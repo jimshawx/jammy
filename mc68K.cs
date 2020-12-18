@@ -14,20 +14,20 @@ namespace runamiga
 			this.instruction = instruction;
 		}
 	}
-	public class UnknownEffectiveAddress : ApplicationException
+	public class UnknownEffectiveAddressException : ApplicationException
 	{
 		private int instruction;
 
-		public UnknownEffectiveAddress(int instruction)
+		public UnknownEffectiveAddressException(int instruction)
 		{
 			this.instruction = instruction;
 		}
 	}
-	public class UnknownInstructionSize : ApplicationException
+	public class UnknownInstructionSizeException : ApplicationException
 	{
 		private int instruction;
 
-		public UnknownInstructionSize(int instruction)
+		public UnknownInstructionSizeException(int instruction)
 		{
 			this.instruction = instruction;
 		}
@@ -58,6 +58,15 @@ namespace runamiga
 			memory = new byte[16 * 1024 * 1024];
 		}
 
+		private void Hack()
+		{
+			//remove the annoying delay loop at FC00D8
+			memory[0xfc00da] = 0;
+			memory[0xfc00db] = 0;
+			memory[0xfc00dc] = 0;
+			memory[0xfc00dd] = 1;
+		}
+
 		public void InitialSetup()
 		{
 			//poke in exec base
@@ -65,6 +74,8 @@ namespace runamiga
 			memory[5] = 0xfc;
 			memory[6] = 0x00;
 			memory[7] = 0xd2;
+
+			Hack();
 
 			pc = read32(4);
 		}
@@ -85,7 +96,7 @@ namespace runamiga
 				case Size.Long: c = (int)val; break;
 				case Size.Word: c = (int)(short)val; break;
 				case Size.Byte: c = (int)(sbyte)val; break;
-				default: throw new UnknownInstructionSize(0);
+				default: throw new UnknownInstructionSizeException(0);
 			}
 
 			//Z
@@ -114,9 +125,11 @@ namespace runamiga
 
 		private void Writebytes(uint address, int len)
 		{
+			Trace.Write($"{address:X8} ");
 			for (int i = 0; i < len; i++)
 				Trace.Write($"{memory[address + i]:X2} ");
 			Trace.WriteLine("");
+			Trace.Write($"{address:X8} ");
 			for (int i = 0; i < len; i++)
 			{
 				if (memory[address + i] >= 32 && memory[address + i] <= 127)
@@ -129,7 +142,7 @@ namespace runamiga
 
 		public int readpc16()
 		{
-			//Writebytes(pc, 8);
+			Writebytes(pc, 8);
 			return ((int)memory[pc] << 8) +
 				memory[pc + 1];
 		}
@@ -272,7 +285,54 @@ namespace runamiga
 
 		private void t_thirteen(int type)
 		{
-			throw new UnknownInstructionException(type);
+			//add
+
+			int s = (type >> 6) & 3;
+			Size size = 0;
+			if (s == 3)
+			{
+				//adda
+				if ((type & 0b1_00_000_000) != 0)
+					size = Size.Long;
+				else
+					size = Size.Word;
+
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+				int Xn = (type >> 9) & 7;
+				a[Xn] += op;
+			}
+			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
+			{
+				if (s == 0) size = Size.Byte;
+				else if (s == 1) size = Size.Word;
+				else if (s == 2) size = Size.Long;
+				//addx
+				throw new UnknownInstructionException(type);
+			}
+			else
+			{
+				if (s == 0) size = Size.Byte;
+				else if (s == 1) size = Size.Word;
+				else if (s == 2) size = Size.Long;
+				//add
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+
+				int Xn = (type >> 9) & 7;
+
+				if ((type & 0b1_00_000_000) != 0)
+				{
+					d[Xn] += op;
+					setNZ(d[Xn], size);
+				}
+				else
+				{
+					op += d[Xn];
+					writeEA(type, ea, size, op);
+					setNZ(op, size);
+				}
+			}
 		}
 
 		private void t_twelve(int type)
@@ -335,7 +395,7 @@ namespace runamiga
 			if (s == 3)
 			{
 				//suba
-				if ((type & 0b1_00_110_000) == 0b1_00_000_000)
+				if ((type & 0b1_00_000_000) != 0)
 					size = Size.Long;
 				else
 					size = Size.Word;
@@ -386,7 +446,17 @@ namespace runamiga
 
 		private void t_seven(int type)
 		{
-			throw new UnknownInstructionException(type);
+			if (((type>>16)&1)==0)
+			{
+				//moveq
+				int Xn = (type>>17)&3;
+				uint imm8 = (uint)(sbyte)(type&0xff);
+				d[Xn]=imm8;
+			}
+			else
+			{
+				throw new UnknownInstructionException(type);
+			}
 		}
 
 		private void t_six(int type)
@@ -520,12 +590,16 @@ namespace runamiga
 		private void bsr(int type)
 		{
 			push(pc);
-			pc = pc + (uint)(sbyte)(type & 0xff);
+			bra(type);
 		}
 
 		private void bra(int type)
 		{
-			pc = pc + (uint)(sbyte)(type&0xff);
+			uint bas = pc;
+			uint disp = (uint)(sbyte)(type & 0xff);
+			if (disp == 0) disp = fetchImm(Size.Word);
+			else if (disp == 0xff) disp = fetchImm(Size.Long);
+			pc = bas + disp;
 		}
 
 		private void t_five(int type)
@@ -686,6 +760,18 @@ namespace runamiga
 				case 0b1110_0111_0111:
 					rtr(type);
 					break;
+				case 0b1110_0111_0010:
+					stop(type);
+					break;
+				case 0b1110_0111_0001:
+					nop(type);
+					break;
+				case 0b1110_0111_0000:
+					reset(type);
+					break;
+				case 0b1010_1111_1100:
+					illegal(type);
+					break;
 				default:
 					if ((subins & 0b1111_1100_0000) == 0b111010000000)
 						jsr(type);
@@ -697,10 +783,163 @@ namespace runamiga
 						lea(type);
 					else if ((subins & 0b0001_1100_0000) == 0b000110000000)
 						chk(type);
+					else if ((subins & 0b1111_1111_0000) == 0b1110_0110_0000)
+						moveusp(type);
+					else if ((subins & 0b1111_1111_1000) == 0b1110_0101_1000)
+						unlk(type);
+					else if ((subins & 0b1111_1111_1000) == 0b1110_0101_0000)
+						link(type);
+					else if ((subins & 0b1111_1111_0000) == 0b1110_0001_0000)
+						trap(type);
+					else if ((subins & 0b111111_000000) == 0b000011_000000)
+						movefromsr(type);
+					else if ((subins & 0b111111_000000) == 0b010011_000000)
+						movetoccr(type);
+					else if ((subins & 0b111111_000000) == 0b011011_000000)
+						movetosr(type);
+					else if ((subins & 0b111110111000) == 0b100010000000)
+						ext(type);
+					else if ((subins & 0b111111000000) == 0b100000000000)
+						nbcd(type);
+					else if ((subins & 0b111111111000) == 0b100001000000)
+						swap(type);
+					else if ((subins & 0b111111000000) == 0b100001000000)
+						pea(type);
+					else if ((subins & 0b1111_00000000) ==0b0000_00000000)
+						negx(type);
+					else if ((subins & 0b1111_00000000) == 0b0010_00000000)
+						clr(type);
+					else if ((subins & 0b1111_00000000) == 0b0100_00000000)
+						neg(type);
+					else if ((subins & 0b1111_00000000) == 0b0110_00000000)
+						not(type);
+					else if ((subins & 0b1111_00000000) == 0b1010_00000000)
+						tst(type);
 					else
 						throw new UnknownInstructionException(type);
 					break;
 			}
+		}
+
+		private void tst(int type)
+		{
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			setNZ(op, size);
+			clrV();
+			clrC();
+		}
+
+		private void not(int type)
+		{
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			op = ~op;
+			setNZ(op, size);
+			writeOp(ea, op, size);
+		}
+
+		private void neg(int type)
+		{
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			op = ~op+1;//same as neg
+			setNZ(op, size);
+			writeOp(ea, op, size);
+		}
+
+		private void clr(int type)
+		{
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			writeOp(ea, 0, size);
+		}
+
+		private void negx(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void pea(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void swap(int type)
+		{
+			int Xn = type&7;
+			d[Xn] = (d[Xn]>>16)|(d[Xn]<<16);
+			setNZ(d[Xn], Size.Long);
+			clrV();
+			clrC();
+		}
+
+		private void nbcd(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void ext(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void movetosr(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void movetoccr(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void movefromsr(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void illegal(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void trap(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void link(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void unlk(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void moveusp(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void reset(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void nop(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void stop(int type)
+		{
+			throw new NotImplementedException();
 		}
 
 		private void t_zero(int type)
@@ -969,7 +1208,7 @@ namespace runamiga
 					}
 				case 6://(d8,An,Xn)
 					{
-						throw new UnknownEffectiveAddress(type);
+						throw new UnknownEffectiveAddressException(type);
 						byte d8 = read8(pc);
 						return a[x] + d[0] + (uint)(sbyte)d8;
 					}
@@ -985,6 +1224,7 @@ namespace runamiga
 							}
 						case 0b011://(d8,pc,Xn)
 							{
+								throw new UnknownEffectiveAddressException(type);
 								byte d8 = read8(pc);
 								uint ea = pc + d[x] + (uint)(sbyte)d8;
 								pc++;
@@ -1005,12 +1245,12 @@ namespace runamiga
 						case 0b100://#imm
 							return pc;
 						default:
-							throw new UnknownEffectiveAddress(type);
+							throw new UnknownEffectiveAddressException(type);
 					}
 					break;
 			}
 
-			throw new UnknownEffectiveAddress(type);
+			throw new UnknownEffectiveAddressException(type);
 		}
 
 		uint fetchOpSize(uint ea, Size size)
@@ -1022,7 +1262,7 @@ namespace runamiga
 				return (uint)(short)read16(ea);
 			if (size == Size.Byte)
 				return (uint)(sbyte)read8(ea);
-			throw new UnknownEffectiveAddress(0);
+			throw new UnknownEffectiveAddressException(0);
 		}
 
 		uint fetchImm(Size size)
@@ -1107,11 +1347,11 @@ namespace runamiga
 						case 0b100://#imm
 							return fetchImm(size);//ea==pc
 						default:
-							throw new UnknownEffectiveAddress(type);
+							throw new UnknownEffectiveAddressException(type);
 					}
 			}
 
-			throw new UnknownEffectiveAddress(type);
+			throw new UnknownEffectiveAddressException(type);
 		}
 
 		void writeOp(uint ea, uint val, Size size)
@@ -1123,7 +1363,7 @@ namespace runamiga
 			{ write16(ea, (ushort)val); return; }
 			if (size == Size.Byte)
 			{ write8(ea, (byte)val); return; }
-			throw new UnknownEffectiveAddress(0);
+			throw new UnknownEffectiveAddressException(0);
 		}
 
 		private void writeEA(int type, uint ea, Size size, uint value)
