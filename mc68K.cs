@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading;
 
 namespace runamiga
@@ -143,16 +141,19 @@ namespace runamiga
 				((uint)memory[address + 2] << 8) +
 				(uint)memory[address + 3];
 		}
+
 		public ushort read16(uint address)
 		{
 			return (ushort)(
 				((ushort)memory[address] << 8) +
 				(ushort)memory[address + 1]);
 		}
+
 		public byte read8(uint address)
 		{
 			return memory[address];
 		}
+
 		public void write32(uint address, uint value)
 		{
 			byte b0, b1, b2, b3;
@@ -327,7 +328,55 @@ namespace runamiga
 
 		private void t_nine(int type)
 		{
-			throw new UnknownInstructionException(type);
+			//sub
+
+			int s = (type>>6)&3;
+			Size size = 0;
+			if (s == 3)
+			{
+				//suba
+				if ((type & 0b1_00_110_000) == 0b1_00_000_000)
+					size = Size.Long;
+				else
+					size = Size.Word;
+
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+				int Xn = (type >> 9) & 7;
+				a[Xn] -= op;
+			}
+			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
+			{
+				if (s == 0) size = Size.Byte;
+				else if (s == 1) size = Size.Word;
+				else if (s == 2) size = Size.Long;
+				//subx
+				throw new UnknownInstructionException(type);
+			}
+			else
+			{
+				if (s == 0) size = Size.Byte;
+				else if (s == 1) size = Size.Word;
+				else if (s == 2) size = Size.Long;
+				//sub
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+
+				int Xn = (type>>9)&7;
+
+				if ((type & 0b1_00_000_000) != 0)
+				{	
+					d[Xn] -= op;
+					setNZ(d[Xn], size);
+				}
+				else
+				{
+					op -= d[Xn];
+					writeEA(type, ea, size, op);
+					setNZ(op, size);
+				}
+			}
+
 		}
 
 		private void t_eight(int type)
@@ -754,42 +803,23 @@ namespace runamiga
 
 		private void cmpi(int type)
 		{
-			int size = (type >> 6) & 3;
-			switch (size)
-			{
-				case 0:
-					{
-						uint ea = fetchEA(type);
-						uint op = fetchOp(type, ea, Size.Byte);
-						ushort imm16 = read16(pc); pc += 2;
-						setNZ(op - imm16, Size.Byte);
-						break;
-					}
-				case 1:
-					{
-						uint ea = fetchEA(type);
-						uint op = fetchOp(type, ea, Size.Word);
-						ushort imm16 = read16(pc); pc += 2;
-						setNZ(op - imm16, Size.Word);
-						break;
-					}
-
-				case 2:
-					{
-						uint ea = fetchEA(type);
-						uint op = fetchOp(type, ea, Size.Long);
-						ushort imm16 = read16(pc); pc += 2;
-						setNZ(op - imm16, Size.Long);
-						break;
-					}
-				default:
-					throw new UnknownInstructionSize(type);
-			}
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			uint imm = fetchImm(size);
+			op -= imm;
+			setNZ(op, size);
 		}
 
 		private void eori(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			uint imm = fetchImm(size);
+			op ^= imm;
+			setNZ(op, size);
+			writeEA(type, ea, size, op);
 		}
 
 		private void bit(int type)
@@ -839,29 +869,62 @@ namespace runamiga
 					break;
 				case 3://bset
 					op0 |= bit;
-					writeOp(ea, op0, Size.Long);
+					writeOp(ea, op0, size);
 					break;
 			}
 		}
 
+		private Size getSize(int type)
+		{
+			int s = (type>>6)&3;
+			if (s == 0) return Size.Byte;
+			if (s == 1) return Size.Word;
+			if (s == 2) return Size.Long;
+			return (Size)3;
+		}
+
 		private void addi(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			uint imm = fetchImm(size);
+			op += imm;
+			setNZ(op,size);
+			writeEA(type, ea, size, op);
 		}
 
 		private void subi(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			uint imm = fetchImm(size);
+			op -= imm;
+			setNZ(op,size);
+			writeEA(type, ea, size, op);
 		}
 
 		private void andi(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			uint imm = fetchImm(size);
+			op &= imm;
+			setNZ(op, size);
+			writeEA(type, ea, size, op);
 		}
 
 		private void ori(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			uint imm = fetchImm(size);
+			op |= imm;
+			setNZ(op, size);
+			writeEA(type, ea, size, op);
 		}
 
 		private void chk(int type)
@@ -952,13 +1015,37 @@ namespace runamiga
 
 		uint fetchOpSize(uint ea, Size size)
 		{
+			//todo: trap on odd aligned access
 			if (size == Size.Long)
 				return read32(ea);
 			if (size == Size.Word)
-				return read16(ea);
+				return (uint)(short)read16(ea);
 			if (size == Size.Byte)
-				return read8(ea);
+				return (uint)(sbyte)read8(ea);
 			throw new UnknownEffectiveAddress(0);
+		}
+
+		uint fetchImm(Size size)
+		{
+			uint v = 0;
+			if (size == Size.Long)
+			{
+				v = fetchOpSize(pc, size);
+				pc += 4;
+			}
+			else if (size == Size.Word)
+			{
+				v = fetchOpSize(pc, size);
+				pc += 2;
+			}
+			else if (size == Size.Byte)
+			{
+				//immediate bytes are stored in a word
+				v = fetchOpSize(pc, Size.Word);
+				v = (uint)(sbyte)v;
+				pc += 2;
+			}
+			return v;
 		}
 
 		uint fetchOp(int type, uint ea, Size size)
@@ -1018,27 +1105,7 @@ namespace runamiga
 						case 0b001://(xxx).l
 							return fetchOpSize(ea, size);
 						case 0b100://#imm
-							{
-								uint v=0;
-								if (size == Size.Long)
-								{
-									v = fetchOpSize(ea, size);
-									pc += 4;
-								}
-								else if (size == Size.Word)
-								{
-									v = fetchOpSize(ea, size);
-									pc += 2;
-								}
-								else if (size == Size.Byte)
-								{
-									//immediate bytes are stored in a word
-									v = fetchOpSize(ea, Size.Word);
-									v &= 0xff;
-									pc += 2;
-								}
-								return v;
-							}
+							return fetchImm(size);//ea==pc
 						default:
 							throw new UnknownEffectiveAddress(type);
 					}
@@ -1049,6 +1116,7 @@ namespace runamiga
 
 		void writeOp(uint ea, uint val, Size size)
 		{
+			//todo: trap on odd aligned access
 			if (size == Size.Long)
 			{ write32(ea, val); return; }
 			if (size == Size.Word)
