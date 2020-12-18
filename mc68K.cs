@@ -48,7 +48,7 @@ namespace runamiga
 		public UInt32[] a;
 
 		public UInt32 pc;
-		//XNZVC
+		//T.S..210...XNZVC
 		public UInt16 sr;
 
 		public Byte[] memory;
@@ -71,31 +71,33 @@ namespace runamiga
 			pc = read32(4);
 		}
 
-		private void setNZl(Int32 c)
+		private void setNZ(UInt32 val, Size size)
 		{
-			if (c == 0) sr |= 4;
-			else sr &= 0xfffB;
+			Int32 c;
 
-			if (c < 0) sr |= 8;
-			else sr &= 0xfff7;
+			switch (size)
+			{ 
+				case Size.Long: c = (Int32)val; break;
+				case Size.Word: c = (Int32)(Int16)val; break;
+				case Size.Byte: c = (Int32)(SByte)val; break;
+				default: throw new UnknownInstructionSize(0);
+			}
+
+			if (c == 0) sr |= 0b00000000_00000100;
+			else sr &= 0b11111111_11111011;
+
+			if (c < 0) sr |= 0b00000000_00001000;
+			else sr &= 0b11111111_11110111;
 		}
 
-		private void setNZw(Int16 c)
+		private void clrV()
 		{
-			if (c == 0) sr |= 4;
-			else sr &= 0xfffB;
-
-			if (c < 0) sr |= 8;
-			else sr &= 0xfff7;
+			sr &= 0b11111111_11111101;
 		}
 
-		private void setNZb(SByte c)
+		private void clrC()
 		{
-			if (c == 0) sr |= 4;
-			else sr &= 0xfffB;
-
-			if (c < 0) sr |= 8;
-			else sr &= 0xfff7;
+			sr &= 0b11111111_11111110;
 		}
 
 		private bool Z() { return (sr & 4) != 0; }
@@ -214,7 +216,7 @@ namespace runamiga
 			int lr = (type&0b1_00_000_000)>>8;
 			if (mode == 3)
 			{
-				UInt32 ea = fetchEA(type, Size.Long);
+				UInt32 ea = fetchEA(type);
 				int op = type&0b111_000_000_000;
 				switch (op)
 				{
@@ -296,17 +298,21 @@ namespace runamiga
 		{
 			if ((type & 0x100) != 0)
 			{
-				UInt32 eas = fetchEA(type, Size.Long);
+				UInt32 ea = fetchEA(type);
+				UInt32 op0 = fetchOp(type, ea, Size.Long); 
 				type = (swizzle(type) & 7) | 8;
-				UInt32 ead = fetchEA(type, Size.Long);
-				setNZl((Int32)(ead - eas));
+				ea = fetchEA(type);
+				UInt32 op1 = fetchOp(type, ea, Size.Long);
+				setNZ(op1 - op0, Size.Long);
 			}
 			else
 			{
-				UInt32 eas = fetchEA(type, Size.Word);
+				UInt32 ea = fetchEA(type);
+				UInt32 op0 = fetchOp(type, ea, Size.Word);
 				type = swizzle(type & 7);
-				UInt32 ead = fetchEA(type, Size.Word);
-				setNZw((Int16)(ead - eas));
+				ea = fetchEA(type);
+				UInt32 op1 = fetchOp(type, ea, Size.Word);
+				setNZ(op1 - op0, Size.Word);
 			}
 		}
 
@@ -491,55 +497,61 @@ namespace runamiga
 		private void subql(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
-			UInt32 ea = fetchEA(type, Size.Long);
-			ea -= imm;
-			setNZl((Int32)ea);
-			writeEA(type, Size.Long, ea);
+			UInt32 ea = fetchEA(type);
+			UInt32 op = fetchOp(type, ea, Size.Long);
+			op -= imm;
+			setNZ(op, Size.Long);
+			writeEA(type, ea, Size.Long, op);
 		}
 
 		private void subqw(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
-			UInt32 ea = fetchEA(type, Size.Word);
-			ea -= imm;
-			setNZw((Int16)ea);
-			writeEA(type, Size.Word, ea);
+			UInt32 ea = fetchEA(type);
+			UInt32 op = fetchOp(type, ea, Size.Word);
+			op -= imm;
+			setNZ(op, Size.Word);
+			writeEA(type, ea, Size.Word, op);
 		}
 
 		private void subqb(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
-			UInt32 ea = fetchEA(type, Size.Byte);
-			ea -= imm;
-			setNZb((SByte)ea);
-			writeEA(type, Size.Word, ea);
+			UInt32 ea = fetchEA(type);
+			UInt32 op = fetchOp(type, ea, Size.Byte);
+			op -= imm;
+			setNZ(op, Size.Byte);
+			writeEA(type, ea, Size.Byte, op);
 		}
 
 		private void addql(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
-			UInt32 ea = fetchEA(type, Size.Long);
-			ea += imm;
-			setNZl((Int32)ea);
-			writeEA(type, Size.Long, ea);
+			UInt32 ea = fetchEA(type);
+			UInt32 op = fetchOp(type, ea, Size.Long);
+			op += imm;
+			setNZ(op,Size.Long);
+			writeEA(type, ea, Size.Long, op);
 		}
 
 		private void addqw(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
-			UInt32 ea = fetchEA(type, Size.Word);
-			ea += imm;
-			setNZw((Int16)ea);
-			writeEA(type, Size.Word, ea);
+			UInt32 ea = fetchEA(type);
+			UInt32 op = fetchOp(type, ea, Size.Word);
+			op += imm;
+			setNZ(op,Size.Word);
+			writeEA(type, ea, Size.Word, op);
 		}
 
 		private void addqb(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
-			UInt32 ea = fetchEA(type, Size.Byte);
-			ea += imm;
-			setNZb((SByte)ea);
-			writeEA(type, Size.Word, ea);
+			UInt32 ea = fetchEA(type);
+			UInt32 op = fetchOp(type, ea, Size.Byte);
+			op += imm;
+			setNZ(op, Size.Byte);
+			writeEA(type, ea, Size.Byte, op);
 		}
 
 		private void t_four(int type)
@@ -636,24 +648,35 @@ namespace runamiga
 		}
 		private void movel(int type)
 		{
-			UInt32 ea = fetchEA(type, Size.Long);
+			UInt32 ea = fetchEA(type);
+			UInt32 op = fetchOp(type, ea, Size.Long);
 			type = swizzle(type);
-			writeEA(type >> 6, Size.Long, ea);
+			writeEA(type >> 6, ea, Size.Long, op);
+			setNZ(op, Size.Long);
+			clrV();
+			clrC();
 		}
 
 		private void movew(int type)
 		{
-			UInt16 ea = (UInt16)fetchEA(type, Size.Word);
+			UInt32 ea = fetchEA(type);
+			UInt32 op = fetchOp(type, ea, Size.Word);
 			type = swizzle(type);
-			writeEA(type >> 6, Size.Word, ea);
-
+			writeEA(type >> 6, ea, Size.Word, op);
+			setNZ(op, Size.Word);
+			clrV();
+			clrC();
 		}
 
 		private void moveb(int type)
 		{
-			Byte ea = (Byte)fetchEA(type, Size.Byte);
+			UInt32 ea = fetchEA(type);
+			UInt32 op = fetchOp(type, ea, Size.Byte);
 			type = swizzle(type);
-			writeEA(type >> 6, Size.Byte, ea);
+			writeEA(type >> 6, ea, Size.Byte, op);
+			setNZ(op, Size.Byte);
+			clrV();
+			clrC();
 		}
 
 		private void cmpi(int type)
@@ -663,22 +686,27 @@ namespace runamiga
 			{
 				case 0:
 					{
-						UInt32 ea = fetchEA(type, Size.Byte);
+						UInt32 ea = fetchEA(type);
+						UInt32 op = fetchOp(type, ea, Size.Byte);
 						UInt16 imm16 = read16(pc); pc += 2;
+						setNZ(op - imm16, Size.Byte);
 						break;
 					}
 				case 1:
 					{
-						UInt32 ea = fetchEA(type, Size.Word);
+						UInt32 ea = fetchEA(type);
+						UInt32 op = fetchOp(type, ea, Size.Word);
 						UInt16 imm16 = read16(pc); pc += 2;
-						setNZw((Int16)(ea-imm16));
+						setNZ(op - imm16, Size.Word);
+						break;
 					}
-					break;
+
 				case 2:
 					{
-						UInt32 ea = fetchEA(type, Size.Long);
+						UInt32 ea = fetchEA(type);
+						UInt32 op = fetchOp(type, ea, Size.Long);
 						UInt16 imm16 = read16(pc); pc += 2;
-
+						setNZ(op - imm16, Size.Long);
 						break;
 					}
 				default:
@@ -723,7 +751,7 @@ namespace runamiga
 
 		private void lea(int type)
 		{
-			UInt32 ea = fetchEA(type, Size.Long);
+			UInt32 ea = fetchEA(type);
 			int An = (type >> 9) & 7;
 			a[An] = ea;
 		}
@@ -733,7 +761,7 @@ namespace runamiga
 			throw new NotImplementedException();
 		}
 
-		UInt32 fetchEA(int type, Size size)
+		UInt32 fetchEA(int type)
 		{
 			int m = (type >> 3) & 7;
 			int x = type & 7;
@@ -745,41 +773,43 @@ namespace runamiga
 				case 1:
 					return a[x];
 				case 2:
-					return read32(a[x]);
+					return a[x];
 				case 3:
-					{
-						UInt32 ea = read32(a[x]);
-						a[x] += 4;
-						return ea;
-					}
+					return a[x];
 				case 4:
-					a[x] -= 4;
-					return read32(a[x]);
+					return a[x];
 				case 5://(d16,An)
+					{
+					UInt16 d16 = read16(pc);
+					pc+=2;
+					return a[x]+(UInt32)(Int16)d16;
+					}
+					case 6://(d8,An,Xn)
+					{
 					throw new UnknownEffectiveAddress(type);
-				case 6://(d8,An,Xn)
-					throw new UnknownEffectiveAddress(type);
-				case 7:
+					Byte d8 = read8(pc);
+					return a[x] + d[0] + (UInt32)(SByte)d8;
+					}
+					case 7:
 					switch (x)
 					{
 						case 0b010://(d16,pc)
 							{
 								UInt16 d16 = read16(pc);
-								UInt32 ea = (UInt32)(pc + (Int16)d16);
+								UInt32 ea = pc + (UInt32)(Int16)d16;
 								pc += 2;
 								return ea;
 							}
 						case 0b011://(d8,pc,Xn)
 							{
 								Byte d8 = read8(pc);
-								UInt32 ea = (UInt32)(pc + d[x] + (SByte)d8);
+								UInt32 ea = pc + d[x] + (UInt32)(SByte)d8;
 								pc++;
 								return ea;
 							}
 						case 0b000://(xxx).w
 							{
-								throw new UnknownEffectiveAddress(type);
-								UInt32 ea = read16(pc);
+								UInt32 ea = (UInt32)(Int16)read16(pc);
 								pc += 2;
 								return ea;
 							}
@@ -804,7 +834,95 @@ namespace runamiga
 			throw new UnknownEffectiveAddress(type);
 		}
 
-		private void writeEA(int type, Size size, UInt32 value)
+		UInt32 fetchOpSize(UInt32 ea, Size size)
+		{
+			if (size == Size.Long)
+				return read32(ea);
+			if (size == Size.Word)
+				return read16(ea);
+			if (size == Size.Byte)
+				return read8(ea);
+			throw new UnknownEffectiveAddress(0);
+		}
+
+		UInt32 fetchOp(int type, UInt32 ea, Size size)
+		{
+			int m = (type >> 3) & 7;
+			int x = type & 7;
+
+			switch (m)
+			{
+				case 0:
+					return ea;
+
+				case 1:
+					return ea;
+
+				case 2:
+					return fetchOpSize(ea,size);
+
+				case 3:
+					{
+						UInt32 v = fetchOpSize(ea,size);
+						if (size == Size.Long)
+							a[x] += 4;
+						if (size == Size.Word)
+							a[x] += 2;
+						if (size == Size.Byte)
+							a[x] += 1;
+						return v;
+					}
+
+				case 4:
+					{ 
+						if (size == Size.Long)
+							a[x] -= 4;
+						if (size == Size.Word)
+							a[x] -= 2;
+						if (size == Size.Byte)
+							a[x] -= 1;
+						return fetchOpSize(a[x],size);//yes, a[x]
+					}
+
+				case 5://(d16,An)
+					return fetchOpSize(ea,size);
+
+				case 6://(d8,An,Xn)
+					return fetchOpSize(ea, size);
+
+				case 7:
+					switch (x)
+					{
+						case 0b010://(d16,pc)
+							return fetchOpSize(ea,size);
+						case 0b011://(d8,pc,Xn)
+							return fetchOpSize(ea, size);
+						case 0b000://(xxx).w
+							return fetchOpSize(ea, size);
+						case 0b001://(xxx).l
+							return fetchOpSize(ea, size);
+						case 0b100://#imm
+							return ea;
+						default:
+							throw new UnknownEffectiveAddress(type);
+					}
+			}
+
+			throw new UnknownEffectiveAddress(type);
+		}
+
+		void writeOp(UInt32 ea, UInt32 val, Size size)
+		{
+			if (size == Size.Long)
+			{	write32(ea, val); return; }
+			if (size == Size.Word)
+			{	write16(ea,(UInt16)val); return; }
+			if (size == Size.Byte)
+			{	write8(ea,(Byte)val); return; }
+			throw new UnknownEffectiveAddress(0);
+		}
+
+		private void writeEA(int type, UInt32 ea, Size size, UInt32 value)
 		{
 			int m = (type >> 3) & 7;
 			int Xn = type & 7;
@@ -818,42 +936,54 @@ namespace runamiga
 					a[Xn] = value;
 					break;
 				case 2:
-					write32(a[Xn], value);
+					writeOp(ea, value, size);
 					break;
 				case 3:
-					write32(a[Xn], value);
-					a[Xn] += 4;
+					writeOp(ea, value, size);
+					if(size == Size.Long)
+						a[Xn] += 4;
+					if (size == Size.Word)
+						a[Xn] += 2;
+					if (size == Size.Byte)
+						a[Xn] += 1;
 					break;
 				case 4:
-					a[Xn] -= 4;
-					write32(a[Xn], value);
+					if (size == Size.Long)
+						a[Xn] -= 4;
+					if (size == Size.Word)
+						a[Xn] -= 2;
+					if (size == Size.Byte)
+						a[Xn] -= 1;
+					writeOp(a[Xn], value, size);//yes, a[Xn]
 					break;
 				case 5:
-					throw new UnknownEffectiveAddress(type);
+					writeOp(ea, value, size);
+					break;
 				case 6:
-					throw new UnknownEffectiveAddress(type);
-				default:
-					throw new UnknownEffectiveAddress(type);
-
+					writeOp(ea, value, size);
+					break;
+				case 7:
+					writeOp(ea, value, size);
+					break;
 			}
 		}
 
 		private void push(UInt32 value)
 		{
-			write32(a[7], value);
 			a[7] -= 4;
+			write32(pc, value);
 		}
 
 		private void jmp(int type)
 		{
-			UInt32 ea = fetchEA(type, Size.Long);
+			UInt32 ea = fetchEA(type);
 			pc = ea;
 		}
 
 		private void jsr(int type)
 		{
 			push(pc);
-			UInt32 ea = fetchEA(type, Size.Long);
+			UInt32 ea = fetchEA(type);
 			pc = ea;
 		}
 
