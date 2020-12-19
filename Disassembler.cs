@@ -149,7 +149,7 @@ namespace runamiga
 						ushort d16 = read16(pc);
 						pc += 2;
 						//return a[x] + (uint)(short)d16;
-						Append($"(${d16:X4},a{x})");
+						Append($"${d16:X4}(a{x})");
 						return 0;
 
 					}
@@ -970,7 +970,7 @@ namespace runamiga
 					Append("t");
 					break;
 				case 1:
-					Append("f");
+					Append("ra");
 					break;
 				case 2:
 					hi();
