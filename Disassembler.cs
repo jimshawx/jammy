@@ -69,22 +69,32 @@ namespace runamiga
 			else if (s == Size.Long) asm.Append(".l ");
 		}
 
-		private void Writebytes(uint address, int len)
+		void Append(uint imm, Size s)
 		{
-			Trace.Write($"{address:X8} ");
-			for (int i = 0; i < len; i++)
-				Trace.Write($"{memory[address + i]:X2} ");
-			Trace.WriteLine("");
-			Trace.Write($"{address:X8} ");
-			for (int i = 0; i < len; i++)
-			{
-				if (memory[address + i] >= 32 && memory[address + i] <= 127)
-					Trace.Write($" {Convert.ToChar(memory[address + i])} ");
-				else
-					Trace.Write(" . ");
-			}
-			Trace.WriteLine("");
+			if (s == Size.Byte)
+				asm.Append($"#${imm:X2}");
+			else if (s == Size.Word)
+				asm.Append($"#${imm:X4}");
+			else if (s == Size.Long)
+				asm.Append($"#${imm:X8}");
 		}
+
+		//private void Writebytes(uint address, int len)
+		//{
+		//	Trace.Write($"{address:X8} ");
+		//	for (int i = 0; i < len; i++)
+		//		Trace.Write($"{memory[address + i]:X2} ");
+		//	Trace.WriteLine("");
+		//	Trace.Write($"{address:X8} ");
+		//	for (int i = 0; i < len; i++)
+		//	{
+		//		if (memory[address + i] >= 32 && memory[address + i] <= 127)
+		//			Trace.Write($" {Convert.ToChar(memory[address + i])} ");
+		//		else
+		//			Trace.Write(" . ");
+		//	}
+		//	Trace.WriteLine("");
+		//}
 
 		public uint read32(uint address)
 		{
@@ -154,8 +164,13 @@ namespace runamiga
 							{
 								ushort d16 = read16(pc);
 								//uint ea = pc + (uint)(short)d16;
+
+								uint d32 = (uint)(address + pc + (short)d16);
+
+
 								pc += 2;
-								Append($"(${d16:X4},pc)");
+								//Append($"(${d16:X4},pc)");
+								Append($"${d32:X8}(pc)");
 								//return ea;
 								return 0;
 							}
@@ -168,18 +183,17 @@ namespace runamiga
 							{
 								uint ea = (uint)(short)read16(pc);
 								pc += 2;
-								Append($"(${ea:X4})");
+								Append($"${ea:X4}");
 								return ea;
 							}
 						case 0b001://(xxx).l
 							{
 								uint ea = read32(pc);
 								pc += 4;
-								Append($"(${ea:X8})");
+								Append($"${ea:X8}");
 								return ea;
 							}
 						case 0b100://#imm
-							Append($"(${address+pc:X4})");
 							return pc;
 						default:
 							throw new UnknownEffectiveAddressException(type);
@@ -230,11 +244,11 @@ namespace runamiga
 
 		uint fetchOp(int type, uint ea, Size size)
 		{
-			//int m = (type >> 3) & 7;
-			//int x = type & 7;
+			int m = (type >> 3) & 7;
+			int x = type & 7;
 
-			//switch (m)
-			//{
+			switch (m)
+			{
 			//	case 0:
 			//		return ea;
 
@@ -273,23 +287,24 @@ namespace runamiga
 			//	case 6://(d8,An,Xn)
 			//		return fetchOpSize(ea, size);
 
-			//	case 7:
-			//		switch (x)
-			//		{
-			//			case 0b010://(d16,pc)
-			//				return fetchOpSize(ea, size);
-			//			case 0b011://(d8,pc,Xn)
-			//				return fetchOpSize(ea, size);
-			//			case 0b000://(xxx).w
-			//				return fetchOpSize(ea, size);
-			//			case 0b001://(xxx).l
-			//				return fetchOpSize(ea, size);
-			//			case 0b100://#imm
-			//				return fetchImm(size);//ea==pc
-			//			default:
-			//				throw new UnknownEffectiveAddressException(type);
-			//		}
-			//}
+				case 7:
+					switch (x)
+					{
+						case 0b010://(d16,pc)
+							return fetchOpSize(ea, size);
+						case 0b011://(d8,pc,Xn)
+							return fetchOpSize(ea, size);
+						case 0b000://(xxx).w
+							return fetchOpSize(ea, size);
+						case 0b001://(xxx).l
+							return fetchOpSize(ea, size);
+						case 0b100://#imm
+							uint imm = fetchImm(size);//ea==pc
+							return imm;
+						default:
+							throw new UnknownEffectiveAddressException(type);
+					}
+			}
 
 			//throw new UnknownEffectiveAddressException(type);
 			return 0;
@@ -439,7 +454,7 @@ namespace runamiga
 				else
 					size = Size.Word;
 
-				Append("size");
+				Append(size);
 
 				int Xn = (type >> 9) & 7;
 				Append($"a{Xn},");
@@ -564,7 +579,8 @@ namespace runamiga
 		{
 			if ((type & 0b1_00_000_000) != 0)
 			{
-				Append("cmpa.l");
+				Append("cmpa");
+				Append(Size.Long);
 				uint ea = fetchEA(type);
 				uint op0 = fetchOp(type, ea, Size.Long);
 				Append(",");
@@ -574,7 +590,8 @@ namespace runamiga
 			}
 			else
 			{
-				Append("cmpa.w");
+				Append("cmpa");
+				Append(Size.Word);
 				uint ea = fetchEA(type);
 				uint op0 = fetchOp(type, ea, Size.Word);
 				Append(",");
@@ -858,11 +875,12 @@ namespace runamiga
 
 		private void bra2(int type)
 		{
+			Append(" ");
 			uint bas = pc;
 			uint disp = (uint)(sbyte)(type & 0xff);
 			if (disp == 0) disp = fetchImm(Size.Word);
 			else if (disp == 0xff) disp = fetchImm(Size.Long);
-			pc = bas + disp;
+			else Append($"#${disp:X2}");
 		}
 
 		private void t_five(int type)
@@ -1359,6 +1377,7 @@ namespace runamiga
 
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Byte);
+			Append(",");
 
 			type = swizzle(type);
 			ea = fetchEA(type);
@@ -1368,18 +1387,20 @@ namespace runamiga
 		{
 			Append("cmpi");
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
+			Append(",");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 		}
 
 		private void eori(int type)
 		{
 			Append("eori");
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
+			Append(",");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 		}
 
 		private void bit(int type)
@@ -1439,28 +1460,32 @@ namespace runamiga
 		{
 			Append($"addi");
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
+			Append(",");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 		}
 
 		private void subi(int type)
 		{
 			Append($"subi");
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
+			Append(",");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 		}
 
 		private void andi(int type)
 		{
 			Append($"andi");
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
+			Append(",");
 
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
+
 		}
 
 		private void ori(int type)
@@ -1468,9 +1493,12 @@ namespace runamiga
 			Append($"ori");
 
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
+			Append(",");
+
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
+
 		}
 
 		private void chk(int type)
@@ -1482,9 +1510,10 @@ namespace runamiga
 
 		private void lea(int type)
 		{
+			Append("lea ");
 			fetchEA(type);
 			int An = (type >> 9) & 7;
-			Append($"lea ,a{An}");
+			Append($",a{An}");
 		}
 
 		private void movem(int type)
