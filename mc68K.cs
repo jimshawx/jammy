@@ -108,6 +108,11 @@ namespace runamiga
 			else sr &= 0b11111111_11110111;
 		}
 
+		void setSupervisor()
+		{
+			sr |= 0b00100000_00000000;
+		}
+
 		private void clrV()
 		{
 			sr &= 0b11111111_11111101;
@@ -122,6 +127,7 @@ namespace runamiga
 		private bool N() { return (sr & 8) != 0; }
 		private bool V() { return (sr & 2) != 0; }
 		private bool C() { return (sr & 1) != 0; }
+		private bool Supervisor() { return (sr & 0b00100000_00000000) != 0; }
 
 		private void Writebytes(uint address, int len)
 		{
@@ -140,11 +146,9 @@ namespace runamiga
 			Trace.WriteLine("");
 		}
 
-		public int readpc16()
+		public ushort readpc16()
 		{
-			Writebytes(pc, 8);
-			return ((int)memory[pc] << 8) +
-				memory[pc + 1];
+			return read16(pc);
 		}
 
 		public uint read32(uint address)
@@ -194,6 +198,11 @@ namespace runamiga
 			memory[address] = value;
 		}
 
+		public void Reset()
+		{
+			throw new NotImplementedException();
+		}
+
 		public void Emulate()
 		{
 			int ins = readpc16();
@@ -237,50 +246,109 @@ namespace runamiga
 		{
 			int mode = (type & 0b11_000_000) >> 6;
 			int lr = (type & 0b1_00_000_000) >> 8;
+
 			if (mode == 3)
 			{
-				uint ea = fetchEA(type);
 				int op = type & 0b111_000_000_000;
 				switch (op)
 				{
-					case 0: asd(type, 1, lr); break;
-					case 1: lsd(type, 1, lr); break;
-					case 2: roxd(type, 1, lr); break;
-					case 3: rod(type, 1, lr); break;
+					case 0: asd(type, 1, lr, Size.Word); break;
+					case 1: lsd(type, 1, lr, Size.Word); break;
+					case 2: roxd(type, 1, lr, Size.Word); break;
+					case 3: rod(type, 1, lr, Size.Word); break;
 				}
 			}
 			else
 			{
 				int op = (type & 0b11_000) >> 3;
 				int rot = (type & 0b111_0_00_0_00_000) >> 9;
+				
+				if ((type & 0b1_00_000) != 0)
+				{ 
+					rot = (int)(d[rot]&0x3f);
+				}
+				else
+				{
+					if (rot == 0) rot = 8;
+				}
+
+				Size size = getSize(type);
+
+				//EA is d[x]
+				type &= 0b1111111111000111;
+
 				switch (op)
 				{
-					case 0: asd(type, rot, lr); break;
-					case 1: lsd(type, rot, lr); break;
-					case 2: roxd(type, rot, lr); break;
-					case 3: rod(type, rot, lr); break;
+					case 0: asd(type, rot, lr, size); break;
+					case 1: lsd(type, rot, lr, size); break;
+					case 2: roxd(type, rot, lr, size); break;
+					case 3: rod(type, rot, lr, size); break;
 				}
 			}
 		}
 
-		private void rod(int type, int rot, int lr)
+		private void rod(int type, int rot, int lr, Size size)
 		{
-			throw new NotImplementedException();
+			uint ea = fetchEA(type);
+			uint val = fetchOp(type, ea, size);
+			if (lr == 1)
+			{
+				val = (val << rot) | (val >> (32-rot));
+			}
+			else
+			{
+				val = (val >> rot) | (val << (32 - rot));
+			}
+			setNZ(val, size);
+			writeEA(type, ea, size, val);
 		}
 
-		private void roxd(int type, int rot, int lr)
+		private void roxd(int type, int rot, int lr, Size size)
 		{
-			throw new NotImplementedException();
+			uint ea = fetchEA(type);
+			uint val = fetchOp(type, ea, size);
+			if (lr == 1)
+			{
+				val = (val << rot) | (val >> (32 - rot));
+			}
+			else
+			{
+				val = (val >> rot) | (val << (32 - rot));
+			}
+			writeEA(type, ea, size, val);
+			setNZ(val, size);
 		}
 
-		private void lsd(int type, int rot, int lr)
+		private void lsd(int type, int rot, int lr, Size size)
 		{
-			throw new NotImplementedException();
+			uint ea = fetchEA(type);
+			uint val = fetchOp(type, ea, size);
+			if (lr==1)
+			{
+				val <<= rot;
+			}
+			else
+			{
+				val >>= rot;
+			}
+			setNZ(val, size);
+			writeEA(type, ea, size, val);
 		}
 
-		private void asd(int type, int rot, int lr)
+		private void asd(int type, int rot, int lr, Size size)
 		{
-			throw new NotImplementedException();
+			uint ea = fetchEA(type);
+			int val = (int)fetchOp(type, ea, size);
+			if (lr == 1)
+			{
+				val <<= rot;
+			}
+			else
+			{
+				val >>= rot;
+			}
+			setNZ((uint)val, size);
+			writeEA(type, ea, size, (uint)val);
 		}
 
 		private void t_thirteen(int type)
@@ -361,12 +429,18 @@ namespace runamiga
 
 		private void cmp(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op0 = fetchOp(type, ea, size);
+			type = swizzle(type) & 7;
+			ea = fetchEA(type);
+			uint op1 = fetchOp(type, ea, size);
+			setNZ(op1 - op0, size);
 		}
 
 		private void cmpa(int type)
 		{
-			if ((type & 0x100) != 0)
+			if ((type & 0b1_00_000_000) != 0)
 			{
 				uint ea = fetchEA(type);
 				uint op0 = fetchOp(type, ea, Size.Long);
@@ -379,7 +453,7 @@ namespace runamiga
 			{
 				uint ea = fetchEA(type);
 				uint op0 = fetchOp(type, ea, Size.Word);
-				type = swizzle(type & 7);
+				type = (swizzle(type)&7)|8;
 				ea = fetchEA(type);
 				uint op1 = fetchOp(type, ea, Size.Word);
 				setNZ(op1 - op0, Size.Word);
@@ -909,7 +983,9 @@ namespace runamiga
 
 		private void trap(int type)
 		{
-			throw new NotImplementedException();
+			setSupervisor();
+			uint vector = (uint)(type&0xf);
+			pc = read32(vector<<2);
 		}
 
 		private void link(int type)
@@ -929,17 +1005,22 @@ namespace runamiga
 
 		private void reset(int type)
 		{
-			throw new NotImplementedException();
+			if (Supervisor())
+				Reset();
+			else
+				trap(type);
 		}
 
 		private void nop(int type)
 		{
-			throw new NotImplementedException();
 		}
 
 		private void stop(int type)
 		{
-			throw new NotImplementedException();
+			if (Supervisor())
+				sr = readpc16();
+			else
+				trap(type);
 		}
 
 		private void t_zero(int type)
@@ -1374,10 +1455,20 @@ namespace runamiga
 			switch (m)
 			{
 				case 0:
-					d[Xn] = value;
+					if (size == Size.Long)
+						d[Xn] = value;
+					else if (size == Size.Word)
+						d[Xn] = (d[Xn]&0xffff0000)|(value&0x0000ffff);
+					else if (size == Size.Byte)
+						d[Xn] = (d[Xn] & 0xffffff00) | (value & 0x000000ff);
 					break;
 				case 1:
-					a[Xn] = value;
+					if (size == Size.Long)
+						a[Xn] = value;
+					else if (size == Size.Word)
+						a[Xn] = (a[Xn] & 0xffff0000) | (value & 0x0000ffff);
+					else if (size == Size.Byte)
+						a[Xn] = (a[Xn] & 0xffffff00) | (value & 0x000000ff);
 					break;
 				case 2:
 					writeOp(ea, value, size);
