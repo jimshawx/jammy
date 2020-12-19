@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace runamiga
@@ -18,8 +15,8 @@ namespace runamiga
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 
-			var cpu = new mc68K();
-			cpu.Init();
+			var machine = new Machine();
+			machine.Init();
 
 			Application.Run(new Form1());
 		}

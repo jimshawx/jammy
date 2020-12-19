@@ -1,61 +1,32 @@
-﻿using System;
+﻿using runamiga.Types;
+using System;
 using System.Diagnostics;
-using System.IO;
-using System.Threading;
 
 namespace runamiga
 {
-	public class UnknownInstructionException : ApplicationException
+	public class CPU : IEmulate
 	{
-		private int instruction;
+		private uint[] d;
+		private uint[] a;
 
-		public UnknownInstructionException(int instruction)
-		{
-			this.instruction = instruction;
-		}
-	}
-	public class UnknownEffectiveAddressException : ApplicationException
-	{
-		private int instruction;
-
-		public UnknownEffectiveAddressException(int instruction)
-		{
-			this.instruction = instruction;
-		}
-	}
-	public class UnknownInstructionSizeException : ApplicationException
-	{
-		private int instruction;
-
-		public UnknownInstructionSizeException(int instruction)
-		{
-			this.instruction = instruction;
-		}
-	}
-
-	public enum Size
-	{
-		Byte,
-		Word,
-		Long
-	}
-
-	public class CPU
-	{
-		public uint[] d;
-		public uint[] a;
-
-		public uint pc;
+		private uint pc;
 		//T.S..210...XNZVC
-		public ushort sr;
+		private ushort sr;
 
-		public byte[] memory;
+		private byte[] memory;
 
-		public CPU()
+		private IMemoryMappedDevice cia { get; }
+		private IMemoryMappedDevice custom { get; }
+
+		public CPU(IMemoryMappedDevice cia, IMemoryMappedDevice custom)
 		{
 			d = new uint[8];
 			a = new uint[8];
 			memory = new byte[16 * 1024 * 1024];
+			this.cia = cia;
+			this.custom = custom;
+
+			InitialSetup();
 		}
 
 		private void Hack()
@@ -78,6 +49,11 @@ namespace runamiga
 			Hack();
 
 			pc = read32(4);
+		}
+
+		public void BulkWrite(int dst, byte[]src, int length)
+		{
+			Array.Copy(src, 0, memory, dst, 256 * 1024);
 		}
 
 		private void setZ(uint val)
@@ -153,6 +129,9 @@ namespace runamiga
 
 		public uint read32(uint address)
 		{
+			if (cia.IsMapped(address)) cia.Read(address, Size.Long);
+			if (custom.IsMapped(address)) custom.Read(address, Size.Long);
+
 			return ((uint)memory[address] << 24) +
 				((uint)memory[address + 1] << 16) +
 				((uint)memory[address + 2] << 8) +
@@ -161,6 +140,9 @@ namespace runamiga
 
 		public ushort read16(uint address)
 		{
+			if (cia.IsMapped(address)) cia.Read(address, Size.Word);
+			if (custom.IsMapped(address)) custom.Read(address, Size.Word);
+
 			return (ushort)(
 				((ushort)memory[address] << 8) +
 				(ushort)memory[address + 1]);
@@ -168,11 +150,17 @@ namespace runamiga
 
 		public byte read8(uint address)
 		{
+			if (cia.IsMapped(address)) cia.Read(address, Size.Byte);
+			if (custom.IsMapped(address)) custom.Read(address, Size.Byte);
+
 			return memory[address];
 		}
 
 		public void write32(uint address, uint value)
 		{
+			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Long); return; }
+			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Long); return; }
+
 			byte b0, b1, b2, b3;
 			b0 = (byte)(value >> 24);
 			b1 = (byte)(value >> 16);
@@ -186,6 +174,9 @@ namespace runamiga
 
 		public void write16(uint address, ushort value)
 		{
+			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Word); return; }
+			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Word); return; }
+
 			byte b0, b1;
 			b0 = (byte)(value >> 8);
 			b1 = (byte)(value);
@@ -195,8 +186,14 @@ namespace runamiga
 
 		public void write8(uint address, byte value)
 		{
+			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Byte); return; }
+			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Byte); return; }
+
 			memory[address] = value;
 		}
+
+
+
 
 		public void Reset()
 		{
@@ -1540,36 +1537,6 @@ namespace runamiga
 		private void rte(int type)
 		{
 			throw new NotImplementedException();
-		}
-
-
-	}
-
-	public class mc68K
-	{
-		byte[] rom;
-		Thread cpuThread;
-		CPU cpu;
-
-		public void Init()
-		{
-			rom = File.ReadAllBytes("../../../kick12.rom");
-			Debug.Assert(rom.Length == 256 * 1024);
-
-			cpu = new CPU();
-
-			Array.Copy(rom, 0, cpu.memory, 0xfc0000, 256 * 1024);
-
-			cpuThread = new Thread(Emulate);
-			cpuThread.Start();
-		}
-
-		void Emulate(object o)
-		{
-			cpu.InitialSetup();
-
-			for (; ; )
-				cpu.Emulate();
 		}
 	}
 }
