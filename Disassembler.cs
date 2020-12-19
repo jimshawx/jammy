@@ -1,489 +1,24 @@
 ﻿using runamiga.Types;
 using System;
 using System.Diagnostics;
-
+using System.Text;
 
 namespace runamiga
 {
-	public class CPU : IEmulate
+	public class Disassembler
 	{
-		private uint[] d;
-		private uint[] a;
-
+		private StringBuilder asm;
 		private uint pc;
-		//T.S..210...XNZVC
-		private ushort sr;
-
-		private uint ssp;
-
 		private byte[] memory;
+		private uint address;
 
-		private IMemoryMappedDevice cia { get; }
-		private IMemoryMappedDevice custom { get; }
-		private Disassembler disassembler { get; }
-
-		public CPU(IMemoryMappedDevice cia, IMemoryMappedDevice custom)
+		public void Disassemble(uint address, ReadOnlySpan<byte> m)
 		{
-			d = new uint[8];
-			a = new uint[8];
-			memory = new byte[16 * 1024 * 1024];
-			this.cia = cia;
-			this.custom = custom;
-
-			disassembler = new Disassembler();
-
-			InitialSetup();
-		}
-
-		private void Hack()
-		{
-			//remove the annoying delay loop at FC00D8
-			memory[0xfc00da] = 0;
-			memory[0xfc00db] = 0;
-			memory[0xfc00dc] = 0;
-			memory[0xfc00dd] = 1;
-		}
-
-		public void InitialSetup()
-		{
-			//poke in exec base
-			memory[4] = 0x00;
-			memory[5] = 0xfc;
-			memory[6] = 0x00;
-			memory[7] = 0xd2;
-
-			Hack();
-
-			Reset();
-		}
-
-		public void BulkWrite(int dst, byte[] src, int length)
-		{
-			Array.Copy(src, 0, memory, dst, 256 * 1024);
-			Hack();
-		}
-
-		private void setZ(uint val)
-		{
-			//Z
-			if (val == 0) sr |= 0b00000000_00000100;
-			else sr &= 0b11111111_11111011;
-		}
-
-		private void setX()
-		{
-			sr |= 0b0000000000010000;
-		}
-		private void clrX()
-		{
-			sr &= 0b1111111111101111;
-		}
-
-		private void setNZ(uint val, Size size)
-		{
-			int c;
-
-			switch (size)
-			{
-				case Size.Long: c = (int)val; break;
-				case Size.Word: c = (int)(short)val; break;
-				case Size.Byte: c = (int)(sbyte)val; break;
-				default: throw new UnknownInstructionSizeException(0);
-			}
-
-			//Z
-			if (c == 0) sr |= 0b00000000_00000100;
-			else sr &= 0b11111111_11111011;
-
-			//N
-			if (c < 0) sr |= 0b00000000_00001000;
-			else sr &= 0b11111111_11110111;
-		}
-
-		void setSupervisor()
-		{
-			sr |= 0b00100000_00000000;
-		}
-
-		private void clrV()
-		{
-			sr &= 0b11111111_11111101;
-		}
-
-		private void clrC()
-		{
-			sr &= 0b11111111_11111110;
-		}
-
-		private bool X() { return (sr & 16) != 0; }
-		private bool N() { return (sr & 8) != 0; }
-		private bool Z() { return (sr & 4) != 0; }
-		private bool V() { return (sr & 2) != 0; }
-		private bool C() { return (sr & 1) != 0; }
-		private bool Supervisor() { return (sr & 0b00100000_00000000) != 0; }
-
-		private void Writebytes(uint address, int len)
-		{
-			Trace.Write($"{address:X8} ");
-			for (int i = 0; i < len; i++)
-				Trace.Write($"{memory[address + i]:X2} ");
-			Trace.WriteLine("");
-			Trace.Write($"{address:X8} ");
-			for (int i = 0; i < len; i++)
-			{
-				if (memory[address + i] >= 32 && memory[address + i] <= 127)
-					Trace.Write($" {Convert.ToChar(memory[address + i])} ");
-				else
-					Trace.Write(" . ");
-			}
-			Trace.WriteLine("");
-		}
-
-		public uint read32(uint address)
-		{
-			if (cia.IsMapped(address)) cia.Read(address, Size.Long);
-			if (custom.IsMapped(address)) custom.Read(address, Size.Long);
-
-			return ((uint)memory[address] << 24) +
-				((uint)memory[address + 1] << 16) +
-				((uint)memory[address + 2] << 8) +
-				(uint)memory[address + 3];
-		}
-
-		public ushort read16(uint address)
-		{
-			if (cia.IsMapped(address)) cia.Read(address, Size.Word);
-			if (custom.IsMapped(address)) custom.Read(address, Size.Word);
-
-			return (ushort)(
-				((ushort)memory[address] << 8) +
-				(ushort)memory[address + 1]);
-		}
-
-		public byte read8(uint address)
-		{
-			if (cia.IsMapped(address)) cia.Read(address, Size.Byte);
-			if (custom.IsMapped(address)) custom.Read(address, Size.Byte);
-
-			return memory[address];
-		}
-
-		public void write32(uint address, uint value)
-		{
-			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Long); return; }
-			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Long); return; }
-
-			byte b0, b1, b2, b3;
-			b0 = (byte)(value >> 24);
-			b1 = (byte)(value >> 16);
-			b2 = (byte)(value >> 8);
-			b3 = (byte)(value);
-			memory[address] = b0;
-			memory[address + 1] = b1;
-			memory[address + 2] = b2;
-			memory[address + 3] = b3;
-		}
-
-		public void write16(uint address, ushort value)
-		{
-			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Word); return; }
-			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Word); return; }
-
-			byte b0, b1;
-			b0 = (byte)(value >> 8);
-			b1 = (byte)(value);
-			memory[address] = b0;
-			memory[address + 1] = b1;
-		}
-
-		public void write8(uint address, byte value)
-		{
-			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Byte); return; }
-			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Byte); return; }
-
-			memory[address] = value;
-		}
-
-		private void push32(uint value)
-		{
-			a[7] -= 4;
-			write32(a[7], value);
-		}
-
-		private uint pop32()
-		{
-			uint val = read32(a[7]);
-			a[7] += 4;
-			return val;
-		}
-
-		private ushort pop16()
-		{
-			ushort val = read16(a[7]);
-			a[7] += 2;
-			return val;
-		}
-
-		uint fetchEA(int type)
-		{
-			int m = (type >> 3) & 7;
-			int x = type & 7;
-
-			switch (m)
-			{
-				case 0:
-					return d[x];
-				case 1:
-					return a[x];
-				case 2:
-					return a[x];
-				case 3:
-					return a[x];
-				case 4:
-					return a[x];
-				case 5://(d16,An)
-					{
-						ushort d16 = read16(pc);
-						pc += 2;
-						return a[x] + (uint)(short)d16;
-					}
-				case 6://(d8,An,Xn)
-					{
-						throw new UnknownEffectiveAddressException(type);
-						byte d8 = read8(pc);
-						return a[x] + d[0] + (uint)(sbyte)d8;
-					}
-				case 7:
-					switch (x)
-					{
-						case 0b010://(d16,pc)
-							{
-								ushort d16 = read16(pc);
-								uint ea = pc + (uint)(short)d16;
-								pc += 2;
-								return ea;
-							}
-						case 0b011://(d8,pc,Xn)
-							{
-								throw new UnknownEffectiveAddressException(type);
-								byte d8 = read8(pc);
-								uint ea = pc + d[x] + (uint)(sbyte)d8;
-								pc++;
-								return ea;
-							}
-						case 0b000://(xxx).w
-							{
-								uint ea = (uint)(short)read16(pc);
-								pc += 2;
-								return ea;
-							}
-						case 0b001://(xxx).l
-							{
-								uint ea = read32(pc);
-								pc += 4;
-								return ea;
-							}
-						case 0b100://#imm
-							return pc;
-						default:
-							throw new UnknownEffectiveAddressException(type);
-					}
-					break;
-			}
-
-			throw new UnknownEffectiveAddressException(type);
-		}
-
-		uint fetchOpSize(uint ea, Size size)
-		{
-			//todo: trap on odd aligned access
-			if (size == Size.Long)
-				return read32(ea);
-			if (size == Size.Word)
-				return (uint)(short)read16(ea);
-			if (size == Size.Byte)
-				return (uint)(sbyte)read8(ea);
-			throw new UnknownEffectiveAddressException(0);
-		}
-
-		uint fetchImm(Size size)
-		{
-			uint v = 0;
-			if (size == Size.Long)
-			{
-				v = fetchOpSize(pc, size);
-				pc += 4;
-			}
-			else if (size == Size.Word)
-			{
-				v = fetchOpSize(pc, size);
-				pc += 2;
-			}
-			else if (size == Size.Byte)
-			{
-				//immediate bytes are stored in a word
-				v = fetchOpSize(pc, Size.Word);
-				v = (uint)(sbyte)v;
-				pc += 2;
-			}
-			return v;
-		}
-
-		uint fetchOp(int type, uint ea, Size size)
-		{
-			int m = (type >> 3) & 7;
-			int x = type & 7;
-
-			switch (m)
-			{
-				case 0:
-					return ea;
-
-				case 1:
-					return ea;
-
-				case 2:
-					return fetchOpSize(ea, size);
-
-				case 3:
-					{
-						uint v = fetchOpSize(ea, size);
-						if (size == Size.Long)
-							a[x] += 4;
-						else if (size == Size.Word)
-							a[x] += 2;
-						else if (size == Size.Byte)
-							a[x] += 1;
-						return v;
-					}
-
-				case 4:
-					{
-						if (size == Size.Long)
-							a[x] -= 4;
-						else if (size == Size.Word)
-							a[x] -= 2;
-						else if (size == Size.Byte)
-							a[x] -= 1;
-						return fetchOpSize(a[x], size);//yes, a[x]
-					}
-
-				case 5://(d16,An)
-					return fetchOpSize(ea, size);
-
-				case 6://(d8,An,Xn)
-					return fetchOpSize(ea, size);
-
-				case 7:
-					switch (x)
-					{
-						case 0b010://(d16,pc)
-							return fetchOpSize(ea, size);
-						case 0b011://(d8,pc,Xn)
-							return fetchOpSize(ea, size);
-						case 0b000://(xxx).w
-							return fetchOpSize(ea, size);
-						case 0b001://(xxx).l
-							return fetchOpSize(ea, size);
-						case 0b100://#imm
-							return fetchImm(size);//ea==pc
-						default:
-							throw new UnknownEffectiveAddressException(type);
-					}
-			}
-
-			throw new UnknownEffectiveAddressException(type);
-		}
-
-		void writeOp(uint ea, uint val, Size size)
-		{
-			//todo: trap on odd aligned access
-			if (size == Size.Long)
-			{ write32(ea, val); return; }
-			if (size == Size.Word)
-			{ write16(ea, (ushort)val); return; }
-			if (size == Size.Byte)
-			{ write8(ea, (byte)val); return; }
-			throw new UnknownEffectiveAddressException(0);
-		}
-
-		private void writeEA(int type, uint ea, Size size, uint value)
-		{
-			int m = (type >> 3) & 7;
-			int Xn = type & 7;
-
-			switch (m)
-			{
-				case 0:
-					if (size == Size.Long)
-						d[Xn] = value;
-					else if (size == Size.Word)
-						d[Xn] = (d[Xn] & 0xffff0000) | (value & 0x0000ffff);
-					else if (size == Size.Byte)
-						d[Xn] = (d[Xn] & 0xffffff00) | (value & 0x000000ff);
-					break;
-				case 1:
-					if (size == Size.Long)
-						a[Xn] = value;
-					else if (size == Size.Word)
-						a[Xn] = (a[Xn] & 0xffff0000) | (value & 0x0000ffff);
-					else if (size == Size.Byte)
-						a[Xn] = (a[Xn] & 0xffffff00) | (value & 0x000000ff);
-					break;
-				case 2:
-					writeOp(ea, value, size);
-					break;
-				case 3:
-					writeOp(ea, value, size);
-					if (size == Size.Long)
-						a[Xn] += 4;
-					if (size == Size.Word)
-						a[Xn] += 2;
-					if (size == Size.Byte)
-						a[Xn] += 1;
-					break;
-				case 4:
-					if (size == Size.Long)
-						a[Xn] -= 4;
-					if (size == Size.Word)
-						a[Xn] -= 2;
-					if (size == Size.Byte)
-						a[Xn] -= 1;
-					writeOp(a[Xn], value, size);//yes, a[Xn]
-					break;
-				case 5:
-					writeOp(ea, value, size);
-					break;
-				case 6:
-					writeOp(ea, value, size);
-					break;
-				case 7:
-					writeOp(ea, value, size);
-					break;
-			}
-		}
-
-		private Size getSize(int type)
-		{
-			int s = (type >> 6) & 3;
-			if (s == 0) return Size.Byte;
-			if (s == 1) return Size.Word;
-			if (s == 2) return Size.Long;
-			return (Size)3;
-		}
-
-		public void Reset()
-		{
-			ssp = read32(0);
-			pc = read32(4);
-			sr = 0b00000_111_00000000;
-		}
-
-		public void Emulate()
-		{
-			disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, 12));
-
-			int ins = read16(pc);
+			memory = m.ToArray();
+			pc = 0;
+			this.address = address;
+			asm = new StringBuilder();
+			ushort ins = read16(pc);
 			pc += 2;
 
 			int type = (int)(ins >> 12);
@@ -518,6 +53,255 @@ namespace runamiga
 				default:
 					throw new UnknownInstructionException(ins);
 			}
+			Trace.WriteLine($"{address:X8} {asm}");
+		}
+
+		void Append(string s)
+		{
+			asm.Append(s);
+		}
+
+		void Append(Size s)
+		{
+			if (s == Size.Byte)
+			asm.Append(".b ");
+			else if (s == Size.Word) asm.Append(".w ");
+			else if (s == Size.Long) asm.Append(".l ");
+		}
+
+		private void Writebytes(uint address, int len)
+		{
+			Trace.Write($"{address:X8} ");
+			for (int i = 0; i < len; i++)
+				Trace.Write($"{memory[address + i]:X2} ");
+			Trace.WriteLine("");
+			Trace.Write($"{address:X8} ");
+			for (int i = 0; i < len; i++)
+			{
+				if (memory[address + i] >= 32 && memory[address + i] <= 127)
+					Trace.Write($" {Convert.ToChar(memory[address + i])} ");
+				else
+					Trace.Write(" . ");
+			}
+			Trace.WriteLine("");
+		}
+
+		public uint read32(uint address)
+		{
+		return ((uint)memory[address] << 24) +
+				((uint)memory[address + 1] << 16) +
+				((uint)memory[address + 2] << 8) +
+				(uint)memory[address + 3];
+		}
+
+		public ushort read16(uint address)
+		{
+
+			return (ushort)(
+				((ushort)memory[address] << 8) +
+				(ushort)memory[address + 1]);
+		}
+
+		public byte read8(uint address)
+		{
+			return memory[address];
+		}
+
+		uint fetchEA(int type)
+		{
+			int m = (type >> 3) & 7;
+			int x = type & 7;
+
+			switch (m)
+			{
+				case 0:
+					//return d[x];
+					Append($"d{x}");
+					return 0;
+				case 1:
+					//return a[x];
+					Append($"a{x}");
+					return 0;
+				case 2:
+					//return a[x];
+					Append($"(a{x})");
+					return 0;
+				case 3:
+					Append($"(a{x})+");
+					return 0;
+//					return a[x];
+				case 4:
+					Append($"-(a{x})");
+					return 0;
+					//return a[x];
+				case 5://(d16,An)
+					{
+						ushort d16 = read16(pc);
+						pc += 2;
+						//return a[x] + (uint)(short)d16;
+						Append($"(${d16:X4},a{x})");
+						return 0;
+
+					}
+				case 6://(d8,An,Xn)
+					{
+						throw new UnknownEffectiveAddressException(type);
+					}
+				case 7:
+					switch (x)
+					{
+						case 0b010://(d16,pc)
+							{
+								ushort d16 = read16(pc);
+								//uint ea = pc + (uint)(short)d16;
+								pc += 2;
+								Append($"(${d16:X4},pc)");
+								//return ea;
+								return 0;
+							}
+						case 0b011://(d8,pc,Xn)
+							{
+								throw new UnknownEffectiveAddressException(type);
+
+							}
+						case 0b000://(xxx).w
+							{
+								uint ea = (uint)(short)read16(pc);
+								pc += 2;
+								Append($"(${ea:X4})");
+								return ea;
+							}
+						case 0b001://(xxx).l
+							{
+								uint ea = read32(pc);
+								pc += 4;
+								Append($"(${ea:X8})");
+								return ea;
+							}
+						case 0b100://#imm
+							Append($"(${address+pc:X4})");
+							return pc;
+						default:
+							throw new UnknownEffectiveAddressException(type);
+					}
+					break;
+			}
+
+			throw new UnknownEffectiveAddressException(type);
+		}
+
+		uint fetchOpSize(uint ea, Size size)
+		{
+			//todo: trap on odd aligned access
+			if (size == Size.Long)
+				return read32(ea);
+			if (size == Size.Word)
+				return (uint)(short)read16(ea);
+			if (size == Size.Byte)
+				return (uint)(sbyte)read8(ea);
+			throw new UnknownEffectiveAddressException(0);
+		}
+
+		uint fetchImm(Size size)
+		{
+			uint v = 0;
+			if (size == Size.Long)
+			{
+				v = fetchOpSize(pc, size);
+				pc += 4;
+				Append($"#${v:X4}");
+			}
+			else if (size == Size.Word)
+			{
+				v = fetchOpSize(pc, size);
+				pc += 2;
+				Append($"#${v:X2}");
+			}
+			else if (size == Size.Byte)
+			{
+				//immediate bytes are stored in a word
+				v = fetchOpSize(pc, Size.Word);
+				v = (uint)(sbyte)v;
+				pc += 2;
+				Append($"#${v:X2}");
+			}
+			return v;
+		}
+
+		uint fetchOp(int type, uint ea, Size size)
+		{
+			//int m = (type >> 3) & 7;
+			//int x = type & 7;
+
+			//switch (m)
+			//{
+			//	case 0:
+			//		return ea;
+
+			//	case 1:
+			//		return ea;
+
+			//	case 2:
+			//		return fetchOpSize(ea, size);
+
+			//	case 3:
+			//		{
+			//			uint v = fetchOpSize(ea, size);
+			//			if (size == Size.Long)
+			//				a[x] += 4;
+			//			else if (size == Size.Word)
+			//				a[x] += 2;
+			//			else if (size == Size.Byte)
+			//				a[x] += 1;
+			//			return v;
+			//		}
+
+			//	case 4:
+			//		{
+			//			if (size == Size.Long)
+			//				a[x] -= 4;
+			//			else if (size == Size.Word)
+			//				a[x] -= 2;
+			//			else if (size == Size.Byte)
+			//				a[x] -= 1;
+			//			return fetchOpSize(a[x], size);//yes, a[x]
+			//		}
+
+			//	case 5://(d16,An)
+			//		return fetchOpSize(ea, size);
+
+			//	case 6://(d8,An,Xn)
+			//		return fetchOpSize(ea, size);
+
+			//	case 7:
+			//		switch (x)
+			//		{
+			//			case 0b010://(d16,pc)
+			//				return fetchOpSize(ea, size);
+			//			case 0b011://(d8,pc,Xn)
+			//				return fetchOpSize(ea, size);
+			//			case 0b000://(xxx).w
+			//				return fetchOpSize(ea, size);
+			//			case 0b001://(xxx).l
+			//				return fetchOpSize(ea, size);
+			//			case 0b100://#imm
+			//				return fetchImm(size);//ea==pc
+			//			default:
+			//				throw new UnknownEffectiveAddressException(type);
+			//		}
+			//}
+
+			//throw new UnknownEffectiveAddressException(type);
+			return 0;
+		}
+
+		private Size getSize(int type)
+		{
+			int s = (type >> 6) & 3;
+			if (s == 0){Append(".b "); return Size.Byte; }
+			if (s == 1){Append(".w "); return Size.Word; }
+			if (s == 2){Append(".l "); return Size.Long; }
+			return (Size)3;
 		}
 
 		private void t_fourteen(int type)
@@ -543,11 +327,13 @@ namespace runamiga
 
 				if ((type & 0b1_00_000) != 0)
 				{
-					rot = (int)(d[rot] & 0x3f);
+					//rot = (int)(d[rot] & 0x3f);
+					Append($"d{rot}");
 				}
 				else
 				{
 					if (rot == 0) rot = 8;
+					Append($"#{rot}");
 				}
 
 				Size size = getSize(type);
@@ -567,66 +353,75 @@ namespace runamiga
 
 		private void rod(int type, int rot, int lr, Size size)
 		{
-			uint ea = fetchEA(type);
-			uint val = fetchOp(type, ea, size);
 			if (lr == 1)
 			{
-				val = (val << rot) | (val >> (32 - rot));
+				Append($"rol");
+				Append(size);
+				Append($"{rot}");
 			}
 			else
 			{
-				val = (val >> rot) | (val << (32 - rot));
+				Append($"ror");
+				Append(size);
+				Append($"{rot}");
 			}
-			setNZ(val, size);
-			writeEA(type, ea, size, val);
+			uint ea = fetchEA(type);
+			uint val = fetchOp(type, ea, size);
 		}
 
 		private void roxd(int type, int rot, int lr, Size size)
 		{
-			uint ea = fetchEA(type);
-			uint val = fetchOp(type, ea, size);
 			if (lr == 1)
 			{
-				val = (val << rot) | (val >> (32 - rot));
+				Append($"roxl");
+				Append(size);
+				Append($"{rot}");
 			}
 			else
 			{
-				val = (val >> rot) | (val << (32 - rot));
+				Append($"roxr");
+				Append(size);
+				Append($"{rot}");
 			}
-			writeEA(type, ea, size, val);
-			setNZ(val, size);
+			uint ea = fetchEA(type);
+			uint val = fetchOp(type, ea, size);
 		}
 
 		private void lsd(int type, int rot, int lr, Size size)
 		{
-			uint ea = fetchEA(type);
-			uint val = fetchOp(type, ea, size);
+
 			if (lr == 1)
 			{
-				val <<= rot;
+				Append($"lsl");
+				Append(size);
+				Append($"{rot}");
 			}
 			else
 			{
-				val >>= rot;
+				Append($"lsr");
+				Append(size);
+				Append($"{rot}");
 			}
-			setNZ(val, size);
-			writeEA(type, ea, size, val);
+			uint ea = fetchEA(type);
+			uint val = fetchOp(type, ea, size);
 		}
 
 		private void asd(int type, int rot, int lr, Size size)
 		{
-			uint ea = fetchEA(type);
-			int val = (int)fetchOp(type, ea, size);
 			if (lr == 1)
 			{
-				val <<= rot;
+				Append($"asl");
+				Append(size);
+				Append($"{rot}");
 			}
 			else
 			{
-				val >>= rot;
+				Append($"asr");
+				Append(size);
+				Append($"{rot}");
 			}
-			setNZ((uint)val, size);
-			writeEA(type, ea, size, (uint)val);
+			uint ea = fetchEA(type);
+			int val = (int)fetchOp(type, ea, size);
 		}
 
 		private void t_thirteen(int type)
@@ -637,46 +432,54 @@ namespace runamiga
 			Size size = 0;
 			if (s == 3)
 			{
+				Append("adda");
 				//adda
 				if ((type & 0b1_00_000_000) != 0)
 					size = Size.Long;
 				else
 					size = Size.Word;
 
+				Append("size");
+
+				int Xn = (type >> 9) & 7;
+				Append($"a{Xn},");
+
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
-				int Xn = (type >> 9) & 7;
-				a[Xn] += op;
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
+				Append("addx");
+
 				if (s == 0) size = Size.Byte;
 				else if (s == 1) size = Size.Word;
 				else if (s == 2) size = Size.Long;
+				Append(size);
 				//addx
 				throw new UnknownInstructionException(type);
 			}
 			else
 			{
+				Append("add");
 				if (s == 0) size = Size.Byte;
 				else if (s == 1) size = Size.Word;
 				else if (s == 2) size = Size.Long;
+				Append(size);
 				//add
-				uint ea = fetchEA(type);
-				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
 
 				if ((type & 0b1_00_000_000) != 0)
 				{
-					d[Xn] += op;
-					setNZ(d[Xn], size);
+					Append($"d{Xn},");
+					uint ea = fetchEA(type);
+					uint op = fetchOp(type, ea, size);
 				}
 				else
 				{
-					op += d[Xn];
-					writeEA(type, ea, size, op);
-					setNZ(op, size);
+					uint ea = fetchEA(type);
+					uint op = fetchOp(type, ea, size);
+					Append($",d{Xn}");
 				}
 			}
 		}
@@ -692,39 +495,36 @@ namespace runamiga
 
 		private void and(int type)
 		{
+			Append("and");
 			throw new NotImplementedException();
 		}
 
 		private void exg(int type)
 		{
+			Append("exg");
 			throw new NotImplementedException();
 		}
 
 		private void abcd(int type)
 		{
+			Append("abcd");
 			throw new NotImplementedException();
 		}
 
 		private void muls(int type)
 		{
 			int Xn = (type>>9)&7;
+			Append($"muls.w d{Xn},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type,ea,Size.Word);
-			d[Xn] = (uint)((int)(short)d[Xn] * (int)(short)op);
-			setNZ(d[Xn], Size.Long);
-			clrV();
-			clrC();
 		}
 
 		private void mulu(int type)
 		{
 			int Xn = (type >> 9) & 7;
+			Append($"mulu.w d{Xn},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-			d[Xn] = (uint)(ushort)d[Xn] * (uint)(ushort)op;
-			setNZ(d[Xn], Size.Long);
-			clrV();
-			clrC();
 		}
 
 		private void t_eleven(int type)
@@ -738,44 +538,49 @@ namespace runamiga
 
 		private void eor(int type)
 		{
+			Append("eor");
 			throw new NotImplementedException();
 		}
 
 		private void cmpm(int type)
 		{
+			Append("cmpm");
 			throw new NotImplementedException();
 		}
 
 		private void cmp(int type)
 		{
+			Append("cmp");
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op0 = fetchOp(type, ea, size);
+			Append(",");
 			type = swizzle(type) & 7;
 			ea = fetchEA(type);
 			uint op1 = fetchOp(type, ea, size);
-			setNZ(op1 - op0, size);
 		}
 
 		private void cmpa(int type)
 		{
 			if ((type & 0b1_00_000_000) != 0)
 			{
+				Append("cmpa.l");
 				uint ea = fetchEA(type);
 				uint op0 = fetchOp(type, ea, Size.Long);
+				Append(",");
 				type = (swizzle(type) & 7) | 8;
 				ea = fetchEA(type);
 				uint op1 = fetchOp(type, ea, Size.Long);
-				setNZ(op1 - op0, Size.Long);
 			}
 			else
 			{
+				Append("cmpa.w");
 				uint ea = fetchEA(type);
 				uint op0 = fetchOp(type, ea, Size.Word);
+				Append(",");
 				type = (swizzle(type) & 7) | 8;
 				ea = fetchEA(type);
 				uint op1 = fetchOp(type, ea, Size.Word);
-				setNZ(op1 - op0, Size.Word);
 			}
 		}
 
@@ -787,47 +592,54 @@ namespace runamiga
 			Size size = 0;
 			if (s == 3)
 			{
+				Append("suba");
 				//suba
 				if ((type & 0b1_00_000_000) != 0)
 					size = Size.Long;
 				else
 					size = Size.Word;
 
+				Append(size);
+
+				int Xn = (type >> 9) & 7;
+				Append($"a{Xn},");
+
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
-				int Xn = (type >> 9) & 7;
-				a[Xn] -= op;
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
+				Append("subx");
 				if (s == 0) size = Size.Byte;
 				else if (s == 1) size = Size.Word;
 				else if (s == 2) size = Size.Long;
+				Append(size);
 				//subx
 				//d[Xn] -= op + (X()?1:0);
 				throw new UnknownInstructionException(type);
 			}
 			else
 			{
+				Append("sub");
 				if (s == 0) size = Size.Byte;
 				else if (s == 1) size = Size.Word;
 				else if (s == 2) size = Size.Long;
+				Append(size);
 				//sub
-				uint ea = fetchEA(type);
-				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
 
 				if ((type & 0b1_00_000_000) != 0)
 				{
-					d[Xn] -= op;
-					setNZ(d[Xn], size);
+					Append($"d{Xn},");
+					uint ea = fetchEA(type);
+					uint op = fetchOp(type, ea, size);
 				}
 				else
 				{
-					op -= d[Xn];
-					writeEA(type, ea, size, op);
-					setNZ(op, size);
+					uint ea = fetchEA(type);
+					uint op = fetchOp(type, ea, size);
+					Append($",d{Xn}");
 				}
 			}
 
@@ -843,48 +655,30 @@ namespace runamiga
 
 		private void or(int type)
 		{
+			Append("or");
 			throw new NotImplementedException();
 		}
 
 		private void sbcd(int type)
 		{
+			Append("sbcd");
 			throw new NotImplementedException();
 		}
 
 		private void divs(int type)
 		{
 			int Xn = (type >> 9) & 7;
+			Append($"divs.w d{Xn},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-
-			if (op == 0)
-				trap(type);
-
-			uint lo = (uint)((int)d[Xn] / (short)op);
-			uint hi = (uint)((int)d[Xn] % (short)op);
-
-			d[Xn] = (hi<<16)|(uint)(short)lo;
-
-			setNZ(d[Xn], Size.Word);
-			clrC();
 		}
 
 		private void divu(int type)
 		{
 			int Xn = (type >> 9) & 7;
+			Append($"divu.w d{Xn},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-
-			if (op == 0)
-				trap(type);
-
-			uint lo = d[Xn] / (ushort)op;
-			uint hi = d[Xn] % (ushort)op;
-
-			d[Xn] = (hi << 16) | (ushort)lo;
-
-			setNZ(d[Xn], Size.Word);
-			clrC();
 		}
 
 		private void t_seven(int type)
@@ -894,7 +688,7 @@ namespace runamiga
 				//moveq
 				int Xn = (type >> 17) & 3;
 				uint imm8 = (uint)(sbyte)(type & 0xff);
-				d[Xn] = imm8;
+				Append($"moveq.l #{imm8},d{Xn}");
 			}
 			else
 			{
@@ -905,56 +699,62 @@ namespace runamiga
 		private void t_six(int type)
 		{
 			int cond = (type >> 8) & 0xf;
-			switch (cond)
-			{
-				case 0:
-					bra(type);
-					break;
-				case 1:
-					bsr(type);
-					break;
-				case 2:
-					if (hi()) bra(type);
-					break;
-				case 3:
-					if (ls()) bra(type);
-					break;
-				case 4:
-					if (cc()) bra(type);
-					break;
-				case 5:
-					if (cs()) bra(type);
-					break;
-				case 6:
-					if (ne()) bra(type);
-					break;
-				case 7:
-					if (eq()) bra(type);
-					break;
-				case 8:
-					if (vc()) bra(type);
-					break;
-				case 9:
-					if (vs()) bra(type);
-					break;
-				case 10:
-					if (pl()) bra(type);
-					break;
-				case 11:
-					if (mi()) bra(type);
-					break;
-				case 12:
-					if (ge()) bra(type);
-					break;
-				case 13:
-					if (lt()) bra(type);
-					break;
-				case 14:
-					if (gt()) bra(type);
-					break;
-				case 15:
-					if (le()) bra(type);
-					break;
+
+			if (cond == 0)
+				bra(type);
+
+			else if (cond == 1)
+				bsr(type);
+
+			else
+			{ 
+				Append("b");
+				switch (cond)
+				{
+					case 2:
+						hi();
+						break;
+					case 3:
+						ls();
+						break;
+					case 4:
+						cc();
+						break;
+					case 5:
+						cs();
+						break;
+					case 6:
+						ne();
+						break;
+					case 7:
+						eq();
+						break;
+					case 8:
+						vc();
+						break;
+					case 9:
+						vs();
+						break;
+					case 10:
+						pl();
+						break;
+					case 11:
+						mi();
+						break;
+					case 12:
+						ge();
+						break;
+					case 13:
+						lt();
+						break;
+					case 14:
+						gt();
+						break;
+					case 15:
+						le();
+						break;
+				}
+				bra2(type);
 			}
 		}
 
@@ -962,81 +762,101 @@ namespace runamiga
 		//3-19
 		private bool le()
 		{
-			return Z() || (N() && !V()) || (!N() && V());
+			Append("le");
+			return false;
 		}
 
 		private bool gt()
 		{
-			return (N() && V() && !Z()) || (!N() && !V() && !Z());
+			Append("gt");
+			return false;
 		}
 
 		private bool lt()
 		{
-			return (N() && !V()) || (!N() && V());
+			Append("lt");
+			return false;
 		}
 
 		private bool ge()
 		{
-			return (N() && V()) || (!N() && !V());
+			Append("ge");
+			return false;
 		}
 
 		private bool mi()
 		{
-			return N();
+			Append("mi");
+			return false;
 		}
 
 		private bool pl()
 		{
-			return !N();
+			Append("pl");
+			return false;
 		}
 
 		private bool vs()
 		{
-			return V();
+			Append("vs");
+			return false;
 		}
 
 		private bool vc()
 		{
-			return !V();
+			Append("vc");
+			return false;
 		}
 
 		private bool eq()
 		{
-			return Z();
+			Append("eq");
+			return false;
 		}
 
 		private bool ne()
 		{
-			return !Z();
+			Append("ne");
+			return false;
 		}
 
 		private bool cs()
 		{
-			return C();
+			Append("cs");
+			return false;
 		}
 
 		private bool cc()
 		{
-			return !C();
+			Append("cc");
+			return false;
 		}
 
 		private bool ls()
 		{
-			return C() || Z();
+			Append("ls");
+			return false;
 		}
 
 		private bool hi()
 		{
-			return !C() && !Z();
+			Append("hi");
+			return false;
 		}
 
 		private void bsr(int type)
 		{
-			push32(pc);
-			bra(type);
+			Append("bsr");
+			bra2(type);
 		}
 
 		private void bra(int type)
+		{
+			Append("bra");
+			bra2(type);
+		}
+
+		private void bra2(int type)
 		{
 			uint bas = pc;
 			uint disp = (uint)(sbyte)(type & 0xff);
@@ -1059,182 +879,175 @@ namespace runamiga
 
 		private void scc(int type)
 		{
-			uint ea = fetchEA(type);
+			Append("set");
 			int cond = (type >> 8) & 0xf;
 			switch (cond)
 			{
 				case 0:
-					writeOp(ea, 1, Size.Byte);
+					Append("t");
 					break;
 				case 1:
-					writeOp(ea, 0, Size.Byte);
+					Append("f");
 					break;
 				case 2:
-					writeOp(ea, hi() ? 1u : 0, Size.Byte);
+					hi();
 					break;
 				case 3:
-					writeOp(ea, ls() ? 1u : 0, Size.Byte);
+					ls();
 					break;
 				case 4:
-					writeOp(ea, cc() ? 1u : 0, Size.Byte);
+					cc();
 					break;
 				case 5:
-					writeOp(ea, cs() ? 1u : 0, Size.Byte);
+					cs();
 					break;
 				case 6:
-					writeOp(ea, ne() ? 1u : 0, Size.Byte);
+					ne();
 					break;
 				case 7:
-					writeOp(ea, eq() ? 1u : 0, Size.Byte);
+					eq();
 					break;
 				case 8:
-					writeOp(ea, vc() ? 1u : 0, Size.Byte);
+					vc();
 					break;
 				case 9:
-					writeOp(ea, vs() ? 1u : 0, Size.Byte);
+					vs();
 					break;
 				case 10:
-					writeOp(ea, pl() ? 1u : 0, Size.Byte);
+					pl();
 					break;
 				case 11:
-					writeOp(ea, mi() ? 1u : 0, Size.Byte);
+					mi();
 					break;
 				case 12:
-					writeOp(ea, ge() ? 1u : 0, Size.Byte);
+					ge();
 					break;
 				case 13:
-					writeOp(ea, lt() ? 1u : 0, Size.Byte);
+					lt();
 					break;
 				case 14:
-					writeOp(ea, gt() ? 1u : 0, Size.Byte);
+					gt();
 					break;
 				case 15:
-					writeOp(ea, le() ? 1u : 0, Size.Byte);
+					le();
 					break;
 			}
+			Append(",");
+			uint ea = fetchEA(type);
 		}
 
 		private void dbcc(int type)
 		{
-			int Xn = type & 7;
-			uint v = d[Xn];
-			v--;
-			setNZ(v, Size.Long);
 
-			uint target = pc + (uint)(short)read16(pc);
+			int Xn = type & 7;
+
+			uint target = (uint)(short)read16(pc);
 			pc += 2;
 
+			Append($"db");
 			int cond = (type >> 8) & 0xf;
 			switch (cond)
 			{
 				case 0:
-					pc = target;
+					Append("t");
 					break;
 				case 1:
+					Append("f");
 					break;
 				case 2:
-					if (hi()) pc = target;
+					hi();
 					break;
 				case 3:
-					if (ls()) pc = target;
+					ls();
 					break;
 				case 4:
-					if (cc()) pc = target;
+					cc();
 					break;
 				case 5:
-					if (cs()) pc = target;
+					cs();
 					break;
 				case 6:
-					if (ne()) pc = target;
+					ne();
 					break;
 				case 7:
-					if (eq()) pc = target;
+					eq();
 					break;
 				case 8:
-					if (vc()) pc = target;
+					vc();
 					break;
 				case 9:
-					if (vs()) pc = target;
+					vs();
 					break;
 				case 10:
-					if (pl()) pc = target;
+					pl();
 					break;
 				case 11:
-					if (mi()) pc = target;
+					mi();
 					break;
 				case 12:
-					if (ge()) pc = target;
+					ge();
 					break;
 				case 13:
-					if (lt()) pc = target;
+					lt();
 					break;
 				case 14:
-					if (gt()) pc = target;
+					gt();
 					break;
 				case 15:
-					if (le()) pc = target;
+					le();
 					break;
 			}
+			Append($" d{Xn},#${target:X4}(pc)");
+
 		}
 
 		private void subql(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			Append($"subq.l #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Long);
-			op -= imm;
-			setNZ(op, Size.Long);
-			writeEA(type, ea, Size.Long, op);
 		}
 
 		private void subqw(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			Append($"subq.w #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-			op -= imm;
-			setNZ(op, Size.Word);
-			writeEA(type, ea, Size.Word, op);
 		}
 
 		private void subqb(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			Append($"subq.b #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Byte);
-			op -= imm;
-			setNZ(op, Size.Byte);
-			writeEA(type, ea, Size.Byte, op);
 		}
 
 		private void addql(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			Append($"addq.l #{imm},");
+
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Long);
-			op += imm;
-			setNZ(op, Size.Long);
-			writeEA(type, ea, Size.Long, op);
 		}
 
 		private void addqw(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			Append($"addq.w #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-			op += imm;
-			setNZ(op, Size.Word);
-			writeEA(type, ea, Size.Word, op);
 		}
 
 		private void addqb(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			Append($"addq.b #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Byte);
-			op += imm;
-			setNZ(op, Size.Byte);
-			writeEA(type, ea, Size.Byte, op);
 		}
 
 		private void t_four(int type)
@@ -1318,63 +1131,56 @@ namespace runamiga
 
 		private void tst(int type)
 		{
+			Append("tst");
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			setNZ(op, size);
-			clrV();
-			clrC();
 		}
 
 		private void not(int type)
 		{
+			Append("not");
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			op = ~op;
-			setNZ(op, size);
-			writeOp(ea, op, size);
 		}
 
 		private void neg(int type)
 		{
+			Append("neg");
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			op = ~op + 1;//same as neg
-			setNZ(op, size);
-			writeOp(ea, op, size);
 		}
 
 		private void clr(int type)
 		{
+			Append("clr");
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
-			writeOp(ea, 0, size);
 		}
 
 		private void negx(int type)
 		{
+			Append("negx");
 			throw new NotImplementedException();
 		}
 
 		private void pea(int type)
 		{
+			Append("pea");
 			uint ea = fetchEA(type);
-			push32(ea);
 		}
 
 		private void swap(int type)
 		{
 			int Xn = type & 7;
-			d[Xn] = (d[Xn] >> 16) | (d[Xn] << 16);
-			setNZ(d[Xn], Size.Long);
-			clrV();
-			clrC();
+			Append($"swap d{Xn}");
 		}
 
 		private void nbcd(int type)
 		{
+			Append("nbcd");
 			throw new NotImplementedException();
 		}
 
@@ -1385,106 +1191,83 @@ namespace runamiga
 			switch (mode)
 			{
 				case 0b010:
-					d[Xn] = (d[Xn] & 0xffff0000) | (uint)(ushort)(sbyte)d[Xn];
-					setNZ(d[Xn], Size.Word);
+					Append($"ext.w d{Xn}");
 					break;
 				case 0b011:
-					d[Xn] = (uint)(short)d[Xn];
-					setNZ(d[Xn], Size.Long);
+					Append($"ext.l d{Xn}");
 					break;
 				case 0b111:
-					d[Xn] = (uint)(sbyte)d[Xn];
-					setNZ(d[Xn], Size.Long);
+					Append($"extb.l d{Xn}");
 					break;
 				default: throw new UnknownInstructionException(type);
 			}
-			clrV();
-			clrX();
 		}
 
 		private void movetosr(int type)
 		{
+			Append("move.w sr,");
 			uint ea = fetchEA(type);
-			if (Supervisor())
-				sr = (ushort)fetchOp(type, ea, Size.Word);
-			else
-				trap(type);
 		}
 
 		private void movetoccr(int type)
 		{
+			Append("moveccr ");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-			sr = (ushort)((sr & 0xff00) | (op & 0xff));
 		}
 
 		private void movefromsr(int type)
 		{
+			Append("move.w ");
 			uint ea = fetchEA(type);
-			writeEA(type, ea, Size.Word, sr);
+			Append(",sr");
 		}
 
 		private void illegal(int type)
 		{
-			throw new NotImplementedException();
-			trap(4);
+			Append("illegal");
 		}
 
 		private void trap(int type)
 		{
-			setSupervisor();
-			uint vector = (uint)(type & 0xf) + 32;
-			pc = read32(vector << 2);
+			uint vector = (uint)(type & 0xf);
+			Append($"trap #{vector}");
 		}
 
 		private void link(int type)
 		{
 			int An = type & 7;
-			push32(a[An]);
-			a[An] = a[7];
-			a[7] += (uint)(short)read16(pc);
-			pc += 2;
+			short imm16 = (short)read16(pc); pc+=2;
+			Append($"link a{An},#${imm16:X4}");
 		}
 
 		private void unlk(int type)
 		{
-			int An = type & 7;
-			a[7] = a[An];
-			a[An] = pop32();
+			Append("unlk");
 		}
 
 		private void moveusp(int type)
 		{
 			int An = type & 7;
 			if ((type & 0b1000) == 0)
-				a[7] = a[An];
+				Append($"move.l sp,a{An}");
 			else
-				a[An] = a[7];
+				Append($"move.l a{An},sp");
 		}
 
 		private void reset(int type)
 		{
-			if (Supervisor())
-				Reset();
-			else
-				trap(type);
+			Append("reset");
 		}
 
 		private void nop(int type)
 		{
+			Append("nop");
 		}
 
 		private void stop(int type)
 		{
-			if (Supervisor())
-			{
-				sr = read16(pc);
-				pc += 2;
-			}
-			else
-			{
-				trap(type);
-			}
+			Append("stop");
 		}
 
 		private void t_zero(int type)
@@ -1547,69 +1330,79 @@ namespace runamiga
 
 		private void movel(int type)
 		{
+			Append("move");
+			Append(Size.Long);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Long);
-
+			Append(",");
 			type = swizzle(type);
 			ea = fetchEA(type);
-			writeEA(type, ea, Size.Long, op);
 
-			clrV();
-			clrC();
 		}
 
 		private void movew(int type)
 		{
+			Append("move");
+			Append(Size.Word);
+
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-
+			Append(",");
 			type = swizzle(type);
 			ea = fetchEA(type);
-			writeEA(type, ea, Size.Word, op);
-
-			setNZ(op, Size.Word);
-			clrV();
-			clrC();
 		}
 
 		private void moveb(int type)
 		{
+			Append("move");
+			Append(Size.Byte);
+
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Byte);
 
 			type = swizzle(type);
 			ea = fetchEA(type);
-			writeEA(type, ea, Size.Byte, op);
-
-			setNZ(op, Size.Byte);
-			clrV();
-			clrC();
 		}
 
 		private void cmpi(int type)
 		{
+			Append("cmpi");
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
-			op -= imm;
-			setNZ(op, size);
 		}
 
 		private void eori(int type)
 		{
+			Append("eori");
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
-			op ^= imm;
-			setNZ(op, size);
-			writeEA(type, ea, size, op);
 		}
 
 		private void bit(int type)
 		{
 			Size size;
+
+			int op = (type >> 6) & 3;
+
+			switch (op)
+			{
+				case 0://btst
+					Append("btst");
+					break;
+				case 1://bchg
+					Append("bchg");
+					break;
+				case 2://bclr
+					Append("bclr");
+					break;
+				case 3://bset
+					Append("bset");
+					break;
+			}
 
 			//if target is a register, then it's a long else it's a byte
 			if (((type & 0b111000) >> 3) == 0)
@@ -1617,161 +1410,119 @@ namespace runamiga
 			else
 				size = Size.Byte;
 
+			Append(size);
+
 			uint bit;
 			if ((type & 0b100000000) != 0)
 			{
 				//bit number is in Xn
-				bit = d[(type >> 9) & 7];
+				int Xn = (type >> 9) & 7;
+				Append($"d{Xn}");
 			}
 			else
 			{
 				//bit number is in immediate byte following
 				ushort imm16 = read16(pc);
 				bit = (uint)(imm16 & 0xff); pc += 2;
+				Append($"#{bit}");
 			}
 
-			if (size == Size.Byte)
-				bit &= 7;
-
-			bit = 1u << (int)bit;
+			Append(",");
 
 			uint ea = fetchEA(type);
 			uint op0 = fetchOp(type, ea, size);
 
-			int op = (type >> 6) & 3;
-			switch (op)
-			{
-				case 0://btst
-					setZ(op0 & bit);
-					break;
-				case 1://bchg
-					op0 ^= bit;
-					writeOp(ea, op0, size);
-					break;
-				case 2://bclr
-					op0 &= ~bit;
-					writeOp(ea, op0, size);
-					break;
-				case 3://bset
-					op0 |= bit;
-					writeOp(ea, op0, size);
-					break;
-			}
+
 		}
 
 		private void addi(int type)
 		{
+			Append($"addi");
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
-			op += imm;
-			setNZ(op, size);
-			writeEA(type, ea, size, op);
 		}
 
 		private void subi(int type)
 		{
+			Append($"subi");
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
-			op -= imm;
-			setNZ(op, size);
-			writeEA(type, ea, size, op);
 		}
 
 		private void andi(int type)
 		{
+			Append($"andi");
 			Size size = getSize(type);
+
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
-			op &= imm;
-			setNZ(op, size);
-			writeEA(type, ea, size, op);
 		}
 
 		private void ori(int type)
 		{
+			Append($"ori");
+
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
-			op |= imm;
-			setNZ(op, size);
-			writeEA(type, ea, size, op);
 		}
 
 		private void chk(int type)
 		{
-			uint ea = fetchEA(type);
 			int Xn = (type >> 9) & 7;
-			if (d[Xn] < 0)
-			{
-				setX();
-				trap(6);
-			}
-
-			if (d[Xn] > ea)
-			{
-				clrX();
-				trap(6);
-			}
+			Append($"chk d{Xn},");
+			fetchEA(type);
 		}
 
 		private void lea(int type)
 		{
-			uint ea = fetchEA(type);
+			fetchEA(type);
 			int An = (type >> 9) & 7;
-			a[An] = ea;
+			Append($"lea ,a{An}");
 		}
 
 		private void movem(int type)
 		{
+			Append("movem");
 			throw new NotImplementedException();
 		}
 
 		private void jmp(int type)
 		{
-			pc = fetchEA(type);
+			Append($"jmp ");
+			fetchEA(type);
 		}
 
 		private void jsr(int type)
 		{
-			push32(pc);
-			pc = fetchEA(type);
+			Append($"jsr ");
+			fetchEA(type);
 		}
 
 		private void rtr(int type)
 		{
-			sr = (ushort)((sr & 0xff00) | (pop16() & 0x00ff));
-			pc = pop32();
+			Append("rtr");
 		}
 
 		private void trapv(int type)
 		{
-			if (V())
-				trap(type);
+			Append("trapv");
 		}
 
 		private void rts(int type)
 		{
-			pc = pop32();
+			Append("rts");
 		}
 
 		private void rte(int type)
 		{
-			if (Supervisor())
-			{
-				throw new NotImplementedException();
-				sr = pop16();
-				pc = pop32();
-			}
-			else
-			{
-				trap(type);
-			}
+			Append("rte");
 		}
 	}
 }

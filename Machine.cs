@@ -28,7 +28,6 @@ namespace runamiga
 
 		public void Init()
 		{
-
 			byte[] rom; rom = File.ReadAllBytes("../../../kick12.rom");
 			Debug.Assert(rom.Length == 256 * 1024);
 
@@ -41,7 +40,7 @@ namespace runamiga
 		private void Emulate(object o)
 		{
 			for (;;)
-			RunEmulations();
+				RunEmulations();
 		}
 	}
 }
