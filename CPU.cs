@@ -676,7 +676,44 @@ namespace runamiga
 
 		private void t_twelve(int type)
 		{
-			throw new UnknownInstructionException(type);
+			if      ((type & 0b111_000000) == 0b011_000000) mulu(type);
+			else if ((type & 0b111_000000) == 0b111_000000) muls(type);
+			else if ((type & 0b11111_0000) == 0b10000_0000) abcd(type);
+			else if ((type & 0b100110000)  == 0b10000_0000) exg(type);
+			else and(type);
+		}
+
+		private void and(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void exg(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void abcd(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void muls(int type)
+		{
+			int Xn = (type>>9)&7;
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type,ea,Size.Word);
+			d[Xn] = (uint)((int)(short)d[Xn] * (int)(short)op);
+			setNZ(d[Xn], Size.Long);
+		}
+
+		private void mulu(int type)
+		{
+			int Xn = (type >> 9) & 7;
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, Size.Word);
+			d[Xn] = (uint)(ushort)d[Xn] * (uint)(ushort)op;
+			setNZ(d[Xn], Size.Long);
 		}
 
 		private void t_eleven(int type)
@@ -787,7 +824,56 @@ namespace runamiga
 
 		private void t_eight(int type)
 		{
-			throw new UnknownInstructionException(type);
+			if      ((type & 0b111_000000) == 0b011_000000) divu(type);
+			else if ((type & 0b111_000000) == 0b111_000000) divs(type);
+			else if ((type & 0b11111_0000) == 0b10000_0000) sbcd(type);
+			else or(type);
+		}
+
+		private void or(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void sbcd(int type)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void divs(int type)
+		{
+			int Xn = (type >> 9) & 7;
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, Size.Word);
+
+			if (op == 0)
+				trap(type);
+
+			uint lo = (uint)((int)d[Xn] / (short)op);
+			uint hi = (uint)((int)d[Xn] % (short)op);
+
+			d[Xn] = (hi<<16)|(uint)(short)lo;
+
+			setNZ(d[Xn], Size.Word);
+			clrC();
+		}
+
+		private void divu(int type)
+		{
+			int Xn = (type >> 9) & 7;
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, Size.Word);
+
+			if (op == 0)
+				trap(type);
+
+			uint lo = d[Xn] / (ushort)op;
+			uint hi = d[Xn] % (ushort)op;
+
+			d[Xn] = (hi << 16) | (ushort)lo;
+
+			setNZ(d[Xn], Size.Word);
+			clrC();
 		}
 
 		private void t_seven(int type)
