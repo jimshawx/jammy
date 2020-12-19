@@ -11,6 +11,7 @@ namespace runamiga
 			this.instruction = instruction;
 		}
 	}
+
 	public class UnknownEffectiveAddressException : ApplicationException
 	{
 		private int instruction;
@@ -20,11 +21,22 @@ namespace runamiga
 			this.instruction = instruction;
 		}
 	}
+
 	public class UnknownInstructionSizeException : ApplicationException
 	{
 		private int instruction;
 
 		public UnknownInstructionSizeException(int instruction)
+		{
+			this.instruction = instruction;
+		}
+	}
+
+	public class InstructionAlignmentException : ApplicationException
+	{
+		private int instruction;
+
+		public InstructionAlignmentException(int instruction)
 		{
 			this.instruction = instruction;
 		}
