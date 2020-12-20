@@ -64,7 +64,7 @@ namespace runamiga
 		void Append(Size s)
 		{
 			if (s == Size.Byte)
-			asm.Append(".b ");
+				asm.Append(".b ");
 			else if (s == Size.Word) asm.Append(".w ");
 			else if (s == Size.Long) asm.Append(".l ");
 		}
@@ -98,10 +98,10 @@ namespace runamiga
 
 		public uint read32(uint address)
 		{
-		return ((uint)memory[address] << 24) +
-				((uint)memory[address + 1] << 16) +
-				((uint)memory[address + 2] << 8) +
-				(uint)memory[address + 3];
+			return ((uint)memory[address] << 24) +
+					((uint)memory[address + 1] << 16) +
+					((uint)memory[address + 2] << 8) +
+					(uint)memory[address + 3];
 		}
 
 		public ushort read16(uint address)
@@ -139,11 +139,11 @@ namespace runamiga
 				case 3:
 					Append($"(a{x})+");
 					return 0;
-//					return a[x];
+				//					return a[x];
 				case 4:
 					Append($"-(a{x})");
 					return 0;
-					//return a[x];
+				//return a[x];
 				case 5://(d16,An)
 					{
 						ushort d16 = read16(pc);
@@ -249,43 +249,43 @@ namespace runamiga
 
 			switch (m)
 			{
-			//	case 0:
-			//		return ea;
+				//	case 0:
+				//		return ea;
 
-			//	case 1:
-			//		return ea;
+				//	case 1:
+				//		return ea;
 
-			//	case 2:
-			//		return fetchOpSize(ea, size);
+				//	case 2:
+				//		return fetchOpSize(ea, size);
 
-			//	case 3:
-			//		{
-			//			uint v = fetchOpSize(ea, size);
-			//			if (size == Size.Long)
-			//				a[x] += 4;
-			//			else if (size == Size.Word)
-			//				a[x] += 2;
-			//			else if (size == Size.Byte)
-			//				a[x] += 1;
-			//			return v;
-			//		}
+				//	case 3:
+				//		{
+				//			uint v = fetchOpSize(ea, size);
+				//			if (size == Size.Long)
+				//				a[x] += 4;
+				//			else if (size == Size.Word)
+				//				a[x] += 2;
+				//			else if (size == Size.Byte)
+				//				a[x] += 1;
+				//			return v;
+				//		}
 
-			//	case 4:
-			//		{
-			//			if (size == Size.Long)
-			//				a[x] -= 4;
-			//			else if (size == Size.Word)
-			//				a[x] -= 2;
-			//			else if (size == Size.Byte)
-			//				a[x] -= 1;
-			//			return fetchOpSize(a[x], size);//yes, a[x]
-			//		}
+				//	case 4:
+				//		{
+				//			if (size == Size.Long)
+				//				a[x] -= 4;
+				//			else if (size == Size.Word)
+				//				a[x] -= 2;
+				//			else if (size == Size.Byte)
+				//				a[x] -= 1;
+				//			return fetchOpSize(a[x], size);//yes, a[x]
+				//		}
 
-			//	case 5://(d16,An)
-			//		return fetchOpSize(ea, size);
+				//	case 5://(d16,An)
+				//		return fetchOpSize(ea, size);
 
-			//	case 6://(d8,An,Xn)
-			//		return fetchOpSize(ea, size);
+				//	case 6://(d8,An,Xn)
+				//		return fetchOpSize(ea, size);
 
 				case 7:
 					switch (x)
@@ -313,9 +313,9 @@ namespace runamiga
 		private Size getSize(int type)
 		{
 			int s = (type >> 6) & 3;
-			if (s == 0){Append(".b "); return Size.Byte; }
-			if (s == 1){Append(".w "); return Size.Word; }
-			if (s == 2){Append(".l "); return Size.Long; }
+			if (s == 0) { Append(".b "); return Size.Byte; }
+			if (s == 1) { Append(".w "); return Size.Word; }
+			if (s == 2) { Append(".l "); return Size.Long; }
 			return (Size)3;
 		}
 
@@ -501,10 +501,10 @@ namespace runamiga
 
 		private void t_twelve(int type)
 		{
-			if      ((type & 0b111_000000) == 0b011_000000) mulu(type);
+			if ((type & 0b111_000000) == 0b011_000000) mulu(type);
 			else if ((type & 0b111_000000) == 0b111_000000) muls(type);
 			else if ((type & 0b11111_0000) == 0b10000_0000) abcd(type);
-			else if ((type & 0b100110000)  == 0b10000_0000) exg(type);
+			else if ((type & 0b100110000) == 0b10000_0000) exg(type);
 			else and(type);
 		}
 
@@ -528,10 +528,10 @@ namespace runamiga
 
 		private void muls(int type)
 		{
-			int Xn = (type>>9)&7;
+			int Xn = (type >> 9) & 7;
 			Append($"muls.w d{Xn},");
 			uint ea = fetchEA(type);
-			uint op = fetchOp(type,ea,Size.Word);
+			uint op = fetchOp(type, ea, Size.Word);
 		}
 
 		private void mulu(int type)
@@ -664,7 +664,7 @@ namespace runamiga
 
 		private void t_eight(int type)
 		{
-			if      ((type & 0b111_000000) == 0b011_000000) divu(type);
+			if ((type & 0b111_000000) == 0b011_000000) divu(type);
 			else if ((type & 0b111_000000) == 0b111_000000) divs(type);
 			else if ((type & 0b11111_0000) == 0b10000_0000) sbcd(type);
 			else or(type);
@@ -724,7 +724,7 @@ namespace runamiga
 				bsr(type);
 
 			else
-			{ 
+			{
 				Append("b");
 				switch (cond)
 				{
@@ -1255,7 +1255,7 @@ namespace runamiga
 		private void link(int type)
 		{
 			int An = type & 7;
-			short imm16 = (short)read16(pc); pc+=2;
+			short imm16 = (short)read16(pc); pc += 2;
 			Append($"link a{An},#${imm16:X4}");
 		}
 
@@ -1519,7 +1519,71 @@ namespace runamiga
 		private void movem(int type)
 		{
 			Append("movem");
-			throw new NotImplementedException();
+
+			Size size;
+
+			if ((type & 0b1000000) != 0)
+				size = Size.Long;
+			else
+				size = Size.Word;
+
+			Append(size);
+
+			uint mask = read16(pc); pc +=2;
+
+			if ((type & 0b1_0000_000000) != 0)
+			{
+				uint ea = fetchEA(type);
+				Append(",");
+				//M->R
+				for (int i = 0; i < 16; i++)
+				{
+					if ((mask & (1<<i)) != 0)
+					{
+						int m = i & 7;
+						if (i > 7)
+							Append($"a{m}/");
+						else
+							Append($"d{m}/");
+					}
+				}
+			}
+			else
+			{
+				//R->M
+				//if it's pre-decrement mode
+				if ((type & 0b111_000) == 0b100_000)
+				{
+					for (int i = 15; i >= 0; i--)
+					{
+						if ((mask & (1<<i)) != 0)
+						{
+							int m = i & 7;
+							if (i <= 7)
+								Append($"a{m}/");
+							else
+								Append($"d{m}/");
+						}
+					}
+
+				}
+				else
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						if ((mask & (1<<i)) != 0)
+						{
+							int m = i & 7;
+							if (i > 7)
+								Append($"a{m}/");
+							else
+								Append($"d{m}/");
+						}
+					}
+				}
+				Append(",");
+				uint ea = fetchEA(type);
+			}
 		}
 
 		private void jmp(int type)

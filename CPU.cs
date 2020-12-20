@@ -683,10 +683,10 @@ namespace runamiga
 
 		private void t_twelve(int type)
 		{
-			if      ((type & 0b111_000000) == 0b011_000000) mulu(type);
+			if ((type & 0b111_000000) == 0b011_000000) mulu(type);
 			else if ((type & 0b111_000000) == 0b111_000000) muls(type);
 			else if ((type & 0b11111_0000) == 0b10000_0000) abcd(type);
-			else if ((type & 0b100110000)  == 0b10000_0000) exg(type);
+			else if ((type & 0b100110000) == 0b10000_0000) exg(type);
 			else and(type);
 		}
 
@@ -707,9 +707,9 @@ namespace runamiga
 
 		private void muls(int type)
 		{
-			int Xn = (type>>9)&7;
+			int Xn = (type >> 9) & 7;
 			uint ea = fetchEA(type);
-			uint op = fetchOp(type,ea,Size.Word);
+			uint op = fetchOp(type, ea, Size.Word);
 			d[Xn] = (uint)((int)(short)d[Xn] * (int)(short)op);
 			setNZ(d[Xn], Size.Long);
 			clrV();
@@ -835,7 +835,7 @@ namespace runamiga
 
 		private void t_eight(int type)
 		{
-			if      ((type & 0b111_000000) == 0b011_000000) divu(type);
+			if ((type & 0b111_000000) == 0b011_000000) divu(type);
 			else if ((type & 0b111_000000) == 0b111_000000) divs(type);
 			else if ((type & 0b11111_0000) == 0b10000_0000) sbcd(type);
 			else or(type);
@@ -863,7 +863,7 @@ namespace runamiga
 			uint lo = (uint)((int)d[Xn] / (short)op);
 			uint hi = (uint)((int)d[Xn] % (short)op);
 
-			d[Xn] = (hi<<16)|(uint)(short)lo;
+			d[Xn] = (hi << 16) | (uint)(short)lo;
 
 			setNZ(d[Xn], Size.Word);
 			clrC();
@@ -1729,7 +1729,69 @@ namespace runamiga
 
 		private void movem(int type)
 		{
-			throw new NotImplementedException();
+			uint ea = fetchEA(type);
+			Size size;
+			uint eastep;
+			if ((type & 0b1000000) != 0)
+			{
+				size = Size.Long;
+				eastep = 4;
+			}
+			else
+			{
+				size = Size.Word;
+				eastep = 2;
+			}
+			uint mask = fetchImm(Size.Word);
+
+			if ((type & 0b1_0000_000000) != 0)
+			{
+				//M->R
+				for (int i = 0; i < 16; i++)
+				{
+					if ((mask & (1<<i)) != 0)
+					{
+						int m = i & 7;
+						if (i > 7)
+							a[m] = fetchOp(type, ea, size);
+						else
+							d[m] = fetchOp(type, ea, size);
+						ea += eastep;
+					}
+				}
+			}
+			else
+			{
+				//R->M
+				//if it's pre-decrement mode
+				if ((type & 0b111_000) == 0b100_000)
+				{
+					for (int i = 15; i >= 0; i--)
+					{
+						if ((mask & (1<<i)) != 0)
+						{
+							int m = i & 7;
+							uint op = i <= 7 ? a[m] : d[m];
+							ea -= eastep;
+							writeOp(ea, op, size);
+						}
+					}
+
+				}
+				else
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						if ((mask & (1<<i)) != 0)
+						{
+							int m = i & 7;
+							uint op = i > 7 ? a[m] : d[m];
+							writeOp(ea, op, size);
+							ea += eastep;
+						}
+					}
+				}
+			}
 		}
 
 		private void jmp(int type)
