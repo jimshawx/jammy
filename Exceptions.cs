@@ -2,7 +2,9 @@
 
 namespace runamiga
 {
-	public class UnknownInstructionException : ApplicationException
+	public class MC68000Exception : ApplicationException { }
+
+	public class UnknownInstructionException : MC68000Exception
 	{
 		private int instruction;
 
@@ -12,7 +14,7 @@ namespace runamiga
 		}
 	}
 
-	public class UnknownEffectiveAddressException : ApplicationException
+	public class UnknownEffectiveAddressException : MC68000Exception
 	{
 		private int instruction;
 
@@ -22,7 +24,7 @@ namespace runamiga
 		}
 	}
 
-	public class UnknownInstructionSizeException : ApplicationException
+	public class UnknownInstructionSizeException : MC68000Exception
 	{
 		private int instruction;
 
@@ -32,7 +34,7 @@ namespace runamiga
 		}
 	}
 
-	public class InstructionAlignmentException : ApplicationException
+	public class InstructionAlignmentException : MC68000Exception
 	{
 		private int instruction;
 
@@ -41,5 +43,4 @@ namespace runamiga
 			this.instruction = instruction;
 		}
 	}
-
 }

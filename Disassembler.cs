@@ -12,8 +12,10 @@ namespace runamiga
 		private byte[] memory;
 		private uint address;
 
-		public void Disassemble(uint address, ReadOnlySpan<byte> m)
+		public DAsm Disassemble(uint address, ReadOnlySpan<byte> m)
 		{
+			var dasm = new DAsm();
+
 			memory = m.ToArray();
 			pc = 0;
 			this.address = address;
@@ -51,9 +53,15 @@ namespace runamiga
 				case 14:
 					t_fourteen(ins); break;
 				default:
-					throw new UnknownInstructionException(ins);
+					Append($"unknown instruction {type}");
+					break;
 			}
-			Trace.WriteLine($"{address:X8} {asm}");
+			dasm.Asm = asm.ToString();
+			dasm.Bytes = m.Slice(0,(int)pc).ToArray();
+			dasm.Address = address;
+			Trace.WriteLine($"{dasm}");
+
+			return dasm;
 		}
 
 		void Append(string s)
@@ -155,7 +163,12 @@ namespace runamiga
 					}
 				case 6://(d8,An,Xn)
 					{
-						throw new UnknownEffectiveAddressException(type);
+						uint ext = read16(pc); pc += 2;
+						uint Xn = (ext >> 12) & 7;
+						uint d8 = ext & 0xff;
+						string s = (((ext>>11)&1) != 0)?"l":"w";
+						Append($"${d8:X2}(a{x},d{Xn}.{s})");
+						return 0;
 					}
 				case 7:
 					switch (x)
@@ -176,8 +189,12 @@ namespace runamiga
 							}
 						case 0b011://(d8,pc,Xn)
 							{
-								throw new UnknownEffectiveAddressException(type);
-
+								uint ext = read16(pc); pc += 2;
+								uint Xn = (ext >> 12) & 7;
+								uint d8 = ext & 0xff;
+								string s = (((ext >> 11) & 1) != 0) ? "l" : "w";
+								Append($"${d8:X2}(pc,d{Xn}.{s})");
+								return 0;
 							}
 						case 0b000://(xxx).w
 							{
@@ -511,7 +528,25 @@ namespace runamiga
 		private void and(int type)
 		{
 			Append("and");
-			throw new NotImplementedException();
+
+			Size size = getSize(type);
+
+			int Xn = (type >> 9) & 7;
+			if ((type & 0b1_00_000000) != 0)
+			{
+				//R->M
+				Append($"d{Xn},");
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+			}
+			else
+			{
+				//M-R
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+
+				Append($",d{Xn}");
+			}
 		}
 
 		private void exg(int type)
@@ -554,7 +589,24 @@ namespace runamiga
 		private void eor(int type)
 		{
 			Append("eor");
-			throw new NotImplementedException();
+			Size size = getSize(type);
+
+			int Xn = (type >> 9) & 7;
+			if ((type & 0b1_00_000000) != 0)
+			{
+				//R->M
+				Append($"d{Xn},");
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+			}
+			else
+			{
+				//M-R
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+
+				Append($",d{Xn}");
+			}
 		}
 
 		private void cmpm(int type)
@@ -673,7 +725,25 @@ namespace runamiga
 		private void or(int type)
 		{
 			Append("or");
-			throw new NotImplementedException();
+
+			Size size = getSize(type);
+
+			int Xn = (type >> 9) & 7;
+			if ((type & 0b1_00_000000) != 0)
+			{
+				//R->M
+				Append($"d{Xn},");
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+			}
+			else
+			{
+				//M-R
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+
+				Append($",d{Xn}");
+			}
 		}
 
 		private void sbcd(int type)

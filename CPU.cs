@@ -249,9 +249,11 @@ namespace runamiga
 					}
 				case 6://(d8,An,Xn)
 					{
-						throw new UnknownEffectiveAddressException(type);
-						byte d8 = read8(pc);
-						return a[x] + d[0] + (uint)(sbyte)d8;
+						uint ext = read16(pc); pc += 2;
+						uint Xn = (ext>>12)&7;
+						uint d8 = ext&0xff;
+						uint dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
+						return a[x] + dx + (uint)(sbyte)d8;
 					}
 				case 7:
 					switch (x)
@@ -265,11 +267,11 @@ namespace runamiga
 							}
 						case 0b011://(d8,pc,Xn)
 							{
-								throw new UnknownEffectiveAddressException(type);
-								byte d8 = read8(pc);
-								uint ea = pc + d[x] + (uint)(sbyte)d8;
-								pc++;
-								return ea;
+								uint ext = read16(pc); pc += 2;
+								uint Xn = (ext >> 12) & 7;
+								uint d8 = ext & 0xff;
+								uint dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
+								return pc + dx + (uint)(sbyte)d8;
 							}
 						case 0b000://(xxx).w
 							{
@@ -483,40 +485,54 @@ namespace runamiga
 		{
 			disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, 12));
 
-			int ins = read16(pc);
-			pc += 2;
-
-			int type = (int)(ins >> 12);
-
-			switch (type)
+			try
 			{
-				case 0:
-				case 1:
-				case 2:
-				case 3:
-					t_zero(ins); break;
-				case 4:
-					t_four(ins); break;
-				case 5:
-					t_five(ins); break;
-				case 6:
-					t_six(ins); break;
-				case 7:
-					t_seven(ins); break;
-				case 8:
-					t_eight(ins); break;
-				case 9:
-					t_nine(ins); break;
-				case 11:
-					t_eleven(ins); break;
-				case 12:
-					t_twelve(ins); break;
-				case 13:
-					t_thirteen(ins); break;
-				case 14:
-					t_fourteen(ins); break;
-				default:
-					throw new UnknownInstructionException(ins);
+				int ins = read16(pc);
+				pc += 2;
+
+				int type = (int)(ins >> 12);
+
+				switch (type)
+				{
+					case 0:
+					case 1:
+					case 2:
+					case 3:
+						t_zero(ins); break;
+					case 4:
+						t_four(ins); break;
+					case 5:
+						t_five(ins); break;
+					case 6:
+						t_six(ins); break;
+					case 7:
+						t_seven(ins); break;
+					case 8:
+						t_eight(ins); break;
+					case 9:
+						t_nine(ins); break;
+					case 11:
+						t_eleven(ins); break;
+					case 12:
+						t_twelve(ins); break;
+					case 13:
+						t_thirteen(ins); break;
+					case 14:
+						t_fourteen(ins); break;
+					default:
+						throw new UnknownInstructionException(ins);
+				}
+			}
+			catch (MC68000Exception ex)
+			{
+				if (ex is UnknownInstructionException)
+					internalTrap(4);
+				else if (ex is UnknownInstructionSizeException)
+					internalTrap(4);
+				else if (ex is UnknownEffectiveAddressException)
+					internalTrap(4);
+				else if (ex is InstructionAlignmentException)
+					internalTrap(3);
 			}
 		}
 
@@ -692,7 +708,23 @@ namespace runamiga
 
 		private void and(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			int Xn = (type >> 9) & 7;
+			if ((type & 0b1_00_000000) != 0)
+			{
+				//R->M
+				op &= d[Xn];
+				writeEA(type, ea, size, op);
+				setNZ(op, size);
+			}
+			else
+			{
+				//M-R
+				d[Xn] &= op;
+				setNZ(d[Xn], size);
+			}
 		}
 
 		private void exg(int type)
@@ -738,7 +770,23 @@ namespace runamiga
 
 		private void eor(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			int Xn = (type >> 9) & 7;
+			if ((type & 0b1_00_000000) != 0)
+			{
+				//R->M
+				op ^= d[Xn];
+				writeEA(type, ea, size, op);
+				setNZ(op, size);
+			}
+			else
+			{
+				//M-R
+				d[Xn] ^= op;
+				setNZ(d[Xn], size);
+			}
 		}
 
 		private void cmpm(int type)
@@ -843,7 +891,23 @@ namespace runamiga
 
 		private void or(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type,ea,size);
+			int Xn = (type>>9)&7;
+			if ((type & 0b1_00_000000) != 0)
+			{
+				//R->M
+				op |= d[Xn];
+				writeEA(type, ea, size, op);
+				setNZ(op,size);
+			}
+			else
+			{
+				//M-R
+				d[Xn] |= op;
+				setNZ(d[Xn], size);
+			}
 		}
 
 		private void sbcd(int type)
@@ -1762,7 +1826,7 @@ namespace runamiga
 				//M->R
 				for (int i = 0; i < 16; i++)
 				{
-					if ((mask & (1<<i)) != 0)
+					if ((mask & (1 << i)) != 0)
 					{
 						int m = i & 7;
 						if (i > 7)
@@ -1771,6 +1835,12 @@ namespace runamiga
 							d[m] = fetchOp(type, ea, size);
 						ea += eastep;
 					}
+				}
+				//if it's post-increment mode
+				if ((type & 0b111_000) == 0b011_000)
+				{
+					int Xn = type & 7;
+					a[Xn] = ea;
 				}
 			}
 			else
@@ -1781,7 +1851,7 @@ namespace runamiga
 				{
 					for (int i = 15; i >= 0; i--)
 					{
-						if ((mask & (1<<i)) != 0)
+						if ((mask & (1 << i)) != 0)
 						{
 							int m = i & 7;
 							uint op = i <= 7 ? a[m] : d[m];
@@ -1789,13 +1859,14 @@ namespace runamiga
 							writeOp(ea, op, size);
 						}
 					}
-
+					int Xn=type&7;
+					a[Xn]=ea;
 				}
 				else
 				{
 					for (int i = 0; i < 16; i++)
 					{
-						if ((mask & (1<<i)) != 0)
+						if ((mask & (1 << i)) != 0)
 						{
 							int m = i & 7;
 							uint op = i > 7 ? a[m] : d[m];
