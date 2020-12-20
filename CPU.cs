@@ -1,7 +1,8 @@
 ﻿using runamiga.Types;
 using System;
 using System.Diagnostics;
-
+using System.IO;
+using System.Text;
 
 namespace runamiga
 {
@@ -250,8 +251,8 @@ namespace runamiga
 				case 6://(d8,An,Xn)
 					{
 						uint ext = read16(pc); pc += 2;
-						uint Xn = (ext>>12)&7;
-						uint d8 = ext&0xff;
+						uint Xn = (ext >> 12) & 7;
+						uint d8 = ext & 0xff;
 						uint dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
 						return a[x] + dx + (uint)(sbyte)d8;
 					}
@@ -483,7 +484,8 @@ namespace runamiga
 
 		public void Emulate()
 		{
-			disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, 12));
+			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, 12));
+			Trace.WriteLine(dasm);
 
 			try
 			{
@@ -897,14 +899,14 @@ namespace runamiga
 		{
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
-			uint op = fetchOp(type,ea,size);
-			int Xn = (type>>9)&7;
+			uint op = fetchOp(type, ea, size);
+			int Xn = (type >> 9) & 7;
 			if ((type & 0b1_00_000000) != 0)
 			{
 				//R->M
 				op |= d[Xn];
 				writeEA(type, ea, size, op);
-				setNZ(op,size);
+				setNZ(op, size);
 			}
 			else
 			{
@@ -1863,8 +1865,8 @@ namespace runamiga
 							writeOp(ea, op, size);
 						}
 					}
-					int Xn=type&7;
-					a[Xn]=ea;
+					int Xn = type & 7;
+					a[Xn] = ea;
 				}
 				else
 				{
@@ -1921,6 +1923,25 @@ namespace runamiga
 			else
 			{
 				internalTrap(8);
+			}
+		}
+
+		public void Disassemble(uint address)
+		{
+			var memorySpan = new ReadOnlySpan<byte>(memory);
+
+			using (var file = File.OpenWrite("kick12.rom.asm"))
+			{
+				using (var txtFile = new StreamWriter(file, Encoding.UTF8))
+				{
+					while (address < 0x1000000)
+					{
+						var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12,(int)(0x1000000-address))));
+						//Trace.WriteLine(dasm);
+						txtFile.WriteLine(dasm);
+						address += (uint)dasm.Bytes.Length;
+					}
+				}
 			}
 		}
 	}

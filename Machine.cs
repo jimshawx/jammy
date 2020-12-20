@@ -32,6 +32,7 @@ namespace runamiga
 			Debug.Assert(rom.Length == 256 * 1024);
 
 			cpu.BulkWrite(0xfc0000, rom, 256*1024);
+			cpu.Disassemble(0xfc0000);
 
 			emuThread = new Thread(Emulate);
 			emuThread.Start();

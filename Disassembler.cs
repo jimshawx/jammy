@@ -59,7 +59,6 @@ namespace runamiga
 			dasm.Asm = asm.ToString();
 			dasm.Bytes = m.Slice(0,(int)pc).ToArray();
 			dasm.Address = address;
-			Trace.WriteLine($"{dasm}");
 
 			return dasm;
 		}
@@ -80,29 +79,12 @@ namespace runamiga
 		void Append(uint imm, Size s)
 		{
 			if (s == Size.Byte)
-				asm.Append($"#${imm:X2}");
+				asm.Append($"#${(byte)imm:X2}");
 			else if (s == Size.Word)
-				asm.Append($"#${imm:X4}");
+				asm.Append($"#${(ushort)imm:X4}");
 			else if (s == Size.Long)
 				asm.Append($"#${imm:X8}");
 		}
-
-		//private void Writebytes(uint address, int len)
-		//{
-		//	Trace.Write($"{address:X8} ");
-		//	for (int i = 0; i < len; i++)
-		//		Trace.Write($"{memory[address + i]:X2} ");
-		//	Trace.WriteLine("");
-		//	Trace.Write($"{address:X8} ");
-		//	for (int i = 0; i < len; i++)
-		//	{
-		//		if (memory[address + i] >= 32 && memory[address + i] <= 127)
-		//			Trace.Write($" {Convert.ToChar(memory[address + i])} ");
-		//		else
-		//			Trace.Write(" . ");
-		//	}
-		//	Trace.WriteLine("");
-		//}
 
 		public uint read32(uint address)
 		{
@@ -157,7 +139,7 @@ namespace runamiga
 						ushort d16 = read16(pc);
 						pc += 2;
 						//return a[x] + (uint)(short)d16;
-						Append($"${d16:X4}(a{x})");
+						Append($"${(ushort)d16:X4}(a{x})");
 						return 0;
 
 					}
@@ -167,7 +149,7 @@ namespace runamiga
 						uint Xn = (ext >> 12) & 7;
 						uint d8 = ext & 0xff;
 						string s = (((ext>>11)&1) != 0)?"l":"w";
-						Append($"${d8:X2}(a{x},d{Xn}.{s})");
+						Append($"${(byte)d8:X2}(a{x},d{Xn}.{s})");
 						return 0;
 					}
 				case 7:
@@ -193,14 +175,14 @@ namespace runamiga
 								uint Xn = (ext >> 12) & 7;
 								uint d8 = ext & 0xff;
 								string s = (((ext >> 11) & 1) != 0) ? "l" : "w";
-								Append($"${d8:X2}(pc,d{Xn}.{s})");
+								Append($"${(byte)d8:X2}(pc,d{Xn}.{s})");
 								return 0;
 							}
 						case 0b000://(xxx).w
 							{
 								uint ea = (uint)(short)read16(pc);
 								pc += 2;
-								Append($"${ea:X4}");
+								Append($"${(ushort)ea:X4}");
 								return ea;
 							}
 						case 0b001://(xxx).l
@@ -213,12 +195,14 @@ namespace runamiga
 						case 0b100://#imm
 							return pc;
 						default:
-							throw new UnknownEffectiveAddressException(type);
+							Append($"unknown effective address mode {type}");
+							return 0;
 					}
 					break;
 			}
 
-			throw new UnknownEffectiveAddressException(type);
+			Append($"unknown effective address mode {type}");
+			return 0;
 		}
 
 		uint fetchOpSize(uint ea, Size size)
@@ -230,7 +214,8 @@ namespace runamiga
 				return (uint)(short)read16(ea);
 			if (size == Size.Byte)
 				return (uint)(sbyte)read8(ea);
-			throw new UnknownEffectiveAddressException(0);
+			Append(" - unknown size");
+			return 0;
 		}
 
 		uint fetchImm(Size size)
@@ -246,7 +231,7 @@ namespace runamiga
 			{
 				v = fetchOpSize(pc, size);
 				pc += 2;
-				Append($"#${v:X4}");
+				Append($"#${(ushort)v:X4}");
 			}
 			else if (size == Size.Byte)
 			{
@@ -254,7 +239,7 @@ namespace runamiga
 				v = fetchOpSize(pc, Size.Word);
 				v = (uint)(sbyte)v;
 				pc += 2;
-				Append($"#${v:X2}");
+				Append($"#${(byte)v:X2}");
 			}
 			return v;
 		}
@@ -319,11 +304,10 @@ namespace runamiga
 							uint imm = fetchImm(size);//ea==pc
 							return imm;
 						default:
-							throw new UnknownEffectiveAddressException(type);
+							Append($"unknown effective address mode {type}");
+							return 0;
 					}
 			}
-
-			//throw new UnknownEffectiveAddressException(type);
 			return 0;
 		}
 
@@ -488,7 +472,7 @@ namespace runamiga
 				else if (s == 2) size = Size.Long;
 				Append(size);
 				//addx
-				throw new UnknownInstructionException(type);
+				Append(" - incomplete");
 			}
 			else
 			{
@@ -552,13 +536,13 @@ namespace runamiga
 		private void exg(int type)
 		{
 			Append("exg");
-			throw new NotImplementedException();
+			Append(" - incomplete");
 		}
 
 		private void abcd(int type)
 		{
 			Append("abcd");
-			throw new NotImplementedException();
+			Append(" - incomplete");
 		}
 
 		private void muls(int type)
@@ -612,7 +596,7 @@ namespace runamiga
 		private void cmpm(int type)
 		{
 			Append("cmpm");
-			throw new NotImplementedException();
+			Append(" - incomplete");
 		}
 
 		private void cmp(int type)
@@ -685,7 +669,7 @@ namespace runamiga
 				Append(size);
 				//subx
 				//d[Xn] -= op + (X()?1:0);
-				throw new UnknownInstructionException(type);
+				Append(" - incomplete");
 			}
 			else
 			{
@@ -749,7 +733,7 @@ namespace runamiga
 		private void sbcd(int type)
 		{
 			Append("sbcd");
-			throw new NotImplementedException();
+			Append(" - incomplete");
 		}
 
 		private void divs(int type)
@@ -1087,7 +1071,7 @@ namespace runamiga
 					le();
 					break;
 			}
-			Append($" d{Xn},#${target:X4}(pc)");
+			Append($" d{Xn},#${(ushort)target:X4}(pc)");
 
 		}
 
@@ -1253,7 +1237,7 @@ namespace runamiga
 		private void negx(int type)
 		{
 			Append("negx");
-			throw new NotImplementedException();
+			Append(" - incomplete");
 		}
 
 		private void pea(int type)
@@ -1271,7 +1255,7 @@ namespace runamiga
 		private void nbcd(int type)
 		{
 			Append("nbcd");
-			throw new NotImplementedException();
+			Append(" - incomplete");
 		}
 
 		private void ext(int type)
@@ -1328,7 +1312,7 @@ namespace runamiga
 		{
 			int An = type & 7;
 			short imm16 = (short)read16(pc); pc += 2;
-			Append($"link a{An},#${imm16:X4}");
+			Append($"link a{An},#${(ushort)imm16:X4}");
 		}
 
 		private void unlk(int type)
@@ -1389,7 +1373,8 @@ namespace runamiga
 						cmpi(type);
 						break;
 					default:
-						throw new UnknownInstructionException(type);
+						Append($"unknown instruction {type}");
+						break;
 				}
 			}
 			else
@@ -1398,7 +1383,8 @@ namespace runamiga
 				switch (op)
 				{
 					case 0://bit or movep
-						throw new UnknownInstructionException(type);
+						Append($"unknown instruction {type}");
+						break;
 					case 1://move byte
 						moveb(type);
 						break;

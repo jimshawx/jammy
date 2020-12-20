@@ -21,7 +21,7 @@ namespace runamiga.Types
 				s.Append("   ");
 
 			string[] sp = Asm.Split(' ');
-			s.Append($"{sp[0], -8} {string.Join("", sp.Skip(1))}");
+			s.Append($"{sp[0], -8} {string.Join(" ", sp.Skip(1))}");
 
 			return s.ToString();
 		}
