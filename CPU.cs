@@ -142,6 +142,8 @@ namespace runamiga
 
 		public uint read32(uint address)
 		{
+			address &= 0xffffff;
+
 			if (cia.IsMapped(address)) cia.Read(address, Size.Long);
 			if (custom.IsMapped(address)) custom.Read(address, Size.Long);
 
@@ -153,6 +155,8 @@ namespace runamiga
 
 		public ushort read16(uint address)
 		{
+			address &= 0xffffff;
+
 			if (cia.IsMapped(address)) cia.Read(address, Size.Word);
 			if (custom.IsMapped(address)) custom.Read(address, Size.Word);
 
@@ -163,6 +167,8 @@ namespace runamiga
 
 		public byte read8(uint address)
 		{
+			address &= 0xffffff;
+
 			if (cia.IsMapped(address)) cia.Read(address, Size.Byte);
 			if (custom.IsMapped(address)) custom.Read(address, Size.Byte);
 
@@ -171,6 +177,8 @@ namespace runamiga
 
 		public void write32(uint address, uint value)
 		{
+			address &= 0xffffff;
+
 			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Long); return; }
 			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Long); return; }
 
@@ -187,6 +195,8 @@ namespace runamiga
 
 		public void write16(uint address, ushort value)
 		{
+			address &= 0xffffff;
+
 			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Word); return; }
 			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Word); return; }
 
@@ -199,6 +209,8 @@ namespace runamiga
 
 		public void write8(uint address, byte value)
 		{
+			address &= 0xffffff;
+
 			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Byte); return; }
 			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Byte); return; }
 
@@ -735,7 +747,19 @@ namespace runamiga
 
 		private void exg(int type)
 		{
-			throw new NotImplementedException();
+			int Yn=type&7;
+			int Xn=(type>>9)&7;
+			int mode = (type>>3)&0x1f;
+			uint tmp;
+			switch (mode)
+			{
+				case 0b01000://DD
+					tmp = d[Xn]; d[Xn] = d[Yn]; d[Yn] = tmp; break;
+				case 0b01001://AA
+					tmp = a[Xn]; a[Xn] = a[Yn]; a[Yn] = tmp; break;
+				case 0b10001://DA
+					tmp = d[Xn]; d[Xn] = a[Yn]; a[Yn] = tmp; break;
+			}
 		}
 
 		private void abcd(int type)
@@ -1683,6 +1707,22 @@ namespace runamiga
 		{
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
+
+			if ((int)size == 3)
+			{
+				if (Supervisor())
+				{
+					uint opsr = fetchOp(type, ea, Size.Word);
+					ushort immsr = (ushort)fetchImm(Size.Word);
+					sr ^= immsr;
+				}
+				else
+				{
+					internalTrap(8);
+				}
+				return;
+			}
+
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
 			op ^= imm;
@@ -1768,6 +1808,22 @@ namespace runamiga
 		{
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
+
+			if ((int)size == 3)
+			{
+				if (Supervisor())
+				{
+					uint opsr = fetchOp(type, ea, Size.Word);
+					ushort immsr = (ushort)fetchImm(Size.Word);
+					sr &= immsr;
+				}
+				else
+				{
+					internalTrap(8);
+				}
+				return;
+			}
+
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
 			op &= imm;
@@ -1779,6 +1835,22 @@ namespace runamiga
 		{
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
+
+			if ((int)size == 3)
+			{
+				if (Supervisor())
+				{
+					uint opsr = fetchOp(type, ea, Size.Word);
+					ushort immsr = (ushort)fetchImm(Size.Word);
+					sr |= immsr;
+				}
+				else
+				{
+					internalTrap(8);
+				}
+				return;
+			}
+
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
 			op |= imm;

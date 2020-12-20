@@ -536,7 +536,20 @@ namespace runamiga
 		private void exg(int type)
 		{
 			Append("exg");
-			Append(" - incomplete");
+
+			int Yn = type & 7;
+			int Xn = (type >> 9) & 7;
+			int mode = (type >> 3) & 0x1f;
+
+			switch (mode)
+			{
+				case 0b01000://DD
+					Append($" d{Xn},d{Yn}"); break;
+				case 0b01001://AA
+					Append($" a{Xn},a{Yn}"); break;
+				case 0b10001://DA
+					Append($" d{Xn},a{Yn}"); break;
+			}
 		}
 
 		private void abcd(int type)
@@ -1455,6 +1468,16 @@ namespace runamiga
 		{
 			Append("eori");
 			Size size = getSize(type);
+
+			if ((int)size == 3)
+			{
+				Append(Size.Word);
+				uint easr = fetchEA(type);
+				fetchOp(type, easr, Size.Word);
+				Append(",sr");
+				return;
+			}
+
 			uint imm = fetchImm(size);
 			Append(",");
 			uint ea = fetchEA(type);
@@ -1538,6 +1561,16 @@ namespace runamiga
 		{
 			Append($"andi");
 			Size size = getSize(type);
+
+			if ((int)size == 3)
+			{
+				Append(Size.Word);
+				uint easr = fetchEA(type);
+				fetchOp(type, easr, Size.Word);
+				Append(",sr");
+				return;
+			}
+
 			uint imm = fetchImm(size);
 			Append(",");
 
@@ -1551,6 +1584,16 @@ namespace runamiga
 			Append($"ori");
 
 			Size size = getSize(type);
+
+			if((int)size == 3)
+			{
+				Append(Size.Word);
+				uint easr = fetchEA(type);
+				fetchOp(type, easr, Size.Word);
+				Append(",sr");
+				return;
+			}
+
 			uint imm = fetchImm(size);
 			Append(",");
 
