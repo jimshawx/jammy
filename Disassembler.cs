@@ -223,13 +223,13 @@ namespace runamiga
 			{
 				v = fetchOpSize(pc, size);
 				pc += 4;
-				Append($"#${v:X4}");
+				Append($"#${v:X8}");
 			}
 			else if (size == Size.Word)
 			{
 				v = fetchOpSize(pc, size);
 				pc += 2;
-				Append($"#${v:X2}");
+				Append($"#${v:X4}");
 			}
 			else if (size == Size.Byte)
 			{
@@ -295,9 +295,9 @@ namespace runamiga
 						case 0b011://(d8,pc,Xn)
 							return fetchOpSize(ea, size);
 						case 0b000://(xxx).w
-							return fetchOpSize(ea, size);
+							return ea;//fetchOpSize(ea, size);
 						case 0b001://(xxx).l
-							return fetchOpSize(ea, size);
+							return ea;//fetchOpSize(ea, size);
 						case 0b100://#imm
 							uint imm = fetchImm(size);//ea==pc
 							return imm;
@@ -875,12 +875,14 @@ namespace runamiga
 
 		private void bra2(int type)
 		{
-			Append(" ");
+			Size size = Size.Byte;
 			uint bas = pc;
 			uint disp = (uint)(sbyte)(type & 0xff);
-			if (disp == 0) disp = fetchImm(Size.Word);
-			else if (disp == 0xff) disp = fetchImm(Size.Long);
-			else Append($"#${disp:X2}");
+			if (disp == 0) {disp = read16(pc); pc+=2; size = Size.Word; }
+			else if (disp == 0xffffffff) {disp = read32(pc); pc += 4; size = Size.Long; }
+			disp += address+2;
+			Append(size);
+			Append($"#${disp:X8}");
 		}
 
 		private void t_five(int type)
@@ -1142,7 +1144,7 @@ namespace runamiga
 					else if ((subins & 0b1111_00000000) == 0b1010_00000000)
 						tst(type);
 					else
-						throw new UnknownInstructionException(type);
+						Append($"unknown instruction {type:X4}");
 					break;
 			}
 		}

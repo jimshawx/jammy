@@ -382,9 +382,9 @@ namespace runamiga
 						case 0b011://(d8,pc,Xn)
 							return fetchOpSize(ea, size);
 						case 0b000://(xxx).w
-							return fetchOpSize(ea, size);
+							return ea;//fetchOpSize(ea, size);
 						case 0b001://(xxx).l
-							return fetchOpSize(ea, size);
+							return ea;//fetchOpSize(ea, size);
 						case 0b100://#imm
 							return fetchImm(size);//ea==pc
 						default:
@@ -858,7 +858,7 @@ namespace runamiga
 			uint op = fetchOp(type, ea, Size.Word);
 
 			if (op == 0)
-				trap(type);
+				internalTrap(5);
 
 			uint lo = (uint)((int)d[Xn] / (short)op);
 			uint hi = (uint)((int)d[Xn] % (short)op);
@@ -876,7 +876,7 @@ namespace runamiga
 			uint op = fetchOp(type, ea, Size.Word);
 
 			if (op == 0)
-				trap(type);
+				internalTrap(5);
 
 			uint lo = d[Xn] / (ushort)op;
 			uint hi = d[Xn] % (ushort)op;
@@ -1032,8 +1032,12 @@ namespace runamiga
 
 		private void bsr(int type)
 		{
+			uint bas = pc;
+			uint disp = (uint)(sbyte)(type & 0xff);
+			if (disp == 0) disp = fetchImm(Size.Word);
+			else if (disp == 0xffffffff) disp = fetchImm(Size.Long);
 			push32(pc);
-			bra(type);
+			pc = bas + disp;
 		}
 
 		private void bra(int type)
@@ -1311,7 +1315,12 @@ namespace runamiga
 					else if ((subins & 0b1111_00000000) == 0b1010_00000000)
 						tst(type);
 					else
-						throw new UnknownInstructionException(type);
+					{
+						//this is how some CPU detection routines work
+						//Amiga ROM 1.2 does this by executing various movec instructions (which is a 68010 or better)
+						//the first of which is 0x4e7b @ $FC0564 movec D1,VBR
+						internalTrap(4);
+					}
 					break;
 			}
 		}
@@ -1408,7 +1417,7 @@ namespace runamiga
 			if (Supervisor())
 				sr = (ushort)fetchOp(type, ea, Size.Word);
 			else
-				trap(type);
+				internalTrap(8);
 		}
 
 		private void movetoccr(int type)
@@ -1426,15 +1435,19 @@ namespace runamiga
 
 		private void illegal(int type)
 		{
-			throw new NotImplementedException();
-			trap(4);
+			internalTrap(4);
+		}
+
+		void internalTrap(uint vector)
+		{
+			pc = read32(vector << 2);
 		}
 
 		private void trap(int type)
 		{
 			setSupervisor();
 			uint vector = (uint)(type & 0xf) + 32;
-			pc = read32(vector << 2);
+			internalTrap(vector);
 		}
 
 		private void link(int type)
@@ -1467,7 +1480,7 @@ namespace runamiga
 			if (Supervisor())
 				Reset();
 			else
-				trap(type);
+				internalTrap(8);
 		}
 
 		private void nop(int type)
@@ -1483,7 +1496,7 @@ namespace runamiga
 			}
 			else
 			{
-				trap(type);
+				internalTrap(8);
 			}
 		}
 
@@ -1710,13 +1723,13 @@ namespace runamiga
 			if (d[Xn] < 0)
 			{
 				setX();
-				trap(6);
+				internalTrap(6);
 			}
 
 			if (d[Xn] > ea)
 			{
 				clrX();
-				trap(6);
+				internalTrap(6);
 			}
 		}
 
@@ -1814,7 +1827,7 @@ namespace runamiga
 		private void trapv(int type)
 		{
 			if (V())
-				trap(type);
+				internalTrap(7);
 		}
 
 		private void rts(int type)
@@ -1832,7 +1845,7 @@ namespace runamiga
 			}
 			else
 			{
-				trap(type);
+				internalTrap(8);
 			}
 		}
 	}
