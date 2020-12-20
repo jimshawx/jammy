@@ -266,10 +266,13 @@ namespace runamiga
 			{ 0xdff1fe, new Tuple<string,string>("NO-OP", "No operation/NULL (Copper NOP instruction)")}
 		};
 
-
 		private ushort[] regs = new ushort[32768];
 
 		public void Emulate()
+		{
+		}
+
+		public void Reset()
 		{
 		}
 

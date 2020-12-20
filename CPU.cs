@@ -519,6 +519,10 @@ namespace runamiga
 						t_thirteen(ins); break;
 					case 14:
 						t_fourteen(ins); break;
+					case 10:
+						internalTrap(10); break;
+					case 15:
+						internalTrap(11); break;
 					default:
 						throw new UnknownInstructionException(ins);
 				}

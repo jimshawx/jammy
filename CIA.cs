@@ -34,6 +34,10 @@ namespace runamiga
 		{
 		}
 
+		public void Reset()
+		{
+		}
+
 		public bool IsMapped(uint address)
 		{
 			return (address&1)==1;
@@ -89,6 +93,10 @@ namespace runamiga
 		{
 		}
 
+		public void Reset()
+		{
+		}
+
 		public bool IsMapped(uint address)
 		{
 			return (address & 1) == 0;
@@ -130,6 +138,12 @@ namespace runamiga
 		{
 			ciaA.Emulate();
 			ciaB.Emulate();
+		}
+
+		public void Reset()
+		{
+			ciaA.Reset();
+			ciaB.Reset();
 		}
 
 		public bool IsMapped(uint address)

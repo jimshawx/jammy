@@ -39,6 +39,10 @@ namespace runamiga
 
 		private void Emulate(object o)
 		{
+			cia.Reset();
+			custom.Reset();
+			cpu.Reset();
+
 			for (;;)
 				RunEmulations();
 		}
