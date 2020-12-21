@@ -7,6 +7,7 @@ namespace runamiga.Types
 		public uint[] D { get; private set; }
 		public uint[] A { get; private set; }
 		public uint PC { get; set; }
+		public uint SSP { get; set; }
 		//T.S..210...XNZVC
 		public ushort SR { get; set;}
 
@@ -34,10 +35,8 @@ namespace runamiga.Types
 					items.Add($"D{i} {D[i]:X8}  A{i} {A[i]:X8}");
 			}
 
-
-			items.Add($"PC {PC:X8}");
-			items.Add($"SR {PC:X4}");
-			items.Add("X N Z V C");
+			items.Add($"PC {PC:X8} SSP {SSP:X8}");
+			items.Add($"X N Z V C   SR {SR:X4}");
 			items.Add($"{(SR >> 4) & 1} {(SR >> 3) & 1} {(SR >> 2) & 1} {(SR >> 1) & 1} {SR & 1}");
 			return items;
 		}

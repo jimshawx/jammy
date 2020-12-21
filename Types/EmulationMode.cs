@@ -8,6 +8,7 @@ namespace runamiga.Types
 	{
 		Stopped,
 		Step,
-		Running
+		Running,
+		Exit
 	}
 }

@@ -66,7 +66,7 @@ namespace runamiga
 			custom.Reset();
 			cpu.Reset();
 
-			for (;;)
+			while (emulationMode != EmulationMode.Exit)
 			{
 				switch (emulationMode)
 				{
@@ -81,6 +81,7 @@ namespace runamiga
 						//targetEmulationMode = EmulationMode.Stopped;
 						emulationMode = EmulationMode.Stopped;
 						break;
+					case EmulationMode.Exit: break;
 					default:
 						throw new ApplicationException("unknown emulation mode");
 				}

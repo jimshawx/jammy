@@ -40,12 +40,16 @@ namespace runamiga
 		{
 			uint pc = cpu.GetRegs().PC;
 			int line = cpu.GetAddressLine(pc);
+			if (line == 0) return;
+
+			txtDisassembly.SuspendLayout();
 			txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
 			txtDisassembly.ScrollToCaret();
 			txtDisassembly.Select(txtDisassembly.GetFirstCharIndexFromLine(line),
 				txtDisassembly.GetFirstCharIndexFromLine(line + 1) - txtDisassembly.GetFirstCharIndexFromLine(line));
-
-			UpdateRegisters();
+			txtDisassembly.Invalidate();
+			txtDisassembly.ResumeLayout();
+			txtDisassembly.Update();
 		}
 
 		private void btnStep_Click(object sender, System.EventArgs e)
@@ -54,6 +58,7 @@ namespace runamiga
 			machine.SetEmulationMode(EmulationMode.Step);
 			
 			SetSelection();
+			UpdateRegisters();
 		}
 
 		private void btnStop_Click(object sender, System.EventArgs e)
@@ -62,6 +67,7 @@ namespace runamiga
 			machine.SetEmulationMode(EmulationMode.Stopped);
 
 			SetSelection();
+			UpdateRegisters();
 		}
 
 		private void btnGo_Click(object sender, System.EventArgs e)
@@ -75,11 +81,12 @@ namespace runamiga
 			machine.SetEmulationMode(EmulationMode.Stopped);
 			machine.GetCPU().Reset();
 			SetSelection();
+			UpdateRegisters();
 		}
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			machine.SetEmulationMode(EmulationMode.Stopped);
+			machine.SetEmulationMode(EmulationMode.Exit);
 		}
 	}
 }

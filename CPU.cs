@@ -14,8 +14,10 @@ namespace runamiga
 
 		private class A
 		{
+			public uint ssp { get; private set; }
+			public uint sp { get { return a[7]; } }
+
 			private uint[] a = new uint[8];
-			private uint ssp;
 			private Func<bool> isSupervisor;
 
 			public A(Func<bool> isSupervisor)
@@ -58,9 +60,11 @@ namespace runamiga
 			{
 				regs.A[i] = a[i];
 				regs.D[i] = d[i];
-				regs.PC = pc;
-				regs.SR = sr;
 			}
+			regs.PC = pc;
+			regs.A[7] = a.sp;
+			regs.SSP = a.ssp;
+			regs.SR = sr;
 			return regs;
 		}
 
