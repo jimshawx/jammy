@@ -203,7 +203,7 @@ namespace runamiga
 
 		private void setC(uint v, uint op, Size size)
 		{
-			ulong r = zeroExtend(v, size) + (ulong)zeroExtend(op, size);
+			ulong r = (ulong)zeroExtend(v, size) + (ulong)(long)(int)zeroExtend(op, size);
 			setC(r, size);
 		}
 
@@ -1138,7 +1138,7 @@ namespace runamiga
 
 			setC(op1, (uint)-(int)op0, size);
 			setV(op1, (uint)-(int)op0, size);
-			setNZ(op1 - op0, Size.Long);
+			setNZ(op1 - op0, size);
 		}
 
 		private void t_nine(int type)
@@ -2279,8 +2279,9 @@ namespace runamiga
 
 		private void jsr(int type)
 		{
+			uint ea = fetchEA(type);
 			push32(pc);
-			pc = fetchEA(type);
+			pc = ea;
 		}
 
 		private void rtr(int type)

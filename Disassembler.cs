@@ -76,14 +76,59 @@ namespace runamiga
 			else if (s == Size.Long) asm.Append(".l ");
 		}
 
-		void Append(uint imm, Size s)
+		private string fmtX2(uint x)
 		{
-			if (s == Size.Byte)
-				asm.Append($"#${(byte)imm:X2}");
-			else if (s == Size.Word)
-				asm.Append($"#${(ushort)imm:X4}");
-			else if (s == Size.Long)
-				asm.Append($"#${imm:X8}");
+			x &= 0xff;
+			if (x < 10)
+				return string.Format($"{x}");
+			else if (x < 16)
+				return string.Format($"${x:X1}");
+			return string.Format($"${x:X2}");
+		}
+
+		private string fmtX4(uint x)
+		{
+			x &= 0xffff;
+			if (x < 10)
+				return string.Format($"{x}");
+			else if (x < 16)
+				return string.Format($"${x:X1}");
+			else if (x < 256)
+				return string.Format($"${x:X2}");
+			return string.Format($"${x:X4}");
+		}
+
+		private string fmtX8(uint x)
+		{
+			if (x < 10)
+				return string.Format($"{x}");
+			else if (x < 16)
+				return string.Format($"${x:X1}");
+			else if (x < 256)
+				return string.Format($"${x:X2}");
+			else if (x < 65536)
+				return string.Format($"${x:X4}");
+			else if (x < 0x1000000)
+				return string.Format($"${x:X6}");
+			return string.Format($"${x:X8}");
+		}
+
+		private string fmt(uint x, Size s)
+		{
+			if (s == Size.Byte) return fmtX2(x);
+			if (s == Size.Word) return fmtX4(x);
+			if (s == Size.Long) return fmtX8(x);
+			return $"unknown size {s}";
+		}
+
+		private void Append(uint imm, Size s)
+		{
+			asm.Append(fmt(imm,s));
+		}
+
+		private void Remove(int count)
+		{
+			asm.Length-=count;
 		}
 
 		public uint read32(uint address)
@@ -139,7 +184,7 @@ namespace runamiga
 						ushort d16 = read16(pc);
 						pc += 2;
 						//return a[x] + (uint)(short)d16;
-						Append($"${(ushort)d16:X4}(a{x})");
+						Append($"{fmtX4(d16)}(a{x})");
 						return 0;
 
 					}
@@ -149,7 +194,7 @@ namespace runamiga
 						uint Xn = (ext >> 12) & 7;
 						uint d8 = ext & 0xff;
 						string s = (((ext>>11)&1) != 0)?"l":"w";
-						Append($"${(byte)d8:X2}(a{x},d{Xn}.{s})");
+						Append($"{fmtX2(d8)}(a{x},d{Xn}.{s})");
 						return 0;
 					}
 				case 7:
@@ -165,7 +210,7 @@ namespace runamiga
 
 								pc += 2;
 								//Append($"(${d16:X4},pc)");
-								Append($"${d32:X8}(pc)");
+								Append($"{fmtX8(d32)}(pc)");
 								//return ea;
 								return 0;
 							}
@@ -175,21 +220,21 @@ namespace runamiga
 								uint Xn = (ext >> 12) & 7;
 								uint d8 = ext & 0xff;
 								string s = (((ext >> 11) & 1) != 0) ? "l" : "w";
-								Append($"${(byte)d8:X2}(pc,d{Xn}.{s})");
+								Append($"{fmtX2(d8)}(pc,d{Xn}.{s})");
 								return 0;
 							}
 						case 0b000://(xxx).w
 							{
 								uint ea = (uint)(short)read16(pc);
 								pc += 2;
-								Append($"${(ushort)ea:X4}");
+								Append($"{fmtX4(ea)}");
 								return ea;
 							}
 						case 0b001://(xxx).l
 							{
 								uint ea = read32(pc);
 								pc += 4;
-								Append($"${ea:X8}");
+								Append($"{fmtX8(ea)}");
 								return ea;
 							}
 						case 0b100://#imm
@@ -225,13 +270,13 @@ namespace runamiga
 			{
 				v = fetchOpSize(pc, size);
 				pc += 4;
-				Append($"#${v:X8}");
+				Append($"#{fmtX8(v)}");
 			}
 			else if (size == Size.Word)
 			{
 				v = fetchOpSize(pc, size);
 				pc += 2;
-				Append($"#${(ushort)v:X4}");
+				Append($"#{fmtX4(v)}");
 			}
 			else if (size == Size.Byte)
 			{
@@ -239,7 +284,7 @@ namespace runamiga
 				v = fetchOpSize(pc, Size.Word);
 				v = (uint)(sbyte)v;
 				pc += 2;
-				Append($"#${(byte)v:X2}");
+				Append($"#{fmtX2(v)}");
 			}
 			return v;
 		}
@@ -670,10 +715,11 @@ namespace runamiga
 				Append(size);
 
 				int Xn = (type >> 9) & 7;
-				Append($"a{Xn},");
 
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
+
+				Append($",a{Xn}");
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
@@ -951,7 +997,7 @@ namespace runamiga
 			else if (disp == 0xffffffff) {disp = read32(pc); pc += 4; size = Size.Long; }
 			disp += address+2;
 			Append(size);
-			Append($"#${disp:X8}");
+			Append($"#{fmtX8(disp)}");
 		}
 
 		private void t_five(int type)
@@ -1650,6 +1696,7 @@ namespace runamiga
 							Append($"d{m}/");
 					}
 				}
+				Remove(1);
 			}
 			else
 			{
@@ -1668,7 +1715,7 @@ namespace runamiga
 								Append($"d{m}/");
 						}
 					}
-
+					Remove(1);
 				}
 				else
 				{
@@ -1683,6 +1730,7 @@ namespace runamiga
 								Append($"d{m}/");
 						}
 					}
+					Remove(1);
 				}
 				Append(",");
 				uint ea = fetchEA(type);
