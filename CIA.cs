@@ -46,7 +46,7 @@ namespace runamiga
 		public uint Read(uint address, Size size)
 		{
 			if (size != Size.Byte)
-				throw new UnknownInstructionSizeException(0);
+				throw new UnknownInstructionSizeException(address,0);
 
 			byte reg = (byte)((address>>8)&0xf);
 			Trace.WriteLine($"CIAA Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
@@ -56,7 +56,7 @@ namespace runamiga
 		public void Write(uint address, uint value, Size size)
 		{
 			if (size != Size.Byte)
-				throw new UnknownInstructionSizeException(0);
+				throw new UnknownInstructionSizeException(address,0);
 
 			byte reg = (byte)((address >> 8) & 0xf);
 			regs[reg] = (byte)value;
@@ -105,7 +105,7 @@ namespace runamiga
 		public uint Read(uint address, Size size)
 		{
 			if (size != Size.Byte)
-				throw new UnknownInstructionSizeException(0);
+				throw new UnknownInstructionSizeException(address,0);
 
 			byte reg = (byte)((address >> 8) & 0xf);
 			Trace.WriteLine($"CIAB Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
@@ -115,7 +115,7 @@ namespace runamiga
 		public void Write(uint address, uint value, Size size)
 		{
 			if (size != Size.Byte)
-				throw new UnknownInstructionSizeException(0);
+				throw new UnknownInstructionSizeException(address, 0);
 
 			byte reg = (byte)((address >> 8) & 0xf);
 			regs[reg] = (byte)value;

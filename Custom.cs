@@ -284,12 +284,12 @@ namespace runamiga
 		public uint Read(uint address, Size size)
 		{
 			if (size != Size.Word)
-				throw new UnknownInstructionSizeException(0);
+				throw new UnknownInstructionSizeException(address, 0);
 
 			int reg = (int)(address&0x0000ffff);
 
 			if ((reg&1)!=0)
-				throw new InstructionAlignmentException(0);
+				throw new InstructionAlignmentException(address, 0);
 
 			Trace.WriteLine($"Custom Read {address:X8} {size} {debug[address].Item1} {debug[address].Item2}");
 			return (uint)regs[reg>>1];
@@ -298,12 +298,12 @@ namespace runamiga
 		public void Write(uint address, uint value, Size size)
 		{
 			if (size != Size.Word)
-				throw new UnknownInstructionSizeException(0);
+				throw new UnknownInstructionSizeException(address, 0);
 
 			int reg = (int)(address & 0x0000ffff);
 
 			if ((reg & 1) != 0)
-				throw new InstructionAlignmentException(0);
+				throw new InstructionAlignmentException(address, 0);
 
 			regs[reg >> 1] = (ushort)value;
 			Trace.WriteLine($"Custom Write {address:X8} {value:X8} {size} {debug[address].Item1} {debug[address].Item2}");

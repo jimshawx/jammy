@@ -1,21 +1,85 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using runamiga.Types;
+using System;
 using System.Windows.Forms;
 
 namespace runamiga
 {
 	public partial class Form1 : Form
 	{
-		public Form1()
+		private readonly CPU cpu;
+		private readonly Machine machine;
+
+		public Form1(Machine machine)
 		{
 			InitializeComponent();
+
+			this.machine = machine;
+
+			machine.Init();
+
+			cpu = machine.GetCPU();
+
+			UpdateRegisters();
+
+			var disasm = cpu.DisassembleTxt(0xfc0000);
+			txtDisassembly.Text = disasm;
+
+			SetSelection();
+			machine.SetEmulationMode(EmulationMode.Stopped);
+			machine.Start();
 		}
 
+		private void UpdateRegisters()
+		{
+			var regs = cpu.GetRegs();
+			lbRegisters.Items.Clear();
+			lbRegisters.Items.AddRange(regs.Items().ToArray());
+		}
+
+		private void SetSelection()
+		{
+			uint pc = cpu.GetRegs().PC;
+			int line = cpu.GetAddressLine(pc);
+			txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
+			txtDisassembly.ScrollToCaret();
+			txtDisassembly.Select(txtDisassembly.GetFirstCharIndexFromLine(line),
+				txtDisassembly.GetFirstCharIndexFromLine(line + 1) - txtDisassembly.GetFirstCharIndexFromLine(line));
+
+			UpdateRegisters();
+		}
+
+		private void btnStep_Click(object sender, System.EventArgs e)
+		{
+			txtDisassembly.DeselectAll();
+			machine.SetEmulationMode(EmulationMode.Step);
+			
+			SetSelection();
+		}
+
+		private void btnStop_Click(object sender, System.EventArgs e)
+		{
+			txtDisassembly.DeselectAll();
+			machine.SetEmulationMode(EmulationMode.Stopped);
+
+			SetSelection();
+		}
+
+		private void btnGo_Click(object sender, System.EventArgs e)
+		{
+			txtDisassembly.DeselectAll();
+			machine.SetEmulationMode(EmulationMode.Running);
+		}
+
+		private void btnReset_Click(object sender, EventArgs e)
+		{
+			machine.SetEmulationMode(EmulationMode.Stopped);
+			machine.GetCPU().Reset();
+			SetSelection();
+		}
+
+		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			machine.SetEmulationMode(EmulationMode.Stopped);
+		}
 	}
 }

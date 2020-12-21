@@ -16,9 +16,7 @@ namespace runamiga
 			Application.SetCompatibleTextRenderingDefault(false);
 
 			var machine = new Machine();
-			machine.Init();
-
-			Application.Run(new Form1());
+			Application.Run(new Form1(machine));
 		}
 	}
 }

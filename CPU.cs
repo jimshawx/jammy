@@ -1,5 +1,6 @@
 ﻿using runamiga.Types;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -34,6 +35,19 @@ namespace runamiga
 			disassembler = new Disassembler();
 
 			InitialSetup();
+		}
+
+		public Regs GetRegs()
+		{
+			var regs = new Regs();
+			for (int i = 0; i < 8; i++)
+			{
+				regs.A[i] = a[i];
+				regs.D[i] = d[i];
+				regs.PC = pc;
+				regs.SR = sr;
+			}
+			return regs;
 		}
 
 		private void Hack()
@@ -188,7 +202,7 @@ namespace runamiga
 				case Size.Long: c = (int)val; break;
 				case Size.Word: c = (int)(short)val; break;
 				case Size.Byte: c = (int)(sbyte)val; break;
-				default: throw new UnknownInstructionSizeException(0);
+				default: throw new UnknownInstructionSizeException(pc, 0);
 			}
 
 			//Z
@@ -291,9 +305,9 @@ namespace runamiga
 			b2 = (byte)(value >> 8);
 			b3 = (byte)(value);
 			memory[address] = b0;
-			memory[address + 1] = b1;
-			memory[address + 2] = b2;
-			memory[address + 3] = b3;
+			memory[(address + 1) & 0xffffff] = b1;
+			memory[(address + 2) & 0xffffff] = b2;
+			memory[(address + 3) & 0xffffff] = b3;
 		}
 
 		public void write16(uint address, ushort value)
@@ -307,7 +321,7 @@ namespace runamiga
 			b0 = (byte)(value >> 8);
 			b1 = (byte)(value);
 			memory[address] = b0;
-			memory[address + 1] = b1;
+			memory[(address + 1) & 0xffffff] = b1;
 		}
 
 		public void write8(uint address, byte value)
@@ -404,12 +418,12 @@ namespace runamiga
 						case 0b100://#imm
 							return pc;
 						default:
-							throw new UnknownEffectiveAddressException(type);
+							throw new UnknownEffectiveAddressException(pc, type);
 					}
 					break;
 			}
 
-			throw new UnknownEffectiveAddressException(type);
+			throw new UnknownEffectiveAddressException(pc, type);
 		}
 
 		private uint fetchOpSize(uint ea, Size size)
@@ -421,7 +435,7 @@ namespace runamiga
 				return (uint)(short)read16(ea);
 			if (size == Size.Byte)
 				return (uint)(sbyte)read8(ea);
-			throw new UnknownEffectiveAddressException(0);
+			throw new UnknownEffectiveAddressException(pc, 0);
 		}
 
 		private uint fetchImm(Size size)
@@ -500,17 +514,17 @@ namespace runamiga
 						case 0b011://(d8,pc,Xn)
 							return fetchOpSize(ea, size);
 						case 0b000://(xxx).w
-							return ea;//fetchOpSize(ea, size);
+							return fetchOpSize(ea, size);
 						case 0b001://(xxx).l
-							return ea;//fetchOpSize(ea, size);
+							return fetchOpSize(ea, size);
 						case 0b100://#imm
 							return fetchImm(size);//ea==pc
 						default:
-							throw new UnknownEffectiveAddressException(type);
+							throw new UnknownEffectiveAddressException(pc, type);
 					}
 			}
 
-			throw new UnknownEffectiveAddressException(type);
+			throw new UnknownEffectiveAddressException(pc, type);
 		}
 
 		private void writeOp(uint ea, uint val, Size size)
@@ -522,7 +536,7 @@ namespace runamiga
 			{ write16(ea, (ushort)val); return; }
 			if (size == Size.Byte)
 			{ write8(ea, (byte)val); return; }
-			throw new UnknownEffectiveAddressException(0);
+			throw new UnknownEffectiveAddressException(pc, 0);
 		}
 
 		private void writeEA(int type, uint ea, Size size, uint value)
@@ -601,13 +615,15 @@ namespace runamiga
 		{
 			ssp = read32(0);
 			pc = read32(4);
-			sr = 0b00000_111_00000000;
+			sr = 0b00100_111_00000000;
 		}
 
 		public void Emulate()
 		{
-			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, 12));
-			Trace.WriteLine(dasm);
+			pc &=0xffffff;
+
+			//var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
+			//Trace.WriteLine(dasm);
 
 			try
 			{
@@ -648,7 +664,7 @@ namespace runamiga
 					case 15:
 						internalTrap(11); break;
 					default:
-						throw new UnknownInstructionException(ins);
+						throw new UnknownInstructionException(pc, ins);
 				}
 			}
 			catch (MC68000Exception ex)
@@ -967,7 +983,7 @@ namespace runamiga
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
 				//addx
-				throw new UnknownInstructionException(type);
+				throw new UnknownInstructionException(pc, type);
 			}
 			else
 			{
@@ -1041,7 +1057,7 @@ namespace runamiga
 				case 0b10001://DA
 					tmp = d[Xn]; d[Xn] = a[Yn]; a[Yn] = tmp; break;
 				default:
-					throw new UnknownInstructionException(type);
+					throw new UnknownInstructionException(pc, type);
 			}
 		}
 
@@ -1163,7 +1179,7 @@ namespace runamiga
 			{
 				//subx
 				//d[Xn] -= op + (X()?1:0);
-				throw new UnknownInstructionException(type);
+				throw new UnknownInstructionException(pc, type);
 			}
 			else
 			{
@@ -1279,7 +1295,7 @@ namespace runamiga
 			}
 			else
 			{
-				throw new UnknownInstructionException(type);
+				throw new UnknownInstructionException(pc, type);
 			}
 		}
 
@@ -1806,7 +1822,7 @@ namespace runamiga
 					d[Xn] = (uint)(sbyte)d[Xn];
 					setNZ(d[Xn], Size.Byte);
 					break;
-				default: throw new UnknownInstructionException(type);
+				default: throw new UnknownInstructionException(pc, type);
 			}
 			clrCV();
 		}
@@ -1929,7 +1945,7 @@ namespace runamiga
 						cmpi(type);
 						break;
 					default:
-						throw new UnknownInstructionException(type);
+						throw new UnknownInstructionException(pc, type);
 				}
 			}
 			else
@@ -1938,7 +1954,7 @@ namespace runamiga
 				switch (op)
 				{
 					case 0://bit or movep
-						throw new UnknownInstructionException(type);
+						throw new UnknownInstructionException(pc, type);
 					case 1://move byte
 						moveb(type);
 						break;
@@ -2328,10 +2344,37 @@ namespace runamiga
 						var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
 						//Trace.WriteLine(dasm);
 						txtFile.WriteLine(dasm);
+
 						address += (uint)dasm.Bytes.Length;
 					}
 				}
 			}
 		}
+
+		private Dictionary<uint,int> addressToLine = new Dictionary<uint,int>();
+		public string DisassembleTxt(uint address)
+		{
+			var memorySpan = new ReadOnlySpan<byte>(memory);
+			var txt = new StringBuilder();
+
+			int line = 0;
+			while (address < 0x1000000)
+			{
+				addressToLine.Add(address, line++);
+				var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
+				txt.Append($"{dasm}\n");
+				address += (uint)dasm.Bytes.Length;
+			}
+
+			return txt.ToString();
+		}
+
+		public int GetAddressLine(uint address)
+		{
+			if (addressToLine.TryGetValue(address, out int line))
+				return line;
+			return 0;
+		}
+
 	}
 }

@@ -824,7 +824,7 @@ namespace runamiga
 			}
 			else
 			{
-				throw new UnknownInstructionException(type);
+				throw new UnknownInstructionException(0,type);
 			}
 		}
 
@@ -1334,7 +1334,7 @@ namespace runamiga
 				case 0b111:
 					Append($"extb.l d{Xn}");
 					break;
-				default: throw new UnknownInstructionException(type);
+				default: throw new UnknownInstructionException(0,type);
 			}
 		}
 
@@ -1342,6 +1342,7 @@ namespace runamiga
 		{
 			Append("move.w sr,");
 			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, Size.Word);
 		}
 
 		private void movetoccr(int type)
