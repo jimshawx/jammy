@@ -9,16 +9,32 @@ namespace runamiga
 {
 	public class CPU : IEmulate
 	{
-		private uint[] d;
-		private uint[] a;
+		private uint[] d = new uint[8];
+		private A a;
+
+		private class A
+		{
+			private uint[] a = new uint[8];
+			private uint ssp;
+			private Func<bool> isSupervisor;
+
+			public A(Func<bool> isSupervisor)
+			{
+				this.isSupervisor = isSupervisor;
+			}
+
+			public uint this[int i]
+			{
+				get { if (i == 7 && isSupervisor()) return ssp; else return a[i]; }
+				set { if (i == 7 && isSupervisor()) ssp = value; else a[i] = value; }
+			}
+		}
 
 		private uint pc;
 		//T.S..210...XNZVC
 		private ushort sr;
 
-		private uint ssp;
-
-		private byte[] memory;
+		private byte[] memory = new byte[16 * 1024 * 1024];
 
 		private IMemoryMappedDevice cia { get; }
 		private IMemoryMappedDevice custom { get; }
@@ -26,9 +42,7 @@ namespace runamiga
 
 		public CPU(IMemoryMappedDevice cia, IMemoryMappedDevice custom)
 		{
-			d = new uint[8];
-			a = new uint[8];
-			memory = new byte[16 * 1024 * 1024];
+			a = new A(Supervisor);
 			this.cia = cia;
 			this.custom = custom;
 
@@ -613,9 +627,9 @@ namespace runamiga
 
 		public void Reset()
 		{
-			ssp = read32(0);
-			pc = read32(4);
 			sr = 0b00100_111_00000000;
+			a[7] = read32(0);
+			pc = read32(4);
 		}
 
 		public void Emulate()
