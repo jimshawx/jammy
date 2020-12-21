@@ -67,6 +67,7 @@ namespace runamiga
 			// 
 			// btnStep
 			// 
+			this.btnStep.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnStep.Location = new System.Drawing.Point(462, 179);
 			this.btnStep.Name = "btnStep";
 			this.btnStep.Size = new System.Drawing.Size(75, 23);
@@ -77,6 +78,7 @@ namespace runamiga
 			// 
 			// btnStop
 			// 
+			this.btnStop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnStop.Location = new System.Drawing.Point(462, 208);
 			this.btnStop.Name = "btnStop";
 			this.btnStop.Size = new System.Drawing.Size(75, 23);
@@ -87,6 +89,7 @@ namespace runamiga
 			// 
 			// btnGo
 			// 
+			this.btnGo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnGo.Location = new System.Drawing.Point(462, 238);
 			this.btnGo.Name = "btnGo";
 			this.btnGo.Size = new System.Drawing.Size(75, 23);
@@ -97,6 +100,7 @@ namespace runamiga
 			// 
 			// btnReset
 			// 
+			this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnReset.Location = new System.Drawing.Point(463, 268);
 			this.btnReset.Name = "btnReset";
 			this.btnReset.Size = new System.Drawing.Size(75, 23);
