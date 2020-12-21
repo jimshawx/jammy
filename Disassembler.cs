@@ -195,13 +195,13 @@ namespace runamiga
 						case 0b100://#imm
 							return pc;
 						default:
-							Append($"unknown effective address mode {type}");
+							Append($"unknown effective address mode {type:X4}");
 							return 0;
 					}
 					break;
 			}
 
-			Append($"unknown effective address mode {type}");
+			Append($"unknown effective address mode {type:X4}");
 			return 0;
 		}
 
@@ -549,6 +549,8 @@ namespace runamiga
 					Append($" a{Xn},a{Yn}"); break;
 				case 0b10001://DA
 					Append($" d{Xn},a{Yn}"); break;
+				default:
+					Append(" - unknown mode"); break;
 			}
 		}
 

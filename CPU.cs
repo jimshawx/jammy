@@ -64,20 +64,89 @@ namespace runamiga
 			Hack();
 		}
 
-		private void setZ(uint val)
+		void setSupervisor()
 		{
-			//Z
-			if (val == 0) sr |= 0b00000000_00000100;
-			else sr &= 0b11111111_11111011;
+			sr |= 0b00100000_00000000;
+		}
+
+		void clrSupervisor()
+		{
+			sr &= 0b11011111_11111111;
 		}
 
 		private void setX()
 		{
 			sr |= 0b0000000000010000;
 		}
+
 		private void clrX()
 		{
 			sr &= 0b1111111111101111;
+		}
+
+		private void setX(bool val)
+		{
+			if (val) setX(); else clrX();
+		}
+
+		private void setN()
+		{
+			sr |= 0b0000000000100000;
+		}
+
+		private void clrN()
+		{
+			sr &= 0b1111111111011111;
+		}
+
+		private void setN(bool val)
+		{
+			if (val) setN(); else clrN();
+		}
+
+		private void setZ()
+		{
+			sr |= 0b00000000_00000100;
+		}
+
+		private void clrZ()
+		{
+			sr &= 0b11111111_11111011;
+		}
+
+		private void setV()
+		{
+			sr |= 0b00000000_00000010;
+		}
+
+		private void setZ(bool val)
+		{
+			if (val) setZ(); else clrZ();
+		}
+
+		private void clrV()
+		{
+			sr &= 0b11111111_11111101;
+		}
+
+		private void setC()
+		{
+			sr |= 0b00000000_00000001;
+		}
+
+		private void setV(bool val)
+		{
+			if (val) setV(); else clrV();
+		}
+
+		private void clrC()
+		{
+			sr &= 0b11111111_11111110;
+		}
+
+		private void setC(bool val)
+		{
+			if (val) setC(); else clrC();
 		}
 
 		private void setNZ(uint val, Size size)
@@ -101,19 +170,10 @@ namespace runamiga
 			else sr &= 0b11111111_11110111;
 		}
 
-		void setSupervisor()
+		private void clrCV()
 		{
-			sr |= 0b00100000_00000000;
-		}
-
-		private void clrV()
-		{
-			sr &= 0b11111111_11111101;
-		}
-
-		private void clrC()
-		{
-			sr &= 0b11111111_11111110;
+			clrC();
+			clrV();
 		}
 
 		private bool X() { return (sr & 16) != 0; }
@@ -543,6 +603,7 @@ namespace runamiga
 			}
 			catch (MC68000Exception ex)
 			{
+				Trace.WriteLine($"Caught an exception {ex}");
 				if (ex is UnknownInstructionException)
 					internalTrap(4);
 				else if (ex is UnknownInstructionSizeException)
@@ -759,6 +820,8 @@ namespace runamiga
 					tmp = a[Xn]; a[Xn] = a[Yn]; a[Yn] = tmp; break;
 				case 0b10001://DA
 					tmp = d[Xn]; d[Xn] = a[Yn]; a[Yn] = tmp; break;
+				default:
+					throw new UnknownInstructionException(type);
 			}
 		}
 
@@ -1765,7 +1828,7 @@ namespace runamiga
 			switch (op)
 			{
 				case 0://btst
-					setZ(op0 & bit);
+					setZ((op0 & bit)!=0);
 					break;
 				case 1://bchg
 					op0 ^= bit;
