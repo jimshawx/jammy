@@ -89,6 +89,11 @@ namespace runamiga
 			if (val) setX(); else clrX();
 		}
 
+		private void setX(uint val)
+		{
+			if (val != 0) setX(); else clrX();
+		}
+
 		private void setN()
 		{
 			sr |= 0b0000000000100000;
@@ -114,14 +119,14 @@ namespace runamiga
 			sr &= 0b11111111_11111011;
 		}
 
-		private void setV()
-		{
-			sr |= 0b00000000_00000010;
-		}
-
 		private void setZ(bool val)
 		{
 			if (val) setZ(); else clrZ();
+		}
+
+		private void setV()
+		{
+			sr |= 0b00000000_00000010;
 		}
 
 		private void clrV()
@@ -129,14 +134,24 @@ namespace runamiga
 			sr &= 0b11111111_11111101;
 		}
 
-		private void setC()
+		private void setV(long val, Size size)
 		{
-			sr |= 0b00000000_00000001;
+			if (size == Size.Long)
+				setV(val < 0x80000000 || val > 0x7fffffff);
+			else if (size == Size.Word)
+				setV(val < 0x8000 || val > 0x7fff);
+			else if (size == Size.Byte)
+				setV(val < 0x80 || val > 0x7f);
 		}
 
 		private void setV(bool val)
 		{
 			if (val) setV(); else clrV();
+		}
+
+		private void setC()
+		{
+			sr |= 0b00000000_00000001;
 		}
 
 		private void clrC()
@@ -147,6 +162,21 @@ namespace runamiga
 		private void setC(bool val)
 		{
 			if (val) setC(); else clrC();
+		}
+
+		private void setC(uint val)
+		{
+			if (val != 0) setC(); else clrC();
+		}
+
+		private void setC(ulong val, Size size)
+		{
+			if (size == Size.Long)
+				setC(val > 0xffffffff);
+			else if (size == Size.Word)
+				setC(val > 0xffff);
+			else if (size == Size.Byte)
+				setC(val > 0xff);
 		}
 
 		private void setNZ(uint val, Size size)
@@ -168,6 +198,19 @@ namespace runamiga
 			//N
 			if (c < 0) sr |= 0b00000000_00001000;
 			else sr &= 0b11111111_11110111;
+		}
+
+
+		private void setC(uint v, uint op, Size size)
+		{
+			ulong r = zeroExtend(v, size) + (ulong)zeroExtend(op, size);
+			setC(r, size);
+		}
+
+		private void setV(uint v, uint op, Size size)
+		{
+			long r = (long)(int)zeroExtend(v, size) + (int)zeroExtend(op, size);
+			setV(r, size);
 		}
 
 		private void clrCV()
@@ -297,7 +340,7 @@ namespace runamiga
 			return val;
 		}
 
-		uint fetchEA(int type)
+		private uint fetchEA(int type)
 		{
 			int m = (type >> 3) & 7;
 			int x = type & 7;
@@ -369,7 +412,7 @@ namespace runamiga
 			throw new UnknownEffectiveAddressException(type);
 		}
 
-		uint fetchOpSize(uint ea, Size size)
+		private uint fetchOpSize(uint ea, Size size)
 		{
 			//todo: trap on odd aligned access
 			if (size == Size.Long)
@@ -381,7 +424,7 @@ namespace runamiga
 			throw new UnknownEffectiveAddressException(0);
 		}
 
-		uint fetchImm(Size size)
+		private uint fetchImm(Size size)
 		{
 			uint v = 0;
 			if (size == Size.Long)
@@ -404,7 +447,7 @@ namespace runamiga
 			return v;
 		}
 
-		uint fetchOp(int type, uint ea, Size size)
+		private uint fetchOp(int type, uint ea, Size size)
 		{
 			int m = (type >> 3) & 7;
 			int x = type & 7;
@@ -470,7 +513,7 @@ namespace runamiga
 			throw new UnknownEffectiveAddressException(type);
 		}
 
-		void writeOp(uint ea, uint val, Size size)
+		private void writeOp(uint ea, uint val, Size size)
 		{
 			//todo: trap on odd aligned access
 			if (size == Size.Long)
@@ -545,6 +588,13 @@ namespace runamiga
 			if (s == 1) return Size.Word;
 			if (s == 2) return Size.Long;
 			return (Size)3;
+		}
+
+		private uint zeroExtend(uint val, Size size)
+		{
+			if (size == Size.Byte) return val & 0xff;
+			if (size == Size.Word) return val & 0xffff;
+			return val;
 		}
 
 		public void Reset()
@@ -664,15 +714,44 @@ namespace runamiga
 		{
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
-			if (lr == 1)
+			val = zeroExtend(val, size);
+			if (rot == 0)
 			{
-				val = (val << rot) | (val >> (32 - rot));
+				clrC();
 			}
 			else
 			{
-				val = (val >> rot) | (val << (32 - rot));
+				if (lr == 1)
+				{
+					if (size == Size.Long)
+						val = (val << rot) | (val >> (32 - rot));
+					else if (size == Size.Word)
+						val = (val << rot) | ((val & 0xffff) >> (16 - rot));
+					else if (size == Size.Byte)
+						val = (val << rot) | ((val & 0xff) >> (8 - rot));
+					setC(val & 1);
+				}
+				else
+				{
+					if (size == Size.Long)
+					{
+						val = (val >> rot) | (val << (32 - rot));
+						setC(val & (1u << 31));
+					}
+					else if (size == Size.Word)
+					{
+						val = ((val & 0xffff) >> rot) | (val << (16 - rot));
+						setC(val & (1u << 15));
+					}
+					else if (size == Size.Byte)
+					{
+						val = ((val & 0xff) >> rot) | (val << (8 - rot));
+						setC(val & (1u << 7));
+					}
+				}
 			}
 			setNZ(val, size);
+			clrV();
 			writeEA(type, ea, size, val);
 		}
 
@@ -680,57 +759,199 @@ namespace runamiga
 		{
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
-			if (lr == 1)
+			val = zeroExtend(val, size);
+			if (rot == 0)
 			{
-				val = (val << rot) | (val >> (32 - rot));
+				setC(X());
 			}
 			else
 			{
-				val = (val >> rot) | (val << (32 - rot));
+				if (lr == 1)
+				{
+					if (size == Size.Long)
+					{
+						for (int i = 0; i < rot; i++)
+						{
+							uint x = X() ? 1u : 0;
+							setX(val & (1u << 31));
+							val <<= 1;
+							val |= x;
+						}
+					}
+					else if (size == Size.Word)
+					{
+						for (int i = 0; i < rot; i++)
+						{
+							uint x = X() ? 1u : 0;
+							setX(val & (1u << 15));
+							val <<= 1;
+							val &= 0xffff;
+							val |= x;
+						}
+					}
+					else if (size == Size.Byte)
+					{
+						for (int i = 0; i < rot; i++)
+						{
+							uint x = X() ? 1u : 0;
+							setX(val & (1u << 7));
+							val <<= 1;
+							val &= 0xff;
+							val |= x;
+						}
+					}
+					setC(val & 1);
+				}
+				else
+				{
+					if (size == Size.Long)
+					{
+						for (int i = 0; i < rot; i++)
+						{
+							uint x = X() ? 1u : 0;
+							setX(val & 1);
+							val >>= 1;
+							val |= (x << 31);
+						}
+						setC(val & (1u << 31));
+					}
+					else if (size == Size.Word)
+					{
+						for (int i = 0; i < rot; i++)
+						{
+							uint x = X() ? 1u : 0;
+							setX(val & 1);
+							val >>= 1;
+							val |= (x << 15);
+						}
+						setC(val & (1u << 15));
+					}
+					else if (size == Size.Byte)
+					{
+						for (int i = 0; i < rot; i++)
+						{
+							uint x = X() ? 1u : 0;
+							setX(val & 1);
+							val >>= 1;
+							val |= (x << 7);
+						}
+						setC(val & (1u << 7));
+					}
+				}
 			}
 			writeEA(type, ea, size, val);
 			setNZ(val, size);
+			clrV();
 		}
 
-		private void lsd(int type, int rot, int lr, Size size)
+		private void lsd(int type, int shift, int lr, Size size)
 		{
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
-			if (lr == 1)
+			val = zeroExtend(val, size);
+			if (shift == 0)
 			{
-				val <<= rot;
+				clrC();
 			}
 			else
 			{
-				val >>= rot;
+				if (lr == 1)
+				{
+					if (size == Size.Long)
+					{
+						setX(1u << (32 - shift));
+						setC(1u << (32 - shift));
+					}
+					else if (size == Size.Word)
+					{
+						setX(1u << (16 - shift));
+						setC(1u << (16 - shift));
+					}
+					else if (size == Size.Byte)
+					{
+						setX(1u << (8 - shift));
+						setC(1u << (8 - shift));
+					}
+					val <<= shift;
+				}
+				else
+				{
+					if (size == Size.Word)
+						val &= 0xffff;
+					if (size == Size.Byte)
+						val &= 0xff;
+					setX(1u << (shift - 1));
+					setC(1u << (shift - 1));
+					val >>= shift;
+				}
 			}
 			setNZ(val, size);
+			clrV();
 			writeEA(type, ea, size, val);
 		}
 
-		private void asd(int type, int rot, int lr, Size size)
+		private void asd(int type, int shift, int lr, Size size)
 		{
 			uint ea = fetchEA(type);
-			int val = (int)fetchOp(type, ea, size);
-			if (lr == 1)
+			uint val = fetchOp(type, ea, size);
+			val = zeroExtend(val, size);
+			if (shift == 0)
 			{
-				val <<= rot;
+				clrC();
 			}
 			else
 			{
-				val >>= rot;
+				if (lr == 1)
+				{
+					uint v = 0;
+					if (size == Size.Long)
+					{
+						setX(1u << (32 - shift));
+						setC(1u << (32 - shift));
+						v = val & (1u << 31);
+					}
+					else if (size == Size.Word)
+					{
+						setX(1u << (16 - shift));
+						setC(1u << (16 - shift));
+						v = val & (1u << 15);
+						val &= 0xffff;
+					}
+					else if (size == Size.Byte)
+					{
+						setX(1u << (8 - shift));
+						setC(1u << (8 - shift));
+						v = val & (1u << 7);
+						val &= 0xff;
+					}
+					uint signmask = ((v << shift) - 1) << (16 - shift);
+					setV((v & signmask) != signmask);
+
+					val <<= shift;
+				}
+				else
+				{
+					setX(1u << (shift - 1));
+					setC(1u << (shift - 1));
+					if (size == Size.Long)
+						val = (uint)((int)val >> shift);
+					else if (size == Size.Word)
+						val = (uint)((short)val >> shift);
+					else if (size == Size.Byte)
+						val = (uint)((sbyte)val >> shift);
+					clrV();
+				}
 			}
-			setNZ((uint)val, size);
-			writeEA(type, ea, size, (uint)val);
+			setNZ(val, size);
+			writeEA(type, ea, size, val);
 		}
 
 		private void t_thirteen(int type)
 		{
 			//add
 
-			int s = (type >> 6) & 3;
-			Size size = 0;
-			if (s == 3)
+			Size size = getSize(type);
+			if ((int)size == 3)
 			{
 				//adda
 				if ((type & 0b1_00_000_000) != 0)
@@ -745,22 +966,20 @@ namespace runamiga
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
-				if (s == 0) size = Size.Byte;
-				else if (s == 1) size = Size.Word;
-				else if (s == 2) size = Size.Long;
 				//addx
 				throw new UnknownInstructionException(type);
 			}
 			else
 			{
-				if (s == 0) size = Size.Byte;
-				else if (s == 1) size = Size.Word;
-				else if (s == 2) size = Size.Long;
 				//add
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
+
+				setV(d[Xn], op, size);
+				setC(d[Xn], op, size);
+				setX(C());
 
 				if ((type & 0b1_00_000_000) != 0)
 				{
@@ -804,13 +1023,14 @@ namespace runamiga
 				d[Xn] &= op;
 				setNZ(d[Xn], size);
 			}
+			clrCV();
 		}
 
 		private void exg(int type)
 		{
-			int Yn=type&7;
-			int Xn=(type>>9)&7;
-			int mode = (type>>3)&0x1f;
+			int Yn = type & 7;
+			int Xn = (type >> 9) & 7;
+			int mode = (type >> 3) & 0x1f;
 			uint tmp;
 			switch (mode)
 			{
@@ -835,9 +1055,10 @@ namespace runamiga
 			int Xn = (type >> 9) & 7;
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
+			long v = (long)(short)d[Xn] * (short)op;
+			setV(v, Size.Long);
 			d[Xn] = (uint)((int)(short)d[Xn] * (int)(short)op);
 			setNZ(d[Xn], Size.Long);
-			clrV();
 			clrC();
 		}
 
@@ -848,8 +1069,7 @@ namespace runamiga
 			uint op = fetchOp(type, ea, Size.Word);
 			d[Xn] = (uint)(ushort)d[Xn] * (uint)(ushort)op;
 			setNZ(d[Xn], Size.Long);
-			clrV();
-			clrC();
+			clrCV();
 		}
 
 		private void t_eleven(int type)
@@ -880,6 +1100,7 @@ namespace runamiga
 				d[Xn] ^= op;
 				setNZ(d[Xn], size);
 			}
+			clrCV();
 		}
 
 		private void cmpm(int type)
@@ -895,38 +1116,37 @@ namespace runamiga
 			type = swizzle(type) & 7;
 			ea = fetchEA(type);
 			uint op1 = fetchOp(type, ea, size);
+
+			setC(op1, (uint)-(int)op0, size);
+			setV(op1, (uint)-(int)op0, size);
 			setNZ(op1 - op0, size);
 		}
 
 		private void cmpa(int type)
 		{
+			Size size;
 			if ((type & 0b1_00_000_000) != 0)
-			{
-				uint ea = fetchEA(type);
-				uint op0 = fetchOp(type, ea, Size.Long);
-				type = (swizzle(type) & 7) | 8;
-				ea = fetchEA(type);
-				uint op1 = fetchOp(type, ea, Size.Long);
-				setNZ(op1 - op0, Size.Long);
-			}
+				size = Size.Long;
 			else
-			{
-				uint ea = fetchEA(type);
-				uint op0 = fetchOp(type, ea, Size.Word);
-				type = (swizzle(type) & 7) | 8;
-				ea = fetchEA(type);
-				uint op1 = fetchOp(type, ea, Size.Word);
-				setNZ(op1 - op0, Size.Word);
-			}
+				size = Size.Word;
+
+			uint ea = fetchEA(type);
+			uint op0 = fetchOp(type, ea, size);
+			type = (swizzle(type) & 7) | 8;
+			ea = fetchEA(type);
+			uint op1 = fetchOp(type, ea, size);
+
+			setC(op1, (uint)-(int)op0, size);
+			setV(op1, (uint)-(int)op0, size);
+			setNZ(op1 - op0, Size.Long);
 		}
 
 		private void t_nine(int type)
 		{
 			//sub
 
-			int s = (type >> 6) & 3;
-			Size size = 0;
-			if (s == 3)
+			Size size = getSize(type);
+			if ((int)size == 3)
 			{
 				//suba
 				if ((type & 0b1_00_000_000) != 0)
@@ -941,23 +1161,21 @@ namespace runamiga
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
-				if (s == 0) size = Size.Byte;
-				else if (s == 1) size = Size.Word;
-				else if (s == 2) size = Size.Long;
 				//subx
 				//d[Xn] -= op + (X()?1:0);
 				throw new UnknownInstructionException(type);
 			}
 			else
 			{
-				if (s == 0) size = Size.Byte;
-				else if (s == 1) size = Size.Word;
-				else if (s == 2) size = Size.Long;
 				//sub
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
+
+				setC(d[Xn], (uint)-(int)op, size);
+				setV(d[Xn], (uint)-(int)op, size);
+				setX(C());
 
 				if ((type & 0b1_00_000_000) != 0)
 				{
@@ -971,7 +1189,6 @@ namespace runamiga
 					setNZ(op, size);
 				}
 			}
-
 		}
 
 		private void t_eight(int type)
@@ -1001,6 +1218,7 @@ namespace runamiga
 				d[Xn] |= op;
 				setNZ(d[Xn], size);
 			}
+			clrCV();
 		}
 
 		private void sbcd(int type)
@@ -1020,6 +1238,8 @@ namespace runamiga
 			uint lo = (uint)((int)d[Xn] / (short)op);
 			uint hi = (uint)((int)d[Xn] % (short)op);
 
+			setV(lo, Size.Word);
+
 			d[Xn] = (hi << 16) | (uint)(short)lo;
 
 			setNZ(d[Xn], Size.Word);
@@ -1038,6 +1258,8 @@ namespace runamiga
 			uint lo = d[Xn] / (ushort)op;
 			uint hi = d[Xn] % (ushort)op;
 
+			setV(lo > 0xffff);
+
 			d[Xn] = (hi << 16) | (ushort)lo;
 
 			setNZ(d[Xn], Size.Word);
@@ -1052,6 +1274,8 @@ namespace runamiga
 				int Xn = (type >> 17) & 3;
 				uint imm8 = (uint)(sbyte)(type & 0xff);
 				d[Xn] = imm8;
+				setNZ(d[Xn], Size.Long);
+				clrCV();
 			}
 			else
 			{
@@ -1278,9 +1502,6 @@ namespace runamiga
 		private void dbcc(int type)
 		{
 			int Xn = type & 7;
-			uint v = d[Xn];
-			v--;
-			setNZ(v, Size.Long);
 
 			uint target = pc + (uint)(short)read16(pc);
 			pc += 2;
@@ -1289,51 +1510,51 @@ namespace runamiga
 			switch (cond)
 			{
 				case 0:
-					pc = target;
+					d[Xn]--; pc = target;
 					break;
 				case 1:
 					break;
 				case 2:
-					if (hi()) pc = target;
+					if (hi()) { d[Xn]--; pc = target; }
 					break;
 				case 3:
-					if (ls()) pc = target;
+					if (ls()) { d[Xn]--; pc = target; }
 					break;
 				case 4:
-					if (cc()) pc = target;
+					if (cc()) { d[Xn]--; pc = target; }
 					break;
 				case 5:
-					if (cs()) pc = target;
+					if (cs()) { d[Xn]--; pc = target; }
 					break;
 				case 6:
-					if (ne()) pc = target;
+					if (ne()) { d[Xn]--; pc = target; }
 					break;
 				case 7:
-					if (eq()) pc = target;
+					if (eq()) { d[Xn]--; pc = target; }
 					break;
 				case 8:
-					if (vc()) pc = target;
+					if (vc()) { d[Xn]--; pc = target; }
 					break;
 				case 9:
-					if (vs()) pc = target;
+					if (vs()) { d[Xn]--; pc = target; }
 					break;
 				case 10:
-					if (pl()) pc = target;
+					if (pl()) { d[Xn]--; pc = target; }
 					break;
 				case 11:
-					if (mi()) pc = target;
+					if (mi()) { d[Xn]--; pc = target; }
 					break;
 				case 12:
-					if (ge()) pc = target;
+					if (ge()) { d[Xn]--; pc = target; }
 					break;
 				case 13:
-					if (lt()) pc = target;
+					if (lt()) { d[Xn]--; pc = target; }
 					break;
 				case 14:
-					if (gt()) pc = target;
+					if (gt()) { d[Xn]--; pc = target; }
 					break;
 				case 15:
-					if (le()) pc = target;
+					if (le()) { d[Xn]--; pc = target; }
 					break;
 			}
 		}
@@ -1343,6 +1564,9 @@ namespace runamiga
 			uint imm = (uint)((type >> 9) & 7);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Long);
+			setV(op, (uint)-(int)imm, Size.Long);
+			setC(op, (uint)-(int)imm, Size.Long);
+			setX(C());
 			op -= imm;
 			setNZ(op, Size.Long);
 			writeEA(type, ea, Size.Long, op);
@@ -1353,6 +1577,9 @@ namespace runamiga
 			uint imm = (uint)((type >> 9) & 7);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
+			setV(op, (uint)-(int)imm, Size.Word);
+			setC(op, (uint)-(int)imm, Size.Word);
+			setX(C());
 			op -= imm;
 			setNZ(op, Size.Word);
 			writeEA(type, ea, Size.Word, op);
@@ -1363,6 +1590,9 @@ namespace runamiga
 			uint imm = (uint)((type >> 9) & 7);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Byte);
+			setV(op, (uint)-(int)imm, Size.Byte);
+			setC(op, (uint)-(int)imm, Size.Byte);
+			setX(C());
 			op -= imm;
 			setNZ(op, Size.Byte);
 			writeEA(type, ea, Size.Byte, op);
@@ -1373,6 +1603,9 @@ namespace runamiga
 			uint imm = (uint)((type >> 9) & 7);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Long);
+			setV(op, imm, Size.Long);
+			setC(op, imm, Size.Long);
+			setX(C());
 			op += imm;
 			setNZ(op, Size.Long);
 			writeEA(type, ea, Size.Long, op);
@@ -1383,6 +1616,9 @@ namespace runamiga
 			uint imm = (uint)((type >> 9) & 7);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
+			setV(op, imm, Size.Word);
+			setC(op, imm, Size.Word);
+			setX(C());
 			op += imm;
 			setNZ(op, Size.Word);
 			writeEA(type, ea, Size.Word, op);
@@ -1393,6 +1629,9 @@ namespace runamiga
 			uint imm = (uint)((type >> 9) & 7);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Byte);
+			setV(op, imm, Size.Byte);
+			setC(op, imm, Size.Byte);
+			setX(C());
 			op += imm;
 			setNZ(op, Size.Byte);
 			writeEA(type, ea, Size.Byte, op);
@@ -1488,8 +1727,7 @@ namespace runamiga
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			setNZ(op, size);
-			clrV();
-			clrC();
+			clrCV();
 		}
 
 		private void not(int type)
@@ -1499,6 +1737,7 @@ namespace runamiga
 			uint op = fetchOp(type, ea, size);
 			op = ~op;
 			setNZ(op, size);
+			clrCV();
 			writeOp(ea, op, size);
 		}
 
@@ -1507,7 +1746,10 @@ namespace runamiga
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
+			setV(0, (uint)-(int)op, size);
 			op = ~op + 1;//same as neg
+			setC(op != 0);
+			setX(C());
 			setNZ(op, size);
 			writeOp(ea, op, size);
 		}
@@ -1517,6 +1759,9 @@ namespace runamiga
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			writeOp(ea, 0, size);
+			clrN();
+			setZ();
+			clrCV();
 		}
 
 		private void negx(int type)
@@ -1535,8 +1780,7 @@ namespace runamiga
 			int Xn = type & 7;
 			d[Xn] = (d[Xn] >> 16) | (d[Xn] << 16);
 			setNZ(d[Xn], Size.Long);
-			clrV();
-			clrC();
+			clrCV();
 		}
 
 		private void nbcd(int type)
@@ -1560,19 +1804,18 @@ namespace runamiga
 					break;
 				case 0b111:
 					d[Xn] = (uint)(sbyte)d[Xn];
-					setNZ(d[Xn], Size.Long);
+					setNZ(d[Xn], Size.Byte);
 					break;
 				default: throw new UnknownInstructionException(type);
 			}
-			clrV();
-			clrX();
+			clrCV();
 		}
 
 		private void movetosr(int type)
 		{
 			uint ea = fetchEA(type);
 			if (Supervisor())
-				sr = (ushort)fetchOp(type, ea, Size.Word);
+				sr = (ushort)fetchOp(type, ea, Size.Word); //naturally sets the flags
 			else
 				internalTrap(8);
 		}
@@ -1581,7 +1824,7 @@ namespace runamiga
 		{
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-			sr = (ushort)((sr & 0xff00) | (op & 0xff));
+			sr = (ushort)((sr & 0xff00) | (op & 0xff)); //naturally sets the flags
 		}
 
 		private void movefromsr(int type)
@@ -1648,7 +1891,7 @@ namespace runamiga
 		{
 			if (Supervisor())
 			{
-				sr = read16(pc);
+				sr = read16(pc);//naturally sets the flags
 				pc += 2;
 			}
 			else
@@ -1724,8 +1967,8 @@ namespace runamiga
 			ea = fetchEA(type);
 			writeEA(type, ea, Size.Long, op);
 
-			clrV();
-			clrC();
+			setNZ(op, Size.Long);
+			clrCV();
 		}
 
 		private void movew(int type)
@@ -1738,8 +1981,7 @@ namespace runamiga
 			writeEA(type, ea, Size.Word, op);
 
 			setNZ(op, Size.Word);
-			clrV();
-			clrC();
+			clrCV();
 		}
 
 		private void moveb(int type)
@@ -1752,8 +1994,7 @@ namespace runamiga
 			writeEA(type, ea, Size.Byte, op);
 
 			setNZ(op, Size.Byte);
-			clrV();
-			clrC();
+			clrCV();
 		}
 
 		private void cmpi(int type)
@@ -1762,6 +2003,8 @@ namespace runamiga
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
+			setC(op, (uint)-(int)imm, size);
+			setV(op, (uint)-(int)imm, size);
 			op -= imm;
 			setNZ(op, size);
 		}
@@ -1777,7 +2020,7 @@ namespace runamiga
 				{
 					uint opsr = fetchOp(type, ea, Size.Word);
 					ushort immsr = (ushort)fetchImm(Size.Word);
-					sr ^= immsr;
+					sr ^= immsr; //naturally sets the flags
 				}
 				else
 				{
@@ -1790,6 +2033,7 @@ namespace runamiga
 			uint imm = fetchImm(size);
 			op ^= imm;
 			setNZ(op, size);
+			clrCV();
 			writeEA(type, ea, size, op);
 		}
 
@@ -1824,11 +2068,12 @@ namespace runamiga
 			uint ea = fetchEA(type);
 			uint op0 = fetchOp(type, ea, size);
 
+			setZ((op0 & bit) != 0);
+
 			int op = (type >> 6) & 3;
 			switch (op)
 			{
 				case 0://btst
-					setZ((op0 & bit)!=0);
 					break;
 				case 1://bchg
 					op0 ^= bit;
@@ -1851,6 +2096,9 @@ namespace runamiga
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
+			setC(op, imm, size);
+			setV(op, imm, size);
+			setX(C());
 			op += imm;
 			setNZ(op, size);
 			writeEA(type, ea, size, op);
@@ -1862,6 +2110,9 @@ namespace runamiga
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 			uint imm = fetchImm(size);
+			setC(op, (uint)-(int)imm, size);
+			setV(op, (uint)-(int)imm, size);
+			setX(C());
 			op -= imm;
 			setNZ(op, size);
 			writeEA(type, ea, size, op);
@@ -1878,7 +2129,7 @@ namespace runamiga
 				{
 					uint opsr = fetchOp(type, ea, Size.Word);
 					ushort immsr = (ushort)fetchImm(Size.Word);
-					sr &= immsr;
+					sr &= immsr;//naturally clears the flags
 				}
 				else
 				{
@@ -1891,6 +2142,7 @@ namespace runamiga
 			uint imm = fetchImm(size);
 			op &= imm;
 			setNZ(op, size);
+			clrCV();
 			writeEA(type, ea, size, op);
 		}
 
@@ -1918,6 +2170,7 @@ namespace runamiga
 			uint imm = fetchImm(size);
 			op |= imm;
 			setNZ(op, size);
+			clrCV();
 			writeEA(type, ea, size, op);
 		}
 
@@ -1927,13 +2180,13 @@ namespace runamiga
 			int Xn = (type >> 9) & 7;
 			if (d[Xn] < 0)
 			{
-				setX();
+				setN();
 				internalTrap(6);
 			}
 
 			if (d[Xn] > ea)
 			{
-				clrX();
+				clrN();
 				internalTrap(6);
 			}
 		}
@@ -2032,7 +2285,7 @@ namespace runamiga
 
 		private void rtr(int type)
 		{
-			sr = (ushort)((sr & 0xff00) | (pop16() & 0x00ff));
+			sr = (ushort)((sr & 0xff00) | (pop16() & 0x00ff));//naturally sets the flags
 			pc = pop32();
 		}
 
@@ -2071,7 +2324,7 @@ namespace runamiga
 				{
 					while (address < 0x1000000)
 					{
-						var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12,(int)(0x1000000-address))));
+						var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
 						//Trace.WriteLine(dasm);
 						txtFile.WriteLine(dasm);
 						address += (uint)dasm.Bytes.Length;
