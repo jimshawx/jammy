@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Linq;
 
 namespace RunAmiga
 {
@@ -68,6 +69,11 @@ namespace RunAmiga
 			return regs;
 		}
 
+		public Memory GetMemory()
+		{
+			return new Memory(memory);
+		}
+
 		private void Hack()
 		{
 			//remove the annoying delay loop at FC00D8
@@ -75,17 +81,22 @@ namespace RunAmiga
 			memory[0xfc00db] = 0;
 			memory[0xfc00dc] = 0;
 			memory[0xfc00dd] = 1;
+
+			memory[0x0000da] = 0;
+			memory[0x0000db] = 0;
+			memory[0x0000dc] = 0;
+			memory[0x0000dd] = 1;
 		}
 
 		public void InitialSetup()
 		{
-			//poke in exec base
-			memory[4] = 0x00;
-			memory[5] = 0xfc;
-			memory[6] = 0x00;
-			memory[7] = 0xd2;
+			////poke in exec base
+			//memory[4] = 0x00;
+			//memory[5] = 0xfc;
+			//memory[6] = 0x00;
+			//memory[7] = 0xd2;
 
-			Hack();
+			//Hack();
 
 			Reset();
 		}
@@ -93,7 +104,6 @@ namespace RunAmiga
 		public void BulkWrite(int dst, byte[] src, int length)
 		{
 			Array.Copy(src, 0, memory, dst, 256 * 1024);
-			Hack();
 		}
 
 		void setSupervisor()
@@ -283,9 +293,9 @@ namespace RunAmiga
 			if (custom.IsMapped(address)) custom.Read(address, Size.Long);
 
 			return ((uint)memory[address] << 24) +
-				((uint)memory[address + 1] << 16) +
-				((uint)memory[address + 2] << 8) +
-				(uint)memory[address + 3];
+				((uint)memory[(address + 1)&0xffffff] << 16) +
+				((uint)memory[(address + 2)& 0xffffff] << 8) +
+				(uint)memory[(address + 3)& 0xffffff];
 		}
 
 		public ushort read16(uint address)
@@ -297,7 +307,7 @@ namespace RunAmiga
 
 			return (ushort)(
 				((ushort)memory[address] << 8) +
-				(ushort)memory[address + 1]);
+				(ushort)memory[(address + 1)& 0xffffff]);
 		}
 
 		public byte read8(uint address)
@@ -640,8 +650,14 @@ namespace RunAmiga
 		{
 			pc &=0xffffff;
 
-			//var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
-			//Trace.WriteLine(dasm);
+			if (IsBreakpoint(pc))
+			{
+				Machine.SetEmulationMode(EmulationMode.Stopped);
+				return;
+			}
+
+			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
+			tracePC(dasm.ToString(), pc);
 
 			try
 			{
@@ -1447,21 +1463,29 @@ namespace RunAmiga
 
 		private void bsr(int type)
 		{
+			tracePC("bsr", pc);
+
 			uint bas = pc;
 			uint disp = (uint)(sbyte)(type & 0xff);
 			if (disp == 0) disp = fetchImm(Size.Word);
 			else if (disp == 0xffffffff) disp = fetchImm(Size.Long);
 			push32(pc);
 			pc = bas + disp;
+			
+			tracePC(pc);
 		}
 
 		private void bra(int type)
 		{
+			tracePC("bra", pc);
+
 			uint bas = pc;
 			uint disp = (uint)(sbyte)(type & 0xff);
 			if (disp == 0) disp = fetchImm(Size.Word);
 			else if (disp == 0xff) disp = fetchImm(Size.Long);
 			pc = bas + disp;
+
+			tracePC(pc);
 		}
 
 		private void t_five(int type)
@@ -1872,9 +1896,37 @@ namespace RunAmiga
 			internalTrap(4);
 		}
 
+		string[] trapNames = new string [16] {
+			"Initial SSP",
+			"Initial PC",
+			"Bus Error",
+			"Address Error",
+			"Illegal Instruction",
+			"Zero Divide",
+			"CHK Instruction",
+			"TRAPV Instruction",
+			"Privilege Violation",
+			"Trace",
+			"Line 1010 Emulator",
+			"Line 1111 Emulator",
+			"Reserved",
+			"Reserved",
+			"Format Error (MC68010)",
+			"Unitialized Interrupt Vector",
+			};
+
 		void internalTrap(uint vector)
 		{
+			DumpTrace();
+
+			if (vector < 16)
+				Trace.Write($"Trap {vector} {trapNames[vector]} {pc:X8}");
+			else
+				Trace.Write($"Trap {vector} {pc:X8}");
+
 			pc = read32(vector << 2);
+
+			Trace.WriteLine($" -> {pc:X8}");
 		}
 
 		private void trap(int type)
@@ -1911,9 +1963,7 @@ namespace RunAmiga
 
 		private void reset(int type)
 		{
-			if (Supervisor())
-				Reset();
-			else
+			if (!Supervisor())
 				internalTrap(8);
 		}
 
@@ -2308,14 +2358,22 @@ namespace RunAmiga
 
 		private void jmp(int type)
 		{
+			tracePC("jmp", pc);
+
 			pc = fetchEA(type);
+
+			tracePC(pc);
 		}
 
 		private void jsr(int type)
 		{
+			tracePC("jsr", pc);
+
 			uint ea = fetchEA(type);
 			push32(pc);
 			pc = ea;
+
+			tracePC(pc);
 		}
 
 		private void rtr(int type)
@@ -2332,7 +2390,9 @@ namespace RunAmiga
 
 		private void rts(int type)
 		{
+			tracePC("rts", pc);
 			pc = pop32();
+			tracePC(pc);
 		}
 
 		private void rte(int type)
@@ -2392,6 +2452,69 @@ namespace RunAmiga
 			if (addressToLine.TryGetValue(address, out int line))
 				return line;
 			return 0;
+		}
+
+		private class Tracer
+		{
+			public string type { get; set; }
+			public uint fromPC { get; set; }
+			public uint toPC { get; set; }
+			public Regs regs { get; set; }
+
+			public override string ToString()
+			{
+				return $"{type,-80} {fromPC:X8}->{toPC:X8} {regs.RegString()}";
+			}
+		}
+
+		List<Tracer> traces = new List<Tracer>();
+		private void tracePC(uint pc)
+		{
+			traces.Last().toPC = pc;
+		}
+
+		private void tracePC(string v, uint pc)
+		{
+			traces.Add(new Tracer { type = v, fromPC = pc, regs = GetRegs() });
+		}
+		private void DumpTrace()
+		{
+			foreach (var t in traces.TakeLast(64))
+			{
+				Trace.WriteLine($"{t}");
+			}
+		}
+
+		private Dictionary<uint, Breakpoint> breakpoints = new Dictionary<uint, Breakpoint>();
+		
+		private bool IsBreakpoint(uint pc)
+		{
+			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
+				return bp.Active;
+			return false;
+		}
+		
+		public void AddBreakpoint(uint address)
+		{
+			breakpoints[address] = new Breakpoint { Address = address, Active = true };
+		}
+
+		public void RemoveBreakpoint(uint address)
+		{
+			breakpoints.Remove(address);
+		}
+
+		public void SetBreakpoint(uint address, bool active)
+		{
+			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
+				bp.Active = active;
+		}
+
+		public Breakpoint GetBreakpoint(uint address, bool active)
+		{
+			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
+				return bp;
+			return new Breakpoint { Address = address, Active = false };
 		}
 
 	}

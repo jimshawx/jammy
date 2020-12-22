@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 
 namespace RunAmiga.Types
 {
@@ -39,6 +40,23 @@ namespace RunAmiga.Types
 			items.Add($"X N Z V C    SR {SR:X4}");
 			items.Add($"{(SR >> 4) & 1} {(SR >> 3) & 1} {(SR >> 2) & 1} {(SR >> 1) & 1} {SR & 1}");
 			return items;
+		}
+
+		public string RegString()
+		{
+			var sb = new StringBuilder();
+			
+			sb.Append("D ");
+			for (int i = 0; i < 8; i++)
+				sb.Append($"{D[i]:X8} ");
+			
+			sb.Append(" A ");
+			for (int i = 0; i < 8; i++)
+				sb.Append($"{A[i]:X8} ");
+			
+			sb.Append($" PC {PC:X8}");
+
+			return sb.ToString();
 		}
 	}
 }

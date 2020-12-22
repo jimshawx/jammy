@@ -36,6 +36,12 @@ namespace RunAmiga
 			this.btnStop = new System.Windows.Forms.Button();
 			this.btnGo = new System.Windows.Forms.Button();
 			this.btnReset = new System.Windows.Forms.Button();
+			this.txtMemory = new System.Windows.Forms.RichTextBox();
+			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+			this.splitContainer1.Panel1.SuspendLayout();
+			this.splitContainer1.Panel2.SuspendLayout();
+			this.splitContainer1.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// lbRegisters
@@ -44,7 +50,7 @@ namespace RunAmiga
 			this.lbRegisters.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.lbRegisters.FormattingEnabled = true;
 			this.lbRegisters.IntegralHeight = false;
-			this.lbRegisters.Location = new System.Drawing.Point(462, 12);
+			this.lbRegisters.Location = new System.Drawing.Point(717, 12);
 			this.lbRegisters.Name = "lbRegisters";
 			this.lbRegisters.SelectionMode = System.Windows.Forms.SelectionMode.None;
 			this.lbRegisters.Size = new System.Drawing.Size(179, 160);
@@ -58,10 +64,10 @@ namespace RunAmiga
 			this.txtDisassembly.DetectUrls = false;
 			this.txtDisassembly.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.txtDisassembly.HideSelection = false;
-			this.txtDisassembly.Location = new System.Drawing.Point(12, 12);
+			this.txtDisassembly.Location = new System.Drawing.Point(3, 3);
 			this.txtDisassembly.Name = "txtDisassembly";
 			this.txtDisassembly.ReadOnly = true;
-			this.txtDisassembly.Size = new System.Drawing.Size(444, 426);
+			this.txtDisassembly.Size = new System.Drawing.Size(693, 233);
 			this.txtDisassembly.TabIndex = 1;
 			this.txtDisassembly.Text = "";
 			this.txtDisassembly.WordWrap = false;
@@ -69,7 +75,7 @@ namespace RunAmiga
 			// btnStep
 			// 
 			this.btnStep.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnStep.Location = new System.Drawing.Point(462, 179);
+			this.btnStep.Location = new System.Drawing.Point(717, 179);
 			this.btnStep.Name = "btnStep";
 			this.btnStep.Size = new System.Drawing.Size(75, 23);
 			this.btnStep.TabIndex = 2;
@@ -80,7 +86,7 @@ namespace RunAmiga
 			// btnStop
 			// 
 			this.btnStop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnStop.Location = new System.Drawing.Point(462, 208);
+			this.btnStop.Location = new System.Drawing.Point(717, 208);
 			this.btnStop.Name = "btnStop";
 			this.btnStop.Size = new System.Drawing.Size(75, 23);
 			this.btnStop.TabIndex = 3;
@@ -91,7 +97,7 @@ namespace RunAmiga
 			// btnGo
 			// 
 			this.btnGo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnGo.Location = new System.Drawing.Point(462, 238);
+			this.btnGo.Location = new System.Drawing.Point(717, 238);
 			this.btnGo.Name = "btnGo";
 			this.btnGo.Size = new System.Drawing.Size(75, 23);
 			this.btnGo.TabIndex = 4;
@@ -102,7 +108,7 @@ namespace RunAmiga
 			// btnReset
 			// 
 			this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnReset.Location = new System.Drawing.Point(463, 268);
+			this.btnReset.Location = new System.Drawing.Point(718, 268);
 			this.btnReset.Name = "btnReset";
 			this.btnReset.Size = new System.Drawing.Size(75, 23);
 			this.btnReset.TabIndex = 5;
@@ -110,21 +116,59 @@ namespace RunAmiga
 			this.btnReset.UseVisualStyleBackColor = true;
 			this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
 			// 
+			// txtMemory
+			// 
+			this.txtMemory.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.txtMemory.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			this.txtMemory.Location = new System.Drawing.Point(3, 3);
+			this.txtMemory.Name = "txtMemory";
+			this.txtMemory.ReadOnly = true;
+			this.txtMemory.Size = new System.Drawing.Size(693, 306);
+			this.txtMemory.TabIndex = 6;
+			this.txtMemory.Text = "";
+			this.txtMemory.WordWrap = false;
+			// 
+			// splitContainer1
+			// 
+			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.splitContainer1.Location = new System.Drawing.Point(12, 12);
+			this.splitContainer1.Name = "splitContainer1";
+			this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+			// 
+			// splitContainer1.Panel1
+			// 
+			this.splitContainer1.Panel1.Controls.Add(this.txtDisassembly);
+			// 
+			// splitContainer1.Panel2
+			// 
+			this.splitContainer1.Panel2.Controls.Add(this.txtMemory);
+			this.splitContainer1.Size = new System.Drawing.Size(699, 555);
+			this.splitContainer1.SplitterDistance = 239;
+			this.splitContainer1.TabIndex = 7;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(654, 450);
+			this.ClientSize = new System.Drawing.Size(909, 579);
+			this.Controls.Add(this.splitContainer1);
 			this.Controls.Add(this.btnReset);
 			this.Controls.Add(this.btnGo);
 			this.Controls.Add(this.btnStop);
 			this.Controls.Add(this.btnStep);
-			this.Controls.Add(this.txtDisassembly);
 			this.Controls.Add(this.lbRegisters);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "Form1";
 			this.Text = "RunAmiga";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
+			this.splitContainer1.Panel1.ResumeLayout(false);
+			this.splitContainer1.Panel2.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+			this.splitContainer1.ResumeLayout(false);
 			this.ResumeLayout(false);
 
 		}
@@ -137,6 +181,8 @@ namespace RunAmiga
 		private System.Windows.Forms.Button btnStop;
 		private System.Windows.Forms.Button btnGo;
 		private System.Windows.Forms.Button btnReset;
+		private System.Windows.Forms.RichTextBox txtMemory;
+		private System.Windows.Forms.SplitContainer splitContainer1;
 	}
 }
 

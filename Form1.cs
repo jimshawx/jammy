@@ -1,5 +1,6 @@
 ﻿using RunAmiga.Types;
 using System;
+using System.Diagnostics;
 using System.Windows.Forms;
 
 namespace RunAmiga
@@ -25,15 +26,33 @@ namespace RunAmiga
 			txtDisassembly.Text = disasm;
 
 			SetSelection();
-			machine.SetEmulationMode(EmulationMode.Stopped);
+			Machine.SetEmulationMode(EmulationMode.Stopped);
 			machine.Start();
 		}
 
 		private void UpdateRegisters()
 		{
+			UpdateRegs();
+			UpdateMem();
+		}
+
+		private void UpdateRegs()
+		{
+			Machine.LockEmulation();
 			var regs = cpu.GetRegs();
+			Machine.UnlockEmulation();
+
 			lbRegisters.Items.Clear();
 			lbRegisters.Items.AddRange(regs.Items().ToArray());
+		}
+
+		private void UpdateMem()
+		{
+			Machine.LockEmulation();
+			var memory = cpu.GetMemory();
+			Machine.UnlockEmulation();
+
+			txtMemory.Text = memory.ToString();
 		}
 
 		private void SetSelection()
@@ -55,8 +74,8 @@ namespace RunAmiga
 		private void btnStep_Click(object sender, System.EventArgs e)
 		{
 			txtDisassembly.DeselectAll();
-			machine.SetEmulationMode(EmulationMode.Step);
-			
+			Machine.SetEmulationMode(EmulationMode.Step);
+
 			SetSelection();
 			UpdateRegisters();
 		}
@@ -64,7 +83,7 @@ namespace RunAmiga
 		private void btnStop_Click(object sender, System.EventArgs e)
 		{
 			txtDisassembly.DeselectAll();
-			machine.SetEmulationMode(EmulationMode.Stopped);
+			Machine.SetEmulationMode(EmulationMode.Stopped);
 
 			SetSelection();
 			UpdateRegisters();
@@ -73,20 +92,21 @@ namespace RunAmiga
 		private void btnGo_Click(object sender, System.EventArgs e)
 		{
 			txtDisassembly.DeselectAll();
-			machine.SetEmulationMode(EmulationMode.Running);
+			Machine.SetEmulationMode(EmulationMode.Running);
 		}
 
 		private void btnReset_Click(object sender, EventArgs e)
 		{
-			machine.SetEmulationMode(EmulationMode.Stopped);
+			Machine.SetEmulationMode(EmulationMode.Stopped);
 			machine.GetCPU().Reset();
+
 			SetSelection();
 			UpdateRegisters();
 		}
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			machine.SetEmulationMode(EmulationMode.Exit);
+			Machine.SetEmulationMode(EmulationMode.Exit);
 		}
 	}
 }
