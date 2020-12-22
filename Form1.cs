@@ -20,7 +20,7 @@ namespace RunAmiga
 
 			cpu = machine.GetCPU();
 
-			UpdateRegisters();
+			UpdateDisplay();
 
 			var disasm = cpu.DisassembleTxt(0xfc0000);
 			txtDisassembly.Text = disasm;
@@ -30,7 +30,7 @@ namespace RunAmiga
 			machine.Start();
 		}
 
-		private void UpdateRegisters()
+		private void UpdateDisplay()
 		{
 			UpdateRegs();
 			UpdateMem();
@@ -77,7 +77,7 @@ namespace RunAmiga
 			Machine.SetEmulationMode(EmulationMode.Step);
 
 			SetSelection();
-			UpdateRegisters();
+			UpdateDisplay();
 		}
 
 		private void btnStop_Click(object sender, System.EventArgs e)
@@ -86,7 +86,7 @@ namespace RunAmiga
 			Machine.SetEmulationMode(EmulationMode.Stopped);
 
 			SetSelection();
-			UpdateRegisters();
+			UpdateDisplay();
 		}
 
 		private void btnGo_Click(object sender, System.EventArgs e)
@@ -101,12 +101,18 @@ namespace RunAmiga
 			machine.GetCPU().Reset();
 
 			SetSelection();
-			UpdateRegisters();
+			UpdateDisplay();
 		}
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			Machine.SetEmulationMode(EmulationMode.Exit);
+		}
+
+		private void btnRefresh_Click(object sender, EventArgs e)
+		{
+			SetSelection();
+			UpdateDisplay();
 		}
 	}
 }

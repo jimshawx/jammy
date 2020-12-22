@@ -77,15 +77,15 @@ namespace RunAmiga
 		private void Hack()
 		{
 			//remove the annoying delay loop at FC00D8
-			memory[0xfc00da] = 0;
-			memory[0xfc00db] = 0;
-			memory[0xfc00dc] = 0;
-			memory[0xfc00dd] = 1;
+			//memory[0xfc00da] = 0;
+			//memory[0xfc00db] = 0;
+			//memory[0xfc00dc] = 0;
+			//memory[0xfc00dd] = 1;
 
-			memory[0x0000da] = 0;
-			memory[0x0000db] = 0;
-			memory[0x0000dc] = 0;
-			memory[0x0000dd] = 1;
+			//memory[0x0000da] = 0;
+			//memory[0x0000db] = 0;
+			//memory[0x0000dc] = 0;
+			//memory[0x0000dd] = 1;
 		}
 
 		public void InitialSetup()
@@ -99,6 +99,7 @@ namespace RunAmiga
 			//Hack();
 
 			Reset();
+			AddBreakpoint(0xfc05f0);
 		}
 
 		public void BulkWrite(int dst, byte[] src, int length)
@@ -179,11 +180,11 @@ namespace RunAmiga
 		private void setV(long val, Size size)
 		{
 			if (size == Size.Long)
-				setV(val < 0x80000000 || val > 0x7fffffff);
+				setV(val < -0x80000000L || val > 0x7fffffff);
 			else if (size == Size.Word)
-				setV(val < 0x8000 || val > 0x7fff);
+				setV(val < -0x8000L || val > 0x7fff);
 			else if (size == Size.Byte)
-				setV(val < 0x80 || val > 0x7f);
+				setV(val < -0x80L || val > 0x7f);
 		}
 
 		private void setV(bool val)
@@ -648,13 +649,16 @@ namespace RunAmiga
 
 		public void Emulate()
 		{
-			pc &=0xffffff;
-
-			if (IsBreakpoint(pc))
+			//debugging
+			if (!((pc>0 && pc <0x4000) || (pc>=0xc00000 && pc < 0xc04000) || (pc>=0xfc0000 && pc < 0xfc4000)))
 			{
-				Machine.SetEmulationMode(EmulationMode.Stopped);
+				DumpTrace();
+				Trace.WriteLine($"PC out of expected range {pc:X8}");
+				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 				return;
 			}
+
+			pc &=0xffffff;
 
 			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
 			tracePC(dasm.ToString(), pc);
@@ -712,6 +716,14 @@ namespace RunAmiga
 					internalTrap(4);
 				else if (ex is InstructionAlignmentException)
 					internalTrap(3);
+			}
+
+			if (IsBreakpoint(pc))
+			{
+				DumpTrace();
+				Trace.WriteLine($"Breakpoint @{pc:X8}");
+				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				return;
 			}
 		}
 
@@ -2494,9 +2506,9 @@ namespace RunAmiga
 			return false;
 		}
 		
-		public void AddBreakpoint(uint address)
+		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0)
 		{
-			breakpoints[address] = new Breakpoint { Address = address, Active = true };
+			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter };
 		}
 
 		public void RemoveBreakpoint(uint address)

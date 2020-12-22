@@ -58,12 +58,19 @@ namespace RunAmiga
 		}
 
 		//private EmulationMode targetEmulationMode;
-		public static void SetEmulationMode(EmulationMode mode)
+		public static void SetEmulationMode(EmulationMode mode, bool omitLock = false)
 		{
 			//if (mode == EmulationMode.Stopped)
 			//	LockEmulation();
 			//else
 			//	UnlockEmulation();
+
+			if (omitLock)
+			{
+				emulationMode = mode;
+				return;
+			}
+
 			LockEmulation();
 			emulationMode = mode;
 			UnlockEmulation();

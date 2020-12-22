@@ -38,6 +38,7 @@ namespace RunAmiga
 			this.btnReset = new System.Windows.Forms.Button();
 			this.txtMemory = new System.Windows.Forms.RichTextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+			this.btnRefresh = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -150,11 +151,22 @@ namespace RunAmiga
 			this.splitContainer1.SplitterDistance = 239;
 			this.splitContainer1.TabIndex = 7;
 			// 
+			// btnRefresh
+			// 
+			this.btnRefresh.Location = new System.Drawing.Point(718, 332);
+			this.btnRefresh.Name = "btnRefresh";
+			this.btnRefresh.Size = new System.Drawing.Size(75, 23);
+			this.btnRefresh.TabIndex = 8;
+			this.btnRefresh.Text = "Refresh";
+			this.btnRefresh.UseVisualStyleBackColor = true;
+			this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(909, 579);
+			this.Controls.Add(this.btnRefresh);
 			this.Controls.Add(this.splitContainer1);
 			this.Controls.Add(this.btnReset);
 			this.Controls.Add(this.btnGo);
@@ -183,6 +195,7 @@ namespace RunAmiga
 		private System.Windows.Forms.Button btnReset;
 		private System.Windows.Forms.RichTextBox txtMemory;
 		private System.Windows.Forms.SplitContainer splitContainer1;
+		private System.Windows.Forms.Button btnRefresh;
 	}
 }
 
