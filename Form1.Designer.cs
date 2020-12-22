@@ -1,5 +1,5 @@
 ﻿
-namespace runamiga
+namespace RunAmiga
 {
 	partial class Form1
 	{
@@ -29,6 +29,7 @@ namespace runamiga
 		/// </summary>
 		private void InitializeComponent()
 		{
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.lbRegisters = new System.Windows.Forms.ListBox();
 			this.txtDisassembly = new System.Windows.Forms.RichTextBox();
 			this.btnStep = new System.Windows.Forms.Button();
@@ -120,6 +121,7 @@ namespace runamiga
 			this.Controls.Add(this.btnStep);
 			this.Controls.Add(this.txtDisassembly);
 			this.Controls.Add(this.lbRegisters);
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "Form1";
 			this.Text = "RunAmiga";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);

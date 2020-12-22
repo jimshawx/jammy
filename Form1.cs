@@ -1,8 +1,8 @@
-﻿using runamiga.Types;
+﻿using RunAmiga.Types;
 using System;
 using System.Windows.Forms;
 
-namespace runamiga
+namespace RunAmiga
 {
 	public partial class Form1 : Form
 	{

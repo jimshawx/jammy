@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace runamiga
+namespace RunAmiga
 {
 	public class MC68000Exception : ApplicationException { }
 

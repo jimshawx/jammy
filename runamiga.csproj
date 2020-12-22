@@ -4,6 +4,9 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon></ApplicationIcon>
+    <AssemblyName>RunAmiga</AssemblyName>
+    <RootNamespace>RunAmiga</RootNamespace>
   </PropertyGroup>
 
 </Project>

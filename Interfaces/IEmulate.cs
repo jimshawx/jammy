@@ -1,4 +1,4 @@
-﻿namespace runamiga
+﻿namespace RunAmiga
 {
 	public interface IEmulate
 	{

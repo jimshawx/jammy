@@ -1,10 +1,10 @@
-﻿using runamiga.Types;
+﻿using RunAmiga.Types;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
-namespace runamiga
+namespace RunAmiga
 {
 	public class Machine
 	{

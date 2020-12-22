@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace runamiga
+namespace RunAmiga
 {
 	static class Program
 	{

@@ -1,11 +1,11 @@
-﻿using runamiga.Types;
+﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace runamiga
+namespace RunAmiga
 {
 	public class CPU : IEmulate
 	{

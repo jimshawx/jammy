@@ -1,6 +1,6 @@
-﻿using runamiga.Types;
+﻿using RunAmiga.Types;
 
-namespace runamiga
+namespace RunAmiga
 {
 	public interface IMemoryMappedDevice
 	{

@@ -1,9 +1,9 @@
-﻿using runamiga.Types;
+﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace runamiga
+namespace RunAmiga
 {
 	public class CIAA : IEmulate, IMemoryMappedDevice
 	{

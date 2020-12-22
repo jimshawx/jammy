@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace runamiga.Types
+namespace RunAmiga.Types
 {
 	public enum EmulationMode
 	{

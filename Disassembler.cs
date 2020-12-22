@@ -1,9 +1,9 @@
-﻿using runamiga.Types;
+﻿using RunAmiga.Types;
 using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace runamiga
+namespace RunAmiga
 {
 	public class Disassembler
 	{
