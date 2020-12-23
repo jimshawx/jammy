@@ -450,7 +450,6 @@ namespace RunAmiga
 
 		private void lsd(int type, int rot, int lr, Size size)
 		{
-
 			if (lr == 1)
 			{
 				Append($"lsl");
@@ -818,13 +817,13 @@ namespace RunAmiga
 			if (((type >> 16) & 1) == 0)
 			{
 				//moveq
-				int Xn = (type >> 17) & 3;
+				int Xn = (type >> 9) & 3;
 				uint imm8 = (uint)(sbyte)(type & 0xff);
 				Append($"moveq.l #{imm8},d{Xn}");
 			}
 			else
 			{
-				throw new UnknownInstructionException(0,type);
+				Append($"unknown instruction {type}");
 			}
 		}
 
@@ -1073,10 +1072,9 @@ namespace RunAmiga
 
 		private void dbcc(int type)
 		{
-
 			int Xn = type & 7;
 
-			uint target = (uint)(short)read16(pc);
+			uint target = (address+2) + (uint)(short)read16(pc);
 			pc += 2;
 
 			Append($"db");
@@ -1132,7 +1130,7 @@ namespace RunAmiga
 					le();
 					break;
 			}
-			Append($" d{Xn},#${(ushort)target:X4}(pc)");
+			Append($" d{Xn},#{fmtX8(target)}(pc)");
 
 		}
 
@@ -1334,7 +1332,9 @@ namespace RunAmiga
 				case 0b111:
 					Append($"extb.l d{Xn}");
 					break;
-				default: throw new UnknownInstructionException(0,type);
+				default:
+					Append($"unknown instruction {type}");
+					break;
 			}
 		}
 

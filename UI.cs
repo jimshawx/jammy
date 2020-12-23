@@ -35,6 +35,19 @@ namespace RunAmiga
 			}
 		}
 
+		private static bool diskLight;
+		public static bool DiskLight
+		{
+			set
+			{
+				diskLight = value;
+			}
+			get
+			{
+				return diskLight;
+			}
+		}
+
 		private static uint [] colours = new uint[256];
 		public static void SetColour(int index, ushort value)
 		{

@@ -1,7 +1,9 @@
 ﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace RunAmiga
@@ -33,9 +35,17 @@ namespace RunAmiga
 					});
 			txtDisassembly.Text = disasm;
 
-			SetSelection();
+			UpdateDisplay();
+
 			Machine.SetEmulationMode(EmulationMode.Stopped);
 			machine.Start();
+		}
+
+		Thread uiUpdateThread;
+		public void Init()
+		{
+			uiUpdateThread = new Thread(UIUpdateThread);
+			uiUpdateThread.Start();
 		}
 
 		private void UpdateDisplay()
@@ -43,6 +53,7 @@ namespace RunAmiga
 			UpdateRegs();
 			UpdateMem();
 			UpdatePowerLight();
+			UpdateDiskLight();
 			UpdateColours();
 		}
 
@@ -140,10 +151,25 @@ namespace RunAmiga
 			UpdateDisplay();
 		}
 
+		private void UIUpdateThread(object o)
+		{
+			for (; ; )
+			{ 
+				this.Invoke((Action)delegate() { UpdatePowerLight(); } );
+				Thread.Sleep(100);
+			}
+		}
+
 		private void UpdatePowerLight()
 		{
 			bool power = UI.PowerLight;
 			picPower.BackColor = power?Color.Red:Color.DarkRed;
+		}
+
+		private void UpdateDiskLight()
+		{
+			bool disk = UI.DiskLight;
+			picDisk.BackColor = disk? Color.Green : Color.DarkGreen;
 		}
 
 		private void UpdateColours()

@@ -158,6 +158,7 @@ namespace RunAmiga
 			// 
 			// btnRefresh
 			// 
+			this.btnRefresh.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnRefresh.Location = new System.Drawing.Point(718, 332);
 			this.btnRefresh.Name = "btnRefresh";
 			this.btnRefresh.Size = new System.Drawing.Size(75, 23);
@@ -168,6 +169,7 @@ namespace RunAmiga
 			// 
 			// btnStepOver
 			// 
+			this.btnStepOver.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnStepOver.Location = new System.Drawing.Point(799, 179);
 			this.btnStepOver.Name = "btnStepOver";
 			this.btnStepOver.Size = new System.Drawing.Size(75, 23);
@@ -178,6 +180,7 @@ namespace RunAmiga
 			// 
 			// picPower
 			// 
+			this.picPower.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.picPower.Location = new System.Drawing.Point(823, 250);
 			this.picPower.Name = "picPower";
 			this.picPower.Size = new System.Drawing.Size(51, 10);
@@ -186,6 +189,7 @@ namespace RunAmiga
 			// 
 			// picDisk
 			// 
+			this.picDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.picDisk.Location = new System.Drawing.Point(823, 268);
 			this.picDisk.Name = "picDisk";
 			this.picDisk.Size = new System.Drawing.Size(51, 10);

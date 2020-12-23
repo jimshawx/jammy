@@ -99,9 +99,7 @@ namespace RunAmiga
 			//Hack();
 
 			Reset();
-			AddBreakpoint(0xfc05b8);
-			AddBreakpoint(0xfc05ce);
-			AddBreakpoint(0xfc05f0);
+			AddBreakpoint(0xfc061a);
 		}
 
 		public void BulkWrite(int dst, byte[] src, int length)
@@ -323,12 +321,20 @@ namespace RunAmiga
 			return memory[address];
 		}
 
+		private bool isROM(uint address)
+		{
+			return address >= 0xfc0000 && address <= 0xffffff;
+		}
+
 		public void write32(uint address, uint value)
 		{
 			address &= 0xffffff;
 
 			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Long); return; }
 			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Long); return; }
+
+			if (isROM(address))
+				internalTrap(3);
 
 			byte b0, b1, b2, b3;
 			b0 = (byte)(value >> 24);
@@ -348,6 +354,9 @@ namespace RunAmiga
 			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Word); return; }
 			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Word); return; }
 
+			if (isROM(address))
+				internalTrap(3);
+
 			byte b0, b1;
 			b0 = (byte)(value >> 8);
 			b1 = (byte)(value);
@@ -361,6 +370,9 @@ namespace RunAmiga
 
 			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Byte); return; }
 			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Byte); return; }
+
+			if (isROM(address))
+				internalTrap(3);
 
 			memory[address] = value;
 		}
@@ -1350,7 +1362,7 @@ namespace RunAmiga
 			if (((type >> 16) & 1) == 0)
 			{
 				//moveq
-				int Xn = (type >> 17) & 3;
+				int Xn = (type >> 9) & 3;
 				uint imm8 = (uint)(sbyte)(type & 0xff);
 				d[Xn] = imm8;
 				setNZ(d[Xn], Size.Long);
@@ -1602,9 +1614,11 @@ namespace RunAmiga
 			switch (cond)
 			{
 				case 0:
+					//if (!true) ...
 					throw new UnknownInstructionException(pc, type);
 					break;
 				case 1:
+					//if (!false) ...
 					dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target;
 					break;
 				case 2:
@@ -2094,10 +2108,14 @@ namespace RunAmiga
 		{
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-
 			type = swizzle(type);
 			ea = fetchEA(type);
-			writeEA(type, ea, Size.Word, op);
+
+			//movea.w is sign extended
+			if ((type &0b111_000) == 0b001_000)
+				writeEA(type, ea, Size.Long, op);
+			else
+				writeEA(type, ea, Size.Word, op);
 
 			setNZ(op, Size.Word);
 			clrCV();
