@@ -99,6 +99,8 @@ namespace RunAmiga
 			//Hack();
 
 			Reset();
+			AddBreakpoint(0xfc05b8);
+			AddBreakpoint(0xfc05ce);
 			AddBreakpoint(0xfc05f0);
 		}
 
@@ -246,13 +248,13 @@ namespace RunAmiga
 
 		private void setC(uint v, uint op, Size size)
 		{
-			ulong r = (ulong)zeroExtend(v, size) + (ulong)(long)(int)zeroExtend(op, size);
+			ulong r = zeroExtend(v, size) + zeroExtend(op, size);
 			setC(r, size);
 		}
 
 		private void setV(uint v, uint op, Size size)
 		{
-			long r = (long)(int)zeroExtend(v, size) + (int)zeroExtend(op, size);
+			long r = signExtend(op, size) + signExtend(op, size);
 			setV(r, size);
 		}
 
@@ -294,9 +296,9 @@ namespace RunAmiga
 			if (custom.IsMapped(address)) custom.Read(address, Size.Long);
 
 			return ((uint)memory[address] << 24) +
-				((uint)memory[(address + 1)&0xffffff] << 16) +
-				((uint)memory[(address + 2)& 0xffffff] << 8) +
-				(uint)memory[(address + 3)& 0xffffff];
+				((uint)memory[(address + 1) & 0xffffff] << 16) +
+				((uint)memory[(address + 2) & 0xffffff] << 8) +
+				(uint)memory[(address + 3) & 0xffffff];
 		}
 
 		public ushort read16(uint address)
@@ -308,7 +310,7 @@ namespace RunAmiga
 
 			return (ushort)(
 				((ushort)memory[address] << 8) +
-				(ushort)memory[(address + 1)& 0xffffff]);
+				(ushort)memory[(address + 1) & 0xffffff]);
 		}
 
 		public byte read8(uint address)
@@ -633,15 +635,30 @@ namespace RunAmiga
 			return (Size)3;
 		}
 
-		private uint zeroExtend(uint val, Size size)
+		private ulong zeroExtend(uint val, Size size)
 		{
 			if (size == Size.Byte) return val & 0xff;
 			if (size == Size.Word) return val & 0xffff;
 			return val;
 		}
 
+		private long signExtend(uint val, Size size)
+		{
+			if (size == Size.Byte) return (long)(sbyte)val;
+			if (size == Size.Word) return (long)(short)val;
+			return (long)(int)val;
+		}
+
 		public void Reset()
 		{
+			Array.Clear(memory,0,memory.Length);
+
+			byte[] rom = File.ReadAllBytes("../../../kick12.rom");
+			Debug.Assert(rom.Length == 256 * 1024);
+
+			BulkWrite(0xfc0000, rom, 256 * 1024);
+			BulkWrite(0, rom, 256 * 1024);
+
 			sr = 0b00100_111_00000000;
 			a[7] = read32(0);
 			pc = read32(4);
@@ -650,7 +667,7 @@ namespace RunAmiga
 		public void Emulate()
 		{
 			//debugging
-			if (!((pc>0 && pc <0x4000) || (pc>=0xc00000 && pc < 0xc04000) || (pc>=0xfc0000 && pc < 0xfc4000)))
+			if (!((pc > 0 && pc < 0x4000) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xfc0000 && pc < 0xfc4000)))
 			{
 				DumpTrace();
 				Trace.WriteLine($"PC out of expected range {pc:X8}");
@@ -658,7 +675,7 @@ namespace RunAmiga
 				return;
 			}
 
-			pc &=0xffffff;
+			pc &= 0xffffff;
 
 			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
 			tracePC(dasm.ToString(), pc);
@@ -776,7 +793,7 @@ namespace RunAmiga
 		{
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
-			val = zeroExtend(val, size);
+			val = (uint)zeroExtend(val, size);
 			if (rot == 0)
 			{
 				clrC();
@@ -821,7 +838,7 @@ namespace RunAmiga
 		{
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
-			val = zeroExtend(val, size);
+			val = (uint)zeroExtend(val, size);
 			if (rot == 0)
 			{
 				setC(X());
@@ -910,7 +927,7 @@ namespace RunAmiga
 		{
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
-			val = zeroExtend(val, size);
+			val = (uint)zeroExtend(val, size);
 			if (shift == 0)
 			{
 				clrC();
@@ -956,7 +973,7 @@ namespace RunAmiga
 		{
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
-			val = zeroExtend(val, size);
+			val = (uint)zeroExtend(val, size);
 			if (shift == 0)
 			{
 				clrC();
@@ -1483,7 +1500,7 @@ namespace RunAmiga
 			else if (disp == 0xffffffff) disp = fetchImm(Size.Long);
 			push32(pc);
 			pc = bas + disp;
-			
+
 			tracePC(pc);
 		}
 
@@ -1571,6 +1588,11 @@ namespace RunAmiga
 
 		private void dbcc(int type)
 		{
+			void dec16(int Xn)
+			{
+				d[Xn] = (uint)((d[Xn]&0xffff0000)|(uint)(ushort)(d[Xn]-1));
+			}
+
 			int Xn = type & 7;
 
 			uint target = pc + (uint)(short)read16(pc);
@@ -1580,51 +1602,52 @@ namespace RunAmiga
 			switch (cond)
 			{
 				case 0:
-					d[Xn]--; pc = target;
+					throw new UnknownInstructionException(pc, type);
 					break;
 				case 1:
+					dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target;
 					break;
 				case 2:
-					if (hi()) { d[Xn]--; pc = target; }
+					if (!hi()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 3:
-					if (ls()) { d[Xn]--; pc = target; }
+					if (!ls()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 4:
-					if (cc()) { d[Xn]--; pc = target; }
+					if (!cc()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 5:
-					if (cs()) { d[Xn]--; pc = target; }
+					if (!cs()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 6:
-					if (ne()) { d[Xn]--; pc = target; }
+					if (!ne()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 7:
-					if (eq()) { d[Xn]--; pc = target; }
+					if (!eq()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 8:
-					if (vc()) { d[Xn]--; pc = target; }
+					if (!vc()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 9:
-					if (vs()) { d[Xn]--; pc = target; }
+					if (!vs()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 10:
-					if (pl()) { d[Xn]--; pc = target; }
+					if (!pl()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 11:
-					if (mi()) { d[Xn]--; pc = target; }
+					if (!mi()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 12:
-					if (ge()) { d[Xn]--; pc = target; }
+					if (!ge()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 13:
-					if (lt()) { d[Xn]--; pc = target; }
+					if (!lt()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 14:
-					if (gt()) { d[Xn]--; pc = target; }
+					if (!gt()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 				case 15:
-					if (le()) { d[Xn]--; pc = target; }
+					if (!le()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
 					break;
 			}
 		}
@@ -1908,7 +1931,7 @@ namespace RunAmiga
 			internalTrap(4);
 		}
 
-		string[] trapNames = new string [16] {
+		string[] trapNames = new string[16] {
 			"Initial SSP",
 			"Initial PC",
 			"Bus Error",
@@ -2441,21 +2464,31 @@ namespace RunAmiga
 			}
 		}
 
-		private Dictionary<uint,int> addressToLine = new Dictionary<uint,int>();
-		public string DisassembleTxt(uint address)
+		private Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
+		private Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
+
+		public string DisassembleTxt(List<Tuple<uint, uint>> ranges)
 		{
 			var memorySpan = new ReadOnlySpan<byte>(memory);
 			var txt = new StringBuilder();
 
 			int line = 0;
-			while (address < 0x1000000)
-			{
-				addressToLine.Add(address, line++);
-				var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-				txt.Append($"{dasm}\n");
-				address += (uint)dasm.Bytes.Length;
-			}
 
+			foreach (var range in ranges)
+			{
+				uint address = range.Item1;
+				uint size = range.Item2;
+				uint addressEnd = address + size;
+				while (address < addressEnd)
+				{
+					addressToLine.Add(address, line);
+					lineToAddress.Add(line, address);
+					line++;
+					var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
+					txt.Append($"{dasm}\n");
+					address += (uint)dasm.Bytes.Length;
+				}
+			}
 			return txt.ToString();
 		}
 
@@ -2463,6 +2496,26 @@ namespace RunAmiga
 		{
 			if (addressToLine.TryGetValue(address, out int line))
 				return line;
+
+			uint inc = 1;
+			int sign = 1;
+			while (Math.Abs(inc) < 16)
+			{
+				address += (uint)(sign*inc);
+				if (addressToLine.TryGetValue(address, out int linex))
+					return linex;
+				if (sign == - 1)
+					inc++;
+				sign = -sign;
+			}
+
+			return 0;
+		}
+
+		public uint GetLineAddress(int line)
+		{
+			if (lineToAddress.TryGetValue(line, out uint address))
+				return address;
 			return 0;
 		}
 
@@ -2498,14 +2551,18 @@ namespace RunAmiga
 		}
 
 		private Dictionary<uint, Breakpoint> breakpoints = new Dictionary<uint, Breakpoint>();
-		
+
 		private bool IsBreakpoint(uint pc)
 		{
 			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
+			{
+				if (bp.Type == BreakpointType.OneShot)
+					breakpoints.Remove(pc);
 				return bp.Active;
+			}
 			return false;
 		}
-		
+
 		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0)
 		{
 			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter };
@@ -2527,6 +2584,12 @@ namespace RunAmiga
 			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
 				return bp;
 			return new Breakpoint { Address = address, Active = false };
+		}
+
+		public void BreakAtNextPC()
+		{
+			int line = GetAddressLine(pc) + 1;
+			AddBreakpoint(GetLineAddress(line), BreakpointType.OneShot);
 		}
 
 	}

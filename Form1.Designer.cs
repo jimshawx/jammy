@@ -39,10 +39,15 @@ namespace RunAmiga
 			this.txtMemory = new System.Windows.Forms.RichTextBox();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.btnRefresh = new System.Windows.Forms.Button();
+			this.btnStepOver = new System.Windows.Forms.Button();
+			this.picPower = new System.Windows.Forms.PictureBox();
+			this.picDisk = new System.Windows.Forms.PictureBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
 			this.splitContainer1.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.picPower)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.picDisk)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// lbRegisters
@@ -161,11 +166,40 @@ namespace RunAmiga
 			this.btnRefresh.UseVisualStyleBackColor = true;
 			this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
 			// 
+			// btnStepOver
+			// 
+			this.btnStepOver.Location = new System.Drawing.Point(799, 179);
+			this.btnStepOver.Name = "btnStepOver";
+			this.btnStepOver.Size = new System.Drawing.Size(75, 23);
+			this.btnStepOver.TabIndex = 9;
+			this.btnStepOver.Text = "Step Over";
+			this.btnStepOver.UseVisualStyleBackColor = true;
+			this.btnStepOver.Click += new System.EventHandler(this.btnStepOver_Click);
+			// 
+			// picPower
+			// 
+			this.picPower.Location = new System.Drawing.Point(823, 250);
+			this.picPower.Name = "picPower";
+			this.picPower.Size = new System.Drawing.Size(51, 10);
+			this.picPower.TabIndex = 10;
+			this.picPower.TabStop = false;
+			// 
+			// picDisk
+			// 
+			this.picDisk.Location = new System.Drawing.Point(823, 268);
+			this.picDisk.Name = "picDisk";
+			this.picDisk.Size = new System.Drawing.Size(51, 10);
+			this.picDisk.TabIndex = 11;
+			this.picDisk.TabStop = false;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(909, 579);
+			this.Controls.Add(this.picDisk);
+			this.Controls.Add(this.picPower);
+			this.Controls.Add(this.btnStepOver);
 			this.Controls.Add(this.btnRefresh);
 			this.Controls.Add(this.splitContainer1);
 			this.Controls.Add(this.btnReset);
@@ -181,6 +215,8 @@ namespace RunAmiga
 			this.splitContainer1.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
 			this.splitContainer1.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)(this.picPower)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.picDisk)).EndInit();
 			this.ResumeLayout(false);
 
 		}
@@ -196,6 +232,9 @@ namespace RunAmiga
 		private System.Windows.Forms.RichTextBox txtMemory;
 		private System.Windows.Forms.SplitContainer splitContainer1;
 		private System.Windows.Forms.Button btnRefresh;
+		private System.Windows.Forms.Button btnStepOver;
+		private System.Windows.Forms.PictureBox picPower;
+		private System.Windows.Forms.PictureBox picDisk;
 	}
 }
 

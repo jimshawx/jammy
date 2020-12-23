@@ -36,12 +36,6 @@ namespace RunAmiga
 
 		public void Init()
 		{
-			byte[] rom = File.ReadAllBytes("../../../kick12.rom");
-			Debug.Assert(rom.Length == 256 * 1024);
-
-			cpu.BulkWrite(0xfc0000, rom, 256 * 1024);
-			cpu.BulkWrite(0, rom, 256 * 1024);
-
 			//cpu.Disassemble(0xfc0000);
 		}
 
@@ -74,6 +68,21 @@ namespace RunAmiga
 			LockEmulation();
 			emulationMode = mode;
 			UnlockEmulation();
+		}
+
+		public static void WaitEmulationMode(EmulationMode mode)
+		{
+			for(;;)
+			{
+				LockEmulation();
+				if (emulationMode == mode)
+				{
+					UnlockEmulation();
+					break;
+				}
+				UnlockEmulation();
+				Thread.Sleep(100);
+			}
 		}
 
 		public static void UnlockEmulation()

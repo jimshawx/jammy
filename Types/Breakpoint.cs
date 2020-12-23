@@ -3,8 +3,8 @@
 	public enum BreakpointType
 	{
 		Permanent,
-		Internal,
-		Counter
+		Counter,
+		OneShot
 	}
 
 	public class Breakpoint

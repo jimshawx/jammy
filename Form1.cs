@@ -1,6 +1,7 @@
 ﻿using RunAmiga.Types;
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace RunAmiga
@@ -22,7 +23,14 @@ namespace RunAmiga
 
 			UpdateDisplay();
 
-			var disasm = cpu.DisassembleTxt(0xfc0000);
+			var disasm =
+				cpu.DisassembleTxt(
+					new List<Tuple<uint, uint>>
+					{
+						new Tuple<uint, uint> (0x000000, 0x4000),
+						new Tuple<uint, uint> (0xc00000, 0x4000),
+						new Tuple<uint, uint> (0xfc0000, 0x4000)
+					});
 			txtDisassembly.Text = disasm;
 
 			SetSelection();
@@ -34,6 +42,8 @@ namespace RunAmiga
 		{
 			UpdateRegs();
 			UpdateMem();
+			UpdatePowerLight();
+			UpdateColours();
 		}
 
 		private void UpdateRegs()
@@ -76,6 +86,8 @@ namespace RunAmiga
 			txtDisassembly.DeselectAll();
 			Machine.SetEmulationMode(EmulationMode.Step);
 
+			Machine.WaitEmulationMode(EmulationMode.Stopped);
+
 			SetSelection();
 			UpdateDisplay();
 		}
@@ -113,6 +125,31 @@ namespace RunAmiga
 		{
 			SetSelection();
 			UpdateDisplay();
+		}
+
+		private void btnStepOver_Click(object sender, EventArgs e)
+		{
+			Machine.LockEmulation();
+			machine.GetCPU().BreakAtNextPC();
+			Machine.SetEmulationMode(EmulationMode.Running, true);
+			Machine.UnlockEmulation();
+
+			Machine.WaitEmulationMode(EmulationMode.Stopped);
+
+			SetSelection();
+			UpdateDisplay();
+		}
+
+		private void UpdatePowerLight()
+		{
+			bool power = UI.PowerLight;
+			picPower.BackColor = power?Color.Red:Color.DarkRed;
+		}
+
+		private void UpdateColours()
+		{
+			var colours = new uint[256];
+			UI.GetColours(colours);
 		}
 	}
 }

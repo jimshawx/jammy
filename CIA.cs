@@ -5,6 +5,8 @@ using System.Diagnostics;
 
 namespace RunAmiga
 {
+	//https://www.amigacoding.com/index.php?title=CIA_Memory_Map
+
 	public class CIAA : IEmulate, IMemoryMappedDevice
 	{
 		private readonly Dictionary<int, Tuple<string,string>> debug = new Dictionary<int, Tuple<string,string>>
@@ -49,7 +51,7 @@ namespace RunAmiga
 				throw new UnknownInstructionSizeException(address,0);
 
 			byte reg = (byte)((address>>8)&0xf);
-			Trace.WriteLine($"CIAA Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			//Trace.WriteLine($"CIAA Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return (uint)regs[reg];
 		}
 
@@ -60,7 +62,18 @@ namespace RunAmiga
 
 			byte reg = (byte)((address >> 8) & 0xf);
 			regs[reg] = (byte)value;
-			Trace.WriteLine($"CIAA Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			//Trace.WriteLine($"CIAA Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+
+			if (reg == 0)
+			{
+				UI.PowerLight = (regs[0]&1)!=0;
+			}
+
+		}
+
+		public bool PowerLight()
+		{
+			return (regs[0]&1)!=0;
 		}
 	}
 
@@ -108,7 +121,7 @@ namespace RunAmiga
 				throw new UnknownInstructionSizeException(address,0);
 
 			byte reg = (byte)((address >> 8) & 0xf);
-			Trace.WriteLine($"CIAB Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			//Trace.WriteLine($"CIAB Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return (uint)regs[reg];
 		}
 
@@ -119,7 +132,7 @@ namespace RunAmiga
 
 			byte reg = (byte)((address >> 8) & 0xf);
 			regs[reg] = (byte)value;
-			Trace.WriteLine($"CIAB Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			//Trace.WriteLine($"CIAB Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
 		}
 	}
 
