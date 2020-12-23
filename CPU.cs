@@ -99,8 +99,7 @@ namespace RunAmiga
 			//Hack();
 
 			Reset();
-			AddBreakpoint(0xfc12a8);
-			AddBreakpoint(0xfc14ec);
+			AddBreakpoint(0xfc08ba);
 		}
 
 		public void BulkWrite(int dst, byte[] src, int length)
@@ -2159,12 +2158,18 @@ namespace RunAmiga
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 
-			if ((int)size == 3)
+			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
+			{
+				uint opsr = fetchOp(type, ea, size);
+				ushort immsr = (ushort)fetchImm(size);
+				sr ^= immsr; //naturally sets the flags
+			}
+			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
 			{
 				if (Supervisor())
 				{
-					uint opsr = fetchOp(type, ea, Size.Word);
-					ushort immsr = (ushort)fetchImm(Size.Word);
+					uint opsr = fetchOp(type, ea, size);
+					ushort immsr = (ushort)fetchImm(size);
 					sr ^= immsr; //naturally sets the flags
 				}
 				else
@@ -2268,12 +2273,18 @@ namespace RunAmiga
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 
-			if ((int)size == 3)
+			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
+			{
+				uint opsr = fetchOp(type, ea, size);
+				ushort immsr = (ushort)fetchImm(size);
+				sr &= immsr;//naturally clears the flags
+			}
+			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
 			{
 				if (Supervisor())
 				{
-					uint opsr = fetchOp(type, ea, Size.Word);
-					ushort immsr = (ushort)fetchImm(Size.Word);
+					uint opsr = fetchOp(type, ea, size);
+					ushort immsr = (ushort)fetchImm(size);
 					sr &= immsr;//naturally clears the flags
 				}
 				else
@@ -2296,12 +2307,18 @@ namespace RunAmiga
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 
-			if ((int)size == 3)
+			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
+			{
+				uint opsr = fetchOp(type, ea, size);
+				ushort immsr = (ushort)fetchImm(size);
+				sr |= immsr;
+			}
+			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
 			{
 				if (Supervisor())
 				{
-					uint opsr = fetchOp(type, ea, Size.Word);
-					ushort immsr = (ushort)fetchImm(Size.Word);
+					uint opsr = fetchOp(type, ea, size);
+					ushort immsr = (ushort)fetchImm(size);
 					sr |= immsr;
 				}
 				else

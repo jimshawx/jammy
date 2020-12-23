@@ -1527,11 +1527,17 @@ namespace RunAmiga
 			Append("eori");
 			Size size = getSize(type);
 
-			if ((int)size == 3)
+			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
 			{
-				Append(Size.Word);
 				uint easr = fetchEA(type);
-				fetchOp(type, easr, Size.Word);
+				fetchOp(type, easr, size);
+				Append(",ccr");
+				return;
+			}
+			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
+			{
+				uint easr = fetchEA(type);
+				fetchOp(type, easr, size);
 				Append(",sr");
 				return;
 			}
@@ -1620,11 +1626,17 @@ namespace RunAmiga
 			Append($"andi");
 			Size size = getSize(type);
 
-			if ((int)size == 3)
+			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
 			{
-				Append(Size.Word);
 				uint easr = fetchEA(type);
-				fetchOp(type, easr, Size.Word);
+				fetchOp(type, easr, size);
+				Append(",ccr");
+				return;
+			}
+			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
+			{
+				uint easr = fetchEA(type);
+				fetchOp(type, easr, size);
 				Append(",sr");
 				return;
 			}
@@ -1643,11 +1655,17 @@ namespace RunAmiga
 
 			Size size = getSize(type);
 
-			if((int)size == 3)
+			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
 			{
-				Append(Size.Word);
 				uint easr = fetchEA(type);
-				fetchOp(type, easr, Size.Word);
+				fetchOp(type, easr, size);
+				Append(",ccr");
+				return;
+			}
+			else if (((type&0b111111) == 0b111100) && size == Size.Word)
+			{
+				uint easr = fetchEA(type);
+				fetchOp(type, easr, size);
 				Append(",sr");
 				return;
 			}
