@@ -99,7 +99,8 @@ namespace RunAmiga
 			//Hack();
 
 			Reset();
-			AddBreakpoint(0xfc0546);
+			AddBreakpoint(0xfc02b0);
+			AddBreakpoint(0xfc033e);
 		}
 
 		public void BulkWrite(int dst, byte[] src, int length)
@@ -1378,56 +1379,65 @@ namespace RunAmiga
 
 		private void t_six(int type)
 		{
+			uint target;
+
+			uint bas = pc;
+			uint disp = (uint)(sbyte)(type & 0xff);
+			if (disp == 0) disp = fetchImm(Size.Word);
+			else if (disp == 0xff) disp = fetchImm(Size.Long);
+			
+			target = bas + disp;
+
 			int cond = (type >> 8) & 0xf;
 			switch (cond)
 			{
 				case 0:
-					bra(type);
+					bra(type, target);
 					break;
 				case 1:
-					bsr(type);
+					bsr(type, target);
 					break;
 				case 2:
-					if (hi()) bra(type);
+					if (hi()) bra(type, target);
 					break;
 				case 3:
-					if (ls()) bra(type);
+					if (ls()) bra(type, target);
 					break;
 				case 4:
-					if (cc()) bra(type);
+					if (cc()) bra(type, target);
 					break;
 				case 5:
-					if (cs()) bra(type);
+					if (cs()) bra(type, target);
 					break;
 				case 6:
-					if (ne()) bra(type);
+					if (ne()) bra(type, target);
 					break;
 				case 7:
-					if (eq()) bra(type);
+					if (eq()) bra(type, target);
 					break;
 				case 8:
-					if (vc()) bra(type);
+					if (vc()) bra(type, target);
 					break;
 				case 9:
-					if (vs()) bra(type);
+					if (vs()) bra(type, target);
 					break;
 				case 10:
-					if (pl()) bra(type);
+					if (pl()) bra(type, target);
 					break;
 				case 11:
-					if (mi()) bra(type);
+					if (mi()) bra(type, target);
 					break;
 				case 12:
-					if (ge()) bra(type);
+					if (ge()) bra(type, target);
 					break;
 				case 13:
-					if (lt()) bra(type);
+					if (lt()) bra(type, target);
 					break;
 				case 14:
-					if (gt()) bra(type);
+					if (gt()) bra(type, target);
 					break;
 				case 15:
-					if (le()) bra(type);
+					if (le()) bra(type, target);
 					break;
 			}
 		}
@@ -1504,29 +1514,21 @@ namespace RunAmiga
 			return !C() && !Z();
 		}
 
-		private void bsr(int type)
+		private void bsr(int type, uint target)
 		{
 			tracePC("bsr", pc);
 
-			uint bas = pc;
-			uint disp = (uint)(sbyte)(type & 0xff);
-			if (disp == 0) disp = fetchImm(Size.Word);
-			else if (disp == 0xffffffff) disp = fetchImm(Size.Long);
 			push32(pc);
-			pc = bas + disp;
+			pc = target;
 
 			tracePC(pc);
 		}
 
-		private void bra(int type)
+		private void bra(int type, uint target)
 		{
 			tracePC("bra", pc);
 
-			uint bas = pc;
-			uint disp = (uint)(sbyte)(type & 0xff);
-			if (disp == 0) disp = fetchImm(Size.Word);
-			else if (disp == 0xff) disp = fetchImm(Size.Long);
-			pc = bas + disp;
+			pc = target;
 
 			tracePC(pc);
 		}
@@ -2489,6 +2491,9 @@ namespace RunAmiga
 
 		public string DisassembleTxt(List<Tuple<uint, uint>> ranges)
 		{
+			addressToLine.Clear();
+			lineToAddress.Clear();
+
 			var memorySpan = new ReadOnlySpan<byte>(memory);
 			var txt = new StringBuilder();
 
@@ -2568,6 +2573,7 @@ namespace RunAmiga
 			{
 				Trace.WriteLine($"{t}");
 			}
+			traces.Clear();
 		}
 
 		private Dictionary<uint, Breakpoint> breakpoints = new Dictionary<uint, Breakpoint>();

@@ -42,6 +42,7 @@ namespace RunAmiga
 			this.btnStepOver = new System.Windows.Forms.Button();
 			this.picPower = new System.Windows.Forms.PictureBox();
 			this.picDisk = new System.Windows.Forms.PictureBox();
+			this.btnDisassemble = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -196,11 +197,23 @@ namespace RunAmiga
 			this.picDisk.TabIndex = 11;
 			this.picDisk.TabStop = false;
 			// 
+			// btnDisassemble
+			// 
+			this.btnDisassemble.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnDisassemble.Location = new System.Drawing.Point(799, 332);
+			this.btnDisassemble.Name = "btnDisassemble";
+			this.btnDisassemble.Size = new System.Drawing.Size(81, 23);
+			this.btnDisassemble.TabIndex = 12;
+			this.btnDisassemble.Text = "Disassemble";
+			this.btnDisassemble.UseVisualStyleBackColor = true;
+			this.btnDisassemble.Click += new System.EventHandler(this.btnDisassemble_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(909, 579);
+			this.Controls.Add(this.btnDisassemble);
 			this.Controls.Add(this.picDisk);
 			this.Controls.Add(this.picPower);
 			this.Controls.Add(this.btnStepOver);
@@ -239,6 +252,7 @@ namespace RunAmiga
 		private System.Windows.Forms.Button btnStepOver;
 		private System.Windows.Forms.PictureBox picPower;
 		private System.Windows.Forms.PictureBox picDisk;
+		private System.Windows.Forms.Button btnDisassemble;
 	}
 }
 

@@ -25,15 +25,7 @@ namespace RunAmiga
 
 			UpdateDisplay();
 
-			var disasm =
-				cpu.DisassembleTxt(
-					new List<Tuple<uint, uint>>
-					{
-						new Tuple<uint, uint> (0x000000, 0x4000),
-						new Tuple<uint, uint> (0xc00000, 0x4000),
-						new Tuple<uint, uint> (0xfc0000, 0x4000)
-					});
-			txtDisassembly.Text = disasm;
+			UpdateDisassembly();
 
 			UpdateDisplay();
 
@@ -46,6 +38,18 @@ namespace RunAmiga
 		{
 			uiUpdateThread = new Thread(UIUpdateThread);
 			uiUpdateThread.Start();
+		}
+
+		private void UpdateDisassembly()
+		{
+			var disasm = cpu.DisassembleTxt(
+					new List<Tuple<uint, uint>>
+					{
+						new Tuple<uint, uint> (0x000000, 0x4000),
+						new Tuple<uint, uint> (0xc00000, 0x4000),
+						new Tuple<uint, uint> (0xfc0000, 0x4000)
+					});
+			txtDisassembly.Text = disasm;
 		}
 
 		private void UpdateDisplay()
@@ -127,8 +131,11 @@ namespace RunAmiga
 			UpdateDisplay();
 		}
 
+		bool exiting = false;
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
+			exiting = true;
+			while (exiting) Thread.Yield();
 			Machine.SetEmulationMode(EmulationMode.Exit);
 		}
 
@@ -153,11 +160,12 @@ namespace RunAmiga
 
 		private void UIUpdateThread(object o)
 		{
-			for (; ; )
+			while (!exiting)
 			{ 
 				this.Invoke((Action)delegate() { UpdatePowerLight(); } );
 				Thread.Sleep(100);
 			}
+			exiting = false;
 		}
 
 		private void UpdatePowerLight()
@@ -176,6 +184,13 @@ namespace RunAmiga
 		{
 			var colours = new uint[256];
 			UI.GetColours(colours);
+		}
+
+		private void btnDisassemble_Click(object sender, EventArgs e)
+		{
+			UpdateDisassembly();
+			SetSelection();
+			UpdateDisplay();
 		}
 	}
 }
