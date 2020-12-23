@@ -1451,7 +1451,10 @@ namespace RunAmiga
 				switch (op)
 				{
 					case 0://bit or movep
-						Append($"unknown instruction {type}");
+						if (((type >> 3) & 7) == 0b001)
+							Append($"unknown instruction {type}");
+						else
+							bit(type);
 						break;
 					case 1://move byte
 						moveb(type);

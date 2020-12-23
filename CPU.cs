@@ -99,8 +99,8 @@ namespace RunAmiga
 			//Hack();
 
 			Reset();
-			AddBreakpoint(0xfc02b0);
-			AddBreakpoint(0xfc033e);
+			AddBreakpoint(0xfc12a8);
+			AddBreakpoint(0xfc14ec);
 		}
 
 		public void BulkWrite(int dst, byte[] src, int length)
@@ -2075,7 +2075,11 @@ namespace RunAmiga
 				switch (op)
 				{
 					case 0://bit or movep
-						throw new UnknownInstructionException(pc, type);
+						if (((type>>3)&7)==0b001)
+							throw new UnknownInstructionException(pc, type);//movep
+						else
+							bit(type);
+						break;
 					case 1://move byte
 						moveb(type);
 						break;
