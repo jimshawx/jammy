@@ -394,10 +394,11 @@ namespace RunAmiga
 				else
 				{
 					if (rot == 0) rot = 8;
-					Append($"#{rot}");
+					//Append($"#{rot}");
 				}
 
 				Size size = getSize(type);
+				Remove(3);
 
 				//EA is d[x]
 				type &= 0b1111111111000111;
@@ -418,14 +419,15 @@ namespace RunAmiga
 			{
 				Append($"rol");
 				Append(size);
-				Append($"{rot}");
+				Append($"#{rot}");
 			}
 			else
 			{
 				Append($"ror");
 				Append(size);
-				Append($"{rot}");
+				Append($"#{rot}");
 			}
+			Append(",");
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
 		}
@@ -436,14 +438,16 @@ namespace RunAmiga
 			{
 				Append($"roxl");
 				Append(size);
-				Append($"{rot}");
+				Append($"#{rot}");
 			}
 			else
 			{
 				Append($"roxr");
 				Append(size);
-				Append($"{rot}");
+				Append($"#{rot}");
 			}
+			Append(",");
+
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
 		}
@@ -454,14 +458,15 @@ namespace RunAmiga
 			{
 				Append($"lsl");
 				Append(size);
-				Append($"{rot}");
+				Append($"#{rot}");
 			}
 			else
 			{
 				Append($"lsr");
 				Append(size);
-				Append($"{rot}");
+				Append($"#{rot}");
 			}
+			Append(",");
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
 		}
@@ -472,14 +477,15 @@ namespace RunAmiga
 			{
 				Append($"asl");
 				Append(size);
-				Append($"{rot}");
+				Append($"#{rot}");
 			}
 			else
 			{
 				Append($"asr");
 				Append(size);
-				Append($"{rot}");
+				Append($"#{rot}");
 			}
+			Append(",");
 			uint ea = fetchEA(type);
 			int val = (int)fetchOp(type, ea, size);
 		}
@@ -501,11 +507,11 @@ namespace RunAmiga
 
 				Append(size);
 
-				int Xn = (type >> 9) & 7;
-				Append($"a{Xn},");
-
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
+
+				int Xn = (type >> 9) & 7;
+				Append($",a{Xn}");
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{

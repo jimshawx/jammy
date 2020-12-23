@@ -99,7 +99,7 @@ namespace RunAmiga
 			//Hack();
 
 			Reset();
-			AddBreakpoint(0xfc061a);
+			AddBreakpoint(0xfc0546);
 		}
 
 		public void BulkWrite(int dst, byte[] src, int length)
@@ -246,7 +246,7 @@ namespace RunAmiga
 
 		private void setC(uint v, uint op, Size size)
 		{
-			ulong r = zeroExtend(v, size) + zeroExtend(op, size);
+			ulong r = (ulong)signExtend(v, size) + (ulong)signExtend(op, size);
 			setC(r, size);
 		}
 
@@ -1072,7 +1072,7 @@ namespace RunAmiga
 				setC(d[Xn], op, size);
 				setX(C());
 
-				if ((type & 0b1_00_000_000) != 0)
+				if ((type & 0b1_00_000_000) == 0)
 				{
 					d[Xn] += op;
 					setNZ(d[Xn], size);
@@ -1264,21 +1264,23 @@ namespace RunAmiga
 
 				int Xn = (type >> 9) & 7;
 
-				setC(d[Xn], (uint)-(int)op, size);
-				setV(d[Xn], (uint)-(int)op, size);
-				setX(C());
 
-				if ((type & 0b1_00_000_000) != 0)
+				if ((type & 0b1_00_000_000) == 0)
 				{
+					setC(d[Xn], (uint)-(int)op, size);
+					setV(d[Xn], (uint)-(int)op, size);
 					d[Xn] -= op;
 					setNZ(d[Xn], size);
 				}
 				else
 				{
+					setC(op, (uint)-(int)d[Xn], size);
+					setV(op, (uint)-(int)d[Xn], size);
 					op -= d[Xn];
 					writeEA(type, ea, size, op);
 					setNZ(op, size);
 				}
+				setX(C());
 			}
 		}
 
