@@ -553,6 +553,20 @@ namespace RunAmiga
 				uint bank = (Read(BPLCON3, Size.Word)&0b111_00000_00000000)>>(13-5);
 				UI.SetColour((int)(bank+((address - COLOR00) >> 1)), (ushort)value);
 			}
+
+			if (address == BPLCON0)
+			{
+				if ((value & 2) != 0) Trace.Write("ESRY ");
+				if ((value & 4) != 0) Trace.Write("LACE ");
+				if ((value & 8) != 0) Trace.Write("LPEN ");
+				if ((value & 256) != 0) Trace.Write("GAUD ");
+				if ((value & 512) != 0) Trace.Write("COLOR_ON ");
+				if ((value & 1024) != 0) Trace.Write("DBLPF ");
+				if ((value & 2048) != 0) Trace.Write("HOMOD ");
+				Trace.Write($"{(value>>12)&7}BPP ");
+				if ((value & 32768) != 0) Trace.Write("HIRES ");
+				Trace.WriteLine("");
+			}
 		}
 	}
 }

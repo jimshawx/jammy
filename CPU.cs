@@ -16,9 +16,9 @@ namespace RunAmiga
 		private class A
 		{
 			public uint ssp { get; private set; }
-			public uint sp { get { return a[7]; } }
+			public uint usp { get; set; }
 
-			private uint[] a = new uint[8];
+			private uint[] a = new uint[7];
 			private Func<bool> isSupervisor;
 
 			public A(Func<bool> isSupervisor)
@@ -28,8 +28,8 @@ namespace RunAmiga
 
 			public uint this[int i]
 			{
-				get { if (i == 7 && isSupervisor()) return ssp; else return a[i]; }
-				set { if (i == 7 && isSupervisor()) ssp = value; else a[i] = value; }
+				get { if (i == 7) { return isSupervisor() ? ssp:usp; } else return a[i]; }
+				set { if (i == 7) { if (isSupervisor()) ssp = value; else usp = value; } else a[i] = value; }
 			}
 		}
 
@@ -63,7 +63,7 @@ namespace RunAmiga
 				regs.D[i] = d[i];
 			}
 			regs.PC = pc;
-			regs.A[7] = a.sp;
+			regs.A[7] = a.usp;
 			regs.SSP = a.ssp;
 			regs.SR = sr;
 			return regs;
@@ -99,7 +99,10 @@ namespace RunAmiga
 			//Hack();
 
 			Reset();
-			AddBreakpoint(0xfc08ba);
+			//AddBreakpoint(0xfc08ba);
+			//AddBreakpoint(0xfc0e86);
+			//AddBreakpoint(0xfc2fb4);
+			//AddBreakpoint(0xfc305e);
 		}
 
 		public void BulkWrite(int dst, byte[] src, int length)
@@ -2006,11 +2009,18 @@ namespace RunAmiga
 
 		private void moveusp(int type)
 		{
-			int An = type & 7;
-			if ((type & 0b1000) == 0)
-				a[7] = a[An];
+			if (Supervisor())
+			{
+				int An = type & 7;
+				if ((type & 0b1000) != 0)
+					a.usp = a[An];
+				else
+					a[An] = a.usp;
+			}
 			else
-				a[An] = a[7];
+			{
+				internalTrap(8);
+			}
 		}
 
 		private void reset(int type)
@@ -2144,9 +2154,9 @@ namespace RunAmiga
 		private void cmpi(int type)
 		{
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 			setC(op, (uint)-(int)imm, size);
 			setV(op, (uint)-(int)imm, size);
 			op -= imm;
@@ -2156,20 +2166,20 @@ namespace RunAmiga
 		private void eori(int type)
 		{
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
 			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
 
 			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
 			{
-				uint opsr = fetchOp(type, ea, size);
-				ushort immsr = (ushort)fetchImm(size);
+				ushort immsr = (ushort)imm;
 				sr ^= immsr; //naturally sets the flags
 			}
 			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
 			{
 				if (Supervisor())
 				{
-					uint opsr = fetchOp(type, ea, size);
-					ushort immsr = (ushort)fetchImm(size);
+					ushort immsr = (ushort)imm;
 					sr ^= immsr; //naturally sets the flags
 				}
 				else
@@ -2179,8 +2189,6 @@ namespace RunAmiga
 				return;
 			}
 
-			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 			op ^= imm;
 			setNZ(op, size);
 			clrCV();
@@ -2243,9 +2251,9 @@ namespace RunAmiga
 		private void addi(int type)
 		{
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 			setC(op, imm, size);
 			setV(op, imm, size);
 			setX(C());
@@ -2257,9 +2265,9 @@ namespace RunAmiga
 		private void subi(int type)
 		{
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 			setC(op, (uint)-(int)imm, size);
 			setV(op, (uint)-(int)imm, size);
 			setX(C());
@@ -2271,20 +2279,20 @@ namespace RunAmiga
 		private void andi(int type)
 		{
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
 			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
 
 			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
 			{
-				uint opsr = fetchOp(type, ea, size);
-				ushort immsr = (ushort)fetchImm(size);
+				ushort immsr = (ushort)imm;
 				sr &= immsr;//naturally clears the flags
 			}
 			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
 			{
 				if (Supervisor())
 				{
-					uint opsr = fetchOp(type, ea, size);
-					ushort immsr = (ushort)fetchImm(size);
+					ushort immsr = (ushort)imm;
 					sr &= immsr;//naturally clears the flags
 				}
 				else
@@ -2294,8 +2302,6 @@ namespace RunAmiga
 				return;
 			}
 
-			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 			op &= imm;
 			setNZ(op, size);
 			clrCV();
@@ -2305,20 +2311,20 @@ namespace RunAmiga
 		private void ori(int type)
 		{
 			Size size = getSize(type);
+			uint imm = fetchImm(size);
 			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
 
 			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
 			{
-				uint opsr = fetchOp(type, ea, size);
-				ushort immsr = (ushort)fetchImm(size);
+				ushort immsr = (ushort)imm;
 				sr |= immsr;
 			}
 			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
 			{
 				if (Supervisor())
 				{
-					uint opsr = fetchOp(type, ea, size);
-					ushort immsr = (ushort)fetchImm(size);
+					ushort immsr = (ushort)imm;
 					sr |= immsr;
 				}
 				else
@@ -2328,8 +2334,6 @@ namespace RunAmiga
 				return;
 			}
 
-			uint op = fetchOp(type, ea, size);
-			uint imm = fetchImm(size);
 			op |= imm;
 			setNZ(op, size);
 			clrCV();
@@ -2362,6 +2366,8 @@ namespace RunAmiga
 
 		private void movem(int type)
 		{
+			uint mask = fetchImm(Size.Word);
+
 			uint ea = fetchEA(type);
 			Size size;
 			uint eastep;
@@ -2375,7 +2381,6 @@ namespace RunAmiga
 				size = Size.Word;
 				eastep = 2;
 			}
-			uint mask = fetchImm(Size.Word);
 
 			if ((type & 0b1_0000_000000) != 0)
 			{
@@ -2409,7 +2414,7 @@ namespace RunAmiga
 					{
 						if ((mask & (1 << i)) != 0)
 						{
-							int m = i & 7;
+							int m = (i & 7)^7;
 							uint op = i <= 7 ? a[m] : d[m];
 							ea -= eastep;
 							writeOp(ea, op, size);

@@ -1346,23 +1346,24 @@ namespace RunAmiga
 
 		private void movetosr(int type)
 		{
-			Append("move.w sr,");
+			Append("move.w ");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
+			Append(",sr");
 		}
 
 		private void movetoccr(int type)
 		{
-			Append("moveccr ");
+			Append("move.b ");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
+			Append(",ccr");
 		}
 
 		private void movefromsr(int type)
 		{
-			Append("move.w ");
+			Append("move.w sr,");
 			uint ea = fetchEA(type);
-			Append(",sr");
 		}
 
 		private void illegal(int type)
@@ -1391,10 +1392,10 @@ namespace RunAmiga
 		private void moveusp(int type)
 		{
 			int An = type & 7;
-			if ((type & 0b1000) == 0)
-				Append($"move.l sp,a{An}");
+			if ((type & 0b1000) != 0)
+				Append($"move usp,a{An}");
 			else
-				Append($"move.l a{An},sp");
+				Append($"move a{An},usp");
 		}
 
 		private void reset(int type)
@@ -1736,7 +1737,7 @@ namespace RunAmiga
 					{
 						if ((mask & (1<<i)) != 0)
 						{
-							int m = i & 7;
+							int m = (i & 7)^7;
 							if (i <= 7)
 								Append($"a{m}/");
 							else
