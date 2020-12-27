@@ -28,7 +28,7 @@ namespace RunAmiga
 
 			public uint this[int i]
 			{
-				get { if (i == 7) { return isSupervisor() ? ssp:usp; } else return a[i]; }
+				get { if (i == 7) { return isSupervisor() ? ssp : usp; } else return a[i]; }
 				set { if (i == 7) { if (isSupervisor()) ssp = value; else usp = value; } else a[i] = value; }
 			}
 		}
@@ -99,10 +99,19 @@ namespace RunAmiga
 			//Hack();
 
 			Reset();
-			//AddBreakpoint(0xfc08ba);
+			//AddBreakpoint(0xfc02ac);
+			//AddBreakpoint(0xfc033e);
+			//AddBreakpoint(0xfc03e2);
+			AddBreakpoint(0xfc1794);
+			//AddBreakpoint(0xfc05a6);
+			AddBreakpoint(0xfc08aa);
 			//AddBreakpoint(0xfc0e86);
-			//AddBreakpoint(0xfc2fb4);
-			//AddBreakpoint(0xfc305e);
+			AddBreakpoint(0xfc1f38);
+			AddBreakpoint(0xfc0e86);//Shedule().
+			AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
+			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
+			AddBreakpoint(0xfc2fb4);//Task Crash Routine
+			AddBreakpoint(0xfc305e);//Irrecoverable Crash
 		}
 
 		public void BulkWrite(int dst, byte[] src, int length)
@@ -666,7 +675,7 @@ namespace RunAmiga
 
 		public void Reset()
 		{
-			Array.Clear(memory,0,memory.Length);
+			Array.Clear(memory, 0, memory.Length);
 
 			byte[] rom = File.ReadAllBytes("../../../kick12.rom");
 			Debug.Assert(rom.Length == 256 * 1024);
@@ -693,7 +702,7 @@ namespace RunAmiga
 			pc &= 0xffffff;
 
 			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
-			tracePC(dasm.ToString(), pc);
+			//tracePC(dasm.ToString(), pc);
 
 			try
 			{
@@ -1387,7 +1396,7 @@ namespace RunAmiga
 			uint disp = (uint)(sbyte)(type & 0xff);
 			if (disp == 0) disp = fetchImm(Size.Word);
 			else if (disp == 0xff) disp = fetchImm(Size.Long);
-			
+
 			target = bas + disp;
 
 			int cond = (type >> 8) & 0xf;
@@ -1554,52 +1563,52 @@ namespace RunAmiga
 			switch (cond)
 			{
 				case 0:
-					writeOp(ea, 1, Size.Byte);
+					writeEA(type, ea, Size.Byte, 0xffu);
 					break;
 				case 1:
-					writeOp(ea, 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, 0);
 					break;
 				case 2:
-					writeOp(ea, hi() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, hi() ? 0xffu : 0);
 					break;
 				case 3:
-					writeOp(ea, ls() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, ls() ? 0xffu : 0);
 					break;
 				case 4:
-					writeOp(ea, cc() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, cc() ? 0xffu : 0);
 					break;
 				case 5:
-					writeOp(ea, cs() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, cs() ? 0xffu : 0);
 					break;
 				case 6:
-					writeOp(ea, ne() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, ne() ? 0xffu : 0);
 					break;
 				case 7:
-					writeOp(ea, eq() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, eq() ? 0xffu : 0);
 					break;
 				case 8:
-					writeOp(ea, vc() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, vc() ? 0xffu : 0);
 					break;
 				case 9:
-					writeOp(ea, vs() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, vs() ? 0xffu : 0);
 					break;
 				case 10:
-					writeOp(ea, pl() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, pl() ? 0xffu : 0);
 					break;
 				case 11:
-					writeOp(ea, mi() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, mi() ? 0xffu : 0);
 					break;
 				case 12:
-					writeOp(ea, ge() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, ge() ? 0xffu : 0);
 					break;
 				case 13:
-					writeOp(ea, lt() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, lt() ? 0xffu : 0);
 					break;
 				case 14:
-					writeOp(ea, gt() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, gt() ? 0xffu : 0);
 					break;
 				case 15:
-					writeOp(ea, le() ? 1u : 0, Size.Byte);
+					writeEA(type, ea, Size.Byte, le() ? 0xffu : 0);
 					break;
 			}
 		}
@@ -1608,7 +1617,7 @@ namespace RunAmiga
 		{
 			void dec16(int Xn)
 			{
-				d[Xn] = (uint)((d[Xn]&0xffff0000)|(uint)(ushort)(d[Xn]-1));
+				d[Xn] = (uint)((d[Xn] & 0xffff0000) | (uint)(ushort)(d[Xn] - 1));
 			}
 
 			int Xn = type & 7;
@@ -1625,49 +1634,49 @@ namespace RunAmiga
 					break;
 				case 1:
 					//if (!false) ...
-					dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target;
+					dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target;
 					break;
 				case 2:
-					if (!hi()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!hi()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 3:
-					if (!ls()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!ls()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 4:
-					if (!cc()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!cc()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 5:
-					if (!cs()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!cs()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 6:
-					if (!ne()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!ne()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 7:
-					if (!eq()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!eq()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 8:
-					if (!vc()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!vc()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 9:
-					if (!vs()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!vs()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 10:
-					if (!pl()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!pl()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 11:
-					if (!mi()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!mi()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 12:
-					if (!ge()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!ge()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 13:
-					if (!lt()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!lt()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 14:
-					if (!gt()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!gt()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 				case 15:
-					if (!le()) { dec16(Xn); if ((ushort)d[Xn]!=0xffff) pc = target; }
+					if (!le()) { dec16(Xn); if ((ushort)d[Xn] != 0xffff) pc = target; }
 					break;
 			}
 		}
@@ -1972,13 +1981,19 @@ namespace RunAmiga
 
 		void internalTrap(uint vector)
 		{
-			DumpTrace();
-
-			if (vector < 16)
-				Trace.Write($"Trap {vector} {trapNames[vector]} {pc:X8}");
+			if (vector == 4 && pc == 0xFC0566)
+			{
+				Trace.Write("68020 CPU Check Exception");
+			}
 			else
-				Trace.Write($"Trap {vector} {pc:X8}");
+			{
+				DumpTrace();
 
+				if (vector < 16)
+					Trace.Write($"Trap {vector} {trapNames[vector]} {pc:X8}");
+				else
+					Trace.Write($"Trap {vector} {pc:X8}");
+			}
 			pc = read32(vector << 2);
 
 			Trace.WriteLine($" -> {pc:X8}");
@@ -2084,7 +2099,7 @@ namespace RunAmiga
 				switch (op)
 				{
 					case 0://bit or movep
-						if (((type>>3)&7)==0b001)
+						if (((type >> 3) & 7) == 0b001)
 							throw new UnknownInstructionException(pc, type);//movep
 						else
 							bit(type);
@@ -2129,7 +2144,7 @@ namespace RunAmiga
 			ea = fetchEA(type);
 
 			//movea.w is sign extended
-			if ((type &0b111_000) == 0b001_000)
+			if ((type & 0b111_000) == 0b001_000)
 				writeEA(type, ea, Size.Long, op);
 			else
 				writeEA(type, ea, Size.Word, op);
@@ -2167,27 +2182,35 @@ namespace RunAmiga
 		{
 			Size size = getSize(type);
 			uint imm = fetchImm(size);
-			uint ea = fetchEA(type);
-			uint op = fetchOp(type, ea, size);
 
-			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
+			if ((type & 0b111111) == 0b111100)
 			{
-				ushort immsr = (ushort)imm;
-				sr ^= immsr; //naturally sets the flags
-			}
-			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
-			{
-				if (Supervisor())
+				if (size == Size.Byte)
 				{
 					ushort immsr = (ushort)imm;
 					sr ^= immsr; //naturally sets the flags
 				}
+				else if (size == Size.Word)
+				{
+					if (Supervisor())
+					{
+						ushort immsr = (ushort)imm;
+						sr ^= immsr; //naturally sets the flags
+					}
+					else
+					{
+						internalTrap(8);
+					}
+				}
 				else
 				{
-					internalTrap(8);
+					throw new UnknownInstructionException(pc, type);
 				}
 				return;
 			}
+
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
 
 			op ^= imm;
 			setNZ(op, size);
@@ -2226,7 +2249,7 @@ namespace RunAmiga
 			uint ea = fetchEA(type);
 			uint op0 = fetchOp(type, ea, size);
 
-			setZ((op0 & bit) != 0);
+			setZ((op0 & bit) == 0);
 
 			int op = (type >> 6) & 3;
 			switch (op)
@@ -2280,28 +2303,35 @@ namespace RunAmiga
 		{
 			Size size = getSize(type);
 			uint imm = fetchImm(size);
-			uint ea = fetchEA(type);
-			uint op = fetchOp(type, ea, size);
 
-			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
+			if ((type & 0b111111) == 0b111100)
 			{
-				ushort immsr = (ushort)imm;
-				sr &= immsr;//naturally clears the flags
-			}
-			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
-			{
-				if (Supervisor())
+				if (size == Size.Byte)
 				{
 					ushort immsr = (ushort)imm;
 					sr &= immsr;//naturally clears the flags
 				}
+				else if (size == Size.Word)
+				{
+					if (Supervisor())
+					{
+						ushort immsr = (ushort)imm;
+						sr &= immsr;//naturally clears the flags
+					}
+					else
+					{
+						internalTrap(8);
+					}
+				}
 				else
 				{
-					internalTrap(8);
+					throw new UnknownInstructionException(pc, type);
 				}
 				return;
 			}
 
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
 			op &= imm;
 			setNZ(op, size);
 			clrCV();
@@ -2312,28 +2342,34 @@ namespace RunAmiga
 		{
 			Size size = getSize(type);
 			uint imm = fetchImm(size);
-			uint ea = fetchEA(type);
-			uint op = fetchOp(type, ea, size);
 
-			if (((type & 0b111111) == 0b111100) && size == Size.Byte)
+			if ((type & 0b111111) == 0b111100)
 			{
-				ushort immsr = (ushort)imm;
-				sr |= immsr;
-			}
-			else if (((type & 0b111111) == 0b111100) && size == Size.Word)
-			{
-				if (Supervisor())
+				if (size == Size.Byte)
 				{
 					ushort immsr = (ushort)imm;
 					sr |= immsr;
 				}
+				else if (size == Size.Word)
+				{
+					if (Supervisor())
+					{
+						ushort immsr = (ushort)imm;
+						sr |= immsr;
+					}
+					else
+					{
+						internalTrap(8);
+					}
+				}
 				else
 				{
-					internalTrap(8);
+					throw new UnknownInstructionException(pc, type);
 				}
 				return;
 			}
-
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
 			op |= imm;
 			setNZ(op, size);
 			clrCV();
@@ -2385,7 +2421,8 @@ namespace RunAmiga
 			if ((type & 0b1_0000_000000) != 0)
 			{
 				//M->R
-				for (int i = 0; i < 16; i++)
+				//for (int i = 0; i < 16; i++)
+				for (int i = 15; i >= 0; i--)
 				{
 					if ((mask & (1 << i)) != 0)
 					{
@@ -2414,7 +2451,7 @@ namespace RunAmiga
 					{
 						if ((mask & (1 << i)) != 0)
 						{
-							int m = (i & 7)^7;
+							int m = (i & 7) ^ 7;
 							uint op = i <= 7 ? a[m] : d[m];
 							ea -= eastep;
 							writeOp(ea, op, size);
@@ -2482,7 +2519,6 @@ namespace RunAmiga
 		{
 			if (Supervisor())
 			{
-				throw new NotImplementedException();
 				sr = pop16();
 				pc = pop32();
 			}
@@ -2552,10 +2588,10 @@ namespace RunAmiga
 			int sign = 1;
 			while (Math.Abs(inc) < 16)
 			{
-				address += (uint)(sign*inc);
+				address += (uint)(sign * inc);
 				if (addressToLine.TryGetValue(address, out int linex))
 					return linex;
-				if (sign == - 1)
+				if (sign == -1)
 					inc++;
 				sign = -sign;
 			}
@@ -2586,12 +2622,13 @@ namespace RunAmiga
 		List<Tracer> traces = new List<Tracer>();
 		private void tracePC(uint pc)
 		{
-			traces.Last().toPC = pc;
+			if (traces.Any())
+				traces.Last().toPC = pc;
 		}
 
 		private void tracePC(string v, uint pc)
 		{
-			traces.Add(new Tracer { type = v, fromPC = pc, regs = GetRegs() });
+			traces.Add(new Tracer { type = v, fromPC = pc - 2, regs = GetRegs() });
 		}
 		private void DumpTrace()
 		{

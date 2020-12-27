@@ -520,32 +520,66 @@ namespace RunAmiga
 			return (address >> 16) == 0xdf;
 		}
 
+		private int REG(uint address)
+		{
+			return (int)(address & 0x0000fffe)>>1;
+		}
+
 		public uint Read(uint address, Size size)
 		{
 			if (size != Size.Word)
-				throw new UnknownInstructionSizeException(address, 0);
+				throw new InvalidCustomRegisterSizeException(address, size);
 
-			int reg = (int)(address & 0x0000ffff);
-
-			if ((reg & 1) != 0)
+			if ((address & 1) != 0)
 				throw new InstructionAlignmentException(address, 0);
 
-			Trace.WriteLine($"Custom Read {address:X8} {size} {debug[address].Item1} {debug[address].Item2}");
-			return (uint)regs[reg >> 1];
+			int reg = REG(address);
+
+			Trace.WriteLine($"Custom Read {address:X8} {size} : #{regs[reg]:X4} {debug[address].Item1} {debug[address].Item2}");
+
+			return (uint)regs[reg];
 		}
 
 		public void Write(uint address, uint value, Size size)
 		{
 			if (size != Size.Word)
-				throw new UnknownInstructionSizeException(address, 0);
+				throw new InvalidCustomRegisterSizeException(address, size);
 
-			int reg = (int)(address & 0x0000ffff);
-
-			if ((reg & 1) != 0)
+			if ((address & 1)!=0)
 				throw new InstructionAlignmentException(address, 0);
 
-			regs[reg >> 1] = (ushort)value;
-			Trace.WriteLine($"Custom Write {address:X8} {value:X8} {size} {debug[address].Item1} {debug[address].Item2}");
+			DebugInfo(address, value, size);
+
+			int reg = REG(address);
+
+			if (address == DMACON)
+			{
+				if ((value & 0x8000) != 0)
+					regs[reg] |= (ushort)value;
+				else
+					regs[reg] &= (ushort)~value;
+				regs[REG(DMACONR)] = regs[reg];
+			}
+			else if (address == INTENA)
+			{
+				if ((value & 0x8000)!=0)
+					regs[reg] |= (ushort)value;
+				else
+					regs[reg] &= (ushort)~value;
+				regs[REG(INTENAR)] = regs[reg];
+			}
+			else if (address == INTREQ)
+			{
+				if ((value & 0x8000) != 0)
+					regs[reg] |= (ushort)value;
+				else
+					regs[reg] &= (ushort)~value;
+				regs[REG(INTREQR)] = regs[reg];
+			}
+			else
+			{ 
+				regs[reg] = (ushort)value;
+			}
 
 			//NB. BPLCON3 13..15 controls the palette bank on AGA
 			if (address >= COLOR00 && address <= COLOR31)
@@ -553,6 +587,12 @@ namespace RunAmiga
 				uint bank = (Read(BPLCON3, Size.Word)&0b111_00000_00000000)>>(13-5);
 				UI.SetColour((int)(bank+((address - COLOR00) >> 1)), (ushort)value);
 			}
+
+		}
+
+		private void DebugInfo(uint address, uint value, Size size)
+		{
+			Trace.WriteLine($"Custom Write {address:X8} {value:X8} {size} {debug[address].Item1} {debug[address].Item2}");
 
 			if (address == BPLCON0)
 			{
@@ -563,7 +603,7 @@ namespace RunAmiga
 				if ((value & 512) != 0) Trace.Write("COLOR_ON ");
 				if ((value & 1024) != 0) Trace.Write("DBLPF ");
 				if ((value & 2048) != 0) Trace.Write("HOMOD ");
-				Trace.Write($"{(value>>12)&7}BPP ");
+				Trace.Write($"{(value >> 12) & 7}BPP ");
 				if ((value & 32768) != 0) Trace.Write("HIRES ");
 				Trace.WriteLine("");
 			}

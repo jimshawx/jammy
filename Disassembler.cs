@@ -1019,7 +1019,7 @@ namespace RunAmiga
 
 		private void scc(int type)
 		{
-			Append("set");
+			Append("s");
 			int cond = (type >> 8) & 0xf;
 			switch (cond)
 			{
@@ -1072,7 +1072,7 @@ namespace RunAmiga
 					le();
 					break;
 			}
-			Append(",");
+			Append(" ");
 			uint ea = fetchEA(type);
 		}
 
@@ -1307,7 +1307,7 @@ namespace RunAmiga
 
 		private void pea(int type)
 		{
-			Append("pea");
+			Append("pea ");
 			uint ea = fetchEA(type);
 		}
 

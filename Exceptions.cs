@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RunAmiga.Types;
+using System;
 
 namespace RunAmiga
 {
@@ -68,6 +69,23 @@ namespace RunAmiga
 		public override string ToString()
 		{
 			return $"Unknown Instruction Alignment @{pc:X6} {instruction:X4}. {base.ToString()}";
+		}
+	}
+
+	public class InvalidCustomRegisterSizeException : MC68000Exception
+	{
+		private uint pc;
+		private Size size;
+
+		public InvalidCustomRegisterSizeException(uint pc, Size size)
+		{
+			this.pc = pc;
+			this.size = size;
+		}
+
+		public override string ToString()
+		{
+			return $"Invalid Custom Register Size @{pc:X6} {size}. {base.ToString()}";
 		}
 	}
 }
