@@ -42,6 +42,7 @@ namespace RunAmiga
 		private IMemoryMappedDevice cia { get; }
 		private IMemoryMappedDevice custom { get; }
 		private Disassembler disassembler { get; }
+		private uint instructionStartPC;
 
 		public CPU(IMemoryMappedDevice cia, IMemoryMappedDevice custom)
 		{
@@ -102,11 +103,12 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc02ac);
 			//AddBreakpoint(0xfc033e);
 			//AddBreakpoint(0xfc03e2);
-			AddBreakpoint(0xfc1794);
-			//AddBreakpoint(0xfc05a6);
+			//AddBreakpoint(0xfc1794);
+			//AddBreakpoint(0xfc04be);
+			//AddBreakpoint(0xfc0478);
 			AddBreakpoint(0xfc08aa);
 			//AddBreakpoint(0xfc0e86);
-			AddBreakpoint(0xfc1f38);
+			//AddBreakpoint(0xfc1f38);
 			AddBreakpoint(0xfc0e86);//Shedule().
 			AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
@@ -393,6 +395,12 @@ namespace RunAmiga
 		{
 			a[7] -= 4;
 			write32(a[7], value);
+		}
+
+		private void push16(ushort value)
+		{
+			a[7] -= 2;
+			write16(a[7], value);
 		}
 
 		private uint pop32()
@@ -700,9 +708,10 @@ namespace RunAmiga
 			}
 
 			pc &= 0xffffff;
+			instructionStartPC = pc;
 
 			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
-			//tracePC(dasm.ToString(), pc);
+			//tracePC(dasm.ToString(), instructionStartPC);
 
 			try
 			{
@@ -1527,7 +1536,7 @@ namespace RunAmiga
 
 		private void bsr(int type, uint target)
 		{
-			tracePC("bsr", pc);
+			tracePC("bsr", instructionStartPC);
 
 			push32(pc);
 			pc = target;
@@ -1537,7 +1546,7 @@ namespace RunAmiga
 
 		private void bra(int type, uint target)
 		{
-			tracePC("bra", pc);
+			tracePC("bra", instructionStartPC);
 
 			pc = target;
 
@@ -1981,9 +1990,17 @@ namespace RunAmiga
 
 		void internalTrap(uint vector)
 		{
-			if (vector == 4 && pc == 0xFC0566)
+			if (vector == 4 && instructionStartPC == 0xFC0564)
 			{
 				Trace.Write("68020 CPU Check Exception");
+			}
+			else if (vector == 8 && instructionStartPC == 0xFC08AA)
+			{
+				Trace.Write("Supervisor()");
+			}
+			else if (vector == 8 && instructionStartPC == 0xFC08BA)
+			{
+				Trace.Write("68020 Supervisor()");
 			}
 			else
 			{
@@ -1994,6 +2011,11 @@ namespace RunAmiga
 				else
 					Trace.Write($"Trap {vector} {pc:X8}");
 			}
+
+			setSupervisor();
+			push32(instructionStartPC);
+			push16(sr);
+
 			pc = read32(vector << 2);
 
 			Trace.WriteLine($" -> {pc:X8}");
@@ -2028,9 +2050,9 @@ namespace RunAmiga
 			{
 				int An = type & 7;
 				if ((type & 0b1000) != 0)
-					a.usp = a[An];
-				else
 					a[An] = a.usp;
+				else
+					a.usp = a[An];
 			}
 			else
 			{
@@ -2478,7 +2500,7 @@ namespace RunAmiga
 
 		private void jmp(int type)
 		{
-			tracePC("jmp", pc);
+			tracePC("jmp", instructionStartPC);
 
 			pc = fetchEA(type);
 
@@ -2487,7 +2509,7 @@ namespace RunAmiga
 
 		private void jsr(int type)
 		{
-			tracePC("jsr", pc);
+			tracePC("jsr", instructionStartPC);
 
 			uint ea = fetchEA(type);
 			push32(pc);
@@ -2510,7 +2532,7 @@ namespace RunAmiga
 
 		private void rts(int type)
 		{
-			tracePC("rts", pc);
+			tracePC("rts", instructionStartPC);
 			pc = pop32();
 			tracePC(pc);
 		}
@@ -2519,8 +2541,10 @@ namespace RunAmiga
 		{
 			if (Supervisor())
 			{
+				tracePC("rte", instructionStartPC);
 				sr = pop16();
 				pc = pop32();
+				tracePC(pc);
 			}
 			else
 			{
@@ -2630,6 +2654,7 @@ namespace RunAmiga
 		{
 			traces.Add(new Tracer { type = v, fromPC = pc - 2, regs = GetRegs() });
 		}
+
 		private void DumpTrace()
 		{
 			foreach (var t in traces.TakeLast(64))
