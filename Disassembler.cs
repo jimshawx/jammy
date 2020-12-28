@@ -661,7 +661,12 @@ namespace RunAmiga
 		private void cmpm(int type)
 		{
 			Append("cmpm");
-			Append(" - incomplete");
+
+			Size size = getSize(type);
+
+			int Xn = type & 7;
+			int Ax = (type>>9) & 7;
+			Append($"(a{Xn})+,(a{Ax})+");
 		}
 
 		private void cmp(int type)

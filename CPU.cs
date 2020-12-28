@@ -106,10 +106,10 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc1794);
 			//AddBreakpoint(0xfc04be);
 			//AddBreakpoint(0xfc0478);
-			AddBreakpoint(0xfc08aa);
+			//AddBreakpoint(0xfc08aa);
 			//AddBreakpoint(0xfc0e86);
-			//AddBreakpoint(0xfc1f38);
-			AddBreakpoint(0xfc0e86);//Shedule().
+			AddBreakpoint(0xfc0500);
+			//AddBreakpoint(0xfc0e86);//Shedule().
 			AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
 			AddBreakpoint(0xfc2fb4);//Task Crash Routine
@@ -1217,7 +1217,33 @@ namespace RunAmiga
 
 		private void cmpm(int type)
 		{
-			throw new NotImplementedException();
+			Size size = getSize(type);
+
+			int Xn = type&7;
+			uint op0 = fetchOpSize(a[Xn], size);
+
+			int Ax = (type>>9) & 7;
+			uint op1 = fetchOpSize(a[Ax], size);
+
+			if (size == Size.Byte)
+			{ 
+				a[Xn]++;
+				a[Ax]++;
+			}
+			else if (size == Size.Word)
+			{
+				a[Xn]+=2;
+				a[Ax]+=2;
+			}
+			else if (size == Size.Long)
+			{
+				a[Xn]+=4;
+				a[Ax]+=4;
+			}
+
+			setC(op1, (uint)-(int)op0, size);
+			setV(op1, (uint)-(int)op0, size);
+			setNZ(op1 - op0, size);
 		}
 
 		private void cmp(int type)
@@ -2012,9 +2038,10 @@ namespace RunAmiga
 					Trace.Write($"Trap {vector} {pc:X8}");
 			}
 
+			ushort oldSR = sr;
 			setSupervisor();
 			push32(instructionStartPC);
-			push16(sr);
+			push16(oldSR);
 
 			pc = read32(vector << 2);
 
@@ -2023,7 +2050,6 @@ namespace RunAmiga
 
 		private void trap(int type)
 		{
-			setSupervisor();
 			uint vector = (uint)(type & 0xf) + 32;
 			internalTrap(vector);
 		}
@@ -2652,7 +2678,7 @@ namespace RunAmiga
 
 		private void tracePC(string v, uint pc)
 		{
-			traces.Add(new Tracer { type = v, fromPC = pc - 2, regs = GetRegs() });
+			traces.Add(new Tracer { type = v, fromPC = pc, regs = GetRegs() });
 		}
 
 		private void DumpTrace()
