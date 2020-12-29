@@ -29,6 +29,7 @@ namespace RunAmiga
 
 		public UnknownEffectiveAddressException(uint pc, int instruction)
 		{
+			this.pc = pc;
 			this.instruction = (ushort)instruction;
 		}
 

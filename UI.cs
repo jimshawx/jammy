@@ -48,6 +48,19 @@ namespace RunAmiga
 			}
 		}
 
+		private static bool isDirty;
+		public static bool IsDirty
+		{
+			set
+			{
+				isDirty = value;
+			}
+			get
+			{
+				return isDirty;
+			}
+		}
+
 		private static uint [] colours = new uint[256];
 		public static void SetColour(int index, ushort value)
 		{

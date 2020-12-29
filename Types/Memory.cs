@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace RunAmiga.Types
@@ -12,44 +13,64 @@ namespace RunAmiga.Types
 			Array.Copy(src, memory, 16 * 1024 * 1024);
 		}
 
-		private void BlockToString(uint start, uint size, StringBuilder sb)
+		private Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
+		private string BlockToString(List<Tuple<uint, uint>> ranges)
 		{
-			for (uint i = start; i < start+size; i += 32)
+			var sb = new StringBuilder();
+
+			int line = 0;
+			foreach (var range in ranges)
 			{
-				sb.Append($"{i:X6} ");
-				for (int k = 0; k < 4; k++)
+				uint start = range.Item1;
+				uint size = range.Item2;
+
+				for (uint i = start; i < start + size; i += 32)
 				{
-					for (int j = 0; j < 8; j++)
+					addressToLine.Add(i, line++);
+					sb.Append($"{i:X6} ");
+					for (int k = 0; k < 4; k++)
 					{
-						sb.Append($"{memory[i + k * 8 + j]:X2}");
+						for (int j = 0; j < 8; j++)
+						{
+							sb.Append($"{memory[i + k * 8 + j]:X2}");
+						}
+						sb.Append(" ");
 					}
-					sb.Append(" ");
+
+					sb.Append("  ");
+
+					for (int k = 0; k < 32; k++)
+					{
+
+						byte c = memory[i + k];
+						if (c < 31 || c >= 127) c = (byte)'.';
+						sb.Append($"{Convert.ToChar(c)}");
+					}
+
+					sb.Append("\n");
 				}
-
-				sb.Append("  ");
-
-				for (int k = 0; k < 32; k++)
-				{
-
-					byte c = memory[i + k];
-					if (c < 31 || c >= 127) c = (byte)'.';
-					sb.Append($"{Convert.ToChar(c)}");
-				}
-
-				sb.Append("\n");
 			}
+			return sb.ToString();
+		}
+
+		public int AddressToLine(uint address)
+		{
+			for (uint i = address; i >= address - 32; i--)
+			{
+				if (addressToLine.TryGetValue(i, out int v))
+					return v;
+			}
+			return 0;
 		}
 
 		public override string ToString()
 		{
-			var sb = new StringBuilder();
-
-			BlockToString(0x000000, 0x4000, sb);
-			BlockToString(0xc00000, 0x4000, sb);
-			BlockToString(0xfc0000, 0x4000, sb);
-			BlockToString(0xfe4000, 0x4000, sb);
-
-			return sb.ToString();
+			return BlockToString(new List<Tuple<uint, uint>>
+				{
+					new Tuple<uint, uint> ( 0x000000, 0x4000),
+					new Tuple<uint, uint> ( 0xc00000, 0x4000),
+					new Tuple<uint, uint> ( 0xfc0000, 0x40000)
+				});
 		}
 	}
 }

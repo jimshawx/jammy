@@ -607,6 +607,13 @@ namespace RunAmiga
 				if ((value & 32768) != 0) Trace.Write("HIRES ");
 				Trace.WriteLine("");
 			}
+
+			if (address == SERPER)
+			{
+				if ((value & 0x8000)!=0) Trace.WriteLine("9bit"); else Trace.WriteLine("8bit");
+				Trace.WriteLine($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.27936)} NTSC");
+				Trace.WriteLine($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.28194)} PAL");
+			}
 		}
 	}
 }

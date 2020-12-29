@@ -17,6 +17,8 @@ namespace RunAmiga
 		{
 			InitializeComponent();
 
+			addressFollowBox.SelectedIndex = 0;
+
 			this.machine = machine;
 
 			machine.Init();
@@ -47,7 +49,8 @@ namespace RunAmiga
 					{
 						new Tuple<uint, uint> (0x000000, 0x4000),
 						new Tuple<uint, uint> (0xc00000, 0x4000),
-						new Tuple<uint, uint> (0xfc0000, 0x4000),
+						new Tuple<uint, uint> (0xfc0000, 0x0900),
+						new Tuple<uint, uint> (0xfc0900, 0x4000),
 						new Tuple<uint, uint> (0xfe52a4, 0x0144),
 						new Tuple<uint, uint> (0xfe53e8, 0x4000)
 					});
@@ -77,9 +80,43 @@ namespace RunAmiga
 		{
 			Machine.LockEmulation();
 			var memory = cpu.GetMemory();
+			var regs = cpu.GetRegs();
 			Machine.UnlockEmulation();
 
 			txtMemory.Text = memory.ToString();
+
+			if (addressFollowBox.SelectedIndex != 0)
+			{
+				uint address = 0;
+				switch ((string)addressFollowBox.SelectedItem)
+				{
+					case "A0": address = regs.A[0]; break;
+					case "A1": address = regs.A[1]; break;
+					case "A2": address = regs.A[2]; break;
+					case "A3": address = regs.A[3]; break;
+					case "A4": address = regs.A[4]; break;
+					case "A5": address = regs.A[5]; break;
+					case "A6": address = regs.A[6]; break;
+					case "SP": address = regs.SP; break;
+					case "SSP": address = regs.SSP; break;
+					case "D0": address = regs.D[0]; break;
+					case "D1": address = regs.D[1]; break;
+					case "D2": address = regs.D[2]; break;
+					case "D3": address = regs.D[3]; break;
+					case "D4": address = regs.D[4]; break;
+					case "D5": address = regs.D[5]; break;
+					case "D6": address = regs.D[6]; break;
+					case "D7": address = regs.D[7]; break;
+					case "PC": address = regs.PC; break;
+				}
+				var line = memory.AddressToLine(address);
+				if (line != 0)
+				{
+					txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
+					txtMemory.ScrollToCaret();
+				} 
+			}
+
 		}
 
 		private void SetSelection()
@@ -163,9 +200,16 @@ namespace RunAmiga
 		private void UIUpdateThread(object o)
 		{
 			while (!exiting)
-			{ 
-				this.Invoke((Action)delegate() { UpdatePowerLight(); } );
-				Thread.Sleep(100);
+			{
+				this.Invoke((Action)delegate () { UpdatePowerLight(); });
+
+				if (UI.IsDirty)
+				{
+					this.Invoke((Action)delegate () { SetSelection(); UpdateDisplay(); });
+					UI.IsDirty = false;
+				}
+
+				Thread.Sleep(500);
 			}
 			exiting = false;
 		}
@@ -173,25 +217,50 @@ namespace RunAmiga
 		private void UpdatePowerLight()
 		{
 			bool power = UI.PowerLight;
-			picPower.BackColor = power?Color.Red:Color.DarkRed;
+			picPower.BackColor = power ? Color.Red : Color.DarkRed;
 		}
 
 		private void UpdateDiskLight()
 		{
 			bool disk = UI.DiskLight;
-			picDisk.BackColor = disk? Color.Green : Color.DarkGreen;
+			picDisk.BackColor = disk ? Color.Green : Color.DarkGreen;
 		}
 
 		private void UpdateColours()
 		{
 			var colours = new uint[256];
 			UI.GetColours(colours);
+
+			for (int i = 0; i < colours.Length; i++)
+				colours[i] |= 0xff000000;
+
+			colour0.BackColor = Color.FromArgb((int)colours[0]);
+			colour1.BackColor = Color.FromArgb((int)colours[1]);
+			colour2.BackColor = Color.FromArgb((int)colours[2]);
+			colour3.BackColor = Color.FromArgb((int)colours[3]);
+			colour4.BackColor = Color.FromArgb((int)colours[4]);
+			colour5.BackColor = Color.FromArgb((int)colours[5]);
+			colour6.BackColor = Color.FromArgb((int)colours[6]);
+			colour7.BackColor = Color.FromArgb((int)colours[7]);
+			colour8.BackColor = Color.FromArgb((int)colours[8]);
+			colour9.BackColor = Color.FromArgb((int)colours[9]);
+			colour10.BackColor = Color.FromArgb((int)colours[10]);
+			colour11.BackColor = Color.FromArgb((int)colours[11]);
+			colour12.BackColor = Color.FromArgb((int)colours[12]);
+			colour13.BackColor = Color.FromArgb((int)colours[13]);
+			colour14.BackColor = Color.FromArgb((int)colours[14]);
+			colour15.BackColor = Color.FromArgb((int)colours[15]);
 		}
 
 		private void btnDisassemble_Click(object sender, EventArgs e)
 		{
 			UpdateDisassembly();
 			SetSelection();
+			UpdateDisplay();
+		}
+
+		private void addressFollowBox_SelectionChangeCommitted(object sender, EventArgs e)
+		{
 			UpdateDisplay();
 		}
 	}

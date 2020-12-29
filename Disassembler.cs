@@ -223,7 +223,7 @@ namespace RunAmiga
 								//Append($"{fmtX2(d8)}(pc,d{Xn}.{s})");
 								d8 += (address + pc);
 								pc += 2;
-								Append($"{fmtX8(d8)}(d{Xn}.{s}) ");
+								Append($"{fmtX8(d8)}(d{Xn}.{s})");
 
 								return 0;
 							}

@@ -8,6 +8,7 @@ namespace RunAmiga.Types
 		public uint[] D { get; private set; }
 		public uint[] A { get; private set; }
 		public uint PC { get; set; }
+		public uint SP { get; set; }
 		public uint SSP { get; set; }
 		//T.S..210...XNZVC
 		public ushort SR { get; set;}

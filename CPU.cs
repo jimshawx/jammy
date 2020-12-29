@@ -64,7 +64,7 @@ namespace RunAmiga
 				regs.D[i] = d[i];
 			}
 			regs.PC = pc;
-			regs.A[7] = a.usp;
+			regs.SP = a.usp;
 			regs.SSP = a.ssp;
 			regs.SR = sr;
 			return regs;
@@ -75,50 +75,26 @@ namespace RunAmiga
 			return new Memory(memory);
 		}
 
-		private void Hack()
-		{
-			//remove the annoying delay loop at FC00D8
-			//memory[0xfc00da] = 0;
-			//memory[0xfc00db] = 0;
-			//memory[0xfc00dc] = 0;
-			//memory[0xfc00dd] = 1;
-
-			//memory[0x0000da] = 0;
-			//memory[0x0000db] = 0;
-			//memory[0x0000dc] = 0;
-			//memory[0x0000dd] = 1;
-		}
-
 		public void InitialSetup()
 		{
-			////poke in exec base
-			//memory[4] = 0x00;
-			//memory[5] = 0xfc;
-			//memory[6] = 0x00;
-			//memory[7] = 0xd2;
-
-			//Hack();
-
 			Reset();
-			//AddBreakpoint(0xfc02ac);
-			//AddBreakpoint(0xfc033e);
-			//AddBreakpoint(0xfc03e2);
-			//AddBreakpoint(0xfc1794);
-			//AddBreakpoint(0xfc04be);
-			//AddBreakpoint(0xfc0478);
-			//AddBreakpoint(0xfc089a);
-			//AddBreakpoint(0xfc0e86);
+
 			//AddBreakpoint(0xfc0500);//InitCode
 			//AddBreakpoint(0xfc0af0);
-			AddBreakpoint(0xfc14ec);//MakeLibrary
-			AddBreakpoint(0xfc1560);
-			AddBreakpoint(0xfc0bc8);//InitStruct
-			//AddBreakpoint(0xfe53fe);
-			//AddBreakpoint(0xfc0e86);//Shedule().
+			//AddBreakpoint(0xfc14ec);//MakeLibrary
+			//AddBreakpoint(0xfc0900);
+			//AddBreakpoint(0xfc096c);
+			//AddBreakpoint(0xfc0bc8);//InitStruct
+			AddBreakpoint(0xfc1c34);//OpenResource
+			AddBreakpoint(0xfe9174);
+			//AddBreakpoint(0xfc0e86);//Schedule().
 			AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
 			AddBreakpoint(0xfc2fb4);//Task Crash Routine
+			AddBreakpoint(0xfc2fd6);//Alert()
 			AddBreakpoint(0xfc305e);//Irrecoverable Crash
+
+			ExecLabels();
 		}
 
 		public void BulkWrite(int dst, byte[] src, int length)
@@ -470,7 +446,7 @@ namespace RunAmiga
 								uint d8 = ext & 0xff;
 								uint dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
 								uint ea = pc + dx + (uint)(sbyte)d8;
-								pc+=2;
+								pc += 2;
 								return ea;
 							}
 						case 0b000://(xxx).w
@@ -717,6 +693,9 @@ namespace RunAmiga
 			pc &= 0xffffff;
 			instructionStartPC = pc;
 
+			if (asmLabels.ContainsKey(pc))
+				Trace.WriteLine($"{asmLabels[pc].Address:X6} {asmLabels[pc].Name}");
+
 			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
 			//tracePC(dasm.ToString(), instructionStartPC);
 
@@ -780,6 +759,7 @@ namespace RunAmiga
 				DumpTrace();
 				Trace.WriteLine($"Breakpoint @{pc:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				UI.IsDirty = true;
 				return;
 			}
 		}
@@ -1226,26 +1206,26 @@ namespace RunAmiga
 		{
 			Size size = getSize(type);
 
-			int Xn = type&7;
+			int Xn = type & 7;
 			uint op0 = fetchOpSize(a[Xn], size);
 
-			int Ax = (type>>9) & 7;
+			int Ax = (type >> 9) & 7;
 			uint op1 = fetchOpSize(a[Ax], size);
 
 			if (size == Size.Byte)
-			{ 
+			{
 				a[Xn]++;
 				a[Ax]++;
 			}
 			else if (size == Size.Word)
 			{
-				a[Xn]+=2;
-				a[Ax]+=2;
+				a[Xn] += 2;
+				a[Ax] += 2;
 			}
 			else if (size == Size.Long)
 			{
-				a[Xn]+=4;
-				a[Ax]+=4;
+				a[Xn] += 4;
+				a[Ax] += 4;
 			}
 
 			setC(op1, (uint)-(int)op0, size);
@@ -2625,6 +2605,11 @@ namespace RunAmiga
 				uint addressEnd = address + size;
 				while (address < addressEnd)
 				{
+					if (asmLabels.ContainsKey(address))
+					{
+						txt.Append($"{asmLabels[address].Name}:\n");
+						line++;
+					}
 					addressToLine.Add(address, line);
 					lineToAddress.Add(line, address);
 					line++;
@@ -2739,5 +2724,202 @@ namespace RunAmiga
 			AddBreakpoint(GetLineAddress(line), BreakpointType.OneShot);
 		}
 
+		private string[] fns = {
+			"Supervisor",
+			"ExitIntr",
+			"Schedule",
+			"Reschedule",
+			"Switch",
+			"Dispatch",
+			"Exception",
+			"InitCode",
+			"InitStruct",
+			"MakeLibrary",
+			"MakeFunctions",
+			"FindResident",
+			"InitResident",
+			"Alert",
+			"Debug",
+			"Disable",
+			"Enable",
+			"Forbid",
+			"Permit",
+			"SetSR",
+			"SuperState",
+			"UserState",
+			"SetIntVector",
+			"AddIntServer",
+			"RemIntServer",
+			"Cause",
+			"Allocate",
+			"Deallocate",
+			"AllocMem",
+			"AllocAbs",
+			"FreeMem",
+			"AvailMem",
+			"AllocEntry",
+			"FreeEntry",
+			"Insert",
+			"AddHead",
+			"AddTail",
+			"Remove",
+			"RemHead",
+			"RemTail",
+			"Enqueue",
+			"FindName",
+			"AddTask",
+			"RemTask",
+			"FindTask",
+			"SetTaskPri",
+			"SetSignal",
+			"SetExcept",
+			"Wait",
+			"Signal",
+			"AllocSignal",
+			"FreeSignal",
+			"AllocTrap",
+			"FreeTrap",
+			"AddPort",
+			"RemPort",
+			"PutMsg",
+			"GetMsg",
+			"ReplyMsg",
+			"WaitPort",
+			"FindPort",
+			"AddLibrary",
+			"RemLibrary",
+			"OldOpenLibrary",
+			"CloseLibrary",
+			"SetFunction",
+			"SumLibrary",
+			"AddDevice",
+			"RemDevice",
+			"OpenDevice",
+			"CloseDevice",
+			"DoIO",
+			"SendIO",
+			"CheckIO",
+			"WaitIO",
+			"AbortIO",
+			"AddResource",
+			"RemResource",
+			"OpenResource",
+			"RawIOInit",
+			"RawMayGetChar",
+			"RawPutChar",
+			"RawDoFmt",
+			"GetCC",
+			"TypeOfMem",
+			"Procure",
+			"Vacate",
+			"OpenLibrary",
+			"InitSemaphore",
+			"ObtainSemaphore",
+			"ReleaseSemaphore",
+			"AttemptSemaphore",
+			"ObtainSemaphoreList",
+			"ReleaseSemaphoreList",
+			"FindSemaphore",
+			"AddSemaphore",
+			"RemSemaphore",
+			"SumKickData",
+			"AddMemList",
+			"CopyMem",
+			"CopyMemQuick",
+			"CacheClearU",
+			"CacheClearE",
+			"CacheControl",
+			"CreateIORequest",
+			"DeleteIORequest",
+			"CreateMsgPort",
+			"DeleteMsgPort",
+			"ObtainSemaphoreShared",
+			"AllocVec",
+			"FreeVec",
+			"CreatePrivatePool",
+			"DeletePrivatePool",
+			"AllocPooled",
+			"FreePooled",
+			"AttemptSemaphoreShared",
+			"ColdReboot",
+			"StackSwap",
+			"ChildFree",
+			"ChildOrphan",
+			"ChildStatus",
+			"ChildWait",
+			"CachePreDMA",
+			"CachePostDMA",
+			"ExecReserved01",
+			"ExecReserved02",
+			"ExecReserved03",
+			"ExecReserved04",
+		};
+
+		uint fnbase = 0xFC1A40;
+		
+		ushort[] fnoffs = {
+			0x08A0, 0x08A8,
+			0x08AC, 0x08AC,
+			0xEE6A, 0xF420,
+			0xF446, 0x04F8,
+			0xF4A0, 0xF4EA,
+			0xF58E, 0xF0B0,
+			0xF188, 0xFAAC,
+			0xFB36, 0xF080,
+			0xF0E8, 0x1596,
+			0x08EE, 0xF9AC,
+			0xF9BA, 0x051A,
+			0x0520, 0xF6E2,
+			0xF708, 0xF734,
+			0xF74E, 0xF794,
+			0xF7D4, 0xF8E0,
+			0xFC5C, 0xFCC4,
+			0xFD54, 0xFE00,
+			0xFDB0, 0xFE90,
+			0xFEDE, 0xFF6C,
+			0xFB6C, 0xFB98,
+			0xFBA8, 0xFBC0,
+			0xFBCE, 0xFBDE,
+			0xFBF4, 0xFC1A,
+			0x0208, 0x02B4,
+			0x0334, 0x0388,
+			0x03E2, 0x03D8,
+			0x0490, 0x0408,
+			0x0584, 0x05BC,
+			0x054E, 0x0574,
+			0x00D8, 0x00F0,
+			0x00F4, 0x016E,
+			0x019C, 0x01B6,
+			0x01DE, 0xF9CC,
+			0xF9DA, 0xF9F0,
+			0xFA26, 0xFA3A,
+			0xFA58, 0xEC14,
+			0xEC22, 0xEC26,
+			0xEC74, 0xEC9C,
+			0xEC8A, 0xED0E,
+			0xECB2, 0xED2A,
+			0x01E8, 0x01F0,
+			0x01F4, 0x07B8,
+			0x07C2, 0x07EE,
+			0x06A8, 0xF700,
+			0xFDDA, 0x131C,
+			0x1332, 0xF9F8,
+			0x1354, 0x1374,
+			0x13C4, 0x1428,
+			0x1458, 0x14CE,
+			0x14F4, 0x14E4,
+			0x14F0, 0xEFFC,
+			0xFFAA, 0x1504,
+			0x1500};
+
+		Dictionary<uint, Label> asmLabels = new Dictionary<uint, Label>();
+		private void ExecLabels()
+		{
+			for (int i = 4; i < fnoffs.Length; i++)
+				asmLabels[fnbase + fnoffs[i]] = new Label { Address = fnbase + fnoffs[i], Name = fns[i - 4] };
+
+			//foreach (var e in asmLabels)
+			//	Trace.WriteLine($"{e.Key:X6} {e.Value.Name}");
+		}
 	}
 }

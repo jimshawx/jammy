@@ -43,12 +43,53 @@ namespace RunAmiga
 			this.picPower = new System.Windows.Forms.PictureBox();
 			this.picDisk = new System.Windows.Forms.PictureBox();
 			this.btnDisassemble = new System.Windows.Forms.Button();
+			this.colour0 = new System.Windows.Forms.PictureBox();
+			this.colour1 = new System.Windows.Forms.PictureBox();
+			this.colour2 = new System.Windows.Forms.PictureBox();
+			this.colour3 = new System.Windows.Forms.PictureBox();
+			this.colour7 = new System.Windows.Forms.PictureBox();
+			this.colour6 = new System.Windows.Forms.PictureBox();
+			this.colour5 = new System.Windows.Forms.PictureBox();
+			this.colour4 = new System.Windows.Forms.PictureBox();
+			this.colour11 = new System.Windows.Forms.PictureBox();
+			this.colour10 = new System.Windows.Forms.PictureBox();
+			this.colour9 = new System.Windows.Forms.PictureBox();
+			this.colour8 = new System.Windows.Forms.PictureBox();
+			this.colour15 = new System.Windows.Forms.PictureBox();
+			this.colour14 = new System.Windows.Forms.PictureBox();
+			this.colour13 = new System.Windows.Forms.PictureBox();
+			this.colour12 = new System.Windows.Forms.PictureBox();
+			this.radioButton10 = new System.Windows.Forms.RadioButton();
+			this.radioButton11 = new System.Windows.Forms.RadioButton();
+			this.radioButton12 = new System.Windows.Forms.RadioButton();
+			this.radioButton13 = new System.Windows.Forms.RadioButton();
+			this.radioButton14 = new System.Windows.Forms.RadioButton();
+			this.radioButton15 = new System.Windows.Forms.RadioButton();
+			this.radioButton16 = new System.Windows.Forms.RadioButton();
+			this.radioButton17 = new System.Windows.Forms.RadioButton();
+			this.addressFollowBox = new System.Windows.Forms.ComboBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
 			this.splitContainer1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.picPower)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.picDisk)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour0)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour1)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour2)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour3)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour7)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour6)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour5)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour4)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour11)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour10)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour9)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour8)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour15)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour14)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour13)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour12)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// lbRegisters
@@ -208,11 +249,290 @@ namespace RunAmiga
 			this.btnDisassemble.UseVisualStyleBackColor = true;
 			this.btnDisassemble.Click += new System.EventHandler(this.btnDisassemble_Click);
 			// 
+			// colour0
+			// 
+			this.colour0.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour0.Location = new System.Drawing.Point(815, 485);
+			this.colour0.Name = "colour0";
+			this.colour0.Size = new System.Drawing.Size(16, 16);
+			this.colour0.TabIndex = 13;
+			this.colour0.TabStop = false;
+			// 
+			// colour1
+			// 
+			this.colour1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour1.Location = new System.Drawing.Point(837, 485);
+			this.colour1.Name = "colour1";
+			this.colour1.Size = new System.Drawing.Size(16, 16);
+			this.colour1.TabIndex = 14;
+			this.colour1.TabStop = false;
+			// 
+			// colour2
+			// 
+			this.colour2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour2.Location = new System.Drawing.Point(859, 485);
+			this.colour2.Name = "colour2";
+			this.colour2.Size = new System.Drawing.Size(16, 16);
+			this.colour2.TabIndex = 15;
+			this.colour2.TabStop = false;
+			// 
+			// colour3
+			// 
+			this.colour3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour3.Location = new System.Drawing.Point(881, 485);
+			this.colour3.Name = "colour3";
+			this.colour3.Size = new System.Drawing.Size(16, 16);
+			this.colour3.TabIndex = 16;
+			this.colour3.TabStop = false;
+			// 
+			// colour7
+			// 
+			this.colour7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour7.Location = new System.Drawing.Point(881, 507);
+			this.colour7.Name = "colour7";
+			this.colour7.Size = new System.Drawing.Size(16, 16);
+			this.colour7.TabIndex = 20;
+			this.colour7.TabStop = false;
+			// 
+			// colour6
+			// 
+			this.colour6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour6.Location = new System.Drawing.Point(859, 507);
+			this.colour6.Name = "colour6";
+			this.colour6.Size = new System.Drawing.Size(16, 16);
+			this.colour6.TabIndex = 19;
+			this.colour6.TabStop = false;
+			// 
+			// colour5
+			// 
+			this.colour5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour5.Location = new System.Drawing.Point(837, 507);
+			this.colour5.Name = "colour5";
+			this.colour5.Size = new System.Drawing.Size(16, 16);
+			this.colour5.TabIndex = 18;
+			this.colour5.TabStop = false;
+			// 
+			// colour4
+			// 
+			this.colour4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour4.Location = new System.Drawing.Point(815, 507);
+			this.colour4.Name = "colour4";
+			this.colour4.Size = new System.Drawing.Size(16, 16);
+			this.colour4.TabIndex = 17;
+			this.colour4.TabStop = false;
+			// 
+			// colour11
+			// 
+			this.colour11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour11.Location = new System.Drawing.Point(881, 529);
+			this.colour11.Name = "colour11";
+			this.colour11.Size = new System.Drawing.Size(16, 16);
+			this.colour11.TabIndex = 24;
+			this.colour11.TabStop = false;
+			// 
+			// colour10
+			// 
+			this.colour10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour10.Location = new System.Drawing.Point(859, 529);
+			this.colour10.Name = "colour10";
+			this.colour10.Size = new System.Drawing.Size(16, 16);
+			this.colour10.TabIndex = 23;
+			this.colour10.TabStop = false;
+			// 
+			// colour9
+			// 
+			this.colour9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour9.Location = new System.Drawing.Point(837, 529);
+			this.colour9.Name = "colour9";
+			this.colour9.Size = new System.Drawing.Size(16, 16);
+			this.colour9.TabIndex = 22;
+			this.colour9.TabStop = false;
+			// 
+			// colour8
+			// 
+			this.colour8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour8.Location = new System.Drawing.Point(815, 529);
+			this.colour8.Name = "colour8";
+			this.colour8.Size = new System.Drawing.Size(16, 16);
+			this.colour8.TabIndex = 21;
+			this.colour8.TabStop = false;
+			// 
+			// colour15
+			// 
+			this.colour15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour15.Location = new System.Drawing.Point(881, 551);
+			this.colour15.Name = "colour15";
+			this.colour15.Size = new System.Drawing.Size(16, 16);
+			this.colour15.TabIndex = 20;
+			this.colour15.TabStop = false;
+			// 
+			// colour14
+			// 
+			this.colour14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour14.Location = new System.Drawing.Point(859, 551);
+			this.colour14.Name = "colour14";
+			this.colour14.Size = new System.Drawing.Size(16, 16);
+			this.colour14.TabIndex = 19;
+			this.colour14.TabStop = false;
+			// 
+			// colour13
+			// 
+			this.colour13.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour13.Location = new System.Drawing.Point(837, 551);
+			this.colour13.Name = "colour13";
+			this.colour13.Size = new System.Drawing.Size(16, 16);
+			this.colour13.TabIndex = 18;
+			this.colour13.TabStop = false;
+			// 
+			// colour12
+			// 
+			this.colour12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.colour12.Location = new System.Drawing.Point(815, 551);
+			this.colour12.Name = "colour12";
+			this.colour12.Size = new System.Drawing.Size(16, 16);
+			this.colour12.TabIndex = 17;
+			this.colour12.TabStop = false;
+			// 
+			// radioButton10
+			// 
+			this.radioButton10.AutoSize = true;
+			this.radioButton10.Location = new System.Drawing.Point(404, 280);
+			this.radioButton10.Name = "radioButton10";
+			this.radioButton10.Size = new System.Drawing.Size(100, 19);
+			this.radioButton10.TabIndex = 27;
+			this.radioButton10.TabStop = true;
+			this.radioButton10.Text = "radioButton10";
+			this.radioButton10.UseVisualStyleBackColor = true;
+			// 
+			// radioButton11
+			// 
+			this.radioButton11.AutoSize = true;
+			this.radioButton11.Location = new System.Drawing.Point(412, 288);
+			this.radioButton11.Name = "radioButton11";
+			this.radioButton11.Size = new System.Drawing.Size(100, 19);
+			this.radioButton11.TabIndex = 28;
+			this.radioButton11.TabStop = true;
+			this.radioButton11.Text = "radioButton11";
+			this.radioButton11.UseVisualStyleBackColor = true;
+			// 
+			// radioButton12
+			// 
+			this.radioButton12.AutoSize = true;
+			this.radioButton12.Location = new System.Drawing.Point(420, 296);
+			this.radioButton12.Name = "radioButton12";
+			this.radioButton12.Size = new System.Drawing.Size(100, 19);
+			this.radioButton12.TabIndex = 29;
+			this.radioButton12.TabStop = true;
+			this.radioButton12.Text = "radioButton12";
+			this.radioButton12.UseVisualStyleBackColor = true;
+			// 
+			// radioButton13
+			// 
+			this.radioButton13.AutoSize = true;
+			this.radioButton13.Location = new System.Drawing.Point(428, 304);
+			this.radioButton13.Name = "radioButton13";
+			this.radioButton13.Size = new System.Drawing.Size(100, 19);
+			this.radioButton13.TabIndex = 30;
+			this.radioButton13.TabStop = true;
+			this.radioButton13.Text = "radioButton13";
+			this.radioButton13.UseVisualStyleBackColor = true;
+			// 
+			// radioButton14
+			// 
+			this.radioButton14.AutoSize = true;
+			this.radioButton14.Location = new System.Drawing.Point(436, 312);
+			this.radioButton14.Name = "radioButton14";
+			this.radioButton14.Size = new System.Drawing.Size(100, 19);
+			this.radioButton14.TabIndex = 31;
+			this.radioButton14.TabStop = true;
+			this.radioButton14.Text = "radioButton14";
+			this.radioButton14.UseVisualStyleBackColor = true;
+			// 
+			// radioButton15
+			// 
+			this.radioButton15.AutoSize = true;
+			this.radioButton15.Location = new System.Drawing.Point(444, 320);
+			this.radioButton15.Name = "radioButton15";
+			this.radioButton15.Size = new System.Drawing.Size(100, 19);
+			this.radioButton15.TabIndex = 32;
+			this.radioButton15.TabStop = true;
+			this.radioButton15.Text = "radioButton15";
+			this.radioButton15.UseVisualStyleBackColor = true;
+			// 
+			// radioButton16
+			// 
+			this.radioButton16.AutoSize = true;
+			this.radioButton16.Location = new System.Drawing.Point(452, 328);
+			this.radioButton16.Name = "radioButton16";
+			this.radioButton16.Size = new System.Drawing.Size(100, 19);
+			this.radioButton16.TabIndex = 33;
+			this.radioButton16.TabStop = true;
+			this.radioButton16.Text = "radioButton16";
+			this.radioButton16.UseVisualStyleBackColor = true;
+			// 
+			// radioButton17
+			// 
+			this.radioButton17.AutoSize = true;
+			this.radioButton17.Location = new System.Drawing.Point(460, 336);
+			this.radioButton17.Name = "radioButton17";
+			this.radioButton17.Size = new System.Drawing.Size(100, 19);
+			this.radioButton17.TabIndex = 34;
+			this.radioButton17.TabStop = true;
+			this.radioButton17.Text = "radioButton17";
+			this.radioButton17.UseVisualStyleBackColor = true;
+			// 
+			// addressFollowBox
+			// 
+			this.addressFollowBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.addressFollowBox.FormattingEnabled = true;
+			this.addressFollowBox.Items.AddRange(new object[] {
+            "(None)",
+            "A0",
+            "A1",
+            "A2",
+            "A3",
+            "A4",
+            "A5",
+            "A6",
+            "SP",
+            "SSP",
+            "D0",
+            "D1",
+            "D2",
+            "D3",
+            "D4",
+            "D5",
+            "D6",
+            "D7",
+            "PC"});
+			this.addressFollowBox.Location = new System.Drawing.Point(718, 362);
+			this.addressFollowBox.Name = "addressFollowBox";
+			this.addressFollowBox.Size = new System.Drawing.Size(121, 23);
+			this.addressFollowBox.TabIndex = 25;
+			this.addressFollowBox.SelectionChangeCommitted += new System.EventHandler(this.addressFollowBox_SelectionChangeCommitted);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(909, 579);
+			this.Controls.Add(this.addressFollowBox);
+			this.Controls.Add(this.colour15);
+			this.Controls.Add(this.colour11);
+			this.Controls.Add(this.colour14);
+			this.Controls.Add(this.colour10);
+			this.Controls.Add(this.colour13);
+			this.Controls.Add(this.colour12);
+			this.Controls.Add(this.colour9);
+			this.Controls.Add(this.colour8);
+			this.Controls.Add(this.colour7);
+			this.Controls.Add(this.colour6);
+			this.Controls.Add(this.colour5);
+			this.Controls.Add(this.colour4);
+			this.Controls.Add(this.colour3);
+			this.Controls.Add(this.colour2);
+			this.Controls.Add(this.colour1);
+			this.Controls.Add(this.colour0);
 			this.Controls.Add(this.btnDisassemble);
 			this.Controls.Add(this.picDisk);
 			this.Controls.Add(this.picPower);
@@ -234,6 +554,22 @@ namespace RunAmiga
 			this.splitContainer1.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.picPower)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.picDisk)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour0)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour1)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour2)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour3)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour7)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour6)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour5)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour4)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour11)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour10)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour9)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour8)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour15)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour14)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour13)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.colour12)).EndInit();
 			this.ResumeLayout(false);
 
 		}
@@ -253,6 +589,31 @@ namespace RunAmiga
 		private System.Windows.Forms.PictureBox picPower;
 		private System.Windows.Forms.PictureBox picDisk;
 		private System.Windows.Forms.Button btnDisassemble;
+		private System.Windows.Forms.PictureBox colour0;
+		private System.Windows.Forms.PictureBox colour1;
+		private System.Windows.Forms.PictureBox colour2;
+		private System.Windows.Forms.PictureBox colour3;
+		private System.Windows.Forms.PictureBox colour7;
+		private System.Windows.Forms.PictureBox colour6;
+		private System.Windows.Forms.PictureBox colour5;
+		private System.Windows.Forms.PictureBox colour4;
+		private System.Windows.Forms.PictureBox colour11;
+		private System.Windows.Forms.PictureBox colour10;
+		private System.Windows.Forms.PictureBox colour9;
+		private System.Windows.Forms.PictureBox colour8;
+		private System.Windows.Forms.PictureBox colour15;
+		private System.Windows.Forms.PictureBox colour14;
+		private System.Windows.Forms.PictureBox colour13;
+		private System.Windows.Forms.PictureBox colour12;
+		private System.Windows.Forms.RadioButton radioButton10;
+		private System.Windows.Forms.RadioButton radioButton11;
+		private System.Windows.Forms.RadioButton radioButton12;
+		private System.Windows.Forms.RadioButton radioButton13;
+		private System.Windows.Forms.RadioButton radioButton14;
+		private System.Windows.Forms.RadioButton radioButton15;
+		private System.Windows.Forms.RadioButton radioButton16;
+		private System.Windows.Forms.RadioButton radioButton17;
+		private System.Windows.Forms.ComboBox addressFollowBox;
 	}
 }
 
