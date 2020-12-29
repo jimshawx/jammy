@@ -216,11 +216,15 @@ namespace RunAmiga
 							}
 						case 0b011://(d8,pc,Xn)
 							{
-								uint ext = read16(pc); pc += 2;
+								uint ext = read16(pc);
 								uint Xn = (ext >> 12) & 7;
 								uint d8 = ext & 0xff;
 								string s = (((ext >> 11) & 1) != 0) ? "l" : "w";
-								Append($"{fmtX2(d8)}(pc,d{Xn}.{s})");
+								//Append($"{fmtX2(d8)}(pc,d{Xn}.{s})");
+								d8 += (address + pc);
+								pc += 2;
+								Append($"{fmtX8(d8)}(d{Xn}.{s}) ");
+
 								return 0;
 							}
 						case 0b000://(xxx).w
@@ -613,17 +617,19 @@ namespace RunAmiga
 		private void muls(int type)
 		{
 			int Xn = (type >> 9) & 7;
-			Append($"muls.w d{Xn},");
+			Append($"muls.w ");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
+			Append($",d{Xn}");
 		}
 
 		private void mulu(int type)
 		{
 			int Xn = (type >> 9) & 7;
-			Append($"mulu.w d{Xn},");
+			Append($"mulu.w ");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
+			Append($",d{Xn}");
 		}
 
 		private void t_eleven(int type)
@@ -1003,7 +1009,7 @@ namespace RunAmiga
 			Size size = Size.Byte;
 			uint bas = pc;
 			uint disp = (uint)(sbyte)(type & 0xff);
-			if (disp == 0) {disp = read16(pc); pc+=2; size = Size.Word; }
+			if (disp == 0) {disp = (uint)(short)read16(pc); pc+=2; size = Size.Word; }
 			else if (disp == 0xffffffff) {disp = read32(pc); pc += 4; size = Size.Long; }
 			disp += address+2;
 			Append(size);

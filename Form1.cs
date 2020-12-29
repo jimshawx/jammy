@@ -47,7 +47,9 @@ namespace RunAmiga
 					{
 						new Tuple<uint, uint> (0x000000, 0x4000),
 						new Tuple<uint, uint> (0xc00000, 0x4000),
-						new Tuple<uint, uint> (0xfc0000, 0x4000)
+						new Tuple<uint, uint> (0xfc0000, 0x4000),
+						new Tuple<uint, uint> (0xfe52a4, 0x0144),
+						new Tuple<uint, uint> (0xfe53e8, 0x4000)
 					});
 			txtDisassembly.Text = disasm;
 		}

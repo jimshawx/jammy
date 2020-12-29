@@ -106,9 +106,14 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc1794);
 			//AddBreakpoint(0xfc04be);
 			//AddBreakpoint(0xfc0478);
-			//AddBreakpoint(0xfc08aa);
+			//AddBreakpoint(0xfc089a);
 			//AddBreakpoint(0xfc0e86);
-			AddBreakpoint(0xfc0500);
+			//AddBreakpoint(0xfc0500);//InitCode
+			//AddBreakpoint(0xfc0af0);
+			AddBreakpoint(0xfc14ec);//MakeLibrary
+			AddBreakpoint(0xfc1560);
+			AddBreakpoint(0xfc0bc8);//InitStruct
+			//AddBreakpoint(0xfe53fe);
 			//AddBreakpoint(0xfc0e86);//Shedule().
 			AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
@@ -460,11 +465,13 @@ namespace RunAmiga
 							}
 						case 0b011://(d8,pc,Xn)
 							{
-								uint ext = read16(pc); pc += 2;
+								uint ext = read16(pc);
 								uint Xn = (ext >> 12) & 7;
 								uint d8 = ext & 0xff;
 								uint dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
-								return pc + dx + (uint)(sbyte)d8;
+								uint ea = pc + dx + (uint)(sbyte)d8;
+								pc+=2;
+								return ea;
 							}
 						case 0b000://(xxx).w
 							{
@@ -699,7 +706,7 @@ namespace RunAmiga
 		public void Emulate()
 		{
 			//debugging
-			if (!((pc > 0 && pc < 0x4000) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xfc0000 && pc < 0xfc4000)))
+			if (!((pc > 0 && pc < 0x4000) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xfc0000 && pc < 0x1000000)))
 			{
 				DumpTrace();
 				Trace.WriteLine($"PC out of expected range {pc:X8}");
@@ -1895,7 +1902,7 @@ namespace RunAmiga
 			op = ~op;
 			setNZ(op, size);
 			clrCV();
-			writeOp(ea, op, size);
+			writeEA(type, ea, size, op);
 		}
 
 		private void neg(int type)
@@ -1908,14 +1915,14 @@ namespace RunAmiga
 			setC(op != 0);
 			setX(C());
 			setNZ(op, size);
-			writeOp(ea, op, size);
+			writeEA(type, ea, size, op);
 		}
 
 		private void clr(int type)
 		{
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
-			writeOp(ea, 0, size);
+			writeEA(type, ea, size, 0);
 			clrN();
 			setZ();
 			clrCV();
@@ -2033,9 +2040,9 @@ namespace RunAmiga
 				DumpTrace();
 
 				if (vector < 16)
-					Trace.Write($"Trap {vector} {trapNames[vector]} {pc:X8}");
+					Trace.Write($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
 				else
-					Trace.Write($"Trap {vector} {pc:X8}");
+					Trace.Write($"Trap {vector} {instructionStartPC:X8}");
 			}
 
 			ushort oldSR = sr;
@@ -2306,15 +2313,15 @@ namespace RunAmiga
 					break;
 				case 1://bchg
 					op0 ^= bit;
-					writeOp(ea, op0, size);
+					writeEA(type, ea, size, op0);
 					break;
 				case 2://bclr
 					op0 &= ~bit;
-					writeOp(ea, op0, size);
+					writeEA(type, ea, size, op0);
 					break;
 				case 3://bset
 					op0 |= bit;
-					writeOp(ea, op0, size);
+					writeEA(type, ea, size, op0);
 					break;
 			}
 		}

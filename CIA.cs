@@ -66,7 +66,7 @@ namespace RunAmiga
 
 			if (reg == 0)
 			{
-				UI.PowerLight = (regs[0]&2)!=0;
+				UI.PowerLight = (regs[0]&2)==0;
 			}
 
 		}

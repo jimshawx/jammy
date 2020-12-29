@@ -47,6 +47,7 @@ namespace RunAmiga.Types
 			BlockToString(0x000000, 0x4000, sb);
 			BlockToString(0xc00000, 0x4000, sb);
 			BlockToString(0xfc0000, 0x4000, sb);
+			BlockToString(0xfe4000, 0x4000, sb);
 
 			return sb.ToString();
 		}
