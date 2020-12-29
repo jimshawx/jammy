@@ -174,7 +174,11 @@ namespace RunAmiga
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			exiting = true;
-			while (exiting) Thread.Yield();
+			while (exiting)
+			{
+				Thread.Yield();
+				Application.DoEvents();
+			}
 			Machine.SetEmulationMode(EmulationMode.Exit);
 		}
 
