@@ -45,7 +45,7 @@ namespace RunAmiga
 			return (address&1)==1;
 		}
 
-		public uint Read(uint address, Size size)
+		public uint Read(uint insaddr, uint address, Size size)
 		{
 			if (size != Size.Byte)
 				throw new UnknownInstructionSizeException(address,0);
@@ -55,7 +55,7 @@ namespace RunAmiga
 			return (uint)regs[reg];
 		}
 
-		public void Write(uint address, uint value, Size size)
+		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			if (size != Size.Byte)
 				throw new UnknownInstructionSizeException(address,0);
@@ -115,7 +115,7 @@ namespace RunAmiga
 			return (address & 1) == 0;
 		}
 
-		public uint Read(uint address, Size size)
+		public uint Read(uint insaddr, uint address, Size size)
 		{
 			if (size != Size.Byte)
 				throw new UnknownInstructionSizeException(address,0);
@@ -125,7 +125,7 @@ namespace RunAmiga
 			return (uint)regs[reg];
 		}
 
-		public void Write(uint address, uint value, Size size)
+		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			if (size != Size.Byte)
 				throw new UnknownInstructionSizeException(address, 0);
@@ -164,16 +164,16 @@ namespace RunAmiga
 			return (address>>16)==0xbf;
 		}
 
-		public uint Read(uint address, Size size)
+		public uint Read(uint insaddr, uint address, Size size)
 		{
-			if (ciaA.IsMapped(address)) return ciaA.Read(address, size);
-			if (ciaB.IsMapped(address)) return ciaB.Read(address, size);
+			if (ciaA.IsMapped(address)) return ciaA.Read(insaddr, address, size);
+			if (ciaB.IsMapped(address)) return ciaB.Read(insaddr, address, size);
 			return 0;
 		}
-		public void Write(uint address, uint value, Size size)
+		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (ciaA.IsMapped(address)) { ciaA.Write(address, value, size); return; }
-			if (ciaB.IsMapped(address)) { ciaB.Write(address, value, size); return; }
+			if (ciaA.IsMapped(address)) { ciaA.Write(insaddr, address, value, size); return; }
+			if (ciaB.IsMapped(address)) { ciaB.Write(insaddr, address, value, size); return; }
 		}
 	}
 }

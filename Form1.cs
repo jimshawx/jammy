@@ -27,10 +27,6 @@ namespace RunAmiga
 
 			UpdateDisplay();
 
-			UpdateDisassembly();
-
-			UpdateDisplay();
-
 			Machine.SetEmulationMode(EmulationMode.Stopped);
 			machine.Start();
 		}
@@ -38,6 +34,9 @@ namespace RunAmiga
 		Thread uiUpdateThread;
 		public void Init()
 		{
+			UpdateDisassembly();
+			UpdateDisplay();
+
 			uiUpdateThread = new Thread(UIUpdateThread);
 			uiUpdateThread.Start();
 		}
@@ -47,8 +46,9 @@ namespace RunAmiga
 			var disasm = cpu.DisassembleTxt(
 					new List<Tuple<uint, uint>>
 					{
-						new Tuple<uint, uint> (0x000000, 0x4000),
-						new Tuple<uint, uint> (0xc00000, 0x4000),
+						new Tuple<uint, uint> (0x000000, 0x400),
+						new Tuple<uint, uint> (0xc00000, 0x1000),
+						//new Tuple<uint, uint> (0xf80000, 0x80000),
 						new Tuple<uint, uint> (0xfc0000, 0x0900),
 						new Tuple<uint, uint> (0xfc0900, 0x4000),
 						new Tuple<uint, uint> (0xfe52a4, 0x0144),

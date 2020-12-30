@@ -7,7 +7,6 @@ namespace RunAmiga
 {
 	public sealed class UI
 	{
-		private static UI instance = null;
 		private static readonly object padlock = new object();
 
 		private static SemaphoreSlim uiSemaphore = new SemaphoreSlim(1);

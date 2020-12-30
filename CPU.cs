@@ -285,8 +285,8 @@ namespace RunAmiga
 		{
 			address &= 0xffffff;
 
-			if (cia.IsMapped(address)) cia.Read(address, Size.Long);
-			if (custom.IsMapped(address)) custom.Read(address, Size.Long);
+			if (cia.IsMapped(address)) cia.Read(instructionStartPC, address, Size.Long);
+			if (custom.IsMapped(address)) custom.Read(instructionStartPC, address, Size.Long);
 
 			return ((uint)memory[address] << 24) +
 				((uint)memory[(address + 1) & 0xffffff] << 16) +
@@ -298,8 +298,8 @@ namespace RunAmiga
 		{
 			address &= 0xffffff;
 
-			if (cia.IsMapped(address)) cia.Read(address, Size.Word);
-			if (custom.IsMapped(address)) custom.Read(address, Size.Word);
+			if (cia.IsMapped(address)) cia.Read(instructionStartPC, address, Size.Word);
+			if (custom.IsMapped(address)) custom.Read(instructionStartPC, address, Size.Word);
 
 			return (ushort)(
 				((ushort)memory[address] << 8) +
@@ -310,8 +310,8 @@ namespace RunAmiga
 		{
 			address &= 0xffffff;
 
-			if (cia.IsMapped(address)) cia.Read(address, Size.Byte);
-			if (custom.IsMapped(address)) custom.Read(address, Size.Byte);
+			if (cia.IsMapped(address)) cia.Read(instructionStartPC, address, Size.Byte);
+			if (custom.IsMapped(address)) custom.Read(instructionStartPC, address, Size.Byte);
 
 			return memory[address];
 		}
@@ -325,8 +325,8 @@ namespace RunAmiga
 		{
 			address &= 0xffffff;
 
-			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Long); return; }
-			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Long); return; }
+			if (cia.IsMapped(address)) { cia.Write(instructionStartPC, address, value, Size.Long); return; }
+			if (custom.IsMapped(address)) { custom.Write(instructionStartPC, address, value, Size.Long); return; }
 
 			if (isROM(address))
 				internalTrap(3);
@@ -346,8 +346,8 @@ namespace RunAmiga
 		{
 			address &= 0xffffff;
 
-			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Word); return; }
-			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Word); return; }
+			if (cia.IsMapped(address)) { cia.Write(instructionStartPC, address, value, Size.Word); return; }
+			if (custom.IsMapped(address)) { custom.Write(instructionStartPC, address, value, Size.Word); return; }
 
 			if (isROM(address))
 				internalTrap(3);
@@ -363,8 +363,8 @@ namespace RunAmiga
 		{
 			address &= 0xffffff;
 
-			if (cia.IsMapped(address)) { cia.Write(address, value, Size.Byte); return; }
-			if (custom.IsMapped(address)) { custom.Write(address, value, Size.Byte); return; }
+			if (cia.IsMapped(address)) { cia.Write(instructionStartPC, address, value, Size.Byte); return; }
+			if (custom.IsMapped(address)) { custom.Write(instructionStartPC, address, value, Size.Byte); return; }
 
 			if (isROM(address))
 				internalTrap(3);
@@ -674,6 +674,12 @@ namespace RunAmiga
 			BulkWrite(0xfc0000, rom, 256 * 1024);
 			BulkWrite(0, rom, 256 * 1024);
 
+			//byte[] rom = File.ReadAllBytes("../../../kick31.rom");
+			//Debug.Assert(rom.Length == 512 * 1024);
+
+			//BulkWrite(0xf80000, rom, 512 * 1024);
+			//BulkWrite(0, rom, 512 * 1024);
+
 			sr = 0b00100_111_00000000;
 			a[7] = read32(0);
 			pc = read32(4);
@@ -682,7 +688,7 @@ namespace RunAmiga
 		public void Emulate()
 		{
 			//debugging
-			if (!((pc > 0 && pc < 0x4000) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xfc0000 && pc < 0x1000000)))
+			if (!((pc > 0 && pc < 0x400) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xf80000 && pc < 0x1000000)))
 			{
 				DumpTrace();
 				Trace.WriteLine($"PC out of expected range {pc:X8}");
@@ -697,7 +703,7 @@ namespace RunAmiga
 				Trace.WriteLine($"{asmLabels[pc].Address:X6} {asmLabels[pc].Name}");
 
 			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
-			//tracePC(dasm.ToString(), instructionStartPC);
+			tracePC(dasm.ToString(), instructionStartPC);
 
 			try
 			{

@@ -525,30 +525,30 @@ namespace RunAmiga
 			return (int)(address & 0x0000fffe)>>1;
 		}
 
-		public uint Read(uint address, Size size)
+		public uint Read(uint insaddr, uint address, Size size)
 		{
 			if (size != Size.Word)
-				throw new InvalidCustomRegisterSizeException(address, size);
+				throw new InvalidCustomRegisterSizeException(insaddr, address, size);
 
 			if ((address & 1) != 0)
 				throw new InstructionAlignmentException(address, 0);
 
 			int reg = REG(address);
 
-			Trace.WriteLine($"Custom Read {address:X8} {size} : #{regs[reg]:X4} {debug[address].Item1} {debug[address].Item2}");
+			//Trace.WriteLine($"Custom Read {address:X8} {size} : #{regs[reg]:X4} {debug[address].Item1} {debug[address].Item2}");
 
 			return (uint)regs[reg];
 		}
 
-		public void Write(uint address, uint value, Size size)
+		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			if (size != Size.Word)
-				throw new InvalidCustomRegisterSizeException(address, size);
+				throw new InvalidCustomRegisterSizeException(insaddr, address, size);
 
 			if ((address & 1)!=0)
 				throw new InstructionAlignmentException(address, 0);
 
-			DebugInfo(address, value, size);
+			//DebugInfo(address, value, size);
 
 			int reg = REG(address);
 
@@ -584,7 +584,7 @@ namespace RunAmiga
 			//NB. BPLCON3 13..15 controls the palette bank on AGA
 			if (address >= COLOR00 && address <= COLOR31)
 			{
-				uint bank = (Read(BPLCON3, Size.Word)&0b111_00000_00000000)>>(13-5);
+				uint bank = (Read(insaddr, BPLCON3, Size.Word)&0b111_00000_00000000)>>(13-5);
 				UI.SetColour((int)(bank+((address - COLOR00) >> 1)), (ushort)value);
 			}
 

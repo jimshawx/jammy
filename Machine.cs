@@ -13,7 +13,6 @@ namespace RunAmiga
 		private CIA cia;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
-		private static int emulationLock = 0;
 
 		private static SemaphoreSlim emulationSemaphore;
 

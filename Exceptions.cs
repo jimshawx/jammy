@@ -76,17 +76,19 @@ namespace RunAmiga
 	public class InvalidCustomRegisterSizeException : MC68000Exception
 	{
 		private uint pc;
+		private uint reg;
 		private Size size;
 
-		public InvalidCustomRegisterSizeException(uint pc, Size size)
+		public InvalidCustomRegisterSizeException(uint pc, uint reg, Size size)
 		{
 			this.pc = pc;
+			this.reg = reg;
 			this.size = size;
 		}
 
 		public override string ToString()
 		{
-			return $"Invalid Custom Register Size @{pc:X6} {size}. {base.ToString()}";
+			return $"Invalid Custom Register Size @{pc:X6} {reg:X6} {size}. {base.ToString()}";
 		}
 	}
 }
