@@ -9,35 +9,59 @@ namespace RunAmiga.Types
 	using LONG = System.Int32;
 
 	using APTR = System.UInt32;
-
-	using TaskPtr = System.UInt32;
-	using NodePtr = System.UInt32;
-	using MinNodePtr = System.UInt32;
 	using FunctionPtr = System.UInt32;
 
 	using CharPtr = System.String;
+
+	using System.Linq;
+	using System;
+	using System.Diagnostics;
+	using System.Text;
+	using System.Collections.Generic;
+
+	//using TaskPtr = System.UInt32;
+	//using NodePtr = System.UInt32;
+	//using MinNodePtr = System.UInt32;
+	public interface IWrappedPtr { }
+	public class TaskPtr : IWrappedPtr
+	{
+		public uint Address { get; set; }
+		public Task Task { get; set; }
+	}
+
+	public class NodePtr : IWrappedPtr
+	{
+		public uint Address { get; set; }
+		public Node Node { get; set; }
+	}
+
+	public class MinNodePtr : IWrappedPtr
+	{
+		public uint Address { get; set; }
+		public MinNode MinNode { get; set; }
+	}
 
 	/*
 	 * Full featured list header.
 	 */
 	public class List
 	{
-		NodePtr lh_Head;
-		NodePtr lh_Tail;
-		NodePtr lh_TailPred;
-		UBYTE lh_Type;
-		UBYTE l_pad;
-	};  /* word aligned */
+		public NodePtr lh_Head { get; set; }
+		public NodePtr lh_Tail { get; set; }
+		public NodePtr lh_TailPred { get; set; }
+		public UBYTE lh_Type { get; set; }
+		public UBYTE l_pad { get; set; }
+	} /* word aligned */
 
 	/*
 	 * Minimal List Header - no type checking
 	 */
 	public class MinList
 	{
-		MinNodePtr mlh_Head;
-		MinNodePtr mlh_Tail;
-		MinNodePtr mlh_TailPred;
-	};  /* longword aligned */
+		public MinNodePtr mlh_Head { get; set; }
+		public MinNodePtr mlh_Tail { get; set; }
+		public MinNodePtr mlh_TailPred { get; set; }
+	} /* longword aligned */
 
 	/*
 	 *	List Node Structure.	Each member in a list starts with a Node
@@ -45,141 +69,141 @@ namespace RunAmiga.Types
 
 	public class Node
 	{
-		NodePtr ln_Succ;    /* Pointer to next (successor) */
-		NodePtr ln_Pred;    /* Pointer to previous (predecessor) */
-		UBYTE ln_Type;
-		BYTE ln_Pri;        /* Priority, for sorting */
-		CharPtr ln_Name;        /* ID string, null terminated */
-	};  /* Note: word aligned */
+		public NodePtr ln_Succ { get; set; }    /* Pointer to next (successor) */
+		public NodePtr ln_Pred { get; set; }    /* Pointer to previous (predecessor) */
+		public UBYTE ln_Type { get; set; }
+		public BYTE ln_Pri { get; set; }        /* Priority, for sorting */
+		public CharPtr ln_Name { get; set; }        /* ID string, null terminated */
+	} /* Note: word aligned */
 
 	/* minimal node -- no type checking possible */
 	public class MinNode
 	{
-		MinNodePtr mln_Succ;
-		MinNodePtr mln_Pred;
-	};
+		public MinNodePtr mln_Succ { get; set; }
+		public MinNodePtr mln_Pred { get; set; }
+	}
 
 	/*------ Library Base Structure ----------------------------------*/
 	/* Also used for Devices and some Resources */
 	public class Library
 	{
-		Node lib_Node;
-		UBYTE lib_Flags;
-		UBYTE lib_pad;
-		UWORD lib_NegSize;      /* number of bytes before library */
-		UWORD lib_PosSize;      /* number of bytes after library */
-		UWORD lib_Version;      /* major */
-		UWORD lib_Revision;  /* minor */
-		APTR lib_IdString;      /* ASCII identification */
-		ULONG lib_Sum;          /* the checksum itself */
-		UWORD lib_OpenCnt;      /* number of current opens */
-	};  /* Warning: size is not a longword multiple! */
+		public Node lib_Node { get; set; }
+		public UBYTE lib_Flags { get; set; }
+		public UBYTE lib_pad { get; set; }
+		public UWORD lib_NegSize { get; set; }      /* number of bytes before library */
+		public UWORD lib_PosSize { get; set; }      /* number of bytes after library */
+		public UWORD lib_Version { get; set; }      /* major */
+		public UWORD lib_Revision { get; set; }  /* minor */
+		public APTR lib_IdString { get; set; }      /* ASCII identification */
+		public ULONG lib_Sum { get; set; }          /* the checksum itself */
+		public UWORD lib_OpenCnt { get; set; }      /* number of current opens */
+	} /* Warning: size is not a longword multiple! */
 
 	/* Please use Exec functions to modify task structure fields, where available.
 	 */
 	public class Task
 	{
-		Node tc_Node;
-		UBYTE tc_Flags;
-		UBYTE tc_State;
-		BYTE tc_IDNestCnt;      /* intr disabled nesting*/
-		BYTE tc_TDNestCnt;      /* task disabled nesting*/
-		ULONG tc_SigAlloc;      /* sigs allocated */
-		ULONG tc_SigWait;       /* sigs we are waiting for */
-		ULONG tc_SigRecvd;      /* sigs we have received */
-		ULONG tc_SigExcept;  /* sigs we will take excepts for */
-		UWORD tc_TrapAlloc;  /* traps allocated */
-		UWORD tc_TrapAble;      /* traps enabled */
-		APTR tc_ExceptData;  /* points to except data */
-		APTR tc_ExceptCode;  /* points to except code */
-		APTR tc_TrapData;       /* points to trap code */
-		APTR tc_TrapCode;       /* points to trap data */
-		APTR tc_SPReg;          /* stack pointer		*/
-		APTR tc_SPLower;        /* stack lower bound	*/
-		APTR tc_SPUpper;        /* stack upper bound + 2*/
-		FunctionPtr tc_Switch;      /* task losing CPU		*/
-		FunctionPtr tc_Launch;      /* task getting CPU	*/
-		List tc_MemEntry;       /* Allocated memory. Freed by RemTask() */
-		APTR tc_UserData;       /* For use by the task; no restrictions! */
-	};
+		public Node tc_Node { get; set; }
+		public UBYTE tc_Flags { get; set; }
+		public UBYTE tc_State { get; set; }
+		public BYTE tc_IDNestCnt { get; set; }      /* intr disabled nesting*/
+		public BYTE tc_TDNestCnt { get; set; }      /* task disabled nesting*/
+		public ULONG tc_SigAlloc { get; set; }      /* sigs allocated */
+		public ULONG tc_SigWait { get; set; }       /* sigs we are waiting for */
+		public ULONG tc_SigRecvd { get; set; }      /* sigs we have received */
+		public ULONG tc_SigExcept { get; set; }  /* sigs we will take excepts for */
+		public UWORD tc_TrapAlloc { get; set; }  /* traps allocated */
+		public UWORD tc_TrapAble { get; set; }      /* traps enabled */
+		public APTR tc_ExceptData { get; set; }  /* points to except data */
+		public APTR tc_ExceptCode { get; set; }  /* points to except code */
+		public APTR tc_TrapData { get; set; }       /* points to trap code */
+		public APTR tc_TrapCode { get; set; }       /* points to trap data */
+		public APTR tc_SPReg { get; set; }          /* stack pointer		*/
+		public APTR tc_SPLower { get; set; }        /* stack lower bound	*/
+		public APTR tc_SPUpper { get; set; }        /* stack upper bound + 2*/
+		public FunctionPtr tc_Switch { get; set; }      /* task losing CPU		*/
+		public FunctionPtr tc_Launch { get; set; }      /* task getting CPU	*/
+		public List tc_MemEntry { get; set; }       /* Allocated memory. Freed by RemTask() */
+		public APTR tc_UserData { get; set; }       /* For use by the task { get; set; } no restrictions! */
+	}
 
 	public class IntVector
 	{   /* For EXEC use ONLY! */
-		APTR iv_Data;
-		FunctionPtr iv_Code;
-		NodePtr iv_Node;
-	};
+		public APTR iv_Data { get; set; }
+		public FunctionPtr iv_Code { get; set; }
+		public NodePtr iv_Node { get; set; }
+	}
 
 	public class SoftIntList
 	{   /* For EXEC use ONLY! */
-		List sh_List;
-		UWORD sh_Pad;
-	};
+		public List sh_List { get; set; }
+		public UWORD sh_Pad { get; set; }
+	}
 
-	public class ExecBase
+	public class ExecBase : ObjectWalk
 	{
-		Library LibNode; /* Standard library node */
+		public Library LibNode { get; set; } /* Standard library node */
 
 		/******** Static System Variables ********/
 
-		UWORD SoftVer;  /* kickstart release number (obs.) */
-		WORD LowMemChkSum;  /* checksum of 68000 trap vectors */
-		ULONG ChkBase;  /* system base pointer complement */
-		APTR ColdCapture;   /* coldstart soft capture vector */
-		APTR CoolCapture;   /* coolstart soft capture vector */
-		APTR WarmCapture;   /* warmstart soft capture vector */
-		APTR SysStkUpper;   /* system stack base	(upper bound) */
-		APTR SysStkLower;   /* top of system stack (lower bound) */
-		ULONG MaxLocMem;    /* top of chip memory */
-		APTR DebugEntry;    /* global debugger entry point */
-		APTR DebugData; /* global debugger data segment */
-		APTR AlertData; /* alert data segment */
-		APTR MaxExtMem; /* top of extended mem, or null if none */
+		public UWORD SoftVer { get; set; }  /* kickstart release number (obs.) */
+		public WORD LowMemChkSum { get; set; }  /* checksum of 68000 trap vectors */
+		public ULONG ChkBase { get; set; }  /* system base pointer complement */
+		public APTR ColdCapture { get; set; }   /* coldstart soft capture vector */
+		public APTR CoolCapture { get; set; }   /* coolstart soft capture vector */
+		public APTR WarmCapture { get; set; }   /* warmstart soft capture vector */
+		public APTR SysStkUpper { get; set; }   /* system stack base	(upper bound) */
+		public APTR SysStkLower { get; set; }   /* top of system stack (lower bound) */
+		public ULONG MaxLocMem { get; set; }    /* top of chip memory */
+		public APTR DebugEntry { get; set; }    /* global debugger entry point */
+		public APTR DebugData { get; set; } /* global debugger data segment */
+		public APTR AlertData { get; set; } /* alert data segment */
+		public APTR MaxExtMem { get; set; } /* top of extended mem, or null if none */
 
-		UWORD ChkSum;   /* for all of the above (minus 2) */
+		public UWORD ChkSum { get; set; }   /* for all of the above (minus 2) */
 
 		/****** Interrupt Related ***************************************/
 
-		IntVector[] IntVects = new IntVector[16];
+		public IntVector[] IntVects = new IntVector[16];
 
 		/****** Dynamic System Variables *************************************/
 
-		TaskPtr ThisTask; /* pointer to current task (readable) */
+		public TaskPtr ThisTask { get; set; } /* pointer to current task (readable) */
 
-		ULONG IdleCount;    /* idle counter */
-		ULONG DispCount;    /* dispatch counter */
-		UWORD Quantum;  /* time slice quantum */
-		UWORD Elapsed;  /* current quantum ticks */
-		UWORD SysFlags; /* misc internal system flags */
-		BYTE IDNestCnt; /* interrupt disable nesting count */
-		BYTE TDNestCnt; /* task disable nesting count */
+		public ULONG IdleCount { get; set; }    /* idle counter */
+		public ULONG DispCount { get; set; }    /* dispatch counter */
+		public UWORD Quantum { get; set; }  /* time slice quantum */
+		public UWORD Elapsed { get; set; }  /* current quantum ticks */
+		public UWORD SysFlags { get; set; } /* misc internal system flags */
+		public BYTE IDNestCnt { get; set; } /* interrupt disable nesting count */
+		public BYTE TDNestCnt { get; set; } /* task disable nesting count */
 
-		UWORD AttnFlags;    /* special attention flags (readable) */
+		public UWORD AttnFlags { get; set; }    /* special attention flags (readable) */
 
-		UWORD AttnResched;  /* rescheduling attention */
-		APTR ResModules;    /* resident module array pointer */
-		APTR TaskTrapCode;
-		APTR TaskExceptCode;
-		APTR TaskExitCode;
-		ULONG TaskSigAlloc;
-		UWORD TaskTrapAlloc;
+		public UWORD AttnResched { get; set; }  /* rescheduling attention */
+		public APTR ResModules { get; set; }    /* resident module array pointer */
+		public APTR TaskTrapCode { get; set; }
+		public APTR TaskExceptCode { get; set; }
+		public APTR TaskExitCode { get; set; }
+		public ULONG TaskSigAlloc { get; set; }
+		public UWORD TaskTrapAlloc { get; set; }
 
 		/****** System Lists (private!) ********************************/
 
-		List MemList;
-		List ResourceList;
-		List DeviceList;
-		List IntrList;
-		List LibList;
-		List PortList;
-		List TaskReady;
-		List TaskWait;
+		public List MemList { get; set; }
+		public List ResourceList { get; set; }
+		public List DeviceList { get; set; }
+		public List IntrList { get; set; }
+		public List LibList { get; set; }
+		public List PortList { get; set; }
+		public List TaskReady { get; set; }
+		public List TaskWait { get; set; }
 
-		SoftIntList[] SoftInts = new SoftIntList[5];
+		public SoftIntList[] SoftInts {get; set;} = new SoftIntList[5];
 
 		/****** Other Globals *******************************************/
 
-		LONG[] LastAlert = new LONG[4];
+		public LONG[] LastAlert { get; set; } = new LONG[4];
 
 		/* these next two variables are provided to allow
 		** system developers to have a rough idea of the
@@ -191,10 +215,10 @@ namespace RunAmiga.Types
 		** other.	These values replace the obsolete AFB_PAL
 		** and AFB_50HZ flags.
 		*/
-		UBYTE VBlankFrequency;  /* (readable) */
-		UBYTE PowerSupplyFrequency; /* (readable) */
+		public UBYTE VBlankFrequency { get; set; }  /* (readable) */
+		public UBYTE PowerSupplyFrequency { get; set; } /* (readable) */
 
-		List SemaphoreList;
+		public List SemaphoreList { get; set; }
 
 		/* these next two are to be able to kickstart into user ram.
 		** KickMemPtr holds a singly linked list of MemLists which
@@ -202,40 +226,204 @@ namespace RunAmiga.Types
 		** all the AllocAbs's succeeded, then the KickTagPtr will
 		** be added to the rom tag list.
 		*/
-		APTR KickMemPtr;    /* ptr to queue of mem lists */
-		APTR KickTagPtr;    /* ptr to rom tag queue */
-		APTR KickCheckSum;  /* checksum for mem and tags */
+		public APTR KickMemPtr { get; set; }    /* ptr to queue of mem lists */
+		public APTR KickTagPtr { get; set; }    /* ptr to rom tag queue */
+		public APTR KickCheckSum { get; set; }  /* checksum for mem and tags */
 
 		/****** V36 Exec additions start here **************************************/
 
-		UWORD ex_Pad0;
-		ULONG ex_LaunchPoint;       /* Private to Launch/Switch */
-		APTR ex_RamLibPrivate;
+		public UWORD ex_Pad0 { get; set; }
+		public ULONG ex_LaunchPoint { get; set; }       /* Private to Launch/Switch */
+		public APTR ex_RamLibPrivate { get; set; }
 		/* The next ULONG contains the system "E" clock frequency,
 		** expressed in Hertz.	The E clock is used as a timebase for
 		** the Amiga's 8520 I/O chips. (E is connected to "02").
 		** Typical values are 715909 for NTSC, or 709379 for PAL.
 		*/
-		ULONG ex_EClockFrequency;   /* (readable) */
-		ULONG ex_CacheControl;  /* Private to CacheControl calls */
-		ULONG ex_TaskID;        /* Next available task ID */
+		public ULONG ex_EClockFrequency { get; set; }   /* (readable) */
+		public ULONG ex_CacheControl { get; set; }  /* Private to CacheControl calls */
+		public ULONG ex_TaskID { get; set; }        /* Next available task ID */
 
-		ULONG ex_PuddleSize;
-		ULONG ex_PoolThreshold;
-		MinList ex_PublicPool;
+		public ULONG ex_PuddleSize { get; set; }
+		public ULONG ex_PoolThreshold { get; set; }
+		public MinList ex_PublicPool { get; set; }
 
-		APTR ex_MMULock;        /* private */
+		public APTR ex_MMULock { get; set; }        /* private */
 
-		UBYTE[] ex_Reserved = new UBYTE[12];
+		public UBYTE[] ex_Reserved { get; set; } = new UBYTE[12];
 	}
 
 	public class ExecBaseMapper
 	{
+		private Memory memory;
+
+		public ExecBaseMapper(Memory memory)
+		{
+			this.memory = memory;
+		}
+
+		HashSet<uint> lookup = new HashSet<uint>();
+
+		private uint MapObject(Type type, object obj, uint addr)
+		{
+			if (lookup.Contains(addr))
+			{
+				Trace.WriteLine($"Visited {addr:X8} again for {type.Name}");
+				return 0;
+			}
+			lookup.Add(addr);
+
+			uint startAddr = addr;
+			foreach (var prop in type.GetProperties().OrderBy(x => x.MetadataToken))
+			{
+				object rv = null;
+				var propType = prop.PropertyType;
+				try
+				{
+					if (typeof(IWrappedPtr).IsAssignableFrom(propType))
+					{
+						if (propType == typeof(TaskPtr))
+						{
+							var tp = new TaskPtr();
+							tp.Address = memory.Read32(addr); addr += 4;
+							if (tp.Address != 0 && tp.Address < 0x1000000)
+							{
+								tp.Task = new Task();
+								MapObject(typeof(Task), tp.Task, tp.Address);
+							}
+							rv = tp;
+						}
+						else if (propType == typeof(NodePtr))
+						{
+							var tp = new NodePtr();
+							tp.Address = memory.Read32(addr); addr += 4;
+							if (tp.Address != 0 && tp.Address < 0x1000000)
+							{
+								tp.Node = new Node();
+								MapObject(typeof(Node), tp.Node, tp.Address);
+							}
+							rv = tp;
+						}
+						else if (propType == typeof(MinNodePtr))
+						{
+							var tp = new MinNodePtr();
+							tp.Address = memory.Read32(addr); addr += 4;
+							if (tp.Address != 0 && tp.Address < 0x1000000)
+							{
+								tp.MinNode = new MinNode();
+								MapObject(typeof(MinNode), tp.MinNode, tp.Address);
+							}
+							rv = tp;
+						}
+						else
+						{
+							throw new NotImplementedException();
+						}
+					}
+					else if (propType == typeof(String))
+					{
+						rv = MapString(addr);
+						addr += 4;
+					}
+					else if (propType.BaseType == typeof(Array))
+					{
+						var array = (Array)prop.GetValue(obj);
+						var arrayType = array.GetType().GetElementType();
+
+						if (arrayType.BaseType == typeof(object))
+						{ 
+							for (int i = 0; i < array.Length; i++)
+							{
+								array.SetValue(Activator.CreateInstance(arrayType), i);
+								addr += MapObject(arrayType, array.GetValue(i), addr);
+							}
+						}
+						else
+						{
+							for (int i = 0; i < array.Length; i++)
+							{
+								object s = MapSimple(arrayType, addr);
+								array.SetValue(s, i);
+
+								if (s.GetType() == typeof(BYTE) || s.GetType() == typeof(UBYTE)) addr++;
+								if (s.GetType() == typeof(WORD) || s.GetType() == typeof(UWORD)) addr += 2;
+								if (s.GetType() == typeof(LONG) || s.GetType() == typeof(ULONG) || s.GetType() == typeof(APTR) || s.GetType() == typeof(FunctionPtr)) addr += 4;
+							}
+						}
+						rv = array;
+					}
+					else if (propType.BaseType == typeof(object))
+					{
+						rv = Activator.CreateInstance(propType);
+						addr += MapObject(propType, rv, addr);
+					}
+					else
+					{
+						rv = MapSimple(propType, addr);
+						if (rv.GetType() == typeof(BYTE) || rv.GetType() == typeof(UBYTE)) addr++;
+						else if (rv.GetType() == typeof(WORD) || rv.GetType() == typeof(UWORD)) addr += 2;
+						else if (rv.GetType() == typeof(LONG) || rv.GetType() == typeof(ULONG) || rv.GetType() == typeof(APTR) || rv.GetType() == typeof(FunctionPtr)) addr += 4;
+						else throw new ApplicationException();
+					}
+
+					Trace.WriteLine($"{addr:X8} {prop.Name}");
+					prop.SetValue(obj, rv);
+				}
+				catch (NullReferenceException ex)
+				{
+					Trace.WriteLine($"Problem Mapping {prop.Name} was null\n{ex}");
+				}
+				catch (Exception ex)
+				{
+					if (rv != null)
+						Trace.WriteLine($"Problem Mapping {prop.Name} {prop.PropertyType} != {rv.GetType()}\n{ex}");
+					else
+						Trace.WriteLine($"Problem Mapping {prop.Name} {prop.PropertyType}\n{ex}");
+				}
+			}
+			return addr - startAddr;
+		}
+
 		public void FromAddress(uint addr)
 		{
-			foreach (var p in typeof(ExecBase).GetProperties())
-			{
+			lookup.Clear();
 
+			var execbase = new ExecBase();
+			uint execAddress = memory.Read32(4);
+			if (execAddress == 0xc00276)
+				MapObject(typeof(ExecBase), execbase, execAddress);
+
+			Trace.WriteLine(execbase.ToString());
+		}
+
+		private object MapSimple(Type type, uint addr)
+		{
+			if (type == typeof(BYTE)) return (BYTE)memory.Read8(addr);
+			if (type == typeof(UBYTE)) return (UBYTE)memory.Read8(addr);
+			if (type == typeof(UWORD)) return (UWORD)memory.Read16(addr);
+			if (type == typeof(WORD)) return (WORD)memory.Read16(addr);
+			if (type == typeof(ULONG)) return (ULONG)memory.Read32(addr);
+			if (type == typeof(LONG)) return (LONG)memory.Read32(addr);
+			if (type == typeof(APTR)) return (APTR)memory.Read32(addr);
+			if (type == typeof(FunctionPtr)) return (FunctionPtr)memory.Read32(addr);
+			throw new ApplicationException();
+		}
+
+		public string MapString(uint addr)
+		{
+			//addr = memory.Read32(addr);
+			//if (addr == 0)
+			//	return "";
+
+			var sb = new StringBuilder();
+			for (; ; )
+			{
+				byte c = memory.Read8(addr);
+				if (c == 0)
+					return sb.ToString();
+
+				sb.Append(Convert.ToChar(c));
+				addr++;
 			}
 		}
 	}

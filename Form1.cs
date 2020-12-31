@@ -64,6 +64,17 @@ namespace RunAmiga
 			UpdatePowerLight();
 			UpdateDiskLight();
 			UpdateColours();
+			UpdateExecBase();
+		}
+
+		private void UpdateExecBase()
+		{
+			Machine.LockEmulation();
+			var memory = cpu.GetMemory();
+			Machine.UnlockEmulation();
+
+			var execBase = new ExecBaseMapper(memory);
+			execBase.FromAddress(0);
 		}
 
 		private void UpdateRegs()

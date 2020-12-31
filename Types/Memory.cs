@@ -63,6 +63,25 @@ namespace RunAmiga.Types
 			return 0;
 		}
 
+		public byte Read8(uint address)
+		{
+			return memory[address];
+		}
+
+		public ushort Read16(uint address)
+		{
+			return (ushort)(((ushort)memory[address] << 8) +
+							(ushort)memory[(address + 1) ]);
+		}
+
+		public uint Read32(uint address)
+		{
+			return ((uint)memory[address] << 24) +
+					((uint)memory[(address + 1) ] << 16) +
+					((uint)memory[(address + 2)] << 8) +
+					(uint)memory[(address + 3) ];
+		}
+
 		public override string ToString()
 		{
 			return BlockToString(new List<Tuple<uint, uint>>
