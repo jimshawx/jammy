@@ -87,6 +87,11 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc0bc8);//InitStruct
 			AddBreakpoint(0xfc1c34);//OpenResource
 			AddBreakpoint(0xfe9174);
+			
+			AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
+			AddBreakpoint(0xfc0240);
+			AddBreakpoint(0xfc033e);
+
 			//AddBreakpoint(0xfc0e86);//Schedule().
 			AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
@@ -285,6 +290,9 @@ namespace RunAmiga
 		{
 			address &= 0xffffff;
 
+			if ((address & 1)!=0)
+				throw new MemoryAlignmentException(address);
+
 			if (cia.IsMapped(address)) cia.Read(instructionStartPC, address, Size.Long);
 			if (custom.IsMapped(address)) custom.Read(instructionStartPC, address, Size.Long);
 
@@ -297,6 +305,9 @@ namespace RunAmiga
 		public ushort read16(uint address)
 		{
 			address &= 0xffffff;
+
+			if ((address & 1) != 0)
+				throw new MemoryAlignmentException(address);
 
 			if (cia.IsMapped(address)) cia.Read(instructionStartPC, address, Size.Word);
 			if (custom.IsMapped(address)) custom.Read(instructionStartPC, address, Size.Word);
@@ -331,6 +342,9 @@ namespace RunAmiga
 			if (isROM(address))
 				internalTrap(3);
 
+			if ((address & 1) != 0)
+				throw new MemoryAlignmentException(address);
+
 			byte b0, b1, b2, b3;
 			b0 = (byte)(value >> 24);
 			b1 = (byte)(value >> 16);
@@ -351,6 +365,9 @@ namespace RunAmiga
 
 			if (isROM(address))
 				internalTrap(3);
+
+			if ((address & 1) != 0)
+				throw new MemoryAlignmentException(address);
 
 			byte b0, b1;
 			b0 = (byte)(value >> 8);

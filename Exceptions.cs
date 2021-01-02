@@ -73,6 +73,21 @@ namespace RunAmiga
 		}
 	}
 
+	public class MemoryAlignmentException : MC68000Exception
+	{
+		private uint address;
+
+		public MemoryAlignmentException(uint address)
+		{
+			this.address = address;
+		}
+
+		public override string ToString()
+		{
+			return $"Unknown Memory Alignment @{address:X6}. {base.ToString()}";
+		}
+	}
+
 	public class InvalidCustomRegisterSizeException : MC68000Exception
 	{
 		private uint pc;

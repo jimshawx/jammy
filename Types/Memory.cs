@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace RunAmiga.Types
@@ -65,17 +66,22 @@ namespace RunAmiga.Types
 
 		public byte Read8(uint address)
 		{
+			if (address >= 0x1000000) { Trace.WriteLine($"Memory Read Byte from {address:X8}"); return 0; }
 			return memory[address];
 		}
 
 		public ushort Read16(uint address)
 		{
+			if (address >= 0xfffffe) { Trace.WriteLine($"Memory Read Word from ${address:X8}"); return 0; }
+			if ((address & 1) != 0) { Trace.WriteLine($"Memory Read Unaligned Word from ${address:X8}"); return 0; }
 			return (ushort)(((ushort)memory[address] << 8) +
 							(ushort)memory[(address + 1) ]);
 		}
 
 		public uint Read32(uint address)
 		{
+			if (address >= 0xfffffc) { Trace.WriteLine($"Memory Read Int from ${address:X8}"); return 0; }
+			if ((address & 1) != 0) { Trace.WriteLine($"Memory Read Unaligned Int from ${address:X8}"); return 0; }
 			return ((uint)memory[address] << 24) +
 					((uint)memory[(address + 1) ] << 16) +
 					((uint)memory[(address + 2)] << 8) +

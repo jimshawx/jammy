@@ -19,6 +19,34 @@ namespace RunAmiga.Types
 	using System.Text;
 	using System.Collections.Generic;
 
+
+	public enum NodeType
+	{
+		NT_UNKNOWN	= 0,
+		NT_TASK		= 1,	/* Exec task */
+		NT_INTERRUPT	= 2,
+		NT_DEVICE	= 3,
+		NT_MSGPORT	= 4,
+		NT_MESSAGE	= 5,	/* Indicates message currently pending */
+		NT_FREEMSG	= 6,
+		NT_REPLYMSG	= 7,	/* Message has been replied */
+		NT_RESOURCE	= 8,
+		NT_LIBRARY	= 9,
+		NT_MEMORY	= 10,
+		NT_SOFTINT	= 11,	/* Internal flag used by SoftInits */
+		NT_FONT		= 12,
+		NT_PROCESS	= 13,	/* AmigaDOS Process */
+		NT_SEMAPHORE	= 14,
+		NT_SIGNALSEM	= 15,	/* signal semaphores */
+		NT_BOOTNODE	= 16,
+		NT_KICKMEM	= 17,
+		NT_GRAPHICS	= 18,
+		NT_DEATHMESSAGE	= 19,
+
+		NT_USER		= 254,	/* User node types work down from here */
+		NT_EXTENDED	= 255,
+	}
+
 	//using TaskPtr = System.UInt32;
 	//using NodePtr = System.UInt32;
 	//using MinNodePtr = System.UInt32;
@@ -71,7 +99,7 @@ namespace RunAmiga.Types
 	{
 		public NodePtr ln_Succ { get; set; }    /* Pointer to next (successor) */
 		public NodePtr ln_Pred { get; set; }    /* Pointer to previous (predecessor) */
-		public UBYTE ln_Type { get; set; }
+		public NodeType ln_Type { get; set; }
 		public BYTE ln_Pri { get; set; }        /* Priority, for sorting */
 		public CharPtr ln_Name { get; set; }        /* ID string, null terminated */
 	} /* Note: word aligned */
@@ -94,7 +122,8 @@ namespace RunAmiga.Types
 		public UWORD lib_PosSize { get; set; }      /* number of bytes after library */
 		public UWORD lib_Version { get; set; }      /* major */
 		public UWORD lib_Revision { get; set; }  /* minor */
-		public APTR lib_IdString { get; set; }      /* ASCII identification */
+		//public APTR lib_IdString { get; set; }      /* ASCII identification */
+		public CharPtr lib_IdString { get; set; }
 		public ULONG lib_Sum { get; set; }          /* the checksum itself */
 		public UWORD lib_OpenCnt { get; set; }      /* number of current opens */
 	} /* Warning: size is not a longword multiple! */
@@ -124,7 +153,7 @@ namespace RunAmiga.Types
 		public FunctionPtr tc_Switch { get; set; }      /* task losing CPU		*/
 		public FunctionPtr tc_Launch { get; set; }      /* task getting CPU	*/
 		public List tc_MemEntry { get; set; }       /* Allocated memory. Freed by RemTask() */
-		public APTR tc_UserData { get; set; }       /* For use by the task { get; set; } no restrictions! */
+		public APTR tc_UserData { get; set; }       /* For use by the task no restrictions! */
 	}
 
 	public class IntVector
@@ -164,7 +193,7 @@ namespace RunAmiga.Types
 
 		/****** Interrupt Related ***************************************/
 
-		public IntVector[] IntVects = new IntVector[16];
+		public IntVector[] IntVects { get; set; } = new IntVector[16];
 
 		/****** Dynamic System Variables *************************************/
 
@@ -262,20 +291,28 @@ namespace RunAmiga.Types
 			this.memory = memory;
 		}
 
-		HashSet<uint> lookup = new HashSet<uint>();
+		HashSet<long> lookup = new HashSet<long>();
 
-		private uint MapObject(Type type, object obj, uint addr)
+		private uint MapObject(Type type, object obj, uint addr, int depth)
 		{
-			if (lookup.Contains(addr))
+			if (lookup.Contains(addr+type.GetHashCode()))
 			{
-				Trace.WriteLine($"Visited {addr:X8} again for {type.Name}");
+				//Trace.WriteLine($"Visited {addr:X8} again for {type.Name}");
 				return 0;
 			}
-			lookup.Add(addr);
+			lookup.Add(addr+type.GetHashCode());
 
 			uint startAddr = addr;
-			foreach (var prop in type.GetProperties().OrderBy(x => x.MetadataToken))
+			var properties = type.GetProperties().OrderBy(x => x.MetadataToken).ToList();
+
+			if (!properties.Any())
+				throw new ApplicationException();
+
+			foreach (var prop in properties)
 			{
+				if (depth == 0)
+					Trace.WriteLine($"{addr:X8} {prop.Name,-25} {prop.PropertyType}");
+				
 				object rv = null;
 				var propType = prop.PropertyType;
 				try
@@ -289,7 +326,11 @@ namespace RunAmiga.Types
 							if (tp.Address != 0 && tp.Address < 0x1000000)
 							{
 								tp.Task = new Task();
-								MapObject(typeof(Task), tp.Task, tp.Address);
+								MapObject(typeof(Task), tp.Task, tp.Address, depth+1);
+							}
+							else
+							{
+								tp = null;
 							}
 							rv = tp;
 						}
@@ -300,7 +341,11 @@ namespace RunAmiga.Types
 							if (tp.Address != 0 && tp.Address < 0x1000000)
 							{
 								tp.Node = new Node();
-								MapObject(typeof(Node), tp.Node, tp.Address);
+								MapObject(typeof(Node), tp.Node, tp.Address, depth+1);
+							}
+							else
+							{
+								tp = null;
 							}
 							rv = tp;
 						}
@@ -311,7 +356,11 @@ namespace RunAmiga.Types
 							if (tp.Address != 0 && tp.Address < 0x1000000)
 							{
 								tp.MinNode = new MinNode();
-								MapObject(typeof(MinNode), tp.MinNode, tp.Address);
+								MapObject(typeof(MinNode), tp.MinNode, tp.Address, depth+1);
+							}
+							else
+							{
+								tp = null;
 							}
 							rv = tp;
 						}
@@ -335,7 +384,7 @@ namespace RunAmiga.Types
 							for (int i = 0; i < array.Length; i++)
 							{
 								array.SetValue(Activator.CreateInstance(arrayType), i);
-								addr += MapObject(arrayType, array.GetValue(i), addr);
+								addr += MapObject(arrayType, array.GetValue(i), addr, depth+1);
 							}
 						}
 						else
@@ -345,9 +394,10 @@ namespace RunAmiga.Types
 								object s = MapSimple(arrayType, addr);
 								array.SetValue(s, i);
 
-								if (s.GetType() == typeof(BYTE) || s.GetType() == typeof(UBYTE)) addr++;
-								if (s.GetType() == typeof(WORD) || s.GetType() == typeof(UWORD)) addr += 2;
-								if (s.GetType() == typeof(LONG) || s.GetType() == typeof(ULONG) || s.GetType() == typeof(APTR) || s.GetType() == typeof(FunctionPtr)) addr += 4;
+								if (s.GetType() == typeof(BYTE) || s.GetType() == typeof(UBYTE) || s.GetType() == typeof(NodeType)) addr++;
+								else if (s.GetType() == typeof(WORD) || s.GetType() == typeof(UWORD)) addr += 2;
+								else if (s.GetType() == typeof(LONG) || s.GetType() == typeof(ULONG) || s.GetType() == typeof(APTR) || s.GetType() == typeof(FunctionPtr)) addr += 4;
+								else throw new ApplicationException();
 							}
 						}
 						rv = array;
@@ -355,18 +405,18 @@ namespace RunAmiga.Types
 					else if (propType.BaseType == typeof(object))
 					{
 						rv = Activator.CreateInstance(propType);
-						addr += MapObject(propType, rv, addr);
+						addr += MapObject(propType, rv, addr, depth+1);
 					}
 					else
 					{
 						rv = MapSimple(propType, addr);
-						if (rv.GetType() == typeof(BYTE) || rv.GetType() == typeof(UBYTE)) addr++;
+						if (rv.GetType() == typeof(BYTE) || rv.GetType() == typeof(UBYTE) || rv.GetType() == typeof(NodeType)) addr++;
 						else if (rv.GetType() == typeof(WORD) || rv.GetType() == typeof(UWORD)) addr += 2;
 						else if (rv.GetType() == typeof(LONG) || rv.GetType() == typeof(ULONG) || rv.GetType() == typeof(APTR) || rv.GetType() == typeof(FunctionPtr)) addr += 4;
 						else throw new ApplicationException();
 					}
 
-					Trace.WriteLine($"{addr:X8} {prop.Name}");
+					//Trace.WriteLine($"{addr:X8} {prop.Name}");
 					prop.SetValue(obj, rv);
 				}
 				catch (NullReferenceException ex)
@@ -381,23 +431,26 @@ namespace RunAmiga.Types
 						Trace.WriteLine($"Problem Mapping {prop.Name} {prop.PropertyType}\n{ex}");
 				}
 			}
+			//Trace.WriteLine($"{addr-startAddr}");
 			return addr - startAddr;
 		}
 
-		public void FromAddress(uint addr)
+		public string FromAddress(uint addr)
 		{
 			lookup.Clear();
 
 			var execbase = new ExecBase();
 			uint execAddress = memory.Read32(4);
 			if (execAddress == 0xc00276)
-				MapObject(typeof(ExecBase), execbase, execAddress);
+				MapObject(typeof(ExecBase), execbase, execAddress, 0);
 
-			Trace.WriteLine(execbase.ToString());
+			//Trace.WriteLine(execbase.ToString());
+			return execbase.ToString();
 		}
 
 		private object MapSimple(Type type, uint addr)
 		{
+			if (type == typeof(NodeType)) return (NodeType)memory.Read8(addr);
 			if (type == typeof(BYTE)) return (BYTE)memory.Read8(addr);
 			if (type == typeof(UBYTE)) return (UBYTE)memory.Read8(addr);
 			if (type == typeof(UWORD)) return (UWORD)memory.Read16(addr);
@@ -411,19 +464,20 @@ namespace RunAmiga.Types
 
 		public string MapString(uint addr)
 		{
-			//addr = memory.Read32(addr);
-			//if (addr == 0)
-			//	return "";
+			uint str = memory.Read32(addr);
+			//Trace.WriteLine($"String @{addr:X8}->{str:X8}");
+			if (str == 0)
+				return "(null)";
 
 			var sb = new StringBuilder();
 			for (; ; )
 			{
-				byte c = memory.Read8(addr);
+				byte c = memory.Read8(str);
 				if (c == 0)
 					return sb.ToString();
 
 				sb.Append(Convert.ToChar(c));
-				addr++;
+				str++;
 			}
 		}
 	}

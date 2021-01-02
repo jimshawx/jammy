@@ -68,6 +68,7 @@ namespace RunAmiga
 			this.radioButton16 = new System.Windows.Forms.RadioButton();
 			this.radioButton17 = new System.Windows.Forms.RadioButton();
 			this.addressFollowBox = new System.Windows.Forms.ComboBox();
+			this.txtExecBase = new System.Windows.Forms.RichTextBox();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -98,7 +99,7 @@ namespace RunAmiga
 			this.lbRegisters.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.lbRegisters.FormattingEnabled = true;
 			this.lbRegisters.IntegralHeight = false;
-			this.lbRegisters.Location = new System.Drawing.Point(717, 12);
+			this.lbRegisters.Location = new System.Drawing.Point(1091, 12);
 			this.lbRegisters.Name = "lbRegisters";
 			this.lbRegisters.SelectionMode = System.Windows.Forms.SelectionMode.None;
 			this.lbRegisters.Size = new System.Drawing.Size(179, 160);
@@ -115,7 +116,7 @@ namespace RunAmiga
 			this.txtDisassembly.Location = new System.Drawing.Point(3, 3);
 			this.txtDisassembly.Name = "txtDisassembly";
 			this.txtDisassembly.ReadOnly = true;
-			this.txtDisassembly.Size = new System.Drawing.Size(693, 233);
+			this.txtDisassembly.Size = new System.Drawing.Size(717, 227);
 			this.txtDisassembly.TabIndex = 1;
 			this.txtDisassembly.Text = "";
 			this.txtDisassembly.WordWrap = false;
@@ -123,7 +124,7 @@ namespace RunAmiga
 			// btnStep
 			// 
 			this.btnStep.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnStep.Location = new System.Drawing.Point(717, 179);
+			this.btnStep.Location = new System.Drawing.Point(1091, 179);
 			this.btnStep.Name = "btnStep";
 			this.btnStep.Size = new System.Drawing.Size(75, 23);
 			this.btnStep.TabIndex = 2;
@@ -134,7 +135,7 @@ namespace RunAmiga
 			// btnStop
 			// 
 			this.btnStop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnStop.Location = new System.Drawing.Point(717, 208);
+			this.btnStop.Location = new System.Drawing.Point(1091, 208);
 			this.btnStop.Name = "btnStop";
 			this.btnStop.Size = new System.Drawing.Size(75, 23);
 			this.btnStop.TabIndex = 3;
@@ -145,7 +146,7 @@ namespace RunAmiga
 			// btnGo
 			// 
 			this.btnGo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnGo.Location = new System.Drawing.Point(717, 238);
+			this.btnGo.Location = new System.Drawing.Point(1091, 238);
 			this.btnGo.Name = "btnGo";
 			this.btnGo.Size = new System.Drawing.Size(75, 23);
 			this.btnGo.TabIndex = 4;
@@ -156,7 +157,7 @@ namespace RunAmiga
 			// btnReset
 			// 
 			this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnReset.Location = new System.Drawing.Point(718, 268);
+			this.btnReset.Location = new System.Drawing.Point(1092, 268);
 			this.btnReset.Name = "btnReset";
 			this.btnReset.Size = new System.Drawing.Size(75, 23);
 			this.btnReset.TabIndex = 5;
@@ -166,23 +167,21 @@ namespace RunAmiga
 			// 
 			// txtMemory
 			// 
-			this.txtMemory.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.txtMemory.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
 			this.txtMemory.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.txtMemory.Location = new System.Drawing.Point(3, 3);
 			this.txtMemory.Name = "txtMemory";
 			this.txtMemory.ReadOnly = true;
-			this.txtMemory.Size = new System.Drawing.Size(693, 306);
+			this.txtMemory.Size = new System.Drawing.Size(717, 301);
 			this.txtMemory.TabIndex = 6;
 			this.txtMemory.Text = "";
 			this.txtMemory.WordWrap = false;
 			// 
 			// splitContainer1
 			// 
-			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
 			this.splitContainer1.Location = new System.Drawing.Point(12, 12);
 			this.splitContainer1.Name = "splitContainer1";
 			this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
@@ -194,14 +193,14 @@ namespace RunAmiga
 			// splitContainer1.Panel2
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.txtMemory);
-			this.splitContainer1.Size = new System.Drawing.Size(699, 555);
-			this.splitContainer1.SplitterDistance = 239;
+			this.splitContainer1.Size = new System.Drawing.Size(723, 544);
+			this.splitContainer1.SplitterDistance = 233;
 			this.splitContainer1.TabIndex = 7;
 			// 
 			// btnRefresh
 			// 
 			this.btnRefresh.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnRefresh.Location = new System.Drawing.Point(718, 332);
+			this.btnRefresh.Location = new System.Drawing.Point(1092, 332);
 			this.btnRefresh.Name = "btnRefresh";
 			this.btnRefresh.Size = new System.Drawing.Size(75, 23);
 			this.btnRefresh.TabIndex = 8;
@@ -212,7 +211,7 @@ namespace RunAmiga
 			// btnStepOver
 			// 
 			this.btnStepOver.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnStepOver.Location = new System.Drawing.Point(799, 179);
+			this.btnStepOver.Location = new System.Drawing.Point(1173, 179);
 			this.btnStepOver.Name = "btnStepOver";
 			this.btnStepOver.Size = new System.Drawing.Size(75, 23);
 			this.btnStepOver.TabIndex = 9;
@@ -223,7 +222,7 @@ namespace RunAmiga
 			// picPower
 			// 
 			this.picPower.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.picPower.Location = new System.Drawing.Point(823, 250);
+			this.picPower.Location = new System.Drawing.Point(1197, 250);
 			this.picPower.Name = "picPower";
 			this.picPower.Size = new System.Drawing.Size(51, 10);
 			this.picPower.TabIndex = 10;
@@ -232,7 +231,7 @@ namespace RunAmiga
 			// picDisk
 			// 
 			this.picDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.picDisk.Location = new System.Drawing.Point(823, 268);
+			this.picDisk.Location = new System.Drawing.Point(1197, 268);
 			this.picDisk.Name = "picDisk";
 			this.picDisk.Size = new System.Drawing.Size(51, 10);
 			this.picDisk.TabIndex = 11;
@@ -241,7 +240,7 @@ namespace RunAmiga
 			// btnDisassemble
 			// 
 			this.btnDisassemble.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnDisassemble.Location = new System.Drawing.Point(799, 332);
+			this.btnDisassemble.Location = new System.Drawing.Point(1173, 332);
 			this.btnDisassemble.Name = "btnDisassemble";
 			this.btnDisassemble.Size = new System.Drawing.Size(81, 23);
 			this.btnDisassemble.TabIndex = 12;
@@ -252,7 +251,7 @@ namespace RunAmiga
 			// colour0
 			// 
 			this.colour0.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour0.Location = new System.Drawing.Point(815, 485);
+			this.colour0.Location = new System.Drawing.Point(1189, 485);
 			this.colour0.Name = "colour0";
 			this.colour0.Size = new System.Drawing.Size(16, 16);
 			this.colour0.TabIndex = 13;
@@ -261,7 +260,7 @@ namespace RunAmiga
 			// colour1
 			// 
 			this.colour1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour1.Location = new System.Drawing.Point(837, 485);
+			this.colour1.Location = new System.Drawing.Point(1211, 485);
 			this.colour1.Name = "colour1";
 			this.colour1.Size = new System.Drawing.Size(16, 16);
 			this.colour1.TabIndex = 14;
@@ -270,7 +269,7 @@ namespace RunAmiga
 			// colour2
 			// 
 			this.colour2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour2.Location = new System.Drawing.Point(859, 485);
+			this.colour2.Location = new System.Drawing.Point(1233, 485);
 			this.colour2.Name = "colour2";
 			this.colour2.Size = new System.Drawing.Size(16, 16);
 			this.colour2.TabIndex = 15;
@@ -279,7 +278,7 @@ namespace RunAmiga
 			// colour3
 			// 
 			this.colour3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour3.Location = new System.Drawing.Point(881, 485);
+			this.colour3.Location = new System.Drawing.Point(1255, 485);
 			this.colour3.Name = "colour3";
 			this.colour3.Size = new System.Drawing.Size(16, 16);
 			this.colour3.TabIndex = 16;
@@ -288,7 +287,7 @@ namespace RunAmiga
 			// colour7
 			// 
 			this.colour7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour7.Location = new System.Drawing.Point(881, 507);
+			this.colour7.Location = new System.Drawing.Point(1255, 507);
 			this.colour7.Name = "colour7";
 			this.colour7.Size = new System.Drawing.Size(16, 16);
 			this.colour7.TabIndex = 20;
@@ -297,7 +296,7 @@ namespace RunAmiga
 			// colour6
 			// 
 			this.colour6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour6.Location = new System.Drawing.Point(859, 507);
+			this.colour6.Location = new System.Drawing.Point(1233, 507);
 			this.colour6.Name = "colour6";
 			this.colour6.Size = new System.Drawing.Size(16, 16);
 			this.colour6.TabIndex = 19;
@@ -306,7 +305,7 @@ namespace RunAmiga
 			// colour5
 			// 
 			this.colour5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour5.Location = new System.Drawing.Point(837, 507);
+			this.colour5.Location = new System.Drawing.Point(1211, 507);
 			this.colour5.Name = "colour5";
 			this.colour5.Size = new System.Drawing.Size(16, 16);
 			this.colour5.TabIndex = 18;
@@ -315,7 +314,7 @@ namespace RunAmiga
 			// colour4
 			// 
 			this.colour4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour4.Location = new System.Drawing.Point(815, 507);
+			this.colour4.Location = new System.Drawing.Point(1189, 507);
 			this.colour4.Name = "colour4";
 			this.colour4.Size = new System.Drawing.Size(16, 16);
 			this.colour4.TabIndex = 17;
@@ -324,7 +323,7 @@ namespace RunAmiga
 			// colour11
 			// 
 			this.colour11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour11.Location = new System.Drawing.Point(881, 529);
+			this.colour11.Location = new System.Drawing.Point(1255, 529);
 			this.colour11.Name = "colour11";
 			this.colour11.Size = new System.Drawing.Size(16, 16);
 			this.colour11.TabIndex = 24;
@@ -333,7 +332,7 @@ namespace RunAmiga
 			// colour10
 			// 
 			this.colour10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour10.Location = new System.Drawing.Point(859, 529);
+			this.colour10.Location = new System.Drawing.Point(1233, 529);
 			this.colour10.Name = "colour10";
 			this.colour10.Size = new System.Drawing.Size(16, 16);
 			this.colour10.TabIndex = 23;
@@ -342,7 +341,7 @@ namespace RunAmiga
 			// colour9
 			// 
 			this.colour9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour9.Location = new System.Drawing.Point(837, 529);
+			this.colour9.Location = new System.Drawing.Point(1211, 529);
 			this.colour9.Name = "colour9";
 			this.colour9.Size = new System.Drawing.Size(16, 16);
 			this.colour9.TabIndex = 22;
@@ -351,7 +350,7 @@ namespace RunAmiga
 			// colour8
 			// 
 			this.colour8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour8.Location = new System.Drawing.Point(815, 529);
+			this.colour8.Location = new System.Drawing.Point(1189, 529);
 			this.colour8.Name = "colour8";
 			this.colour8.Size = new System.Drawing.Size(16, 16);
 			this.colour8.TabIndex = 21;
@@ -360,7 +359,7 @@ namespace RunAmiga
 			// colour15
 			// 
 			this.colour15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour15.Location = new System.Drawing.Point(881, 551);
+			this.colour15.Location = new System.Drawing.Point(1255, 551);
 			this.colour15.Name = "colour15";
 			this.colour15.Size = new System.Drawing.Size(16, 16);
 			this.colour15.TabIndex = 20;
@@ -369,7 +368,7 @@ namespace RunAmiga
 			// colour14
 			// 
 			this.colour14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour14.Location = new System.Drawing.Point(859, 551);
+			this.colour14.Location = new System.Drawing.Point(1233, 551);
 			this.colour14.Name = "colour14";
 			this.colour14.Size = new System.Drawing.Size(16, 16);
 			this.colour14.TabIndex = 19;
@@ -378,7 +377,7 @@ namespace RunAmiga
 			// colour13
 			// 
 			this.colour13.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour13.Location = new System.Drawing.Point(837, 551);
+			this.colour13.Location = new System.Drawing.Point(1211, 551);
 			this.colour13.Name = "colour13";
 			this.colour13.Size = new System.Drawing.Size(16, 16);
 			this.colour13.TabIndex = 18;
@@ -387,7 +386,7 @@ namespace RunAmiga
 			// colour12
 			// 
 			this.colour12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour12.Location = new System.Drawing.Point(815, 551);
+			this.colour12.Location = new System.Drawing.Point(1189, 551);
 			this.colour12.Name = "colour12";
 			this.colour12.Size = new System.Drawing.Size(16, 16);
 			this.colour12.TabIndex = 17;
@@ -505,17 +504,31 @@ namespace RunAmiga
             "D6",
             "D7",
             "PC"});
-			this.addressFollowBox.Location = new System.Drawing.Point(718, 362);
+			this.addressFollowBox.Location = new System.Drawing.Point(1092, 362);
 			this.addressFollowBox.Name = "addressFollowBox";
 			this.addressFollowBox.Size = new System.Drawing.Size(121, 23);
 			this.addressFollowBox.TabIndex = 25;
 			this.addressFollowBox.SelectionChangeCommitted += new System.EventHandler(this.addressFollowBox_SelectionChangeCommitted);
 			// 
+			// txtExecBase
+			// 
+			this.txtExecBase.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.txtExecBase.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			this.txtExecBase.Location = new System.Drawing.Point(742, 15);
+			this.txtExecBase.Multiline = true;
+			this.txtExecBase.Name = "txtExecBase";
+			this.txtExecBase.Size = new System.Drawing.Size(343, 538);
+			this.txtExecBase.TabIndex = 26;
+			this.txtExecBase.WordWrap = false;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(909, 579);
+			this.ClientSize = new System.Drawing.Size(1283, 568);
+			this.Controls.Add(this.txtExecBase);
 			this.Controls.Add(this.addressFollowBox);
 			this.Controls.Add(this.colour15);
 			this.Controls.Add(this.colour11);
@@ -571,6 +584,7 @@ namespace RunAmiga
 			((System.ComponentModel.ISupportInitialize)(this.colour13)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.colour12)).EndInit();
 			this.ResumeLayout(false);
+			this.PerformLayout();
 
 		}
 
@@ -614,6 +628,7 @@ namespace RunAmiga
 		private System.Windows.Forms.RadioButton radioButton16;
 		private System.Windows.Forms.RadioButton radioButton17;
 		private System.Windows.Forms.ComboBox addressFollowBox;
+		private System.Windows.Forms.RichTextBox txtExecBase;
 	}
 }
 

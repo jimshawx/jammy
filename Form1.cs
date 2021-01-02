@@ -74,7 +74,7 @@ namespace RunAmiga
 			Machine.UnlockEmulation();
 
 			var execBase = new ExecBaseMapper(memory);
-			execBase.FromAddress(0);
+			this.txtExecBase.Text = execBase.FromAddress(0);
 		}
 
 		private void UpdateRegs()
