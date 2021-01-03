@@ -19,6 +19,8 @@
 		public int CounterReset { get; set; }
 		public int Counter { get; set; }
 
+		public Size Size { get; set; }
+
 		public Breakpoint()
 		{
 			Type = BreakpointType.Permanent;

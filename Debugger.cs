@@ -31,6 +31,7 @@ namespace RunAmiga
 			AddBreakpoint(0xfc1c34);//OpenResource
 			AddBreakpoint(0xfe9174);
 			AddBreakpoint(0xfc30e4);//setup LastAlert
+			AddBreakpoint(0xfc19ea);//AddMemList
 
 			AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
 			AddBreakpoint(0xfc0240);
@@ -44,8 +45,8 @@ namespace RunAmiga
 			AddBreakpoint(0xfc305e);//Irrecoverable Crash
 
 
-			for (uint i = 0; i < 12; i++)
-				AddBreakpoint(0xc004d2+4*i, BreakpointType.Write);
+			//for (uint i = 0; i < 12; i++)
+			//	AddBreakpoint(0xc004d2+4*i, BreakpointType.Write);
 
 			ExecLabels();
 		}
@@ -103,17 +104,21 @@ namespace RunAmiga
 
 		public bool IsMemoryBreakpoint(uint pc, BreakpointType type)
 		{
-			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
+			//for (uint i = 0; i < 4; i++)
+			uint i =0;
 			{
-				if (type == BreakpointType.Write)
+				if (breakpoints.TryGetValue(pc+i, out Breakpoint bp))
 				{
-					if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
-						return bp.Active;
-				}
-				else if (type == BreakpointType.Read)
-				{
-					if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-						return bp.Active;
+					if (type == BreakpointType.Write)
+					{
+						if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
+							return bp.Active;
+					}
+					else if (type == BreakpointType.Read)
+					{
+						if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
+							return bp.Active;
+					}
 				}
 			}
 			return false;
@@ -145,9 +150,9 @@ namespace RunAmiga
 			return false;
 		}
 
-	public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0)
+	public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long)
 	{
-		breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter };
+		breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size };
 	}
 
 	public void RemoveBreakpoint(uint address)
