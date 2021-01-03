@@ -435,7 +435,7 @@ namespace RunAmiga.Types
 			return addr - startAddr;
 		}
 
-		public string FromAddress(uint addr)
+		public string FromAddress()
 		{
 			lookup.Clear();
 

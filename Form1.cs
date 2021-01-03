@@ -1,7 +1,6 @@
 ﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
@@ -10,8 +9,8 @@ namespace RunAmiga
 {
 	public partial class Form1 : Form
 	{
-		private readonly CPU cpu;
 		private readonly Machine machine;
+		private readonly Debugger debugger;
 
 		public Form1(Machine machine)
 		{
@@ -20,10 +19,9 @@ namespace RunAmiga
 			addressFollowBox.SelectedIndex = 0;
 
 			this.machine = machine;
+			this.debugger = machine.GetDebugger();
 
 			machine.Init();
-
-			cpu = machine.GetCPU();
 
 			UpdateDisplay();
 
@@ -43,7 +41,7 @@ namespace RunAmiga
 
 		private void UpdateDisassembly()
 		{
-			var disasm = cpu.DisassembleTxt(
+			var disasm = debugger.DisassembleTxt(
 					new List<Tuple<uint, uint>>
 					{
 						new Tuple<uint, uint> (0x000000, 0x400),
@@ -70,17 +68,15 @@ namespace RunAmiga
 		private void UpdateExecBase()
 		{
 			Machine.LockEmulation();
-			var memory = cpu.GetMemory();
+			var execBaseTxt = debugger.UpdateExecBase();
 			Machine.UnlockEmulation();
-
-			var execBase = new ExecBaseMapper(memory);
-			this.txtExecBase.Text = execBase.FromAddress(0);
+			this.txtExecBase.Text = execBaseTxt;
 		}
 
 		private void UpdateRegs()
 		{
 			Machine.LockEmulation();
-			var regs = cpu.GetRegs();
+			var regs = debugger.GetRegs();
 			Machine.UnlockEmulation();
 
 			lbRegisters.Items.Clear();
@@ -90,8 +86,8 @@ namespace RunAmiga
 		private void UpdateMem()
 		{
 			Machine.LockEmulation();
-			var memory = cpu.GetMemory();
-			var regs = cpu.GetRegs();
+			var memory = debugger.GetMemory();
+			var regs = debugger.GetRegs();
 			Machine.UnlockEmulation();
 
 			txtMemory.Text = memory.ToString();
@@ -132,8 +128,8 @@ namespace RunAmiga
 
 		private void SetSelection()
 		{
-			uint pc = cpu.GetRegs().PC;
-			int line = cpu.GetAddressLine(pc);
+			uint pc = debugger.GetRegs().PC;
+			int line = debugger.GetAddressLine(pc);
 			if (line == 0) return;
 
 			txtDisassembly.SuspendLayout();
@@ -175,7 +171,7 @@ namespace RunAmiga
 		private void btnReset_Click(object sender, EventArgs e)
 		{
 			Machine.SetEmulationMode(EmulationMode.Stopped);
-			machine.GetCPU().Reset();
+			machine.Reset();
 
 			SetSelection();
 			UpdateDisplay();
@@ -202,7 +198,7 @@ namespace RunAmiga
 		private void btnStepOver_Click(object sender, EventArgs e)
 		{
 			Machine.LockEmulation();
-			machine.GetCPU().BreakAtNextPC();
+			debugger.BreakAtNextPC();
 			Machine.SetEmulationMode(EmulationMode.Running, true);
 			Machine.UnlockEmulation();
 

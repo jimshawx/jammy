@@ -507,6 +507,10 @@ namespace RunAmiga
 
 		private ushort[] regs = new ushort[32768];
 
+		public Custom(Debugger debugger)
+		{
+		}
+
 		public void Emulate()
 		{
 		}

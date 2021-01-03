@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Text;
 using System.Linq;
 
 namespace RunAmiga
@@ -37,22 +35,115 @@ namespace RunAmiga
 		//T.S..210...XNZVC
 		private ushort sr;
 
-		private byte[] memory = new byte[16 * 1024 * 1024];
-
-		private IMemoryMappedDevice cia { get; }
-		private IMemoryMappedDevice custom { get; }
-		private Disassembler disassembler { get; }
 		private uint instructionStartPC;
 
-		public CPU(IMemoryMappedDevice cia, IMemoryMappedDevice custom)
+		private List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
+		private Debugger debugger;
+
+		public CPU(CIA cia, Custom custom, Memory memory, Debugger debugger)
 		{
 			a = new A(Supervisor);
-			this.cia = cia;
-			this.custom = custom;
 
-			disassembler = new Disassembler();
+			devices.Add(debugger);
+			devices.Add(cia);
+			devices.Add(custom);
+			devices.Add(memory);
 
-			InitialSetup();
+			this.debugger = debugger;
+
+			Reset();
+		}
+
+		public void Reset()
+		{
+			sr = 0b00100_111_00000000;
+			a[7] = read32(0);
+			pc = read32(4);
+		}
+
+		private ushort Fetch(uint pc)
+		{
+			//debugging
+			if (!((pc > 0 && pc < 0x400) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xf80000 && pc < 0x1000000)))
+			{
+				debugger.DumpTrace();
+				Trace.WriteLine($"PC out of expected range {pc:X8}");
+				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			}
+
+			debugger.CurrentLabel(pc);
+			debugger.tracePC(debugger.DisassembleAddress(pc), pc);
+
+			return read16(pc);
+		}
+
+		public void Emulate()
+		{
+			instructionStartPC = pc;
+
+			try
+			{
+				int ins = Fetch(pc);
+				pc += 2;
+
+				int type = (int)(ins >> 12);
+
+				switch (type)
+				{
+					case 0:
+					case 1:
+					case 2:
+					case 3:
+						t_zero(ins); break;
+					case 4:
+						t_four(ins); break;
+					case 5:
+						t_five(ins); break;
+					case 6:
+						t_six(ins); break;
+					case 7:
+						t_seven(ins); break;
+					case 8:
+						t_eight(ins); break;
+					case 9:
+						t_nine(ins); break;
+					case 11:
+						t_eleven(ins); break;
+					case 12:
+						t_twelve(ins); break;
+					case 13:
+						t_thirteen(ins); break;
+					case 14:
+						t_fourteen(ins); break;
+					case 10:
+						internalTrap(10); break;
+					case 15:
+						internalTrap(11); break;
+					default:
+						throw new UnknownInstructionException(pc, ins);
+				}
+			}
+			catch (MC68000Exception ex)
+			{
+				Trace.WriteLine($"Caught an exception {ex}");
+				if (ex is UnknownInstructionException)
+					internalTrap(4);
+				else if (ex is UnknownInstructionSizeException)
+					internalTrap(4);
+				else if (ex is UnknownEffectiveAddressException)
+					internalTrap(4);
+				else if (ex is InstructionAlignmentException)
+					internalTrap(3);
+			}
+
+			if (debugger.IsBreakpoint(pc))
+			{
+				debugger.DumpTrace();
+				Trace.WriteLine($"Breakpoint @{pc:X8}");
+				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				UI.IsDirty = true;
+				return;
+			}
 		}
 
 		public Regs GetRegs()
@@ -70,49 +161,12 @@ namespace RunAmiga
 			return regs;
 		}
 
-		public Memory GetMemory()
-		{
-			return new Memory(memory);
-		}
-
-		public void InitialSetup()
-		{
-			Reset();
-
-			//AddBreakpoint(0xfc0500);//InitCode
-			//AddBreakpoint(0xfc0af0);
-			//AddBreakpoint(0xfc14ec);//MakeLibrary
-			//AddBreakpoint(0xfc0900);
-			//AddBreakpoint(0xfc096c);
-			//AddBreakpoint(0xfc0bc8);//InitStruct
-			AddBreakpoint(0xfc1c34);//OpenResource
-			AddBreakpoint(0xfe9174);
-			
-			AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
-			AddBreakpoint(0xfc0240);
-			AddBreakpoint(0xfc033e);
-
-			//AddBreakpoint(0xfc0e86);//Schedule().
-			AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
-			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
-			AddBreakpoint(0xfc2fb4);//Task Crash Routine
-			AddBreakpoint(0xfc2fd6);//Alert()
-			AddBreakpoint(0xfc305e);//Irrecoverable Crash
-
-			ExecLabels();
-		}
-
-		public void BulkWrite(int dst, byte[] src, int length)
-		{
-			Array.Copy(src, 0, memory, dst, 256 * 1024);
-		}
-
-		void setSupervisor()
+		private void setSupervisor()
 		{
 			sr |= 0b00100000_00000000;
 		}
 
-		void clrSupervisor()
+		private void clrSupervisor()
 		{
 			sr &= 0b11011111_11111111;
 		}
@@ -269,124 +323,45 @@ namespace RunAmiga
 		private bool C() { return (sr & 1) != 0; }
 		private bool Supervisor() { return (sr & 0b00100000_00000000) != 0; }
 
-		private void Writebytes(uint address, int len)
+		private List<IMemoryMappedDevice> MemoryMapper(uint address)
 		{
-			Trace.Write($"{address:X8} ");
-			for (int i = 0; i < len; i++)
-				Trace.Write($"{memory[address + i]:X2} ");
-			Trace.WriteLine("");
-			Trace.Write($"{address:X8} ");
-			for (int i = 0; i < len; i++)
-			{
-				if (memory[address + i] >= 32 && memory[address + i] <= 127)
-					Trace.Write($" {Convert.ToChar(memory[address + i])} ");
-				else
-					Trace.Write(" . ");
-			}
-			Trace.WriteLine("");
+			return devices.Where(x=>x.IsMapped(address)).ToList();
 		}
 
 		public uint read32(uint address)
 		{
-			address &= 0xffffff;
-
-			if ((address & 1)!=0)
-				throw new MemoryAlignmentException(address);
-
-			if (cia.IsMapped(address)) cia.Read(instructionStartPC, address, Size.Long);
-			if (custom.IsMapped(address)) custom.Read(instructionStartPC, address, Size.Long);
-
-			return ((uint)memory[address] << 24) +
-				((uint)memory[(address + 1) & 0xffffff] << 16) +
-				((uint)memory[(address + 2) & 0xffffff] << 8) +
-				(uint)memory[(address + 3) & 0xffffff];
+			uint value=0;
+			MemoryMapper(address).ForEach(x=> value = x.Read(instructionStartPC, address, Size.Long));
+			return value;
 		}
 
 		public ushort read16(uint address)
 		{
-			address &= 0xffffff;
-
-			if ((address & 1) != 0)
-				throw new MemoryAlignmentException(address);
-
-			if (cia.IsMapped(address)) cia.Read(instructionStartPC, address, Size.Word);
-			if (custom.IsMapped(address)) custom.Read(instructionStartPC, address, Size.Word);
-
-			return (ushort)(
-				((ushort)memory[address] << 8) +
-				(ushort)memory[(address + 1) & 0xffffff]);
+			ushort value=0;
+			MemoryMapper(address).ForEach(x=> value = (ushort)x.Read(instructionStartPC, address, Size.Word));
+			return value;
 		}
 
 		public byte read8(uint address)
 		{
-			address &= 0xffffff;
-
-			if (cia.IsMapped(address)) cia.Read(instructionStartPC, address, Size.Byte);
-			if (custom.IsMapped(address)) custom.Read(instructionStartPC, address, Size.Byte);
-
-			return memory[address];
-		}
-
-		private bool isROM(uint address)
-		{
-			return address >= 0xfc0000 && address <= 0xffffff;
+			byte value = 0;
+			MemoryMapper(address).ForEach(x=> value = (byte)x.Read(instructionStartPC, address, Size.Byte));
+			return value;
 		}
 
 		public void write32(uint address, uint value)
 		{
-			address &= 0xffffff;
-
-			if (cia.IsMapped(address)) { cia.Write(instructionStartPC, address, value, Size.Long); return; }
-			if (custom.IsMapped(address)) { custom.Write(instructionStartPC, address, value, Size.Long); return; }
-
-			if (isROM(address))
-				internalTrap(3);
-
-			if ((address & 1) != 0)
-				throw new MemoryAlignmentException(address);
-
-			byte b0, b1, b2, b3;
-			b0 = (byte)(value >> 24);
-			b1 = (byte)(value >> 16);
-			b2 = (byte)(value >> 8);
-			b3 = (byte)(value);
-			memory[address] = b0;
-			memory[(address + 1) & 0xffffff] = b1;
-			memory[(address + 2) & 0xffffff] = b2;
-			memory[(address + 3) & 0xffffff] = b3;
+			MemoryMapper(address).ForEach(x => x.Write(instructionStartPC, address, value, Size.Long));
 		}
 
 		public void write16(uint address, ushort value)
 		{
-			address &= 0xffffff;
-
-			if (cia.IsMapped(address)) { cia.Write(instructionStartPC, address, value, Size.Word); return; }
-			if (custom.IsMapped(address)) { custom.Write(instructionStartPC, address, value, Size.Word); return; }
-
-			if (isROM(address))
-				internalTrap(3);
-
-			if ((address & 1) != 0)
-				throw new MemoryAlignmentException(address);
-
-			byte b0, b1;
-			b0 = (byte)(value >> 8);
-			b1 = (byte)(value);
-			memory[address] = b0;
-			memory[(address + 1) & 0xffffff] = b1;
+			MemoryMapper(address).ForEach(x => x.Write(instructionStartPC, address, value, Size.Word));
 		}
 
 		public void write8(uint address, byte value)
 		{
-			address &= 0xffffff;
-
-			if (cia.IsMapped(address)) { cia.Write(instructionStartPC, address, value, Size.Byte); return; }
-			if (custom.IsMapped(address)) { custom.Write(instructionStartPC, address, value, Size.Byte); return; }
-
-			if (isROM(address))
-				internalTrap(3);
-
-			memory[address] = value;
+			MemoryMapper(address).ForEach(x => x.Write(instructionStartPC, address, value, Size.Byte));
 		}
 
 		private void push32(uint value)
@@ -679,112 +654,6 @@ namespace RunAmiga
 			if (size == Size.Byte) return (long)(sbyte)val;
 			if (size == Size.Word) return (long)(short)val;
 			return (long)(int)val;
-		}
-
-		public void Reset()
-		{
-			Array.Clear(memory, 0, memory.Length);
-
-			byte[] rom = File.ReadAllBytes("../../../kick12.rom");
-			Debug.Assert(rom.Length == 256 * 1024);
-
-			BulkWrite(0xfc0000, rom, 256 * 1024);
-			BulkWrite(0, rom, 256 * 1024);
-
-			//byte[] rom = File.ReadAllBytes("../../../kick31.rom");
-			//Debug.Assert(rom.Length == 512 * 1024);
-
-			//BulkWrite(0xf80000, rom, 512 * 1024);
-			//BulkWrite(0, rom, 512 * 1024);
-
-			sr = 0b00100_111_00000000;
-			a[7] = read32(0);
-			pc = read32(4);
-		}
-
-		public void Emulate()
-		{
-			//debugging
-			if (!((pc > 0 && pc < 0x400) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xf80000 && pc < 0x1000000)))
-			{
-				DumpTrace();
-				Trace.WriteLine($"PC out of expected range {pc:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
-				return;
-			}
-
-			pc &= 0xffffff;
-			instructionStartPC = pc;
-
-			if (asmLabels.ContainsKey(pc))
-				Trace.WriteLine($"{asmLabels[pc].Address:X6} {asmLabels[pc].Name}");
-
-			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
-			tracePC(dasm.ToString(), instructionStartPC);
-
-			try
-			{
-				int ins = read16(pc);
-				pc += 2;
-
-				int type = (int)(ins >> 12);
-
-				switch (type)
-				{
-					case 0:
-					case 1:
-					case 2:
-					case 3:
-						t_zero(ins); break;
-					case 4:
-						t_four(ins); break;
-					case 5:
-						t_five(ins); break;
-					case 6:
-						t_six(ins); break;
-					case 7:
-						t_seven(ins); break;
-					case 8:
-						t_eight(ins); break;
-					case 9:
-						t_nine(ins); break;
-					case 11:
-						t_eleven(ins); break;
-					case 12:
-						t_twelve(ins); break;
-					case 13:
-						t_thirteen(ins); break;
-					case 14:
-						t_fourteen(ins); break;
-					case 10:
-						internalTrap(10); break;
-					case 15:
-						internalTrap(11); break;
-					default:
-						throw new UnknownInstructionException(pc, ins);
-				}
-			}
-			catch (MC68000Exception ex)
-			{
-				Trace.WriteLine($"Caught an exception {ex}");
-				if (ex is UnknownInstructionException)
-					internalTrap(4);
-				else if (ex is UnknownInstructionSizeException)
-					internalTrap(4);
-				else if (ex is UnknownEffectiveAddressException)
-					internalTrap(4);
-				else if (ex is InstructionAlignmentException)
-					internalTrap(3);
-			}
-
-			if (IsBreakpoint(pc))
-			{
-				DumpTrace();
-				Trace.WriteLine($"Breakpoint @{pc:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
-				UI.IsDirty = true;
-				return;
-			}
 		}
 
 		private void t_fourteen(int type)
@@ -1572,21 +1441,21 @@ namespace RunAmiga
 
 		private void bsr(int type, uint target)
 		{
-			tracePC("bsr", instructionStartPC);
+			debugger.tracePC("bsr", instructionStartPC);
 
 			push32(pc);
 			pc = target;
 
-			tracePC(pc);
+			debugger.tracePC(pc);
 		}
 
 		private void bra(int type, uint target)
 		{
-			tracePC("bra", instructionStartPC);
+			debugger.tracePC("bra", instructionStartPC);
 
 			pc = target;
 
-			tracePC(pc);
+			debugger.tracePC(pc);
 		}
 
 		private void t_five(int type)
@@ -2040,7 +1909,7 @@ namespace RunAmiga
 			}
 			else
 			{
-				DumpTrace();
+				debugger.DumpTrace();
 
 				if (vector < 16)
 					Trace.Write($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
@@ -2536,22 +2405,22 @@ namespace RunAmiga
 
 		private void jmp(int type)
 		{
-			tracePC("jmp", instructionStartPC);
+			debugger.tracePC("jmp", instructionStartPC);
 
 			pc = fetchEA(type);
 
-			tracePC(pc);
+			debugger.tracePC(pc);
 		}
 
 		private void jsr(int type)
 		{
-			tracePC("jsr", instructionStartPC);
+			debugger.tracePC("jsr", instructionStartPC);
 
 			uint ea = fetchEA(type);
 			push32(pc);
 			pc = ea;
 
-			tracePC(pc);
+			debugger.tracePC(pc);
 		}
 
 		private void rtr(int type)
@@ -2568,381 +2437,24 @@ namespace RunAmiga
 
 		private void rts(int type)
 		{
-			tracePC("rts", instructionStartPC);
+			debugger.tracePC("rts", instructionStartPC);
 			pc = pop32();
-			tracePC(pc);
+			debugger.tracePC(pc);
 		}
 
 		private void rte(int type)
 		{
 			if (Supervisor())
 			{
-				tracePC("rte", instructionStartPC);
+				debugger.tracePC("rte", instructionStartPC);
 				sr = pop16();
 				pc = pop32();
-				tracePC(pc);
+				debugger.tracePC(pc);
 			}
 			else
 			{
 				internalTrap(8);
 			}
-		}
-
-		public void Disassemble(uint address)
-		{
-			var memorySpan = new ReadOnlySpan<byte>(memory);
-
-			using (var file = File.OpenWrite("kick12.rom.asm"))
-			{
-				using (var txtFile = new StreamWriter(file, Encoding.UTF8))
-				{
-					while (address < 0x1000000)
-					{
-						var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-						//Trace.WriteLine(dasm);
-						txtFile.WriteLine(dasm);
-
-						address += (uint)dasm.Bytes.Length;
-					}
-				}
-			}
-		}
-
-		private Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
-		private Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
-
-		public string DisassembleTxt(List<Tuple<uint, uint>> ranges)
-		{
-			addressToLine.Clear();
-			lineToAddress.Clear();
-
-			var memorySpan = new ReadOnlySpan<byte>(memory);
-			var txt = new StringBuilder();
-
-			int line = 0;
-
-			foreach (var range in ranges)
-			{
-				uint address = range.Item1;
-				uint size = range.Item2;
-				uint addressEnd = address + size;
-				while (address < addressEnd)
-				{
-					if (asmLabels.ContainsKey(address))
-					{
-						txt.Append($"{asmLabels[address].Name}:\n");
-						line++;
-					}
-					addressToLine.Add(address, line);
-					lineToAddress.Add(line, address);
-					line++;
-					var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-					txt.Append($"{dasm}\n");
-					address += (uint)dasm.Bytes.Length;
-				}
-			}
-			return txt.ToString();
-		}
-
-		public int GetAddressLine(uint address)
-		{
-			if (addressToLine.TryGetValue(address, out int line))
-				return line;
-
-			uint inc = 1;
-			int sign = 1;
-			while (Math.Abs(inc) < 16)
-			{
-				address += (uint)(sign * inc);
-				if (addressToLine.TryGetValue(address, out int linex))
-					return linex;
-				if (sign == -1)
-					inc++;
-				sign = -sign;
-			}
-
-			return 0;
-		}
-
-		public uint GetLineAddress(int line)
-		{
-			if (lineToAddress.TryGetValue(line, out uint address))
-				return address;
-			return 0;
-		}
-
-		private class Tracer
-		{
-			public string type { get; set; }
-			public uint fromPC { get; set; }
-			public uint toPC { get; set; }
-			public Regs regs { get; set; }
-
-			public override string ToString()
-			{
-				return $"{type,-80} {fromPC:X8}->{toPC:X8} {regs.RegString()}";
-			}
-		}
-
-		List<Tracer> traces = new List<Tracer>();
-		private void tracePC(uint pc)
-		{
-			if (traces.Any())
-				traces.Last().toPC = pc;
-		}
-
-		private void tracePC(string v, uint pc)
-		{
-			traces.Add(new Tracer { type = v, fromPC = pc, regs = GetRegs() });
-		}
-
-		private void DumpTrace()
-		{
-			foreach (var t in traces.TakeLast(64))
-			{
-				Trace.WriteLine($"{t}");
-			}
-			traces.Clear();
-		}
-
-		private Dictionary<uint, Breakpoint> breakpoints = new Dictionary<uint, Breakpoint>();
-
-		private bool IsBreakpoint(uint pc)
-		{
-			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
-			{
-				if (bp.Type == BreakpointType.OneShot)
-					breakpoints.Remove(pc);
-				return bp.Active;
-			}
-			return false;
-		}
-
-		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0)
-		{
-			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter };
-		}
-
-		public void RemoveBreakpoint(uint address)
-		{
-			breakpoints.Remove(address);
-		}
-
-		public void SetBreakpoint(uint address, bool active)
-		{
-			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
-				bp.Active = active;
-		}
-
-		public Breakpoint GetBreakpoint(uint address, bool active)
-		{
-			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
-				return bp;
-			return new Breakpoint { Address = address, Active = false };
-		}
-
-		public void BreakAtNextPC()
-		{
-			int line = GetAddressLine(pc) + 1;
-			AddBreakpoint(GetLineAddress(line), BreakpointType.OneShot);
-		}
-
-		private string[] fns = {
-			"Supervisor",
-			"ExitIntr",
-			"Schedule",
-			"Reschedule",
-			"Switch",
-			"Dispatch",
-			"Exception",
-			"InitCode",
-			"InitStruct",
-			"MakeLibrary",
-			"MakeFunctions",
-			"FindResident",
-			"InitResident",
-			"Alert",
-			"Debug",
-			"Disable",
-			"Enable",
-			"Forbid",
-			"Permit",
-			"SetSR",
-			"SuperState",
-			"UserState",
-			"SetIntVector",
-			"AddIntServer",
-			"RemIntServer",
-			"Cause",
-			"Allocate",
-			"Deallocate",
-			"AllocMem",
-			"AllocAbs",
-			"FreeMem",
-			"AvailMem",
-			"AllocEntry",
-			"FreeEntry",
-			"Insert",
-			"AddHead",
-			"AddTail",
-			"Remove",
-			"RemHead",
-			"RemTail",
-			"Enqueue",
-			"FindName",
-			"AddTask",
-			"RemTask",
-			"FindTask",
-			"SetTaskPri",
-			"SetSignal",
-			"SetExcept",
-			"Wait",
-			"Signal",
-			"AllocSignal",
-			"FreeSignal",
-			"AllocTrap",
-			"FreeTrap",
-			"AddPort",
-			"RemPort",
-			"PutMsg",
-			"GetMsg",
-			"ReplyMsg",
-			"WaitPort",
-			"FindPort",
-			"AddLibrary",
-			"RemLibrary",
-			"OldOpenLibrary",
-			"CloseLibrary",
-			"SetFunction",
-			"SumLibrary",
-			"AddDevice",
-			"RemDevice",
-			"OpenDevice",
-			"CloseDevice",
-			"DoIO",
-			"SendIO",
-			"CheckIO",
-			"WaitIO",
-			"AbortIO",
-			"AddResource",
-			"RemResource",
-			"OpenResource",
-			"RawIOInit",
-			"RawMayGetChar",
-			"RawPutChar",
-			"RawDoFmt",
-			"GetCC",
-			"TypeOfMem",
-			"Procure",
-			"Vacate",
-			"OpenLibrary",
-			"InitSemaphore",
-			"ObtainSemaphore",
-			"ReleaseSemaphore",
-			"AttemptSemaphore",
-			"ObtainSemaphoreList",
-			"ReleaseSemaphoreList",
-			"FindSemaphore",
-			"AddSemaphore",
-			"RemSemaphore",
-			"SumKickData",
-			"AddMemList",
-			"CopyMem",
-			"CopyMemQuick",
-			"CacheClearU",
-			"CacheClearE",
-			"CacheControl",
-			"CreateIORequest",
-			"DeleteIORequest",
-			"CreateMsgPort",
-			"DeleteMsgPort",
-			"ObtainSemaphoreShared",
-			"AllocVec",
-			"FreeVec",
-			"CreatePrivatePool",
-			"DeletePrivatePool",
-			"AllocPooled",
-			"FreePooled",
-			"AttemptSemaphoreShared",
-			"ColdReboot",
-			"StackSwap",
-			"ChildFree",
-			"ChildOrphan",
-			"ChildStatus",
-			"ChildWait",
-			"CachePreDMA",
-			"CachePostDMA",
-			"ExecReserved01",
-			"ExecReserved02",
-			"ExecReserved03",
-			"ExecReserved04",
-		};
-
-		uint fnbase = 0xFC1A40;
-		
-		ushort[] fnoffs = {
-			0x08A0, 0x08A8,
-			0x08AC, 0x08AC,
-			0xEE6A, 0xF420,
-			0xF446, 0x04F8,
-			0xF4A0, 0xF4EA,
-			0xF58E, 0xF0B0,
-			0xF188, 0xFAAC,
-			0xFB36, 0xF080,
-			0xF0E8, 0x1596,
-			0x08EE, 0xF9AC,
-			0xF9BA, 0x051A,
-			0x0520, 0xF6E2,
-			0xF708, 0xF734,
-			0xF74E, 0xF794,
-			0xF7D4, 0xF8E0,
-			0xFC5C, 0xFCC4,
-			0xFD54, 0xFE00,
-			0xFDB0, 0xFE90,
-			0xFEDE, 0xFF6C,
-			0xFB6C, 0xFB98,
-			0xFBA8, 0xFBC0,
-			0xFBCE, 0xFBDE,
-			0xFBF4, 0xFC1A,
-			0x0208, 0x02B4,
-			0x0334, 0x0388,
-			0x03E2, 0x03D8,
-			0x0490, 0x0408,
-			0x0584, 0x05BC,
-			0x054E, 0x0574,
-			0x00D8, 0x00F0,
-			0x00F4, 0x016E,
-			0x019C, 0x01B6,
-			0x01DE, 0xF9CC,
-			0xF9DA, 0xF9F0,
-			0xFA26, 0xFA3A,
-			0xFA58, 0xEC14,
-			0xEC22, 0xEC26,
-			0xEC74, 0xEC9C,
-			0xEC8A, 0xED0E,
-			0xECB2, 0xED2A,
-			0x01E8, 0x01F0,
-			0x01F4, 0x07B8,
-			0x07C2, 0x07EE,
-			0x06A8, 0xF700,
-			0xFDDA, 0x131C,
-			0x1332, 0xF9F8,
-			0x1354, 0x1374,
-			0x13C4, 0x1428,
-			0x1458, 0x14CE,
-			0x14F4, 0x14E4,
-			0x14F0, 0xEFFC,
-			0xFFAA, 0x1504,
-			0x1500};
-
-		Dictionary<uint, Label> asmLabels = new Dictionary<uint, Label>();
-		private void ExecLabels()
-		{
-			for (int i = 4; i < fnoffs.Length; i++)
-				asmLabels[fnbase + fnoffs[i]] = new Label { Address = fnbase + fnoffs[i], Name = fns[i - 4] };
-
-			//foreach (var e in asmLabels)
-			//	Trace.WriteLine($"{e.Key:X6} {e.Value.Name}");
 		}
 	}
 }

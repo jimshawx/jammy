@@ -5,11 +5,11 @@ using System.Text;
 
 namespace RunAmiga.Types
 {
-	public class Memory
+	public class MemoryDump
 	{
 		private byte[] memory = new byte[16 * 1024 * 1024];
 
-		public Memory(byte[] src)
+		public MemoryDump(byte[] src)
 		{
 			Array.Copy(src, memory, 16 * 1024 * 1024);
 		}

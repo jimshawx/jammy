@@ -1,34 +1,47 @@
 ﻿using RunAmiga.Types;
 using System;
-using System.Diagnostics;
-using System.IO;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace RunAmiga
 {
-	public class Machine
+	public class Machine : IEmulate
 	{
 		private CPU cpu;
 		private Custom custom;
 		private CIA cia;
+		private Memory memory;
+		private Debugger debugger;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
 
 		private static SemaphoreSlim emulationSemaphore;
 
+		private List<IEmulate> emulations = new List<IEmulate>();
+
 		public Machine()
 		{
-			cia = new CIA();
-			custom = new Custom();
-			cpu = new CPU(cia, custom);
+			debugger = new Debugger();
+			cia = new CIA(debugger);
+			custom = new Custom(debugger);
+			memory = new Memory(debugger);
+			cpu = new CPU(cia, custom, memory, debugger);
+
+			emulations.Add(cia);
+			emulations.Add(custom);
+			emulations.Add(memory);
+			emulations.Add(cpu);
+
+			debugger.Initialise(memory, cpu, custom, cia);
+
+			Reset();
+
 			emulationSemaphore = new SemaphoreSlim(1);
 		}
 
 		public void RunEmulations()
 		{
-			cia.Emulate();
-			custom.Emulate();
-			cpu.Emulate();
+			emulations.ForEach(x=>x.Emulate());
 		}
 
 		Thread emuThread;
@@ -43,6 +56,11 @@ namespace RunAmiga
 			emuThread = new Thread(Emulate);
 			emuThread.Name = "Emulation";
 			emuThread.Start();
+		}
+
+		public Debugger GetDebugger()
+		{
+			return debugger;
 		}
 
 		public CPU GetCPU()
@@ -112,7 +130,7 @@ namespace RunAmiga
 			//emulationMutex.WaitOne();
 		}
 
-		private void Emulate(object o)
+		public void Emulate()
 		{
 			cia.Reset();
 			custom.Reset();
@@ -147,6 +165,11 @@ namespace RunAmiga
 				//if (emulationMode == EmulationMode.Stopped)
 				//	Thread.Sleep(1000);
 			}
+		}
+
+		public void Reset()
+		{
+			emulations.ForEach(x=>x.Reset());
 		}
 	}
 }

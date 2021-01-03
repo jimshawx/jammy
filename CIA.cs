@@ -32,6 +32,10 @@ namespace RunAmiga
 		//BFE001 - BFEF01
 		private byte[] regs = new byte[16];
 
+		public CIAA(Debugger debugger)
+		{
+		}
+
 		public void Emulate()
 		{
 		}
@@ -102,6 +106,10 @@ namespace RunAmiga
 		//BFD000 - BFDF00
 		private byte[] regs = new byte[16];
 
+		public CIAB(Debugger debugger)
+		{
+		}
+
 		public void Emulate()
 		{
 		}
@@ -141,10 +149,10 @@ namespace RunAmiga
 		private CIAA ciaA;
 		private CIAB ciaB;
 
-		public CIA()
+		public CIA(Debugger debugger)
 		{
-			ciaA = new CIAA();
-			ciaB = new CIAB();
+			ciaA = new CIAA(debugger);
+			ciaB = new CIAB(debugger);
 		}
 
 		public void Emulate()

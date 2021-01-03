@@ -4,7 +4,10 @@
 	{
 		Permanent,
 		Counter,
-		OneShot
+		OneShot,
+		Read,
+		Write,
+		ReadOrWrite
 	}
 
 	public class Breakpoint
