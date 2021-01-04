@@ -298,6 +298,8 @@ namespace RunAmiga.Types
 
 		HashSet<long> lookup = new HashSet<long>();
 
+		StringBuilder sb;
+
 		private uint MapObject(Type type, object obj, uint addr, int depth)
 		{
 			if (lookup.Contains(addr+type.GetHashCode()))
@@ -317,7 +319,7 @@ namespace RunAmiga.Types
 			foreach (var prop in properties)
 			{
 				if (depth == 0)
-					Trace.WriteLine($"{addr:X8} {addr-0xc00276:X4} {addr - 0xc00276,5} {prop.Name,-25} {prop.PropertyType}");
+					sb.Append($"{addr:X8} {addr-0xc00276:X4} {addr - 0xc00276,5} {prop.Name,-25} {prop.PropertyType}\n");
 
 				if (prop.Name == "ln_Pred")
 				{
@@ -461,13 +463,15 @@ namespace RunAmiga.Types
 		{
 			lookup.Clear();
 
+			sb = new StringBuilder();
+
 			var execbase = new ExecBase();
 			uint execAddress = memory.Read32(4);
 			if (execAddress == 0xc00276)
 				MapObject(typeof(ExecBase), execbase, execAddress, 0);
 
 			//Trace.WriteLine(execbase.ToString());
-			return execbase.ToString();
+			return execbase.ToString() + "\n"+ sb.ToString();
 		}
 
 		private object MapSimple(Type type, uint addr)
@@ -487,7 +491,7 @@ namespace RunAmiga.Types
 		public string MapString(uint addr)
 		{
 			uint str = memory.Read32(addr);
-			Trace.WriteLine($"String @{addr:X8}->{str:X8}");
+			//Trace.WriteLine($"String @{addr:X8}->{str:X8}");
 			if (str == 0)
 				return "(null)";
 

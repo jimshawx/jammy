@@ -28,17 +28,19 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc0900);
 			//AddBreakpoint(0xfc096c);
 			//AddBreakpoint(0xfc0bc8);//InitStruct
-			AddBreakpoint(0xfc1c34);//OpenResource
-			AddBreakpoint(0xfe9174);
-			AddBreakpoint(0xfc30e4);//setup LastAlert
-			AddBreakpoint(0xfc19ea);//AddMemList
+			//AddBreakpoint(0xfc1c34);//OpenResource
+			//AddBreakpoint(0xfe9174);
+			//AddBreakpoint(0xfc30e4);//setup LastAlert
+			//AddBreakpoint(0xfc19ea);//AddMemList
 
-			AddBreakpoint(0xfc02b0);//initialize exec lists
-			AddBreakpoint(0xFC125C);//initialize exec interrupts
+			//AddBreakpoint(0xfc02b0);//initialize exec lists
+			//AddBreakpoint(0xFC125C);//initialize exec interrupts
 
-			AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
-			AddBreakpoint(0xfc0240);
-			AddBreakpoint(0xfc033e);
+			//AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
+			//AddBreakpoint(0xfc0240);
+			//AddBreakpoint(0xfc033e);
+
+			AddBreakpoint(0xfc043e);
 
 			//AddBreakpoint(0xfc0e86);//Schedule().
 			AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
@@ -87,8 +89,8 @@ namespace RunAmiga
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
-			if (IsMemoryBreakpoint(address, BreakpointType.Read))
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			//if (IsMemoryBreakpoint(address, BreakpointType.Read))
+			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
 
 			return 0;
 		}
@@ -109,8 +111,8 @@ namespace RunAmiga
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
-			if (IsMemoryBreakpoint(address, BreakpointType.Write))
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			//if (IsMemoryBreakpoint(address, BreakpointType.Write))
+			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
 		}
 
 		public bool IsMemoryBreakpoint(uint pc, BreakpointType type)
@@ -390,6 +392,8 @@ namespace RunAmiga
 			asmLabels.Add(0xfc108A, new Label { Address = 0xfc108A, Name = "SwitchFPU" });
 
 			asmLabels.Add(0xFC125C, new Label { Address = 0xFC125C, Name = "InitInterruptHandlers" });
+			asmLabels.Add(0xFC30EC, new Label { Address = 0xFC30EC, Name = "GuruAlert" });
+			asmLabels.Add(0xFC22fa, new Label { Address = 0xFC22fa, Name = "InitROMWack" });
 
 			asmLabels.Add(0xfc19ea, new Label { Address = 0xfc19ea, Name = "AddMemList" });
 			asmLabels.Add(0xFC191E, new Label { Address = 0xFC191E, Name = "AllocEntry" });

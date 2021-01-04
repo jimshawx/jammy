@@ -953,7 +953,8 @@ namespace RunAmiga
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
 				int Xn = (type >> 9) & 7;
-				a[Xn] += op;
+				//a[Xn] += op;
+				writeEA(Xn+0b001_000, 0, size, a[Xn] + op);
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
@@ -974,7 +975,8 @@ namespace RunAmiga
 
 				if ((type & 0b1_00_000_000) == 0)
 				{
-					d[Xn] += op;
+					//d[Xn] += op;
+					writeEA(Xn, 0, size, d[Xn]+op);
 					setNZ(d[Xn], size);
 				}
 				else
@@ -1011,7 +1013,8 @@ namespace RunAmiga
 			else
 			{
 				//M-R
-				d[Xn] &= op;
+				//d[Xn] &= op;
+				writeEA(Xn, 0, size, d[Xn] & op);
 				setNZ(d[Xn], size);
 			}
 			clrCV();
@@ -1088,7 +1091,8 @@ namespace RunAmiga
 			else
 			{
 				//M-R
-				d[Xn] ^= op;
+				//d[Xn] ^= op;
+				writeEA(Xn, 0, size, d[Xn] ^ op);
 				setNZ(d[Xn], size);
 			}
 			clrCV();
@@ -1174,7 +1178,8 @@ namespace RunAmiga
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
 				int Xn = (type >> 9) & 7;
-				a[Xn] -= op;
+				//a[Xn] -= op;
+				writeEA(Xn + 0b001_000, 0, size, a[Xn] - op);
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
@@ -1190,12 +1195,12 @@ namespace RunAmiga
 
 				int Xn = (type >> 9) & 7;
 
-
 				if ((type & 0b1_00_000_000) == 0)
 				{
 					setC(d[Xn], (uint)-(int)op, size);
 					setV(d[Xn], (uint)-(int)op, size);
-					d[Xn] -= op;
+					//d[Xn] -= op;
+					writeEA(Xn, 0, size, d[Xn] - op);
 					setNZ(d[Xn], size);
 				}
 				else
@@ -1234,7 +1239,8 @@ namespace RunAmiga
 			else
 			{
 				//M-R
-				d[Xn] |= op;
+				//d[Xn] |= op;
+				writeEA(Xn, 0, size, d[Xn] | op);
 				setNZ(d[Xn], size);
 			}
 			clrCV();

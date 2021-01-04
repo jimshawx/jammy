@@ -552,7 +552,7 @@ namespace RunAmiga
 			if ((address & 1)!=0)
 				throw new InstructionAlignmentException(address, 0);
 
-			//DebugInfo(address, value, size);
+			DebugInfo(address, value, size);
 
 			int reg = REG(address);
 
