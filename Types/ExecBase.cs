@@ -77,7 +77,7 @@ namespace RunAmiga.Types
 		public NodePtr lh_Head { get; set; }
 		public NodePtr lh_Tail { get; set; }
 		public NodePtr lh_TailPred { get; set; }
-		public UBYTE lh_Type { get; set; }
+		public NodeType lh_Type { get; set; }
 		public UBYTE l_pad { get; set; }
 	} /* word aligned */
 
@@ -259,27 +259,32 @@ namespace RunAmiga.Types
 		public APTR KickTagPtr { get; set; }    /* ptr to rom tag queue */
 		public APTR KickCheckSum { get; set; }  /* checksum for mem and tags */
 
+		// ExecBase used to look like this in 1.3
+		public UBYTE[] ExecBaseReserved { get; set; } = new UBYTE[10];
+		public UBYTE[] ExecBaseNewReserved { get; set; } = new UBYTE[20];
+
 		/****** V36 Exec additions start here **************************************/
 
-		public UWORD ex_Pad0 { get; set; }
-		public ULONG ex_LaunchPoint { get; set; }       /* Private to Launch/Switch */
-		public APTR ex_RamLibPrivate { get; set; }
-		/* The next ULONG contains the system "E" clock frequency,
-		** expressed in Hertz.	The E clock is used as a timebase for
-		** the Amiga's 8520 I/O chips. (E is connected to "02").
-		** Typical values are 715909 for NTSC, or 709379 for PAL.
-		*/
-		public ULONG ex_EClockFrequency { get; set; }   /* (readable) */
-		public ULONG ex_CacheControl { get; set; }  /* Private to CacheControl calls */
-		public ULONG ex_TaskID { get; set; }        /* Next available task ID */
+		//public UWORD ex_Pad0 { get; set; }
+		//public ULONG ex_LaunchPoint { get; set; }       /* Private to Launch/Switch */
+		//public APTR ex_RamLibPrivate { get; set; }
+		///* The next ULONG contains the system "E" clock frequency,
+		//** expressed in Hertz.	The E clock is used as a timebase for
+		//** the Amiga's 8520 I/O chips. (E is connected to "02").
+		//** Typical values are 715909 for NTSC, or 709379 for PAL.
+		//*/
+		//public ULONG ex_EClockFrequency { get; set; }   /* (readable) */
+		//public ULONG ex_CacheControl { get; set; }  /* Private to CacheControl calls */
+		//public ULONG ex_TaskID { get; set; }        /* Next available task ID */
 
-		public ULONG ex_PuddleSize { get; set; }
-		public ULONG ex_PoolThreshold { get; set; }
-		public MinList ex_PublicPool { get; set; }
+		//public ULONG ex_PuddleSize { get; set; }
+		//public ULONG ex_PoolThreshold { get; set; }
+		//public MinList ex_PublicPool { get; set; }
 
-		public APTR ex_MMULock { get; set; }        /* private */
+		//public APTR ex_MMULock { get; set; }        /* private */
 
-		public UBYTE[] ex_Reserved { get; set; } = new UBYTE[12];
+		//public UBYTE[] ex_Reserved { get; set; } = new UBYTE[12];
+
 	}
 
 	public class ExecBaseMapper
@@ -308,11 +313,18 @@ namespace RunAmiga.Types
 			if (!properties.Any())
 				throw new ApplicationException();
 
+			uint lastAddr = addr;
 			foreach (var prop in properties)
 			{
 				if (depth == 0)
-					Trace.WriteLine($"{addr:X8} {prop.Name,-25} {prop.PropertyType}");
-				
+					Trace.WriteLine($"{addr:X8} {addr-0xc00276:X4} {addr - 0xc00276,5} {prop.Name,-25} {prop.PropertyType}");
+
+				if (prop.Name == "ln_Pred")
+				{
+					addr += 4;
+					continue;
+				}
+
 				object rv = null;
 				var propType = prop.PropertyType;
 				try
@@ -402,6 +414,16 @@ namespace RunAmiga.Types
 						}
 						rv = array;
 					}
+					else if (propType == typeof(List))
+					{
+						var list = new List();
+						rv = list;
+						uint size = MapObject(propType, rv, addr, depth + 1);
+						//it's an empty list
+						if (list.lh_TailPred == null || list.lh_TailPred.Address == addr)
+							list.lh_Head = list.lh_Tail = list.lh_TailPred = null;
+						addr += size;
+					}
 					else if (propType.BaseType == typeof(object))
 					{
 						rv = Activator.CreateInstance(propType);
@@ -465,7 +487,7 @@ namespace RunAmiga.Types
 		public string MapString(uint addr)
 		{
 			uint str = memory.Read32(addr);
-			//Trace.WriteLine($"String @{addr:X8}->{str:X8}");
+			Trace.WriteLine($"String @{addr:X8}->{str:X8}");
 			if (str == 0)
 				return "(null)";
 

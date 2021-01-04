@@ -33,6 +33,9 @@ namespace RunAmiga
 			AddBreakpoint(0xfc30e4);//setup LastAlert
 			AddBreakpoint(0xfc19ea);//AddMemList
 
+			AddBreakpoint(0xfc02b0);//initialize exec lists
+			AddBreakpoint(0xFC125C);//initialize exec interrupts
+
 			AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
 			AddBreakpoint(0xfc0240);
 			AddBreakpoint(0xfc033e);
@@ -45,10 +48,11 @@ namespace RunAmiga
 			AddBreakpoint(0xfc305e);//Irrecoverable Crash
 
 
-			//for (uint i = 0; i < 12; i++)
-			//	AddBreakpoint(0xc004d2+4*i, BreakpointType.Write);
+			for (uint i = 0; i < 12; i++)
+				AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);
 
 			ExecLabels();
+			MiscLabels();
 		}
 
 		public void Initialise(Memory memory, CPU cpu, Custom custom, CIA cia)
@@ -91,6 +95,13 @@ namespace RunAmiga
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			//if (address >= 0xc004d2 && address < 0xc004d2+48) 
+			//{
+			//	DumpTrace();
+			//	Trace.WriteLine($"Wrote to {address:X8}");
+			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			//}
+
 			if (isROM(address) || isOutOfRange(address))
 			{
 				DumpTrace();
@@ -105,9 +116,9 @@ namespace RunAmiga
 		public bool IsMemoryBreakpoint(uint pc, BreakpointType type)
 		{
 			//for (uint i = 0; i < 4; i++)
-			uint i =0;
+			uint i = 0;
 			{
-				if (breakpoints.TryGetValue(pc+i, out Breakpoint bp))
+				if (breakpoints.TryGetValue(pc + i, out Breakpoint bp))
 				{
 					if (type == BreakpointType.Write)
 					{
@@ -150,37 +161,37 @@ namespace RunAmiga
 			return false;
 		}
 
-	public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long)
-	{
-		breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size };
-	}
+		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long)
+		{
+			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size };
+		}
 
-	public void RemoveBreakpoint(uint address)
-	{
-		breakpoints.Remove(address);
-	}
+		public void RemoveBreakpoint(uint address)
+		{
+			breakpoints.Remove(address);
+		}
 
-	public void SetBreakpoint(uint address, bool active)
-	{
-		if (breakpoints.TryGetValue(address, out Breakpoint bp))
-			bp.Active = active;
-	}
+		public void SetBreakpoint(uint address, bool active)
+		{
+			if (breakpoints.TryGetValue(address, out Breakpoint bp))
+				bp.Active = active;
+		}
 
-	public Breakpoint GetBreakpoint(uint address, bool active)
-	{
-		if (breakpoints.TryGetValue(address, out Breakpoint bp))
-			return bp;
-		return new Breakpoint { Address = address, Active = false };
-	}
+		public Breakpoint GetBreakpoint(uint address, bool active)
+		{
+			if (breakpoints.TryGetValue(address, out Breakpoint bp))
+				return bp;
+			return new Breakpoint { Address = address, Active = false };
+		}
 
-	public void BreakAtNextPC()
-	{
-		uint pc = cpu.GetRegs().PC;
-		int line = GetAddressLine(pc) + 1;
-		AddBreakpoint(GetLineAddress(line), BreakpointType.OneShot);
-	}
+		public void BreakAtNextPC()
+		{
+			uint pc = cpu.GetRegs().PC;
+			int line = GetAddressLine(pc) + 1;
+			AddBreakpoint(GetLineAddress(line), BreakpointType.OneShot);
+		}
 
-	private string[] fns = {
+		private string[] fns = {
 			"Supervisor",
 			"ExitIntr",
 			"Schedule",
@@ -311,9 +322,9 @@ namespace RunAmiga
 			"ExecReserved04",
 		};
 
-	uint fnbase = 0xFC1A40;
+		uint fnbase = 0xFC1A40;
 
-	ushort[] fnoffs = {
+		ushort[] fnoffs = {
 			0x08A0, 0x08A8,
 			0x08AC, 0x08AC,
 			0xEE6A, 0xF420,
@@ -368,158 +379,175 @@ namespace RunAmiga
 			0xFFAA, 0x1504,
 			0x1500};
 
-	Dictionary<uint, Label> asmLabels = new Dictionary<uint, Label>();
-	private void ExecLabels()
-	{
-		for (int i = 4; i < fnoffs.Length; i++)
-			asmLabels[fnbase + fnoffs[i]] = new Label { Address = fnbase + fnoffs[i], Name = fns[i - 4] };
+		Dictionary<uint, Label> asmLabels = new Dictionary<uint, Label>();
 
-		//foreach (var e in asmLabels)
-		//	Trace.WriteLine($"{e.Key:X6} {e.Value.Name}");
-	}
-
-	public void Disassemble(uint address)
-	{
-		var memorySpan = new ReadOnlySpan<byte>(memory.GetMemoryArray());
-
-		using (var file = File.OpenWrite("kick12.rom.asm"))
+		private void MiscLabels()
 		{
-			using (var txtFile = new StreamWriter(file, Encoding.UTF8))
-			{
-				while (address < 0x1000000)
-				{
-					var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-					//Trace.WriteLine(dasm);
-					txtFile.WriteLine(dasm);
+			asmLabels.Add(0xfc2fb4, new Label { Address = 0xfc2fb4, Name = "TaskCrash" });
+			//asmLabels.Add(0xfc2fd6, new Label { Address = 0xfc2fd6, Name = "Alert" });
+			asmLabels.Add(0xfc305e, new Label { Address = 0xfc305e, Name = "IrrecoverableCrash" });
+			asmLabels.Add(0xfc0ee0, new Label { Address = 0xfc0ee0, Name = "Switch" });
+			asmLabels.Add(0xfc108A, new Label { Address = 0xfc108A, Name = "SwitchFPU" });
 
+			asmLabels.Add(0xFC125C, new Label { Address = 0xFC125C, Name = "InitInterruptHandlers" });
+
+			asmLabels.Add(0xfc19ea, new Label { Address = 0xfc19ea, Name = "AddMemList" });
+			asmLabels.Add(0xFC191E, new Label { Address = 0xFC191E, Name = "AllocEntry" });
+			asmLabels.Add(0xFC19AC, new Label { Address = 0xFC19AC, Name = "FreeEntry" });
+			asmLabels.Add(0xFC18D0, new Label { Address = 0xFC18D0, Name = "AvailMem" });
+		}
+
+		private void ExecLabels()
+		{
+			for (int i = 4; i < fnoffs.Length; i++)
+				asmLabels[fnbase + fnoffs[i]] = new Label { Address = fnbase + fnoffs[i], Name = fns[i - 4] };
+
+			//foreach (var e in asmLabels)
+			//	Trace.WriteLine($"{e.Key:X6} {e.Value.Name}");
+		}
+
+		public void Disassemble(uint address)
+		{
+			var memorySpan = new ReadOnlySpan<byte>(memory.GetMemoryArray());
+
+			using (var file = File.OpenWrite("kick12.rom.asm"))
+			{
+				using (var txtFile = new StreamWriter(file, Encoding.UTF8))
+				{
+					while (address < 0x1000000)
+					{
+						var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
+						//Trace.WriteLine(dasm);
+						txtFile.WriteLine(dasm);
+
+						address += (uint)dasm.Bytes.Length;
+					}
+				}
+			}
+		}
+
+		private Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
+		private Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
+
+		public string DisassembleTxt(List<Tuple<uint, uint>> ranges)
+		{
+			addressToLine.Clear();
+			lineToAddress.Clear();
+
+			var memorySpan = new ReadOnlySpan<byte>(memory.GetMemoryArray());
+			var txt = new StringBuilder();
+
+			int line = 0;
+
+			foreach (var range in ranges)
+			{
+				uint address = range.Item1;
+				uint size = range.Item2;
+				uint addressEnd = address + size;
+				while (address < addressEnd)
+				{
+					if (asmLabels.ContainsKey(address))
+					{
+						txt.Append($"{asmLabels[address].Name}:\n");
+						line++;
+					}
+					addressToLine.Add(address, line);
+					lineToAddress.Add(line, address);
+					line++;
+					var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
+					txt.Append($"{dasm}\n");
 					address += (uint)dasm.Bytes.Length;
 				}
 			}
+			return txt.ToString();
 		}
-	}
 
-	private Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
-	private Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
-
-	public string DisassembleTxt(List<Tuple<uint, uint>> ranges)
-	{
-		addressToLine.Clear();
-		lineToAddress.Clear();
-
-		var memorySpan = new ReadOnlySpan<byte>(memory.GetMemoryArray());
-		var txt = new StringBuilder();
-
-		int line = 0;
-
-		foreach (var range in ranges)
+		public int GetAddressLine(uint address)
 		{
-			uint address = range.Item1;
-			uint size = range.Item2;
-			uint addressEnd = address + size;
-			while (address < addressEnd)
+			if (addressToLine.TryGetValue(address, out int line))
+				return line;
+
+			uint inc = 1;
+			int sign = 1;
+			while (Math.Abs(inc) < 16)
 			{
-				if (asmLabels.ContainsKey(address))
-				{
-					txt.Append($"{asmLabels[address].Name}:\n");
-					line++;
-				}
-				addressToLine.Add(address, line);
-				lineToAddress.Add(line, address);
-				line++;
-				var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-				txt.Append($"{dasm}\n");
-				address += (uint)dasm.Bytes.Length;
+				address += (uint)(sign * inc);
+				if (addressToLine.TryGetValue(address, out int linex))
+					return linex;
+				if (sign == -1)
+					inc++;
+				sign = -sign;
+			}
+
+			return 0;
+		}
+
+		public uint GetLineAddress(int line)
+		{
+			if (lineToAddress.TryGetValue(line, out uint address))
+				return address;
+			return 0;
+		}
+
+		private class Tracer
+		{
+			public string type { get; set; }
+			public uint fromPC { get; set; }
+			public uint toPC { get; set; }
+			public Regs regs { get; set; }
+
+			public override string ToString()
+			{
+				return $"{type,-80} {fromPC:X8}->{toPC:X8} {regs.RegString()}";
 			}
 		}
-		return txt.ToString();
-	}
 
-	public int GetAddressLine(uint address)
-	{
-		if (addressToLine.TryGetValue(address, out int line))
-			return line;
-
-		uint inc = 1;
-		int sign = 1;
-		while (Math.Abs(inc) < 16)
+		List<Tracer> traces = new List<Tracer>();
+		public void tracePC(uint pc)
 		{
-			address += (uint)(sign * inc);
-			if (addressToLine.TryGetValue(address, out int linex))
-				return linex;
-			if (sign == -1)
-				inc++;
-			sign = -sign;
+			if (traces.Any())
+				traces.Last().toPC = pc;
 		}
 
-		return 0;
-	}
-
-	public uint GetLineAddress(int line)
-	{
-		if (lineToAddress.TryGetValue(line, out uint address))
-			return address;
-		return 0;
-	}
-
-	private class Tracer
-	{
-		public string type { get; set; }
-		public uint fromPC { get; set; }
-		public uint toPC { get; set; }
-		public Regs regs { get; set; }
-
-		public override string ToString()
+		public void tracePC(string v, uint pc)
 		{
-			return $"{type,-80} {fromPC:X8}->{toPC:X8} {regs.RegString()}";
+			traces.Add(new Tracer { type = v, fromPC = pc, regs = cpu.GetRegs() });
+		}
+
+		public void DumpTrace()
+		{
+			foreach (var t in traces.TakeLast(64))
+			{
+				Trace.WriteLine($"{t}");
+			}
+			traces.Clear();
+		}
+
+		public void CurrentLabel(uint pc)
+		{
+			if (asmLabels.ContainsKey(pc))
+				Trace.WriteLine($"{asmLabels[pc].Address:X6} {asmLabels[pc].Name}");
+		}
+
+		public string DisassembleAddress(uint pc)
+		{
+			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory.GetMemoryArray()).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
+			return dasm.ToString();
+		}
+
+		public string UpdateExecBase()
+		{
+			return new ExecBaseMapper(memory).FromAddress();
+		}
+
+		public MemoryDump GetMemory()
+		{
+			return new MemoryDump(memory.GetMemoryArray());
+		}
+
+		public Regs GetRegs()
+		{
+			return cpu.GetRegs();
 		}
 	}
-
-	List<Tracer> traces = new List<Tracer>();
-	public void tracePC(uint pc)
-	{
-		if (traces.Any())
-			traces.Last().toPC = pc;
-	}
-
-	public void tracePC(string v, uint pc)
-	{
-		traces.Add(new Tracer { type = v, fromPC = pc, regs = cpu.GetRegs() });
-	}
-
-	public void DumpTrace()
-	{
-		foreach (var t in traces.TakeLast(64))
-		{
-			Trace.WriteLine($"{t}");
-		}
-		traces.Clear();
-	}
-
-	public void CurrentLabel(uint pc)
-	{
-		if (asmLabels.ContainsKey(pc))
-			Trace.WriteLine($"{asmLabels[pc].Address:X6} {asmLabels[pc].Name}");
-	}
-
-	public string DisassembleAddress(uint pc)
-	{
-		var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory.GetMemoryArray()).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
-		return dasm.ToString();
-	}
-
-	public string UpdateExecBase()
-	{
-		return new ExecBaseMapper(memory).FromAddress();
-	}
-
-	public MemoryDump GetMemory()
-	{
-		return new MemoryDump(memory.GetMemoryArray());
-	}
-
-	public Regs GetRegs()
-	{
-		return cpu.GetRegs();
-	}
-}
 }
