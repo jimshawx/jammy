@@ -160,6 +160,11 @@ namespace RunAmiga
 			return regs;
 		}
 
+		public void SetPC(uint pc)
+		{
+			this.pc = pc;
+		}
+
 		private void setSupervisor()
 		{
 			sr |= 0b00100000_00000000;

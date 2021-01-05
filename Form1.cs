@@ -1,6 +1,7 @@
 ﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
@@ -272,6 +273,43 @@ namespace RunAmiga
 
 		private void addressFollowBox_SelectionChangeCommitted(object sender, EventArgs e)
 		{
+			UpdateDisplay();
+		}
+
+		private void menuDisassembly_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+		{
+			if (!(sender is ContextMenuStrip))
+				return;
+
+			var ctx = (ContextMenuStrip)sender;
+
+			var mouse = this.PointToClient(ctx.Location);
+			Trace.WriteLine($"ctx {mouse.X} {mouse.Y}");
+			int c = txtDisassembly.GetCharIndexFromPosition(mouse);
+			Trace.WriteLine($"char {c}");
+			int line = txtDisassembly.GetLineFromCharIndex(c)-1;
+			Trace.WriteLine($"line {line}");
+			uint pc = debugger.GetLineAddress(line);
+			Trace.WriteLine($"PC {pc:X8}");
+
+			if (e.ClickedItem == toolStripBreakpoint)
+			{
+				Trace.WriteLine($"BP {pc:X8}");
+				Machine.LockEmulation();
+				debugger.ToggleBreakpoint(pc);
+				Machine.UnlockEmulation();
+			}
+
+			if (e.ClickedItem == toolStripSkip)
+			{
+				Trace.WriteLine($"SKIP {pc:X8}");
+				Machine.LockEmulation();
+				debugger.SetPC(pc);
+				Machine.UnlockEmulation();
+			}
+
+			UpdateDisassembly();
+			SetSelection();
 			UpdateDisplay();
 		}
 	}

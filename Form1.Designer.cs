@@ -29,9 +29,13 @@ namespace RunAmiga
 		/// </summary>
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.lbRegisters = new System.Windows.Forms.ListBox();
 			this.txtDisassembly = new System.Windows.Forms.RichTextBox();
+			this.menuDisassembly = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this.toolStripBreakpoint = new System.Windows.Forms.ToolStripMenuItem();
+			this.toolStripSkip = new System.Windows.Forms.ToolStripMenuItem();
 			this.btnStep = new System.Windows.Forms.Button();
 			this.btnStop = new System.Windows.Forms.Button();
 			this.btnGo = new System.Windows.Forms.Button();
@@ -69,6 +73,7 @@ namespace RunAmiga
 			this.radioButton17 = new System.Windows.Forms.RadioButton();
 			this.addressFollowBox = new System.Windows.Forms.ComboBox();
 			this.txtExecBase = new System.Windows.Forms.RichTextBox();
+			this.menuDisassembly.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -110,6 +115,7 @@ namespace RunAmiga
 			this.txtDisassembly.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+			this.txtDisassembly.ContextMenuStrip = this.menuDisassembly;
 			this.txtDisassembly.DetectUrls = false;
 			this.txtDisassembly.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.txtDisassembly.HideSelection = false;
@@ -120,6 +126,27 @@ namespace RunAmiga
 			this.txtDisassembly.TabIndex = 1;
 			this.txtDisassembly.Text = "";
 			this.txtDisassembly.WordWrap = false;
+			// 
+			// menuDisassembly
+			// 
+			this.menuDisassembly.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripBreakpoint,
+            this.toolStripSkip});
+			this.menuDisassembly.Name = "menuDisassembly";
+			this.menuDisassembly.Size = new System.Drawing.Size(132, 48);
+			this.menuDisassembly.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.menuDisassembly_ItemClicked);
+			// 
+			// toolStripBreakpoint
+			// 
+			this.toolStripBreakpoint.Name = "toolStripBreakpoint";
+			this.toolStripBreakpoint.Size = new System.Drawing.Size(131, 22);
+			this.toolStripBreakpoint.Text = "Breakpoint";
+			// 
+			// toolStripSkip
+			// 
+			this.toolStripSkip.Name = "toolStripSkip";
+			this.toolStripSkip.Size = new System.Drawing.Size(131, 22);
+			this.toolStripSkip.Text = "Skip";
 			// 
 			// btnStep
 			// 
@@ -517,10 +544,10 @@ namespace RunAmiga
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.txtExecBase.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.txtExecBase.Location = new System.Drawing.Point(742, 15);
-			this.txtExecBase.Multiline = true;
 			this.txtExecBase.Name = "txtExecBase";
 			this.txtExecBase.Size = new System.Drawing.Size(343, 538);
 			this.txtExecBase.TabIndex = 26;
+			this.txtExecBase.Text = "";
 			this.txtExecBase.WordWrap = false;
 			// 
 			// Form1
@@ -561,6 +588,7 @@ namespace RunAmiga
 			this.Name = "Form1";
 			this.Text = "RunAmiga";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
+			this.menuDisassembly.ResumeLayout(false);
 			this.splitContainer1.Panel1.ResumeLayout(false);
 			this.splitContainer1.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -584,7 +612,6 @@ namespace RunAmiga
 			((System.ComponentModel.ISupportInitialize)(this.colour13)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.colour12)).EndInit();
 			this.ResumeLayout(false);
-			this.PerformLayout();
 
 		}
 
@@ -629,6 +656,9 @@ namespace RunAmiga
 		private System.Windows.Forms.RadioButton radioButton17;
 		private System.Windows.Forms.ComboBox addressFollowBox;
 		private System.Windows.Forms.RichTextBox txtExecBase;
+		private System.Windows.Forms.ContextMenuStrip menuDisassembly;
+		private System.Windows.Forms.ToolStripMenuItem toolStripBreakpoint;
+		private System.Windows.Forms.ToolStripMenuItem toolStripSkip;
 	}
 }
 

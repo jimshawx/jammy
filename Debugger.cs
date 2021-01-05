@@ -264,6 +264,7 @@ namespace RunAmiga
 					addressToLine.Add(address, line);
 					lineToAddress.Add(line, address);
 					line++;
+					txt.Append(IsBreakpoint(address)?'*':' ');
 					var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
 					txt.Append($"{dasm}\n");
 					address += (uint)dasm.Bytes.Length;
@@ -357,6 +358,19 @@ namespace RunAmiga
 		public Regs GetRegs()
 		{
 			return cpu.GetRegs();
+		}
+
+		public void ToggleBreakpoint(uint pc)
+		{
+			if (IsBreakpoint(pc))
+				breakpoints[pc].Active ^= true;
+			else
+				AddBreakpoint(pc);
+		}
+
+		public void SetPC(uint pc)
+		{
+			cpu.SetPC(pc);
 		}
 	}
 }
