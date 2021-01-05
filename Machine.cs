@@ -21,7 +21,8 @@ namespace RunAmiga
 
 		public Machine()
 		{
-			debugger = new Debugger();
+			var labeller = new Labeller();
+			debugger = new Debugger(labeller);
 			cia = new CIA(debugger);
 			custom = new Custom(debugger);
 			memory = new Memory(debugger);

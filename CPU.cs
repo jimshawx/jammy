@@ -71,8 +71,7 @@ namespace RunAmiga
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
-			debugger.CurrentLabel(pc);
-			debugger.tracePC(debugger.DisassembleAddress(pc), pc);
+			debugger.Trace(debugger.DisassembleAddress(pc), pc);
 
 			return read16(pc);
 		}
@@ -1447,21 +1446,21 @@ namespace RunAmiga
 
 		private void bsr(int type, uint target)
 		{
-			debugger.tracePC("bsr", instructionStartPC);
+			debugger.Trace("bsr", instructionStartPC);
 
 			push32(pc);
 			pc = target;
 
-			debugger.tracePC(pc);
+			debugger.Trace(pc);
 		}
 
 		private void bra(int type, uint target)
 		{
-			debugger.tracePC("bra", instructionStartPC);
+			debugger.Trace("bra", instructionStartPC);
 
 			pc = target;
 
-			debugger.tracePC(pc);
+			debugger.Trace(pc);
 		}
 
 		private void t_five(int type)
@@ -1866,7 +1865,7 @@ namespace RunAmiga
 		{
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
-			sr = (ushort)((sr & 0xff00) | (op & 0xff)); //naturally sets the flags
+			sr = (ushort)((sr & 0xff00u) | (op & 0x00ffu)); //naturally sets the flags
 		}
 
 		private void movefromsr(int type)
@@ -2411,22 +2410,22 @@ namespace RunAmiga
 
 		private void jmp(int type)
 		{
-			debugger.tracePC("jmp", instructionStartPC);
+			debugger.Trace("jmp", instructionStartPC);
 
 			pc = fetchEA(type);
 
-			debugger.tracePC(pc);
+			debugger.Trace(pc);
 		}
 
 		private void jsr(int type)
 		{
-			debugger.tracePC("jsr", instructionStartPC);
+			debugger.Trace("jsr", instructionStartPC);
 
 			uint ea = fetchEA(type);
 			push32(pc);
 			pc = ea;
 
-			debugger.tracePC(pc);
+			debugger.Trace(pc);
 		}
 
 		private void rtr(int type)
@@ -2443,19 +2442,19 @@ namespace RunAmiga
 
 		private void rts(int type)
 		{
-			debugger.tracePC("rts", instructionStartPC);
+			debugger.Trace("rts", instructionStartPC);
 			pc = pop32();
-			debugger.tracePC(pc);
+			debugger.Trace(pc);
 		}
 
 		private void rte(int type)
 		{
 			if (Supervisor())
 			{
-				debugger.tracePC("rte", instructionStartPC);
+				debugger.Trace("rte", instructionStartPC);
 				sr = pop16();
 				pc = pop32();
-				debugger.tracePC(pc);
+				debugger.Trace(pc);
 			}
 			else
 			{
