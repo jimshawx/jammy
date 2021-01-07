@@ -1316,7 +1316,7 @@ namespace RunAmiga
 			if (((type >> 16) & 1) == 0)
 			{
 				//moveq
-				int Xn = (type >> 9) & 3;
+				int Xn = (type >> 9) & 7;
 				uint imm8 = (uint)(sbyte)(type & 0xff);
 				d[Xn] = imm8;
 				setNZ(d[Xn], Size.Long);

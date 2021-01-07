@@ -539,6 +539,7 @@ namespace RunAmiga
 
 			if (size == Size.Long)
 			{
+				//Trace.WriteLine($"Custom read from long {address:X8}");
 				uint r0 = Read(insaddr, address, Size.Word);
 				uint r1 = Read(insaddr, address+2, Size.Word);
 				return (r0<<16)|r1;
@@ -571,7 +572,7 @@ If "custom byte write bug":
 
 			if (size == Size.Long)
 			{
-				Trace.WriteLine($"Custom write to long {address:X8}");
+				//Trace.WriteLine($"Custom write to long {address:X8}");
 				Write(insaddr, address, value >> 16, Size.Word);
 				Write(insaddr, address+2, value, Size.Word);
 				return;
