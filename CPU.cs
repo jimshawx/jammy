@@ -1625,11 +1625,18 @@ namespace RunAmiga
 			uint op = fetchOp(type, ea, size);
 			if (imm == 0) imm = 8;
 
-			setV_sub(op, imm, size);
-			setC_sub(op, imm, size);
-			setX(C());
+			if ((type & 0b111000) != 0b001_000)
+			{
+				setV_sub(op, imm, size);
+				setC_sub(op, imm, size);
+				setX(C());
+			}
+
 			op -= imm;
-			setNZ(op, size);
+
+			if ((type & 0b111000) != 0b001_000)
+				setNZ(op, size);
+
 			writeEA(type, ea, size, op);
 		}
 
@@ -2337,24 +2344,39 @@ namespace RunAmiga
 			if ((type & 0b1_0000_000000) != 0)
 			{
 				//M->R
-				//for (int i = 0; i < 16; i++)
-				for (int i = 15; i >= 0; i--)
-				{
-					if ((mask & (1 << i)) != 0)
-					{
-						int m = i & 7;
-						if (i > 7)
-							a[m] = fetchOp(type, ea, size);
-						else
-							d[m] = fetchOp(type, ea, size);
-						ea += eastep;
-					}
-				}
 				//if it's post-increment mode
 				if ((type & 0b111_000) == 0b011_000)
 				{
+					for (int i = 15; i >= 0; i--)
+					{
+						if ((mask & (1 << i)) != 0)
+						{
+							int m = i & 7;
+							if (i > 7)
+								a[m] = fetchOp(type, ea, size);
+							else
+								d[m] = fetchOp(type, ea, size);
+							ea += eastep;
+						}
+					}
+
 					int Xn = type & 7;
 					a[Xn] = ea;
+				}
+				else
+				{
+					for (int i = 0; i < 16; i++)
+					{
+						if ((mask & (1 << i)) != 0)
+						{
+							int m = i & 7;
+							if (i > 7)
+								a[m] = fetchOp(type, ea, size);
+							else
+								d[m] = fetchOp(type, ea, size);
+							ea += eastep;
+						}
+					}
 				}
 			}
 			else

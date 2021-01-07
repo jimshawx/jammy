@@ -23,15 +23,15 @@ namespace RunAmiga
 		{
 			disassembler = new Disassembler();
 
-			AddBreakpoint(0xfc0af0);//InitCode
-			AddBreakpoint(0xfc0afe);
+			//AddBreakpoint(0xfc0af0);//InitCode
+			//AddBreakpoint(0xfc0afe);
 			//AddBreakpoint(0xfc0af0);
 			//AddBreakpoint(0xfc14ec);//MakeLibrary
 			//AddBreakpoint(0xfc0900);
 			//AddBreakpoint(0xfc096c);
 			//AddBreakpoint(0xfc0bc8);//InitStruct
 			//AddBreakpoint(0xfc1c34);//OpenResource
-			AddBreakpoint(0xfe9180);
+			//AddBreakpoint(0xfe9180);
 			//AddBreakpoint(0xfc30e4);//setup LastAlert
 			//AddBreakpoint(0xfc19ea);//AddMemList
 			//AddBreakpoint(0xfc165a);//FindName
