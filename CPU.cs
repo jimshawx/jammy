@@ -342,27 +342,27 @@ namespace RunAmiga
 
 		private List<IMemoryMappedDevice> MemoryMapper(uint address)
 		{
-			return devices.Where(x=>x.IsMapped(address)).ToList();
+			return devices.Where(x => x.IsMapped(address)).ToList();
 		}
 
 		public uint read32(uint address)
 		{
-			uint value=0;
-			MemoryMapper(address).ForEach(x=> value = x.Read(instructionStartPC, address, Size.Long));
+			uint value = 0;
+			MemoryMapper(address).ForEach(x => value = x.Read(instructionStartPC, address, Size.Long));
 			return value;
 		}
 
 		public ushort read16(uint address)
 		{
-			ushort value=0;
-			MemoryMapper(address).ForEach(x=> value = (ushort)x.Read(instructionStartPC, address, Size.Word));
+			ushort value = 0;
+			MemoryMapper(address).ForEach(x => value = (ushort)x.Read(instructionStartPC, address, Size.Word));
 			return value;
 		}
 
 		public byte read8(uint address)
 		{
 			byte value = 0;
-			MemoryMapper(address).ForEach(x=> value = (byte)x.Read(instructionStartPC, address, Size.Byte));
+			MemoryMapper(address).ForEach(x => value = (byte)x.Read(instructionStartPC, address, Size.Byte));
 			return value;
 		}
 
@@ -867,7 +867,7 @@ namespace RunAmiga
 				{
 					if (size == Size.Long)
 					{
-						setX(val&(1u << (32 - shift)));
+						setX(val & (1u << (32 - shift)));
 						setC(val & (1u << (32 - shift)));
 					}
 					else if (size == Size.Word)
@@ -911,36 +911,39 @@ namespace RunAmiga
 			{
 				if (lr == 1)
 				{
-					uint v = 0;
+					uint signmask = 0;
 					if (size == Size.Long)
 					{
-						setX(val & (1u << (32 - shift)));
 						setC(val & (1u << (32 - shift)));
-						v = val & (1u << 31);
+						signmask = ((1u << shift) - 1) << (32 - shift);
 					}
 					else if (size == Size.Word)
 					{
-						setX(val & (1u << (16 - shift)));
 						setC(val & (1u << (16 - shift)));
-						v = val & (1u << 15);
-						val &= 0xffff;
+						signmask = ((1u << shift) - 1) << (16 - shift);
 					}
 					else if (size == Size.Byte)
 					{
-						setX(val & (1u << (8 - shift)));
 						setC(val & (1u << (8 - shift)));
-						v = val & (1u << 7);
-						val &= 0xff;
+						signmask = ((1u << shift) - 1) << (8 - shift);
 					}
-					uint signmask = ((v << shift) - 1) << (16 - shift);
-					setV((v & signmask) != signmask);
+					setX(C());
+					//algorithm - if the bits shifted out do not all equal sign bit, set V
+					//let's say .w << 3, then if we AND with shiftmask == 0xb111_00000_00000000 == ((1<<shift)-1)<<(.w-shift)
+					//and sign is ((int)v>>shift)&(signmask)
+					uint sign = (uint)((int)val>>shift)&signmask;
 
+					//Trace.WriteLine($"asl #{shift},{Convert.ToString(val, 2).PadLeft(32, '0')}");
+					//Trace.WriteLine($"mask {Convert.ToString(signmask, 2).PadLeft(32, '0')}");
+					//Trace.WriteLine($"sign {Convert.ToString(sign,2).PadLeft(32,'0')}");
+					//Trace.WriteLine($"vm   {Convert.ToString(val&signmask, 2).PadLeft(32, '0')}");
+					setV((val&signmask) != sign);
 					val <<= shift;
 				}
 				else
 				{
-					setX(val & (1u << (shift - 1)));
 					setC(val & (1u << (shift - 1)));
+					setX(C());
 					if (size == Size.Long)
 						val = (uint)((int)val >> shift);
 					else if (size == Size.Word)
@@ -971,7 +974,7 @@ namespace RunAmiga
 				uint op = fetchOp(type, ea, size);
 				int Xn = (type >> 9) & 7;
 				//a[Xn] += op;
-				writeEA(Xn+0b001_000, 0, size, a[Xn] + op);
+				writeEA(Xn + 0b001_000, 0, size, a[Xn] + op);
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
@@ -993,7 +996,7 @@ namespace RunAmiga
 				if ((type & 0b1_00_000_000) == 0)
 				{
 					//d[Xn] += op; 
-					writeEA(Xn, 0, size, d[Xn]+op);
+					writeEA(Xn, 0, size, d[Xn] + op);
 					setNZ(d[Xn], size);
 				}
 				else
@@ -1653,9 +1656,9 @@ namespace RunAmiga
 				setC(op, imm, size);
 				setX(C());
 			}
-			
+
 			op += imm;
-			
+
 			if ((type & 0b111000) != 0b001_000)
 				setNZ(op, size);
 

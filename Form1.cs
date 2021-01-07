@@ -53,6 +53,7 @@ namespace RunAmiga
 						new Tuple<uint, uint> (0xf80000, 0x40000),
 						new Tuple<uint, uint> (0xfc0000, 0x0900),
 						new Tuple<uint, uint> (0xfc0900, 0x4000),
+						new Tuple<uint, uint> (0xfc4900, 0x1f000),
 						new Tuple<uint, uint> (0xfe52a4, 0x0144),
 						new Tuple<uint, uint> (0xfe53e8, 0x4000)
 					});

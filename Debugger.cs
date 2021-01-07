@@ -42,6 +42,7 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
 			//AddBreakpoint(0xfc0240);
 			//AddBreakpoint(0xfc033e);
+			//AddBreakpoint(0xfcac92);
 
 			//AddBreakpoint(0xfc0b28);//InitResident
 			//AddBreakpoint(0xFC1C28);//AddResource

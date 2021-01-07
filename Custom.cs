@@ -531,11 +531,18 @@ namespace RunAmiga
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			if (size != Size.Word)
-				throw new InvalidCustomRegisterSizeException(insaddr, address, size);
-
 			if ((address & 1) != 0)
 				throw new InstructionAlignmentException(address, 0);
+
+			if (size == Size.Byte)
+				throw new InvalidCustomRegisterSizeException(insaddr, address, size);
+
+			if (size == Size.Long)
+			{
+				uint r0 = Read(insaddr, address, Size.Word);
+				uint r1 = Read(insaddr, address+2, Size.Word);
+				return (r0<<16)|r1;
+			}
 
 			int reg = REG(address);
 
@@ -546,11 +553,29 @@ namespace RunAmiga
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (size != Size.Word)
+			if ((address & 1) != 0)
+				throw new InstructionAlignmentException(address, 0);
+
+			/*
+If AGA (or maybe any 68020+ hardware?)
+- if odd address: 00xx is written to even address
+- if even address: xxxx is written. (duplicated)
+
+If "custom byte write bug":
+- if odd address: 00xx is written to even address.
+- if even address: xx00 is written.
+			*/
+
+			if (size == Size.Byte)
 				throw new InvalidCustomRegisterSizeException(insaddr, address, size);
 
-			if ((address & 1)!=0)
-				throw new InstructionAlignmentException(address, 0);
+			if (size == Size.Long)
+			{
+				Trace.WriteLine($"Custom write to long {address:X8}");
+				Write(insaddr, address, value >> 16, Size.Word);
+				Write(insaddr, address+2, value, Size.Word);
+				return;
+			}
 
 			DebugInfo(address, value, size);
 
