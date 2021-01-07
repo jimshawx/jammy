@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RunAmiga": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

@@ -1154,6 +1154,7 @@ namespace RunAmiga
 		private void subql(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			if (imm == 0) imm = 8;
 			Append($"subq.l #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Long);
@@ -1162,6 +1163,7 @@ namespace RunAmiga
 		private void subqw(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			if (imm == 0) imm = 8;
 			Append($"subq.w #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
@@ -1170,6 +1172,7 @@ namespace RunAmiga
 		private void subqb(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			if (imm == 0) imm = 8;
 			Append($"subq.b #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Byte);
@@ -1178,6 +1181,7 @@ namespace RunAmiga
 		private void addql(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			if (imm == 0) imm = 8;
 			Append($"addq.l #{imm},");
 
 			uint ea = fetchEA(type);
@@ -1187,6 +1191,7 @@ namespace RunAmiga
 		private void addqw(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			if (imm == 0) imm = 8;
 			Append($"addq.w #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
@@ -1195,6 +1200,7 @@ namespace RunAmiga
 		private void addqb(int type)
 		{
 			uint imm = (uint)((type >> 9) & 7);
+			if (imm == 0) imm = 8;
 			Append($"addq.b #{imm},");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Byte);

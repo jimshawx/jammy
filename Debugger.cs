@@ -74,7 +74,7 @@ namespace RunAmiga
 
 		private bool isROM(uint address)
 		{
-			return address >= 0xfc0000 && address <= 0xffffff;
+			return address >= 0xf80000 && address <= 0xffffff;
 		}
 
 		private bool isOutOfRange(uint address)

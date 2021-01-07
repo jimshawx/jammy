@@ -56,8 +56,8 @@ namespace RunAmiga
 
 		public void Reset()
 		{
-			sr = 0b00100_111_00000000;
-			a[7] = read32(0);
+			sr = 0b00100_111_00000100;//S,INTS,Z
+			a[7] = read16(0);
 			pc = read32(4);
 		}
 
@@ -197,12 +197,12 @@ namespace RunAmiga
 
 		private void setN()
 		{
-			sr |= 0b0000000000100000;
+			sr |= 0b0000000000001000;
 		}
 
 		private void clrN()
 		{
-			sr &= 0b1111111111011111;
+			sr &= 0b1111111111110111;
 		}
 
 		private void setN(bool val)
@@ -301,16 +301,29 @@ namespace RunAmiga
 			else sr &= 0b11111111_11110111;
 		}
 
-
 		private void setC(uint v, uint op, Size size)
 		{
-			ulong r = (ulong)signExtend(v, size) + (ulong)signExtend(op, size);
+			//ulong r = (ulong)signExtend(v, size) + (ulong)signExtend(op, size);
+			ulong r = (ulong)zeroExtend(v, size) + (ulong)zeroExtend(op, size);
+			setC(r, size);
+		}
+
+		private void setC_sub(uint v, uint op, Size size)
+		{
+			//ulong r = (ulong)signExtend(v, size) - (ulong)signExtend(op, size);
+			ulong r = zeroExtend(v, size) - zeroExtend(op, size);
 			setC(r, size);
 		}
 
 		private void setV(uint v, uint op, Size size)
 		{
-			long r = signExtend(op, size) + signExtend(op, size);
+			long r = signExtend(v, size) + signExtend(op, size);
+			setV(r, size);
+		}
+
+		private void setV_sub(uint v, uint op, Size size)
+		{
+			long r = signExtend(v, size) - signExtend(op, size);
 			setV(r, size);
 		}
 
@@ -854,18 +867,18 @@ namespace RunAmiga
 				{
 					if (size == Size.Long)
 					{
-						setX(1u << (32 - shift));
-						setC(1u << (32 - shift));
+						setX(val&(1u << (32 - shift)));
+						setC(val & (1u << (32 - shift)));
 					}
 					else if (size == Size.Word)
 					{
-						setX(1u << (16 - shift));
-						setC(1u << (16 - shift));
+						setX(val & (1u << (16 - shift)));
+						setC(val & (1u << (16 - shift)));
 					}
 					else if (size == Size.Byte)
 					{
-						setX(1u << (8 - shift));
-						setC(1u << (8 - shift));
+						setX(val & (1u << (8 - shift)));
+						setC(val & (1u << (8 - shift)));
 					}
 					val <<= shift;
 				}
@@ -875,8 +888,8 @@ namespace RunAmiga
 						val &= 0xffff;
 					if (size == Size.Byte)
 						val &= 0xff;
-					setX(1u << (shift - 1));
-					setC(1u << (shift - 1));
+					setX(val & (1u << (shift - 1)));
+					setC(val & (1u << (shift - 1)));
 					val >>= shift;
 				}
 			}
@@ -901,21 +914,21 @@ namespace RunAmiga
 					uint v = 0;
 					if (size == Size.Long)
 					{
-						setX(1u << (32 - shift));
-						setC(1u << (32 - shift));
+						setX(val & (1u << (32 - shift)));
+						setC(val & (1u << (32 - shift)));
 						v = val & (1u << 31);
 					}
 					else if (size == Size.Word)
 					{
-						setX(1u << (16 - shift));
-						setC(1u << (16 - shift));
+						setX(val & (1u << (16 - shift)));
+						setC(val & (1u << (16 - shift)));
 						v = val & (1u << 15);
 						val &= 0xffff;
 					}
 					else if (size == Size.Byte)
 					{
-						setX(1u << (8 - shift));
-						setC(1u << (8 - shift));
+						setX(val & (1u << (8 - shift)));
+						setC(val & (1u << (8 - shift)));
 						v = val & (1u << 7);
 						val &= 0xff;
 					}
@@ -926,8 +939,8 @@ namespace RunAmiga
 				}
 				else
 				{
-					setX(1u << (shift - 1));
-					setC(1u << (shift - 1));
+					setX(val & (1u << (shift - 1)));
+					setC(val & (1u << (shift - 1)));
 					if (size == Size.Long)
 						val = (uint)((int)val >> shift);
 					else if (size == Size.Word)
@@ -979,7 +992,7 @@ namespace RunAmiga
 
 				if ((type & 0b1_00_000_000) == 0)
 				{
-					//d[Xn] += op;
+					//d[Xn] += op; 
 					writeEA(Xn, 0, size, d[Xn]+op);
 					setNZ(d[Xn], size);
 				}
@@ -1128,8 +1141,8 @@ namespace RunAmiga
 				a[Ax] += 4;
 			}
 
-			setC(op1, (uint)-(int)op0, size);
-			setV(op1, (uint)-(int)op0, size);
+			setC_sub(op1, op0, size);
+			setV_sub(op1, op0, size);
 			setNZ(op1 - op0, size);
 		}
 
@@ -1142,8 +1155,8 @@ namespace RunAmiga
 			ea = fetchEA(type);
 			uint op1 = fetchOp(type, ea, size);
 
-			setC(op1, (uint)-(int)op0, size);
-			setV(op1, (uint)-(int)op0, size);
+			setC_sub(op1, op0, size);
+			setV_sub(op1, op0, size);
 			setNZ(op1 - op0, size);
 		}
 
@@ -1161,8 +1174,8 @@ namespace RunAmiga
 			ea = fetchEA(type);
 			uint op1 = fetchOp(type, ea, size);
 
-			setC(op1, (uint)-(int)op0, size);
-			setV(op1, (uint)-(int)op0, size);
+			setC_sub(op1, op0, size);
+			setV_sub(op1, op0, size);
 			setNZ(op1 - op0, size);
 		}
 
@@ -1201,16 +1214,16 @@ namespace RunAmiga
 
 				if ((type & 0b1_00_000_000) == 0)
 				{
-					setC(d[Xn], (uint)-(int)op, size);
-					setV(d[Xn], (uint)-(int)op, size);
+					setC_sub(d[Xn], op, size);
+					setV_sub(d[Xn], op, size);
 					//d[Xn] -= op;
 					writeEA(Xn, 0, size, d[Xn] - op);
 					setNZ(d[Xn], size);
 				}
 				else
 				{
-					setC(op, (uint)-(int)d[Xn], size);
-					setV(op, (uint)-(int)d[Xn], size);
+					setC_sub(op, d[Xn], size);
+					setV_sub(op, d[Xn], size);
 					op -= d[Xn];
 					writeEA(type, ea, size, op);
 					setNZ(op, size);
@@ -1470,12 +1483,12 @@ namespace RunAmiga
 
 		private void t_five(int type)
 		{
-			if ((type & 0b111_000000) == 0b000_000000) addqb(type);
-			else if ((type & 0b111_000000) == 0b001_000000) addqw(type);
-			else if ((type & 0b111_000000) == 0b010_000000) addql(type);
-			else if ((type & 0b111_000000) == 0b100_000000) subqb(type);
-			else if ((type & 0b111_000000) == 0b101_000000) subqw(type);
-			else if ((type & 0b111_000000) == 0b110_000000) subql(type);
+			if ((type & 0b111_000000) == 0b000_000000) addq(type, Size.Byte);
+			else if ((type & 0b111_000000) == 0b001_000000) addq(type, Size.Word);
+			else if ((type & 0b111_000000) == 0b010_000000) addq(type, Size.Long);
+			else if ((type & 0b111_000000) == 0b100_000000) subq(type, Size.Byte);
+			else if ((type & 0b111_000000) == 0b101_000000) subq(type, Size.Word);
+			else if ((type & 0b111_000000) == 0b110_000000) subq(type, Size.Long);
 			else if ((type & 0b11111000) == 0b11001000) dbcc(type);
 			else if ((type & 0b11000000) == 0b11000000) scc(type);
 		}
@@ -1605,82 +1618,41 @@ namespace RunAmiga
 			}
 		}
 
-		private void subql(int type)
+		private void subq(int type, Size size)
 		{
 			uint imm = (uint)((type >> 9) & 7);
 			uint ea = fetchEA(type);
-			uint op = fetchOp(type, ea, Size.Long);
-			setV(op, (uint)-(int)imm, Size.Long);
-			setC(op, (uint)-(int)imm, Size.Long);
+			uint op = fetchOp(type, ea, size);
+			if (imm == 0) imm = 8;
+
+			setV_sub(op, imm, size);
+			setC_sub(op, imm, size);
 			setX(C());
 			op -= imm;
-			setNZ(op, Size.Long);
-			writeEA(type, ea, Size.Long, op);
+			setNZ(op, size);
+			writeEA(type, ea, size, op);
 		}
 
-		private void subqw(int type)
+		private void addq(int type, Size size)
 		{
 			uint imm = (uint)((type >> 9) & 7);
 			uint ea = fetchEA(type);
-			uint op = fetchOp(type, ea, Size.Word);
-			setV(op, (uint)-(int)imm, Size.Word);
-			setC(op, (uint)-(int)imm, Size.Word);
-			setX(C());
-			op -= imm;
-			setNZ(op, Size.Word);
-			writeEA(type, ea, Size.Word, op);
-		}
+			uint op = fetchOp(type, ea, size);
+			if (imm == 0) imm = 8;
 
-		private void subqb(int type)
-		{
-			uint imm = (uint)((type >> 9) & 7);
-			uint ea = fetchEA(type);
-			uint op = fetchOp(type, ea, Size.Byte);
-			setV(op, (uint)-(int)imm, Size.Byte);
-			setC(op, (uint)-(int)imm, Size.Byte);
-			setX(C());
-			op -= imm;
-			setNZ(op, Size.Byte);
-			writeEA(type, ea, Size.Byte, op);
-		}
-
-		private void addql(int type)
-		{
-			uint imm = (uint)((type >> 9) & 7);
-			uint ea = fetchEA(type);
-			uint op = fetchOp(type, ea, Size.Long);
-			setV(op, imm, Size.Long);
-			setC(op, imm, Size.Long);
-			setX(C());
+			if ((type & 0b111000) != 0b001_000)
+			{
+				setV(op, imm, size);
+				setC(op, imm, size);
+				setX(C());
+			}
+			
 			op += imm;
-			setNZ(op, Size.Long);
-			writeEA(type, ea, Size.Long, op);
-		}
+			
+			if ((type & 0b111000) != 0b001_000)
+				setNZ(op, size);
 
-		private void addqw(int type)
-		{
-			uint imm = (uint)((type >> 9) & 7);
-			uint ea = fetchEA(type);
-			uint op = fetchOp(type, ea, Size.Word);
-			setV(op, imm, Size.Word);
-			setC(op, imm, Size.Word);
-			setX(C());
-			op += imm;
-			setNZ(op, Size.Word);
-			writeEA(type, ea, Size.Word, op);
-		}
-
-		private void addqb(int type)
-		{
-			uint imm = (uint)((type >> 9) & 7);
-			uint ea = fetchEA(type);
-			uint op = fetchOp(type, ea, Size.Byte);
-			setV(op, imm, Size.Byte);
-			setC(op, imm, Size.Byte);
-			setX(C());
-			op += imm;
-			setNZ(op, Size.Byte);
-			writeEA(type, ea, Size.Byte, op);
+			writeEA(type, ea, size, op);
 		}
 
 		private void t_four(int type)
@@ -1792,7 +1764,7 @@ namespace RunAmiga
 			Size size = getSize(type);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			setV(0, (uint)-(int)op, size);
+			setV_sub(0, op, size);
 			op = ~op + 1;//same as neg
 			setC(op != 0);
 			setX(C());
@@ -2069,8 +2041,12 @@ namespace RunAmiga
 			ea = fetchEA(type);
 			writeEA(type, ea, Size.Long, op);
 
-			setNZ(op, Size.Long);
-			clrCV();
+			//movea.l does not change the flags
+			if ((type & 0b111_000) != 0b001_000)
+			{
+				setNZ(op, Size.Long);
+				clrCV();
+			}
 		}
 
 		private void movew(int type)
@@ -2080,14 +2056,17 @@ namespace RunAmiga
 			type = swizzle(type);
 			ea = fetchEA(type);
 
-			//movea.w is sign extended
+			//movea.w is sign extended and does not change the flags
 			if ((type & 0b111_000) == 0b001_000)
+			{
 				writeEA(type, ea, Size.Long, op);
+			}
 			else
+			{
 				writeEA(type, ea, Size.Word, op);
-
-			setNZ(op, Size.Word);
-			clrCV();
+				setNZ(op, Size.Word);
+				clrCV();
+			}
 		}
 
 		private void moveb(int type)
@@ -2109,8 +2088,8 @@ namespace RunAmiga
 			uint imm = fetchImm(size);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			setC(op, (uint)-(int)imm, size);
-			setV(op, (uint)-(int)imm, size);
+			setC_sub(op, imm, size);
+			setV_sub(op, imm, size);
 			op -= imm;
 			setNZ(op, size);
 		}
@@ -2228,8 +2207,8 @@ namespace RunAmiga
 			uint imm = fetchImm(size);
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
-			setC(op, (uint)-(int)imm, size);
-			setV(op, (uint)-(int)imm, size);
+			setC_sub(op, imm, size);
+			setV_sub(op, imm, size);
 			setX(C());
 			op -= imm;
 			setNZ(op, size);

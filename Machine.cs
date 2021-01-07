@@ -1,12 +1,29 @@
 ﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace RunAmiga
 {
+	[StructLayout(LayoutKind.Sequential)]
+	public class Musashi_regs
+	{
+		public uint d0, d1, d2, d3, d4, d5, d6, d7;
+		public uint a0, a1, a2, a3, a4, a5, a6, a7;
+		public uint pc, sp, usp;
+		public ushort sr;
+	}
+
 	public class Machine : IEmulate
 	{
+		[DllImport("Musashi.dll")]
+		static extern void Musashi_init([In, Out] byte[] memory, IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
+
+		[DllImport("Musashi.dll")]
+		static extern int Musashi_execute(int cycles, Musashi_regs regs);
+
 		private CPU cpu;
 		private Custom custom;
 		private CIA cia;
@@ -19,6 +36,15 @@ namespace RunAmiga
 
 		private List<IEmulate> emulations = new List<IEmulate>();
 
+		private Musashi_Reader r32;
+		private Musashi_Reader r16;
+		private Musashi_Reader r8;
+		private Musashi_Writer w32;
+		private Musashi_Writer w16;
+		private Musashi_Writer w8;
+		private Memory musashiMemory;
+		private Disassembler disassembler;
+		private Musashi_regs musashiRegs;
 		public Machine()
 		{
 			var labeller = new Labeller();
@@ -37,12 +63,164 @@ namespace RunAmiga
 
 			Reset();
 
+			musashiMemory = new Memory(debugger);
+			musashiMemory.Reset();
+			disassembler = new Disassembler();
+
+			r32 = new Musashi_Reader(Musashi_read32);
+			r16 = new Musashi_Reader(Musashi_read16);
+			r8 = new Musashi_Reader(Musashi_read8);
+			w32 = new Musashi_Writer(Musashi_write32);
+			w16 = new Musashi_Writer(Musashi_write16);
+			w8 = new Musashi_Writer(Musashi_write8);
+
+			var memoryArray = musashiMemory.GetMemoryArray();
+			Musashi_init(memoryArray,
+			Marshal.GetFunctionPointerForDelegate(r32),
+			Marshal.GetFunctionPointerForDelegate(r16),
+			Marshal.GetFunctionPointerForDelegate(r8),
+			Marshal.GetFunctionPointerForDelegate(w32),
+			Marshal.GetFunctionPointerForDelegate(w16),
+			Marshal.GetFunctionPointerForDelegate(w8)
+				);
+			Musashi_execute(1, new Musashi_regs());//run RESET
+			musashiRegs = new Musashi_regs();
+
 			emulationSemaphore = new SemaphoreSlim(1);
+		}
+
+		private delegate uint Musashi_Reader(uint address);
+		private delegate void Musashi_Writer(uint address, uint value);
+
+		private uint Musashi_read32(uint address)
+		{
+			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
+			uint value = musashiMemory.read32(address);
+			//Trace.WriteLine($"[MUSH] read {value:X8} @{address:X8}");
+			return value;
+		}
+		private uint Musashi_read16(uint address)
+		{
+			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
+			uint value = musashiMemory.read16(address);
+			//Trace.WriteLine($"[MUSH] read {value:X4} @{address:X8}");
+			return value;
+		}
+		private uint Musashi_read8(uint address)
+		{
+			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
+			uint value = musashiMemory.read8(address);
+			//Trace.WriteLine($"[MUSH] read {value:X2} @{address:X8}");
+			return value;
+		}
+		private void Musashi_write32(uint address, uint value)
+		{
+			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
+			//Trace.WriteLine($"[MUSH] write {value:X8} @{address:X8}");
+			musashiMemory.write32(address, value);
+		}
+		private void Musashi_write16(uint address, uint value)
+		{
+			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
+			//Trace.WriteLine($"[MUSH] write {value:X4} @{address:X8}");
+			musashiMemory.write16(address, (ushort)value);
+		}
+
+		private void Musashi_write8(uint address, uint value)
+		{
+			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
+			//Trace.WriteLine($"[MUSH] write {value:X2} @{address:X8}");
+			musashiMemory.write8(address, (byte)value);
 		}
 
 		public void RunEmulations()
 		{
-			emulations.ForEach(x=>x.Emulate());
+			uint instructionStartPC = cpu.GetRegs().PC;
+
+			emulations.ForEach(x => x.Emulate());
+
+			var regsAfter = cpu.GetRegs();
+
+			int counter = 0;
+			const int maxPCdrift = 5;
+			int cycles;
+			do
+			{
+				cycles = Musashi_execute(1, musashiRegs);
+				counter++;
+			} while (musashiRegs.pc != regsAfter.PC && counter < maxPCdrift);
+
+			if (counter == maxPCdrift)
+			{
+				Trace.WriteLine($"PC Drift too far at {regsAfter.PC:X8} {musashiRegs.pc:X8}");
+			}
+			else if (counter != 1)
+			{
+				Trace.WriteLine($"Counter isn't 1 {counter}");
+			}
+
+			if (regsAfter.PC != musashiRegs.pc)
+			{
+				Trace.WriteLine($"PC Drift at {regsAfter.PC:X8} {musashiRegs.pc:X8}");
+			}
+			else
+			{
+				bool differs = false;
+				if (regsAfter.D[0] != musashiRegs.d0) { Trace.WriteLine($"reg D0 differs {regsAfter.D[0]:X8} {musashiRegs.d0:X8}"); differs = true; }
+				if (regsAfter.D[1] != musashiRegs.d1) { Trace.WriteLine($"reg D1 differs {regsAfter.D[1]:X8} {musashiRegs.d1:X8}"); differs = true; }
+				if (regsAfter.D[2] != musashiRegs.d2) { Trace.WriteLine($"reg D2 differs {regsAfter.D[2]:X8} {musashiRegs.d2:X8}"); differs = true; }
+				if (regsAfter.D[3] != musashiRegs.d3) { Trace.WriteLine($"reg D3 differs {regsAfter.D[3]:X8} {musashiRegs.d3:X8}"); differs = true; }
+				if (regsAfter.D[4] != musashiRegs.d4) { Trace.WriteLine($"reg D4 differs {regsAfter.D[4]:X8} {musashiRegs.d4:X8}"); differs = true; }
+				if (regsAfter.D[5] != musashiRegs.d5) { Trace.WriteLine($"reg D5 differs {regsAfter.D[5]:X8} {musashiRegs.d5:X8}"); differs = true; }
+				if (regsAfter.D[6] != musashiRegs.d6) { Trace.WriteLine($"reg D6 differs {regsAfter.D[6]:X8} {musashiRegs.d6:X8}"); differs = true; }
+				if (regsAfter.D[7] != musashiRegs.d7) { Trace.WriteLine($"reg D7 differs {regsAfter.D[7]:X8} {musashiRegs.d7:X8}"); differs = true; }
+
+				if (regsAfter.A[0] != musashiRegs.a0) { Trace.WriteLine($"reg A0 differs {regsAfter.A[0]:X8} {musashiRegs.a0:X8}"); differs = true; }
+				if (regsAfter.A[1] != musashiRegs.a1) { Trace.WriteLine($"reg A1 differs {regsAfter.A[1]:X8} {musashiRegs.a1:X8}"); differs = true; }
+				if (regsAfter.A[2] != musashiRegs.a2) { Trace.WriteLine($"reg A2 differs {regsAfter.A[2]:X8} {musashiRegs.a2:X8}"); differs = true; }
+				if (regsAfter.A[3] != musashiRegs.a3) { Trace.WriteLine($"reg A3 differs {regsAfter.A[3]:X8} {musashiRegs.a3:X8}"); differs = true; }
+				if (regsAfter.A[4] != musashiRegs.a4) { Trace.WriteLine($"reg A4 differs {regsAfter.A[4]:X8} {musashiRegs.a4:X8}"); differs = true; }
+				if (regsAfter.A[5] != musashiRegs.a5) { Trace.WriteLine($"reg A5 differs {regsAfter.A[5]:X8} {musashiRegs.a5:X8}"); differs = true; }
+				if (regsAfter.A[6] != musashiRegs.a6) { Trace.WriteLine($"reg A6 differs {regsAfter.A[6]:X8} {musashiRegs.a6:X8}"); differs = true; }
+				if (regsAfter.A[7] != musashiRegs.a7) { Trace.WriteLine($"reg A7 differs {regsAfter.A[7]:X8} {musashiRegs.a7:X8}"); differs = true; }
+
+				if (regsAfter.SR != musashiRegs.sr)
+				{
+					Trace.WriteLine($"reg SR differs {regsAfter.SR:X4} {musashiRegs.sr:X4}");
+					Trace.WriteLine($"  XNZVC\nJ {Convert.ToString(regsAfter.SR & 0x1f, 2).PadLeft(5,'0')}\nM {Convert.ToString(musashiRegs.sr & 0x1f, 2).PadLeft(5, '0')}");
+					differs = true;
+					regsAfter.SR &= 0b11111111_11101111;
+				}
+
+				if (differs) Trace.WriteLine($"cycles {cycles} @{instructionStartPC:X8} {disassembler.Disassemble(instructionStartPC, new ReadOnlySpan<byte>(memory.GetMemoryArray(),(int)instructionStartPC, 12))}");
+			}
+		}
+
+		public void RunEmulations2()
+		{
+			Musashi_regs cpur = new Musashi_regs();
+			Musashi_execute(100, cpur);
+
+			Trace.WriteLine($"D0 {cpur.d0:X8}");
+			Trace.WriteLine($"D1 {cpur.d1:X8}");
+			Trace.WriteLine($"D2 {cpur.d2:X8}");
+			Trace.WriteLine($"D3 {cpur.d3:X8}");
+			Trace.WriteLine($"D4 {cpur.d4:X8}");
+			Trace.WriteLine($"D5 {cpur.d5:X8}");
+			Trace.WriteLine($"D6 {cpur.d6:X8}");
+			Trace.WriteLine($"D7 {cpur.d7:X8}");
+
+			Trace.WriteLine($"A0 {cpur.a0:X8}");
+			Trace.WriteLine($"A1 {cpur.a1:X8}");
+			Trace.WriteLine($"A2 {cpur.a2:X8}");
+			Trace.WriteLine($"A3 {cpur.a3:X8}");
+			Trace.WriteLine($"A4 {cpur.a4:X8}");
+			Trace.WriteLine($"A5 {cpur.a5:X8}");
+			Trace.WriteLine($"A6 {cpur.a6:X8}");
+			Trace.WriteLine($"A7 {cpur.a7:X8}");
+
+			Trace.WriteLine($"PC {cpur.pc:X8}");
+			Trace.WriteLine($"SR {cpur.sr:X4}");
 		}
 
 		Thread emuThread;
@@ -90,7 +268,7 @@ namespace RunAmiga
 
 		public static void WaitEmulationMode(EmulationMode mode)
 		{
-			for(;;)
+			for (; ; )
 			{
 				LockEmulation();
 				if (emulationMode == mode)
@@ -170,7 +348,7 @@ namespace RunAmiga
 
 		public void Reset()
 		{
-			emulations.ForEach(x=>x.Reset());
+			emulations.ForEach(x => x.Reset());
 		}
 	}
 }

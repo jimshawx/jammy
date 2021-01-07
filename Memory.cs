@@ -23,7 +23,7 @@ namespace RunAmiga
 			return true;
 		}
 
-		private uint read32(uint address)
+		public uint read32(uint address)
 		{
 			if ((address & 1) != 0)
 				throw new MemoryAlignmentException(address);
@@ -34,7 +34,7 @@ namespace RunAmiga
 				(uint)memory[(address + 3) & memoryMask];
 		}
 
-		private ushort read16(uint address)
+		public ushort read16(uint address)
 		{
 			if ((address & 1) != 0)
 				throw new MemoryAlignmentException(address);
@@ -166,11 +166,17 @@ namespace RunAmiga
 		{
 			Array.Clear(memory, 0, memory.Length);
 
-			byte[] rom = File.ReadAllBytes("../../../kick12.rom");
+			byte[] rom = File.ReadAllBytes("../../../../kick12.rom");
 			Debug.Assert(rom.Length == 256 * 1024);
 
 			BulkWrite(0xfc0000, rom, 256 * 1024);
 			BulkWrite(0, rom, 256 * 1024);
+
+			//byte[] rom = File.ReadAllBytes("../../../kick13.rom");
+			//Debug.Assert(rom.Length == 256 * 1024);
+
+			//BulkWrite(0xfc0000, rom, 256 * 1024);
+			//BulkWrite(0, rom, 256 * 1024);
 
 			//byte[] rom = File.ReadAllBytes("../../../kick31.rom");
 			//Debug.Assert(rom.Length == 512 * 1024);
