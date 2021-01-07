@@ -64,7 +64,7 @@ namespace RunAmiga
 		private ushort Fetch(uint pc)
 		{
 			//debugging
-			if (!((pc > 0 && pc < 0x400) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xf80000 && pc < 0x1000000)))
+			if (!((pc > 0 && pc < 0x800) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xf80000 && pc < 0x1000000)))
 			{
 				debugger.DumpTrace();
 				Trace.WriteLine($"PC out of expected range {pc:X8}");
