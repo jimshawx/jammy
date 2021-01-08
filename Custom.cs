@@ -554,21 +554,28 @@ namespace RunAmiga
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			if (size == Size.Byte)
+			{
+				/*
+	If AGA (or maybe any 68020+ hardware?)
+	- if odd address: 00xx is written to even address
+	- if even address: xxxx is written. (duplicated)
+
+	If "custom byte write bug":
+	- if odd address: 00xx is written to even address.
+	- if even address: xx00 is written.
+				*/
+
+				//Trace.WriteLine($"Custom write to byte {address:X8}");
+				if ((address&1)!=0)
+					Write(insaddr, address&~1u, value, Size.Word);
+				else
+					Write(insaddr, address, value<<8, Size.Word);
+				return;
+			}
+
 			if ((address & 1) != 0)
 				throw new InstructionAlignmentException(address, 0);
-
-			/*
-If AGA (or maybe any 68020+ hardware?)
-- if odd address: 00xx is written to even address
-- if even address: xxxx is written. (duplicated)
-
-If "custom byte write bug":
-- if odd address: 00xx is written to even address.
-- if even address: xx00 is written.
-			*/
-
-			if (size == Size.Byte)
-				throw new InvalidCustomRegisterSizeException(insaddr, address, size);
 
 			if (size == Size.Long)
 			{

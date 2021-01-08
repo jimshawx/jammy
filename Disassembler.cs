@@ -526,7 +526,20 @@ namespace RunAmiga
 				else if (s == 2) size = Size.Long;
 				Append(size);
 				//addx
-				Append(" - incomplete");
+				int Xn = (type >> 9) & 7;
+
+				if ((type & 0b1_00_000_000) != 0)
+				{
+					Append($"d{Xn},");
+					uint ea = fetchEA(type);
+					uint op = fetchOp(type, ea, size);
+				}
+				else
+				{
+					uint ea = fetchEA(type);
+					uint op = fetchOp(type, ea, size);
+					Append($",d{Xn}");
+				}
 			}
 			else
 			{
@@ -1241,6 +1254,8 @@ namespace RunAmiga
 						jsr(type);
 					else if ((subins & 0b1111_1100_0000) == 0b111011000000)
 						jmp(type);
+					else if ((subins & 0b111110111000) == 0b100010000000)
+						ext(type);
 					else if ((subins & 0b1011_1000_0000) == 0b100010000000)
 						movem(type);
 					else if ((subins & 0b0001_1100_0000) == 0b000111000000)
@@ -1261,8 +1276,6 @@ namespace RunAmiga
 						movetoccr(type);
 					else if ((subins & 0b111111_000000) == 0b011011_000000)
 						movetosr(type);
-					else if ((subins & 0b111110111000) == 0b100010000000)
-						ext(type);
 					else if ((subins & 0b111111000000) == 0b100000000000)
 						nbcd(type);
 					else if ((subins & 0b111111111000) == 0b100001000000)
