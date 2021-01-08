@@ -152,7 +152,7 @@ namespace RunAmiga
 					(uint)memory[(address + 3)];
 		}
 
-		public void Emulate()
+		public void Emulate(ulong ns)
 		{
 
 		}
@@ -172,17 +172,17 @@ namespace RunAmiga
 			//BulkWrite(0xfc0000, rom, 256 * 1024);
 			//BulkWrite(0, rom, 256 * 1024);
 
-			//byte[] rom = File.ReadAllBytes("../../../../kick13.rom");
-			//Debug.Assert(rom.Length == 256 * 1024);
+			byte[] rom = File.ReadAllBytes("../../../../kick13.rom");
+			Debug.Assert(rom.Length == 256 * 1024);
 
-			//BulkWrite(0xfc0000, rom, 256 * 1024);
-			//BulkWrite(0, rom, 256 * 1024);
+			BulkWrite(0xfc0000, rom, 256 * 1024);
+			BulkWrite(0, rom, 256 * 1024);
 
-			byte[] rom = File.ReadAllBytes("../../../../kick31.rom");
-			Debug.Assert(rom.Length == 512 * 1024);
+			//byte[] rom = File.ReadAllBytes("../../../../kick31.rom");
+			//Debug.Assert(rom.Length == 512 * 1024);
 
-			BulkWrite(0xf80000, rom, 512 * 1024);
-			BulkWrite(0, rom, 512 * 1024);
+			//BulkWrite(0xf80000, rom, 512 * 1024);
+			//BulkWrite(0, rom, 512 * 1024);
 		}
 	}
 }

@@ -16,7 +16,7 @@ namespace RunAmiga
 		public ushort sr;
 	}
 
-	public class Machine : IEmulate
+	public class Machine
 	{
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_init([In, Out] byte[] memory, IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
@@ -50,8 +50,8 @@ namespace RunAmiga
 			var labeller = new Labeller();
 			debugger = new Debugger(labeller);
 			cia = new CIA(debugger);
-			custom = new Custom(debugger);
 			memory = new Memory(debugger);
+			custom = new Custom(debugger, memory);
 			cpu = new CPU(cia, custom, memory, debugger);
 
 			emulations.Add(cia);
@@ -133,11 +133,11 @@ namespace RunAmiga
 			musashiMemory.write8(address, (byte)value);
 		}
 
-		public void RunEmulations()
+		public void RunEmulations(ulong ns)
 		{
 			uint instructionStartPC = cpu.GetRegs().PC;
 
-			emulations.ForEach(x => x.Emulate());
+			emulations.ForEach(x => x.Emulate(ns));
 
 			var regsAfter = cpu.GetRegs();
 
@@ -322,27 +322,27 @@ namespace RunAmiga
 				switch (emulationMode)
 				{
 					case EmulationMode.Running:
-						RunEmulations();
-						//UnlockEmulation();
+						int counter = 1000;
+						long time = Stopwatch.GetTimestamp();
+						while (counter-- > 0 && emulationMode == EmulationMode.Running)
+						{
+							long t = Stopwatch.GetTimestamp();
+							ulong ns = (ulong) (((t - time) * 1000_000_000L) / Stopwatch.Frequency) ;
+							time = t;
+							RunEmulations(ns);
+						}
 						break;
 					case EmulationMode.Step:
-						RunEmulations();
-						//LockEmulation();
+						RunEmulations(1);
 						emulationMode = EmulationMode.Stopped;
-						//UnlockEmulation();
 						break;
 					case EmulationMode.Exit: break;
-					case EmulationMode.Stopped:
-						//throw new ApplicationException("should not happen");
-						//UnlockEmulation();
-						break;
+					case EmulationMode.Stopped: break;
 					default:
 						throw new ApplicationException("unknown emulation mode");
 				}
 
 				UnlockEmulation();
-				//if (emulationMode == EmulationMode.Stopped)
-				//	Thread.Sleep(1000);
 			}
 		}
 

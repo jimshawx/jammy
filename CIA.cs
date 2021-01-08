@@ -36,7 +36,7 @@ namespace RunAmiga
 		{
 		}
 
-		public void Emulate()
+		public void Emulate(ulong ns)
 		{
 		}
 
@@ -110,7 +110,7 @@ namespace RunAmiga
 		{
 		}
 
-		public void Emulate()
+		public void Emulate(ulong ns)
 		{
 		}
 
@@ -155,10 +155,10 @@ namespace RunAmiga
 			ciaB = new CIAB(debugger);
 		}
 
-		public void Emulate()
+		public void Emulate(ulong ns)
 		{
-			ciaA.Emulate();
-			ciaB.Emulate();
+			ciaA.Emulate(ns);
+			ciaB.Emulate(ns);
 		}
 
 		public void Reset()

@@ -44,11 +44,14 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc033e);
 			//AddBreakpoint(0xfcac92);
 
+			AddBreakpoint(0x00fcac82);//copper list
+			
+
 			//AddBreakpoint(0xfc0b28);//InitResident
 			//AddBreakpoint(0xFC1C28);//AddResource
 
 			//AddBreakpoint(0xfc0e86);//Schedule().
-			AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
+			//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
 			AddBreakpoint(0xfc2fb4);//Task Crash Routine
 			AddBreakpoint(0xfc2fd6);//Alert()
@@ -333,11 +336,11 @@ namespace RunAmiga
 
 		public void DumpTrace()
 		{
-			foreach (var t in traces.TakeLast(64))
-			{
-				System.Diagnostics.Trace.WriteLine($"{t}");
-			}
-			traces.Clear();
+			//foreach (var t in traces.TakeLast(64))
+			//{
+			//	System.Diagnostics.Trace.WriteLine($"{t}");
+			//}
+			//traces.Clear();
 		}
 
 		public string DisassembleAddress(uint pc)

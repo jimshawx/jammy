@@ -76,7 +76,7 @@ namespace RunAmiga
 			return read16(pc);
 		}
 
-		public void Emulate()
+		public void Emulate(ulong ns)
 		{
 			instructionStartPC = pc;
 
