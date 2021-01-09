@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace RunAmiga
+namespace RunAmiga.Custom
 {
 	public static class CustomRegs
 	{

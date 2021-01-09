@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using RunAmiga.Custom;
 
 namespace RunAmiga
 {
@@ -40,7 +41,7 @@ namespace RunAmiga
 		private List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 		private Debugger debugger;
 
-		public CPU(CIA cia, Custom custom, Memory memory, Debugger debugger)
+		public CPU(CIA cia, Custom.Custom custom, Memory memory, Debugger debugger)
 		{
 			a = new A(Supervisor);
 

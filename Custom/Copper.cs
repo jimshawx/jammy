@@ -1,15 +1,15 @@
 ﻿using System.Diagnostics;
 using RunAmiga.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Custom
 {
 	public class Copper : IEmulate
 	{
 		private readonly Memory memory;
-		private readonly Custom custom;
+		private readonly RunAmiga.Custom.Custom custom;
 		private const uint customBase = 0xdff000;
 
-		public Copper(Memory memory, Custom custom)
+		public Copper(Memory memory, RunAmiga.Custom.Custom custom)
 		{
 			this.memory = memory;
 			this.custom = custom;
@@ -50,6 +50,8 @@ namespace RunAmiga
 
 		public void ParseCopperList(uint copPC)
 		{
+			if (copPC == null) return;
+
 			Trace.WriteLine($"Parsing Copper List @{copPC:X8}");
 
 			int counter = 32;
@@ -58,35 +60,38 @@ namespace RunAmiga
 				ushort ins = memory.read16(copPC);
 				copPC += 2;
 
+				ushort data = memory.read16(copPC);
+				copPC += 2;
+
+				Trace.Write($"{copPC-4:X8} {ins:X4},{data:X4} ");
+
 				if ((ins & 0x0001) == 0)
 				{
 					//MOVE
-					ushort data = memory.read16(copPC);
-					copPC += 2;
-
-					uint reg = (uint)((ins >> 1) & 0xff);
+					uint reg = (uint)(ins & 0x1fe);
 
 					Trace.WriteLine($"MOVE {CustomRegs.Name(customBase+reg)}({reg:X4}),{data:X4}");
 
-					if (customBase+reg == CustomRegs.COPJMP1)
-						copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC
-					else if (customBase + reg == CustomRegs.COPJMP2) 
-						copPC = custom.Read(copPC, CustomRegs.COP2LCH, Size.Long);//COP2LC
+					//if (customBase+reg == CustomRegs.COPJMP1)
+					//	copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC
+					//else if (customBase + reg == CustomRegs.COPJMP2) 
+					//	copPC = custom.Read(copPC, CustomRegs.COP2LCH, Size.Long);//COP2LC
 				}
 				else if ((ins & 0x0001) == 1)
 				{
 					//WAIT/SKIP
-					ushort data = memory.read16(copPC);
-					copPC += 2;
 
 					if ((data &1)==0)
 					{
 						//WAIT
-						uint horz = (uint)((ins >> 1) & 0x7f);
-						uint vert = (uint)((ins >> 8) & 0x7f);
-						uint blit = (uint)(ins >> 15);
+						uint hp = (uint)((ins >> 1) & 0x7f);
+						uint vp = (uint)((ins >> 8) & 0xff);
 
-						Trace.WriteLine($"WAIT v:{vert:X4} h:{horz:X4} b:{blit}");
+						uint he = (uint)((data >> 1) & 0x7f);
+						uint ve = (uint)((data >> 8) & 0x7f);
+						uint blit = (uint)(data >> 15);
+
+						Trace.WriteLine($"WAIT vp:{vp:X4} hp:{hp:X4} he:{he:X4} ve:{ve:X4} b:{blit}");
 					}
 					else
 					{
@@ -94,9 +99,9 @@ namespace RunAmiga
 						uint horz = (uint)((ins >> 1) & 0x7f);
 						uint vert = (uint)((ins >> 8) & 0xff);
 
-						uint horzC = (uint)((ins >> 1) & 0x7f);
-						uint vertC = (uint)((ins >> 8) & 0x3f);
-						uint blitC = (uint)(ins >> 15);
+						uint horzC = (uint)((data >> 1) & 0x7f);
+						uint vertC = (uint)((data >> 8) & 0x3f);
+						uint blitC = (uint)(data >> 15);
 
 						Trace.WriteLine($"SKIP v:{vert:X4} h:{horz:X4} vC:{vertC} hC:{horzC} bC:{blitC}");
 					}

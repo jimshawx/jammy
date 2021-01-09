@@ -1,9 +1,8 @@
-﻿using RunAmiga.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using RunAmiga.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Custom
 {
 	//https://www.amigacoding.com/index.php?title=CIA_Memory_Map
 

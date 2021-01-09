@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using RunAmiga.Custom;
 
 namespace RunAmiga
 {
@@ -15,7 +16,7 @@ namespace RunAmiga
 		private readonly Disassembler disassembler;
 		private Memory memory;
 		private CPU cpu;
-		private Custom custom;
+		private Custom.Custom custom;
 		private CIA cia;
 		private Labeller labeller;
 
@@ -63,7 +64,7 @@ namespace RunAmiga
 			this.labeller = labeller;
 		}
 
-		public void Initialise(Memory memory, CPU cpu, Custom custom, CIA cia)
+		public void Initialise(Memory memory, CPU cpu, Custom.Custom custom, CIA cia)
 		{
 			this.memory = memory;
 			this.cpu = cpu;

@@ -1,26 +1,25 @@
-﻿using RunAmiga.Types;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
+using RunAmiga.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Custom
 {
 	public class Custom : IEmulate, IMemoryMappedDevice
 	{
-
 		private ushort[] regs = new ushort[32768];
 
 		private Copper copper;
+		private Blitter blitter;
 
 		public Custom(Debugger debugger, Memory memory)
 		{
+			blitter = new Blitter(this);
 			copper = new Copper(memory, this);
 		}
 
 		public void Emulate(ulong ns)
 		{
 			copper.Emulate(ns);
+			blitter.Emulate(ns);
 		}
 
 		public void Reset()
@@ -156,6 +155,10 @@ namespace RunAmiga
 				copper.ParseCopperList(copadd);
 				copadd = ((uint)regs[REG(CustomRegs.COP2LCH)] << 16) + regs[REG(CustomRegs.COP2LCL)];
 				copper.ParseCopperList(copadd);
+			}
+			else if (address == CustomRegs.BLTCON0 || address == CustomRegs.BLTCON1 || address == CustomRegs.BLTSIZE)
+			{
+				blitter.Write(address, (ushort)value);
 			}
 		}
 

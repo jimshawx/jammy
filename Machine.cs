@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using RunAmiga.Custom;
 
 namespace RunAmiga
 {
@@ -25,7 +26,7 @@ namespace RunAmiga
 		static extern int Musashi_execute(int cycles, Musashi_regs regs);
 
 		private CPU cpu;
-		private Custom custom;
+		private Custom.Custom custom;
 		private CIA cia;
 		private Memory memory;
 		private Debugger debugger;
@@ -51,7 +52,7 @@ namespace RunAmiga
 			debugger = new Debugger(labeller);
 			cia = new CIA(debugger);
 			memory = new Memory(debugger);
-			custom = new Custom(debugger, memory);
+			custom = new Custom.Custom(debugger, memory);
 			cpu = new CPU(cia, custom, memory, debugger);
 
 			emulations.Add(cia);
@@ -322,18 +323,19 @@ namespace RunAmiga
 				switch (emulationMode)
 				{
 					case EmulationMode.Running:
-						int counter = 1000;
-						long time = Stopwatch.GetTimestamp();
-						while (counter-- > 0 && emulationMode == EmulationMode.Running)
-						{
-							long t = Stopwatch.GetTimestamp();
-							ulong ns = (ulong) (((t - time) * 1000_000_000L) / Stopwatch.Frequency) ;
-							time = t;
-							RunEmulations(ns);
-						}
+						//int counter = 1000;
+						//long time = Stopwatch.GetTimestamp();
+						//while (counter-- > 0 && emulationMode == EmulationMode.Running)
+						//{
+						//	long t = Stopwatch.GetTimestamp();
+						//	ulong ns = (ulong) (((t - time) * 1000_000_000L) / Stopwatch.Frequency) ;
+						//	time = t;
+						//	RunEmulations(ns);
+						//}
+						RunEmulations(4*1000/7);//4cycles per instruction, 7MHz, in nanoseconds.
 						break;
 					case EmulationMode.Step:
-						RunEmulations(1);
+						RunEmulations(4*1000/7);
 						emulationMode = EmulationMode.Stopped;
 						break;
 					case EmulationMode.Exit: break;
