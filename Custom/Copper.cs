@@ -6,10 +6,10 @@ namespace RunAmiga.Custom
 	public class Copper : IEmulate
 	{
 		private readonly Memory memory;
-		private readonly RunAmiga.Custom.Custom custom;
+		private readonly Chips custom;
 		private const uint customBase = 0xdff000;
 
-		public Copper(Memory memory, RunAmiga.Custom.Custom custom)
+		public Copper(Memory memory, Chips custom)
 		{
 			this.memory = memory;
 			this.custom = custom;
@@ -27,7 +27,7 @@ namespace RunAmiga.Custom
 			//every 50Hz, reset the copper list
 			if (copperTime > 20_000_000)
 			{
-				copperPC = custom.Read(copperPC, CustomRegs.COP1LCH, Size.Long);
+				copperPC = custom.Read(copperPC, ChipRegs.COP1LCH, Size.Long);
 				copperTime -= 20_000_000;
 			}
 			//roughly
@@ -50,11 +50,11 @@ namespace RunAmiga.Custom
 
 		public void ParseCopperList(uint copPC)
 		{
-			if (copPC == null) return;
+			if (copPC == 0) return;
 
 			Trace.WriteLine($"Parsing Copper List @{copPC:X8}");
 
-			int counter = 32;
+			int counter = 16;
 			while (counter-- > 0)
 			{
 				ushort ins = memory.read16(copPC);
@@ -70,7 +70,7 @@ namespace RunAmiga.Custom
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					Trace.WriteLine($"MOVE {CustomRegs.Name(customBase+reg)}({reg:X4}),{data:X4}");
+					Trace.WriteLine($"MOVE {ChipRegs.Name(customBase+reg)}({reg:X4}),{data:X4}");
 
 					//if (customBase+reg == CustomRegs.COPJMP1)
 					//	copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC

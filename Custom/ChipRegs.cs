@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RunAmiga.Custom
 {
-	public static class CustomRegs
+	public static class ChipRegs
 	{
 		private static readonly Dictionary<uint, Tuple<string, string>> debug = new Dictionary<uint, Tuple<string, string>> {
 			{ 0xdff000, new Tuple<string,string>("BLTDDAT", "Blitter destination early read (unusable)")},

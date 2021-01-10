@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using RunAmiga.Custom;
@@ -20,13 +21,22 @@ namespace RunAmiga
 	public class Machine
 	{
 		[DllImport("Musashi.dll")]
-		static extern void Musashi_init([In, Out] byte[] memory, IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
+		static extern void Musashi_init(IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
 
 		[DllImport("Musashi.dll")]
-		static extern int Musashi_execute(int cycles, Musashi_regs regs);
+		static extern uint Musashi_execute(ref int cycles);
+
+		[DllImport("Musashi.dll")]
+		static extern void Musashi_get_regs(Musashi_regs regs);
+
+		[DllImport("Musashi.dll")]
+		static extern void Musashi_set_pc(uint pc);
+
+		[DllImport("Musashi.dll")]
+		static extern void Musashi_set_irq(uint levels);
 
 		private CPU cpu;
-		private Custom.Custom custom;
+		private Chips custom;
 		private CIA cia;
 		private Memory memory;
 		private Debugger debugger;
@@ -52,7 +62,7 @@ namespace RunAmiga
 			debugger = new Debugger(labeller);
 			cia = new CIA(debugger);
 			memory = new Memory(debugger);
-			custom = new Custom.Custom(debugger, memory);
+			custom = new Custom.Chips(debugger, memory);
 			cpu = new CPU(cia, custom, memory, debugger);
 
 			emulations.Add(cia);
@@ -76,7 +86,7 @@ namespace RunAmiga
 			w8 = new Musashi_Writer(Musashi_write8);
 
 			var memoryArray = musashiMemory.GetMemoryArray();
-			Musashi_init(memoryArray,
+			Musashi_init(
 			Marshal.GetFunctionPointerForDelegate(r32),
 			Marshal.GetFunctionPointerForDelegate(r16),
 			Marshal.GetFunctionPointerForDelegate(r8),
@@ -84,7 +94,8 @@ namespace RunAmiga
 			Marshal.GetFunctionPointerForDelegate(w16),
 			Marshal.GetFunctionPointerForDelegate(w8)
 				);
-			Musashi_execute(1, new Musashi_regs());//run RESET
+			int cycles=0;
+			Musashi_execute(ref cycles);//run RESET
 			musashiRegs = new Musashi_regs();
 
 			emulationSemaphore = new SemaphoreSlim(1);
@@ -134,38 +145,61 @@ namespace RunAmiga
 			musashiMemory.write8(address, (byte)value);
 		}
 
+		private List<uint> mpc = new List<uint>();
+		private ushort last_sr;
 		public void RunEmulations(ulong ns)
 		{
-			uint instructionStartPC = cpu.GetRegs().PC;
+			Musashi_get_regs(musashiRegs);
+
+			var regs = cpu.GetRegs();
+			uint instructionStartPC = regs.PC;
+
+			if (musashiRegs.pc == 0xfc0ca6)
+				Trace.WriteLine($"Musashi L2 Interrupt {musashiRegs.sr:X4}");
+			if (instructionStartPC == 0xfc0ca6 || instructionStartPC == 0xfc0caa)
+				Trace.WriteLine($"C# L2 Interrupt {regs.SR:X4}");
 
 			emulations.ForEach(x => x.Emulate(ns));
 
 			var regsAfter = cpu.GetRegs();
+			if ((regsAfter.SR>>8) != last_sr)
+				Trace.WriteLine($"SR {instructionStartPC:X8} {last_sr:X4}->{regsAfter.SR>>8:X4}");
+			last_sr = (ushort)(regsAfter.SR >> 8);
 
 			int counter = 0;
-			const int maxPCdrift = 5;
-			int cycles;
+			const int maxPCdrift = 6;
+			int cycles=0;
+			uint pc;
 			do
 			{
-				cycles = Musashi_execute(1, musashiRegs);
+				pc = Musashi_execute(ref cycles);
+				if (pc == 0xfc0ca6)
+					Trace.WriteLine($"Musashi L2 Interrupt {musashiRegs.sr:X4}");
+				mpc.Add(pc);
 				counter++;
-			} while (musashiRegs.pc != regsAfter.PC && counter < maxPCdrift);
+			} while (pc != regsAfter.PC && counter < maxPCdrift);
 
 			if (counter == maxPCdrift)
 			{
-				Trace.WriteLine($"PC Drift too far at {regsAfter.PC:X8} {musashiRegs.pc:X8}");
+				//mpc = mpc.Skip(mpc.Count-32).ToList();
+				//foreach (var v in mpc)
+				//	Trace.WriteLine($"{v:X8}");
+				Trace.WriteLine($"PC Drift too far at {regsAfter.PC:X8} {pc:X8}");
 			}
 			else if (counter != 1)
 			{
 				Trace.WriteLine($"Counter isn't 1 {counter}");
 			}
 
-			if (regsAfter.PC != musashiRegs.pc)
+			if (regsAfter.PC != pc)
 			{
-				Trace.WriteLine($"PC Drift at {regsAfter.PC:X8} {musashiRegs.pc:X8}");
+				//debugger.DumpTrace();
+				Trace.WriteLine($"PC Drift at {regsAfter.PC:X8} {pc:X8}");
 			}
 			else
 			{
+				Musashi_get_regs(musashiRegs);
+
 				bool differs = false;
 				if (regsAfter.D[0] != musashiRegs.d0) { Trace.WriteLine($"reg D0 differs {regsAfter.D[0]:X8} {musashiRegs.d0:X8}"); differs = true; }
 				if (regsAfter.D[1] != musashiRegs.d1) { Trace.WriteLine($"reg D1 differs {regsAfter.D[1]:X8} {musashiRegs.d1:X8}"); differs = true; }
@@ -195,40 +229,31 @@ namespace RunAmiga
 
 				if (differs) Trace.WriteLine($"cycles {cycles} @{instructionStartPC:X8} {disassembler.Disassemble(instructionStartPC, new ReadOnlySpan<byte>(memory.GetMemoryArray(),(int)instructionStartPC, 12))}");
 			}
+
+			Interrupt(cycles);
 		}
 
-		public void RunEmulations2()
+		private uint clock=0;
+		private void Interrupt(int cycles)
 		{
-			Musashi_regs cpur = new Musashi_regs();
-			Musashi_execute(100, cpur);
+			clock += (uint)cycles;
 
-			Trace.WriteLine($"D0 {cpur.d0:X8}");
-			Trace.WriteLine($"D1 {cpur.d1:X8}");
-			Trace.WriteLine($"D2 {cpur.d2:X8}");
-			Trace.WriteLine($"D3 {cpur.d3:X8}");
-			Trace.WriteLine($"D4 {cpur.d4:X8}");
-			Trace.WriteLine($"D5 {cpur.d5:X8}");
-			Trace.WriteLine($"D6 {cpur.d6:X8}");
-			Trace.WriteLine($"D7 {cpur.d7:X8}");
+			//7Mhz = 7M/50 = 140,000 cycles in a frame.
+			//the multitask timeslice is 4frames, 560000 cycles
+			if (clock > 560000)
+			{
+				clock -= 560000;
 
-			Trace.WriteLine($"A0 {cpur.a0:X8}");
-			Trace.WriteLine($"A1 {cpur.a1:X8}");
-			Trace.WriteLine($"A2 {cpur.a2:X8}");
-			Trace.WriteLine($"A3 {cpur.a3:X8}");
-			Trace.WriteLine($"A4 {cpur.a4:X8}");
-			Trace.WriteLine($"A5 {cpur.a5:X8}");
-			Trace.WriteLine($"A6 {cpur.a6:X8}");
-			Trace.WriteLine($"A7 {cpur.a7:X8}");
-
-			Trace.WriteLine($"PC {cpur.pc:X8}");
-			Trace.WriteLine($"SR {cpur.sr:X4}");
+				cpu.Interrupt(2);
+				Musashi_set_irq(2);
+			}
 		}
+
 
 		Thread emuThread;
 
 		public void Init()
 		{
-			//cpu.Disassemble(0xfc0000);
 		}
 
 		public void Start()
@@ -241,11 +266,6 @@ namespace RunAmiga
 		public Debugger GetDebugger()
 		{
 			return debugger;
-		}
-
-		public CPU GetCPU()
-		{
-			return cpu;
 		}
 
 		//private EmulationMode targetEmulationMode;

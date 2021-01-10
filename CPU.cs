@@ -32,16 +32,34 @@ namespace RunAmiga
 			}
 		}
 
-		private uint pc;
+		private uint internalPc;
+		private uint pc
+		{
+			get => internalPc;
+			set
+			{
+				internalPc = value;
+				if (internalPc == 0)
+					Trace.WriteLine("Set PC to NULL");
+			}
+		}
+
 		//T.S..210...XNZVC
-		private ushort sr;
+		private ushort internalSr;
+		private ushort sr
+		{
+			get => internalSr;
+			set { internalSr = value; CheckInterrupt(); }
+		}
+
+		private ushort interruptPending;
 
 		private uint instructionStartPC;
 
 		private List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 		private Debugger debugger;
 
-		public CPU(CIA cia, Custom.Custom custom, Memory memory, Debugger debugger)
+		public CPU(CIA cia, Custom.Chips custom, Memory memory, Debugger debugger)
 		{
 			a = new A(Supervisor);
 
@@ -77,9 +95,27 @@ namespace RunAmiga
 			return read16(pc);
 		}
 
+		private void CheckInterrupt()
+		{
+			if (interruptPending != 0)
+			{
+				ushort maskedInterrupt = (ushort)(interruptPending & ~sr);
+				if (maskedInterrupt != 0)
+				{
+					Trace.WriteLine("ISR Taken");
+					internalTrap(0x18 + ((uint)maskedInterrupt >> 8));
+					interruptPending = 0;
+
+					instructionStartPC = pc;
+				}
+			}
+		}
+
 		public void Emulate(ulong ns)
 		{
 			instructionStartPC = pc;
+
+			CheckInterrupt();
 
 			try
 			{
@@ -138,7 +174,7 @@ namespace RunAmiga
 
 			if (debugger.IsBreakpoint(pc))
 			{
-				debugger.DumpTrace();
+				//debugger.DumpTrace();
 				Trace.WriteLine($"Breakpoint @{pc:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 				UI.IsDirty = true;
@@ -1923,12 +1959,25 @@ namespace RunAmiga
 			}
 			else
 			{
-				debugger.DumpTrace();
 
-				if (vector < 16)
-					Trace.Write($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
+				if (vector >= 0x19 && vector <= 0x1f)
+				{
+					Trace.WriteLine($"Interrupt Level {vector-0x18}");
+
+					uint m = (vector - 0x18) << 8;
+					sr = (ushort)(((uint)sr & 0b11111_000_11111111) | m);
+					uint isr = read32(vector << 2);
+					if (isr == 0)
+						vector = 0xf;//Uninitialized Interrupt Vector
+				}
 				else
-					Trace.Write($"Trap {vector} {instructionStartPC:X8}");
+				{
+					//debugger.DumpTrace();
+					if (vector < 16)
+						Trace.Write($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
+					else
+						Trace.Write($"Trap {vector} {instructionStartPC:X8}");
+				}
 			}
 
 			ushort oldSR = sr;
@@ -2480,6 +2529,7 @@ namespace RunAmiga
 
 		private void rte(int type)
 		{
+			Trace.WriteLine($"rte {instructionStartPC:X8}");
 			if (Supervisor())
 			{
 				debugger.Trace("rte", instructionStartPC);
@@ -2491,6 +2541,12 @@ namespace RunAmiga
 			{
 				internalTrap(8);
 			}
+		}
+
+		public void Interrupt(uint level)
+		{
+			//i is the interrupt bits in SR
+			interruptPending = (ushort)(level<<8);
 		}
 	}
 }

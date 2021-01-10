@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -37,6 +38,7 @@ namespace RunAmiga.Custom
 
 		public void Emulate(ulong ns)
 		{
+			//regs[0] |= 2;
 		}
 
 		public void Reset()
@@ -54,7 +56,7 @@ namespace RunAmiga.Custom
 				throw new UnknownInstructionSizeException(address,0);
 
 			byte reg = (byte)((address>>8)&0xf);
-			//Trace.WriteLine($"CIAA Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			Trace.WriteLine($"CIAA Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return (uint)regs[reg];
 		}
 
@@ -65,7 +67,7 @@ namespace RunAmiga.Custom
 
 			byte reg = (byte)((address >> 8) & 0xf);
 			regs[reg] = (byte)value;
-			//Trace.WriteLine($"CIAA Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			Trace.WriteLine($"CIAA Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
 
 			if (reg == 0)
 			{
@@ -128,7 +130,7 @@ namespace RunAmiga.Custom
 				throw new UnknownInstructionSizeException(address,0);
 
 			byte reg = (byte)((address >> 8) & 0xf);
-			//Trace.WriteLine($"CIAB Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			Trace.WriteLine($"CIAB Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return (uint)regs[reg];
 		}
 
@@ -139,7 +141,7 @@ namespace RunAmiga.Custom
 
 			byte reg = (byte)((address >> 8) & 0xf);
 			regs[reg] = (byte)value;
-			//Trace.WriteLine($"CIAB Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			Trace.WriteLine($"CIAB Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
 		}
 	}
 

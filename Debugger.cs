@@ -16,7 +16,7 @@ namespace RunAmiga
 		private readonly Disassembler disassembler;
 		private Memory memory;
 		private CPU cpu;
-		private Custom.Custom custom;
+		private Custom.Chips custom;
 		private CIA cia;
 		private Labeller labeller;
 
@@ -64,7 +64,7 @@ namespace RunAmiga
 			this.labeller = labeller;
 		}
 
-		public void Initialise(Memory memory, CPU cpu, Custom.Custom custom, CIA cia)
+		public void Initialise(Memory memory, CPU cpu, Custom.Chips custom, CIA cia)
 		{
 			this.memory = memory;
 			this.cpu = cpu;
@@ -337,11 +337,11 @@ namespace RunAmiga
 
 		public void DumpTrace()
 		{
-			//foreach (var t in traces.TakeLast(64))
-			//{
-			//	System.Diagnostics.Trace.WriteLine($"{t}");
-			//}
-			//traces.Clear();
+			foreach (var t in traces.TakeLast(64))
+			{
+				System.Diagnostics.Trace.WriteLine($"{t}");
+			}
+			traces.Clear();
 		}
 
 		public string DisassembleAddress(uint pc)
