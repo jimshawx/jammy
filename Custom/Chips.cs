@@ -94,7 +94,7 @@ namespace RunAmiga.Custom
 				return;
 			}
 
-			DebugInfo(address, value, size);
+			//DebugInfo(insaddr, address, value, size);
 
 			int reg = REG(address);
 
@@ -104,6 +104,25 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
+				Trace.WriteLine($"DMACON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
+				
+				if ((regs[reg] & 0x4000) != 0) Trace.Write("BBUSY ");
+				if ((regs[reg] & 0x2000) != 0) Trace.Write("EXTER ");
+				if ((regs[reg] & 0x1000) != 0) Trace.Write("BZERO ");
+				if ((regs[reg] & 0x0800) != 0) Trace.Write("unused ");
+				if ((regs[reg] & 0x0400) != 0) Trace.Write("unused ");
+				if ((regs[reg] & 0x0200) != 0) Trace.Write("BLTPRI ");
+				if ((regs[reg] & 0x0100) != 0) Trace.Write("DMAEN ");
+				if ((regs[reg] & 0x0080) != 0) Trace.Write("BPLEN ");
+				if ((regs[reg] & 0x0040) != 0) Trace.Write("COPEN ");
+				if ((regs[reg] & 0x0020) != 0) Trace.Write("BLTEN ");
+				if ((regs[reg] & 0x0010) != 0) Trace.Write("DSKEN ");
+				if ((regs[reg] & 0x0008) != 0) Trace.Write("AUD3EN ");
+				if ((regs[reg] & 0x0004) != 0) Trace.Write("AUD2EN ");
+				if ((regs[reg] & 0x0002) != 0) Trace.Write("AUD1EN ");
+				if ((regs[reg] & 0x0001) != 0) Trace.Write("AUD0EN ");
+				if ((regs[reg] & 0x7fff) != 0) Trace.WriteLine("");
+
 				regs[REG(ChipRegs.DMACONR)] = regs[reg];
 			}
 			else if (address == ChipRegs.INTENA)
@@ -112,7 +131,25 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
-				//Trace.WriteLine($"INTENA {regs[reg]:X4} {Convert.ToString(regs[reg],2).PadLeft(16,'0')}");
+				Trace.WriteLine($"INTENA {regs[reg]:X4} {Convert.ToString(regs[reg],2).PadLeft(16,'0')}");
+
+				if ((regs[reg] & 0x4000) != 0) Trace.Write("INTEN ");
+				if ((regs[reg] & 0x2000) != 0) Trace.Write("EXTER ");
+				if ((regs[reg] & 0x1000) != 0) Trace.Write("DSKSYN ");
+				if ((regs[reg] & 0x0800) != 0) Trace.Write("RBF ");
+				if ((regs[reg] & 0x0400) != 0) Trace.Write("AUD3 ");
+				if ((regs[reg] & 0x0200) != 0) Trace.Write("AUD2 ");
+				if ((regs[reg] & 0x0100) != 0) Trace.Write("AUD1 ");
+				if ((regs[reg] & 0x0080) != 0) Trace.Write("AUD0 ");
+				if ((regs[reg] & 0x0040) != 0) Trace.Write("BLIT ");
+				if ((regs[reg] & 0x0020) != 0) Trace.Write("VERTB ");
+				if ((regs[reg] & 0x0010) != 0) Trace.Write("COPER ");
+				if ((regs[reg] & 0x0008) != 0) Trace.Write("PORTS ");
+				if ((regs[reg] & 0x0004) != 0) Trace.Write("SOFT ");
+				if ((regs[reg] & 0x0002) != 0) Trace.Write("DSKBLK ");
+				if ((regs[reg] & 0x0001) != 0) Trace.Write("TBE ");
+				if ((regs[reg]&0x7fff)!=0) Trace.WriteLine("");
+
 				regs[REG(ChipRegs.INTENAR)] = regs[reg];
 			}
 			else if (address == ChipRegs.INTREQ)
@@ -121,6 +158,25 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
+				//Trace.WriteLine($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
+
+				//if ((regs[reg] & 0x4000) != 0) Trace.Write("INTEN ");
+				//if ((regs[reg] & 0x2000) != 0) Trace.Write("EXTER ");
+				//if ((regs[reg] & 0x1000) != 0) Trace.Write("DSKSYN ");
+				//if ((regs[reg] & 0x0800) != 0) Trace.Write("RBF ");
+				//if ((regs[reg] & 0x0400) != 0) Trace.Write("AUD3 ");
+				//if ((regs[reg] & 0x0200) != 0) Trace.Write("AUD2 ");
+				//if ((regs[reg] & 0x0100) != 0) Trace.Write("AUD1 ");
+				//if ((regs[reg] & 0x0080) != 0) Trace.Write("AUD0 ");
+				//if ((regs[reg] & 0x0040) != 0) Trace.Write("BLIT ");
+				//if ((regs[reg] & 0x0020) != 0) Trace.Write("VERTB ");
+				//if ((regs[reg] & 0x0010) != 0) Trace.Write("COPER ");
+				//if ((regs[reg] & 0x0008) != 0) Trace.Write("PORTS ");
+				//if ((regs[reg] & 0x0004) != 0) Trace.Write("SOFT ");
+				//if ((regs[reg] & 0x0002) != 0) Trace.Write("DSKBLK ");
+				//if ((regs[reg] & 0x0001) != 0) Trace.Write("TBE ");
+				//if ((regs[reg] & 0x7fff) != 0) Trace.WriteLine("");
+
 				regs[REG(ChipRegs.INTREQR)] = regs[reg];
 			}
 			else if (address == ChipRegs.COPJMP1)
@@ -166,9 +222,9 @@ namespace RunAmiga.Custom
 
 
 
-		private void DebugInfo(uint address, uint value, Size size)
+		private void DebugInfo(uint insaddr, uint address, uint value, Size size)
 		{
-			Trace.WriteLine($"Custom Write {address:X8} {value:X8} {size} {ChipRegs.Name(address)} {ChipRegs.Description(address)}");
+			Trace.WriteLine($"Custom Write {insaddr:X8} {address:X8} {value:X8} {size} {ChipRegs.Name(address)} {ChipRegs.Description(address)}");
 
 			if (address == ChipRegs.BPLCON0)
 			{

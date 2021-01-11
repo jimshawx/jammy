@@ -1947,41 +1947,25 @@ namespace RunAmiga
 		{
 			ushort oldSR = sr;
 
-			if (vector == 4 && instructionStartPC == 0xFC0564)
+			if (vector >= 0x19 && vector <= 0x1f)
 			{
-				Trace.Write("68020 CPU Check Exception");
-			}
-			else if (vector == 8 && instructionStartPC == 0xFC08AA)
-			{
-				Trace.Write("Supervisor()");
-			}
-			else if (vector == 8 && instructionStartPC == 0xFC08BA)
-			{
-				Trace.Write("68020 Supervisor()");
+				//Trace.Write($"Interrupt Level {vector-0x18} @{instructionStartPC:X8}");
+
+				uint m = (vector - 0x18) << 8;
+				sr = (ushort)(((uint)sr & 0b11111_000_11111111) | m);
+				//sr = (ushort)(sr & 0b11111_000_11111111);
+
+				uint isr = read32(vector << 2);
+				if (isr == 0)
+					vector = 0xf;//Uninitialized Interrupt Vector
 			}
 			else
 			{
-
-				if (vector >= 0x19 && vector <= 0x1f)
-				{
-					Trace.WriteLine($"Interrupt Level {vector-0x18} @{instructionStartPC:X8}");
-
-					uint m = (vector - 0x18) << 8;
-					sr = (ushort)(((uint)sr & 0b11111_000_11111111) | m);
-					//sr = (ushort)(sr & 0b11111_000_11111111);
-
-					uint isr = read32(vector << 2);
-					if (isr == 0)
-						vector = 0xf;//Uninitialized Interrupt Vector
-				}
+				//debugger.DumpTrace();
+				if (vector < 16)
+					Trace.WriteLine($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
 				else
-				{
-					//debugger.DumpTrace();
-					if (vector < 16)
-						Trace.Write($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
-					else
-						Trace.Write($"Trap {vector} {instructionStartPC:X8}");
-				}
+					Trace.WriteLine($"Trap {vector} {instructionStartPC:X8}");
 			}
 
 			setSupervisor();
@@ -1990,7 +1974,7 @@ namespace RunAmiga
 
 			pc = read32(vector << 2);
 
-			Trace.WriteLine($" -> {pc:X8}");
+			//Trace.WriteLine($" -> {pc:X8}");
 		}
 
 		private void trap(int type)

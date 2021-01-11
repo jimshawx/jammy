@@ -22,8 +22,6 @@ namespace RunAmiga
 			this.machine = machine;
 			this.debugger = machine.GetDebugger();
 
-			machine.Init();
-
 			UpdateDisplay();
 
 			Machine.SetEmulationMode(EmulationMode.Stopped);
@@ -45,6 +43,7 @@ namespace RunAmiga
 
 		private void UpdateDisassembly()
 		{
+			Machine.LockEmulation();
 			var disasm = debugger.DisassembleTxt(
 					new List<Tuple<uint, uint>>
 					{
@@ -57,6 +56,7 @@ namespace RunAmiga
 						new Tuple<uint, uint> (0xfe52a4, 0x0144),
 						new Tuple<uint, uint> (0xfe53e8, 0x4000)
 					});
+			Machine.UnlockEmulation();
 			txtDisassembly.Text = disasm;
 		}
 
@@ -313,6 +313,7 @@ namespace RunAmiga
 			}
 
 			UpdateDisassembly();
+
 			SetSelection();
 			UpdateDisplay();
 		}

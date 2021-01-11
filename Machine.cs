@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Xml.Serialization;
 using RunAmiga.Custom;
 
 namespace RunAmiga
@@ -130,14 +131,14 @@ namespace RunAmiga
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
 			//Trace.WriteLine($"[MUSH] write {value:X8} @{address:X8}");
 			musashiMemory.write32(address, value);
-			musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
+			//musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
 		}
 		private void Musashi_write16(uint address, uint value)
 		{
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
 			//Trace.WriteLine($"[MUSH] write {value:X4} @{address:X8}");
 			musashiMemory.write16(address, (ushort)value);
-			musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
+			//musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
 		}
 
 		private void Musashi_write8(uint address, uint value)
@@ -145,7 +146,7 @@ namespace RunAmiga
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
 			//Trace.WriteLine($"[MUSH] write {value:X2} @{address:X8}");
 			musashiMemory.write8(address, (byte)value);
-			musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
+			//musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
 		}
 
 		//private List<uint> mpc = new List<uint>();
@@ -192,7 +193,7 @@ namespace RunAmiga
 				//foreach (var v in mpc)
 				//	Trace.WriteLine($"{v:X8}");
 				Trace.WriteLine($"PC Drift too far at {regsAfter.PC:X8} {pc:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				//Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 			else if (counter != 1)
 			{
@@ -236,11 +237,28 @@ namespace RunAmiga
 				if (differs) Trace.WriteLine($"cycles {cycles} @{instructionStartPC:X8} {disassembler.Disassemble(instructionStartPC, new ReadOnlySpan<byte>(memory.GetMemoryArray(),(int)instructionStartPC, 12))}");
 			}
 
-			Interrupt(cycles);
+			//VBInterrupt(cycles);
+			MemChk();
+		}
+
+		private uint memChkCnt = 0;
+		private void MemChk()
+		{
+			memChkCnt++;
+			if ((memChkCnt%100000)==0)
+			{
+				var mem1 = memory.GetMemoryArray();
+				var mem2 = musashiMemory.GetMemoryArray();
+				for (int i = 0; i < 0xa00000; i++)
+				{
+					if (mem1[i] != mem2[i])
+						Trace.WriteLine($"MEM {i:8X} {mem1[i]:X2} {mem2[i]:X2}");
+				}
+			}
 		}
 
 		private uint clock=0;
-		private void Interrupt(int cycles)
+		private void VBInterrupt(int cycles)
 		{
 			clock += (uint)cycles;
 
@@ -251,20 +269,23 @@ namespace RunAmiga
 				clock -= 560000;
 
 				//vblank interrupt enabled
-				custom.Write(0,ChipRegs.INTENA, 0x8000+32, Size.Word);
-				uint intenar = custom.Read(0, ChipRegs.INTENA, Size.Word);
+				uint intenar;
+				intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
+				if ((intenar & 32) == 0)
+					custom.Write(0, ChipRegs.INTENA, 0x8000 + 32, Size.Word);
+				intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
 				musashiMemory.Write(0, ChipRegs.INTENAR, intenar, Size.Word);
 
 				//raise the interrupt
 				custom.Write(0, ChipRegs.INTREQ, 0x8000 + 32, Size.Word);
-				uint intreqr = custom.Read(0, ChipRegs.INTREQ, Size.Word);
+				uint intreqr = custom.Read(0, ChipRegs.INTREQR, Size.Word);
 				musashiMemory.Write(0, ChipRegs.INTREQR, intreqr, Size.Word);
 
 				//enable scheduler attention
 				uint execBase = memory.Read(0, 4, Size.Long);
 				uint sysflags = memory.Read(0, execBase + 0x124, Size.Byte);
 				sysflags |= 0x80;
-				memory.Write(0, execBase+0x124, sysflags, Size.Byte);
+				memory.Write(0, execBase + 0x124, sysflags, Size.Byte);
 				musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
 
 				//trigger vblank interrupt level 3
@@ -273,11 +294,40 @@ namespace RunAmiga
 			}
 		}
 
-		Thread emuThread;
-
-		public void Init()
+		private void SWInterrupt(int cycles)
 		{
+			clock += (uint)cycles;
+
+			//7Mhz = 7M/50 = 140,000 cycles in a frame.
+			//the multitask timeslice is 4frames, 560000 cycles
+			if (clock > 560000)
+			{
+				clock -= 560000;
+
+				//sw interrupt enabled (it's mostly always enabled)
+				//custom.Write(0,ChipRegs.INTENA, 0x8000+4, Size.Word);
+				//uint intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
+				//musashiMemory.Write(0, ChipRegs.INTENAR, intenar, Size.Word);
+
+				//raise the interrupt
+				custom.Write(0, ChipRegs.INTREQ, 0x8000 + 4, Size.Word);
+				uint intreqr = custom.Read(0, ChipRegs.INTREQR, Size.Word);
+				musashiMemory.Write(0, ChipRegs.INTREQR, intreqr, Size.Word);
+
+				//enable scheduler attention
+				uint execBase = memory.Read(0, 4, Size.Long);
+				uint sysflags = memory.Read(0, execBase + 0x124, Size.Byte);
+				sysflags |= 0x80;
+				memory.Write(0, execBase + 0x124, sysflags, Size.Byte);
+				musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
+
+				//trigger sw interrupt level 1
+				cpu.Interrupt(1);
+				Musashi_set_irq(1);
+			}
 		}
+
+		private Thread emuThread;
 
 		public void Start()
 		{

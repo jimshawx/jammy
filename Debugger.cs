@@ -16,7 +16,7 @@ namespace RunAmiga
 		private readonly Disassembler disassembler;
 		private Memory memory;
 		private CPU cpu;
-		private Custom.Chips custom;
+		private Chips custom;
 		private CIA cia;
 		private Labeller labeller;
 
@@ -46,14 +46,15 @@ namespace RunAmiga
 			//AddBreakpoint(0xfcac92);
 
 			//AddBreakpoint(0x00fcac82);//copper list
-			AddBreakpoint(0x00fc0e60);//ExitIntr
-			AddBreakpoint(0x00fc0c4c);//Interrupt Bail Out
-			AddBreakpoint(0x00fc0ca6);//L2 Autovector
-			AddBreakpoint(0x00fc0cdc);//L3 Autovector
-			AddBreakpoint(0xfc0e8a);//Schedule()+4
+			//AddBreakpoint(0x00fc0e60);//ExitIntr
+			//AddBreakpoint(0x00fc0c4c);//Interrupt Bail Out
+			//AddBreakpoint(0x00fc0ca6);//L2 Autovector
+			//AddBreakpoint(0x00fc0cdc);//L3 Autovector
+			//AddBreakpoint(0xfc0e8a);//Schedule()+4
 
 			//AddBreakpoint(0xfc0b28);//InitResident
 			//AddBreakpoint(0xFC1C28);//AddResource
+			AddBreakpoint(0xFC0ca2);//sw interrupt
 
 			AddBreakpoint(0xfc0e86);//Schedule().
 			//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
