@@ -130,12 +130,14 @@ namespace RunAmiga
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
 			//Trace.WriteLine($"[MUSH] write {value:X8} @{address:X8}");
 			musashiMemory.write32(address, value);
+			musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
 		}
 		private void Musashi_write16(uint address, uint value)
 		{
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
 			//Trace.WriteLine($"[MUSH] write {value:X4} @{address:X8}");
 			musashiMemory.write16(address, (ushort)value);
+			musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
 		}
 
 		private void Musashi_write8(uint address, uint value)
@@ -143,10 +145,11 @@ namespace RunAmiga
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
 			//Trace.WriteLine($"[MUSH] write {value:X2} @{address:X8}");
 			musashiMemory.write8(address, (byte)value);
+			musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
 		}
 
-		private List<uint> mpc = new List<uint>();
-		private ushort last_sr;
+		//private List<uint> mpc = new List<uint>();
+		//private ushort last_sr;
 		public void RunEmulations(ulong ns)
 		{
 			Musashi_get_regs(musashiRegs);
@@ -154,10 +157,10 @@ namespace RunAmiga
 			var regs = cpu.GetRegs();
 			uint instructionStartPC = regs.PC;
 
-			if (musashiRegs.pc == 0xfc0ca6 || musashiRegs.pc == 0xfc0caa)
-				Trace.WriteLine($"Musashi L2 Interrupt 1 {musashiRegs.pc:X8} {musashiRegs.sr:X4}");
-			if (instructionStartPC == 0xfc0ca6)
-				Trace.WriteLine($"C# L2 Interrupt {regs.SR:X4}");
+			//if (musashiRegs.pc == 0xfc0ca6 || musashiRegs.pc == 0xfc0caa)
+			//	Trace.WriteLine($"Musashi L2 Interrupt 1 {musashiRegs.pc:X8} {musashiRegs.sr:X4}");
+			//if (instructionStartPC == 0xfc0ca6)
+			//	Trace.WriteLine($"C# L2 Interrupt {regs.SR:X4}");
 
 			emulations.ForEach(x => x.Emulate(ns));
 
@@ -170,9 +173,9 @@ namespace RunAmiga
 			do
 			{
 				pc = Musashi_execute(ref cycles);
-				if (pc == 0xfc0ca6 || pc == 0xfc0caa)
-					Trace.WriteLine($"Musashi L2 Interrupt 2 {pc:X8} {musashiRegs.sr:X4}");
-				mpc.Add(pc);
+				//if (pc == 0xfc0ca6 || pc == 0xfc0caa)
+				//	Trace.WriteLine($"Musashi L2 Interrupt 2 {pc:X8} {musashiRegs.sr:X4}");
+				//mpc.Add(pc);
 				counter++;
 			} while (pc != regsAfter.PC && counter < maxPCdrift);
 
@@ -184,10 +187,10 @@ namespace RunAmiga
 
 			if (counter == maxPCdrift)
 			{
-				debugger.DumpTrace();
-				mpc = mpc.Skip(mpc.Count - 32).ToList();
-				foreach (var v in mpc)
-					Trace.WriteLine($"{v:X8}");
+				//debugger.DumpTrace();
+				//mpc = mpc.Skip(mpc.Count - 32).ToList();
+				//foreach (var v in mpc)
+				//	Trace.WriteLine($"{v:X8}");
 				Trace.WriteLine($"PC Drift too far at {regsAfter.PC:X8} {pc:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
@@ -247,11 +250,28 @@ namespace RunAmiga
 			{
 				clock -= 560000;
 
-				cpu.Interrupt(2);
-				Musashi_set_irq(2);
+				//vblank interrupt enabled
+				custom.Write(0,ChipRegs.INTENA, 0x8000+32, Size.Word);
+				uint intenar = custom.Read(0, ChipRegs.INTENA, Size.Word);
+				musashiMemory.Write(0, ChipRegs.INTENAR, intenar, Size.Word);
+
+				//raise the interrupt
+				custom.Write(0, ChipRegs.INTREQ, 0x8000 + 32, Size.Word);
+				uint intreqr = custom.Read(0, ChipRegs.INTREQ, Size.Word);
+				musashiMemory.Write(0, ChipRegs.INTREQR, intreqr, Size.Word);
+
+				//enable scheduler attention
+				uint execBase = memory.Read(0, 4, Size.Long);
+				uint sysflags = memory.Read(0, execBase + 0x124, Size.Byte);
+				sysflags |= 0x80;
+				memory.Write(0, execBase+0x124, sysflags, Size.Byte);
+				musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
+
+				//trigger vblank interrupt level 3
+				cpu.Interrupt(3);
+				Musashi_set_irq(3);
 			}
 		}
-
 
 		Thread emuThread;
 

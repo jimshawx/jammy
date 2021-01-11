@@ -49,9 +49,9 @@ namespace RunAmiga
 			a = new A(Supervisor);
 
 			devices.Add(debugger);
+			devices.Add(memory);
 			devices.Add(cia);
 			devices.Add(custom);
-			devices.Add(memory);
 
 			this.debugger = debugger;
 
@@ -80,7 +80,7 @@ namespace RunAmiga
 			return read16(pc);
 		}
 
-		private void CheckInterrupt()
+		private bool CheckInterrupt()
 		{
 			if (interruptPending != 0)
 			{
@@ -91,8 +91,19 @@ namespace RunAmiga
 					internalTrap(0x18 + ((uint)maskedInterrupt >> 8));
 					interruptPending = 0;
 					instructionStartPC = pc;
+
+					if (debugger.IsBreakpoint(pc))
+					{
+						//debugger.DumpTrace();
+						Trace.WriteLine($"Breakpoint @{pc:X8}");
+						Machine.SetEmulationMode(EmulationMode.Stopped, true);
+						UI.IsDirty = true;
+						return true;
+					}
 				}
 			}
+
+			return false;
 		}
 
 		public void Emulate(ulong ns)

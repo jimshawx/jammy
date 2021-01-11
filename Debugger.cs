@@ -47,12 +47,15 @@ namespace RunAmiga
 
 			//AddBreakpoint(0x00fcac82);//copper list
 			AddBreakpoint(0x00fc0e60);//ExitIntr
-			AddBreakpoint(0x00fc0c52);//Interrupt Bail Out
+			AddBreakpoint(0x00fc0c4c);//Interrupt Bail Out
+			AddBreakpoint(0x00fc0ca6);//L2 Autovector
+			AddBreakpoint(0x00fc0cdc);//L3 Autovector
+			AddBreakpoint(0xfc0e8a);//Schedule()+4
 
 			//AddBreakpoint(0xfc0b28);//InitResident
 			//AddBreakpoint(0xFC1C28);//AddResource
 
-			//AddBreakpoint(0xfc0e86);//Schedule().
+			AddBreakpoint(0xfc0e86);//Schedule().
 			//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
 			AddBreakpoint(0xfc2fb4);//Task Crash Routine

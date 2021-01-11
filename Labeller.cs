@@ -220,6 +220,19 @@ namespace RunAmiga
 			new Label (0xf014ec, "MakeLibrary"),
 			new Label (0xFC1576 , "MakeFunctions"),
 			new Label (0xfc0af0 , "InitCode"),
+			new Label (0xfc0e86 , "Schedule"),
+
+			new Label (0xfc05c2 , "Level1Autovector"),
+			new Label (0xfc0ca6 , "Level2Autovector"),
+			new Label (0xfc0cd8 , "Level3Autovector"),
+			new Label (0xfc0d30 , "Level4Autovector"),
+			new Label (0xfc0dbe , "Level5Autovector"),
+			new Label (0xfc0e04 , "Level6Autovector"),
+			new Label (0xfc0e4a , "Level7Autovector"),
+			new Label (0xfc0e60 , "ExitIntr"),
+			new Label (0xfc0c4c , "InterruptBail"),
+
+
 		};
 
 		private void MiscLabels()

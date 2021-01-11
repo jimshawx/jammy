@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -111,6 +112,7 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
+				//Trace.WriteLine($"INTENA {regs[reg]:X4} {Convert.ToString(regs[reg],2).PadLeft(16,'0')}");
 				regs[REG(ChipRegs.INTENAR)] = regs[reg];
 			}
 			else if (address == ChipRegs.INTREQ)
