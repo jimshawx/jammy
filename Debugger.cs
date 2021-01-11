@@ -45,8 +45,9 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc033e);
 			//AddBreakpoint(0xfcac92);
 
-			AddBreakpoint(0x00fcac82);//copper list
-			
+			//AddBreakpoint(0x00fcac82);//copper list
+			AddBreakpoint(0x00fc0e60);//ExitIntr
+			AddBreakpoint(0x00fc0c52);//Interrupt Bail Out
 
 			//AddBreakpoint(0xfc0b28);//InitResident
 			//AddBreakpoint(0xFC1C28);//AddResource

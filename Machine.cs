@@ -154,17 +154,14 @@ namespace RunAmiga
 			var regs = cpu.GetRegs();
 			uint instructionStartPC = regs.PC;
 
-			if (musashiRegs.pc == 0xfc0ca6)
-				Trace.WriteLine($"Musashi L2 Interrupt {musashiRegs.sr:X4}");
-			if (instructionStartPC == 0xfc0ca6 || instructionStartPC == 0xfc0caa)
+			if (musashiRegs.pc == 0xfc0ca6 || musashiRegs.pc == 0xfc0caa)
+				Trace.WriteLine($"Musashi L2 Interrupt 1 {musashiRegs.pc:X8} {musashiRegs.sr:X4}");
+			if (instructionStartPC == 0xfc0ca6)
 				Trace.WriteLine($"C# L2 Interrupt {regs.SR:X4}");
 
 			emulations.ForEach(x => x.Emulate(ns));
 
 			var regsAfter = cpu.GetRegs();
-			if ((regsAfter.SR>>8) != last_sr)
-				Trace.WriteLine($"SR {instructionStartPC:X8} {last_sr:X4}->{regsAfter.SR>>8:X4}");
-			last_sr = (ushort)(regsAfter.SR >> 8);
 
 			int counter = 0;
 			const int maxPCdrift = 6;
@@ -173,18 +170,26 @@ namespace RunAmiga
 			do
 			{
 				pc = Musashi_execute(ref cycles);
-				if (pc == 0xfc0ca6)
-					Trace.WriteLine($"Musashi L2 Interrupt {musashiRegs.sr:X4}");
+				if (pc == 0xfc0ca6 || pc == 0xfc0caa)
+					Trace.WriteLine($"Musashi L2 Interrupt 2 {pc:X8} {musashiRegs.sr:X4}");
 				mpc.Add(pc);
 				counter++;
 			} while (pc != regsAfter.PC && counter < maxPCdrift);
 
+			Musashi_get_regs(musashiRegs);
+
+			//if ((regsAfter.SR & 0xff00) != last_sr)
+			//	Trace.WriteLine($"SR {instructionStartPC:X8} {last_sr:X4}->{regsAfter.SR & 0xff00:X4} M:{musashiRegs.sr:X4}");
+			//last_sr = (ushort)(regsAfter.SR & 0xff00);
+
 			if (counter == maxPCdrift)
 			{
-				//mpc = mpc.Skip(mpc.Count-32).ToList();
-				//foreach (var v in mpc)
-				//	Trace.WriteLine($"{v:X8}");
+				debugger.DumpTrace();
+				mpc = mpc.Skip(mpc.Count - 32).ToList();
+				foreach (var v in mpc)
+					Trace.WriteLine($"{v:X8}");
 				Trace.WriteLine($"PC Drift too far at {regsAfter.PC:X8} {pc:X8}");
+				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 			else if (counter != 1)
 			{
@@ -198,8 +203,6 @@ namespace RunAmiga
 			}
 			else
 			{
-				Musashi_get_regs(musashiRegs);
-
 				bool differs = false;
 				if (regsAfter.D[0] != musashiRegs.d0) { Trace.WriteLine($"reg D0 differs {regsAfter.D[0]:X8} {musashiRegs.d0:X8}"); differs = true; }
 				if (regsAfter.D[1] != musashiRegs.d1) { Trace.WriteLine($"reg D1 differs {regsAfter.D[1]:X8} {musashiRegs.d1:X8}"); differs = true; }

@@ -32,25 +32,10 @@ namespace RunAmiga
 			}
 		}
 
-		private uint internalPc;
-		private uint pc
-		{
-			get => internalPc;
-			set
-			{
-				internalPc = value;
-				if (internalPc == 0)
-					Trace.WriteLine("Set PC to NULL");
-			}
-		}
+		private uint pc;
 
 		//T.S..210...XNZVC
-		private ushort internalSr;
-		private ushort sr
-		{
-			get => internalSr;
-			set { internalSr = value; CheckInterrupt(); }
-		}
+		private ushort sr;
 
 		private ushort interruptPending;
 
@@ -102,10 +87,9 @@ namespace RunAmiga
 				ushort maskedInterrupt = (ushort)(interruptPending & ~sr);
 				if (maskedInterrupt != 0)
 				{
-					Trace.WriteLine("ISR Taken");
+					instructionStartPC = pc;
 					internalTrap(0x18 + ((uint)maskedInterrupt >> 8));
 					interruptPending = 0;
-
 					instructionStartPC = pc;
 				}
 			}
@@ -1901,9 +1885,14 @@ namespace RunAmiga
 		{
 			uint ea = fetchEA(type);
 			if (Supervisor())
-				sr = (ushort)fetchOp(type, ea, Size.Word); //naturally sets the flags
+			{
+				sr = (ushort) fetchOp(type, ea, Size.Word); //naturally sets the flags
+				CheckInterrupt();
+			}
 			else
+			{
 				internalTrap(8);
+			}
 		}
 
 		private void movetoccr(int type)
@@ -1945,6 +1934,8 @@ namespace RunAmiga
 
 		void internalTrap(uint vector)
 		{
+			ushort oldSR = sr;
+
 			if (vector == 4 && instructionStartPC == 0xFC0564)
 			{
 				Trace.Write("68020 CPU Check Exception");
@@ -1962,10 +1953,12 @@ namespace RunAmiga
 
 				if (vector >= 0x19 && vector <= 0x1f)
 				{
-					Trace.WriteLine($"Interrupt Level {vector-0x18}");
+					Trace.WriteLine($"Interrupt Level {vector-0x18} @{instructionStartPC:X8}");
 
 					uint m = (vector - 0x18) << 8;
 					sr = (ushort)(((uint)sr & 0b11111_000_11111111) | m);
+					//sr = (ushort)(sr & 0b11111_000_11111111);
+
 					uint isr = read32(vector << 2);
 					if (isr == 0)
 						vector = 0xf;//Uninitialized Interrupt Vector
@@ -1980,7 +1973,6 @@ namespace RunAmiga
 				}
 			}
 
-			ushort oldSR = sr;
 			setSupervisor();
 			push32(instructionStartPC);
 			push16(oldSR);
@@ -2044,6 +2036,7 @@ namespace RunAmiga
 			{
 				sr = read16(pc);//naturally sets the flags
 				pc += 2;
+				CheckInterrupt();
 			}
 			else
 			{
@@ -2186,6 +2179,7 @@ namespace RunAmiga
 				{
 					ushort immsr = (ushort)imm;
 					sr ^= immsr; //naturally sets the flags
+					CheckInterrupt();
 				}
 				else if (size == Size.Word)
 				{
@@ -2193,6 +2187,7 @@ namespace RunAmiga
 					{
 						ushort immsr = (ushort)imm;
 						sr ^= immsr; //naturally sets the flags
+						CheckInterrupt();
 					}
 					else
 					{
@@ -2307,6 +2302,7 @@ namespace RunAmiga
 				{
 					ushort immsr = (ushort)imm;
 					sr &= immsr;//naturally clears the flags
+					CheckInterrupt();
 				}
 				else if (size == Size.Word)
 				{
@@ -2314,6 +2310,7 @@ namespace RunAmiga
 					{
 						ushort immsr = (ushort)imm;
 						sr &= immsr;//naturally clears the flags
+						CheckInterrupt();
 					}
 					else
 					{
@@ -2345,14 +2342,16 @@ namespace RunAmiga
 				if (size == Size.Byte)
 				{
 					ushort immsr = (ushort)imm;
-					sr |= immsr;
+					sr |= immsr;//naturally sets the flags
+					CheckInterrupt();
 				}
 				else if (size == Size.Word)
 				{
 					if (Supervisor())
 					{
 						ushort immsr = (ushort)imm;
-						sr |= immsr;
+						sr |= immsr;//naturally sets the flags
+						CheckInterrupt();
 					}
 					else
 					{
@@ -2512,6 +2511,7 @@ namespace RunAmiga
 		{
 			sr = (ushort)((sr & 0xff00) | (pop16() & 0x00ff));//naturally sets the flags
 			pc = pop32();
+			CheckInterrupt();
 		}
 
 		private void trapv(int type)
@@ -2529,12 +2529,13 @@ namespace RunAmiga
 
 		private void rte(int type)
 		{
-			Trace.WriteLine($"rte {instructionStartPC:X8}");
 			if (Supervisor())
 			{
 				debugger.Trace("rte", instructionStartPC);
-				sr = pop16();
+				ushort tmpsr = pop16();//may clear the supervisor bit, causing following pop to come of the wrong stack
 				pc = pop32();
+				sr = tmpsr;
+				CheckInterrupt();
 				debugger.Trace(pc);
 			}
 			else
@@ -2545,7 +2546,7 @@ namespace RunAmiga
 
 		public void Interrupt(uint level)
 		{
-			//i is the interrupt bits in SR
+			//level is the IPLx interrupt bits in SR
 			interruptPending = (ushort)(level<<8);
 		}
 	}
