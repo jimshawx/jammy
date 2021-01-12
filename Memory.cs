@@ -11,10 +11,12 @@ namespace RunAmiga
 		private const uint memoryMask = 0x00ffffff;
 
 		private readonly Debugger debugger;
+		private readonly string id;
 
-		public Memory(Debugger debugger)
+		public Memory(Debugger debugger, string id)
 		{
 			this.debugger = debugger;
+			this.id = id;
 			this.memory = new byte[16 * 1024 * 1024];
 		}
 
@@ -92,6 +94,17 @@ namespace RunAmiga
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			//if ((address >= 0xc014cd && address <= 0xC014ff && address != 0xc014f4) || (address == 0xc014f4 && (insaddr == 0xfc1798 || insaddr == 0)))
+			//{
+			//	if (size == Size.Long)
+			//	{
+			//		Write(insaddr, address + 2, (ushort)value, Size.Word);
+			//		Write(insaddr, address,   (ushort)(value>>16), Size.Word);
+			//		return;
+			//	}
+			//	Trace.WriteLine($"[LOG{id}] a:{address:X8} v:{value:X8} pc:{insaddr:X8} s:{size}");
+			//}
+
 			if (size == Size.Byte) { write8(address, (byte)value); return; }
 			if (size == Size.Word) { write16(address, (ushort)value); return; }
 			if (size == Size.Long) { write32(address, value); return; }

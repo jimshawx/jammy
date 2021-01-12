@@ -2415,7 +2415,8 @@ namespace RunAmiga
 				//if it's post-increment mode
 				if ((type & 0b111_000) == 0b011_000)
 				{
-					for (int i = 15; i >= 0; i--)
+					//for (int i = 15; i >= 0; i--)
+					for (int i = 0; i < 16; i++)
 					{
 						if ((mask & (1 << i)) != 0)
 						{
@@ -2449,11 +2450,25 @@ namespace RunAmiga
 			}
 			else
 			{
+				//if (instructionStartPC == 0xfc1798)
+				//{
+				//	Trace.WriteLine("movem.l  d2/d3/a2,-(a7)");
+				//	Trace.WriteLine($"d2:{d[2]:X8} d3:{d[3]:X8} a2:{a[2]:X8} a7:{a[7]:X8}");
+				//	Trace.WriteLine($"{Convert.ToString(mask,2).PadLeft(16,'0')}");
+
+				//	if (d[2] == 0x000001c8 && d[3] == 0x00000096 && a[2] == 0x00e80000 && a[7] == 0x00c014f8)
+				//	{
+				//		System.Diagnostics.Debugger.Break();
+				//	}
+
+				//}
+
 				//R->M
 				//if it's pre-decrement mode
 				if ((type & 0b111_000) == 0b100_000)
 				{
-					for (int i = 15; i >= 0; i--)
+					//for (int i = 15; i >= 0; i--)
+					for (int i = 0; i < 16; i++)
 					{
 						if ((mask & (1 << i)) != 0)
 						{

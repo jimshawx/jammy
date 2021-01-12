@@ -54,7 +54,7 @@ namespace RunAmiga.Custom
 
 			Trace.WriteLine($"Parsing Copper List @{copPC:X8}");
 
-			int counter = 16;
+			int counter = 32;
 			while (counter-- > 0)
 			{
 				ushort ins = memory.read16(copPC);

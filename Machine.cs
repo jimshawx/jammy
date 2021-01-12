@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Xml.Serialization;
 using RunAmiga.Custom;
 
 namespace RunAmiga
@@ -15,7 +14,7 @@ namespace RunAmiga
 	{
 		public uint d0, d1, d2, d3, d4, d5, d6, d7;
 		public uint a0, a1, a2, a3, a4, a5, a6, a7;
-		public uint pc, sp, usp;
+		public uint pc, sp, usp, ssp;
 		public ushort sr;
 	}
 
@@ -62,7 +61,7 @@ namespace RunAmiga
 			var labeller = new Labeller();
 			debugger = new Debugger(labeller);
 			cia = new CIA(debugger);
-			memory = new Memory(debugger);
+			memory = new Memory(debugger, "J");
 			custom = new Custom.Chips(debugger, memory);
 			cpu = new CPU(cia, custom, memory, debugger);
 
@@ -75,7 +74,7 @@ namespace RunAmiga
 
 			Reset();
 
-			musashiMemory = new Memory(debugger);
+			musashiMemory = new Memory(debugger, "M");
 			musashiMemory.Reset();
 			disassembler = new Disassembler();
 
@@ -109,47 +108,41 @@ namespace RunAmiga
 		{
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
 			uint value = musashiMemory.read32(address);
-			//Trace.WriteLine($"[MUSH] read {value:X8} @{address:X8}");
 			return value;
 		}
 		private uint Musashi_read16(uint address)
 		{
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
 			uint value = musashiMemory.read16(address);
-			//Trace.WriteLine($"[MUSH] read {value:X4} @{address:X8}");
 			return value;
 		}
 		private uint Musashi_read8(uint address)
 		{
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
 			uint value = musashiMemory.read8(address);
-			//Trace.WriteLine($"[MUSH] read {value:X2} @{address:X8}");
 			return value;
 		}
 		private void Musashi_write32(uint address, uint value)
 		{
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
-			//Trace.WriteLine($"[MUSH] write {value:X8} @{address:X8}");
-			musashiMemory.write32(address, value);
-			//musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
+			//musashiMemory.write32(address, value);
+			musashiMemory.Write(0, address, value, Size.Long);
 		}
 		private void Musashi_write16(uint address, uint value)
 		{
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
-			//Trace.WriteLine($"[MUSH] write {value:X4} @{address:X8}");
-			musashiMemory.write16(address, (ushort)value);
-			//musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
+			//musashiMemory.write16(address, (ushort)value);
+			musashiMemory.Write(0, address, value, Size.Word);
 		}
 
 		private void Musashi_write8(uint address, uint value)
 		{
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
-			//Trace.WriteLine($"[MUSH] write {value:X2} @{address:X8}");
-			musashiMemory.write8(address, (byte)value);
-			//musashiMemory.Write(0, ChipRegs.INTENAR, custom.Read(0, ChipRegs.INTENA, Size.Word), Size.Word);
+			//musashiMemory.write8(address, (byte)value);
+			musashiMemory.Write(0, address, value, Size.Byte);
 		}
 
-		//private List<uint> mpc = new List<uint>();
+		private List<uint> mpc = new List<uint>();
 		//private ushort last_sr;
 		public void RunEmulations(ulong ns)
 		{
@@ -176,7 +169,7 @@ namespace RunAmiga
 				pc = Musashi_execute(ref cycles);
 				//if (pc == 0xfc0ca6 || pc == 0xfc0caa)
 				//	Trace.WriteLine($"Musashi L2 Interrupt 2 {pc:X8} {musashiRegs.sr:X4}");
-				//mpc.Add(pc);
+				mpc.Add(pc);
 				counter++;
 			} while (pc != regsAfter.PC && counter < maxPCdrift);
 
@@ -226,6 +219,9 @@ namespace RunAmiga
 				if (regsAfter.A[6] != musashiRegs.a6) { Trace.WriteLine($"reg A6 differs {regsAfter.A[6]:X8} {musashiRegs.a6:X8}"); differs = true; }
 				if (regsAfter.A[7] != musashiRegs.a7) { Trace.WriteLine($"reg A7 differs {regsAfter.A[7]:X8} {musashiRegs.a7:X8}"); differs = true; }
 
+				if (regsAfter.SSP != musashiRegs.ssp) { Trace.WriteLine($"reg SSP differs {regsAfter.SSP:X8} {musashiRegs.ssp:X8}"); differs = true; }
+				if (regsAfter.SP != musashiRegs.usp) { Trace.WriteLine($"reg SSP differs {regsAfter.SP:X8} {musashiRegs.usp:X8}"); differs = true; }
+
 				if (regsAfter.SR != musashiRegs.sr)
 				{
 					Trace.WriteLine($"reg SR differs {regsAfter.SR:X4} {musashiRegs.sr:X4}");
@@ -237,24 +233,64 @@ namespace RunAmiga
 				if (differs) Trace.WriteLine($"cycles {cycles} @{instructionStartPC:X8} {disassembler.Disassemble(instructionStartPC, new ReadOnlySpan<byte>(memory.GetMemoryArray(),(int)instructionStartPC, 12))}");
 			}
 
-			//VBInterrupt(cycles);
-			MemChk();
+			VBInterrupt(cycles);
+			
+			if (MemChk(instructionStartPC))
+			{
+				debugger.DumpTrace();
+				mpc = mpc.Skip(mpc.Count - 32).ToList();
+				foreach (var v in mpc)
+					Trace.WriteLine($"{v:X8}");
+			}
 		}
 
 		private uint memChkCnt = 0;
-		private void MemChk()
+		private bool MemChk(uint pc)
 		{
+			bool differ = false;
+
 			memChkCnt++;
-			if ((memChkCnt%100000)==0)
+			if ((memChkCnt % 1000000) == 0)
 			{
 				var mem1 = memory.GetMemoryArray();
 				var mem2 = musashiMemory.GetMemoryArray();
 				for (int i = 0; i < 0xa00000; i++)
 				{
 					if (mem1[i] != mem2[i])
-						Trace.WriteLine($"MEM {i:8X} {mem1[i]:X2} {mem2[i]:X2}");
+					{
+						Trace.WriteLine($"[MEMX] {i:X8} {mem1[i]:X2} {mem2[i]:X2}");
+						differ = true;
+					}
+				}
+
+				for (int i = 0xc00000; i < 0xd80000; i++)
+				{
+					if (mem1[i] != mem2[i])
+					{
+						Trace.WriteLine($"[MEMX] {i:X8} {mem1[i]:X2} {mem2[i]:X2}");
+						differ = true;
+					}
 				}
 			}
+
+			//if (memChkCnt != 0)
+			//{
+			//	var mem1 = memory.GetMemoryArray();
+			//	var mem2 = musashiMemory.GetMemoryArray();
+			//	for (int i = 0xc014cd; i <= 0xC014ff; i++)
+			//	{
+			//		if (mem1[i] != mem2[i])
+			//		{
+			//			Trace.WriteLine($"[MEMX] {i:X8} {mem1[i]:X2} {mem2[i]:X2}");
+			//			differ = true;
+			//		}
+			//	}
+
+			//}
+			if (differ)
+				Trace.WriteLine($"@{pc:X8}");
+
+			return differ;
 		}
 
 		private uint clock=0;
