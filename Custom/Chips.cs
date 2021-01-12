@@ -114,7 +114,7 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
-				Trace.WriteLine($"DMACON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
+				Trace.WriteLine($"DMACON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 				
 				if ((regs[reg] & 0x4000) != 0) Trace.Write("BBUSY ");
 				if ((regs[reg] & 0x2000) != 0) Trace.Write("EXTER ");
@@ -137,7 +137,7 @@ namespace RunAmiga.Custom
 			}
 			else if (address == ChipRegs.INTENA)
 			{
-				Trace.WriteLine($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')}");
+				Trace.WriteLine($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");
 				if ((value & 0x8000) != 0)
 					regs[reg] |= (ushort)value;
 				else

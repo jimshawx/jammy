@@ -113,6 +113,9 @@ namespace RunAmiga
 		private uint Musashi_read16(uint address)
 		{
 			if (address > 0x1000000) { Trace.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
+
+			if (address == ChipRegs.INTENAR) return custom.Read(0, ChipRegs.INTENAR, Size.Word);
+
 			uint value = musashiMemory.read16(address);
 			return value;
 		}

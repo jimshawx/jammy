@@ -169,7 +169,7 @@ namespace RunAmiga
 
 			if (debugger.IsBreakpoint(pc))
 			{
-				//debugger.DumpTrace();
+				debugger.DumpTrace();
 				Trace.WriteLine($"Breakpoint @{pc:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 				UI.IsDirty = true;
