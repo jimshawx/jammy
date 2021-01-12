@@ -27,7 +27,7 @@ namespace RunAmiga.Custom
 			//every 50Hz, reset the copper list
 			if (copperTime > 20_000_000)
 			{
-				copperPC = custom.Read(copperPC, ChipRegs.COP1LCH, Size.Long);
+				copperPC = cop1lc;
 				copperTime -= 20_000_000;
 			}
 			//roughly
@@ -63,14 +63,14 @@ namespace RunAmiga.Custom
 				ushort data = memory.read16(copPC);
 				copPC += 2;
 
-				Trace.Write($"{copPC-4:X8} {ins:X4},{data:X4} ");
+				Trace.Write($"{copPC - 4:X8} {ins:X4},{data:X4} ");
 
 				if ((ins & 0x0001) == 0)
 				{
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					Trace.WriteLine($"MOVE {ChipRegs.Name(customBase+reg)}({reg:X4}),{data:X4}");
+					Trace.WriteLine($"MOVE {ChipRegs.Name(customBase + reg)}({reg:X4}),{data:X4}");
 
 					//if (customBase+reg == CustomRegs.COPJMP1)
 					//	copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC
@@ -81,7 +81,7 @@ namespace RunAmiga.Custom
 				{
 					//WAIT/SKIP
 
-					if ((data &1)==0)
+					if ((data & 1) == 0)
 					{
 						//WAIT
 						uint hp = (uint)((ins >> 1) & 0x7f);
@@ -110,6 +110,49 @@ namespace RunAmiga.Custom
 					if (ins == 0xffff && data == 0xfffe)
 						break;
 				}
+			}
+		}
+
+		public ushort Read(uint insaddr, uint address)
+		{
+			ushort value = 0;
+			Trace.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			return value;
+		}
+
+		private uint cop1lc;
+		private uint cop2lc;
+
+		public void Write(uint insaddr, uint address, ushort value)
+		{
+			Trace.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+
+			switch (address)
+			{
+				case ChipRegs.COPCON: break;
+				case ChipRegs.COP1LCH:
+					cop1lc = (cop1lc & 0x0000ffff) | ((uint)value << 16);
+					break;
+				case ChipRegs.COP1LCL:
+					cop1lc = (cop1lc & 0xffff0000) | value;
+					ParseCopperList(cop1lc);
+					ParseCopperList(cop2lc);
+					break;
+				case ChipRegs.COP2LCH:
+					cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16);
+					break;
+				case ChipRegs.COP2LCL:
+					cop2lc = (cop2lc & 0xffff0000) | value;
+					ParseCopperList(cop1lc);
+					ParseCopperList(cop2lc);
+					break;
+				case ChipRegs.COPJMP1:
+					SetCopperPC(cop1lc);
+					break;
+				case ChipRegs.COPJMP2:
+					SetCopperPC(cop2lc);
+					break;
+				case ChipRegs.COPINS: break;
 			}
 		}
 	}

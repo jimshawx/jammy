@@ -8,8 +8,8 @@ namespace RunAmiga.Custom
 	{
 		private ushort[] regs = new ushort[32768];
 
-		private Copper copper;
-		private Blitter blitter;
+		private readonly Copper copper;
+		private readonly Blitter blitter;
 
 		public Chips(Debugger debugger, Memory memory)
 		{
@@ -57,10 +57,15 @@ namespace RunAmiga.Custom
 			int reg = REG(address);
 
 			//Trace.WriteLine($"Custom Read {address:X8} {size} : #{regs[reg]:X4} {debug[address].Item1} {debug[address].Item2}");
-			
-			if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
+
+
+			if ((address >= ChipRegs.COP1LCH && address < ChipRegs.DIWSTRT) || address == ChipRegs.COPCON)
 			{
-				return (uint)blitter.Read(insaddr, address);
+				copper.Read(insaddr, address);
+			}
+			else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
+			{
+				blitter.Read(insaddr, address);
 			}
 
 			return (uint)regs[reg];
@@ -132,11 +137,12 @@ namespace RunAmiga.Custom
 			}
 			else if (address == ChipRegs.INTENA)
 			{
+				Trace.WriteLine($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')}");
 				if ((value & 0x8000) != 0)
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
-				Trace.WriteLine($"INTENA {regs[reg]:X4} {Convert.ToString(regs[reg],2).PadLeft(16,'0')}");
+				Trace.WriteLine($"new {regs[reg]:X4} {Convert.ToString(regs[reg],2).PadLeft(16,'0')}");
 
 				if ((regs[reg] & 0x4000) != 0) Trace.Write("INTEN ");
 				if ((regs[reg] & 0x2000) != 0) Trace.Write("EXTER ");
@@ -184,16 +190,6 @@ namespace RunAmiga.Custom
 
 				regs[REG(ChipRegs.INTREQR)] = regs[reg];
 			}
-			else if (address == ChipRegs.COPJMP1)
-			{
-				uint copadd = (uint)(regs[REG(ChipRegs.COP1LCH)] << 16) + regs[REG(ChipRegs.COP1LCL)];
-				copper.SetCopperPC(copadd);
-			}
-			else if (address == ChipRegs.COPJMP2)
-			{
-				uint copadd = (uint)(regs[REG(ChipRegs.COP2LCH)] << 16) + regs[REG(ChipRegs.COP2LCL)];
-				copper.SetCopperPC(copadd);
-			}
 			else
 			{
 				regs[reg] = (ushort)value;
@@ -205,19 +201,9 @@ namespace RunAmiga.Custom
 				uint bank = (Read(insaddr, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
 				UI.SetColour((int)(bank + ((address - ChipRegs.COLOR00) >> 1)), (ushort)value);
 			}
-			else if (address == ChipRegs.COP1LCL)
+			else if ((address >= ChipRegs.COP1LCH && address < ChipRegs.DIWSTRT) || address == ChipRegs.COPCON)
 			{
-				uint copadd = ((uint)regs[REG(ChipRegs.COP1LCH)] << 16) + regs[REG(ChipRegs.COP1LCL)];
-				copper.ParseCopperList(copadd);
-				copadd = ((uint)regs[REG(ChipRegs.COP2LCH)] << 16) + regs[REG(ChipRegs.COP2LCL)];
-				copper.ParseCopperList(copadd);
-			}
-			else if (address == ChipRegs.COP2LCL)
-			{
-				uint copadd = ((uint)regs[REG(ChipRegs.COP1LCH)] << 16) + regs[REG(ChipRegs.COP1LCL)];
-				copper.ParseCopperList(copadd);
-				copadd = ((uint)regs[REG(ChipRegs.COP2LCH)] << 16) + regs[REG(ChipRegs.COP2LCL)];
-				copper.ParseCopperList(copadd);
+				copper.Write(insaddr, address, (ushort)value);
 			}
 			else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
 			{

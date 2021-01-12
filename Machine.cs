@@ -233,8 +233,10 @@ namespace RunAmiga
 				if (differs) Trace.WriteLine($"cycles {cycles} @{instructionStartPC:X8} {disassembler.Disassemble(instructionStartPC, new ReadOnlySpan<byte>(memory.GetMemoryArray(),(int)instructionStartPC, 12))}");
 			}
 
-			VBInterrupt(cycles);
-			
+			//SWInterrupt(cycles);
+			//VBInterrupt(cycles);
+			//PortsInterrupt(cycles);
+
 			if (MemChk(instructionStartPC))
 			{
 				debugger.DumpTrace();
@@ -305,24 +307,26 @@ namespace RunAmiga
 				clock -= 560000;
 
 				//vblank interrupt enabled
-				uint intenar;
-				intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
-				if ((intenar & 32) == 0)
-					custom.Write(0, ChipRegs.INTENA, 0x8000 + 32, Size.Word);
-				intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
+				//uint intenar;
+				//intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
+				//if ((intenar & 32) == 0)
+				//	custom.Write(0, ChipRegs.INTENA, 0x8000 + 32, Size.Word);
+				uint intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
 				musashiMemory.Write(0, ChipRegs.INTENAR, intenar, Size.Word);
 
 				//raise the interrupt
 				custom.Write(0, ChipRegs.INTREQ, 0x8000 + 32, Size.Word);
+				musashiMemory.Write(0, ChipRegs.INTREQ, 0x8000 + 32, Size.Word);
+
 				uint intreqr = custom.Read(0, ChipRegs.INTREQR, Size.Word);
 				musashiMemory.Write(0, ChipRegs.INTREQR, intreqr, Size.Word);
 
 				//enable scheduler attention
-				uint execBase = memory.Read(0, 4, Size.Long);
-				uint sysflags = memory.Read(0, execBase + 0x124, Size.Byte);
-				sysflags |= 0x80;
-				memory.Write(0, execBase + 0x124, sysflags, Size.Byte);
-				musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
+				//uint execBase = memory.Read(0, 4, Size.Long);
+				//uint sysflags = memory.Read(0, execBase + 0x124, Size.Byte);
+				//sysflags |= 0x80;
+				//memory.Write(0, execBase + 0x124, sysflags, Size.Byte);
+				//musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
 
 				//trigger vblank interrupt level 3
 				cpu.Interrupt(3);
@@ -360,6 +364,37 @@ namespace RunAmiga
 				//trigger sw interrupt level 1
 				cpu.Interrupt(1);
 				Musashi_set_irq(1);
+			}
+		}
+
+		private void PortsInterrupt(int cycles)
+		{
+			clock += (uint)cycles;
+
+			//7Mhz = 7M/50 = 140,000 cycles in a frame.
+			//the multitask timeslice is 4frames, 560000 cycles
+			if (clock > 560000)
+			{
+				clock -= 560000;
+
+				uint intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
+				musashiMemory.Write(0, ChipRegs.INTENAR, intenar, Size.Word);
+
+				//raise the interrupt
+				custom.Write(0, ChipRegs.INTREQ, 0x8000 + 8, Size.Word);
+				uint intreqr = custom.Read(0, ChipRegs.INTREQR, Size.Word);
+				musashiMemory.Write(0, ChipRegs.INTREQR, intreqr, Size.Word);
+
+				//enable scheduler attention
+				//uint execBase = memory.Read(0, 4, Size.Long);
+				//uint sysflags = memory.Read(0, execBase + 0x124, Size.Byte);
+				//sysflags |= 0x80;
+				//memory.Write(0, execBase + 0x124, sysflags, Size.Byte);
+				//musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
+
+				//trigger ports interrupt level 2
+				cpu.Interrupt(2);
+				Musashi_set_irq(2);
 			}
 		}
 

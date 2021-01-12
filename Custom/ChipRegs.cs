@@ -5,7 +5,7 @@ namespace RunAmiga.Custom
 {
 	public static class ChipRegs
 	{
-		private static readonly Dictionary<uint, Tuple<string, string>> debug = new Dictionary<uint, Tuple<string, string>> {
+		private static readonly Dictionary<uint, Tuple<string, string>> customRegisterDetails = new Dictionary<uint, Tuple<string, string>> {
 			{ 0xdff000, new Tuple<string,string>("BLTDDAT", "Blitter destination early read (unusable)")},
 			{ 0xdff002, new Tuple<string,string>("DMACONR", "DMA control (and blitter status) read")},
 			{ 0xdff004, new Tuple<string,string>("VPOSR", "Read vertical raster position bit 9 (and interlace odd/even frame)")},
@@ -506,13 +506,13 @@ namespace RunAmiga.Custom
 
 		public static string Name(uint address)
 		{
-			if (debug.TryGetValue(address, out Tuple<string, string> item))
+			if (customRegisterDetails.TryGetValue(address, out Tuple<string, string> item))
 				return item.Item1;
-			return $"Uknown_{address:X6}";
+			return $"Unknown_{address:X6}";
 		}
 		public static string Description(uint address)
 		{
-			if (debug.TryGetValue(address, out Tuple<string, string> item))
+			if (customRegisterDetails.TryGetValue(address, out Tuple<string, string> item))
 				return item.Item2;
 			return $"Uknown_{address:X6}";
 		}
