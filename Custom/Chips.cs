@@ -57,6 +57,11 @@ namespace RunAmiga.Custom
 			int reg = REG(address);
 
 			//Trace.WriteLine($"Custom Read {address:X8} {size} : #{regs[reg]:X4} {debug[address].Item1} {debug[address].Item2}");
+			
+			if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
+			{
+				return (uint)blitter.Read(insaddr, address);
+			}
 
 			return (uint)regs[reg];
 		}
@@ -214,9 +219,9 @@ namespace RunAmiga.Custom
 				copadd = ((uint)regs[REG(ChipRegs.COP2LCH)] << 16) + regs[REG(ChipRegs.COP2LCL)];
 				copper.ParseCopperList(copadd);
 			}
-			else if (address == ChipRegs.BLTCON0 || address == ChipRegs.BLTCON1 || address == ChipRegs.BLTSIZE)
+			else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
 			{
-				blitter.Write(address, (ushort)value);
+				blitter.Write(insaddr, address, (ushort)value);
 			}
 		}
 

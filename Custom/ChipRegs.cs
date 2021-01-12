@@ -502,6 +502,8 @@ namespace RunAmiga.Custom
 		public const uint FMODE = 0xdff1fc;
 		public const uint NO_OP = 0xdff1fe;
 
+		public const uint ChipBase = 0xdff000;
+
 		public static string Name(uint address)
 		{
 			if (debug.TryGetValue(address, out Tuple<string, string> item))
