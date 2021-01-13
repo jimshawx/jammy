@@ -84,33 +84,49 @@ namespace RunAmiga
 		{
 			if (interruptPending != 0)
 			{
-				ushort maskedInterrupt = (ushort)(interruptPending & ~sr);
-				if (maskedInterrupt != 0)
+				//the three IPL bits are the current interrupt level
+				//higher levels can interrupt lower ones, but not the other way around
+				//level 7 is NMI
+				ushort currentInterruptLevel = (ushort)((sr>>8)&7);
+				if (interruptPending > currentInterruptLevel || interruptPending == 7)
 				{
 					instructionStartPC = pc;
-					internalTrap(0x18 + ((uint)maskedInterrupt >> 8));
+					internalTrap(0x18 + (uint)interruptPending);
+
 					interruptPending = 0;
 					instructionStartPC = pc;
 
-					if (debugger.IsBreakpoint(pc))
-					{
-						//debugger.DumpTrace();
-						Trace.WriteLine($"Breakpoint @{pc:X8}");
-						Machine.SetEmulationMode(EmulationMode.Stopped, true);
-						UI.IsDirty = true;
-						return true;
-					}
+					return true;
 				}
 			}
 
 			return false;
 		}
 
+		private void Breakpoint()
+		{
+			{
+				debugger.DumpTrace();
+				Trace.WriteLine($"Breakpoint @{pc:X8}");
+				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				UI.IsDirty = true;
+				return;
+			}
+
+		}
+
 		public void Emulate(ulong ns)
 		{
 			instructionStartPC = pc;
 
-			CheckInterrupt();
+			if (CheckInterrupt())
+			{
+				if (debugger.IsBreakpoint(pc))
+				{
+					Breakpoint();
+					return;
+				}
+			}
 
 			try
 			{
@@ -169,10 +185,7 @@ namespace RunAmiga
 
 			if (debugger.IsBreakpoint(pc))
 			{
-				debugger.DumpTrace();
-				Trace.WriteLine($"Breakpoint @{pc:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
-				UI.IsDirty = true;
+				Breakpoint();
 				return;
 			}
 		}
@@ -1951,9 +1964,10 @@ namespace RunAmiga
 			{
 				//Trace.Write($"Interrupt Level {vector-0x18} @{instructionStartPC:X8}");
 
-				uint m = (vector - 0x18) << 8;
-				sr = (ushort)(((uint)sr & 0b11111_000_11111111) | m);
-				//sr = (ushort)(sr & 0b11111_000_11111111);
+				//the three IPL bits are the current interrupt level
+				uint level = vector - 0x18;
+				level = (level) & 7;
+				sr = (ushort)(((uint)sr & 0b11111_000_11111111) | (level<<8));
 
 				uint isr = read32(vector << 2);
 				if (isr == 0)
@@ -2557,7 +2571,7 @@ namespace RunAmiga
 		public void Interrupt(uint level)
 		{
 			//level is the IPLx interrupt bits in SR
-			interruptPending = (ushort)(level<<8);
+			interruptPending = (ushort)level;
 		}
 	}
 }
