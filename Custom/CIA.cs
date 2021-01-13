@@ -36,9 +36,58 @@ namespace RunAmiga.Custom
 		{
 		}
 
+		private ulong beamTime;
+		private ulong timerTime;
+
+		private uint vblankCount;
 		public void Emulate(ulong ns)
 		{
-			//regs[0] |= 2;
+			beamTime += ns;
+
+			//every 50Hz, reset the copper list
+			if (beamTime > 140_000) // 50Hz = 1/50th cpu clock = 7MHz/50 = 140k 
+			{
+				beamTime -= 140_000;
+
+				vblankCount++;
+
+				regs[8] = (byte)vblankCount;
+				regs[9] = (byte)(vblankCount >> 8);
+				regs[10] = (byte)(vblankCount >> 16);
+			}
+
+			timerTime += ns;
+			if (timerTime > 10)// timers tick at 1/10th cpu clock
+			{
+				timerTime -= 10;
+
+				//timer A running
+				if ((regs[0xe] & 1) != 0)
+				{
+					//timer A
+					regs[4]--;
+					if (regs[4] == 0xff)
+						regs[5]--;
+
+					//one shot mode?
+					if (regs[4] == 0 && regs[5] == 0 && (regs[0xe]&(1<<3))==1 )
+						regs[0xe] &= 0xfe;
+				}
+
+				//timer B running
+				if ((regs[0xf] & 1) != 0)
+				{
+					//timer B
+					regs[6]--;
+					if (regs[6] == 0xff)
+						regs[7]--;
+
+					//one shot mode?
+					if (regs[6] == 0 && regs[7] == 0 && (regs[0xf] & (1 << 3)) == 1)
+						regs[0xe] &= 0xfe;
+				}
+			}
+
 		}
 
 		public void Reset()
@@ -56,7 +105,7 @@ namespace RunAmiga.Custom
 				throw new UnknownInstructionSizeException(address,0);
 
 			byte reg = (byte)((address>>8)&0xf);
-			Trace.WriteLine($"CIAA Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			//Trace.WriteLine($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return (uint)regs[reg];
 		}
 
@@ -67,13 +116,12 @@ namespace RunAmiga.Custom
 
 			byte reg = (byte)((address >> 8) & 0xf);
 			regs[reg] = (byte)value;
-			Trace.WriteLine($"CIAA Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			Trace.WriteLine($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value,2).PadLeft(8,'0')}");
 
 			if (reg == 0)
 			{
 				UI.PowerLight = (regs[0]&2)==0;
 			}
-
 		}
 
 		public bool PowerLight()
@@ -111,8 +159,58 @@ namespace RunAmiga.Custom
 		{
 		}
 
+		private ulong beamTime;
+		private ulong timerTime;
+
+		private uint hblankCount;
 		public void Emulate(ulong ns)
 		{
+			beamTime += ns;
+
+			//every 50Hz, reset the copper list
+			if (beamTime > 140_000/312)
+			{
+				beamTime -= 140_000/312;
+
+				hblankCount++;
+
+				regs[8] = (byte)hblankCount;
+				regs[9] = (byte)(hblankCount >> 8);
+				regs[10] = (byte)(hblankCount >> 16);
+			}
+
+			timerTime += ns;
+			if (timerTime > 10)
+			{
+				timerTime -= 10;
+
+				//timer A running
+				if ((regs[0xe] & 1) != 0)
+				{
+					//timer A
+					regs[4]--;
+					if (regs[4] == 0xff)
+						regs[5]--;
+
+					//one shot mode?
+					if (regs[4] == 0 && regs[5] == 0 && (regs[0xe] & (1 << 3)) == 1)
+						regs[0xe] &= 0xfe;
+				}
+
+				//timer B running
+				if ((regs[0xf] & 1) != 0)
+				{
+					//timer B
+					regs[6]--;
+					if (regs[6] == 0xff)
+						regs[7]--;
+
+					//one shot mode?
+					if (regs[6] == 0 && regs[7] == 0 && (regs[0xf] & (1 << 3)) == 1)
+						regs[0xe] &= 0xfe;
+				}
+			}
+
 		}
 
 		public void Reset()
@@ -130,7 +228,7 @@ namespace RunAmiga.Custom
 				throw new UnknownInstructionSizeException(address,0);
 
 			byte reg = (byte)((address >> 8) & 0xf);
-			Trace.WriteLine($"CIAB Read {address:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			Trace.WriteLine($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return (uint)regs[reg];
 		}
 
@@ -141,7 +239,7 @@ namespace RunAmiga.Custom
 
 			byte reg = (byte)((address >> 8) & 0xf);
 			regs[reg] = (byte)value;
-			Trace.WriteLine($"CIAB Write {address:X8} {value:X8} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			Trace.WriteLine($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 		}
 	}
 

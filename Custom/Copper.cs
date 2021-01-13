@@ -25,14 +25,14 @@ namespace RunAmiga.Custom
 			copperTime += ns;
 
 			//every 50Hz, reset the copper list
-			if (copperTime > 20_000_000)
+			if (copperTime > 140_000)
 			{
 				copperPC = cop1lc;
-				copperTime -= 20_000_000;
+				copperTime -= 140_000;
 			}
 			//roughly
-			copperVert = (uint)((copperTime * 312) / 20_000_000);
-			copperHorz = (uint)(copperTime % (20_000_000 / 312));
+			copperVert = (uint)((copperTime * 312) / 140_000);
+			copperHorz = (uint)(copperTime % (140_000 / 312));
 		}
 
 		public void Reset()
@@ -135,16 +135,16 @@ namespace RunAmiga.Custom
 					break;
 				case ChipRegs.COP1LCL:
 					cop1lc = (cop1lc & 0xffff0000) | value;
-					ParseCopperList(cop1lc);
-					ParseCopperList(cop2lc);
+					//ParseCopperList(cop1lc);
+					//ParseCopperList(cop2lc);
 					break;
 				case ChipRegs.COP2LCH:
 					cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16);
 					break;
 				case ChipRegs.COP2LCL:
 					cop2lc = (cop2lc & 0xffff0000) | value;
-					ParseCopperList(cop1lc);
-					ParseCopperList(cop2lc);
+					//ParseCopperList(cop1lc);
+					//ParseCopperList(cop2lc);
 					break;
 				case ChipRegs.COPJMP1:
 					SetCopperPC(cop1lc);

@@ -232,6 +232,8 @@ namespace RunAmiga
 			new Label (0xfc0e60 , "ExitIntr"),
 			new Label (0xfc0c4c , "InterruptBail"),
 
+			new Label (0xfcabe4, "GraphicsLibraryInit"),
+
 
 		};
 

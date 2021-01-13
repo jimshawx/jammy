@@ -24,7 +24,7 @@ namespace RunAmiga
 		{
 			disassembler = new Disassembler();
 
-			//AddBreakpoint(0xfc0af0);//InitCode
+			AddBreakpoint(0xfc0af0);//InitCode
 			//AddBreakpoint(0xfc0afe);
 			//AddBreakpoint(0xfc0af0);
 			//AddBreakpoint(0xfc14ec);//MakeLibrary
@@ -32,6 +32,7 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc096c);
 			//AddBreakpoint(0xfc0bc8);//InitStruct
 			//AddBreakpoint(0xfc1c34);//OpenResource
+			AddBreakpoint(0xfc1438);//OpenLibrary
 			//AddBreakpoint(0xfe9180);
 			//AddBreakpoint(0xfc30e4);//setup LastAlert
 			//AddBreakpoint(0xfc19ea);//AddMemList
@@ -62,13 +63,16 @@ namespace RunAmiga
 
 			//AddBreakpoint(0xfc13ec);
 
+			AddBreakpoint(0xfcabe4);//Init Graphics Library
+
+			AddBreakpoint(0x00FE930E);//
+
 			//AddBreakpoint(0xfc0e86);//Schedule().
 			//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
 			AddBreakpoint(0xfc2fb4);//Task Crash Routine
 			AddBreakpoint(0xfc2fd6);//Alert()
 			AddBreakpoint(0xfc305e);//Irrecoverable Crash
-
 
 			for (uint i = 0; i < 12; i++)
 				AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);

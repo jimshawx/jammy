@@ -10,17 +10,20 @@ namespace RunAmiga.Custom
 
 		private readonly Copper copper;
 		private readonly Blitter blitter;
+		private readonly Beam beam;
 
 		public Chips(Debugger debugger, Memory memory)
 		{
 			blitter = new Blitter(this);
 			copper = new Copper(memory, this);
+			beam = new Beam();
 		}
 
 		public void Emulate(ulong ns)
 		{
 			copper.Emulate(ns);
 			blitter.Emulate(ns);
+			beam.Emulate(ns);
 		}
 
 		public void Reset()
@@ -56,9 +59,6 @@ namespace RunAmiga.Custom
 
 			int reg = REG(address);
 
-			//Trace.WriteLine($"Custom Read {address:X8} {size} : #{regs[reg]:X4} {debug[address].Item1} {debug[address].Item2}");
-
-
 			if ((address >= ChipRegs.COP1LCH && address < ChipRegs.DIWSTRT) || address == ChipRegs.COPCON)
 			{
 				copper.Read(insaddr, address);
@@ -67,6 +67,13 @@ namespace RunAmiga.Custom
 			{
 				blitter.Read(insaddr, address);
 			}
+			else if (address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW)
+			{
+				regs[reg] = beam.Read(address);
+			}
+
+			if (address != ChipRegs.VHPOSR && address != ChipRegs.VPOSR)
+				Trace.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
 
 			return (uint)regs[reg];
 		}
@@ -142,7 +149,7 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
-				Trace.WriteLine($"new {regs[reg]:X4} {Convert.ToString(regs[reg],2).PadLeft(16,'0')}");
+				Trace.WriteLine($"    -> {Convert.ToString(regs[reg],2).PadLeft(16,'0')} {regs[reg]:X4}");
 
 				if ((regs[reg] & 0x4000) != 0) Trace.Write("INTEN ");
 				if ((regs[reg] & 0x2000) != 0) Trace.Write("EXTER ");
