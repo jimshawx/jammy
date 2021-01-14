@@ -54,7 +54,7 @@ namespace RunAmiga
 						new Tuple<uint, uint> (0xfc0900, 0x4000),
 						new Tuple<uint, uint> (0xfc4900, 0x1f000),
 						new Tuple<uint, uint> (0xfe52a4, 0x0144),
-						new Tuple<uint, uint> (0xfe53e8, 0x4000)
+						new Tuple<uint, uint> (0xfe53e8, 0x6000)
 					});
 			Machine.UnlockEmulation();
 			txtDisassembly.Text = disasm;
@@ -288,17 +288,17 @@ namespace RunAmiga
 			var ctx = (ContextMenuStrip)sender;
 
 			var mouse = this.PointToClient(ctx.Location);
-			Trace.WriteLine($"ctx {mouse.X} {mouse.Y}");
+			Logger.WriteLine($"ctx {mouse.X} {mouse.Y}");
 			int c = txtDisassembly.GetCharIndexFromPosition(mouse);
-			Trace.WriteLine($"char {c}");
+			Logger.WriteLine($"char {c}");
 			int line = txtDisassembly.GetLineFromCharIndex(c)-1;
-			Trace.WriteLine($"line {line}");
+			Logger.WriteLine($"line {line}");
 			uint pc = debugger.GetLineAddress(line);
-			Trace.WriteLine($"PC {pc:X8}");
+			Logger.WriteLine($"PC {pc:X8}");
 
 			if (e.ClickedItem == toolStripBreakpoint)
 			{
-				Trace.WriteLine($"BP {pc:X8}");
+				Logger.WriteLine($"BP {pc:X8}");
 				Machine.LockEmulation();
 				debugger.ToggleBreakpoint(pc);
 				Machine.UnlockEmulation();
@@ -306,7 +306,7 @@ namespace RunAmiga
 
 			if (e.ClickedItem == toolStripSkip)
 			{
-				Trace.WriteLine($"SKIP {pc:X8}");
+				Logger.WriteLine($"SKIP {pc:X8}");
 				Machine.LockEmulation();
 				debugger.SetPC(pc);
 				Machine.UnlockEmulation();

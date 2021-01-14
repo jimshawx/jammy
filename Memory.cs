@@ -102,7 +102,7 @@ namespace RunAmiga
 			//		Write(insaddr, address,   (ushort)(value>>16), Size.Word);
 			//		return;
 			//	}
-			//	Trace.WriteLine($"[LOG{id}] a:{address:X8} v:{value:X8} pc:{insaddr:X8} s:{size}");
+			//	Logger.WriteLine($"[LOG{id}] a:{address:X8} v:{value:X8} pc:{insaddr:X8} s:{size}");
 			//}
 
 			if (size == Size.Byte) { write8(address, (byte)value); return; }
@@ -125,7 +125,7 @@ namespace RunAmiga
 		{
 			if (address >= 0x1000000)
 			{
-				//Trace.WriteLine($"Memory Read Byte from {address:X8}");
+				//Logger.WriteLine($"Memory Read Byte from {address:X8}");
 				return 0;
 			}
 			return memory[address];
@@ -135,12 +135,12 @@ namespace RunAmiga
 		{
 			if (address >= 0xfffffe)
 			{
-				Trace.WriteLine($"Memory Read Word from ${address:X8}");
+				Logger.WriteLine($"Memory Read Word from ${address:X8}");
 				return 0;
 			}
 			if ((address & 1) != 0)
 			{
-				Trace.WriteLine($"Memory Read Unaligned Word from ${address:X8}");
+				Logger.WriteLine($"Memory Read Unaligned Word from ${address:X8}");
 				return 0;
 			}
 			return (ushort)(((ushort)memory[address] << 8) +
@@ -151,12 +151,12 @@ namespace RunAmiga
 		{
 			if (address >= 0xfffffc)
 			{
-				Trace.WriteLine($"Memory Read Int from ${address:X8}");
+				Logger.WriteLine($"Memory Read Int from ${address:X8}");
 				return 0;
 			}
 			if ((address & 1) != 0)
 			{
-				Trace.WriteLine($"Memory Read Unaligned Int from ${address:X8}");
+				Logger.WriteLine($"Memory Read Unaligned Int from ${address:X8}");
 				return 0;
 			}
 			return ((uint)memory[address] << 24) +

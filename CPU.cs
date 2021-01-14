@@ -9,6 +9,12 @@ namespace RunAmiga
 {
 	public class CPU : IEmulate
 	{
+		private enum FetchMode
+		{
+			Running,
+			Stopped
+		}
+
 		private uint[] d = new uint[8];
 		private A a;
 
@@ -41,6 +47,8 @@ namespace RunAmiga
 
 		private uint instructionStartPC;
 
+		private FetchMode fetchMode;
+
 		private List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 		private Debugger debugger;
 
@@ -60,6 +68,7 @@ namespace RunAmiga
 
 		public void Reset()
 		{
+			fetchMode = FetchMode.Running;
 			sr = 0b00100_111_00000100;//S,INTS,Z
 			a[7] = read16(0);
 			pc = read32(4);
@@ -71,7 +80,7 @@ namespace RunAmiga
 			if (!((pc > 0 && pc < 0x800) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xf80000 && pc < 0x1000000)))
 			{
 				debugger.DumpTrace();
-				Trace.WriteLine($"PC out of expected range {pc:X8}");
+				Logger.WriteLine($"PC out of expected range {pc:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
@@ -105,14 +114,10 @@ namespace RunAmiga
 
 		private void Breakpoint()
 		{
-			{
-				debugger.DumpTrace();
-				Trace.WriteLine($"Breakpoint @{pc:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
-				UI.IsDirty = true;
-				return;
-			}
-
+			//debugger.DumpTrace();
+			Logger.WriteLine($"Breakpoint @{pc:X8}");
+			Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			UI.IsDirty = true;
 		}
 
 		public void Emulate(ulong ns)
@@ -127,6 +132,9 @@ namespace RunAmiga
 					return;
 				}
 			}
+
+			if (fetchMode == FetchMode.Stopped)
+				return;
 
 			try
 			{
@@ -172,7 +180,7 @@ namespace RunAmiga
 			}
 			catch (MC68000Exception ex)
 			{
-				Trace.WriteLine($"Caught an exception {ex}");
+				Logger.WriteLine($"Caught an exception {ex}");
 				if (ex is UnknownInstructionException)
 					internalTrap(4);
 				else if (ex is UnknownInstructionSizeException)
@@ -660,7 +668,7 @@ namespace RunAmiga
 					else if (size == Size.Word)
 						a[Xn] = (a[Xn] & 0xffff0000) | (value & 0x0000ffff);
 					else if (size == Size.Byte)
-						a[Xn] = (a[Xn] & 0xffffff00) | (value & 0x000000ff);
+						throw new UnknownInstructionSizeException(0,type);
 					break;
 				case 2:
 					writeOp(ea, value, size);
@@ -978,10 +986,10 @@ namespace RunAmiga
 					//and sign is ((int)v>>shift)&(signmask)
 					uint sign = (uint)((int)val>>shift)&signmask;
 
-					//Trace.WriteLine($"asl #{shift},{Convert.ToString(val, 2).PadLeft(32, '0')}");
-					//Trace.WriteLine($"mask {Convert.ToString(signmask, 2).PadLeft(32, '0')}");
-					//Trace.WriteLine($"sign {Convert.ToString(sign,2).PadLeft(32,'0')}");
-					//Trace.WriteLine($"vm   {Convert.ToString(val&signmask, 2).PadLeft(32, '0')}");
+					//Logger.WriteLine($"asl #{shift},{Convert.ToString(val, 2).PadLeft(32, '0')}");
+					//Logger.WriteLine($"mask {Convert.ToString(signmask, 2).PadLeft(32, '0')}");
+					//Logger.WriteLine($"sign {Convert.ToString(sign,2).PadLeft(32,'0')}");
+					//Logger.WriteLine($"vm   {Convert.ToString(val&signmask, 2).PadLeft(32, '0')}");
 					setV((val&signmask) != sign);
 					val <<= shift;
 				}
@@ -1962,7 +1970,7 @@ namespace RunAmiga
 
 			if (vector >= 0x19 && vector <= 0x1f)
 			{
-				//Trace.Write($"Interrupt Level {vector-0x18} @{instructionStartPC:X8}");
+				//Logger.Write($"Interrupt Level {vector-0x18} @{instructionStartPC:X8}");
 
 				//the three IPL bits are the current interrupt level
 				uint level = vector - 0x18;
@@ -1977,10 +1985,12 @@ namespace RunAmiga
 			{
 				//debugger.DumpTrace();
 				if (vector < 16)
-					Trace.WriteLine($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
+					Logger.WriteLine($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
 				else
-					Trace.WriteLine($"Trap {vector} {instructionStartPC:X8}");
+					Logger.WriteLine($"Trap {vector} {instructionStartPC:X8}");
 			}
+
+			fetchMode = FetchMode.Running;
 
 			setSupervisor();
 			push32(instructionStartPC);
@@ -1988,7 +1998,7 @@ namespace RunAmiga
 
 			pc = read32(vector << 2);
 
-			//Trace.WriteLine($" -> {pc:X8}");
+			//Logger.WriteLine($" -> {pc:X8}");
 		}
 
 		private void trap(int type)
@@ -2045,6 +2055,7 @@ namespace RunAmiga
 			{
 				sr = read16(pc);//naturally sets the flags
 				pc += 2;
+				fetchMode = FetchMode.Stopped;
 				CheckInterrupt();
 			}
 			else
@@ -2142,7 +2153,7 @@ namespace RunAmiga
 			//movea.w is sign extended and does not change the flags
 			if ((type & 0b111_000) == 0b001_000)
 			{
-				writeEA(type, ea, Size.Long, op);
+				writeEA(type, ea, Size.Long, (uint)(short)op);
 			}
 			else
 			{
@@ -2243,7 +2254,9 @@ namespace RunAmiga
 			}
 
 			if (size == Size.Byte)
-				bit &= 7;
+				bit &= 7;//0-7
+			else
+				bit &= 31;//0-31
 
 			bit = 1u << (int)bit;
 
@@ -2466,9 +2479,9 @@ namespace RunAmiga
 			{
 				//if (instructionStartPC == 0xfc1798)
 				//{
-				//	Trace.WriteLine("movem.l  d2/d3/a2,-(a7)");
-				//	Trace.WriteLine($"d2:{d[2]:X8} d3:{d[3]:X8} a2:{a[2]:X8} a7:{a[7]:X8}");
-				//	Trace.WriteLine($"{Convert.ToString(mask,2).PadLeft(16,'0')}");
+				//	Logger.WriteLine("movem.l  d2/d3/a2,-(a7)");
+				//	Logger.WriteLine($"d2:{d[2]:X8} d3:{d[3]:X8} a2:{a[2]:X8} a7:{a[7]:X8}");
+				//	Logger.WriteLine($"{Convert.ToString(mask,2).PadLeft(16,'0')}");
 
 				//	if (d[2] == 0x000001c8 && d[3] == 0x00000096 && a[2] == 0x00e80000 && a[7] == 0x00c014f8)
 				//	{

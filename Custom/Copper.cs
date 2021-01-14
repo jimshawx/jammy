@@ -52,7 +52,7 @@ namespace RunAmiga.Custom
 		{
 			if (copPC == 0) return;
 
-			Trace.WriteLine($"Parsing Copper List @{copPC:X8}");
+			Logger.WriteLine($"Parsing Copper List @{copPC:X8}");
 
 			int counter = 64;
 			while (counter-- > 0)
@@ -63,14 +63,14 @@ namespace RunAmiga.Custom
 				ushort data = memory.read16(copPC);
 				copPC += 2;
 
-				Trace.Write($"{copPC - 4:X8} {ins:X4},{data:X4} ");
+				Logger.Write($"{copPC - 4:X8} {ins:X4},{data:X4} ");
 
 				if ((ins & 0x0001) == 0)
 				{
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					Trace.WriteLine($"MOVE {ChipRegs.Name(customBase + reg)}({reg:X4}),{data:X4}");
+					Logger.WriteLine($"MOVE {ChipRegs.Name(customBase + reg)}({reg:X4}),{data:X4}");
 
 					//if (customBase+reg == CustomRegs.COPJMP1)
 					//	copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC
@@ -91,7 +91,7 @@ namespace RunAmiga.Custom
 						uint ve = (uint)((data >> 8) & 0x7f);
 						uint blit = (uint)(data >> 15);
 
-						Trace.WriteLine($"WAIT vp:{vp:X4} hp:{hp:X4} he:{he:X4} ve:{ve:X4} b:{blit}");
+						Logger.WriteLine($"WAIT vp:{vp:X4} hp:{hp:X4} he:{he:X4} ve:{ve:X4} b:{blit}");
 					}
 					else
 					{
@@ -103,7 +103,7 @@ namespace RunAmiga.Custom
 						uint vertC = (uint)((data >> 8) & 0x3f);
 						uint blitC = (uint)(data >> 15);
 
-						Trace.WriteLine($"SKIP v:{vert:X4} h:{horz:X4} vC:{vertC} hC:{horzC} bC:{blitC}");
+						Logger.WriteLine($"SKIP v:{vert:X4} h:{horz:X4} vC:{vertC} hC:{horzC} bC:{blitC}");
 					}
 
 					//this is usually how a copper list ends
@@ -116,7 +116,7 @@ namespace RunAmiga.Custom
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
-			Trace.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 			return value;
 		}
 
@@ -125,7 +125,7 @@ namespace RunAmiga.Custom
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			Trace.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			switch (address)
 			{

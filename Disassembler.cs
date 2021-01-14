@@ -1440,7 +1440,8 @@ namespace RunAmiga
 
 		private void stop(int type)
 		{
-			Append("stop");
+			Append("stop ");
+			fetchImm(Size.Word);
 		}
 
 		private void t_zero(int type)

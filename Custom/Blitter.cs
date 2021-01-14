@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing.Drawing2D;
 
 namespace RunAmiga.Custom
 {
 	public class Blitter : IEmulate
 	{
-		private Chips custom;
+		private readonly Chips custom;
+		private readonly Memory memory;
 
-		public Blitter(Chips custom)
+		public Blitter(Chips custom, Memory memory)
 		{
 			this.custom = custom;
+			this.memory = memory;
 		}
 
 		public void Emulate(ulong ns)
@@ -25,7 +28,7 @@ namespace RunAmiga.Custom
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
-			Trace.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 			return value;
 		}
 
@@ -39,25 +42,37 @@ namespace RunAmiga.Custom
 		private uint bltcmod;
 		private uint bltdmod;
 
+		private uint bltadat;
+		private uint bltbdat;
+		private uint bltcdat;
+		private uint bltddat;
+
 		private uint bltafwm;
 		private uint bltalwm;
 
+		private uint bltsize;
 		private uint bltsizv;
+		private uint bltsizh;
+
+		private uint bltcon0;
+		private uint bltcon1;
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			Trace.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			switch (address)
 			{
 				case ChipRegs.BLTCON0:
+					bltcon0 = value;
 					uint lf = (uint)value & 0xff;
 					uint ash = (uint)value >> 12;
 					uint use = (uint)(value >> 8) & 0xf;
-					Trace.WriteLine($"minterm:{lf:X2} ash:{ash} use:{Convert.ToString(use, 2).PadLeft(4, '0')}");
+					Logger.WriteLine($"minterm:{lf:X2} ash:{ash} use:{Convert.ToString(use, 2).PadLeft(4, '0')}");
 					break;
 
 				case ChipRegs.BLTCON1:
+					bltcon1 = value;
 					uint bsh = (uint)value >> 12;
 					uint doff = (uint)(value >> 7) & 1;
 					uint efe = (uint)(value >> 4) & 1;
@@ -65,7 +80,7 @@ namespace RunAmiga.Custom
 					uint fci = (uint)(value >> 2) & 1;
 					uint desc = (uint)(value >> 1) & 1;
 					uint line = (uint)value & 1;
-					Trace.WriteLine($"bsh:{bsh} doff:{doff} efe:{efe} ife:{ife} fci:{fci} desc:{desc} line:{line}");
+					Logger.WriteLine($"bsh:{bsh} doff:{doff} efe:{efe} ife:{ife} fci:{fci} desc:{desc} line:{line}");
 					break;
 
 				case ChipRegs.BLTAFWM:
@@ -101,41 +116,147 @@ namespace RunAmiga.Custom
 					break;
 
 				case ChipRegs.BLTSIZE:
-					uint width = (uint)value & 0x1f;
-					uint height = (uint)value >> 5;
-					Trace.WriteLine($"BLIT! size:{width}x{height}");
+					bltsize = value;
+					BlitSmall();
 					break;
 
 				case ChipRegs.BLTCON0L:
+					bltcon0 = (bltcon0 & 0x0000ff00) | ((uint)value & 0x000000ff);
 					uint minterm = (uint)value & 0xff;
-					Trace.WriteLine($"minterm:{minterm:X2}");
+					Logger.WriteLine($"minterm:{minterm:X2}");
 					break;
 
 				case ChipRegs.BLTSIZV:
 					bltsizv = value;
 					break;
 				case ChipRegs.BLTSIZH:
-					Trace.WriteLine($"BLIT! size:{value}x{bltsizv}");
+					bltsizh = value;
+					BlitBig();
 					break;
 
 				case ChipRegs.BLTCMOD:
-					bltcmod = value;
+					bltcmod = (uint)(short)value;
 					break;
 				case ChipRegs.BLTBMOD:
-					bltbmod = value; 
+					bltbmod = (uint)(short)value;
 					break;
 				case ChipRegs.BLTAMOD:
-					bltamod = value; 
+					bltamod = (uint)(short)value;
 					break;
 				case ChipRegs.BLTDMOD:
-					bltdmod = value; 
+					bltdmod = (uint)(short)value;
 					break;
 
-				case ChipRegs.BLTCDAT: break;
-				case ChipRegs.BLTBDAT: break;
-				case ChipRegs.BLTADAT: break;
-				case ChipRegs.BLTDDAT: break;
+				case ChipRegs.BLTCDAT:
+					bltcdat = value;
+					break;
+				case ChipRegs.BLTBDAT:
+					bltbdat = value;
+					break;
+				case ChipRegs.BLTADAT:
+					bltadat = value;
+					break;
+				case ChipRegs.BLTDDAT:
+					bltddat = value;
+					break;
 			}
+		}
+
+		private void BlitSmall()
+		{
+			if ((bltcon1 & 1) != 0)
+			{
+				Line();
+				return;
+			}
+
+			uint width = bltsize & 0x1f;
+			uint height = bltsize >> 5;
+			Logger.WriteLine($"BLIT! size:{width}x{height}");
+			Blit(width, height);
+		}
+
+		private void BlitBig()
+		{
+			if ((bltcon1 & 1) != 0)
+			{
+				Line();
+				return;
+			}
+			
+			Logger.WriteLine($"BLIT! size:{bltsizh}x{bltsizv}");
+			Blit(bltsizh, bltsizv);
+		}
+
+		private void Blit(uint width, uint height)
+		{
+			//hacky alignment fudge
+			uint s_bltapt = bltapt & ~1u;
+			uint s_bltbpt = bltbpt & ~1u;
+			uint s_bltcpt = bltcpt & ~1u;
+			uint s_bltdpt = bltdpt & ~1u;
+
+			int ashift = (int)(bltcon0 >> 12);
+			int bshift = (int)(bltcon1 >> 12);
+
+			for (uint h = 0; h < height; h++)
+			{
+				uint bltabits = 0;
+				uint bltbbits = 0;
+
+				for (uint w = 0; w < width; w++)
+				{
+					if ((bltcon0 & (1u << 11)) != 0)
+					{
+						bltadat = memory.read16(s_bltapt);
+						if (w == 0) bltadat &= bltafwm;
+						else if (w == width - 1) bltadat &= bltalwm;
+						bltadat <<= (16 - ashift);
+						bltadat |= bltabits;
+						bltabits = bltadat << 16;
+						bltadat >>= 16;
+					}
+
+					if ((bltcon0 & (1u << 10)) != 0)
+					{
+						bltbdat = memory.read16(s_bltbpt);
+						bltbdat <<= (16 - bshift);
+						bltbdat |= bltbbits;
+						bltbbits = bltbdat << 16;
+						bltbdat >>= 16;
+					}
+
+					if ((bltcon0 & (1u << 9)) != 0)
+					{
+						bltcdat = memory.read16(s_bltcpt);
+					}
+
+					bltddat = (bltbdat & ~bltadat) | (bltcdat & bltadat);
+
+					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
+					{
+						memory.write16(s_bltdpt, (ushort) bltddat);
+					}
+
+					//Logger.Write($"{Convert.ToString(bltddat,2).PadLeft(16,'0')}");
+
+					s_bltapt += 2;
+					s_bltbpt += 2;
+					s_bltcpt += 2;
+					s_bltdpt += 2;
+				}
+				//Logger.WriteLine("");
+
+				s_bltapt += bltamod;
+				s_bltbpt += bltbmod;
+				s_bltcpt += bltcmod;
+				s_bltdpt += bltdmod;
+			}
+		}
+
+		private void Line()
+		{
+			Logger.WriteLine($"BLIT LINE!");
 		}
 	}
 }

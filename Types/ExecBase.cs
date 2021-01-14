@@ -304,7 +304,7 @@ namespace RunAmiga.Types
 		{
 			if (lookup.Contains(addr+type.GetHashCode()))
 			{
-				//Trace.WriteLine($"Visited {addr:X8} again for {type.Name}");
+				//Logger.WriteLine($"Visited {addr:X8} again for {type.Name}");
 				return 0;
 			}
 			lookup.Add(addr+type.GetHashCode());
@@ -440,22 +440,22 @@ namespace RunAmiga.Types
 						else throw new ApplicationException();
 					}
 
-					//Trace.WriteLine($"{addr:X8} {prop.Name}");
+					//Logger.WriteLine($"{addr:X8} {prop.Name}");
 					prop.SetValue(obj, rv);
 				}
 				catch (NullReferenceException ex)
 				{
-					Trace.WriteLine($"Problem Mapping {prop.Name} was null\n{ex}");
+					Logger.WriteLine($"Problem Mapping {prop.Name} was null\n{ex}");
 				}
 				catch (Exception ex)
 				{
 					if (rv != null)
-						Trace.WriteLine($"Problem Mapping {prop.Name} {prop.PropertyType} != {rv.GetType()}\n{ex}");
+						Logger.WriteLine($"Problem Mapping {prop.Name} {prop.PropertyType} != {rv.GetType()}\n{ex}");
 					else
-						Trace.WriteLine($"Problem Mapping {prop.Name} {prop.PropertyType}\n{ex}");
+						Logger.WriteLine($"Problem Mapping {prop.Name} {prop.PropertyType}\n{ex}");
 				}
 			}
-			//Trace.WriteLine($"{addr-startAddr}");
+			//Logger.WriteLine($"{addr-startAddr}");
 			return addr - startAddr;
 		}
 
@@ -470,7 +470,7 @@ namespace RunAmiga.Types
 			if (execAddress == 0xc00276)
 				MapObject(typeof(ExecBase), execbase, execAddress, 0);
 
-			//Trace.WriteLine(execbase.ToString());
+			//Logger.WriteLine(execbase.ToString());
 			return execbase.ToString() + "\n"+ sb.ToString();
 		}
 
@@ -491,7 +491,7 @@ namespace RunAmiga.Types
 		public string MapString(uint addr)
 		{
 			uint str = memory.Read32(addr);
-			//Trace.WriteLine($"String @{addr:X8}->{str:X8}");
+			//Logger.WriteLine($"String @{addr:X8}->{str:X8}");
 			if (str == 0)
 				return "(null)";
 

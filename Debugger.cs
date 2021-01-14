@@ -24,7 +24,7 @@ namespace RunAmiga
 		{
 			disassembler = new Disassembler();
 
-			AddBreakpoint(0xfc0af0);//InitCode
+			//AddBreakpoint(0xfc0af0);//InitCode
 			//AddBreakpoint(0xfc0afe);
 			//AddBreakpoint(0xfc0af0);
 			//AddBreakpoint(0xfc14ec);//MakeLibrary
@@ -32,7 +32,7 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc096c);
 			//AddBreakpoint(0xfc0bc8);//InitStruct
 			//AddBreakpoint(0xfc1c34);//OpenResource
-			AddBreakpoint(0xfc1438);//OpenLibrary
+			//AddBreakpoint(0xfc1438);//OpenLibrary
 			//AddBreakpoint(0xfe9180);
 			//AddBreakpoint(0xfc30e4);//setup LastAlert
 			//AddBreakpoint(0xfc19ea);//AddMemList
@@ -47,7 +47,7 @@ namespace RunAmiga
 			//AddBreakpoint(0xfcac92);
 
 			//AddBreakpoint(0xfc1798);
-			
+
 			//AddBreakpoint(0xfcac92);
 
 			//AddBreakpoint(0x00fcac82);//copper list
@@ -63,9 +63,13 @@ namespace RunAmiga
 
 			//AddBreakpoint(0xfc13ec);
 
-			AddBreakpoint(0xfcabe4);//Init Graphics Library
+			//AddBreakpoint(0xfcabe4);//Init Graphics Library
 
-			AddBreakpoint(0x00FE930E);//
+			//AddBreakpoint(0xFE930E);//
+			//AddBreakpoint(0xFC0F2A);//
+			//AddBreakpoint(0xFC6d1a);
+			AddBreakpoint(0xFc666a);
+			//AddBreakpoint(0xFC050C);
 
 			//AddBreakpoint(0xfc0e86);//Schedule().
 			//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
@@ -107,7 +111,7 @@ namespace RunAmiga
 			if (isOutOfRange(address))
 			{
 				DumpTrace();
-				System.Diagnostics.Trace.WriteLine($"Trying to read a {size} from {address:X8} @{insaddr:X8}");
+				Logger.WriteLine($"Trying to read a {size} from {address:X8} @{insaddr:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
@@ -122,14 +126,14 @@ namespace RunAmiga
 			//if (address >= 0xc004d2 && address < 0xc004d2+48) 
 			//{
 			//	DumpTrace();
-			//	Trace.WriteLine($"Wrote to {address:X8}");
+			//	Logger.WriteLine($"Wrote to {address:X8}");
 			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			//}
 
 			if (isROM(address) || isOutOfRange(address))
 			{
 				DumpTrace();
-				System.Diagnostics.Trace.WriteLine($"Trying to write a {size} ({value:X8} {value}) to {address:X8} @{insaddr:X8}");
+				Logger.WriteLine($"Trying to write a {size} ({value:X8} {value}) to {address:X8} @{insaddr:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
@@ -247,7 +251,7 @@ namespace RunAmiga
 					while (address < 0x1000000)
 					{
 						var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-						//Trace.WriteLine(dasm);
+						//Logger.WriteLine(dasm);
 						txtFile.WriteLine(dasm);
 
 						address += (uint)dasm.Bytes.Length;
@@ -354,7 +358,7 @@ namespace RunAmiga
 		{
 			foreach (var t in traces.TakeLast(64))
 			{
-				System.Diagnostics.Trace.WriteLine($"{t}");
+				Logger.WriteLine($"{t}");
 			}
 			traces.Clear();
 		}
