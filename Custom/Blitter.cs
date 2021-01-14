@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing.Drawing2D;
+using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
@@ -8,11 +10,13 @@ namespace RunAmiga.Custom
 	{
 		private readonly Chips custom;
 		private readonly Memory memory;
+		private readonly Memory musashiMemory;
 
-		public Blitter(Chips custom, Memory memory)
+		public Blitter(Chips custom, Memory memory, Memory musashiMemory)
 		{
 			this.custom = custom;
 			this.memory = memory;
+			this.musashiMemory = musashiMemory;
 		}
 
 		public void Emulate(ulong ns)
@@ -190,6 +194,8 @@ namespace RunAmiga.Custom
 
 		private void Blit(uint width, uint height)
 		{
+			//todo: assume blitter DMA is enabled
+
 			//hacky alignment fudge
 			uint s_bltapt = bltapt & ~1u;
 			uint s_bltbpt = bltbpt & ~1u;
@@ -198,6 +204,11 @@ namespace RunAmiga.Custom
 
 			int ashift = (int)(bltcon0 >> 12);
 			int bshift = (int)(bltcon1 >> 12);
+
+			uint bltzero = 0;
+
+			//set blitter busy in DMACON
+			custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u<<14), Size.Word);
 
 			for (uint h = 0; h < height; h++)
 			{
@@ -232,10 +243,13 @@ namespace RunAmiga.Custom
 					}
 
 					bltddat = (bltbdat & ~bltadat) | (bltcdat & bltadat);
+					
+					bltzero |= bltddat;
 
 					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
 					{
 						memory.write16(s_bltdpt, (ushort) bltddat);
+						musashiMemory.write16(s_bltdpt, (ushort)bltddat);
 					}
 
 					//Logger.Write($"{Convert.ToString(bltddat,2).PadLeft(16,'0')}");
@@ -252,6 +266,20 @@ namespace RunAmiga.Custom
 				s_bltcpt += bltcmod;
 				s_bltdpt += bltdmod;
 			}
+
+			//write the BZERO bit in DMACON
+			if (bltzero == 0)
+				custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
+			else
+				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+
+			//write blitter interrupt bit to INTREQ
+			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u<<(int)Interrupt.BLIT), Size.Word);
+
+			//disable blitter busy in DMACON
+			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+
+			//todo: want to trigger the blitter interrupt here
 		}
 
 		private void Line()

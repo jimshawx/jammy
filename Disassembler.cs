@@ -377,28 +377,30 @@ namespace RunAmiga
 			if (mode == 3)
 			{
 				int op = type & 0b111_000_000_000;
+				string rots = "1";
 				switch (op)
 				{
-					case 0: asd(type, 1, lr, Size.Word); break;
-					case 1: lsd(type, 1, lr, Size.Word); break;
-					case 2: roxd(type, 1, lr, Size.Word); break;
-					case 3: rod(type, 1, lr, Size.Word); break;
+					case 0: asd(type, rots, lr, Size.Word); break;
+					case 1: lsd(type, rots, lr, Size.Word); break;
+					case 2: roxd(type, rots, lr, Size.Word); break;
+					case 3: rod(type, rots, lr, Size.Word); break;
 				}
 			}
 			else
 			{
 				int op = (type & 0b11_000) >> 3;
 				int rot = (type & 0b111_0_00_0_00_000) >> 9;
+				string rots;
 
 				if ((type & 0b1_00_000) != 0)
 				{
 					//rot = (int)(d[rot] & 0x3f);
-					Append($"d{rot}");
+					rots = $"d{rot}";
 				}
 				else
 				{
 					if (rot == 0) rot = 8;
-					//Append($"#{rot}");
+					rots = $"#{rot}";
 				}
 
 				Size size = getSize(type);
@@ -409,46 +411,46 @@ namespace RunAmiga
 
 				switch (op)
 				{
-					case 0: asd(type, rot, lr, size); break;
-					case 1: lsd(type, rot, lr, size); break;
-					case 2: roxd(type, rot, lr, size); break;
-					case 3: rod(type, rot, lr, size); break;
+					case 0: asd(type, rots, lr, size); break;
+					case 1: lsd(type, rots, lr, size); break;
+					case 2: roxd(type, rots, lr, size); break;
+					case 3: rod(type, rots, lr, size); break;
 				}
 			}
 		}
 
-		private void rod(int type, int rot, int lr, Size size)
+		private void rod(int type, string rot, int lr, Size size)
 		{
 			if (lr == 1)
 			{
 				Append($"rol");
 				Append(size);
-				Append($"#{rot}");
+				Append(rot);
 			}
 			else
 			{
 				Append($"ror");
 				Append(size);
-				Append($"#{rot}");
+				Append(rot);
 			}
 			Append(",");
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
 		}
 
-		private void roxd(int type, int rot, int lr, Size size)
+		private void roxd(int type, string rot, int lr, Size size)
 		{
 			if (lr == 1)
 			{
 				Append($"roxl");
 				Append(size);
-				Append($"#{rot}");
+				Append(rot);
 			}
 			else
 			{
 				Append($"roxr");
 				Append(size);
-				Append($"#{rot}");
+				Append(rot);
 			}
 			Append(",");
 
@@ -456,38 +458,38 @@ namespace RunAmiga
 			uint val = fetchOp(type, ea, size);
 		}
 
-		private void lsd(int type, int rot, int lr, Size size)
+		private void lsd(int type, string rot, int lr, Size size)
 		{
 			if (lr == 1)
 			{
 				Append($"lsl");
 				Append(size);
-				Append($"#{rot}");
+				Append(rot);
 			}
 			else
 			{
 				Append($"lsr");
 				Append(size);
-				Append($"#{rot}");
+				Append(rot);
 			}
 			Append(",");
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
 		}
 
-		private void asd(int type, int rot, int lr, Size size)
+		private void asd(int type, string rot, int lr, Size size)
 		{
 			if (lr == 1)
 			{
 				Append($"asl");
 				Append(size);
-				Append($"#{rot}");
+				Append(rot);
 			}
 			else
 			{
 				Append($"asr");
 				Append(size);
-				Append($"#{rot}");
+				Append(rot);
 			}
 			Append(",");
 			uint ea = fetchEA(type);

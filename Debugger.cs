@@ -68,8 +68,9 @@ namespace RunAmiga
 			//AddBreakpoint(0xFE930E);//
 			//AddBreakpoint(0xFC0F2A);//
 			//AddBreakpoint(0xFC6d1a);
-			AddBreakpoint(0xFc666a);
+			//AddBreakpoint(0xFc666a);
 			//AddBreakpoint(0xFC050C);
+			//AddBreakpoint(0xFC559C);
 
 			//AddBreakpoint(0xfc0e86);//Schedule().
 			//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.

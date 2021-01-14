@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
 using System.Threading;
-using System.Windows.Forms.VisualStyles;
-using RunAmiga.Types;
 
 namespace RunAmiga
 {
@@ -10,27 +8,54 @@ namespace RunAmiga
 	{
 		private static StringBuilder sb = new StringBuilder();
 
+		private static object locker = new object();
+
+		static Logger()
+		{
+			Thread t = new Thread(Dump);
+			t.Start();
+		}
+
+		private static void Dump()
+		{
+			string s = null;
+			
+			for (; ; )
+			{
+				Thread.Sleep(2000);
+
+				lock (locker)
+				{
+					if (sb.Length > 0)
+					{
+						s = sb.ToString();
+						sb.Clear();
+					}
+				}
+
+				if (s != null)
+				{
+					Trace.Write(s);
+					s = null;
+				}
+			}
+		}
+
 		public static void Write(string s)
 		{
-			Debug.Write(s);
-			//sb.Append(s);
-			//Dump();
+			lock (locker)
+			{
+				sb.Append(s);
+			}
 		}
 
 		public static void WriteLine(string s)
 		{
-			Debug.WriteLine(s);
-			//sb.AppendLine(s);
-			//Dump();
+			lock (locker)
+			{
+				sb.AppendLine(s);
+			}
 		}
 
-		//private static void Dump()
-		//{
-		//	if (sb.Length > 1000)
-		//	{
-		//		Trace.Write(sb.ToString());
-		//		sb = new StringBuilder();
-		//	}
-		//}
 	}
 }

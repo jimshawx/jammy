@@ -62,7 +62,8 @@ namespace RunAmiga
 			debugger = new Debugger(labeller);
 			cia = new CIA(debugger);
 			memory = new Memory(debugger, "J");
-			custom = new Custom.Chips(debugger, memory);
+			musashiMemory = new Memory(debugger, "M");
+			custom = new Chips(debugger, memory, musashiMemory);
 			cpu = new CPU(cia, custom, memory, debugger);
 
 			emulations.Add(cia);
@@ -74,7 +75,6 @@ namespace RunAmiga
 
 			Reset();
 
-			musashiMemory = new Memory(debugger, "M");
 			musashiMemory.Reset();
 			disassembler = new Disassembler();
 
@@ -151,7 +151,13 @@ namespace RunAmiga
 			musashiMemory.Write(0, address, value, Size.Byte);
 		}
 
-		private List<uint> mpc = new List<uint>();
+		public void RunEmulations2(ulong ns)
+		{
+			emulations.ForEach(x => x.Emulate(ns));
+			CheckInterrupts(10);
+		}
+
+		//private List<uint> mpc = new List<uint>();
 		//private ushort last_sr;
 		public void RunEmulations(ulong ns)
 		{
@@ -175,10 +181,19 @@ namespace RunAmiga
 			uint pc;
 			do
 			{
-				pc = Musashi_execute(ref cycles);
+				try
+				{
+					pc = Musashi_execute(ref cycles);
+				}
+				catch
+				{
+					/*yum*/
+					pc = 0;
+				}
+
 				//if (pc == 0xfc0ca6 || pc == 0xfc0caa)
 				//	Logger.WriteLine($"Musashi L2 Interrupt 2 {pc:X8} {musashiRegs.sr:X4}");
-				mpc.Add(pc);
+				//mpc.Add(pc);
 				counter++;
 			} while (pc != regsAfter.PC && counter < maxPCdrift);
 
@@ -204,7 +219,6 @@ namespace RunAmiga
 
 			if (regsAfter.PC != pc)
 			{
-				//debugger.DumpTrace();
 				Logger.WriteLine($"PC Drift at {regsAfter.PC:X8} {pc:X8}");
 			}
 			else
@@ -248,9 +262,9 @@ namespace RunAmiga
 			if (MemChk(instructionStartPC))
 			{
 				debugger.DumpTrace();
-				mpc = mpc.Skip(mpc.Count - 32).ToList();
-				foreach (var v in mpc)
-					Logger.WriteLine($"{v:X8}");
+				//mpc = mpc.Skip(mpc.Count - 32).ToList();
+				//foreach (var v in mpc)
+				//	Logger.WriteLine($"{v:X8}");
 			}
 		}
 
@@ -260,7 +274,7 @@ namespace RunAmiga
 			bool differ = false;
 
 			memChkCnt++;
-			if ((memChkCnt % 1000000) == 0)
+			if ((memChkCnt % 100000) == 0)
 			{
 				var mem1 = memory.GetMemoryArray();
 				var mem2 = musashiMemory.GetMemoryArray();
@@ -283,20 +297,6 @@ namespace RunAmiga
 				}
 			}
 
-			//if (memChkCnt != 0)
-			//{
-			//	var mem1 = memory.GetMemoryArray();
-			//	var mem2 = musashiMemory.GetMemoryArray();
-			//	for (int i = 0xc014cd; i <= 0xC014ff; i++)
-			//	{
-			//		if (mem1[i] != mem2[i])
-			//		{
-			//			Logger.WriteLine($"[MEMX] {i:X8} {mem1[i]:X2} {mem2[i]:X2}");
-			//			differ = true;
-			//		}
-			//	}
-
-			//}
 			if (differ)
 				Logger.WriteLine($"@{pc:X8}");
 

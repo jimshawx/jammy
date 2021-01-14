@@ -69,7 +69,7 @@ namespace RunAmiga
 		public void Reset()
 		{
 			fetchMode = FetchMode.Running;
-			sr = 0b00100_111_00000100;//S,INTS,Z
+			sr = 0b00100_111_00000100;//S,INT L7,Z
 			a[7] = read16(0);
 			pc = read32(4);
 		}
@@ -141,7 +141,7 @@ namespace RunAmiga
 				int ins = Fetch(pc);
 				pc += 2;
 
-				int type = (int)(ins >> 12);
+				int type = (int) (ins >> 12);
 
 				switch (type)
 				{
@@ -149,31 +149,44 @@ namespace RunAmiga
 					case 1:
 					case 2:
 					case 3:
-						t_zero(ins); break;
+						t_zero(ins);
+						break;
 					case 4:
-						t_four(ins); break;
+						t_four(ins);
+						break;
 					case 5:
-						t_five(ins); break;
+						t_five(ins);
+						break;
 					case 6:
-						t_six(ins); break;
+						t_six(ins);
+						break;
 					case 7:
-						t_seven(ins); break;
+						t_seven(ins);
+						break;
 					case 8:
-						t_eight(ins); break;
+						t_eight(ins);
+						break;
 					case 9:
-						t_nine(ins); break;
+						t_nine(ins);
+						break;
 					case 11:
-						t_eleven(ins); break;
+						t_eleven(ins);
+						break;
 					case 12:
-						t_twelve(ins); break;
+						t_twelve(ins);
+						break;
 					case 13:
-						t_thirteen(ins); break;
+						t_thirteen(ins);
+						break;
 					case 14:
-						t_fourteen(ins); break;
+						t_fourteen(ins);
+						break;
 					case 10:
-						internalTrap(10); break;
+						internalTrap(10);
+						break;
 					case 15:
-						internalTrap(11); break;
+						internalTrap(11);
+						break;
 					default:
 						throw new UnknownInstructionException(pc, ins);
 				}
@@ -189,6 +202,9 @@ namespace RunAmiga
 					internalTrap(4);
 				else if (ex is InstructionAlignmentException)
 					internalTrap(3);
+
+				debugger.DumpTrace();
+				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
 			if (debugger.IsBreakpoint(pc))
@@ -955,7 +971,7 @@ namespace RunAmiga
 		{
 			uint ea = fetchEA(type);
 			uint val = fetchOp(type, ea, size);
-			val = (uint)zeroExtend(val, size);
+			val = (uint)signExtend(val, size);
 			if (shift == 0)
 			{
 				clrC();
