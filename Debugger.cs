@@ -345,15 +345,15 @@ namespace RunAmiga
 
 		public void Trace(uint pc)
 		{
-			if (traces.Any()) { 
-				traces.Last().toPC = pc;
-				traces.Last().toLabel = labeller.LabelName(pc);
-			}
+			//if (traces.Any()) { 
+			//	traces.Last().toPC = pc;
+			//	traces.Last().toLabel = labeller.LabelName(pc);
+			//}
 		}
 
 		public void Trace(string v, uint pc)
 		{
-			traces.Add(new Tracer { type = v, fromPC = pc, fromLabel = labeller.LabelName(pc), regs = cpu.GetRegs() });
+			//traces.Add(new Tracer { type = v, fromPC = pc, fromLabel = labeller.LabelName(pc), regs = cpu.GetRegs() });
 		}
 
 		public void DumpTrace()

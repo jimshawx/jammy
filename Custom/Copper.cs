@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing.Imaging;
+using System.Windows.Forms.VisualStyles;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -48,11 +51,21 @@ namespace RunAmiga.Custom
 			ParseCopperList(copperPC);
 		}
 
+		private Dictionary<uint, Display> displays = new Dictionary<uint, Display>();
+
 		public void ParseCopperList(uint copPC)
 		{
 			if (copPC == 0) return;
 
+			if (displays.ContainsKey(copPC))
+				return;
+
 			Logger.WriteLine($"Parsing Copper List @{copPC:X8}");
+
+			var pf = new Playfield();
+			pf.address = copPC;
+
+			uint copStartPC = copPC;
 
 			int counter = 64;
 			while (counter-- > 0)
@@ -71,6 +84,50 @@ namespace RunAmiga.Custom
 					uint reg = (uint)(ins & 0x1fe);
 
 					Logger.WriteLine($"MOVE {ChipRegs.Name(customBase + reg)}({reg:X4}),{data:X4}");
+
+					switch (customBase + reg)
+					{
+						case ChipRegs.BPL1MOD: pf.bpl1mod = data; break;
+						case ChipRegs.BPL2MOD: pf.bpl2mod = data; break;
+
+						case ChipRegs.BPLCON0: pf.bplcon0 = data; break;
+						case ChipRegs.BPLCON1: pf.bplcon1 = data; break;
+						case ChipRegs.BPLCON2: pf.bplcon2 = data; break;
+						case ChipRegs.BPLCON3: pf.bplcon3 = data; break;
+						case ChipRegs.BPLCON4: pf.bplcon4 = data; break;
+
+						case ChipRegs.BPL1DAT: pf.bpl1dat = data; break;
+						case ChipRegs.BPL2DAT: pf.bpl2dat = data; break;
+						case ChipRegs.BPL3DAT: pf.bpl3dat = data; break;
+						case ChipRegs.BPL4DAT: pf.bpl4dat = data; break;
+						case ChipRegs.BPL5DAT: pf.bpl5dat = data; break;
+						case ChipRegs.BPL6DAT: pf.bpl6dat = data; break;
+						case ChipRegs.BPL7DAT: pf.bpl7dat = data; break;
+						case ChipRegs.BPL8DAT: pf.bpl8dat = data; break;
+
+						case ChipRegs.BPL1PTL: pf.bpl1pt = (pf.bpl1pt & 0xffff0000) | data; break;
+						case ChipRegs.BPL1PTH: pf.bpl1pt = (pf.bpl1pt & 0x0000ffff) | ((uint)data<<16); break;
+						case ChipRegs.BPL2PTL: pf.bpl2pt = (pf.bpl2pt & 0xffff0000) | data; break;
+						case ChipRegs.BPL2PTH: pf.bpl2pt = (pf.bpl2pt & 0x0000ffff) | ((uint)data << 16); break;
+						case ChipRegs.BPL3PTL: pf.bpl3pt = (pf.bpl3pt & 0xffff0000) | data; break;
+						case ChipRegs.BPL3PTH: pf.bpl3pt = (pf.bpl3pt & 0x0000ffff) | ((uint)data << 16); break;
+						case ChipRegs.BPL4PTL: pf.bpl4pt = (pf.bpl4pt & 0xffff0000) | data; break;
+						case ChipRegs.BPL4PTH: pf.bpl4pt = (pf.bpl4pt & 0x0000ffff) | ((uint)data << 16); break;
+						case ChipRegs.BPL5PTL: pf.bpl5pt = (pf.bpl5pt & 0xffff0000) | data; break;
+						case ChipRegs.BPL5PTH: pf.bpl5pt = (pf.bpl5pt & 0x0000ffff) | ((uint)data << 16); break;
+						case ChipRegs.BPL6PTL: pf.bpl6pt = (pf.bpl6pt & 0xffff0000) | data; break;
+						case ChipRegs.BPL6PTH: pf.bpl6pt = (pf.bpl6pt & 0x0000ffff) | ((uint)data << 16); break;
+						case ChipRegs.BPL7PTL: pf.bpl7pt = (pf.bpl7pt & 0xffff0000) | data; break;
+						case ChipRegs.BPL7PTH: pf.bpl7pt = (pf.bpl7pt & 0x0000ffff) | ((uint)data << 16); break;
+						case ChipRegs.BPL8PTL: pf.bpl8pt = (pf.bpl8pt & 0xffff0000) | data; break;
+						case ChipRegs.BPL8PTH: pf.bpl8pt = (pf.bpl8pt & 0x0000ffff) | ((uint)data << 16); break;
+
+						case ChipRegs.DIWSTRT: pf.diwstrt = data; break;
+						case ChipRegs.DIWSTOP: pf.diwstop = data; break;
+
+						case ChipRegs.DDFSTRT: pf.ddfstrt = data; break;
+						case ChipRegs.DDFSTOP: pf.ddfstop = data; break;
+					}
 
 					//if (customBase+reg == CustomRegs.COPJMP1)
 					//	copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC
@@ -111,6 +168,9 @@ namespace RunAmiga.Custom
 						break;
 				}
 			}
+
+			displays[copStartPC] = new Display(pf, memory);
+
 		}
 
 		public ushort Read(uint insaddr, uint address)
@@ -142,16 +202,14 @@ namespace RunAmiga.Custom
 					break;
 				case ChipRegs.COP1LCL:
 					cop1lc = (cop1lc & 0xffff0000) | value;
-					//ParseCopperList(cop1lc);
-					//ParseCopperList(cop2lc);
+					ParseCopperList(cop1lc);
 					break;
 				case ChipRegs.COP2LCH:
 					cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16);
 					break;
 				case ChipRegs.COP2LCL:
 					cop2lc = (cop2lc & 0xffff0000) | value;
-					//ParseCopperList(cop1lc);
-					//ParseCopperList(cop2lc);
+					ParseCopperList(cop2lc);
 					break;
 				case ChipRegs.COPJMP1:
 					copjmp1 = value;
