@@ -120,8 +120,13 @@ namespace RunAmiga.Custom
 			return value;
 		}
 
+		private uint copcon;
 		private uint cop1lc;
 		private uint cop2lc;
+
+		private uint copjmp1;
+		private uint copjmp2;
+		private uint copins;
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
@@ -129,7 +134,9 @@ namespace RunAmiga.Custom
 
 			switch (address)
 			{
-				case ChipRegs.COPCON: break;
+				case ChipRegs.COPCON:
+					copcon = value;
+					break;
 				case ChipRegs.COP1LCH:
 					cop1lc = (cop1lc & 0x0000ffff) | ((uint)value << 16);
 					break;
@@ -147,12 +154,16 @@ namespace RunAmiga.Custom
 					//ParseCopperList(cop2lc);
 					break;
 				case ChipRegs.COPJMP1:
+					copjmp1 = value;
 					SetCopperPC(cop1lc);
 					break;
 				case ChipRegs.COPJMP2:
+					copjmp2 = value;
 					SetCopperPC(cop2lc);
 					break;
-				case ChipRegs.COPINS: break;
+				case ChipRegs.COPINS:
+					copins = value;
+					break;
 			}
 		}
 	}

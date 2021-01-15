@@ -174,8 +174,8 @@ namespace RunAmiga.Custom
 				return;
 			}
 
-			uint width = bltsize & 0x1f;
-			uint height = bltsize >> 5;
+			uint width = bltsize & 0x3f;
+			uint height = bltsize >> 6;
 			Logger.WriteLine($"BLIT! size:{width}x{height}");
 			Blit(width, height);
 		}

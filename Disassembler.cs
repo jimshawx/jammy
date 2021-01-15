@@ -376,14 +376,15 @@ namespace RunAmiga
 
 			if (mode == 3)
 			{
-				int op = type & 0b111_000_000_000;
-				string rots = "1";
+				int op = (type & 0b111_000_000_000)>>9;
+				string rots = "#1";
 				switch (op)
 				{
 					case 0: asd(type, rots, lr, Size.Word); break;
 					case 1: lsd(type, rots, lr, Size.Word); break;
 					case 2: roxd(type, rots, lr, Size.Word); break;
 					case 3: rod(type, rots, lr, Size.Word); break;
+					default: Append($"unknown instruction {type}"); break;
 				}
 			}
 			else

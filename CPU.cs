@@ -749,13 +749,14 @@ namespace RunAmiga
 
 			if (mode == 3)
 			{
-				int op = type & 0b111_000_000_000;
+				int op = (type & 0b111_000_000_000) >> 9;
 				switch (op)
 				{
 					case 0: asd(type, 1, lr, Size.Word); break;
 					case 1: lsd(type, 1, lr, Size.Word); break;
 					case 2: roxd(type, 1, lr, Size.Word); break;
 					case 3: rod(type, 1, lr, Size.Word); break;
+					default: throw new UnknownInstructionException(instructionStartPC, type);
 				}
 			}
 			else
