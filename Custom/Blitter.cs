@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
-using System.Drawing.Drawing2D;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -11,12 +8,14 @@ namespace RunAmiga.Custom
 		private readonly Chips custom;
 		private readonly Memory memory;
 		private readonly Memory musashiMemory;
+		private readonly Interrupt interrupt;
 
-		public Blitter(Chips custom, Memory memory, Memory musashiMemory)
+		public Blitter(Chips custom, Memory memory, Memory musashiMemory, Interrupt interrupt)
 		{
 			this.custom = custom;
 			this.memory = memory;
 			this.musashiMemory = musashiMemory;
+			this.interrupt = interrupt;
 		}
 
 		public void Emulate(ulong ns)
@@ -26,7 +25,30 @@ namespace RunAmiga.Custom
 
 		public void Reset()
 		{
+			bltapt = 0;
+			bltbpt = 0;
+			bltcpt = 0;
+			bltdpt = 0;
 
+			bltamod = 0;
+			bltbmod = 0;
+			bltcmod = 0;
+			bltdmod = 0;
+
+			bltadat = 0;
+			bltbdat = 0;
+			bltcdat = 0;
+			bltddat = 0;
+
+			bltafwm = 0;
+			bltalwm = 0;
+
+			bltsize = 0;
+			bltsizv = 0;
+			bltsizh = 0;
+
+			bltcon0 = 0;
+			bltcon1 = 0;
 		}
 
 		public ushort Read(uint insaddr, uint address)
@@ -207,6 +229,8 @@ namespace RunAmiga.Custom
 
 			uint bltzero = 0;
 
+			bltadat = bltbdat = bltcdat = 0;
+
 			//set blitter busy in DMACON
 			custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u<<14), Size.Word);
 
@@ -242,8 +266,19 @@ namespace RunAmiga.Custom
 						bltcdat = memory.read16(s_bltcpt);
 					}
 
-					bltddat = (bltbdat & ~bltadat) | (bltcdat & bltadat);
-					
+					//bltddat = (bltbdat & ~bltadat) | (bltcdat & bltadat);
+					//bltddat = bltbdat|bltadat;
+
+					bltddat = 0;
+					if ((bltcon0 & 1) != 0) bltddat   |= ~bltadat & ~bltbdat & ~bltcdat;
+					if ((bltcon0 & 2) != 0) bltddat   |= ~bltadat & ~bltbdat &  bltcdat;
+					if ((bltcon0 & 4) != 0) bltddat   |= ~bltadat &  bltbdat & ~bltcdat;
+					if ((bltcon0 & 8) != 0) bltddat   |= ~bltadat &  bltbdat &  bltcdat;
+					if ((bltcon0 & 16) != 0) bltddat  |=  bltadat & ~bltbdat & ~bltcdat;
+					if ((bltcon0 & 32) != 0) bltddat  |=  bltadat & ~bltbdat &  bltcdat;
+					if ((bltcon0 & 64) != 0) bltddat  |=  bltadat &  bltbdat & ~bltcdat;
+					if ((bltcon0 & 128) != 0) bltddat |=  bltadat &  bltbdat &  bltcdat;
+
 					bltzero |= bltddat;
 
 					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
@@ -279,7 +314,8 @@ namespace RunAmiga.Custom
 			//disable blitter busy in DMACON
 			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
 
-			//todo: want to trigger the blitter interrupt here
+			//blitter done
+			interrupt.TriggerInterrupt(Interrupt.BLIT);
 		}
 
 		private void Line()

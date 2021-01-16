@@ -32,8 +32,7 @@ namespace RunAmiga
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_set_pc(uint pc);
 
-		[DllImport("Musashi.dll")]
-		static extern void Musashi_set_irq(uint levels);
+
 
 		private CPU cpu;
 		private Chips custom;
@@ -56,6 +55,8 @@ namespace RunAmiga
 		private Memory musashiMemory;
 		private Disassembler disassembler;
 		private Musashi_regs musashiRegs;
+		private Interrupt interrupt;
+
 		public Machine()
 		{
 			var labeller = new Labeller();
@@ -63,13 +64,16 @@ namespace RunAmiga
 			cia = new CIA(debugger);
 			memory = new Memory(debugger, "J");
 			musashiMemory = new Memory(debugger, "M");
-			custom = new Chips(debugger, memory, musashiMemory);
-			cpu = new CPU(cia, custom, memory, debugger);
+			interrupt = new Interrupt();
+			custom = new Chips(debugger, memory, musashiMemory, interrupt);
+			interrupt.Init(custom);
+			cpu = new CPU(cia, custom, memory, debugger, interrupt);
 
 			emulations.Add(cia);
 			emulations.Add(custom);
 			emulations.Add(memory);
 			emulations.Add(cpu);
+			emulations.Add(interrupt);
 
 			debugger.Initialise(memory, cpu, custom, cia);
 
@@ -306,30 +310,6 @@ namespace RunAmiga
 			return differ;
 		}
 
-		private void EnableSchedulerAttention()
-		{
-			//enable scheduler attention
-			uint execBase = memory.Read(0, 4, Size.Long);
-			uint sysflags = memory.Read(0, execBase + 0x124, Size.Byte);
-			sysflags |= 0x80;
-			memory.Write(0, execBase + 0x124, sysflags, Size.Byte);
-			musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
-		}
-
-		private void TriggerInterrupt(uint interrupt)
-		{
-			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)interrupt), Size.Word);
-			cpu.Interrupt(Interrupt.CPUPriority(interrupt));
-			Musashi_set_irq(Interrupt.CPUPriority(interrupt));
-		}
-
-		private void EnableInterrupt(uint interrupt)
-		{
-			uint intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
-			//only write the bit if necessary
-			if ((intenar & (1u << (int)interrupt)) == 0)
-				custom.Write(0, ChipRegs.INTENA, 0x8000 + (1u << (int)interrupt), Size.Word);
-		}
 
 		private uint clock=0;
 		private uint intType = 0;
@@ -344,22 +324,22 @@ namespace RunAmiga
 				clock -= 140_000;
 
 				//hack to force enable scheduling
-				//EnableSchedulerAttention();
+				//interrupt.EnableSchedulerAttention();
 
 				//hack to force enable this interrupt level
-				//EnableInterrupt(Interrupt.VERTB);
-				//EnableInterrupt(Interrupt.BLIT);
-				//EnableInterrupt(Interrupt.COPPER);
-				//EnableInterrupt(Interrupt.PORTS);
-				//EnableInterrupt(Interrupt.SOFTINT);
+				//interrupt.EnableInterrupt(Interrupt.VERTB);
+				//interrupt.EnableInterrupt(Interrupt.BLIT);
+				//interrupt.EnableInterrupt(Interrupt.COPPER);
+				//interrupt.EnableInterrupt(Interrupt.PORTS);
+				//interrupt.EnableInterrupt(Interrupt.SOFTINT);
 
-				//trigger the interrupt
+				////trigger the interrupt
 				//intType = 0;
-				if (intType == 0) TriggerInterrupt(Interrupt.VERTB);
-				if (intType == 1) TriggerInterrupt(Interrupt.BLIT);
-				if (intType == 2) TriggerInterrupt(Interrupt.COPPER);
-				if (intType == 3) TriggerInterrupt(Interrupt.PORTS);
-				if (intType == 4) TriggerInterrupt(Interrupt.SOFTINT);
+				//if (intType == 0) interrupt.TriggerInterrupt(Interrupt.VERTB);
+				//if (intType == 1) interrupt.TriggerInterrupt(Interrupt.BLIT);
+				if (intType == 2) interrupt.TriggerInterrupt(Interrupt.COPPER);
+				if (intType == 3) interrupt.TriggerInterrupt(Interrupt.PORTS);
+				//if (intType == 4) interrupt.TriggerInterrupt(Interrupt.SOFTINT);
 				intType++; intType %= 5;
 			}
 		}

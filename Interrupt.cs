@@ -1,7 +1,12 @@
-﻿namespace RunAmiga
+﻿using System.Runtime.InteropServices;
+using RunAmiga.Custom;
+using RunAmiga.Types;
+
+namespace RunAmiga
 {
-	public static class Interrupt
+	public class Interrupt : IEmulate
 	{
+		private Chips custom;
 		public const uint NMI = 15;
 		public const uint INTEN = 14;
 		public const uint EXTER = 13;
@@ -24,6 +29,68 @@
 		public static uint CPUPriority(uint interrupt)
 		{
 			return priority[interrupt];
+		}
+
+		public void Init(Chips custom)
+		{
+			this.custom = custom;
+		}
+
+		public void Emulate(ulong ns)
+		{
+			
+		}
+
+		public void Reset()
+		{
+			interruptPending = 0;
+		}
+
+		//level is the IPLx interrupt bits in SR
+
+		private uint interruptPending;
+
+		public bool InterruptPending()
+		{
+			return interruptPending != 0;
+		}
+
+		public void ResetInterrupt()
+		{
+			interruptPending = 0;
+		}
+
+		public ushort GetInterruptLevel()
+		{
+			return (ushort)interruptPending;
+		}
+
+		//public void EnableSchedulerAttention()
+		//{
+		//	//enable scheduler attention
+		//	uint execBase = memory.Read(0, 4, Size.Long);
+		//	uint sysflags = memory.Read(0, execBase + 0x124, Size.Byte);
+		//	sysflags |= 0x80;
+		//	memory.Write(0, execBase + 0x124, sysflags, Size.Byte);
+		//	musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
+		//}
+
+		[DllImport("Musashi.dll")]
+		static extern void Musashi_set_irq(uint levels);
+
+		public void TriggerInterrupt(uint interrupt)
+		{
+			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)interrupt), Size.Word);
+			interruptPending = CPUPriority(interrupt);
+			Musashi_set_irq(interruptPending);
+		}
+
+		private void EnableInterrupt(uint interrupt)
+		{
+			uint intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
+			//only write the bit if necessary
+			if ((intenar & (1u << (int)interrupt)) == 0)
+				custom.Write(0, ChipRegs.INTENA, 0x8000 + (1u << (int)interrupt), Size.Word);
 		}
 	}
 }

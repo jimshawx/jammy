@@ -2,9 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Windows.Forms;
-using Newtonsoft.Json.Linq;
 
 namespace RunAmiga.Custom
 {
@@ -44,16 +42,23 @@ namespace RunAmiga.Custom
 		public uint ddfstop;
 
 		public uint address;
+
+		public ushort [] colour = new ushort[256];
+		public uint [] truecolour = new uint[256];
 	}
 
 	public class Display
 	{
+		private readonly Playfield pf;
+		private readonly Memory memory;
 		private readonly Form form;
 		private readonly PictureBox picture;
 		private readonly Bitmap bitmap;
 
 		public Display(Playfield pf, Memory memory)
 		{
+			this.pf = pf;
+			this.memory = memory;
 			uint bitdepth = (pf.bplcon0 >> 12)&7;
 			//if (bitdepth == 0) return;
 
@@ -64,21 +69,12 @@ namespace RunAmiga.Custom
 			form = new Form();
 			form.Controls.Add(picture);
 			form.Text = $"0x{pf.address:X6}";
-			form.Size = new Size(320, 200);
-
-			var random = new Random();
-			var pixels = new int[320 * 200];
-			for (int i = 0; i < 320 * 200; i++)
-				pixels[i] = (int)(0xff0000ff|random.Next());
-
-			PlanarToChunky(pf, memory, pixels);
+			form.ClientSize = new Size(320, 200);
 
 			bitmap = new Bitmap(320, 200, PixelFormat.Format32bppRgb);
-			var bitmapData = bitmap.LockBits(new Rectangle(0,0,320,200), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
-			Marshal.Copy(pixels, 0, bitmapData.Scan0, 320*200);
-			bitmap.UnlockBits(bitmapData);
-
 			picture.Image = bitmap;
+
+			Refresh();
 
 			form.Show();
 			form.Invalidate();
@@ -88,32 +84,60 @@ namespace RunAmiga.Custom
 
 		public void Refresh()
 		{
+			var pixels = new int[320 * 200];
 
+			PlanarToChunky(pf, memory, pixels);
+
+			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, 320, 200), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
+			Marshal.Copy(pixels, 0, bitmapData.Scan0, 320 * 200);
+			bitmap.UnlockBits(bitmapData);
+			picture.Image = bitmap;
+			form.Invalidate();
+
+			Application.DoEvents();
 		}
 
 		private void PlanarToChunky(Playfield pf, Memory memory, int [] dst)
 		{
 			uint p;
 			uint d=0;
-			for (int i = 0; i < 20 * 200; i++)
+
+			uint s_bpl1pt = pf.bpl1pt;
+			uint s_bpl2pt = pf.bpl2pt;
+
+			if (s_bpl1pt == 0)
 			{
-				uint p0 = memory.read16(pf.bpl1pt);
-				uint p1 = memory.read16(pf.bpl2pt);
-				for (int j = 0; j < 16; j++)
+
+				var random = new Random();
+				for (int i = 0; i < 320 * 200; i++)
+					dst[i] = random.Next(3);
+			}
+			else
+			{
+				for (int i = 0; i < 20 * 200; i++)
 				{
-					p = (p0 >> j) & 1;
-					p |= ((p1 >> j) & 1)<<1;
-					dst[d++] = (int)p;
+					uint p0 = memory.read16(s_bpl1pt);
+					uint p1 = memory.read16(s_bpl2pt);
+					for (int j = 0; j < 16; j++)
+					{
+						p = (p0 >> j) & 1;
+						p |= ((p1 >> j) & 1) << 1;
+						dst[d++] = (int) p;
+					}
+
+					s_bpl1pt += 2;
+					s_bpl2pt += 2;
 				}
-				pf.bpl1pt += 2;
-				pf.bpl2pt += 2;
 			}
 
-			int[] cols = new int[4] {0x0f00ffff, 0xff00ff, 0xff, 0x00ffff};
 			for (int i = 0; i < 320 * 200; i++)
 			{
-				dst[i] = cols[dst[i]];
+				dst[i] = (int)pf.truecolour[dst[i]];
 			}
+
+			for (int j = 0; j < 4; j++)
+			for (int i = 320 * (10 + j); i < 320 * (11 + j); i++)
+				dst[i] = (int)pf.truecolour[j];
 		}
 	}
 }

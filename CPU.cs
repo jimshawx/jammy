@@ -43,16 +43,15 @@ namespace RunAmiga
 		//T.S..210...XNZVC
 		private ushort sr;
 
-		private ushort interruptPending;
-
 		private uint instructionStartPC;
 
 		private FetchMode fetchMode;
 
 		private List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 		private Debugger debugger;
+		private readonly Interrupt interrupt;
 
-		public CPU(CIA cia, Custom.Chips custom, Memory memory, Debugger debugger)
+		public CPU(CIA cia, Chips custom, Memory memory, Debugger debugger, Interrupt interrupt)
 		{
 			a = new A(Supervisor);
 
@@ -62,6 +61,7 @@ namespace RunAmiga
 			devices.Add(custom);
 
 			this.debugger = debugger;
+			this.interrupt = interrupt;
 
 			Reset();
 		}
@@ -89,28 +89,6 @@ namespace RunAmiga
 			return read16(pc);
 		}
 
-		private bool CheckInterrupt()
-		{
-			if (interruptPending != 0)
-			{
-				//the three IPL bits are the current interrupt level
-				//higher levels can interrupt lower ones, but not the other way around
-				//level 7 is NMI
-				ushort currentInterruptLevel = (ushort)((sr>>8)&7);
-				if (interruptPending > currentInterruptLevel || interruptPending == 7)
-				{
-					instructionStartPC = pc;
-					internalTrap(0x18 + (uint)interruptPending);
-
-					interruptPending = 0;
-					instructionStartPC = pc;
-
-					return true;
-				}
-			}
-
-			return false;
-		}
 
 		private void Breakpoint()
 		{
@@ -118,6 +96,30 @@ namespace RunAmiga
 			Logger.WriteLine($"Breakpoint @{pc:X8}");
 			Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			UI.IsDirty = true;
+		}
+
+		private bool CheckInterrupt()
+		{
+			if (interrupt.InterruptPending())
+			{
+				//the three IPL bits are the current interrupt level
+				//higher levels can interrupt lower ones, but not the other way around
+				//level 7 is NMI
+				ushort currentInterruptLevel = (ushort)((sr >> 8) & 7);
+				ushort interruptLevel = interrupt.GetInterruptLevel();
+				if (interruptLevel > currentInterruptLevel || interruptLevel == 7)
+				{
+					instructionStartPC = pc;
+					internalTrap(0x18 + (uint)interruptLevel);
+
+					interrupt.ResetInterrupt();
+					instructionStartPC = pc;
+
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		public void Emulate(ulong ns)
@@ -2596,12 +2598,6 @@ namespace RunAmiga
 			{
 				internalTrap(8);
 			}
-		}
-
-		public void Interrupt(uint level)
-		{
-			//level is the IPLx interrupt bits in SR
-			interruptPending = (ushort)level;
 		}
 	}
 }

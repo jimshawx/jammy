@@ -7,17 +7,19 @@ namespace RunAmiga.Custom
 	public class Chips : IEmulate, IMemoryMappedDevice
 	{
 		private readonly Memory musashiMemory;
+		private readonly Interrupt interrupt;
 		private ushort[] regs = new ushort[32768];
 
 		private readonly Copper copper;
 		private readonly Blitter blitter;
 		private readonly Beam beam;
 
-		public Chips(Debugger debugger, Memory memory, Memory musashiMemory)
+		public Chips(Debugger debugger, Memory memory, Memory musashiMemory, Interrupt interrupt)
 		{
 			this.musashiMemory = musashiMemory;
-			blitter = new Blitter(this, memory, musashiMemory);
-			copper = new Copper(memory, this);
+			this.interrupt = interrupt;
+			blitter = new Blitter(this, memory, musashiMemory, interrupt);
+			copper = new Copper(memory, this, interrupt);
 			beam = new Beam();
 		}
 
