@@ -90,7 +90,7 @@ namespace RunAmiga.Custom
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					Logger.WriteLine($"MOVE {ChipRegs.Name(customBase + reg)}({reg:X4}),{data:X4}");
+					Logger.WriteLine($"{copPC:X8} MOVE {ChipRegs.Name(customBase + reg)}({reg:X4}),{data:X4}");
 
 					//if (customBase+reg == CustomRegs.COPJMP1)
 					//	copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC
@@ -111,7 +111,7 @@ namespace RunAmiga.Custom
 						uint ve = (uint)((data >> 8) & 0x7f);
 						uint blit = (uint)(data >> 15);
 
-						Logger.WriteLine($"WAIT vp:{vp:X4} hp:{hp:X4} he:{he:X4} ve:{ve:X4} b:{blit}");
+						Logger.WriteLine($"{copPC:X8} WAIT vp:{vp:X4} hp:{hp:X4} he:{he:X4} ve:{ve:X4} b:{blit}");
 					}
 					else
 					{
@@ -123,7 +123,7 @@ namespace RunAmiga.Custom
 						uint vertC = (uint)((data >> 8) & 0x3f);
 						uint blitC = (uint)(data >> 15);
 
-						Logger.WriteLine($"SKIP v:{vert:X4} h:{horz:X4} vC:{vertC} hC:{horzC} bC:{blitC}");
+						Logger.WriteLine($"{copPC:X8} SKIP v:{vert:X4} h:{horz:X4} vC:{vertC} hC:{horzC} bC:{blitC}");
 					}
 
 					//this is usually how a copper list ends
@@ -219,7 +219,7 @@ namespace RunAmiga.Custom
 
 						//24bit colour
 						uint colour = data;
-						pf.truecolour[index] = ((colour & 0xf) * 0x11) + ((colour & 0xf0) * 0x110) + ((colour & 0xf00) * 0x1100);
+						//pf.truecolour[index] = ((colour & 0xf) * 0x11) + ((colour & 0xf0) * 0x110) + ((colour & 0xf00) * 0x1100);
 
 						//UI colour
 						UI.SetColour(index, data);

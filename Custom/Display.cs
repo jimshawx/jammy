@@ -45,6 +45,17 @@ namespace RunAmiga.Custom
 
 		public ushort [] colour = new ushort[256];
 		public uint [] truecolour = new uint[256];
+
+		public Playfield()
+		{
+			var r = new Random();
+			for (int i = 0; i < 256; i++)
+			{
+				uint col = (uint)r.Next(0xfff);
+				colour[i] = (ushort)col;
+				truecolour[i] = ((col & 0xf) * 0x11) + ((col & 0xf0) * 0x110) + ((col & 0xf00) * 0x1100);
+			}
+		}
 	}
 
 	public class Display
@@ -86,7 +97,7 @@ namespace RunAmiga.Custom
 		{
 			var pixels = new int[320 * 200];
 
-			PlanarToChunky(pf, memory, pixels);
+			PlanarToChunky(pixels);
 
 			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, 320, 200), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
 			Marshal.Copy(pixels, 0, bitmapData.Scan0, 320 * 200);
@@ -97,7 +108,7 @@ namespace RunAmiga.Custom
 			Application.DoEvents();
 		}
 
-		private void PlanarToChunky(Playfield pf, Memory memory, int [] dst)
+		private void PlanarToChunky(int [] dst)
 		{
 			uint p;
 			uint d=0;
@@ -107,7 +118,6 @@ namespace RunAmiga.Custom
 
 			if (s_bpl1pt == 0)
 			{
-
 				var random = new Random();
 				for (int i = 0; i < 320 * 200; i++)
 					dst[i] = random.Next(3);

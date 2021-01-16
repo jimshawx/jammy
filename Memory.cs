@@ -179,11 +179,11 @@ namespace RunAmiga
 		{
 			Array.Clear(memory, 0, memory.Length);
 
-			byte[] rom = File.ReadAllBytes("../../../../kick12.rom");
-			Debug.Assert(rom.Length == 256 * 1024);
+			//byte[] rom = File.ReadAllBytes("../../../../kick12.rom");
+			//Debug.Assert(rom.Length == 256 * 1024);
 
-			BulkWrite(0xfc0000, rom, 256 * 1024);
-			BulkWrite(0, rom, 256 * 1024);
+			//BulkWrite(0xfc0000, rom, 256 * 1024);
+			//BulkWrite(0, rom, 256 * 1024);
 
 			//byte[] rom = File.ReadAllBytes("../../../../kick13.rom");
 			//Debug.Assert(rom.Length == 256 * 1024);
@@ -191,11 +191,11 @@ namespace RunAmiga
 			//BulkWrite(0xfc0000, rom, 256 * 1024);
 			//BulkWrite(0, rom, 256 * 1024);
 
-			//byte[] rom = File.ReadAllBytes("../../../../kick31.rom");
-			//Debug.Assert(rom.Length == 512 * 1024);
+			byte[] rom = File.ReadAllBytes("../../../../kick31.rom");
+			Debug.Assert(rom.Length == 512 * 1024);
 
-			//BulkWrite(0xf80000, rom, 512 * 1024);
-			//BulkWrite(0, rom, 512 * 1024);
+			BulkWrite(0xf80000, rom, 512 * 1024);
+			BulkWrite(0, rom, 512 * 1024);
 		}
 	}
 }

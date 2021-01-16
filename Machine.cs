@@ -155,15 +155,15 @@ namespace RunAmiga
 			musashiMemory.Write(0, address, value, Size.Byte);
 		}
 
-		public void RunEmulations(ulong ns)
+		public void RunEmulations1(ulong ns)
 		{
 			emulations.ForEach(x => x.Emulate(ns));
 			CheckInterrupts(10);
 		}
 
-		private List<uint> mpc = new List<uint>();
+		//private List<uint> mpc = new List<uint>();
 		//private ushort last_sr;
-		public void RunEmulations2(ulong ns)
+		public void RunEmulations(ulong ns)
 		{
 			Musashi_get_regs(musashiRegs);
 
@@ -200,7 +200,7 @@ namespace RunAmiga
 
 				//if (pc == 0xfc0ca6 || pc == 0xfc0caa)
 				//	Logger.WriteLine($"Musashi L2 Interrupt 2 {pc:X8} {musashiRegs.sr:X4}");
-				mpc.Add(pc);
+				//mpc.Add(pc);
 				counter++;
 			} while (pc != regsAfter.PC && counter < maxPCdrift);
 
@@ -213,9 +213,9 @@ namespace RunAmiga
 			if (counter == maxPCdrift)
 			{
 				debugger.DumpTrace();
-				mpc = mpc.Skip(mpc.Count - 32).ToList();
-				foreach (var v in mpc)
-					Logger.WriteLine($"{v:X8}");
+				//mpc = mpc.Skip(mpc.Count - 32).ToList();
+				//foreach (var v in mpc)
+				//	Logger.WriteLine($"{v:X8}");
 				Logger.WriteLine($"PC Drift too far at {regsAfter.PC:X8} {pc:X8}");
 				//Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}

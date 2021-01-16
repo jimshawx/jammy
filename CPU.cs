@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using RunAmiga.Custom;
 
 namespace RunAmiga
@@ -77,7 +78,7 @@ namespace RunAmiga
 		private ushort Fetch(uint pc)
 		{
 			//debugging
-			if (!((pc > 0 && pc < 0x800) || (pc >= 0xc00000 && pc < 0xc04000) || (pc >= 0xf80000 && pc < 0x1000000)))
+			if (!((pc > 0 && pc < 0x800) || (pc >= 0xc00000 && pc < 0xc10000) || (pc >= 0xf80000 && pc < 0x1000000)))
 			{
 				debugger.DumpTrace();
 				Logger.WriteLine($"PC out of expected range {pc:X8}");
@@ -98,6 +99,10 @@ namespace RunAmiga
 			UI.IsDirty = true;
 		}
 
+		[DllImport("Musashi.dll")]
+		static extern void Musashi_set_irq(uint levels);
+
+
 		private bool CheckInterrupt()
 		{
 			if (interrupt.InterruptPending())
@@ -111,6 +116,7 @@ namespace RunAmiga
 				{
 					instructionStartPC = pc;
 					internalTrap(0x18 + (uint)interruptLevel);
+					Musashi_set_irq(interruptLevel);
 
 					interrupt.ResetInterrupt();
 					instructionStartPC = pc;

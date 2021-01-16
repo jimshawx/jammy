@@ -75,14 +75,12 @@ namespace RunAmiga
 		//	musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
 		//}
 
-		[DllImport("Musashi.dll")]
-		static extern void Musashi_set_irq(uint levels);
 
 		public void TriggerInterrupt(uint interrupt)
 		{
 			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)interrupt), Size.Word);
 			interruptPending = CPUPriority(interrupt);
-			Musashi_set_irq(interruptPending);
+			//Musashi_set_irq(interruptPending);
 		}
 
 		private void EnableInterrupt(uint interrupt)
