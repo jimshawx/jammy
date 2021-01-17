@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Win32;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -325,12 +326,14 @@ namespace RunAmiga.Custom
 			interrupt.TriggerInterrupt(Interrupt.BLIT);
 		}
 
+
+		private int ii = 0;
 		private void Line()
 		{
 			Logger.WriteLine($"BLIT LINE!");
 
-			uint octant = (bltcon1 >> 2) & 3;
-			uint sign = (bltcon1 >> 1) & 1;
+			uint octant = (bltcon1 >> 2) & 7;
+			uint sign = (bltcon1 >> 6) & 1;
 			Logger.WriteLine($"octant:{octant} sign:{sign}");
 			if (bltadat != 0x8000) Logger.WriteLine("BLTADAT is not 0x8000");
 			if (bltafwm != 0xffff) Logger.WriteLine("BLTAFWM is not 0xffff");
@@ -359,73 +362,70 @@ namespace RunAmiga.Custom
 			uint s_bltdpt = bltdpt & ~1u;
 
 			uint length = bltsize >> 6;
-			//while (length-- >= 0)
-			//{
-			//	Thread.Sleep(3000);
-			//	memory.Write(0, s_bltdpt, (ushort) (1u << (int) (bltcon0 >> 12)), Size.Word);
-			//}
-			//Thread.Sleep(3000);
+			if (length <= 1) return;
 
 			bltdmod = bltcmod;
 
-			double dy = bltbmod / 4.0;
-			double dx = -(int)bltamod / 4.0 + dy;
-			double dydx;
-			if (dx != 0.0)
-				dydx = dy / dx;
-			else
-				dydx = 1.0;
+			double ty = bltbmod / 4.0;
+			double tx = -(int)bltamod / 4.0 + ty;
 
-			int xinc=1;
+			tx *= 2.0;
+			ty *= 2.0;
 
-			//if (octant == 3 || octant == 7 || octant == 5 || octant == 2)
-			//	xinc = -xinc;
-			//if (octant == 3 || octant == 7 || octant == 6 || octant == 1)
-			//	dydx = -dydx;
+			double dx=0, dy=0;
+			switch (octant)
+			{
+				case 0: dx =  ty; dy = -tx; break;
+				case 1: dx =  ty; dy =  tx; break;
+				case 2: dx = -ty; dy = -tx; break;
+				case 3: dx = -ty; dy =  tx; break;
+				case 4: dx =  tx; dy = -ty; break;
+				case 5: dx = -tx; dy = -ty; break;
+				case 6: dx =  tx; dy =  ty; break;
+				case 7: dx = -tx; dy =  ty; break;
+			}
 
-			if (octant == 2 || octant == 3 || octant == 4 || octant == 5)
-				xinc = -xinc;
-			if (octant == 0 || octant == 1 || octant == 2 || octant == 3)
-				dydx = -dydx;
+			dy = -dy;
 
-			Logger.WriteLine($"dx,dy {dx},{dy} dydx {dydx}");
+			double dydl, dxdl;
+			dydl = dy / (length-1);
+			dxdl = dx / (length-1);
 
-			int x1 = (int)(bltcon0 >> 12);
-			double y1 = 0.0;
+			Logger.WriteLine($"tx,ty {tx,3},{ty,3} dx,dy {dx,3},{dy,3} {Convert.ToString(octant,2).PadLeft(3,'0')}({octant}) {sign} {(bltamod >> 15) & 1} {(bltcmod >> 15) & 1} {(bltdmod >> 15) & 1} {bltapt}");
+			Logger.WriteLine($"dydl {dydl} dxdl {dxdl}");
+
+			double x = bltcon0 >> 12;
+			double y = 0.0;
 			uint p;
 			while (length-- > 0)
 			{
+				int x1 = (int) (x+0.5);
+
 				p = memory.Read(0, s_bltdpt, Size.Word);
-				memory.Write(0, s_bltdpt, (ushort)(p|(1<<(x1^15))), Size.Word);
-				x1+=xinc;
-				if (x1 == 16)
+				memory.Write(0, s_bltdpt, p | (1u << x1), Size.Word);
+
+				x += dxdl;
+				if (dxdl < 0 && x < 0)
 				{
-					x1 = 0;
-					s_bltdpt += 2;
+					s_bltdpt += (uint)(2 * (-1+(int)(x / 16)));
+					x = 16 + (x % 16.0);
 				}
-				if (x1 == -1)
+				else if (dxdl > 0 && x >= 16)
 				{
-					x1 = 15;
-					s_bltdpt -= 2;
+					s_bltdpt += (uint)(2 * (int)(x / 16));
+					x = x % 16.0;
 				}
-				y1 += dydx;
-				while (y1 > 1.0)
+
+				y += dydl;
+				if (dydl < 0 && y <= -1.0)
 				{
-					s_bltdpt += bltdmod;
-
-					p = memory.Read(0, s_bltdpt, Size.Word);
-					memory.Write(0, s_bltdpt, (ushort)(p | (1 << (x1 ^ 15))), Size.Word);
-
-					y1 -= 1.0;
+					s_bltdpt += (uint)(bltdmod * (int)y);
+					y = y % 1.0;
 				}
-				while (y1 < -1.0)
+				else if (dydl > 0 && y >= 1.0)
 				{
-					s_bltdpt -= bltdmod;
-
-					p = memory.Read(0, s_bltdpt, Size.Word);
-					memory.Write(0, s_bltdpt, (ushort)(p | (1 << (x1 ^ 15))), Size.Word);
-
-					y1 += 1.0;
+					s_bltdpt += (uint)(bltdmod * (int)y);
+					y = y % 1.0;
 				}
 			}
 		}

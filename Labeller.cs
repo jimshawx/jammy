@@ -234,7 +234,7 @@ namespace RunAmiga
 
 			new Label (0xfcabe4, "GraphicsLibraryInit"),
 
-
+			new Label(0xFE8E1C, "KickstartLogoData"),
 		};
 
 		private void MiscLabels()

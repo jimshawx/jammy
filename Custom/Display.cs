@@ -140,6 +140,15 @@ namespace RunAmiga.Custom
 				}
 			}
 
+			//    0: #fff 
+			//    1: #000
+			//    2: #77c
+			//    3: #bbb
+			pf.truecolour[0] = 0xffffff;
+			pf.truecolour[1] = 0x000000;
+			pf.truecolour[2] = 0x7777cc;
+			pf.truecolour[3] = 0xbbbbbb;
+
 			for (int i = 0; i < 320 * 200; i++)
 			{
 				dst[i] = (int)pf.truecolour[dst[i]];

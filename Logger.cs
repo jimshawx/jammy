@@ -1,6 +1,10 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace RunAmiga
 {
@@ -10,8 +14,15 @@ namespace RunAmiga
 
 		private static object locker = new object();
 
+		private static Form form;
+		private static RichTextBox text;
+
 		static Logger()
 		{
+			form = new Form {ClientSize = new Size(640, 480)};
+			text = new RichTextBox{Multiline = true, Size = new Size(640,480), Font = new Font(FontFamily.GenericMonospace, 8.0f), Anchor = AnchorStyles.Left| AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right, ScrollBars = RichTextBoxScrollBars.ForcedBoth};
+			form.Controls.Add(text);
+			form.Show();
 			Thread t = new Thread(Dump);
 			t.Start();
 		}
@@ -22,7 +33,7 @@ namespace RunAmiga
 			
 			for (; ; )
 			{
-				Thread.Sleep(2000);
+				Thread.Sleep(1000);
 
 				lock (locker)
 				{
@@ -35,7 +46,9 @@ namespace RunAmiga
 
 				if (s != null)
 				{
-					Trace.Write(s);
+					//Trace.Write(s);
+					string t = s;
+					text.Invoke((Action)delegate () { text.AppendText(t); });
 					s = null;
 				}
 			}

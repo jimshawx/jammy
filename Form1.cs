@@ -28,7 +28,7 @@ namespace RunAmiga
 			machine.Start();
 		}
 
-		Thread uiUpdateThread;
+		Thread uiUpdateThread, uiUpdateThread2;
 		public void Init()
 		{
 			UpdateDisassembly();
@@ -39,6 +39,9 @@ namespace RunAmiga
 
 			uiUpdateThread = new Thread(UIUpdateThread);
 			uiUpdateThread.Start();
+
+			uiUpdateThread2 = new Thread(UIUpdateThread2);
+			uiUpdateThread2.Start();
 		}
 
 		private void UpdateDisassembly()
@@ -213,6 +216,15 @@ namespace RunAmiga
 			UpdateDisplay();
 		}
 
+		private void UIUpdateThread2(object o)
+		{
+			while (!exiting)
+			{
+				Application.DoEvents();
+				Thread.Sleep(500);
+			}
+		}
+
 		private void UIUpdateThread(object o)
 		{
 			while (!exiting)
@@ -227,7 +239,6 @@ namespace RunAmiga
 
 				Thread.Sleep(500);
 			}
-			exiting = false;
 		}
 
 		private void UpdatePowerLight()
