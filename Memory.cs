@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Xml.Schema;
@@ -214,8 +215,7 @@ namespace RunAmiga
 			//BulkWrite(0xf80000, rom, 512 * 1024);
 			//BulkWrite(0, rom, 512 * 1024);
 
-			KSLogo(rom);
-			
+			//KSLogo(rom);
 		}
 
 		private void KSLogo(byte[]rom)
@@ -243,6 +243,7 @@ namespace RunAmiga
 			SelectObject(hdc, dcbrush);
 			SetDCBrushColor(hdc, 0x0000ff);
 			g.ReleaseHdc();
+			int miny = 200;
 			for (;;)
 			{
 				b0 = kslogo[k++];
@@ -271,9 +272,15 @@ namespace RunAmiga
 					}
 					else if (mode == 2)
 					{
-						Logger.WriteLine($"draw {ox+b0},{oy+b1} // {ox+b0-dx},{oy+b1-dy}");
+						Logger.WriteLine($"draw {ox + b0},{oy + b1} // {ox + b0 - dx},{oy + b1 - dy}");
 						int nx = ox + b0, ny = oy + b1;
-						g.DrawLine(p, dx,dy,nx,ny);
+
+						g.DrawLine(p, dx, dy, nx, ny);
+						if (ny == dy)
+						{
+							if (ny < miny) miny = ny;
+						}
+
 						dx = nx;
 						dy = ny;
 					}

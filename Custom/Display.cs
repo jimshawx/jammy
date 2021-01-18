@@ -56,11 +56,21 @@ namespace RunAmiga.Custom
 				truecolour[i] = ((col & 0xf) * 0x11) + ((col & 0xf0) * 0x110) + ((col & 0xf00) * 0x1100);
 			}
 		}
+
+		public void UpdatePalette()
+		{
+			for (int i = 0; i < 256; i++)
+			{
+				uint col = colour[i];
+				colour[i] = (ushort)col;
+				truecolour[i] = ((col & 0xf) * 0x11) + ((col & 0xf0) * 0x110) + ((col & 0xf00) * 0x1100);
+			}
+		}
 	}
 
 	public class Display
 	{
-		private readonly Playfield pf;
+		public Playfield pf { get; }
 		private readonly Memory memory;
 		private readonly Form form;
 		private readonly PictureBox picture;
@@ -144,10 +154,11 @@ namespace RunAmiga.Custom
 			//    1: #000
 			//    2: #77c
 			//    3: #bbb
-			pf.truecolour[0] = 0xffffff;
-			pf.truecolour[1] = 0x000000;
-			pf.truecolour[2] = 0x7777cc;
-			pf.truecolour[3] = 0xbbbbbb;
+			//pf.truecolour[0] = 0xffffff;
+			//pf.truecolour[1] = 0x000000;
+			//pf.truecolour[2] = 0x7777cc;
+			//pf.truecolour[3] = 0xbbbbbb;
+			pf.UpdatePalette();
 
 			for (int i = 0; i < 320 * 200; i++)
 			{

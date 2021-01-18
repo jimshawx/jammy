@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -17,12 +17,30 @@ namespace RunAmiga
 		private static Form form;
 		private static RichTextBox text;
 
+		private static bool exiting = false;
 		static Logger()
 		{
-			form = new Form {ClientSize = new Size(640, 480)};
-			text = new RichTextBox{Multiline = true, Size = new Size(640,480), Font = new Font(FontFamily.GenericMonospace, 8.0f), Anchor = AnchorStyles.Left| AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right, ScrollBars = RichTextBoxScrollBars.ForcedBoth};
+			form = new Form {ClientSize = new Size(480, 480)};
+			text = new RichTextBox{
+									Multiline = true,
+									Size = new Size(480,480),
+									Font = new Font(FontFamily.GenericMonospace, 8.0f),
+									Anchor = AnchorStyles.Left| AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right,
+									ScrollBars = RichTextBoxScrollBars.ForcedBoth,
+									ReadOnly = true,
+									};
 			form.Controls.Add(text);
 			form.Show();
+			form.Closing += (sender, args) =>
+			{
+				exiting = true;
+				while (exiting)
+				{
+					Application.DoEvents();
+					Thread.Sleep(500);
+				}
+			};
+
 			Thread t = new Thread(Dump);
 			t.Start();
 		}
@@ -31,7 +49,7 @@ namespace RunAmiga
 		{
 			string s = null;
 			
-			for (; ; )
+			while (!exiting)
 			{
 				Thread.Sleep(1000);
 
@@ -46,12 +64,19 @@ namespace RunAmiga
 
 				if (s != null)
 				{
-					//Trace.Write(s);
-					string t = s;
-					text.Invoke((Action)delegate () { text.AppendText(t); });
+					Trace.Write(s);
+					//string t = s;
+					//text.Invoke((Action) delegate()
+					//{
+					//	text.AppendText(t);
+					//});
 					s = null;
 				}
 			}
+
+			Trace.WriteLine(form.Text);
+
+			exiting = false;
 		}
 
 		public static void Write(string s)

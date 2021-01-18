@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using Microsoft.Win32;
 using RunAmiga.Types;
@@ -57,7 +58,7 @@ namespace RunAmiga.Custom
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
-			Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			//Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 			return value;
 		}
 
@@ -88,7 +89,7 @@ namespace RunAmiga.Custom
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			//Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			switch (address)
 			{
@@ -326,36 +327,35 @@ namespace RunAmiga.Custom
 			interrupt.TriggerInterrupt(Interrupt.BLIT);
 		}
 
-
-		private int ii = 0;
 		private void Line()
 		{
 			Logger.WriteLine($"BLIT LINE!");
 
 			uint octant = (bltcon1 >> 2) & 7;
 			uint sign = (bltcon1 >> 6) & 1;
-			Logger.WriteLine($"octant:{octant} sign:{sign}");
-			if (bltadat != 0x8000) Logger.WriteLine("BLTADAT is not 0x8000");
-			if (bltafwm != 0xffff) Logger.WriteLine("BLTAFWM is not 0xffff");
-			if (bltalwm != 0xffff) Logger.WriteLine("BLTALWM is not 0xffff");
-			if (bltcpt != bltdpt) Logger.WriteLine("BLTCPT != BLTDPT");
-			if (bltcmod != bltdmod) Logger.WriteLine("BLTCMOD != BLTDMOD");
 
-			Logger.WriteLine($"{bltamod:X8} {(int)bltamod} 4*(dy-dx)");
-			Logger.WriteLine($"{bltbmod:X8} {bltbmod} 4*dy");
-			Logger.WriteLine($"{bltcmod:X8} cmod");
-			Logger.WriteLine($"{bltdmod:X8} {bltdmod} mod");
-			Logger.WriteLine($"{bltapt:X8} {(short)bltapt} (4*dy)-(2*dx)");
-			Logger.WriteLine($"{bltdpt:X8} dest");
-			Logger.WriteLine($"{bltcon0 >> 12} x1 mod 15");
-			Logger.WriteLine($"{Convert.ToString(bltcon0, 2).PadLeft(16, '0')} bltcon0");
-			Logger.WriteLine($"{Convert.ToString(bltcon1, 2).PadLeft(16, '0')} bltcon1");
-			Logger.WriteLine($"{bltsize >> 6:X8} dx+1");
-			Logger.WriteLine($"{bltsize & 0x3f:X8} 2");
+			//Logger.WriteLine($"octant:{octant} sign:{sign}");
+			//if (bltadat != 0x8000) Logger.WriteLine("BLTADAT is not 0x8000");
+			//if (bltafwm != 0xffff) Logger.WriteLine("BLTAFWM is not 0xffff");
+			//if (bltalwm != 0xffff) Logger.WriteLine("BLTALWM is not 0xffff");
+			//if (bltcpt != bltdpt) Logger.WriteLine("BLTCPT != BLTDPT");
+			//if (bltcmod != bltdmod) Logger.WriteLine("BLTCMOD != BLTDMOD");
 
-			if ((bltapt & 1) != 0) Logger.WriteLine($"Channel A is odd {bltapt:X8}");
-			if ((bltcpt & 1) != 0) Logger.WriteLine($"Channel C is odd {bltcpt:X8}");
-			if ((bltdpt & 1) != 0) Logger.WriteLine($"Channel D is odd {bltdpt:X8}");
+			//Logger.WriteLine($"{bltamod:X8} {(int)bltamod} 4*(dy-dx)");
+			//Logger.WriteLine($"{bltbmod:X8} {bltbmod} 4*dy");
+			//Logger.WriteLine($"{bltcmod:X8} cmod");
+			//Logger.WriteLine($"{bltdmod:X8} {bltdmod} mod");
+			//Logger.WriteLine($"{bltapt:X8} {(short)bltapt} (4*dy)-(2*dx)");
+			//Logger.WriteLine($"{bltdpt:X8} dest");
+			//Logger.WriteLine($"{bltcon0 >> 12} x1 mod 15");
+			//Logger.WriteLine($"{Convert.ToString(bltcon0, 2).PadLeft(16, '0')} bltcon0");
+			//Logger.WriteLine($"{Convert.ToString(bltcon1, 2).PadLeft(16, '0')} bltcon1");
+			//Logger.WriteLine($"{bltsize >> 6:X8} dx+1");
+			//Logger.WriteLine($"{bltsize & 0x3f:X8} 2");
+
+			//if ((bltapt & 1) != 0) Logger.WriteLine($"Channel A is odd {bltapt:X8}");
+			//if ((bltcpt & 1) != 0) Logger.WriteLine($"Channel C is odd {bltcpt:X8}");
+			//if ((bltdpt & 1) != 0) Logger.WriteLine($"Channel D is odd {bltdpt:X8}");
 
 			uint s_bltapt = bltapt & ~1u;
 			uint s_bltcpt = bltcpt & ~1u;
@@ -363,8 +363,6 @@ namespace RunAmiga.Custom
 
 			uint length = bltsize >> 6;
 			if (length <= 1) return;
-
-			bltdmod = bltcmod;
 
 			double ty = bltbmod / 4.0;
 			double tx = -(int)bltamod / 4.0 + ty;
@@ -391,8 +389,15 @@ namespace RunAmiga.Custom
 			dydl = dy / (length-1);
 			dxdl = dx / (length-1);
 
-			Logger.WriteLine($"tx,ty {tx,3},{ty,3} dx,dy {dx,3},{dy,3} {Convert.ToString(octant,2).PadLeft(3,'0')}({octant}) {sign} {(bltamod >> 15) & 1} {(bltcmod >> 15) & 1} {(bltdmod >> 15) & 1} {bltapt}");
-			Logger.WriteLine($"dydl {dydl} dxdl {dxdl}");
+			Logger.WriteLine($"tx,ty {tx,3},{ty,3} dx,dy {dx,3},{dy,3} {Convert.ToString(octant,2).PadLeft(3,'0')}({octant}) {sign} am:{bltamod&0xffff:X4} cm:{bltcmod:X4} dm:{bltdmod:X4} a:{bltapt,5} d:{bltdpt:X8} dydl:{dydl} dxdl:{dxdl}");
+
+			//todo: these are supposed to be the same, why are they not?
+			bltdmod = bltcmod;
+
+			uint bltzero = 0;
+
+			//set blitter busy in DMACON
+			custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
 
 			double x = bltcon0 >> 12;
 			double y = 0.0;
@@ -402,7 +407,11 @@ namespace RunAmiga.Custom
 				int x1 = (int) (x+0.5);
 
 				p = memory.Read(0, s_bltdpt, Size.Word);
-				memory.Write(0, s_bltdpt, p | (1u << x1), Size.Word);
+				//todo: apply minterm here
+				p |= (1u << x1);
+				bltzero |= p;
+				memory.Write(0, s_bltdpt, p, Size.Word);
+				musashiMemory.Write(0, s_bltdpt, p, Size.Word);
 
 				x += dxdl;
 				if (dxdl < 0 && x < 0)
@@ -412,7 +421,7 @@ namespace RunAmiga.Custom
 				}
 				else if (dxdl > 0 && x >= 16)
 				{
-					s_bltdpt += (uint)(2 * (int)(x / 16));
+					s_bltdpt += (uint)(2 * ((int)(x / 16)));
 					x = x % 16.0;
 				}
 
@@ -428,6 +437,23 @@ namespace RunAmiga.Custom
 					y = y % 1.0;
 				}
 			}
+
+			bltdpt = s_bltdpt;
+
+			//write the BZERO bit in DMACON
+			if (bltzero == 0)
+				custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
+			else
+				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+
+			//write blitter interrupt bit to INTREQ
+			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)Interrupt.BLIT), Size.Word);
+
+			//disable blitter busy in DMACON
+			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+
+			//blitter done
+			interrupt.TriggerInterrupt(Interrupt.BLIT);
 		}
 	}
 }

@@ -8,16 +8,18 @@ namespace RunAmiga.Custom
 	{
 		private readonly Memory musashiMemory;
 		private readonly Interrupt interrupt;
+		private readonly Disk disk;
 		private ushort[] regs = new ushort[32768];
 
 		private readonly Copper copper;
 		private readonly Blitter blitter;
 		private readonly Beam beam;
 
-		public Chips(Debugger debugger, Memory memory, Memory musashiMemory, Interrupt interrupt)
+		public Chips(Debugger debugger, Memory memory, Memory musashiMemory, Interrupt interrupt, Disk disk)
 		{
 			this.musashiMemory = musashiMemory;
 			this.interrupt = interrupt;
+			this.disk = disk;
 			blitter = new Blitter(this, memory, musashiMemory, interrupt);
 			copper = new Copper(memory, this, interrupt);
 			beam = new Beam();
@@ -78,9 +80,15 @@ namespace RunAmiga.Custom
 			{
 				regs[reg] = beam.Read(address);
 			}
+			else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
+			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT 
+			         )//|| address == ChipRegs.ADKCON || address == ChipRegs.ADKCONR)//these last two shared with audio
+			{
+				regs[reg] = disk.Read(insaddr, address);
+			}
 
-			if (address != ChipRegs.VHPOSR && address != ChipRegs.VPOSR)
-				Logger.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
+			//if (address != ChipRegs.VHPOSR && address != ChipRegs.VPOSR)
+			//	Logger.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
 
 			return (uint)regs[reg];
 		}
@@ -128,52 +136,52 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
-				Logger.WriteLine($"DMACON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+				//Logger.WriteLine($"DMACON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 				
-				if ((regs[reg] & 0x4000) != 0) Logger.Write("BBUSY ");
-				if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
-				if ((regs[reg] & 0x1000) != 0) Logger.Write("BZERO ");
-				if ((regs[reg] & 0x0800) != 0) Logger.Write("unused ");
-				if ((regs[reg] & 0x0400) != 0) Logger.Write("unused ");
-				if ((regs[reg] & 0x0200) != 0) Logger.Write("BLTPRI ");
-				if ((regs[reg] & 0x0100) != 0) Logger.Write("DMAEN ");
-				if ((regs[reg] & 0x0080) != 0) Logger.Write("BPLEN ");
-				if ((regs[reg] & 0x0040) != 0) Logger.Write("COPEN ");
-				if ((regs[reg] & 0x0020) != 0) Logger.Write("BLTEN ");
-				if ((regs[reg] & 0x0010) != 0) Logger.Write("DSKEN ");
-				if ((regs[reg] & 0x0008) != 0) Logger.Write("AUD3EN ");
-				if ((regs[reg] & 0x0004) != 0) Logger.Write("AUD2EN ");
-				if ((regs[reg] & 0x0002) != 0) Logger.Write("AUD1EN ");
-				if ((regs[reg] & 0x0001) != 0) Logger.Write("AUD0EN ");
-				if ((regs[reg] & 0x7fff) != 0) Logger.WriteLine("");
+				//if ((regs[reg] & 0x4000) != 0) Logger.Write("BBUSY ");
+				//if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
+				//if ((regs[reg] & 0x1000) != 0) Logger.Write("BZERO ");
+				//if ((regs[reg] & 0x0800) != 0) Logger.Write("unused ");
+				//if ((regs[reg] & 0x0400) != 0) Logger.Write("unused ");
+				//if ((regs[reg] & 0x0200) != 0) Logger.Write("BLTPRI ");
+				//if ((regs[reg] & 0x0100) != 0) Logger.Write("DMAEN ");
+				//if ((regs[reg] & 0x0080) != 0) Logger.Write("BPLEN ");
+				//if ((regs[reg] & 0x0040) != 0) Logger.Write("COPEN ");
+				//if ((regs[reg] & 0x0020) != 0) Logger.Write("BLTEN ");
+				//if ((regs[reg] & 0x0010) != 0) Logger.Write("DSKEN ");
+				//if ((regs[reg] & 0x0008) != 0) Logger.Write("AUD3EN ");
+				//if ((regs[reg] & 0x0004) != 0) Logger.Write("AUD2EN ");
+				//if ((regs[reg] & 0x0002) != 0) Logger.Write("AUD1EN ");
+				//if ((regs[reg] & 0x0001) != 0) Logger.Write("AUD0EN ");
+				//if ((regs[reg] & 0x7fff) != 0) Logger.WriteLine("");
 
 				regs[REG(ChipRegs.DMACONR)] = regs[reg];
 			}
 			else if (address == ChipRegs.INTENA)
 			{
-				Logger.WriteLine($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");
+				//Logger.WriteLine($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");
 				if ((value & 0x8000) != 0)
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
-				Logger.WriteLine($"    -> {Convert.ToString(regs[reg],2).PadLeft(16,'0')} {regs[reg]:X4}");
+				//Logger.WriteLine($"    -> {Convert.ToString(regs[reg],2).PadLeft(16,'0')} {regs[reg]:X4}");
 
-				if ((regs[reg] & 0x4000) != 0) Logger.Write("INTEN ");
-				if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
-				if ((regs[reg] & 0x1000) != 0) Logger.Write("DSKSYN ");
-				if ((regs[reg] & 0x0800) != 0) Logger.Write("RBF ");
-				if ((regs[reg] & 0x0400) != 0) Logger.Write("AUD3 ");
-				if ((regs[reg] & 0x0200) != 0) Logger.Write("AUD2 ");
-				if ((regs[reg] & 0x0100) != 0) Logger.Write("AUD1 ");
-				if ((regs[reg] & 0x0080) != 0) Logger.Write("AUD0 ");
-				if ((regs[reg] & 0x0040) != 0) Logger.Write("BLIT ");
-				if ((regs[reg] & 0x0020) != 0) Logger.Write("VERTB ");
-				if ((regs[reg] & 0x0010) != 0) Logger.Write("COPER ");
-				if ((regs[reg] & 0x0008) != 0) Logger.Write("PORTS ");
-				if ((regs[reg] & 0x0004) != 0) Logger.Write("SOFT ");
-				if ((regs[reg] & 0x0002) != 0) Logger.Write("DSKBLK ");
-				if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
-				if ((regs[reg]&0x7fff)!=0) Logger.WriteLine("");
+				//if ((regs[reg] & 0x4000) != 0) Logger.Write("INTEN ");
+				//if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
+				//if ((regs[reg] & 0x1000) != 0) Logger.Write("DSKSYN ");
+				//if ((regs[reg] & 0x0800) != 0) Logger.Write("RBF ");
+				//if ((regs[reg] & 0x0400) != 0) Logger.Write("AUD3 ");
+				//if ((regs[reg] & 0x0200) != 0) Logger.Write("AUD2 ");
+				//if ((regs[reg] & 0x0100) != 0) Logger.Write("AUD1 ");
+				//if ((regs[reg] & 0x0080) != 0) Logger.Write("AUD0 ");
+				//if ((regs[reg] & 0x0040) != 0) Logger.Write("BLIT ");
+				//if ((regs[reg] & 0x0020) != 0) Logger.Write("VERTB ");
+				//if ((regs[reg] & 0x0010) != 0) Logger.Write("COPER ");
+				//if ((regs[reg] & 0x0008) != 0) Logger.Write("PORTS ");
+				//if ((regs[reg] & 0x0004) != 0) Logger.Write("SOFT ");
+				//if ((regs[reg] & 0x0002) != 0) Logger.Write("DSKBLK ");
+				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
+				//if ((regs[reg]&0x7fff)!=0) Logger.WriteLine("");
 
 				regs[REG(ChipRegs.INTENAR)] = regs[reg];
 			}
@@ -204,6 +212,14 @@ namespace RunAmiga.Custom
 
 				regs[REG(ChipRegs.INTREQR)] = regs[reg];
 			}
+			else if (address == ChipRegs.ADKCON)
+			{
+				if ((value & 0x8000) != 0)
+					regs[reg] |= (ushort) value;
+				else
+					regs[reg] &= (ushort) ~value;
+				Logger.WriteLine($"ADKCON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+			}
 			else
 			{
 				regs[reg] = (ushort)value;
@@ -226,6 +242,12 @@ namespace RunAmiga.Custom
 			else if (address >= ChipRegs.BPL1PTH && address < ChipRegs.BPLCON0)
 			{
 				DebugInfo(insaddr, address, value, size);
+			}
+			else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
+			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT 
+			         || address == ChipRegs.ADKCON || address == ChipRegs.ADKCONR)//these last two shared with audio
+			{
+				disk.Write(insaddr, address, (ushort) value);
 			}
 		}
 

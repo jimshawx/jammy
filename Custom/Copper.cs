@@ -34,6 +34,7 @@ namespace RunAmiga.Custom
 				copperPC = cop1lc;
 				
 				ParseCopperList(copperPC);
+				ParseCopperList(cop2lc);
 
 				foreach (var p in displays.Values)
 					p.Refresh();
@@ -56,7 +57,7 @@ namespace RunAmiga.Custom
 		public void SetCopperPC(uint address)
 		{
 			copperPC = address;
-			DebugCopperList(copperPC);
+			//DebugCopperList(copperPC);
 		}
 
 		private Dictionary<uint, Display> displays = new Dictionary<uint, Display>();
@@ -137,12 +138,16 @@ namespace RunAmiga.Custom
 		{
 			if (copPC == 0) return;
 
+			Playfield pf;
 			if (displays.ContainsKey(copPC))
-				return;
+			{
+				pf = displays[copPC].pf;
+			}
+			else
+			{
+				pf = new Playfield();
+			}
 
-			//Logger.WriteLine($"Parsing Copper List @{copPC:X8}");
-
-			var pf = new Playfield();
 			pf.address = copPC;
 
 			uint copStartPC = copPC;
@@ -265,13 +270,14 @@ namespace RunAmiga.Custom
 				}
 			}
 
-			displays[copStartPC] = new Display(pf, memory);
+			if (!displays.ContainsKey(copStartPC))
+				displays[copStartPC] = new Display(pf, memory);
 		}
 
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
-			Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			//Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 			return value;
 		}
 
@@ -285,7 +291,7 @@ namespace RunAmiga.Custom
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			//Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			switch (address)
 			{
@@ -297,14 +303,14 @@ namespace RunAmiga.Custom
 					break;
 				case ChipRegs.COP1LCL:
 					cop1lc = (cop1lc & 0xffff0000) | value;
-					DebugCopperList(cop1lc);
+					//DebugCopperList(cop1lc);
 					break;
 				case ChipRegs.COP2LCH:
 					cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16);
 					break;
 				case ChipRegs.COP2LCL:
 					cop2lc = (cop2lc & 0xffff0000) | value;
-					DebugCopperList(cop2lc);
+					//DebugCopperList(cop2lc);
 					break;
 				case ChipRegs.COPJMP1:
 					copjmp1 = value;

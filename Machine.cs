@@ -61,11 +61,12 @@ namespace RunAmiga
 		{
 			var labeller = new Labeller();
 			debugger = new Debugger(labeller);
-			cia = new CIA(debugger);
+			disk = new Disk();
+			cia = new CIA(debugger, disk);
 			memory = new Memory(debugger, "J");
 			musashiMemory = new Memory(debugger, "M");
 			interrupt = new Interrupt();
-			custom = new Chips(debugger, memory, musashiMemory, interrupt);
+			custom = new Chips(debugger, memory, musashiMemory, interrupt, disk);
 			interrupt.Init(custom);
 			cpu = new CPU(cia, custom, memory, debugger, interrupt);
 
@@ -345,6 +346,7 @@ namespace RunAmiga
 		}
 
 		private Thread emuThread;
+		private readonly Disk disk;
 
 		public void Start()
 		{
