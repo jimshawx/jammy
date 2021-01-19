@@ -10,15 +10,13 @@ namespace RunAmiga.Custom
 	public class Blitter : IEmulate
 	{
 		private readonly Chips custom;
-		private readonly Memory memory;
-		private readonly Memory musashiMemory;
+		private readonly IMemoryMappedDevice memory;
 		private readonly Interrupt interrupt;
 
-		public Blitter(Chips custom, Memory memory, Memory musashiMemory, Interrupt interrupt)
+		public Blitter(Chips custom, IMemoryMappedDevice memory, Interrupt interrupt)
 		{
 			this.custom = custom;
 			this.memory = memory;
-			this.musashiMemory = musashiMemory;
 			this.interrupt = interrupt;
 		}
 
@@ -253,7 +251,7 @@ namespace RunAmiga.Custom
 				{
 					if ((bltcon0 & (1u << 11)) != 0)
 					{
-						bltadat = memory.read16(s_bltapt);
+						bltadat = memory.Read(0, s_bltapt, Size.Word);
 						if (w == 0) bltadat &= bltafwm;
 						else if (w == width - 1) bltadat &= bltalwm;
 						bltadat <<= (16 - ashift);
@@ -264,7 +262,7 @@ namespace RunAmiga.Custom
 
 					if ((bltcon0 & (1u << 10)) != 0)
 					{
-						bltbdat = memory.read16(s_bltbpt);
+						bltbdat = memory.Read(0, s_bltbpt, Size.Word);
 						bltbdat <<= (16 - bshift);
 						bltbdat |= bltbbits;
 						bltbbits = bltbdat << 16;
@@ -273,7 +271,7 @@ namespace RunAmiga.Custom
 
 					if ((bltcon0 & (1u << 9)) != 0)
 					{
-						bltcdat = memory.read16(s_bltcpt);
+						bltcdat = memory.Read(0, s_bltcpt, Size.Word);
 					}
 
 					//bltddat = (bltbdat & bltadat) | (bltcdat & ~bltadat);
@@ -291,10 +289,7 @@ namespace RunAmiga.Custom
 					bltzero |= bltddat;
 
 					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
-					{
-						memory.write16(s_bltdpt, (ushort) bltddat);
-						musashiMemory.write16(s_bltdpt, (ushort) bltddat);
-					}
+						memory.Write(0, s_bltdpt, (ushort) bltddat, Size.Word);
 
 					//Logger.Write($"{Convert.ToString(bltddat,2).PadLeft(16,'0')}");
 
@@ -411,7 +406,6 @@ namespace RunAmiga.Custom
 				p |= (1u << x1);
 				bltzero |= p;
 				memory.Write(0, s_bltdpt, p, Size.Word);
-				musashiMemory.Write(0, s_bltdpt, p, Size.Word);
 
 				x += dxdl;
 				if (dxdl < 0 && x < 0)

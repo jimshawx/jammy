@@ -1,10 +1,11 @@
 ﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+using RunAmiga.Options;
 
 namespace RunAmiga
 {
@@ -47,6 +48,20 @@ namespace RunAmiga
 		private void UpdateDisassembly()
 		{
 			Machine.LockEmulation();
+
+			string dmp;
+			dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>> {new Tuple<uint, uint>(0xfe88d6, 0xfe8e18 - 0xfe88d6 + 1)}, new DisassemblyOptions{IncludeBytes = false, CommentPad = true});
+			File.WriteAllText("boot_disassembly.txt", dmp);
+
+			dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
+			{
+				new Tuple<uint, uint>(0xfc06dc, 0xfc074c - 0xfc06dc + 1),//DoIO
+				new Tuple<uint, uint>(0xfe9fbe, 0xfea01a - 0xfe9fbe + 1),//BeginIO
+				new Tuple<uint, uint>(0xfea01c, 0xfea068 - 0xfea01c + 1),//Task
+				new Tuple<uint, uint>(0xfeae50, 0xfeaf4a - 0xfeae50 + 1),//
+			}, new DisassemblyOptions{ IncludeBytes = false, CommentPad = true});
+			File.WriteAllText("trackdisk_disassembly.txt", dmp);
+
 			var disasm = debugger.DisassembleTxt(
 					new List<Tuple<uint, uint>>
 					{
@@ -58,7 +73,8 @@ namespace RunAmiga
 						new Tuple<uint, uint> (0xfc4900, 0x1f000),
 						new Tuple<uint, uint> (0xfe52a4, 0x0144),
 						new Tuple<uint, uint> (0xfe53e8, 0x6000)
-					});
+					}, new DisassemblyOptions{ IncludeBytes = true, IncludeBreakpoints = true});
+
 			Machine.UnlockEmulation();
 			txtDisassembly.Text = disasm;
 		}

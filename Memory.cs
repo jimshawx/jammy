@@ -31,7 +31,7 @@ namespace RunAmiga
 			return true;
 		}
 
-		public uint read32(uint address)
+		private uint read32(uint address)
 		{
 			if ((address & 1) != 0)
 				throw new MemoryAlignmentException(address);
@@ -42,7 +42,7 @@ namespace RunAmiga
 				(uint)memory[(address + 3) & memoryMask];
 		}
 
-		public ushort read16(uint address)
+		private ushort read16(uint address)
 		{
 			if ((address & 1) != 0)
 				throw new MemoryAlignmentException(address);
@@ -52,12 +52,12 @@ namespace RunAmiga
 				(ushort)memory[(address + 1) & memoryMask]);
 		}
 
-		public byte read8(uint address)
+		private byte read8(uint address)
 		{
 			return memory[address & memoryMask];
 		}
 
-		public void write32(uint address, uint value)
+		private void write32(uint address, uint value)
 		{
 			if ((address & 1) != 0)
 				throw new MemoryAlignmentException(address);
@@ -73,7 +73,7 @@ namespace RunAmiga
 			memory[(address + 3) & memoryMask] = b3;
 		}
 
-		public void write16(uint address, ushort value)
+		private void write16(uint address, ushort value)
 		{
 			if ((address & 1) != 0)
 				throw new MemoryAlignmentException(address);
@@ -85,7 +85,7 @@ namespace RunAmiga
 			memory[(address + 1) & memoryMask] = b1;
 		}
 
-		public void write8(uint address, byte value)
+		private void write8(uint address, byte value)
 		{
 			memory[address & memoryMask] = value;
 		}

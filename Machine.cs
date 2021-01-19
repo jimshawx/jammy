@@ -32,8 +32,6 @@ namespace RunAmiga
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_set_pc(uint pc);
 
-
-
 		private CPU cpu;
 		private Chips custom;
 		private CIA cia;
@@ -52,27 +50,37 @@ namespace RunAmiga
 		private Musashi_Writer w32;
 		private Musashi_Writer w16;
 		private Musashi_Writer w8;
-		private Memory musashiMemory;
+		private IMemoryMappedDevice musashiMemory;
 		private Disassembler disassembler;
 		private Musashi_regs musashiRegs;
 		private Interrupt interrupt;
+		private MemoryMapper memoryMapper;
+		private MemoryReplay memoryReplay;
 
 		public Machine()
 		{
 			var labeller = new Labeller();
 			debugger = new Debugger(labeller);
-			disk = new Disk();
-			cia = new CIA(debugger, disk);
-			memory = new Memory(debugger, "J");
-			musashiMemory = new Memory(debugger, "M");
 			interrupt = new Interrupt();
-			custom = new Chips(debugger, memory, musashiMemory, interrupt, disk);
+			memory = new Memory(debugger, "J");
+			//musashiMemory = new Memory(debugger, "M");
+			memoryReplay = new MemoryReplay();
+			musashiMemory = memoryReplay;
+
+			disk = new Disk(memory, interrupt);
+			cia = new CIA(debugger, disk);
+
+			custom = new Chips(debugger, memory, interrupt, disk);
 			interrupt.Init(custom);
-			cpu = new CPU(cia, custom, memory, debugger, interrupt);
+
+			memoryMapper = new MemoryMapper(debugger, memory, cia, custom, memoryReplay);
+
+			cpu = new CPU(debugger, interrupt, memoryMapper);
 
 			emulations.Add(cia);
 			emulations.Add(custom);
 			emulations.Add(memory);
+			emulations.Add(memoryReplay);
 			emulations.Add(cpu);
 			emulations.Add(interrupt);
 
@@ -80,7 +88,7 @@ namespace RunAmiga
 
 			Reset();
 
-			musashiMemory.Reset();
+			//musashiMemory.Reset();
 			disassembler = new Disassembler();
 
 			r32 = new Musashi_Reader(Musashi_read32);
@@ -90,7 +98,7 @@ namespace RunAmiga
 			w16 = new Musashi_Writer(Musashi_write16);
 			w8 = new Musashi_Writer(Musashi_write8);
 
-			var memoryArray = musashiMemory.GetMemoryArray();
+			//var memoryArray = musashiMemory.GetMemoryArray();
 			Musashi_init(
 			Marshal.GetFunctionPointerForDelegate(r32),
 			Marshal.GetFunctionPointerForDelegate(r16),
@@ -111,52 +119,31 @@ namespace RunAmiga
 
 		private uint Musashi_read32(uint address)
 		{
-			//if (address > 0x1000000) { Logger.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
-
-			if (address >= 0xdf0000 && address <= 0xdfffff) return custom.Read(0, address, Size.Long);
-
-			uint value = musashiMemory.read32(address);
-			return value;
+			return musashiMemory.Read(0, address, Size.Long);
 		}
 		private uint Musashi_read16(uint address)
 		{
-			//if (address > 0x1000000) { Logger.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
-
-			if (address >= 0xdf0000 && address <= 0xdfffff) return custom.Read(0, address, Size.Word);
-
-			uint value = musashiMemory.read16(address);
-			return value;
+			return musashiMemory.Read(0, address, Size.Word);
 		}
 		private uint Musashi_read8(uint address)
 		{
-			//if (address > 0x1000000) { Logger.WriteLine($"[MUSH] read oob @{address:X8}"); return 0; }
-
-			//BFD000 - BFDF00
-			//BFE001 - BFEF01
-			if (address >= 0xbfd000 && address <= 0xbfef01) return cia.Read(0, address, Size.Byte);
-			if (address >= 0xdf0000 && address <= 0xdfffff) return custom.Read(0, address, Size.Byte);
-
-			uint value = musashiMemory.read8(address);
-			return value;
+			return musashiMemory.Read(0, address, Size.Byte);
 		}
 		private void Musashi_write32(uint address, uint value)
 		{
-			//if (address > 0x1000000) { Logger.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
 			musashiMemory.Write(0, address, value, Size.Long);
 		}
 		private void Musashi_write16(uint address, uint value)
 		{
-			//if (address > 0x1000000) { Logger.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
 			musashiMemory.Write(0, address, value, Size.Word);
 		}
 
 		private void Musashi_write8(uint address, uint value)
 		{
-			//if (address > 0x1000000) { Logger.WriteLine($"[MUSH] write oob @{address:X8}"); return; }
 			musashiMemory.Write(0, address, value, Size.Byte);
 		}
 
-		public void RunEmulations1(ulong ns)
+		public void RunEmulations(ulong ns)
 		{
 			emulations.ForEach(x => x.Emulate(ns));
 			CheckInterrupts(10);
@@ -164,8 +151,10 @@ namespace RunAmiga
 
 		//private List<uint> mpc = new List<uint>();
 		//private ushort last_sr;
-		public void RunEmulations(ulong ns)
+		public void RunEmulations2(ulong ns)
 		{
+			memoryReplay.SetRecording();
+
 			Musashi_get_regs(musashiRegs);
 
 			var regs = cpu.GetRegs();
@@ -179,6 +168,8 @@ namespace RunAmiga
 			emulations.ForEach(x => x.Emulate(ns));
 
 			var regsAfter = cpu.GetRegs();
+
+			memoryReplay.SetPlayback();
 
 			int counter = 0;
 			const int maxPCdrift = 6;
@@ -267,49 +258,49 @@ namespace RunAmiga
 
 			CheckInterrupts(cycles);
 
-			if (MemChk(instructionStartPC))
-			{
-				debugger.DumpTrace();
-				//mpc = mpc.Skip(mpc.Count - 32).ToList();
-				//foreach (var v in mpc)
-				//	Logger.WriteLine($"{v:X8}");
-			}
+			//if (MemChk(instructionStartPC))
+			//{
+			//	debugger.DumpTrace();
+			//	//mpc = mpc.Skip(mpc.Count - 32).ToList();
+			//	//foreach (var v in mpc)
+			//	//	Logger.WriteLine($"{v:X8}");
+			//}
 		}
 
-		private uint memChkCnt = 0;
-		private bool MemChk(uint pc)
-		{
-			bool differ = false;
+		//private uint memChkCnt = 0;
+		//private bool MemChk(uint pc)
+		//{
+		//	bool differ = false;
 
-			memChkCnt++;
-			if ((memChkCnt % 100000) == 0)
-			{
-				var mem1 = memory.GetMemoryArray();
-				var mem2 = musashiMemory.GetMemoryArray();
-				for (int i = 0; i < 0xa00000; i++)
-				{
-					if (mem1[i] != mem2[i])
-					{
-						Logger.WriteLine($"[MEMX] {i:X8} {mem1[i]:X2} {mem2[i]:X2}");
-						differ = true;
-					}
-				}
+		//	memChkCnt++;
+		//	if ((memChkCnt % 100000) == 0)
+		//	{
+		//		var mem1 = memory.GetMemoryArray();
+		//		var mem2 = musashiMemory.GetMemoryArray();
+		//		for (int i = 0; i < 0xa00000; i++)
+		//		{
+		//			if (mem1[i] != mem2[i])
+		//			{
+		//				Logger.WriteLine($"[MEMX] {i:X8} {mem1[i]:X2} {mem2[i]:X2}");
+		//				differ = true;
+		//			}
+		//		}
 
-				for (int i = 0xc00000; i < 0xd80000; i++)
-				{
-					if (mem1[i] != mem2[i])
-					{
-						Logger.WriteLine($"[MEMX] {i:X8} {mem1[i]:X2} {mem2[i]:X2}");
-						differ = true;
-					}
-				}
-			}
+		//		for (int i = 0xc00000; i < 0xd80000; i++)
+		//		{
+		//			if (mem1[i] != mem2[i])
+		//			{
+		//				Logger.WriteLine($"[MEMX] {i:X8} {mem1[i]:X2} {mem2[i]:X2}");
+		//				differ = true;
+		//			}
+		//		}
+		//	}
 
-			if (differ)
-				Logger.WriteLine($"@{pc:X8}");
+		//	if (differ)
+		//		Logger.WriteLine($"@{pc:X8}");
 
-			return differ;
-		}
+		//	return differ;
+		//}
 
 
 		private uint clock=0;

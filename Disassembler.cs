@@ -850,7 +850,7 @@ namespace RunAmiga
 			if (((type >> 16) & 1) == 0)
 			{
 				//moveq
-				int Xn = (type >> 9) & 3;
+				int Xn = (type >> 9) & 7;
 				uint imm8 = (uint)(sbyte)(type & 0xff);
 				Append($"moveq.l #{imm8},d{Xn}");
 			}

@@ -48,30 +48,27 @@ namespace RunAmiga
 
 		private FetchMode fetchMode;
 
-		private List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 		private Debugger debugger;
 		private readonly Interrupt interrupt;
 
-		public CPU(CIA cia, Chips custom, Memory memory, Debugger debugger, Interrupt interrupt)
+		private IMemoryMappedDevice memoryMapper;
+
+		public CPU(Debugger debugger, Interrupt interrupt, IMemoryMappedDevice memoryMapper)
 		{
 			a = new A(Supervisor);
 
-			devices.Add(debugger);
-			devices.Add(memory);
-			devices.Add(cia);
-			devices.Add(custom);
-
 			this.debugger = debugger;
 			this.interrupt = interrupt;
+			this.memoryMapper = memoryMapper;
 
-			Reset();
+			//Reset();
 		}
 
 		public void Reset()
 		{
 			fetchMode = FetchMode.Running;
 			sr = 0b00100_111_00000100;//S,INT L7,Z
-			a[7] = read16(0);
+			a[7] = read32(0);
 			pc = read32(4);
 		}
 
@@ -417,45 +414,38 @@ namespace RunAmiga
 		private bool C() { return (sr & 1) != 0; }
 		private bool Supervisor() { return (sr & 0b00100000_00000000) != 0; }
 
-		private List<IMemoryMappedDevice> MemoryMapper(uint address)
-		{
-			return devices.Where(x => x.IsMapped(address)).ToList();
-		}
 
 		public uint read32(uint address)
 		{
-			uint value = 0;
-			MemoryMapper(address).ForEach(x => value = x.Read(instructionStartPC, address, Size.Long));
+			uint value = memoryMapper.Read(instructionStartPC, address, Size.Long);
 			return value;
 		}
 
 		public ushort read16(uint address)
 		{
-			ushort value = 0;
-			MemoryMapper(address).ForEach(x => value = (ushort)x.Read(instructionStartPC, address, Size.Word));
+			ushort value = (ushort)memoryMapper.Read(instructionStartPC, address, Size.Word);
 			return value;
 		}
 
 		public byte read8(uint address)
 		{
-			byte value = 0;
-			MemoryMapper(address).ForEach(x => value = (byte)x.Read(instructionStartPC, address, Size.Byte));
+			byte value = (byte)memoryMapper.Read(instructionStartPC, address, Size.Byte);
 			return value;
 		}
 
 		public void write32(uint address, uint value)
 		{
-			MemoryMapper(address).ForEach(x => x.Write(instructionStartPC, address, value, Size.Long));
+			memoryMapper.Write(instructionStartPC, address, value, Size.Long);
 		}
 
 		public void write16(uint address, ushort value)
 		{
-			MemoryMapper(address).ForEach(x => x.Write(instructionStartPC, address, value, Size.Word));
+			memoryMapper.Write(instructionStartPC, address, value, Size.Word);
 		}
 
 		public void write8(uint address, byte value)
 		{
-			MemoryMapper(address).ForEach(x => x.Write(instructionStartPC, address, value, Size.Byte));
+			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
 		}
 
 		private void push32(uint value)
@@ -2008,11 +1998,13 @@ namespace RunAmiga
 			}
 			else
 			{
-				//debugger.DumpTrace();
-				if (vector < 16)
-					Logger.WriteLine($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
-				else
-					Logger.WriteLine($"Trap {vector} {instructionStartPC:X8}");
+				if (vector != 8)//used in multitasker
+				{
+					if (vector < 16)
+						Logger.WriteLine($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
+					else
+						Logger.WriteLine($"Trap {vector} {instructionStartPC:X8}");
+				}
 			}
 
 			fetchMode = FetchMode.Running;

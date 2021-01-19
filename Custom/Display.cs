@@ -71,12 +71,12 @@ namespace RunAmiga.Custom
 	public class Display
 	{
 		public Playfield pf { get; }
-		private readonly Memory memory;
+		private readonly IMemoryMappedDevice memory;
 		private readonly Form form;
 		private readonly PictureBox picture;
 		private readonly Bitmap bitmap;
 
-		public Display(Playfield pf, Memory memory)
+		public Display(Playfield pf, IMemoryMappedDevice memory)
 		{
 			this.pf = pf;
 			this.memory = memory;
@@ -136,8 +136,8 @@ namespace RunAmiga.Custom
 			{
 				for (int i = 0; i < 20 * 200; i++)
 				{
-					uint p0 = memory.read16(s_bpl1pt);
-					uint p1 = memory.read16(s_bpl2pt);
+					uint p0 = memory.Read(0,s_bpl1pt, Types.Size.Word);
+					uint p1 = memory.Read(0,s_bpl2pt, Types.Size.Word);
 					for (int j = 0; j < 16; j++)
 					{
 						p = (p0 >> j) & 1;

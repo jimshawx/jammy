@@ -5,12 +5,11 @@ namespace RunAmiga.Custom
 {
 	public class Copper : IEmulate
 	{
-		private readonly Memory memory;
+		private readonly IMemoryMappedDevice memory;
 		private readonly Chips custom;
 		private readonly Interrupt interrupt;
-		private const uint customBase = 0xdff000;
 
-		public Copper(Memory memory, Chips custom, Interrupt interrupt)
+		public Copper(IMemoryMappedDevice memory, Chips custom, Interrupt interrupt)
 		{
 			this.memory = memory;
 			this.custom = custom;
@@ -78,10 +77,10 @@ namespace RunAmiga.Custom
 			int counter = 64;
 			while (counter-- > 0)
 			{
-				ushort ins = memory.read16(copPC);
+				ushort ins = (ushort)memory.Read(0, copPC, Size.Word);
 				copPC += 2;
 
-				ushort data = memory.read16(copPC);
+				ushort data = (ushort)memory.Read(0, copPC, Size.Word);
 				copPC += 2;
 
 				Logger.Write($"{copPC - 4:X8} {ins:X4},{data:X4} ");
@@ -91,7 +90,7 @@ namespace RunAmiga.Custom
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					Logger.WriteLine($"{copPC:X8} MOVE {ChipRegs.Name(customBase + reg)}({reg:X4}),{data:X4}");
+					Logger.WriteLine($"{copPC:X8} MOVE {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
 
 					//if (customBase+reg == CustomRegs.COPJMP1)
 					//	copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC
@@ -155,10 +154,10 @@ namespace RunAmiga.Custom
 			int counter = 64;
 			while (counter-- > 0)
 			{
-				ushort ins = memory.read16(copPC);
+				ushort ins = (ushort)memory.Read(0,copPC,Size.Word);
 				copPC += 2;
 
-				ushort data = memory.read16(copPC);
+				ushort data = (ushort)memory.Read(0,copPC,Size.Word);
 				copPC += 2;
 
 				//Logger.Write($"{copPC - 4:X8} {ins:X4},{data:X4} ");
@@ -169,7 +168,7 @@ namespace RunAmiga.Custom
 					uint reg = (uint)(ins & 0x1fe);
 
 					//Logger.WriteLine($"MOVE {ChipRegs.Name(customBase + reg)}({reg:X4}),{data:X4}");
-					uint address = customBase + reg;
+					uint address = ChipRegs.ChipBase + reg;
 					switch (address)
 					{
 						case ChipRegs.BPL1MOD: pf.bpl1mod = data; break;

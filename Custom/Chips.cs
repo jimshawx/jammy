@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
 	public class Chips : IEmulate, IMemoryMappedDevice
 	{
-		private readonly Memory musashiMemory;
 		private readonly Interrupt interrupt;
 		private readonly Disk disk;
 		private ushort[] regs = new ushort[32768];
@@ -15,12 +13,11 @@ namespace RunAmiga.Custom
 		private readonly Blitter blitter;
 		private readonly Beam beam;
 
-		public Chips(Debugger debugger, Memory memory, Memory musashiMemory, Interrupt interrupt, Disk disk)
+		public Chips(Debugger debugger, IMemoryMappedDevice memory, Interrupt interrupt, Disk disk)
 		{
-			this.musashiMemory = musashiMemory;
 			this.interrupt = interrupt;
 			this.disk = disk;
-			blitter = new Blitter(this, memory, musashiMemory, interrupt);
+			blitter = new Blitter(this, memory, interrupt);
 			copper = new Copper(memory, this, interrupt);
 			beam = new Beam();
 		}

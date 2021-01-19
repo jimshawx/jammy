@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Text;
+using RunAmiga.Options;
 
 namespace RunAmiga.Types
 {
@@ -13,7 +14,7 @@ namespace RunAmiga.Types
 		public override string ToString()
 		{
 			var s = new StringBuilder();
-			s.Append($"{Address:X8} ");
+			s.Append($"{Address:X6}  ");
 
 			for (int i = 0; i < Bytes.Length; i++)
 				s.Append($"{Bytes[i]:X2} ");
@@ -21,7 +22,34 @@ namespace RunAmiga.Types
 				s.Append("   ");
 
 			string[] sp = Asm.Split(' ');
-			s.Append($"{sp[0], -8} {string.Join(" ", sp.Skip(1))}");
+			s.Append($"{sp[0], -9} {string.Join(" ", sp.Skip(1))}");
+
+			return s.ToString();
+		}
+
+		public string ToString(DisassemblyOptions options)
+		{
+			var s = new StringBuilder();
+			s.Append($"{Address:X6}  ");
+
+			if (options.IncludeBytes)
+			{
+				for (int i = 0; i < Bytes.Length; i++)
+					s.Append($"{Bytes[i]:X2} ");
+				for (int i = Bytes.Length; i < 8; i++)
+					s.Append("   ");
+			}
+
+			string[] sp = Asm.Split(' ');
+			s.Append($"{sp[0],-9} {string.Join(" ", sp.Skip(1))}");
+
+			if (options.CommentPad)
+			{
+				if (s.Length < 48)
+					s.Append("".PadRight(48 - s.Length, ' '));
+				else
+					s.Append(" ");
+			}
 
 			return s.ToString();
 		}

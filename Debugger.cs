@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using RunAmiga.Custom;
+using RunAmiga.Options;
 
 namespace RunAmiga
 {
@@ -265,7 +266,7 @@ namespace RunAmiga
 		private Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
 		private Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
 
-		public string DisassembleTxt(List<Tuple<uint, uint>> ranges)
+		public string DisassembleTxt(List<Tuple<uint, uint>> ranges, DisassemblyOptions options)
 		{
 			addressToLine.Clear();
 			lineToAddress.Clear();
@@ -290,9 +291,10 @@ namespace RunAmiga
 					addressToLine.Add(address, line);
 					lineToAddress.Add(line, address);
 					line++;
-					txt.Append(IsBreakpoint(address)?'*':' ');
+					if (options.IncludeBreakpoints)
+						txt.Append(IsBreakpoint(address)?'*':' ');
 					var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-					txt.Append($"{dasm}\n");
+					txt.Append($"{dasm.ToString(options)}\n");
 					address += (uint)dasm.Bytes.Length;
 				}
 			}
