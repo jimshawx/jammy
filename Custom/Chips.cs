@@ -30,6 +30,7 @@ namespace RunAmiga.Custom
 			copper.Emulate(ns);
 			blitter.Emulate(ns);
 			beam.Emulate(ns);
+			disk.Emulate(ns);
 		}
 
 		public void Reset()
@@ -219,6 +220,7 @@ namespace RunAmiga.Custom
 				else
 					regs[reg] &= (ushort) ~value;
 				Logger.WriteLine($"ADKCON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+				regs[REG(ChipRegs.ADKCONR)] = regs[reg];
 			}
 			else
 			{

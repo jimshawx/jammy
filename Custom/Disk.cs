@@ -9,7 +9,8 @@ namespace RunAmiga.Custom
 
 		public void Emulate(ulong ns)
 		{
-
+			pra ^= 1 << 5;
+			pra |= 1 << 2;
 		}
 
 		public void Reset()
@@ -96,7 +97,7 @@ namespace RunAmiga.Custom
 			if ((pra & (1 << 3)) != 0) Logger.Write("DSKPROT ");
 			if ((pra & (1 << 4)) != 0) Logger.Write("DSKTRACK0 ");
 			if ((pra & (1 << 5)) != 0) Logger.Write("DSKRDY ");
-			if ((pra&0x3c) != 0) Trace.WriteLine("");
+			if ((pra&0x3c) != 0) Logger.WriteLine("");
 
 			//2 DISKCHANGE, low disk removed, high inserted and stepped
 			//3 DSKPROT, active low
@@ -116,7 +117,7 @@ namespace RunAmiga.Custom
 			if ((prb & (1 << 5)) != 0) Logger.Write("DSKSEL2 ");
 			if ((prb & (1 << 6)) != 0) Logger.Write("DSKSEL3 ");
 			if ((prb & (1 << 7)) != 0) Logger.Write("DSKMOTOR ");
-			if (prb!=0) Trace.WriteLine("");
+			if (prb!=0) Logger.WriteLine("");
 
 			//0 DSKSTEP
 			//1 DSKDIREC
@@ -137,10 +138,7 @@ namespace RunAmiga.Custom
 
 		public byte ReadPRA()
 		{
-			pra ^= 1 << 5;
-			pra |= 1 << 2;
-
-			Logger.WriteLine($"R PRA {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')}");
+			Logger.WriteLine($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')}");
 
 			return (byte)pra;
 		}
