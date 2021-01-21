@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+using RunAmiga.Dialogs;
 using RunAmiga.Options;
 
 namespace RunAmiga
@@ -58,7 +59,24 @@ namespace RunAmiga
 				new Tuple<uint, uint>(0xfc06dc, 0xfc074c - 0xfc06dc + 1),//DoIO
 				new Tuple<uint, uint>(0xfe9fbe, 0xfea01a - 0xfe9fbe + 1),//BeginIO
 				new Tuple<uint, uint>(0xfea01c, 0xfea068 - 0xfea01c + 1),//Task
+				new Tuple<uint, uint>(0xfea112, 0xfea142 - 0xfea112 + 1),//
+
+				new Tuple<uint, uint>(0xFEA358, 0xFEA5B3 - 0xFEA358 + 1),//
+
+				
+
+				new Tuple<uint, uint>(0xfea5b4, 0xfea6f0 - 0xfea5b4 + 1),
+				new Tuple<uint, uint>(0xfea6f2, 0xfea730 - 0xfea6f2 + 1),//
+				new Tuple<uint, uint>(0xfea99e, 0xfea9fc - 0xfea99e + 1),
+				new Tuple<uint, uint>(0xfeaadc, 0xfeac84 - 0xfeaadc + 1),//
+				new Tuple<uint, uint>(0xfeacb2, 0xfead44 - 0xfeacb2 + 1),//
+				new Tuple<uint, uint>(0xfead46, 0xfeada2 - 0xfead46 + 1),//
+				new Tuple<uint, uint>(0xfeada4, 0xfeadbc - 0xfeada4 + 1),//
 				new Tuple<uint, uint>(0xfeae50, 0xfeaf4a - 0xfeae50 + 1),//
+				new Tuple<uint, uint>(0xfeaf4c, 0xfeaf96 - 0xfeaf4c + 1),
+				new Tuple<uint, uint>(0xfeafe2, 0xfeb202 - 0xfeafe2 + 1),
+				new Tuple<uint, uint>(0xfeb2cc, 0xfeb2e6 - 0xfeb2cc + 1),//
+				new Tuple<uint, uint>(0xfeb2e8, 0xfeb3b4 - 0xfeb2e8 + 1)
 			}, new DisassemblyOptions{ IncludeBytes = false, CommentPad = true});
 			File.WriteAllText("trackdisk_disassembly.txt", dmp);
 
@@ -307,6 +325,55 @@ namespace RunAmiga
 			UpdateDisplay();
 		}
 
+		private void menuMemory_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+		{
+			if (!(sender is ContextMenuStrip))
+				return;
+
+			var ctx = (ContextMenuStrip)sender;
+
+			if (e.ClickedItem == menuMemoryGotoItem)
+			{
+				var gotoForm = new GoTo();
+				var res = gotoForm.ShowDialog();
+				if (res == DialogResult.OK)
+				{
+					uint address = gotoForm.GotoLocation;
+				}
+			}
+			else if (e.ClickedItem == menuMemoryFindItem)
+			{
+				var findForm = new Find();
+				var res = findForm.ShowDialog();
+				if (res == DialogResult.OK)
+				{
+					if (findForm.SearchText != null)
+					{
+						uint address = debugger.FindMemoryText(findForm.SearchText);
+
+						Machine.LockEmulation();
+						var memory = debugger.GetMemory();
+						int gotoLine = memory.AddressToLine(address);
+						Machine.UnlockEmulation();
+
+						txtMemory.SuspendLayout();
+						txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(Math.Max(0, gotoLine - 5));
+						txtMemory.ScrollToCaret();
+						txtMemory.Select(txtMemory.GetFirstCharIndexFromLine(gotoLine),
+							txtMemory.GetFirstCharIndexFromLine(gotoLine + 1) - txtMemory.GetFirstCharIndexFromLine(gotoLine));
+						txtMemory.Invalidate();
+						txtMemory.ResumeLayout();
+						txtMemory.Update();
+					}
+				}
+			}
+
+			UpdateDisassembly();
+
+			SetSelection();
+			UpdateDisplay();
+		}
+
 		private void menuDisassembly_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
 		{
 			if (!(sender is ContextMenuStrip))
@@ -314,14 +381,17 @@ namespace RunAmiga
 
 			var ctx = (ContextMenuStrip)sender;
 
-			var mouse = this.PointToClient(ctx.Location);
-			Logger.WriteLine($"ctx {mouse.X} {mouse.Y}");
-			int c = txtDisassembly.GetCharIndexFromPosition(mouse);
-			Logger.WriteLine($"char {c}");
-			int line = txtDisassembly.GetLineFromCharIndex(c)-1;
-			Logger.WriteLine($"line {line}");
-			uint pc = debugger.GetLineAddress(line);
-			Logger.WriteLine($"PC {pc:X8}");
+			uint pc;
+			{
+				var mouse = this.PointToClient(ctx.Location);
+				Logger.WriteLine($"ctx {mouse.X} {mouse.Y}");
+				int c = txtDisassembly.GetCharIndexFromPosition(mouse);
+				Logger.WriteLine($"char {c}");
+				int line = txtDisassembly.GetLineFromCharIndex(c) - 1;
+				Logger.WriteLine($"line {line}");
+				pc = debugger.GetLineAddress(line);
+				Logger.WriteLine($"PC {pc:X8}");
+			}
 
 			if (e.ClickedItem == toolStripBreakpoint)
 			{
@@ -330,13 +400,30 @@ namespace RunAmiga
 				debugger.ToggleBreakpoint(pc);
 				Machine.UnlockEmulation();
 			}
-
-			if (e.ClickedItem == toolStripSkip)
+			else if (e.ClickedItem == toolStripSkip)
 			{
 				Logger.WriteLine($"SKIP {pc:X8}");
 				Machine.LockEmulation();
 				debugger.SetPC(pc);
 				Machine.UnlockEmulation();
+			}
+			else if (e.ClickedItem == toolStripGoto)
+			{
+				var gotoForm = new GoTo();
+				var res = gotoForm.ShowDialog();
+				if (res == DialogResult.OK)
+				{
+					uint address = gotoForm.GotoLocation;
+					int gotoLine = debugger.GetAddressLine(address);
+					txtDisassembly.SuspendLayout();
+					txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, gotoLine - 5));
+					txtDisassembly.ScrollToCaret();
+					txtDisassembly.Select(txtDisassembly.GetFirstCharIndexFromLine(gotoLine),
+						txtDisassembly.GetFirstCharIndexFromLine(gotoLine + 1) - txtDisassembly.GetFirstCharIndexFromLine(gotoLine));
+					txtDisassembly.Invalidate();
+					txtDisassembly.ResumeLayout();
+					txtDisassembly.Update();
+				}
 			}
 
 			UpdateDisassembly();

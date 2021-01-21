@@ -1,0 +1,28 @@
+﻿using System;
+using System.Windows.Forms;
+
+namespace RunAmiga.Dialogs
+{
+	public partial class GoTo : Form
+	{
+		public GoTo()
+		{
+			InitializeComponent();
+		}
+
+		public uint GotoLocation { get; set; } = 0;
+
+		private void btnGoToGoTo_Click(object sender, EventArgs e)
+		{
+			GotoLocation = Convert.ToUInt32(this.txtGotoAddress.Text, 16);
+			if (GotoLocation == 0)
+				this.txtGotoAddress.Text = "0";
+			DialogResult = DialogResult.OK;
+		}
+
+		private void btnGotoCancel_Click(object sender, EventArgs e)
+		{
+			DialogResult = DialogResult.Cancel;
+		}
+	}
+}

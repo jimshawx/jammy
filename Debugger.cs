@@ -400,5 +400,10 @@ namespace RunAmiga
 		{
 			cpu.SetPC(pc);
 		}
+
+		public uint FindMemoryText(string txt)
+		{
+			return memory.FindSequence(Encoding.ASCII.GetBytes(txt));
+		}
 	}
 }

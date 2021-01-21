@@ -36,11 +36,15 @@ namespace RunAmiga
 			this.menuDisassembly = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.toolStripBreakpoint = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSkip = new System.Windows.Forms.ToolStripMenuItem();
+			this.toolStripGoto = new System.Windows.Forms.ToolStripMenuItem();
 			this.btnStep = new System.Windows.Forms.Button();
 			this.btnStop = new System.Windows.Forms.Button();
 			this.btnGo = new System.Windows.Forms.Button();
 			this.btnReset = new System.Windows.Forms.Button();
 			this.txtMemory = new System.Windows.Forms.RichTextBox();
+			this.menuMemory = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this.menuMemoryGotoItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.menuMemoryFindItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.btnRefresh = new System.Windows.Forms.Button();
 			this.btnStepOver = new System.Windows.Forms.Button();
@@ -74,6 +78,7 @@ namespace RunAmiga
 			this.addressFollowBox = new System.Windows.Forms.ComboBox();
 			this.txtExecBase = new System.Windows.Forms.RichTextBox();
 			this.menuDisassembly.SuspendLayout();
+			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -131,9 +136,10 @@ namespace RunAmiga
 			// 
 			this.menuDisassembly.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripBreakpoint,
-            this.toolStripSkip});
+            this.toolStripSkip,
+            this.toolStripGoto});
 			this.menuDisassembly.Name = "menuDisassembly";
-			this.menuDisassembly.Size = new System.Drawing.Size(132, 48);
+			this.menuDisassembly.Size = new System.Drawing.Size(132, 70);
 			this.menuDisassembly.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.menuDisassembly_ItemClicked);
 			// 
 			// toolStripBreakpoint
@@ -147,6 +153,12 @@ namespace RunAmiga
 			this.toolStripSkip.Name = "toolStripSkip";
 			this.toolStripSkip.Size = new System.Drawing.Size(131, 22);
 			this.toolStripSkip.Text = "Skip";
+			// 
+			// toolStripGoto
+			// 
+			this.toolStripGoto.Name = "toolStripGoto";
+			this.toolStripGoto.Size = new System.Drawing.Size(131, 22);
+			this.toolStripGoto.Text = "Go To...";
 			// 
 			// btnStep
 			// 
@@ -196,6 +208,7 @@ namespace RunAmiga
 			// 
 			this.txtMemory.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
+			this.txtMemory.ContextMenuStrip = this.menuMemory;
 			this.txtMemory.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.txtMemory.Location = new System.Drawing.Point(3, 3);
 			this.txtMemory.Name = "txtMemory";
@@ -204,6 +217,27 @@ namespace RunAmiga
 			this.txtMemory.TabIndex = 6;
 			this.txtMemory.Text = "";
 			this.txtMemory.WordWrap = false;
+			// 
+			// menuMemory
+			// 
+			this.menuMemory.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.menuMemoryGotoItem,
+            this.menuMemoryFindItem});
+			this.menuMemory.Name = "menuMemory";
+			this.menuMemory.Size = new System.Drawing.Size(114, 48);
+			this.menuMemory.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.menuMemory_ItemClicked);
+			// 
+			// menuMemoryGotoItem
+			// 
+			this.menuMemoryGotoItem.Name = "menuMemoryGotoItem";
+			this.menuMemoryGotoItem.Size = new System.Drawing.Size(113, 22);
+			this.menuMemoryGotoItem.Text = "Go To...";
+			// 
+			// menuMemoryFindItem
+			// 
+			this.menuMemoryFindItem.Name = "menuMemoryFindItem";
+			this.menuMemoryFindItem.Size = new System.Drawing.Size(113, 22);
+			this.menuMemoryFindItem.Text = "Find...";
 			// 
 			// splitContainer1
 			// 
@@ -589,6 +623,7 @@ namespace RunAmiga
 			this.Text = "RunAmiga";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 			this.menuDisassembly.ResumeLayout(false);
+			this.menuMemory.ResumeLayout(false);
 			this.splitContainer1.Panel1.ResumeLayout(false);
 			this.splitContainer1.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -659,6 +694,10 @@ namespace RunAmiga
 		private System.Windows.Forms.ContextMenuStrip menuDisassembly;
 		private System.Windows.Forms.ToolStripMenuItem toolStripBreakpoint;
 		private System.Windows.Forms.ToolStripMenuItem toolStripSkip;
+		private System.Windows.Forms.ToolStripMenuItem toolStripGoto;
+		private System.Windows.Forms.ContextMenuStrip menuMemory;
+		private System.Windows.Forms.ToolStripMenuItem menuMemoryGotoItem;
+		private System.Windows.Forms.ToolStripMenuItem menuMemoryFindItem;
 	}
 }
 

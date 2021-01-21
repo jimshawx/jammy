@@ -341,5 +341,15 @@ namespace RunAmiga
 		//    3: #bbb
 		//The offsets used for drawing the image centered are X = 70, Y= 40.
 
+		public uint FindSequence(byte[] bytes)
+		{
+			for (int i = 0xfc0000; i < memory.Length - bytes.Length; i++)
+			{
+				if (bytes.SequenceEqual(memory.Skip(i).Take(bytes.Length)))
+					return (uint) i;
+			}
+
+			return 0;
+		}
 	}
 }

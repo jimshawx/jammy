@@ -1419,7 +1419,8 @@ namespace RunAmiga
 
 		private void unlk(int type)
 		{
-			Append("unlk");
+			int An = type & 7;
+			Append($"unlk a{An}");
 		}
 
 		private void moveusp(int type)
