@@ -4,6 +4,28 @@ using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
+	[Flags]
+	public enum PRB
+	{
+		DSKSTEP = 1,
+		DSKDIREC = 2,
+		DSKSIDE = 4,
+		DSKSEL0 = 8,
+		DSKSEL1 = 16,
+		DSKSEL2 = 32,
+		DSKSEL3 = 64,
+		DSKMOTOR = 128
+	}
+
+	[Flags]
+	public enum PRA
+	{
+		DSKCHANGE = 4,
+		DSKPROT = 8,
+		DSKTRACK0 = 16,
+		DSKRDY = 32,
+	}
+
 	public class Disk : IEmulate
 	{
 		private readonly IMemoryMappedDevice memory;
@@ -20,9 +42,42 @@ namespace RunAmiga.Custom
 			workbenchAdf = File.ReadAllBytes("../../../../workbench.adf");
 		}
 
+		private int diskChangeCounter = 10;
+		private int diskChangeState;
 		public void Emulate(ulong ns)
 		{
-			pra &= ~(1u << 2);//disk in the drive
+			//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)
+			if (diskChangeState != 0)
+			{
+				diskChangeCounter--;
+				if (diskChangeCounter < 0)
+				{
+					switch (diskChangeState)
+					{
+						case 5:
+							pra &= ~(uint) PRA.DSKCHANGE;
+							diskChangeState = 0;
+							break;
+						case 4:
+							pra |= (uint) PRA.DSKCHANGE;
+							//prb &= ~(uint) PRB.DSKSEL0;
+							break;
+						case 3:
+							prb |= (uint) PRB.DSKSTEP;
+							break;
+						case 2:
+							prb &= ~(uint) PRB.DSKSTEP;
+							break;
+						case 1:
+							prb |= (uint) PRB.DSKSTEP;
+							break;
+					}
+
+					if (diskChangeState != 0)
+						diskChangeState--;
+					diskChangeCounter = 10;
+				}
+			}
 		}
 
 		public void Reset()
@@ -120,6 +175,7 @@ namespace RunAmiga.Custom
 		private uint pra;
 		private uint prb;
 
+
 		public void WritePRA(byte value)
 		{
 			uint oldvalue = pra;
@@ -132,7 +188,7 @@ namespace RunAmiga.Custom
 			if ((pra & (1 << 5)) == 0) Logger.Write("DSKRDY ");
 			if ((pra&0x3c) != 0x3c) Logger.WriteLine("");
 
-			//2 DISKCHANGE, low disk removed, high inserted and stepped
+			//2 DSKCHANGE, low disk removed, high inserted and stepped
 			//3 DSKPROT, active low
 			//4 DSKTRACK0, low when track 0
 			//5 DSKRDY low when disk is ready
@@ -165,9 +221,9 @@ namespace RunAmiga.Custom
 			//6 DSKSEL3
 			//7 DSKMOTOR
 
-			uint changes = prb ^ oldvalue;
-			if ((changes&(1u<<7))==0)
-				pra &= ~(1u << 5);
+			//uint changes = prb ^ oldvalue;
+			//if ((changes&(1u<<7))==0)
+			//	pra &= ~(1u << 5);
 		}
 
 		//there is also bit 4, DSKINDEX in CIAB icr register BFDD00
@@ -179,16 +235,28 @@ namespace RunAmiga.Custom
 
 		public byte ReadPRA()
 		{
-			//Logger.WriteLine($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')}");
+			Logger.WriteLine($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')}");
 
 			return (byte)pra;
 		}
 
 		public byte ReadPRB()
 		{
-			//Logger.WriteLine($"R PRB {Convert.ToString(prb, 2).PadLeft(8, '0')}");
+			Logger.WriteLine($"R PRB {Convert.ToString(prb, 2).PadLeft(8, '0')}");
 
 			return (byte)prb;
+		}
+
+		//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)
+		public void InsertDisk()
+		{
+			diskChangeState = 4;
+			diskChangeCounter = 0;
+		}
+
+		public void RemoveDisk()
+		{
+			diskChangeState = 5;
 		}
 	}
 }

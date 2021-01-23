@@ -128,9 +128,9 @@ namespace RunAmiga.Custom
 
 			if (s_bpl1pt == 0)
 			{
-				var random = new Random();
+				//var random = new Random();
 				for (int i = 0; i < 320 * 200; i++)
-					dst[i] = random.Next(3);
+					dst[i] = (i & 0xff) ^ (i >> 8); //random.Next(3);
 			}
 			else
 			{

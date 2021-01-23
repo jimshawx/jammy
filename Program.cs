@@ -16,7 +16,7 @@ namespace RunAmiga
 			Application.SetCompatibleTextRenderingDefault(false);
 
 			var machine = new Machine();
-			var form = new Form1(machine);
+			var form = new RunAmiga(machine);
 			form.Init();
 			Application.Run(form);
 		}

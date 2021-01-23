@@ -1,7 +1,6 @@
 ﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -20,6 +19,7 @@ namespace RunAmiga
 		private Chips custom;
 		private CIA cia;
 		private Labeller labeller;
+		private Disk disk;
 
 		public Debugger(Labeller labeller)
 		{
@@ -81,17 +81,28 @@ namespace RunAmiga
 			AddBreakpoint(0xfc2fd6);//Alert()
 			AddBreakpoint(0xfc305e);//Irrecoverable Crash
 
+
+			//disk debugging
+			AddBreakpoint(0xFe89cc);//disk changes
+			AddBreakpoint(0xFe89e4);//read boot block
+			AddBreakpoint(0xFe8a84);//after logo, wait for disk change
+			AddBreakpoint(0xFe8a9c);//after logo, check for disk inserted
+
+			AddBreakpoint(0xFe800e);//dispatch trackdisk.device message
+			AddBreakpoint(0xFea734);//CMD_READ
+
 			for (uint i = 0; i < 12; i++)
 				AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);
 			this.labeller = labeller;
 		}
 
-		public void Initialise(Memory memory, CPU cpu, Custom.Chips custom, CIA cia)
+		public void Initialise(Memory memory, CPU cpu, Custom.Chips custom, CIA cia, Disk disk)
 		{
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
 			this.cia = cia;
+			this.disk = disk;
 		}
 
 		public bool IsMapped(uint address)
@@ -345,6 +356,7 @@ namespace RunAmiga
 
 		List<Tracer> traces = new List<Tracer>();
 
+
 		public void Trace(uint pc)
 		{
 			//if (traces.Any()) { 
@@ -404,6 +416,16 @@ namespace RunAmiga
 		public uint FindMemoryText(string txt)
 		{
 			return memory.FindSequence(Encoding.ASCII.GetBytes(txt));
+		}
+
+		public void InsertDisk()
+		{
+			disk.InsertDisk();
+		}
+
+		public void RemoveDisk()
+		{
+			disk.RemoveDisk();
 		}
 	}
 }

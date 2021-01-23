@@ -12,13 +12,13 @@ namespace RunAmiga.Custom
 	
 	public class CIA : IEmulate, IMemoryMappedDevice
 	{
-		private CIAA ciaA;
-		private CIAB ciaB;
+		private CIAAOdd ciaA;
+		private CIABEven ciaB;
 
 		public CIA(Debugger debugger, Disk disk)
 		{
-			ciaA = new CIAA(debugger, disk);
-			ciaB = new CIAB(debugger, disk);
+			ciaA = new CIAAOdd(debugger, disk);
+			ciaB = new CIABEven(debugger, disk);
 		}
 
 		public void Emulate(ulong ns)

@@ -1,7 +1,7 @@
 ﻿
 namespace RunAmiga
 {
-	partial class Form1
+	partial class RunAmiga
 	{
 		/// <summary>
 		///  Required designer variable.
@@ -30,7 +30,7 @@ namespace RunAmiga
 		private void InitializeComponent()
 		{
 			this.components = new System.ComponentModel.Container();
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RunAmiga));
 			this.lbRegisters = new System.Windows.Forms.ListBox();
 			this.txtDisassembly = new System.Windows.Forms.RichTextBox();
 			this.menuDisassembly = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -77,6 +77,8 @@ namespace RunAmiga
 			this.radioButton17 = new System.Windows.Forms.RadioButton();
 			this.addressFollowBox = new System.Windows.Forms.ComboBox();
 			this.txtExecBase = new System.Windows.Forms.RichTextBox();
+			this.btnInsertDisk = new System.Windows.Forms.Button();
+			this.btnRemoveDisk = new System.Windows.Forms.Button();
 			this.menuDisassembly.SuspendLayout();
 			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -584,11 +586,33 @@ namespace RunAmiga
 			this.txtExecBase.Text = "";
 			this.txtExecBase.WordWrap = false;
 			// 
-			// Form1
+			// btnInsertDisk
+			// 
+			this.btnInsertDisk.Location = new System.Drawing.Point(1092, 409);
+			this.btnInsertDisk.Name = "btnInsertDisk";
+			this.btnInsertDisk.Size = new System.Drawing.Size(75, 23);
+			this.btnInsertDisk.TabIndex = 27;
+			this.btnInsertDisk.Text = "Insert Disk";
+			this.btnInsertDisk.UseVisualStyleBackColor = true;
+			this.btnInsertDisk.Click += new System.EventHandler(this.btnInsertDisk_Click);
+			// 
+			// btnRemoveDisk
+			// 
+			this.btnRemoveDisk.Location = new System.Drawing.Point(1092, 439);
+			this.btnRemoveDisk.Name = "btnRemoveDisk";
+			this.btnRemoveDisk.Size = new System.Drawing.Size(75, 23);
+			this.btnRemoveDisk.TabIndex = 28;
+			this.btnRemoveDisk.Text = "Remove Disk";
+			this.btnRemoveDisk.UseVisualStyleBackColor = true;
+			this.btnRemoveDisk.Click += new System.EventHandler(this.btnRemoveDisk_Click);
+			// 
+			// RunAmiga
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1283, 568);
+			this.Controls.Add(this.btnRemoveDisk);
+			this.Controls.Add(this.btnInsertDisk);
 			this.Controls.Add(this.txtExecBase);
 			this.Controls.Add(this.addressFollowBox);
 			this.Controls.Add(this.colour15);
@@ -619,7 +643,7 @@ namespace RunAmiga
 			this.Controls.Add(this.btnStep);
 			this.Controls.Add(this.lbRegisters);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-			this.Name = "Form1";
+			this.Name = "RunAmiga";
 			this.Text = "RunAmiga";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 			this.menuDisassembly.ResumeLayout(false);
@@ -698,6 +722,8 @@ namespace RunAmiga
 		private System.Windows.Forms.ContextMenuStrip menuMemory;
 		private System.Windows.Forms.ToolStripMenuItem menuMemoryGotoItem;
 		private System.Windows.Forms.ToolStripMenuItem menuMemoryFindItem;
+		private System.Windows.Forms.Button btnInsertDisk;
+		private System.Windows.Forms.Button btnRemoveDisk;
 	}
 }
 

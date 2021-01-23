@@ -10,12 +10,12 @@ using RunAmiga.Options;
 
 namespace RunAmiga
 {
-	public partial class Form1 : Form
+	public partial class RunAmiga : Form
 	{
 		private readonly Machine machine;
 		private readonly Debugger debugger;
 
-		public Form1(Machine machine)
+		public RunAmiga(Machine machine)
 		{
 			InitializeComponent();
 
@@ -56,27 +56,8 @@ namespace RunAmiga
 
 			dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
 			{
-				new Tuple<uint, uint>(0xfc06dc, 0xfc074c - 0xfc06dc + 1),//DoIO
-				new Tuple<uint, uint>(0xfe9fbe, 0xfea01a - 0xfe9fbe + 1),//BeginIO
-				new Tuple<uint, uint>(0xfea01c, 0xfea068 - 0xfea01c + 1),//Task
-				new Tuple<uint, uint>(0xfea112, 0xfea142 - 0xfea112 + 1),//
-
-				new Tuple<uint, uint>(0xFEA358, 0xFEA5B3 - 0xFEA358 + 1),//
-
-				
-
-				new Tuple<uint, uint>(0xfea5b4, 0xfea6f0 - 0xfea5b4 + 1),
-				new Tuple<uint, uint>(0xfea6f2, 0xfea730 - 0xfea6f2 + 1),//
-				new Tuple<uint, uint>(0xfea99e, 0xfea9fc - 0xfea99e + 1),
-				new Tuple<uint, uint>(0xfeaadc, 0xfeac84 - 0xfeaadc + 1),//
-				new Tuple<uint, uint>(0xfeacb2, 0xfead44 - 0xfeacb2 + 1),//
-				new Tuple<uint, uint>(0xfead46, 0xfeada2 - 0xfead46 + 1),//
-				new Tuple<uint, uint>(0xfeada4, 0xfeadbc - 0xfeada4 + 1),//
-				new Tuple<uint, uint>(0xfeae50, 0xfeaf4a - 0xfeae50 + 1),//
-				new Tuple<uint, uint>(0xfeaf4c, 0xfeaf96 - 0xfeaf4c + 1),
-				new Tuple<uint, uint>(0xfeafe2, 0xfeb202 - 0xfeafe2 + 1),
-				new Tuple<uint, uint>(0xfeb2cc, 0xfeb2e6 - 0xfeb2cc + 1),//
-				new Tuple<uint, uint>(0xfeb2e8, 0xfeb3b4 - 0xfeb2e8 + 1)
+				new Tuple<uint, uint>(0xFEa734, 0xFEB460 - 0xFEa734 + 1),
+				//new Tuple<uint, uint>(0xFE9930, 0xFEB460 - 0xFE9930 + 1),
 			}, new DisassemblyOptions{ IncludeBytes = false, CommentPad = true});
 			File.WriteAllText("trackdisk_disassembly.txt", dmp);
 
@@ -372,6 +353,16 @@ namespace RunAmiga
 
 			SetSelection();
 			UpdateDisplay();
+		}
+
+		private void btnInsertDisk_Click(object sender, EventArgs e)
+		{
+			debugger.InsertDisk();
+		}
+
+		private void btnRemoveDisk_Click(object sender, EventArgs e)
+		{
+			debugger.RemoveDisk();
 		}
 
 		private void menuDisassembly_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
