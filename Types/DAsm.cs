@@ -34,10 +34,17 @@ namespace RunAmiga.Types
 
 			if (options.IncludeBytes)
 			{
-				for (int i = 0; i < Bytes.Length; i++)
-					s.Append($"{Bytes[i]:X2} ");
-				for (int i = Bytes.Length; i < 8; i++)
-					s.Append("   ");
+				//Bytes
+				//for (int i = 0; i < Bytes.Length; i++)
+				//	s.Append($"{Bytes[i]:X2} ");
+				//for (int i = Bytes.Length; i < 8; i++)
+				//	s.Append("   ");
+
+				//Words
+				for (int i = 0; i < Bytes.Length/2; i++)
+					s.Append($"{((uint)Bytes[i*2]<<8)+ Bytes[i * 2+1]:X4} ");
+				for (int i = Bytes.Length/2; i < 4; i++)
+					s.Append("     ");
 			}
 
 			string[] sp = Asm.Split(' ');

@@ -122,10 +122,10 @@ namespace RunAmiga.Custom
 			regs[reg] = (byte)value;
 			//Logger.WriteLine($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 
-			if (reg == 1)
-			{
-				UI.DiskLight = (regs[1] & 0x80) == 0;
-			}
+			//if (reg == 1)
+			//{
+			//	UI.DiskLight = (regs[1] & 0x80) == 0;
+			//}
 
 			if (reg == 1)
 				disk.WritePRB((byte)value);

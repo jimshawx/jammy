@@ -265,7 +265,7 @@ namespace RunAmiga
 		private void UpdateDiskLight()
 		{
 			bool disk = UI.DiskLight;
-			picDisk.BackColor = disk ? Color.Green : Color.DarkGreen;
+			picDisk.BackColor = disk ? Color.LightGreen : Color.DarkGreen;
 		}
 
 		private void UpdateColours()
