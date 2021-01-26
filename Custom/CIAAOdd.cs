@@ -107,7 +107,7 @@ namespace RunAmiga.Custom
 			byte reg = (byte)((address >> 8) & 0xf);
 
 			if (reg == 0)
-				return disk.ReadPRA();
+				return disk.ReadPRA(insaddr);
 
 			//Logger.WriteLine($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 
@@ -129,7 +129,7 @@ namespace RunAmiga.Custom
 			}
 
 			if (reg == 0)
-				disk.WritePRA((byte)value);
+				disk.WritePRA(insaddr, (byte)value);
 		}
 
 		public bool PowerLight()

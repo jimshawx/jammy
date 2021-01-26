@@ -47,12 +47,10 @@ namespace RunAmiga.Custom
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			if ((address & 1) != 0)
-				throw new InstructionAlignmentException(address, 0);
-
 			if (size == Size.Byte)
 			{
-				uint r0 = Read(insaddr, address, Size.Word);
+				uint r0 = Read(insaddr, address&~1u, Size.Word);
+				if ((address & 1)!=0) return (byte) r0;
 				return r0 >> 8;
 			}
 
@@ -114,7 +112,7 @@ namespace RunAmiga.Custom
 			}
 
 			if ((address & 1) != 0)
-				throw new InstructionAlignmentException(address, 0);
+				throw new InstructionAlignmentException(insaddr, address, 0);
 
 			if (size == Size.Long)
 			{

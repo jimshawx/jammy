@@ -89,13 +89,21 @@ namespace RunAmiga
 		private string fmtX4(uint x)
 		{
 			x &= 0xffff;
-			if (x < 10)
-				return string.Format($"{x}");
-			else if (x < 16)
-				return string.Format($"${x:X1}");
-			else if (x < 256)
-				return string.Format($"${x:X2}");
-			return string.Format($"${x:X4}");
+
+			if ((short) x < 0)
+			{
+				return string.Format($"{(short)x}");
+			}
+			else
+			{
+				if (x < 10)
+					return string.Format($"{x}");
+				else if (x < 16)
+					return string.Format($"${x:X1}");
+				else if (x < 256)
+					return string.Format($"${x:X2}");
+				return string.Format($"${x:X4}");
+			}
 		}
 
 		private string fmtX8(uint x)

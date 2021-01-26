@@ -1,9 +1,11 @@
 ﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using RunAmiga.Custom;
 using RunAmiga.Options;
 
@@ -20,6 +22,7 @@ namespace RunAmiga
 		private CIA cia;
 		private Labeller labeller;
 		private Disk disk;
+		private Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
 
 		public Debugger(Labeller labeller)
 		{
@@ -84,18 +87,61 @@ namespace RunAmiga
 
 			//disk debugging
 			//AddBreakpoint(0xFe89cc);//disk changes
-			AddBreakpoint(0xFe89e4);//read boot block
+			//AddBreakpoint(0xFe89e4);//read boot block
 			//AddBreakpoint(0xFe8a84);//after logo, wait for disk change
 			//AddBreakpoint(0xFe8a9c);//after logo, check for disk inserted
 
-			AddBreakpoint(0xFe800e);//dispatch trackdisk.device message
-			AddBreakpoint(0xFea734);//CMD_READ
-			AddBreakpoint(0xFea99e);//step to track and read
-			AddBreakpoint(0xFea5b2);//just after disk DMA
-
+			//AddBreakpoint(0xFe800e);//dispatch trackdisk.device message
+			//AddBreakpoint(0xFea734);//CMD_READ
+			//AddBreakpoint(0xFea99e);//step to track and read
+			//AddBreakpoint(0xFea5b2);//just after disk DMA
+			//AddBreakpoint(0xFea9ce);//after track-read message before fixing track gap
+			AddBreakpoint(0xFeab76);//blitter decode start
+			AddBreakpoint(0xFeb2a4);//blitter decode start
 			for (uint i = 0; i < 12; i++)
 				AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);
 			this.labeller = labeller;
+
+			LoadComments();
+		}
+
+		private void LoadComments()
+		{
+			LoadComment("trackdisk_disassembly.txt");
+			LoadComment("exec_disassembly.txt");
+			LoadComment("boot_disassembly.txt");
+		}
+
+		private void LoadComment(string filename)
+		{
+			using (var f = File.OpenText(Path.Combine("c:/source/programming/amiga/",  filename)))
+			{
+				for (;;)
+				{
+					string line = f.ReadLine();
+					if (line == null) break;
+
+					//xxxxxx..instruction txt..........(column 40)comment
+					if (line.Length > 38)
+					{
+						var addressTxt = line.Substring(0, 6);
+						if (Regex.IsMatch(addressTxt, "[a-fA-F0-9]{6}"))
+						{
+							uint address = UInt32.Parse(addressTxt, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+
+							var splits = line.Split(" ", 4, StringSplitOptions.RemoveEmptyEntries);
+							if (splits.Length == 4)
+							{
+								string comment = splits[3];
+								if (comments.ContainsKey(address))
+									Logger.WriteLine($"[COMMENT] dupe {address:X6} \"{comment}\"");
+								else
+									comments.Add(address, new Comment {Address = address, Text = comment});
+							}
+						}
+					}
+				}
+			}
 		}
 
 		public void Initialise(Memory memory, CPU cpu, Custom.Chips custom, CIA cia, Disk disk)
@@ -307,7 +353,27 @@ namespace RunAmiga
 					if (options.IncludeBreakpoints)
 						txt.Append(IsBreakpoint(address)?'*':' ');
 					var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-					txt.Append($"{dasm.ToString(options)}\n");
+					
+					if (options.IncludeComments)
+					{
+						string asm = dasm.ToString(options);
+						if (comments.TryGetValue(address, out Comment comment))
+						{
+							if (asm.Length < 64)
+								txt.Append($"{asm.PadRight(64)} {comment.Text}\n");
+							else
+								txt.Append($" {comment.Text}\n");
+						}
+						else
+						{
+							txt.Append($"{asm}\n");
+						}
+					}
+					else
+					{
+						txt.Append($"{dasm.ToString(options)}\n");
+					}
+
 					address += (uint)dasm.Bytes.Length;
 				}
 			}

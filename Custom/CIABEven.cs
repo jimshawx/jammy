@@ -107,7 +107,7 @@ namespace RunAmiga.Custom
 			byte reg = (byte)((address >> 8) & 0xf);
 
 			if (reg == 1)
-				return disk.ReadPRB();
+				return disk.ReadPRB(insaddr);
 
 			//Logger.WriteLine($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return (uint)regs[reg];
@@ -128,7 +128,7 @@ namespace RunAmiga.Custom
 			//}
 
 			if (reg == 1)
-				disk.WritePRB((byte)value);
+				disk.WritePRB(insaddr, (byte)value);
 		}
 	}
 

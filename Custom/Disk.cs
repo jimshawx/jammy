@@ -2,8 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using RunAmiga.Extensions;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -134,6 +137,8 @@ namespace RunAmiga.Custom
 		private uint dskdat;
 		private uint adkcon;
 
+		private int upcomingDiskDMA = -1;
+
 		public void Write(uint insaddr, uint address, ushort value)
 		{
 			Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
@@ -157,37 +162,103 @@ namespace RunAmiga.Custom
 					break;
 				case ChipRegs.DSKLEN:
 					dsklen = value;
-					Logger.WriteLine($"dma:{(dsklen >> 16) & 1} rw:{(dsklen >> 15) & 1} len:{dsklen & 0x3fff} {dsklen & 0x3fff:X4}");
+					Logger.WriteLine($"dma:{(dsklen >> 16) & 1} rw:{(dsklen >> 15) & 1} len:{dsklen & 0x3fff} {dsklen & 0x3fff:X4} /11:{(dsklen & 0x3fff)/11}");
 
-					//look out
-					if (dsklen == 0x4000) break;
-
-					uint len = dsklen & 0x3fff;
-					uint srcpt = 0;
-					//while (len > 0)
-					//{
-					//	uint src; 
-					//	src = workbenchAdf[srcpt++];
-					//	dskbytr = src;
-					//	src |= (uint)workbenchAdf[srcpt++]<<8;
-					//	memory.Write(0, dskpt, src, Size.Word);
-					//	dskpt += 2;
-					//	len -= 2;
-					//}
-					byte[] src = workbenchAdf.Skip((int)srcpt).Take((int)len/2).ToArray();
-					byte[] mfm = ToMFM(src);
-					while (len > 0)
+					//turn OFF disk DMA
+					if (dsklen == 0x4000)
 					{
-						uint s;
-						s = ((uint)mfm[srcpt] << 8) + mfm[srcpt + 1];
-						dskbytr = s;
-						srcpt += 2;
-						memory.Write(0, dskpt, s, Size.Word);
-						dskpt += 2;
-						len -= 2;
+						upcomingDiskDMA = -1;
+						break;
 					}
 
-					dsklen &= 0xC000;
+					//haven't started setting up disk DMA
+					if (upcomingDiskDMA == 0)
+					{
+						break;
+					}
+
+					//first DMA enabled write
+					if (upcomingDiskDMA == -1)
+					{
+						upcomingDiskDMA = (int)dsklen;
+						break;
+					}
+
+					//second DMA enabled write == first DMA enabled write
+					if (upcomingDiskDMA != dsklen)
+					{
+						upcomingDiskDMA = -1;
+						break;
+					}
+
+					//dsklen is number of MFM encoded words (usually a track, 7358 = 668 x 11words, 1336 x 11 bytes)
+					if ((dsklen&0x3fff) != 7358) throw new ApplicationException();
+
+					byte[] mfm = new byte[1088*11+720];//12688 bytes, 6344 words hmm.
+					MFM.FloppyTrackMfmEncode(0, workbenchAdf, mfm, 0x4489);
+
+					foreach (var w in mfm.AsUWord())
+					{
+						memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
+					}
+
+					//uint srcpt = 0;//todo: need to work out where we are within the ADF file
+					//byte[] src = workbenchAdf.Skip((int)srcpt).Take(((int)(dsklen&0x3fff)/668)*512*2).ToArray();
+
+					//if (src.Length != 11 * 1024) throw new ApplicationException();
+
+					//byte[] mfm;
+					//uint checksum;
+
+					//uint s_dskstart;
+					//byte gapDistance = 11;
+					//byte sectorNum = 0;
+					//for (;;)
+					//{
+					//	s_dskstart = dsklen;
+
+					//	//64 bytes of MFM  block header
+
+					//	//8 bytes sync
+					//	memory.Write(0, dskpt, 0xAAAA, Size.Word); dskpt += 2; dsklen--;//0
+					//	memory.Write(0, dskpt, 0xAAAA, Size.Word); dskpt += 2; dsklen--;//0
+					//	memory.Write(0, dskpt, 0x4489, Size.Word); dskpt += 2; dsklen--;//sync word
+					//	memory.Write(0, dskpt, 0x4489, Size.Word); dskpt += 2; dsklen--;//sync word
+
+					//	//20 bytes
+					//	//format id ($ff), track number (((0-11)<<1)+side), sector number, number of sectors to the gap, followed by 16 00s
+					//	var header = new byte[] {0xff, 0, sectorNum++, gapDistance--,
+					//								0, 0 ,0 ,0,
+					//								0, 0 ,0 ,0,
+					//								0, 0 ,0 ,0,
+					//								0, 0 ,0 ,0,
+					//							};
+
+					//	var oddEven = new MemoryStream();
+					//	//header
+					//	oddEven.Write(header.Take(4).OddEven().ToArray());
+					//	oddEven.Write(header.Skip(4).Take(16).OddEven().ToArray());
+
+					//	//checksum
+					//	checksum = Checksum(oddEven.ToArray());
+					//	oddEven.Write(checksum.AsByte().OddEven().ToArray());
+						
+					//	//data
+					//	var oddEvenData = src.Take(512).OddEven().ToArray();
+						
+					//	//checksum
+					//	checksum = Checksum(oddEvenData);
+					//	oddEven.Write(checksum.AsByte().OddEven().ToArray());
+					//	oddEven.Write(oddEvenData);
+
+					//	var trackData = oddEven.ToArray().Select(x => (byte)(x | 0x55)).ToArray();
+					//	foreach (var w in trackData.AsUWord())
+					//	{
+					//		memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
+					//	}
+					//	src = src.Skip(512).ToArray();
+					//}
+					//// plus 720 bytes track gap
 
 					//now what?
 					interrupt.TriggerInterrupt(Interrupt.DSKBLK);
@@ -202,10 +273,21 @@ namespace RunAmiga.Custom
 			}
 		}
 
+		private uint Checksum(IEnumerable<byte> b)
+		{
+			uint D0 = 0;
+			foreach (var D2 in b.ToArray().AsULong())
+				D0 ^= D2;
+			return D0;
+		}
+
+		private byte[] ToMFM(uint src)
+		{
+			return ToMFM(new byte[] {(byte)(src >> 24), (byte)(src >> 16), (byte)(src >> 8), (byte)src});
+		}
+
 		private byte[] ToMFM(byte[] src)
 		{
-			//if ((src.Length & 3) != 0) throw new ApplicationException("buffer not x4");
-
 			var dst = new byte[src.Length * 2];
 
 			int dsti = 0;
@@ -240,11 +322,13 @@ namespace RunAmiga.Custom
 			for (int i = 0; i < src.Length / 4; i++)
 			{
 				uint s = ((uint) src[i * 4] << 24) + ((uint) src[i * 4 + 1] << 16) + ((uint) src[i * 4 + 2] << 8) + (uint) src[i * 4 + 3];
-				for (int m = 1; m < 32; m += 2)
+				//for (int m = 1; m < 32; m += 2)
+				for (int m = 31; m>= 0; m -= 2)
 				{
 					yield return (s & (1u << m))!=0;
 				}
-				for (int m = 0; m < 32; m += 2)
+				//for (int m = 0; m < 32; m += 2)
+				for (int m = 30; m >= 0; m -= 2)
 				{
 					yield return (s & (1u << m))!=0;
 				}
@@ -255,12 +339,12 @@ namespace RunAmiga.Custom
 		private uint prb;
 
 
-		public void WritePRA(byte value)
+		public void WritePRA(uint insaddr, byte value)
 		{
 			uint oldvalue = pra;
 
 			pra = value;
-			Logger.WriteLine($"W PRA {Convert.ToString(pra&0x3c,2).PadLeft(8,'0')}");
+			Logger.WriteLine($"W PRA {Convert.ToString(pra&0x3c,2).PadLeft(8,'0')} @{insaddr:X6}");
 			if ((pra & (uint)PRA.DSKCHANGE) == 0) Logger.Write("DSKCHANGE ");
 			if ((pra & (uint)PRA.DSKPROT) == 0) Logger.Write("DSKPROT ");
 			if ((pra & (uint)PRA.DSKTRACK0) == 0) Logger.Write("DSKTRACK0 ");
@@ -275,12 +359,12 @@ namespace RunAmiga.Custom
 			uint changes = pra ^ oldvalue;
 		}
 
-		public void WritePRB(byte value)
+		public void WritePRB(uint insaddr, byte value)
 		{
 			uint oldvalue = prb;
 
 			prb = value;
-			Logger.WriteLine($"W PRB {Convert.ToString(prb, 2).PadLeft(8, '0')}");
+			Logger.WriteLine($"W PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
 			if ((prb & (uint)PRB.DSKSTEP) == 0) Logger.Write("DSKSTEP ");
 			if ((prb & (uint)PRB.DSKDIREC) == 0) Logger.Write("DSKDIREC ");
 			if ((prb & (uint)PRB.DSKSIDE) == 0) Logger.Write("DSKSIDE ");
@@ -342,16 +426,16 @@ namespace RunAmiga.Custom
 		//	o DSKBLK (level 1, INTREQ bit 1)-disk DMA has completed.
 		//	o INDEX (level 6, 8520 Flag pin)-index sensor triggered
 
-		public byte ReadPRA()
+		public byte ReadPRA(uint insaddr)
 		{
-			Logger.WriteLine($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')}");
+			Logger.WriteLine($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')} @{insaddr:X6}");
 
 			return (byte)pra;
 		}
 
-		public byte ReadPRB()
+		public byte ReadPRB(uint insaddr)
 		{
-			Logger.WriteLine($"R PRB {Convert.ToString(prb, 2).PadLeft(8, '0')}");
+			Logger.WriteLine($"R PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
 
 			return (byte)prb;
 		}

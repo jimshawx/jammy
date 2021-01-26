@@ -60,16 +60,18 @@ namespace RunAmiga
 	{
 		private uint pc;
 		private ushort instruction;
+		private uint address;
 
-		public InstructionAlignmentException(uint pc, int instruction)
+		public InstructionAlignmentException(uint pc, uint address, int instruction)
 		{
 			this.pc = pc;
 			this.instruction = (ushort)instruction;
+			this.address = address;
 		}
 
 		public override string ToString()
 		{
-			return $"Unknown Instruction Alignment @{pc:X6} {instruction:X4}. {base.ToString()}";
+			return $"Unknown Instruction Alignment @{pc:X6} {instruction:X4} {address:X8}. {base.ToString()}";
 		}
 	}
 
