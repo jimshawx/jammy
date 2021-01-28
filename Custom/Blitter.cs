@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -93,22 +94,22 @@ namespace RunAmiga.Custom
 			{
 				case ChipRegs.BLTCON0:
 					bltcon0 = value;
-					uint lf = (uint) value & 0xff;
-					uint ash = (uint) value >> 12;
-					uint use = (uint) (value >> 8) & 0xf;
-					Logger.WriteLine($"minterm:{lf:X2} ash:{ash} use:{Convert.ToString(use, 2).PadLeft(4, '0')}");
+					//uint lf = (uint) value & 0xff;
+					//uint ash = (uint) value >> 12;
+					//uint use = (uint) (value >> 8) & 0xf;
+					//Logger.WriteLine($"minterm:{lf:X2} ash:{ash} use:{Convert.ToString(use, 2).PadLeft(4, '0')}");
 					break;
 
 				case ChipRegs.BLTCON1:
 					bltcon1 = value;
-					uint bsh = (uint) value >> 12;
-					uint doff = (uint) (value >> 7) & 1;
-					uint efe = (uint) (value >> 4) & 1;
-					uint ife = (uint) (value >> 3) & 1;
-					uint fci = (uint) (value >> 2) & 1;
-					uint desc = (uint) (value >> 1) & 1;
-					uint line = (uint) value & 1;
-					Logger.WriteLine($"bsh:{bsh} doff:{doff} efe:{efe} ife:{ife} fci:{fci} desc:{desc} line:{line}");
+					//uint bsh = (uint) value >> 12;
+					//uint doff = (uint) (value >> 7) & 1;
+					//uint efe = (uint) (value >> 4) & 1;
+					//uint ife = (uint) (value >> 3) & 1;
+					//uint fci = (uint) (value >> 2) & 1;
+					//uint desc = (uint) (value >> 1) & 1;
+					//uint line = (uint) value & 1;
+					//Logger.WriteLine($"bsh:{bsh} doff:{doff} efe:{efe} ife:{ife} fci:{fci} desc:{desc} line:{line}");
 					break;
 
 				case ChipRegs.BLTAFWM:
@@ -189,7 +190,18 @@ namespace RunAmiga.Custom
 					break;
 			}
 
-			//these bits are ignored
+			//hacky alignment fudge
+
+			//if ((bltapt & 1) != 0 && (bltcon0 & (1u << 11)) != 0) Logger.WriteLine($"Channel A is odd {bltapt:X8}");
+			//if ((bltbpt & 1) != 0 && (bltcon0 & (1u << 10)) != 0) Logger.WriteLine($"Channel B is odd {bltbpt:X8}");
+			//if ((bltcpt & 1) != 0 && (bltcon0 & (1u << 9)) != 0) Logger.WriteLine($"Channel C is odd {bltcpt:X8}");
+			//if ((bltdpt & 1) != 0 && (bltcon0 & (1u << 8)) != 0) Logger.WriteLine($"Channel D is odd {bltdpt:X8}");
+			//if ((bltamod & 1) != 0 && (bltcon0 & (1u << 11)) != 0) Logger.WriteLine($"Channel Amod is odd {bltamod:X8}");
+			//if ((bltbmod & 1) != 0 && (bltcon0 & (1u << 10)) != 0) Logger.WriteLine($"Channel Bmod is odd {bltbmod:X8}");
+			//if ((bltcmod & 1) != 0 && (bltcon0 & (1u << 9)) != 0) Logger.WriteLine($"Channel Cmod is odd {bltcmod:X8}");
+			//if ((bltdmod & 1) != 0 && (bltcon0 & (1u << 8)) != 0) Logger.WriteLine($"Channel Dmod is odd {bltdmod:X8}");
+
+			//these bits are ignored anyway
 			bltapt &= ~1u;
 			bltbpt &= ~1u;
 			bltcpt &= ~1u;
@@ -209,10 +221,16 @@ namespace RunAmiga.Custom
 				return;
 			}
 
+			if ((bltcon1 & (7 << 2)) != 0)
+			{
+				Fill(insaddr);
+				return;
+			}
+
 			uint width = bltsize & 0x3f;
 			uint height = bltsize >> 6;
 
-			Logger.WriteLine($"BLIT! size:{width}x{height} @{insaddr:X8}");
+			//Logger.WriteLine($"BLIT! size:{width}x{height} @{insaddr:X8}");
 			Blit(width, height);
 		}
 
@@ -224,32 +242,37 @@ namespace RunAmiga.Custom
 				return;
 			}
 
-			Logger.WriteLine($"BLIT! size:{bltsizh}x{bltsizv} @{insaddr:X8}");
+			if ((bltcon1 & (7 << 2)) != 0)
+			{
+				Fill(insaddr);
+				return;
+			}
+
+			//Logger.WriteLine($"BLIT! size:{bltsizh}x{bltsizv} @{insaddr:X8}");
 			Blit(bltsizh, bltsizv);
+		}
+
+		private void Fill(uint insaddr)
+		{
+			throw new NotImplementedException();
 		}
 
 		private void Blit(uint width, uint height)
 		{
-			//todo: assume blitter DMA is enabled
+			//todo: assumes blitter DMA is enabled
 
-			//hacky alignment fudge
+			Logger.WriteLine($"{width}x{height} = {width*16}bits x {height} = {width * 16 * height} bits = {width*height*2} bytes");
 
-			if ((bltapt & 1) != 0 && (bltcon0 & (1u << 11)) != 0) Logger.WriteLine($"Channel A is odd {bltapt:X8}");
-			if ((bltbpt & 1) != 0 && (bltcon0 & (1u << 10)) != 0) Logger.WriteLine($"Channel B is odd {bltbpt:X8}");
-			if ((bltcpt & 1) != 0 && (bltcon0 & (1u << 9)) != 0) Logger.WriteLine($"Channel C is odd {bltcpt:X8}");
-			if ((bltdpt & 1) != 0 && (bltcon0 & (1u << 8)) != 0) Logger.WriteLine($"Channel D is odd {bltdpt:X8}");
-
-			uint s_bltapt = bltapt & ~1u;
-			uint s_bltbpt = bltbpt & ~1u;
-			uint s_bltcpt = bltcpt & ~1u;
-			uint s_bltdpt = bltdpt & ~1u;
+			Logger.WriteLine($"->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
+			Logger.WriteLine($"->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
+			Logger.WriteLine($"->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
+			Logger.WriteLine($"->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
+			Logger.WriteLine($"cookie: {bltcon0&0xff:X2} {((bltcon1&2)!=0?"descending":"ascending")}");
 
 			int ashift = (int) (bltcon0 >> 12);
 			int bshift = (int) (bltcon1 >> 12);
 
 			uint bltzero = 0;
-
-			bltadat = bltbdat = bltcdat = 0;
 
 			//set blitter busy in DMACON
 			custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
@@ -263,7 +286,7 @@ namespace RunAmiga.Custom
 				{
 					if ((bltcon0 & (1u << 11)) != 0)
 					{
-						bltadat = memory.Read(0, s_bltapt, Size.Word);
+						bltadat = memory.Read(0, bltapt, Size.Word);
 						
 						if (w == 0) bltadat &= bltafwm;
 						else if (w == width - 1) bltadat &= bltalwm;
@@ -286,7 +309,7 @@ namespace RunAmiga.Custom
 
 					if ((bltcon0 & (1u << 10)) != 0)
 					{
-						bltbdat = memory.Read(0, s_bltbpt, Size.Word);
+						bltbdat = memory.Read(0, bltbpt, Size.Word);
 
 						if ((bltcon1 & (1u << 1)) != 0)
 						{
@@ -306,7 +329,7 @@ namespace RunAmiga.Custom
 
 					if ((bltcon0 & (1u << 9)) != 0)
 					{
-						bltcdat = memory.Read(0, s_bltcpt, Size.Word);
+						bltcdat = memory.Read(0, bltcpt, Size.Word);
 					}
 
 					//bltddat = (bltbdat & bltadat) | (bltcdat & ~bltadat);
@@ -324,40 +347,40 @@ namespace RunAmiga.Custom
 					bltzero |= bltddat;
 
 					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
-						memory.Write(0, s_bltdpt, (ushort) bltddat, Size.Word);
+						memory.Write(0, bltdpt, (ushort) bltddat, Size.Word);
 
 					//Logger.Write($"{Convert.ToString(bltddat,2).PadLeft(16,'0')}");
 
 					if ((bltcon1 & (1u << 1)) != 0)
 					{
-						if ((bltcon0 & (1u << 11)) != 0) s_bltapt -= 2;
-						if ((bltcon0 & (1u << 10)) != 0) s_bltbpt -= 2;
-						if ((bltcon0 & (1u << 9)) != 0) s_bltcpt -= 2;
-						if ((bltcon0 & (1u << 8)) != 0) s_bltdpt -= 2;
+						if ((bltcon0 & (1u << 11)) != 0) bltapt -= 2;
+						if ((bltcon0 & (1u << 10)) != 0) bltbpt -= 2;
+						if ((bltcon0 & (1u << 9)) != 0) bltcpt -= 2;
+						if ((bltcon0 & (1u << 8)) != 0) bltdpt -= 2;
 					}
 					else
 					{
-						if ((bltcon0 & (1u << 11)) != 0) s_bltapt += 2;
-						if ((bltcon0 & (1u << 10)) != 0) s_bltbpt += 2;
-						if ((bltcon0 & (1u << 9)) != 0) s_bltcpt += 2;
-						if ((bltcon0 & (1u << 8)) != 0) s_bltdpt += 2;
+						if ((bltcon0 & (1u << 11)) != 0) bltapt += 2;
+						if ((bltcon0 & (1u << 10)) != 0) bltbpt += 2;
+						if ((bltcon0 & (1u << 9)) != 0) bltcpt += 2;
+						if ((bltcon0 & (1u << 8)) != 0) bltdpt += 2;
 					}
 				}
 				//Logger.WriteLine("");
 
 				if ((bltcon1 & (1u << 1)) != 0)
 				{
-					if ((bltcon0 & (1u << 11)) != 0) s_bltapt -= bltamod;
-					if ((bltcon0 & (1u << 10)) != 0) s_bltbpt -= bltbmod;
-					if ((bltcon0 & (1u << 9)) != 0) s_bltcpt -= bltcmod;
-					if ((bltcon0 & (1u << 8)) != 0) s_bltdpt -= bltdmod;
+					if ((bltcon0 & (1u << 11)) != 0) bltapt -= bltamod;
+					if ((bltcon0 & (1u << 10)) != 0) bltbpt -= bltbmod;
+					if ((bltcon0 & (1u << 9)) != 0) bltcpt -= bltcmod;
+					if ((bltcon0 & (1u << 8)) != 0) bltdpt -= bltdmod;
 				}
 				else
 				{
-					if ((bltcon0 & (1u << 11)) != 0) s_bltapt += bltamod;
-					if ((bltcon0 & (1u << 10)) != 0) s_bltbpt += bltbmod;
-					if ((bltcon0 & (1u << 9)) != 0) s_bltcpt += bltcmod;
-					if ((bltcon0 & (1u << 8)) != 0) s_bltdpt += bltdmod;
+					if ((bltcon0 & (1u << 11)) != 0) bltapt += bltamod;
+					if ((bltcon0 & (1u << 10)) != 0) bltbpt += bltbmod;
+					if ((bltcon0 & (1u << 9)) != 0) bltcpt += bltcmod;
+					if ((bltcon0 & (1u << 8)) != 0) bltdpt += bltdmod;
 				}
 			}
 
@@ -402,14 +425,6 @@ namespace RunAmiga.Custom
 			//Logger.WriteLine($"{Convert.ToString(bltcon1, 2).PadLeft(16, '0')} bltcon1");
 			//Logger.WriteLine($"{bltsize >> 6:X8} dx+1");
 			//Logger.WriteLine($"{bltsize & 0x3f:X8} 2");
-
-			//if ((bltapt & 1) != 0) Logger.WriteLine($"Channel A is odd {bltapt:X8}");
-			//if ((bltcpt & 1) != 0) Logger.WriteLine($"Channel C is odd {bltcpt:X8}");
-			//if ((bltdpt & 1) != 0) Logger.WriteLine($"Channel D is odd {bltdpt:X8}");
-
-			uint s_bltapt = bltapt & ~1u;
-			uint s_bltcpt = bltcpt & ~1u;
-			uint s_bltdpt = bltdpt & ~1u;
 
 			uint length = bltsize >> 6;
 			if (length <= 1) return;
@@ -456,38 +471,36 @@ namespace RunAmiga.Custom
 			{
 				int x1 = (int) (x+0.5);
 
-				p = memory.Read(0, s_bltdpt, Size.Word);
+				p = memory.Read(0, bltdpt, Size.Word);
 				//todo: apply minterm here
-				p |= (1u << x1);
+				p |= (1u << (x1^15));
 				bltzero |= p;
-				memory.Write(0, s_bltdpt, p, Size.Word);
+				memory.Write(0, bltdpt, p, Size.Word);
 
 				x += dxdl;
 				if (dxdl < 0 && x < 0)
 				{
-					s_bltdpt += (uint)(2 * (-1+(int)(x / 16)));
+					bltdpt += (uint)(2 * (-1+(int)(x / 16)));
 					x = 16 + (x % 16.0);
 				}
 				else if (dxdl > 0 && x >= 16)
 				{
-					s_bltdpt += (uint)(2 * ((int)(x / 16)));
+					bltdpt += (uint)(2 * ((int)(x / 16)));
 					x = x % 16.0;
 				}
 
 				y += dydl;
 				if (dydl < 0 && y <= -1.0)
 				{
-					s_bltdpt += (uint)(bltdmod * (int)y);
+					bltdpt += (uint)(bltdmod * (int)y);
 					y = y % 1.0;
 				}
 				else if (dydl > 0 && y >= 1.0)
 				{
-					s_bltdpt += (uint)(bltdmod * (int)y);
+					bltdpt += (uint)(bltdmod * (int)y);
 					y = y % 1.0;
 				}
 			}
-
-			bltdpt = s_bltdpt;
 
 			//write the BZERO bit in DMACON
 			if (bltzero == 0)

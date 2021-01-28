@@ -81,18 +81,21 @@ namespace RunAmiga.Custom
 			this.pf = pf;
 			this.memory = memory;
 			uint bitdepth = (pf.bplcon0 >> 12)&7;
-			//if (bitdepth == 0) return;
 
 			picture = new PictureBox();
-			picture.Size = new Size(320, 200);
+
+			int w = 320;
+			if ((pf.bplcon0 & 0x8000) != 0) w *= 2;
+
+			picture.Size = new Size(w, 200);
 			picture.Location = new Point(0, 0);
 
 			form = new Form();
 			form.Controls.Add(picture);
 			form.Text = $"0x{pf.address:X6}";
-			form.ClientSize = new Size(320, 200);
+			form.ClientSize = new Size(w, 200);
 
-			bitmap = new Bitmap(320, 200, PixelFormat.Format32bppRgb);
+			bitmap = new Bitmap(w, 200, PixelFormat.Format32bppRgb);
 			picture.Image = bitmap;
 
 			Refresh();
@@ -105,12 +108,15 @@ namespace RunAmiga.Custom
 
 		public void Refresh()
 		{
-			var pixels = new int[320 * 200];
+			int w = 320;
+			if ((pf.bplcon0 & 0x8000) != 0) w *= 2;
+
+			var pixels = new int[w * 200];
 
 			PlanarToChunky(pixels);
 
-			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, 320, 200), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
-			Marshal.Copy(pixels, 0, bitmapData.Scan0, 320 * 200);
+			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, w, 200), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
+			Marshal.Copy(pixels, 0, bitmapData.Scan0, w * 200);
 			bitmap.UnlockBits(bitmapData);
 			picture.Image = bitmap;
 			form.Invalidate();
@@ -123,30 +129,43 @@ namespace RunAmiga.Custom
 			uint p;
 			uint d=0;
 
-			uint s_bpl1pt = pf.bpl1pt;
-			uint s_bpl2pt = pf.bpl2pt;
+			uint s_bpl1pt = pf.bpl1pt & ~1u;
+			uint s_bpl2pt = pf.bpl2pt & ~1u;
 
-			if (s_bpl1pt == 0)
+			if (s_bpl1pt == 0xfffffffe)
+			{
+
+			}
+			else if (s_bpl1pt == 0)
 			{
 				//var random = new Random();
 				for (int i = 0; i < 320 * 200; i++)
 					dst[i] = (i & 0xff) ^ (i >> 8); //random.Next(3);
+				pf.bpl1pt = 0xfffffffe;
 			}
 			else
 			{
-				for (int i = 0; i < 20 * 200; i++)
+				int width = 320 / 16;
+				if ((pf.bplcon0 & 0x8000) != 0) width *= 2;
+				for (int y = 0; y < 200; y++)
 				{
-					uint p0 = memory.Read(0,s_bpl1pt, Types.Size.Word);
-					uint p1 = memory.Read(0,s_bpl2pt, Types.Size.Word);
-					for (int j = 0; j < 16; j++)
+					for (int i = 0; i < width; i++)
 					{
-						p = (p0 >> j) & 1;
-						p |= ((p1 >> j) & 1) << 1;
-						dst[d++] = (int) p;
+						uint p0 = memory.Read(0, s_bpl1pt, Types.Size.Word);
+						uint p1 = memory.Read(0, s_bpl2pt, Types.Size.Word);
+						for (int j = 15; j >= 0; j--)
+						{
+							p = (p0 >> j) & 1;
+							p |= ((p1 >> j) & 1) << 1;
+							dst[d++] = (int) p;
+						}
+
+						s_bpl1pt += 2;
+						s_bpl2pt += 2;
 					}
 
-					s_bpl1pt += 2;
-					s_bpl2pt += 2;
+					s_bpl1pt += pf.bpl1mod & ~1u;
+					s_bpl2pt += pf.bpl2mod & ~1u;
 				}
 			}
 
@@ -160,13 +179,16 @@ namespace RunAmiga.Custom
 			//pf.truecolour[3] = 0xbbbbbb;
 			pf.UpdatePalette();
 
-			for (int i = 0; i < 320 * 200; i++)
+			int w = 320;
+			if ((pf.bplcon0 & 0x8000) != 0) w *= 2;
+
+			for (int i = 0; i < w * 200; i++)
 			{
 				dst[i] = (int)pf.truecolour[dst[i]];
 			}
 
 			for (int j = 0; j < 4; j++)
-			for (int i = 320 * (10 + j); i < 320 * (11 + j); i++)
+			for (int i = w * (10 + j); i < w * (11 + j); i++)
 				dst[i] = (int)pf.truecolour[j];
 		}
 	}

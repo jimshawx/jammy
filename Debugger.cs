@@ -87,17 +87,19 @@ namespace RunAmiga
 
 			//disk debugging
 			//AddBreakpoint(0xFe89cc);//disk changes
-			//AddBreakpoint(0xFe89e4);//read boot block
+			AddBreakpoint(0xFe89e4);//read boot block
 			//AddBreakpoint(0xFe8a84);//after logo, wait for disk change
 			//AddBreakpoint(0xFe8a9c);//after logo, check for disk inserted
+			AddBreakpoint(0xFe8a0a);//track read, is it a DOS disk?
 
 			//AddBreakpoint(0xFe800e);//dispatch trackdisk.device message
 			//AddBreakpoint(0xFea734);//CMD_READ
 			//AddBreakpoint(0xFea99e);//step to track and read
 			//AddBreakpoint(0xFea5b2);//just after disk DMA
 			//AddBreakpoint(0xFea9ce);//after track-read message before fixing track gap
-			AddBreakpoint(0xFeab76);//blitter decode start
-			AddBreakpoint(0xFeb2a4);//blitter decode start
+			//AddBreakpoint(0xFeab76);//blitter decode start
+			//AddBreakpoint(0xFeb2a4);//blitter decode start
+
 			for (uint i = 0; i < 12; i++)
 				AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);
 			this.labeller = labeller;

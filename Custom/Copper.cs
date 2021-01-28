@@ -171,8 +171,8 @@ namespace RunAmiga.Custom
 					uint address = ChipRegs.ChipBase + reg;
 					switch (address)
 					{
-						case ChipRegs.BPL1MOD: pf.bpl1mod = data; break;
-						case ChipRegs.BPL2MOD: pf.bpl2mod = data; break;
+						case ChipRegs.BPL1MOD: pf.bpl1mod = (uint)(short)data; break;
+						case ChipRegs.BPL2MOD: pf.bpl2mod = (uint)(short)data; break;
 
 						case ChipRegs.BPLCON0: pf.bplcon0 = data; break;
 						case ChipRegs.BPLCON1: pf.bplcon1 = data; break;
