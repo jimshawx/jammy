@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using RunAmiga.Extensions;
 using RunAmiga.Types;
 
@@ -39,8 +35,16 @@ namespace RunAmiga.Custom
 		public uint track;
 		public uint side;
 
+		public int diskChangeCounter;
+		public int diskChangeState;
+
+		public uint dsksel;
+
 		public void Reset()
 		{
+			diskChangeState = 0;
+			diskChangeCounter = 10;
+
 			motor = false;
 			track = 0;
 			side = 0;
@@ -67,49 +71,63 @@ namespace RunAmiga.Custom
 			drive = new Drive[4];
 			for (int i = 0; i < 4; i++)
 				drive[i] = new Drive();
+
+			drive[0].dsksel = (uint)PRB.DSKSEL0;
+			drive[1].dsksel = (uint)PRB.DSKSEL1;
+			drive[2].dsksel = (uint)PRB.DSKSEL2;
+			drive[3].dsksel = (uint)PRB.DSKSEL3;
 		}
 
-		private int diskChangeCounter = 10;
-		private int diskChangeState;
 		public void Emulate(ulong ns)
 		{
 			//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)
-			if (diskChangeState != 0)
-			{
-				diskChangeCounter--;
-				if (diskChangeCounter < 0)
-				{
-					switch (diskChangeState)
-					{
-						case 7:
-							pra &= ~(uint)PRA.DSKTRACK0;
-							diskChangeState = 0;
-							break;
-						case 6:
-							pra &= ~(uint)PRA.DSKRDY;
-							diskChangeState = 0;
-							break;
-						case 5:
-							pra &= ~(uint) PRA.DSKCHANGE;
-							diskChangeState = 0;
-							break;
-						case 4:
-							pra |= (uint) PRA.DSKCHANGE;
-							break;
-						case 3:
-							prb |= (uint) PRB.DSKSTEP;
-							break;
-						case 2:
-							prb &= ~(uint) PRB.DSKSTEP;
-							break;
-						case 1:
-							prb |= (uint) PRB.DSKSTEP;
-							break;
-					}
 
-					if (diskChangeState != 0)
-						diskChangeState--;
-					diskChangeCounter = 10;
+			for (int i = 0; i < drive.Length; i++)
+			{
+				//if ((prb & drive[i].dsksel) == 0)
+				{
+					if (drive[i].diskChangeState != 0)
+					{
+						drive[i].diskChangeCounter--;
+						if (drive[i].diskChangeCounter < 0)
+						{
+							switch (drive[i].diskChangeState)
+							{
+								case 8:
+									pra |= (uint)PRA.DSKTRACK0;
+									drive[i].diskChangeState = 0;
+									break;
+								case 7:
+									pra &= ~(uint) PRA.DSKTRACK0;
+									drive[i].diskChangeState = 0;
+									break;
+								case 6:
+									pra &= ~(uint) PRA.DSKRDY;
+									drive[i].diskChangeState = 0;
+									break;
+								case 5:
+									pra &= ~(uint) PRA.DSKCHANGE;
+									drive[i].diskChangeState = 0;
+									break;
+								case 4:
+									pra |= (uint) PRA.DSKCHANGE;
+									break;
+								case 3:
+									prb |= (uint) PRB.DSKSTEP;
+									break;
+								case 2:
+									prb &= ~(uint) PRB.DSKSTEP;
+									break;
+								case 1:
+									prb |= (uint) PRB.DSKSTEP;
+									break;
+							}
+
+							if (drive[i].diskChangeState != 0)
+								drive[i].diskChangeState--;
+							drive[i].diskChangeCounter = 10;
+						}
+					}
 				}
 			}
 		}
@@ -403,56 +421,60 @@ namespace RunAmiga.Custom
 			//6 DSKSEL3
 			//7 DSKMOTOR
 
-			drive[0].side = ((prb & (uint)PRB.DSKSIDE)==0)?1u:0;
-
-			uint changes = prb ^ oldvalue;
-			if ((changes & (uint)PRB.DSKMOTOR) != 0) //motor bit changed
+			for (int i = 0; i < drive.Length; i++)
 			{
-				//motor on. signal DSKRDY
-				if ((prb & (uint)PRB.DSKMOTOR) == 0)
-					diskChangeState = 6;
-			}
 
-			if ((changes & (uint)PRB.DSKSTEP) != 0) //step bit changed (Hi->Lo->Hi == Step)
-			{
-				if ((prb & (uint) PRB.DSKSTEP) == 1)
+				if ((prb & drive[i].dsksel) == 0)
 				{
-					////step, signal DSKTRACK0 for now
-					//	diskChangeState = 7;
+					drive[i].side = ((prb & (uint) PRB.DSKSIDE) == 0) ? 1u : 0;
 
-					if ((prb & (uint) PRB.DSKDIREC) != 0)
+					//which bits changed?
+					uint changes = prb ^ oldvalue;
+
+					//if ((changes & (uint) PRB.DSKMOTOR) != 0) //motor bit changed
+					//{
+					//	//motor on. signal DSKRDY
+					//	if ((prb & (uint) PRB.DSKMOTOR) == 0)
+					//		drive[i].diskChangeState = 6;
+					//}
+
+					//drive sel changed, and it's now selected, update motor bit, signal drive ready
+					if ((changes & drive[i].dsksel) != 0 && (prb & drive[i].dsksel) == 0)
 					{
-						//step in
-						if (drive[0].track == 0)
+						drive[i].motor = (prb & (uint) PRB.DSKMOTOR) == 0;
+						drive[i].diskChangeState = 6;
+					}
+
+					//step changed, and it's set
+					if ((changes & (uint) PRB.DSKSTEP) != 0 && ((prb & (uint)PRB.DSKSTEP) == 1)) //step bit changed (Lo->Hi == Step)
+					{
+						////step, signal DSKTRACK0 for now
+						//	diskChangeState = 7;
+
+						if ((prb & (uint) PRB.DSKDIREC) != 0)
 						{
-							diskChangeState = 7; //hit track 0, signal DSKTRACK0
+							//step in
+							if (drive[i].track == 0)
+							{
+								drive[i].diskChangeState = 7; //hit track 0, signal DSKTRACK0
+							}
+							else
+							{
+								drive[i].track--;
+								drive[i].diskChangeState = 8;
+								//pra |= (uint) PRA.DSKTRACK0;
+							}
 						}
 						else
 						{
-							drive[0].track--;
-							pra |= (uint) PRA.DSKTRACK0;
+							//step out
+							drive[i].track++;
+							drive[i].diskChangeState = 8;
+							//pra |= (uint) PRA.DSKTRACK0;
 						}
-					}
-					else
-					{
-						//step out
-						drive[0].track++;
-						pra |= (uint) PRA.DSKTRACK0;
 					}
 				}
 			}
-
-			if ((changes & (uint)PRB.DSKSEL0) != 0 && (prb & (uint)PRB.DSKSEL0) == 0)
-				drive[0].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
-
-			if ((changes & (uint)PRB.DSKSEL1) != 0 && (prb & (uint)PRB.DSKSEL1) == 0)
-				drive[1].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
-
-			if ((changes & (uint)PRB.DSKSEL2) != 0 && (prb & (uint)PRB.DSKSEL2) == 0)
-				drive[2].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
-			
-			if ((changes & (uint)PRB.DSKSEL3) != 0 && (prb & (uint)PRB.DSKSEL3) == 0)
-				drive[3].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
 
 			UI.DiskLight = drive[0].motor | drive[1].motor | drive[2].motor | drive[3].motor;
 		}
@@ -481,13 +503,13 @@ namespace RunAmiga.Custom
 		//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)
 		public void InsertDisk()
 		{
-			diskChangeState = 4;
-			diskChangeCounter = 0;
+			drive[0].diskChangeState = 4;
+			drive[0].diskChangeCounter = 0;
 		}
 
 		public void RemoveDisk()
 		{
-			diskChangeState = 5;
+			drive[0].diskChangeState = 5;
 		}
 	}
 }
