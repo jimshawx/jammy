@@ -33,12 +33,28 @@ namespace RunAmiga.Custom
 		DSKRDY = 32,
 	}
 
+	public class Drive
+	{
+		public bool motor;
+		public uint track;
+		public uint side;
+
+		public void Reset()
+		{
+			motor = false;
+			track = 0;
+			side = 0;
+		}
+	}
+
 	public class Disk : IEmulate
 	{
 		private readonly IMemoryMappedDevice memory;
 
 		private readonly Interrupt interrupt;
 		//HRM pp241
+
+		private Drive[] drive;
 
 		private byte[] workbenchAdf;
 
@@ -47,6 +63,10 @@ namespace RunAmiga.Custom
 			this.memory = memory;
 			this.interrupt = interrupt;
 			workbenchAdf = File.ReadAllBytes("../../../../workbench.adf");
+
+			drive = new Drive[4];
+			for (int i = 0; i < 4; i++)
+				drive[i] = new Drive();
 		}
 
 		private int diskChangeCounter = 10;
@@ -96,10 +116,8 @@ namespace RunAmiga.Custom
 
 		public void Reset()
 		{
-			dsk0_motor = false;
-			dsk1_motor = false;
-			dsk2_motor = false;
-			dsk3_motor = false;
+			for (int i = 0; i < 4; i++)
+				drive[i].Reset();
 		}
 
 		public ushort Read(uint insaddr, uint address)
@@ -195,7 +213,8 @@ namespace RunAmiga.Custom
 					if ((dsklen&0x3fff) != 7358) throw new ApplicationException();
 
 					byte[] mfm = new byte[1088*11+720];//12688 bytes, 6344 words hmm.
-					MFM.FloppyTrackMfmEncode(0, workbenchAdf, mfm, 0x4489);
+					//MFM.FloppyTrackMfmEncode((drive[0].track<<1)|drive[0].side, workbenchAdf, mfm, 0x4489);
+					MFM.FloppyTrackMfmEncode((drive[0].track <<1)+ drive[0].side, workbenchAdf, mfm, 0x4489);
 
 					foreach (var w in mfm.AsUWord())
 					{
@@ -384,6 +403,8 @@ namespace RunAmiga.Custom
 			//6 DSKSEL3
 			//7 DSKMOTOR
 
+			drive[0].side = ((prb & (uint)PRB.DSKSIDE)==0)?1u:0;
+
 			uint changes = prb ^ oldvalue;
 			if ((changes & (uint)PRB.DSKMOTOR) != 0) //motor bit changed
 			{
@@ -394,30 +415,47 @@ namespace RunAmiga.Custom
 
 			if ((changes & (uint)PRB.DSKSTEP) != 0) //step bit changed (Hi->Lo->Hi == Step)
 			{
-				//step, signal DSKTRACK0 for now
 				if ((prb & (uint) PRB.DSKSTEP) == 1)
-					diskChangeState = 7;
+				{
+					////step, signal DSKTRACK0 for now
+					//	diskChangeState = 7;
+
+					if ((prb & (uint) PRB.DSKDIREC) != 0)
+					{
+						//step in
+						if (drive[0].track == 0)
+						{
+							diskChangeState = 7; //hit track 0, signal DSKTRACK0
+						}
+						else
+						{
+							drive[0].track--;
+							pra |= (uint) PRA.DSKTRACK0;
+						}
+					}
+					else
+					{
+						//step out
+						drive[0].track++;
+						pra |= (uint) PRA.DSKTRACK0;
+					}
+				}
 			}
 
 			if ((changes & (uint)PRB.DSKSEL0) != 0 && (prb & (uint)PRB.DSKSEL0) == 0)
-				dsk0_motor = (prb & (uint)PRB.DSKMOTOR) == 0;
+				drive[0].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
 
 			if ((changes & (uint)PRB.DSKSEL1) != 0 && (prb & (uint)PRB.DSKSEL1) == 0)
-				dsk1_motor = (prb & (uint)PRB.DSKMOTOR) == 0;
+				drive[1].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
 
 			if ((changes & (uint)PRB.DSKSEL2) != 0 && (prb & (uint)PRB.DSKSEL2) == 0)
-				dsk2_motor = (prb & (uint)PRB.DSKMOTOR) == 0;
+				drive[2].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
 			
 			if ((changes & (uint)PRB.DSKSEL3) != 0 && (prb & (uint)PRB.DSKSEL3) == 0)
-				dsk3_motor = (prb & (uint)PRB.DSKMOTOR) == 0;
+				drive[3].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
 
-			UI.DiskLight = dsk0_motor | dsk1_motor | dsk2_motor | dsk3_motor;
+			UI.DiskLight = drive[0].motor | drive[1].motor | drive[2].motor | drive[3].motor;
 		}
-
-		bool dsk0_motor = false;
-		bool dsk1_motor = false;
-		bool dsk2_motor = false;
-		bool dsk3_motor = false;
 
 		//there is also bit 4, DSKINDEX in CIAB icr register BFDD00
 

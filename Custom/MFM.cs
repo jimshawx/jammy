@@ -109,10 +109,16 @@ namespace RunAmiga.Custom
 
 		public static void FloppyTrackMfmEncode(uint track, byte[] src, byte[] dst, ushort sync)
 		{
+			if (track > 161)
+			{
+				Logger.WriteLine($"Track {track} {track/2}:{track&1} Out of range!");
+				return;
+			}
+
 			int i;
 			for (i = 0; i < 11; i++)
 			{
-				FloppySectorMfmEncode(track, (uint)i, new Span<byte>(src, i * 512, 512), new Span<byte>(dst, i * 1088, 1088), sync);
+				FloppySectorMfmEncode(track, (uint)i, new Span<byte>(src, (int)((track * 11 * 512) + (i * 512)), 512), new Span<byte>(dst, i * 1088, 1088), sync);
 			}
 			FloppyGapMfmEncode(new Span<byte>(dst, 11 * 1088, FLOPPY_GAP_BYTES));
 		}

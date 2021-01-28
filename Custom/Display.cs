@@ -79,7 +79,7 @@ namespace RunAmiga.Custom
 		public Display(Playfield pf, IMemoryMappedDevice memory)
 		{
 			this.pf = pf;
-			//pf.bplcon0 |= 0x8000;
+			pf.bplcon0 |= 0x8000;
 
 			this.memory = memory;
 			uint bitdepth = (pf.bplcon0 >> 12)&7;

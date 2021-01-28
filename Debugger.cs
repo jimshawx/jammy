@@ -1,6 +1,7 @@
 ﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -102,6 +103,12 @@ namespace RunAmiga
 
 			for (uint i = 0; i < 12; i++)
 				AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);
+
+			//AddBreakpoint(0xb328, BreakpointType.Write);
+			//AddBreakpoint(0xb32a, BreakpointType.Write);
+			//AddBreakpoint(0xfd18dc);
+
+
 			this.labeller = labeller;
 
 			LoadComments();
@@ -200,6 +207,8 @@ namespace RunAmiga
 				Logger.WriteLine($"Trying to write a {size} ({value:X8} {value}) to {address:X8} @{insaddr:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
+
+			//if (address == 0xb328 || address == 0xb32a) System.Diagnostics.Debugger.Break();
 
 			//if (IsMemoryBreakpoint(address, BreakpointType.Write))
 			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
