@@ -32,7 +32,7 @@ namespace RunAmiga.Custom
 
 				copperPC = cop1lc;
 				
-				ParseCopperList(copperPC);
+				ParseCopperList(cop1lc);
 				ParseCopperList(cop2lc);
 
 				foreach (var p in displays.Values)
@@ -92,10 +92,10 @@ namespace RunAmiga.Custom
 
 					Logger.WriteLine($"{copPC:X8} MOVE {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
 
-					//if (customBase+reg == CustomRegs.COPJMP1)
-					//	copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC
-					//else if (customBase + reg == CustomRegs.COPJMP2) 
-					//	copPC = custom.Read(copPC, CustomRegs.COP2LCH, Size.Long);//COP2LC
+					//if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
+					//	copPC = custom.Read(copPC, ChipRegs.COP1LCH, Size.Long);//COP1LC
+					//else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2) 
+					//	copPC = custom.Read(copPC, ChipRegs.COP2LCH, Size.Long);//COP2LC
 				}
 				else if ((ins & 0x0001) == 1)
 				{
@@ -151,7 +151,7 @@ namespace RunAmiga.Custom
 
 			uint copStartPC = copPC;
 
-			int counter = 64;
+			int counter = 256;
 			while (counter-- > 0)
 			{
 				ushort ins = (ushort)memory.Read(0,copPC,Size.Word);
@@ -174,7 +174,8 @@ namespace RunAmiga.Custom
 						case ChipRegs.BPL1MOD: pf.bpl1mod = (uint)(short)data; break;
 						case ChipRegs.BPL2MOD: pf.bpl2mod = (uint)(short)data; break;
 
-						case ChipRegs.BPLCON0: pf.bplcon0 = data; break;
+						case ChipRegs.BPLCON0: pf.bplcon0 = data;
+							break;
 						case ChipRegs.BPLCON1: pf.bplcon1 = data; break;
 						case ChipRegs.BPLCON2: pf.bplcon2 = data; break;
 						case ChipRegs.BPLCON3: pf.bplcon3 = data; break;

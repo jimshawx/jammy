@@ -261,13 +261,22 @@ namespace RunAmiga.Custom
 		{
 			//todo: assumes blitter DMA is enabled
 
-			Logger.WriteLine($"{width}x{height} = {width*16}bits x {height} = {width * 16 * height} bits = {width*height*2} bytes");
+			Logger.WriteLine($"BLIT! {width}x{height} = {width*16}bits x {height} = {width * 16 * height} bits = {width*height*2} bytes");
 
 			Logger.WriteLine($"->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
 			Logger.WriteLine($"->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
 			Logger.WriteLine($"->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
 			Logger.WriteLine($"->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
 			Logger.WriteLine($"cookie: {bltcon0&0xff:X2} {((bltcon1&2)!=0?"descending":"ascending")}");
+			Logger.WriteLine("ABC");
+			if ((bltcon0 & 0x01) != 0) Logger.WriteLine("000");
+			if ((bltcon0 & 0x02) != 0) Logger.WriteLine("001");
+			if ((bltcon0 & 0x04) != 0) Logger.WriteLine("010");
+			if ((bltcon0 & 0x08) != 0) Logger.WriteLine("011");
+			if ((bltcon0 & 0x10) != 0) Logger.WriteLine("100");
+			if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
+			if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
+			if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
 
 			int ashift = (int) (bltcon0 >> 12);
 			int bshift = (int) (bltcon1 >> 12);
@@ -277,6 +286,9 @@ namespace RunAmiga.Custom
 			//set blitter busy in DMACON
 			custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
 
+			uint o_bltadat = bltadat;
+			uint o_bltbdat = bltbdat;
+
 			for (uint h = 0; h < height; h++)
 			{
 				uint bltabits = 0;
@@ -284,47 +296,53 @@ namespace RunAmiga.Custom
 
 				for (uint w = 0; w < width; w++)
 				{
+					bltadat = o_bltadat;
+
 					if ((bltcon0 & (1u << 11)) != 0)
 					{
 						bltadat = memory.Read(0, bltapt, Size.Word);
-						
-						if (w == 0) bltadat &= bltafwm;
-						else if (w == width - 1) bltadat &= bltalwm;
-
-						if ((bltcon1 & (1u << 1)) != 0)
-						{
-							bltadat <<= ashift;
-							bltadat |= bltabits;
-							bltabits = bltadat >> 16;
-							bltadat &= 0xffff;
-						}
-						else
-						{
-							bltadat <<= (16 - ashift);
-							bltadat |= bltabits;
-							bltabits = bltadat << 16;
-							bltadat >>= 16;
-						}
+						o_bltadat = bltadat;
 					}
+
+					if (w == 0) bltadat &= bltafwm;
+					else if (w == width - 1) bltadat &= bltalwm;
+
+					if ((bltcon1 & (1u << 1)) != 0)
+					{
+						bltadat <<= ashift;
+						bltadat |= bltabits;
+						bltabits = bltadat >> 16;
+						bltadat &= 0xffff;
+					}
+					else
+					{
+						bltadat <<= (16 - ashift);
+						bltadat |= bltabits;
+						bltabits = bltadat << 16;
+						bltadat >>= 16;
+					}
+
+					bltbdat = o_bltbdat;
 
 					if ((bltcon0 & (1u << 10)) != 0)
 					{
 						bltbdat = memory.Read(0, bltbpt, Size.Word);
+						o_bltbdat = bltbdat;
+					}
 
-						if ((bltcon1 & (1u << 1)) != 0)
-						{
-							bltbdat <<= bshift;
-							bltbdat |= bltbbits;
-							bltbbits = bltbdat >> 16;
-							bltbdat &= 0xffff;
-						}
-						else
-						{
-							bltbdat <<= (16 - bshift);
-							bltbdat |= bltbbits;
-							bltbbits = bltbdat << 16;
-							bltbdat >>= 16;
-						}
+					if ((bltcon1 & (1u << 1)) != 0)
+					{
+						bltbdat <<= bshift;
+						bltbdat |= bltbbits;
+						bltbbits = bltbdat >> 16;
+						bltbdat &= 0xffff;
+					}
+					else
+					{
+						bltbdat <<= (16 - bshift);
+						bltbdat |= bltbbits;
+						bltbbits = bltbdat << 16;
+						bltbdat >>= 16;
 					}
 
 					if ((bltcon0 & (1u << 9)) != 0)
@@ -335,14 +353,14 @@ namespace RunAmiga.Custom
 					//bltddat = (bltbdat & bltadat) | (bltcdat & ~bltadat);
 
 					bltddat = 0;
-					if ((bltcon0 & 1) != 0) bltddat |= ~bltadat & ~bltbdat & ~bltcdat;
-					if ((bltcon0 & 2) != 0) bltddat |= ~bltadat & ~bltbdat & bltcdat;
-					if ((bltcon0 & 4) != 0) bltddat |= ~bltadat & bltbdat & ~bltcdat;
-					if ((bltcon0 & 8) != 0) bltddat |= ~bltadat & bltbdat & bltcdat;
-					if ((bltcon0 & 16) != 0) bltddat |= bltadat & ~bltbdat & ~bltcdat;
-					if ((bltcon0 & 32) != 0) bltddat |= bltadat & ~bltbdat & bltcdat;
-					if ((bltcon0 & 64) != 0) bltddat |= bltadat & bltbdat & ~bltcdat;
-					if ((bltcon0 & 128) != 0) bltddat |= bltadat & bltbdat & bltcdat;
+					if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdat & ~bltcdat;
+					if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdat &  bltcdat;
+					if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat &  bltbdat & ~bltcdat;
+					if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat &  bltbdat &  bltcdat;
+					if ((bltcon0 & 0x10) != 0) bltddat |=  bltadat & ~bltbdat & ~bltcdat;
+					if ((bltcon0 & 0x20) != 0) bltddat |=  bltadat & ~bltbdat &  bltcdat;
+					if ((bltcon0 & 0x40) != 0) bltddat |=  bltadat &  bltbdat & ~bltcdat;
+					if ((bltcon0 & 0x80) != 0) bltddat |=  bltadat &  bltbdat &  bltcdat;
 
 					bltzero |= bltddat;
 
@@ -383,6 +401,10 @@ namespace RunAmiga.Custom
 					if ((bltcon0 & (1u << 8)) != 0) bltdpt += bltdmod;
 				}
 			}
+
+			bltadat = o_bltadat;
+			bltbdat = o_bltbdat;
+
 
 			//write the BZERO bit in DMACON
 			if (bltzero == 0)
@@ -456,26 +478,56 @@ namespace RunAmiga.Custom
 
 			Logger.WriteLine($"tx,ty {tx,3},{ty,3} dx,dy {dx,3},{dy,3} {Convert.ToString(octant,2).PadLeft(3,'0')}({octant}) {sign} am:{bltamod&0xffff:X4} cm:{bltcmod:X4} dm:{bltdmod:X4} a:{bltapt,5} d:{bltdpt:X8} dydl:{dydl} dxdl:{dxdl}");
 
+			Logger.WriteLine("ABC");
+			if ((bltcon0 & 0x01) != 0) Logger.WriteLine("000");
+			if ((bltcon0 & 0x02) != 0) Logger.WriteLine("001");
+			if ((bltcon0 & 0x04) != 0) Logger.WriteLine("010");
+			if ((bltcon0 & 0x08) != 0) Logger.WriteLine("011");
+			if ((bltcon0 & 0x10) != 0) Logger.WriteLine("100");
+			if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
+			if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
+			if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
+			if ((bltcon1 & (7 << 2)) != 0)
+			{
+				Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+				//return;
+			}
+
 			//todo: these are supposed to be the same, why are they not?
 			bltdmod = bltcmod;
 
 			uint bltzero = 0;
 
 			//set blitter busy in DMACON
-			custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
+			custom.Write(insaddr, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
 
 			double x = bltcon0 >> 12;
 			double y = 0.0;
-			uint p;
 			while (length-- > 0)
 			{
 				int x1 = (int) (x+0.5);
 
-				p = memory.Read(0, bltdpt, Size.Word);
-				//todo: apply minterm here
-				p |= (1u << (x1^15));
-				bltzero |= p;
-				memory.Write(0, bltdpt, p, Size.Word);
+				bltcpt = bltdpt;
+
+				if ((bltcon0 & (1u << 9)) != 0)
+					bltcdat = memory.Read(insaddr, bltcpt, Size.Word);
+
+				bltadat = (1u << (x1^15));
+
+				bltddat = 0;
+				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdat & ~bltcdat;
+				if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdat &  bltcdat;
+				if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat &  bltbdat & ~bltcdat;
+				if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat &  bltbdat &  bltcdat;
+				if ((bltcon0 & 0x10) != 0) bltddat |=  bltadat & ~bltbdat & ~bltcdat;
+				if ((bltcon0 & 0x20) != 0) bltddat |=  bltadat & ~bltbdat &  bltcdat;
+				if ((bltcon0 & 0x40) != 0) bltddat |=  bltadat &  bltbdat & ~bltcdat;
+				if ((bltcon0 & 0x80) != 0) bltddat |=  bltadat &  bltbdat &  bltcdat;
+
+				if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
+					memory.Write(insaddr, bltdpt, bltddat, Size.Word);
+				
+				bltzero |= bltddat;
 
 				x += dxdl;
 				if (dxdl < 0 && x < 0)
@@ -501,6 +553,7 @@ namespace RunAmiga.Custom
 					y = y % 1.0;
 				}
 			}
+			bltcpt = bltdpt;
 
 			//write the BZERO bit in DMACON
 			if (bltzero == 0)
