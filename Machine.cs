@@ -28,10 +28,11 @@ namespace RunAmiga
 			interrupt = new Interrupt();
 			var memory = new Memory(debugger, "M");
 
+			mouse = new Mouse();
 			disk = new Disk(memory, interrupt);
-			cia = new CIA(debugger, disk);
+			cia = new CIA(debugger, disk, mouse);
 
-			custom = new Chips(debugger, memory, interrupt, disk);
+			custom = new Chips(debugger, memory, interrupt, disk, mouse);
 			interrupt.Init(custom);
 
 			var memoryMapper = new MemoryMapper(debugger, memory, cia, custom);
@@ -244,6 +245,7 @@ namespace RunAmiga
 
 		private Thread emuThread;
 		private readonly Disk disk;
+		private readonly Mouse mouse;
 
 		public void Start()
 		{

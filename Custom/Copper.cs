@@ -212,6 +212,13 @@ namespace RunAmiga.Custom
 
 						case ChipRegs.DDFSTRT: pf.ddfstrt = data; break;
 						case ChipRegs.DDFSTOP: pf.ddfstop = data; break;
+
+						case ChipRegs.SPR0PTL: pf.spr0pt = (pf.spr0pt & 0xffff0000) | data; break;
+						case ChipRegs.SPR0PTH: pf.spr0pt = (pf.spr0pt & 0x0000ffff) | ((uint)data << 16); break;
+						case ChipRegs.SPR0POS: pf.spr0pos = data; break;
+						case ChipRegs.SPR0CTL: pf.spr0ctl = data; break;
+						case ChipRegs.SPR0DATA: pf.spr0data = data; break;
+						case ChipRegs.SPR0DATB: pf.spr0datb = data; break;
 					}
 
 					if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)

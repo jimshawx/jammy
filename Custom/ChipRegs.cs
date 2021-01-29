@@ -12,7 +12,7 @@ namespace RunAmiga.Custom
 			{ 0xdff006, new Tuple<string,string>("VHPOSR", "Rest of raster XY position - High byte: vertical, low byte: horizontal")},
 			{ 0xdff008, new Tuple<string,string>("DSKDATR", "Disk data early read (unusable)")},
 			{ 0xdff00a, new Tuple<string,string>("JOY0DAT", "Joystick/mouse 0 data")},
-			{ 0xdff00c, new Tuple<string,string>("JOT1DAT", "Joystick/mouse 1 data")},
+			{ 0xdff00c, new Tuple<string,string>("JOY1DAT", "Joystick/mouse 1 data")},
 			{ 0xdff00e, new Tuple<string,string>("CLXDAT", "Poll (read and clear) sprite collision state")},
 			{ 0xdff010, new Tuple<string,string>("ADKCONR", "Audio, disk control register read")},
 			{ 0xdff012, new Tuple<string,string>("POT0DAT", "Pot counter pair 0 data")},
@@ -270,7 +270,7 @@ namespace RunAmiga.Custom
 		public const uint VHPOSR = 0xdff006;
 		public const uint DSKDATR = 0xdff008;
 		public const uint JOY0DAT = 0xdff00a;
-		public const uint JOT1DAT = 0xdff00c;
+		public const uint JOY1DAT = 0xdff00c;
 		public const uint CLXDAT = 0xdff00e;
 		public const uint ADKCONR = 0xdff010;
 		public const uint POT0DAT = 0xdff012;

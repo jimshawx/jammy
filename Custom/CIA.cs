@@ -15,9 +15,9 @@ namespace RunAmiga.Custom
 		private CIAAOdd ciaA;
 		private CIABEven ciaB;
 
-		public CIA(Debugger debugger, Disk disk)
+		public CIA(Debugger debugger, Disk disk, Mouse mouse)
 		{
-			ciaA = new CIAAOdd(debugger, disk);
+			ciaA = new CIAAOdd(debugger, disk, mouse);
 			ciaB = new CIABEven(debugger, disk);
 		}
 

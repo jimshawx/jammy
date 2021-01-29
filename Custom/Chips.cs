@@ -12,11 +12,13 @@ namespace RunAmiga.Custom
 		private readonly Copper copper;
 		private readonly Blitter blitter;
 		private readonly Beam beam;
+		private readonly Mouse mouse;
 
-		public Chips(Debugger debugger, IMemoryMappedDevice memory, Interrupt interrupt, Disk disk)
+		public Chips(Debugger debugger, IMemoryMappedDevice memory, Interrupt interrupt, Disk disk, Mouse mouse)
 		{
 			this.interrupt = interrupt;
 			this.disk = disk;
+			this.mouse = mouse;
 			blitter = new Blitter(this, memory, interrupt);
 			copper = new Copper(memory, this, interrupt);
 			beam = new Beam();
@@ -28,11 +30,16 @@ namespace RunAmiga.Custom
 			blitter.Emulate(ns);
 			beam.Emulate(ns);
 			disk.Emulate(ns);
+			mouse.Emulate(ns);
 		}
 
 		public void Reset()
 		{
 			copper.Reset();
+			blitter.Reset();
+			beam.Reset();
+			disk.Reset();
+			mouse.Reset();
 		}
 
 		public bool IsMapped(uint address)
@@ -66,11 +73,11 @@ namespace RunAmiga.Custom
 
 			if ((address >= ChipRegs.COP1LCH && address < ChipRegs.DIWSTRT) || address == ChipRegs.COPCON)
 			{
-				copper.Read(insaddr, address);
+				regs[reg] = copper.Read(insaddr, address);
 			}
 			else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
 			{
-				blitter.Read(insaddr, address);
+				regs[reg] = blitter.Read(insaddr, address);
 			}
 			else if (address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW)
 			{
@@ -82,7 +89,10 @@ namespace RunAmiga.Custom
 			{
 				regs[reg] = disk.Read(insaddr, address);
 			}
-
+			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR)
+			{
+				regs[reg] = mouse.Read(insaddr, address);
+			}
 			//if (address != ChipRegs.VHPOSR && address != ChipRegs.VPOSR)
 			//	Logger.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
 
@@ -246,9 +256,11 @@ namespace RunAmiga.Custom
 			{
 				disk.Write(insaddr, address, (ushort) value);
 			}
+			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR)
+			{
+				mouse.Write(insaddr, address, (ushort)value);
+			}
 		}
-
-
 
 		private void DebugInfo(uint insaddr, uint address, uint value, Size size)
 		{

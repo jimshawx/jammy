@@ -7,6 +7,7 @@ namespace RunAmiga.Custom
 	public class CIAAOdd : IEmulate, IMemoryMappedDevice
 	{
 		private readonly Disk disk;
+		private readonly Mouse mouse;
 
 		private readonly Dictionary<int, Tuple<string, string>> debug = new Dictionary<int, Tuple<string, string>>
 		{
@@ -29,11 +30,12 @@ namespace RunAmiga.Custom
 		};
 
 		//BFE001 - BFEF01
-		private byte[] regs = new byte[16];
+		private readonly byte[] regs = new byte[16];
 
-		public CIAAOdd(Debugger debugger, Disk disk)
+		public CIAAOdd(Debugger debugger, Disk disk, Mouse mouse)
 		{
 			this.disk = disk;
+			this.mouse = mouse;
 		}
 
 		private ulong beamTime;
@@ -107,8 +109,12 @@ namespace RunAmiga.Custom
 			byte reg = (byte)((address >> 8) & 0xf);
 
 			if (reg == 0)
-				return disk.ReadPRA(insaddr);
-
+			{
+				byte p = 0;
+				p |= disk.ReadPRA(insaddr);
+				p |= mouse.ReadPRA(insaddr);
+				return p;
+			}
 			//Logger.WriteLine($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 
 			return (uint)regs[reg];
@@ -119,8 +125,8 @@ namespace RunAmiga.Custom
 			if (size != Size.Byte)
 				throw new UnknownInstructionSizeException(address, 0);
 
-			byte reg = (byte)((address >> 8) & 0xf);
-			regs[reg] = (byte)value;
+			byte reg = (byte) ((address >> 8) & 0xf);
+			regs[reg] = (byte) value;
 			//Logger.WriteLine($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 
 			if (reg == 0)
@@ -129,7 +135,10 @@ namespace RunAmiga.Custom
 			}
 
 			if (reg == 0)
-				disk.WritePRA(insaddr, (byte)value);
+			{
+				disk.WritePRA(insaddr, (byte) value);
+				mouse.WritePRA(insaddr, (byte) value);
+			}
 		}
 
 		public bool PowerLight()

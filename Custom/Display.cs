@@ -41,6 +41,12 @@ namespace RunAmiga.Custom
 		public uint ddfstrt;
 		public uint ddfstop;
 
+		public uint spr0pt;
+		public uint spr0pos;
+		public uint spr0ctl;
+		public uint spr0data;
+		public uint spr0datb;
+
 		public uint address;
 
 		public ushort [] colour = new ushort[256];
@@ -187,9 +193,22 @@ namespace RunAmiga.Custom
 				dst[i] = (int)pf.truecolour[dst[i]&0xff];
 			}
 
-			//for (int j = 0; j < 4; j++)
+			int sprx = (int)(pf.spr0pos & 0xff);
+			int spry = (int)(pf.spr0pos >> 8);
+			if (sprx < 1) sprx = 1;
+			else if (sprx >= 638) sprx = 638;
+			if (spry < 1) spry = 1;
+			if (spry >= 254) spry = 254;
+			
+			dst[sprx + w * spry] ^= 0xffffff;
+			dst[sprx+1 + w * spry] ^= 0xffffff;
+			dst[sprx-1 + w * spry] ^= 0xffffff;
+			dst[sprx + w * (spry-1)] ^= 0xffffff;
+			dst[sprx + w * (spry+1)] ^= 0xffffff;
+
+			//for (int j = 0; j < 4; j++){
 			//for (int i = w * (10 + j); i < w * (11 + j); i++)
-			//	dst[i] = (int)pf.truecolour[j];
+			//	dst[i] = (int)pf.truecolour[j];}
 		}
 	}
 }

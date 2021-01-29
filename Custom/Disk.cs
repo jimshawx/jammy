@@ -27,6 +27,8 @@ namespace RunAmiga.Custom
 		DSKPROT = 8,
 		DSKTRACK0 = 16,
 		DSKRDY = 32,
+
+		MASK = DSKCHANGE|DSKPROT|DSKTRACK0|DSKRDY
 	}
 
 	public class Drive
@@ -501,7 +503,7 @@ namespace RunAmiga.Custom
 		{
 			Logger.WriteLine($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')} @{insaddr:X6}");
 
-			return (byte)pra;
+			return (byte)(pra & (uint)PRA.MASK);
 		}
 
 		public byte ReadPRB(uint insaddr)
