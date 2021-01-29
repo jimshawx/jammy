@@ -1,14 +1,10 @@
 ﻿using RunAmiga.Types;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using RunAmiga.Custom;
 
 namespace RunAmiga
 {
-	public class CPU : IEmulate
+	public class CPU : IEmulate, ICPU
 	{
 		private enum FetchMode
 		{
@@ -97,9 +93,6 @@ namespace RunAmiga
 			UI.IsDirty = true;
 		}
 
-		[DllImport("Musashi.dll")]
-		static extern void Musashi_set_irq(uint levels);
-
 
 		private bool CheckInterrupt()
 		{
@@ -114,7 +107,6 @@ namespace RunAmiga
 				{
 					instructionStartPC = pc;
 					internalTrap(0x18 + (uint)interruptLevel);
-					Musashi_set_irq(interruptLevel);
 
 					interrupt.ResetInterrupt();
 					instructionStartPC = pc;

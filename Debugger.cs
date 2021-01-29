@@ -18,7 +18,7 @@ namespace RunAmiga
 
 		private readonly Disassembler disassembler;
 		private Memory memory;
-		private CPU cpu;
+		private ICPU cpu;
 		private Chips custom;
 		private CIA cia;
 		private Labeller labeller;
@@ -153,7 +153,7 @@ namespace RunAmiga
 			}
 		}
 
-		public void Initialise(Memory memory, CPU cpu, Custom.Chips custom, CIA cia, Disk disk)
+		public void Initialise(Memory memory, ICPU cpu, Custom.Chips custom, CIA cia, Disk disk)
 		{
 			this.memory = memory;
 			this.cpu = cpu;

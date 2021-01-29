@@ -40,6 +40,9 @@ namespace RunAmiga.Custom
 
 		public uint dsksel;
 
+		public bool attached;
+		public bool diskinserted;
+
 		public void Reset()
 		{
 			diskChangeState = 0;
@@ -48,6 +51,9 @@ namespace RunAmiga.Custom
 			motor = false;
 			track = 0;
 			side = 0;
+
+			attached = false;
+			diskinserted = false;
 		}
 	}
 
@@ -76,6 +82,11 @@ namespace RunAmiga.Custom
 			drive[1].dsksel = (uint)PRB.DSKSEL1;
 			drive[2].dsksel = (uint)PRB.DSKSEL2;
 			drive[3].dsksel = (uint)PRB.DSKSEL3;
+
+			drive[0].attached = true;
+			drive[1].attached = false;
+			drive[2].attached = false;
+			drive[3].attached = false;
 		}
 
 		public void Emulate(ulong ns)
@@ -375,7 +386,6 @@ namespace RunAmiga.Custom
 		private uint pra;
 		private uint prb;
 
-
 		public void WritePRA(uint insaddr, byte value)
 		{
 			uint oldvalue = pra;
@@ -423,6 +433,7 @@ namespace RunAmiga.Custom
 
 			for (int i = 0; i < drive.Length; i++)
 			{
+				if (!drive[i].attached) continue;
 
 				if ((prb & drive[i].dsksel) == 0)
 				{

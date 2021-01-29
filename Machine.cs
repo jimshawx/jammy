@@ -1,71 +1,32 @@
 ﻿using RunAmiga.Types;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using RunAmiga.Custom;
 
 namespace RunAmiga
 {
-	[StructLayout(LayoutKind.Sequential)]
-	public class Musashi_regs
-	{
-		public uint d0, d1, d2, d3, d4, d5, d6, d7;
-		public uint a0, a1, a2, a3, a4, a5, a6, a7;
-		public uint pc, sp, usp, ssp;
-		public ushort sr;
-	}
-
 	public class Machine
 	{
-		[DllImport("Musashi.dll")]
-		static extern void Musashi_init(IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
-
-		[DllImport("Musashi.dll")]
-		static extern uint Musashi_execute(ref int cycles);
-
-		[DllImport("Musashi.dll")]
-		static extern void Musashi_get_regs(Musashi_regs regs);
-
-		[DllImport("Musashi.dll")]
-		static extern void Musashi_set_pc(uint pc);
-
-		private CPU cpu;
-		private Chips custom;
-		private CIA cia;
-		private Memory memory;
-		private Debugger debugger;
+		private readonly IEmulate cpu;
+		private readonly Chips custom;
+		private readonly CIA cia;
+		private readonly Interrupt interrupt;
+		private readonly Debugger debugger;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
 
 		private static SemaphoreSlim emulationSemaphore;
 
-		private List<IEmulate> emulations = new List<IEmulate>();
+		private readonly List<IEmulate> emulations = new List<IEmulate>();
 
-		private Musashi_Reader r32;
-		private Musashi_Reader r16;
-		private Musashi_Reader r8;
-		private Musashi_Writer w32;
-		private Musashi_Writer w16;
-		private Musashi_Writer w8;
-		private IMemoryMappedDevice musashiMemory;
-		private Disassembler disassembler;
-		private Musashi_regs musashiRegs;
-		private Interrupt interrupt;
-		private MemoryMapper memoryMapper;
-		private MemoryReplay memoryReplay;
 
 		public Machine()
 		{
 			var labeller = new Labeller();
 			debugger = new Debugger(labeller);
 			interrupt = new Interrupt();
-			memory = new Memory(debugger, "J");
-			//musashiMemory = new Memory(debugger, "M");
-			memoryReplay = new MemoryReplay();
-			musashiMemory = memoryReplay;
+			var memory = new Memory(debugger, "M");
 
 			disk = new Disk(memory, interrupt);
 			cia = new CIA(debugger, disk);
@@ -73,75 +34,24 @@ namespace RunAmiga
 			custom = new Chips(debugger, memory, interrupt, disk);
 			interrupt.Init(custom);
 
-			memoryMapper = new MemoryMapper(debugger, memory, cia, custom, memoryReplay);
+			var memoryMapper = new MemoryMapper(debugger, memory, cia, custom);
 
-			cpu = new CPU(debugger, interrupt, memoryMapper);
+			//cpu = new CPU(debugger, interrupt, memoryMapper);
+			cpu = new MusashiCPU(debugger, interrupt, memoryMapper);
 
 			emulations.Add(cia);
 			emulations.Add(custom);
 			emulations.Add(memory);
-			emulations.Add(memoryReplay);
 			emulations.Add(cpu);
 			emulations.Add(interrupt);
 
-			debugger.Initialise(memory, cpu, custom, cia, disk);
+			debugger.Initialise(memory, (ICPU)cpu, custom, cia, disk);
 
 			Reset();
-
-			//musashiMemory.Reset();
-			disassembler = new Disassembler();
-
-			r32 = new Musashi_Reader(Musashi_read32);
-			r16 = new Musashi_Reader(Musashi_read16);
-			r8 = new Musashi_Reader(Musashi_read8);
-			w32 = new Musashi_Writer(Musashi_write32);
-			w16 = new Musashi_Writer(Musashi_write16);
-			w8 = new Musashi_Writer(Musashi_write8);
-
-			//var memoryArray = musashiMemory.GetMemoryArray();
-			Musashi_init(
-			Marshal.GetFunctionPointerForDelegate(r32),
-			Marshal.GetFunctionPointerForDelegate(r16),
-			Marshal.GetFunctionPointerForDelegate(r8),
-			Marshal.GetFunctionPointerForDelegate(w32),
-			Marshal.GetFunctionPointerForDelegate(w16),
-			Marshal.GetFunctionPointerForDelegate(w8)
-				);
-			int cycles=0;
-			Musashi_execute(ref cycles);//run RESET
-			musashiRegs = new Musashi_regs();
 
 			emulationSemaphore = new SemaphoreSlim(1);
 		}
 
-		private delegate uint Musashi_Reader(uint address);
-		private delegate void Musashi_Writer(uint address, uint value);
-
-		private uint Musashi_read32(uint address)
-		{
-			return musashiMemory.Read(0, address, Size.Long);
-		}
-		private uint Musashi_read16(uint address)
-		{
-			return musashiMemory.Read(0, address, Size.Word);
-		}
-		private uint Musashi_read8(uint address)
-		{
-			return musashiMemory.Read(0, address, Size.Byte);
-		}
-		private void Musashi_write32(uint address, uint value)
-		{
-			musashiMemory.Write(0, address, value, Size.Long);
-		}
-		private void Musashi_write16(uint address, uint value)
-		{
-			musashiMemory.Write(0, address, value, Size.Word);
-		}
-
-		private void Musashi_write8(uint address, uint value)
-		{
-			musashiMemory.Write(0, address, value, Size.Byte);
-		}
 
 		public void RunEmulations(ulong ns)
 		{
@@ -149,123 +59,119 @@ namespace RunAmiga
 			CheckInterrupts(10);
 		}
 
-		//private List<uint> mpc = new List<uint>();
-		//private ushort last_sr;
-		public void RunEmulations2(ulong ns)
-		{
-			memoryReplay.SetRecording();
+		////private List<uint> mpc = new List<uint>();
+		////private ushort last_sr;
+		//public void RunEmulations2(ulong ns)
+		//{
+		//	Musashi_get_regs(musashiRegs);
 
-			Musashi_get_regs(musashiRegs);
+		//	var regs = cpu.GetRegs();
+		//	uint instructionStartPC = regs.PC;
 
-			var regs = cpu.GetRegs();
-			uint instructionStartPC = regs.PC;
+		//	//if (musashiRegs.pc == 0xfc0ca6 || musashiRegs.pc == 0xfc0caa)
+		//	//	Logger.WriteLine($"Musashi L2 Interrupt 1 {musashiRegs.pc:X8} {musashiRegs.sr:X4}");
+		//	//if (instructionStartPC == 0xfc0ca6)
+		//	//	Logger.WriteLine($"C# L2 Interrupt {regs.SR:X4}");
 
-			//if (musashiRegs.pc == 0xfc0ca6 || musashiRegs.pc == 0xfc0caa)
-			//	Logger.WriteLine($"Musashi L2 Interrupt 1 {musashiRegs.pc:X8} {musashiRegs.sr:X4}");
-			//if (instructionStartPC == 0xfc0ca6)
-			//	Logger.WriteLine($"C# L2 Interrupt {regs.SR:X4}");
+		//	emulations.ForEach(x => x.Emulate(ns));
 
-			emulations.ForEach(x => x.Emulate(ns));
+		//	var regsAfter = cpu.GetRegs();
 
-			var regsAfter = cpu.GetRegs();
+		//	int counter = 0;
+		//	const int maxPCdrift = 6;
+		//	int cycles=0;
+		//	uint pc;
+		//	do
+		//	{
+		//		//try
+		//		//{
+		//			pc = Musashi_execute(ref cycles);
+		//		//}
+		//		//catch
+		//		//{
+		//		//	debugger.DumpTrace();
+		//		//	mpc = mpc.Skip(mpc.Count - 32).ToList();
+		//		//	foreach (var v in mpc)
+		//		//		Logger.WriteLine($"{v:X8}");
+		//		//	pc = 0;
+		//		//}
 
-			memoryReplay.SetPlayback();
+		//		//if (pc == 0xfc0ca6 || pc == 0xfc0caa)
+		//		//	Logger.WriteLine($"Musashi L2 Interrupt 2 {pc:X8} {musashiRegs.sr:X4}");
+		//		//mpc.Add(pc);
+		//		counter++;
+		//	} while (pc != regsAfter.PC && counter < maxPCdrift);
 
-			int counter = 0;
-			const int maxPCdrift = 6;
-			int cycles=0;
-			uint pc;
-			do
-			{
-				//try
-				//{
-					pc = Musashi_execute(ref cycles);
-				//}
-				//catch
-				//{
-				//	debugger.DumpTrace();
-				//	mpc = mpc.Skip(mpc.Count - 32).ToList();
-				//	foreach (var v in mpc)
-				//		Logger.WriteLine($"{v:X8}");
-				//	pc = 0;
-				//}
+		//	Musashi_get_regs(musashiRegs);
 
-				//if (pc == 0xfc0ca6 || pc == 0xfc0caa)
-				//	Logger.WriteLine($"Musashi L2 Interrupt 2 {pc:X8} {musashiRegs.sr:X4}");
-				//mpc.Add(pc);
-				counter++;
-			} while (pc != regsAfter.PC && counter < maxPCdrift);
+		//	//if ((regsAfter.SR & 0xff00) != last_sr)
+		//	//	Logger.WriteLine($"SR {instructionStartPC:X8} {last_sr:X4}->{regsAfter.SR & 0xff00:X4} M:{musashiRegs.sr:X4}");
+		//	//last_sr = (ushort)(regsAfter.SR & 0xff00);
 
-			Musashi_get_regs(musashiRegs);
+		//	if (counter == maxPCdrift)
+		//	{
+		//		debugger.DumpTrace();
+		//		//mpc = mpc.Skip(mpc.Count - 32).ToList();
+		//		//foreach (var v in mpc)
+		//		//	Logger.WriteLine($"{v:X8}");
+		//		Logger.WriteLine($"PC Drift too far at {regsAfter.PC:X8} {pc:X8}");
+		//		//Machine.SetEmulationMode(EmulationMode.Stopped, true);
+		//	}
+		//	else if (counter != 1)
+		//	{
+		//		Logger.WriteLine($"Counter isn't 1 {counter}");
+		//	}
 
-			//if ((regsAfter.SR & 0xff00) != last_sr)
-			//	Logger.WriteLine($"SR {instructionStartPC:X8} {last_sr:X4}->{regsAfter.SR & 0xff00:X4} M:{musashiRegs.sr:X4}");
-			//last_sr = (ushort)(regsAfter.SR & 0xff00);
+		//	if (regsAfter.PC != pc)
+		//	{
+		//		Logger.WriteLine($"PC Drift at {regsAfter.PC:X8} {pc:X8}");
+		//	}
+		//	else
+		//	{
+		//		bool differs = false;
+		//		if (regsAfter.D[0] != musashiRegs.d0) { Logger.WriteLine($"reg D0 differs {regsAfter.D[0]:X8} {musashiRegs.d0:X8}"); differs = true; }
+		//		if (regsAfter.D[1] != musashiRegs.d1) { Logger.WriteLine($"reg D1 differs {regsAfter.D[1]:X8} {musashiRegs.d1:X8}"); differs = true; }
+		//		if (regsAfter.D[2] != musashiRegs.d2) { Logger.WriteLine($"reg D2 differs {regsAfter.D[2]:X8} {musashiRegs.d2:X8}"); differs = true; }
+		//		if (regsAfter.D[3] != musashiRegs.d3) { Logger.WriteLine($"reg D3 differs {regsAfter.D[3]:X8} {musashiRegs.d3:X8}"); differs = true; }
+		//		if (regsAfter.D[4] != musashiRegs.d4) { Logger.WriteLine($"reg D4 differs {regsAfter.D[4]:X8} {musashiRegs.d4:X8}"); differs = true; }
+		//		if (regsAfter.D[5] != musashiRegs.d5) { Logger.WriteLine($"reg D5 differs {regsAfter.D[5]:X8} {musashiRegs.d5:X8}"); differs = true; }
+		//		if (regsAfter.D[6] != musashiRegs.d6) { Logger.WriteLine($"reg D6 differs {regsAfter.D[6]:X8} {musashiRegs.d6:X8}"); differs = true; }
+		//		if (regsAfter.D[7] != musashiRegs.d7) { Logger.WriteLine($"reg D7 differs {regsAfter.D[7]:X8} {musashiRegs.d7:X8}"); differs = true; }
 
-			if (counter == maxPCdrift)
-			{
-				debugger.DumpTrace();
-				//mpc = mpc.Skip(mpc.Count - 32).ToList();
-				//foreach (var v in mpc)
-				//	Logger.WriteLine($"{v:X8}");
-				Logger.WriteLine($"PC Drift too far at {regsAfter.PC:X8} {pc:X8}");
-				//Machine.SetEmulationMode(EmulationMode.Stopped, true);
-			}
-			else if (counter != 1)
-			{
-				Logger.WriteLine($"Counter isn't 1 {counter}");
-			}
+		//		if (regsAfter.A[0] != musashiRegs.a0) { Logger.WriteLine($"reg A0 differs {regsAfter.A[0]:X8} {musashiRegs.a0:X8}"); differs = true; }
+		//		if (regsAfter.A[1] != musashiRegs.a1) { Logger.WriteLine($"reg A1 differs {regsAfter.A[1]:X8} {musashiRegs.a1:X8}"); differs = true; }
+		//		if (regsAfter.A[2] != musashiRegs.a2) { Logger.WriteLine($"reg A2 differs {regsAfter.A[2]:X8} {musashiRegs.a2:X8}"); differs = true; }
+		//		if (regsAfter.A[3] != musashiRegs.a3) { Logger.WriteLine($"reg A3 differs {regsAfter.A[3]:X8} {musashiRegs.a3:X8}"); differs = true; }
+		//		if (regsAfter.A[4] != musashiRegs.a4) { Logger.WriteLine($"reg A4 differs {regsAfter.A[4]:X8} {musashiRegs.a4:X8}"); differs = true; }
+		//		if (regsAfter.A[5] != musashiRegs.a5) { Logger.WriteLine($"reg A5 differs {regsAfter.A[5]:X8} {musashiRegs.a5:X8}"); differs = true; }
+		//		if (regsAfter.A[6] != musashiRegs.a6) { Logger.WriteLine($"reg A6 differs {regsAfter.A[6]:X8} {musashiRegs.a6:X8}"); differs = true; }
+		//		if (regsAfter.A[7] != musashiRegs.a7) { Logger.WriteLine($"reg A7 differs {regsAfter.A[7]:X8} {musashiRegs.a7:X8}"); differs = true; }
 
-			if (regsAfter.PC != pc)
-			{
-				Logger.WriteLine($"PC Drift at {regsAfter.PC:X8} {pc:X8}");
-			}
-			else
-			{
-				bool differs = false;
-				if (regsAfter.D[0] != musashiRegs.d0) { Logger.WriteLine($"reg D0 differs {regsAfter.D[0]:X8} {musashiRegs.d0:X8}"); differs = true; }
-				if (regsAfter.D[1] != musashiRegs.d1) { Logger.WriteLine($"reg D1 differs {regsAfter.D[1]:X8} {musashiRegs.d1:X8}"); differs = true; }
-				if (regsAfter.D[2] != musashiRegs.d2) { Logger.WriteLine($"reg D2 differs {regsAfter.D[2]:X8} {musashiRegs.d2:X8}"); differs = true; }
-				if (regsAfter.D[3] != musashiRegs.d3) { Logger.WriteLine($"reg D3 differs {regsAfter.D[3]:X8} {musashiRegs.d3:X8}"); differs = true; }
-				if (regsAfter.D[4] != musashiRegs.d4) { Logger.WriteLine($"reg D4 differs {regsAfter.D[4]:X8} {musashiRegs.d4:X8}"); differs = true; }
-				if (regsAfter.D[5] != musashiRegs.d5) { Logger.WriteLine($"reg D5 differs {regsAfter.D[5]:X8} {musashiRegs.d5:X8}"); differs = true; }
-				if (regsAfter.D[6] != musashiRegs.d6) { Logger.WriteLine($"reg D6 differs {regsAfter.D[6]:X8} {musashiRegs.d6:X8}"); differs = true; }
-				if (regsAfter.D[7] != musashiRegs.d7) { Logger.WriteLine($"reg D7 differs {regsAfter.D[7]:X8} {musashiRegs.d7:X8}"); differs = true; }
+		//		if (regsAfter.SSP != musashiRegs.ssp) { Logger.WriteLine($"reg SSP differs {regsAfter.SSP:X8} {musashiRegs.ssp:X8}"); differs = true; }
+		//		if (regsAfter.SP != musashiRegs.usp) { Logger.WriteLine($"reg SSP differs {regsAfter.SP:X8} {musashiRegs.usp:X8}"); differs = true; }
 
-				if (regsAfter.A[0] != musashiRegs.a0) { Logger.WriteLine($"reg A0 differs {regsAfter.A[0]:X8} {musashiRegs.a0:X8}"); differs = true; }
-				if (regsAfter.A[1] != musashiRegs.a1) { Logger.WriteLine($"reg A1 differs {regsAfter.A[1]:X8} {musashiRegs.a1:X8}"); differs = true; }
-				if (regsAfter.A[2] != musashiRegs.a2) { Logger.WriteLine($"reg A2 differs {regsAfter.A[2]:X8} {musashiRegs.a2:X8}"); differs = true; }
-				if (regsAfter.A[3] != musashiRegs.a3) { Logger.WriteLine($"reg A3 differs {regsAfter.A[3]:X8} {musashiRegs.a3:X8}"); differs = true; }
-				if (regsAfter.A[4] != musashiRegs.a4) { Logger.WriteLine($"reg A4 differs {regsAfter.A[4]:X8} {musashiRegs.a4:X8}"); differs = true; }
-				if (regsAfter.A[5] != musashiRegs.a5) { Logger.WriteLine($"reg A5 differs {regsAfter.A[5]:X8} {musashiRegs.a5:X8}"); differs = true; }
-				if (regsAfter.A[6] != musashiRegs.a6) { Logger.WriteLine($"reg A6 differs {regsAfter.A[6]:X8} {musashiRegs.a6:X8}"); differs = true; }
-				if (regsAfter.A[7] != musashiRegs.a7) { Logger.WriteLine($"reg A7 differs {regsAfter.A[7]:X8} {musashiRegs.a7:X8}"); differs = true; }
+		//		if (regsAfter.SR != musashiRegs.sr)
+		//		{
+		//			Logger.WriteLine($"reg SR differs {regsAfter.SR:X4} {musashiRegs.sr:X4}");
+		//			Logger.WriteLine($"  XNZVC\nJ {Convert.ToString(regsAfter.SR & 0x1f, 2).PadLeft(5,'0')}\nM {Convert.ToString(musashiRegs.sr & 0x1f, 2).PadLeft(5, '0')}");
+		//			differs = true;
+		//			//regsAfter.SR &= 0b11111111_11101111;
+		//		}
 
-				if (regsAfter.SSP != musashiRegs.ssp) { Logger.WriteLine($"reg SSP differs {regsAfter.SSP:X8} {musashiRegs.ssp:X8}"); differs = true; }
-				if (regsAfter.SP != musashiRegs.usp) { Logger.WriteLine($"reg SSP differs {regsAfter.SP:X8} {musashiRegs.usp:X8}"); differs = true; }
+		//		if (differs) 
+		//			Logger.WriteLine($"cycles {cycles} @{instructionStartPC:X8} {disassembler.Disassemble(instructionStartPC, new ReadOnlySpan<byte>(memory.GetMemoryArray(),(int)instructionStartPC, 12))}");
+		//	}
 
-				if (regsAfter.SR != musashiRegs.sr)
-				{
-					Logger.WriteLine($"reg SR differs {regsAfter.SR:X4} {musashiRegs.sr:X4}");
-					Logger.WriteLine($"  XNZVC\nJ {Convert.ToString(regsAfter.SR & 0x1f, 2).PadLeft(5,'0')}\nM {Convert.ToString(musashiRegs.sr & 0x1f, 2).PadLeft(5, '0')}");
-					differs = true;
-					//regsAfter.SR &= 0b11111111_11101111;
-				}
+		//	CheckInterrupts(cycles);
 
-				if (differs) 
-					Logger.WriteLine($"cycles {cycles} @{instructionStartPC:X8} {disassembler.Disassemble(instructionStartPC, new ReadOnlySpan<byte>(memory.GetMemoryArray(),(int)instructionStartPC, 12))}");
-			}
-
-			CheckInterrupts(cycles);
-
-			//if (MemChk(instructionStartPC))
-			//{
-			//	debugger.DumpTrace();
-			//	//mpc = mpc.Skip(mpc.Count - 32).ToList();
-			//	//foreach (var v in mpc)
-			//	//	Logger.WriteLine($"{v:X8}");
-			//}
-		}
+		//	//if (MemChk(instructionStartPC))
+		//	//{
+		//	//	debugger.DumpTrace();
+		//	//	//mpc = mpc.Skip(mpc.Count - 32).ToList();
+		//	//	//foreach (var v in mpc)
+		//	//	//	Logger.WriteLine($"{v:X8}");
+		//	//}
+		//}
 
 		//private uint memChkCnt = 0;
 		//private bool MemChk(uint pc)

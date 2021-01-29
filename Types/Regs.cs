@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace RunAmiga.Types
@@ -60,4 +61,14 @@ namespace RunAmiga.Types
 			return sb.ToString();
 		}
 	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public class Musashi_regs
+	{
+		public uint d0, d1, d2, d3, d4, d5, d6, d7;
+		public uint a0, a1, a2, a3, a4, a5, a6, a7;
+		public uint pc, sp, usp, ssp;
+		public ushort sr;
+	}
+
 }
