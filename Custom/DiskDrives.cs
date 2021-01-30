@@ -66,8 +66,8 @@ namespace RunAmiga.Custom
 			track = 0;
 			side = 0;
 
-			attached = false;
-			diskinserted = false;
+			//attached = false;
+			//diskinserted = false;
 		}
 	}
 
@@ -114,6 +114,7 @@ namespace RunAmiga.Custom
 			DiskNotChanged = 4,
 			DiskNotStep = 3,
 			DiskStep = 2,
+			DiskStepDone = 1,
 
 			Idle = 0
 		}
@@ -124,6 +125,8 @@ namespace RunAmiga.Custom
 
 			for (int i = 0; i < drive.Length; i++)
 			{
+				if (!drive[i].attached) continue;
+
 				//if ((prb & drive[i].DSKSEL) == 0)
 				{
 					if (drive[i].state != DriveState.Idle)
@@ -135,10 +138,12 @@ namespace RunAmiga.Custom
 							{
 								case DriveState.Track0NotReached:
 									pra |= (uint)PRA.DSKTRACK0;
+									//prb |= (uint)PRB.DSKSTEP;
 									drive[i].state = DriveState.Idle;
 									break;
 								case DriveState.Track0Reached:
 									pra &= ~(uint) PRA.DSKTRACK0;
+									//prb |= (uint)PRB.DSKSTEP;
 									drive[i].state = DriveState.Idle;
 									break;
 								case DriveState.DiskReady:
@@ -159,11 +164,15 @@ namespace RunAmiga.Custom
 									break;
 								case DriveState.DiskStep:
 									prb &= ~(uint) PRB.DSKSTEP;
+									drive[i].state = DriveState.DiskStepDone;
+									break;
+								case DriveState.DiskStepDone:
+									prb |= (uint)PRB.DSKSTEP;
 									drive[i].state = DriveState.Idle;
 									break;
 							}
 
-							drive[i].stateCounter = 1;
+							drive[i].stateCounter = 10;
 						}
 					}
 				}
@@ -268,8 +277,9 @@ namespace RunAmiga.Custom
 					//dsklen is number of MFM encoded words (usually a track, 7358 = 668 x 11words, 1336 x 11 bytes)
 					if ((dsklen&0x3fff) != 7358) throw new ApplicationException();
 
+					Logger.WriteLine($"Reading track {drive[0].track} side {drive[0].side}");
+
 					byte[] mfm = new byte[1088*11+720];//12688 bytes, 6344 words hmm.
-					//MFM.FloppyTrackMfmEncode((drive[0].track<<1)|drive[0].side, workbenchAdf, mfm, 0x4489);
 					MFM.FloppyTrackMfmEncode((drive[0].track <<1)+ drive[0].side, drive[0].disk.data, mfm, 0x4489);
 
 					foreach (var w in mfm.AsUWord())
@@ -457,6 +467,9 @@ namespace RunAmiga.Custom
 			//5 DSKSEL2
 			//6 DSKSEL3
 			//7 DSKMOTOR
+			
+			//which bits changed?
+			uint changes = prb ^ oldvalue;
 
 			for (int i = 0; i < drive.Length; i++)
 			{
@@ -465,9 +478,6 @@ namespace RunAmiga.Custom
 				if ((prb & drive[i].DSKSEL) == 0)
 				{
 					drive[i].side = ((prb & (uint) PRB.DSKSIDE) == 0) ? 1u : 0;
-
-					//which bits changed?
-					uint changes = prb ^ oldvalue;
 
 					//drive sel changed, and it's now selected, update motor bit, signal drive ready
 					if ((changes & drive[i].DSKSEL) != 0 && (prb & drive[i].DSKSEL) == 0)
@@ -516,14 +526,14 @@ namespace RunAmiga.Custom
 
 		public byte ReadPRA(uint insaddr)
 		{
-			Logger.WriteLine($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')} @{insaddr:X6}");
+			//Logger.WriteLine($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')} @{insaddr:X6}");
 
 			return (byte)(pra & (uint)PRA.MASK);
 		}
 
 		public byte ReadPRB(uint insaddr)
 		{
-			Logger.WriteLine($"R PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
+			//Logger.WriteLine($"R PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
 
 			return (byte)prb;
 		}
