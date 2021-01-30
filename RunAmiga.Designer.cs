@@ -211,6 +211,7 @@ namespace RunAmiga
 			this.txtMemory.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
 			this.txtMemory.ContextMenuStrip = this.menuMemory;
+			this.txtMemory.DetectUrls = false;
 			this.txtMemory.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.txtMemory.Location = new System.Drawing.Point(3, 3);
 			this.txtMemory.Name = "txtMemory";
@@ -578,9 +579,11 @@ namespace RunAmiga
 			this.txtExecBase.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+			this.txtExecBase.DetectUrls = false;
 			this.txtExecBase.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.txtExecBase.Location = new System.Drawing.Point(742, 15);
 			this.txtExecBase.Name = "txtExecBase";
+			this.txtExecBase.ReadOnly = true;
 			this.txtExecBase.Size = new System.Drawing.Size(343, 538);
 			this.txtExecBase.TabIndex = 26;
 			this.txtExecBase.Text = "";
@@ -588,6 +591,7 @@ namespace RunAmiga
 			// 
 			// btnInsertDisk
 			// 
+			this.btnInsertDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnInsertDisk.Location = new System.Drawing.Point(1092, 409);
 			this.btnInsertDisk.Name = "btnInsertDisk";
 			this.btnInsertDisk.Size = new System.Drawing.Size(75, 23);
@@ -598,6 +602,7 @@ namespace RunAmiga
 			// 
 			// btnRemoveDisk
 			// 
+			this.btnRemoveDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnRemoveDisk.Location = new System.Drawing.Point(1092, 439);
 			this.btnRemoveDisk.Name = "btnRemoveDisk";
 			this.btnRemoveDisk.Size = new System.Drawing.Size(75, 23);

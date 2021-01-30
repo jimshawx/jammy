@@ -6,7 +6,7 @@ namespace RunAmiga.Custom
 {
 	public class CIAAOdd : IEmulate, IMemoryMappedDevice
 	{
-		private readonly Disk disk;
+		private readonly DiskDrives diskDrives;
 		private readonly Mouse mouse;
 
 		private readonly Dictionary<int, Tuple<string, string>> debug = new Dictionary<int, Tuple<string, string>>
@@ -32,9 +32,9 @@ namespace RunAmiga.Custom
 		//BFE001 - BFEF01
 		private readonly byte[] regs = new byte[16];
 
-		public CIAAOdd(Debugger debugger, Disk disk, Mouse mouse)
+		public CIAAOdd(Debugger debugger, DiskDrives diskDrives, Mouse mouse)
 		{
-			this.disk = disk;
+			this.diskDrives = diskDrives;
 			this.mouse = mouse;
 		}
 
@@ -111,7 +111,7 @@ namespace RunAmiga.Custom
 			if (reg == 0)
 			{
 				byte p = 0;
-				p |= disk.ReadPRA(insaddr);
+				p |= diskDrives.ReadPRA(insaddr);
 				p |= mouse.ReadPRA(insaddr);
 				return p;
 			}
@@ -136,7 +136,7 @@ namespace RunAmiga.Custom
 
 			if (reg == 0)
 			{
-				disk.WritePRA(insaddr, (byte) value);
+				diskDrives.WritePRA(insaddr, (byte) value);
 				mouse.WritePRA(insaddr, (byte) value);
 			}
 		}

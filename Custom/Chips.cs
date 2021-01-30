@@ -6,7 +6,7 @@ namespace RunAmiga.Custom
 	public class Chips : IEmulate, IMemoryMappedDevice
 	{
 		private readonly Interrupt interrupt;
-		private readonly Disk disk;
+		private readonly DiskDrives diskDrives;
 		private ushort[] regs = new ushort[32768];
 
 		private readonly Copper copper;
@@ -14,10 +14,10 @@ namespace RunAmiga.Custom
 		private readonly Beam beam;
 		private readonly Mouse mouse;
 
-		public Chips(Debugger debugger, IMemoryMappedDevice memory, Interrupt interrupt, Disk disk, Mouse mouse)
+		public Chips(Debugger debugger, IMemoryMappedDevice memory, Interrupt interrupt, DiskDrives diskDrives, Mouse mouse)
 		{
 			this.interrupt = interrupt;
-			this.disk = disk;
+			this.diskDrives = diskDrives;
 			this.mouse = mouse;
 			blitter = new Blitter(this, memory, interrupt);
 			copper = new Copper(memory, this, interrupt);
@@ -29,7 +29,7 @@ namespace RunAmiga.Custom
 			copper.Emulate(ns);
 			blitter.Emulate(ns);
 			beam.Emulate(ns);
-			disk.Emulate(ns);
+			diskDrives.Emulate(ns);
 			mouse.Emulate(ns);
 		}
 
@@ -38,7 +38,7 @@ namespace RunAmiga.Custom
 			copper.Reset();
 			blitter.Reset();
 			beam.Reset();
-			disk.Reset();
+			diskDrives.Reset();
 			mouse.Reset();
 		}
 
@@ -87,7 +87,7 @@ namespace RunAmiga.Custom
 			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT 
 			         )//|| address == ChipRegs.ADKCON || address == ChipRegs.ADKCONR)//these last two shared with audio
 			{
-				regs[reg] = disk.Read(insaddr, address);
+				regs[reg] = diskDrives.Read(insaddr, address);
 			}
 			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR)
 			{
@@ -254,7 +254,7 @@ namespace RunAmiga.Custom
 			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT 
 			         || address == ChipRegs.ADKCON || address == ChipRegs.ADKCONR)//these last two shared with audio
 			{
-				disk.Write(insaddr, address, (ushort) value);
+				diskDrives.Write(insaddr, address, (ushort) value);
 			}
 			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR)
 			{

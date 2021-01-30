@@ -22,7 +22,7 @@ namespace RunAmiga
 		private Chips custom;
 		private CIA cia;
 		private Labeller labeller;
-		private Disk disk;
+		private DiskDrives diskDrives;
 		private Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
 
 		public Debugger(Labeller labeller)
@@ -86,17 +86,17 @@ namespace RunAmiga
 			AddBreakpoint(0xfc305e);//Irrecoverable Crash
 
 
-			//disk debugging
-			//AddBreakpoint(0xFe89cc);//disk changes
+			//diskDrives debugging
+			//AddBreakpoint(0xFe89cc);//diskDrives changes
 			AddBreakpoint(0xFe89e4);//read boot block
-			//AddBreakpoint(0xFe8a84);//after logo, wait for disk change
-			//AddBreakpoint(0xFe8a9c);//after logo, check for disk inserted
-			AddBreakpoint(0xFe8a0a);//track read, is it a DOS disk?
+			//AddBreakpoint(0xFe8a84);//after logo, wait for diskDrives change
+			//AddBreakpoint(0xFe8a9c);//after logo, check for diskDrives inserted
+			AddBreakpoint(0xFe8a0a);//track read, is it a DOS diskDrives?
 
 			//AddBreakpoint(0xFe800e);//dispatch trackdisk.device message
 			//AddBreakpoint(0xFea734);//CMD_READ
 			//AddBreakpoint(0xFea99e);//step to track and read
-			//AddBreakpoint(0xFea5b2);//just after disk DMA
+			//AddBreakpoint(0xFea5b2);//just after diskDrives DMA
 			//AddBreakpoint(0xFea9ce);//after track-read message before fixing track gap
 			//AddBreakpoint(0xFeab76);//blitter decode start
 			//AddBreakpoint(0xFeb2a4);//blitter decode start
@@ -153,13 +153,13 @@ namespace RunAmiga
 			}
 		}
 
-		public void Initialise(Memory memory, ICPU cpu, Custom.Chips custom, CIA cia, Disk disk)
+		public void Initialise(Memory memory, ICPU cpu, Custom.Chips custom, CIA cia, DiskDrives diskDrives)
 		{
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
 			this.cia = cia;
-			this.disk = disk;
+			this.diskDrives = diskDrives;
 		}
 
 		public bool IsMapped(uint address)
@@ -499,12 +499,12 @@ namespace RunAmiga
 
 		public void InsertDisk()
 		{
-			disk.InsertDisk();
+			diskDrives.InsertDisk();
 		}
 
 		public void RemoveDisk()
 		{
-			disk.RemoveDisk();
+			diskDrives.RemoveDisk();
 		}
 	}
 }

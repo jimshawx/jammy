@@ -29,10 +29,10 @@ namespace RunAmiga
 			var memory = new Memory(debugger, "M");
 
 			mouse = new Mouse();
-			disk = new Disk(memory, interrupt);
-			cia = new CIA(debugger, disk, mouse);
+			diskDrives = new DiskDrives(memory, interrupt);
+			cia = new CIA(debugger, diskDrives, mouse);
 
-			custom = new Chips(debugger, memory, interrupt, disk, mouse);
+			custom = new Chips(debugger, memory, interrupt, diskDrives, mouse);
 			interrupt.Init(custom);
 
 			var memoryMapper = new MemoryMapper(debugger, memory, cia, custom);
@@ -46,7 +46,7 @@ namespace RunAmiga
 			emulations.Add(cpu);
 			emulations.Add(interrupt);
 
-			debugger.Initialise(memory, (ICPU)cpu, custom, cia, disk);
+			debugger.Initialise(memory, (ICPU)cpu, custom, cia, diskDrives);
 
 			Reset();
 
@@ -244,7 +244,7 @@ namespace RunAmiga
 		}
 
 		private Thread emuThread;
-		private readonly Disk disk;
+		private readonly DiskDrives diskDrives;
 		private readonly Mouse mouse;
 
 		public void Start()

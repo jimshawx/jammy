@@ -73,7 +73,7 @@ namespace RunAmiga.Custom
 				}
 
 				oldMouseX = mousex;
-				oldMouseX = mousey;
+				oldMouseY = mousey;
 			}
 		}
 

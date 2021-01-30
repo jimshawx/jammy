@@ -6,7 +6,7 @@ namespace RunAmiga.Custom
 {
 	public class CIABEven : IEmulate, IMemoryMappedDevice
 	{
-		private readonly Disk disk;
+		private readonly DiskDrives diskDrives;
 
 		private readonly Dictionary<int, Tuple<string, string>> debug = new Dictionary<int, Tuple<string, string>>
 		{
@@ -31,9 +31,9 @@ namespace RunAmiga.Custom
 		//BFD000 - BFDF00
 		private byte[] regs = new byte[16];
 
-		public CIABEven(Debugger debugger, Disk disk)
+		public CIABEven(Debugger debugger, DiskDrives diskDrives)
 		{
-			this.disk = disk;
+			this.diskDrives = diskDrives;
 		}
 
 		private ulong beamTime;
@@ -107,7 +107,7 @@ namespace RunAmiga.Custom
 			byte reg = (byte)((address >> 8) & 0xf);
 
 			if (reg == 1)
-				return disk.ReadPRB(insaddr);
+				return diskDrives.ReadPRB(insaddr);
 
 			//Logger.WriteLine($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return (uint)regs[reg];
@@ -128,7 +128,7 @@ namespace RunAmiga.Custom
 			//}
 
 			if (reg == 1)
-				disk.WritePRB(insaddr, (byte)value);
+				diskDrives.WritePRB(insaddr, (byte)value);
 		}
 	}
 
