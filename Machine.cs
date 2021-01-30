@@ -30,7 +30,7 @@ namespace RunAmiga
 
 			mouse = new Mouse();
 			diskDrives = new DiskDrives(memory, interrupt);
-			cia = new CIA(debugger, diskDrives, mouse);
+			cia = new CIA(debugger, diskDrives, mouse, interrupt);
 
 			custom = new Chips(debugger, memory, interrupt, diskDrives, mouse);
 			interrupt.Init(custom);

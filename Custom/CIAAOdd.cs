@@ -8,6 +8,7 @@ namespace RunAmiga.Custom
 	{
 		private readonly DiskDrives diskDrives;
 		private readonly Mouse mouse;
+		private readonly Interrupt interrupt;
 
 		private readonly Dictionary<int, Tuple<string, string>> debug = new Dictionary<int, Tuple<string, string>>
 		{
@@ -32,10 +33,11 @@ namespace RunAmiga.Custom
 		//BFE001 - BFEF01
 		private readonly byte[] regs = new byte[16];
 
-		public CIAAOdd(Debugger debugger, DiskDrives diskDrives, Mouse mouse)
+		public CIAAOdd(Debugger debugger, DiskDrives diskDrives, Mouse mouse, Interrupt interrupt)
 		{
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
+			this.interrupt = interrupt;
 		}
 
 		private ulong beamTime;
@@ -71,9 +73,14 @@ namespace RunAmiga.Custom
 					if (regs[4] == 0xff)
 						regs[5]--;
 
-					//one shot mode?
-					if (regs[4] == 0 && regs[5] == 0 && (regs[0xe] & (1 << 3)) == 1)
-						regs[0xe] &= 0xfe;
+					if (regs[4] == 0 && regs[5] == 0)
+					{
+						interrupt.TriggerInterrupt(Interrupt.PORTS);
+
+						//one shot mode?
+						if ((regs[0xe] & (1 << 3)) != 0)
+							regs[0xe] &= 0xfe;
+					}
 				}
 
 				//timer B running
@@ -84,9 +91,14 @@ namespace RunAmiga.Custom
 					if (regs[6] == 0xff)
 						regs[7]--;
 
-					//one shot mode?
-					if (regs[6] == 0 && regs[7] == 0 && (regs[0xf] & (1 << 3)) == 1)
+					if (regs[6] == 0 && regs[7] == 0)
+					{
+						interrupt.TriggerInterrupt(Interrupt.PORTS);
+
+						//one shot mode?
+						if ((regs[0xf] & (1 << 3)) != 0)
 						regs[0xe] &= 0xfe;
+					}
 				}
 			}
 

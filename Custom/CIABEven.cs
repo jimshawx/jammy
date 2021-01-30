@@ -7,6 +7,7 @@ namespace RunAmiga.Custom
 	public class CIABEven : IEmulate, IMemoryMappedDevice
 	{
 		private readonly DiskDrives diskDrives;
+		private readonly Interrupt interrupt;
 
 		private readonly Dictionary<int, Tuple<string, string>> debug = new Dictionary<int, Tuple<string, string>>
 		{
@@ -31,9 +32,10 @@ namespace RunAmiga.Custom
 		//BFD000 - BFDF00
 		private byte[] regs = new byte[16];
 
-		public CIABEven(Debugger debugger, DiskDrives diskDrives)
+		public CIABEven(Debugger debugger, DiskDrives diskDrives, Interrupt interrupt)
 		{
 			this.diskDrives = diskDrives;
+			this.interrupt = interrupt;
 		}
 
 		private ulong beamTime;
@@ -69,9 +71,14 @@ namespace RunAmiga.Custom
 					if (regs[4] == 0xff)
 						regs[5]--;
 
-					//one shot mode?
-					if (regs[4] == 0 && regs[5] == 0 && (regs[0xe] & (1 << 3)) == 1)
-						regs[0xe] &= 0xfe;
+					if (regs[4] == 0 && regs[5] == 0)
+					{
+						interrupt.TriggerInterrupt(Interrupt.PORTS);
+
+						//one shot mode?
+						if ((regs[0xe] & (1 << 3)) != 0)
+							regs[0xe] &= 0xfe;
+					}
 				}
 
 				//timer B running
@@ -82,9 +89,14 @@ namespace RunAmiga.Custom
 					if (regs[6] == 0xff)
 						regs[7]--;
 
-					//one shot mode?
-					if (regs[6] == 0 && regs[7] == 0 && (regs[0xf] & (1 << 3)) == 1)
-						regs[0xe] &= 0xfe;
+					if (regs[6] == 0 && regs[7] == 0)
+					{
+						interrupt.TriggerInterrupt(Interrupt.PORTS);
+
+						//one shot mode?
+						if ((regs[0xf] & (1 << 3)) != 0)
+							regs[0xe] &= 0xfe;
+					}
 				}
 			}
 

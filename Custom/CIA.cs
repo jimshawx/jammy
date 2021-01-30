@@ -15,10 +15,10 @@ namespace RunAmiga.Custom
 		private CIAAOdd ciaA;
 		private CIABEven ciaB;
 
-		public CIA(Debugger debugger, DiskDrives diskDrives, Mouse mouse)
+		public CIA(Debugger debugger, DiskDrives diskDrives, Mouse mouse, Interrupt interrupt)
 		{
-			ciaA = new CIAAOdd(debugger, diskDrives, mouse);
-			ciaB = new CIABEven(debugger, diskDrives);
+			ciaA = new CIAAOdd(debugger, diskDrives, mouse, interrupt);
+			ciaB = new CIABEven(debugger, diskDrives, interrupt);
 		}
 
 		public void Emulate(ulong ns)

@@ -119,13 +119,17 @@ namespace RunAmiga.Custom
 			Idle = 0
 		}
 
+		private const int stateCycles = 1;//10;
+
 		public void Emulate(ulong ns)
 		{
-			//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)
-
 			for (int i = 0; i < drive.Length; i++)
 			{
 				if (!drive[i].attached) continue;
+
+
+				prb |= (uint)(PRB.DSKSEL1|PRB.DSKSEL2|PRB.DSKSEL3);
+				prb &= ~(uint)PRB.DSKSEL0;
 
 				//if ((prb & drive[i].DSKSEL) == 0)
 				{
@@ -172,7 +176,7 @@ namespace RunAmiga.Custom
 									break;
 							}
 
-							drive[i].stateCounter = 10;
+							drive[i].stateCounter = stateCycles;
 						}
 					}
 				}
