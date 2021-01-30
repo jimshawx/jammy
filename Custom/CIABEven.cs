@@ -9,6 +9,7 @@ namespace RunAmiga.Custom
 		private readonly DiskDrives diskDrives;
 		private readonly Interrupt interrupt;
 
+
 		private readonly Dictionary<int, Tuple<string, string>> debug = new Dictionary<int, Tuple<string, string>>
 		{
 			{0,new Tuple<string,string>("pra", "") },
@@ -31,6 +32,7 @@ namespace RunAmiga.Custom
 
 		//BFD000 - BFDF00
 		private byte[] regs = new byte[16];
+		private byte icrr;
 
 		public CIABEven(Debugger debugger, DiskDrives diskDrives, Interrupt interrupt)
 		{
@@ -59,43 +61,51 @@ namespace RunAmiga.Custom
 			}
 
 			timerTime += ns;
-			if (timerTime > 10)
+			if (timerTime > 10)// timers tick at 1/10th cpu clock
 			{
 				timerTime -= 10;
 
 				//timer A running
-				if ((regs[0xe] & 1) != 0)
+				if ((regs[CIA.CRA] & 1) != 0)
 				{
 					//timer A
-					regs[4]--;
-					if (regs[4] == 0xff)
-						regs[5]--;
+					regs[CIA.TALO]--;
+					if (regs[CIA.TALO] == 0xff)
+						regs[CIA.TAHI]--;
 
-					if (regs[4] == 0 && regs[5] == 0)
+					if (regs[CIA.TALO] == 0 && regs[CIA.TAHI] == 0)
 					{
-						interrupt.TriggerInterrupt(Interrupt.PORTS);
+						if ((regs[CIA.ICR] & (1 << 0)) != 0)
+						{
+							icrr |= (1 << 0) + 0x80;
+							interrupt.TriggerInterrupt(Interrupt.PORTS);
+						}
 
 						//one shot mode?
-						if ((regs[0xe] & (1 << 3)) != 0)
-							regs[0xe] &= 0xfe;
+						if ((regs[CIA.CRA] & (1 << 3)) != 0)
+							regs[CIA.CRA] &= 0xfe;
 					}
 				}
 
 				//timer B running
-				if ((regs[0xf] & 1) != 0)
+				if ((regs[CIA.CRB] & 1) != 0)
 				{
 					//timer B
-					regs[6]--;
-					if (regs[6] == 0xff)
-						regs[7]--;
+					regs[CIA.TBLO]--;
+					if (regs[CIA.TBLO] == 0xff)
+						regs[CIA.TBHI]--;
 
-					if (regs[6] == 0 && regs[7] == 0)
+					if (regs[CIA.TBLO] == 0 && regs[CIA.TBHI] == 0)
 					{
-						interrupt.TriggerInterrupt(Interrupt.PORTS);
+						if ((regs[CIA.ICR] & (1 << 1)) != 0)
+						{
+							icrr |= (1 << 1) + 0x80;
+							interrupt.TriggerInterrupt(Interrupt.PORTS);
+						}
 
 						//one shot mode?
-						if ((regs[0xf] & (1 << 3)) != 0)
-							regs[0xe] &= 0xfe;
+						if ((regs[CIA.CRB] & (1 << 3)) != 0)
+							regs[CIA.CRB] &= 0xfe;
 					}
 				}
 			}
@@ -104,6 +114,9 @@ namespace RunAmiga.Custom
 
 		public void Reset()
 		{
+			for (int i = 0; i < 16; i++)
+				regs[i] = 0;
+			regs[CIA.TAHI] = regs[CIA.TALO] = regs[CIA.TBHI] = regs[CIA.TBLO] = 0xff;
 		}
 
 		public bool IsMapped(uint address)
@@ -118,11 +131,22 @@ namespace RunAmiga.Custom
 
 			byte reg = (byte)((address >> 8) & 0xf);
 
-			if (reg == 1)
+			if (reg == CIA.PRB)
+			{
 				return diskDrives.ReadPRB(insaddr);
-
-			//Logger.WriteLine($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
-			return (uint)regs[reg];
+			}
+			else if (reg == CIA.ICR)
+			{
+				byte p = icrr;
+				icrr = 0;
+				return p;
+				//return regs[CIA.ICR];
+			}
+			else
+			{
+				//Logger.WriteLine($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
+				return (uint)regs[reg];
+			}
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
@@ -131,17 +155,32 @@ namespace RunAmiga.Custom
 				throw new UnknownInstructionSizeException(address, 0);
 
 			byte reg = (byte)((address >> 8) & 0xf);
-			regs[reg] = (byte)value;
-			//Logger.WriteLine($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 
-			//if (reg == 1)
-			//{
-			//	UI.DiskLight = (regs[1] & 0x80) == 0;
-			//}
-
-			if (reg == 1)
+			if (reg == CIA.ICR)
+			{
+				if ((value & 0x80) != 0)
+					regs[CIA.ICR] |= (byte)value;
+				else
+					regs[CIA.ICR] &= (byte)~value;
+			}
+			else if (reg == CIA.PRB)
+			{
 				diskDrives.WritePRB(insaddr, (byte)value);
+			}
+			else
+			{
+				//Logger.WriteLine($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+				regs[reg] = (byte)value;
+			}
+
+			if (reg == CIA.TAHI)
+			{
+				regs[CIA.CRA] |= 1;
+			}
+			else if (reg == CIA.TBHI)
+			{
+				regs[CIA.CRB] |= 1;
+			}
 		}
 	}
-
 }

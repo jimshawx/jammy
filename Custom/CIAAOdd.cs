@@ -32,6 +32,9 @@ namespace RunAmiga.Custom
 
 		//BFE001 - BFEF01
 		private readonly byte[] regs = new byte[16];
+		private byte icrr;
+		//writing to regs[0xd] sets icr which controls which interrupts TO trigger.
+		//icrr has the equivalent bits set for which interrupt WAS triggered. reset to 0 after read.
 
 		public CIAAOdd(Debugger debugger, DiskDrives diskDrives, Mouse mouse, Interrupt interrupt)
 		{
@@ -55,9 +58,9 @@ namespace RunAmiga.Custom
 
 				vblankCount++;
 
-				regs[8] = (byte)vblankCount;
-				regs[9] = (byte)(vblankCount >> 8);
-				regs[10] = (byte)(vblankCount >> 16);
+				regs[CIA.TODLO] = (byte)vblankCount;
+				regs[CIA.TODMID] = (byte)(vblankCount >> 8);
+				regs[CIA.TODHI] = (byte)(vblankCount >> 16);
 			}
 
 			timerTime += ns;
@@ -66,38 +69,46 @@ namespace RunAmiga.Custom
 				timerTime -= 10;
 
 				//timer A running
-				if ((regs[0xe] & 1) != 0)
+				if ((regs[CIA.CRA] & 1) != 0)
 				{
 					//timer A
-					regs[4]--;
-					if (regs[4] == 0xff)
-						regs[5]--;
+					regs[CIA.TALO]--;
+					if (regs[CIA.TALO] == 0xff)
+						regs[CIA.TAHI]--;
 
-					if (regs[4] == 0 && regs[5] == 0)
+					if (regs[CIA.TALO] == 0 && regs[CIA.TAHI] == 0)
 					{
-						interrupt.TriggerInterrupt(Interrupt.PORTS);
+						if ((regs[CIA.ICR] & (1 << 0)) != 0)
+						{
+							icrr |= (1 << 0)+0x80;
+							interrupt.TriggerInterrupt(Interrupt.PORTS);
+						}
 
 						//one shot mode?
-						if ((regs[0xe] & (1 << 3)) != 0)
-							regs[0xe] &= 0xfe;
+						if ((regs[CIA.CRA] & (1 << 3)) != 0)
+							regs[CIA.CRA] &= 0xfe;
 					}
 				}
 
 				//timer B running
-				if ((regs[0xf] & 1) != 0)
+				if ((regs[CIA.CRB] & 1) != 0)
 				{
 					//timer B
-					regs[6]--;
-					if (regs[6] == 0xff)
-						regs[7]--;
+					regs[CIA.TBLO]--;
+					if (regs[CIA.TBLO] == 0xff)
+						regs[CIA.TBHI]--;
 
-					if (regs[6] == 0 && regs[7] == 0)
+					if (regs[CIA.TBLO] == 0 && regs[CIA.TBHI] == 0)
 					{
-						interrupt.TriggerInterrupt(Interrupt.PORTS);
+						if ((regs[CIA.ICR] & (1 << 1)) != 0)
+						{
+							icrr |= (1 << 1) + 0x80;
+							interrupt.TriggerInterrupt(Interrupt.PORTS);
+						}
 
 						//one shot mode?
-						if ((regs[0xf] & (1 << 3)) != 0)
-						regs[0xe] &= 0xfe;
+						if ((regs[CIA.CRB] & (1 << 3)) != 0)
+							regs[CIA.CRB] &= 0xfe;
 					}
 				}
 			}
@@ -106,6 +117,9 @@ namespace RunAmiga.Custom
 
 		public void Reset()
 		{
+			for (int i = 0; i < 16; i++)
+				regs[i] = 0;
+			regs[CIA.TAHI] = regs[CIA.TALO] = regs[CIA.TBHI] = regs[CIA.TBLO] = 0xff;
 		}
 
 		public bool IsMapped(uint address)
@@ -120,16 +134,25 @@ namespace RunAmiga.Custom
 
 			byte reg = (byte)((address >> 8) & 0xf);
 
-			if (reg == 0)
+			if (reg == CIA.PRA)
 			{
 				byte p = 0;
 				p |= diskDrives.ReadPRA(insaddr);
 				p |= mouse.ReadPRA(insaddr);
 				return p;
 			}
-			//Logger.WriteLine($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
-
-			return (uint)regs[reg];
+			else if (reg == CIA.ICR)
+			{
+				byte p = icrr;
+				icrr = 0;
+				return p;
+				//return regs[CIA.ICR];
+			}
+			else
+			{
+				//Logger.WriteLine($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
+				return (uint)regs[reg];
+			}
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
@@ -138,24 +161,35 @@ namespace RunAmiga.Custom
 				throw new UnknownInstructionSizeException(address, 0);
 
 			byte reg = (byte) ((address >> 8) & 0xf);
-			regs[reg] = (byte) value;
-			//Logger.WriteLine($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 
-			if (reg == 0)
+			if (reg == CIA.ICR)
 			{
-				UI.PowerLight = (regs[0] & 2) == 0;
+				if ((value & 0x80)!=0)
+					regs[CIA.ICR] |= (byte)value;
+				else
+					regs[CIA.ICR] &= (byte)~value;
+			}
+			else if (reg == CIA.PRA)
+			{
+				UI.PowerLight = (regs[CIA.PRA] & 2) == 0;
+
+				diskDrives.WritePRA(insaddr, (byte)value);
+				mouse.WritePRA(insaddr, (byte)value);
+			}
+			else
+			{
+				//Logger.WriteLine($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+				regs[reg] = (byte)value;
 			}
 
-			if (reg == 0)
+			if (reg == CIA.TAHI)
 			{
-				diskDrives.WritePRA(insaddr, (byte) value);
-				mouse.WritePRA(insaddr, (byte) value);
+				regs[CIA.CRA] |= 1;
 			}
-		}
-
-		public bool PowerLight()
-		{
-			return (regs[0] & 1) != 0;
+			else if (reg == CIA.TBHI)
+			{
+				regs[CIA.CRB] |= 1;
+			}
 		}
 	}
 }

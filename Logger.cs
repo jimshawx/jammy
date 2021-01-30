@@ -20,29 +20,29 @@ namespace RunAmiga
 		private static bool exiting = false;
 		static Logger()
 		{
-			form = new Form {ClientSize = new Size(480, 480)};
-			text = new RichTextBox{
-									Multiline = true,
-									Size = new Size(480,480),
-									Font = new Font(FontFamily.GenericMonospace, 8.0f),
-									Anchor = AnchorStyles.Left| AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right,
-									ScrollBars = RichTextBoxScrollBars.ForcedBoth,
-									ReadOnly = true,
-									};
-			form.Controls.Add(text);
-			form.Show();
-			form.Closing += (sender, args) =>
-			{
-				exiting = true;
-				while (exiting)
-				{
-					Application.DoEvents();
-					Thread.Sleep(500);
-				}
-			};
+			//form = new Form {ClientSize = new Size(480, 480)};
+			//text = new RichTextBox{
+			//						Multiline = true,
+			//						Size = new Size(480,480),
+			//						Font = new Font(FontFamily.GenericMonospace, 8.0f),
+			//						Anchor = AnchorStyles.Left| AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right,
+			//						ScrollBars = RichTextBoxScrollBars.ForcedBoth,
+			//						ReadOnly = true,
+			//						};
+			//form.Controls.Add(text);
+			//form.Show();
+			//form.Closing += (sender, args) =>
+			//{
+			//	exiting = true;
+			//	while (exiting)
+			//	{
+			//		Application.DoEvents();
+			//		Thread.Sleep(500);
+			//	}
+			//};
 
-			Thread t = new Thread(Dump);
-			t.Start();
+			//Thread t = new Thread(Dump);
+			//t.Start();
 		}
 
 		private static void Dump()
@@ -81,18 +81,18 @@ namespace RunAmiga
 
 		public static void Write(string s)
 		{
-			lock (locker)
-			{
-				sb.Append(s);
-			}
+			//lock (locker)
+			//{
+			//	sb.Append(s);
+			//}
 		}
 
 		public static void WriteLine(string s)
 		{
-			lock (locker)
-			{
-				sb.AppendLine(s);
-			}
+			//lock (locker)
+			//{
+			//	sb.AppendLine(s);
+			//}
 		}
 
 	}

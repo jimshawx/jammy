@@ -1,17 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using RunAmiga.Types;
+﻿using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
 	//https://www.amigacoding.com/index.php?title=CIA_Memory_Map
 
-	
-
-	
 	public class CIA : IEmulate, IMemoryMappedDevice
 	{
+			public const int PRA = 0;
+			public const int PRB = 1;
+			public const int DDRA = 2;
+			public const int DDRB = 3;
+			public const int TALO = 4;
+			public const int TAHI = 5;
+			public const int TBLO = 6;
+			public const int TBHI = 7;
+			public const int TODLO = 8;
+			public const int TODMID = 9;
+			public const int TODHI = 10;
+			public const int NA = 11;
+			public const int SDR = 12;
+			public const int ICR = 13;
+			public const int CRA = 14;
+			public const int CRB = 15;
+
 		private CIAAOdd ciaA;
 		private CIABEven ciaB;
 
