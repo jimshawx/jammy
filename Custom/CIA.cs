@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -53,10 +52,9 @@ namespace RunAmiga.Custom
 
 		protected readonly uint[] regs = new uint[16];
 
-		private byte icrr;
+		protected byte icrr;
 		//writing to regs[ICR] sets icr which controls which interrupts TO trigger.
 		//icrr has the equivalent bits set for which interrupt WAS triggered. reset to 0 after read.
-
 
 		private ushort timerA;
 		private ushort timerB;
@@ -153,12 +151,7 @@ namespace RunAmiga.Custom
 		{
 			switch (reg)
 			{
-				case CIA.ICR:
-				{
-					byte p = icrr;
-					icrr = 0;
-					return p;
-				}
+				case CIA.ICR: { byte p = icrr; icrr = 0; return p; }
 				case CIA.TAHI: return (uint)(timerA >> 8);
 				case CIA.TALO: return timerA;
 				case CIA.TBHI: return (uint)(timerB >> 8);

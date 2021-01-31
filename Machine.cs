@@ -14,6 +14,9 @@ namespace RunAmiga
 		private readonly CIABEven ciab;
 		private readonly Interrupt interrupt;
 		private readonly Debugger debugger;
+		private readonly DiskDrives diskDrives;
+		private readonly Mouse mouse;
+		private readonly Keyboard keyboard;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
 
@@ -32,11 +35,14 @@ namespace RunAmiga
 			mouse = new Mouse();
 			diskDrives = new DiskDrives(memory, interrupt);
 			//cia = new CIA(debugger, diskDrives, mouse, interrupt);
+			keyboard = new Keyboard(interrupt);
 
-			ciaa = new CIAAOdd(debugger, diskDrives, mouse, interrupt);
+			ciaa = new CIAAOdd(debugger, diskDrives, mouse, keyboard, interrupt);
 			ciab = new CIABEven(debugger, diskDrives, interrupt);
 
-			custom = new Chips(debugger, memory, interrupt, diskDrives, mouse);
+			keyboard.SetCIA(ciaa);
+
+			custom = new Chips(debugger, memory, interrupt, diskDrives, mouse, keyboard);
 			interrupt.Init(custom);
 
 			var memoryMapper = new MemoryMapper(debugger, memory, ciaa, ciab, custom);
@@ -249,8 +255,6 @@ namespace RunAmiga
 		}
 
 		private Thread emuThread;
-		private readonly DiskDrives diskDrives;
-		private readonly Mouse mouse;
 
 		public void Start()
 		{

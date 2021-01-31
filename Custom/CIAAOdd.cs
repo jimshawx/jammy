@@ -7,6 +7,7 @@ namespace RunAmiga.Custom
 	{
 		private readonly DiskDrives diskDrives;
 		private readonly Mouse mouse;
+		private readonly Keyboard keyboard;
 
 		private readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -30,10 +31,11 @@ namespace RunAmiga.Custom
 
 		//BFE001 - BFEF01
 
-		public CIAAOdd(Debugger debugger, DiskDrives diskDrives, Mouse mouse, Interrupt interrupt)
+		public CIAAOdd(Debugger debugger, DiskDrives diskDrives, Mouse mouse, Keyboard keyboard, Interrupt interrupt)
 		{
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
+			this.keyboard = keyboard;
 			this.interrupt = interrupt;
 		}
 
@@ -53,6 +55,7 @@ namespace RunAmiga.Custom
 				regs[CIA.TODMID] = (byte)(vblankCount >> 8);
 				regs[CIA.TODHI] = (byte)(vblankCount >> 16);
 			}
+
 			base.Emulate(cycles);
 		}
 
@@ -71,6 +74,10 @@ namespace RunAmiga.Custom
 				p |= diskDrives.ReadPRA(insaddr);
 				p |= mouse.ReadPRA(insaddr);
 				return p;
+			}
+			else if (reg == CIA.SDR)
+			{
+				return keyboard.ReadKey();
 			}
 
 			//Logger.WriteLine($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
@@ -93,6 +100,11 @@ namespace RunAmiga.Custom
 
 			//Logger.WriteLine($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 			base.Write(reg, value);
+		}
+
+		public void SerialInterrupt()
+		{
+			icrr |= (byte)(ICRB.SERIAL | ICRB.IR);
 		}
 	}
 }

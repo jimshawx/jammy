@@ -13,12 +13,14 @@ namespace RunAmiga.Custom
 		private readonly Blitter blitter;
 		private readonly Beam beam;
 		private readonly Mouse mouse;
+		private readonly Keyboard keyboard;
 
-		public Chips(Debugger debugger, IMemoryMappedDevice memory, Interrupt interrupt, DiskDrives diskDrives, Mouse mouse)
+		public Chips(Debugger debugger, IMemoryMappedDevice memory, Interrupt interrupt, DiskDrives diskDrives, Mouse mouse, Keyboard keyboard)
 		{
 			this.interrupt = interrupt;
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
+			this.keyboard = keyboard;
 			blitter = new Blitter(this, memory, interrupt);
 			copper = new Copper(memory, this, interrupt);
 			beam = new Beam();
@@ -31,6 +33,7 @@ namespace RunAmiga.Custom
 			beam.Emulate(cycles);
 			diskDrives.Emulate(cycles);
 			mouse.Emulate(cycles);
+			keyboard.Emulate(cycles);
 		}
 
 		public void Reset()
@@ -40,6 +43,7 @@ namespace RunAmiga.Custom
 			beam.Reset();
 			diskDrives.Reset();
 			mouse.Reset();
+			keyboard.Reset();
 		}
 
 		public bool IsMapped(uint address)
