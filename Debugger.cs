@@ -153,12 +153,11 @@ namespace RunAmiga
 			}
 		}
 
-		public void Initialise(Memory memory, ICPU cpu, Custom.Chips custom, CIA cia, DiskDrives diskDrives)
+		public void Initialise(Memory memory, ICPU cpu, Custom.Chips custom, DiskDrives diskDrives)
 		{
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
-			this.cia = cia;
 			this.diskDrives = diskDrives;
 		}
 

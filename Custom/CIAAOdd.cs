@@ -1,40 +1,34 @@
 ﻿using System;
-using System.Collections.Generic;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
-	public class CIAAOdd : IEmulate, IMemoryMappedDevice
+	public class CIAAOdd : CIA
 	{
 		private readonly DiskDrives diskDrives;
 		private readonly Mouse mouse;
-		private readonly Interrupt interrupt;
 
-		private readonly Dictionary<int, Tuple<string, string>> debug = new Dictionary<int, Tuple<string, string>>
+		private readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
-			{0,new Tuple<string,string>("pra", "") },
-			{1,new Tuple<string,string>("prb", "Parallel port data") },
-			{2,new Tuple<string,string>("ddra", "Direction for Port A (BFE001), bit set = output") },
-			{3,new Tuple<string,string>("ddrb", "Direction for Port B (BFE101), bit set = output") },
-			{4,new Tuple<string,string>("talo", "Timer A low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)") },
-			{5,new Tuple<string,string>("tahi", "Timer A high byte") },
-			{6,new Tuple<string,string>("tblo", "Timer B low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)") },
-			{7,new Tuple<string,string>("tbhi", "Timer B high byte") },
-			{8,new Tuple<string,string>("todlo", "Vertical sync event counter bits 7-0 (50/60Hz)") },
-			{9,new Tuple<string,string>("todmid", "Vertical sync event counter bits 15-8") },
-			{0xa,new Tuple<string,string>("todhi", "Vertical sync event counter bits 23-16") },
-			{0xb,new Tuple<string,string>("", "Not used") },
-			{0xc,new Tuple<string,string>("sdr", "Serial data register (used for keyboard)") },
-			{0xd,new Tuple<string,string>("icr", "Interrupt control register") },
-			{0xe,new Tuple<string,string>("cra", "Control register A") },
-			{0xf,new Tuple<string,string>("crb", "Control register B") },
+			new Tuple<string,string>("pra", ""),
+			new Tuple<string,string>("prb", "Parallel port data"),
+			new Tuple<string,string>("ddra", "Direction for Port A (BFE001), bit set = output"),
+			new Tuple<string,string>("ddrb", "Direction for Port B (BFE101), bit set = output"),
+			new Tuple<string,string>("talo", "Timer A low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
+			new Tuple<string,string>("tahi", "Timer A high byte"),
+			new Tuple<string,string>("tblo", "Timer B low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
+			new Tuple<string,string>("tbhi", "Timer B high byte"),
+			new Tuple<string,string>("todlo", "Vertical sync event counter bits 7-0 (50/60Hz)"),
+			new Tuple<string,string>("todmid", "Vertical sync event counter bits 15-8"),
+			new Tuple<string,string>("todhi", "Vertical sync event counter bits 23-16"),
+			new Tuple<string,string>("", "Not used"),
+			new Tuple<string,string>("sdr", "Serial data register (used for keyboard)"),
+			new Tuple<string,string>("icr", "Interrupt control register"),
+			new Tuple<string,string>("cra", "Control register A"),
+			new Tuple<string,string>("crb", "Control register B")
 		};
 
 		//BFE001 - BFEF01
-		private readonly byte[] regs = new byte[16];
-		private byte icrr;
-		//writing to regs[0xd] sets icr which controls which interrupts TO trigger.
-		//icrr has the equivalent bits set for which interrupt WAS triggered. reset to 0 after read.
 
 		public CIAAOdd(Debugger debugger, DiskDrives diskDrives, Mouse mouse, Interrupt interrupt)
 		{
@@ -44,10 +38,8 @@ namespace RunAmiga.Custom
 		}
 
 		private ulong beamTime;
-		private ulong timerTime;
-
 		private uint vblankCount;
-		public void Emulate(ulong ns)
+		public override void Emulate(ulong ns)
 		{
 			beamTime += ns;
 
@@ -62,72 +54,20 @@ namespace RunAmiga.Custom
 				regs[CIA.TODMID] = (byte)(vblankCount >> 8);
 				regs[CIA.TODHI] = (byte)(vblankCount >> 16);
 			}
-
-			timerTime += ns;
-			if (timerTime > 10)// timers tick at 1/10th cpu clock
-			{
-				timerTime -= 10;
-
-				//timer A running
-				if ((regs[CIA.CRA] & 1) != 0)
-				{
-					//timer A
-					regs[CIA.TALO]--;
-					if (regs[CIA.TALO] == 0xff)
-						regs[CIA.TAHI]--;
-
-					if (regs[CIA.TALO] == 0 && regs[CIA.TAHI] == 0)
-					{
-						if ((regs[CIA.ICR] & (1 << 0)) != 0)
-						{
-							icrr |= (1 << 0)+0x80;
-							interrupt.TriggerInterrupt(Interrupt.PORTS);
-						}
-
-						//one shot mode?
-						if ((regs[CIA.CRA] & (1 << 3)) != 0)
-							regs[CIA.CRA] &= 0xfe;
-					}
-				}
-
-				//timer B running
-				if ((regs[CIA.CRB] & 1) != 0)
-				{
-					//timer B
-					regs[CIA.TBLO]--;
-					if (regs[CIA.TBLO] == 0xff)
-						regs[CIA.TBHI]--;
-
-					if (regs[CIA.TBLO] == 0 && regs[CIA.TBHI] == 0)
-					{
-						if ((regs[CIA.ICR] & (1 << 1)) != 0)
-						{
-							icrr |= (1 << 1) + 0x80;
-							interrupt.TriggerInterrupt(Interrupt.PORTS);
-						}
-
-						//one shot mode?
-						if ((regs[CIA.CRB] & (1 << 3)) != 0)
-							regs[CIA.CRB] &= 0xfe;
-					}
-				}
-			}
-
+			base.Emulate(ns);
 		}
 
-		public void Reset()
+		public override void Reset()
 		{
-			for (int i = 0; i < 16; i++)
-				regs[i] = 0;
-			regs[CIA.TAHI] = regs[CIA.TALO] = regs[CIA.TBHI] = regs[CIA.TBLO] = 0xff;
+			base.Reset();
 		}
 
-		public bool IsMapped(uint address)
+		public override bool IsMapped(uint address)
 		{
-			return (address & 1) == 1;
+			return base.IsMapped(address) && (address & 1) == 1;
 		}
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public override uint Read(uint insaddr, uint address, Size size)
 		{
 			if (size != Size.Byte)
 				throw new UnknownInstructionSizeException(address, 0);
@@ -155,16 +95,16 @@ namespace RunAmiga.Custom
 			}
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public override void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			if (size != Size.Byte)
 				throw new UnknownInstructionSizeException(address, 0);
 
-			byte reg = (byte) ((address >> 8) & 0xf);
+			byte reg = (byte)((address >> 8) & 0xf);
 
 			if (reg == CIA.ICR)
 			{
-				if ((value & 0x80)!=0)
+				if ((value & 0x80) != 0)
 					regs[CIA.ICR] |= (byte)value;
 				else
 					regs[CIA.ICR] &= (byte)~value;

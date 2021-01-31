@@ -10,7 +10,8 @@ namespace RunAmiga
 	{
 		private readonly IEmulate cpu;
 		private readonly Chips custom;
-		private readonly CIA cia;
+		private readonly CIAAOdd ciaa;
+		private readonly CIABEven ciab;
 		private readonly Interrupt interrupt;
 		private readonly Debugger debugger;
 
@@ -30,23 +31,27 @@ namespace RunAmiga
 
 			mouse = new Mouse();
 			diskDrives = new DiskDrives(memory, interrupt);
-			cia = new CIA(debugger, diskDrives, mouse, interrupt);
+			//cia = new CIA(debugger, diskDrives, mouse, interrupt);
+
+			ciaa = new CIAAOdd(debugger, diskDrives, mouse, interrupt);
+			ciab = new CIABEven(debugger, diskDrives, interrupt);
 
 			custom = new Chips(debugger, memory, interrupt, diskDrives, mouse);
 			interrupt.Init(custom);
 
-			var memoryMapper = new MemoryMapper(debugger, memory, cia, custom);
+			var memoryMapper = new MemoryMapper(debugger, memory, ciaa, ciab, custom);
 
 			//cpu = new CPU(debugger, interrupt, memoryMapper);
 			cpu = new MusashiCPU(debugger, interrupt, memoryMapper);
 
-			emulations.Add(cia);
+			emulations.Add(ciaa);
+			emulations.Add(ciab);
 			emulations.Add(custom);
 			emulations.Add(memory);
 			emulations.Add(cpu);
 			emulations.Add(interrupt);
 
-			debugger.Initialise(memory, (ICPU)cpu, custom, cia, diskDrives);
+			debugger.Initialise(memory, (ICPU)cpu, custom, diskDrives);
 
 			Reset();
 
@@ -323,7 +328,8 @@ namespace RunAmiga
 
 		public void Emulate()
 		{
-			cia.Reset();
+			ciaa.Reset();
+			ciab.Reset();
 			custom.Reset();
 			cpu.Reset();
 
