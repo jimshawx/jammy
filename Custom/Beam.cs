@@ -11,9 +11,9 @@
 		private uint vposr;
 		private uint vhposr;
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
-			beamTime += ns;
+			beamTime += cycles;
 
 			//every 50Hz, reset the copper list
 			if (beamTime > 140_000)

@@ -21,7 +21,7 @@ namespace RunAmiga.Custom
 			this.interrupt = interrupt;
 		}
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
 
 		}

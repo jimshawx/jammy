@@ -33,10 +33,10 @@ namespace RunAmiga.Custom
 
 		private ulong timerTime;
 
-		public virtual void Emulate(ulong ns)
+		public virtual void Emulate(ulong cycles)
 		{
 
-			timerTime += ns;
+			timerTime += cycles;
 			if (timerTime > 10)// timers tick at 1/10th cpu clock
 			{
 				timerTime -= 10;
@@ -100,8 +100,52 @@ namespace RunAmiga.Custom
 			return (address >> 16) == 0xbf;
 		}
 
+		protected byte GetReg(uint address, Size size)
+		{
+			if (size != Size.Byte)
+				throw new UnknownInstructionSizeException(address, 0);
+
+			return (byte)((address >> 8) & 0xf);
+		} 
+
 		public abstract uint Read(uint insaddr, uint address, Size size);
 
+		protected uint Read(byte reg)
+		{
+			if (reg == CIA.ICR)
+			{
+				byte p = icrr;
+				icrr = 0;
+				return p;
+			}
+
+			return (uint)regs[reg];
+		}
+
 		public abstract void Write(uint insaddr, uint address, uint value, Size size);
+
+		protected void Write(byte reg, uint value)
+		{
+			if (reg == CIA.ICR)
+			{
+				if ((value & 0x80) != 0)
+					regs[CIA.ICR] |= (byte)value;
+				else
+					regs[CIA.ICR] &= (byte)~value;
+			}
+			else
+			{
+				regs[reg] = (byte)value;
+			}
+
+			if (reg == CIA.TAHI)
+			{
+				regs[CIA.CRA] |= 1;
+			}
+			else if (reg == CIA.TBHI)
+			{
+				regs[CIA.CRB] |= 1;
+			}
+		}
 	}
 }

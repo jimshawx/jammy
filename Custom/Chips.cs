@@ -24,13 +24,13 @@ namespace RunAmiga.Custom
 			beam = new Beam();
 		}
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
-			copper.Emulate(ns);
-			blitter.Emulate(ns);
-			beam.Emulate(ns);
-			diskDrives.Emulate(ns);
-			mouse.Emulate(ns);
+			copper.Emulate(cycles);
+			blitter.Emulate(cycles);
+			beam.Emulate(cycles);
+			diskDrives.Emulate(cycles);
+			mouse.Emulate(cycles);
 		}
 
 		public void Reset()

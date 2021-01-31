@@ -118,7 +118,7 @@ namespace RunAmiga
 			return false;
 		}
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
 			instructionStartPC = pc;
 

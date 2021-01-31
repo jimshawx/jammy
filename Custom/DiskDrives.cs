@@ -121,7 +121,7 @@ namespace RunAmiga.Custom
 
 		private const int stateCycles = 1;//10;
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
 			for (int i = 0; i < drive.Length; i++)
 			{

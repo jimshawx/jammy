@@ -37,11 +37,10 @@ namespace RunAmiga.Custom
 
 		private ulong beamTime;
 		private uint hblankCount;
-		public override void Emulate(ulong ns)
+		public override void Emulate(ulong cycles)
 		{
-			beamTime += ns;
+			beamTime += cycles;
 
-			//every 50Hz, reset the copper list
 			if (beamTime > 140_000 / 312)
 			{
 				beamTime -= 140_000 / 312;
@@ -53,12 +52,7 @@ namespace RunAmiga.Custom
 				regs[CIA.TODHI] = (byte)(hblankCount >> 16);
 			}
 
-			base.Emulate(ns);
-		}
-
-		public override void Reset()
-		{
-			base.Reset();
+			base.Emulate(cycles);
 		}
 
 		public override bool IsMapped(uint address)
@@ -68,61 +62,29 @@ namespace RunAmiga.Custom
 
 		public override uint Read(uint insaddr, uint address, Size size)
 		{
-			if (size != Size.Byte)
-				throw new UnknownInstructionSizeException(address, 0);
-
-			byte reg = (byte)((address >> 8) & 0xf);
+			byte reg = GetReg(address, size);
 
 			if (reg == CIA.PRB)
 			{
 				return diskDrives.ReadPRB(insaddr);
 			}
-			else if (reg == CIA.ICR)
-			{
-				byte p = icrr;
-				icrr = 0;
-				return p;
-				//return regs[CIA.ICR];
-			}
-			else
-			{
-				//Logger.WriteLine($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
-				return (uint)regs[reg];
-			}
+
+			//Logger.WriteLine($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			return base.Read(reg);
 		}
 
 		public override void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (size != Size.Byte)
-				throw new UnknownInstructionSizeException(address, 0);
+			byte reg = GetReg(address, size);
 
-			byte reg = (byte)((address >> 8) & 0xf);
-
-			if (reg == CIA.ICR)
-			{
-				if ((value & 0x80) != 0)
-					regs[CIA.ICR] |= (byte)value;
-				else
-					regs[CIA.ICR] &= (byte)~value;
-			}
-			else if (reg == CIA.PRB)
+			if (reg == CIA.PRB)
 			{
 				diskDrives.WritePRB(insaddr, (byte)value);
+				return;
 			}
-			else
-			{
-				//Logger.WriteLine($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
-				regs[reg] = (byte)value;
-			}
-
-			if (reg == CIA.TAHI)
-			{
-				regs[CIA.CRA] |= 1;
-			}
-			else if (reg == CIA.TBHI)
-			{
-				regs[CIA.CRB] |= 1;
-			}
+			
+			//Logger.WriteLine($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+			base.Write(reg, value);
 		}
 	}
 }

@@ -171,7 +171,7 @@ namespace RunAmiga
 					(uint)memory[(address + 3)];
 		}
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
 
 		}

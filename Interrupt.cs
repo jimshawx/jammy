@@ -36,7 +36,7 @@ namespace RunAmiga
 			this.custom = custom;
 		}
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
 			
 		}

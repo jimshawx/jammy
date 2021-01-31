@@ -20,9 +20,9 @@ namespace RunAmiga.Custom
 
 		private ulong mouseTime = 0;
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
-			mouseTime += ns;
+			mouseTime += cycles;
 
 			if (mouseTime > 50_000)
 			{

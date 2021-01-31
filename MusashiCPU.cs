@@ -39,18 +39,15 @@ namespace RunAmiga
 			return false;
 		}
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
 			CheckInterrupt();
 			
-			int cycles = 0;
-			uint pc = Musashi_execute(ref cycles);
+			int ticks = 0;
+			uint pc = Musashi_execute(ref ticks);
 			
 			if (debugger.IsBreakpoint(pc))
-			{
 				Breakpoint(pc);
-				return;
-			}
 		}
 
 		private void Breakpoint(uint pc)

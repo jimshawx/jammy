@@ -21,9 +21,9 @@ namespace RunAmiga.Custom
 		private uint copperHorz;//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
 		private uint copperVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 
-		public void Emulate(ulong ns)
+		public void Emulate(ulong cycles)
 		{
-			copperTime += ns;
+			copperTime += cycles;
 
 			//every 50Hz, reset the copper list
 			if (copperTime > 140_000)
