@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Data;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using Microsoft.Win32;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -182,31 +177,32 @@ namespace RunAmiga.Custom
 
 		private void Fill(uint insaddr)
 		{
-			throw new NotImplementedException();
+			//throw new NotImplementedException();
+			Logger.WriteLine($"Fill!");
 		}
 
 		private void Blit(uint width, uint height)
 		{
 			//todo: assumes blitter DMA is enabled
 
-			Logger.WriteLine($"BLIT! {width}x{height} = {width*16}bits x {height} = {width * 16 * height} bits = {width*height*2} bytes");
+			//Logger.WriteLine($"BLIT! {width}x{height} = {width*16}bits x {height} = {width * 16 * height} bits = {width*height*2} bytes");
 
-			Logger.WriteLine($"->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
-			Logger.WriteLine($"->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
-			Logger.WriteLine($"->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
-			Logger.WriteLine($"->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
-			Logger.WriteLine($"cookie: {bltcon0&0xff:X2} {((bltcon1&2)!=0?"descending":"ascending")}");
-			Logger.WriteLine("ABC");
-			if ((bltcon0 & 0x01) != 0) Logger.WriteLine("000");
-			if ((bltcon0 & 0x02) != 0) Logger.WriteLine("001");
-			if ((bltcon0 & 0x04) != 0) Logger.WriteLine("010");
-			if ((bltcon0 & 0x08) != 0) Logger.WriteLine("011");
-			if ((bltcon0 & 0x10) != 0) Logger.WriteLine("100");
-			if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
-			if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
-			if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
-			if ((bltcon1 & (7 << 2)) != 0)
-				Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			//Logger.WriteLine($"->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
+			//Logger.WriteLine($"->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
+			//Logger.WriteLine($"->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
+			//Logger.WriteLine($"->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
+			//Logger.WriteLine($"cookie: {bltcon0&0xff:X2} {((bltcon1&2)!=0?"descending":"ascending")}");
+			//Logger.WriteLine("ABC");
+			//if ((bltcon0 & 0x01) != 0) Logger.WriteLine("000");
+			//if ((bltcon0 & 0x02) != 0) Logger.WriteLine("001");
+			//if ((bltcon0 & 0x04) != 0) Logger.WriteLine("010");
+			//if ((bltcon0 & 0x08) != 0) Logger.WriteLine("011");
+			//if ((bltcon0 & 0x10) != 0) Logger.WriteLine("100");
+			//if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
+			//if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
+			//if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
+			//if ((bltcon1 & (7 << 2)) != 0)
+			//	Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 
 			int ashift = (int) (bltcon0 >> 12);
 			int bshift = (int) (bltcon1 >> 12);
@@ -340,7 +336,7 @@ namespace RunAmiga.Custom
 
 		private void Line(uint insaddr)
 		{
-			Logger.WriteLine($"BLIT LINE! @{insaddr:X8}");
+			//Logger.WriteLine($"BLIT LINE! @{insaddr:X8}");
 
 			uint octant = (bltcon1 >> 2) & 7;
 			uint sign = (bltcon1 >> 6) & 1;
@@ -392,19 +388,19 @@ namespace RunAmiga.Custom
 			dydl = dy / (length-1);
 			dxdl = dx / (length-1);
 
-			Logger.WriteLine($"tx,ty {tx,3},{ty,3} dx,dy {dx,3},{dy,3} {Convert.ToString(octant,2).PadLeft(3,'0')}({octant}) {sign} am:{bltamod&0xffff:X4} cm:{bltcmod:X4} dm:{bltdmod:X4} a:{bltapt,5} d:{bltdpt:X8} dydl:{dydl} dxdl:{dxdl}");
+			//Logger.WriteLine($"tx,ty {tx,3},{ty,3} dx,dy {dx,3},{dy,3} {Convert.ToString(octant,2).PadLeft(3,'0')}({octant}) {sign} am:{bltamod&0xffff:X4} cm:{bltcmod:X4} dm:{bltdmod:X4} a:{bltapt,5} d:{bltdpt:X8} dydl:{dydl} dxdl:{dxdl}");
 
-			Logger.WriteLine("ABC");
-			if ((bltcon0 & 0x01) != 0) Logger.WriteLine("000");
-			if ((bltcon0 & 0x02) != 0) Logger.WriteLine("001");
-			if ((bltcon0 & 0x04) != 0) Logger.WriteLine("010");
-			if ((bltcon0 & 0x08) != 0) Logger.WriteLine("011");
-			if ((bltcon0 & 0x10) != 0) Logger.WriteLine("100");
-			if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
-			if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
-			if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
-			if ((bltcon1 & (7 << 2)) != 0)
-				Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			//Logger.WriteLine("ABC");
+			//if ((bltcon0 & 0x01) != 0) Logger.WriteLine("000");
+			//if ((bltcon0 & 0x02) != 0) Logger.WriteLine("001");
+			//if ((bltcon0 & 0x04) != 0) Logger.WriteLine("010");
+			//if ((bltcon0 & 0x08) != 0) Logger.WriteLine("011");
+			//if ((bltcon0 & 0x10) != 0) Logger.WriteLine("100");
+			//if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
+			//if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
+			//if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
+			//if ((bltcon1 & (7 << 2)) != 0)
+			//	Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 
 			//todo: these are supposed to be the same, why are they not?
 			bltdmod = bltcmod;

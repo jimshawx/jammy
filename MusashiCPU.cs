@@ -90,8 +90,6 @@ namespace RunAmiga
 				Marshal.GetFunctionPointerForDelegate(w16),
 				Marshal.GetFunctionPointerForDelegate(w8)
 			);
-			int cycles = 0;
-			Musashi_execute(ref cycles);
 		}
 
 		public Regs GetRegs()

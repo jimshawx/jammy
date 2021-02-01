@@ -136,7 +136,8 @@ namespace RunAmiga.Custom
 				return;
 			}
 
-			//DebugInfo(insaddr, address, value, size);
+			if (address == ChipRegs.SPR0POS || address == ChipRegs.SPR1POS)
+				DebugInfo(insaddr, address, value, size);
 
 			int reg = REG(address);
 
@@ -191,7 +192,7 @@ namespace RunAmiga.Custom
 				//if ((regs[reg] & 0x0004) != 0) Logger.Write("SOFT ");
 				//if ((regs[reg] & 0x0002) != 0) Logger.Write("DSKBLK ");
 				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
-				//if ((regs[reg]&0x7fff)!=0) Logger.WriteLine("");
+				//if ((regs[reg] & 0x7fff) != 0) Logger.WriteLine("");
 
 				regs[REG(ChipRegs.INTENAR)] = regs[reg];
 			}
@@ -228,7 +229,7 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort) value;
 				else
 					regs[reg] &= (ushort) ~value;
-				Logger.WriteLine($"ADKCON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+				//Logger.WriteLine($"ADKCON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 				regs[REG(ChipRegs.ADKCONR)] = regs[reg];
 			}
 			else

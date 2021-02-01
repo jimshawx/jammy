@@ -3,10 +3,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Xml.Schema;
 using Size = RunAmiga.Types.Size;
 
 namespace RunAmiga
@@ -24,6 +22,7 @@ namespace RunAmiga
 			this.debugger = debugger;
 			this.id = id;
 			this.memory = new byte[16 * 1024 * 1024];
+			Reset();
 		}
 
 		public bool IsMapped(uint address)

@@ -208,7 +208,7 @@ namespace RunAmiga.Custom
 					value = dskdat; break;
 			}
 
-			Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			//Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			return (ushort)value;
 		}
@@ -225,7 +225,7 @@ namespace RunAmiga.Custom
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			//Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			switch (address)
 			{
@@ -246,7 +246,7 @@ namespace RunAmiga.Custom
 					break;
 				case ChipRegs.DSKLEN:
 					dsklen = value;
-					Logger.WriteLine($"dma:{(dsklen >> 16) & 1} rw:{(dsklen >> 15) & 1} len:{dsklen & 0x3fff} {dsklen & 0x3fff:X4} /11:{(dsklen & 0x3fff)/11}");
+					//Logger.WriteLine($"dma:{(dsklen >> 16) & 1} rw:{(dsklen >> 15) & 1} len:{dsklen & 0x3fff} {dsklen & 0x3fff:X4} /11:{(dsklen & 0x3fff)/11}");
 
 					//turn OFF disk DMA
 					if (dsklen == 0x4000)
@@ -276,9 +276,9 @@ namespace RunAmiga.Custom
 					}
 
 					//dsklen is number of MFM encoded words (usually a track, 7358 = 668 x 11words, 1336 x 11 bytes)
-					if ((dsklen&0x3fff) != 7358) throw new ApplicationException();
+					if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814) throw new ApplicationException();
 
-					Logger.WriteLine($"Reading track {drive[0].track} side {drive[0].side}");
+					//Logger.WriteLine($"Reading track {drive[0].track} side {drive[0].side}");
 
 					byte[] mfm = new byte[1088*11+720];//12688 bytes, 6344 words hmm.
 					MFM.FloppyTrackMfmEncode((drive[0].track <<1)+ drive[0].side, drive[0].disk.data, mfm, 0x4489);
@@ -440,12 +440,12 @@ namespace RunAmiga.Custom
 			drive[SelectedDrive()].pra = value;
 			pra = value;
 			
-			Logger.WriteLine($"W PRA {Convert.ToString(pra&0x3c,2).PadLeft(8,'0')} @{insaddr:X6}");
-			if ((pra & (uint)PRA.DSKCHANGE) == 0) Logger.Write("DSKCHANGE ");
-			if ((pra & (uint)PRA.DSKPROT) == 0) Logger.Write("DSKPROT ");
-			if ((pra & (uint)PRA.DSKTRACK0) == 0) Logger.Write("DSKTRACK0 ");
-			if ((pra & (uint)PRA.DSKRDY) == 0) Logger.Write("DSKRDY ");
-			if ((pra&0x3c) != 0x3c) Logger.WriteLine("");
+			//Logger.WriteLine($"W PRA {Convert.ToString(pra&0x3c,2).PadLeft(8,'0')} @{insaddr:X6}");
+			//if ((pra & (uint)PRA.DSKCHANGE) == 0) Logger.Write("DSKCHANGE ");
+			//if ((pra & (uint)PRA.DSKPROT) == 0) Logger.Write("DSKPROT ");
+			//if ((pra & (uint)PRA.DSKTRACK0) == 0) Logger.Write("DSKTRACK0 ");
+			//if ((pra & (uint)PRA.DSKRDY) == 0) Logger.Write("DSKRDY ");
+			//if ((pra&0x3c) != 0x3c) Logger.WriteLine("");
 
 			//2 DSKCHANGE, low disk removed, high inserted and stepped
 			//3 DSKPROT, active low
@@ -461,16 +461,16 @@ namespace RunAmiga.Custom
 
 			prb = value;
 
-			Logger.WriteLine($"W PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
-			if ((prb & (uint)PRB.DSKSTEP) == 0) Logger.Write("DSKSTEP ");
-			if ((prb & (uint)PRB.DSKDIREC) == 0) Logger.Write("DSKDIREC ");
-			if ((prb & (uint)PRB.DSKSIDE) == 0) Logger.Write("DSKSIDE ");
-			if ((prb & (uint)PRB.DSKSEL0) == 0) Logger.Write("DSKSEL0 ");
-			if ((prb & (uint)PRB.DSKSEL1) == 0) Logger.Write("DSKSEL1 ");
-			if ((prb & (uint)PRB.DSKSEL2) == 0) Logger.Write("DSKSEL2 ");
-			if ((prb & (uint)PRB.DSKSEL3) == 0) Logger.Write("DSKSEL3 ");
-			if ((prb & (uint)PRB.DSKMOTOR) == 0) Logger.Write("DSKMOTOR ");
-			if (prb != 0xff) Logger.WriteLine("");
+			//Logger.WriteLine($"W PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
+			//if ((prb & (uint)PRB.DSKSTEP) == 0) Logger.Write("DSKSTEP ");
+			//if ((prb & (uint)PRB.DSKDIREC) == 0) Logger.Write("DSKDIREC ");
+			//if ((prb & (uint)PRB.DSKSIDE) == 0) Logger.Write("DSKSIDE ");
+			//if ((prb & (uint)PRB.DSKSEL0) == 0) Logger.Write("DSKSEL0 ");
+			//if ((prb & (uint)PRB.DSKSEL1) == 0) Logger.Write("DSKSEL1 ");
+			//if ((prb & (uint)PRB.DSKSEL2) == 0) Logger.Write("DSKSEL2 ");
+			//if ((prb & (uint)PRB.DSKSEL3) == 0) Logger.Write("DSKSEL3 ");
+			//if ((prb & (uint)PRB.DSKMOTOR) == 0) Logger.Write("DSKMOTOR ");
+			//if (prb != 0xff) Logger.WriteLine("");
 
 			//0 DSKSTEP
 			//1 DSKDIREC

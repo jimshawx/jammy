@@ -110,18 +110,18 @@ namespace RunAmiga.Custom
 		{
 			int key = e.KeyValue;
 
-			Trace.Write($"{Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} ");
+			Logger.Write($"{Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} ");
 
 			if (scanConvert.ContainsKey(key))
 			{
-				Trace.Write($"{scanConvert[key]:X2}");
+				Logger.Write($"{scanConvert[key]:X2}");
 
 				keyQueue.Enqueue(scanConvert[key]);
 
 				cia.SerialInterrupt();
 				interrupt.TriggerInterrupt(Interrupt.PORTS);
 			}
-			Trace.WriteLine("");
+			Logger.WriteLine("");
 		}
 
 		public void Emulate(ulong cycles)

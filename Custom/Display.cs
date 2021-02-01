@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -8,6 +10,7 @@ namespace RunAmiga.Custom
 {
 	public class Playfield
 	{
+		public readonly Copper copper;
 		public uint bpl1mod;
 		public uint bpl2mod;
 
@@ -52,8 +55,9 @@ namespace RunAmiga.Custom
 		public ushort [] colour = new ushort[256];
 		public uint [] truecolour = new uint[256];
 
-		public Playfield()
+		public Playfield(Copper copper)
 		{
+			this.copper = copper;
 			var r = new Random();
 			for (int i = 0; i < 256; i++)
 			{
@@ -80,12 +84,12 @@ namespace RunAmiga.Custom
 		private readonly IMemoryMappedDevice memory;
 		private readonly Form form;
 		private readonly PictureBox picture;
-		private readonly Bitmap bitmap;
+		private Bitmap bitmap;
 
 		public Display(Playfield pf, IMemoryMappedDevice memory)
 		{
 			this.pf = pf;
-			pf.bplcon0 |= 0x8000;
+			//pf.bplcon0 |= 0x8000;
 
 			this.memory = memory;
 			uint bitdepth = (pf.bplcon0 >> 12)&7;
@@ -102,6 +106,8 @@ namespace RunAmiga.Custom
 			form.Controls.Add(picture);
 			form.Text = $"0x{pf.address:X6}";
 			form.ClientSize = new Size(w, 256);
+			form.KeyPress += DumpCopperList;
+			form.Closing += FormClosing;
 
 			bitmap = new Bitmap(w, 256, PixelFormat.Format32bppRgb);
 			picture.Image = bitmap;
@@ -114,10 +120,25 @@ namespace RunAmiga.Custom
 			Application.DoEvents();
 		}
 
+		private void FormClosing(object sender, CancelEventArgs e)
+		{
+			//remove from list of playfields
+			pf.copper.RemoveDisplay(pf);
+		}
+
+		private void DumpCopperList(object sender, KeyPressEventArgs e)
+		{
+			//re-dump the copper list details
+			pf.copper.DebugCopperList(pf.address);
+		}
+
 		public void Refresh()
 		{
 			int w = 320;
 			if ((pf.bplcon0 & 0x8000) != 0) w *= 2;
+
+			if (bitmap.Width != w)
+				bitmap = new Bitmap(w, 256, PixelFormat.Format32bppRgb);
 
 			var pixels = new int[w * 256];
 
@@ -135,7 +156,7 @@ namespace RunAmiga.Custom
 		private void PlanarToChunky(int [] dst)
 		{
 			int w = 320;
-			if ((pf.bplcon0 & 0x8000) != 0) w *= 2;
+			
 
 			uint p;
 			uint d=0;
@@ -194,6 +215,7 @@ namespace RunAmiga.Custom
 			}
 
 			int sprx = (int)(pf.spr0pos & 0xff);
+			if ((pf.bplcon0 & 0x8000) != 0) sprx *= 2;
 			int spry = (int)(pf.spr0pos >> 8);
 			if (sprx < 1) sprx = 1;
 			else if (sprx >= 638) sprx = 638;

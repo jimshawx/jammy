@@ -61,20 +61,22 @@ namespace RunAmiga.Custom
 
 		private Dictionary<uint, Display> displays = new Dictionary<uint, Display>();
 
+		public void RemoveDisplay(Playfield pf)
+		{
+			displays.Remove(pf.address);
+		}
+
 		public void DebugCopperList(uint copPC)
 		{
-			if (displays.ContainsKey(copPC))
-				return;
-
 			if (copPC == 0) return;
 
-			ParseCopperList(copPC);
+			//ParseCopperList(copPC);
 
-			Logger.WriteLine($"Parsing Copper List @{copPC:X8}");
+			Logger.WriteLine($"Copper List @{copPC:X8}");
 
 			uint copStartPC = copPC;
 
-			int counter = 64;
+			int counter = 256;
 			while (counter-- > 0)
 			{
 				ushort ins = (ushort)memory.Read(0, copPC, Size.Word);
@@ -144,7 +146,10 @@ namespace RunAmiga.Custom
 			}
 			else
 			{
-				pf = new Playfield();
+				pf = new Playfield(this);
+				//uint tmp = copPC;
+				//DebugCopperList(copPC);
+				//copPC = tmp;
 			}
 
 			pf.address = copPC;
@@ -237,10 +242,10 @@ namespace RunAmiga.Custom
 						UI.SetColour(index, data);
 					}
 
-					//if (customBase+reg == CustomRegs.COPJMP1)
-					//	copPC = custom.Read(copPC, CustomRegs.COP1LCH, Size.Long);//COP1LC
-					//else if (customBase + reg == CustomRegs.COPJMP2) 
-					//	copPC = custom.Read(copPC, CustomRegs.COP2LCH, Size.Long);//COP2LC
+					//if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
+					//	copPC = custom.Read(copPC, ChipRegs.COP1LCH, Size.Long);//COP1LC
+					//else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2) 
+					//	copPC = custom.Read(copPC, ChipRegs.COP2LCH, Size.Long);//COP2LC
 				}
 				else if ((ins & 0x0001) == 1)
 				{
@@ -332,5 +337,6 @@ namespace RunAmiga.Custom
 					break;
 			}
 		}
+
 	}
 }

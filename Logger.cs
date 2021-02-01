@@ -85,6 +85,7 @@ namespace RunAmiga
 			//{
 			//	sb.Append(s);
 			//}
+			Trace.Write(s);
 		}
 
 		public static void WriteLine(string s)
@@ -93,6 +94,7 @@ namespace RunAmiga
 			//{
 			//	sb.AppendLine(s);
 			//}
+			Trace.WriteLine(s);
 		}
 
 	}

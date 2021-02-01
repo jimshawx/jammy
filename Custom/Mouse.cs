@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace RunAmiga.Custom
@@ -65,11 +66,23 @@ namespace RunAmiga.Custom
 					joy0dat = 0;
 					joy1dat = 0;
 
-					if (dx < 0) joy0dat |= 0xc0;
-					if (dx > 0) joy0dat |= 0x40;
+					//if (dx < 0) joy0dat |= 0xc0;
+					//if (dx > 0) joy0dat |= 0x40;
 
-					if (dy < 0) joy0dat |= 0xc000;
-					if (dy > 0) joy0dat |= 0x4000;
+					//if (dy < 0) joy0dat |= 0xc000;
+					//if (dy > 0) joy0dat |= 0x4000;
+
+					//if (dx < 0) joy0dat |= 0x80;
+					//if (dx > 0) joy0dat |= 0x7f;
+
+					//if (dy < 0) joy0dat |= 0x8000;
+					//if (dy > 0) joy0dat |= 0x7f00;
+
+					if (dx < 0) joy0dat |= 0x90;
+					if (dx > 0) joy0dat |= 0x10;
+
+					if (dy < 0) joy0dat |= 0x9000;
+					if (dy > 0) joy0dat |= 0x1000;
 				}
 
 				oldMouseX = mousex;
