@@ -55,6 +55,9 @@ namespace RunAmiga.Custom
 		public bool attached;
 		public bool diskinserted;
 
+		public uint pra;
+		public uint prb;
+
 		public Disk disk;
 
 		public void Reset()
@@ -127,12 +130,6 @@ namespace RunAmiga.Custom
 			{
 				if (!drive[i].attached) continue;
 
-
-				prb |= (uint)(PRB.DSKSEL1|PRB.DSKSEL2|PRB.DSKSEL3);
-				prb &= ~(uint)PRB.DSKSEL0;
-
-				//if ((prb & drive[i].DSKSEL) == 0)
-				{
 					if (drive[i].state != DriveState.Idle)
 					{
 						drive[i].stateCounter--;
@@ -141,37 +138,37 @@ namespace RunAmiga.Custom
 							switch (drive[i].state)
 							{
 								case DriveState.Track0NotReached:
-									pra |= (uint)PRA.DSKTRACK0;
+									drive[i].pra |= (uint)PRA.DSKTRACK0;
 									//prb |= (uint)PRB.DSKSTEP;
 									drive[i].state = DriveState.Idle;
 									break;
 								case DriveState.Track0Reached:
-									pra &= ~(uint) PRA.DSKTRACK0;
+									drive[i].pra &= ~(uint) PRA.DSKTRACK0;
 									//prb |= (uint)PRB.DSKSTEP;
 									drive[i].state = DriveState.Idle;
 									break;
 								case DriveState.DiskReady:
-									pra &= ~(uint) PRA.DSKRDY;
+									drive[i].pra &= ~(uint) PRA.DSKRDY;
 									drive[i].state = DriveState.Idle;
 									break;
 								case DriveState.DiskChange:
-									pra &= ~(uint) PRA.DSKCHANGE;
+									drive[i].pra &= ~(uint) PRA.DSKCHANGE;
 									drive[i].state = DriveState.Idle;
 									break;
 								case DriveState.DiskNotChanged:
-									pra |= (uint) PRA.DSKCHANGE;
+									drive[i].pra |= (uint) PRA.DSKCHANGE;
 									drive[i].state = DriveState.DiskNotStep;
 									break;
 								case DriveState.DiskNotStep:
-									prb |= (uint) PRB.DSKSTEP;
+									drive[i].prb |= (uint) PRB.DSKSTEP;
 									drive[i].state = DriveState.DiskStep;
 									break;
 								case DriveState.DiskStep:
-									prb &= ~(uint) PRB.DSKSTEP;
+									drive[i].prb &= ~(uint) PRB.DSKSTEP;
 									drive[i].state = DriveState.DiskStepDone;
 									break;
 								case DriveState.DiskStepDone:
-									prb |= (uint)PRB.DSKSTEP;
+									drive[i].prb |= (uint)PRB.DSKSTEP;
 									drive[i].state = DriveState.Idle;
 									break;
 							}
@@ -179,7 +176,7 @@ namespace RunAmiga.Custom
 							drive[i].stateCounter = stateCycles;
 						}
 					}
-				}
+				
 			}
 		}
 
@@ -362,76 +359,87 @@ namespace RunAmiga.Custom
 			}
 		}
 
-		private uint Checksum(IEnumerable<byte> b)
-		{
-			uint D0 = 0;
-			foreach (var D2 in b.ToArray().AsULong())
-				D0 ^= D2;
-			return D0;
-		}
+		//private uint Checksum(IEnumerable<byte> b)
+		//{
+		//	uint D0 = 0;
+		//	foreach (var D2 in b.ToArray().AsULong())
+		//		D0 ^= D2;
+		//	return D0;
+		//}
 
-		private byte[] ToMFM(uint src)
-		{
-			return ToMFM(new byte[] {(byte)(src >> 24), (byte)(src >> 16), (byte)(src >> 8), (byte)src});
-		}
+		//private byte[] ToMFM(uint src)
+		//{
+		//	return ToMFM(new byte[] {(byte)(src >> 24), (byte)(src >> 16), (byte)(src >> 8), (byte)src});
+		//}
 
-		private byte[] ToMFM(byte[] src)
-		{
-			var dst = new byte[src.Length * 2];
+		//private byte[] ToMFM(byte[] src)
+		//{
+		//	var dst = new byte[src.Length * 2];
 
-			int dsti = 0;
-			int cnt = 0;
-			uint d=0;
-			bool lastBit = false;
-			foreach (var b in GetNextBit(src))
-			{
-				d <<= 2;
-				if (b)
-					d |= 1;
-				else if (!lastBit)
-					d |= 2;
-				lastBit = b;
-				cnt++;
-				if (cnt == 16)
-				{
-					cnt = 0;
-					dst[dsti++] = (byte)(d >> 24);
-					dst[dsti++] = (byte)(d >> 16);
-					dst[dsti++] = (byte)(d >> 8);
-					dst[dsti++] = (byte)(d >> 0);
-					d = 0;
-				}
-			}
+		//	int dsti = 0;
+		//	int cnt = 0;
+		//	uint d=0;
+		//	bool lastBit = false;
+		//	foreach (var b in GetNextBit(src))
+		//	{
+		//		d <<= 2;
+		//		if (b)
+		//			d |= 1;
+		//		else if (!lastBit)
+		//			d |= 2;
+		//		lastBit = b;
+		//		cnt++;
+		//		if (cnt == 16)
+		//		{
+		//			cnt = 0;
+		//			dst[dsti++] = (byte)(d >> 24);
+		//			dst[dsti++] = (byte)(d >> 16);
+		//			dst[dsti++] = (byte)(d >> 8);
+		//			dst[dsti++] = (byte)(d >> 0);
+		//			d = 0;
+		//		}
+		//	}
 
-			return dst;
-		}
+		//	return dst;
+		//}
 
-		private IEnumerable<bool> GetNextBit(byte[]src)
-		{
-			for (int i = 0; i < src.Length / 4; i++)
-			{
-				uint s = ((uint) src[i * 4] << 24) + ((uint) src[i * 4 + 1] << 16) + ((uint) src[i * 4 + 2] << 8) + (uint) src[i * 4 + 3];
-				//for (int m = 1; m < 32; m += 2)
-				for (int m = 31; m>= 0; m -= 2)
-				{
-					yield return (s & (1u << m))!=0;
-				}
-				//for (int m = 0; m < 32; m += 2)
-				for (int m = 30; m >= 0; m -= 2)
-				{
-					yield return (s & (1u << m))!=0;
-				}
-			}
-		}
+		//private IEnumerable<bool> GetNextBit(byte[]src)
+		//{
+		//	for (int i = 0; i < src.Length / 4; i++)
+		//	{
+		//		uint s = ((uint) src[i * 4] << 24) + ((uint) src[i * 4 + 1] << 16) + ((uint) src[i * 4 + 2] << 8) + (uint) src[i * 4 + 3];
+		//		//for (int m = 1; m < 32; m += 2)
+		//		for (int m = 31; m>= 0; m -= 2)
+		//		{
+		//			yield return (s & (1u << m))!=0;
+		//		}
+		//		//for (int m = 0; m < 32; m += 2)
+		//		for (int m = 30; m >= 0; m -= 2)
+		//		{
+		//			yield return (s & (1u << m))!=0;
+		//		}
+		//	}
+		//}
 
 		private uint pra;
 		private uint prb;
 
+		private int SelectedDrive()
+		{
+			if ((prb & (uint)PRB.DSKSEL0) == 0) return 0;
+			if ((prb & (uint)PRB.DSKSEL1) == 0) return 1;
+			if ((prb & (uint)PRB.DSKSEL2) == 0) return 2;
+			if ((prb & (uint)PRB.DSKSEL3) == 0) return 3;
+			return 0;
+		}
+		
 		public void WritePRA(uint insaddr, byte value)
 		{
 			uint oldvalue = pra;
 
+			drive[SelectedDrive()].pra = value;
 			pra = value;
+			
 			Logger.WriteLine($"W PRA {Convert.ToString(pra&0x3c,2).PadLeft(8,'0')} @{insaddr:X6}");
 			if ((pra & (uint)PRA.DSKCHANGE) == 0) Logger.Write("DSKCHANGE ");
 			if ((pra & (uint)PRA.DSKPROT) == 0) Logger.Write("DSKPROT ");
@@ -452,6 +460,7 @@ namespace RunAmiga.Custom
 			uint oldvalue = prb;
 
 			prb = value;
+
 			Logger.WriteLine($"W PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
 			if ((prb & (uint)PRB.DSKSTEP) == 0) Logger.Write("DSKSTEP ");
 			if ((prb & (uint)PRB.DSKDIREC) == 0) Logger.Write("DSKDIREC ");
@@ -478,9 +487,11 @@ namespace RunAmiga.Custom
 			for (int i = 0; i < drive.Length; i++)
 			{
 				if (!drive[i].attached) continue;
-
+				
 				if ((prb & drive[i].DSKSEL) == 0)
 				{
+					drive[i].prb = value;
+
 					drive[i].side = ((prb & (uint) PRB.DSKSIDE) == 0) ? 1u : 0;
 
 					//drive sel changed, and it's now selected, update motor bit, signal drive ready
@@ -504,7 +515,6 @@ namespace RunAmiga.Custom
 							{
 								drive[i].track--;
 								drive[i].state = DriveState.Track0NotReached;
-								//pra |= (uint) PRA.DSKTRACK0;
 							}
 						}
 						else
@@ -512,7 +522,6 @@ namespace RunAmiga.Custom
 							//step out
 							drive[i].track++;
 							drive[i].state = DriveState.Track0NotReached;
-							//pra |= (uint) PRA.DSKTRACK0;
 						}
 					}
 				}
@@ -532,14 +541,18 @@ namespace RunAmiga.Custom
 		{
 			//Logger.WriteLine($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')} @{insaddr:X6}");
 
-			return (byte)(pra & (uint)PRA.MASK);
+			return (byte)(drive[SelectedDrive()].pra & (uint)PRA.MASK);
+
+			//return (byte)(pra & (uint)PRA.MASK);
 		}
 
 		public byte ReadPRB(uint insaddr)
 		{
 			//Logger.WriteLine($"R PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
 
-			return (byte)prb;
+			return (byte)drive[SelectedDrive()].prb;
+
+			//return (byte)prb;
 		}
 
 		//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)
