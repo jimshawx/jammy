@@ -40,6 +40,7 @@ namespace RunAmiga.Custom
 
 		public uint diwstrt;
 		public uint diwstop;
+		public uint diwhigh;
 
 		public uint ddfstrt;
 		public uint ddfstop;
@@ -54,6 +55,10 @@ namespace RunAmiga.Custom
 
 		public ushort [] colour = new ushort[256];
 		public uint [] truecolour = new uint[256];
+
+		public int width;
+		public int height;
+		public int width2;
 
 		public Playfield(Copper copper)
 		{
@@ -89,27 +94,28 @@ namespace RunAmiga.Custom
 		public Display(Playfield pf, IMemoryMappedDevice memory)
 		{
 			this.pf = pf;
-			//pf.bplcon0 |= 0x8000;
+
+			pf.width = 320;
+			pf.height = 256;
 
 			this.memory = memory;
-			uint bitdepth = (pf.bplcon0 >> 12)&7;
+			//uint bitdepth = (pf.bplcon0 >> 12)&7;
 
 			picture = new PictureBox();
 
-			int w = 320;
-			if ((pf.bplcon0 & 0x8000) != 0) w *= 2;
+			if ((pf.bplcon0 & 0x8000) != 0) pf.width *= 2;
 
-			picture.Size = new Size(w, 256);
+			picture.Size = new Size(pf.width, pf.height);
 			picture.Location = new Point(0, 0);
 
 			form = new Form();
 			form.Controls.Add(picture);
 			form.Text = $"0x{pf.address:X6}";
-			form.ClientSize = new Size(w, 256);
+			form.ClientSize = new Size(pf.width, pf.height);
 			form.KeyPress += DumpCopperList;
 			form.Closing += FormClosing;
 
-			bitmap = new Bitmap(w, 256, PixelFormat.Format32bppRgb);
+			bitmap = new Bitmap(pf.width, pf.height, PixelFormat.Format32bppRgb);
 			picture.Image = bitmap;
 
 			Refresh();
@@ -134,18 +140,60 @@ namespace RunAmiga.Custom
 
 		public void Refresh()
 		{
-			int w = 320;
-			if ((pf.bplcon0 & 0x8000) != 0) w *= 2;
 
-			if (bitmap.Width != w)
-				bitmap = new Bitmap(w, 256, PixelFormat.Format32bppRgb);
+			//DDFSTRT 0040 64
+			//DDFSTOP 00D0 208
+			//64 = 208-4(N-1))
+			//4(N-1)=208-64
+			//(N-1)=144/4
+			//N-1=36
+			//N=37
 
-			var pixels = new int[w * 256];
+			//START = STOP - 4 (N-1)
+			//((STOP-START)/4)+1
+			int div = 8;
+			if ((pf.bplcon0 & 0x8000) != 0)
+				div = 4;
+
+			pf.width2 = (int)((pf.ddfstop - pf.ddfstrt) / div + 1) * 16;
+
+			int startx = (int)pf.diwstrt & 0xff;
+			int stopx = (int)(pf.diwstop & 0xff)+0x100;
+			pf.width = stopx - startx;
+
+			int starty = (int)(pf.diwstrt >>8);
+			int stopy = (int)(pf.diwstop >>8);
+			if ((stopy & 0x80) == 0) stopy += 0x100;
+			pf.height = stopy - starty;
+
+			//pf.bplcon0 |= 0x8000;
+			//pf.width = 320;
+			if ((pf.bplcon0 & 0x8000)!=0)
+				pf.width *= 2;
+			//pf.height = 256;
+
+			if (bitmap.Width != pf.width || bitmap.Height != pf.height)
+			{
+				Trace.WriteLine($"DDFSTRT {pf.ddfstrt:X4} {pf.ddfstrt >> 8} {pf.ddfstrt & 0xff}");
+				Trace.WriteLine($"DDFSTOP {pf.ddfstop:X4} {pf.ddfstop >> 8} {pf.ddfstop & 0xff}");
+				Trace.WriteLine($"DIWSTRT {pf.diwstrt:X4} {pf.diwstrt >> 8} {pf.diwstrt & 0xff}");
+				Trace.WriteLine($"DIWSTOP {pf.diwstop:X4} {pf.diwstop >> 8} {pf.diwstop & 0xff}");
+				Trace.WriteLine($"BPL1MOD {pf.bpl1mod:X4} {(int)pf.bpl1mod}");
+				Trace.WriteLine($"BPL2MOD {pf.bpl1mod:X4} {(int)pf.bpl2mod}");
+
+				Trace.WriteLine($"{pf.width}x{pf.height}-{pf.width2} mod {pf.width2-pf.width}");
+
+				form.ClientSize = picture.Size = new Size(pf.width, pf.height);
+				bitmap = new Bitmap(pf.width, pf.height, PixelFormat.Format32bppRgb);
+				picture.Image = bitmap;
+			}
+
+			var pixels = new int[pf.width *pf.height];
 
 			PlanarToChunky(pixels);
 
-			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, w, 256), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
-			Marshal.Copy(pixels, 0, bitmapData.Scan0, w * 256);
+			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, pf.width, pf.height), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
+			Marshal.Copy(pixels, 0, bitmapData.Scan0, pf.width * pf.height);
 			bitmap.UnlockBits(bitmapData);
 			picture.Image = bitmap;
 			form.Invalidate();
@@ -155,48 +203,74 @@ namespace RunAmiga.Custom
 
 		private void PlanarToChunky(int [] dst)
 		{
-			int w = 320;
-			
-
-			uint p;
 			uint d=0;
 
-			uint s_bpl1pt = pf.bpl1pt & ~1u;
-			uint s_bpl2pt = pf.bpl2pt & ~1u;
+			uint[] s_bplpt = new uint [8]
+			{
+				pf.bpl1pt & ~1u,
+				pf.bpl2pt & ~1u,
+				pf.bpl3pt & ~1u,
+				pf.bpl4pt & ~1u,
+				pf.bpl5pt & ~1u,
+				pf.bpl6pt & ~1u,
+				pf.bpl7pt & ~1u,
+				pf.bpl8pt & ~1u
+			};
 
-			if (s_bpl1pt == 0xfffffffe)
+			if (s_bplpt[0] == 0xfffffffe)
 			{
 
 			}
-			else if (s_bpl1pt == 0)
+			else if (s_bplpt[0] == 0)
 			{
 				//var random = new Random();
-				for (int i = 0; i < w * 256; i++)
+				for (int i = 0; i < pf.width*pf.height; i++)
 					dst[i] = (i & 0xff) ^ (i >> 8); //random.Next(3);
 				pf.bpl1pt = 0xfffffffe;
 			}
 			else
 			{
-				for (int y = 0; y < 256; y++)
+				try
 				{
-					for (int i = 0; i < w/16; i++)
+					uint[] p = new uint[8];
+					uint planes = (pf.bplcon0 >> 12) & 7;
+					//if (planes == 0) planes = 2;
+					uint pix;
+					for (int y = 0; y < pf.height; y++)
 					{
-						uint p0 = memory.Read(0, s_bpl1pt, Types.Size.Word);
-						uint p1 = memory.Read(0, s_bpl2pt, Types.Size.Word);
-						for (int j = 15; j >= 0; j--)
+						for (int x = 0; x < pf.width / 16; x++)
 						{
-							p = (p0 >> j) & 1;
-							p |= ((p1 >> j) & 1) << 1;
-							dst[d++] = (int) p;
+							for (int i = 0; i < planes; i++)
+								p[i] = memory.Read(0, s_bplpt[i], Types.Size.Word);
+
+							for (int j = 15; j >= 0; j--)
+							{
+								pix = 0;
+								for (int i = 0; i < planes; i++)
+									pix |= ((p[i] >> j) & 1) << i;
+								dst[d++] = (int)pix;
+							}
+
+							for (int i = 0; i < planes; i++)
+								s_bplpt[i] += 2;
 						}
 
-						s_bpl1pt += 2;
-						s_bpl2pt += 2;
-					}
+						/*
+						for (int i = 0; i < planes; i++)
+						{
+							s_bplpt[i] += (uint)(pf.width2 - pf.width) / 16;
+							s_bplpt[i] &= ~1u;
+						}
 
-					s_bpl1pt += pf.bpl1mod & ~1u;
-					s_bpl2pt += pf.bpl2mod & ~1u;
+						for (int i = 0; i < planes; i += 2)
+						{
+							s_bplpt[i] += pf.bpl1mod & ~1u;
+							s_bplpt[i + 1] += pf.bpl2mod & ~1u;
+						}
+						*/
+					}
 				}
+				catch { }
 			}
 
 			//    0: #fff 
@@ -209,7 +283,7 @@ namespace RunAmiga.Custom
 			//pf.truecolour[3] = 0xbbbbbb;
 			pf.UpdatePalette();
 
-			for (int i = 0; i < w * 256; i++)
+			for (int i = 0; i < pf.width * pf.height; i++)
 			{
 				dst[i] = (int)pf.truecolour[dst[i]&0xff];
 			}
@@ -222,15 +296,35 @@ namespace RunAmiga.Custom
 			if (spry < 1) spry = 1;
 			if (spry >= 254) spry = 254;
 			
-			dst[sprx + w * spry] ^= 0xffffff;
-			dst[sprx+1 + w * spry] ^= 0xffffff;
-			dst[sprx-1 + w * spry] ^= 0xffffff;
-			dst[sprx + w * (spry-1)] ^= 0xffffff;
-			dst[sprx + w * (spry+1)] ^= 0xffffff;
+			dst[sprx + pf.width * spry] ^= 0xffffff;
+			dst[sprx+1 + pf.width * spry] ^= 0xffffff;
+			dst[sprx-1 + pf.width * spry] ^= 0xffffff;
+			dst[sprx + pf.width * (spry-1)] ^= 0xffffff;
+			dst[sprx + pf.width * (spry+1)] ^= 0xffffff;
 
 			//for (int j = 0; j < 4; j++){
 			//for (int i = w * (10 + j); i < w * (11 + j); i++)
 			//	dst[i] = (int)pf.truecolour[j];}
 		}
+		//DDFSTRT = DDFSTOP - (8 * (word count - 1)) for low resolution
+		//DDFSTRT = DDFSTOP - (4 * (word count - 2)) for high resolution
+		
+		//DIWSTRT 6395 start at (99,149)
+		//DIWSTOP F4AD stop at F4,1_AD (244,0b11010_1101) (244,429)
+		//145,280
+		//DDFSTRT 0040 64
+		//DDFSTOP 00D0 208
+		//64 = 208-4(N-1))
+		//4(N-1)=208-64
+		//(N-1)=144/4
+		//N-1=36
+		//N=37
+		//DIWHIGH 2000
+		//BPLMOD  FFFA -6
+
+		//PAL
+		//DIWSTRT 2C81 (44,129)
+		//DIWSTOP 2CC1 (300,449)
+		//256,320
 	}
 }

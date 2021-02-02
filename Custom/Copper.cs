@@ -66,6 +66,8 @@ namespace RunAmiga.Custom
 			displays.Remove(pf.address);
 		}
 
+		private const int MAX_COPPER_ENTRIES = 512;
+
 		public void DebugCopperList(uint copPC)
 		{
 			if (copPC == 0) return;
@@ -76,7 +78,7 @@ namespace RunAmiga.Custom
 
 			uint copStartPC = copPC;
 
-			int counter = 256;
+			int counter = MAX_COPPER_ENTRIES;
 			while (counter-- > 0)
 			{
 				ushort ins = (ushort)memory.Read(0, copPC, Size.Word);
@@ -156,7 +158,7 @@ namespace RunAmiga.Custom
 
 			uint copStartPC = copPC;
 
-			int counter = 256;
+			int counter = MAX_COPPER_ENTRIES;
 			while (counter-- > 0)
 			{
 				ushort ins = (ushort)memory.Read(0,copPC,Size.Word);
@@ -179,7 +181,9 @@ namespace RunAmiga.Custom
 						case ChipRegs.BPL1MOD: pf.bpl1mod = (uint)(short)data; break;
 						case ChipRegs.BPL2MOD: pf.bpl2mod = (uint)(short)data; break;
 
-						case ChipRegs.BPLCON0: pf.bplcon0 = data;
+						case ChipRegs.BPLCON0:
+							//this is a hack to get the highest colour/resolution
+							if (data > pf.bplcon0) pf.bplcon0 = data;
 							break;
 						case ChipRegs.BPLCON1: pf.bplcon1 = data; break;
 						case ChipRegs.BPLCON2: pf.bplcon2 = data; break;
@@ -214,6 +218,7 @@ namespace RunAmiga.Custom
 
 						case ChipRegs.DIWSTRT: pf.diwstrt = data; break;
 						case ChipRegs.DIWSTOP: pf.diwstop = data; break;
+						case ChipRegs.DIWHIGH: pf.diwhigh = data; break;
 
 						case ChipRegs.DDFSTRT: pf.ddfstrt = data; break;
 						case ChipRegs.DDFSTOP: pf.ddfstop = data; break;
