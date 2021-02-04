@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Configuration;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -16,18 +17,22 @@ namespace RunAmiga.Custom
 		private uint joy0dat;
 		private uint joy1dat;
 		private uint potgo;
+		private uint pot0dat;
+		private uint pot1dat;
+		private uint joytest;
 
 		private int oldMouseX, oldMouseY;
 
 		private ulong mouseTime = 0;
+		private int clock;
 
 		public void Emulate(ulong cycles)
 		{
 			mouseTime += cycles;
 
-			if (mouseTime > 50_000)
+			if (mouseTime > 100)
 			{
-				mouseTime -= 50_000;
+				mouseTime -= 100;
 
 				//CIAA pra, bit 6 port 0 left mouse/joystick fire, inverted logic, 0 closed, 1 open
 				//CIAA pra, bit 7 port 1 left mouse/joystick fire
@@ -87,6 +92,15 @@ namespace RunAmiga.Custom
 
 				oldMouseX = mousex;
 				oldMouseY = mousey;
+
+				clock++;
+				clock &= 3;
+
+				joy0dat &= 0b11111100_11111100;
+				joy0dat |= (uint)(clock * 0x101);
+
+				joy1dat &= 0b11111100_11111100;
+				joy1dat |= (uint)(clock * 0x101);
 			}
 		}
 
@@ -107,6 +121,9 @@ namespace RunAmiga.Custom
 				case ChipRegs.JOY1DAT: value = joy1dat; break;
 				case ChipRegs.POTGO: value = potgo; break;
 				case ChipRegs.POTGOR: value = potgo; break;
+				case ChipRegs.POT0DAT: value = pot0dat; break;
+				case ChipRegs.POT1DAT: value = pot1dat; break;
+				case ChipRegs.JOYTEST: value = joytest; break;
 			}
 
 			return (ushort)value;
@@ -120,6 +137,12 @@ namespace RunAmiga.Custom
 				case ChipRegs.JOY1DAT: joy1dat = value; break;
 				case ChipRegs.POTGO: potgo = value; break;
 				case ChipRegs.POTGOR: potgo = value; break;
+				case ChipRegs.POT0DAT: pot0dat = value; break;
+				case ChipRegs.POT1DAT: pot1dat = value; break;
+				case ChipRegs.JOYTEST: joytest = value;
+					joy0dat = joytest;
+					joy1dat = joytest;
+					break;
 			}
 		}
 

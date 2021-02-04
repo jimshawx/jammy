@@ -83,12 +83,12 @@ namespace RunAmiga
 			//Musashi_set_irq(interruptPending);
 		}
 
-		private void EnableInterrupt(uint interrupt)
-		{
-			uint intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
-			//only write the bit if necessary
-			if ((intenar & (1u << (int)interrupt)) == 0)
-				custom.Write(0, ChipRegs.INTENA, 0x8000 + (1u << (int)interrupt), Size.Word);
-		}
+		//private void EnableInterrupt(uint interrupt)
+		//{
+		//	uint intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
+		//	//only write the bit if necessary
+		//	if ((intenar & (1u << (int)interrupt)) == 0)
+		//		custom.Write(0, ChipRegs.INTENA, 0x8000 + (1u << (int)interrupt), Size.Word);
+		//}
 	}
 }

@@ -39,13 +39,16 @@ namespace RunAmiga
 			return false;
 		}
 
+		private uint instructionStartPC = 0;
 		public void Emulate(ulong cycles)
 		{
 			CheckInterrupt();
 			
 			int ticks = 0;
 			uint pc = Musashi_execute(ref ticks);
-			
+
+			instructionStartPC = pc;
+
 			if (debugger.IsBreakpoint(pc))
 				Breakpoint(pc);
 		}
@@ -136,27 +139,27 @@ namespace RunAmiga
 
 		private uint Musashi_read32(uint address)
 		{
-			return memoryMapper.Read(0, address, Size.Long);
+			return memoryMapper.Read(instructionStartPC, address, Size.Long);
 		}
 		private uint Musashi_read16(uint address)
 		{
-			return memoryMapper.Read(0, address, Size.Word);
+			return memoryMapper.Read(instructionStartPC, address, Size.Word);
 		}
 		private uint Musashi_read8(uint address)
 		{
-			return memoryMapper.Read(0, address, Size.Byte);
+			return memoryMapper.Read(instructionStartPC, address, Size.Byte);
 		}
 		private void Musashi_write32(uint address, uint value)
 		{
-			memoryMapper.Write(0, address, value, Size.Long);
+			memoryMapper.Write(instructionStartPC, address, value, Size.Long);
 		}
 		private void Musashi_write16(uint address, uint value)
 		{
-			memoryMapper.Write(0, address, value, Size.Word);
+			memoryMapper.Write(instructionStartPC, address, value, Size.Word);
 		}
 		private void Musashi_write8(uint address, uint value)
 		{
-			memoryMapper.Write(0, address, value, Size.Byte);
+			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
 		}
 	}
 }

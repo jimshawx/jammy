@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Forms;
 using Size = RunAmiga.Types.Size;
 
@@ -61,15 +63,10 @@ namespace RunAmiga
 			if ((address & 1) != 0)
 				throw new MemoryAlignmentException(address);
 
-			byte b0, b1, b2, b3;
-			b0 = (byte)(value >> 24);
-			b1 = (byte)(value >> 16);
-			b2 = (byte)(value >> 8);
-			b3 = (byte)(value);
-			memory[address & memoryMask] = b0;
-			memory[(address + 1) & memoryMask] = b1;
-			memory[(address + 2) & memoryMask] = b2;
-			memory[(address + 3) & memoryMask] = b3;
+			memory[address & memoryMask] = (byte)(value >> 24);
+			memory[(address + 1) & memoryMask] = (byte)(value >> 16);
+			memory[(address + 2) & memoryMask] = (byte)(value >> 8);
+			memory[(address + 3) & memoryMask] = (byte)value;
 		}
 
 		private void write16(uint address, ushort value)
@@ -77,11 +74,8 @@ namespace RunAmiga
 			if ((address & 1) != 0)
 				throw new MemoryAlignmentException(address);
 
-			byte b0, b1;
-			b0 = (byte)(value >> 8);
-			b1 = (byte)(value);
-			memory[address & memoryMask] = b0;
-			memory[(address + 1) & memoryMask] = b1;
+			memory[address & memoryMask] = (byte)(value >> 8);
+			memory[(address + 1) & memoryMask] = (byte)value;
 		}
 
 		private void write8(uint address, byte value)
@@ -99,17 +93,6 @@ namespace RunAmiga
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			//if ((address >= 0xc014cd && address <= 0xC014ff && address != 0xc014f4) || (address == 0xc014f4 && (insaddr == 0xfc1798 || insaddr == 0)))
-			//{
-			//	if (size == Size.Long)
-			//	{
-			//		Write(insaddr, address + 2, (ushort)value, Size.Word);
-			//		Write(insaddr, address,   (ushort)(value>>16), Size.Word);
-			//		return;
-			//	}
-			//	Logger.WriteLine($"[LOG{id}] a:{address:X8} v:{value:X8} pc:{insaddr:X8} s:{size}");
-			//}
-
 			if (size == Size.Byte) { write8(address, (byte)value); return; }
 			if (size == Size.Word) { write16(address, (ushort)value); return; }
 			if (size == Size.Long) { write32(address, value); return; }
@@ -201,23 +184,27 @@ namespace RunAmiga
 
 			BulkWrite(0xfc0000, rom, 256 * 1024);
 			BulkWrite(0, rom, 256 * 1024);
+			RomTags(rom, 0xfc0000);
 
 			//byte[] rom = File.ReadAllBytes("../../../../kick13.rom");
 			//Debug.Assert(rom.Length == 256 * 1024);
 
 			//BulkWrite(0xfc0000, rom, 256 * 1024);
 			//BulkWrite(0, rom, 256 * 1024);
+			//RomTags(rom, 0xfc0000);
 
 			//byte[] rom = File.ReadAllBytes("../../../../kick31.rom");
 			//Debug.Assert(rom.Length == 512 * 1024);
 
 			//BulkWrite(0xf80000, rom, 512 * 1024);
 			//BulkWrite(0, rom, 512 * 1024);
+			//RomTags(rom, 0xf80000);
 
 			//KSLogo(rom);
+
 		}
 
-		private void KSLogo(byte[]rom)
+		private void KSLogo(byte[] rom)
 		{
 			for (int i = 0xfc0000; i < 0xfc0000 + 256 * 1024 * 1024 - kslogo.Length; i++)
 			{
@@ -232,7 +219,7 @@ namespace RunAmiga
 			byte b0, b1;
 			int mode = 0; //0 unknown, 1 polyline start, 2 polyline, 3 fill
 			const int ox = 70, oy = 40;
-			var form = new Form{ClientSize = new System.Drawing.Size(320,200)};
+			var form = new Form { ClientSize = new System.Drawing.Size(320, 200) };
 			form.Show();
 			var g = form.CreateGraphics();
 			int dx = 0, dy = 0;
@@ -243,7 +230,7 @@ namespace RunAmiga
 			SetDCBrushColor(hdc, 0x0000ff);
 			g.ReleaseHdc();
 			int miny = 200;
-			for (;;)
+			for (; ; )
 			{
 				b0 = kslogo[k++];
 				b1 = kslogo[k++];
@@ -263,10 +250,10 @@ namespace RunAmiga
 					if (mode == 0) Logger.WriteLine("unknown mode");
 					else if (mode == 1)
 					{
-						Logger.WriteLine($"move {ox+b0},{oy+b1}");
+						Logger.WriteLine($"move {ox + b0},{oy + b1}");
 						dx = ox + b0;
 						dy = oy + b1;
-						
+
 						mode = 2;
 					}
 					else if (mode == 2)
@@ -298,7 +285,7 @@ namespace RunAmiga
 		}
 
 		//ks logo
-		private byte [] kslogo =
+		private byte[] kslogo =
 		{
 			0xFF, 0x01, 0x23, 0x0B, 0x3A, 0x0B, 0x3A, 0x21, 0x71, 0x21, 0x71, 0x0B, 0x7D, 0x0B, 0x88, 0x16, 0x88, 0x5E, 0x7F, 0x5E, 0x7F, 0x38, 0x40, 0x38,
 			0x3E, 0x36, 0x35, 0x36, 0x34, 0x38, 0x2D, 0x38, 0x2D, 0x41, 0x23, 0x48, 0x23, 0x0B, 0xFE, 0x02, 0x25, 0x45, 0xFF, 0x01, 0x21, 0x48, 0x21, 0x0A,
@@ -340,12 +327,130 @@ namespace RunAmiga
 		//    3: #bbb
 		//The offsets used for drawing the image centered are X = 70, Y= 40.
 
+		[Flags]
+		public enum RTF
+		{
+			RTF_AUTOINIT = (1 << 7),    /* rt_Init points to data structure */
+			RTF_AFTERDOS = (1 << 2),
+			RTF_SINGLETASK = (1 << 1),
+			RTF_COLDSTART = (1 << 0)
+		}
+
+		public enum NT_Type
+		{
+			NT_UNKNOWN = 0,
+			NT_TASK = 1, /* Exec task */
+			NT_INTERRUPT = 2,
+			NT_DEVICE = 3,
+			NT_MSGPORT = 4,
+			NT_MESSAGE = 5,  /* Indicates message currently pending */
+			NT_FREEMSG = 6,
+			NT_REPLYMSG = 7, /* Message has been replied */
+			NT_RESOURCE = 8,
+			NT_LIBRARY = 9,
+			NT_MEMORY = 10,
+			NT_SOFTINT = 11, /* Internal flag used by SoftInits */
+			NT_FONT = 12,
+			NT_PROCESS = 13, /* AmigaDOS Process */
+			NT_SEMAPHORE = 14,
+			NT_SIGNALSEM = 15,   /* signal semaphores */
+			NT_BOOTNODE = 16,
+			NT_KICKMEM = 17,
+			NT_GRAPHICS = 18,
+			NT_DEATHMESSAGE = 19,
+
+			NT_USER = 254,   /* User node types work down from here */
+			NT_EXTENDED = 255
+		}
+
+		public class Resident
+		{
+			public ushort MatchWord { get; set; } /* word to match on (ILLEGAL)	*/
+			public uint MatchTag { get; set; }    /* pointer to the above	*/
+			public uint EndSkip { get; set; }     /* address to continue scan	*/
+			public RTF Flags { get; set; }        /* various tag flags		*/
+			public byte Version { get; set; }     /* release version number	*/
+			public NT_Type Type { get; set; }     /* type of module (NT_XXXXXX)	*/
+			public sbyte Pri { get; set; }        /* initialization priority */
+			public string Name { get; set; }      /* pointer to node name	*/
+			public string IdString { get; set; }  /* pointer to identification string */
+			public uint Init { get; set; }        /* pointer to init code	*/
+		}
+
+		private const int RTC_MATCHWORD = 0x4AFC;
+
+		public void RomTags(byte[] bytes, uint rombase)
+		{
+			var resident = new List<Resident>();
+
+			for (int i = 0; i < bytes.Length; i += 2)
+			{
+				ushort matchWord = (ushort)(bytes[i] * 256 + bytes[i + 1]);
+				if (matchWord == RTC_MATCHWORD)
+				{
+					uint matchTag = (uint)((bytes[2 + i] << 24) + (bytes[2 + i + 1] << 16) + (bytes[2 + i + 2] << 8) + bytes[2 + i + 3]);
+					if (matchTag == i + rombase)
+					{
+						i += 6;
+						var rt = new Resident();
+
+						rt.MatchWord = RTC_MATCHWORD;
+						rt.MatchTag = matchTag;
+
+						rt.EndSkip = (uint)((bytes[i] << 24) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3]); i += 4;
+						rt.Flags = (RTF)bytes[i++];
+						rt.Version = bytes[i++];
+						rt.Type = (NT_Type)bytes[i++];
+						rt.Pri = (sbyte)bytes[i++];
+
+						{
+							uint s = (uint)((bytes[i] << 24) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3]); i += 4;
+							s -= rombase;
+							var n = new StringBuilder();
+							while (bytes[s] != 0)
+							{
+								if (bytes[s] == 0xd) { n.Append(",CR"); s++;}
+								else if (bytes[s] == 0xa) { n.Append(",LF"); s++; }
+								else n.Append(Convert.ToChar(bytes[s++]));
+							}
+							rt.Name = n.ToString();
+						}
+
+						{
+							uint s = (uint)((bytes[i] << 24) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3]); i += 4;
+							s -= rombase;
+							var n = new StringBuilder();
+							while (bytes[s] != 0)
+							{
+								if (bytes[s] == 0xd) { n.Append(",CR"); s++; }
+								else if (bytes[s] == 0xa) { n.Append(",LF"); s++; }
+								else n.Append(Convert.ToChar(bytes[s++]));
+							}
+							rt.IdString = n.ToString();
+						}
+
+						rt.Init = (uint)((bytes[i] << 24) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3]); i += 4;
+
+						resident.Add(rt);
+
+						i = (int)(rt.EndSkip - rombase - 2);
+					}
+				}
+			}
+
+			foreach (var rt in resident)
+			{
+				Logger.WriteLine($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
+			}
+
+		}
+
 		public uint FindSequence(byte[] bytes)
 		{
 			for (int i = 0xfc0000; i < memory.Length - bytes.Length; i++)
 			{
 				if (bytes.SequenceEqual(memory.Skip(i).Take(bytes.Length)))
-					return (uint) i;
+					return (uint)i;
 			}
 
 			return 0;

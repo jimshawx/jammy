@@ -90,6 +90,19 @@ namespace RunAmiga
 		{
 			x &= 0xffff;
 
+			if (x < 10)
+				return string.Format($"{x}");
+			else if (x < 16)
+				return string.Format($"${x:X1}");
+			else if (x < 256)
+				return string.Format($"${x:X2}");
+			return string.Format($"${x:X4}");
+		}
+
+		private string fmtX4o(uint x)
+		{
+			x &= 0xffff;
+
 			if ((short) x < 0)
 			{
 				return string.Format($"{(short)x}");
@@ -192,7 +205,7 @@ namespace RunAmiga
 						ushort d16 = read16(pc);
 						pc += 2;
 						//return a[x] + (uint)(short)d16;
-						Append($"{fmtX4(d16)}(a{x})");
+						Append($"{fmtX4o(d16)}(a{x})");
 						return 0;
 
 					}

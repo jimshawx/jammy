@@ -108,6 +108,7 @@ namespace RunAmiga
 			//AddBreakpoint(0xb32a, BreakpointType.Write);
 			//AddBreakpoint(0xfd18dc);
 
+			AddBreakpoint(0xfe5efa);//Mouse
 
 			this.labeller = labeller;
 

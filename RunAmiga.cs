@@ -50,7 +50,7 @@ namespace RunAmiga
 		{
 			Machine.LockEmulation();
 
-			//string dmp;
+			string dmp;
 			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>> {new Tuple<uint, uint>(0xfe88d6, 0xfe8e18 - 0xfe88d6 + 1)}, new DisassemblyOptions{IncludeBytes = false, CommentPad = true});
 			//File.WriteAllText("boot_disassembly.txt", dmp);
 
@@ -60,6 +60,12 @@ namespace RunAmiga
 			//	//new Tuple<uint, uint>(0xFE9930, 0xFEB460 - 0xFE9930 + 1),
 			//}, new DisassemblyOptions{ IncludeBytes = false, CommentPad = true});
 			//File.WriteAllText("trackdisk_disassembly.txt", dmp);
+
+			dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
+			{
+				new Tuple<uint, uint>(0xfe489a , 0xFE889E  - 0xfe489a + 1),
+			}, new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
+			File.WriteAllText("keymap.resource_disassembly.txt", dmp);
 
 			var disasm = debugger.DisassembleTxt(
 					new List<Tuple<uint, uint>>

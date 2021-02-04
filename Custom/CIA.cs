@@ -201,6 +201,10 @@ namespace RunAmiga.Custom
 					if ((value & (uint)CR.LOAD) != 0)
 						timerA = timerAreset;
 					value &= ~(uint)CR.LOAD;
+
+					if (((value>>5)&1)!=0)
+						Logger.WriteLine($"A inmode: {(value>>5)&1}");
+
 					regs[CIA.CRA] = (byte)value;
 					break;
 
@@ -208,6 +212,10 @@ namespace RunAmiga.Custom
 					if ((value & (uint)CR.LOAD) != 0)
 						timerB = timerBreset;
 					value &= ~(uint)CR.LOAD;
+
+					if (((value >> 5) & 3) != 0)
+						Logger.WriteLine($"B inmode: {(value >> 5) & 3}");
+
 					regs[CIA.CRB] = (byte)value;
 					break;
 

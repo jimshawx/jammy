@@ -93,9 +93,12 @@ namespace RunAmiga.Custom
 			{
 				regs[reg] = diskDrives.Read(insaddr, address);
 			}
-			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR)
+			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
+			         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
 			{
 				regs[reg] = mouse.Read(insaddr, address);
+				//if (address == ChipRegs.JOY0DAT)
+				//	Logger.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
 			}
 			//if (address != ChipRegs.VHPOSR && address != ChipRegs.VPOSR)
 			//	Logger.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
@@ -261,7 +264,8 @@ namespace RunAmiga.Custom
 			{
 				diskDrives.Write(insaddr, address, (ushort) value);
 			}
-			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR)
+			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
+			         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
 			{
 				mouse.Write(insaddr, address, (ushort)value);
 			}
