@@ -247,7 +247,7 @@ namespace RunAmiga
 				//intType = 0;
 				//if (intType == 2) interrupt.TriggerInterrupt(Interrupt.VERTB);
 				//if (intType == 3) interrupt.TriggerInterrupt(Interrupt.BLIT);
-				if (intType == 0) interrupt.TriggerInterrupt(Interrupt.COPPER);
+				//if (intType == 0) interrupt.TriggerInterrupt(Interrupt.COPPER);
 				if (intType == 1) interrupt.TriggerInterrupt(Interrupt.PORTS);
 				//if (intType == 4) interrupt.TriggerInterrupt(Interrupt.SOFTINT);
 				intType++; intType %= 2;

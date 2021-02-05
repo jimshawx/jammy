@@ -104,11 +104,6 @@ namespace RunAmiga
 			return memory;
 		}
 
-		public void Clear()
-		{
-			Array.Clear(memory, 0, memory.Length);
-		}
-
 		public byte Read8(uint address)
 		{
 			if (address >= 0x1000000)

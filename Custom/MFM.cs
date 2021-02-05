@@ -124,3 +124,131 @@ namespace RunAmiga.Custom
 		}
 	}
 }
+
+/*
+ * 
+ * 
+ 
+					//uint srcpt = 0;//todo: need to work out where we are within the ADF file
+					//byte[] src = workbenchAdf.Skip((int)srcpt).Take(((int)(dsklen&0x3fff)/668)*512*2).ToArray();
+
+					//if (src.Length != 11 * 1024) throw new ApplicationException();
+
+					//byte[] mfm;
+					//uint checksum;
+
+					//uint s_dskstart;
+					//byte gapDistance = 11;
+					//byte sectorNum = 0;
+					//for (;;)
+					//{
+					//	s_dskstart = dsklen;
+
+					//	//64 bytes of MFM  block header
+
+					//	//8 bytes sync
+					//	memory.Write(0, dskpt, 0xAAAA, Size.Word); dskpt += 2; dsklen--;//0
+					//	memory.Write(0, dskpt, 0xAAAA, Size.Word); dskpt += 2; dsklen--;//0
+					//	memory.Write(0, dskpt, 0x4489, Size.Word); dskpt += 2; dsklen--;//sync word
+					//	memory.Write(0, dskpt, 0x4489, Size.Word); dskpt += 2; dsklen--;//sync word
+
+					//	//20 bytes
+					//	//format id ($ff), track number (((0-11)<<1)+side), sector number, number of sectors to the gap, followed by 16 00s
+					//	var header = new byte[] {0xff, 0, sectorNum++, gapDistance--,
+					//								0, 0 ,0 ,0,
+					//								0, 0 ,0 ,0,
+					//								0, 0 ,0 ,0,
+					//								0, 0 ,0 ,0,
+					//							};
+
+					//	var oddEven = new MemoryStream();
+					//	//header
+					//	oddEven.Write(header.Take(4).OddEven().ToArray());
+					//	oddEven.Write(header.Skip(4).Take(16).OddEven().ToArray());
+
+					//	//checksum
+					//	checksum = Checksum(oddEven.ToArray());
+					//	oddEven.Write(checksum.AsByte().OddEven().ToArray());
+						
+					//	//data
+					//	var oddEvenData = src.Take(512).OddEven().ToArray();
+						
+					//	//checksum
+					//	checksum = Checksum(oddEvenData);
+					//	oddEven.Write(checksum.AsByte().OddEven().ToArray());
+					//	oddEven.Write(oddEvenData);
+
+					//	var trackData = oddEven.ToArray().Select(x => (byte)(x | 0x55)).ToArray();
+					//	foreach (var w in trackData.AsUWord())
+					//	{
+					//		memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
+					//	}
+					//	src = src.Skip(512).ToArray();
+					//}
+					//// plus 720 bytes track gap
+
+					//now what?
+
+		//private uint Checksum(IEnumerable<byte> b)
+		//{
+		//	uint D0 = 0;
+		//	foreach (var D2 in b.ToArray().AsULong())
+		//		D0 ^= D2;
+		//	return D0;
+		//}
+
+		//private byte[] ToMFM(uint src)
+		//{
+		//	return ToMFM(new byte[] {(byte)(src >> 24), (byte)(src >> 16), (byte)(src >> 8), (byte)src});
+		//}
+
+		//private byte[] ToMFM(byte[] src)
+		//{
+		//	var dst = new byte[src.Length * 2];
+
+		//	int dsti = 0;
+		//	int cnt = 0;
+		//	uint d=0;
+		//	bool lastBit = false;
+		//	foreach (var b in GetNextBit(src))
+		//	{
+		//		d <<= 2;
+		//		if (b)
+		//			d |= 1;
+		//		else if (!lastBit)
+		//			d |= 2;
+		//		lastBit = b;
+		//		cnt++;
+		//		if (cnt == 16)
+		//		{
+		//			cnt = 0;
+		//			dst[dsti++] = (byte)(d >> 24);
+		//			dst[dsti++] = (byte)(d >> 16);
+		//			dst[dsti++] = (byte)(d >> 8);
+		//			dst[dsti++] = (byte)(d >> 0);
+		//			d = 0;
+		//		}
+		//	}
+
+		//	return dst;
+		//}
+
+		//private IEnumerable<bool> GetNextBit(byte[]src)
+		//{
+		//	for (int i = 0; i < src.Length / 4; i++)
+		//	{
+		//		uint s = ((uint) src[i * 4] << 24) + ((uint) src[i * 4 + 1] << 16) + ((uint) src[i * 4 + 2] << 8) + (uint) src[i * 4 + 3];
+		//		//for (int m = 1; m < 32; m += 2)
+		//		for (int m = 31; m>= 0; m -= 2)
+		//		{
+		//			yield return (s & (1u << m))!=0;
+		//		}
+		//		//for (int m = 0; m < 32; m += 2)
+		//		for (int m = 30; m >= 0; m -= 2)
+		//		{
+		//			yield return (s & (1u << m))!=0;
+		//		}
+		//	}
+		//}
+
+*/

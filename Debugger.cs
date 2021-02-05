@@ -109,6 +109,7 @@ namespace RunAmiga
 			//AddBreakpoint(0xfd18dc);
 
 			AddBreakpoint(0xfe5efa);//Mouse
+			AddBreakpoint(0xfe544e);//Install Keyboard ISR
 
 			this.labeller = labeller;
 
@@ -119,7 +120,9 @@ namespace RunAmiga
 		{
 			LoadComment("trackdisk_disassembly.txt");
 			LoadComment("exec_disassembly.txt");
-			LoadComment("boot_disassembly.txt");
+			LoadComment("strap_disassembly.txt");
+			LoadComment("misc.resource_disassembly.txt");
+			LoadComment("keymap.resource_disassembly.txt");
 		}
 
 		private void LoadComment(string filename)
@@ -336,10 +339,12 @@ namespace RunAmiga
 		private Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
 		private Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
 
-		public string DisassembleTxt(List<Tuple<uint, uint>> ranges, DisassemblyOptions options)
+		public string DisassembleTxt(List<Tuple<uint, uint>> ranges, List<uint> restartsList, DisassemblyOptions options)
 		{
 			addressToLine.Clear();
 			lineToAddress.Clear();
+
+			var restarts = (IEnumerable<uint>)restartsList.OrderBy(x => x).ToList();
 
 			var memorySpan = new ReadOnlySpan<byte>(memory.GetMemoryArray());
 			var txt = new StringBuilder();
@@ -353,6 +358,12 @@ namespace RunAmiga
 				uint addressEnd = address + size;
 				while (address < addressEnd)
 				{
+					if (restarts.Any() && address > restarts.First())
+					{
+						address = restarts.First();
+						restarts = restarts.Skip(1);
+					}
+					
 					if (labeller.HasLabel(address))
 					{
 						txt.Append($"{labeller.LabelName(address)}:\n");

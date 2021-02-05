@@ -61,11 +61,14 @@ namespace RunAmiga
 			//}, new DisassemblyOptions{ IncludeBytes = false, CommentPad = true});
 			//File.WriteAllText("trackdisk_disassembly.txt", dmp);
 
-			dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
-			{
-				new Tuple<uint, uint>(0xfe489a , 0xFE889E  - 0xfe489a + 1),
-			}, new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
-			File.WriteAllText("keymap.resource_disassembly.txt", dmp);
+			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
+			//{
+			//	new Tuple<uint, uint>(0xfe489a , 0xFE889E  - 0xfe489a + 1),
+			//},
+			//new List<uint>(), 
+			//new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
+
+			//File.WriteAllText("keymap.resource_disassembly.txt", dmp);
 
 			var disasm = debugger.DisassembleTxt(
 					new List<Tuple<uint, uint>>
@@ -73,12 +76,10 @@ namespace RunAmiga
 						new Tuple<uint, uint> (0x000000, 0x400),
 						new Tuple<uint, uint> (0xc00000, 0x1000),
 						new Tuple<uint, uint> (0xf80000, 0x40000),
-						new Tuple<uint, uint> (0xfc0000, 0x0900),
-						new Tuple<uint, uint> (0xfc0900, 0x4000),
-						new Tuple<uint, uint> (0xfc4900, 0x1f000),
-						new Tuple<uint, uint> (0xfe52a4, 0x0144),
-						new Tuple<uint, uint> (0xfe53e8, 0x6000)
-					}, new DisassemblyOptions{ IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
+						new Tuple<uint, uint> (0xfc0000, 0x40000),
+					},
+					new List<uint> { 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2, 0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8 },
+					new DisassemblyOptions{ IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 
 			Machine.UnlockEmulation();
 			txtDisassembly.Text = disasm;
