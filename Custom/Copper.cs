@@ -31,7 +31,7 @@ namespace RunAmiga.Custom
 				copperTime -= 140_000;
 
 				copperPC = cop1lc;
-				
+
 				ParseCopperList(cop1lc);
 				ParseCopperList(cop2lc);
 
@@ -161,10 +161,10 @@ namespace RunAmiga.Custom
 			int counter = MAX_COPPER_ENTRIES;
 			while (counter-- > 0)
 			{
-				ushort ins = (ushort)memory.Read(0,copPC,Size.Word);
+				ushort ins = (ushort)memory.Read(0, copPC, Size.Word);
 				copPC += 2;
 
-				ushort data = (ushort)memory.Read(0,copPC,Size.Word);
+				ushort data = (ushort)memory.Read(0, copPC, Size.Word);
 				copPC += 2;
 
 				//Logger.Write($"{copPC - 4:X8} {ins:X4},{data:X4} ");
@@ -291,6 +291,220 @@ namespace RunAmiga.Custom
 				displays[copStartPC] = new Display(pf, memory);
 		}
 
+		////HRM 3rd Ed, PP24
+		//private uint beamHorz;//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
+		//private uint beamVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
+		private enum CopperState
+		{
+			Running,
+			Waiting,
+		}
+
+		private enum DisplayMode
+		{
+			Normal,
+			HiRes,
+			SuperHiRes,
+		}
+
+		private void RunCopperList(uint address, bool isEvenFrame)
+		{
+			//grap the initial version of these regs.
+			uint diwstrt = memory.Read(0, ChipRegs.DIWSTRT, Size.Word);
+			uint diwstop = memory.Read(0, ChipRegs.DIWSTOP, Size.Word);
+			uint bplcon0 = memory.Read(0, ChipRegs.BPLCON0, Size.Word);
+			uint ddfstrt = memory.Read(0, ChipRegs.DDFSTRT, Size.Word);
+			uint ddfstop = memory.Read(0, ChipRegs.DDFSTOP, Size.Word);
+			uint bpl1mod = (uint)(int)(short)memory.Read(0, ChipRegs.BPL1MOD, Size.Word);
+			uint bpl2mod = (uint)(int)(short)memory.Read(0, ChipRegs.BPL2MOD, Size.Word);
+
+			DisplayMode displayMode = DisplayMode.Normal;
+			if ((bplcon0 & (1 << 15)) != 0)
+				displayMode = DisplayMode.HiRes;
+			if ((bplcon0 & (1 << 6)) != 0)
+				displayMode = DisplayMode.SuperHiRes;
+
+			ushort [] bpldat = new ushort[8];
+			uint[] bplpt = new uint[8];
+
+			bpldat[0] = (ushort)memory.Read(0, ChipRegs.BPL1DAT, Size.Word);
+			bpldat[1] = (ushort)memory.Read(0, ChipRegs.BPL2DAT, Size.Word);
+			bpldat[2] = (ushort)memory.Read(0, ChipRegs.BPL3DAT, Size.Word);
+			bpldat[3] = (ushort)memory.Read(0, ChipRegs.BPL4DAT, Size.Word);
+			bpldat[4] = (ushort)memory.Read(0, ChipRegs.BPL5DAT, Size.Word);
+			bpldat[5] = (ushort)memory.Read(0, ChipRegs.BPL6DAT, Size.Word);
+			bpldat[6] = (ushort)memory.Read(0, ChipRegs.BPL7DAT, Size.Word);
+			bpldat[7] = (ushort)memory.Read(0, ChipRegs.BPL8DAT, Size.Word);
+
+			bplpt[0] = memory.Read(0, ChipRegs.BPL1PTH, Size.Long);
+			bplpt[1] = memory.Read(0, ChipRegs.BPL2PTH, Size.Long);
+			bplpt[2] = memory.Read(0, ChipRegs.BPL3PTH, Size.Long);
+			bplpt[3] = memory.Read(0, ChipRegs.BPL4PTH, Size.Long);
+			bplpt[4] = memory.Read(0, ChipRegs.BPL5PTH, Size.Long);
+			bplpt[5] = memory.Read(0, ChipRegs.BPL6PTH, Size.Long);
+			bplpt[6] = memory.Read(0, ChipRegs.BPL7PTH, Size.Long);
+			bplpt[7] = memory.Read(0, ChipRegs.BPL8PTH, Size.Long);
+
+			uint planes = (bplcon0>>12)&7;
+
+			uint[] colours = new uint[256];
+			colours[0] = 0xffffff;
+			colours[1] = 0x000000;
+			colours[2] = 0x7777cc;
+			colours[3] = 0xbbbbbb;
+
+			int waitH=0, waitV=0;
+			int waitHMask = 0xff, waitVMask = 0xff;
+
+			bool in_display = true;
+			bool in_fetch = true;
+			bool is_new_pixel = true;
+
+			int pixelCountdown = 0;
+			uint col=0x000000;
+
+			uint copPC = address;
+			CopperState state = CopperState.Running;
+			int lines = isEvenFrame ? 312 : 313;
+			for (int v = 0; v < lines; v++)
+			{
+				for (int h = 0; h < 227; h++)
+				{
+					if (state == CopperState.Running)
+					{
+						ushort ins = (ushort)memory.Read(0, copPC, Size.Word);
+						copPC += 2;
+
+						ushort data = (ushort)memory.Read(0, copPC, Size.Word);
+						copPC += 2;
+
+						if ((ins & 0x0001) == 0)
+						{
+							//MOVE
+
+							uint reg = (uint)(ins & 0x1fe);
+
+							uint regAddress = ChipRegs.ChipBase + reg;
+
+							memory.Write(0, regAddress, data, Size.Word);
+							
+							//todo: if regAddress is one of the cached values, need to update them, and deal with writes to copjmp
+						}
+						else if ((ins & 0x0001) == 1)
+						{
+							//WAIT
+							waitH = ins & 0xfe;
+							waitV = (ins >> 8) & 0xff;
+
+							waitHMask = (data & 0xfe)|0xff00;
+							waitVMask = ((data >> 8) & 0x7f)|0xff80;
+							uint blit = (uint)(data >> 15);//totod: blitter is immediate, so currently ignored. in reality, if blitter-busy bit is set the comparisons will fail.
+
+							if ((data & 1) == 0)
+							{
+								//WAIT
+								state = CopperState.Waiting;
+							}
+							else
+							{
+								//SKIP
+								if ((v & waitVMask) >= waitV)
+								{
+									if ((h & waitHMask) >= waitH)
+										copPC += 4;
+								}
+							}
+						}
+					}
+					else if (state == CopperState.Waiting)
+					{
+						if ((v&waitVMask) >= waitV)
+						{
+							if ((h&waitHMask) >= waitH)
+								state = CopperState.Running;
+						}
+					}
+
+					//are we within the display area defined by DIW regs?
+					if (in_display)
+					{
+						//are we within the bitplane fetch area defined by DDF?
+						if (in_fetch)
+						{
+							//is it time to fetch a new pixel colour?
+							if (is_new_pixel)
+							{
+								//is it time to fetch some more bitblane data?
+								pixelCountdown--;
+								if (pixelCountdown < 0)
+								{
+									for (int i = 0; i < planes; i++)
+									{
+										if ((planes & (1 << i)) != 0)
+										{
+											bpldat[i] = (ushort)custom.Read(0, bplpt[i], Size.Word);
+											bplpt[i] += 2;
+										}
+									}
+
+									pixelCountdown = 15;
+								}
+
+								//decode the colour
+								byte pix = 0;
+								for (int i = 0; i < planes; i++)
+									if ((planes & (1 << i)) != 0)
+										pix |= (byte)((bpldat[i] & (1 << (pixelCountdown /*^15*/))) != 0 ? (1 << i) : 0);
+								//pix is the colour
+								col = colours[pix];
+							}
+						}
+						else
+						{
+							//output colour 0 pixels
+							col = colours[0];
+						}
+					}
+					else
+					{
+						// output black pixels
+						col = 0x000000;
+					}
+
+					//plot something
+
+					//227 hclocks @ 3.5MHz, DIW normally 0x81 to 0x1C1 = 0x140 = 296
+					//                      DDF          0x38 to 0x1D0 = 0x198 = 408
+
+					/*
+							During a horizontal scan line (about 63 microseconds), there are 227.5
+							"color clocks", or memory access cycles.  A memory cycle is approximately
+							280 ns in duration.  The total of 227.5 cycles per horizontal line
+							includes both display time and non-display time.  Of this total time, 226
+							cycles are available to be allocated to the various devices that need
+							memory access.
+
+							The time-slot allocation per horizontal line is:
+
+							      4 cycles for memory refresh
+							      3 cycles for disk DMA
+							      4 cycles for audio DMA (2 bytes per channel)
+							     16 cycles for sprite DMA (2 words per channel)
+							     80 cycles for bitplane DMA (even- or odd-numbered slots
+							          according to the display size used)
+					*/
+				}
+				//next horizontal line
+				for (int i = 0; i < planes; i++)
+				{
+					if ((planes & (1 << i)) != 0)
+					{
+						bplpt[i] += ((i&1)==0)? bpl1mod:bpl2mod;
+					}
+				}
+			}
+		}
+
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
@@ -308,7 +522,7 @@ namespace RunAmiga.Custom
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			//Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+
 
 			switch (address)
 			{
@@ -317,16 +531,20 @@ namespace RunAmiga.Custom
 					break;
 				case ChipRegs.COP1LCH:
 					cop1lc = (cop1lc & 0x0000ffff) | ((uint)value << 16);
+					cop1lc &= ChipRegs.ChipAddressMask;
 					break;
 				case ChipRegs.COP1LCL:
 					cop1lc = (cop1lc & 0xffff0000) | value;
+					cop1lc &= ChipRegs.ChipAddressMask;
 					//DebugCopperList(cop1lc);
 					break;
 				case ChipRegs.COP2LCH:
 					cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16);
+					cop2lc &= ChipRegs.ChipAddressMask;
 					break;
 				case ChipRegs.COP2LCL:
 					cop2lc = (cop2lc & 0xffff0000) | value;
+					cop2lc &= ChipRegs.ChipAddressMask;
 					//DebugCopperList(cop2lc);
 					break;
 				case ChipRegs.COPJMP1:
@@ -341,6 +559,9 @@ namespace RunAmiga.Custom
 					copins = value;
 					break;
 			}
+
+			if (cop1lc == 0xc00276 || cop2lc == 0xc00276)
+				Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 		}
 
 	}

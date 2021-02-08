@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -162,13 +163,25 @@ namespace RunAmiga
 		static extern uint FloodFill(IntPtr hdc, int x, int y, int color);
 
 		[DllImport("gdi32.dll")]
+		static extern uint ExtFloodFill(IntPtr hdc, int x, int y, int color, uint type);
+
+		[DllImport("gdi32.dll")]
 		static extern uint SetDCBrushColor(IntPtr hdc, int color);
+
+		[DllImport("gdi32.dll")]
+		static extern uint SetDCPenColor(IntPtr hdc, int color);
 
 		[DllImport("gdi32.dll")]
 		static extern int GetStockObject(IntPtr hdc, int color);
 
 		[DllImport("gdi32.dll")]
 		static extern uint SelectObject(IntPtr hdc, int obj);
+
+		[DllImport("gdi32.dll")]
+		static extern uint LineTo(IntPtr hdc, int x, int y);
+
+		[DllImport("gdi32.dll")]
+		static extern uint MoveToEx(IntPtr hdc, int x, int y, IntPtr lppt);
 
 		public void Reset()
 		{
@@ -196,8 +209,9 @@ namespace RunAmiga
 			//RomTags(rom, 0xf80000);
 
 			//KSLogo(rom);
-
 		}
+
+		private List<Form> forms = new List<Form>();
 
 		private void KSLogo(byte[] rom)
 		{
@@ -215,16 +229,28 @@ namespace RunAmiga
 			int mode = 0; //0 unknown, 1 polyline start, 2 polyline, 3 fill
 			const int ox = 70, oy = 40;
 			var form = new Form { ClientSize = new System.Drawing.Size(320, 200) };
+			var picture = new PictureBox{ Size = new System.Drawing.Size(320,200)};
+			var bitmap = new Bitmap(320,200, PixelFormat.Format32bppRgb);
+			//picture.Image = bitmap;
+
+			form.Controls.Add(picture);
 			form.Show();
-			var g = form.CreateGraphics();
+			forms.Add(form);
+
+			int[] colours = new int[] {0xffffff, 0x000000, 0x7777cc, 0xbbbbbb};
+
+			var g = picture.CreateGraphics();
 			int dx = 0, dy = 0;
-			Pen p = new Pen(Color.Blue);//.FromArgb(0xff0000ff));
+
 			var hdc = g.GetHdc();
+			SelectObject(hdc, (int)bitmap.GetHbitmap());
+
 			int dcbrush = GetStockObject(hdc, 18);
-			SelectObject(hdc, dcbrush);
-			SetDCBrushColor(hdc, 0x0000ff);
-			g.ReleaseHdc();
-			int miny = 200;
+			int dcpen = GetStockObject(hdc, 19);
+
+			//SetDCBrushColor(hdc, colours[0]);
+			SetDCPenColor(hdc, colours[2]);
+
 			for (; ; )
 			{
 				b0 = kslogo[k++];
@@ -233,11 +259,15 @@ namespace RunAmiga
 				if (b0 == 0xfe)
 				{
 					Logger.WriteLine($"fill colour {b1}");
+					SelectObject(hdc, dcbrush);
+					SetDCBrushColor(hdc, colours[b1]);
 					mode = 3;
 				}
 				else if (b0 == 0xff)
 				{
 					Logger.WriteLine($"colour {b1}");
+					SelectObject(hdc, dcpen);
+					SetDCPenColor(hdc, colours[2]);
 					mode = 1;
 				}
 				else
@@ -248,6 +278,7 @@ namespace RunAmiga
 						Logger.WriteLine($"move {ox + b0},{oy + b1}");
 						dx = ox + b0;
 						dy = oy + b1;
+						MoveToEx(hdc, dx, dy, IntPtr.Zero);
 
 						mode = 2;
 					}
@@ -256,11 +287,7 @@ namespace RunAmiga
 						Logger.WriteLine($"draw {ox + b0},{oy + b1} // {ox + b0 - dx},{oy + b1 - dy}");
 						int nx = ox + b0, ny = oy + b1;
 
-						g.DrawLine(p, dx, dy, nx, ny);
-						if (ny == dy)
-						{
-							if (ny < miny) miny = ny;
-						}
+						LineTo(hdc, nx, ny);
 
 						dx = nx;
 						dy = ny;
@@ -268,13 +295,13 @@ namespace RunAmiga
 					else if (mode == 3)
 					{
 						Logger.WriteLine($"fill {ox + b0},{oy + b1}");
-						hdc = g.GetHdc();
-						FloodFill(hdc, ox + b0, oy + b1, 0xff0000);
-						g.ReleaseHdc();
+						//FloodFill(hdc, ox + b0, oy + b1, 0xffffff);
+						ExtFloodFill(hdc, ox + b0, oy + b1, 0x000000, 0);
 						mode = 0;
 					}
 				}
 			}
+			g.ReleaseHdc();
 
 			Application.DoEvents();
 		}

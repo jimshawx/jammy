@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using RunAmiga.Types;
 
@@ -39,6 +40,9 @@ namespace RunAmiga
 			return false;
 		}
 
+		private ulong totalTicks = 0;
+		private ulong tickCount = 0;
+
 		private uint instructionStartPC = 0;
 		public void Emulate(ulong cycles)
 		{
@@ -46,6 +50,12 @@ namespace RunAmiga
 			
 			int ticks = 0;
 			uint pc = Musashi_execute(ref ticks);
+
+			totalTicks += (ulong)ticks;
+			tickCount++;
+
+			if ((tickCount&0xffffff)==0)
+				Logger.WriteLine($"{(double)totalTicks/tickCount}");
 
 			instructionStartPC = pc;
 
@@ -132,7 +142,6 @@ namespace RunAmiga
 		{
 			Musashi_set_pc(pc);
 		}
-
 
 		private delegate uint Musashi_Reader(uint address);
 		private delegate void Musashi_Writer(uint address, uint value);

@@ -108,9 +108,9 @@ namespace RunAmiga
 			//AddBreakpoint(0xb32a, BreakpointType.Write);
 			//AddBreakpoint(0xfd18dc);
 
-			AddBreakpoint(0xfe5efa);//Mouse
-			AddBreakpoint(0xfe544e);//Install Keyboard ISR
-
+			//AddBreakpoint(0xfe5efa);//Mouse
+			//AddBreakpoint(0xfe544e);//Install Keyboard ISR
+			//AddBreakpoint(0xfc6d00);//wrong copper address 0xc00276
 			this.labeller = labeller;
 
 			LoadComments();
@@ -358,12 +358,19 @@ namespace RunAmiga
 				uint addressEnd = address + size;
 				while (address < addressEnd)
 				{
-					if (restarts.Any() && address > restarts.First())
+					if (restarts.Any())
 					{
-						address = restarts.First();
-						restarts = restarts.Skip(1);
+						if (address == restarts.First())
+						{
+							restarts = restarts.Skip(1);
+						}
+						else if (address > restarts.First())
+						{
+							address = restarts.First();
+							restarts = restarts.Skip(1);
+						}
 					}
-					
+
 					if (labeller.HasLabel(address))
 					{
 						txt.Append($"{labeller.LabelName(address)}:\n");

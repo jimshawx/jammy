@@ -1,5 +1,4 @@
-﻿using System;
-using RunAmiga.Types;
+﻿using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
@@ -87,68 +86,95 @@ namespace RunAmiga.Custom
 
 			switch (address)
 			{
-				case ChipRegs.BLTCON0: bltcon0 = value; break;
-				case ChipRegs.BLTCON1: bltcon1 = value; break;
+				case ChipRegs.BLTCON0:
+					bltcon0 = value;
+					break;
+				case ChipRegs.BLTCON1:
+					bltcon1 = value;
+					break;
 
-				case ChipRegs.BLTAFWM: bltafwm = value; break;
-				case ChipRegs.BLTALWM: bltalwm = value; break;
+				case ChipRegs.BLTAFWM:
+					bltafwm = value;
+					break;
+				case ChipRegs.BLTALWM:
+					bltalwm = value;
+					break;
 
-				case ChipRegs.BLTCPTH: bltcpt = (bltcpt & 0x0000ffff) | ((uint) value << 16); break;
-				case ChipRegs.BLTCPTL: bltcpt = (bltcpt & 0xffff0000) | value; break;
-				case ChipRegs.BLTBPTH: bltbpt = (bltbpt & 0x0000ffff) | ((uint) value << 16); break;
-				case ChipRegs.BLTBPTL: bltbpt = (bltbpt & 0xffff0000) | value; break;
-				case ChipRegs.BLTAPTH: bltapt = (bltapt & 0x0000ffff) | ((uint) value << 16); break;
-				case ChipRegs.BLTAPTL: bltapt = (bltapt & 0xffff0000) | value; break;
-				case ChipRegs.BLTDPTH: bltdpt = (bltdpt & 0x0000ffff) | ((uint) value << 16); break;
-				case ChipRegs.BLTDPTL: bltdpt = (bltdpt & 0xffff0000) | value; break;
+				case ChipRegs.BLTCPTH:
+					bltcpt = ((bltcpt & 0x0000ffff) | ((uint)value << 16)) & ChipRegs.ChipAddressMask;
+					break;
+				case ChipRegs.BLTCPTL:
+					bltcpt = ((bltcpt & 0xffff0000) | value) & ChipRegs.ChipAddressMask;
+					break;
+				case ChipRegs.BLTBPTH:
+					bltbpt = ((bltbpt & 0x0000ffff) | ((uint)value << 16)) & ChipRegs.ChipAddressMask;
+					break;
+				case ChipRegs.BLTBPTL:
+					bltbpt = ((bltbpt & 0xffff0000) | value) & ChipRegs.ChipAddressMask;
+					break;
+				case ChipRegs.BLTAPTH:
+					bltapt = ((bltapt & 0x0000ffff) | ((uint)value << 16)) & ChipRegs.ChipAddressMask;
+					break;
+				case ChipRegs.BLTAPTL:
+					bltapt = ((bltapt & 0xffff0000) | value) & ChipRegs.ChipAddressMask;
+					break;
+				case ChipRegs.BLTDPTH:
+					bltdpt = ((bltdpt & 0x0000ffff) | ((uint)value << 16)) & ChipRegs.ChipAddressMask;
+					break;
+				case ChipRegs.BLTDPTL:
+					bltdpt = ((bltdpt & 0xffff0000) | value) & ChipRegs.ChipAddressMask;
+					break;
 
 				case ChipRegs.BLTSIZE:
 					bltsize = value;
 					BlitSmall(insaddr);
 					break;
 
-				case ChipRegs.BLTCON0L: bltcon0 = (bltcon0 & 0x0000ff00) | ((uint) value & 0x000000ff); break;
+				case ChipRegs.BLTCON0L:
+					bltcon0 = (bltcon0 & 0x0000ff00) | ((uint)value & 0x000000ff);
+					break;
 
-				case ChipRegs.BLTSIZV: bltsizv = value; break;
+				case ChipRegs.BLTSIZV:
+					bltsizv = value;
+					break;
 				case ChipRegs.BLTSIZH:
 					bltsizh = value;
-					BlitBig(insaddr); break;
+					BlitBig(insaddr);
+					break;
 
-				case ChipRegs.BLTCMOD: bltcmod = (uint)(short)value; break;
-				case ChipRegs.BLTBMOD: bltbmod = (uint)(short)value; break;
-				case ChipRegs.BLTAMOD: bltamod = (uint)(short)value; break;
-				case ChipRegs.BLTDMOD: bltdmod = (uint)(short)value; break;
+				case ChipRegs.BLTCMOD:
+					bltcmod = (uint)(short)value & 0xfffffffe;
+					break;
+				case ChipRegs.BLTBMOD:
+					bltbmod = (uint)(short)value & 0xfffffffe;
+					break;
+				case ChipRegs.BLTAMOD:
+					bltamod = (uint)(short)value & 0xfffffffe;
+					break;
+				case ChipRegs.BLTDMOD:
+					bltdmod = (uint)(short)value & 0xfffffffe;
+					break;
 
-				case ChipRegs.BLTCDAT: bltcdat = value; break;
-				case ChipRegs.BLTBDAT: bltbdat = value; break;
-				case ChipRegs.BLTADAT: bltadat = value; break;
-				case ChipRegs.BLTDDAT: bltddat = value; break;
+				case ChipRegs.BLTCDAT:
+					bltcdat = value;
+					break;
+				case ChipRegs.BLTBDAT:
+					bltbdat = value;
+					break;
+				case ChipRegs.BLTADAT:
+					bltadat = value;
+					break;
+				case ChipRegs.BLTDDAT:
+					bltddat = value;
+					break;
 			}
-
-			//hacky alignment fudge
-			//these bits are ignored anyway
-			bltapt &= ~1u;
-			bltbpt &= ~1u;
-			bltcpt &= ~1u;
-			bltdpt &= ~1u;
-
-			bltamod &= ~1u;
-			bltbmod &= ~1u;
-			bltcmod &= ~1u;
-			bltdmod &= ~1u;
 		}
 
 		private void BlitSmall(uint insaddr)
 		{
 			if ((bltcon1 & 1) != 0)
 			{
-				Line(insaddr);
-				return;
-			}
-
-			if ((bltcon1 & (7 << 2)) != 0)
-			{
-				Fill(insaddr);
+				Line2(insaddr);
 				return;
 			}
 
@@ -162,23 +188,11 @@ namespace RunAmiga.Custom
 		{
 			if ((bltcon1 & 1) != 0)
 			{
-				Line(insaddr);
-				return;
-			}
-
-			if ((bltcon1 & (7 << 2)) != 0)
-			{
-				Fill(insaddr);
+				Line2(insaddr);
 				return;
 			}
 
 			Blit(bltsizh, bltsizv);
-		}
-
-		private void Fill(uint insaddr)
-		{
-			//throw new NotImplementedException();
-			Logger.WriteLine($"Fill!");
 		}
 
 		private void Blit(uint width, uint height)
@@ -201,11 +215,16 @@ namespace RunAmiga.Custom
 			//if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
 			//if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
 			//if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
-			//if ((bltcon1 & (7 << 2)) != 0)
-			//	Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
+				Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 
-			int ashift = (int) (bltcon0 >> 12);
-			int bshift = (int) (bltcon1 >> 12);
+			bool dont_blit = false;
+			//these ones are weird
+			if ((bltcon0 & 0xff) == 0x1a && (bltcon1 & 2) != 0)//00,1a,2a,3a,ca,ea
+				dont_blit = true;
+
+			int ashift = (int)(bltcon0 >> 12);
+			int bshift = (int)(bltcon1 >> 12);
 
 			uint bltzero = 0;
 			uint s_bltadat, s_bltbdat;
@@ -224,23 +243,23 @@ namespace RunAmiga.Custom
 						bltadat = memory.Read(0, bltapt, Size.Word);
 
 					s_bltadat = bltadat;
-					
+
 					if (w == 0) s_bltadat &= bltafwm;
 					else if (w == width - 1) s_bltadat &= bltalwm;
 
 					if ((bltcon1 & (1u << 1)) != 0)
 					{
-						s_bltadat <<= ashift;
-						s_bltadat |= bltabits;
-						bltabits = s_bltadat >> 16;
-						s_bltadat &= 0xffff;
+						s_bltadat <<= ashift;                 // 0000000000000111:1111111111111000, say ash = 3
+						s_bltadat |= bltabits;                // 0000000000000111:1111111111111aaa
+						bltabits = s_bltadat >> 16;           // 0000000000000000:0000000000000111
+						s_bltadat &= 0xffff;                  // 0000000000000000:1111111111111aaa
 					}
 					else
 					{
-						s_bltadat <<= (16 - ashift);
-						s_bltadat |= bltabits;
-						bltabits = s_bltadat << 16;
-						s_bltadat >>= 16;
+						s_bltadat <<= (16 - ashift);          // 0001111111111111:1110000000000000
+						s_bltadat |= bltabits;                // aaa1111111111111:1110000000000000
+						bltabits = s_bltadat << 16;           // 1110000000000000:0000000000000000
+						s_bltadat >>= 16;                     // 0000000000000000:aaa1111111111111
 					}
 
 					if ((bltcon0 & (1u << 10)) != 0)
@@ -276,47 +295,43 @@ namespace RunAmiga.Custom
 					if ((bltcon0 & 0x40) != 0) bltddat |=  s_bltadat &  s_bltbdat & ~bltcdat;
 					if ((bltcon0 & 0x80) != 0) bltddat |=  s_bltadat &  s_bltbdat &  bltcdat;
 
+					//todo: apply fill here
+
 					bltzero |= bltddat;
 
-					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
-						memory.Write(0, bltdpt, (ushort) bltddat, Size.Word);
-
-					//Logger.Write($"{Convert.ToString(bltddat,2).PadLeft(16,'0')}");
+					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0) && !dont_blit)
+						memory.Write(0, bltdpt, (ushort)bltddat, Size.Word);
 
 					if ((bltcon1 & (1u << 1)) != 0)
 					{
 						if ((bltcon0 & (1u << 11)) != 0) bltapt -= 2;
 						if ((bltcon0 & (1u << 10)) != 0) bltbpt -= 2;
-						if ((bltcon0 & (1u << 9)) != 0) bltcpt -= 2;
-						if ((bltcon0 & (1u << 8)) != 0) bltdpt -= 2;
+						if ((bltcon0 & (1u <<  9)) != 0) bltcpt -= 2;
+						if ((bltcon0 & (1u <<  8)) != 0) bltdpt -= 2;
 					}
 					else
 					{
 						if ((bltcon0 & (1u << 11)) != 0) bltapt += 2;
 						if ((bltcon0 & (1u << 10)) != 0) bltbpt += 2;
-						if ((bltcon0 & (1u << 9)) != 0) bltcpt += 2;
-						if ((bltcon0 & (1u << 8)) != 0) bltdpt += 2;
+						if ((bltcon0 & (1u <<  9)) != 0) bltcpt += 2;
+						if ((bltcon0 & (1u <<  8)) != 0) bltdpt += 2;
 					}
 				}
-				//Logger.WriteLine("");
-
 				if ((bltcon1 & (1u << 1)) != 0)
 				{
 					if ((bltcon0 & (1u << 11)) != 0) bltapt -= bltamod;
 					if ((bltcon0 & (1u << 10)) != 0) bltbpt -= bltbmod;
-					if ((bltcon0 & (1u << 9)) != 0) bltcpt -= bltcmod;
-					if ((bltcon0 & (1u << 8)) != 0) bltdpt -= bltdmod;
+					if ((bltcon0 & (1u <<  9)) != 0) bltcpt -= bltcmod;
+					if ((bltcon0 & (1u <<  8)) != 0) bltdpt -= bltdmod;
 				}
 				else
 				{
 					if ((bltcon0 & (1u << 11)) != 0) bltapt += bltamod;
 					if ((bltcon0 & (1u << 10)) != 0) bltbpt += bltbmod;
-					if ((bltcon0 & (1u << 9)) != 0) bltcpt += bltcmod;
-					if ((bltcon0 & (1u << 8)) != 0) bltdpt += bltdmod;
+					if ((bltcon0 & (1u <<  9)) != 0) bltcpt += bltcmod;
+					if ((bltcon0 & (1u <<  8)) != 0) bltdpt += bltdmod;
 				}
 			}
-
-
 
 			//write the BZERO bit in DMACON
 			if (bltzero == 0)
@@ -324,11 +339,11 @@ namespace RunAmiga.Custom
 			else
 				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
 
-			//write blitter interrupt bit to INTREQ
-			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int) Interrupt.BLIT), Size.Word);
-
 			//disable blitter busy in DMACON
 			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+
+			//write blitter interrupt bit to INTREQ
+			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)Interrupt.BLIT), Size.Word);
 
 			//blitter done
 			interrupt.TriggerInterrupt(Interrupt.BLIT);
@@ -369,24 +384,46 @@ namespace RunAmiga.Custom
 			tx *= 2.0;
 			ty *= 2.0;
 
-			double dx=0, dy=0;
+			double dx = 0, dy = 0;
 			switch (octant)
 			{
-				case 0: dx =  ty; dy = -tx; break;
-				case 1: dx =  ty; dy =  tx; break;
-				case 2: dx = -ty; dy = -tx; break;
-				case 3: dx = -ty; dy =  tx; break;
-				case 4: dx =  tx; dy = -ty; break;
-				case 5: dx = -tx; dy = -ty; break;
-				case 6: dx =  tx; dy =  ty; break;
-				case 7: dx = -tx; dy =  ty; break;
+				case 0:
+					dx = ty;
+					dy = tx;
+					break;
+				case 1:
+					dx = ty;
+					dy = -tx;
+					break;
+				case 2:
+					dx = -ty;
+					dy = tx;
+					break;
+				case 3:
+					dx = -ty;
+					dy = -tx;
+					break;
+				case 4:
+					dx = tx;
+					dy = ty;
+					break;
+				case 5:
+					dx = -tx;
+					dy = ty;
+					break;
+				case 6:
+					dx = tx;
+					dy = -ty;
+					break;
+				case 7:
+					dx = -tx;
+					dy = -ty;
+					break;
 			}
 
-			dy = -dy;
-
 			double dydl, dxdl;
-			dydl = dy / (length-1);
-			dxdl = dx / (length-1);
+			dydl = dy / (length - 1);
+			dxdl = dx / (length - 1);
 
 			//Logger.WriteLine($"tx,ty {tx,3},{ty,3} dx,dy {dx,3},{dy,3} {Convert.ToString(octant,2).PadLeft(3,'0')}({octant}) {sign} am:{bltamod&0xffff:X4} cm:{bltcmod:X4} dm:{bltdmod:X4} a:{bltapt,5} d:{bltdpt:X8} dydl:{dydl} dxdl:{dxdl}");
 
@@ -399,8 +436,11 @@ namespace RunAmiga.Custom
 			//if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
 			//if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
 			//if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
-			//if ((bltcon1 & (7 << 2)) != 0)
+			//if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
+			//{
 			//	Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			//	return;
+			//}
 
 			//todo: these are supposed to be the same, why are they not?
 			bltdmod = bltcmod;
@@ -414,34 +454,34 @@ namespace RunAmiga.Custom
 			double y = 0.0;
 			while (length-- > 0)
 			{
-				int x1 = (int) (x+0.5);
+				int x1 = (int)(x + 0.5);
 
 				bltcpt = bltdpt;
 
 				if ((bltcon0 & (1u << 9)) != 0)
 					bltcdat = memory.Read(insaddr, bltcpt, Size.Word);
 
-				bltadat = (1u << (x1^15));
+				bltadat = (1u << (x1 ^ 15));
 
 				bltddat = 0;
 				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdat & ~bltcdat;
-				if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdat &  bltcdat;
-				if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat &  bltbdat & ~bltcdat;
-				if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat &  bltbdat &  bltcdat;
-				if ((bltcon0 & 0x10) != 0) bltddat |=  bltadat & ~bltbdat & ~bltcdat;
-				if ((bltcon0 & 0x20) != 0) bltddat |=  bltadat & ~bltbdat &  bltcdat;
-				if ((bltcon0 & 0x40) != 0) bltddat |=  bltadat &  bltbdat & ~bltcdat;
-				if ((bltcon0 & 0x80) != 0) bltddat |=  bltadat &  bltbdat &  bltcdat;
+				if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdat & bltcdat;
+				if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat & bltbdat & ~bltcdat;
+				if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat & bltbdat & bltcdat;
+				if ((bltcon0 & 0x10) != 0) bltddat |= bltadat & ~bltbdat & ~bltcdat;
+				if ((bltcon0 & 0x20) != 0) bltddat |= bltadat & ~bltbdat & bltcdat;
+				if ((bltcon0 & 0x40) != 0) bltddat |= bltadat & bltbdat & ~bltcdat;
+				if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdat & bltcdat;
 
 				if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
 					memory.Write(insaddr, bltdpt, bltddat, Size.Word);
-				
+
 				bltzero |= bltddat;
 
 				x += dxdl;
 				if (dxdl < 0 && x < 0)
 				{
-					bltdpt += (uint)(2 * (-1+(int)(x / 16)));
+					bltdpt += (uint)(2 * (-1 + (int)(x / 16)));
 					x = 16 + (x % 16.0);
 				}
 				else if (dxdl > 0 && x >= 16)
@@ -462,6 +502,7 @@ namespace RunAmiga.Custom
 					y = y % 1.0;
 				}
 			}
+
 			bltcpt = bltdpt;
 
 			//write the BZERO bit in DMACON
@@ -478,6 +519,316 @@ namespace RunAmiga.Custom
 
 			//blitter done
 			interrupt.TriggerInterrupt(Interrupt.BLIT);
+		}
+
+		private void Line2(uint insaddr)
+		{
+			var b = new BlitterLine.Blitter();
+
+			b.bltadat = (ushort)bltadat;
+			b.bltbdat = (ushort)bltbdat;
+			b.bltbdat_original = bltbdat;
+			b.bltcdat = (ushort)bltcdat;
+
+			b.bltcon = (bltcon0<<16)|bltcon1;
+			b.bltamod = (ushort)bltamod;
+			b.bltbmod = (ushort)bltbmod;
+			b.bltcmod = (ushort)bltcmod;
+
+			b.bltafwm = (ushort)bltafwm;
+
+			b.bltapt = bltapt;
+			b.bltcpt = bltcpt;
+			b.bltdpt = bltdpt;
+
+			b.height = bltsize >> 6;
+
+			b.a_shift_asc = bltcon0 >> 12;
+			b.a_shift_desc = 16-b.a_shift_asc;
+
+			b.b_shift_asc = bltcon1 >> 12;
+
+			b.bltzero = 0;
+
+			BlitterLine.blitterLineMode(b, memory);
+
+			bltadat = b.bltadat;
+			//bltbdat = b.bltbdat_original;
+			bltcdat = b.bltcdat;
+
+			bltcon1 = b.bltcon;
+			bltcon0 = b.bltcon >> 16;
+			bltamod = b.bltamod;
+			bltbmod = b.bltbmod;
+			bltcmod = b.bltcmod;
+			bltafwm = b.bltafwm;
+
+			bltapt = b.bltapt;
+			bltcpt = b.bltcpt;
+			bltdpt = b.bltdpt;
+
+			//write the BZERO bit in DMACON
+			if (b.bltzero == 0)
+				custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
+			else
+				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+
+			interrupt.TriggerInterrupt(Interrupt.BLIT);
+		}
+	}
+
+	public static class BlitterLine
+	{
+		public class Blitter
+		{
+			public ushort bltadat;
+			public uint bltbdat_original;
+			public ushort bltbdat; //output
+			public ushort bltcdat;
+
+			public uint bltcon; //output
+			public ushort bltamod;
+			public ushort bltbmod;
+			public ushort bltcmod;
+			public ushort bltafwm;
+
+			public uint bltapt;
+			public uint bltcpt;
+			public uint bltdpt;
+
+			public uint height;
+
+			public uint a_shift_asc;
+			public uint a_shift_desc;
+
+			public uint b_shift_asc;
+
+			public uint bltzero; //output
+		}
+
+		private static uint chipsetMaskPtr(uint c)
+		{
+			return c & ChipRegs.ChipAddressMask;
+		}
+
+		private static void blitterLineIncreaseX(ref uint a_shift, ref uint cpt)
+		{
+			if (a_shift < 15) a_shift++;
+			else
+			{
+				a_shift = 0;
+				cpt = chipsetMaskPtr(cpt + 2);
+			}
+		}
+
+		private static void blitterLineDecreaseX(ref uint a_shift, ref uint cpt)
+		{
+			{
+				if (a_shift == 0)
+				{
+					a_shift = 16;
+					cpt = chipsetMaskPtr(cpt - 2);
+				}
+
+				a_shift--;
+			}
+		}
+
+		private static void blitterLineIncreaseY(ref uint cpt, ushort cmod)
+		{
+			cpt = chipsetMaskPtr(cpt + cmod);
+		}
+
+		private static void blitterLineDecreaseY(ref uint cpt, ushort cmod)
+		{
+			cpt = chipsetMaskPtr(cpt - cmod);
+		}
+
+		private static ushort chipmemReadWord(uint address)
+		{
+			return (ushort)memory.Read(0, address, Size.Word);
+		}
+
+		private static void chipmemWriteWord(ushort value, uint address)
+		{
+			memory.Write(0, address, value, Size.Word);
+		}
+
+		private static void memoryWriteWord(ushort value, uint address)
+		{
+			memory.Write(0, address, value, Size.Word);
+		}
+
+		private static IMemoryMappedDevice memory;
+
+		public static void blitterLineMode(Blitter blitter, IMemoryMappedDevice memory)
+		{
+			BlitterLine.memory = memory;
+
+			uint bltadat_local;
+			uint bltbdat_local = 0;
+			uint bltcdat_local = blitter.bltcdat;
+			uint bltddat_local;
+			ushort mask = (ushort)((blitter.bltbdat_original >> (int)blitter.b_shift_asc) | (blitter.bltbdat_original << (int)(16 - blitter.b_shift_asc)));
+			bool a_enabled = (blitter.bltcon & 0x08000000) != 0;
+			bool c_enabled = (blitter.bltcon & 0x02000000) != 0;
+
+			bool decision_is_signed = (((blitter.bltcon >> 6) & 1) == 1);
+			int decision_variable = (int)(short)blitter.bltapt;
+
+			// Quirk: Set decision increases to 0 if a is disabled, ensures bltapt remains unchanged
+			short decision_inc_signed = (a_enabled) ? ((short)blitter.bltbmod) : (short)0;
+			short decision_inc_unsigned = (a_enabled) ? ((short)blitter.bltamod) : (short)0;
+
+			uint bltcpt_local = blitter.bltcpt;
+			uint bltdpt_local = blitter.bltdpt;
+			uint blit_a_shift_local = blitter.a_shift_asc;
+			uint bltzero_local = 0;
+			uint i;
+
+			uint sulsudaul = (uint)((blitter.bltcon >> 2) & 0x7);
+			bool x_independent = (sulsudaul & 4) != 0;
+			bool x_inc = ((!x_independent) && !((sulsudaul & 2) != 0)) || (x_independent && !((sulsudaul & 1) != 0));
+			bool y_inc = ((!x_independent) && !((sulsudaul & 1) != 0)) || (x_independent && !((sulsudaul & 2) != 0));
+			bool single_dot = false;
+			byte minterm = (byte)(blitter.bltcon >> 16);
+
+			for (i = 0; i < blitter.height; ++i)
+			{
+				// Read C-data from memory if the C-channel is enabled
+				if (c_enabled)
+				{
+					bltcdat_local = chipmemReadWord(bltcpt_local);
+				}
+
+				// Calculate data for the A-channel
+				bltadat_local = (ushort)((blitter.bltadat & blitter.bltafwm) >> (int)blit_a_shift_local);
+
+				// Check for single dot
+				if (x_independent)
+				{
+					if ((blitter.bltcon & 0x00000002) != 0)
+					{
+						if (single_dot)
+						{
+							bltadat_local = 0;
+						}
+						else
+						{
+							single_dot = true;
+						}
+					}
+				}
+
+				// Calculate data for the B-channel
+				bltbdat_local = ((mask & 1) != 0) ? (ushort)0xffff : (ushort)0;
+
+				// Calculate result
+				bltddat_local = 0;
+				if ((minterm & 0x01) != 0) bltddat_local |= ~bltadat_local & ~bltbdat_local & ~bltcdat_local;
+				if ((minterm & 0x02) != 0) bltddat_local |= ~bltadat_local & ~bltbdat_local &  bltcdat_local;
+				if ((minterm & 0x04) != 0) bltddat_local |= ~bltadat_local &  bltbdat_local & ~bltcdat_local;
+				if ((minterm & 0x08) != 0) bltddat_local |= ~bltadat_local &  bltbdat_local &  bltcdat_local;
+				if ((minterm & 0x10) != 0) bltddat_local |=  bltadat_local & ~bltbdat_local & ~bltcdat_local;
+				if ((minterm & 0x20) != 0) bltddat_local |=  bltadat_local & ~bltbdat_local &  bltcdat_local;
+				if ((minterm & 0x40) != 0) bltddat_local |=  bltadat_local &  bltbdat_local & ~bltcdat_local;
+				if ((minterm & 0x80) != 0) bltddat_local |=  bltadat_local &  bltbdat_local &  bltcdat_local;
+
+				// Save result to D-channel, same as the C ptr after first pixel. 
+				if (c_enabled) // C-channel must be enabled
+				{
+					chipmemWriteWord((ushort)bltddat_local, bltdpt_local);
+				}
+
+				// Remember zero result status
+				bltzero_local = bltzero_local | bltddat_local;
+
+				// Rotate mask
+				mask = (ushort)((mask << 1) | (mask >> 15));
+
+				// Test movement in the X direction
+				// When the decision variable gets positive,
+				// the line moves one pixel to the right
+
+				// decrease/increase x
+				if (decision_is_signed)
+				{
+					// Do not yet increase, D has sign
+					// D = D + (2*sdelta = bltbmod)
+					decision_variable += decision_inc_signed;
+				}
+				else
+				{
+					// increase, D reached a positive value
+					// D = D + (2*sdelta - 2*ldelta = bltamod)
+					decision_variable += decision_inc_unsigned;
+
+					if (!x_independent)
+					{
+						if (x_inc)
+						{
+							blitterLineIncreaseX(ref blit_a_shift_local, ref bltcpt_local);
+						}
+						else
+						{
+							blitterLineDecreaseX(ref blit_a_shift_local, ref bltcpt_local);
+						}
+					}
+					else
+					{
+						if (y_inc)
+						{
+							blitterLineIncreaseY(ref bltcpt_local, blitter.bltcmod);
+						}
+						else
+						{
+							blitterLineDecreaseY(ref bltcpt_local, blitter.bltcmod);
+						}
+
+						single_dot = false;
+					}
+				}
+
+				decision_is_signed = ((short)decision_variable < 0);
+
+				if (!x_independent)
+				{
+					// decrease/increase y
+					if (y_inc)
+					{
+						blitterLineIncreaseY(ref bltcpt_local, blitter.bltcmod);
+					}
+					else
+					{
+						blitterLineDecreaseY(ref bltcpt_local, blitter.bltcmod);
+					}
+				}
+				else
+				{
+					if (x_inc)
+					{
+						blitterLineIncreaseX(ref blit_a_shift_local, ref bltcpt_local);
+					}
+					else
+					{
+						blitterLineDecreaseX(ref blit_a_shift_local, ref bltcpt_local);
+					}
+				}
+
+				bltdpt_local = bltcpt_local;
+			}
+
+			blitter.bltcon = (ushort)(blitter.bltcon & 0x0FFFFFFBF);
+			if (decision_is_signed) blitter.bltcon |= 0x00000040;
+
+			blitter.a_shift_asc = blit_a_shift_local;
+			blitter.a_shift_desc = 16 - blitter.a_shift_asc;
+			blitter.bltbdat = (ushort)bltbdat_local;
+			blitter.bltapt = (uint)((blitter.bltapt & 0xffff0000) | (decision_variable & 0xffff));
+			blitter.bltcpt = bltcpt_local;
+			blitter.bltdpt = bltdpt_local;
+			blitter.bltzero = bltzero_local;
+			memoryWriteWord(0x8040, 0x00DFF09C);
 		}
 	}
 }
