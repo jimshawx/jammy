@@ -56,7 +56,7 @@ namespace RunAmiga.Custom
 				copperTime -= 140_000;
 
 				//RunCopperList(cop1lc, false);
-				if ((cf++ % 50) == 0)
+				if ((cf++ % 20) == 0)
 					RunCopperList(cop1lc, false);
 				//if (((25 + cf++) % 50) == 0)
 				//	RunCopperList(cop2lc, false);
@@ -169,10 +169,13 @@ namespace RunAmiga.Custom
 			SuperHiRes=1<<6,
 		}
 
-
-		private void RunCopperList(uint address, bool isEvenFrame)
+		private void RunCopperList(uint copPC, bool isEvenFrame)
 		{
-			Logger.WriteLine($"COP  {address:X6}");
+			Array.Clear(screen,0,screen.Length);
+			
+			if (copPC == 0) return;
+
+			//Logger.WriteLine($"COP  {copPC:X6} {bplpt[0]:X6} {bplpt[1]:X6}");
 			colour[0] = 0xfff;
 			colour[1] = 0x000;
 			colour[2] = 0x77c;
@@ -189,10 +192,9 @@ namespace RunAmiga.Custom
 			bool in_fetch = true;
 			bool is_new_pixel = true;
 
-			ushort pixelCountdown = 0;
+			int pixelCountdown = -1;
 			uint col=0x000000;
 
-			uint copPC = address;
 			CopperState state = CopperState.Running;
 			int lines = isEvenFrame ? 312 : 313;
 
@@ -201,7 +203,7 @@ namespace RunAmiga.Custom
 			for (int v = 0; v < lines; v++)
 			{
 				int lineStart = dptr;
-
+				pixelCountdown = -1;
 				for (int h = 0; h < 227; h++)
 				{
 					//copper instruction every even clock
@@ -223,17 +225,17 @@ namespace RunAmiga.Custom
 
 								uint regAddress = ChipRegs.ChipBase + reg;
 
-								memory.Write(0, regAddress, data, Size.Word);
+								custom.Write(0, regAddress, data, Size.Word);
 
 								if (regAddress == ChipRegs.COPJMP1)
 								{
 									copPC = cop1lc;
-									Logger.WriteLine($"JMP1 {copPC:X6}");
+									//Logger.WriteLine($"JMP1 {copPC:X6}");
 								}
 								else if (regAddress == ChipRegs.COPJMP2)
 								{
 									copPC = cop2lc;
-									Logger.WriteLine($"JMP2 {copPC:X6}");
+									//Logger.WriteLine($"JMP2 {copPC:X6}");
 								}
 							}
 							else if ((ins & 0x0001) == 1)
@@ -253,7 +255,7 @@ namespace RunAmiga.Custom
 								if ((data & 1) == 0)
 								{
 									//WAIT
-									Logger.WriteLine($"WAIT {waitH},{waitV} {waitHMask:X3} {waitVMask:X3}");
+									//Logger.WriteLine($"WAIT {waitH},{waitV} {waitHMask:X3} {waitVMask:X3}");
 									state = CopperState.Waiting;
 								}
 								else
@@ -266,6 +268,10 @@ namespace RunAmiga.Custom
 									}
 								}
 							}
+
+							//this is usually how a copper list ends
+							if (ins == 0xffff && data == 0xfffe)
+								h = v = 1000;
 						}
 						else if (state == CopperState.Waiting)
 						{
@@ -273,7 +279,7 @@ namespace RunAmiga.Custom
 							{
 								if ((h & waitHMask) >= waitH)
 								{
-									Logger.WriteLine($"RUN  {h},{v}");
+									//Logger.WriteLine($"RUN  {h},{v}");
 									state = CopperState.Running;
 								}
 							}
@@ -300,7 +306,7 @@ namespace RunAmiga.Custom
 						//1 colour clock, draw 2 pixel
 						pixelLoop = 2;
 					}
-					in_fetch = h >= ddfstrt && h < ddfstop &&
+					in_fetch = h >= ddfstrt && h <= ddfstop &&
 					           v >= (diwstrt >> 8) &&  v < ((diwstop>>8)+(((diwstop&0x8000)^0x8000)>>7));
 
 					for (int p = 0; p < pixelLoop; p++)
@@ -317,17 +323,16 @@ namespace RunAmiga.Custom
 								//if (is_new_pixel)
 								{
 									//is it time to fetch some more bitblane data?
-									if (pixelCountdown <= 0)
+									if (pixelCountdown < 0)
 									{
 										int planes = (bplcon0 >> 12) & 7;
-
 										for (int i = 0; i < planes; i++)
 										{
 											bpldat[i] = (ushort)memory.Read(0, bplpt[i], Size.Word);
 											bplpt[i] += 2;
 										}
 
-										pixelCountdown = 0x8000;
+										pixelCountdown = 15;
 									}
 
 									//decode the colour
@@ -335,11 +340,11 @@ namespace RunAmiga.Custom
 										byte pix = 0;
 										int planes = (bplcon0 >> 12) & 7;
 										for (int i = 0; i < planes; i++)
-											pix |= (byte)((bpldat[i] & pixelCountdown) != 0 ? (1 << i) : 0);
+											pix |= (byte)((bpldat[i] & (1<<pixelCountdown)) != 0 ? (1 << i) : 0);
 										//pix is the colour
 										int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
 										col = truecolour[pix + bank];
-										pixelCountdown>>=1;
+										pixelCountdown--;
 									}
 								}
 							}
@@ -347,7 +352,7 @@ namespace RunAmiga.Custom
 							{
 								//output colour 0 pixels
 								col = truecolour[0];
-								col = 0xffff00;
+								col = 0xff0000;
 							}
 						}
 						//else
@@ -368,10 +373,7 @@ namespace RunAmiga.Custom
 					int planes = (bplcon0 >> 12) & 7;
 					for (int i = 0; i < planes; i++)
 					{
-						if ((planes & (1 << i)) != 0)
-						{
-							bplpt[i] += ((i & 1) == 0) ? bpl2mod : bpl1mod;
-						}
+						bplpt[i] += ((i & 1) == 0) ? bpl2mod : bpl1mod;
 					}
 				}
 

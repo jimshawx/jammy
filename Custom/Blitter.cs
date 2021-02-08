@@ -220,8 +220,8 @@ namespace RunAmiga.Custom
 
 			bool dont_blit = false;
 			//these ones are weird
-			if ((bltcon0 & 0xff) == 0x1a && (bltcon1 & 2) != 0)//00,1a,2a,3a,ca,ea
-				dont_blit = true;
+			//if ((bltcon0 & 0xff) == 0x1a && (bltcon1 & 2) != 0)//00,1a,2a,3a,ca,ea
+			//	dont_blit = true;
 
 			int ashift = (int)(bltcon0 >> 12);
 			int bshift = (int)(bltcon1 >> 12);
