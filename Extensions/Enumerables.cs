@@ -29,6 +29,17 @@ namespace RunAmiga.Extensions
 			}
 		}
 
+		public static IEnumerable<byte> AsByte(this uint[] src)
+		{
+			for (int i = 0; i < src.Length; i++)
+			{
+				yield return (byte)src[i];
+				yield return (byte)(src[i]>>8);
+				yield return (byte)(src[i]>>16);
+				yield return (byte)(src[i]>>24);
+			}
+		}
+
 		public static IEnumerable<byte> AsByte(this uint v)
 		{
 			yield return (byte)(v >> 24);

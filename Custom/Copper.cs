@@ -1,5 +1,12 @@
-﻿using System.Collections.Generic;
-using RunAmiga.Types;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using RunAmiga.Extensions;
+using Size = RunAmiga.Types.Size;
 
 namespace RunAmiga.Custom
 {
@@ -9,11 +16,28 @@ namespace RunAmiga.Custom
 		private readonly Chips custom;
 		private readonly Interrupt interrupt;
 
+		private Form form;
+		private Bitmap bitmap;
+		private PictureBox picture;
+
+		//private const int screenWidth = 1280;
+		//private const int screenHeight = 1024;
+
+		private const int screenWidth = 227 * 4;
+		private const int screenHeight = 313;
+
+		private readonly uint[] screen = new uint[screenWidth * screenHeight];
+
 		public Copper(IMemoryMappedDevice memory, Chips custom, Interrupt interrupt)
 		{
 			this.memory = memory;
 			this.custom = custom;
 			this.interrupt = interrupt;
+			form = new Form {ClientSize = new System.Drawing.Size(screenWidth, screenHeight) };
+			bitmap = new Bitmap(screenWidth, screenHeight, PixelFormat.Format32bppRgb);
+			picture = new PictureBox {Image = bitmap, ClientSize = new System.Drawing.Size(screenWidth, screenHeight)};
+			form.Controls.Add(picture);
+			form.Show();
 		}
 
 		private ulong copperTime;
@@ -21,6 +45,7 @@ namespace RunAmiga.Custom
 		private uint copperHorz;//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
 		private uint copperVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 
+		private int cf = 0;
 		public void Emulate(ulong cycles)
 		{
 			copperTime += cycles;
@@ -30,13 +55,11 @@ namespace RunAmiga.Custom
 			{
 				copperTime -= 140_000;
 
-				copperPC = cop1lc;
-
-				ParseCopperList(cop1lc);
-				ParseCopperList(cop2lc);
-
-				foreach (var p in displays.Values)
-					p.Refresh();
+				//RunCopperList(cop1lc, false);
+				if ((cf++ % 50) == 0)
+					RunCopperList(cop1lc, false);
+				//if (((25 + cf++) % 50) == 0)
+				//	RunCopperList(cop2lc, false);
 
 				interrupt.TriggerInterrupt(Interrupt.VERTB);
 			}
@@ -51,20 +74,13 @@ namespace RunAmiga.Custom
 			copperTime = 0;
 		}
 
-		private uint copperPC;
+		//private uint copperPC;
 
-		public void SetCopperPC(uint address)
-		{
-			copperPC = address;
-			//DebugCopperList(copperPC);
-		}
-
-		private Dictionary<uint, Display> displays = new Dictionary<uint, Display>();
-
-		public void RemoveDisplay(Playfield pf)
-		{
-			displays.Remove(pf.address);
-		}
+		//public void SetCopperPC(uint address)
+		//{
+		//	copperPC = address;
+		//	//DebugCopperList(copperPC);
+		//}
 
 		private const int MAX_COPPER_ENTRIES = 512;
 
@@ -137,160 +153,6 @@ namespace RunAmiga.Custom
 			}
 		}
 
-		public void ParseCopperList(uint copPC)
-		{
-			if (copPC == 0) return;
-
-			Playfield pf;
-			if (displays.ContainsKey(copPC))
-			{
-				pf = displays[copPC].pf;
-			}
-			else
-			{
-				pf = new Playfield(this);
-				//uint tmp = copPC;
-				//DebugCopperList(copPC);
-				//copPC = tmp;
-			}
-
-			pf.address = copPC;
-
-			uint copStartPC = copPC;
-
-			int counter = MAX_COPPER_ENTRIES;
-			while (counter-- > 0)
-			{
-				ushort ins = (ushort)memory.Read(0, copPC, Size.Word);
-				copPC += 2;
-
-				ushort data = (ushort)memory.Read(0, copPC, Size.Word);
-				copPC += 2;
-
-				//Logger.Write($"{copPC - 4:X8} {ins:X4},{data:X4} ");
-
-				if ((ins & 0x0001) == 0)
-				{
-					//MOVE
-					uint reg = (uint)(ins & 0x1fe);
-
-					//Logger.WriteLine($"MOVE {ChipRegs.Name(customBase + reg)}({reg:X4}),{data:X4}");
-					uint address = ChipRegs.ChipBase + reg;
-					switch (address)
-					{
-						case ChipRegs.BPL1MOD: pf.bpl1mod = (uint)(short)data; break;
-						case ChipRegs.BPL2MOD: pf.bpl2mod = (uint)(short)data; break;
-
-						case ChipRegs.BPLCON0:
-							//this is a hack to get the highest colour/resolution
-							if (data > pf.bplcon0) pf.bplcon0 = data;
-							break;
-						case ChipRegs.BPLCON1: pf.bplcon1 = data; break;
-						case ChipRegs.BPLCON2: pf.bplcon2 = data; break;
-						case ChipRegs.BPLCON3: pf.bplcon3 = data; break;
-						case ChipRegs.BPLCON4: pf.bplcon4 = data; break;
-
-						case ChipRegs.BPL1DAT: pf.bpl1dat = data; break;
-						case ChipRegs.BPL2DAT: pf.bpl2dat = data; break;
-						case ChipRegs.BPL3DAT: pf.bpl3dat = data; break;
-						case ChipRegs.BPL4DAT: pf.bpl4dat = data; break;
-						case ChipRegs.BPL5DAT: pf.bpl5dat = data; break;
-						case ChipRegs.BPL6DAT: pf.bpl6dat = data; break;
-						case ChipRegs.BPL7DAT: pf.bpl7dat = data; break;
-						case ChipRegs.BPL8DAT: pf.bpl8dat = data; break;
-
-						case ChipRegs.BPL1PTL: pf.bpl1pt = (pf.bpl1pt & 0xffff0000) | data; break;
-						case ChipRegs.BPL1PTH: pf.bpl1pt = (pf.bpl1pt & 0x0000ffff) | ((uint)data << 16); break;
-						case ChipRegs.BPL2PTL: pf.bpl2pt = (pf.bpl2pt & 0xffff0000) | data; break;
-						case ChipRegs.BPL2PTH: pf.bpl2pt = (pf.bpl2pt & 0x0000ffff) | ((uint)data << 16); break;
-						case ChipRegs.BPL3PTL: pf.bpl3pt = (pf.bpl3pt & 0xffff0000) | data; break;
-						case ChipRegs.BPL3PTH: pf.bpl3pt = (pf.bpl3pt & 0x0000ffff) | ((uint)data << 16); break;
-						case ChipRegs.BPL4PTL: pf.bpl4pt = (pf.bpl4pt & 0xffff0000) | data; break;
-						case ChipRegs.BPL4PTH: pf.bpl4pt = (pf.bpl4pt & 0x0000ffff) | ((uint)data << 16); break;
-						case ChipRegs.BPL5PTL: pf.bpl5pt = (pf.bpl5pt & 0xffff0000) | data; break;
-						case ChipRegs.BPL5PTH: pf.bpl5pt = (pf.bpl5pt & 0x0000ffff) | ((uint)data << 16); break;
-						case ChipRegs.BPL6PTL: pf.bpl6pt = (pf.bpl6pt & 0xffff0000) | data; break;
-						case ChipRegs.BPL6PTH: pf.bpl6pt = (pf.bpl6pt & 0x0000ffff) | ((uint)data << 16); break;
-						case ChipRegs.BPL7PTL: pf.bpl7pt = (pf.bpl7pt & 0xffff0000) | data; break;
-						case ChipRegs.BPL7PTH: pf.bpl7pt = (pf.bpl7pt & 0x0000ffff) | ((uint)data << 16); break;
-						case ChipRegs.BPL8PTL: pf.bpl8pt = (pf.bpl8pt & 0xffff0000) | data; break;
-						case ChipRegs.BPL8PTH: pf.bpl8pt = (pf.bpl8pt & 0x0000ffff) | ((uint)data << 16); break;
-
-						case ChipRegs.DIWSTRT: pf.diwstrt = data; break;
-						case ChipRegs.DIWSTOP: pf.diwstop = data; break;
-						case ChipRegs.DIWHIGH: pf.diwhigh = data; break;
-
-						case ChipRegs.DDFSTRT: pf.ddfstrt = data; break;
-						case ChipRegs.DDFSTOP: pf.ddfstop = data; break;
-
-						case ChipRegs.SPR0PTL: pf.spr0pt = (pf.spr0pt & 0xffff0000) | data; break;
-						case ChipRegs.SPR0PTH: pf.spr0pt = (pf.spr0pt & 0x0000ffff) | ((uint)data << 16); break;
-						case ChipRegs.SPR0POS: pf.spr0pos = data; break;
-						case ChipRegs.SPR0CTL: pf.spr0ctl = data; break;
-						case ChipRegs.SPR0DATA: pf.spr0data = data; break;
-						case ChipRegs.SPR0DATB: pf.spr0datb = data; break;
-					}
-
-					if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
-					{
-						uint bank = (custom.Read(0, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
-
-						//Amiga colour
-						int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
-						pf.colour[index] = data;
-
-						//24bit colour
-						uint colour = data;
-						//pf.truecolour[index] = ((colour & 0xf) * 0x11) + ((colour & 0xf0) * 0x110) + ((colour & 0xf00) * 0x1100);
-
-						//UI colour
-						UI.SetColour(index, data);
-					}
-
-					//if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
-					//	copPC = custom.Read(copPC, ChipRegs.COP1LCH, Size.Long);//COP1LC
-					//else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2) 
-					//	copPC = custom.Read(copPC, ChipRegs.COP2LCH, Size.Long);//COP2LC
-				}
-				else if ((ins & 0x0001) == 1)
-				{
-					//WAIT/SKIP
-
-					if ((data & 1) == 0)
-					{
-						//WAIT
-						uint hp = (uint)((ins >> 1) & 0x7f);
-						uint vp = (uint)((ins >> 8) & 0xff);
-
-						uint he = (uint)((data >> 1) & 0x7f);
-						uint ve = (uint)((data >> 8) & 0x7f);
-						uint blit = (uint)(data >> 15);
-
-						//Logger.WriteLine($"WAIT vp:{vp:X4} hp:{hp:X4} he:{he:X4} ve:{ve:X4} b:{blit}");
-					}
-					else
-					{
-						//SKIP
-						uint horz = (uint)((ins >> 1) & 0x7f);
-						uint vert = (uint)((ins >> 8) & 0xff);
-
-						uint horzC = (uint)((data >> 1) & 0x7f);
-						uint vertC = (uint)((data >> 8) & 0x3f);
-						uint blitC = (uint)(data >> 15);
-
-						//Logger.WriteLine($"SKIP v:{vert:X4} h:{horz:X4} vC:{vertC} hC:{horzC} bC:{blitC}");
-					}
-
-					//this is usually how a copper list ends
-					if (ins == 0xffff && data == 0xfffe)
-						break;
-				}
-			}
-
-			if (!displays.ContainsKey(copStartPC))
-				displays[copStartPC] = new Display(pf, memory);
-		}
-
 		////HRM 3rd Ed, PP24
 		//private uint beamHorz;//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
 		//private uint beamVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
@@ -300,58 +162,25 @@ namespace RunAmiga.Custom
 			Waiting,
 		}
 
-		private enum DisplayMode
+		[Flags]
+		private enum BPLCON0
 		{
-			Normal,
-			HiRes,
-			SuperHiRes,
+			HiRes=1<<15,
+			SuperHiRes=1<<6,
 		}
+
 
 		private void RunCopperList(uint address, bool isEvenFrame)
 		{
-			//grap the initial version of these regs.
-			uint diwstrt = memory.Read(0, ChipRegs.DIWSTRT, Size.Word);
-			uint diwstop = memory.Read(0, ChipRegs.DIWSTOP, Size.Word);
-			uint bplcon0 = memory.Read(0, ChipRegs.BPLCON0, Size.Word);
-			uint ddfstrt = memory.Read(0, ChipRegs.DDFSTRT, Size.Word);
-			uint ddfstop = memory.Read(0, ChipRegs.DDFSTOP, Size.Word);
-			uint bpl1mod = (uint)(int)(short)memory.Read(0, ChipRegs.BPL1MOD, Size.Word);
-			uint bpl2mod = (uint)(int)(short)memory.Read(0, ChipRegs.BPL2MOD, Size.Word);
-
-			DisplayMode displayMode = DisplayMode.Normal;
-			if ((bplcon0 & (1 << 15)) != 0)
-				displayMode = DisplayMode.HiRes;
-			if ((bplcon0 & (1 << 6)) != 0)
-				displayMode = DisplayMode.SuperHiRes;
-
-			ushort [] bpldat = new ushort[8];
-			uint[] bplpt = new uint[8];
-
-			bpldat[0] = (ushort)memory.Read(0, ChipRegs.BPL1DAT, Size.Word);
-			bpldat[1] = (ushort)memory.Read(0, ChipRegs.BPL2DAT, Size.Word);
-			bpldat[2] = (ushort)memory.Read(0, ChipRegs.BPL3DAT, Size.Word);
-			bpldat[3] = (ushort)memory.Read(0, ChipRegs.BPL4DAT, Size.Word);
-			bpldat[4] = (ushort)memory.Read(0, ChipRegs.BPL5DAT, Size.Word);
-			bpldat[5] = (ushort)memory.Read(0, ChipRegs.BPL6DAT, Size.Word);
-			bpldat[6] = (ushort)memory.Read(0, ChipRegs.BPL7DAT, Size.Word);
-			bpldat[7] = (ushort)memory.Read(0, ChipRegs.BPL8DAT, Size.Word);
-
-			bplpt[0] = memory.Read(0, ChipRegs.BPL1PTH, Size.Long);
-			bplpt[1] = memory.Read(0, ChipRegs.BPL2PTH, Size.Long);
-			bplpt[2] = memory.Read(0, ChipRegs.BPL3PTH, Size.Long);
-			bplpt[3] = memory.Read(0, ChipRegs.BPL4PTH, Size.Long);
-			bplpt[4] = memory.Read(0, ChipRegs.BPL5PTH, Size.Long);
-			bplpt[5] = memory.Read(0, ChipRegs.BPL6PTH, Size.Long);
-			bplpt[6] = memory.Read(0, ChipRegs.BPL7PTH, Size.Long);
-			bplpt[7] = memory.Read(0, ChipRegs.BPL8PTH, Size.Long);
-
-			uint planes = (bplcon0>>12)&7;
-
-			uint[] colours = new uint[256];
-			colours[0] = 0xffffff;
-			colours[1] = 0x000000;
-			colours[2] = 0x7777cc;
-			colours[3] = 0xbbbbbb;
+			Logger.WriteLine($"COP  {address:X6}");
+			colour[0] = 0xfff;
+			colour[1] = 0x000;
+			colour[2] = 0x77c;
+			colour[3] = 0xbbb;
+			truecolour[0] = 0xffffff;
+			truecolour[1] = 0x000000;
+			truecolour[2] = 0x7777cc;
+			truecolour[3] = 0xbbbbbb;
 
 			int waitH=0, waitV=0;
 			int waitHMask = 0xff, waitVMask = 0xff;
@@ -360,122 +189,206 @@ namespace RunAmiga.Custom
 			bool in_fetch = true;
 			bool is_new_pixel = true;
 
-			int pixelCountdown = 0;
+			ushort pixelCountdown = 0;
 			uint col=0x000000;
 
 			uint copPC = address;
 			CopperState state = CopperState.Running;
 			int lines = isEvenFrame ? 312 : 313;
+
+			int dptr = 0;
+
 			for (int v = 0; v < lines; v++)
 			{
+				int lineStart = dptr;
+
 				for (int h = 0; h < 227; h++)
 				{
-					if (state == CopperState.Running)
+					//copper instruction every even clock
+					if ((h & 1) == 0)
 					{
-						ushort ins = (ushort)memory.Read(0, copPC, Size.Word);
-						copPC += 2;
-
-						ushort data = (ushort)memory.Read(0, copPC, Size.Word);
-						copPC += 2;
-
-						if ((ins & 0x0001) == 0)
+						if (state == CopperState.Running)
 						{
-							//MOVE
+							ushort ins = (ushort)memory.Read(0, copPC, Size.Word);
+							copPC += 2;
 
-							uint reg = (uint)(ins & 0x1fe);
+							ushort data = (ushort)memory.Read(0, copPC, Size.Word);
+							copPC += 2;
 
-							uint regAddress = ChipRegs.ChipBase + reg;
+							if ((ins & 0x0001) == 0)
+							{
+								//MOVE
 
-							memory.Write(0, regAddress, data, Size.Word);
-							
-							//todo: if regAddress is one of the cached values, need to update them, and deal with writes to copjmp
-						}
-						else if ((ins & 0x0001) == 1)
-						{
-							//WAIT
-							waitH = ins & 0xfe;
-							waitV = (ins >> 8) & 0xff;
+								uint reg = (uint)(ins & 0x1fe);
 
-							waitHMask = (data & 0xfe)|0xff00;
-							waitVMask = ((data >> 8) & 0x7f)|0xff80;
-							uint blit = (uint)(data >> 15);
-							//todo: blitter is immediate, so currently ignored.
-							//in reality if blitter-busy bit is set the comparisons will fail.
+								uint regAddress = ChipRegs.ChipBase + reg;
 
-							if ((data & 1) == 0)
+								memory.Write(0, regAddress, data, Size.Word);
+
+								if (regAddress == ChipRegs.COPJMP1)
+								{
+									copPC = cop1lc;
+									Logger.WriteLine($"JMP1 {copPC:X6}");
+								}
+								else if (regAddress == ChipRegs.COPJMP2)
+								{
+									copPC = cop2lc;
+									Logger.WriteLine($"JMP2 {copPC:X6}");
+								}
+							}
+							else if ((ins & 0x0001) == 1)
 							{
 								//WAIT
-								state = CopperState.Waiting;
-							}
-							else
-							{
-								//SKIP
-								if ((v & waitVMask) >= waitV)
-								{
-									if ((h & waitHMask) >= waitH)
-										copPC += 4;
-								}
-							}
-						}
-					}
-					else if (state == CopperState.Waiting)
-					{
-						if ((v&waitVMask) >= waitV)
-						{
-							if ((h&waitHMask) >= waitH)
-								state = CopperState.Running;
-						}
-					}
+								waitH = ins & 0xfe;
+								waitV = (ins >> 8) & 0xff;
 
-					//are we within the display area defined by DIW regs?
-					if (in_display)
-					{
-						//are we within the bitplane fetch area defined by DDF?
-						if (in_fetch)
-						{
-							//is it time to fetch a new pixel colour?
-							if (is_new_pixel)
-							{
-								//is it time to fetch some more bitblane data?
-								pixelCountdown--;
-								if (pixelCountdown < 0)
+								waitHMask = (data & 0xfe) | 0xff00;
+								waitVMask = ((data >> 8) & 0x7f) | 0x80;
+
+								uint blit = (uint)(data >> 15);
+								
+								//todo: blitter is immediate, so currently ignored.
+								//todo: in reality if blitter-busy bit is set the comparisons will fail.
+
+								if ((data & 1) == 0)
 								{
-									for (int i = 0; i < planes; i++)
+									//WAIT
+									Logger.WriteLine($"WAIT {waitH},{waitV} {waitHMask:X3} {waitVMask:X3}");
+									state = CopperState.Waiting;
+								}
+								else
+								{
+									//SKIP
+									if ((v & waitVMask) >= waitV)
 									{
-										if ((planes & (1 << i)) != 0)
-										{
-											bpldat[i] = (ushort)custom.Read(0, bplpt[i], Size.Word);
-											bplpt[i] += 2;
-										}
+										if ((h & waitHMask) >= waitH)
+											copPC += 4;
 									}
-
-									pixelCountdown = 15;
 								}
-
-								//decode the colour
-								byte pix = 0;
-								for (int i = 0; i < planes; i++)
-									if ((planes & (1 << i)) != 0)
-										pix |= (byte)((bpldat[i] & (1 << (pixelCountdown /*^15*/))) != 0 ? (1 << i) : 0);
-								//pix is the colour
-								col = colours[pix];
 							}
 						}
-						else
+						else if (state == CopperState.Waiting)
 						{
-							//output colour 0 pixels
-							col = colours[0];
+							if ((v & waitVMask) >= waitV)
+							{
+								if ((h & waitHMask) >= waitH)
+								{
+									Logger.WriteLine($"RUN  {h},{v}");
+									state = CopperState.Running;
+								}
+							}
 						}
+					}
+
+					//how many pixels should be fecthed in the current mode?
+					int pixelLoop=0;
+					if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
+					{
+						//4 colour clocks, fetch 16 pixels
+						//1 colour clock, draw 4 pixel
+						pixelLoop = 4;
+					}
+					else if ((bplcon0 & (uint)BPLCON0.SuperHiRes)!=0)
+					{
+						//2 colour clocks, fetch 16 pixels
+						//1 colour clock, draw 8 pixel
+						pixelLoop = 8;
 					}
 					else
 					{
-						// output black pixels
-						col = 0x000000;
+						//8 colour clocks, fetch 16 pixels
+						//1 colour clock, draw 2 pixel
+						pixelLoop = 2;
+					}
+					in_fetch = h >= ddfstrt && h < ddfstop &&
+					           v >= (diwstrt >> 8) &&  v < ((diwstop>>8)+(((diwstop&0x8000)^0x8000)>>7));
+
+					for (int p = 0; p < pixelLoop; p++)
+					{
+						//are we within the display area defined by DIW regs?
+						//if (in_display)
+						{
+							//is_new_pixel = ((ddfstrt - h) / 8) == 0;
+
+							//are we within the bitplane fetch area defined by DDF?
+							if (in_fetch)
+							{
+								//is it time to fetch a new pixel colour?
+								//if (is_new_pixel)
+								{
+									//is it time to fetch some more bitblane data?
+									if (pixelCountdown <= 0)
+									{
+										int planes = (bplcon0 >> 12) & 7;
+
+										for (int i = 0; i < planes; i++)
+										{
+											bpldat[i] = (ushort)memory.Read(0, bplpt[i], Size.Word);
+											bplpt[i] += 2;
+										}
+
+										pixelCountdown = 0x8000;
+									}
+
+									//decode the colour
+									{
+										byte pix = 0;
+										int planes = (bplcon0 >> 12) & 7;
+										for (int i = 0; i < planes; i++)
+											pix |= (byte)((bpldat[i] & pixelCountdown) != 0 ? (1 << i) : 0);
+										//pix is the colour
+										int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+										col = truecolour[pix + bank];
+										pixelCountdown>>=1;
+									}
+								}
+							}
+							else
+							{
+								//output colour 0 pixels
+								col = truecolour[0];
+								col = 0xffff00;
+							}
+						}
+						//else
+						//{
+						//	// output black pixels
+						//	col = 0x000000;
+						//}
+
+						//duplicate the pixel 4 times in low res, 2x in hires and 4x in shres
+						for (int k = 0; k < 4 / pixelLoop; k++)
+							screen[dptr++] = col;
 					}
 
-					//plot something
+				}
 
-					//227 hclocks @ 3.5MHz,
+				//next horizontal line
+				{
+					int planes = (bplcon0 >> 12) & 7;
+					for (int i = 0; i < planes; i++)
+					{
+						if ((planes & (1 << i)) != 0)
+						{
+							bplpt[i] += ((i & 1) == 0) ? bpl2mod : bpl1mod;
+						}
+					}
+				}
+
+				//this should be a no-op
+				dptr += screenWidth - (dptr - lineStart);
+			}
+
+			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, screenWidth, screenHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
+			Marshal.Copy(screen.AsByte().ToArray(), 0, bitmapData.Scan0, screenWidth * screenHeight * 4);
+			bitmap.UnlockBits(bitmapData);
+			picture.Image = bitmap;
+			form.Invalidate();
+
+			Application.DoEvents();
+		}
+/*
+					//227 (E3) hclocks @ 3.5MHz,
 					// in lowres, 1 pixel is 8 clocks, hires pixel is 4 clocks, shres pixel is 2 clocks
 					//                      DIW  1 pixel resolution
 					//DIW normally               0x81 to 0x1C1 = 129->449 0x140 = 320 "clipping window" always in lowres pixels
@@ -485,6 +398,7 @@ namespace RunAmiga.Custom
 					// 0x81/2-8.5 = 0x38   DIW/2-x = DDF
 					// 0x81/2-4.5 = 0x3C
 					//                      DDF  4 pixel resolution    x4 224->832
+					// looks like these values tie in with the horizontal colour clocks
 					//                      DDF  lowres  0x38 to 0xD0 =   56->208  0x98 = 152 - in low res mode, 152/8+1 = 19+1 = 20 fetches
 					//                      DDF  hires   0x3c to 0xD4 =   60->212  0x98 = 152 - in hi res mode,  152/4+2 = 38+2 = 40 fetches
 					//                           shres   0x3c to 0xD4 =   60->212  0x98 = 152 - in shres  mode,  152/2+4 = 76+4 = 80 fetches
@@ -492,7 +406,9 @@ namespace RunAmiga.Custom
 
 					//question: how do DIW and DDF values tie into colour clock?
 
-					/*
+					//every 8 colour clocks, fetch 16 pixels
+					//so in 227 colour clocks, there'd be a max
+
 						During a horizontal scan line (about 63 microseconds), there are 227.5
 						"color clocks", or memory access cycles.  A memory cycle is approximately
 						280 ns in duration.  The total of 227.5 cycles per horizontal line
@@ -509,41 +425,199 @@ namespace RunAmiga.Custom
 						     80 cycles for bitplane DMA (even- or odd-numbered slots
 						          according to the display size used)
 				           =107 total
-					*/
-				}
+ */
 
-				//next horizontal line
-				for (int i = 0; i < planes; i++)
-				{
-					if ((planes & (1 << i)) != 0)
-					{
-						bplpt[i] += ((i&1)==0)? bpl2mod:bpl1mod;
-					}
-				}
-			}
-		}
+		private ushort copcon;
+		private uint cop1lc;
+		private uint cop2lc;
+
+		private ushort copjmp1;
+		private ushort copjmp2;
+		private ushort copins;
+
+		private ushort[] bpldat = new ushort[8];
+		private uint[] bplpt = new uint[8];
+		private ushort diwstrt;
+		private ushort diwstop;
+		private ushort diwhigh;
+		private ushort bplcon0;
+		private ushort bplcon1;
+		private ushort bplcon2;
+		private ushort bplcon3;
+		private ushort bplcon4;
+		private ushort ddfstrt;
+		private ushort ddfstop;
+		private uint bpl1mod;
+		private uint bpl2mod;
+		private uint[] sprpt = new uint[8];
+		private ushort[] sprpos = new ushort[8];
+		private ushort[] sprctl = new ushort[8];
+		private ushort[] sprdata = new ushort[8];
+		private ushort[] sprdatb = new ushort[8];
+
+		public ushort[] colour = new ushort[256];
+		public uint[] truecolour = new uint[256];
+
 
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
 			//Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
-			return value;
-		}
-
-		private uint copcon;
-		private uint cop1lc;
-		private uint cop2lc;
-
-		private uint copjmp1;
-		private uint copjmp2;
-		private uint copins;
-
-		public void Write(uint insaddr, uint address, ushort value)
-		{
-
 
 			switch (address)
 			{
+				case ChipRegs.VPOSR:
+					value = (ushort)((copperVert >> 8) & 1);
+					break;
+				case ChipRegs.VHPOSR:
+					value = (ushort)((copperVert << 8) | (copperHorz & 0x00ff));
+					break;
+
+				case ChipRegs.COPCON:
+					value = (ushort)copcon;
+					break;
+				case ChipRegs.COP1LCH:
+					value = (ushort)(cop1lc >> 16);
+					break;
+				case ChipRegs.COP1LCL:
+					value = (ushort)cop1lc;
+					break;
+				case ChipRegs.COP2LCH:
+					value = (ushort)(cop2lc >> 16);
+					break;
+				case ChipRegs.COP2LCL:
+					value = (ushort)cop2lc;
+					break;
+				case ChipRegs.COPJMP1:
+					value = (ushort)copjmp1;
+					break;
+				case ChipRegs.COPJMP2:
+					value = (ushort)copjmp2;
+					break;
+				case ChipRegs.COPINS:
+					value = copins;
+					break;
+
+				//bitplane specific
+
+				case ChipRegs.BPL1MOD: value = (ushort)bpl1mod; break;
+				case ChipRegs.BPL2MOD: value = (ushort)bpl2mod; break;
+
+				case ChipRegs.BPLCON0: value = bplcon1; break;
+				case ChipRegs.BPLCON1: value = bplcon1; break;
+				case ChipRegs.BPLCON2: value = bplcon2; break;
+				case ChipRegs.BPLCON3: value = bplcon3; break;
+				case ChipRegs.BPLCON4: value = bplcon4; break;
+
+				case ChipRegs.BPL1DAT: value = bpldat[0]; break;
+				case ChipRegs.BPL2DAT: value = bpldat[1]; break;
+				case ChipRegs.BPL3DAT: value = bpldat[2]; break;
+				case ChipRegs.BPL4DAT: value = bpldat[3]; break;
+				case ChipRegs.BPL5DAT: value = bpldat[4]; break;
+				case ChipRegs.BPL6DAT: value = bpldat[5]; break;
+				case ChipRegs.BPL7DAT: value = bpldat[6]; break;
+				case ChipRegs.BPL8DAT: value = bpldat[7]; break;
+
+				case ChipRegs.BPL1PTL: value = (ushort)bplpt[0]; break;
+				case ChipRegs.BPL1PTH: value = (ushort)(bplpt[0]>>16); break;
+				case ChipRegs.BPL2PTL: value = (ushort)bplpt[1]; break;
+				case ChipRegs.BPL2PTH: value = (ushort)(bplpt[1] >> 16); break;
+				case ChipRegs.BPL3PTL: value = (ushort)bplpt[2]; break;
+				case ChipRegs.BPL3PTH: value = (ushort)(bplpt[2] >> 16); break;
+				case ChipRegs.BPL4PTL: value = (ushort)bplpt[3]; break;
+				case ChipRegs.BPL4PTH: value = (ushort)(bplpt[3] >> 16); break;
+				case ChipRegs.BPL5PTL: value = (ushort)bplpt[4]; break;
+				case ChipRegs.BPL5PTH: value = (ushort)(bplpt[4] >> 16); break;
+				case ChipRegs.BPL6PTL: value = (ushort)bplpt[5]; break;
+				case ChipRegs.BPL6PTH: value = (ushort)(bplpt[5] >> 16); break;
+				case ChipRegs.BPL7PTL: value = (ushort)bplpt[6]; break;
+				case ChipRegs.BPL7PTH: value = (ushort)(bplpt[6] >> 16); break;
+				case ChipRegs.BPL8PTL: value = (ushort)bplpt[7]; break;
+				case ChipRegs.BPL8PTH: value = (ushort)(bplpt[7] >> 16); break;
+
+				case ChipRegs.DIWSTRT: value = diwstrt; break;
+				case ChipRegs.DIWSTOP: value = diwstop; break;
+				case ChipRegs.DIWHIGH: value = diwhigh; break;
+
+				case ChipRegs.DDFSTRT: value = ddfstrt; break;
+				case ChipRegs.DDFSTOP: value = ddfstop; break;
+
+				case ChipRegs.SPR0PTL: value = (ushort)sprpt[0]; break;
+				case ChipRegs.SPR0PTH: value = (ushort)(sprpt[0]>>16); break;
+				case ChipRegs.SPR0POS: value = sprpos[0]; break;
+				case ChipRegs.SPR0CTL: value = sprctl[0]; break;
+				case ChipRegs.SPR0DATA: value = sprdata[0]; break;
+				case ChipRegs.SPR0DATB: value = sprdatb[0]; break;
+
+				case ChipRegs.SPR1PTL: value = (ushort)sprpt[1]; break;
+				case ChipRegs.SPR1PTH: value = (ushort)(sprpt[1] >> 16); break;
+				case ChipRegs.SPR1POS: value = sprpos[1]; break;
+				case ChipRegs.SPR1CTL: value = sprctl[1]; break;
+				case ChipRegs.SPR1DATA: value = sprdata[1]; break;
+				case ChipRegs.SPR1DATB: value = sprdatb[1]; break;
+
+				case ChipRegs.SPR2PTL: value = (ushort)sprpt[2]; break;
+				case ChipRegs.SPR2PTH: value = (ushort)(sprpt[2] >> 16); break;
+				case ChipRegs.SPR2POS: value = sprpos[2]; break;
+				case ChipRegs.SPR2CTL: value = sprctl[2]; break;
+				case ChipRegs.SPR2DATA: value = sprdata[2]; break;
+				case ChipRegs.SPR2DATB: value = sprdatb[2]; break;
+
+				case ChipRegs.SPR3PTL: value = (ushort)sprpt[3]; break;
+				case ChipRegs.SPR3PTH: value = (ushort)(sprpt[3] >> 16); break;
+				case ChipRegs.SPR3POS: value = sprpos[3]; break;
+				case ChipRegs.SPR3CTL: value = sprctl[3]; break;
+				case ChipRegs.SPR3DATA: value = sprdata[3]; break;
+				case ChipRegs.SPR3DATB: value = sprdatb[3]; break;
+
+				case ChipRegs.SPR4PTL: value = (ushort)sprpt[4]; break;
+				case ChipRegs.SPR4PTH: value = (ushort)(sprpt[4] >> 16); break;
+				case ChipRegs.SPR4POS: value = sprpos[4]; break;
+				case ChipRegs.SPR4CTL: value = sprctl[4]; break;
+				case ChipRegs.SPR4DATA: value = sprdata[4]; break;
+				case ChipRegs.SPR4DATB: value = sprdatb[4]; break;
+
+				case ChipRegs.SPR5PTL: value = (ushort)sprpt[5]; break;
+				case ChipRegs.SPR5PTH: value = (ushort)(sprpt[5] >> 16); break;
+				case ChipRegs.SPR5POS: value = sprpos[5]; break;
+				case ChipRegs.SPR5CTL: value = sprctl[5]; break;
+				case ChipRegs.SPR5DATA: value = sprdata[5]; break;
+				case ChipRegs.SPR5DATB: value = sprdatb[5]; break;
+
+				case ChipRegs.SPR6PTL: value = (ushort)sprpt[6]; break;
+				case ChipRegs.SPR6PTH: value = (ushort)(sprpt[6] >> 16); break;
+				case ChipRegs.SPR6POS: value = sprpos[6]; break;
+				case ChipRegs.SPR6CTL: value = sprctl[6]; break;
+				case ChipRegs.SPR6DATA: value = sprdata[6]; break;
+				case ChipRegs.SPR6DATB: value = sprdatb[6]; break;
+
+				case ChipRegs.SPR7PTL: value = (ushort)sprpt[7]; break;
+				case ChipRegs.SPR7PTH: value = (ushort)(sprpt[7] >> 16); break;
+				case ChipRegs.SPR7POS: value = sprpos[7]; break;
+				case ChipRegs.SPR7CTL: value = sprctl[7]; break;
+				case ChipRegs.SPR7DATA: value = sprdata[7]; break;
+				case ChipRegs.SPR7DATB: value = sprdatb[7]; break;
+			}
+
+			if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
+			{
+				//uint bank = (custom.Read(0, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
+				int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+
+				//Amiga colour
+				int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
+				value = colour[index] = value;
+			}
+
+			return value;
+		}
+
+		public void Write(uint insaddr, uint address, ushort value)
+		{
+			switch (address)
+			{
+				//copper specific
+
 				case ChipRegs.COPCON:
 					copcon = value;
 					break;
@@ -567,19 +641,132 @@ namespace RunAmiga.Custom
 					break;
 				case ChipRegs.COPJMP1:
 					copjmp1 = value;
-					SetCopperPC(cop1lc);
+					//SetCopperPC(cop1lc);
 					break;
 				case ChipRegs.COPJMP2:
 					copjmp2 = value;
-					SetCopperPC(cop2lc);
+					//SetCopperPC(cop2lc);
 					break;
 				case ChipRegs.COPINS:
 					copins = value;
 					break;
+
+				//bitplane specific
+
+				case ChipRegs.BPL1MOD: bpl1mod = (uint)(short)value; break;
+				case ChipRegs.BPL2MOD: bpl2mod = (uint)(short)value; break;
+
+				case ChipRegs.BPLCON0: bplcon0 = value; break;
+				case ChipRegs.BPLCON1: bplcon1 = value; break;
+				case ChipRegs.BPLCON2: bplcon2 = value; break;
+				case ChipRegs.BPLCON3: bplcon3 = value; break;
+				case ChipRegs.BPLCON4: bplcon4 = value; break;
+
+				case ChipRegs.BPL1DAT: bpldat[0] = value; break;
+				case ChipRegs.BPL2DAT: bpldat[1] = value; break;
+				case ChipRegs.BPL3DAT: bpldat[2] = value; break;
+				case ChipRegs.BPL4DAT: bpldat[3] = value; break;
+				case ChipRegs.BPL5DAT: bpldat[4] = value; break;
+				case ChipRegs.BPL6DAT: bpldat[5] = value; break;
+				case ChipRegs.BPL7DAT: bpldat[6] = value; break;
+				case ChipRegs.BPL8DAT: bpldat[7] = value; break;
+
+				case ChipRegs.BPL1PTL: bplpt[0] = (bplpt[0] & 0xffff0000) | value; break;
+				case ChipRegs.BPL1PTH: bplpt[0] = (bplpt[0] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.BPL2PTL: bplpt[1] = (bplpt[1] & 0xffff0000) | value; break;
+				case ChipRegs.BPL2PTH: bplpt[1] = (bplpt[1] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.BPL3PTL: bplpt[2] = (bplpt[2] & 0xffff0000) | value; break;
+				case ChipRegs.BPL3PTH: bplpt[2] = (bplpt[2] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.BPL4PTL: bplpt[3] = (bplpt[3] & 0xffff0000) | value; break;
+				case ChipRegs.BPL4PTH: bplpt[3] = (bplpt[3] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.BPL5PTL: bplpt[4] = (bplpt[4] & 0xffff0000) | value; break;
+				case ChipRegs.BPL5PTH: bplpt[4] = (bplpt[4] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.BPL6PTL: bplpt[5] = (bplpt[5] & 0xffff0000) | value; break;
+				case ChipRegs.BPL6PTH: bplpt[5] = (bplpt[5] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.BPL7PTL: bplpt[6] = (bplpt[6] & 0xffff0000) | value; break;
+				case ChipRegs.BPL7PTH: bplpt[6] = (bplpt[6] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.BPL8PTL: bplpt[7] = (bplpt[7] & 0xffff0000) | value; break;
+				case ChipRegs.BPL8PTH: bplpt[7] = (bplpt[7] & 0x0000ffff) | ((uint)value << 16); break;
+
+				case ChipRegs.DIWSTRT: diwstrt = value; break;
+				case ChipRegs.DIWSTOP: diwstop = value; break;
+				case ChipRegs.DIWHIGH: diwhigh = value; break;
+
+				case ChipRegs.DDFSTRT: ddfstrt = value; break;
+				case ChipRegs.DDFSTOP: ddfstop = value; break;
+
+				case ChipRegs.SPR0PTL: sprpt[0] = (sprpt[0] & 0xffff0000) | value; break;
+				case ChipRegs.SPR0PTH: sprpt[0] = (sprpt[0] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.SPR0POS: sprpos[0] = value; break;
+				case ChipRegs.SPR0CTL: sprctl[0] = value; break;
+				case ChipRegs.SPR0DATA: sprdata[0] = value; break;
+				case ChipRegs.SPR0DATB: sprdatb[0] = value; break;
+
+				case ChipRegs.SPR1PTL: sprpt[1] = (sprpt[1] & 0xffff0000) | value; break;
+				case ChipRegs.SPR1PTH: sprpt[1] = (sprpt[1] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.SPR1POS: sprpos[1] = value; break;
+				case ChipRegs.SPR1CTL: sprctl[1] = value; break;
+				case ChipRegs.SPR1DATA: sprdata[1] = value; break;
+				case ChipRegs.SPR1DATB: sprdatb[1] = value; break;
+
+				case ChipRegs.SPR2PTL: sprpt[2] = (sprpt[2] & 0xffff0000) | value; break;
+				case ChipRegs.SPR2PTH: sprpt[2] = (sprpt[2] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.SPR2POS: sprpos[2] = value; break;
+				case ChipRegs.SPR2CTL: sprctl[2] = value; break;
+				case ChipRegs.SPR2DATA: sprdata[2] = value; break;
+				case ChipRegs.SPR2DATB: sprdatb[2] = value; break;
+
+				case ChipRegs.SPR3PTL: sprpt[3] = (sprpt[3] & 0xffff0000) | value; break;
+				case ChipRegs.SPR3PTH: sprpt[3] = (sprpt[3] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.SPR3POS: sprpos[3] = value; break;
+				case ChipRegs.SPR3CTL: sprctl[3] = value; break;
+				case ChipRegs.SPR3DATA: sprdata[3] = value; break;
+				case ChipRegs.SPR3DATB: sprdatb[3] = value; break;
+
+				case ChipRegs.SPR4PTL: sprpt[4] = (sprpt[4] & 0xffff0000) | value; break;
+				case ChipRegs.SPR4PTH: sprpt[4] = (sprpt[4] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.SPR4POS: sprpos[4] = value; break;
+				case ChipRegs.SPR4CTL: sprctl[4] = value; break;
+				case ChipRegs.SPR4DATA: sprdata[4] = value; break;
+				case ChipRegs.SPR4DATB: sprdatb[4] = value; break;
+				
+				case ChipRegs.SPR5PTL: sprpt[5] = (sprpt[5] & 0xffff0000) | value; break;
+				case ChipRegs.SPR5PTH: sprpt[5] = (sprpt[5] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.SPR5POS: sprpos[5] = value; break;
+				case ChipRegs.SPR5CTL: sprctl[5] = value; break;
+				case ChipRegs.SPR5DATA: sprdata[5] = value; break;
+				case ChipRegs.SPR5DATB: sprdatb[5] = value; break;
+
+				case ChipRegs.SPR6PTL: sprpt[6] = (sprpt[6] & 0xffff0000) | value; break;
+				case ChipRegs.SPR6PTH: sprpt[6] = (sprpt[6] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.SPR6POS: sprpos[6] = value; break;
+				case ChipRegs.SPR6CTL: sprctl[6] = value; break;
+				case ChipRegs.SPR6DATA: sprdata[6] = value; break;
+				case ChipRegs.SPR6DATB: sprdatb[6] = value; break;
+
+				case ChipRegs.SPR7PTL: sprpt[7] = (sprpt[7] & 0xffff0000) | value; break;
+				case ChipRegs.SPR7PTH: sprpt[7] = (sprpt[7] & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.SPR7POS: sprpos[7] = value; break;
+				case ChipRegs.SPR7CTL: sprctl[7] = value; break;
+				case ChipRegs.SPR7DATA: sprdata[7] = value; break;
+				case ChipRegs.SPR7DATB: sprdatb[7] = value; break;
 			}
 
-			if (cop1lc == 0xc00276 || cop2lc == 0xc00276)
-				Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
+			{
+				//uint bank = (custom.Read(0, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
+				int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+
+				//Amiga colour
+				int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
+				colour[index] = value;
+
+				//24bit colour
+				uint col = value;
+				truecolour[index] = ((col & 0xf) * 0x11) + ((col & 0xf0) * 0x110) + ((col & 0xf00) * 0x1100);
+			}
+
+
 		}
 
 	}

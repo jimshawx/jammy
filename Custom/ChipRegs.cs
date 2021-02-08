@@ -296,6 +296,7 @@ namespace RunAmiga.Custom
 		public const uint STRVBL = 0xdff03a;
 		public const uint STRHOR = 0xdff03c;
 		public const uint STRLONG = 0xdff03e;
+
 		public const uint BLTCON0 = 0xdff040;
 		public const uint BLTCON1 = 0xdff042;
 		public const uint BLTAFWM = 0xdff044;
@@ -323,6 +324,7 @@ namespace RunAmiga.Custom
 		public const uint BPLHDAT = 0xdff07a;
 		public const uint LISAID = 0xdff07c;
 		public const uint DSKSYNC = 0xdff07e;
+
 		public const uint COP1LCH = 0xdff080;
 		public const uint COP1LCL = 0xdff082;
 		public const uint COP2LCH = 0xdff084;
@@ -334,6 +336,7 @@ namespace RunAmiga.Custom
 		public const uint DIWSTOP = 0xdff090;
 		public const uint DDFSTRT = 0xdff092;
 		public const uint DDFSTOP = 0xdff094;
+
 		public const uint DMACON = 0xdff096;
 		public const uint CLXCON = 0xdff098;
 		public const uint INTENA = 0xdff09a;
@@ -363,6 +366,7 @@ namespace RunAmiga.Custom
 		public const uint AUD3PER = 0xdff0d6;
 		public const uint AUD3VOL = 0xdff0d8;
 		public const uint AUD3DAT = 0xdff0da;
+
 		public const uint BPL1PTH = 0xdff0e0;
 		public const uint BPL1PTL = 0xdff0e2;
 		public const uint BPL2PTH = 0xdff0e4;
@@ -475,6 +479,7 @@ namespace RunAmiga.Custom
 		public const uint COLOR29 = 0xdff1ba;
 		public const uint COLOR30 = 0xdff1bc;
 		public const uint COLOR31 = 0xdff1be;
+
 		public const uint HTOTAL = 0xdff1c0;
 		public const uint HSSTOP = 0xdff1c2;
 		public const uint HBSTRT = 0xdff1c4;

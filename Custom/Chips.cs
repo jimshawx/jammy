@@ -11,9 +11,9 @@ namespace RunAmiga.Custom
 
 		private readonly Copper copper;
 		private readonly Blitter blitter;
-		private readonly Beam beam;
 		private readonly Mouse mouse;
 		private readonly Keyboard keyboard;
+		private readonly Audio audio;
 
 		public Chips(Debugger debugger, IMemoryMappedDevice memory, Interrupt interrupt, DiskDrives diskDrives, Mouse mouse, Keyboard keyboard)
 		{
@@ -23,14 +23,13 @@ namespace RunAmiga.Custom
 			this.keyboard = keyboard;
 			blitter = new Blitter(this, memory, interrupt);
 			copper = new Copper(memory, this, interrupt);
-			beam = new Beam();
+			audio = new Audio(memory);
 		}
 
 		public void Emulate(ulong cycles)
 		{
 			copper.Emulate(cycles);
 			blitter.Emulate(cycles);
-			beam.Emulate(cycles);
 			diskDrives.Emulate(cycles);
 			mouse.Emulate(cycles);
 			keyboard.Emulate(cycles);
@@ -40,7 +39,6 @@ namespace RunAmiga.Custom
 		{
 			copper.Reset();
 			blitter.Reset();
-			beam.Reset();
 			diskDrives.Reset();
 			mouse.Reset();
 			keyboard.Reset();
@@ -75,17 +73,15 @@ namespace RunAmiga.Custom
 
 			int reg = REG(address);
 
-			if ((address >= ChipRegs.COP1LCH && address < ChipRegs.DIWSTRT) || address == ChipRegs.COPCON)
+			if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.DDFSTOP) ||
+				(address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31)||
+				address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW)
 			{
 				regs[reg] = copper.Read(insaddr, address);
 			}
 			else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
 			{
 				regs[reg] = blitter.Read(insaddr, address);
-			}
-			else if (address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW)
-			{
-				regs[reg] = beam.Read(address);
 			}
 			else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
 			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT 
@@ -97,11 +93,20 @@ namespace RunAmiga.Custom
 			         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
 			{
 				regs[reg] = mouse.Read(insaddr, address);
-				//if (address == ChipRegs.JOY0DAT)
-				//	Logger.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
 			}
-			//if (address != ChipRegs.VHPOSR && address != ChipRegs.VPOSR)
-			//	Logger.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
+			else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
+			{
+				regs[reg] = mouse.Read(insaddr, address);
+			}
+			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
+			                     address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR)
+			{
+
+			}
+			else
+			{
+				Logger.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
+			}
 
 			return (uint)regs[reg];
 		}
@@ -138,9 +143,6 @@ namespace RunAmiga.Custom
 				Write(insaddr, address + 2, value, Size.Word);
 				return;
 			}
-
-			if (address == ChipRegs.SPR0POS || address == ChipRegs.SPR1POS)
-				DebugInfo(insaddr, address, value, size);
 
 			int reg = REG(address);
 
@@ -232,7 +234,6 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort) value;
 				else
 					regs[reg] &= (ushort) ~value;
-				//Logger.WriteLine($"ADKCON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 				regs[REG(ChipRegs.ADKCONR)] = regs[reg];
 			}
 			else
@@ -240,23 +241,15 @@ namespace RunAmiga.Custom
 				regs[reg] = (ushort)value;
 			}
 
-			//NB. BPLCON3 13..15 controls the palette bank on AGA
-			if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
-			{
-				uint bank = (Read(insaddr, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
-				UI.SetColour((int)(bank + ((address - ChipRegs.COLOR00) >> 1)), (ushort)value);
-			}
-			else if ((address >= ChipRegs.COP1LCH && address < ChipRegs.DIWSTRT) || address == ChipRegs.COPCON)
+			if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.DDFSTOP) ||
+			    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31) ||
+			    address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW)
 			{
 				copper.Write(insaddr, address, (ushort)value);
 			}
 			else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
 			{
 				blitter.Write(insaddr, address, (ushort)value);
-			}
-			else if (address >= ChipRegs.BPL1PTH && address < ChipRegs.BPLCON0)
-			{
-				DebugInfo(insaddr, address, value, size);
 			}
 			else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
 			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT 
@@ -268,6 +261,19 @@ namespace RunAmiga.Custom
 			         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
 			{
 				mouse.Write(insaddr, address, (ushort)value);
+			}
+			else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
+			{
+				mouse.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
+			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR)
+			{
+
+			}
+			else 
+			{
+				Logger.WriteLine($"W {ChipRegs.Name(address)} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 			}
 		}
 
