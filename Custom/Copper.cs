@@ -398,7 +398,9 @@ namespace RunAmiga.Custom
 
 							waitHMask = (data & 0xfe)|0xff00;
 							waitVMask = ((data >> 8) & 0x7f)|0xff80;
-							uint blit = (uint)(data >> 15);//totod: blitter is immediate, so currently ignored. in reality, if blitter-busy bit is set the comparisons will fail.
+							uint blit = (uint)(data >> 15);
+							//todo: blitter is immediate, so currently ignored.
+							//in reality if blitter-busy bit is set the comparisons will fail.
 
 							if ((data & 1) == 0)
 							{
@@ -473,33 +475,49 @@ namespace RunAmiga.Custom
 
 					//plot something
 
-					//227 hclocks @ 3.5MHz, DIW normally 0x81 to 0x1C1 = 0x140 = 296
-					//                      DDF          0x38 to 0x1D0 = 0x198 = 408
+					//227 hclocks @ 3.5MHz,
+					// in lowres, 1 pixel is 8 clocks, hires pixel is 4 clocks, shres pixel is 2 clocks
+					//                      DIW  1 pixel resolution
+					//DIW normally               0x81 to 0x1C1 = 129->449 0x140 = 320 "clipping window" always in lowres pixels
+					//                                     /2   64.5->224.5
+					//                                     /4  32.25->112.25
+
+					// 0x81/2-8.5 = 0x38   DIW/2-x = DDF
+					// 0x81/2-4.5 = 0x3C
+					//                      DDF  4 pixel resolution    x4 224->832
+					//                      DDF  lowres  0x38 to 0xD0 =   56->208  0x98 = 152 - in low res mode, 152/8+1 = 19+1 = 20 fetches
+					//                      DDF  hires   0x3c to 0xD4 =   60->212  0x98 = 152 - in hi res mode,  152/4+2 = 38+2 = 40 fetches
+					//                           shres   0x3c to 0xD4 =   60->212  0x98 = 152 - in shres  mode,  152/2+4 = 76+4 = 80 fetches
+					//low res means we'll fetch 20 words per scanline per plane, and 40 in hi-res
+
+					//question: how do DIW and DDF values tie into colour clock?
 
 					/*
-							During a horizontal scan line (about 63 microseconds), there are 227.5
-							"color clocks", or memory access cycles.  A memory cycle is approximately
-							280 ns in duration.  The total of 227.5 cycles per horizontal line
-							includes both display time and non-display time.  Of this total time, 226
-							cycles are available to be allocated to the various devices that need
-							memory access.
+						During a horizontal scan line (about 63 microseconds), there are 227.5
+						"color clocks", or memory access cycles.  A memory cycle is approximately
+						280 ns in duration.  The total of 227.5 cycles per horizontal line
+						includes both display time and non-display time.  Of this total time, 226
+						cycles are available to be allocated to the various devices that need
+						memory access.
 
-							The time-slot allocation per horizontal line is:
+						The time-slot allocation per horizontal line is:
 
-							      4 cycles for memory refresh
-							      3 cycles for disk DMA
-							      4 cycles for audio DMA (2 bytes per channel)
-							     16 cycles for sprite DMA (2 words per channel)
-							     80 cycles for bitplane DMA (even- or odd-numbered slots
-							          according to the display size used)
+						      4 cycles for memory refresh
+						      3 cycles for disk DMA
+						      4 cycles for audio DMA (2 bytes per channel)
+						     16 cycles for sprite DMA (2 words per channel)
+						     80 cycles for bitplane DMA (even- or odd-numbered slots
+						          according to the display size used)
+				           =107 total
 					*/
 				}
+
 				//next horizontal line
 				for (int i = 0; i < planes; i++)
 				{
 					if ((planes & (1 << i)) != 0)
 					{
-						bplpt[i] += ((i&1)==0)? bpl1mod:bpl2mod;
+						bplpt[i] += ((i&1)==0)? bpl2mod:bpl1mod;
 					}
 				}
 			}
