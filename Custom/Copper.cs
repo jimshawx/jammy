@@ -45,6 +45,7 @@ namespace RunAmiga.Custom
 		private uint copperHorz;//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
 		private uint copperVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 
+		private bool dbug=false;
 		private int cf = 0;
 		public void Emulate(ulong cycles)
 		{
@@ -58,6 +59,13 @@ namespace RunAmiga.Custom
 				//RunCopperList(cop1lc, false);
 				if ((cf++ % 20) == 0)
 					RunCopperList(cop1lc, false);
+
+				if (dbug)
+				{
+					DebugCopperList(cop1lc);
+					dbug = false;
+				}
+
 				//if (((25 + cf++) % 50) == 0)
 				//	RunCopperList(cop2lc, false);
 
@@ -112,10 +120,10 @@ namespace RunAmiga.Custom
 
 					Logger.WriteLine($"{copPC:X8} MOVE {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
 
-					//if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
-					//	copPC = custom.Read(copPC, ChipRegs.COP1LCH, Size.Long);//COP1LC
-					//else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2) 
-					//	copPC = custom.Read(copPC, ChipRegs.COP2LCH, Size.Long);//COP2LC
+					if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
+						copPC = custom.Read(copPC, ChipRegs.COP1LCH, Size.Long);//COP1LC
+					else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2) 
+						copPC = custom.Read(copPC, ChipRegs.COP2LCH, Size.Long);//COP2LC
 				}
 				else if ((ins & 0x0001) == 1)
 				{
@@ -163,7 +171,7 @@ namespace RunAmiga.Custom
 		}
 
 		[Flags]
-		private enum BPLCON0
+		private enum BPLCON0 : uint
 		{
 			HiRes=1<<15,
 			SuperHiRes=1<<6,
@@ -203,7 +211,7 @@ namespace RunAmiga.Custom
 			for (int v = 0; v < lines; v++)
 			{
 				int lineStart = dptr;
-				pixelCountdown = -1;
+				pixelCountdown = 0;
 				for (int h = 0; h < 227; h++)
 				{
 					//copper instruction every even clock
@@ -285,8 +293,11 @@ namespace RunAmiga.Custom
 							}
 						}
 					}
+					//end copper instruction
 
-					//how many pixels should be fecthed in the current mode?
+					//bitplane fetching
+
+					//how many pixels should be fecthed per clock in the current mode?
 					int pixelLoop=0;
 					if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 					{
@@ -306,67 +317,65 @@ namespace RunAmiga.Custom
 						//1 colour clock, draw 2 pixel
 						pixelLoop = 2;
 					}
-					in_fetch = h >= ddfstrt && h <= ddfstop &&
-					           v >= (diwstrt >> 8) &&  v < ((diwstop>>8)+(((diwstop&0x8000)^0x8000)>>7));
+					in_fetch = /*pixelCountdown != 0 ||*/ (h >= ddfstrt && h < ddfstop+ (3*pixelLoop) 
+					                                                    && v >= (diwstrt >> 8) &&  v < ((diwstop>>8)+(((diwstop&0x8000)^0x8000)>>7)));
+
+					//if (v == 100 && h == 0)
+					//	Logger.Write($"{ddfstrt:X4} {ddfstop:X4} {ddfstrt} {ddfstop} {ddfstop-ddfstrt}");
 
 					for (int p = 0; p < pixelLoop; p++)
 					{
-						//are we within the display area defined by DIW regs?
-						//if (in_display)
+						//are we within the bitplane fetch area defined by DDF?
+						if (in_fetch)
 						{
-							//is_new_pixel = ((ddfstrt - h) / 8) == 0;
+							int planes = (bplcon0 >> 12) & 7;
 
-							//are we within the bitplane fetch area defined by DDF?
-							if (in_fetch)
+							//is it time to fetch some more bitplane data?
+							if (pixelCountdown <= 0)
 							{
-								//is it time to fetch a new pixel colour?
-								//if (is_new_pixel)
+
+								//if (v == 100)
+								//	Logger.Write($"{h:X2} ");
+
+								for (int i = 0; i < planes; i++)
 								{
-									//is it time to fetch some more bitblane data?
-									if (pixelCountdown < 0)
-									{
-										int planes = (bplcon0 >> 12) & 7;
-										for (int i = 0; i < planes; i++)
-										{
-											bpldat[i] = (ushort)memory.Read(0, bplpt[i], Size.Word);
-											bplpt[i] += 2;
-										}
-
-										pixelCountdown = 15;
-									}
-
-									//decode the colour
-									{
-										byte pix = 0;
-										int planes = (bplcon0 >> 12) & 7;
-										for (int i = 0; i < planes; i++)
-											pix |= (byte)((bpldat[i] & (1<<pixelCountdown)) != 0 ? (1 << i) : 0);
-										//pix is the colour
-										int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
-										col = truecolour[pix + bank];
-										pixelCountdown--;
-									}
+									bpldat[i] = (ushort)memory.Read(0, bplpt[i], Size.Word);
+									bplpt[i] += 2;
 								}
-							}
-							else
-							{
-								//output colour 0 pixels
-								col = truecolour[0];
-								col = 0xff0000;
-							}
-						}
-						//else
-						//{
-						//	// output black pixels
-						//	col = 0x000000;
-						//}
 
-						//duplicate the pixel 4 times in low res, 2x in hires and 4x in shres
+								pixelCountdown = 0x8000;
+							}
+
+							//decode the colour
+							byte pix = 0;
+
+							for (int i = 0; i < planes; i++)
+								pix |= (byte)((bpldat[i] & (pixelCountdown)) != 0 ? (1 << i) : 0);
+
+							//pix is the Amiga colour
+							int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+
+							col = truecolour[pix + bank];
+							
+							pixelCountdown >>= 1;
+						}
+						else
+						{
+							//output colour 0 pixels
+							col = truecolour[0];
+							col = 0xff0000;
+						}
+
+						//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+						//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
 						for (int k = 0; k < 4 / pixelLoop; k++)
 							screen[dptr++] = col;
 					}
 
 				}
+
+				//if (v == 100)
+				//	Logger.WriteLine("\\");
 
 				//next horizontal line
 				{
@@ -441,7 +450,6 @@ namespace RunAmiga.Custom
 		private uint[] bplpt = new uint[8];
 		private ushort diwstrt;
 		private ushort diwstop;
-		private ushort diwhigh;
 		private ushort bplcon0;
 		private ushort bplcon1;
 		private ushort bplcon2;
@@ -457,9 +465,15 @@ namespace RunAmiga.Custom
 		private ushort[] sprdata = new ushort[8];
 		private ushort[] sprdatb = new ushort[8];
 
+		//ECS/AGA
+		private ushort vbstrt;
+		private ushort vbstop;
+		private ushort diwhigh;
+		private ushort vtotal;
+		private ushort fmode;
+
 		public ushort[] colour = new ushort[256];
 		public uint[] truecolour = new uint[256];
-
 
 		public ushort Read(uint insaddr, uint address)
 		{
@@ -505,7 +519,7 @@ namespace RunAmiga.Custom
 				case ChipRegs.BPL1MOD: value = (ushort)bpl1mod; break;
 				case ChipRegs.BPL2MOD: value = (ushort)bpl2mod; break;
 
-				case ChipRegs.BPLCON0: value = bplcon1; break;
+				case ChipRegs.BPLCON0: value = bplcon0; break;
 				case ChipRegs.BPLCON1: value = bplcon1; break;
 				case ChipRegs.BPLCON2: value = bplcon2; break;
 				case ChipRegs.BPLCON3: value = bplcon3; break;
@@ -599,6 +613,12 @@ namespace RunAmiga.Custom
 				case ChipRegs.SPR7CTL: value = sprctl[7]; break;
 				case ChipRegs.SPR7DATA: value = sprdata[7]; break;
 				case ChipRegs.SPR7DATB: value = sprdatb[7]; break;
+
+				//ECS/AGA
+				case ChipRegs.VBSTRT: value = vbstrt; break;
+				case ChipRegs.VBSTOP: value = vbstop; break;
+				case ChipRegs.VTOTAL: value = vtotal; break;
+				case ChipRegs.FMODE: value = fmode; break;
 			}
 
 			if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
@@ -752,6 +772,12 @@ namespace RunAmiga.Custom
 				case ChipRegs.SPR7CTL: sprctl[7] = value; break;
 				case ChipRegs.SPR7DATA: sprdata[7] = value; break;
 				case ChipRegs.SPR7DATB: sprdatb[7] = value; break;
+
+				//ECS/AGA
+				case ChipRegs.VBSTRT: vbstrt = value; break;
+				case ChipRegs.VBSTOP: vbstop = value; break;
+				case ChipRegs.VTOTAL: vtotal = value; break;
+				case ChipRegs.FMODE: fmode = value; break;
 			}
 
 			if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
@@ -767,8 +793,6 @@ namespace RunAmiga.Custom
 				uint col = value;
 				truecolour[index] = ((col & 0xf) * 0x11) + ((col & 0xf0) * 0x110) + ((col & 0xf00) * 0x1100);
 			}
-
-
 		}
 
 	}

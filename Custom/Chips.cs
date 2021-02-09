@@ -42,6 +42,9 @@ namespace RunAmiga.Custom
 			diskDrives.Reset();
 			mouse.Reset();
 			keyboard.Reset();
+
+			regs[REG(ChipRegs.LISAID)] = 0x00f8;//LISA (0x00fc ECS Denise 8373) (OCD Denise just returns last value on bus).
+			regs[REG(ChipRegs.LISAID)] = 0x0000;
 		}
 
 		public bool IsMapped(uint address)
@@ -75,7 +78,9 @@ namespace RunAmiga.Custom
 
 			if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.DDFSTOP) ||
 				(address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31)||
-				address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW)
+				address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
+				|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
+				|| address == ChipRegs.FMODE)
 			{
 				regs[reg] = copper.Read(insaddr, address);
 			}
@@ -96,10 +101,11 @@ namespace RunAmiga.Custom
 			}
 			else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
 			{
-				regs[reg] = mouse.Read(insaddr, address);
+				regs[reg] = audio.Read(insaddr, address);
 			}
 			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
-			                     address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR)
+			                     address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
+			                     || address == ChipRegs.LISAID || address == ChipRegs.NO_OP)
 			{
 
 			}
@@ -243,7 +249,9 @@ namespace RunAmiga.Custom
 
 			if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.DDFSTOP) ||
 			    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31) ||
-			    address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW)
+			    address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
+			    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
+			    || address == ChipRegs.FMODE)
 			{
 				copper.Write(insaddr, address, (ushort)value);
 			}
@@ -264,10 +272,11 @@ namespace RunAmiga.Custom
 			}
 			else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
 			{
-				mouse.Write(insaddr, address, (ushort)value);
+				audio.Write(insaddr, address, (ushort)value);
 			}
 			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
-			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR)
+			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
+			         || address == ChipRegs.LISAID || address == ChipRegs.NO_OP)
 			{
 
 			}
