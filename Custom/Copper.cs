@@ -82,14 +82,6 @@ namespace RunAmiga.Custom
 			copperTime = 0;
 		}
 
-		//private uint copperPC;
-
-		//public void SetCopperPC(uint address)
-		//{
-		//	copperPC = address;
-		//	//DebugCopperList(copperPC);
-		//}
-
 		private const int MAX_COPPER_ENTRIES = 512;
 
 		public void DebugCopperList(uint copPC)
@@ -208,14 +200,17 @@ namespace RunAmiga.Custom
 
 			int dptr = 0;
 
+
 			for (int v = 0; v < lines; v++)
 			{
 				int lineStart = dptr;
 				pixelCountdown = 0;
 				for (int h = 0; h < 227; h++)
 				{
+					ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+
 					//copper instruction every even clock
-					if ((h & 1) == 0)
+					if ((h & 1) == 0 && (dmacon&0b101000000) == 0b101000000)
 					{
 						if (state == CopperState.Running)
 						{
@@ -228,9 +223,7 @@ namespace RunAmiga.Custom
 							if ((ins & 0x0001) == 0)
 							{
 								//MOVE
-
 								uint reg = (uint)(ins & 0x1fe);
-
 								uint regAddress = ChipRegs.ChipBase + reg;
 
 								custom.Write(0, regAddress, data, Size.Word);
@@ -326,7 +319,7 @@ namespace RunAmiga.Custom
 					for (int p = 0; p < pixelLoop; p++)
 					{
 						//are we within the bitplane fetch area defined by DDF?
-						if (in_fetch)
+						if (in_fetch && (dmacon&0b110000000) == 0b110000000)
 						{
 							int planes = (bplcon0 >> 12) & 7;
 
@@ -336,7 +329,6 @@ namespace RunAmiga.Custom
 
 								//if (v == 100)
 								//	Logger.Write($"{h:X2} ");
-
 								for (int i = 0; i < planes; i++)
 								{
 									bpldat[i] = (ushort)memory.Read(0, bplpt[i], Size.Word);

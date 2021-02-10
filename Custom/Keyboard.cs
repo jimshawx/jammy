@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -100,13 +101,17 @@ namespace RunAmiga.Custom
 			keys = new Form();
 			keys.Text = "Keyboard";
 			keys.Size = new Size(100, 100);
-			keys.KeyDown += AddAKey;
+			var btn = new Button {Text = "Reset"};
+			btn.Click += AddReset;
+			keys.Controls.Add(btn);
+			keys.KeyDown += AddKeyDown;
+			keys.KeyUp += AddKeyUp;
 			keys.Show();
 		}
 
-		private Queue<int> keyQueue = new Queue<int>();
+		private ConcurrentQueue<int> keyQueue = new ConcurrentQueue<int>();
 
-		private void AddAKey(object sender, KeyEventArgs e)
+		private void AddKeyDown(object sender, KeyEventArgs e)
 		{
 			int key = e.KeyValue;
 
@@ -117,15 +122,50 @@ namespace RunAmiga.Custom
 				Logger.Write($"{scanConvert[key]:X2}");
 
 				keyQueue.Enqueue(scanConvert[key]);
-
-				cia.SerialInterrupt();
-				interrupt.TriggerInterrupt(Interrupt.PORTS);
+				//KeyInterrupt();
 			}
 			Logger.WriteLine("");
 		}
 
+		private void AddKeyUp(object sender, KeyEventArgs e)
+		{
+			int key = e.KeyValue;
+
+			Logger.Write($"{Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} ");
+
+			if (scanConvert.ContainsKey(key))
+			{
+				Logger.Write($"{scanConvert[key]:X2}");
+
+				keyQueue.Enqueue(scanConvert[key] | 0x80);
+				//KeyInterrupt();
+			}
+			Logger.WriteLine("");
+		}
+
+		private void AddReset(object sender, EventArgs e)
+		{
+			keyQueue.Enqueue(0x78);
+			//KeyInterrupt();
+		}
+
+		private void KeyInterrupt()
+		{
+			cia.SerialInterrupt();
+			interrupt.TriggerInterrupt(Interrupt.PORTS);
+		}
+
+		private uint keyTimer=0;
 		public void Emulate(ulong cycles)
 		{
+			keyTimer++;
+			if (keyTimer >= 10)
+			{
+				keyTimer -= 10;
+
+				if (keyQueue.Any())
+					KeyInterrupt();
+			}
 		}
 
 		public void Reset()
@@ -135,15 +175,14 @@ namespace RunAmiga.Custom
 
 		public uint ReadKey()
 		{
-			if (keyQueue.Any())
+			if (keyQueue.TryDequeue(out int c))
 			{
-				int c = keyQueue.Dequeue();
 				c = (c << 1) | (c >> 7);
 				c = ~c;
 				return (uint)c;
 			}
 
-			return 0xff;
+			return 0x00;
 		}
 
 		public void SetCIA(CIAAOdd ciaa)
