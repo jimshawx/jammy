@@ -30,9 +30,9 @@ namespace RunAmiga.Custom
 		{
 			mouseTime += cycles;
 
-			if (mouseTime > 100)
+			if (mouseTime > 250000)
 			{
-				mouseTime -= 100;
+				mouseTime -= 250000;
 
 				//CIAA pra, bit 6 port 0 left mouse/joystick fire, inverted logic, 0 closed, 1 open
 				//CIAA pra, bit 7 port 1 left mouse/joystick fire
@@ -51,6 +51,7 @@ namespace RunAmiga.Custom
 				int mousey = Cursor.Position.Y;
 
 				bool rmouse = (Control.MouseButtons & MouseButtons.Right) != 0;
+				bool mmouse = (Control.MouseButtons & MouseButtons.Middle) != 0;
 				bool lmouse = (Control.MouseButtons & MouseButtons.Left) != 0;
 
 				if (lmouse)
@@ -62,6 +63,11 @@ namespace RunAmiga.Custom
 					potgo &= ~(1u << 10);
 				else
 					potgo |= (1u << 10);
+
+				if (mmouse)
+					potgo &= ~(1u << 8);
+				else
+					potgo |= (1u << 8);
 
 				if (oldMouseX != -1)
 				{
@@ -88,19 +94,26 @@ namespace RunAmiga.Custom
 
 					if (dy < 0) joy0dat |= 0x9000;
 					if (dy > 0) joy0dat |= 0x1000;
+
+					//if (dx < 0) joy0dat |= 0xff;
+					//if (dx > 0) joy0dat |= 0x01;
+
+					//if (dy < 0) joy0dat |= 0xff00;
+					//if (dy > 0) joy0dat |= 0x0100;
+
 				}
 
 				oldMouseX = mousex;
 				oldMouseY = mousey;
 
-				clock++;
-				clock &= 3;
+				//clock++;
+				//clock &= 3;
 
-				joy0dat &= 0b11111100_11111100;
-				joy0dat |= (uint)(clock * 0x101);
+				//joy0dat &= 0b11111100_11111100;
+				//joy0dat |= (uint)(clock * 0x101);
 
-				joy1dat &= 0b11111100_11111100;
-				joy1dat |= (uint)(clock * 0x101);
+				//joy1dat &= 0b11111100_11111100;
+				//joy1dat |= (uint)(clock * 0x101);
 			}
 		}
 

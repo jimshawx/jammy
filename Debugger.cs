@@ -88,7 +88,7 @@ namespace RunAmiga
 
 			//diskDrives debugging
 			//AddBreakpoint(0xFe89cc);//diskDrives changes
-			AddBreakpoint(0xFe89e4);//read boot block
+			////AddBreakpoint(0xFe89e4);//read boot block
 			//AddBreakpoint(0xFe8a84);//after logo, wait for diskDrives change
 			//AddBreakpoint(0xFe8a9c);//after logo, check for diskDrives inserted
 			AddBreakpoint(0xFe8a0a);//track read, is it a DOS diskDrives?

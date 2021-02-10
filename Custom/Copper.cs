@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using RunAmiga.Extensions;
 using Size = RunAmiga.Types.Size;
 
 namespace RunAmiga.Custom
@@ -26,7 +23,7 @@ namespace RunAmiga.Custom
 		private const int screenWidth = 227 * 4;
 		private const int screenHeight = 313;
 
-		private readonly uint[] screen = new uint[screenWidth * screenHeight];
+		private readonly int[] screen = new int[screenWidth * screenHeight];
 
 		public Copper(IMemoryMappedDevice memory, Chips custom, Interrupt interrupt)
 		{
@@ -361,7 +358,7 @@ namespace RunAmiga.Custom
 						//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
 						//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
 						for (int k = 0; k < 4 / pixelLoop; k++)
-							screen[dptr++] = col;
+							screen[dptr++] = (int)col;
 					}
 
 				}
@@ -382,8 +379,54 @@ namespace RunAmiga.Custom
 				dptr += screenWidth - (dptr - lineStart);
 			}
 
+			// sprites
+			if ((custom.Read(0, ChipRegs.DMACONR, Size.Word) & 0b100100000) == 0b100100000)
+			{
+				for (int s = 7; s >= 0; s--)
+				{
+					for (;;)
+					{
+						sprpos[s] = (ushort)memory.Read(0, sprpt[s], Size.Word); sprpt[s] += 2;
+						sprctl[s] = (ushort)memory.Read(0, sprpt[s], Size.Word); sprpt[s] += 2;
+
+						if (sprpos[s] == 0 && sprctl[s] == 0)
+							break;
+
+						int hstart = (sprpos[s] & 0xff) << 1;
+						int vstart = sprpos[s] >> 8;
+						int vstop = sprctl[s] >> 8;
+
+						vstart += (sprctl[s] & 4) << 6; //bit 2 is high bit of vstart
+						vstop += (sprctl[s] & 2) << 7; //bit 1 is high bit of vstop
+						hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
+
+						//x2 because they are low-res pixels on our high-res bitmap
+						dptr = (hstart * 2) + vstart * screenWidth;
+						for (int r = vstart; r < vstop; r++)
+						{
+							sprdata[s] = (ushort)memory.Read(0, sprpt[s], Size.Word); sprpt[s] += 2;
+							sprdatb[s] = (ushort)memory.Read(0, sprpt[s], Size.Word); sprpt[s] += 2;
+
+							for (int x = 0x8000; x > 0; x >>= 1)
+							{
+								int pix = (sprdata[s] & x)!=0?1:0 + (sprdatb[s] & x)!=0?2:0;
+								if (pix != 0)
+									screen[dptr] = (int)truecolour[16 + 4*(s>>1) + pix];
+								dptr++;
+								if (dptr >= screen.Length) break;
+							}
+
+							dptr += screenWidth - 16;
+							if (dptr >= screen.Length) break;
+						}
+
+						if (dptr >= screen.Length) break;
+					}
+				}
+			}
+
 			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, screenWidth, screenHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
-			Marshal.Copy(screen.AsByte().ToArray(), 0, bitmapData.Scan0, screenWidth * screenHeight * 4);
+			Marshal.Copy(screen, 0, bitmapData.Scan0, screen.Length);
 			bitmap.UnlockBits(bitmapData);
 			picture.Image = bitmap;
 			form.Invalidate();
