@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Forms;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -210,7 +211,13 @@ namespace RunAmiga.Custom
 			else if (address == ChipRegs.INTREQ)
 			{
 				if ((value & 0x8000) != 0)
+				{
 					regs[reg] |= (ushort)value;
+
+					interrupt.TriggerCPUInterrupt(value);
+					
+					//Logger.WriteLine($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
+				}
 				else
 					regs[reg] &= (ushort)~value;
 				//Logger.WriteLine($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");

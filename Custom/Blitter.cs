@@ -342,10 +342,7 @@ namespace RunAmiga.Custom
 			//disable blitter busy in DMACON
 			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
 
-			//write blitter interrupt bit to INTREQ
-			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)Interrupt.BLIT), Size.Word);
-
-			//blitter done
+			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.TriggerInterrupt(Interrupt.BLIT);
 		}
 
@@ -511,13 +508,10 @@ namespace RunAmiga.Custom
 			else
 				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
 
-			//write blitter interrupt bit to INTREQ
-			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)Interrupt.BLIT), Size.Word);
-
 			//disable blitter busy in DMACON
 			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
 
-			//blitter done
+			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.TriggerInterrupt(Interrupt.BLIT);
 		}
 
@@ -573,6 +567,7 @@ namespace RunAmiga.Custom
 			else
 				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
 
+			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.TriggerInterrupt(Interrupt.BLIT);
 		}
 	}

@@ -101,9 +101,9 @@ namespace RunAmiga.Custom
 			keys = new Form();
 			keys.Text = "Keyboard";
 			keys.Size = new Size(100, 100);
-			var btn = new Button {Text = "Reset"};
-			btn.Click += AddReset;
-			keys.Controls.Add(btn);
+			//var btn = new Button {Text = "Reset"};
+			//btn.Click += AddReset;
+			//keys.Controls.Add(btn);
 			keys.KeyDown += AddKeyDown;
 			keys.KeyUp += AddKeyUp;
 			keys.Show();
@@ -122,7 +122,6 @@ namespace RunAmiga.Custom
 				Logger.Write($"{scanConvert[key]:X2}");
 
 				keyQueue.Enqueue(scanConvert[key]);
-				//KeyInterrupt();
 			}
 			Logger.WriteLine("");
 		}
@@ -138,7 +137,6 @@ namespace RunAmiga.Custom
 				Logger.Write($"{scanConvert[key]:X2}");
 
 				keyQueue.Enqueue(scanConvert[key] | 0x80);
-				//KeyInterrupt();
 			}
 			Logger.WriteLine("");
 		}
@@ -146,7 +144,6 @@ namespace RunAmiga.Custom
 		private void AddReset(object sender, EventArgs e)
 		{
 			keyQueue.Enqueue(0x78);
-			//KeyInterrupt();
 		}
 
 		private void KeyInterrupt()

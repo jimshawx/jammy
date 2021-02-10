@@ -75,12 +75,21 @@ namespace RunAmiga
 		//	musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
 		//}
 
-
-		public void TriggerInterrupt(uint interrupt)
+		public void TriggerInterrupt(uint intreq)
 		{
-			custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)interrupt), Size.Word);
-			interruptPending = CPUPriority(interrupt);
-			//Musashi_set_irq(interruptPending);
+			custom.Write(0, ChipRegs.INTREQ, 0x8000+(1u<<(int)intreq), Size.Word);
+		}
+
+		public void TriggerCPUInterrupt(uint intreq)
+		{
+			for (int i = (int)Interrupt.INTEN; i >= 0; i--)
+			{
+				if ((intreq & (1u<<i))!=0)
+				{
+					interruptPending = CPUPriority((uint)i);
+					break;
+				}
+			}
 		}
 
 		//private void EnableInterrupt(uint interrupt)

@@ -69,7 +69,7 @@ namespace RunAmiga.Custom
 				//if (((25 + cf++) % 50) == 0)
 				//	RunCopperList(cop2lc, false);
 
-				interrupt.TriggerInterrupt(Interrupt.VERTB);
+				custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)Interrupt.VERTB), Size.Word);
 			}
 
 			//roughly
