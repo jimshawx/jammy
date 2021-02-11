@@ -80,10 +80,12 @@ namespace RunAmiga
 			custom.Write(0, ChipRegs.INTREQ, 0x8000+(1u<<(int)intreq), Size.Word);
 		}
 
-		public void TriggerCPUInterrupt(uint intreq)
+		public void SetCPUInterruptLevel(uint intreq)
 		{
 			uint intena = custom.Read(0, ChipRegs.INTENAR, Size.Word);
-			
+
+			interruptPending = 0;
+
 			//all interrupts disabled
 			if ((intena & (1<<(int)Interrupt.INTEN))==0) return;
 

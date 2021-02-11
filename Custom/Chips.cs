@@ -213,15 +213,14 @@ namespace RunAmiga.Custom
 				if ((value & 0x8000) != 0)
 				{
 					regs[reg] |= (ushort)value;
-
-					interrupt.TriggerCPUInterrupt(value);
-					
 					//Logger.WriteLine($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
 				}
 				else
 				{
 					regs[reg] &= (ushort)~value;
 				}
+				
+				interrupt.SetCPUInterruptLevel(regs[reg]);
 
 				//Logger.WriteLine($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
 

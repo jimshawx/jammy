@@ -26,18 +26,10 @@ namespace RunAmiga
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_set_irq(uint levels);
 
-		private bool CheckInterrupt()
+		private void CheckInterrupt()
 		{
-			if (interrupt.InterruptPending())
-			{
-				ushort interruptLevel = interrupt.GetInterruptLevel();
-				Musashi_set_irq(interruptLevel);
-				interrupt.ResetInterrupt();
-
-				return true;
-			}
-
-			return false;
+			ushort interruptLevel = interrupt.GetInterruptLevel();
+			Musashi_set_irq(interruptLevel);
 		}
 
 		private ulong totalTicks = 0;
