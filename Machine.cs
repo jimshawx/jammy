@@ -68,7 +68,7 @@ namespace RunAmiga
 		public void RunEmulations(ulong ns)
 		{
 			emulations.ForEach(x => x.Emulate(ns));
-			CheckInterrupts(10);
+			//CheckInterrupts(10);
 		}
 
 		////private List<uint> mpc = new List<uint>();
@@ -221,39 +221,39 @@ namespace RunAmiga
 		//}
 
 
-		private uint clock=0;
-		private uint intType = 0;
-		private void CheckInterrupts(int cycles)
-		{
-			clock += (uint)cycles;
+		//private uint clock=0;
+		//private uint intType = 0;
+		//private void CheckInterrupts(int cycles)
+		//{
+		//	clock += (uint)cycles;
 
-			//7Mhz = 7M/50 = 140,000 cycles in a frame.
-			//the multitask timeslice is 4frames, 560000 cycles
-			if (clock > 140_000)
-			{
-				clock -= 140_000;
+		//	//7Mhz = 7M/50 = 140,000 cycles in a frame.
+		//	//the multitask timeslice is 4frames, 560000 cycles
+		//	if (clock > 140_000)
+		//	{
+		//		clock -= 140_000;
 
-				//hack to force enable scheduling
-				//interrupt.EnableSchedulerAttention();
+		//		//hack to force enable scheduling
+		//		//interrupt.EnableSchedulerAttention();
 
-				//hack to force enable this interrupt level
-				//interrupt.EnableInterrupt(Interrupt.VERTB);
-				//interrupt.EnableInterrupt(Interrupt.BLIT);
-				//interrupt.EnableInterrupt(Interrupt.COPPER);
-				//interrupt.EnableInterrupt(Interrupt.PORTS);
-				//interrupt.EnableInterrupt(Interrupt.SOFTINT);
+		//		//hack to force enable this interrupt level
+		//		//interrupt.EnableInterrupt(Interrupt.VERTB);
+		//		//interrupt.EnableInterrupt(Interrupt.BLIT);
+		//		//interrupt.EnableInterrupt(Interrupt.COPPER);
+		//		//interrupt.EnableInterrupt(Interrupt.PORTS);
+		//		//interrupt.EnableInterrupt(Interrupt.SOFTINT);
 
-				////trigger the interrupt
-				//intType = 0;
-				//if (intType == 2) interrupt.TriggerInterrupt(Interrupt.VERTB);
-				//if (intType == 3) interrupt.TriggerInterrupt(Interrupt.BLIT);
-				//if (intType == 0) interrupt.TriggerInterrupt(Interrupt.COPPER);
-				//if (intType == 1) interrupt.TriggerInterrupt(Interrupt.PORTS);
-				//if (intType == 1) interrupt.TriggerInterrupt(Interrupt.DSKBLK);
-				//if (intType == 4) interrupt.TriggerInterrupt(Interrupt.SOFTINT);
-				intType++; intType %= 5;
-			}
-		}
+		//		////trigger the interrupt
+		//		//intType = 0;
+		//		//if (intType == 2) interrupt.TriggerInterrupt(Interrupt.VERTB);
+		//		//if (intType == 3) interrupt.TriggerInterrupt(Interrupt.BLIT);
+		//		//if (intType == 0) interrupt.TriggerInterrupt(Interrupt.COPPER);
+		//		//if (intType == 1) interrupt.TriggerInterrupt(Interrupt.PORTS);
+		//		//if (intType == 1) interrupt.TriggerInterrupt(Interrupt.DSKBLK);
+		//		//if (intType == 4) interrupt.TriggerInterrupt(Interrupt.SOFTINT);
+		//		intType++; intType %= 5;
+		//	}
+		//}
 
 		private Thread emuThread;
 

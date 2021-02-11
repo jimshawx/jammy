@@ -66,6 +66,8 @@ namespace RunAmiga.Custom
 
 		private ulong timerTime;
 
+		private byte alarmlo, alarmmid, alarmhi;
+
 		public virtual void Emulate(ulong cycles)
 		{
 			timerTime += cycles;
@@ -217,6 +219,27 @@ namespace RunAmiga.Custom
 						Logger.WriteLine($"B inmode: {(value >> 5) & 3}");
 
 					regs[CIA.CRB] = (byte)value;
+					break;
+
+				case CIA.TODLO:
+					if ((regs[CIA.CRB] & (uint)CR.CRB_ALARM) != 0)
+						alarmlo = (byte)value;
+					else
+						regs[CIA.TODLO] = (byte)value;
+					break;
+
+				case CIA.TODMID:
+					if ((regs[CIA.CRB] & (uint)CR.CRB_ALARM) != 0)
+						alarmmid = (byte)value;
+					else
+						regs[CIA.TODMID] = (byte)value;
+					break;
+
+				case CIA.TODHI:
+					if ((regs[CIA.CRB] & (uint)CR.CRB_ALARM) != 0)
+						alarmhi = (byte)value;
+					else
+						regs[CIA.TODHI] = (byte)value;
 					break;
 
 				default:
