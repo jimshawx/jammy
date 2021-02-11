@@ -600,7 +600,13 @@ namespace RunAmiga
 						else if (size == Size.Word)
 							a[x] += 2;
 						else if (size == Size.Byte)
-							a[x] += 1;
+						{
+							if (x == 7)
+								a[x] += 2;
+							else
+								a[x] += 1;
+						}
+
 						return v;
 					}
 
@@ -611,7 +617,13 @@ namespace RunAmiga
 						else if (size == Size.Word)
 							a[x] -= 2;
 						else if (size == Size.Byte)
-							a[x] -= 1;
+						{
+							if (x == 7)
+								a[x] -= 2;
+							else
+								a[x] -= 1;
+						}
+
 						return fetchOpSize(a[x], size);//yes, a[x]
 					}
 
@@ -684,18 +696,28 @@ namespace RunAmiga
 					writeOp(ea, value, size);
 					if (size == Size.Long)
 						a[Xn] += 4;
-					if (size == Size.Word)
+					else if (size == Size.Word)
 						a[Xn] += 2;
-					if (size == Size.Byte)
-						a[Xn] += 1;
+					else if (size == Size.Byte)
+					{
+						if (Xn == 7)
+							a[Xn] += 2;
+						else
+							a[Xn] += 1;
+					}
 					break;
 				case 4:
 					if (size == Size.Long)
 						a[Xn] -= 4;
-					if (size == Size.Word)
+					else if (size == Size.Word)
 						a[Xn] -= 2;
-					if (size == Size.Byte)
-						a[Xn] -= 1;
+					else if (size == Size.Byte)
+					{
+						if (Xn == 7)
+							a[Xn] -= 2;
+						else
+							a[Xn] -= 1;
+					}
 					writeOp(a[Xn], value, size);//yes, a[Xn]
 					break;
 				case 5:
