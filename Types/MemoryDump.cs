@@ -93,7 +93,7 @@ namespace RunAmiga.Types
 			return BlockToString(new List<Tuple<uint, uint>>
 				{
 					new Tuple<uint, uint> ( 0x000000, 0xc000),
-					new Tuple<uint, uint> ( 0xc00000, 0x4000),
+					new Tuple<uint, uint> ( 0xc00000, 0xa000),
 					new Tuple<uint, uint> ( 0xf80000, 0x40000),
 					new Tuple<uint, uint> ( 0xfc0000, 0x40000)
 				});

@@ -96,7 +96,7 @@ namespace RunAmiga
 
 		private bool CheckInterrupt()
 		{
-			if (interrupt.InterruptPending())
+			//if (interrupt.InterruptPending())
 			{
 				//the three IPL bits are the current interrupt level
 				//higher levels can interrupt lower ones, but not the other way around
@@ -108,7 +108,7 @@ namespace RunAmiga
 					instructionStartPC = pc;
 					internalTrap(0x18 + (uint)interruptLevel);
 
-					interrupt.ResetInterrupt();
+					//interrupt.ResetInterrupt();
 					instructionStartPC = pc;
 
 					return true;
