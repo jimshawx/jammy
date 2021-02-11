@@ -82,7 +82,15 @@ namespace RunAmiga
 
 		public void TriggerCPUInterrupt(uint intreq)
 		{
-			for (int i = (int)Interrupt.INTEN; i >= 0; i--)
+			uint intena = custom.Read(0, ChipRegs.INTENAR, Size.Word);
+			
+			//all interrupts disabled
+			if ((intena & (1<<(int)Interrupt.INTEN))==0) return;
+
+			intreq &= intena;
+			if (intreq == 0) return;
+
+			for (int i = (int)Interrupt.DSKSYNC; i >= 0; i--)
 			{
 				if ((intreq & (1u<<i))!=0)
 				{

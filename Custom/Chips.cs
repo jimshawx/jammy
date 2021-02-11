@@ -219,7 +219,10 @@ namespace RunAmiga.Custom
 					//Logger.WriteLine($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
 				}
 				else
+				{
 					regs[reg] &= (ushort)~value;
+				}
+
 				//Logger.WriteLine($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
 
 				//if ((regs[reg] & 0x4000) != 0) Logger.Write("INTEN ");
