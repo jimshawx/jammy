@@ -36,7 +36,6 @@ namespace RunAmiga.Custom
 		}
 
 		private ulong beamTime;
-		private uint hblankCount;
 		public override void Emulate(ulong cycles)
 		{
 			beamTime += cycles;
@@ -45,11 +44,7 @@ namespace RunAmiga.Custom
 			{
 				beamTime -= 140_000 / 312;
 
-				hblankCount++;
-
-				regs[CIA.TODLO] = (byte)hblankCount;
-				regs[CIA.TODMID] = (byte)(hblankCount >> 8);
-				regs[CIA.TODHI] = (byte)(hblankCount >> 16);
+				IncrementTODTimer();
 			}
 
 			base.Emulate(cycles);

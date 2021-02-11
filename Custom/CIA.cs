@@ -66,7 +66,13 @@ namespace RunAmiga.Custom
 
 		private ulong timerTime;
 
-		private byte alarmlo, alarmmid, alarmhi;
+		private uint todAlarm;
+		private uint todLatch;
+
+		private uint todTimer;
+
+		private bool todStopped;
+		private bool todLatched;
 
 		public virtual void Emulate(ulong cycles)
 		{
@@ -121,6 +127,22 @@ namespace RunAmiga.Custom
 			}
 		}
 
+		protected void IncrementTODTimer()
+		{
+			if (!todStopped)
+			{
+				todTimer++;
+				todTimer &= 0xffffff;
+
+				if (todTimer == todAlarm && (regs[CIA.ICR] & (uint)ICRB.TODALARM) != 0)
+				{
+					Logger.WriteLine($"{todTimer:X6}");
+					icrr |= (byte)(ICRB.TODALARM | ICRB.IR);
+					interrupt.TriggerInterrupt(Interrupt.PORTS);
+				}
+			}
+		}
+
 		public virtual void Reset()
 		{
 			for (int i = 0; i < 16; i++)
@@ -130,6 +152,11 @@ namespace RunAmiga.Custom
 			timerB = 0xffff;
 			timerAreset = timerA;
 			timerBreset = timerB;
+
+			todStopped = false;
+			todLatched = false;
+			todTimer = 0;
+			todAlarm = 0;
 
 			icrr = 0;
 		}
@@ -158,6 +185,19 @@ namespace RunAmiga.Custom
 				case CIA.TALO: return timerA;
 				case CIA.TBHI: return (uint)(timerB >> 8);
 				case CIA.TBLO: return timerB;
+				case CIA.TODLO:
+					uint rv;
+					if (todLatched) rv = todLatch & 0xff;
+					else rv = todTimer & 0xff;
+					todLatched = false;
+					return rv;
+				case CIA.TODMID:
+					if (todLatched) return (todLatch >> 8) & 0xff;
+					else return(todTimer >> 8) & 0xff;
+				case CIA.TODHI://reading TODHI latches the values read from TOD until TODLO is read.  HRM p344.
+					todLatch = todTimer;
+					todLatched = true;
+					return todLatch >> 16;
 				default: return (uint)regs[reg];
 			}
 		}
@@ -223,23 +263,41 @@ namespace RunAmiga.Custom
 
 				case CIA.TODLO:
 					if ((regs[CIA.CRB] & (uint)CR.CRB_ALARM) != 0)
-						alarmlo = (byte)value;
+					{
+						todAlarm = (todAlarm & 0xffff00) | (value & 0xff);
+					}
 					else
-						regs[CIA.TODLO] = (byte)value;
+					{
+						todTimer = (todTimer & 0xffff00) | (value & 0xff);
+						todStopped = false;
+					}
+					todStopped = false;
 					break;
 
 				case CIA.TODMID:
 					if ((regs[CIA.CRB] & (uint)CR.CRB_ALARM) != 0)
-						alarmmid = (byte)value;
+					{
+						todAlarm = (todAlarm & 0xff00ff) | ((value & 0xff) << 8);
+					}
 					else
-						regs[CIA.TODMID] = (byte)value;
+					{
+						todTimer = (todTimer & 0xff00ff) | ((value & 0xff) << 8);
+						todStopped = true;
+					}
+					todStopped = true;
 					break;
 
 				case CIA.TODHI:
 					if ((regs[CIA.CRB] & (uint)CR.CRB_ALARM) != 0)
-						alarmhi = (byte)value;
+					{
+						todAlarm = (todAlarm & 0x00ffff) | ((value & 0xff) << 16);
+					}
 					else
-						regs[CIA.TODHI] = (byte)value;
+					{
+						todTimer = (todTimer & 0x00ffff) | ((value & 0xff) << 16);
+						todStopped = true;//writing TODHI/TODMID stops the TOD timer until TODLO is written. HRM p344.
+					}
+					todStopped = true;//todo: is the TOD stopped when writing the alarm?
 					break;
 
 				default:
