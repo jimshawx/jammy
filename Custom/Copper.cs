@@ -35,6 +35,24 @@ namespace RunAmiga.Custom
 			picture = new PictureBox {Image = bitmap, ClientSize = new System.Drawing.Size(screenWidth, screenHeight)};
 			form.Controls.Add(picture);
 			form.Show();
+			picture.Click += FormClicked;
+			picture.KeyPress += FormKeyPress;
+		}
+
+		private void FormKeyPress(object sender, KeyPressEventArgs e)
+		{
+			Logger.WriteLine($"{e.KeyChar}");
+			if (e.KeyChar == 'Q')
+			{
+				//picture.Capture = false;
+				//Cursor.Show();
+			}
+		}
+
+		private void FormClicked(object sender, EventArgs e)
+		{
+			//picture.Capture = true;
+			//Cursor.Hide();
 		}
 
 		private ulong copperTime;

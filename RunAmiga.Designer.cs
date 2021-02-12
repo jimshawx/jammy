@@ -79,6 +79,10 @@ namespace RunAmiga
 			this.txtExecBase = new System.Windows.Forms.RichTextBox();
 			this.btnInsertDisk = new System.Windows.Forms.Button();
 			this.btnRemoveDisk = new System.Windows.Forms.Button();
+			this.btnCIAInt = new System.Windows.Forms.Button();
+			this.btnIRQ = new System.Windows.Forms.Button();
+			this.cbIRQ = new System.Windows.Forms.ComboBox();
+			this.cbCIA = new System.Windows.Forms.ComboBox();
 			this.menuDisassembly.SuspendLayout();
 			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -592,7 +596,7 @@ namespace RunAmiga
 			// btnInsertDisk
 			// 
 			this.btnInsertDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnInsertDisk.Location = new System.Drawing.Point(1092, 409);
+			this.btnInsertDisk.Location = new System.Drawing.Point(1092, 392);
 			this.btnInsertDisk.Name = "btnInsertDisk";
 			this.btnInsertDisk.Size = new System.Drawing.Size(75, 23);
 			this.btnInsertDisk.TabIndex = 27;
@@ -603,7 +607,7 @@ namespace RunAmiga
 			// btnRemoveDisk
 			// 
 			this.btnRemoveDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnRemoveDisk.Location = new System.Drawing.Point(1092, 439);
+			this.btnRemoveDisk.Location = new System.Drawing.Point(1173, 392);
 			this.btnRemoveDisk.Name = "btnRemoveDisk";
 			this.btnRemoveDisk.Size = new System.Drawing.Size(75, 23);
 			this.btnRemoveDisk.TabIndex = 28;
@@ -611,11 +615,75 @@ namespace RunAmiga
 			this.btnRemoveDisk.UseVisualStyleBackColor = true;
 			this.btnRemoveDisk.Click += new System.EventHandler(this.btnRemoveDisk_Click);
 			// 
+			// btnCIAInt
+			// 
+			this.btnCIAInt.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnCIAInt.Location = new System.Drawing.Point(1092, 422);
+			this.btnCIAInt.Name = "btnCIAInt";
+			this.btnCIAInt.Size = new System.Drawing.Size(75, 23);
+			this.btnCIAInt.TabIndex = 29;
+			this.btnCIAInt.Text = "CIA Int";
+			this.btnCIAInt.UseVisualStyleBackColor = true;
+			this.btnCIAInt.Click += new System.EventHandler(this.btnCIAInt_Click);
+			// 
+			// btnIRQ
+			// 
+			this.btnIRQ.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnIRQ.Location = new System.Drawing.Point(1092, 451);
+			this.btnIRQ.Name = "btnIRQ";
+			this.btnIRQ.Size = new System.Drawing.Size(75, 23);
+			this.btnIRQ.TabIndex = 31;
+			this.btnIRQ.Text = "IRQ";
+			this.btnIRQ.UseVisualStyleBackColor = true;
+			this.btnIRQ.Click += new System.EventHandler(this.btnIRQ_Click);
+			// 
+			// cbIRQ
+			// 
+			this.cbIRQ.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.cbIRQ.FormattingEnabled = true;
+			this.cbIRQ.Items.AddRange(new object[] {
+            "DSKSYNC",
+            "AUD0",
+            "AUD1",
+            "AUD2",
+            "AUD3",
+            "BLIT",
+            "VERTB",
+            "COPPER",
+            "PORTS",
+            "DSKBLK",
+            "SOFTINT"});
+			this.cbIRQ.Location = new System.Drawing.Point(1173, 451);
+			this.cbIRQ.Name = "cbIRQ";
+			this.cbIRQ.Size = new System.Drawing.Size(75, 23);
+			this.cbIRQ.TabIndex = 32;
+			this.cbIRQ.Text = "BLIT";
+			// 
+			// cbCIA
+			// 
+			this.cbCIA.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.cbCIA.FormattingEnabled = true;
+			this.cbCIA.Items.AddRange(new object[] {
+            "TIMERA",
+            "TIMERB",
+            "TODALARM",
+            "SERIAL",
+            "FLAG"});
+			this.cbCIA.Location = new System.Drawing.Point(1173, 422);
+			this.cbCIA.Name = "cbCIA";
+			this.cbCIA.Size = new System.Drawing.Size(75, 23);
+			this.cbCIA.TabIndex = 33;
+			this.cbCIA.Text = "TIMERA";
+			// 
 			// RunAmiga
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1283, 568);
+			this.Controls.Add(this.cbCIA);
+			this.Controls.Add(this.cbIRQ);
+			this.Controls.Add(this.btnIRQ);
+			this.Controls.Add(this.btnCIAInt);
 			this.Controls.Add(this.btnRemoveDisk);
 			this.Controls.Add(this.btnInsertDisk);
 			this.Controls.Add(this.txtExecBase);
@@ -729,6 +797,10 @@ namespace RunAmiga
 		private System.Windows.Forms.ToolStripMenuItem menuMemoryFindItem;
 		private System.Windows.Forms.Button btnInsertDisk;
 		private System.Windows.Forms.Button btnRemoveDisk;
+		private System.Windows.Forms.Button btnCIAInt;
+		private System.Windows.Forms.Button btnIRQ;
+		private System.Windows.Forms.ComboBox cbIRQ;
+		private System.Windows.Forms.ComboBox cbCIA;
 	}
 }
 

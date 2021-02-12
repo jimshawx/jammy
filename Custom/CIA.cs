@@ -199,7 +199,7 @@ namespace RunAmiga.Custom
 					return rv;
 				case CIA.TODMID:
 					if (todLatched) return (todLatch >> 8) & 0xff;
-					else return(todTimer >> 8) & 0xff;
+					else return (todTimer >> 8) & 0xff;
 				case CIA.TODHI://reading TODHI latches the values read from TOD until TODLO is read.  HRM p344.
 					todLatch = todTimer;
 					todLatched = true;
@@ -250,8 +250,8 @@ namespace RunAmiga.Custom
 						timerA = timerAreset;
 					value &= ~(uint)CR.LOAD;
 
-					if (((value>>5)&1)!=0)
-						Logger.WriteLine($"A inmode: {(value>>5)&1}");
+					if (((value >> 5) & 1) != 0)
+						Logger.WriteLine($"A inmode: {(value >> 5) & 1}");
 
 					regs[CIA.CRA] = (byte)value;
 					break;
@@ -313,6 +313,14 @@ namespace RunAmiga.Custom
 					regs[reg] = (byte)value;
 					break;
 			}
+		}
+
+		public void SetICR(ICRB i)
+		{
+			//enable the interrupt mask
+			regs[ICR] |= (byte)i;
+			//flag the interrupt
+			icrr |= (byte)(ICRB.IR | i);
 		}
 	}
 }

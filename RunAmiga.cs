@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+using RunAmiga.Custom;
 using RunAmiga.Dialogs;
 using RunAmiga.Options;
 
@@ -67,8 +68,14 @@ namespace RunAmiga
 			//},
 			//new List<uint>(), 
 			//new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
-
 			//File.WriteAllText("keymap.resource_disassembly.txt", dmp);
+
+			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
+			//	{
+			//		new Tuple<uint, uint>(0xFE90EC, 0xfe98e4 - 0xFE90EC + 1)
+			//	}, new List<uint>(),
+			//	new DisassemblyOptions {IncludeBytes = false, CommentPad = true});
+			//File.WriteAllText("timer.device_disassembly.txt", dmp);
 
 			var disasm = debugger.DisassembleTxt(
 					new List<Tuple<uint, uint>>
@@ -78,7 +85,7 @@ namespace RunAmiga
 						new Tuple<uint, uint> (0xf80000, 0x40000),
 						new Tuple<uint, uint> (0xfc0000, 0x40000),
 					},
-					new List<uint> { 0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2, 0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8 },
+					new List<uint> { 0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2, 0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2 },
 					new DisassemblyOptions{ IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 
 			Machine.UnlockEmulation();
@@ -370,6 +377,28 @@ namespace RunAmiga
 		private void btnRemoveDisk_Click(object sender, EventArgs e)
 		{
 			debugger.RemoveDisk();
+		}
+
+		private void btnCIAInt_Click(object sender, EventArgs e)
+		{
+			if (cbCIA.Text == "TIMERA") debugger.CIAInt(ICRB.TIMERA);
+			if (cbCIA.Text == "TIMERB") debugger.CIAInt(ICRB.TIMERB);
+			if (cbCIA.Text == "TODALARM") debugger.CIAInt(ICRB.TODALARM);
+			if (cbCIA.Text == "SERIAL") debugger.CIAInt(ICRB.SERIAL);
+			if (cbCIA.Text == "FLAG") debugger.CIAInt(ICRB.FLAG);
+		}
+
+		private void btnIRQ_Click(object sender, EventArgs e)
+		{
+			if (cbIRQ.Text == "DSKBLK") debugger.IRQ(Interrupt.DSKBLK);
+			if (cbIRQ.Text == "PORTS") debugger.IRQ(Interrupt.PORTS);
+			if (cbIRQ.Text == "BLIT") debugger.IRQ(Interrupt.BLIT);
+			if (cbIRQ.Text == "COPPER") debugger.IRQ(Interrupt.COPPER);
+			if (cbIRQ.Text == "DSKSYNC") debugger.IRQ(Interrupt.DSKSYNC);
+			if (cbIRQ.Text == "AUD0") debugger.IRQ(Interrupt.AUD0);
+			if (cbIRQ.Text == "AUD1") debugger.IRQ(Interrupt.AUD1);
+			if (cbIRQ.Text == "AUD2") debugger.IRQ(Interrupt.AUD2);
+			if (cbIRQ.Text == "AUD3") debugger.IRQ(Interrupt.AUD3);
 		}
 
 		private void menuDisassembly_ItemClicked(object sender, ToolStripItemClickedEventArgs e)

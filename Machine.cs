@@ -57,7 +57,7 @@ namespace RunAmiga
 			emulations.Add(cpu);
 			emulations.Add(interrupt);
 
-			debugger.Initialise(memory, (ICPU)cpu, custom, diskDrives);
+			debugger.Initialise(memory, (ICPU)cpu, custom, diskDrives, interrupt, ciaa, ciab);
 
 			Reset();
 

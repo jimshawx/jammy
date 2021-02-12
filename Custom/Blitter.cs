@@ -1,4 +1,5 @@
-﻿using RunAmiga.Types;
+﻿using System.Diagnostics;
+using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
@@ -373,7 +374,11 @@ namespace RunAmiga.Custom
 			//Logger.WriteLine($"{bltsize & 0x3f:X8} 2");
 
 			uint length = bltsize >> 6;
-			if (length <= 1) return;
+			if (length <= 1)
+			{
+				interrupt.TriggerInterrupt(Interrupt.BLIT);
+				return;
+			}
 
 			double ty = bltbmod / 4.0;
 			double tx = -(int)bltamod / 4.0 + ty;

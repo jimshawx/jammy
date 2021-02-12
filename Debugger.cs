@@ -20,9 +20,11 @@ namespace RunAmiga
 		private Memory memory;
 		private ICPU cpu;
 		private Chips custom;
-		private CIA cia;
+		private CIAAOdd ciaa;
+		private CIABEven ciab;
 		private Labeller labeller;
 		private DiskDrives diskDrives;
+		private Interrupt interrupt;
 		private Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
 
 		public Debugger(Labeller labeller)
@@ -124,6 +126,7 @@ namespace RunAmiga
 			LoadComment("strap_disassembly.txt");
 			LoadComment("misc.resource_disassembly.txt");
 			LoadComment("keymap.resource_disassembly.txt");
+			LoadComment("timer.device_disassembly.txt");
 		}
 
 		private void LoadComment(string filename)
@@ -158,12 +161,16 @@ namespace RunAmiga
 			}
 		}
 
-		public void Initialise(Memory memory, ICPU cpu, Custom.Chips custom, DiskDrives diskDrives)
+		public void Initialise(Memory memory, ICPU cpu, Custom.Chips custom,
+			DiskDrives diskDrives, Interrupt interrupt, CIAAOdd ciaa, CIABEven ciab)
 		{
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
 			this.diskDrives = diskDrives;
+			this.interrupt = interrupt;
+			this.ciaa = ciaa;
+			this.ciab = ciab;
 		}
 
 		public bool IsMapped(uint address)
@@ -524,6 +531,19 @@ namespace RunAmiga
 		public void RemoveDisk()
 		{
 			diskDrives.RemoveDisk();
+		}
+
+		public void CIAInt(ICRB icr)
+		{
+			ciaa.SetICR(icr);
+			ciab.SetICR(icr);
+			interrupt.TriggerInterrupt(Interrupt.PORTS);
+		}
+
+		public void IRQ(uint irq)
+		{
+			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1<<(int)irq), Size.Word);
+			interrupt.TriggerInterrupt(irq);
 		}
 	}
 }
