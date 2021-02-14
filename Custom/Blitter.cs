@@ -198,6 +198,12 @@ namespace RunAmiga.Custom
 
 		private void Blit(uint width, uint height)
 		{
+			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			if ((dmacon & (1<<6))==0)
+				Trace.WriteLine("BLTEN is off!");
+			if ((dmacon & (1 << 9)) == 0)
+				Trace.WriteLine("DMAEN is off!");
+
 			//todo: assumes blitter DMA is enabled
 
 			//Logger.WriteLine($"BLIT! {width}x{height} = {width*16}bits x {height} = {width * 16 * height} bits = {width*height*2} bytes");

@@ -86,6 +86,7 @@ namespace RunAmiga.Custom
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
 			//var workbenchDisk = new Disk("../../../../workbench3.1.adf");
 			var workbenchDisk = new Disk("../../../../workbench.adf");
+			//var workbenchDisk = new Disk("../../../../buggyboy.adf");
 
 			drive = new Drive[4];
 			for (int i = 0; i < 4; i++)
@@ -272,7 +273,7 @@ namespace RunAmiga.Custom
 					}
 
 					//dsklen is number of MFM encoded words (usually a track, 7358 = 668 x 11words, 1336 x 11 bytes)
-					if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814) throw new ApplicationException();
+					if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814 && (dsklen & 0x3fff) != 6784) throw new ApplicationException();
 
 					//Logger.WriteLine($"Reading track {drive[0].track} side {drive[0].side}");
 

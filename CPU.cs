@@ -1,6 +1,5 @@
 ﻿using RunAmiga.Types;
 using System;
-using System.Runtime.InteropServices;
 
 namespace RunAmiga
 {
@@ -17,7 +16,7 @@ namespace RunAmiga
 
 		private class A
 		{
-			public uint ssp { get; private set; }
+			public uint ssp { get; set; }
 			public uint usp { get; set; }
 
 			private uint[] a = new uint[7];
@@ -225,6 +224,19 @@ namespace RunAmiga
 			regs.SSP = a.ssp;
 			regs.SR = sr;
 			return regs;
+		}
+
+		public void SetRegs(Regs regs)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				a[i] = regs.A[i];
+				d[i] = regs.D[i];
+			}
+			pc = regs.PC;
+			a.usp = regs.SP;
+			a.ssp = regs.SSP;
+			sr = regs.SR;
 		}
 
 		public void SetPC(uint pc)

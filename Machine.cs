@@ -17,6 +17,7 @@ namespace RunAmiga
 		private readonly DiskDrives diskDrives;
 		private readonly Mouse mouse;
 		private readonly Keyboard keyboard;
+		private readonly BattClock battClock;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
 
@@ -30,7 +31,15 @@ namespace RunAmiga
 			var labeller = new Labeller();
 			debugger = new Debugger(labeller);
 			interrupt = new Interrupt();
+
+			var kickstart = new Kickstart("../../../../kick12.rom", "Kickstart 1.2");
+			//var kickstart = new Kickstart("../../../../kick13.rom", "Kickstart 1.3");
+			//var kickstart = new Kickstart("../../../../kick31.rom", "Kickstart 3.1");
+
 			var memory = new Memory(debugger, "M");
+			memory.SetKickstart(kickstart);
+
+			battClock = new BattClock();
 
 			mouse = new Mouse();
 			diskDrives = new DiskDrives(memory, interrupt);
@@ -50,6 +59,7 @@ namespace RunAmiga
 			//cpu = new CPU(debugger, interrupt, memoryMapper);
 			cpu = new MusashiCPU(debugger, interrupt, memoryMapper);
 
+			emulations.Add(battClock);
 			emulations.Add(ciaa);
 			emulations.Add(ciab);
 			emulations.Add(custom);

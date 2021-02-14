@@ -21,6 +21,9 @@ namespace RunAmiga
 		static extern void Musashi_get_regs(Musashi_regs regs);
 
 		[DllImport("Musashi.dll")]
+		static extern void Musashi_set_regs(Musashi_regs regs);
+
+		[DllImport("Musashi.dll")]
 		static extern void Musashi_set_pc(uint pc);
 
 		[DllImport("Musashi.dll")]
@@ -128,6 +131,37 @@ namespace RunAmiga
 			regs.SP = musashiRegs.usp;
 
 			return regs;
+		}
+
+		public void SetRegs(Regs regs)
+		{
+			var musashiRegs = new Musashi_regs();
+			
+			musashiRegs.d0 = regs.D[0];
+			musashiRegs.d1 = regs.D[1];
+			musashiRegs.d2 = regs.D[2];
+			musashiRegs.d3 = regs.D[3];
+			musashiRegs.d4 = regs.D[4];
+			musashiRegs.d5 = regs.D[5];
+			musashiRegs.d6 = regs.D[6];
+			musashiRegs.d7 = regs.D[7];
+
+			musashiRegs.a0 = regs.A[0];
+			musashiRegs.a1 = regs.A[1];
+			musashiRegs.a2 = regs.A[2];
+			musashiRegs.a3 = regs.A[3];
+			musashiRegs.a4 = regs.A[4];
+			musashiRegs.a5 = regs.A[5];
+			musashiRegs.a6 = regs.A[6];
+			musashiRegs.a7 = regs.A[7];
+
+			musashiRegs.pc = regs.PC;
+			musashiRegs.sr = regs.SR;
+
+			musashiRegs.ssp = regs.SSP;
+			musashiRegs.usp = regs.SP;
+
+			Musashi_set_regs(musashiRegs);
 		}
 
 		public void SetPC(uint pc)

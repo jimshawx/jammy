@@ -16,6 +16,11 @@ namespace RunAmiga
 			devices.Add(custom);
 		}
 
+		public MemoryMapper(List<IMemoryMappedDevice> memoryDevices)
+		{
+			devices.AddRange(memoryDevices);
+		}
+
 		public bool IsMapped(uint address)
 		{
 			return true;

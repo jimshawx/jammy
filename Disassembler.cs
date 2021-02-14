@@ -14,53 +14,75 @@ namespace RunAmiga
 
 		public DAsm Disassemble(uint address, ReadOnlySpan<byte> m)
 		{
-			var dasm = new DAsm();
-
-			memory = m.ToArray();
-			pc = 0;
-			this.address = address;
-			asm = new StringBuilder();
-			ushort ins = read16(pc);
-			pc += 2;
-
-			int type = (int)(ins >> 12);
-
-			switch (type)
+			try
 			{
-				case 0:
-				case 1:
-				case 2:
-				case 3:
-					t_zero(ins); break;
-				case 4:
-					t_four(ins); break;
-				case 5:
-					t_five(ins); break;
-				case 6:
-					t_six(ins); break;
-				case 7:
-					t_seven(ins); break;
-				case 8:
-					t_eight(ins); break;
-				case 9:
-					t_nine(ins); break;
-				case 11:
-					t_eleven(ins); break;
-				case 12:
-					t_twelve(ins); break;
-				case 13:
-					t_thirteen(ins); break;
-				case 14:
-					t_fourteen(ins); break;
-				default:
-					Append($"unknown instruction {type}");
-					break;
-			}
-			dasm.Asm = asm.ToString();
-			dasm.Bytes = m.Slice(0,(int)pc).ToArray();
-			dasm.Address = address;
+				var dasm = new DAsm();
+				memory = m.ToArray();
+				pc = 0;
+				this.address = address;
+				asm = new StringBuilder();
+				ushort ins = read16(pc);
+				pc += 2;
 
-			return dasm;
+				int type = (int)(ins >> 12);
+
+				switch (type)
+				{
+					case 0:
+					case 1:
+					case 2:
+					case 3:
+						t_zero(ins);
+						break;
+					case 4:
+						t_four(ins);
+						break;
+					case 5:
+						t_five(ins);
+						break;
+					case 6:
+						t_six(ins);
+						break;
+					case 7:
+						t_seven(ins);
+						break;
+					case 8:
+						t_eight(ins);
+						break;
+					case 9:
+						t_nine(ins);
+						break;
+					case 11:
+						t_eleven(ins);
+						break;
+					case 12:
+						t_twelve(ins);
+						break;
+					case 13:
+						t_thirteen(ins);
+						break;
+					case 14:
+						t_fourteen(ins);
+						break;
+					default:
+						Append($"unknown instruction {type}");
+						break;
+				}
+
+				dasm.Asm = asm.ToString();
+				dasm.Bytes = m.Slice(0, (int)pc).ToArray();
+				dasm.Address = address;
+
+				return dasm;
+			}
+			catch (Exception ex)
+			{
+				var dasm = new DAsm();
+				dasm.Asm = ex.ToString();
+				dasm.Bytes = new byte[] {0, 0};
+				dasm.Address = address;
+				return dasm;
+			}
 		}
 
 		void Append(string s)
