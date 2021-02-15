@@ -77,6 +77,13 @@ namespace RunAmiga
 			//	new DisassemblyOptions {IncludeBytes = false, CommentPad = true});
 			//File.WriteAllText("timer.device_disassembly.txt", dmp);
 
+			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
+			//	{
+			//		new Tuple<uint, uint>(0x00F8574C, 0x00F8618C - 0x00F8574C + 1)
+			//	}, new List<uint>(),
+			//	new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
+			//File.WriteAllText("battclock.resource_disassembly.txt", dmp);
+
 			var disasm = debugger.DisassembleTxt(
 					new List<Tuple<uint, uint>>
 					{

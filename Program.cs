@@ -16,8 +16,8 @@ namespace RunAmiga
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 
-			var test = new CPUTest();
-			test.FuzzCPU();
+			//var test = new CPUTest();
+			//test.FuzzCPU();
 
 			var machine = new Machine();
 			var form = new RunAmiga(machine);

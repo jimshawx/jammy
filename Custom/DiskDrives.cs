@@ -84,8 +84,8 @@ namespace RunAmiga.Custom
 			this.interrupt = interrupt;
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
-			//var workbenchDisk = new Disk("../../../../workbench3.1.adf");
 			var workbenchDisk = new Disk("../../../../workbench.adf");
+			//var workbenchDisk = new Disk("../../../../workbench3.1.adf");
 			//var workbenchDisk = new Disk("../../../../buggyboy.adf");
 
 			drive = new Drive[4];
