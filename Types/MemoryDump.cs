@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 
 namespace RunAmiga.Types
@@ -97,6 +96,14 @@ namespace RunAmiga.Types
 					new Tuple<uint, uint> ( 0xf80000, 0x40000),
 					new Tuple<uint, uint> ( 0xfc0000, 0x40000)
 				});
+		}
+
+		public string ToString(uint start, uint length)
+		{
+			return BlockToString(new List<Tuple<uint, uint>>
+			{
+				new Tuple<uint, uint> ( start, length),
+			});
 		}
 	}
 }

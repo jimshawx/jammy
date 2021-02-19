@@ -52,6 +52,9 @@ namespace RunAmiga.Custom
 
 		protected readonly uint[] regs = new uint[16];
 
+		protected abstract uint interruptLevel { get; }
+		protected abstract char cia { get; }
+
 		protected byte icrr;
 		//writing to regs[ICR] sets icr which controls which interrupts TO trigger.
 		//icrr has the equivalent bits set for which interrupt WAS triggered. reset to 0 after read.
@@ -92,7 +95,7 @@ namespace RunAmiga.Custom
 						if ((regs[CIA.ICR] & (uint)ICRB.TIMERA) != 0)
 						{
 							icrr |= (byte)(ICRB.TIMERA | ICRB.IR);
-							interrupt.TriggerInterrupt(Interrupt.PORTS);
+							interrupt.TriggerInterrupt(interruptLevel);
 						}
 
 						//one shot mode?
@@ -114,7 +117,7 @@ namespace RunAmiga.Custom
 						if ((regs[CIA.ICR] & (uint)ICRB.TIMERB) != 0)
 						{
 							icrr |= (byte)(ICRB.TIMERB | ICRB.IR);
-							interrupt.TriggerInterrupt(Interrupt.PORTS);
+							interrupt.TriggerInterrupt(interruptLevel);
 						}
 
 						//one shot mode?
@@ -142,8 +145,9 @@ namespace RunAmiga.Custom
 		{
 			if (todTimer == todAlarm && (regs[CIA.ICR] & (uint)ICRB.TODALARM) != 0)
 			{
+				Logger.WriteLine($"{cia}TOD ALARM {todTimer}");
 				icrr |= (byte)(ICRB.TODALARM | ICRB.IR);
-				interrupt.TriggerInterrupt(Interrupt.PORTS);
+				interrupt.TriggerInterrupt(interruptLevel);
 			}
 		}
 
@@ -192,15 +196,18 @@ namespace RunAmiga.Custom
 				case CIA.TBHI: return (uint)(timerB >> 8);
 				case CIA.TBLO: return timerB;
 				case CIA.TODLO:
+					//LogTODTimer('R');
 					uint rv;
 					if (todLatched) rv = todLatch & 0xff;
 					else rv = todTimer & 0xff;
 					todLatched = false;
 					return rv;
 				case CIA.TODMID:
+					//LogTODTimer('R');
 					if (todLatched) return (todLatch >> 8) & 0xff;
 					else return (todTimer >> 8) & 0xff;
 				case CIA.TODHI://reading TODHI latches the values read from TOD until TODLO is read.  HRM p344.
+					//LogTODTimer('R');
 					todLatch = todTimer;
 					todLatched = true;
 					return todLatch >> 16;
@@ -271,11 +278,13 @@ namespace RunAmiga.Custom
 					if ((regs[CIA.CRB] & (uint)CR.CRB_ALARM) != 0)
 					{
 						todAlarm = (todAlarm & 0xffff00) | (value & 0xff);
+						//LogTODAlarm('W');
 					}
 					else
 					{
 						todTimer = (todTimer & 0xffff00) | (value & 0xff);
 						todStopped = false;
+						//LogTODTimer('W');
 					}
 					//CheckTODAlarm();
 					//todStopped = false;
@@ -285,11 +294,13 @@ namespace RunAmiga.Custom
 					if ((regs[CIA.CRB] & (uint)CR.CRB_ALARM) != 0)
 					{
 						todAlarm = (todAlarm & 0xff00ff) | ((value & 0xff) << 8);
+						//LogTODAlarm('W');
 					}
 					else
 					{
 						todTimer = (todTimer & 0xff00ff) | ((value & 0xff) << 8);
 						todStopped = true;
+						//LogTODTimer('W');
 					}
 					//CheckTODAlarm();
 					//todStopped = true;
@@ -299,11 +310,13 @@ namespace RunAmiga.Custom
 					if ((regs[CIA.CRB] & (uint)CR.CRB_ALARM) != 0)
 					{
 						todAlarm = (todAlarm & 0x00ffff) | ((value & 0xff) << 16);
+						//LogTODAlarm('W');
 					}
 					else
 					{
 						todTimer = (todTimer & 0x00ffff) | ((value & 0xff) << 16);
 						todStopped = true;//writing TODHI/TODMID stops the TOD timer until TODLO is written. HRM p344.
+						//LogTODTimer('W');
 					}
 					//CheckTODAlarm();
 					//todStopped = true;//todo: is the TOD stopped when writing the alarm?
@@ -315,12 +328,28 @@ namespace RunAmiga.Custom
 			}
 		}
 
-		public void SetICR(ICRB i)
+		private void LogTODAlarm(char rw)
+		{
+			//Logger.WriteLine($"{rw} {cia}TODA {todAlarm:X6}");
+		}
+		private void LogTODTimer(char rw)
+		{
+			//Logger.WriteLine($"{rw} {cia}TOD  {todTimer:X6} {(todStopped?"stopped":"running")}");
+		}
+
+		//only used from the Debugger
+		public void DebugSetICR(ICRB i)
 		{
 			//enable the interrupt mask
 			regs[ICR] |= (byte)i;
 			//flag the interrupt
 			icrr |= (byte)(ICRB.IR | i);
+		}
+
+		//snoop ICR read, because reading it via the usual interface will clear it
+		public byte SnoopICRR()
+		{
+			return icrr;
 		}
 	}
 }

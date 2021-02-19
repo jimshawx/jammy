@@ -60,7 +60,13 @@ namespace RunAmiga
 			//AddBreakpoint(0x00fcac82);//copper list
 			//AddBreakpoint(0x00fc0e60);//ExitIntr
 			//AddBreakpoint(0x00fc0c4c);//Interrupt Bail Out
-			//AddBreakpoint(0x00fc0ca6);//L2 Autovector
+			//AddBreakpoint(0x00fc0ca6);//L2 Autovector IO/Timer
+				AddBreakpoint(0xFC465E);//Timer A
+				AddBreakpoint(0xFC4668);//Timer B
+				AddBreakpoint(0xFC4672);//TOD
+				AddBreakpoint(0xFC467C);//Serial
+				AddBreakpoint(0xFC4686);//Flag
+
 			//AddBreakpoint(0x00fc0cdc);//L3 Autovector
 			//AddBreakpoint(0xfc0e8a);//Schedule()+4
 
@@ -116,7 +122,7 @@ namespace RunAmiga
 			//AddBreakpoint(0xfc6d00);//wrong copper address 0xc00276
 
 			//AddBreakpoint(0xf85804);//KS2.04 battclock.resource init
-
+			AddBreakpoint(0xfe9232);
 			this.labeller = labeller;
 
 			LoadComments();
@@ -130,6 +136,7 @@ namespace RunAmiga
 			LoadComment("misc.resource_disassembly.txt");
 			LoadComment("keymap.resource_disassembly.txt");
 			LoadComment("timer.device_disassembly.txt");
+			LoadComment("cia.resource_disassembly.txt");
 		}
 
 		private void LoadComment(string filename)
@@ -538,8 +545,8 @@ namespace RunAmiga
 
 		public void CIAInt(ICRB icr)
 		{
-			ciaa.SetICR(icr);
-			ciab.SetICR(icr);
+			ciaa.DebugSetICR(icr);
+			ciab.DebugSetICR(icr);
 			interrupt.TriggerInterrupt(Interrupt.PORTS);
 		}
 

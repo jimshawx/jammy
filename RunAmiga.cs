@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using RunAmiga.Custom;
@@ -84,6 +83,13 @@ namespace RunAmiga
 			//	new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
 			//File.WriteAllText("battclock.resource_disassembly.txt", dmp);
 
+			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
+			//	{
+			//		new Tuple<uint, uint>(0x00FC450C, 0x00FC4794 - 0x00FC450C + 1)
+			//	}, new List<uint>(),
+			//	new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
+			//File.WriteAllText("cia.resource_disassembly.txt", dmp);
+
 			var disasm = debugger.DisassembleTxt(
 					new List<Tuple<uint, uint>>
 					{
@@ -92,7 +98,7 @@ namespace RunAmiga
 						new Tuple<uint, uint> (0xf80000, 0x40000),
 						new Tuple<uint, uint> (0xfc0000, 0x40000),
 					},
-					new List<uint> { 0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2, 0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2 },
+					new List<uint> { 0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2, 0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2, 0xFE571C, 0xFC5170 },
 					new DisassemblyOptions{ IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 
 			Machine.UnlockEmulation();
@@ -397,6 +403,7 @@ namespace RunAmiga
 
 		private void btnIRQ_Click(object sender, EventArgs e)
 		{
+			if (cbIRQ.Text == "EXTER") debugger.IRQ(Interrupt.EXTER);
 			if (cbIRQ.Text == "DSKBLK") debugger.IRQ(Interrupt.DSKBLK);
 			if (cbIRQ.Text == "PORTS") debugger.IRQ(Interrupt.PORTS);
 			if (cbIRQ.Text == "BLIT") debugger.IRQ(Interrupt.BLIT);

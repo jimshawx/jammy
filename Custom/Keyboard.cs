@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -160,8 +159,18 @@ namespace RunAmiga.Custom
 			{
 				keyTimer -= 10;
 
-				if (keyQueue.Any())
-					KeyInterrupt();
+				//read ICR, if there's no keyboard interrupt pending
+				byte icr = cia.SnoopICRR();
+				if ((icr & (byte)(ICRB.IR | ICRB.SERIAL))==0)
+				{
+					//read CRA, if it's in input mode the last key has been processed
+					byte cra = (byte)cia.Read(0, 0xBFEE01, Types.Size.Byte);
+					if ((cra & (byte)CR.CRA_SPMODE) == 0)
+					{
+						if (keyQueue.Any())
+							KeyInterrupt();
+					}
+				}
 			}
 		}
 

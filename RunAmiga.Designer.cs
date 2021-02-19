@@ -642,6 +642,7 @@ namespace RunAmiga
 			this.cbIRQ.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.cbIRQ.FormattingEnabled = true;
 			this.cbIRQ.Items.AddRange(new object[] {
+            "EXTER",
             "DSKSYNC",
             "AUD0",
             "AUD1",

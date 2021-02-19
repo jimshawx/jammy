@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using RunAmiga.Custom;
+﻿using RunAmiga.Custom;
 using RunAmiga.Types;
 
 namespace RunAmiga
@@ -50,16 +49,6 @@ namespace RunAmiga
 
 		private uint interruptPending;
 
-		public bool InterruptPending()
-		{
-			return interruptPending != 0;
-		}
-
-		public void ResetInterrupt()
-		{
-			interruptPending = 0;
-		}
-
 		public ushort GetInterruptLevel()
 		{
 			return (ushort)interruptPending;
@@ -92,7 +81,7 @@ namespace RunAmiga
 			intreq &= intena;
 			if (intreq == 0) return;
 
-			for (int i = (int)Interrupt.DSKSYNC; i >= 0; i--)
+			for (int i = (int)Interrupt.EXTER; i >= 0; i--)
 			{
 				if ((intreq & (1u<<i))!=0)
 				{

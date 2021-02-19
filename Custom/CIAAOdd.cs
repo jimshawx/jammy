@@ -39,8 +39,10 @@ namespace RunAmiga.Custom
 			this.interrupt = interrupt;
 		}
 
-		private ulong beamTime;
+		protected override uint interruptLevel => Interrupt.PORTS;
+		protected override char cia => 'A';
 
+		private ulong beamTime;
 		public override void Emulate(ulong cycles)
 		{
 			beamTime += cycles;
