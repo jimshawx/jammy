@@ -1,36 +1,25 @@
 ﻿using RunAmiga.Types;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using RunAmiga.Custom;
-using RunAmiga.Options;
 
 namespace RunAmiga
 {
 	public class Debugger : IMemoryMappedDevice
 	{
-		private Dictionary<uint, Breakpoint> breakpoints = new Dictionary<uint, Breakpoint>();
-
-		private readonly Disassembler disassembler;
+		private BreakpointCollection breakpoints;
 		private Memory memory;
 		private ICPU cpu;
 		private Chips custom;
 		private CIAAOdd ciaa;
 		private CIABEven ciab;
-		private Labeller labeller;
 		private DiskDrives diskDrives;
 		private Interrupt interrupt;
-		private Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
+		private Disassembly disassembly;
+		private Tracer tracer;
 
-		public Debugger(Labeller labeller)
+		public Debugger()
 		{
-			disassembler = new Disassembler();
-
+			breakpoints = new BreakpointCollection();
 			//AddBreakpoint(0xfc0af0);//InitCode
 			//AddBreakpoint(0xfc0afe);
 			//AddBreakpoint(0xfc0af0);
@@ -123,57 +112,13 @@ namespace RunAmiga
 
 			//AddBreakpoint(0xf85804);//KS2.04 battclock.resource init
 			AddBreakpoint(0xfe9232);
-			this.labeller = labeller;
-
-			LoadComments();
-		}
-
-		private void LoadComments()
-		{
-			LoadComment("trackdisk_disassembly.txt");
-			LoadComment("exec_disassembly.txt");
-			LoadComment("strap_disassembly.txt");
-			LoadComment("misc.resource_disassembly.txt");
-			LoadComment("keymap.resource_disassembly.txt");
-			LoadComment("timer.device_disassembly.txt");
-			LoadComment("cia.resource_disassembly.txt");
-		}
-
-		private void LoadComment(string filename)
-		{
-			using (var f = File.OpenText(Path.Combine("c:/source/programming/amiga/",  filename)))
-			{
-				for (;;)
-				{
-					string line = f.ReadLine();
-					if (line == null) break;
-
-					//xxxxxx..instruction txt..........(column 40)comment
-					if (line.Length > 38)
-					{
-						var addressTxt = line.Substring(0, 6);
-						if (Regex.IsMatch(addressTxt, "[a-fA-F0-9]{6}"))
-						{
-							uint address = UInt32.Parse(addressTxt, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-
-							var splits = line.Split(" ", 4, StringSplitOptions.RemoveEmptyEntries);
-							if (splits.Length == 4)
-							{
-								string comment = splits[3];
-								if (comments.ContainsKey(address))
-									Logger.WriteLine($"[COMMENT] dupe {address:X6} \"{comment}\"");
-								else
-									comments.Add(address, new Comment {Address = address, Text = comment});
-							}
-						}
-					}
-				}
-			}
 		}
 
 		public void Initialise(Memory memory, ICPU cpu, Custom.Chips custom,
-			DiskDrives diskDrives, Interrupt interrupt, CIAAOdd ciaa, CIABEven ciab)
+			DiskDrives diskDrives, Interrupt interrupt, CIAAOdd ciaa, CIABEven ciab, Tracer tracer)
 		{
+			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints);
+
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
@@ -181,6 +126,7 @@ namespace RunAmiga
 			this.interrupt = interrupt;
 			this.ciaa = ciaa;
 			this.ciab = ciab;
+			this.tracer = tracer;
 		}
 
 		public bool IsMapped(uint address)
@@ -202,7 +148,7 @@ namespace RunAmiga
 		{
 			if (isOutOfRange(address))
 			{
-				DumpTrace();
+				tracer.DumpTrace();
 				Logger.WriteLine($"Trying to read a {size} from {address:X8} @{insaddr:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
@@ -224,7 +170,7 @@ namespace RunAmiga
 
 			if (isROM(address) || isOutOfRange(address))
 			{
-				DumpTrace();
+				tracer.DumpTrace();
 				Logger.WriteLine($"Trying to write a {size} ({value:X8} {value}) to {address:X8} @{insaddr:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
@@ -235,269 +181,38 @@ namespace RunAmiga
 			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
 		}
 
-		public bool IsMemoryBreakpoint(uint pc, BreakpointType type)
+
+
+		//private string GetString(uint str)
+		//{
+		//	var sb = new StringBuilder();
+		//	for (; ; )
+		//	{
+		//		byte c = memory.Read8(str);
+		//		if (c == 0)
+		//			return sb.ToString();
+
+		//		sb.Append(Convert.ToChar(c));
+		//		str++;
+		//	}
+		//	return null;
+		//}
+
+		public void ToggleBreakpoint(uint pc)
 		{
-			//for (uint i = 0; i < 4; i++)
-			uint i = 0;
-			{
-				if (breakpoints.TryGetValue(pc + i, out Breakpoint bp))
-				{
-					if (type == BreakpointType.Write)
-					{
-						if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
-							return bp.Active;
-					}
-					else if (type == BreakpointType.Read)
-					{
-						if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-							return bp.Active;
-					}
-				}
-			}
-			return false;
-		}
-
-		private string GetString(uint str)
-		{
-			var sb = new StringBuilder();
-			for (; ; )
-			{
-				byte c = memory.Read8(str);
-				if (c == 0)
-					return sb.ToString();
-
-				sb.Append(Convert.ToChar(c));
-				str++;
-			}
-			return null;
-		}
-
-		public bool IsBreakpoint(uint pc)
-		{
-			var regs = cpu.GetRegs();
-
-			//if (pc == 0xfc165a && string.Equals(GetString(regs.A[1]), "ciaa.resource"))
-			//	return true;
-
-			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
-			{
-				if (bp.Type == BreakpointType.Permanent)
-					return bp.Active;
-				if (bp.Type == BreakpointType.Counter)
-				{
-					if (bp.Active)
-					{
-						bp.Counter--;
-						if (bp.Counter == 0)
-						{
-							bp.Counter = bp.CounterReset;
-							return true;
-						}
-					}
-				}
-
-				if (bp.Type == BreakpointType.OneShot)
-					breakpoints.Remove(pc);
-				return bp.Active;
-			}
-			return false;
+			breakpoints.ToggleBreakpoint(pc);
 		}
 
 		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long)
 		{
-			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size };
-		}
-
-		public void RemoveBreakpoint(uint address)
-		{
-			breakpoints.Remove(address);
-		}
-
-		public void SetBreakpoint(uint address, bool active)
-		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp))
-				bp.Active = active;
-		}
-
-		public Breakpoint GetBreakpoint(uint address, bool active)
-		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp))
-				return bp;
-			return new Breakpoint { Address = address, Active = false };
+			breakpoints.AddBreakpoint(address,type,counter,size);
 		}
 
 		public void BreakAtNextPC()
 		{
 			uint pc = cpu.GetRegs().PC;
-			int line = GetAddressLine(pc) + 1;
-			AddBreakpoint(GetLineAddress(line), BreakpointType.OneShot);
-		}
-
-
-		public void Disassemble(uint address)
-		{
-			var memorySpan = new ReadOnlySpan<byte>(memory.GetMemoryArray());
-
-			using (var file = File.OpenWrite("kick12.rom.asm"))
-			{
-				using (var txtFile = new StreamWriter(file, Encoding.UTF8))
-				{
-					while (address < 0x1000000)
-					{
-						var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-						//Logger.WriteLine(dasm);
-						txtFile.WriteLine(dasm);
-
-						address += (uint)dasm.Bytes.Length;
-					}
-				}
-			}
-		}
-
-		private Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
-		private Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
-
-		public string DisassembleTxt(List<Tuple<uint, uint>> ranges, List<uint> restartsList, DisassemblyOptions options)
-		{
-			addressToLine.Clear();
-			lineToAddress.Clear();
-
-			var restarts = (IEnumerable<uint>)restartsList.OrderBy(x => x).ToList();
-
-			var memorySpan = new ReadOnlySpan<byte>(memory.GetMemoryArray());
-			var txt = new StringBuilder();
-
-			int line = 0;
-
-			foreach (var range in ranges)
-			{
-				uint address = range.Item1;
-				uint size = range.Item2;
-				uint addressEnd = address + size;
-				while (address < addressEnd)
-				{
-					if (restarts.Any())
-					{
-						if (address == restarts.First())
-						{
-							restarts = restarts.Skip(1);
-						}
-						else if (address > restarts.First())
-						{
-							address = restarts.First();
-							restarts = restarts.Skip(1);
-						}
-					}
-
-					if (labeller.HasLabel(address))
-					{
-						txt.Append($"{labeller.LabelName(address)}:\n");
-						line++;
-					}
-					addressToLine.Add(address, line);
-					lineToAddress.Add(line, address);
-					line++;
-					if (options.IncludeBreakpoints)
-						txt.Append(IsBreakpoint(address)?'*':' ');
-					var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-					
-					if (options.IncludeComments)
-					{
-						string asm = dasm.ToString(options);
-						if (comments.TryGetValue(address, out Comment comment))
-						{
-							if (asm.Length < 64)
-								txt.Append($"{asm.PadRight(64)} {comment.Text}\n");
-							else
-								txt.Append($" {comment.Text}\n");
-						}
-						else
-						{
-							txt.Append($"{asm}\n");
-						}
-					}
-					else
-					{
-						txt.Append($"{dasm.ToString(options)}\n");
-					}
-
-					address += (uint)dasm.Bytes.Length;
-				}
-			}
-			return txt.ToString();
-		}
-
-		public int GetAddressLine(uint address)
-		{
-			if (addressToLine.TryGetValue(address, out int line))
-				return line;
-
-			uint inc = 1;
-			int sign = 1;
-			while (Math.Abs(inc) < 16)
-			{
-				address += (uint)(sign * inc);
-				if (addressToLine.TryGetValue(address, out int linex))
-					return linex;
-				if (sign == -1)
-					inc++;
-				sign = -sign;
-			}
-
-			return 0;
-		}
-
-		public uint GetLineAddress(int line)
-		{
-			if (lineToAddress.TryGetValue(line, out uint address))
-				return address;
-			return 0;
-		}
-
-		private class Tracer
-		{
-			public string type { get; set; }
-			public uint fromPC { get; set; }
-			public string fromLabel { get;set;}
-			public string toLabel { get;set;}
-			public uint toPC { get; set; }
-			public Regs regs { get; set; }
-
-			public override string ToString()
-			{
-				return $"{type,-80} {fromPC:X8}{(!string.IsNullOrEmpty(fromLabel)?" "+fromLabel:"")}->{toPC:X8}{(!string.IsNullOrEmpty(toLabel)? " " + toLabel : "")} {regs.RegString()}";
-			}
-		}
-
-		List<Tracer> traces = new List<Tracer>();
-
-
-		public void Trace(uint pc)
-		{
-			//if (traces.Any()) { 
-			//	traces.Last().toPC = pc;
-			//	traces.Last().toLabel = labeller.LabelName(pc);
-			//}
-		}
-
-		public void Trace(string v, uint pc)
-		{
-			//traces.Add(new Tracer { type = v, fromPC = pc, fromLabel = labeller.LabelName(pc), regs = cpu.GetRegs() });
-		}
-
-		public void DumpTrace()
-		{
-			foreach (var t in traces.TakeLast(64))
-			{
-				Logger.WriteLine($"{t}");
-			}
-			traces.Clear();
-		}
-
-		public string DisassembleAddress(uint pc)
-		{
-			var dasm = disassembler.Disassemble(pc, new ReadOnlySpan<byte>(memory.GetMemoryArray()).Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
-			return dasm.ToString();
+			int line = disassembly.GetAddressLine(pc) + 1;
+			AddBreakpoint(disassembly.GetLineAddress(line), BreakpointType.OneShot);
 		}
 
 		public string UpdateExecBase()
@@ -515,13 +230,6 @@ namespace RunAmiga
 			return cpu.GetRegs();
 		}
 
-		public void ToggleBreakpoint(uint pc)
-		{
-			if (IsBreakpoint(pc))
-				breakpoints[pc].Active ^= true;
-			else
-				AddBreakpoint(pc);
-		}
 
 		public void SetPC(uint pc)
 		{
@@ -554,6 +262,16 @@ namespace RunAmiga
 		{
 			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1<<(int)irq), Size.Word);
 			interrupt.TriggerInterrupt(irq);
+		}
+
+		public Disassembly GetDisassembly()
+		{
+			return disassembly;
+		}
+
+		public BreakpointCollection GetBreakpoints()
+		{
+			return breakpoints;
 		}
 	}
 }

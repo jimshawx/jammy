@@ -13,6 +13,20 @@ namespace RunAmiga.Custom
 		private CIAAOdd cia;
 		private Form keys;
 
+		/*
+			Amiga keymap scancodes
+
+			    00  01  02  03  04  05  06  07  08  09  0A  0B  0C  0D  0E  0F
+			00   `   1   2   3   4   5   6   7   8   9   0   -   =   \      k0
+			10   Q   W   E   R   T   Y   U   I   O   P   [   ]      k1  k2  k3
+			20   A   S   D   F   G   H   J   K   L       ;   '      k4  k5  k6
+			30   <   Z   X   C   V   B   N   M   ,   .   /      k.  k7  k8  k9
+			40 spc  bs tab ent ret esc del              k-      up  dn  lt  rt
+			50  F1  F2  F3  F4  F5  F6  F7  F8  F9 F10  k(  k)  k/  k*  k+ hlp
+			60 lsh rsh cap ctl Lal Ral Lam Ram
+			70                                 rst
+		 */
+
 		private Dictionary<int, int> scanConvert = new Dictionary<int, int>
 		{
 			{0x70, 0x50},//F1

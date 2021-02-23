@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using RunAmiga.Types;
 
@@ -7,9 +6,9 @@ namespace RunAmiga
 {
 	public class MusashiCPU : IEmulate, ICPU
 	{
-		private readonly Debugger debugger;
 		private readonly Interrupt interrupt;
 		private readonly IMemoryMappedDevice memoryMapper;
+		private readonly BreakpointCollection breakpoints;
 
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_init(IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
@@ -54,7 +53,7 @@ namespace RunAmiga
 
 			instructionStartPC = pc;
 
-			if (debugger.IsBreakpoint(pc))
+			if (breakpoints.IsBreakpoint(pc))
 				Breakpoint(pc);
 		}
 
@@ -77,11 +76,11 @@ namespace RunAmiga
 		private Musashi_Writer w16;
 		private Musashi_Writer w8;
 
-		public MusashiCPU(Debugger debugger, Interrupt interrupt, IMemoryMappedDevice memoryMapper)
+		public MusashiCPU(Interrupt interrupt, IMemoryMappedDevice memoryMapper, BreakpointCollection breakpoints)
 		{
-			this.debugger = debugger;
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
+			this.breakpoints = breakpoints;
 
 			r32 = new Musashi_Reader(Musashi_read32);
 			r16 = new Musashi_Reader(Musashi_read16);

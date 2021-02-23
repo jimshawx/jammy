@@ -1,6 +1,5 @@
 ﻿using RunAmiga.Types;
 using System;
-using System.Diagnostics;
 using System.Text;
 
 namespace RunAmiga
@@ -875,17 +874,19 @@ namespace RunAmiga
 		private void divs(int type)
 		{
 			int Xn = (type >> 9) & 7;
-			Append($"divs.w d{Xn},");
+			Append($"divs.w ");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
+			Append($",d{Xn}");
 		}
 
 		private void divu(int type)
 		{
 			int Xn = (type >> 9) & 7;
-			Append($"divu.w d{Xn},");
+			Append($"divu.w ");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
+			Append($",d{Xn}");
 		}
 
 		private void t_seven(int type)

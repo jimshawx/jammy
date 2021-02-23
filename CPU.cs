@@ -43,18 +43,21 @@ namespace RunAmiga
 
 		private FetchMode fetchMode;
 
-		private Debugger debugger;
 		private readonly Interrupt interrupt;
+		private readonly Tracer tracer;
 
 		private IMemoryMappedDevice memoryMapper;
+		private readonly BreakpointCollection breakpoints;
 
-		public CPU(Debugger debugger, Interrupt interrupt, IMemoryMappedDevice memoryMapper)
+		public CPU(Interrupt interrupt, IMemoryMappedDevice memoryMapper, BreakpointCollection breakpoints, Tracer tracer)
 		{
 			a = new A(Supervisor);
 
-			this.debugger = debugger;
+
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
+			this.breakpoints = breakpoints;
+			this.tracer = tracer;
 
 			//Reset();
 		}
@@ -73,12 +76,12 @@ namespace RunAmiga
 			//if (!((pc > 0 && pc < 0x800) || (pc >= 0xc00000 && pc < 0xc10000) || (pc >= 0xf80000 && pc < 0x1000000)))
 			if (pc >= 0x1000000)
 			{
-				debugger.DumpTrace();
+				tracer.DumpTrace();
 				Logger.WriteLine($"PC out of expected range {pc:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
-			debugger.Trace(debugger.DisassembleAddress(pc), pc);
+			tracer.TraceAsm(pc, GetRegs());
 
 			return read16(pc);
 		}
@@ -123,7 +126,7 @@ namespace RunAmiga
 
 			if (CheckInterrupt())
 			{
-				if (debugger.IsBreakpoint(pc))
+				if (breakpoints.IsBreakpoint(pc))
 				{
 					Breakpoint();
 					return;
@@ -200,11 +203,11 @@ namespace RunAmiga
 				else if (ex is InstructionAlignmentException)
 					internalTrap(3);
 
-				debugger.DumpTrace();
+				tracer.DumpTrace();
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
-			if (debugger.IsBreakpoint(pc))
+			if (breakpoints.IsBreakpoint(pc))
 			{
 				Breakpoint();
 				return;
@@ -1583,21 +1586,21 @@ namespace RunAmiga
 
 		private void bsr(int type, uint target)
 		{
-			debugger.Trace("bsr", instructionStartPC);
+			tracer.Trace("bsr", instructionStartPC, GetRegs());
 
 			push32(pc);
 			pc = target;
 
-			debugger.Trace(pc);
+			tracer.Trace(pc);
 		}
 
 		private void bra(int type, uint target)
 		{
-			debugger.Trace("bra", instructionStartPC);
+			tracer.Trace("bra", instructionStartPC, GetRegs());
 
 			pc = target;
 
-			debugger.Trace(pc);
+			tracer.Trace(pc);
 		}
 
 		private void t_five(int type)
@@ -2570,22 +2573,22 @@ namespace RunAmiga
 
 		private void jmp(int type)
 		{
-			debugger.Trace("jmp", instructionStartPC);
+			tracer.Trace("jmp", instructionStartPC, GetRegs());
 
 			pc = fetchEA(type);
 
-			debugger.Trace(pc);
+			tracer.Trace(pc);
 		}
 
 		private void jsr(int type)
 		{
-			debugger.Trace("jsr", instructionStartPC);
+			tracer.Trace("jsr", instructionStartPC, GetRegs());
 
 			uint ea = fetchEA(type);
 			push32(pc);
 			pc = ea;
 
-			debugger.Trace(pc);
+			tracer.Trace(pc);
 		}
 
 		private void rtr(int type)
@@ -2603,21 +2606,21 @@ namespace RunAmiga
 
 		private void rts(int type)
 		{
-			debugger.Trace("rts", instructionStartPC);
+			tracer.Trace("rts", instructionStartPC, GetRegs());
 			pc = pop32();
-			debugger.Trace(pc);
+			tracer.Trace(pc);
 		}
 
 		private void rte(int type)
 		{
 			if (Supervisor())
 			{
-				debugger.Trace("rte", instructionStartPC);
+				tracer.Trace("rte", instructionStartPC, GetRegs());
 				ushort tmpsr = pop16();//may clear the supervisor bit, causing following pop to come of the wrong stack
 				pc = pop32();
 				sr = tmpsr;
 				CheckInterrupt();
-				debugger.Trace(pc);
+				tracer.Trace(pc);
 			}
 			else
 			{

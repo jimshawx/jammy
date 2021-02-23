@@ -28,8 +28,7 @@ namespace RunAmiga
 
 		public Machine()
 		{
-			var labeller = new Labeller();
-			debugger = new Debugger(labeller);
+			debugger = new Debugger();
 			interrupt = new Interrupt();
 
 			var kickstart = new Kickstart("../../../../kick12.rom", "Kickstart 1.2");
@@ -37,8 +36,12 @@ namespace RunAmiga
 			//var kickstart = new Kickstart("../../../../kick204.rom", "Kickstart 2.04");
 			//var kickstart = new Kickstart("../../../../kick31.rom", "Kickstart 3.1");
 
-			var memory = new Memory(debugger, "M");
+			var memory = new Memory("M");
 			memory.SetKickstart(kickstart);
+
+			var disassembly = new Disassembly(memory.GetMemoryArray(), debugger.GetBreakpoints());
+			var labeller = new Labeller();
+			var tracer = new Tracer(disassembly, labeller);
 
 			battClock = new BattClock();
 
@@ -57,8 +60,8 @@ namespace RunAmiga
 
 			var memoryMapper = new MemoryMapper(debugger, memory, ciaa, ciab, custom, battClock);
 
-			//cpu = new CPU(debugger, interrupt, memoryMapper);
-			cpu = new MusashiCPU(debugger, interrupt, memoryMapper);
+			//cpu = new CPU(interrupt, memoryMapper, debugger.GetBreakpoints());
+			cpu = new MusashiCPU(interrupt, memoryMapper, debugger.GetBreakpoints());
 
 			emulations.Add(battClock);
 			emulations.Add(ciaa);
@@ -68,7 +71,7 @@ namespace RunAmiga
 			emulations.Add(cpu);
 			emulations.Add(interrupt);
 
-			debugger.Initialise(memory, (ICPU)cpu, custom, diskDrives, interrupt, ciaa, ciab);
+			debugger.Initialise(memory, (ICPU)cpu, custom, diskDrives, interrupt, ciaa, ciab, tracer);
 
 			Reset();
 

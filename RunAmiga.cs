@@ -14,6 +14,7 @@ namespace RunAmiga
 	{
 		private readonly Machine machine;
 		private readonly Debugger debugger;
+		private readonly Disassembly disassembly;
 
 		public RunAmiga(Machine machine)
 		{
@@ -23,6 +24,7 @@ namespace RunAmiga
 
 			this.machine = machine;
 			this.debugger = machine.GetDebugger();
+			this.disassembly = debugger.GetDisassembly();
 
 			UpdateDisplay();
 
@@ -90,7 +92,7 @@ namespace RunAmiga
 			//	new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
 			//File.WriteAllText("cia.resource_disassembly.txt", dmp);
 
-			var disasm = debugger.DisassembleTxt(
+			var disasm = disassembly.DisassembleTxt(
 					new List<Tuple<uint, uint>>
 					{
 						new Tuple<uint, uint> (0x000000, 0x400),
@@ -98,7 +100,12 @@ namespace RunAmiga
 						new Tuple<uint, uint> (0xf80000, 0x40000),
 						new Tuple<uint, uint> (0xfc0000, 0x40000),
 					},
-					new List<uint> { 0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2, 0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2, 0xFE571C, 0xFC5170 },
+					new List<uint> { 0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2,
+						0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2, 0xFE571C, 0xFC5170,0xFE5A04,0xfe61d0,0x00FE6FD4,
+
+						0xFE43CC,0xFE4588,0xFE46CC,0xfe42ee,0xFC3A40,0xfc43f4,0xfc4408, 0xfc441c, 0xfc4474, 0xfc44a4, 0xfc44d0, 
+
+					},
 					new DisassemblyOptions{ IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 
 			Machine.UnlockEmulation();
@@ -179,7 +186,7 @@ namespace RunAmiga
 		private void SetSelection()
 		{
 			uint pc = debugger.GetRegs().PC;
-			int line = debugger.GetAddressLine(pc);
+			int line = disassembly.GetAddressLine(pc);
 			if (line == 0) return;
 
 			txtDisassembly.SuspendLayout();
@@ -430,7 +437,7 @@ namespace RunAmiga
 				Logger.WriteLine($"char {c}");
 				int line = txtDisassembly.GetLineFromCharIndex(c) - 1;
 				Logger.WriteLine($"line {line}");
-				pc = debugger.GetLineAddress(line);
+				pc = disassembly.GetLineAddress(line);
 				Logger.WriteLine($"PC {pc:X8}");
 			}
 
@@ -455,7 +462,7 @@ namespace RunAmiga
 				if (res == DialogResult.OK)
 				{
 					uint address = gotoForm.GotoLocation;
-					int gotoLine = debugger.GetAddressLine(address);
+					int gotoLine = disassembly.GetAddressLine(address);
 					txtDisassembly.SuspendLayout();
 					txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, gotoLine - 5));
 					txtDisassembly.ScrollToCaret();

@@ -178,10 +178,10 @@ namespace RunAmiga
 
 		private void Disassemble(List<Resident> resident)
 		{
-			var debugger = new Debugger(new Labeller());
-			var memory = new Memory(debugger, "M");
+			var memory = new Memory("M");
 			memory.SetKickstart(this);
-			debugger.Initialise(memory, null, null, null, null, null, null);
+
+			var disassembly = new Disassembly(memory.GetMemoryArray(), new BreakpointCollection());
 
 			for (int i = 0; i < resident.Count; i++)
 			{
@@ -193,7 +193,7 @@ namespace RunAmiga
 				Logger.WriteLine($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
 
 				var dmp = new StringBuilder();
-				string asm = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
+				string asm = disassembly.DisassembleTxt(new List<Tuple<uint, uint>>
 					{
 						new Tuple<uint, uint>(rt.MatchTag, endAddress - rt.MatchTag + 1)
 					}, new List<uint>(),

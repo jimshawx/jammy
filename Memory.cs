@@ -1,13 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Windows.Forms;
 using Size = RunAmiga.Types.Size;
 
 namespace RunAmiga
@@ -17,12 +9,10 @@ namespace RunAmiga
 		private readonly byte[] memory;
 		private const uint memoryMask = 0x00ffffff;
 
-		private readonly Debugger debugger;
 		private readonly string id;
 
-		public Memory(Debugger debugger, string id)
+		public Memory(string id)
 		{
-			this.debugger = debugger;
 			this.id = id;
 			this.memory = new byte[16 * 1024 * 1024];
 			Reset();

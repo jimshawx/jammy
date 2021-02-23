@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RunAmiga.Options;
 using RunAmiga.Types;
@@ -18,31 +17,35 @@ namespace RunAmiga.Tests
 
 		private class CPUTestRig
 		{
-			private Debugger debugger;
-			private Memory memory;
-			private MemoryMapper memoryMapper;
-			private Interrupt interrupt;
-			private ICPU cpu;
-			private IEmulate emulate;
+			private readonly Memory memory;
+			private readonly ICPU cpu;
+			private readonly IEmulate emulate;
+			private readonly Disassembler disassembler;
 
 			public CPUTestRig(CPUType type)
 			{
-				debugger = new Debugger(new Labeller());
-				memory = new Memory(debugger, "CPU0");
-				memoryMapper = new MemoryMapper(new List<IMemoryMappedDevice> { memory });
-				interrupt = new Interrupt();
-				if (type == CPUType.Musashi)
-					cpu = new MusashiCPU(debugger, interrupt, memoryMapper);
-				else
-					cpu = new CPU(debugger, interrupt, memoryMapper);
+				var labeller = new Labeller();
+				var breakpoints = new BreakpointCollection();
 
-				debugger.Initialise(memory, cpu, null, null, interrupt, null, null);
+				memory = new Memory("CPU0");
+				
+				var disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints);
+				var tracer = new Tracer(disassembly, labeller);
+				var memoryMapper = new MemoryMapper(new List<IMemoryMappedDevice> { memory });
+				var interrupt = new Interrupt();
+				
+				if (type == CPUType.Musashi)
+					cpu = new MusashiCPU(interrupt, memoryMapper, breakpoints);
+				else
+					cpu = new CPU(interrupt, memoryMapper, breakpoints, tracer);
 
 				emulate = cpu as IEmulate;
 
 				var r = new Random(0x24061972);
 				for (uint i = 0; i < 16*1024*1024; i+=4)
 					memory.Write(0,i, (uint)(r.Next()*2), Size.Long);
+
+				disassembler = new Disassembler();
 			}
 
 			public void SetPC(uint pc)
@@ -72,7 +75,6 @@ namespace RunAmiga.Tests
 
 			public string Disassemble(uint address)
 			{
-				var disassembler = new Disassembler();
 				var roMemory = new ReadOnlySpan<byte>(memory.GetMemoryArray());
 				var dasm = disassembler.Disassemble(address, roMemory.Slice((int)address, 20));
 				return dasm.ToString(new DisassemblyOptions{IncludeBytes = true});
