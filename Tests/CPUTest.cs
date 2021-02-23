@@ -27,7 +27,7 @@ namespace RunAmiga.Tests
 				var labeller = new Labeller();
 				var breakpoints = new BreakpointCollection();
 
-				memory = new Memory("CPU0");
+				memory = new Memory($"CPUTest_{type}");
 				
 				var disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints);
 				var tracer = new Tracer(disassembly, labeller);

@@ -178,7 +178,7 @@ namespace RunAmiga
 
 		private void Disassemble(List<Resident> resident)
 		{
-			var memory = new Memory("M");
+			var memory = new Memory("Kickstart");
 			memory.SetKickstart(this);
 
 			var disassembly = new Disassembly(memory.GetMemoryArray(), new BreakpointCollection());

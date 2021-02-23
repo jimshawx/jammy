@@ -1,5 +1,4 @@
-﻿using System;
-using RunAmiga.Types;
+﻿using RunAmiga.Types;
 using System.Collections.Generic;
 
 namespace RunAmiga
