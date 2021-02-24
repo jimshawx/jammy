@@ -13,7 +13,7 @@ namespace RunAmiga
 	public partial class RunAmiga : Form
 	{
 		private readonly IMachine machine;
-		private readonly Debugger debugger;
+		private readonly IDebugger debugger;
 		private readonly Disassembly disassembly;
 
 		public RunAmiga(IMachine machine)

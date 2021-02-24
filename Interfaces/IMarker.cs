@@ -46,6 +46,7 @@ namespace RunAmiga
 	public interface IKeyboard : IEmulate
 	{
 		uint ReadKey();
+		void SetCIA(ICIAAOdd ciaa);
 	}
 
 	public interface IMouse : IEmulate, ICustomReadWrite, IReadWritePRA { }
@@ -54,6 +55,8 @@ namespace RunAmiga
 	{
 		void TriggerInterrupt(uint intreq);
 		void SetCPUInterruptLevel(uint intreq);
+		void Init(IChips custom);
+		ushort GetInterruptLevel();
 	}
 
 	public interface IMemory : IEmulate, IMemoryMappedDevice
@@ -74,4 +77,35 @@ namespace RunAmiga
 		void DumpTrace();
 		void TraceAsm(uint pc, Regs regs);
 	}
+
+	public interface IDebugger : IMemoryMappedDevice
+	{
+		void Initialise(IMemory memory, ICPU cpu, IChips custom,
+			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ITracer tracer);
+
+		void ToggleBreakpoint(uint pc);
+		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long);
+		Disassembly GetDisassembly();
+		BreakpointCollection GetBreakpoints();
+		string UpdateExecBase();
+		MemoryDump GetMemory();
+		Regs GetRegs();
+		void BreakAtNextPC();
+		void SetPC(uint pc);
+		uint FindMemoryText(string txt);
+		void InsertDisk();
+		void RemoveDisk();
+		void CIAInt(ICRB icr);
+		void IRQ(uint irq);
+	}
+
+	public interface IMemoryMapper : IMemoryMappedDevice { }
+
+	public interface IMachine
+	{
+		IDebugger GetDebugger();
+		void Start();
+		void Reset();
+	}
+
 }

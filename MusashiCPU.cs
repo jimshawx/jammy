@@ -6,7 +6,7 @@ namespace RunAmiga
 {
 	public class MusashiCPU : IEmulate, ICPU
 	{
-		private readonly Interrupt interrupt;
+		private readonly IInterrupt interrupt;
 		private readonly IMemoryMappedDevice memoryMapper;
 		private readonly BreakpointCollection breakpoints;
 
@@ -76,7 +76,7 @@ namespace RunAmiga
 		private Musashi_Writer w16;
 		private Musashi_Writer w8;
 
-		public MusashiCPU(Interrupt interrupt, IMemoryMappedDevice memoryMapper, BreakpointCollection breakpoints)
+		public MusashiCPU(IInterrupt interrupt, IMemoryMappedDevice memoryMapper, BreakpointCollection breakpoints)
 		{
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;

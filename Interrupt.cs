@@ -5,7 +5,8 @@ namespace RunAmiga
 {
 	public class Interrupt : IInterrupt
 	{
-		private Chips custom;
+		private IChips custom;
+
 		public const uint NMI = 15;
 		public const uint INTEN = 14;
 		public const uint EXTER = 13;
@@ -30,7 +31,7 @@ namespace RunAmiga
 			return priority[interrupt];
 		}
 
-		public void Init(Chips custom)
+		public void Init(IChips custom)
 		{
 			this.custom = custom;
 		}

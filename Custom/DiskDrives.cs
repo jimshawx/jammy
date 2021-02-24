@@ -73,12 +73,12 @@ namespace RunAmiga.Custom
 	{
 		private readonly IMemory memory;
 
-		private readonly Interrupt interrupt;
+		private readonly IInterrupt interrupt;
 		//HRM pp241
 
 		private Drive[] drive;
 
-		public DiskDrives(IMemory memory, Interrupt interrupt)
+		public DiskDrives(IMemory memory, IInterrupt interrupt)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;

@@ -3,7 +3,7 @@ using RunAmiga.Types;
 
 namespace RunAmiga
 {
-	public class MemoryMapper : IMemoryMappedDevice
+	public class MemoryMapper : IMemoryMapper
 	{
 		private readonly List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 

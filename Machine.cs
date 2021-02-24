@@ -6,25 +6,19 @@ using RunAmiga.Custom;
 
 namespace RunAmiga
 {
-	public interface IMachine
-	{
-		Debugger GetDebugger();
-		void Start();
-		void Reset();
-	}
 
 	public class Machine : IMachine
 	{
-		private readonly IEmulate cpu;
-		private readonly Chips custom;
-		private readonly CIAAOdd ciaa;
-		private readonly CIABEven ciab;
-		private readonly Interrupt interrupt;
-		private readonly Debugger debugger;
-		private readonly DiskDrives diskDrives;
-		private readonly Mouse mouse;
-		private readonly Keyboard keyboard;
-		private readonly BattClock battClock;
+		private readonly ICPU cpu;
+		private readonly IChips custom;
+		private readonly ICIAAOdd ciaa;
+		private readonly ICIABEven ciab;
+		private readonly IInterrupt interrupt;
+		private readonly IDebugger debugger;
+		private readonly IDiskDrives diskDrives;
+		private readonly IMouse mouse;
+		private readonly IKeyboard keyboard;
+		private readonly IBattClock battClock;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
 
@@ -285,7 +279,7 @@ namespace RunAmiga
 			emuThread.Start();
 		}
 
-		public Debugger GetDebugger()
+		public IDebugger GetDebugger()
 		{
 			return debugger;
 		}

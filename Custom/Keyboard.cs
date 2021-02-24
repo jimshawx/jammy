@@ -108,7 +108,7 @@ namespace RunAmiga.Custom
 
 		};
 
-		public Keyboard(Interrupt interrupt)
+		public Keyboard(IInterrupt interrupt)
 		{
 			this.interrupt = interrupt;
 			keys = new Form();
@@ -205,7 +205,7 @@ namespace RunAmiga.Custom
 			return 0x00;
 		}
 
-		public void SetCIA(CIAAOdd ciaa)
+		public void SetCIA(ICIAAOdd ciaa)
 		{
 			this.cia = ciaa;
 		}

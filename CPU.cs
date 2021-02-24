@@ -43,13 +43,13 @@ namespace RunAmiga
 
 		private FetchMode fetchMode;
 
-		private readonly Interrupt interrupt;
-		private readonly Tracer tracer;
+		private readonly IInterrupt interrupt;
+		private readonly ITracer tracer;
 
-		private IMemoryMappedDevice memoryMapper;
+		private IMemoryMapper memoryMapper;
 		private readonly BreakpointCollection breakpoints;
 
-		public CPU(Interrupt interrupt, IMemoryMappedDevice memoryMapper, BreakpointCollection breakpoints, Tracer tracer)
+		public CPU(Interrupt interrupt, IMemoryMapper memoryMapper, BreakpointCollection breakpoints, Tracer tracer)
 		{
 			a = new A(Supervisor);
 

@@ -4,7 +4,7 @@ using RunAmiga.Custom;
 
 namespace RunAmiga
 {
-	public class Debugger : IMemoryMappedDevice
+	public class Debugger : IDebugger
 	{
 		private BreakpointCollection breakpoints;
 		private IMemory memory;
