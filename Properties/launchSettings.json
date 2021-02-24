@@ -1,8 +1,15 @@
 {
   "profiles": {
-    "RunAmiga": {
-      "commandName": "Project",
-      "nativeDebugging": true
-    }
+	"RunAmiga": {
+	  "commandName": "Project",
+	  "nativeDebugging": true
+	}
+  },
+  "Logging": {
+	"LogLevel": {
+	  "Default": "Trace",
+	  "Microsoft": "Warning",
+	  "Microsoft.Hosting.Lifetime": "Information"
+	}
   }
 }

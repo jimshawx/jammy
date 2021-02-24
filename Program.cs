@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Custom;
@@ -24,7 +25,7 @@ namespace RunAmiga
 
 			var serviceCollection = new ServiceCollection();
 			ServiceProvider = serviceCollection
-				.AddLogging()
+				.AddLogging(x=>x.AddDebug())
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IAudio, Audio>()
 				.AddSingleton<IBattClock, BattClock>()

@@ -203,9 +203,9 @@ namespace RunAmiga.Custom
 		{
 			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 			if ((dmacon & (1<<6))==0)
-				Trace.WriteLine("BLTEN is off!");
+				logger.LogTrace("BLTEN is off!");
 			if ((dmacon & (1 << 9)) == 0)
-				Trace.WriteLine("DMAEN is off!");
+				logger.LogTrace("DMAEN is off!");
 
 			//todo: assumes blitter DMA is enabled
 

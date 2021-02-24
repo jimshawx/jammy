@@ -19,8 +19,10 @@ namespace RunAmiga
 
 		private readonly List<IEmulate> emulations = new List<IEmulate>();
 
-		public Machine(IInterrupt interrupt, IMemory memory, IBattClock battClock, IDiskDrives diskDrives,
-			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IDebugger debugger, ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio)
+		public Machine(IInterrupt interrupt, IMemory memory, IBattClock battClock, 
+			IDiskDrives diskDrives,
+			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IDebugger debugger,
+			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio)
 		{
 			this.ciaa = ciaa;
 			this.ciab = ciab;
