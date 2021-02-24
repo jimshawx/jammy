@@ -1,10 +1,10 @@
 using System;
+using System.IO;
 using System.Windows.Forms;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Custom;
-using RunAmiga.Tests;
 using RunAmiga.Types;
 
 namespace RunAmiga
@@ -13,9 +13,6 @@ namespace RunAmiga
 	{
 		public static IServiceProvider ServiceProvider { get; private set; }
 
-		/// <summary>
-		///  The main entry point for the application.
-		/// </summary>
 		[STAThread]
 		static void Main()
 		{
@@ -23,9 +20,20 @@ namespace RunAmiga
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 
+			var configuration = new ConfigurationBuilder()
+				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.AddJsonFile("appsettings.json", false)
+				.Build();
+
+
 			var serviceCollection = new ServiceCollection();
 			ServiceProvider = serviceCollection
-				.AddLogging(x=>x.AddDebug())
+				.AddSingleton<IConfigurationRoot>(configuration)
+				.AddLogging(x=>
+				{
+					x.AddConfiguration(configuration.GetSection("Logging"));
+					x.AddDebug();
+				})
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IAudio, Audio>()
 				.AddSingleton<IBattClock, BattClock>()
@@ -57,9 +65,7 @@ namespace RunAmiga
 			var machine = ServiceProvider.GetRequiredService<IMachine>();
 
 			var logger = ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
-			logger.LogDebug("This is a log message");
-			logger.LogError("This is a log message");
-			logger.LogTrace("This is a log message");
+			logger.LogTrace("Application Starting Up!");
 
 			var form = new RunAmiga(machine);
 			form.Init();
