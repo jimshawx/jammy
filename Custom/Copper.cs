@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Microsoft.Extensions.Logging;
 using Size = RunAmiga.Types.Size;
 
 namespace RunAmiga.Custom
@@ -11,7 +12,7 @@ namespace RunAmiga.Custom
 	{
 		private readonly IMemoryMappedDevice memory;
 		private readonly IChips custom;
-		private readonly IInterrupt interrupt;
+		private readonly ILogger logger;
 
 		private Form form;
 		private Bitmap bitmap;
@@ -25,11 +26,12 @@ namespace RunAmiga.Custom
 
 		private readonly int[] screen = new int[screenWidth * screenHeight];
 
-		public Copper(IMemory memory, IChips custom, IInterrupt interrupt)
+		public Copper(IMemory memory, IChips custom, ILogger<Copper> logger)
 		{
 			this.memory = memory;
 			this.custom = custom;
-			this.interrupt = interrupt;
+			this.logger = logger;
+
 			form = new Form {ClientSize = new System.Drawing.Size(screenWidth, screenHeight) };
 			bitmap = new Bitmap(screenWidth, screenHeight, PixelFormat.Format32bppRgb);
 			picture = new PictureBox {Image = bitmap, ClientSize = new System.Drawing.Size(screenWidth, screenHeight)};
@@ -41,7 +43,7 @@ namespace RunAmiga.Custom
 
 		private void FormKeyPress(object sender, KeyPressEventArgs e)
 		{
-			Logger.WriteLine($"{e.KeyChar}");
+			logger.LogTrace($"{e.KeyChar}");
 			if (e.KeyChar == 'Q')
 			{
 				//picture.Capture = false;
@@ -105,7 +107,7 @@ namespace RunAmiga.Custom
 
 			//ParseCopperList(copPC);
 
-			Logger.WriteLine($"Copper List @{copPC:X8}");
+			logger.LogTrace($"Copper List @{copPC:X8}");
 
 			uint copStartPC = copPC;
 
@@ -118,14 +120,14 @@ namespace RunAmiga.Custom
 				ushort data = (ushort)memory.Read(0, copPC, Size.Word);
 				copPC += 2;
 
-				Logger.Write($"{copPC - 4:X8} {ins:X4},{data:X4} ");
+				logger.LogTrace($"{copPC - 4:X8} {ins:X4},{data:X4} ");
 
 				if ((ins & 0x0001) == 0)
 				{
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					Logger.WriteLine($"{copPC:X8} MOVE {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
+					logger.LogTrace($"{copPC:X8} MOVE {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
 
 					if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
 						copPC = custom.Read(copPC, ChipRegs.COP1LCH, Size.Long);//COP1LC
@@ -146,7 +148,7 @@ namespace RunAmiga.Custom
 						uint ve = (uint)((data >> 8) & 0x7f);
 						uint blit = (uint)(data >> 15);
 
-						Logger.WriteLine($"{copPC:X8} WAIT vp:{vp:X4} hp:{hp:X4} he:{he:X4} ve:{ve:X4} b:{blit}");
+						logger.LogTrace($"{copPC:X8} WAIT vp:{vp:X4} hp:{hp:X4} he:{he:X4} ve:{ve:X4} b:{blit}");
 					}
 					else
 					{
@@ -158,7 +160,7 @@ namespace RunAmiga.Custom
 						uint vertC = (uint)((data >> 8) & 0x3f);
 						uint blitC = (uint)(data >> 15);
 
-						Logger.WriteLine($"{copPC:X8} SKIP v:{vert:X4} h:{horz:X4} vC:{vertC} hC:{horzC} bC:{blitC}");
+						logger.LogTrace($"{copPC:X8} SKIP v:{vert:X4} h:{horz:X4} vC:{vertC} hC:{horzC} bC:{blitC}");
 					}
 
 					//this is usually how a copper list ends
@@ -190,7 +192,7 @@ namespace RunAmiga.Custom
 			
 			if (copPC == 0) return;
 
-			//Logger.WriteLine($"COP  {copPC:X6} {bplpt[0]:X6} {bplpt[1]:X6}");
+			//logger.LogTrace($"COP  {copPC:X6} {bplpt[0]:X6} {bplpt[1]:X6}");
 			colour[0] = 0xfff;
 			colour[1] = 0x000;
 			colour[2] = 0x77c;
@@ -246,12 +248,12 @@ namespace RunAmiga.Custom
 								if (regAddress == ChipRegs.COPJMP1)
 								{
 									copPC = cop1lc;
-									//Logger.WriteLine($"JMP1 {copPC:X6}");
+									//logger.LogTrace($"JMP1 {copPC:X6}");
 								}
 								else if (regAddress == ChipRegs.COPJMP2)
 								{
 									copPC = cop2lc;
-									//Logger.WriteLine($"JMP2 {copPC:X6}");
+									//logger.LogTrace($"JMP2 {copPC:X6}");
 								}
 							}
 							else if ((ins & 0x0001) == 1)
@@ -271,7 +273,7 @@ namespace RunAmiga.Custom
 								if ((data & 1) == 0)
 								{
 									//WAIT
-									//Logger.WriteLine($"WAIT {waitH},{waitV} {waitHMask:X3} {waitVMask:X3}");
+									//logger.LogTrace($"WAIT {waitH},{waitV} {waitHMask:X3} {waitVMask:X3}");
 									state = CopperState.Waiting;
 								}
 								else
@@ -295,7 +297,7 @@ namespace RunAmiga.Custom
 							{
 								if ((h & waitHMask) >= waitH)
 								{
-									//Logger.WriteLine($"RUN  {h},{v}");
+									//logger.LogTrace($"RUN  {h},{v}");
 									state = CopperState.Running;
 								}
 							}
@@ -382,7 +384,7 @@ namespace RunAmiga.Custom
 				}
 
 				//if (v == 100)
-				//	Logger.WriteLine("\\");
+				//	logger.LogTrace("\\");
 
 				//next horizontal line
 				{
@@ -531,7 +533,7 @@ namespace RunAmiga.Custom
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
-			//Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			//logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			switch (address)
 			{

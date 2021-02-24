@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using Size = RunAmiga.Types.Size;
 
 namespace RunAmiga
@@ -10,10 +11,12 @@ namespace RunAmiga
 		private const uint memoryMask = 0x00ffffff;
 
 		private readonly string id;
+		private readonly ILogger<Memory> logger;
 
-		public Memory(string id)
+		public Memory(string id, ILogger<Memory> logger)
 		{
 			this.id = id;
+			this.logger = logger;
 			this.memory = new byte[16 * 1024 * 1024];
 			Reset();
 		}
@@ -99,7 +102,7 @@ namespace RunAmiga
 		{
 			if (address >= 0x1000000)
 			{
-				//Logger.WriteLine($"Memory Read Byte from {address:X8}");
+				//logger.LogTrace($"Memory Read Byte from {address:X8}");
 				return 0;
 			}
 			return memory[address];
@@ -109,12 +112,12 @@ namespace RunAmiga
 		{
 			if (address >= 0xfffffe)
 			{
-				Logger.WriteLine($"Memory Read Word from ${address:X8}");
+				logger.LogTrace($"Memory Read Word from ${address:X8}");
 				return 0;
 			}
 			if ((address & 1) != 0)
 			{
-				Logger.WriteLine($"Memory Read Unaligned Word from ${address:X8}");
+				logger.LogTrace($"Memory Read Unaligned Word from ${address:X8}");
 				return 0;
 			}
 			return (ushort)(((ushort)memory[address] << 8) +
@@ -125,12 +128,12 @@ namespace RunAmiga
 		{
 			if (address >= 0xfffffc)
 			{
-				Logger.WriteLine($"Memory Read Int from ${address:X8}");
+				logger.LogTrace($"Memory Read Int from ${address:X8}");
 				return 0;
 			}
 			if ((address & 1) != 0)
 			{
-				Logger.WriteLine($"Memory Read Unaligned Int from ${address:X8}");
+				logger.LogTrace($"Memory Read Unaligned Int from ${address:X8}");
 				return 0;
 			}
 			return ((uint)memory[address] << 24) +

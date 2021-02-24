@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Options;
 using RunAmiga.Types;
 
@@ -15,8 +17,12 @@ namespace RunAmiga
 		public byte[] ROM { get; set; }
 		public uint Origin { get; set; }
 
+		private ILogger logger;
+
 		public Kickstart(string path, string name)
 		{
+			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Kickstart>();
+
 			Path = path;
 			Name = name;
 
@@ -169,7 +175,7 @@ namespace RunAmiga
 
 			foreach (var rt in resident)
 			{
-				Logger.WriteLine($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
+				logger.LogTrace($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
 			}
 
 			if (dump)
@@ -178,7 +184,7 @@ namespace RunAmiga
 
 		private void Disassemble(List<Resident> resident)
 		{
-			var memory = new Memory("Kickstart");
+			var memory = new Memory("Kickstart", Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Memory>());
 			memory.SetKickstart(this);
 
 			var disassembly = new Disassembly(memory.GetMemoryArray(), new BreakpointCollection());
@@ -190,7 +196,7 @@ namespace RunAmiga
 				if (i != resident.Count - 1)
 					endAddress = resident[i + 1].MatchTag;
 
-				Logger.WriteLine($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
+				logger.LogTrace($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
 
 				var dmp = new StringBuilder();
 				string asm = disassembly.DisassembleTxt(new List<Tuple<uint, uint>>

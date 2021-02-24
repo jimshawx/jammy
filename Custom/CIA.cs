@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -33,6 +34,8 @@ namespace RunAmiga.Custom
 
 	public abstract class CIA : ICIA
 	{
+		protected ILogger logger;
+
 		public const int PRA = 0;
 		public const int PRB = 1;
 		public const int DDRA = 2;
@@ -145,7 +148,7 @@ namespace RunAmiga.Custom
 		{
 			if (todTimer == todAlarm && (regs[CIA.ICR] & (uint)ICRB.TODALARM) != 0)
 			{
-				Logger.WriteLine($"{cia}TOD ALARM {todTimer}");
+				logger.LogTrace($"{cia}TOD ALARM {todTimer}");
 				icrr |= (byte)(ICRB.TODALARM | ICRB.IR);
 				interrupt.TriggerInterrupt(interruptLevel);
 			}
@@ -258,7 +261,7 @@ namespace RunAmiga.Custom
 					value &= ~(uint)CR.LOAD;
 
 					if (((value >> 5) & 1) != 0)
-						Logger.WriteLine($"A inmode: {(value >> 5) & 1}");
+						logger.LogTrace($"A inmode: {(value >> 5) & 1}");
 
 					regs[CIA.CRA] = (byte)value;
 					break;
@@ -269,7 +272,7 @@ namespace RunAmiga.Custom
 					value &= ~(uint)CR.LOAD;
 
 					if (((value >> 5) & 3) != 0)
-						Logger.WriteLine($"B inmode: {(value >> 5) & 3}");
+						logger.LogTrace($"B inmode: {(value >> 5) & 3}");
 
 					regs[CIA.CRB] = (byte)value;
 					break;
@@ -330,11 +333,11 @@ namespace RunAmiga.Custom
 
 		private void LogTODAlarm(char rw)
 		{
-			//Logger.WriteLine($"{rw} {cia}TODA {todAlarm:X6}");
+			//logger.LogTrace($"{rw} {cia}TODA {todAlarm:X6}");
 		}
 		private void LogTODTimer(char rw)
 		{
-			//Logger.WriteLine($"{rw} {cia}TOD  {todTimer:X6} {(todStopped?"stopped":"running")}");
+			//logger.LogTrace($"{rw} {cia}TOD  {todTimer:X6} {(todStopped?"stopped":"running")}");
 		}
 
 		//only used from the Debugger

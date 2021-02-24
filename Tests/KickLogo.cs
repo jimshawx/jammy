@@ -5,6 +5,8 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RunAmiga.Tests
 {
@@ -34,7 +36,14 @@ namespace RunAmiga.Tests
 		[DllImport("gdi32.dll")]
 		static extern uint MoveToEx(IntPtr hdc, int x, int y, IntPtr lppt);
 
-		private static List<Form> forms = new List<Form>();
+		private static ILogger logger;
+
+		static KickLogo()
+		{
+			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("MFM");
+		}
+
+		private static readonly List<Form> forms = new List<Form>();
 
 		public static void KSLogo(Kickstart kickstart)
 		{
@@ -42,7 +51,7 @@ namespace RunAmiga.Tests
 			{
 				if (kslogo.SequenceEqual(kickstart.ROM.Skip((int)(i - kickstart.Origin)).Take(kslogo.Length)))
 				{
-					Logger.WriteLine($"Found the kickstart logo at {i:X8}");
+					logger.LogTrace($"Found the kickstart logo at {i:X8}");
 					break;
 				}
 			}
@@ -81,24 +90,24 @@ namespace RunAmiga.Tests
 				if (b0 == 0xff && b1 == 0xff) break;
 				if (b0 == 0xfe)
 				{
-					Logger.WriteLine($"fill colour {b1}");
+					logger.LogTrace($"fill colour {b1}");
 					SelectObject(hdc, dcbrush);
 					SetDCBrushColor(hdc, colours[b1]);
 					mode = 3;
 				}
 				else if (b0 == 0xff)
 				{
-					Logger.WriteLine($"colour {b1}");
+					logger.LogTrace($"colour {b1}");
 					SelectObject(hdc, dcpen);
 					SetDCPenColor(hdc, colours[2]);
 					mode = 1;
 				}
 				else
 				{
-					if (mode == 0) Logger.WriteLine("unknown mode");
+					if (mode == 0) logger.LogTrace("unknown mode");
 					else if (mode == 1)
 					{
-						Logger.WriteLine($"move {ox + b0},{oy + b1}");
+						logger.LogTrace($"move {ox + b0},{oy + b1}");
 						dx = ox + b0;
 						dy = oy + b1;
 						MoveToEx(hdc, dx, dy, IntPtr.Zero);
@@ -107,7 +116,7 @@ namespace RunAmiga.Tests
 					}
 					else if (mode == 2)
 					{
-						Logger.WriteLine($"draw {ox + b0},{oy + b1} // {ox + b0 - dx},{oy + b1 - dy}");
+						logger.LogTrace($"draw {ox + b0},{oy + b1} // {ox + b0 - dx},{oy + b1 - dy}");
 						int nx = ox + b0, ny = oy + b1;
 
 						LineTo(hdc, nx, ny);
@@ -117,7 +126,7 @@ namespace RunAmiga.Tests
 					}
 					else if (mode == 3)
 					{
-						Logger.WriteLine($"fill {ox + b0},{oy + b1}");
+						logger.LogTrace($"fill {ox + b0},{oy + b1}");
 						//FloodFill(hdc, ox + b0, oy + b1, 0xffffff);
 						ExtFloodFill(hdc, ox + b0, oy + b1, 0x000000, 0);
 						mode = 0;

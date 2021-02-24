@@ -1,4 +1,6 @@
 ﻿using System;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RunAmiga.Custom
 {
@@ -8,6 +10,13 @@ namespace RunAmiga.Custom
 		private const uint MFM_FILLL = 0xaaaaaaaa;
 		private const uint MFM_MASK = 0x55555555;
 		private const int FLOPPY_GAP_BYTES = 720;
+
+		private static ILogger logger;
+
+		static MFM()
+		{
+			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("MFM");
+		}
 
 		private static void FloppySectorMfmEncode(uint tra, uint sec, Span<byte> src, Span<byte> dest, uint sync)
 		{
@@ -111,7 +120,7 @@ namespace RunAmiga.Custom
 		{
 			if (track > 161)
 			{
-				Logger.WriteLine($"Track {track} {track/2}:{track&1} Out of range!");
+				logger.LogTrace($"Track {track} {track/2}:{track&1} Out of range!");
 				return;
 			}
 

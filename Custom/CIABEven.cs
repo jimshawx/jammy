@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -29,10 +30,11 @@ namespace RunAmiga.Custom
 
 		//BFD000 - BFDF00
 
-		public CIABEven(IDiskDrives diskDrives, IInterrupt interrupt)
+		public CIABEven(IDiskDrives diskDrives, IInterrupt interrupt, ILogger<CIABEven> logger)
 		{
 			this.diskDrives = diskDrives;
 			this.interrupt = interrupt;
+			this.logger = logger;
 		}
 
 		protected override uint interruptLevel => Interrupt.EXTER;
@@ -67,7 +69,7 @@ namespace RunAmiga.Custom
 				return diskDrives.ReadPRB(insaddr);
 			}
 
-			//Logger.WriteLine($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			//logger.LogTrace($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return base.Read(reg);
 		}
 
@@ -81,7 +83,7 @@ namespace RunAmiga.Custom
 				return;
 			}
 			
-			//Logger.WriteLine($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+			//logger.LogTrace($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 			base.Write(reg, value);
 		}
 	}

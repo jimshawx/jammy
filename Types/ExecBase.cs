@@ -1,4 +1,6 @@
-﻿
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace RunAmiga.Types
 {
 	using UBYTE = System.Byte;
@@ -290,10 +292,12 @@ namespace RunAmiga.Types
 	public class ExecBaseMapper
 	{
 		private IMemory memory;
+		private readonly ILogger logger;
 
 		public ExecBaseMapper(IMemory memory)
 		{
 			this.memory = memory;
+			this.logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<ExecBaseMapper>();
 		}
 
 		HashSet<long> lookup = new HashSet<long>();
@@ -304,7 +308,7 @@ namespace RunAmiga.Types
 		{
 			if (lookup.Contains(addr+type.GetHashCode()))
 			{
-				//Logger.WriteLine($"Visited {addr:X8} again for {type.Name}");
+				//logger.LogTrace($"Visited {addr:X8} again for {type.Name}");
 				return 0;
 			}
 			lookup.Add(addr+type.GetHashCode());
@@ -440,22 +444,22 @@ namespace RunAmiga.Types
 						else throw new ApplicationException();
 					}
 
-					//Logger.WriteLine($"{addr:X8} {prop.Name}");
+					//logger.LogTrace($"{addr:X8} {prop.Name}");
 					prop.SetValue(obj, rv);
 				}
 				catch (NullReferenceException ex)
 				{
-					Logger.WriteLine($"Problem Mapping {prop.Name} was null\n{ex}");
+					logger.LogTrace($"Problem Mapping {prop.Name} was null\n{ex}");
 				}
 				catch (Exception ex)
 				{
 					if (rv != null)
-						Logger.WriteLine($"Problem Mapping {prop.Name} {prop.PropertyType} != {rv.GetType()}\n{ex}");
+						logger.LogTrace($"Problem Mapping {prop.Name} {prop.PropertyType} != {rv.GetType()}\n{ex}");
 					else
-						Logger.WriteLine($"Problem Mapping {prop.Name} {prop.PropertyType}\n{ex}");
+						logger.LogTrace($"Problem Mapping {prop.Name} {prop.PropertyType}\n{ex}");
 				}
 			}
-			//Logger.WriteLine($"{addr-startAddr}");
+			//logger.LogTrace($"{addr-startAddr}");
 			return addr - startAddr;
 		}
 
@@ -470,7 +474,7 @@ namespace RunAmiga.Types
 			if (execAddress == 0xc00276)
 				MapObject(typeof(ExecBase), execbase, execAddress, 0);
 
-			//Logger.WriteLine(execbase.ToString());
+			//logger.LogTrace(execbase.ToString());
 			return execbase.ToString() + "\n"+ sb.ToString();
 		}
 
@@ -491,7 +495,7 @@ namespace RunAmiga.Types
 		public string MapString(uint addr)
 		{
 			uint str = memory.Read32(addr);
-			//Logger.WriteLine($"String @{addr:X8}->{str:X8}");
+			//logger.LogTrace($"String @{addr:X8}->{str:X8}");
 			if (str == 0)
 				return "(null)";
 

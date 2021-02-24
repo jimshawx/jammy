@@ -66,9 +66,13 @@ namespace RunAmiga
 		byte Read8(uint address);
 		ushort Read16(uint address);
 		uint Read32(uint address);
+		void SetKickstart(Kickstart kickstart);
 	}
 
-	public interface IChips : IEmulate, IMemoryMappedDevice { }
+	public interface IChips : IEmulate, IMemoryMappedDevice
+	{
+		void Init(IBlitter blitter, ICopper copper, IAudio audio);
+	}
 
 	public interface ITracer
 	{

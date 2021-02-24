@@ -1,10 +1,18 @@
 ﻿using System;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
 	public class BattClock : IBattClock
 	{
+		private readonly ILogger logger;
+
+		public BattClock(ILogger<BattClock> logger)
+		{
+			this.logger = logger;
+		}
+
 		public void Emulate(ulong cycles)
 		{
 			
@@ -47,7 +55,7 @@ namespace RunAmiga.Custom
 			uint reg = ((address & 0xffff)-3)/4;
 			if (reg < 16)
 			{
-				Logger.WriteLine($"[BATTCLOCK] R {address:X8} @ {insaddr:X8}");
+				logger.LogTrace($"[BATTCLOCK] R {address:X8} @ {insaddr:X8}");
 
 				//if it's a clock register and the clock isn't held, map in the latest time
 				if (reg <= 12 && (regs[0xd] & 1) == 0)
@@ -100,7 +108,7 @@ namespace RunAmiga.Custom
 			uint reg = ((address & 0xffff) - 3) / 4;
 			if (reg < 16)
 			{
-				Logger.WriteLine($"[BATTCLOCK] W {address:X8} {value:X8} @ {insaddr:X8}");
+				logger.LogTrace($"[BATTCLOCK] W {address:X8} {value:X8} @ {insaddr:X8}");
 
 				regs[reg] = (byte)value;
 			}

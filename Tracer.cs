@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using RunAmiga.Types;
 
 namespace RunAmiga
@@ -26,11 +28,13 @@ namespace RunAmiga
 
 		private readonly Disassembly disassembly;
 		private readonly Labeller labeller;
+		private readonly ILogger logger;
 
 		public Tracer(Disassembly disassembly, Labeller labeller)
 		{
 			this.disassembly = disassembly;
 			this.labeller = labeller;
+			this.logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Tracer>();
 		}
 
 		public void Trace(uint pc)
@@ -51,7 +55,7 @@ namespace RunAmiga
 		{
 			foreach (var t in traces.TakeLast(64))
 			{
-				Logger.WriteLine($"{t}");
+				logger.LogTrace($"{t}");
 			}
 			traces.Clear();
 		}

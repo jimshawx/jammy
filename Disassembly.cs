@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using RunAmiga.Extensions;
 using RunAmiga.Options;
 using RunAmiga.Types;
 
 namespace RunAmiga
 {
-
-
 	public class Disassembly
 	{
 		private readonly byte[] memory;
@@ -23,6 +22,7 @@ namespace RunAmiga
 		
 		private readonly Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
 		private readonly Dictionary<uint, Header> headers = new Dictionary<uint, Header>();
+		private readonly ILogger logger;
 
 		private enum MemType : byte
 		{
@@ -37,11 +37,11 @@ namespace RunAmiga
 
 		public Disassembly(byte[] memory, BreakpointCollection breakpoints)
 		{
+			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Disassembly>();
 			this.memory = memory;
 			this.breakpoints = breakpoints;
 			disassembler = new Disassembler();
 			labeller = new Labeller();
-
 			LoadComments();
 		}
 
@@ -81,7 +81,7 @@ namespace RunAmiga
 			{
 				if (f == null)
 				{
-					Logger.WriteLine($"Can't find {filename} comments file");
+					logger.LogTrace($"Can't find {filename} comments file");
 					return;
 				}
 

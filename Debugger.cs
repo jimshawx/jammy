@@ -1,5 +1,7 @@
 ﻿using RunAmiga.Types;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using RunAmiga.Custom;
 
 namespace RunAmiga
@@ -16,9 +18,12 @@ namespace RunAmiga
 		private IInterrupt interrupt;
 		private Disassembly disassembly;
 		private ITracer tracer;
+		private readonly ILogger logger;
 
 		public Debugger()
 		{
+			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Debugger>();
+
 			breakpoints = new BreakpointCollection();
 			//AddBreakpoint(0xfc0af0);//InitCode
 			//AddBreakpoint(0xfc0afe);
@@ -149,7 +154,7 @@ namespace RunAmiga
 			if (isOutOfRange(address))
 			{
 				tracer.DumpTrace();
-				Logger.WriteLine($"Trying to read a {size} from {address:X8} @{insaddr:X8}");
+				logger.LogTrace($"Trying to read a {size} from {address:X8} @{insaddr:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
@@ -164,14 +169,14 @@ namespace RunAmiga
 			//if (address >= 0xc004d2 && address < 0xc004d2+48) 
 			//{
 			//	DumpTrace();
-			//	Logger.WriteLine($"Wrote to {address:X8}");
+			//	logger.LogTrace($"Wrote to {address:X8}");
 			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			//}
 
 			if (isROM(address) || isOutOfRange(address))
 			{
 				tracer.DumpTrace();
-				Logger.WriteLine($"Trying to write a {size} ({value:X8} {value}) to {address:X8} @{insaddr:X8}");
+				logger.LogTrace($"Trying to write a {size} ({value:X8} {value}) to {address:X8} @{insaddr:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 

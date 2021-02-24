@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Custom;
 using RunAmiga.Dialogs;
 using RunAmiga.Options;
@@ -15,12 +17,15 @@ namespace RunAmiga
 		private readonly IMachine machine;
 		private readonly IDebugger debugger;
 		private readonly Disassembly disassembly;
+		private readonly ILogger logger;
 
 		public RunAmiga(IMachine machine)
 		{
 			InitializeComponent();
 
 			addressFollowBox.SelectedIndex = 0;
+
+			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<RunAmiga>();
 
 			this.machine = machine;
 			this.debugger = machine.GetDebugger();
@@ -52,7 +57,7 @@ namespace RunAmiga
 		{
 			Machine.LockEmulation();
 
-			string dmp;
+			//string dmp;
 			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>> {new Tuple<uint, uint>(0xfe88d6, 0xfe8e18 - 0xfe88d6 + 1)}, new DisassemblyOptions{IncludeBytes = false, CommentPad = true});
 			//File.WriteAllText("boot_disassembly.txt", dmp);
 
@@ -432,25 +437,25 @@ namespace RunAmiga
 			uint pc;
 			{
 				var mouse = this.PointToClient(ctx.Location);
-				Logger.WriteLine($"ctx {mouse.X} {mouse.Y}");
+				logger.LogTrace($"ctx {mouse.X} {mouse.Y}");
 				int c = txtDisassembly.GetCharIndexFromPosition(mouse);
-				Logger.WriteLine($"char {c}");
+				logger.LogTrace($"char {c}");
 				int line = txtDisassembly.GetLineFromCharIndex(c) - 1;
-				Logger.WriteLine($"line {line}");
+				logger.LogTrace($"line {line}");
 				pc = disassembly.GetLineAddress(line);
-				Logger.WriteLine($"PC {pc:X8}");
+				logger.LogTrace($"PC {pc:X8}");
 			}
 
 			if (e.ClickedItem == toolStripBreakpoint)
 			{
-				Logger.WriteLine($"BP {pc:X8}");
+				logger.LogTrace($"BP {pc:X8}");
 				Machine.LockEmulation();
 				debugger.ToggleBreakpoint(pc);
 				Machine.UnlockEmulation();
 			}
 			else if (e.ClickedItem == toolStripSkip)
 			{
-				Logger.WriteLine($"SKIP {pc:X8}");
+				logger.LogTrace($"SKIP {pc:X8}");
 				Machine.LockEmulation();
 				debugger.SetPC(pc);
 				Machine.UnlockEmulation();

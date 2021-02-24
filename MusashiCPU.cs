@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Types;
 
 namespace RunAmiga
 {
-	public class MusashiCPU : IEmulate, ICPU
+	public class MusashiCPU : ICPU, IMusashiCPU
 	{
 		private readonly IInterrupt interrupt;
-		private readonly IMemoryMappedDevice memoryMapper;
+		private readonly IMemoryMapper memoryMapper;
 		private readonly BreakpointCollection breakpoints;
+		private readonly ILogger logger;
 
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_init(IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
@@ -49,7 +51,7 @@ namespace RunAmiga
 			tickCount++;
 
 			if ((tickCount&0xffffff)==0)
-				Logger.WriteLine($"{(double)totalTicks/tickCount}");
+				logger.LogTrace($"{(double)totalTicks/tickCount}");
 
 			instructionStartPC = pc;
 
@@ -60,7 +62,7 @@ namespace RunAmiga
 		private void Breakpoint(uint pc)
 		{
 			//debugger.DumpTrace();
-			Logger.WriteLine($"Breakpoint @{pc:X8}");
+			logger.LogTrace($"Breakpoint @{pc:X8}");
 			Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			UI.IsDirty = true;
 		}
@@ -76,11 +78,12 @@ namespace RunAmiga
 		private Musashi_Writer w16;
 		private Musashi_Writer w8;
 
-		public MusashiCPU(IInterrupt interrupt, IMemoryMappedDevice memoryMapper, BreakpointCollection breakpoints)
+		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper, BreakpointCollection breakpoints, ILogger<MusashiCPU> logger)
 		{
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
+			this.logger = logger;
 
 			r32 = new Musashi_Reader(Musashi_read32);
 			r16 = new Musashi_Reader(Musashi_read16);

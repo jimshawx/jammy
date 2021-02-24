@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Text;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -9,21 +11,27 @@ namespace RunAmiga.Custom
 		private readonly IDiskDrives diskDrives;
 		private ushort[] regs = new ushort[32768];
 
-		private readonly ICopper copper;
-		private readonly IBlitter blitter;
+		private ICopper copper;
+		private IBlitter blitter;
 		private readonly IMouse mouse;
 		private readonly IKeyboard keyboard;
-		private readonly IAudio audio;
+		private readonly ILogger logger;
+		private IAudio audio;
 
-		public Chips(IMemory memory, IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard)
+		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, ILogger<Chips> logger)
 		{
 			this.interrupt = interrupt;
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
 			this.keyboard = keyboard;
-			blitter = new Blitter(this, memory, interrupt);
-			copper = new Copper(memory, this, interrupt);
-			audio = new Audio(memory);
+			this.logger = logger;
+		}
+
+		public void Init(IBlitter blitter, ICopper copper, IAudio audio)
+		{
+			this.blitter = blitter;
+			this.copper = copper;
+			this.audio = audio;
 		}
 
 		public void Emulate(ulong cycles)
@@ -33,6 +41,7 @@ namespace RunAmiga.Custom
 			diskDrives.Emulate(cycles);
 			mouse.Emulate(cycles);
 			keyboard.Emulate(cycles);
+			audio.Emulate(cycles);
 		}
 
 		public void Reset()
@@ -42,6 +51,7 @@ namespace RunAmiga.Custom
 			diskDrives.Reset();
 			mouse.Reset();
 			keyboard.Reset();
+			audio.Reset();
 
 			regs[REG(ChipRegs.LISAID)] = 0x00f8;//LISA (0x00fc ECS Denise 8373) (OCD Denise just returns last value on bus).
 			regs[REG(ChipRegs.LISAID)] = 0x0000;
@@ -68,7 +78,7 @@ namespace RunAmiga.Custom
 
 			if (size == Size.Long)
 			{
-				//Logger.WriteLine($"Custom read from long {address:X8}");
+				//logger.LogTrace($"Custom read from long {address:X8}");
 				uint r0 = Read(insaddr, address, Size.Word);
 				uint r1 = Read(insaddr, address + 2, Size.Word);
 				return (r0 << 16) | r1;
@@ -111,7 +121,7 @@ namespace RunAmiga.Custom
 			}
 			else
 			{
-				Logger.WriteLine($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
+				logger.LogTrace($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
 			}
 
 			return (uint)regs[reg];
@@ -131,7 +141,7 @@ namespace RunAmiga.Custom
 	- if even address: xx00 is written.
 				*/
 
-				//Logger.WriteLine($"Custom write to byte {address:X8}");
+				//logger.LogTrace($"Custom write to byte {address:X8}");
 				if ((address & 1) != 0)
 					Write(insaddr, address & ~1u, value, Size.Word);
 				else
@@ -144,7 +154,7 @@ namespace RunAmiga.Custom
 
 			if (size == Size.Long)
 			{
-				//Logger.WriteLine($"Custom write to long {address:X8}");
+				//logger.LogTrace($"Custom write to long {address:X8}");
 				Write(insaddr, address, value >> 16, Size.Word);
 				Write(insaddr, address + 2, value, Size.Word);
 				return;
@@ -158,7 +168,7 @@ namespace RunAmiga.Custom
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
-				//Logger.WriteLine($"DMACON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+				//logger.LogTrace($"DMACON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 				
 				//if ((regs[reg] & 0x4000) != 0) Logger.Write("BBUSY ");
 				//if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
@@ -175,18 +185,18 @@ namespace RunAmiga.Custom
 				//if ((regs[reg] & 0x0004) != 0) Logger.Write("AUD2EN ");
 				//if ((regs[reg] & 0x0002) != 0) Logger.Write("AUD1EN ");
 				//if ((regs[reg] & 0x0001) != 0) Logger.Write("AUD0EN ");
-				//if ((regs[reg] & 0x7fff) != 0) Logger.WriteLine("");
+				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
 				regs[REG(ChipRegs.DMACONR)] = regs[reg];
 			}
 			else if (address == ChipRegs.INTENA)
 			{
-				//Logger.WriteLine($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");
+				//logger.LogTrace($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");
 				if ((value & 0x8000) != 0)
 					regs[reg] |= (ushort)value;
 				else
 					regs[reg] &= (ushort)~value;
-				//Logger.WriteLine($"    -> {Convert.ToString(regs[reg],2).PadLeft(16,'0')} {regs[reg]:X4}");
+				//logger.LogTrace($"    -> {Convert.ToString(regs[reg],2).PadLeft(16,'0')} {regs[reg]:X4}");
 
 				//if ((regs[reg] & 0x4000) != 0) Logger.Write("INTEN ");
 				//if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
@@ -203,7 +213,7 @@ namespace RunAmiga.Custom
 				//if ((regs[reg] & 0x0004) != 0) Logger.Write("SOFT ");
 				//if ((regs[reg] & 0x0002) != 0) Logger.Write("DSKBLK ");
 				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
-				//if ((regs[reg] & 0x7fff) != 0) Logger.WriteLine("");
+				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
 				regs[REG(ChipRegs.INTENAR)] = regs[reg];
 			}
@@ -212,7 +222,7 @@ namespace RunAmiga.Custom
 				if ((value & 0x8000) != 0)
 				{
 					regs[reg] |= (ushort)value;
-					//Logger.WriteLine($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
+					//logger.LogTrace($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
 				}
 				else
 				{
@@ -221,7 +231,7 @@ namespace RunAmiga.Custom
 				
 				interrupt.SetCPUInterruptLevel(regs[reg]);
 
-				//Logger.WriteLine($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
+				//logger.LogTrace($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
 
 				//if ((regs[reg] & 0x4000) != 0) Logger.Write("INTEN ");
 				//if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
@@ -238,7 +248,7 @@ namespace RunAmiga.Custom
 				//if ((regs[reg] & 0x0004) != 0) Logger.Write("SOFT ");
 				//if ((regs[reg] & 0x0002) != 0) Logger.Write("DSKBLK ");
 				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
-				//if ((regs[reg] & 0x7fff) != 0) Logger.WriteLine("");
+				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
 				regs[REG(ChipRegs.INTREQR)] = regs[reg];
 			}
@@ -290,33 +300,34 @@ namespace RunAmiga.Custom
 			}
 			else 
 			{
-				Logger.WriteLine($"W {ChipRegs.Name(address)} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+				logger.LogTrace($"W {ChipRegs.Name(address)} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 			}
 		}
 
 		private void DebugInfo(uint insaddr, uint address, uint value, Size size)
 		{
-			Logger.WriteLine($"Custom Write {insaddr:X8} {address:X8} {value:X8} {size} {ChipRegs.Name(address)} {ChipRegs.Description(address)}");
+			logger.LogTrace($"Custom Write {insaddr:X8} {address:X8} {value:X8} {size} {ChipRegs.Name(address)} {ChipRegs.Description(address)}");
 
 			if (address == ChipRegs.BPLCON0)
 			{
-				if ((value & 2) != 0) Logger.Write("ESRY ");
-				if ((value & 4) != 0) Logger.Write("LACE ");
-				if ((value & 8) != 0) Logger.Write("LPEN ");
-				if ((value & 256) != 0) Logger.Write("GAUD ");
-				if ((value & 512) != 0) Logger.Write("COLOR_ON ");
-				if ((value & 1024) != 0) Logger.Write("DBLPF ");
-				if ((value & 2048) != 0) Logger.Write("HOMOD ");
-				Logger.Write($"{(value >> 12) & 7}BPP ");
-				if ((value & 32768) != 0) Logger.Write("HIRES ");
-				Logger.WriteLine("");
+				var log = new StringBuilder();
+				if ((value & 2) != 0) log.Append("ESRY ");
+				if ((value & 4) != 0) log.Append("LACE ");
+				if ((value & 8) != 0) log.Append("LPEN ");
+				if ((value & 256) != 0) log.Append("GAUD ");
+				if ((value & 512) != 0) log.Append("COLOR_ON ");
+				if ((value & 1024) != 0) log.Append("DBLPF ");
+				if ((value & 2048) != 0) log.Append("HOMOD ");
+				log.Append($"{(value >> 12) & 7}BPP ");
+				if ((value & 32768) != 0) log.Append("HIRES ");
+				logger.LogTrace(log.ToString());
 			}
 
 			if (address == ChipRegs.SERPER)
 			{
-				if ((value & 0x8000) != 0) Logger.WriteLine("9bit"); else Logger.WriteLine("8bit");
-				Logger.WriteLine($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.27936)} NTSC");
-				Logger.WriteLine($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.28194)} PAL");
+				if ((value & 0x8000) != 0) logger.LogTrace("9bit"); else logger.LogTrace("8bit");
+				logger.LogTrace($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.27936)} NTSC");
+				logger.LogTrace($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.28194)} PAL");
 			}
 		}
 	}

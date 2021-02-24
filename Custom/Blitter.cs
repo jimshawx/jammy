@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -8,12 +9,14 @@ namespace RunAmiga.Custom
 		private readonly IChips custom;
 		private readonly IMemory memory;
 		private readonly IInterrupt interrupt;
+		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IMemory memory, IInterrupt interrupt)
+		public Blitter(IChips custom, IMemory memory, IInterrupt interrupt, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
 			this.memory = memory;
 			this.interrupt = interrupt;
+			this.logger = logger;
 		}
 
 		public void Emulate(ulong cycles)
@@ -52,7 +55,7 @@ namespace RunAmiga.Custom
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
-			//Logger.WriteLine($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			//logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 			return value;
 		}
 
@@ -83,7 +86,7 @@ namespace RunAmiga.Custom
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			//Logger.WriteLine($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			//logger.LogTrace($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			switch (address)
 			{
@@ -206,24 +209,24 @@ namespace RunAmiga.Custom
 
 			//todo: assumes blitter DMA is enabled
 
-			//Logger.WriteLine($"BLIT! {width}x{height} = {width*16}bits x {height} = {width * 16 * height} bits = {width*height*2} bytes");
+			//logger.LogTrace($"BLIT! {width}x{height} = {width*16}bits x {height} = {width * 16 * height} bits = {width*height*2} bytes");
 
-			//Logger.WriteLine($"->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
-			//Logger.WriteLine($"->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
-			//Logger.WriteLine($"->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
-			//Logger.WriteLine($"->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
-			//Logger.WriteLine($"cookie: {bltcon0&0xff:X2} {((bltcon1&2)!=0?"descending":"ascending")}");
-			//Logger.WriteLine("ABC");
-			//if ((bltcon0 & 0x01) != 0) Logger.WriteLine("000");
-			//if ((bltcon0 & 0x02) != 0) Logger.WriteLine("001");
-			//if ((bltcon0 & 0x04) != 0) Logger.WriteLine("010");
-			//if ((bltcon0 & 0x08) != 0) Logger.WriteLine("011");
-			//if ((bltcon0 & 0x10) != 0) Logger.WriteLine("100");
-			//if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
-			//if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
-			//if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
+			//logger.LogTrace($"->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
+			//logger.LogTrace($"->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
+			//logger.LogTrace($"->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
+			//logger.LogTrace($"->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
+			//logger.LogTrace($"cookie: {bltcon0&0xff:X2} {((bltcon1&2)!=0?"descending":"ascending")}");
+			//logger.LogTrace("ABC");
+			//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
+			//if ((bltcon0 & 0x02) != 0) logger.LogTrace("001");
+			//if ((bltcon0 & 0x04) != 0) logger.LogTrace("010");
+			//if ((bltcon0 & 0x08) != 0) logger.LogTrace("011");
+			//if ((bltcon0 & 0x10) != 0) logger.LogTrace("100");
+			//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
+			//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
+			//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
 			if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
-				Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+				logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 
 			bool dont_blit = false;
 			//these ones are weird
@@ -355,29 +358,29 @@ namespace RunAmiga.Custom
 
 		private void Line(uint insaddr)
 		{
-			//Logger.WriteLine($"BLIT LINE! @{insaddr:X8}");
+			//logger.LogTrace($"BLIT LINE! @{insaddr:X8}");
 
 			uint octant = (bltcon1 >> 2) & 7;
 			uint sign = (bltcon1 >> 6) & 1;
 
-			//Logger.WriteLine($"octant:{octant} sign:{sign}");
-			//if (bltadat != 0x8000) Logger.WriteLine("BLTADAT is not 0x8000");
-			//if (bltafwm != 0xffff) Logger.WriteLine("BLTAFWM is not 0xffff");
-			//if (bltalwm != 0xffff) Logger.WriteLine("BLTALWM is not 0xffff");
-			//if (bltcpt != bltdpt) Logger.WriteLine("BLTCPT != BLTDPT");
-			//if (bltcmod != bltdmod) Logger.WriteLine("BLTCMOD != BLTDMOD");
+			//logger.LogTrace($"octant:{octant} sign:{sign}");
+			//if (bltadat != 0x8000) logger.LogTrace("BLTADAT is not 0x8000");
+			//if (bltafwm != 0xffff) logger.LogTrace("BLTAFWM is not 0xffff");
+			//if (bltalwm != 0xffff) logger.LogTrace("BLTALWM is not 0xffff");
+			//if (bltcpt != bltdpt) logger.LogTrace("BLTCPT != BLTDPT");
+			//if (bltcmod != bltdmod) logger.LogTrace("BLTCMOD != BLTDMOD");
 
-			//Logger.WriteLine($"{bltamod:X8} {(int)bltamod} 4*(dy-dx)");
-			//Logger.WriteLine($"{bltbmod:X8} {bltbmod} 4*dy");
-			//Logger.WriteLine($"{bltcmod:X8} cmod");
-			//Logger.WriteLine($"{bltdmod:X8} {bltdmod} mod");
-			//Logger.WriteLine($"{bltapt:X8} {(short)bltapt} (4*dy)-(2*dx)");
-			//Logger.WriteLine($"{bltdpt:X8} dest");
-			//Logger.WriteLine($"{bltcon0 >> 12} x1 mod 15");
-			//Logger.WriteLine($"{Convert.ToString(bltcon0, 2).PadLeft(16, '0')} bltcon0");
-			//Logger.WriteLine($"{Convert.ToString(bltcon1, 2).PadLeft(16, '0')} bltcon1");
-			//Logger.WriteLine($"{bltsize >> 6:X8} dx+1");
-			//Logger.WriteLine($"{bltsize & 0x3f:X8} 2");
+			//logger.LogTrace($"{bltamod:X8} {(int)bltamod} 4*(dy-dx)");
+			//logger.LogTrace($"{bltbmod:X8} {bltbmod} 4*dy");
+			//logger.LogTrace($"{bltcmod:X8} cmod");
+			//logger.LogTrace($"{bltdmod:X8} {bltdmod} mod");
+			//logger.LogTrace($"{bltapt:X8} {(short)bltapt} (4*dy)-(2*dx)");
+			//logger.LogTrace($"{bltdpt:X8} dest");
+			//logger.LogTrace($"{bltcon0 >> 12} x1 mod 15");
+			//logger.LogTrace($"{Convert.ToString(bltcon0, 2).PadLeft(16, '0')} bltcon0");
+			//logger.LogTrace($"{Convert.ToString(bltcon1, 2).PadLeft(16, '0')} bltcon1");
+			//logger.LogTrace($"{bltsize >> 6:X8} dx+1");
+			//logger.LogTrace($"{bltsize & 0x3f:X8} 2");
 
 			uint length = bltsize >> 6;
 			if (length <= 1)
@@ -433,20 +436,20 @@ namespace RunAmiga.Custom
 			dydl = dy / (length - 1);
 			dxdl = dx / (length - 1);
 
-			//Logger.WriteLine($"tx,ty {tx,3},{ty,3} dx,dy {dx,3},{dy,3} {Convert.ToString(octant,2).PadLeft(3,'0')}({octant}) {sign} am:{bltamod&0xffff:X4} cm:{bltcmod:X4} dm:{bltdmod:X4} a:{bltapt,5} d:{bltdpt:X8} dydl:{dydl} dxdl:{dxdl}");
+			//logger.LogTrace($"tx,ty {tx,3},{ty,3} dx,dy {dx,3},{dy,3} {Convert.ToString(octant,2).PadLeft(3,'0')}({octant}) {sign} am:{bltamod&0xffff:X4} cm:{bltcmod:X4} dm:{bltdmod:X4} a:{bltapt,5} d:{bltdpt:X8} dydl:{dydl} dxdl:{dxdl}");
 
-			//Logger.WriteLine("ABC");
-			//if ((bltcon0 & 0x01) != 0) Logger.WriteLine("000");
-			//if ((bltcon0 & 0x02) != 0) Logger.WriteLine("001");
-			//if ((bltcon0 & 0x04) != 0) Logger.WriteLine("010");
-			//if ((bltcon0 & 0x08) != 0) Logger.WriteLine("011");
-			//if ((bltcon0 & 0x10) != 0) Logger.WriteLine("100");
-			//if ((bltcon0 & 0x20) != 0) Logger.WriteLine("101");
-			//if ((bltcon0 & 0x40) != 0) Logger.WriteLine("110");
-			//if ((bltcon0 & 0x80) != 0) Logger.WriteLine("111");
+			//logger.LogTrace("ABC");
+			//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
+			//if ((bltcon0 & 0x02) != 0) logger.LogTrace("001");
+			//if ((bltcon0 & 0x04) != 0) logger.LogTrace("010");
+			//if ((bltcon0 & 0x08) != 0) logger.LogTrace("011");
+			//if ((bltcon0 & 0x10) != 0) logger.LogTrace("100");
+			//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
+			//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
+			//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
 			//if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
 			//{
-			//	Logger.WriteLine($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			//	logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 			//	return;
 			//}
 

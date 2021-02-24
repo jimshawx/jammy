@@ -8,4 +8,7 @@ namespace RunAmiga
 		public void SetRegs(Regs regs);
 		public void SetPC(uint pc);
 	}
+
+	public interface IMusashiCPU { }
+	public interface ICSharpCPU { }
 }

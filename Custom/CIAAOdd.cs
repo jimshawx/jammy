@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
@@ -31,12 +32,13 @@ namespace RunAmiga.Custom
 
 		//BFE001 - BFEF01
 
-		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IInterrupt interrupt)
+		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IInterrupt interrupt, ILogger<CIAAOdd> logger)
 		{
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
 			this.keyboard = keyboard;
 			this.interrupt = interrupt;
+			this.logger = logger;
 		}
 
 		protected override uint interruptLevel => Interrupt.PORTS;
@@ -78,7 +80,7 @@ namespace RunAmiga.Custom
 				return keyboard.ReadKey();
 			}
 
-			//Logger.WriteLine($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			//logger.LogTrace($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return base.Read(reg);
 
 		}
@@ -96,7 +98,7 @@ namespace RunAmiga.Custom
 				return;
 			}
 
-			//Logger.WriteLine($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+			//logger.LogTrace($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 			base.Write(reg, value);
 		}
 	}

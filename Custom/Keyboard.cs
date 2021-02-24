@@ -4,14 +4,16 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using Microsoft.Extensions.Logging;
 
 namespace RunAmiga.Custom
 {
 	public class Keyboard : IKeyboard
 	{
 		private readonly IInterrupt interrupt;
+		private readonly ILogger logger;
 		private ICIAAOdd cia;
-		private Form keys;
+		private readonly Form keys;
 
 		/*
 			Amiga keymap scancodes
@@ -27,7 +29,7 @@ namespace RunAmiga.Custom
 			70                                 rst
 		 */
 
-		private Dictionary<int, int> scanConvert = new Dictionary<int, int>
+		private readonly Dictionary<int, int> scanConvert = new Dictionary<int, int>
 		{
 			{0x70, 0x50},//F1
 			{0x71, 0x51},//F2
@@ -108,12 +110,11 @@ namespace RunAmiga.Custom
 
 		};
 
-		public Keyboard(IInterrupt interrupt)
+		public Keyboard(IInterrupt interrupt, ILogger<Keyboard> logger)
 		{
 			this.interrupt = interrupt;
-			keys = new Form();
-			keys.Text = "Keyboard";
-			keys.Size = new Size(100, 100);
+			this.logger = logger;
+			keys = new Form {Text = "Keyboard", Size = new Size(100, 100)};
 			//var btn = new Button {Text = "Reset"};
 			//btn.Click += AddReset;
 			//keys.Controls.Add(btn);
@@ -128,30 +129,28 @@ namespace RunAmiga.Custom
 		{
 			int key = e.KeyValue;
 
-			Logger.Write($"{Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} ");
+			logger.LogTrace($"{Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} ");
 
 			if (scanConvert.ContainsKey(key))
 			{
-				Logger.Write($"{scanConvert[key]:X2}");
+				logger.LogTrace($"{scanConvert[key]:X2}");
 
 				keyQueue.Enqueue(scanConvert[key]);
 			}
-			Logger.WriteLine("");
 		}
 
 		private void AddKeyUp(object sender, KeyEventArgs e)
 		{
 			int key = e.KeyValue;
 
-			Logger.Write($"{Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} ");
+			logger.LogTrace($"{Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} ");
 
 			if (scanConvert.ContainsKey(key))
 			{
-				Logger.Write($"{scanConvert[key]:X2}");
+				logger.LogTrace($"{scanConvert[key]:X2}");
 
 				keyQueue.Enqueue(scanConvert[key] | 0x80);
 			}
-			Logger.WriteLine("");
 		}
 
 		private void AddReset(object sender, EventArgs e)

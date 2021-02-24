@@ -1,9 +1,10 @@
 ﻿using RunAmiga.Types;
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace RunAmiga
 {
-	public class CPU : ICPU
+	public class CPU : ICPU, ICSharpCPU
 	{
 		private enum FetchMode
 		{
@@ -45,11 +46,12 @@ namespace RunAmiga
 
 		private readonly IInterrupt interrupt;
 		private readonly ITracer tracer;
+		private readonly ILogger logger;
 
-		private IMemoryMapper memoryMapper;
+		private readonly IMemoryMapper memoryMapper;
 		private readonly BreakpointCollection breakpoints;
 
-		public CPU(Interrupt interrupt, IMemoryMapper memoryMapper, BreakpointCollection breakpoints, Tracer tracer)
+		public CPU(IInterrupt interrupt, IMemoryMapper memoryMapper, BreakpointCollection breakpoints, ITracer tracer, ILogger<CPU> logger)
 		{
 			a = new A(Supervisor);
 
@@ -58,6 +60,7 @@ namespace RunAmiga
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
 			this.tracer = tracer;
+			this.logger = logger;
 
 			//Reset();
 		}
@@ -77,7 +80,7 @@ namespace RunAmiga
 			if (pc >= 0x1000000)
 			{
 				tracer.DumpTrace();
-				Logger.WriteLine($"PC out of expected range {pc:X8}");
+				logger.LogTrace($"PC out of expected range {pc:X8}");
 				Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
@@ -90,7 +93,7 @@ namespace RunAmiga
 		private void Breakpoint()
 		{
 			//debugger.DumpTrace();
-			Logger.WriteLine($"Breakpoint @{pc:X8}");
+			logger.LogTrace($"Breakpoint @{pc:X8}");
 			Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			UI.IsDirty = true;
 		}
@@ -193,7 +196,7 @@ namespace RunAmiga
 			}
 			catch (MC68000Exception ex)
 			{
-				Logger.WriteLine($"Caught an exception {ex}");
+				logger.LogTrace($"Caught an exception {ex}");
 				if (ex is UnknownInstructionException)
 					internalTrap(4);
 				else if (ex is UnknownInstructionSizeException)
@@ -1031,10 +1034,10 @@ namespace RunAmiga
 					//and sign is ((int)v>>shift)&(signmask)
 					uint sign = (uint)((int)val>>shift)&signmask;
 
-					//Logger.WriteLine($"asl #{shift},{Convert.ToString(val, 2).PadLeft(32, '0')}");
-					//Logger.WriteLine($"mask {Convert.ToString(signmask, 2).PadLeft(32, '0')}");
-					//Logger.WriteLine($"sign {Convert.ToString(sign,2).PadLeft(32,'0')}");
-					//Logger.WriteLine($"vm   {Convert.ToString(val&signmask, 2).PadLeft(32, '0')}");
+					//logger.LogTrace($"asl #{shift},{Convert.ToString(val, 2).PadLeft(32, '0')}");
+					//logger.LogTrace($"mask {Convert.ToString(signmask, 2).PadLeft(32, '0')}");
+					//logger.LogTrace($"sign {Convert.ToString(sign,2).PadLeft(32,'0')}");
+					//logger.LogTrace($"vm   {Convert.ToString(val&signmask, 2).PadLeft(32, '0')}");
 					setV((val&signmask) != sign);
 					val <<= shift;
 				}
@@ -2031,9 +2034,9 @@ namespace RunAmiga
 				if (vector != 8)//used in multitasker
 				{
 					if (vector < 16)
-						Logger.WriteLine($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
+						logger.LogTrace($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
 					else
-						Logger.WriteLine($"Trap {vector} {instructionStartPC:X8}");
+						logger.LogTrace($"Trap {vector} {instructionStartPC:X8}");
 				}
 			}
 
@@ -2045,7 +2048,7 @@ namespace RunAmiga
 
 			pc = read32(vector << 2);
 
-			//Logger.WriteLine($" -> {pc:X8}");
+			//logger.LogTrace($" -> {pc:X8}");
 		}
 
 		private void trap(int type)
@@ -2526,9 +2529,9 @@ namespace RunAmiga
 			{
 				//if (instructionStartPC == 0xfc1798)
 				//{
-				//	Logger.WriteLine("movem.l  d2/d3/a2,-(a7)");
-				//	Logger.WriteLine($"d2:{d[2]:X8} d3:{d[3]:X8} a2:{a[2]:X8} a7:{a[7]:X8}");
-				//	Logger.WriteLine($"{Convert.ToString(mask,2).PadLeft(16,'0')}");
+				//	logger.LogTrace("movem.l  d2/d3/a2,-(a7)");
+				//	logger.LogTrace($"d2:{d[2]:X8} d3:{d[3]:X8} a2:{a[2]:X8} a7:{a[7]:X8}");
+				//	logger.LogTrace($"{Convert.ToString(mask,2).PadLeft(16,'0')}");
 
 				//	if (d[2] == 0x000001c8 && d[3] == 0x00000096 && a[2] == 0x00e80000 && a[7] == 0x00c014f8)
 				//	{

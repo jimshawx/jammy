@@ -7,7 +7,7 @@ namespace RunAmiga
 	{
 		private readonly List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 
-		public MemoryMapper(IMemoryMappedDevice debugger, IMemoryMappedDevice memory, IMemoryMappedDevice ciaa, IMemoryMappedDevice ciab, IMemoryMappedDevice custom, IMemoryMappedDevice battClock)
+		public MemoryMapper(IDebugger debugger, IMemory memory, ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IBattClock battClock)
 		{
 			devices.Add(debugger);
 			devices.Add(memory);
