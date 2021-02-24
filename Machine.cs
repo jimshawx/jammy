@@ -6,7 +6,14 @@ using RunAmiga.Custom;
 
 namespace RunAmiga
 {
-	public class Machine
+	public interface IMachine
+	{
+		Debugger GetDebugger();
+		void Start();
+		void Reset();
+	}
+
+	public class Machine : IMachine
 	{
 		private readonly IEmulate cpu;
 		private readonly Chips custom;
@@ -50,12 +57,12 @@ namespace RunAmiga
 			//cia = new CIA(debugger, diskDrives, mouse, interrupt);
 			keyboard = new Keyboard(interrupt);
 
-			ciaa = new CIAAOdd(debugger, diskDrives, mouse, keyboard, interrupt);
-			ciab = new CIABEven(debugger, diskDrives, interrupt);
+			ciaa = new CIAAOdd(diskDrives, mouse, keyboard, interrupt);
+			ciab = new CIABEven(diskDrives, interrupt);
 
 			keyboard.SetCIA(ciaa);
 
-			custom = new Chips(debugger, memory, interrupt, diskDrives, mouse, keyboard);
+			custom = new Chips(memory, interrupt, diskDrives, mouse, keyboard);
 			interrupt.Init(custom);
 
 			var memoryMapper = new MemoryMapper(debugger, memory, ciaa, ciab, custom, battClock);

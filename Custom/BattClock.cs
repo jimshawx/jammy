@@ -3,7 +3,7 @@ using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
-	public class BattClock : IEmulate, IMemoryMappedDevice
+	public class BattClock : IBattClock
 	{
 		public void Emulate(ulong cycles)
 		{

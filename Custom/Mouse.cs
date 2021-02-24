@@ -1,16 +1,9 @@
-﻿using System.Configuration;
-using System.Diagnostics;
-using System.Drawing;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace RunAmiga.Custom
 {
-	public class Mouse : IEmulate
+	public class Mouse : IMouse
 	{
-		public Mouse()
-		{
-		}
-
 		private const uint PRAMASK = 0b1100_0000;
 
 		private uint pra;
@@ -24,7 +17,6 @@ namespace RunAmiga.Custom
 		private int oldMouseX, oldMouseY;
 
 		private ulong mouseTime = 0;
-		private int clock;
 
 		public void Emulate(ulong cycles)
 		{

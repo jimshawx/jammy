@@ -289,9 +289,9 @@ namespace RunAmiga.Types
 
 	public class ExecBaseMapper
 	{
-		private Memory memory;
+		private IMemory memory;
 
-		public ExecBaseMapper(Memory memory)
+		public ExecBaseMapper(IMemory memory)
 		{
 			this.memory = memory;
 		}

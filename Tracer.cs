@@ -5,7 +5,7 @@ using RunAmiga.Types;
 namespace RunAmiga
 {
 
-	public class Tracer
+	public class Tracer : ITracer
 	{
 		private class TraceEntry
 		{

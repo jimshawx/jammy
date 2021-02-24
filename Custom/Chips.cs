@@ -1,22 +1,21 @@
 ﻿using System;
-using System.Windows.Forms;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
-	public class Chips : IEmulate, IMemoryMappedDevice
+	public class Chips : IChips
 	{
-		private readonly Interrupt interrupt;
-		private readonly DiskDrives diskDrives;
+		private readonly IInterrupt interrupt;
+		private readonly IDiskDrives diskDrives;
 		private ushort[] regs = new ushort[32768];
 
-		private readonly Copper copper;
-		private readonly Blitter blitter;
-		private readonly Mouse mouse;
-		private readonly Keyboard keyboard;
-		private readonly Audio audio;
+		private readonly ICopper copper;
+		private readonly IBlitter blitter;
+		private readonly IMouse mouse;
+		private readonly IKeyboard keyboard;
+		private readonly IAudio audio;
 
-		public Chips(Debugger debugger, IMemoryMappedDevice memory, Interrupt interrupt, DiskDrives diskDrives, Mouse mouse, Keyboard keyboard)
+		public Chips(IMemory memory, IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard)
 		{
 			this.interrupt = interrupt;
 			this.diskDrives = diskDrives;

@@ -3,9 +3,9 @@ using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
-	public class CIABEven : CIA
+	public class CIABEven : CIA, ICIABEven
 	{
-		private readonly DiskDrives diskDrives;
+		private readonly IDiskDrives diskDrives;
 
 		private readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -29,7 +29,7 @@ namespace RunAmiga.Custom
 
 		//BFD000 - BFDF00
 
-		public CIABEven(Debugger debugger, DiskDrives diskDrives, Interrupt interrupt)
+		public CIABEven(IDiskDrives diskDrives, IInterrupt interrupt)
 		{
 			this.diskDrives = diskDrives;
 			this.interrupt = interrupt;

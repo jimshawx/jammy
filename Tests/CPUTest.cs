@@ -39,7 +39,7 @@ namespace RunAmiga.Tests
 				else
 					cpu = new CPU(interrupt, memoryMapper, breakpoints, tracer);
 
-				emulate = cpu as IEmulate;
+				emulate = (IEmulate)cpu;
 
 				var r = new Random(0x24061972);
 				for (uint i = 0; i < 16*1024*1024; i+=4)

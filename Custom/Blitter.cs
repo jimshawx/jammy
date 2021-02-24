@@ -3,13 +3,13 @@ using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
-	public class Blitter : IEmulate
+	public class Blitter : IBlitter
 	{
-		private readonly Chips custom;
-		private readonly IMemoryMappedDevice memory;
-		private readonly Interrupt interrupt;
+		private readonly IChips custom;
+		private readonly IMemory memory;
+		private readonly IInterrupt interrupt;
 
-		public Blitter(Chips custom, IMemoryMappedDevice memory, Interrupt interrupt)
+		public Blitter(IChips custom, IMemory memory, IInterrupt interrupt)
 		{
 			this.custom = custom;
 			this.memory = memory;

@@ -3,11 +3,11 @@ using RunAmiga.Types;
 
 namespace RunAmiga.Custom
 {
-	public class CIAAOdd : CIA
+	public class CIAAOdd : CIA, ICIAAOdd
 	{
-		private readonly DiskDrives diskDrives;
-		private readonly Mouse mouse;
-		private readonly Keyboard keyboard;
+		private readonly IDiskDrives diskDrives;
+		private readonly IMouse mouse;
+		private readonly IKeyboard keyboard;
 
 		private readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -31,7 +31,7 @@ namespace RunAmiga.Custom
 
 		//BFE001 - BFEF01
 
-		public CIAAOdd(Debugger debugger, DiskDrives diskDrives, Mouse mouse, Keyboard keyboard, Interrupt interrupt)
+		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IInterrupt interrupt)
 		{
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
@@ -98,11 +98,6 @@ namespace RunAmiga.Custom
 
 			//Logger.WriteLine($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 			base.Write(reg, value);
-		}
-
-		public void SerialInterrupt()
-		{
-			icrr |= (byte)(ICRB.SERIAL | ICRB.IR);
 		}
 	}
 }

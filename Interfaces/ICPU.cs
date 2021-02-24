@@ -2,7 +2,7 @@
 
 namespace RunAmiga
 {
-	public interface ICPU
+	public interface ICPU : IEmulate
 	{
 		public Regs GetRegs();
 		public void SetRegs(Regs regs);

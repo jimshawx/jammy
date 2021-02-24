@@ -1,10 +1,10 @@
 ﻿namespace RunAmiga.Custom
 {
-	public class Audio : IEmulate
+	public class Audio : IAudio
 	{
-		private readonly IMemoryMappedDevice memory;
+		private readonly IMemory memory;
 
-		public Audio(IMemoryMappedDevice memory)
+		public Audio(IMemory memory)
 		{
 			this.memory = memory;
 		}

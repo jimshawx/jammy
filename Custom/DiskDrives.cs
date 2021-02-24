@@ -69,16 +69,16 @@ namespace RunAmiga.Custom
 		}
 	}
 
-	public class DiskDrives : IEmulate
+	public class DiskDrives : IDiskDrives
 	{
-		private readonly IMemoryMappedDevice memory;
+		private readonly IMemory memory;
 
 		private readonly Interrupt interrupt;
 		//HRM pp241
 
 		private Drive[] drive;
 
-		public DiskDrives(IMemoryMappedDevice memory, Interrupt interrupt)
+		public DiskDrives(IMemory memory, Interrupt interrupt)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;

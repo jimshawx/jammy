@@ -7,15 +7,15 @@ namespace RunAmiga
 	public class Debugger : IMemoryMappedDevice
 	{
 		private BreakpointCollection breakpoints;
-		private Memory memory;
+		private IMemory memory;
 		private ICPU cpu;
-		private Chips custom;
-		private CIAAOdd ciaa;
-		private CIABEven ciab;
-		private DiskDrives diskDrives;
-		private Interrupt interrupt;
+		private IChips custom;
+		private ICIAAOdd ciaa;
+		private ICIABEven ciab;
+		private IDiskDrives diskDrives;
+		private IInterrupt interrupt;
 		private Disassembly disassembly;
-		private Tracer tracer;
+		private ITracer tracer;
 
 		public Debugger()
 		{
@@ -114,8 +114,8 @@ namespace RunAmiga
 			AddBreakpoint(0xfe9232);
 		}
 
-		public void Initialise(Memory memory, ICPU cpu, Custom.Chips custom,
-			DiskDrives diskDrives, Interrupt interrupt, CIAAOdd ciaa, CIABEven ciab, Tracer tracer)
+		public void Initialise(IMemory memory, ICPU cpu, IChips custom,
+			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ITracer tracer)
 		{
 			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints);
 

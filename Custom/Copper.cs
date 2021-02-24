@@ -7,11 +7,11 @@ using Size = RunAmiga.Types.Size;
 
 namespace RunAmiga.Custom
 {
-	public class Copper : IEmulate
+	public class Copper : ICopper
 	{
 		private readonly IMemoryMappedDevice memory;
-		private readonly Chips custom;
-		private readonly Interrupt interrupt;
+		private readonly IChips custom;
+		private readonly IInterrupt interrupt;
 
 		private Form form;
 		private Bitmap bitmap;
@@ -25,7 +25,7 @@ namespace RunAmiga.Custom
 
 		private readonly int[] screen = new int[screenWidth * screenHeight];
 
-		public Copper(IMemoryMappedDevice memory, Chips custom, Interrupt interrupt)
+		public Copper(IMemory memory, IChips custom, IInterrupt interrupt)
 		{
 			this.memory = memory;
 			this.custom = custom;

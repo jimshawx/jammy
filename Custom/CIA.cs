@@ -31,7 +31,7 @@ namespace RunAmiga.Custom
 		IR=128,
 	}
 
-	public abstract class CIA : IEmulate, IMemoryMappedDevice
+	public abstract class CIA : ICIA
 	{
 		public const int PRA = 0;
 		public const int PRB = 1;
@@ -65,7 +65,7 @@ namespace RunAmiga.Custom
 		private ushort timerAreset;
 		private ushort timerBreset;
 
-		protected Interrupt interrupt;
+		protected IInterrupt interrupt;
 
 		private ulong timerTime;
 
@@ -350,6 +350,11 @@ namespace RunAmiga.Custom
 		public byte SnoopICRR()
 		{
 			return icrr;
+		}
+
+		public void SerialInterrupt()
+		{
+			icrr |= (byte)(ICRB.SERIAL | ICRB.IR);
 		}
 	}
 }

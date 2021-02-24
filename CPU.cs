@@ -3,7 +3,7 @@ using System;
 
 namespace RunAmiga
 {
-	public class CPU : IEmulate, ICPU
+	public class CPU : ICPU
 	{
 		private enum FetchMode
 		{

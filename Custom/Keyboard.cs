@@ -7,10 +7,10 @@ using System.Windows.Forms;
 
 namespace RunAmiga.Custom
 {
-	public class Keyboard : IEmulate
+	public class Keyboard : IKeyboard
 	{
-		private readonly Interrupt interrupt;
-		private CIAAOdd cia;
+		private readonly IInterrupt interrupt;
+		private ICIAAOdd cia;
 		private Form keys;
 
 		/*

@@ -12,11 +12,11 @@ namespace RunAmiga
 {
 	public partial class RunAmiga : Form
 	{
-		private readonly Machine machine;
+		private readonly IMachine machine;
 		private readonly Debugger debugger;
 		private readonly Disassembly disassembly;
 
-		public RunAmiga(Machine machine)
+		public RunAmiga(IMachine machine)
 		{
 			InitializeComponent();
 

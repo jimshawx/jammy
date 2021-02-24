@@ -3,7 +3,7 @@ using RunAmiga.Types;
 
 namespace RunAmiga
 {
-	public class Interrupt : IEmulate
+	public class Interrupt : IInterrupt
 	{
 		private Chips custom;
 		public const uint NMI = 15;

@@ -4,7 +4,7 @@ using Size = RunAmiga.Types.Size;
 
 namespace RunAmiga
 {
-	public class Memory : IMemoryMappedDevice, IEmulate
+	public class Memory : IMemory
 	{
 		private readonly byte[] memory;
 		private const uint memoryMask = 0x00ffffff;
