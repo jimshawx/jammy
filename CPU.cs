@@ -1,6 +1,7 @@
 ﻿using RunAmiga.Types;
 using System;
 using Microsoft.Extensions.Logging;
+using RunAmiga.Interfaces;
 
 namespace RunAmiga
 {

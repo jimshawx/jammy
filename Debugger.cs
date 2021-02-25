@@ -1,30 +1,41 @@
 ﻿using RunAmiga.Types;
 using System.Text;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 using RunAmiga.Custom;
+using RunAmiga.Interfaces;
 
 namespace RunAmiga
 {
 	public class Debugger : IDebugger
 	{
-		private BreakpointCollection breakpoints;
-		private IMemory memory;
-		private ICPU cpu;
-		private IChips custom;
-		private ICIAAOdd ciaa;
-		private ICIABEven ciab;
-		private IDiskDrives diskDrives;
-		private IInterrupt interrupt;
-		private Disassembly disassembly;
-		private ITracer tracer;
+		private readonly BreakpointCollection breakpoints;
+		private readonly IMemory memory;
+		private readonly ICPU cpu;
+		private readonly IChips custom;
+		private readonly ICIAAOdd ciaa;
+		private readonly ICIABEven ciab;
+		private readonly IDiskDrives diskDrives;
+		private readonly IInterrupt interrupt;
+		private readonly Disassembly disassembly;
 		private readonly ILogger logger;
+		private ITracer tracer;
 
-		public Debugger()
+		public Debugger(IMemory memory, ICPU cpu, IChips custom,
+			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger)
 		{
-			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Debugger>();
-
 			breakpoints = new BreakpointCollection();
+
+			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints);
+
+			this.memory = memory;
+			this.cpu = cpu;
+			this.custom = custom;
+			this.diskDrives = diskDrives;
+			this.interrupt = interrupt;
+			this.ciaa = ciaa;
+			this.ciab = ciab;
+			this.logger = logger;
+
 			//AddBreakpoint(0xfc0af0);//InitCode
 			//AddBreakpoint(0xfc0afe);
 			//AddBreakpoint(0xfc0af0);
@@ -119,19 +130,9 @@ namespace RunAmiga
 			AddBreakpoint(0xfe9232);
 		}
 
-		public void Initialise(IMemory memory, ICPU cpu, IChips custom,
-			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ITracer tracer)
+		public void SetTracer(ITracer trace)
 		{
-			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints);
-
-			this.memory = memory;
-			this.cpu = cpu;
-			this.custom = custom;
-			this.diskDrives = diskDrives;
-			this.interrupt = interrupt;
-			this.ciaa = ciaa;
-			this.ciab = ciab;
-			this.tracer = tracer;
+			this.tracer = trace;
 		}
 
 		public bool IsMapped(uint address)
@@ -278,5 +279,7 @@ namespace RunAmiga
 		{
 			return breakpoints;
 		}
+
+
 	}
 }

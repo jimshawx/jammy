@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace RunAmiga
+﻿namespace RunAmiga.Interfaces
 {
 	public interface IEmulate
 	{

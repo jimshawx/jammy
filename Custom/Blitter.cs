@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using RunAmiga.Interfaces;
 using RunAmiga.Types;
 
 namespace RunAmiga.Custom

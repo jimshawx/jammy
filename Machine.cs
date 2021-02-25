@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using RunAmiga.Interfaces;
 
 namespace RunAmiga
 {
@@ -11,7 +12,6 @@ namespace RunAmiga
 		private readonly IChips custom;
 		private readonly ICIAAOdd ciaa;
 		private readonly ICIABEven ciab;
-		private readonly IDebugger debugger;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
 
@@ -20,28 +20,15 @@ namespace RunAmiga
 		private readonly List<IEmulate> emulations = new List<IEmulate>();
 
 		public Machine(IInterrupt interrupt, IMemory memory, IBattClock battClock, 
-			IDiskDrives diskDrives,
-			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IDebugger debugger,
+			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, 
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio)
 		{
 			this.ciaa = ciaa;
 			this.ciab = ciab;
 			this.custom = custom;
-			this.debugger = debugger;
 			this.cpu = cpu;
 
-			var kickstart = new Kickstart("../../../../kick12.rom", "Kickstart 1.2");
-			//var kickstart = new Kickstart("../../../../kick13.rom", "Kickstart 1.3");
-			//var kickstart = new Kickstart("../../../../kick204.rom", "Kickstart 2.04");
-			//var kickstart = new Kickstart("../../../../kick31.rom", "Kickstart 3.1");
-
 			custom.Init(blitter, copper, audio);
-
-			memory.SetKickstart(kickstart);
-
-			var disassembly = new Disassembly(memory.GetMemoryArray(), debugger.GetBreakpoints());
-			var labeller = new Labeller();
-			var tracer = new Tracer(disassembly, labeller);
 
 			keyboard.SetCIA(ciaa);
 
@@ -55,13 +42,10 @@ namespace RunAmiga
 			emulations.Add(cpu);
 			emulations.Add(interrupt);
 
-			debugger.Initialise(memory, cpu, custom, diskDrives, interrupt, ciaa, ciab, tracer);
-
 			Reset();
 
 			emulationSemaphore = new SemaphoreSlim(1);
 		}
-
 
 		public void RunEmulations(ulong ns)
 		{
@@ -75,11 +59,6 @@ namespace RunAmiga
 			emuThread = new Thread(Emulate);
 			emuThread.Name = "Emulation";
 			emuThread.Start();
-		}
-
-		public IDebugger GetDebugger()
-		{
-			return debugger;
 		}
 
 		//private EmulationMode targetEmulationMode;

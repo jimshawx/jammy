@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using RunAmiga.Interfaces;
 using RunAmiga.Types;
 
 namespace RunAmiga
@@ -7,19 +8,23 @@ namespace RunAmiga
 	{
 		private readonly List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 
-		public MemoryMapper(IDebugger debugger, IMemory memory, ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IBattClock battClock)
+		public MemoryMapper(IMemory memory, ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IBattClock battClock)
 		{
-			devices.Add(debugger);
 			devices.Add(memory);
-			devices.Add(battClock);
 			devices.Add(ciaa);
 			devices.Add(ciab);
 			devices.Add(custom);
+			devices.Add(battClock);
 		}
 
 		public MemoryMapper(List<IMemoryMappedDevice> memoryDevices)
 		{
 			devices.AddRange(memoryDevices);
+		}
+
+		public void AddMapper(IMemoryMappedDevice memoryDevice)
+		{
+			devices.Insert(0, memoryDevice);
 		}
 
 		public bool IsMapped(uint address)

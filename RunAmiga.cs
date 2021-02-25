@@ -14,27 +14,29 @@ namespace RunAmiga
 {
 	public partial class RunAmiga : Form
 	{
-		private readonly IMachine machine;
+		private readonly IEmulation emulation;
+		//private readonly IMachine machine;
 		private readonly IDebugger debugger;
+
 		private readonly Disassembly disassembly;
 		private readonly ILogger logger;
 
-		public RunAmiga(IMachine machine)
+		public RunAmiga(IEmulation emulation)
 		{
+			this.emulation = emulation;
 			InitializeComponent();
 
 			addressFollowBox.SelectedIndex = 0;
 
 			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<RunAmiga>();
 
-			this.machine = machine;
-			this.debugger = machine.GetDebugger();
+			this.debugger = emulation.GetDebugger();
 			this.disassembly = debugger.GetDisassembly();
 
 			UpdateDisplay();
 
 			Machine.SetEmulationMode(EmulationMode.Stopped);
-			machine.Start();
+			emulation.Start();
 		}
 
 		Thread uiUpdateThread, uiUpdateThread2;
@@ -100,7 +102,7 @@ namespace RunAmiga
 			var disasm = disassembly.DisassembleTxt(
 					new List<Tuple<uint, uint>>
 					{
-						//new Tuple<uint, uint> (0x000000, 0x400),
+						new Tuple<uint, uint> (0x000000, 0x400),
 						//new Tuple<uint, uint> (0xc00000, 0xa000),
 						//new Tuple<uint, uint> (0xf80000, 0x40000),
 						new Tuple<uint, uint> (0xfc0000, 0x40000),
@@ -233,7 +235,7 @@ namespace RunAmiga
 		private void btnReset_Click(object sender, EventArgs e)
 		{
 			Machine.SetEmulationMode(EmulationMode.Stopped);
-			machine.Reset();
+			emulation.Reset();
 
 			SetSelection();
 			UpdateDisplay();

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using Size = RunAmiga.Types.Size;
+using RunAmiga.Types;
 
 namespace RunAmiga
 {
@@ -18,6 +18,13 @@ namespace RunAmiga
 			this.id = id;
 			this.logger = logger;
 			this.memory = new byte[16 * 1024 * 1024];
+
+			var ks = new Kickstart("../../../../kick12.rom", "Kickstart 1.2");
+			SetKickstart(ks);
+			//var kickstart = new Kickstart("../../../../kick13.rom", "Kickstart 1.3");
+			//var kickstart = new Kickstart("../../../../kick204.rom", "Kickstart 2.04");
+			//var kickstart = new Kickstart("../../../../kick31.rom", "Kickstart 3.1");
+
 			Reset();
 		}
 

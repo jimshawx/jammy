@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
+using RunAmiga.Interfaces;
 using RunAmiga.Types;
 
 namespace RunAmiga
@@ -69,6 +70,7 @@ namespace RunAmiga
 
 		public void Reset()
 		{
+			//Musashi_set_pc(4);
 		}
 
 		private Musashi_Reader r32;

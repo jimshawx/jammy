@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Custom;
+using RunAmiga.Interfaces;
 using RunAmiga.Types;
 
 namespace RunAmiga
@@ -57,17 +58,18 @@ namespace RunAmiga
 					new Memory("M",
 						x.GetRequiredService<ILoggerFactory>().CreateLogger<Memory>()))
 				.AddSingleton<IMemoryMapper, MemoryMapper>()
+				.AddSingleton<IEmulation, Emulation>()
 				.BuildServiceProvider();
 
 			//var test = new CPUTest();
 			//test.FuzzCPU();
 
-			var machine = ServiceProvider.GetRequiredService<IMachine>();
-
 			var logger = ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
 			logger.LogTrace("Application Starting Up!");
 
-			var form = new RunAmiga(machine);
+			var emulation = ServiceProvider.GetRequiredService<IEmulation>();
+
+			var form = new RunAmiga(emulation);
 			form.Init();
 			Application.Run(form);
 		}

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RunAmiga.Types
+﻿namespace RunAmiga.Types
 {
 	public enum EmulationMode
 	{
