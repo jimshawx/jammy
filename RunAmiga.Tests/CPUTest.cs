@@ -1,25 +1,27 @@
 ﻿using System;
+using System.Drawing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using RunAmiga.Custom;
 using RunAmiga.Interfaces;
 using RunAmiga.Options;
 using RunAmiga.Types;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+using Size = RunAmiga.Types.Size;
 
 namespace RunAmiga.Tests
 {
-	[TestClass]
+	[TestFixture]
 	public class CPUTest
 	{
 		private ServiceProvider serviceProvider1;
 		private ServiceProvider serviceProvider2;
 		private ILogger logger;
 
-		[TestInitialize]
+		[OneTimeSetUp]
 		public void CPUTestInit()
-		{
-			var serviceCollection = new ServiceCollection();
+		{var serviceCollection = new ServiceCollection();
 			serviceProvider1 = serviceCollection.AddLogging()
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IAudio, Audio>()
@@ -115,11 +117,11 @@ namespace RunAmiga.Tests
 			}
 		}
 		
-		[TestMethod]
+		[Test]
 		public void FuzzCPU()
 		{
 			var cpu0 = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<IMusashiCPU>(), serviceProvider1.GetRequiredService<IMemory>());
-			var cpu1 = new CPUTestRig((ICPU)serviceProvider2.GetRequiredService<ICSharpCPU>(), serviceProvider1.GetRequiredService<IMemory>());
+			var cpu1 = new CPUTestRig((ICPU)serviceProvider2.GetRequiredService<ICSharpCPU>(), serviceProvider2.GetRequiredService<IMemory>());
 			cpu0.Emulate();
 			cpu1.Reset();
 

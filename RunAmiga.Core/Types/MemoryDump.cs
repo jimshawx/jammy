@@ -15,7 +15,7 @@ namespace RunAmiga.Types
 		public MemoryDump(byte[] src)
 		{
 			Array.Copy(src, memory, 16 * 1024 * 1024);
-			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<MemoryDump>();
+			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<MemoryDump>();
 		}
 
 		private string BlockToString(List<Tuple<uint, uint>> ranges)

@@ -12,7 +12,6 @@ namespace RunAmiga
 {
 	public class Program
 	{
-		public static IServiceProvider ServiceProvider { get; private set; }
 
 		[STAThread]
 		static void Main()
@@ -28,7 +27,7 @@ namespace RunAmiga
 
 
 			var serviceCollection = new ServiceCollection();
-			ServiceProvider = serviceCollection
+			var serviceProvider = serviceCollection
 				.AddSingleton<IConfigurationRoot>(configuration)
 				.AddLogging(x=>
 				{
@@ -61,13 +60,15 @@ namespace RunAmiga
 				.AddSingleton<IEmulation, Emulation>()
 				.BuildServiceProvider();
 
+			ServiceProviderFactory.ServiceProvider = serviceProvider;
+
 			//var test = new CPUTest();
 			//test.FuzzCPU();
 
-			var logger = ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
+			var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
 			logger.LogTrace("Application Starting Up!");
 
-			var emulation = ServiceProvider.GetRequiredService<IEmulation>();
+			var emulation = serviceProvider.GetRequiredService<IEmulation>();
 
 			var form = new RunAmiga(emulation);
 			form.Init();

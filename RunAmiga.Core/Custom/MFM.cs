@@ -15,7 +15,7 @@ namespace RunAmiga.Custom
 
 		static MFM()
 		{
-			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("MFM");
+			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("MFM");
 		}
 
 		private static void FloppySectorMfmEncode(uint tra, uint sec, Span<byte> src, Span<byte> dest, uint sync)

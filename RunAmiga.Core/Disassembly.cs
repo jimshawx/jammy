@@ -37,7 +37,7 @@ namespace RunAmiga
 
 		public Disassembly(byte[] memory, BreakpointCollection breakpoints)
 		{
-			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Disassembly>();
+			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Disassembly>();
 			this.memory = memory;
 			this.breakpoints = breakpoints;
 			disassembler = new Disassembler();

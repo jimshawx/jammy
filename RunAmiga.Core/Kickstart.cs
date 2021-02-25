@@ -21,7 +21,7 @@ namespace RunAmiga
 
 		public Kickstart(string path, string name)
 		{
-			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Kickstart>();
+			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Kickstart>();
 
 			Path = path;
 			Name = name;
@@ -184,7 +184,7 @@ namespace RunAmiga
 
 		private void Disassemble(List<Resident> resident)
 		{
-			var memory = new Memory("Kickstart", Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Memory>());
+			var memory = new Memory("Kickstart", ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Memory>());
 			memory.SetKickstart(this);
 
 			var disassembly = new Disassembly(memory.GetMemoryArray(), new BreakpointCollection());

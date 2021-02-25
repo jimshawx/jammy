@@ -297,7 +297,7 @@ namespace RunAmiga.Types
 		public ExecBaseMapper(IMemory memory)
 		{
 			this.memory = memory;
-			this.logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<ExecBaseMapper>();
+			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<ExecBaseMapper>();
 		}
 
 		HashSet<long> lookup = new HashSet<long>();

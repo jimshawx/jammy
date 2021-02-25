@@ -28,7 +28,7 @@ namespace RunAmiga
 
 			addressFollowBox.SelectedIndex = 0;
 
-			logger = Program.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<RunAmiga>();
+			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<RunAmiga>();
 
 			this.debugger = emulation.GetDebugger();
 			this.disassembly = debugger.GetDisassembly();
