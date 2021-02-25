@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Reflection.Metadata.Ecma335;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -17,46 +19,47 @@ namespace RunAmiga.Tests
 	{
 		private ServiceProvider serviceProvider1;
 		private ServiceProvider serviceProvider2;
-		private ILogger logger;
+		//private ILogger logger;
 
 		[OneTimeSetUp]
 		public void CPUTestInit()
-		{var serviceCollection = new ServiceCollection();
+		{
+			var serviceCollection = new ServiceCollection();
 			serviceProvider1 = serviceCollection.AddLogging()
-				.AddSingleton<IMachine, Machine>()
-				.AddSingleton<IAudio, Audio>()
-				.AddSingleton<IBattClock, BattClock>()
-				.AddSingleton<IBlitter, Blitter>()
-				.AddSingleton<ICIAAOdd, CIAAOdd>()
-				.AddSingleton<ICIABEven, CIABEven>()
-				.AddSingleton<ICopper, Copper>()
-				.AddSingleton<IDiskDrives, DiskDrives>()
-				.AddSingleton<IKeyboard, Keyboard>()
-				.AddSingleton<IMouse, Mouse>()
 				.AddSingleton<IInterrupt, Interrupt>()
-				.AddSingleton<ICPU, MusashiCPU>()
-				.AddSingleton<IMemoryMapper, MemoryMapper>()
-				.AddSingleton<IMemory>(x=> new Memory("CPUTest_Musashi", serviceProvider1.GetRequiredService<ILoggerFactory>().CreateLogger<Memory>()))
+				.AddSingleton<IMusashiCPU>(x=>new MusashiCPU(
+					x.GetRequiredService<IInterrupt>(),
+					x.GetRequiredService<IMemoryMapper>(),
+					new BreakpointCollection(),
+					null
+					))
+				.AddSingleton<IMemoryMapper>(x=>
+				{
+					var m = new MemoryMapper(new List<IMemoryMappedDevice>());
+					m.AddMapper(x.GetRequiredService<IMemory>());
+					return m;
+				})
+				.AddSingleton<IMemory>(x => new Memory("CPUTest_Musashi", null))
 				.BuildServiceProvider();
 
 			serviceProvider2 = serviceCollection.AddLogging()
-				.AddSingleton<IMachine, Machine>()
-				.AddSingleton<IAudio, Audio>()
-				.AddSingleton<IBattClock, BattClock>()
-				.AddSingleton<IBlitter, Blitter>()
-				.AddSingleton<ICIAAOdd, CIAAOdd>()
-				.AddSingleton<ICIABEven, CIABEven>()
-				.AddSingleton<ICopper, Copper>()
-				.AddSingleton<IDiskDrives, DiskDrives>()
-				.AddSingleton<IKeyboard, Keyboard>()
-				.AddSingleton<IMouse, Mouse>()
 				.AddSingleton<IInterrupt, Interrupt>()
-				.AddSingleton<ICPU, CPU>()
-				.AddSingleton<IMemoryMapper, MemoryMapper>()
-				.AddSingleton<IMemory>(x => new Memory("CPUTest_CSharp", serviceProvider1.GetRequiredService<ILoggerFactory>().CreateLogger<Memory>()))
+				.AddSingleton<ICSharpCPU>(x=>new CPU(
+					x.GetRequiredService<IInterrupt>(),
+					x.GetRequiredService<IMemoryMapper>(),
+					new BreakpointCollection(),
+					new Tracer(new Disassembly(new byte[16*1024*1024], new BreakpointCollection()), new Labeller()),
+					null))
+				.AddSingleton<IMemoryMapper>(x =>
+				{
+					var m = new MemoryMapper(new List<IMemoryMappedDevice>());
+					m.AddMapper(x.GetRequiredService<IMemory>());
+					return m;
+				})
+				.AddSingleton<IMemory>(x => new Memory("CPUTest_CSharp", null))
 				.BuildServiceProvider();
 
-			logger = serviceProvider1.GetRequiredService<ILoggerFactory>().CreateLogger<CPUTest>();
+			//logger = serviceProvider1.GetRequiredService<ILoggerFactory>().CreateLogger<CPUTest>();
 		}
 
 		private class CPUTestRig
@@ -120,7 +123,9 @@ namespace RunAmiga.Tests
 		[Test]
 		public void FuzzCPU()
 		{
+			ServiceProviderFactory.ServiceProvider = serviceProvider1;
 			var cpu0 = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<IMusashiCPU>(), serviceProvider1.GetRequiredService<IMemory>());
+			ServiceProviderFactory.ServiceProvider = serviceProvider2;
 			var cpu1 = new CPUTestRig((ICPU)serviceProvider2.GetRequiredService<ICSharpCPU>(), serviceProvider2.GetRequiredService<IMemory>());
 			cpu0.Emulate();
 			cpu1.Reset();
@@ -158,18 +163,18 @@ namespace RunAmiga.Tests
 
 					if (r0.Compare(r1))
 					{
-						logger.LogTrace($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
-						logger.LogTrace(string.Join('\n', r0.CompareSummary(r1)));
+						//logger.LogTrace($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
+						//logger.LogTrace(string.Join('\n', r0.CompareSummary(r1)));
 					}
 					else
 					{
-						logger.LogTrace($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
+						//logger.LogTrace($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
 					}
 				}
 				catch (Exception ex)
 				{
-					logger.LogTrace($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
-					logger.LogTrace(ex.ToString());
+					//logger.LogTrace($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
+					//logger.LogTrace(ex.ToString());
 				}
 			}
 		}
