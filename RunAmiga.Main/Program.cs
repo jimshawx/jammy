@@ -5,9 +5,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core;
+using RunAmiga.Core.CPU.Musashi;
 using RunAmiga.Core.Custom;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Interface;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Main
 {
@@ -52,7 +54,7 @@ namespace RunAmiga.Main
 						x.GetRequiredService<IMemoryMapper>(),
 						new BreakpointCollection(),
 						x.GetRequiredService<ILoggerFactory>().CreateLogger<MusashiCPU>()))
-				.AddSingleton<IDebugger, Debugger>()
+				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
 				.AddSingleton<IMemory>(x =>
 					new Memory("M",

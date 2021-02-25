@@ -1,4 +1,4 @@
-﻿namespace RunAmiga.Core.Types
+﻿namespace RunAmiga.Core.Types.Types
 {
 	public class Label
 	{

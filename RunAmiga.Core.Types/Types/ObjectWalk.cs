@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text;
 
-namespace RunAmiga.Core.Types
+namespace RunAmiga.Core.Types.Types
 {
 	public class ObjectWalk
 	{

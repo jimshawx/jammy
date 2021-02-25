@@ -5,8 +5,8 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Enums;
-using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Enums;
 
 namespace RunAmiga.Core.Custom
 {
@@ -179,7 +179,7 @@ namespace RunAmiga.Core.Custom
 				if ((icr & (byte)(ICRB.IR | ICRB.SERIAL))==0)
 				{
 					//read CRA, if it's in input mode the last key has been processed
-					byte cra = (byte)cia.Read(0, 0xBFEE01, Types.Size.Byte);
+					byte cra = (byte)cia.Read(0, 0xBFEE01, Types.Types.Size.Byte);
 					if ((cra & (byte)CR.CRA_SPMODE) == 0)
 					{
 						if (keyQueue.Any())

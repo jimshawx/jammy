@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace RunAmiga.Core.Types
+namespace RunAmiga.Core.Types.Types.Debugger
 {
 	public class MemoryDump
 	{

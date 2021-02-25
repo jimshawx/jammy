@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using RunAmiga.Core.Enums;
-using RunAmiga.Core.Options;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Types.Enums;
+using RunAmiga.Core.Types.Options;
+using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types.Types.Debugger;
 
-namespace RunAmiga.Core.Interfaces
+namespace RunAmiga.Core.Interface.Interfaces
 {
 
 	public interface ICustomRead

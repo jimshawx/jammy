@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace RunAmiga.Core.Types
+namespace RunAmiga.Core.Types.Types
 {
 	public enum BreakpointType
 	{

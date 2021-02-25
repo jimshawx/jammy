@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace RunAmiga.Core
+namespace RunAmiga.UI
 {
 	public sealed class UI
 	{

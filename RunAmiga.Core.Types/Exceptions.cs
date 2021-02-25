@@ -1,7 +1,7 @@
 ﻿using System;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Core.Types
 {
 	public class MC68000Exception : ApplicationException { }
 

@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Interface;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core.Types
+namespace RunAmiga.Disassembler
 {
 	using UBYTE = System.Byte;
 	using BYTE = System.SByte;

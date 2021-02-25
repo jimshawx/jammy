@@ -6,10 +6,11 @@ using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core;
-using RunAmiga.Core.Enums;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Options;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Interface;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Enums;
+using RunAmiga.Core.Types.Options;
+using RunAmiga.Core.Types.Types;
 using RunAmiga.Main.Dialogs;
 
 namespace RunAmiga.Main
@@ -289,10 +290,10 @@ namespace RunAmiga.Main
 			{
 				this.Invoke((Action)delegate () { UpdatePowerLight(); });
 
-				if (UI.IsDirty)
+				if (UI.UI.IsDirty)
 				{
 					this.Invoke((Action)delegate () { SetSelection(); UpdateDisplay(); });
-					UI.IsDirty = false;
+					UI.UI.IsDirty = false;
 				}
 
 				Thread.Sleep(500);
@@ -301,20 +302,20 @@ namespace RunAmiga.Main
 
 		private void UpdatePowerLight()
 		{
-			bool power = UI.PowerLight;
+			bool power = UI.UI.PowerLight;
 			picPower.BackColor = power ? Color.Red : Color.DarkRed;
 		}
 
 		private void UpdateDiskLight()
 		{
-			bool disk = UI.DiskLight;
+			bool disk = UI.UI.DiskLight;
 			picDisk.BackColor = disk ? Color.LightGreen : Color.DarkGreen;
 		}
 
 		private void UpdateColours()
 		{
 			var colours = new uint[256];
-			UI.GetColours(colours);
+			UI.UI.GetColours(colours);
 
 			for (int i = 0; i < colours.Length; i++)
 				colours[i] |= 0xff000000;

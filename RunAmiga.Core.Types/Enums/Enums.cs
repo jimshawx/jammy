@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RunAmiga.Core.Enums
+namespace RunAmiga.Core.Types.Enums
 {
 	[Flags]
 	public enum CR

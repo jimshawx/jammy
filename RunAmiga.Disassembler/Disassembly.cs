@@ -7,12 +7,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Extensions;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Options;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Interface;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Options;
+using RunAmiga.Core.Types.Types;
+using RunAmiga.Extensions.Extensions;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Disassembler
 {
 	public class Disassembly : IDisassembly
 	{

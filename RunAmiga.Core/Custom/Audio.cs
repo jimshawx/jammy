@@ -1,4 +1,4 @@
-﻿using RunAmiga.Core.Interfaces;
+﻿using RunAmiga.Core.Interface.Interfaces;
 
 namespace RunAmiga.Core.Custom
 {

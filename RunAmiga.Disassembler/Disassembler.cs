@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Text;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Disassembler
 {
 	public class Disassembler
 	{

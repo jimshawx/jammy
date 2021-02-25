@@ -1,6 +1,8 @@
-﻿using RunAmiga.Core.Interfaces;
+﻿using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Debugger;
+using RunAmiga.Disassembler;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Main
 {
 	public class Emulation : IEmulation
 	{

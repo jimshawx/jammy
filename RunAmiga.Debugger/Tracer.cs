@@ -2,10 +2,12 @@
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Interface;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Types;
+using RunAmiga.Disassembler;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Debugger
 {
 	public class Tracer : ITracer
 	{

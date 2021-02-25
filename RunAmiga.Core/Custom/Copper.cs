@@ -4,8 +4,8 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interfaces;
-using Size = RunAmiga.Core.Types.Size;
+using RunAmiga.Core.Interface.Interfaces;
+using Size = RunAmiga.Core.Types.Types.Size;
 
 namespace RunAmiga.Core.Custom
 {

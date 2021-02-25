@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace RunAmiga.Core.Types
+namespace RunAmiga.Core.Types.Types
 {
 	public class Regs
 	{

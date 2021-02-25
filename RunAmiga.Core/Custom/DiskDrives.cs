@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Extensions;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Types;
+using RunAmiga.Extensions.Extensions;
 
 namespace RunAmiga.Core.Custom
 {
@@ -407,7 +407,7 @@ namespace RunAmiga.Core.Custom
 				}
 			}
 
-			UI.DiskLight = drive[0].motor | drive[1].motor | drive[2].motor | drive[3].motor;
+			UI.UI.DiskLight = drive[0].motor | drive[1].motor | drive[2].motor | drive[3].motor;
 		}
 
 		//there is also bit 4, DSKINDEX in CIAB icr register BFDD00

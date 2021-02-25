@@ -1,9 +1,10 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
+using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Core.CPU.CSharp
 {
 	public class CPU : ICPU, ICSharpCPU
 	{
@@ -96,7 +97,7 @@ namespace RunAmiga.Core
 			//debugger.DumpTrace();
 			logger.LogTrace($"Breakpoint @{pc:X8}");
 			//Machine.SetEmulationMode(EmulationMode.Stopped, true);
-			UI.IsDirty = true;
+			UI.UI.IsDirty = true;
 		}
 
 

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
 {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace RunAmiga.Core.Extensions
+namespace RunAmiga.Extensions.Extensions
 {
 	public static class Enumerables
 	{

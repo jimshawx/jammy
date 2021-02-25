@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using RunAmiga.Core;
+using RunAmiga.Core.Interface;
 
 namespace RunAmiga.Tests
 {

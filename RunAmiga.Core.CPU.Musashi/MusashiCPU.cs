@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Core.CPU.Musashi
 {
 	public class MusashiCPU : ICPU, IMusashiCPU
 	{
@@ -65,7 +65,7 @@ namespace RunAmiga.Core
 			//debugger.DumpTrace();
 			logger.LogTrace($"Breakpoint @{pc:X8}");
 			//Machine.SetEmulationMode(EmulationMode.Stopped, true);
-			UI.IsDirty = true;
+			UI.UI.IsDirty = true;
 		}
 
 		public void Reset()

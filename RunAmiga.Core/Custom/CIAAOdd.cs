@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
 {
@@ -92,7 +92,7 @@ namespace RunAmiga.Core.Custom
 
 			if (reg == CIA.PRA)
 			{
-				UI.PowerLight = (regs[CIA.PRA] & 2) == 0;
+				UI.UI.PowerLight = (regs[CIA.PRA] & 2) == 0;
 
 				diskDrives.WritePRA(insaddr, (byte)value);
 				mouse.WritePRA(insaddr, (byte)value);

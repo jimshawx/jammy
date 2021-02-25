@@ -1,12 +1,15 @@
-﻿using System.Reflection.PortableExecutable;
-using System.Text;
+﻿using System.Text;
 using Microsoft.Extensions.Logging;
+using RunAmiga.Core;
 using RunAmiga.Core.Custom;
-using RunAmiga.Core.Enums;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Types;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Enums;
+using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types.Types.Debugger;
+using RunAmiga.Disassembler;
+using Machine = RunAmiga.Core.Machine;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Debugger
 {
 	public class Debugger : IDebugger
 	{

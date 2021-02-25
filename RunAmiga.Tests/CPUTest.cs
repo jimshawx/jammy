@@ -3,10 +3,15 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using RunAmiga.Core;
-using RunAmiga.Core.Interfaces;
-using RunAmiga.Core.Options;
-using RunAmiga.Core.Types;
-using Size = RunAmiga.Core.Types.Size;
+using RunAmiga.Core.CPU.CSharp;
+using RunAmiga.Core.CPU.Musashi;
+using RunAmiga.Core.Interface;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Options;
+using RunAmiga.Core.Types.Types;
+using RunAmiga.Debugger;
+using RunAmiga.Disassembler;
+using Size = RunAmiga.Core.Types.Types.Size;
 
 namespace RunAmiga.Tests
 {
@@ -63,7 +68,7 @@ namespace RunAmiga.Tests
 			private readonly IMemory memory;
 			private readonly ICPU cpu;
 			private readonly IEmulate emulate;
-			private readonly Disassembler disassembler;
+			private readonly Disassembler.Disassembler disassembler;
 
 			public CPUTestRig(ICPU cpu, IMemory memory)
 			{
@@ -75,7 +80,7 @@ namespace RunAmiga.Tests
 				for (uint i = 0; i < 16*1024*1024; i+=4)
 					memory.Write(0,i, (uint)(r.Next()*2), Size.Long);
 
-				disassembler = new Disassembler();
+				disassembler = new Disassembler.Disassembler();
 			}
 
 			public void SetPC(uint pc)
