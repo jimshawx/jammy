@@ -5,8 +5,9 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
+using RunAmiga.Core.Interfaces;
 
-namespace RunAmiga.Custom
+namespace RunAmiga.Core.Custom
 {
 	public class Keyboard : IKeyboard
 	{

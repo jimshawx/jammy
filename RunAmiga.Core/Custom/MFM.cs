@@ -1,8 +1,8 @@
 ﻿using System;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-namespace RunAmiga.Custom
+namespace RunAmiga.Core.Custom
 {
 	public static class MFM
 	{

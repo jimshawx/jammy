@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public static class ServiceProviderFactory
 	{

@@ -1,5 +1,5 @@
 ﻿
-namespace RunAmiga.Dialogs
+namespace RunAmiga.Core.Dialogs
 {
 	partial class GoTo
 	{

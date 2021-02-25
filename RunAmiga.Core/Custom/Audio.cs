@@ -1,4 +1,6 @@
-﻿namespace RunAmiga.Custom
+﻿using RunAmiga.Core.Interfaces;
+
+namespace RunAmiga.Core.Custom
 {
 	public class Audio : IAudio
 	{

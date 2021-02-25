@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace RunAmiga.Custom
+namespace RunAmiga.Core.Custom
 {
 	public static class ChipRegs
 	{

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace RunAmiga.Dialogs
+namespace RunAmiga.Core.Dialogs
 {
 	public partial class GoTo : Form
 	{

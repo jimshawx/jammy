@@ -1,7 +1,7 @@
-﻿using RunAmiga.Types;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public class Labeller
 	{

@@ -1,7 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using RunAmiga.Core.Interfaces;
 
-namespace RunAmiga.Types
+namespace RunAmiga.Core.Types
 {
 	using UBYTE = System.Byte;
 	using BYTE = System.SByte;
@@ -14,12 +19,6 @@ namespace RunAmiga.Types
 	using FunctionPtr = System.UInt32;
 
 	using CharPtr = System.String;
-
-	using System.Linq;
-	using System;
-	using System.Diagnostics;
-	using System.Text;
-	using System.Collections.Generic;
 
 
 	public enum NodeType

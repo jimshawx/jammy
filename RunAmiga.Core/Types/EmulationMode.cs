@@ -1,4 +1,4 @@
-﻿namespace RunAmiga.Types
+﻿namespace RunAmiga.Core.Types
 {
 	public enum EmulationMode
 	{

@@ -1,10 +1,10 @@
-﻿using RunAmiga.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using RunAmiga.Interfaces;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public class Machine : IMachine
 	{

@@ -1,8 +1,9 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Types;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga.Custom
+namespace RunAmiga.Core.Custom
 {
 	public class BattClock : IBattClock
 	{

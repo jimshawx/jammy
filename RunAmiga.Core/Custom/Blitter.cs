@@ -1,9 +1,8 @@
-﻿using System.Diagnostics;
-using Microsoft.Extensions.Logging;
-using RunAmiga.Interfaces;
-using RunAmiga.Types;
+﻿using Microsoft.Extensions.Logging;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga.Custom
+namespace RunAmiga.Core.Custom
 {
 	public class Blitter : IBlitter
 	{

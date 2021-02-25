@@ -1,8 +1,7 @@
-﻿using RunAmiga.Custom;
-using RunAmiga.Interfaces;
-using RunAmiga.Types;
+﻿using RunAmiga.Core.Custom;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core.Interfaces
 {
 
 	public interface ICustomRead

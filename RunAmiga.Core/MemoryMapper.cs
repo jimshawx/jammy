@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using RunAmiga.Interfaces;
-using RunAmiga.Types;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public class MemoryMapper : IMemoryMapper
 	{

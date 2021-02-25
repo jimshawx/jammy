@@ -1,4 +1,4 @@
-﻿namespace RunAmiga.Options
+﻿namespace RunAmiga.Core.Options
 {
 	public class DisassemblyOptions
 	{

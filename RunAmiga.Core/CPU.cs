@@ -1,9 +1,9 @@
-﻿using RunAmiga.Types;
-using System;
+﻿using System;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Interfaces;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public class CPU : ICPU, ICSharpCPU
 	{

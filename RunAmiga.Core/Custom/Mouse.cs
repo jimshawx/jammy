@@ -1,6 +1,7 @@
 ﻿using System.Windows.Forms;
+using RunAmiga.Core.Interfaces;
 
-namespace RunAmiga.Custom
+namespace RunAmiga.Core.Custom
 {
 	public class Mouse : IMouse
 	{

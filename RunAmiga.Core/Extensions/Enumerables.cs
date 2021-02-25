@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace RunAmiga.Extensions
+namespace RunAmiga.Core.Extensions
 {
 	public static class Enumerables
 	{

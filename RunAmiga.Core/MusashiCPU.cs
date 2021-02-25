@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Interfaces;
-using RunAmiga.Types;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public class MusashiCPU : ICPU, IMusashiCPU
 	{

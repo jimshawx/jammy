@@ -1,4 +1,4 @@
-﻿namespace RunAmiga.Interfaces
+﻿namespace RunAmiga.Core.Interfaces
 {
 	public interface IEmulate
 	{

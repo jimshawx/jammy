@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Reflection.Metadata.Ecma335;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using NUnit.Framework;
-using RunAmiga.Custom;
-using RunAmiga.Interfaces;
-using RunAmiga.Options;
-using RunAmiga.Types;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
-using Size = RunAmiga.Types.Size;
+using RunAmiga.Core;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Options;
+using RunAmiga.Core.Types;
+using Size = RunAmiga.Core.Types.Size;
 
 namespace RunAmiga.Tests
 {

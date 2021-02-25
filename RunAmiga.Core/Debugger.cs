@@ -1,10 +1,10 @@
-﻿using RunAmiga.Types;
-using System.Text;
+﻿using System.Text;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Custom;
-using RunAmiga.Interfaces;
+using RunAmiga.Core.Custom;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public class Debugger : IDebugger
 	{

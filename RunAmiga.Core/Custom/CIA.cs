@@ -1,8 +1,9 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Types;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga.Custom
+namespace RunAmiga.Core.Custom
 {
 	//https://www.amigacoding.com/index.php?title=CIA_Memory_Map
 	//http://www.theflatnet.de/pub/cbm/amiga/AmigaDevDocs/hard_f.html#f-2-3

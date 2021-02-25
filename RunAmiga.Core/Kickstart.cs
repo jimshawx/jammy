@@ -5,10 +5,10 @@ using System.IO;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Options;
-using RunAmiga.Types;
+using RunAmiga.Core.Options;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public class Kickstart
 	{

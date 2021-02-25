@@ -1,6 +1,6 @@
-﻿using RunAmiga.Types;
+﻿using RunAmiga.Core.Types;
 
-namespace RunAmiga.Interfaces
+namespace RunAmiga.Core.Interfaces
 {
 	public interface ICPU : IEmulate
 	{

@@ -1,7 +1,8 @@
-﻿using RunAmiga.Custom;
-using RunAmiga.Types;
+﻿using RunAmiga.Core.Custom;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public class Interrupt : IInterrupt
 	{

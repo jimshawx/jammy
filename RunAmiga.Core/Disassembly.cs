@@ -5,13 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using RunAmiga.Extensions;
-using RunAmiga.Options;
-using RunAmiga.Types;
+using Microsoft.Extensions.Logging;
+using RunAmiga.Core.Extensions;
+using RunAmiga.Core.Options;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Core
 {
 	public class Disassembly
 	{

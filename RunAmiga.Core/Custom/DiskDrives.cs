@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Extensions;
-using RunAmiga.Types;
+using RunAmiga.Core.Extensions;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
-namespace RunAmiga.Custom
+namespace RunAmiga.Core.Custom
 {
 	[Flags]
 	public enum PRB

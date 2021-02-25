@@ -4,10 +4,10 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Interfaces;
-using Size = RunAmiga.Types.Size;
+using RunAmiga.Core.Interfaces;
+using Size = RunAmiga.Core.Types.Size;
 
-namespace RunAmiga.Custom
+namespace RunAmiga.Core.Custom
 {
 	public class Copper : ICopper
 	{

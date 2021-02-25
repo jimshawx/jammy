@@ -4,9 +4,10 @@ using System.Windows.Forms;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Custom;
-using RunAmiga.Interfaces;
-using RunAmiga.Types;
+using RunAmiga.Core;
+using RunAmiga.Core.Custom;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Types;
 
 namespace RunAmiga
 {

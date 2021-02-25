@@ -1,14 +1,16 @@
-﻿using RunAmiga.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Custom;
-using RunAmiga.Dialogs;
-using RunAmiga.Options;
+using RunAmiga.Core;
+using RunAmiga.Core.Custom;
+using RunAmiga.Core.Dialogs;
+using RunAmiga.Core.Interfaces;
+using RunAmiga.Core.Options;
+using RunAmiga.Core.Types;
 
 namespace RunAmiga
 {

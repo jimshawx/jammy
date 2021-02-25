@@ -1,4 +1,6 @@
-﻿namespace RunAmiga
+﻿using RunAmiga.Core.Interfaces;
+
+namespace RunAmiga.Core
 {
 	public class Emulation : IEmulation
 	{
