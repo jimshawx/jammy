@@ -178,10 +178,10 @@ namespace RunAmiga.Core
 				logger.LogTrace($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
 			}
 
-			if (dump)
-				Disassemble(resident);
+		//	if (dump)
+		//		Disassemble(resident);
 		}
-
+/*
 		private void Disassemble(List<Resident> resident)
 		{
 			var memory = new Memory("Kickstart", ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Memory>());
@@ -263,5 +263,6 @@ namespace RunAmiga.Core
 			}
 
 		}
+*/
 	}
 }

@@ -118,5 +118,20 @@ namespace RunAmiga.Core.Types
 				AddBreakpoint(pc);
 		}
 
+		private bool signalled = false;
+		public void SignalBreakpoint()
+		{
+			signalled = true;
+		}
+
+		public void AckBreakpoint()
+		{
+			signalled = false;
+		}
+
+		public bool IsBreakpointSignalled()
+		{
+			return signalled;
+		}
 	}
 }

@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace RunAmiga.Core.Types
 {
 	public class MemoryDump
 	{
-		private readonly ILogger logger;
+		//private readonly ILogger logger;
 		private readonly byte[] memory = new byte[16 * 1024 * 1024];
 		private readonly Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
 
 		public MemoryDump(byte[] src)
 		{
 			Array.Copy(src, memory, 16 * 1024 * 1024);
-			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<MemoryDump>();
+			//logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<MemoryDump>();
 		}
 
 		private string BlockToString(List<Tuple<uint, uint>> ranges)
@@ -69,22 +67,22 @@ namespace RunAmiga.Core.Types
 
 		public byte Read8(uint address)
 		{
-			if (address >= 0x1000000) { logger.LogTrace($"Memory Read Byte from {address:X8}"); return 0; }
+			//if (address >= 0x1000000) { logger.LogTrace($"Memory Read Byte from {address:X8}"); return 0; }
 			return memory[address];
 		}
 
 		public ushort Read16(uint address)
 		{
-			if (address >= 0xfffffe) { logger.LogTrace($"Memory Read Word from ${address:X8}"); return 0; }
-			if ((address & 1) != 0) { logger.LogTrace($"Memory Read Unaligned Word from ${address:X8}"); return 0; }
+			//if (address >= 0xfffffe) { logger.LogTrace($"Memory Read Word from ${address:X8}"); return 0; }
+			//if ((address & 1) != 0) { logger.LogTrace($"Memory Read Unaligned Word from ${address:X8}"); return 0; }
 			return (ushort)(((ushort)memory[address] << 8) +
 							(ushort)memory[(address + 1) ]);
 		}
 
 		public uint Read32(uint address)
 		{
-			if (address >= 0xfffffc) { logger.LogTrace($"Memory Read Int from ${address:X8}"); return 0; }
-			if ((address & 1) != 0) { logger.LogTrace($"Memory Read Unaligned Int from ${address:X8}"); return 0; }
+			//if (address >= 0xfffffc) { logger.LogTrace($"Memory Read Int from ${address:X8}"); return 0; }
+			//if ((address & 1) != 0) { logger.LogTrace($"Memory Read Unaligned Int from ${address:X8}"); return 0; }
 			return ((uint)memory[address] << 24) +
 					((uint)memory[(address + 1) ] << 16) +
 					((uint)memory[(address + 2)] << 8) +

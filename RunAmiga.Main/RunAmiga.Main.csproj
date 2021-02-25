@@ -22,10 +22,30 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RunAmiga.Core\RunAmiga.Core.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RunAmiga.Core.CPU.CSharp\RunAmiga.Core.CPU.CSharp.csproj" />
+    <ProjectReference Include="..\RunAmiga.Core.CPU.Musashi\RunAmiga.Core.CPU.Musashi.csproj" />
+    <ProjectReference Include="..\RunAmiga.Core\RunAmiga.Core.csproj" />
+    <ProjectReference Include="..\RunAmiga.Debugger\RunAmiga.Debugger.csproj" />
+    <ProjectReference Include="..\RunAmiga.Disassembler\RunAmiga.Disassembler.csproj" />
+    <ProjectReference Include="..\RunAmiga.Extensions\RunAmiga.Extensions.csproj" />
+    <ProjectReference Include="..\RunAmiga.UI\RunAmiga.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Dialogs\Find.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Dialogs\GoTo.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="RunAmiga.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -6,13 +6,13 @@ using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core;
-using RunAmiga.Core.Custom;
-using RunAmiga.Core.Dialogs;
+using RunAmiga.Core.Enums;
 using RunAmiga.Core.Interfaces;
 using RunAmiga.Core.Options;
 using RunAmiga.Core.Types;
+using RunAmiga.Main.Dialogs;
 
-namespace RunAmiga
+namespace RunAmiga.Main
 {
 	public partial class RunAmiga : Form
 	{
@@ -20,7 +20,7 @@ namespace RunAmiga
 		//private readonly IMachine machine;
 		private readonly IDebugger debugger;
 
-		private readonly Disassembly disassembly;
+		private readonly IDisassembly disassembly;
 		private readonly ILogger logger;
 
 		public RunAmiga(IEmulation emulation)

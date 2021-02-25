@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
+using RunAmiga.Core.Enums;
 using RunAmiga.Core.Interfaces;
 
 namespace RunAmiga.Core.Custom

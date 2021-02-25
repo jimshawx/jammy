@@ -64,7 +64,7 @@ namespace RunAmiga.Core
 		{
 			//debugger.DumpTrace();
 			logger.LogTrace($"Breakpoint @{pc:X8}");
-			Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			//Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			UI.IsDirty = true;
 		}
 

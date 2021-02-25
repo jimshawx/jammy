@@ -8,12 +8,13 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Extensions;
+using RunAmiga.Core.Interfaces;
 using RunAmiga.Core.Options;
 using RunAmiga.Core.Types;
 
 namespace RunAmiga.Core
 {
-	public class Disassembly
+	public class Disassembly : IDisassembly
 	{
 		private readonly byte[] memory;
 		private readonly BreakpointCollection breakpoints;

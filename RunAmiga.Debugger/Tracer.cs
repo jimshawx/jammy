@@ -7,7 +7,6 @@ using RunAmiga.Core.Types;
 
 namespace RunAmiga.Core
 {
-
 	public class Tracer : ITracer
 	{
 		private class TraceEntry

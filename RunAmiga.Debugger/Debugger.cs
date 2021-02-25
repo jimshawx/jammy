@@ -1,6 +1,8 @@
-﻿using System.Text;
+﻿using System.Reflection.PortableExecutable;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Custom;
+using RunAmiga.Core.Enums;
 using RunAmiga.Core.Interfaces;
 using RunAmiga.Core.Types;
 
@@ -270,7 +272,7 @@ namespace RunAmiga.Core
 			interrupt.TriggerInterrupt(irq);
 		}
 
-		public Disassembly GetDisassembly()
+		public IDisassembly GetDisassembly()
 		{
 			return disassembly;
 		}

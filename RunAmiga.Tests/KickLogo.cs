@@ -181,7 +181,5 @@ namespace RunAmiga.Tests
 		//    2: #77c
 		//    3: #bbb
 		//The offsets used for drawing the image centered are X = 70, Y= 40.
-
-
 	}
 }

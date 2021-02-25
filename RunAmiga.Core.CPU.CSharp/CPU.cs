@@ -82,7 +82,7 @@ namespace RunAmiga.Core
 			{
 				tracer.DumpTrace();
 				logger.LogTrace($"PC out of expected range {pc:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				//Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
 			tracer.TraceAsm(pc, GetRegs());
@@ -95,7 +95,7 @@ namespace RunAmiga.Core
 		{
 			//debugger.DumpTrace();
 			logger.LogTrace($"Breakpoint @{pc:X8}");
-			Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			//Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			UI.IsDirty = true;
 		}
 
@@ -208,7 +208,7 @@ namespace RunAmiga.Core
 					internalTrap(3);
 
 				tracer.DumpTrace();
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				//Machine.SetEmulationMode(EmulationMode.Stopped, true);
 			}
 
 			if (breakpoints.IsBreakpoint(pc))

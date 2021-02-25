@@ -9,7 +9,7 @@ using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interfaces;
 using RunAmiga.Core.Types;
 
-namespace RunAmiga
+namespace RunAmiga.Main
 {
 	public class Program
 	{

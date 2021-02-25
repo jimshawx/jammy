@@ -1,4 +1,7 @@
-﻿using RunAmiga.Core.Custom;
+﻿using System;
+using System.Collections.Generic;
+using RunAmiga.Core.Enums;
+using RunAmiga.Core.Options;
 using RunAmiga.Core.Types;
 
 namespace RunAmiga.Core.Interfaces
@@ -66,7 +69,6 @@ namespace RunAmiga.Core.Interfaces
 		byte Read8(uint address);
 		ushort Read16(uint address);
 		uint Read32(uint address);
-		void SetKickstart(Kickstart kickstart);
 	}
 
 	public interface IChips : IEmulate, IMemoryMappedDevice
@@ -85,7 +87,7 @@ namespace RunAmiga.Core.Interfaces
 	public interface IDebugger : IMemoryMappedDevice
 	{
 		void ToggleBreakpoint(uint pc);
-		Disassembly GetDisassembly();
+		//Disassembly GetDisassembly();
 		BreakpointCollection GetBreakpoints();
 		string UpdateExecBase();
 		MemoryDump GetMemory();
@@ -98,6 +100,7 @@ namespace RunAmiga.Core.Interfaces
 		void CIAInt(ICRB icr);
 		void IRQ(uint irq);
 		void SetTracer(ITracer tracer);
+		IDisassembly GetDisassembly();
 	}
 
 	public interface IMemoryMapper : IMemoryMappedDevice
@@ -118,4 +121,10 @@ namespace RunAmiga.Core.Interfaces
 		IDebugger GetDebugger();
 	}
 
+	public interface IDisassembly
+	{
+		string DisassembleTxt(List<Tuple<uint, uint>> ranges, List<uint> restartsList, DisassemblyOptions options);
+		int GetAddressLine(uint address);
+		uint GetLineAddress(int line);
+	}
 }

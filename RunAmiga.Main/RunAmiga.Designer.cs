@@ -1,5 +1,5 @@
 ﻿
-namespace RunAmiga
+namespace RunAmiga.Main
 {
 	partial class RunAmiga
 	{

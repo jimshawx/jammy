@@ -1,5 +1,5 @@
 ﻿
-namespace RunAmiga.Core.Dialogs
+namespace RunAmiga.Main.Dialogs
 {
 	partial class Find
 	{
