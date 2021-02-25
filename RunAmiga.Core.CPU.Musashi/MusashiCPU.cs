@@ -10,7 +10,7 @@ namespace RunAmiga.Core.CPU.Musashi
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
-		private readonly BreakpointCollection breakpoints;
+		private readonly IBreakpointCollection breakpoints;
 		private readonly ILogger logger;
 
 		[DllImport("Musashi.dll")]
@@ -65,6 +65,7 @@ namespace RunAmiga.Core.CPU.Musashi
 			//debugger.DumpTrace();
 			logger.LogTrace($"Breakpoint @{pc:X8}");
 			//Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			breakpoints.SignalBreakpoint();
 			UI.UI.IsDirty = true;
 		}
 
@@ -80,7 +81,7 @@ namespace RunAmiga.Core.CPU.Musashi
 		private Musashi_Writer w16;
 		private Musashi_Writer w8;
 
-		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper, BreakpointCollection breakpoints, ILogger<MusashiCPU> logger)
+		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ILogger<MusashiCPU> logger)
 		{
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;

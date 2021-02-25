@@ -1,35 +1,11 @@
 ﻿using System.Collections.Generic;
+using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types.Types.Breakpoints;
 
-namespace RunAmiga.Core.Types.Types
+namespace RunAmiga.Core
 {
-	public enum BreakpointType
-	{
-		Permanent,
-		Counter,
-		OneShot,
-		Read,
-		Write,
-		ReadOrWrite
-	}
-
-	public class Breakpoint
-	{
-		public uint Address { get; set; }
-		public bool Active { get; set; }
-		public BreakpointType Type { get; set;}
-
-		public int CounterReset { get; set; }
-		public int Counter { get; set; }
-
-		public Size Size { get; set; }
-
-		public Breakpoint()
-		{
-			Type = BreakpointType.Permanent;
-		}
-	}
-
-	public class BreakpointCollection
+	public class BreakpointCollection : IBreakpointCollection
 	{
 		private Dictionary<uint, Breakpoint> breakpoints = new Dictionary<uint, Breakpoint>();
 
@@ -90,7 +66,6 @@ namespace RunAmiga.Core.Types.Types
 			}
 			return false;
 		}
-
 
 		public void RemoveBreakpoint(uint address)
 		{

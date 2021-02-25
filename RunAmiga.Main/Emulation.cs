@@ -9,14 +9,14 @@ namespace RunAmiga.Main
 		private readonly IMachine machine;
 		private readonly IDebugger debugger;
 
-		public Emulation(IMachine machine, IDebugger debugger, IMemory memory, IMemoryMapper memoryMapper)
+		public Emulation(IMachine machine, IDebugger debugger, IMemory memory, IMemoryMapper memoryMapper, IBreakpointCollection breakpointCollection)
 		{
 			this.machine = machine;
 			this.debugger = debugger;
 
 			memoryMapper.AddMapper(debugger);
 
-			var disassembly = new Disassembly(memory.GetMemoryArray(), debugger.GetBreakpoints());
+			var disassembly = new Disassembly(memory.GetMemoryArray(), breakpointCollection);
 			var labeller = new Labeller();
 			var tracer = new Tracer(disassembly, labeller);
 

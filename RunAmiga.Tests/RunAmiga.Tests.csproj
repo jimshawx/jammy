@@ -21,8 +21,6 @@
   <ItemGroup>
     <ProjectReference Include="..\RunAmiga.Core.CPU.CSharp\RunAmiga.Core.CPU.CSharp.csproj" />
     <ProjectReference Include="..\RunAmiga.Core.CPU.Musashi\RunAmiga.Core.CPU.Musashi.csproj" />
-    <ProjectReference Include="..\RunAmiga.Core.Interface\RunAmiga.Core.Interface.csproj" />
-    <ProjectReference Include="..\RunAmiga.Core.Types\RunAmiga.Core.Types.csproj" />
     <ProjectReference Include="..\RunAmiga.Core\RunAmiga.Core.csproj" />
     <ProjectReference Include="..\RunAmiga.Debugger\RunAmiga.Debugger.csproj" />
     <ProjectReference Include="..\RunAmiga.Disassembler\RunAmiga.Disassembler.csproj" />

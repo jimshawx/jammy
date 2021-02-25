@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types.Types.Breakpoints;
 using RunAmiga.Core.Types.Types.Debugger;
 
 namespace RunAmiga.Core.Interface.Interfaces
@@ -85,11 +86,21 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void TraceAsm(uint pc, Regs regs);
 	}
 
+	public interface IBreakpointCollection
+	{
+		bool IsBreakpoint(uint pc);
+		void SignalBreakpoint();
+		void AckBreakpoint();
+		bool IsBreakpointSignalled();
+		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long);
+		void ToggleBreakpoint(uint pc);
+	}
+
 	public interface IDebugger : IMemoryMappedDevice
 	{
 		void ToggleBreakpoint(uint pc);
 		//Disassembly GetDisassembly();
-		BreakpointCollection GetBreakpoints();
+		//BreakpointCollection GetBreakpoints();
 		string UpdateExecBase();
 		MemoryDump GetMemory();
 		Regs GetRegs();

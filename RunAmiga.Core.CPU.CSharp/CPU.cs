@@ -51,9 +51,9 @@ namespace RunAmiga.Core.CPU.CSharp
 		private readonly ILogger logger;
 
 		private readonly IMemoryMapper memoryMapper;
-		private readonly BreakpointCollection breakpoints;
+		private readonly IBreakpointCollection breakpoints;
 
-		public CPU(IInterrupt interrupt, IMemoryMapper memoryMapper, BreakpointCollection breakpoints, ITracer tracer, ILogger<CPU> logger)
+		public CPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ITracer tracer, ILogger<CPU> logger)
 		{
 			a = new A(Supervisor);
 
@@ -84,6 +84,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				tracer.DumpTrace();
 				logger.LogTrace($"PC out of expected range {pc:X8}");
 				//Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				breakpoints.SignalBreakpoint();
 			}
 
 			tracer.TraceAsm(pc, GetRegs());
@@ -97,6 +98,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			//debugger.DumpTrace();
 			logger.LogTrace($"Breakpoint @{pc:X8}");
 			//Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			breakpoints.SignalBreakpoint();
 			UI.UI.IsDirty = true;
 		}
 

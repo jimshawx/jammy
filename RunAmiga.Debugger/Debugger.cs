@@ -5,6 +5,7 @@ using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types.Types.Breakpoints;
 using RunAmiga.Core.Types.Types.Debugger;
 using RunAmiga.Disassembler;
 using Machine = RunAmiga.Core.Machine;
@@ -13,7 +14,7 @@ namespace RunAmiga.Debugger
 {
 	public class Debugger : IDebugger
 	{
-		private readonly BreakpointCollection breakpoints;
+		private readonly IBreakpointCollection breakpoints;
 		private readonly IMemory memory;
 		private readonly ICPU cpu;
 		private readonly IChips custom;
@@ -26,9 +27,10 @@ namespace RunAmiga.Debugger
 		private ITracer tracer;
 
 		public Debugger(IMemory memory, ICPU cpu, IChips custom,
-			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger)
+			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
+			IBreakpointCollection breakpoints)
 		{
-			breakpoints = new BreakpointCollection();
+			this.breakpoints = breakpoints;
 
 			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints);
 
@@ -279,12 +281,5 @@ namespace RunAmiga.Debugger
 		{
 			return disassembly;
 		}
-
-		public BreakpointCollection GetBreakpoints()
-		{
-			return breakpoints;
-		}
-
-
 	}
 }

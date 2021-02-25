@@ -18,7 +18,7 @@ namespace RunAmiga.Disassembler
 	public class Disassembly : IDisassembly
 	{
 		private readonly byte[] memory;
-		private readonly BreakpointCollection breakpoints;
+		private readonly IBreakpointCollection breakpoints;
 		private readonly Disassembler disassembler;
 		private readonly Labeller labeller;
 		
@@ -37,7 +37,7 @@ namespace RunAmiga.Disassembler
 		}
 		private readonly MemType[] memType = new MemType[16 * 1024 * 1024];
 
-		public Disassembly(byte[] memory, BreakpointCollection breakpoints)
+		public Disassembly(byte[] memory, IBreakpointCollection breakpoints)
 		{
 			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Disassembly>();
 			this.memory = memory;

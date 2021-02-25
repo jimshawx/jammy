@@ -9,6 +9,7 @@ namespace RunAmiga.Core
 	public class Machine : IMachine
 	{
 		private readonly ICPU cpu;
+		private readonly IBreakpointCollection breakpointCollection;
 		private readonly IChips custom;
 		private readonly ICIAAOdd ciaa;
 		private readonly ICIABEven ciab;
@@ -21,12 +22,14 @@ namespace RunAmiga.Core
 
 		public Machine(IInterrupt interrupt, IMemory memory, IBattClock battClock, 
 			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, 
-			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio)
+			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
+			IBreakpointCollection breakpointCollection)
 		{
 			this.ciaa = ciaa;
 			this.ciab = ciab;
 			this.custom = custom;
 			this.cpu = cpu;
+			this.breakpointCollection = breakpointCollection;
 
 			custom.Init(blitter, copper, audio);
 
@@ -132,6 +135,12 @@ namespace RunAmiga.Core
 
 			while (emulationMode != EmulationMode.Exit)
 			{
+				if (breakpointCollection.IsBreakpointSignalled())
+				{
+					Machine.SetEmulationMode(EmulationMode.Stopped, true);
+					breakpointCollection.AckBreakpoint();
+				}
+
 				LockEmulation();
 
 				switch (emulationMode)

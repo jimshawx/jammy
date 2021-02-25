@@ -9,6 +9,7 @@ using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types.Types.Breakpoints;
 using RunAmiga.Debugger;
 using RunAmiga.Disassembler;
 using Size = RunAmiga.Core.Types.Types.Size;
@@ -28,10 +29,11 @@ namespace RunAmiga.Tests
 			var serviceCollection = new ServiceCollection();
 			serviceProvider1 = serviceCollection.AddLogging()
 				.AddSingleton<IInterrupt, Interrupt>()
+				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<IMusashiCPU>(x=>new MusashiCPU(
 					x.GetRequiredService<IInterrupt>(),
 					x.GetRequiredService<IMemoryMapper>(),
-					new BreakpointCollection(),
+					x.GetRequiredService<IBreakpointCollection>(),
 					null
 					))
 				.AddSingleton<IMemoryMapper>(x=>
@@ -45,11 +47,12 @@ namespace RunAmiga.Tests
 
 			serviceProvider2 = serviceCollection.AddLogging()
 				.AddSingleton<IInterrupt, Interrupt>()
+				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ICSharpCPU>(x=>new CPU(
 					x.GetRequiredService<IInterrupt>(),
 					x.GetRequiredService<IMemoryMapper>(),
-					new BreakpointCollection(),
-					new Tracer(new Disassembly(new byte[16*1024*1024], new BreakpointCollection()), new Labeller()),
+					x.GetRequiredService<IBreakpointCollection>(),
+					new Tracer(new Disassembly(new byte[16*1024*1024], x.GetRequiredService<IBreakpointCollection>()), new Labeller()),
 					null))
 				.AddSingleton<IMemoryMapper>(x =>
 				{
@@ -162,18 +165,20 @@ namespace RunAmiga.Tests
 					var r0 = cpu0.GetRegs();
 					var r1 = cpu1.GetRegs();
 
-					if (r0.Compare(r1))
-					{
-						//logger.LogTrace($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
-						//logger.LogTrace(string.Join('\n', r0.CompareSummary(r1)));
-					}
-					else
-					{
-						//logger.LogTrace($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
-					}
+					Assert.IsFalse(r0.Compare(r1));
+					//if (r0.Compare(r1))
+					//{
+					//	//logger.LogTrace($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
+					//	//logger.LogTrace(string.Join('\n', r0.CompareSummary(r1)));
+					//}
+					//else
+					//{
+					//	//logger.LogTrace($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
+					//}
 				}
 				catch (Exception ex)
 				{
+					Assert.Fail();
 					//logger.LogTrace($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
 					//logger.LogTrace(ex.ToString());
 				}
