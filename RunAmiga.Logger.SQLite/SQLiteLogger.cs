@@ -126,6 +126,7 @@ namespace RunAmiga.Logger.SQLite
 		public void Reader()
 		{
 			var sb = new StringBuilder();
+			int backoff = 1;
 			while (!quit)
 			{
 				var cmd = new SQLiteCommand("select * from errorlog where id > :counter order by id asc", connection);
@@ -150,10 +151,13 @@ namespace RunAmiga.Logger.SQLite
 					foreach (var msg in messages)
 						sb.AppendLine(msg.Message);
 					Trace.Write(sb.ToString());
+					backoff = 1;
 				}
 				else
 				{
-					Thread.Sleep(500);
+					backoff += backoff;
+					if (backoff > 500) backoff = 500;
+					Thread.Sleep(backoff);
 				}
 			}
 
