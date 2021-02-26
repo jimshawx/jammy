@@ -36,6 +36,7 @@
     <ProjectReference Include="..\RunAmiga.Debugger\RunAmiga.Debugger.csproj" />
     <ProjectReference Include="..\RunAmiga.Disassembler\RunAmiga.Disassembler.csproj" />
     <ProjectReference Include="..\RunAmiga.Extensions\RunAmiga.Extensions.csproj" />
+    <ProjectReference Include="..\RunAmiga.Logger.DebugAsync\RunAmiga.Logger.DebugAsync.csproj" />
     <ProjectReference Include="..\RunAmiga.Logger.SQLite\RunAmiga.Logger.SQLite.csproj" />
     <ProjectReference Include="..\RunAmiga.UI\RunAmiga.UI.csproj" />
   </ItemGroup>

@@ -24,7 +24,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Disassembler", "Ru
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.UI", "RunAmiga.UI\RunAmiga.UI.csproj", "{70DFFFED-66A7-477C-9561-CF0B1DC588D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAmiga.Logger.SQLite", "RunAmiga.Logger.SQLite\RunAmiga.Logger.SQLite.csproj", "{E5614F3B-4681-4315-BDD6-A4167332D2D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Logger.SQLite", "RunAmiga.Logger.SQLite\RunAmiga.Logger.SQLite.csproj", "{E5614F3B-4681-4315-BDD6-A4167332D2D3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAmiga.Logger.DebugAsync", "RunAmiga.Logger.DebugAsync\RunAmiga.Logger.DebugAsync.csproj", "{7B943371-BA63-4887-8C73-7C703A319933}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -130,6 +132,14 @@ Global
 		{E5614F3B-4681-4315-BDD6-A4167332D2D3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E5614F3B-4681-4315-BDD6-A4167332D2D3}.Release|x64.ActiveCfg = Release|Any CPU
 		{E5614F3B-4681-4315-BDD6-A4167332D2D3}.Release|x64.Build.0 = Release|Any CPU
+		{7B943371-BA63-4887-8C73-7C703A319933}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B943371-BA63-4887-8C73-7C703A319933}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B943371-BA63-4887-8C73-7C703A319933}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7B943371-BA63-4887-8C73-7C703A319933}.Debug|x64.Build.0 = Debug|Any CPU
+		{7B943371-BA63-4887-8C73-7C703A319933}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B943371-BA63-4887-8C73-7C703A319933}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B943371-BA63-4887-8C73-7C703A319933}.Release|x64.ActiveCfg = Release|Any CPU
+		{7B943371-BA63-4887-8C73-7C703A319933}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

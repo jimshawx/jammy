@@ -10,6 +10,7 @@ using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Logger.SQLite;
+using RunAmiga.Logger.DebugAsync;
 
 namespace RunAmiga.Main
 {
@@ -36,7 +37,8 @@ namespace RunAmiga.Main
 				{
 					x.AddConfiguration(configuration.GetSection("Logging"));
 					//x.AddDebug();
-					x.AddSQLite();
+					//x.AddSQLite();
+					x.AddDebugAsync();
 				})
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IAudio, Audio>()
