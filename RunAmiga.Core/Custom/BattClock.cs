@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection.Metadata.Ecma335;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
@@ -26,12 +27,16 @@ namespace RunAmiga.Core.Custom
 			//regs[15] = 4;//24/12
 		}
 
+		readonly MemoryRange memoryRange = new MemoryRange(0xdc0000, 0x10000);
+
 		public bool IsMapped(uint address)
 		{
-			//return (address >= 0xdc0000 && address < 0xdd0000) || // 2.04 ROM looks here
-			//	   (address >= 0xd80000 && address < 0xd90000);
-			return address >= 0xdc0000 && address < 0xdc0040;
-			//return false;
+			return memoryRange.Contains(address);
+		}
+
+		public MemoryRange MappedRange()
+		{
+			return memoryRange;
 		}
 
 		// the RTC is an OKI Semiconductor MSM6242B.

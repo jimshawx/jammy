@@ -35,12 +35,7 @@ namespace RunAmiga.Tests
 					x.GetRequiredService<IBreakpointCollection>(),
 					new NullLogger<MusashiCPU>()
 					))
-				.AddSingleton<IMemoryMapper>(x=>
-				{
-					var m = new MemoryMapper(new List<IMemoryMappedDevice>());
-					m.AddMapper(x.GetRequiredService<IMemory>());
-					return m;
-				})
+				.AddSingleton<IMemoryMapper>(x=> new MemoryMapper(new List<IMemoryMappedDevice>{ x.GetRequiredService<IMemory>() }))
 				.AddSingleton<IMemory>(x => new Memory("CPUTest_Musashi", null))
 				.BuildServiceProvider();
 
@@ -53,12 +48,7 @@ namespace RunAmiga.Tests
 					x.GetRequiredService<IBreakpointCollection>(),
 					new Tracer(new Disassembly(x.GetRequiredService<IMemory>().GetMemoryArray(), x.GetRequiredService<IBreakpointCollection>()), new Labeller()),
 					new NullLogger<CPU>()))
-				.AddSingleton<IMemoryMapper>(x =>
-				{
-					var m = new MemoryMapper(new List<IMemoryMappedDevice>());
-					m.AddMapper(x.GetRequiredService<IMemory>());
-					return m;
-				})
+				.AddSingleton<IMemoryMapper>(x => new MemoryMapper(new List<IMemoryMappedDevice> { x.GetRequiredService<IMemory>() }))
 				.AddSingleton<IMemory>(x => new Memory("CPUTest_CSharp", null))
 				.BuildServiceProvider();
 		}

@@ -86,7 +86,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void TraceAsm(uint pc, Regs regs);
 	}
 
-	public interface IBreakpointCollection
+	public interface IBreakpointCollection : IMemoryInterceptor
 	{
 		bool IsBreakpoint(uint pc);
 		void SignalBreakpoint();
@@ -115,9 +115,15 @@ namespace RunAmiga.Core.Interface.Interfaces
 		IDisassembly GetDisassembly();
 	}
 
+	public interface IMemoryInterceptor
+	{
+		void Write(uint insaddr, uint address, uint value, Size size);
+		void Read(uint insaddr, uint address, uint value, Size size);
+	}
+
 	public interface IMemoryMapper : IMemoryMappedDevice
 	{
-		void AddMapper(IMemoryMappedDevice memoryDevice);
+		void AddMemoryIntercept(IMemoryInterceptor interceptor);
 	}
 
 	public interface IMachine

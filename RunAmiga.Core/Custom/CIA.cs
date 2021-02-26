@@ -152,9 +152,16 @@ namespace RunAmiga.Core.Custom
 			icrr = 0;
 		}
 
+		readonly MemoryRange memoryRange = new MemoryRange(0xbf0000, 0x10000);
+
 		public virtual bool IsMapped(uint address)
 		{
 			return (address >> 16) == 0xbf;
+		}
+
+		public MemoryRange MappedRange()
+		{
+			return memoryRange;
 		}
 
 		protected byte GetReg(uint address, Size size)

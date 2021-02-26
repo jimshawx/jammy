@@ -81,7 +81,7 @@ namespace RunAmiga.Core.Custom
 				return keyboard.ReadKey();
 			}
 
-			//logger.LogTrace($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
+			logger.LogTrace($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return base.Read(reg);
 
 		}
@@ -99,7 +99,7 @@ namespace RunAmiga.Core.Custom
 				return;
 			}
 
-			//logger.LogTrace($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+			logger.LogTrace($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 			base.Write(reg, value);
 		}
 	}

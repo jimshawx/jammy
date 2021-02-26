@@ -14,6 +14,7 @@ namespace RunAmiga.Debugger
 {
 	public class Debugger : IDebugger
 	{
+		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
 		private readonly IMemory memory;
 		private readonly ICPU cpu;
@@ -26,10 +27,11 @@ namespace RunAmiga.Debugger
 		private readonly ILogger logger;
 		private ITracer tracer;
 
-		public Debugger(IMemory memory, ICPU cpu, IChips custom,
+		public Debugger(IMemoryMapper memoryMapper, IMemory memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
 			IBreakpointCollection breakpoints)
 		{
+			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
 
 			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints);
@@ -42,6 +44,8 @@ namespace RunAmiga.Debugger
 			this.ciaa = ciaa;
 			this.ciab = ciab;
 			this.logger = logger;
+
+			this.memoryMapper.AddMemoryIntercept(this.breakpoints);
 
 			//AddBreakpoint(0xfc0af0);//InitCode
 			//AddBreakpoint(0xfc0afe);
@@ -142,9 +146,16 @@ namespace RunAmiga.Debugger
 			this.tracer = trace;
 		}
 
+		readonly MemoryRange memoryRange = new MemoryRange(0x0, 0x1000000);
+
 		public bool IsMapped(uint address)
 		{
 			return true;
+		}
+
+		public MemoryRange MappedRange()
+		{
+			return memoryRange;
 		}
 
 		private bool isROM(uint address)
@@ -194,8 +205,6 @@ namespace RunAmiga.Debugger
 			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
 		}
 
-
-
 		//private string GetString(uint str)
 		//{
 		//	var sb = new StringBuilder();
@@ -242,7 +251,6 @@ namespace RunAmiga.Debugger
 		{
 			return cpu.GetRegs();
 		}
-
 
 		public void SetPC(uint pc)
 		{

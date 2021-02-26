@@ -59,9 +59,16 @@ namespace RunAmiga.Core.Custom
 			regs[REG(ChipRegs.LISAID)] = 0x0000;
 		}
 
+		readonly MemoryRange memoryRange = new MemoryRange(0xdf0000, 0x10000);
+
 		public bool IsMapped(uint address)
 		{
 			return (address >> 16) == 0xdf;
+		}
+
+		public MemoryRange MappedRange()
+		{
+			return memoryRange;
 		}
 
 		private int REG(uint address)

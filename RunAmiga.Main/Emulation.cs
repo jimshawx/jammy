@@ -14,7 +14,7 @@ namespace RunAmiga.Main
 			this.machine = machine;
 			this.debugger = debugger;
 
-			memoryMapper.AddMapper(debugger);
+			//memoryMapper.AddMapper(debugger);
 
 			var disassembly = new Disassembly(memory.GetMemoryArray(), breakpointCollection);
 			var labeller = new Labeller();

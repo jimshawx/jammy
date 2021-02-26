@@ -9,8 +9,7 @@ using RunAmiga.Core.CPU.Musashi;
 using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Core.Types.Types;
-using RunAmiga.Core.Types.Types.Breakpoints;
+using RunAmiga.Logger.SQLite;
 
 namespace RunAmiga.Main
 {
@@ -36,7 +35,8 @@ namespace RunAmiga.Main
 				.AddLogging(x=>
 				{
 					x.AddConfiguration(configuration.GetSection("Logging"));
-					x.AddDebug();
+					//x.AddDebug();
+					x.AddSQLite();
 				})
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IAudio, Audio>()
@@ -61,9 +61,6 @@ namespace RunAmiga.Main
 				.BuildServiceProvider();
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider;
-
-			//var test = new CPUTest();
-			//test.FuzzCPU();
 
 			var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
 			logger.LogTrace("Application Starting Up!");

@@ -30,9 +30,16 @@ namespace RunAmiga.Core
 			Reset();
 		}
 
+		readonly MemoryRange memoryRange = new MemoryRange(0x0, 0x1000000);
+
 		public bool IsMapped(uint address)
 		{
 			return true;
+		}
+
+		public MemoryRange MappedRange()
+		{
+			return memoryRange;
 		}
 
 		private uint read32(uint address)

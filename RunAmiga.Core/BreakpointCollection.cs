@@ -14,7 +14,17 @@ namespace RunAmiga.Core
 			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size };
 		}
 
-		public bool IsMemoryBreakpoint(uint pc, BreakpointType type)
+		public void Write(uint insaddr, uint address, uint value, Size size)
+		{
+			//if (IsMemoryBreakpoint(address, BreakpointType.Write))
+		}
+
+		public void Read(uint insaddr, uint address, uint value, Size size)
+		{
+			//if (IsMemoryBreakpoint(address, BreakpointType.Read))
+		}
+
+		private bool IsMemoryBreakpoint(uint pc, BreakpointType type)
 		{
 			//for (uint i = 0; i < 4; i++)
 			uint i = 0;
