@@ -40,6 +40,10 @@ namespace RunAmiga.Disassembler.TypeMapper
 	{
 		private readonly IMemory memory;
 		private readonly ILogger logger;
+		
+		private uint baseAddress;
+		private readonly HashSet<long> lookup = new HashSet<long>();
+		private StringBuilder sb;
 
 		public BaseMapper(IMemory memory)
 		{
@@ -47,15 +51,10 @@ namespace RunAmiga.Disassembler.TypeMapper
 			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerProvider>().CreateLogger("BaseMapper");
 		}
 
-		readonly HashSet<long> lookup = new HashSet<long>();
-
-		StringBuilder sb;
-
 		private uint MapObject(Type type, object obj, uint addr, int depth)
 		{
 			if (lookup.Contains(addr+type.GetHashCode()))
 			{
-				//logger.LogTrace($"Visited {addr:X8} again for {type.Name}");
 				return 0;
 			}
 			lookup.Add(addr+type.GetHashCode());
@@ -69,8 +68,8 @@ namespace RunAmiga.Disassembler.TypeMapper
 			uint lastAddr = addr;
 			foreach (var prop in properties)
 			{
-				if (depth == 0)
-					sb.Append($"{addr:X8} {addr-0xc00276:X4} {addr - 0xc00276,5} {prop.Name,-25} {prop.PropertyType}\n");
+				//if (depth == 0)
+					sb.Append($"{addr:X8} {addr-baseAddress:X4} {addr - baseAddress,5} {prop.Name,-25} {prop.PropertyType}\n");
 
 				if (prop.Name == "ln_Pred")
 				{
@@ -201,8 +200,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 						rv = AmigaTypesMapper.MapSimple(memory, propType, addr);
 						addr += AmigaTypesMapper.GetSize(rv);
 					}
-
-					//logger.LogTrace($"{addr:X8} {prop.Name}");
+					
 					prop.SetValue(obj, rv);
 				}
 				catch (NullReferenceException ex)
@@ -217,12 +215,13 @@ namespace RunAmiga.Disassembler.TypeMapper
 						logger.LogTrace($"Problem Mapping {prop.Name} {prop.PropertyType}\n{ex}");
 				}
 			}
-			//logger.LogTrace($"{addr-startAddr}");
 			return addr - startAddr;
 		}
 
 		public string FromAddress(uint address)
 		{
+			baseAddress = address;
+
 			lookup.Clear();
 
 			sb = new StringBuilder();
@@ -230,14 +229,13 @@ namespace RunAmiga.Disassembler.TypeMapper
 			var amigaObj = new T();
 			MapObject(typeof(T), amigaObj, address, 0);
 
-			//logger.LogTrace(execbase.ToString());
 			return amigaObj.ToString() + "\n"+ sb.ToString();
 		}
 
 		public string MapString(uint addr)
 		{
 			uint str = memory.Read32(addr);
-			//logger.LogTrace($"String @{addr:X8}->{str:X8}");
+
 			if (str == 0)
 				return "(null)";
 
