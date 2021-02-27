@@ -12,7 +12,6 @@ namespace RunAmiga.Core.Custom
 {
 	public class Keyboard : IKeyboard
 	{
-		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 		private ICIAAOdd cia;
 		private readonly Form keys;
@@ -112,9 +111,8 @@ namespace RunAmiga.Core.Custom
 
 		};
 
-		public Keyboard(IInterrupt interrupt, ILogger<Keyboard> logger)
+		public Keyboard(ILogger<Keyboard> logger)
 		{
-			this.interrupt = interrupt;
 			this.logger = logger;
 			keys = new Form {Text = "Keyboard", Size = new Size(100, 100)};
 			//var btn = new Button {Text = "Reset"};
@@ -163,7 +161,6 @@ namespace RunAmiga.Core.Custom
 		private void KeyInterrupt()
 		{
 			cia.SerialInterrupt();
-			interrupt.TriggerInterrupt(Interrupt.PORTS);
 		}
 
 		private uint keyTimer=0;

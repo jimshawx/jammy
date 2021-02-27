@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Enums;
@@ -36,7 +37,7 @@ namespace RunAmiga.Core.Custom
 		protected abstract uint interruptLevel { get; }
 		protected abstract char cia { get; }
 
-		protected byte icrr;
+		private byte icrr;
 		//writing to regs[ICR] sets icr which controls which interrupts TO trigger.
 		//icrr has the equivalent bits set for which interrupt WAS triggered. reset to 0 after read.
 
@@ -74,10 +75,7 @@ namespace RunAmiga.Core.Custom
 					if (timerA == 0xffff)
 					{
 						if ((regs[CIA.ICR] & (uint)ICRB.TIMERA) != 0)
-						{
-							icrr |= (byte)(ICRB.TIMERA | ICRB.IR);
-							interrupt.TriggerInterrupt(interruptLevel);
-						}
+							TriggerICR(ICRB.TIMERA);
 
 						//one shot mode?
 						if ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0)
@@ -96,10 +94,7 @@ namespace RunAmiga.Core.Custom
 					if (timerB == 0xffff)
 					{
 						if ((regs[CIA.ICR] & (uint)ICRB.TIMERB) != 0)
-						{
-							icrr |= (byte)(ICRB.TIMERB | ICRB.IR);
-							interrupt.TriggerInterrupt(interruptLevel);
-						}
+							TriggerICR(ICRB.TIMERB);
 
 						//one shot mode?
 						if ((regs[CIA.CRB] & (uint)CR.RUNMODE) != 0)
@@ -127,9 +122,17 @@ namespace RunAmiga.Core.Custom
 			if (todTimer == todAlarm && (regs[CIA.ICR] & (uint)ICRB.TODALARM) != 0)
 			{
 				logger.LogTrace($"{cia}TOD ALARM {todTimer}");
-				icrr |= (byte)(ICRB.TODALARM | ICRB.IR);
-				interrupt.TriggerInterrupt(interruptLevel);
+				TriggerICR(ICRB.TODALARM);
 			}
+		}
+
+		private void TriggerICR(ICRB icrb)
+		{
+			icrr |= (byte)(ICRB.IR | icrb);
+
+			//if the bit's not masked, trigger the CPU interrupt
+			if (((byte)icrb & regs[CIA.ICR])!=0)
+				interrupt.TriggerInterrupt(interruptLevel);
 		}
 
 		public virtual void Reset()
@@ -331,7 +334,7 @@ namespace RunAmiga.Core.Custom
 			//enable the interrupt mask
 			regs[ICR] |= (byte)i;
 			//flag the interrupt
-			icrr |= (byte)(ICRB.IR | i);
+			TriggerICR(i);
 		}
 
 		//snoop ICR read, because reading it via the usual interface will clear it
@@ -342,7 +345,7 @@ namespace RunAmiga.Core.Custom
 
 		public void SerialInterrupt()
 		{
-			icrr |= (byte)(ICRB.SERIAL | ICRB.IR);
+			TriggerICR(ICRB.SERIAL);
 		}
 	}
 }
