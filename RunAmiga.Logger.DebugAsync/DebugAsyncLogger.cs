@@ -136,7 +136,7 @@ namespace RunAmiga.Logger.DebugAsync
 					{
 						backoff += backoff;
 						if (backoff > 500) backoff = 500;
-						Task.Delay(backoff, cancellation.Token);
+						Task.Delay(backoff, cancellation.Token).Wait();
 					}
 				}
 

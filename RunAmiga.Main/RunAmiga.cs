@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -42,7 +43,12 @@ namespace RunAmiga.Main
 			emulation.Start();
 		}
 
-		Thread uiUpdateThread, uiUpdateThread2;
+		private CancellationTokenSource uiUpdateTokenSource;
+		private Task uiUpdateTask;
+
+		private CancellationTokenSource uiMessagePumpTokenSource;
+		private Task uiMessagePumpTask;
+
 		public void Init()
 		{
 			UpdateDisassembly();
@@ -51,11 +57,39 @@ namespace RunAmiga.Main
 			while (this.Handle == IntPtr.Zero)
 				Application.DoEvents();
 
-			uiUpdateThread = new Thread(UIUpdateThread);
-			uiUpdateThread.Start();
+			uiUpdateTokenSource = new CancellationTokenSource();
+			uiMessagePumpTokenSource = new CancellationTokenSource();
 
-			uiUpdateThread2 = new Thread(UIUpdateThread2);
-			uiUpdateThread2.Start();
+			uiUpdateTask = new Task(() =>
+				{
+					while (!uiUpdateTokenSource.IsCancellationRequested)
+					{
+						this.Invoke((Action)UpdatePowerLight);
+
+						if (UI.UI.IsDirty)
+						{
+							this.Invoke((Action)delegate()
+							{
+								SetSelection();
+								UpdateDisplay();
+							});
+							UI.UI.IsDirty = false;
+						}
+
+						Task.Delay(500, uiUpdateTokenSource.Token).Wait();
+					}
+				}, uiUpdateTokenSource.Token);
+			uiUpdateTask.Start();
+
+			uiMessagePumpTask = new Task(() =>
+				{
+					while (!uiMessagePumpTokenSource.IsCancellationRequested)
+					{
+						Application.DoEvents();
+						Task.Delay(100, uiMessagePumpTokenSource.Token).Wait();
+					}
+				}, uiMessagePumpTokenSource.Token);
+			uiMessagePumpTask.Start();
 		}
 
 		private void UpdateDisassembly()
@@ -244,15 +278,16 @@ namespace RunAmiga.Main
 			UpdateDisplay();
 		}
 
-		bool exiting = false;
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			exiting = true;
-			while (exiting)
-			{
-				Thread.Yield();
-				Application.DoEvents();
-			}
+			UI.UI.IsDirty = false;
+
+			uiUpdateTokenSource.Cancel();
+			uiUpdateTask.Wait(1000);
+
+			uiMessagePumpTokenSource.Cancel();
+			uiMessagePumpTask.Wait();
+
 			Machine.SetEmulationMode(EmulationMode.Exit);
 		}
 
@@ -273,31 +308,6 @@ namespace RunAmiga.Main
 
 			SetSelection();
 			UpdateDisplay();
-		}
-
-		private void UIUpdateThread2(object o)
-		{
-			while (!exiting)
-			{
-				Application.DoEvents();
-				Thread.Sleep(500);
-			}
-		}
-
-		private void UIUpdateThread(object o)
-		{
-			while (!exiting)
-			{
-				this.Invoke((Action)delegate () { UpdatePowerLight(); });
-
-				if (UI.UI.IsDirty)
-				{
-					this.Invoke((Action)delegate () { SetSelection(); UpdateDisplay(); });
-					UI.UI.IsDirty = false;
-				}
-
-				Thread.Sleep(500);
-			}
 		}
 
 		private void UpdatePowerLight()

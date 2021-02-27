@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -55,12 +56,11 @@ namespace RunAmiga.Core
 			emulations.ForEach(x => x.Emulate(ns));
 		}
 
-		private Thread emuThread;
+		private Task emuThread;
 
 		public void Start()
 		{
-			emuThread = new Thread(Emulate);
-			emuThread.Name = "Emulation";
+			emuThread = new Task(Emulate);
 			emuThread.Start();
 		}
 
