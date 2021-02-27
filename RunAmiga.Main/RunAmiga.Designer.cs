@@ -684,7 +684,11 @@ namespace RunAmiga.Main
 			this.cbTypes.Items.AddRange(new object[] {
             "(None)",
             "ExecBase",
-            "timerequest"});
+            "timerequest",
+			"Library",
+			"Task",
+			"KeyMapResource"
+			});
 			this.cbTypes.Location = new System.Drawing.Point(742, 15);
 			this.cbTypes.Name = "cbTypes";
 			this.cbTypes.Size = new System.Drawing.Size(159, 23);

@@ -19,6 +19,33 @@ namespace RunAmiga.Disassembler.AmigaTypes
 	using DevicePtr = System.UInt32;
 	using UnitPtr = System.UInt32;
 	using VoidPtr = System.UInt32;
+	using UBYTEPtr = System.UInt32;
+	using ULONGPtr = System.UInt32;
+
+	public static class AmigaTypesMapper
+	{
+		public static uint GetSize(object s)
+		{
+			if (s.GetType() == typeof(BYTE) || s.GetType() == typeof(UBYTE) || s.GetType() == typeof(NodeType)) return 1;
+			if (s.GetType() == typeof(WORD) || s.GetType() == typeof(UWORD)) return 2;
+			if (s.GetType() == typeof(LONG) || s.GetType() == typeof(ULONG) || s.GetType() == typeof(APTR) || s.GetType() == typeof(FunctionPtr)) return 4;
+			throw new ApplicationException();
+		}
+
+		public static object MapSimple(IMemory memory, Type type, uint addr)
+		{
+			if (type == typeof(NodeType)) return (NodeType)memory.Read8(addr);
+			if (type == typeof(BYTE)) return (BYTE)memory.Read8(addr);
+			if (type == typeof(UBYTE)) return (UBYTE)memory.Read8(addr);
+			if (type == typeof(UWORD)) return (UWORD)memory.Read16(addr);
+			if (type == typeof(WORD)) return (WORD)memory.Read16(addr);
+			if (type == typeof(ULONG)) return (ULONG)memory.Read32(addr);
+			if (type == typeof(LONG)) return (LONG)memory.Read32(addr);
+			if (type == typeof(APTR)) return (APTR)memory.Read32(addr);
+			if (type == typeof(FunctionPtr)) return (FunctionPtr)memory.Read32(addr);
+			throw new ApplicationException();
+		}
+	}
 
 	public enum NodeType
 	{
@@ -329,34 +356,35 @@ namespace RunAmiga.Disassembler.AmigaTypes
 		public ULONG tv_micro { get; set; }
 	}
 
-	public class timerequest : ObjectWalk
+	public class timerequest
 	{
 		public IORequest tr_node { get; set; }
 		public timeval tr_time { get; set; }
 	}
 
-	public static class AmigaTypesMapper
+	public class KeyMap
 	{
-		public static uint GetSize(object s)
-		{
-			if (s.GetType() == typeof(BYTE) || s.GetType() == typeof(UBYTE) || s.GetType() == typeof(NodeType)) return 1;
-			if (s.GetType() == typeof(WORD) || s.GetType() == typeof(UWORD)) return 2;
-			if (s.GetType() == typeof(LONG) || s.GetType() == typeof(ULONG) || s.GetType() == typeof(APTR) || s.GetType() == typeof(FunctionPtr)) return 4; 
-			throw new ApplicationException();
-		}
-
-		public static object MapSimple(IMemory memory, Type type, uint addr)
-		{
-			if (type == typeof(NodeType)) return (NodeType)memory.Read8(addr);
-			if (type == typeof(BYTE)) return (BYTE)memory.Read8(addr);
-			if (type == typeof(UBYTE)) return (UBYTE)memory.Read8(addr);
-			if (type == typeof(UWORD)) return (UWORD)memory.Read16(addr);
-			if (type == typeof(WORD)) return (WORD)memory.Read16(addr);
-			if (type == typeof(ULONG)) return (ULONG)memory.Read32(addr);
-			if (type == typeof(LONG)) return (LONG)memory.Read32(addr);
-			if (type == typeof(APTR)) return (APTR)memory.Read32(addr);
-			if (type == typeof(FunctionPtr)) return (FunctionPtr)memory.Read32(addr);
-			throw new ApplicationException();
-		}
+		public UBYTEPtr km_LoKeyMapTypes{ get; set; }
+		public ULONGPtr km_LoKeyMap{ get; set; }
+		public UBYTEPtr km_LoCapsable{ get; set; }
+		public UBYTEPtr km_LoRepeatable{ get; set; }
+		public UBYTEPtr km_HiKeyMapTypes{ get; set; }
+		public ULONGPtr km_HiKeyMap{ get; set; }
+		public UBYTEPtr km_HiCapsable{ get; set; }
+		public UBYTEPtr km_HiRepeatable{ get; set; }
 	}
+
+	public class KeyMapNode
+	{
+		public Node kn_Node{ get; set; }    /* including name of keymap */
+		public KeyMap kn_KeyMap{ get; set; }
+	}
+
+	/* the structure of keymap.resource */
+	public class KeyMapResource
+	{
+		public Node kr_Node{ get; set; }
+		public List kr_List{ get; set; }	/* a list of KeyMapNodes */
+	}
+
 }
