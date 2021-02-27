@@ -104,11 +104,12 @@ namespace RunAmiga.Logger.DebugAsync
 		static extern bool FreeConsole();
 
 		private readonly CancellationTokenSource cancellation;
+		private readonly Task readerTask;
 
 		public DebugAsyncConsoleLoggerReader()
 		{
 			cancellation = new CancellationTokenSource();
-			var task = new Task(() =>
+			readerTask = new Task(() =>
 			{
 				AllocConsole();
 				var writer = Console.Out;
@@ -135,7 +136,7 @@ namespace RunAmiga.Logger.DebugAsync
 					{
 						backoff += backoff;
 						if (backoff > 500) backoff = 500;
-						Thread.Sleep(backoff);
+						Task.Delay(backoff, cancellation.Token);
 					}
 				}
 
@@ -143,12 +144,13 @@ namespace RunAmiga.Logger.DebugAsync
 
 			}, cancellation.Token);
 
-			task.Start();
+			readerTask.Start();
 		}
 
 		public void Dispose()
 		{
 			cancellation.Cancel();
+			readerTask.Wait(1000);
 		}
 	}
 }

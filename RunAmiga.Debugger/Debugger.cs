@@ -78,7 +78,7 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0x00fc0c4c);//Interrupt Bail Out
 			//AddBreakpoint(0x00fc0ca6);//L2 Autovector IO/Timer
 				AddBreakpoint(0xFC465E);//Timer A
-				AddBreakpoint(0xFC4668);//Timer B
+				//AddBreakpoint(0xFC4668);//Timer B
 				AddBreakpoint(0xFC4672);//TOD
 				AddBreakpoint(0xFC467C);//Serial
 				AddBreakpoint(0xFC4686);//Flag
@@ -131,6 +131,8 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0xb328, BreakpointType.Write);
 			//AddBreakpoint(0xb32a, BreakpointType.Write);
 			//AddBreakpoint(0xfd18dc);
+
+			AddBreakpoint(0xFE571C);//Keyboard ISR
 
 			//AddBreakpoint(0xfe5efa);//Mouse
 			//AddBreakpoint(0xfe572a);//Keyboard
