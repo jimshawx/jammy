@@ -8,6 +8,7 @@ using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
 using RunAmiga.Core.Types.Types.Debugger;
 using RunAmiga.Disassembler;
+using RunAmiga.Disassembler.TypeMapper;
 using Machine = RunAmiga.Core.Machine;
 
 namespace RunAmiga.Debugger
@@ -141,6 +142,8 @@ namespace RunAmiga.Debugger
 
 			//AddBreakpoint(0xf85804);//KS2.04 battclock.resource init
 			AddBreakpoint(0xfe9232);
+
+			AddBreakpoint(0xfe9550);//TR_ADDREQUEST
 		}
 
 		public void SetTracer(ITracer trace)

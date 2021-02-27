@@ -83,6 +83,7 @@ namespace RunAmiga.Main
 			this.btnIRQ = new System.Windows.Forms.Button();
 			this.cbIRQ = new System.Windows.Forms.ComboBox();
 			this.cbCIA = new System.Windows.Forms.ComboBox();
+			this.cbTypes = new System.Windows.Forms.ComboBox();
 			this.menuDisassembly.SuspendLayout();
 			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -585,10 +586,10 @@ namespace RunAmiga.Main
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.txtExecBase.DetectUrls = false;
 			this.txtExecBase.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-			this.txtExecBase.Location = new System.Drawing.Point(742, 15);
+			this.txtExecBase.Location = new System.Drawing.Point(742, 39);
 			this.txtExecBase.Name = "txtExecBase";
 			this.txtExecBase.ReadOnly = true;
-			this.txtExecBase.Size = new System.Drawing.Size(343, 538);
+			this.txtExecBase.Size = new System.Drawing.Size(343, 514);
 			this.txtExecBase.TabIndex = 26;
 			this.txtExecBase.Text = "";
 			this.txtExecBase.WordWrap = false;
@@ -676,11 +677,26 @@ namespace RunAmiga.Main
 			this.cbCIA.TabIndex = 33;
 			this.cbCIA.Text = "TIMERA";
 			// 
+			// cbTypes
+			// 
+			this.cbTypes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.cbTypes.FormattingEnabled = true;
+			this.cbTypes.Items.AddRange(new object[] {
+            "(None)",
+            "ExecBase",
+            "timerequest"});
+			this.cbTypes.Location = new System.Drawing.Point(742, 15);
+			this.cbTypes.Name = "cbTypes";
+			this.cbTypes.Size = new System.Drawing.Size(159, 23);
+			this.cbTypes.TabIndex = 34;
+			this.cbTypes.SelectionChangeCommitted += new System.EventHandler(this.cbTypes_SelectionChangeCommitted);
+			// 
 			// RunAmiga
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1283, 568);
+			this.Controls.Add(this.cbTypes);
 			this.Controls.Add(this.cbCIA);
 			this.Controls.Add(this.cbIRQ);
 			this.Controls.Add(this.btnIRQ);
@@ -802,6 +818,7 @@ namespace RunAmiga.Main
 		private System.Windows.Forms.Button btnIRQ;
 		private System.Windows.Forms.ComboBox cbIRQ;
 		private System.Windows.Forms.ComboBox cbCIA;
+		private System.Windows.Forms.ComboBox cbTypes;
 	}
 }
 

@@ -1,14 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Core.Types.Types;
+using RunAmiga.Disassembler.TypeMapper;
 
-namespace RunAmiga.Disassembler
+namespace RunAmiga.Disassembler.AmigaTypes
 {
 	using UBYTE = System.Byte;
 	using BYTE = System.SByte;
@@ -22,38 +16,44 @@ namespace RunAmiga.Disassembler
 
 	using CharPtr = System.String;
 
+	using DevicePtr = System.UInt32;
+	using UnitPtr = System.UInt32;
+	using VoidPtr = System.UInt32;
 
 	public enum NodeType
 	{
-		NT_UNKNOWN	= 0,
-		NT_TASK		= 1,	/* Exec task */
-		NT_INTERRUPT	= 2,
-		NT_DEVICE	= 3,
-		NT_MSGPORT	= 4,
-		NT_MESSAGE	= 5,	/* Indicates message currently pending */
-		NT_FREEMSG	= 6,
-		NT_REPLYMSG	= 7,	/* Message has been replied */
-		NT_RESOURCE	= 8,
-		NT_LIBRARY	= 9,
-		NT_MEMORY	= 10,
-		NT_SOFTINT	= 11,	/* Internal flag used by SoftInits */
-		NT_FONT		= 12,
-		NT_PROCESS	= 13,	/* AmigaDOS Process */
-		NT_SEMAPHORE	= 14,
-		NT_SIGNALSEM	= 15,	/* signal semaphores */
-		NT_BOOTNODE	= 16,
-		NT_KICKMEM	= 17,
-		NT_GRAPHICS	= 18,
-		NT_DEATHMESSAGE	= 19,
+		NT_UNKNOWN = 0,
+		NT_TASK = 1,    /* Exec task */
+		NT_INTERRUPT = 2,
+		NT_DEVICE = 3,
+		NT_MSGPORT = 4,
+		NT_MESSAGE = 5, /* Indicates message currently pending */
+		NT_FREEMSG = 6,
+		NT_REPLYMSG = 7,    /* Message has been replied */
+		NT_RESOURCE = 8,
+		NT_LIBRARY = 9,
+		NT_MEMORY = 10,
+		NT_SOFTINT = 11,    /* Internal flag used by SoftInits */
+		NT_FONT = 12,
+		NT_PROCESS = 13,    /* AmigaDOS Process */
+		NT_SEMAPHORE = 14,
+		NT_SIGNALSEM = 15,  /* signal semaphores */
+		NT_BOOTNODE = 16,
+		NT_KICKMEM = 17,
+		NT_GRAPHICS = 18,
+		NT_DEATHMESSAGE = 19,
 
-		NT_USER		= 254,	/* User node types work down from here */
-		NT_EXTENDED	= 255,
+		NT_USER = 254,  /* User node types work down from here */
+		NT_EXTENDED = 255,
 	}
 
-	//using TaskPtr = System.UInt32;
-	//using NodePtr = System.UInt32;
-	//using MinNodePtr = System.UInt32;
 	public interface IWrappedPtr { }
+	public interface IWrappedPtr<T> : IWrappedPtr
+	{
+		uint Address { get; set; }
+		T Wrapped { get; set; }
+	}
+
 	public class TaskPtr : IWrappedPtr
 	{
 		public uint Address { get; set; }
@@ -72,6 +72,11 @@ namespace RunAmiga.Disassembler
 		public MinNode MinNode { get; set; }
 	}
 
+	public class MsgPortPtr : IWrappedPtr<MsgPort>
+	{
+		public uint Address { get; set; }
+		public MsgPort Wrapped { get; set; }
+	}
 	/*
 	 * Full featured list header.
 	 */
@@ -231,7 +236,7 @@ namespace RunAmiga.Disassembler
 		public List TaskReady { get; set; }
 		public List TaskWait { get; set; }
 
-		public SoftIntList[] SoftInts {get; set;} = new SoftIntList[5];
+		public SoftIntList[] SoftInts { get; set; } = new SoftIntList[5];
 
 		/****** Other Globals *******************************************/
 
@@ -290,196 +295,57 @@ namespace RunAmiga.Disassembler
 
 	}
 
-	public class ExecBaseMapper
+	public class MsgPort
 	{
-		private IMemory memory;
-		private readonly ILogger logger;
+		public Node mp_Node { get; set; }
+		public UBYTE mp_Flags { get; set; }
+		public UBYTE mp_SigBit { get; set; }        /* signal bit number	*/
+		public VoidPtr mp_SigTask { get; set; }       /* object to be signalled */
+		public List mp_MsgList { get; set; } /* message linked list	*/
+	};
 
-		public ExecBaseMapper(IMemory memory)
+	public class Message
+	{
+		public Node mn_Node { get; set; }
+		public MsgPortPtr mn_ReplyPort { get; set; }  /* message reply port */
+		public UWORD mn_Length { get; set; } /* total message length, in bytes */
+		/* (include the size of the Message */
+		/* structure in the length) */
+	};
+
+	public class IORequest
+	{
+		public Message io_Message { get; set; }
+		public DevicePtr io_Device { get; set; }     /* device node pointer  */
+		public UnitPtr io_Unit { get; set; }        /* unit (driver private)*/
+		public UWORD io_Command { get; set; }       /* device command */
+		public UBYTE io_Flags { get; set; }
+		public BYTE io_Error { get; set; }          /* error or warning num */
+	};
+
+	public class timeval
+	{
+		public ULONG tv_secs { get; set; }
+		public ULONG tv_micro { get; set; }
+	}
+
+	public class timerequest : ObjectWalk
+	{
+		public IORequest tr_node { get; set; }
+		public timeval tr_time { get; set; }
+	}
+
+	public static class AmigaTypesMapper
+	{
+		public static uint GetSize(object s)
 		{
-			this.memory = memory;
-			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<ExecBaseMapper>>();
+			if (s.GetType() == typeof(BYTE) || s.GetType() == typeof(UBYTE) || s.GetType() == typeof(NodeType)) return 1;
+			if (s.GetType() == typeof(WORD) || s.GetType() == typeof(UWORD)) return 2;
+			if (s.GetType() == typeof(LONG) || s.GetType() == typeof(ULONG) || s.GetType() == typeof(APTR) || s.GetType() == typeof(FunctionPtr)) return 4; 
+			throw new ApplicationException();
 		}
 
-		HashSet<long> lookup = new HashSet<long>();
-
-		StringBuilder sb;
-
-		private uint MapObject(Type type, object obj, uint addr, int depth)
-		{
-			if (lookup.Contains(addr+type.GetHashCode()))
-			{
-				//logger.LogTrace($"Visited {addr:X8} again for {type.Name}");
-				return 0;
-			}
-			lookup.Add(addr+type.GetHashCode());
-
-			uint startAddr = addr;
-			var properties = type.GetProperties().OrderBy(x => x.MetadataToken).ToList();
-
-			if (!properties.Any())
-				throw new ApplicationException();
-
-			uint lastAddr = addr;
-			foreach (var prop in properties)
-			{
-				if (depth == 0)
-					sb.Append($"{addr:X8} {addr-0xc00276:X4} {addr - 0xc00276,5} {prop.Name,-25} {prop.PropertyType}\n");
-
-				if (prop.Name == "ln_Pred")
-				{
-					addr += 4;
-					continue;
-				}
-
-				object rv = null;
-				var propType = prop.PropertyType;
-				try
-				{
-					if (typeof(IWrappedPtr).IsAssignableFrom(propType))
-					{
-						if (propType == typeof(TaskPtr))
-						{
-							var tp = new TaskPtr();
-							tp.Address = memory.Read32(addr); addr += 4;
-							if (tp.Address != 0 && tp.Address < 0x1000000)
-							{
-								tp.Task = new Task();
-								MapObject(typeof(Task), tp.Task, tp.Address, depth+1);
-							}
-							else
-							{
-								tp = null;
-							}
-							rv = tp;
-						}
-						else if (propType == typeof(NodePtr))
-						{
-							var tp = new NodePtr();
-							tp.Address = memory.Read32(addr); addr += 4;
-							if (tp.Address != 0 && tp.Address < 0x1000000)
-							{
-								tp.Node = new Node();
-								MapObject(typeof(Node), tp.Node, tp.Address, depth+1);
-							}
-							else
-							{
-								tp = null;
-							}
-							rv = tp;
-						}
-						else if (propType == typeof(MinNodePtr))
-						{
-							var tp = new MinNodePtr();
-							tp.Address = memory.Read32(addr); addr += 4;
-							if (tp.Address != 0 && tp.Address < 0x1000000)
-							{
-								tp.MinNode = new MinNode();
-								MapObject(typeof(MinNode), tp.MinNode, tp.Address, depth+1);
-							}
-							else
-							{
-								tp = null;
-							}
-							rv = tp;
-						}
-						else
-						{
-							throw new NotImplementedException();
-						}
-					}
-					else if (propType == typeof(String))
-					{
-						rv = MapString(addr);
-						addr += 4;
-					}
-					else if (propType.BaseType == typeof(Array))
-					{
-						var array = (Array)prop.GetValue(obj);
-						var arrayType = array.GetType().GetElementType();
-
-						if (arrayType.BaseType == typeof(object))
-						{ 
-							for (int i = 0; i < array.Length; i++)
-							{
-								array.SetValue(Activator.CreateInstance(arrayType), i);
-								addr += MapObject(arrayType, array.GetValue(i), addr, depth+1);
-							}
-						}
-						else
-						{
-							for (int i = 0; i < array.Length; i++)
-							{
-								object s = MapSimple(arrayType, addr);
-								array.SetValue(s, i);
-
-								if (s.GetType() == typeof(BYTE) || s.GetType() == typeof(UBYTE) || s.GetType() == typeof(NodeType)) addr++;
-								else if (s.GetType() == typeof(WORD) || s.GetType() == typeof(UWORD)) addr += 2;
-								else if (s.GetType() == typeof(LONG) || s.GetType() == typeof(ULONG) || s.GetType() == typeof(APTR) || s.GetType() == typeof(FunctionPtr)) addr += 4;
-								else throw new ApplicationException();
-							}
-						}
-						rv = array;
-					}
-					else if (propType == typeof(List))
-					{
-						var list = new List();
-						rv = list;
-						uint size = MapObject(propType, rv, addr, depth + 1);
-						//it's an empty list
-						if (list.lh_TailPred == null || list.lh_TailPred.Address == addr)
-							list.lh_Head = list.lh_Tail = list.lh_TailPred = null;
-						addr += size;
-					}
-					else if (propType.BaseType == typeof(object))
-					{
-						rv = Activator.CreateInstance(propType);
-						addr += MapObject(propType, rv, addr, depth+1);
-					}
-					else
-					{
-						rv = MapSimple(propType, addr);
-						if (rv.GetType() == typeof(BYTE) || rv.GetType() == typeof(UBYTE) || rv.GetType() == typeof(NodeType)) addr++;
-						else if (rv.GetType() == typeof(WORD) || rv.GetType() == typeof(UWORD)) addr += 2;
-						else if (rv.GetType() == typeof(LONG) || rv.GetType() == typeof(ULONG) || rv.GetType() == typeof(APTR) || rv.GetType() == typeof(FunctionPtr)) addr += 4;
-						else throw new ApplicationException();
-					}
-
-					//logger.LogTrace($"{addr:X8} {prop.Name}");
-					prop.SetValue(obj, rv);
-				}
-				catch (NullReferenceException ex)
-				{
-					logger.LogTrace($"Problem Mapping {prop.Name} was null\n{ex}");
-				}
-				catch (Exception ex)
-				{
-					if (rv != null)
-						logger.LogTrace($"Problem Mapping {prop.Name} {prop.PropertyType} != {rv.GetType()}\n{ex}");
-					else
-						logger.LogTrace($"Problem Mapping {prop.Name} {prop.PropertyType}\n{ex}");
-				}
-			}
-			//logger.LogTrace($"{addr-startAddr}");
-			return addr - startAddr;
-		}
-
-		public string FromAddress()
-		{
-			lookup.Clear();
-
-			sb = new StringBuilder();
-
-			var execbase = new ExecBase();
-			uint execAddress = memory.Read32(4);
-			if (execAddress == 0xc00276)
-				MapObject(typeof(ExecBase), execbase, execAddress, 0);
-
-			//logger.LogTrace(execbase.ToString());
-			return execbase.ToString() + "\n"+ sb.ToString();
-		}
-
-		private object MapSimple(Type type, uint addr)
+		public static object MapSimple(IMemory memory, Type type, uint addr)
 		{
 			if (type == typeof(NodeType)) return (NodeType)memory.Read8(addr);
 			if (type == typeof(BYTE)) return (BYTE)memory.Read8(addr);
@@ -491,25 +357,6 @@ namespace RunAmiga.Disassembler
 			if (type == typeof(APTR)) return (APTR)memory.Read32(addr);
 			if (type == typeof(FunctionPtr)) return (FunctionPtr)memory.Read32(addr);
 			throw new ApplicationException();
-		}
-
-		public string MapString(uint addr)
-		{
-			uint str = memory.Read32(addr);
-			//logger.LogTrace($"String @{addr:X8}->{str:X8}");
-			if (str == 0)
-				return "(null)";
-
-			var sb = new StringBuilder();
-			for (; ; )
-			{
-				byte c = memory.Read8(str);
-				if (c == 0)
-					return sb.ToString();
-
-				sb.Append(Convert.ToChar(c));
-				str++;
-			}
 		}
 	}
 }

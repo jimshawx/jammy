@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -19,7 +20,6 @@ namespace RunAmiga.Main
 	public partial class RunAmiga : Form
 	{
 		private readonly IEmulation emulation;
-		//private readonly IMachine machine;
 		private readonly IDebugger debugger;
 
 		private readonly IDisassembly disassembly;
@@ -31,6 +31,7 @@ namespace RunAmiga.Main
 			InitializeComponent();
 
 			addressFollowBox.SelectedIndex = 0;
+			cbTypes.SelectedIndex = 0;
 
 			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<RunAmiga>>();
 
@@ -61,34 +62,34 @@ namespace RunAmiga.Main
 			uiMessagePumpTokenSource = new CancellationTokenSource();
 
 			uiUpdateTask = new Task(() =>
+			{
+				while (!uiUpdateTokenSource.IsCancellationRequested)
 				{
-					while (!uiUpdateTokenSource.IsCancellationRequested)
+					this.Invoke((Action)UpdatePowerLight);
+
+					if (UI.UI.IsDirty)
 					{
-						this.Invoke((Action)UpdatePowerLight);
-
-						if (UI.UI.IsDirty)
+						this.Invoke((Action)delegate()
 						{
-							this.Invoke((Action)delegate()
-							{
-								SetSelection();
-								UpdateDisplay();
-							});
-							UI.UI.IsDirty = false;
-						}
-
-						Task.Delay(500, uiUpdateTokenSource.Token).Wait();
+							SetSelection();
+							UpdateDisplay();
+						});
+						UI.UI.IsDirty = false;
 					}
-				}, uiUpdateTokenSource.Token);
+
+					Task.Delay(500, uiUpdateTokenSource.Token).Wait();
+				}
+			}, uiUpdateTokenSource.Token);
 			uiUpdateTask.Start();
 
 			uiMessagePumpTask = new Task(() =>
+			{
+				while (!uiMessagePumpTokenSource.IsCancellationRequested)
 				{
-					while (!uiMessagePumpTokenSource.IsCancellationRequested)
-					{
-						Application.DoEvents();
-						Task.Delay(100, uiMessagePumpTokenSource.Token).Wait();
-					}
-				}, uiMessagePumpTokenSource.Token);
+					Application.DoEvents();
+					Task.Delay(500, uiMessagePumpTokenSource.Token).Wait();
+				}
+			}, uiMessagePumpTokenSource.Token);
 			uiMessagePumpTask.Start();
 		}
 
@@ -137,20 +138,22 @@ namespace RunAmiga.Main
 			//File.WriteAllText("cia.resource_disassembly.txt", dmp);
 
 			var disasm = disassembly.DisassembleTxt(
-					new List<Tuple<uint, uint>>
-					{
-						new Tuple<uint, uint> (0x000000, 0x400),
-						//new Tuple<uint, uint> (0xc00000, 0xa000),
-						//new Tuple<uint, uint> (0xf80000, 0x40000),
-						new Tuple<uint, uint> (0xfc0000, 0x40000),
-					},
-					new List<uint> { 0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2,
-						0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2, 0xFE571C, 0xFC5170,0xFE5A04,0xfe61d0,0x00FE6FD4,
+				new List<Tuple<uint, uint>>
+				{
+					new Tuple<uint, uint>(0x000000, 0x400),
+					//new Tuple<uint, uint> (0xc00000, 0xa000),
+					//new Tuple<uint, uint> (0xf80000, 0x40000),
+					new Tuple<uint, uint>(0xfc0000, 0x40000),
+				},
+				new List<uint>
+				{
+					0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2,
+					0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2, 0xFE571C, 0xFC5170, 0xFE5A04, 0xfe61d0, 0x00FE6FD4,
 
-						0xFE43CC,0xFE4588,0xFE46CC,0xfe42ee,0xFC3A40,0xfc43f4,0xfc4408, 0xfc441c, 0xfc4474, 0xfc44a4, 0xfc44d0, 
+					0xFE43CC, 0xFE4588, 0xFE46CC, 0xfe42ee, 0xFC3A40, 0xfc43f4, 0xfc4408, 0xfc441c, 0xfc4474, 0xfc44a4, 0xfc44d0,
 
-					},
-					new DisassemblyOptions{ IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
+				},
+				new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 
 			Machine.UnlockEmulation();
 			txtDisassembly.Text = disasm;
@@ -184,6 +187,34 @@ namespace RunAmiga.Main
 			lbRegisters.Items.AddRange(regs.Items().ToArray());
 		}
 
+		private uint ValueFromRegName(Regs regs, string txt)
+		{
+			uint address = 0;
+			switch ((string)addressFollowBox.SelectedItem)
+			{
+				case "A0": address = regs.A[0]; break;
+				case "A1": address = regs.A[1]; break;
+				case "A2": address = regs.A[2]; break;
+				case "A3": address = regs.A[3]; break;
+				case "A4": address = regs.A[4]; break;
+				case "A5": address = regs.A[5]; break;
+				case "A6": address = regs.A[6]; break;
+				case "SP": address = regs.SP; break;
+				case "SSP": address = regs.SSP; break;
+				case "D0": address = regs.D[0]; break;
+				case "D1": address = regs.D[1]; break; 
+				case "D2": address = regs.D[2]; break;
+				case "D3": address = regs.D[3]; break;
+				case "D4": address = regs.D[4]; break;
+				case "D5": address = regs.D[5]; break;
+				case "D6": address = regs.D[6]; break;
+				case "D7": address = regs.D[7]; break;
+				case "PC": address = regs.PC; break;
+			}
+
+			return address;
+		}
+
 		private void UpdateMem()
 		{
 			Machine.LockEmulation();
@@ -195,34 +226,13 @@ namespace RunAmiga.Main
 
 			if (addressFollowBox.SelectedIndex != 0)
 			{
-				uint address = 0;
-				switch ((string)addressFollowBox.SelectedItem)
-				{
-					case "A0": address = regs.A[0]; break;
-					case "A1": address = regs.A[1]; break;
-					case "A2": address = regs.A[2]; break;
-					case "A3": address = regs.A[3]; break;
-					case "A4": address = regs.A[4]; break;
-					case "A5": address = regs.A[5]; break;
-					case "A6": address = regs.A[6]; break;
-					case "SP": address = regs.SP; break;
-					case "SSP": address = regs.SSP; break;
-					case "D0": address = regs.D[0]; break;
-					case "D1": address = regs.D[1]; break;
-					case "D2": address = regs.D[2]; break;
-					case "D3": address = regs.D[3]; break;
-					case "D4": address = regs.D[4]; break;
-					case "D5": address = regs.D[5]; break;
-					case "D6": address = regs.D[6]; break;
-					case "D7": address = regs.D[7]; break;
-					case "PC": address = regs.PC; break;
-				}
+				uint address = ValueFromRegName(regs, (string)addressFollowBox.SelectedItem);
 				var line = memory.AddressToLine(address);
 				if (line != 0)
 				{
 					txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
 					txtMemory.ScrollToCaret();
-				} 
+				}
 			}
 
 		}
@@ -498,6 +508,32 @@ namespace RunAmiga.Main
 
 			SetSelection();
 			UpdateDisplay();
+		}
+
+		private void cbTypes_SelectionChangeCommitted(object sender, EventArgs e)
+		{
+			if (cbTypes.SelectedIndex != 0 && addressFollowBox.SelectedIndex != 0)
+			{
+				string typeName = (string)cbTypes.SelectedItem + "Mapper";
+
+				var regs = debugger.GetRegs();
+				uint address = ValueFromRegName(regs, (string)addressFollowBox.SelectedItem);
+				var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == "RunAmiga.Disassembler");
+				if (assembly != null)
+				{
+					var type = assembly.GetTypes().SingleOrDefault(x => x.Name == typeName);
+					if (type != null)
+					{
+						var memory = ServiceProviderFactory.ServiceProvider.GetRequiredService<IMemory>();
+						dynamic tp = Activator.CreateInstance(type, memory);
+						if (tp != null)
+						{
+							string mm = tp.FromAddress(address);
+							txtExecBase.Text = mm;
+						}
+					}
+				}
+			}
 		}
 	}
 }
