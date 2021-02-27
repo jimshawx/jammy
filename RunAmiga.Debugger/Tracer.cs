@@ -36,7 +36,7 @@ namespace RunAmiga.Debugger
 		{
 			this.disassembly = disassembly;
 			this.labeller = labeller;
-			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Tracer>();
+			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<Tracer>>();
 		}
 
 		public void Trace(uint pc)

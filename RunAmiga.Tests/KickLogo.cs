@@ -42,7 +42,7 @@ namespace RunAmiga.Tests
 
 		static KickLogo()
 		{
-			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("MFM");
+			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<KickLogo>>();
 		}
 
 		private static readonly List<Form> forms = new List<Form>();

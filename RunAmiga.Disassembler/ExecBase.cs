@@ -298,7 +298,7 @@ namespace RunAmiga.Disassembler
 		public ExecBaseMapper(IMemory memory)
 		{
 			this.memory = memory;
-			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<ExecBaseMapper>();
+			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<ExecBaseMapper>>();
 		}
 
 		HashSet<long> lookup = new HashSet<long>();

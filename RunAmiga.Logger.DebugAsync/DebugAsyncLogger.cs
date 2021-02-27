@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
@@ -74,12 +76,12 @@ namespace RunAmiga.Logger.DebugAsync
 			public LogLevel LogLevel { get; set; }
 		}
 
-		private DebugAsyncLoggerReader reader;
+		private DebugAsyncConsoleLoggerReader reader;
 		internal static ConcurrentQueue<DbMessage> MessageQueue = new ConcurrentQueue<DbMessage>();
 
 		public DebugAsyncLoggerProvider()
 		{
-			reader = new DebugAsyncLoggerReader();
+			reader = new DebugAsyncConsoleLoggerReader();
 		}
 
 		public ILogger CreateLogger(string name) { return new DebugAsyncLogger(name); }
@@ -95,9 +97,7 @@ namespace RunAmiga.Logger.DebugAsync
 		}
 	}
 
-	public interface IDebugAsyncLoggerReader { }
-
-	public class DebugAsyncLoggerReader : IDebugAsyncLoggerReader, IDisposable
+	public class DebugAsyncLoggerReader : IDisposable
 	{
 		private readonly Thread thread;
 		private bool quit;
@@ -125,6 +125,64 @@ namespace RunAmiga.Logger.DebugAsync
 						sb.AppendLine(rv.Message);
 					}
 					Trace.Write(sb.ToString());
+
+					backoff = 1;
+				}
+				else
+				{
+					backoff += backoff;
+					if (backoff > 500) backoff = 500;
+					Thread.Sleep(backoff);
+				}
+			}
+
+			quit = false;
+		}
+
+		public void Dispose()
+		{
+			quit = true;
+			while (quit) Thread.Sleep(10);
+		}
+	}
+
+	public class DebugAsyncConsoleLoggerReader : IDisposable
+	{
+		[DllImport("kernel32.dll")]
+		static extern bool AllocConsole();
+
+		private readonly Thread thread;
+		private bool quit;
+		TextWriter writer;
+
+		public DebugAsyncConsoleLoggerReader()
+		{
+			AllocConsole();
+
+			writer = Console.Out;
+
+			thread = new Thread(Reader);
+			thread.Start();
+		}
+
+		public void Reader()
+		{
+			var messageQueue = DebugAsyncLoggerProvider.MessageQueue;
+
+			int backoff = 1;
+
+			var sb = new StringBuilder();
+			while (!quit)
+			{
+				if (!messageQueue.IsEmpty)
+				{
+					sb.Clear();
+					while (messageQueue.TryDequeue(out DebugAsyncLoggerProvider.DbMessage rv))
+					{
+						sb.AppendLine(rv.Message);
+					}
+					//Trace.Write(sb.ToString());
+					writer.Write(sb.ToString());
 
 					backoff = 1;
 				}

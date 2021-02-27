@@ -57,14 +57,14 @@ namespace RunAmiga.Main
 				.AddSingleton<IChips, Chips>()
 				.AddSingleton<IMemory>(x =>
 					new Memory("M",
-						x.GetRequiredService<ILoggerFactory>().CreateLogger<Memory>()))
+						x.GetRequiredService<ILogger<Memory>>()))
 				.AddSingleton<IMemoryMapper, MemoryMapper>()
 				.AddSingleton<IEmulation, Emulation>()
 				.BuildServiceProvider();
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider;
 
-			var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
+			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");
 
 			var emulation = serviceProvider.GetRequiredService<IEmulation>();
