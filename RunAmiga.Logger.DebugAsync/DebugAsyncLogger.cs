@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -103,56 +103,52 @@ namespace RunAmiga.Logger.DebugAsync
 		[DllImport("kernel32.dll")]
 		static extern bool FreeConsole();
 
-		private readonly Thread thread;
-		private bool quit;
-		TextWriter writer;
+		private readonly CancellationTokenSource cancellation;
 
 		public DebugAsyncConsoleLoggerReader()
 		{
-			AllocConsole();
-
-			writer = Console.Out;
-
-			thread = new Thread(Reader);
-			thread.Start();
-		}
-
-		public void Reader()
-		{
-			var messageQueue = DebugAsyncLoggerProvider.MessageQueue;
-
-			int backoff = 1;
-
-			var sb = new StringBuilder();
-			while (!quit)
+			cancellation = new CancellationTokenSource();
+			var task = new Task(() =>
 			{
-				if (!messageQueue.IsEmpty)
+				AllocConsole();
+				var writer = Console.Out;
+
+				var messageQueue = DebugAsyncLoggerProvider.MessageQueue;
+				int backoff = 1;
+				var sb = new StringBuilder();
+
+				while (!cancellation.IsCancellationRequested)
 				{
-					sb.Clear();
-					while (messageQueue.TryDequeue(out DebugAsyncLoggerProvider.DbMessage rv))
+					if (!messageQueue.IsEmpty)
 					{
-						sb.AppendLine($"{rv.Name}: {rv.LogLevel}: {rv.Message}");
+						sb.Clear();
+						while (messageQueue.TryDequeue(out DebugAsyncLoggerProvider.DbMessage rv))
+						{
+							sb.AppendLine($"{rv.Name}: {rv.LogLevel}: {rv.Message}");
+						}
+
+						writer.Write(sb.ToString());
+
+						backoff = 1;
 					}
-					writer.Write(sb.ToString());
-
-					backoff = 1;
+					else
+					{
+						backoff += backoff;
+						if (backoff > 500) backoff = 500;
+						Thread.Sleep(backoff);
+					}
 				}
-				else
-				{
-					backoff += backoff;
-					if (backoff > 500) backoff = 500;
-					Thread.Sleep(backoff);
-				}
-			}
 
-			quit = false;
+				FreeConsole();
+
+			}, cancellation.Token);
+
+			task.Start();
 		}
 
 		public void Dispose()
 		{
-			quit = true;
-			while (quit) Thread.Sleep(10);
-			FreeConsole();
+			cancellation.Cancel();
 		}
 	}
 }
