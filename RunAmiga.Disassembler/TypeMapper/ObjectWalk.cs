@@ -6,7 +6,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 {
 	public class ObjectWalk
 	{
-		private void DumpObj(object obj, StringBuilder sb, int depth)
+		private static void DumpObj(object obj, StringBuilder sb, int depth)
 		{
 			const string space = " ";
 			const string space2 = "  ";
@@ -88,10 +88,10 @@ namespace RunAmiga.Disassembler.TypeMapper
 			}
 		}
 
-		public override string ToString()
+		public static string Walk(object o)
 		{
 			var sb = new StringBuilder();
-			DumpObj(this, sb, 0);
+			DumpObj(o, sb, 0);
 			return sb.ToString();
 		}
 

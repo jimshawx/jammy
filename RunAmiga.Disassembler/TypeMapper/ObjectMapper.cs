@@ -10,33 +10,7 @@ using RunAmiga.Disassembler.AmigaTypes;
 
 namespace RunAmiga.Disassembler.TypeMapper
 {
-	public class ExecBaseMapper : BaseMapper<ExecBase>
-	{
-		private readonly IMemory memory;
-
-		public ExecBaseMapper(IMemory memory) : base(memory)
-		{
-			this.memory = memory;
-		}
-
-		public string FromAddress()
-		{
-			uint execAddress = memory.Read32(4);
-			if (execAddress == 0xc00276)
-				return FromAddress(execAddress);
-
-			return string.Empty;
-		}
-	}
-
-	public class timerequestMapper : BaseMapper<timerequest>
-	{
-		public timerequestMapper(IMemory memory) : base(memory)
-		{
-		}
-	}
-
-	public class BaseMapper<T> where T : ObjectWalk, new() 
+	public class BaseMapper
 	{
 		private readonly IMemory memory;
 		private readonly ILogger logger;
@@ -45,9 +19,9 @@ namespace RunAmiga.Disassembler.TypeMapper
 		private readonly HashSet<long> lookup = new HashSet<long>();
 		private StringBuilder sb;
 
-		public BaseMapper(IMemory memory)
+		public BaseMapper()
 		{
-			this.memory = memory;
+			this.memory = ServiceProviderFactory.ServiceProvider.GetRequiredService<IMemory>();
 			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerProvider>().CreateLogger("BaseMapper");
 		}
 
@@ -218,7 +192,26 @@ namespace RunAmiga.Disassembler.TypeMapper
 			return addr - startAddr;
 		}
 
-		public string FromAddress(uint address)
+		private string MapString(uint addr)
+		{
+			uint strPtr = memory.Read32(addr);
+
+			if (strPtr == 0)
+				return "(null)";
+
+			var str = new StringBuilder();
+			for (; ; )
+			{
+				byte c = memory.Read8(strPtr);
+				if (c == 0)
+					return str.ToString();
+
+				str.Append(Convert.ToChar(c));
+				strPtr++;
+			}
+		}
+
+		public string FromAddress(object amigaObj, uint address)
 		{
 			baseAddress = address;
 
@@ -226,29 +219,19 @@ namespace RunAmiga.Disassembler.TypeMapper
 
 			sb = new StringBuilder();
 
-			var amigaObj = new T();
-			MapObject(typeof(T), amigaObj, address, 0);
+			//maps the memory at "address" into "amigaObj"
+			MapObject(amigaObj.GetType(), amigaObj, address, 0);
 
-			return amigaObj.ToString() + "\n"+ sb.ToString();
+			//Walk the object writing out property names, offsets and values
+			return ObjectWalk.Walk(amigaObj) + "\n" + sb.ToString();
 		}
+	}
 
-		public string MapString(uint addr)
+	public class ObjectMapper
+	{
+		public static string MapObject(object tp, uint address)
 		{
-			uint str = memory.Read32(addr);
-
-			if (str == 0)
-				return "(null)";
-
-			var sb = new StringBuilder();
-			for (; ; )
-			{
-				byte c = memory.Read8(str);
-				if (c == 0)
-					return sb.ToString();
-
-				sb.Append(Convert.ToChar(c));
-				str++;
-			}
+			return new BaseMapper().FromAddress(tp, address);
 		}
 	}
 }

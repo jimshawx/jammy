@@ -99,9 +99,6 @@ namespace RunAmiga.Core.Interface.Interfaces
 	public interface IDebugger : IMemoryMappedDevice
 	{
 		void ToggleBreakpoint(uint pc);
-		//Disassembly GetDisassembly();
-		//BreakpointCollection GetBreakpoints();
-		string UpdateExecBase();
 		MemoryDump GetMemory();
 		Regs GetRegs();
 		void BreakAtNextPC();

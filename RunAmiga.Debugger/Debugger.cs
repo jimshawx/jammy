@@ -242,11 +242,6 @@ namespace RunAmiga.Debugger
 			AddBreakpoint(disassembly.GetLineAddress(line), BreakpointType.OneShot);
 		}
 
-		public string UpdateExecBase()
-		{
-			return new ExecBaseMapper(memory).FromAddress();
-		}
-
 		public MemoryDump GetMemory()
 		{
 			return new MemoryDump(memory.GetMemoryArray());

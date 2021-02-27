@@ -13,6 +13,7 @@ using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Disassembler.TypeMapper;
 using RunAmiga.Main.Dialogs;
 
 namespace RunAmiga.Main
@@ -169,14 +170,6 @@ namespace RunAmiga.Main
 			UpdateExecBase();
 		}
 
-		private void UpdateExecBase()
-		{
-			Machine.LockEmulation();
-			var execBaseTxt = debugger.UpdateExecBase();
-			Machine.UnlockEmulation();
-			this.txtExecBase.Text = execBaseTxt;
-		}
-
 		private void UpdateRegs()
 		{
 			Machine.LockEmulation();
@@ -233,6 +226,7 @@ namespace RunAmiga.Main
 					txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
 					txtMemory.ScrollToCaret();
 				}
+				UpdateExecBase();
 			}
 
 		}
@@ -510,30 +504,32 @@ namespace RunAmiga.Main
 			UpdateDisplay();
 		}
 
-		private void cbTypes_SelectionChangeCommitted(object sender, EventArgs e)
+		private void UpdateExecBase()
 		{
 			if (cbTypes.SelectedIndex != 0 && addressFollowBox.SelectedIndex != 0)
 			{
-				string typeName = (string)cbTypes.SelectedItem + "Mapper";
+				string typeName = (string)cbTypes.SelectedItem;
 
 				var regs = debugger.GetRegs();
 				uint address = ValueFromRegName(regs, (string)addressFollowBox.SelectedItem);
+
 				var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == "RunAmiga.Disassembler");
 				if (assembly != null)
 				{
 					var type = assembly.GetTypes().SingleOrDefault(x => x.Name == typeName);
 					if (type != null)
 					{
-						var memory = ServiceProviderFactory.ServiceProvider.GetRequiredService<IMemory>();
-						dynamic tp = Activator.CreateInstance(type, memory);
+						object tp = Activator.CreateInstance(type);
 						if (tp != null)
-						{
-							string mm = tp.FromAddress(address);
-							txtExecBase.Text = mm;
-						}
+							txtExecBase.Text = ObjectMapper.MapObject(tp, address);
 					}
 				}
 			}
+		}
+
+		private void cbTypes_SelectionChangeCommitted(object sender, EventArgs e)
+		{
+			UpdateExecBase();
 		}
 	}
 }
