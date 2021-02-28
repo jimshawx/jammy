@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
@@ -7,7 +8,13 @@ namespace RunAmiga.Core
 {
 	public class BreakpointCollection : IBreakpointCollection
 	{
-		private Dictionary<uint, Breakpoint> breakpoints = new Dictionary<uint, Breakpoint>();
+		private readonly ILogger logger;
+		private readonly Dictionary<uint, Breakpoint> breakpoints = new Dictionary<uint, Breakpoint>();
+
+		public BreakpointCollection(ILogger<BreakpointCollection> logger)
+		{
+			this.logger = logger;
+		}
 
 		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long)
 		{
@@ -16,12 +23,10 @@ namespace RunAmiga.Core
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			//if (IsMemoryBreakpoint(address, BreakpointType.Write))
 		}
 
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
-			//if (IsMemoryBreakpoint(address, BreakpointType.Read))
 		}
 
 		private bool IsMemoryBreakpoint(uint pc, BreakpointType type)
@@ -48,15 +53,11 @@ namespace RunAmiga.Core
 
 		public bool IsBreakpoint(uint pc)
 		{
-			//var regs = cpu.GetRegs();
-
-			//if (pc == 0xfc165a && string.Equals(GetString(regs.A[1]), "ciaa.resource"))
-			//	return true;
-
 			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
 			{
 				if (bp.Type == BreakpointType.Permanent)
 					return bp.Active;
+
 				if (bp.Type == BreakpointType.Counter)
 				{
 					if (bp.Active)
@@ -72,27 +73,10 @@ namespace RunAmiga.Core
 
 				if (bp.Type == BreakpointType.OneShot)
 					breakpoints.Remove(pc);
+				
 				return bp.Active;
 			}
 			return false;
-		}
-
-		public void RemoveBreakpoint(uint address)
-		{
-			breakpoints.Remove(address);
-		}
-
-		public void SetBreakpoint(uint address, bool active)
-		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp))
-				bp.Active = active;
-		}
-
-		public Breakpoint GetBreakpoint(uint address, bool active)
-		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp))
-				return bp;
-			return new Breakpoint { Address = address, Active = false };
 		}
 
 		public void ToggleBreakpoint(uint pc)
@@ -103,20 +87,40 @@ namespace RunAmiga.Core
 				AddBreakpoint(pc);
 		}
 
-		private bool signalled = false;
-		public void SignalBreakpoint()
+		public void SignalBreakpoint(uint address)
 		{
-			signalled = true;
+			Breakpoint(address);
 		}
 
-		public void AckBreakpoint()
+		public bool CheckBreakpoints(uint address)
 		{
-			signalled = false;
+			if (IsBreakpoint(address))
+			{
+				Breakpoint(address);
+				return true;
+			}
+
+			return false;
 		}
 
-		public bool IsBreakpointSignalled()
+		private bool breakpointHit;
+
+		public bool BreakpointHit()
 		{
-			return signalled;
+			bool hit = breakpointHit;
+			breakpointHit = false;
+			return hit;
+		}
+
+		private void Breakpoint(uint pc)
+		{
+			logger.LogTrace($"Breakpoint @{pc:X8}");
+			breakpointHit = true;
+			
+			//debugger.DumpTrace();
+			//Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			
+			UI.UI.IsDirty = true;
 		}
 	}
 }

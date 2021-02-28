@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -78,7 +79,7 @@ namespace RunAmiga.Main
 						UI.UI.IsDirty = false;
 					}
 
-					Task.Delay(500, uiUpdateTokenSource.Token).Wait();
+					Task.Delay(500).Wait(uiUpdateTokenSource.Token);
 				}
 			}, uiUpdateTokenSource.Token);
 			uiUpdateTask.Start();
@@ -88,7 +89,7 @@ namespace RunAmiga.Main
 				while (!uiMessagePumpTokenSource.IsCancellationRequested)
 				{
 					Application.DoEvents();
-					Task.Delay(500, uiMessagePumpTokenSource.Token).Wait();
+					Task.Delay(500).Wait(uiMessagePumpTokenSource.Token);
 				}
 			}, uiMessagePumpTokenSource.Token);
 			uiMessagePumpTask.Start();
@@ -151,7 +152,7 @@ namespace RunAmiga.Main
 					0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2,
 					0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2, 0xFE571C, 0xFC5170, 0xFE5A04, 0xfe61d0, 0x00FE6FD4,
 
-					0xFE43CC, 0xFE4588, 0xFE46CC, 0xfe42ee, 0xFC3A40, 0xfc43f4, 0xfc4408, 0xfc441c, 0xfc4474, 0xfc44a4, 0xfc44d0,
+					0xFE43CC, 0xFE4588, 0xFE46CC, 0xfe42ee, 0xFC3A40, 0xfc43f4, 0xfc4408, 0xfc441c, 0xfc4474, 0xfc44a4, 0xfc44d0,0xFE62D4
 
 				},
 				new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
@@ -174,10 +175,28 @@ namespace RunAmiga.Main
 		{
 			Machine.LockEmulation();
 			var regs = debugger.GetRegs();
+			var memory = debugger.GetMemory();
 			Machine.UnlockEmulation();
 
+			var mem = new List<Tuple<uint, uint>>();
+			long sp = (long)regs.SP;
+			long ssp = (long)regs.SSP;
+			int cnt = 32;
+			while (sp > 0 && cnt-- > 0)
+			{
+				uint spv = 0xffffffff, sspv = 0xffffffff;
+				if (sp >= 0) spv = memory.Read32((uint)sp);
+				if (ssp >= 0) sspv = memory.Read32((uint)ssp);
+				mem.Add(new Tuple<uint, uint>(spv, sspv));
+				sp -= 4;
+				ssp -= 4;
+			}
+			lbCallStack.Items.Clear();
+			lbCallStack.Items.Add("   SP       SSP   ");
+			lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
+
 			lbRegisters.Items.Clear();
-			lbRegisters.Items.AddRange(regs.Items().ToArray());
+			lbRegisters.Items.AddRange(regs.Items().Cast<object>().ToArray());
 		}
 
 		private uint ValueFromRegName(Regs regs, string txt)
@@ -228,7 +247,6 @@ namespace RunAmiga.Main
 				}
 				UpdateExecBase();
 			}
-
 		}
 
 		private void SetSelection()
@@ -247,18 +265,19 @@ namespace RunAmiga.Main
 			txtDisassembly.Update();
 		}
 
-		private void btnStep_Click(object sender, System.EventArgs e)
+		private void btnStep_Click(object sender, EventArgs e)
 		{
 			txtDisassembly.DeselectAll();
 			Machine.SetEmulationMode(EmulationMode.Step);
-
-			Machine.WaitEmulationMode(EmulationMode.Stopped);
-
-			SetSelection();
-			UpdateDisplay();
 		}
 
-		private void btnStop_Click(object sender, System.EventArgs e)
+		private void btnStepOut_Click(object sender, EventArgs e)
+		{
+			txtDisassembly.DeselectAll();
+			Machine.SetEmulationMode(EmulationMode.StepOut);
+		}
+
+		private void btnStop_Click(object sender, EventArgs e)
 		{
 			txtDisassembly.DeselectAll();
 			Machine.SetEmulationMode(EmulationMode.Stopped);
@@ -267,7 +286,7 @@ namespace RunAmiga.Main
 			UpdateDisplay();
 		}
 
-		private void btnGo_Click(object sender, System.EventArgs e)
+		private void btnGo_Click(object sender, EventArgs e)
 		{
 			txtDisassembly.DeselectAll();
 			Machine.SetEmulationMode(EmulationMode.Running);
@@ -307,11 +326,6 @@ namespace RunAmiga.Main
 			debugger.BreakAtNextPC();
 			Machine.SetEmulationMode(EmulationMode.Running, true);
 			Machine.UnlockEmulation();
-
-			Machine.WaitEmulationMode(EmulationMode.Stopped);
-
-			SetSelection();
-			UpdateDisplay();
 		}
 
 		private void UpdatePowerLight()
@@ -506,6 +520,7 @@ namespace RunAmiga.Main
 
 		private void UpdateExecBase()
 		{
+
 			if (cbTypes.SelectedIndex != 0 && addressFollowBox.SelectedIndex != 0)
 			{
 				string typeName = (string)cbTypes.SelectedItem;
@@ -521,7 +536,11 @@ namespace RunAmiga.Main
 					{
 						object tp = Activator.CreateInstance(type);
 						if (tp != null)
+						{
+							Machine.LockEmulation();
 							txtExecBase.Text = ObjectMapper.MapObject(tp, address);
+							Machine.UnlockEmulation();
+						}
 					}
 				}
 			}

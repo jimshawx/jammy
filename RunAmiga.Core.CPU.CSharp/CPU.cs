@@ -77,53 +77,27 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private ushort Fetch(uint pc)
 		{
-			//debugging
-			//if (!((pc > 0 && pc < 0x800) || (pc >= 0xc00000 && pc < 0xc10000) || (pc >= 0xf80000 && pc < 0x1000000)))
-			if (pc >= 0x1000000)
-			{
-				tracer.DumpTrace();
-				logger.LogTrace($"PC out of expected range {pc:X8}");
-				//Machine.SetEmulationMode(EmulationMode.Stopped, true);
-				breakpoints.SignalBreakpoint();
-			}
-
 			tracer.TraceAsm(pc, GetRegs());
-
 			return read16(pc);
 		}
 
-
-		private void Breakpoint()
-		{
-			//debugger.DumpTrace();
-			logger.LogTrace($"Breakpoint @{pc:X8}");
-			//Machine.SetEmulationMode(EmulationMode.Stopped, true);
-			breakpoints.SignalBreakpoint();
-			UI.UI.IsDirty = true;
-		}
-
-
 		private bool CheckInterrupt()
 		{
-			//if (interrupt.InterruptPending())
+			//the three IPL bits are the current interrupt level
+			//higher levels can interrupt lower ones, but not the other way around
+			//level 7 is NMI
+			ushort currentInterruptLevel = (ushort)((sr >> 8) & 7);
+			ushort interruptLevel = interrupt.GetInterruptLevel();
+			if (interruptLevel > currentInterruptLevel || interruptLevel == 7)
 			{
-				//the three IPL bits are the current interrupt level
-				//higher levels can interrupt lower ones, but not the other way around
-				//level 7 is NMI
-				ushort currentInterruptLevel = (ushort)((sr >> 8) & 7);
-				ushort interruptLevel = interrupt.GetInterruptLevel();
-				if (interruptLevel > currentInterruptLevel || interruptLevel == 7)
-				{
-					instructionStartPC = pc;
-					internalTrap(0x18 + (uint)interruptLevel);
+				instructionStartPC = pc;
+				
+				internalTrap(0x18 + (uint)interruptLevel);
 
-					//interrupt.ResetInterrupt();
-					instructionStartPC = pc;
+				instructionStartPC = pc;
 
-					return true;
-				}
+				return true;
 			}
-
 			return false;
 		}
 
@@ -133,11 +107,8 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			if (CheckInterrupt())
 			{
-				if (breakpoints.IsBreakpoint(pc))
-				{
-					Breakpoint();
+				if (breakpoints.CheckBreakpoints(pc))
 					return;
-				}
 			}
 
 			if (fetchMode == FetchMode.Stopped)
@@ -211,14 +182,10 @@ namespace RunAmiga.Core.CPU.CSharp
 					internalTrap(3);
 
 				tracer.DumpTrace();
-				//Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				breakpoints.SignalBreakpoint(instructionStartPC);
 			}
 
-			if (breakpoints.IsBreakpoint(pc))
-			{
-				Breakpoint();
-				return;
-			}
+			breakpoints.CheckBreakpoints(pc);
 		}
 
 		public Regs GetRegs()

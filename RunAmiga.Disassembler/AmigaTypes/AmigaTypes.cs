@@ -1,6 +1,5 @@
 ﻿using System;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Disassembler.TypeMapper;
 
 namespace RunAmiga.Disassembler.AmigaTypes
 {
@@ -204,7 +203,7 @@ namespace RunAmiga.Disassembler.AmigaTypes
 		public UWORD sh_Pad { get; set; }
 	}
 
-	public class ExecBase : ObjectWalk
+	public class ExecBase
 	{
 		public Library LibNode { get; set; } /* Standard library node */
 
@@ -303,11 +302,11 @@ namespace RunAmiga.Disassembler.AmigaTypes
 		//public UWORD ex_Pad0 { get; set; }
 		//public ULONG ex_LaunchPoint { get; set; }       /* Private to Launch/Switch */
 		//public APTR ex_RamLibPrivate { get; set; }
-		///* The next ULONG contains the system "E" clock frequency,
-		//** expressed in Hertz.	The E clock is used as a timebase for
-		//** the Amiga's 8520 I/O chips. (E is connected to "02").
-		//** Typical values are 715909 for NTSC, or 709379 for PAL.
-		//*/
+		// /* The next ULONG contains the system "E" clock frequency,
+		// ** expressed in Hertz.	The E clock is used as a timebase for
+		// ** the Amiga's 8520 I/O chips. (E is connected to "02").
+		// ** Typical values are 715909 for NTSC, or 709379 for PAL.
+		// */
 		//public ULONG ex_EClockFrequency { get; set; }   /* (readable) */
 		//public ULONG ex_CacheControl { get; set; }  /* Private to CacheControl calls */
 		//public ULONG ex_TaskID { get; set; }        /* Next available task ID */
@@ -385,6 +384,36 @@ namespace RunAmiga.Disassembler.AmigaTypes
 	{
 		public Node kr_Node{ get; set; }
 		public List kr_List{ get; set; }	/* a list of KeyMapNodes */
+	}
+
+	public class Unit
+	{
+		public MsgPort unit_MsgPort { get; set; }    /* queue for unprocessed messages */
+		/* instance of msgport is recommended */
+		public UBYTE unit_flags { get; set; }
+		public UBYTE unit_pad { get; set; }
+		public UWORD unit_OpenCnt { get; set; }     /* number of active opens */
+	}
+
+
+	public class ResidentPtr : IWrappedPtr<Resident>
+	{
+		public uint Address { get; set; }
+		public Resident Wrapped { get; set; }
+	}
+
+	public class Resident
+	{
+		public UWORD rt_MatchWord { get; set; } /* word to match on (ILLEGAL)	*/
+		public ResidentPtr rt_MatchTag { get; set; } /* pointer to the above	*/
+		public APTR rt_EndSkip { get; set; }        /* address to continue scan	*/
+		public UBYTE rt_Flags { get; set; }     /* various tag flags		*/
+		public UBYTE rt_Version { get; set; }       /* release version number	*/
+		public UBYTE rt_Type { get; set; }      /* type of module (NT_XXXXXX)	*/
+		public BYTE rt_Pri { get; set; }        /* initialization priority */
+		public CharPtr rt_Name { get; set; }      /* pointer to node name	*/
+		public CharPtr rt_IdString { get; set; }  /* pointer to identification string */
+		public APTR rt_Init { get; set; }       /* pointer to init code	*/
 	}
 
 }

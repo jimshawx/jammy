@@ -5,6 +5,7 @@
 		Stopped,
 		Step,
 		Running,
-		Exit
+		Exit,
+		StepOut
 	}
 }

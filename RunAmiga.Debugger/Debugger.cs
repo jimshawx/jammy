@@ -8,7 +8,6 @@ using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
 using RunAmiga.Core.Types.Types.Debugger;
 using RunAmiga.Disassembler;
-using RunAmiga.Disassembler.TypeMapper;
 using Machine = RunAmiga.Core.Machine;
 
 namespace RunAmiga.Debugger
@@ -80,8 +79,8 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0x00fc0ca6);//L2 Autovector IO/Timer
 				AddBreakpoint(0xFC465E);//Timer A
 				//AddBreakpoint(0xFC4668);//Timer B
-				AddBreakpoint(0xFC4672);//TOD
-				AddBreakpoint(0xFC467C);//Serial
+				//AddBreakpoint(0xFC4672);//TOD
+				//AddBreakpoint(0xFC467C);//Serial
 				AddBreakpoint(0xFC4686);//Flag
 
 			//AddBreakpoint(0x00fc0cdc);//L3 Autovector
@@ -143,7 +142,19 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0xf85804);//KS2.04 battclock.resource init
 			AddBreakpoint(0xfe9232);
 
+			//AddBreakpoint(0xfe9550);//TR_ADDREQUEST
+			//AddBreakpoint(0xFE958A);//something
+			//AddBreakpoint(0xFE9458);
+			//AddBreakpoint(0xFE9440);
+			//AddBreakpoint(0xFE91d6);
+			//AddBreakpoint(0xFE9622);
+
+			AddBreakpoint(0xFE974C);//where do these jumps go?
+			//AddBreakpoint(0xFE9778);
+
 			AddBreakpoint(0xfe9550);//TR_ADDREQUEST
+									//C037C8
+
 		}
 
 		public void SetTracer(ITracer trace)

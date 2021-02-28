@@ -12,6 +12,7 @@ namespace RunAmiga.Core
 		private readonly ICPU cpu;
 		private readonly IBreakpointCollection breakpointCollection;
 		private readonly IChips custom;
+		private readonly IMemory memory;
 		private readonly ICIAAOdd ciaa;
 		private readonly ICIABEven ciab;
 
@@ -26,6 +27,7 @@ namespace RunAmiga.Core
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IBreakpointCollection breakpointCollection)
 		{
+			this.memory = memory;
 			this.ciaa = ciaa;
 			this.ciab = ciab;
 			this.custom = custom;
@@ -63,15 +65,9 @@ namespace RunAmiga.Core
 			emuThread = new Task(Emulate);
 			emuThread.Start();
 		}
-
-		//private EmulationMode targetEmulationMode;
+		
 		public static void SetEmulationMode(EmulationMode mode, bool omitLock = false)
 		{
-			//if (mode == EmulationMode.Stopped)
-			//	LockEmulation();
-			//else
-			//	UnlockEmulation();
-
 			if (omitLock)
 			{
 				emulationMode = mode;
@@ -83,51 +79,35 @@ namespace RunAmiga.Core
 			UnlockEmulation();
 		}
 
-		public static void WaitEmulationMode(EmulationMode mode)
-		{
-			for (; ; )
-			{
-				LockEmulation();
-				if (emulationMode == mode)
-				{
-					UnlockEmulation();
-					break;
-				}
-				UnlockEmulation();
-				Thread.Sleep(100);
-			}
-		}
+		//public static void WaitEmulationMode(EmulationMode mode)
+		//{
+		//	for (; ; )
+		//	{
+		//		LockEmulation();
+		//		if (emulationMode == mode)
+		//		{
+		//			UnlockEmulation();
+		//			break;
+		//		}
+		//		UnlockEmulation();
+		//		Thread.Sleep(100);
+		//	}
+		//}
 
 		public static void UnlockEmulation()
 		{
-			//logger.LogTrace($"Unlock {Thread.CurrentThread.ManagedThreadId} {Thread.CurrentThread.Name} {emulationSemaphore.CurrentCount}");
-			//Interlocked.Exchange(ref emulationLock, 0);
-
-			//if (emulationSemaphore.Wait(0)) return;
-			//if (emulationSemaphore.CurrentCount == 1) return;
 			emulationSemaphore.Release();
-
-			//emulationMutex.ReleaseMutex();
 		}
 
 		public static void LockEmulation()
 		{
-			//logger.LogTrace($"Lock {Thread.CurrentThread.ManagedThreadId} {Thread.CurrentThread.Name} {emulationSemaphore.CurrentCount}");
-			//for (; ; )
-			//{
-			//	if (Interlocked.Exchange(ref emulationLock, 1) == 0)
-			//		return;
-
-			//	Thread.Yield();
-			//}
-
 			emulationSemaphore.Wait();
-
-			//emulationMutex.WaitOne();
 		}
 
 		public void Emulate()
 		{
+			uint stepOutSp = 0xffffffff;
+
 			ciaa.Reset();
 			ciab.Reset();
 			custom.Reset();
@@ -135,34 +115,39 @@ namespace RunAmiga.Core
 
 			while (emulationMode != EmulationMode.Exit)
 			{
-				if (breakpointCollection.IsBreakpointSignalled())
-				{
+				if (breakpointCollection.BreakpointHit())
 					Machine.SetEmulationMode(EmulationMode.Stopped, true);
-					breakpointCollection.AckBreakpoint();
-				}
 
 				LockEmulation();
 
 				switch (emulationMode)
 				{
 					case EmulationMode.Running:
-						//int counter = 1000;
-						//long time = Stopwatch.GetTimestamp();
-						//while (counter-- > 0 && emulationMode == EmulationMode.Running)
-						//{
-						//	long t = Stopwatch.GetTimestamp();
-						//	ulong ns = (ulong) (((t - time) * 1000_000_000L) / Stopwatch.Frequency) ;
-						//	time = t;
-						//	RunEmulations(ns);
-						//}
 						RunEmulations(8);
 						break;
 					case EmulationMode.Step:
 						RunEmulations(8);
 						emulationMode = EmulationMode.Stopped;
+						UI.UI.IsDirty = true;
 						break;
-					case EmulationMode.Exit: break;
-					case EmulationMode.Stopped: break;
+					case EmulationMode.StepOut:
+						var regs = cpu.GetRegs();
+						if (stepOutSp == 0xffffffff) stepOutSp = regs.A[7];
+						ushort ins = memory.Read16(regs.PC);
+						bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] >= stepOutSp; //rts or rte
+						RunEmulations(8);
+						if (stopping)
+						{
+							emulationMode = EmulationMode.Stopped;
+							stepOutSp = 0xffffffff;
+							UI.UI.IsDirty = true;
+						}
+						break;
+					case EmulationMode.Exit:
+						break;
+					case EmulationMode.Stopped:
+						//Thread.Sleep(50);
+						break;
 					default:
 						throw new ApplicationException("unknown emulation mode");
 				}

@@ -56,17 +56,7 @@ namespace RunAmiga.Core.CPU.Musashi
 
 			instructionStartPC = pc;
 
-			if (breakpoints.IsBreakpoint(pc))
-				Breakpoint(pc);
-		}
-
-		private void Breakpoint(uint pc)
-		{
-			//debugger.DumpTrace();
-			logger.LogTrace($"Breakpoint @{pc:X8}");
-			//Machine.SetEmulationMode(EmulationMode.Stopped, true);
-			breakpoints.SignalBreakpoint();
-			UI.UI.IsDirty = true;
+			breakpoints.CheckBreakpoints(pc);
 		}
 
 		public void Reset()
