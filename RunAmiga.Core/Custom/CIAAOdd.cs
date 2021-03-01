@@ -70,7 +70,6 @@ namespace RunAmiga.Core.Custom
 			byte value;
 			byte reg = GetReg(address, size);
 
-
 			if (reg == CIA.PRA)
 			{
 				byte p = 0;

@@ -132,7 +132,7 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0xb32a, BreakpointType.Write);
 			//AddBreakpoint(0xfd18dc);
 
-			AddBreakpoint(0xFE571C);//Keyboard ISR
+			//AddBreakpoint(0xFE571C);//Keyboard ISR
 
 			//AddBreakpoint(0xfe5efa);//Mouse
 			//AddBreakpoint(0xfe572a);//Keyboard
@@ -140,7 +140,7 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0xfc6d00);//wrong copper address 0xc00276
 
 			//AddBreakpoint(0xf85804);//KS2.04 battclock.resource init
-			AddBreakpoint(0xfe9232);
+			//AddBreakpoint(0xfe9232);
 
 			//AddBreakpoint(0xfe9550);//TR_ADDREQUEST
 			//AddBreakpoint(0xFE958A);//something
@@ -152,7 +152,7 @@ namespace RunAmiga.Debugger
 			AddBreakpoint(0xFE974C);//where do these jumps go?
 			//AddBreakpoint(0xFE9778);
 
-			AddBreakpoint(0xfe9550);//TR_ADDREQUEST
+			//AddBreakpoint(0xfe9550);//TR_ADDREQUEST
 									//C037C8
 
 		}
@@ -287,13 +287,13 @@ namespace RunAmiga.Debugger
 		{
 			ciaa.DebugSetICR(icr);
 			ciab.DebugSetICR(icr);
-			interrupt.TriggerInterrupt(Interrupt.PORTS);
+			interrupt.AssertInterrupt(Interrupt.PORTS);
 		}
 
 		public void IRQ(uint irq)
 		{
 			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1<<(int)irq), Size.Word);
-			interrupt.TriggerInterrupt(irq);
+			interrupt.AssertInterrupt(irq);
 		}
 
 		public IDisassembly GetDisassembly()
