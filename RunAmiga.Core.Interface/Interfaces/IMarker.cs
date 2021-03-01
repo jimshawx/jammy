@@ -50,15 +50,17 @@ namespace RunAmiga.Core.Interface.Interfaces
 	}
 	public interface IKeyboard : IEmulate
 	{
-		uint ReadKey();
+		byte ReadKey();
 		void SetCIA(ICIAAOdd ciaa);
+		void WriteSDR(uint insaddr, byte value);
+		void WriteCRA(uint insaddr, byte value);
 	}
 
 	public interface IMouse : IEmulate, ICustomReadWrite, IReadWritePRA { }
 
 	public interface IInterrupt : IEmulate
 	{
-		void TriggerInterrupt(uint intreq);
+		void AssertInterrupt(uint intreq, bool asserted = true);
 		void SetCPUInterruptLevel(uint intreq);
 		void Init(IChips custom);
 		ushort GetInterruptLevel();

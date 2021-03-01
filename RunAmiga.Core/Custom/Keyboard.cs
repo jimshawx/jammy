@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -30,7 +29,7 @@ namespace RunAmiga.Core.Custom
 			70                                 rst
 		 */
 
-		private readonly Dictionary<int, int> scanConvert = new Dictionary<int, int>
+		private readonly Dictionary<int, byte> scanConvert = new Dictionary<int, byte>
 		{
 			{0x70, 0x50},//F1
 			{0x71, 0x51},//F2
@@ -123,34 +122,26 @@ namespace RunAmiga.Core.Custom
 			keys.Show();
 		}
 
-		private ConcurrentQueue<int> keyQueue = new ConcurrentQueue<int>();
+		private readonly ConcurrentQueue<byte> keyQueue = new ConcurrentQueue<byte>();
 
 		private void AddKeyDown(object sender, KeyEventArgs e)
 		{
 			int key = e.KeyValue;
 
-			logger.LogTrace($"{Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} ");
+			logger.LogTrace($"KeyDown {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2} ");
 
 			if (scanConvert.ContainsKey(key))
-			{
-				logger.LogTrace($"{scanConvert[key]:X2}");
-
 				keyQueue.Enqueue(scanConvert[key]);
-			}
 		}
 
 		private void AddKeyUp(object sender, KeyEventArgs e)
 		{
 			int key = e.KeyValue;
 
-			logger.LogTrace($"{Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} ");
+			logger.LogTrace($"KeyUp   {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2}");
 
 			if (scanConvert.ContainsKey(key))
-			{
-				logger.LogTrace($"{scanConvert[key]:X2}");
-
-				keyQueue.Enqueue(scanConvert[key] | 0x80);
-			}
+				keyQueue.Enqueue((byte)(scanConvert[key] | 0x80));
 		}
 
 		private void AddReset(object sender, EventArgs e)
@@ -158,9 +149,19 @@ namespace RunAmiga.Core.Custom
 			keyQueue.Enqueue(0x78);
 		}
 
+		private enum KeyboardState
+		{
+			Ready,//ready to send a key
+			WaitSPLow,//waiting for CPU to send a 0 bit down the serial port
+			WaitSPHigh//waiting for the CPU to send a 1 bit down the serial port
+		}
+
+		private KeyboardState keyboardState = KeyboardState.Ready;
+
 		private void KeyInterrupt()
 		{
 			cia.SerialInterrupt();
+			keyboardState = KeyboardState.WaitSPLow;
 		}
 
 		private uint keyTimer=0;
@@ -171,36 +172,50 @@ namespace RunAmiga.Core.Custom
 			{
 				keyTimer -= 10;
 
-				//read ICR, if there's no keyboard interrupt pending
-				byte icr = cia.SnoopICRR();
-				if ((icr & (byte)(ICRB.IR | ICRB.SERIAL))==0)
-				{
-					//read CRA, if it's in input mode the last key has been processed
-					byte cra = (byte)cia.Read(0, 0xBFEE01, Types.Types.Size.Byte);
-					if ((cra & (byte)CR.CRA_SPMODE) == 0)
-					{
-						if (keyQueue.Any())
-							KeyInterrupt();
-					}
-				}
+				if (keyboardState == KeyboardState.Ready && !keyQueue.IsEmpty)
+					KeyInterrupt();
 			}
 		}
 
 		public void Reset()
 		{
 			keyQueue.Clear();
+			keyboardState = KeyboardState.Ready;
 		}
 
-		public uint ReadKey()
+		private byte sdr;
+		public byte ReadKey()
 		{
-			if (keyQueue.TryDequeue(out int c))
+			sdr = 0x00;
+			if (keyQueue.TryDequeue(out byte c))
 			{
-				c = (c << 1) | (c >> 7);
-				c = ~c;
-				return (uint)c;
+				c = (byte)~((c << 1) | (c >> 7));
+				sdr = c;
 			}
+			else
+			{
+				//shouldn't get here, since key is only read when we say one is ready
+				sdr = 0x00; 
+			}
+			return sdr;
+		}
 
-			return 0x00;
+		public void WriteSDR(uint insaddr, byte value)
+		{
+			sdr = value;
+
+			logger.LogTrace($"wrote {value:X2} to SDR {keyboardState}");
+			if (keyboardState == KeyboardState.WaitSPLow) keyboardState = KeyboardState.WaitSPHigh;
+			else if (keyboardState == KeyboardState.WaitSPHigh) keyboardState = KeyboardState.Ready;
+			logger.LogTrace($"                     -> {keyboardState}");
+		}
+
+		public void WriteCRA(uint insaddr, byte value)
+		{
+			logger.LogTrace($"wrote {value:X2} to CRA, SDR is {sdr:X2} {keyboardState}");
+			if ((value & (byte)CR.CRA_SPMODE) != 0 && keyboardState == KeyboardState.WaitSPLow) keyboardState = KeyboardState.WaitSPHigh;
+			if ((value & (byte)CR.CRA_SPMODE) == 0 && keyboardState == KeyboardState.WaitSPHigh) keyboardState = KeyboardState.Ready;
+			logger.LogTrace($"                     -> {keyboardState}");
 		}
 
 		public void SetCIA(ICIAAOdd ciaa)

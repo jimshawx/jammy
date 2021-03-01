@@ -353,7 +353,7 @@ namespace RunAmiga.Core.Custom
 			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
-			interrupt.TriggerInterrupt(Interrupt.BLIT);
+			interrupt.AssertInterrupt(Interrupt.BLIT);
 		}
 
 		private void Line(uint insaddr)
@@ -385,7 +385,7 @@ namespace RunAmiga.Core.Custom
 			uint length = bltsize >> 6;
 			if (length <= 1)
 			{
-				interrupt.TriggerInterrupt(Interrupt.BLIT);
+				interrupt.AssertInterrupt(Interrupt.BLIT);
 				return;
 			}
 
@@ -526,7 +526,7 @@ namespace RunAmiga.Core.Custom
 			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
-			interrupt.TriggerInterrupt(Interrupt.BLIT);
+			interrupt.AssertInterrupt(Interrupt.BLIT);
 		}
 
 		private void Line2(uint insaddr)
@@ -582,7 +582,7 @@ namespace RunAmiga.Core.Custom
 				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
-			interrupt.TriggerInterrupt(Interrupt.BLIT);
+			interrupt.AssertInterrupt(Interrupt.BLIT);
 		}
 	}
 

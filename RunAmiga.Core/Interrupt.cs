@@ -66,9 +66,11 @@ namespace RunAmiga.Core
 		//	musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
 		//}
 
-		public void TriggerInterrupt(uint intreq)
+		public void AssertInterrupt(uint intreq, bool asserted = true)
 		{
-			custom.Write(0, ChipRegs.INTREQ, 0x8000+(1u<<(int)intreq), Size.Word);
+			uint mask = (1u << (int)intreq);
+			if (asserted) mask |= 0x8000;
+			custom.Write(0, ChipRegs.INTREQ, mask, Size.Word);
 		}
 
 		public void SetCPUInterruptLevel(uint intreq)

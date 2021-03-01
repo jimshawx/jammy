@@ -67,23 +67,30 @@ namespace RunAmiga.Core.Custom
 
 		public override uint Read(uint insaddr, uint address, Size size)
 		{
+			byte value;
 			byte reg = GetReg(address, size);
+
 
 			if (reg == CIA.PRA)
 			{
 				byte p = 0;
 				p |= diskDrives.ReadPRA(insaddr);
 				p |= mouse.ReadPRA(insaddr);
-				return p;
+				value = p;
 			}
 			else if (reg == CIA.SDR)
 			{
-				return keyboard.ReadKey();
+				value = keyboard.ReadKey();
+			}
+			else
+			{
+				value = (byte)base.Read(reg);
 			}
 
-			//logger.LogTrace($"CIAA Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
-			return base.Read(reg);
+			//if (reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
+			//	logger.LogTrace($"CIAA Read @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 
+			return value;
 		}
 
 		public override void Write(uint insaddr, uint address, uint value, Size size)
@@ -96,11 +103,23 @@ namespace RunAmiga.Core.Custom
 
 				diskDrives.WritePRA(insaddr, (byte)value);
 				mouse.WritePRA(insaddr, (byte)value);
-				return;
+			}
+			else if (reg == CIA.SDR)
+			{
+				keyboard.WriteSDR(insaddr, (byte)value);
+			}
+			else if (reg == CIA.CRA)
+			{
+				keyboard.WriteCRA(insaddr, (byte)value);
+				base.Write(reg, value);
+			}
+			else
+			{
+				base.Write(reg, value);
 			}
 
-			//logger.LogTrace($"CIAA Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
-			base.Write(reg, value);
+			//if (reg != CIA.TBLO && reg != CIA.TBHI && reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
+			//	logger.LogTrace($"CIAA Write @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 		}
 	}
 }

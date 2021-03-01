@@ -290,7 +290,7 @@ namespace RunAmiga.Core.Custom
 						memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
 					}
 
-					interrupt.TriggerInterrupt(Interrupt.DSKBLK);
+					interrupt.AssertInterrupt(Interrupt.DSKBLK);
 
 					break;
 				case ChipRegs.DSKDAT:

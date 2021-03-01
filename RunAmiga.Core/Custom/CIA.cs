@@ -75,7 +75,7 @@ namespace RunAmiga.Core.Custom
 					if (timerA == 0xffff)
 					{
 						if ((regs[CIA.ICR] & (uint)ICRB.TIMERA) != 0)
-							TriggerICR(ICRB.TIMERA);
+							AssertICR(ICRB.TIMERA);
 
 						//one shot mode?
 						if ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0)
@@ -94,7 +94,7 @@ namespace RunAmiga.Core.Custom
 					if (timerB == 0xffff)
 					{
 						if ((regs[CIA.ICR] & (uint)ICRB.TIMERB) != 0)
-							TriggerICR(ICRB.TIMERB);
+							AssertICR(ICRB.TIMERB);
 
 						//one shot mode?
 						if ((regs[CIA.CRB] & (uint)CR.RUNMODE) != 0)
@@ -122,17 +122,20 @@ namespace RunAmiga.Core.Custom
 			if (todTimer == todAlarm && (regs[CIA.ICR] & (uint)ICRB.TODALARM) != 0)
 			{
 				logger.LogTrace($"{cia}TOD ALARM {todTimer}");
-				TriggerICR(ICRB.TODALARM);
+				AssertICR(ICRB.TODALARM);
 			}
 		}
 
-		private void TriggerICR(ICRB icrb)
+		private void AssertICR(ICRB icrb)
 		{
 			icrr |= (byte)(ICRB.IR | icrb);
+			AssertInterrupt();
+		}
 
-			//if the bit's not masked, trigger the CPU interrupt
-			if (((byte)icrb & regs[CIA.ICR])!=0)
-				interrupt.TriggerInterrupt(interruptLevel);
+		private void AssertInterrupt()
+		{
+			//if there are any unmasked bits in ICRR then the Paula INTREQ will be set, otherwise it'll be cleared
+			interrupt.AssertInterrupt(interruptLevel, (icrr & regs[CIA.ICR]) != 0);
 		}
 
 		public virtual void Reset()
@@ -181,7 +184,11 @@ namespace RunAmiga.Core.Custom
 		{
 			switch (reg)
 			{
-				case CIA.ICR: { byte p = icrr; icrr = 0; return p; }
+				case CIA.ICR:
+					byte p = icrr;
+					icrr = 0; 
+					AssertInterrupt();
+					return p;
 				case CIA.TAHI: return (uint)(timerA >> 8);
 				case CIA.TALO: return timerA;
 				case CIA.TBHI: return (uint)(timerB >> 8);
@@ -217,6 +224,7 @@ namespace RunAmiga.Core.Custom
 						regs[CIA.ICR] |= (byte)value;
 					else
 						regs[CIA.ICR] &= (byte)~value;
+					AssertInterrupt();
 					break;
 
 				case CIA.TAHI:
@@ -334,7 +342,7 @@ namespace RunAmiga.Core.Custom
 			//enable the interrupt mask
 			regs[ICR] |= (byte)i;
 			//flag the interrupt
-			TriggerICR(i);
+			AssertICR(i);
 		}
 
 		//snoop ICR read, because reading it via the usual interface will clear it
@@ -345,7 +353,7 @@ namespace RunAmiga.Core.Custom
 
 		public void SerialInterrupt()
 		{
-			TriggerICR(ICRB.SERIAL);
+			AssertICR(ICRB.SERIAL);
 		}
 	}
 }
