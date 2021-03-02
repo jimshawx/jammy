@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
@@ -11,20 +12,27 @@ namespace RunAmiga.Core
 	{
 		private readonly byte[] memory;
 		private const uint memoryMask = 0x00ffffff;
-
-		private readonly string id;
+		
 		private readonly ILogger logger;
 
-		public Memory(string id, ILogger<Memory> logger)
+		public Memory(ILogger<Memory> logger, IOptions<EmulationSettings> settings)
 		{
-			this.id = id;
 			this.logger = logger;
 			this.memory = new byte[16 * 1024 * 1024];
 
-			var ks = new Kickstart("../../../../kick12.rom", "Kickstart 1.2");
-			//var ks = new Kickstart("../../../../kick13.rom", "Kickstart 1.3");
-			//var ks = new Kickstart("../../../../kick204.rom", "Kickstart 2.04");
-			//var ks = new Kickstart("../../../../kick31.rom", "Kickstart 3.1");
+			Kickstart ks;
+			switch (settings.Value.KickStart)
+			{
+				default:
+				case "1.2": ks = new Kickstart("../../../../kick12.rom", "Kickstart 1.2");
+					break;
+				case "1.3": ks = new Kickstart("../../../../kick13.rom", "Kickstart 1.3");
+					break;
+				case "2.04": ks = new Kickstart("../../../../kick204.rom", "Kickstart 2.04");
+					break;
+				case "3.1": ks = new Kickstart("../../../../kick31.rom", "Kickstart 3.1");
+					break;
+			}
 			SetKickstart(ks);
 
 			Reset();

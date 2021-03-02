@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Windows.Forms;
+using System.Xml;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ using RunAmiga.Core.CPU.Musashi;
 using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Logger.SQLite;
 using RunAmiga.Logger.DebugAsync;
 
@@ -28,7 +30,6 @@ namespace RunAmiga.Main
 				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
 				.AddJsonFile("appsettings.json", false)
 				.Build();
-
 
 			var serviceCollection = new ServiceCollection();
 			var serviceProvider = serviceCollection
@@ -55,12 +56,11 @@ namespace RunAmiga.Main
 				.AddSingleton<ICPU, MusashiCPU>()
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
-				.AddSingleton<IMemory>(x =>
-					new Memory("M",
-						x.GetRequiredService<ILogger<Memory>>()))
+				.AddSingleton<IMemory, Memory>()
 				.AddSingleton<IMemoryMapper, MemoryMapper>()
 				.AddSingleton<IEmulationWindow, EmulationWindow>()
 				.AddSingleton<IEmulation, Emulation>()
+				.Configure<EmulationSettings>(o=>configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider;

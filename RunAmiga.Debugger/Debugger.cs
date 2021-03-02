@@ -1,8 +1,10 @@
 ﻿using System.Text;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core;
 using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
@@ -29,12 +31,12 @@ namespace RunAmiga.Debugger
 
 		public Debugger(IMemoryMapper memoryMapper, IMemory memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
-			IBreakpointCollection breakpoints)
+			IBreakpointCollection breakpoints, IOptions<EmulationSettings> settings)
 		{
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
 
-			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints);
+			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints, settings.Value);
 
 			this.memory = memory;
 			this.cpu = cpu;
@@ -46,6 +48,9 @@ namespace RunAmiga.Debugger
 			this.logger = logger;
 
 			this.memoryMapper.AddMemoryIntercept(this.breakpoints);
+
+			if (settings.Value.KickStart != "1.2")
+				return;
 
 			//AddBreakpoint(0xfc0af0);//InitCode
 			//AddBreakpoint(0xfc0afe);
@@ -104,6 +109,7 @@ namespace RunAmiga.Debugger
 
 			//AddBreakpoint(0xfc0e86);//Schedule().
 			//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
+
 			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
 			AddBreakpoint(0xfc2fb4);//Task Crash Routine
 			AddBreakpoint(0xfc2fd6);//Alert()

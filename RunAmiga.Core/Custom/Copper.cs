@@ -314,8 +314,11 @@ namespace RunAmiga.Core.Custom
 					in_fetch = /*pixelCountdown != 0 ||*/ (h >= ddfstrt && h < ddfstop+ (3*pixelLoop) 
 					                                                    && v >= (diwstrt >> 8) &&  v < ((diwstop>>8)+(((diwstop&0x8000)^0x8000)>>7)));
 
-					//if (v == 100 && h == 0)
-					//	Logger.Write($"{ddfstrt:X4} {ddfstop:X4} {ddfstrt} {ddfstop} {ddfstop-ddfstrt}");
+					if (v == 100 && h == 0)
+					{
+						logger.LogInformation($"DDF {ddfstrt:X4} {ddfstop:X4} {ddfstrt} {ddfstop} {ddfstop - ddfstrt}");
+						logger.LogInformation($"DIW {diwstrt:X4} {diwstop:X4} {diwstrt} {diwstop} {diwstop - diwstrt} {diwhigh:X4}");
+					}
 
 					for (int p = 0; p < pixelLoop; p++)
 					{
@@ -510,6 +513,7 @@ namespace RunAmiga.Core.Custom
 		private ushort diwhigh;
 		private ushort vtotal;
 		private ushort fmode;
+		private ushort beamcon0;
 
 		public ushort[] colour = new ushort[256];
 		public uint[] truecolour = new uint[256];
@@ -658,6 +662,7 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.VBSTOP: value = vbstop; break;
 				case ChipRegs.VTOTAL: value = vtotal; break;
 				case ChipRegs.FMODE: value = fmode; break;
+				case ChipRegs.BEAMCON0: value = beamcon0; break;
 			}
 
 			if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
@@ -817,6 +822,7 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.VBSTOP: vbstop = value; break;
 				case ChipRegs.VTOTAL: vtotal = value; break;
 				case ChipRegs.FMODE: fmode = value; break;
+				case ChipRegs.BEAMCON0: beamcon0 = value; break;
 			}
 
 			if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)

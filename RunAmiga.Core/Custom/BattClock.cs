@@ -67,16 +67,12 @@ namespace RunAmiga.Core.Custom
 		{
 			if (size == Size.Long)
 			{
-				//uint hi = Read(insaddr, address, Size.Word) << 16;
-				//return hi | Read(insaddr, address + 2, Size.Word);
 				if ((address & 3) != 0) throw new MemoryAlignmentException(address);
 				uint v = Read(insaddr, address + 3, Size.Byte);
 				return v * 0x00010001;
 			}
 			if (size == Size.Word)
 			{
-				//uint hi = Read(insaddr, address, Size.Byte) << 8;
-				//return hi | Read(insaddr, address + 1, Size.Byte);
 				if ((address & 1) != 0) throw new MemoryAlignmentException(address);
 				uint v = Read(insaddr, address + 1, Size.Byte);
 				return v;
@@ -122,7 +118,7 @@ namespace RunAmiga.Core.Custom
 					// year = 1900 + clock value
 					// if (year < 1978) year += 100
 					// which means it'll work 'til 2078.
-					//kickstart 1.2 unfortunately...
+					//kickstart 1.2/1.3 unfortunately...
 					// year = 1900 + clock value
 					// if (year < 1978) year = 1978
 					int year = (t.Year - 1900) % 100;
@@ -152,16 +148,12 @@ namespace RunAmiga.Core.Custom
 		{
 			if (size == Size.Long)
 			{
-				//Write(insaddr, address, value>>16, Size.Word);
-				//Write(insaddr, address + 2, value&0xffff, Size.Word);
 				if ((address & 3) != 0) throw new MemoryAlignmentException(address);
 				Write(insaddr, address+3, value & 0xf, Size.Byte);
 				return;
 			}
 			if (size == Size.Word)
 			{
-				//Write(insaddr, address, value >> 8, Size.Byte);
-				//Write(insaddr, address + 1, value&0xff, Size.Byte);
 				if ((address & 1) != 0) throw new MemoryAlignmentException(address);
 				Write(insaddr, address + 1, value & 0xf, Size.Byte);
 				return;

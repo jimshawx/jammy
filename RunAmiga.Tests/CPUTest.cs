@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using RunAmiga.Core;
@@ -8,6 +9,7 @@ using RunAmiga.Core.CPU.CSharp;
 using RunAmiga.Core.CPU.Musashi;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Debugger;
@@ -29,27 +31,24 @@ namespace RunAmiga.Tests
 			serviceProvider1 = serviceCollection.AddLogging()
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
-				.AddSingleton<IMusashiCPU>(x=>new MusashiCPU(
-					x.GetRequiredService<IInterrupt>(),
-					x.GetRequiredService<IMemoryMapper>(),
-					x.GetRequiredService<IBreakpointCollection>(),
-					new NullLogger<MusashiCPU>()
-					))
+				.AddSingleton<ILogger<MusashiCPU>>(x=>new NullLogger<MusashiCPU>())
+				.AddSingleton<IMusashiCPU, MusashiCPU>()
 				.AddSingleton<IMemoryMapper>(x=> new MemoryMapper(new List<IMemoryMappedDevice>{ x.GetRequiredService<IMemory>() }))
-				.AddSingleton<IMemory>(x => new Memory("CPUTest_Musashi", null))
+				.AddSingleton<IMemory, Memory>()
 				.BuildServiceProvider();
 
 			serviceProvider2 = serviceCollection.AddLogging()
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
+				.AddSingleton<ILogger<CPU>>(x => new NullLogger<CPU>())
 				.AddSingleton<ICSharpCPU>(x=>new CPU(
 					x.GetRequiredService<IInterrupt>(),
 					x.GetRequiredService<IMemoryMapper>(),
 					x.GetRequiredService<IBreakpointCollection>(),
-					new Tracer(new Disassembly(x.GetRequiredService<IMemory>().GetMemoryArray(), x.GetRequiredService<IBreakpointCollection>()), new Labeller()),
-					new NullLogger<CPU>()))
+					new Tracer(new Disassembly(x.GetRequiredService<IMemory>().GetMemoryArray(), x.GetRequiredService<IBreakpointCollection>(), new EmulationSettings()), new Labeller(new EmulationSettings())),
+					x.GetRequiredService<ILogger<CPU>>()))
 				.AddSingleton<IMemoryMapper>(x => new MemoryMapper(new List<IMemoryMappedDevice> { x.GetRequiredService<IMemory>() }))
-				.AddSingleton<IMemory>(x => new Memory("CPUTest_CSharp", null))
+				.AddSingleton<IMemory, Memory>()
 				.BuildServiceProvider();
 		}
 

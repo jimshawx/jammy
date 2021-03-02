@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Disassembler
@@ -195,10 +196,13 @@ namespace RunAmiga.Disassembler
 
 		Dictionary<uint, Label> asmLabels = new Dictionary<uint, Label>();
 
-		public Labeller()
+		public Labeller(EmulationSettings settings)
 		{
-			ExecLabels();
-			MiscLabels();
+			if (settings.KickStart == "1.2") 
+			{
+				ExecLabels();
+				MiscLabels();
+			}
 		}
 
 		private List<Label> miscLabels = new List<Label>

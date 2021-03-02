@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Extensions.Extensions;
@@ -37,38 +38,41 @@ namespace RunAmiga.Disassembler
 		}
 		private readonly MemType[] memType = new MemType[16 * 1024 * 1024];
 
-		public Disassembly(byte[] memory, IBreakpointCollection breakpoints)
+		public Disassembly(byte[] memory, IBreakpointCollection breakpoints, EmulationSettings settings)
 		{
 			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<Disassembly>>();
 			this.memory = memory;
 			this.breakpoints = breakpoints;
 			disassembler = new Disassembler();
-			labeller = new Labeller();
-			LoadComments();
+			labeller = new Labeller(settings);
+			LoadComments(settings);
 		}
 
-		private void LoadComments()
+		private void LoadComments(EmulationSettings settings)
 		{
 			Array.Clear(memType, 0, memType.Length);
 
-			LoadComment("exec_disassembly.txt");
-			LoadComment("trackdisk.device_disassembly.txt");
-			LoadComment("strap_disassembly.txt");
-			LoadComment("misc.resource_disassembly.txt");
-			LoadComment("keymap.resource_disassembly.txt");
-			LoadComment("timer.device_disassembly.txt");
-			LoadComment("cia.resource_disassembly.txt");
-			LoadComment("potgo.resource_disassembly.txt");
-			LoadComment("ramlib.library_disassembly.txt");
-			LoadComment("workbench.task_disassembly.txt");
-			LoadComment("mathffp.library_disassembly.txt");
-			LoadComment("layers.library_disassembly.txt");
-			LoadComment("intuition.library_disassembly.txt");
-			LoadComment("graphics.library_disassembly.txt");
-			LoadComment("expansion.library_disassembly.txt");
-			LoadComment("dos.library_disassembly.txt");
-			LoadComment("disk.resource_disassembly.txt");
-			LoadComment("audio.device_disassembly.txt");
+			if (settings.KickStart == "1.2")
+			{
+				LoadComment("exec_disassembly.txt");
+				LoadComment("trackdisk.device_disassembly.txt");
+				LoadComment("strap_disassembly.txt");
+				LoadComment("misc.resource_disassembly.txt");
+				LoadComment("keymap.resource_disassembly.txt");
+				LoadComment("timer.device_disassembly.txt");
+				LoadComment("cia.resource_disassembly.txt");
+				LoadComment("potgo.resource_disassembly.txt");
+				LoadComment("ramlib.library_disassembly.txt");
+				LoadComment("workbench.task_disassembly.txt");
+				LoadComment("mathffp.library_disassembly.txt");
+				LoadComment("layers.library_disassembly.txt");
+				LoadComment("intuition.library_disassembly.txt");
+				LoadComment("graphics.library_disassembly.txt");
+				LoadComment("expansion.library_disassembly.txt");
+				LoadComment("dos.library_disassembly.txt");
+				LoadComment("disk.resource_disassembly.txt");
+				LoadComment("audio.device_disassembly.txt");
+			}
 		}
 
 		private void LoadComment(string filename)

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Extensions.Extensions;
 
@@ -82,17 +84,38 @@ namespace RunAmiga.Core.Custom
 
 		private readonly Drive[] drive;
 
-		public DiskDrives(IMemory memory, IInterrupt interrupt, ILogger<DiskDrives> logger)
+		public DiskDrives(IMemory memory, IInterrupt interrupt, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
-			var workbenchDisk = new Disk("../../../../workbench1.2.adf");
-			//var workbenchDisk = new Disk("../../../../workbench2.04.adf");
-			//var workbenchDisk = new Disk("../../../../workbench3.1.adf");
-			//var workbenchDisk = new Disk("../../../../buggyboy.adf");
+			Disk workbenchDisk;
+			if (settings.Value.DF0 != null)
+			{
+				workbenchDisk = new Disk($"../../../../{settings.Value.DF0}");
+			}
+			else
+			{
+				switch (settings.Value.KickStart)
+				{
+					default:
+					case "1.2":
+						workbenchDisk = new Disk("../../../../workbench1.2.adf");
+						break;
+					case "1.3":
+						workbenchDisk = new Disk("../../../../workbench1.3.adf");
+						break;
+					case "2.04":
+						workbenchDisk = new Disk("../../../../workbench2.04.adf");
+						break;
+					case "3.1":
+						workbenchDisk = new Disk("../../../../workbench3.1.adf");
+						break;
+					
+				}
+			}
 
 			drive = new Drive[4];
 			for (int i = 0; i < 4; i++)
