@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Reflection.Metadata.Ecma335;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
@@ -24,10 +24,10 @@ namespace RunAmiga.Core.Custom
 		{
 			for (int i = 0; i < 16; i++)
 				regs[i] = 0;
-			//regs[15] = 4;//24/12
 		}
 
 		readonly MemoryRange memoryRange = new MemoryRange(0xdc0000, 0x10000);
+		//readonly MemoryRange memoryRange = new MemoryRange(0xd80000, 0x60000);
 
 		public bool IsMapped(uint address)
 		{
@@ -54,15 +54,38 @@ namespace RunAmiga.Core.Custom
 
 		//Amiga epoch is 00:00:00 January 1, 1978
 
-		private byte[] regs = new byte [16];
+		private readonly byte[] regs = new byte [16];
+
+		private int REG(uint address)
+		{
+			if ((address & 3) == 3)
+				return (int)((address & 0xfffc) >> 2);
+			return -1;
+		}
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			uint reg = ((address & 0xffff)-3)/4;
-			if (reg < 16)
+			if (size == Size.Long)
 			{
-				logger.LogTrace($"[BATTCLOCK] R {address:X8} @ {insaddr:X8}");
+				//uint hi = Read(insaddr, address, Size.Word) << 16;
+				//return hi | Read(insaddr, address + 2, Size.Word);
+				if ((address & 3) != 0) throw new MemoryAlignmentException(address);
+				uint v = Read(insaddr, address + 3, Size.Byte);
+				return v * 0x00010001;
+			}
+			if (size == Size.Word)
+			{
+				//uint hi = Read(insaddr, address, Size.Byte) << 8;
+				//return hi | Read(insaddr, address + 1, Size.Byte);
+				if ((address & 1) != 0) throw new MemoryAlignmentException(address);
+				uint v = Read(insaddr, address + 1, Size.Byte);
+				return v;
+			}
 
+			int reg = REG(address); 
+			byte value = 0;
+			if (reg >= 0 && reg < 16)
+			{
 				//if it's a clock register and the clock isn't held, map in the latest time
 				if (reg <= 12 && (regs[0xd] & 1) == 0)
 				{
@@ -74,20 +97,34 @@ namespace RunAmiga.Core.Custom
 					regs[3] = (byte)(t.Minute / 10);
 
 					int hour = t.Hour;
-					byte h24 = (byte)(regs[0xf] & 2); //12H, 24H
-					if (h24 != 0)
-						hour %= 12;
-					regs[4] = (byte)(hour % 10);
-					regs[5] = (byte)((hour / 10) | (t.Hour >= 12 ? 4 : 0));
+					if (false)
+					{
+						byte h24 = (byte)(regs[0xf] & 2); //12H, 24H
+						if (h24 == 0) hour %= 12; //AM/PM clock
+						regs[4] = (byte)(hour % 10);
+						regs[5] = (byte)((hour / 10) | (t.Hour >= 12 ? ((h24 ^ 2) << 1) : 0));
+					}
+					else
+					{
+						regs[4] = (byte)(hour % 10);
+						regs[5] = (byte)(hour / 10);
+					}
 
-					int day = t.Day - 1;
+					int day = t.Day;// - 1;
 					regs[6] = (byte)(day % 10);
 					regs[7] = (byte)(day / 10);
 
-					int month = t.Month - 1;
+					int month = t.Month;//1-based
 					regs[8] = (byte)(month % 10);
 					regs[9] = (byte)(month / 10);
 
+					//kickstart 3 battclock is clever enough to say:
+					// year = 1900 + clock value
+					// if (year < 1978) year += 100
+					// which means it'll work 'til 2078.
+					//kickstart 1.2 unfortunately...
+					// year = 1900 + clock value
+					// if (year < 1978) year = 1978
 					int year = (t.Year - 1900) % 100;
 					regs[10] = (byte)(year % 10);
 					regs[11] = (byte)(year / 10);
@@ -103,19 +140,37 @@ namespace RunAmiga.Core.Custom
 						case DayOfWeek.Saturday: regs[12] = 6; break;
 					}
 				}
-				return regs[reg];
+				value = regs[reg];
 			}
 
-			return 0;
+			logger.LogTrace($"[BATTCLOCK] R {address:X8} @ {insaddr:X8} {size} {value:X2} R{reg}");
+			
+			return value;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			uint reg = ((address & 0xffff) - 3) / 4;
-			if (reg < 16)
+			if (size == Size.Long)
 			{
-				logger.LogTrace($"[BATTCLOCK] W {address:X8} {value:X8} @ {insaddr:X8}");
+				//Write(insaddr, address, value>>16, Size.Word);
+				//Write(insaddr, address + 2, value&0xffff, Size.Word);
+				if ((address & 3) != 0) throw new MemoryAlignmentException(address);
+				Write(insaddr, address+3, value & 0xf, Size.Byte);
+				return;
+			}
+			if (size == Size.Word)
+			{
+				//Write(insaddr, address, value >> 8, Size.Byte);
+				//Write(insaddr, address + 1, value&0xff, Size.Byte);
+				if ((address & 1) != 0) throw new MemoryAlignmentException(address);
+				Write(insaddr, address + 1, value & 0xf, Size.Byte);
+				return;
+			}
 
+			int reg = REG(address);
+			logger.LogTrace($"[BATTCLOCK] W {address:X8} @ {insaddr:X8} {size} {value:X2} R{reg}");
+			if (reg >= 0 && reg < 16)
+			{
 				regs[reg] = (byte)value;
 			}
 		}
