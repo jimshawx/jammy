@@ -15,47 +15,30 @@ namespace RunAmiga.Core.Custom
 		private readonly IChips custom;
 		private readonly ILogger logger;
 
-		private Form form;
-		private Bitmap bitmap;
-		private PictureBox picture;
+		private readonly Form form;
+		private readonly Bitmap bitmap;
+		private readonly PictureBox picture;
 
-		//private const int screenWidth = 1280;
-		//private const int screenHeight = 1024;
+		//private const int SCREEN_WIDTH = 1280;
+		//private const int SCREEN_HEIGHT = 1024;
 
-		private const int screenWidth = 227 * 4;
-		private const int screenHeight = 313;
+		private const int SCREEN_WIDTH = 227 * 4;
+		private const int SCREEN_HEIGHT = 313;
 
-		private readonly int[] screen = new int[screenWidth * screenHeight];
+		private readonly int[] screen = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
 
-		public Copper(IMemory memory, IChips custom, ILogger<Copper> logger)
+		public Copper(IMemory memory, IChips custom, IEmulationWindow emulationWindow, ILogger<Copper> logger)
 		{
 			this.memory = memory;
 			this.custom = custom;
 			this.logger = logger;
 
-			form = new Form {ClientSize = new System.Drawing.Size(screenWidth, screenHeight) };
-			bitmap = new Bitmap(screenWidth, screenHeight, PixelFormat.Format32bppRgb);
-			picture = new PictureBox {Image = bitmap, ClientSize = new System.Drawing.Size(screenWidth, screenHeight)};
+			form = emulationWindow.GetForm();
+			form.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, SCREEN_HEIGHT);
+			bitmap = new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT, PixelFormat.Format32bppRgb);
+			picture = new PictureBox {Image = bitmap, ClientSize = new System.Drawing.Size(SCREEN_WIDTH, SCREEN_HEIGHT), Enabled = false};
 			form.Controls.Add(picture);
 			form.Show();
-			picture.Click += FormClicked;
-			picture.KeyPress += FormKeyPress;
-		}
-
-		private void FormKeyPress(object sender, KeyPressEventArgs e)
-		{
-			logger.LogTrace($"{e.KeyChar}");
-			if (e.KeyChar == 'Q')
-			{
-				//picture.Capture = false;
-				//Cursor.Show();
-			}
-		}
-
-		private void FormClicked(object sender, EventArgs e)
-		{
-			//picture.Capture = true;
-			//Cursor.Hide();
 		}
 
 		private ulong copperTime;
@@ -397,7 +380,7 @@ namespace RunAmiga.Core.Custom
 				}
 
 				//this should be a no-op
-				dptr += screenWidth - (dptr - lineStart);
+				dptr += SCREEN_WIDTH - (dptr - lineStart);
 			}
 
 			// sprites
@@ -422,7 +405,7 @@ namespace RunAmiga.Core.Custom
 						hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
 
 						//x2 because they are low-res pixels on our high-res bitmap
-						dptr = (hstart * 2) + vstart * screenWidth;
+						dptr = (hstart * 2) + vstart * SCREEN_WIDTH;
 						for (int r = vstart; r < vstop; r++)
 						{
 							sprdata[s] = (ushort)memory.Read(0, sprpt[s], Size.Word); sprpt[s] += 2;
@@ -437,7 +420,7 @@ namespace RunAmiga.Core.Custom
 								if (dptr >= screen.Length) break;
 							}
 
-							dptr += screenWidth - 16;
+							dptr += SCREEN_WIDTH - 16;
 							if (dptr >= screen.Length) break;
 						}
 
@@ -446,7 +429,7 @@ namespace RunAmiga.Core.Custom
 				}
 			}
 
-			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, screenWidth, screenHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
+			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
 			Marshal.Copy(screen, 0, bitmapData.Scan0, screen.Length);
 			bitmap.UnlockBits(bitmapData);
 			picture.Image = bitmap;

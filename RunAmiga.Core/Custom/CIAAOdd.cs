@@ -103,10 +103,6 @@ namespace RunAmiga.Core.Custom
 				diskDrives.WritePRA(insaddr, (byte)value);
 				mouse.WritePRA(insaddr, (byte)value);
 			}
-			else if (reg == CIA.SDR)
-			{
-				keyboard.WriteSDR(insaddr, (byte)value);
-			}
 			else if (reg == CIA.CRA)
 			{
 				keyboard.WriteCRA(insaddr, (byte)value);

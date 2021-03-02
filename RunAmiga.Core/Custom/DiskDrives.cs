@@ -89,7 +89,8 @@ namespace RunAmiga.Core.Custom
 			this.logger = logger;
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
-			var workbenchDisk = new Disk("../../../../workbench.adf");
+			var workbenchDisk = new Disk("../../../../workbench1.2.adf");
+			//var workbenchDisk = new Disk("../../../../workbench2.04.adf");
 			//var workbenchDisk = new Disk("../../../../workbench3.1.adf");
 			//var workbenchDisk = new Disk("../../../../buggyboy.adf");
 

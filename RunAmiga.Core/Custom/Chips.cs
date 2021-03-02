@@ -11,7 +11,7 @@ namespace RunAmiga.Core.Custom
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IDiskDrives diskDrives;
-		private ushort[] regs = new ushort[32768];
+		private readonly ushort[] regs = new ushort[32768];
 
 		private ICopper copper;
 		private IBlitter blitter;

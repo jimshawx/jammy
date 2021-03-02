@@ -77,11 +77,11 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0x00fc0e60);//ExitIntr
 			//AddBreakpoint(0x00fc0c4c);//Interrupt Bail Out
 			//AddBreakpoint(0x00fc0ca6);//L2 Autovector IO/Timer
-				AddBreakpoint(0xFC465E);//Timer A
-				//AddBreakpoint(0xFC4668);//Timer B
-				//AddBreakpoint(0xFC4672);//TOD
-				//AddBreakpoint(0xFC467C);//Serial
-				AddBreakpoint(0xFC4686);//Flag
+			//AddBreakpoint(0xFC465E);//Timer A
+			//AddBreakpoint(0xFC4668);//Timer B
+			//AddBreakpoint(0xFC4672);//TOD
+			//AddBreakpoint(0xFC467C);//Serial
+			//AddBreakpoint(0xFC4686);//Flag
 
 			//AddBreakpoint(0x00fc0cdc);//L3 Autovector
 			//AddBreakpoint(0xfc0e8a);//Schedule()+4
@@ -115,7 +115,7 @@ namespace RunAmiga.Debugger
 			////AddBreakpoint(0xFe89e4);//read boot block
 			//AddBreakpoint(0xFe8a84);//after logo, wait for diskDrives change
 			//AddBreakpoint(0xFe8a9c);//after logo, check for diskDrives inserted
-			AddBreakpoint(0xFe8a0a);//track read, is it a DOS diskDrives?
+			//AddBreakpoint(0xFe8a0a);//track read, is it a DOS diskDrives?
 
 			//AddBreakpoint(0xFe800e);//dispatch trackdisk.device message
 			//AddBreakpoint(0xFea734);//CMD_READ
@@ -125,8 +125,8 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0xFeab76);//blitter decode start
 			//AddBreakpoint(0xFeb2a4);//blitter decode start
 
-			for (uint i = 0; i < 12; i++)
-				AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);
+			//for (uint i = 0; i < 12; i++)
+			//	AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);
 
 			//AddBreakpoint(0xb328, BreakpointType.Write);
 			//AddBreakpoint(0xb32a, BreakpointType.Write);
@@ -149,11 +149,11 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0xFE91d6);
 			//AddBreakpoint(0xFE9622);
 
-			AddBreakpoint(0xFE974C);//where do these jumps go?
+			//AddBreakpoint(0xFE974C);//where do these jumps go?
 			//AddBreakpoint(0xFE9778);
 
 			//AddBreakpoint(0xfe9550);//TR_ADDREQUEST
-									//C037C8
+			//C037C8
 
 		}
 

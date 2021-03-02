@@ -59,6 +59,7 @@ namespace RunAmiga.Main
 					new Memory("M",
 						x.GetRequiredService<ILogger<Memory>>()))
 				.AddSingleton<IMemoryMapper, MemoryMapper>()
+				.AddSingleton<IEmulationWindow, EmulationWindow>()
 				.AddSingleton<IEmulation, Emulation>()
 				.BuildServiceProvider();
 

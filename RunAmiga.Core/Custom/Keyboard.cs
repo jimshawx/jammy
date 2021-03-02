@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -23,13 +21,11 @@ namespace RunAmiga.Core.Custom
 		private ICIAAOdd cia;
 		private readonly Form keys;
 
-		public Keyboard(ILogger<Keyboard> logger)
+		public Keyboard(ILogger<Keyboard> logger, IEmulationWindow emulationWindow)
 		{
 			this.logger = logger;
-			keys = new Form { Text = "Keyboard", Size = new Size(100, 100) };
-			//var btn = new Button {Text = "Reset"};
-			//btn.Click += AddReset;
-			//keys.Controls.Add(btn);
+			keys = emulationWindow.GetForm();
+
 			keys.KeyDown += AddKeyDown;
 			keys.KeyUp += AddKeyUp;
 			keys.Show();
@@ -43,27 +39,9 @@ namespace RunAmiga.Core.Custom
 
 			logger.LogTrace($"KeyDown {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2} ");
 
-			//var sb = new StringBuilder("\n");
-			//var keyState = new byte[256];
-			//GetKeyboardState(keyState);
-			//for (int j = 0; j < 8; j++)
-			//{
-			//	for (int i = 0; i < 32; i++)
-			//		sb.Append($"{((keyState[j * 32 + i] & 0x80) != 0 ? 1 : 0)}");
-			//	sb.AppendLine("");
-			//}
-			//logger.LogTrace($"{sb.ToString()}\n");
-
 			switch (key)
 			{
-				case 0x14://Caps
-					//var caps = GetAsyncKeyState((int)VK.VK_CAPITAL);
-					//logger.LogTrace($"{Convert.ToString(caps,2)}");
-					//var keyState = new byte[256];
-					//GetKeyboardState(keyState);
-					//logger.LogTrace($"{Convert.ToString(keyState[(int)VK.VK_CAPITAL], 2)}");
-					//if ((caps & 1)!=0)//the caps key is now activated
-					//	keyQueue.Enqueue(scanConvert[key]);
+				case 0x14://Caps Lock - ignore the keydown, keyup will report if caps is enabled or not
 					break;
 				default:
 					if (scanConvert.ContainsKey(key))
@@ -78,25 +56,11 @@ namespace RunAmiga.Core.Custom
 
 			logger.LogTrace($"KeyUp   {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2}");
 
-			//var sb = new StringBuilder("\n");
-			//var keyState = new byte[256];
-			//GetKeyboardState(keyState);
-			//for (int j = 0; j < 8; j++)
-			//{
-			//	for (int i = 0; i < 32; i++)
-			//		sb.Append($"{((keyState[j * 32 + i] & 0x80) != 0 ? 1 : 0)}");
-			//	sb.AppendLine("");
-			//}
-			//logger.LogTrace($"{sb.ToString()}\n");
-
 			switch (key)
 			{
-				case 0x14://Caps
-					//var caps = GetAsyncKeyState((int)VK.VK_CAPITAL);
-					//logger.LogTrace($"{Convert.ToString(caps, 2)}");
+				case 0x14://Caps Lock
 					var keyState = new byte[256];
 					GetKeyboardState(keyState);
-					//logger.LogTrace($"{Convert.ToString(keyState[(int)VK.VK_CAPITAL], 2)}");
 					if (keyState[(int)VK.VK_CAPITAL]==1)//the caps key is now activated
 						keyQueue.Enqueue((byte)(scanConvert[key]));
 					else
@@ -154,33 +118,23 @@ namespace RunAmiga.Core.Custom
 			sdr = 0x00;
 			if (keyQueue.TryDequeue(out byte c))
 			{
+				//logger.LogTrace($"{Convert.ToString(c,2).PadLeft(8,'0')}");
 				c = (byte)~((c << 1) | (c >> 7));
+				//logger.LogTrace($"{Convert.ToString(c, 2).PadLeft(8, '0')}");
 				sdr = c;
 			}
 			else
 			{
 				//shouldn't get here since key is only read when we say one is ready
-				sdr = 0x00;
+				sdr = 0xF9;//bad key code
 			}
 			return sdr;
 		}
 
-		public void WriteSDR(uint insaddr, byte value)
-		{
-			sdr = value;
-
-			logger.LogTrace($"wrote {value:X2} to SDR {keyboardState}");
-			if (keyboardState == KeyboardState.WaitSPLow) keyboardState = KeyboardState.WaitSPHigh;
-			else if (keyboardState == KeyboardState.WaitSPHigh) keyboardState = KeyboardState.Ready;
-			logger.LogTrace($"                     -> {keyboardState}");
-		}
-
 		public void WriteCRA(uint insaddr, byte value)
 		{
-			logger.LogTrace($"wrote {value:X2} to CRA, SDR is {sdr:X2} {keyboardState}");
 			if ((value & (byte)CR.CRA_SPMODE) != 0 && keyboardState == KeyboardState.WaitSPLow) keyboardState = KeyboardState.WaitSPHigh;
 			if ((value & (byte)CR.CRA_SPMODE) == 0 && keyboardState == KeyboardState.WaitSPHigh) keyboardState = KeyboardState.Ready;
-			logger.LogTrace($"                     -> {keyboardState}");
 		}
 
 		public void SetCIA(ICIAAOdd ciaa)
@@ -200,6 +154,27 @@ namespace RunAmiga.Core.Custom
 			50  F1  F2  F3  F4  F5  F6  F7  F8  F9 F10  k(  k)  k/  k*  k+ hlp
 			60 lsh rsh cap ctl Lal Ral Lam Ram
 			70                                 rst
+		 */
+		/*
+			78 Reset warning. Ctrl-Amiga-Amiga has been pressed. The keyboard
+				will wait a maximum of 10 seconds before resetting the machine.
+				(Not available on all keyboard models)
+			F9 Last key code bad, next key is same code retransmitted
+			FA Keyboard key buffer overflow
+			FC Keyboard self-test fail. Also, the caps-lock LED will blink
+				to indicate the source of the error. Once for ROM failure,
+				twice for RAM failure and three times if the watchdog timer fails to function.
+			FD Initiate power-up key stream (for keys held or stuck at power on)
+			FE Terminate power-up key stream. 
+
+			78 Reset warning. Ctrl-Amiga-Amiga has been hit - computer will be reset in 10 seconds. (see text)
+			F9 Last key code bad, next code is the same code retransmitted (used when keyboard and main unit get out of sync) .
+			FA Keyboard output buffer overflow
+			FB Unused (was controller failure)
+			FC Keyboard selftest failed
+			FD Initiate power-up key stream (keys pressed at powerup)
+			FE Terminate power-up key stream
+			FF Unused (was interrupt) 
 		 */
 
 		private readonly Dictionary<int, byte> scanConvert = new Dictionary<int, byte>
@@ -285,9 +260,9 @@ namespace RunAmiga.Core.Custom
 			{(int)VK.VK_SUBTRACT, 0x4A },//numpad '-'
 			//0x4B not used
 			{(int)VK.VK_UP, 0x4C },//UP
-			{(int)VK.VK_DOWN, 0x4D },//DOWN
-			{(int)VK.VK_LEFT, 0x4E },//LEFT
-			{(int)VK.VK_RIGHT, 0x4F },//RIGHT
+			{(int)VK.VK_DOWN, 0x4D },
+			{(int)VK.VK_RIGHT, 0x4E },
+			{(int)VK.VK_LEFT, 0x4F },
 
 			{(int)VK.VK_F1, 0x50},//F1
 			{(int)VK.VK_F2, 0x51},//F2

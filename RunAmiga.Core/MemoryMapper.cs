@@ -8,7 +8,7 @@ namespace RunAmiga.Core
 {
 	public class MemoryMapper : IMemoryMapper
 	{
-		private readonly ILogger<MemoryMapper> logger;
+		private readonly ILogger logger;
 		private IMemoryInterceptor interceptor;
 		private readonly List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 

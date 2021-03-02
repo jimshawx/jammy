@@ -52,7 +52,6 @@ namespace RunAmiga.Core.Interface.Interfaces
 	{
 		byte ReadKey();
 		void SetCIA(ICIAAOdd ciaa);
-		void WriteSDR(uint insaddr, byte value);
 		void WriteCRA(uint insaddr, byte value);
 	}
 
