@@ -838,8 +838,8 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.BPL8PTL: bplpt[7] = (bplpt[7] & 0xffff0000) | value; break;
 				case ChipRegs.BPL8PTH: bplpt[7] = (bplpt[7] & 0x0000ffff) | ((uint)value << 16); break;
 
-				case ChipRegs.DIWSTRT: diwstrt = value; break;
-				case ChipRegs.DIWSTOP: diwstop = value; break;
+				case ChipRegs.DIWSTRT: diwstrt = value; diwhigh = 0; break;
+				case ChipRegs.DIWSTOP: diwstop = value; diwhigh = 0; break;
 				case ChipRegs.DIWHIGH: diwhigh = value; break;
 
 				case ChipRegs.DDFSTRT: ddfstrt = value; break;

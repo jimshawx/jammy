@@ -55,8 +55,11 @@ namespace RunAmiga.Core.Custom
 			keyboard.Reset();
 			audio.Reset();
 
-			regs[REG(ChipRegs.LISAID)] = 0x00f8;//LISA (0x00fc ECS Denise 8373) (OCD Denise just returns last value on bus).
-			regs[REG(ChipRegs.LISAID)] = 0x0000;
+			//http://eab.abime.net/showthread.php?t=72300
+			regs[REG(ChipRegs.LISAID)] = 0x00fc;//LISA (0x00fc ECS Denise 8373) (OCS Denise 8362 just returns last value on bus).
+			regs[REG(ChipRegs.LISAID)] = 0x00f8;//Lisa returns 0xF8
+			regs[REG(ChipRegs.LISAID)] = 0xffff;//OCS, setting this means KS3.1 sees OCS and gets copper list right for this
+			//regs[REG(ChipRegs.VPOSR)] = 0x2300;//Alice
 		}
 
 		readonly MemoryRange memoryRange = new MemoryRange(0xdf0000, 0x10000);
@@ -124,7 +127,7 @@ namespace RunAmiga.Core.Custom
 			}
 			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
 			                     address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
-			                     || address == ChipRegs.LISAID || address == ChipRegs.NO_OP)
+			                     /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
 			{
 
 			}
@@ -303,7 +306,7 @@ namespace RunAmiga.Core.Custom
 			}
 			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
 			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
-			         || address == ChipRegs.LISAID || address == ChipRegs.NO_OP)
+			         /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
 			{
 
 			}
