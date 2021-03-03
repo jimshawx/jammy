@@ -42,9 +42,9 @@ namespace RunAmiga.Core.Custom
 		{
 			joystickTime += cycles;
 
-			if (joystickTime > 1000)
+			if (joystickTime > 10000)
 			{
-				joystickTime -= 1000;
+				joystickTime -= 10000;
 
 				if ((GetAsyncKeyState((int)Keyboard.VK.VK_SPACE)&0x8000)!=0)
 					pra &= ~(1u << 7);

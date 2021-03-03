@@ -23,8 +23,15 @@ namespace RunAmiga.Core.Custom
 		//private const int SCREEN_WIDTH = 1280;
 		//private const int SCREEN_HEIGHT = 1024;
 
-		private const int SCREEN_WIDTH = 227 * 4;
+		private const int SCREEN_WIDTH = DMA_WIDTH*4;//227 * 4;
 		private const int SCREEN_HEIGHT = 313;
+
+		//sprite DMA starts at 0x18, but can be eaten into by bitmap DMA
+		//normal bitmap DMA start at 0x38
+		private const int DMA_START = 0x38;
+		//bitmap DMA ends at 0xD8, with 8 slots after that
+		private const int DMA_END = 0xE0;
+		private const int DMA_WIDTH = DMA_END - DMA_START;
 
 		private readonly int[] screen = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
 
@@ -38,6 +45,13 @@ namespace RunAmiga.Core.Custom
 			form.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, SCREEN_HEIGHT);
 			bitmap = new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT, PixelFormat.Format32bppRgb);
 			picture = new PictureBox {Image = bitmap, ClientSize = new System.Drawing.Size(SCREEN_WIDTH, SCREEN_HEIGHT), Enabled = false};
+			
+			//try to scale the box
+			picture.SizeMode = PictureBoxSizeMode.StretchImage;
+			int scaledHeight = (SCREEN_HEIGHT*5)/4;
+			form.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
+			picture.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
+
 			form.Controls.Add(picture);
 			form.Show();
 		}
@@ -177,25 +191,11 @@ namespace RunAmiga.Core.Custom
 			
 			if (copPC == 0) return;
 
-			//logger.LogTrace($"COP  {copPC:X6} {bplpt[0]:X6} {bplpt[1]:X6}");
-			//colour[0] = 0xfff;
-			//colour[1] = 0x000;
-			//colour[2] = 0x77c;
-			//colour[3] = 0xbbb;
-			//truecolour[0] = 0xffffff;
-			//truecolour[1] = 0x000000;
-			//truecolour[2] = 0x7777cc;
-			//truecolour[3] = 0xbbbbbb;
-
 			int waitH=0, waitV=0;
 			int waitHMask = 0xff, waitVMask = 0xff;
 
-			//bool in_display = true;
-			//bool in_fetch = true;
-			//bool is_new_pixel = true;
-
-			ushort pixelCountdown;
-			uint col=0x000000;
+			ushort pixelMask;
+			uint col;
 
 			CopperState state = CopperState.Running;
 			int lines = isEvenFrame ? 312 : 313;
@@ -216,12 +216,12 @@ namespace RunAmiga.Core.Custom
 					cnt[i] = 0;
 
 				int lineStart = dptr;
-				pixelCountdown = 0x8000;
+				pixelMask = 0x8000;
 				for (int h = 0; h < 227; h++)
 				{
 					ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
-					//copper instruction every even clock
+					//copper instruction every even clock (and copper DMA is on)
 					if ((h & 1) == 0 && (dmacon & 0b101000000) == 0b101000000)
 					{
 						if (state == CopperState.Running)
@@ -304,6 +304,8 @@ namespace RunAmiga.Core.Custom
 					//end copper instruction
 
 					//bitplane fetching
+					if (h < DMA_START || h >= DMA_END)
+						continue;
 
 					//how many pixels should be fecthed per clock in the current mode?
 					int pixelLoop;
@@ -379,7 +381,7 @@ namespace RunAmiga.Core.Custom
 						//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
 						if (h >= diwstrth >> 1 && h < diwstoph >> 1)
 						{
-							if (pixelCountdown == 0x8000)
+							if (pixelMask == 0x8000)
 							{
 								if (v == dbugLine)
 									write[h] = 'x';
@@ -398,7 +400,7 @@ namespace RunAmiga.Core.Custom
 								byte pix = 0;
 
 								for (int i = 0; i < planes; i++)
-									pix |= (byte)((bpldat[i] & pixelCountdown) != 0 ? (1 << i) : 0);
+									pix |= (byte)((bpldat[i] & pixelMask) != 0 ? (1 << i) : 0);
 
 								//pix is the Amiga colour
 								int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
@@ -409,7 +411,7 @@ namespace RunAmiga.Core.Custom
 								for (int k = 0; k < 4 / pixelLoop; k++)
 									screen[dptr++] = (int)col;
 
-								pixelCountdown = (ushort)((pixelCountdown >> 1) | (pixelCountdown << 15)); //next bit
+								pixelMask = (ushort)((pixelMask >> 1) | (pixelMask << 15)); //next bit
 							}
 						}
 						else
