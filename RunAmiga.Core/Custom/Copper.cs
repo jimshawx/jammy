@@ -178,14 +178,14 @@ namespace RunAmiga.Core.Custom
 			if (copPC == 0) return;
 
 			//logger.LogTrace($"COP  {copPC:X6} {bplpt[0]:X6} {bplpt[1]:X6}");
-			colour[0] = 0xfff;
-			colour[1] = 0x000;
-			colour[2] = 0x77c;
-			colour[3] = 0xbbb;
-			truecolour[0] = 0xffffff;
-			truecolour[1] = 0x000000;
-			truecolour[2] = 0x7777cc;
-			truecolour[3] = 0xbbbbbb;
+			//colour[0] = 0xfff;
+			//colour[1] = 0x000;
+			//colour[2] = 0x77c;
+			//colour[3] = 0xbbb;
+			//truecolour[0] = 0xffffff;
+			//truecolour[1] = 0x000000;
+			//truecolour[2] = 0x7777cc;
+			//truecolour[3] = 0xbbbbbb;
 
 			int waitH=0, waitV=0;
 			int waitHMask = 0xff, waitVMask = 0xff;
@@ -205,7 +205,7 @@ namespace RunAmiga.Core.Custom
 
 			ushort[] bpldatdma = new ushort[8];
 			bool copperEarlyOut = false;
-			int dbugLine = diwstrt >> 8;
+			int dbugLine = -1;//diwstrt >> 8;
 
 			char[] fetch = new char[227];
 			char[] write = new char[227];
@@ -437,7 +437,7 @@ namespace RunAmiga.Core.Custom
 					}
 				}
 
-				if (v == 100)
+				if (v == dbugLine)
 				{
 					logger.LogInformation($"DDF {ddfstrt:X4} {ddfstop:X4} FMOD {fmode:X4}");
 					logger.LogInformation($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4}");

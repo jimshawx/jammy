@@ -1,10 +1,17 @@
-﻿using System.Windows.Forms;
+﻿using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 
 namespace RunAmiga.Core.Custom
 {
 	public class Mouse : IMouse
 	{
+		private readonly ILogger logger;
+
+		[DllImport("user32.dll")]
+		private static extern short GetAsyncKeyState(int key);
+
 		private const uint PRAMASK = 0b1100_0000;
 
 		private uint pra;
@@ -15,11 +22,49 @@ namespace RunAmiga.Core.Custom
 		private uint pot1dat;
 		private uint joytest;
 
+		public Mouse(ILogger<Mouse> logger)
+		{
+			this.logger = logger;
+		}
+
 		private int oldMouseX, oldMouseY;
 
 		private ulong mouseTime = 0;
+		private ulong joystickTime = 0;
 
 		public void Emulate(ulong cycles)
+		{
+			EmulateMouse(cycles);
+			EmulateJoystick(cycles);
+		}
+
+		public void EmulateJoystick(ulong cycles)
+		{
+			joystickTime += cycles;
+
+			if (joystickTime > 1000)
+			{
+				joystickTime -= 1000;
+
+				if ((GetAsyncKeyState((int)Keyboard.VK.VK_SPACE)&0x8000)!=0)
+					pra &= ~(1u << 7);
+				else
+					pra |= (1u << 7);
+
+				bool u = ((GetAsyncKeyState((int)Keyboard.VK.VK_UP) & 0x8000) != 0);
+				bool d = ((GetAsyncKeyState((int)Keyboard.VK.VK_DOWN) & 0x8000) != 0);
+				bool l = ((GetAsyncKeyState((int)Keyboard.VK.VK_LEFT) & 0x8000) != 0);
+				bool r = ((GetAsyncKeyState((int)Keyboard.VK.VK_RIGHT) & 0x8000) != 0);
+
+				joy1dat = 0;
+				if (u ^ l) joy1dat |= 1 << 8;
+				if (d ^ r) joy1dat |= 1;
+				if (l) joy1dat |= 2 << 8;
+				if (r) joy1dat |= 2;
+			}
+		}
+
+		public void EmulateMouse(ulong cycles)
 		{
 			mouseTime += cycles;
 
@@ -107,9 +152,13 @@ namespace RunAmiga.Core.Custom
 			switch (address)
 			{
 				case ChipRegs.JOY0DAT: value = joy0dat; break;
-				case ChipRegs.JOY1DAT: value = joy1dat; break;
+				case ChipRegs.JOY1DAT: value = joy1dat;
+					//logger.LogTrace($"JOY1DAT R {value:X4}"); 
+					break;
 				case ChipRegs.POTGO: value = potgo; break;
-				case ChipRegs.POTGOR: value = potgo; break;
+				case ChipRegs.POTGOR: value = potgo;
+					//logger.LogTrace($"POTGO R {value:X4}");
+					break;
 				case ChipRegs.POT0DAT: value = pot0dat; break;
 				case ChipRegs.POT1DAT: value = pot1dat; break;
 				case ChipRegs.JOYTEST: value = joytest; break;
@@ -123,8 +172,12 @@ namespace RunAmiga.Core.Custom
 			switch (address)
 			{
 				case ChipRegs.JOY0DAT: joy0dat = value; break;
-				case ChipRegs.JOY1DAT: joy1dat = value; break;
-				case ChipRegs.POTGO: potgo = value; break;
+				case ChipRegs.JOY1DAT: joy1dat = value;
+					//logger.LogTrace($"JOY1DAT W {value:X4}");
+					break;
+				case ChipRegs.POTGO: potgo = value; 
+					//logger.LogTrace($"POTGO W {value:X4}");
+					break;
 				case ChipRegs.POTGOR: potgo = value; break;
 				case ChipRegs.POT0DAT: pot0dat = value; break;
 				case ChipRegs.POT1DAT: pot1dat = value; break;
