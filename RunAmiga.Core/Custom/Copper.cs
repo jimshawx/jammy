@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -189,29 +190,39 @@ namespace RunAmiga.Core.Custom
 			int waitH=0, waitV=0;
 			int waitHMask = 0xff, waitVMask = 0xff;
 
-			bool in_display = true;
-			bool in_fetch = true;
-			bool is_new_pixel = true;
+			//bool in_display = true;
+			//bool in_fetch = true;
+			//bool is_new_pixel = true;
 
-			int pixelCountdown = -1;
+			ushort pixelCountdown;
 			uint col=0x000000;
 
 			CopperState state = CopperState.Running;
 			int lines = isEvenFrame ? 312 : 313;
 
 			int dptr = 0;
+			int[] cnt = new int[8];
 
+			ushort[] bpldatdma = new ushort[8];
+			bool copperEarlyOut = false;
+			int dbugLine = diwstrt >> 8;
+
+			char[] fetch = new char[227];
+			char[] write = new char[227];
 
 			for (int v = 0; v < lines; v++)
 			{
+				for (int i = 0; i < 8; i++)
+					cnt[i] = 0;
+
 				int lineStart = dptr;
-				pixelCountdown = 0;
+				pixelCountdown = 0x8000;
 				for (int h = 0; h < 227; h++)
 				{
 					ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
 					//copper instruction every even clock
-					if ((h & 1) == 0 && (dmacon&0b101000000) == 0b101000000)
+					if ((h & 1) == 0 && (dmacon & 0b101000000) == 0b101000000)
 					{
 						if (state == CopperState.Running)
 						{
@@ -250,7 +261,7 @@ namespace RunAmiga.Core.Custom
 								waitVMask = ((data >> 8) & 0x7f) | 0x80;
 
 								uint blit = (uint)(data >> 15);
-								
+
 								//todo: blitter is immediate, so currently ignored.
 								//todo: in reality if blitter-busy bit is set the comparisons will fail.
 
@@ -272,8 +283,11 @@ namespace RunAmiga.Core.Custom
 							}
 
 							//this is usually how a copper list ends
-							if (ins == 0xffff && data == 0xfffe)
-								h = v = 1000;
+							if (copperEarlyOut)
+							{
+								if (ins == 0xffff && data == 0xfffe)
+									h = v = 1000;
+							}
 						}
 						else if (state == CopperState.Waiting)
 						{
@@ -292,86 +306,156 @@ namespace RunAmiga.Core.Custom
 					//bitplane fetching
 
 					//how many pixels should be fecthed per clock in the current mode?
-					int pixelLoop=0;
+					int pixelLoop;
+					int pixmod;
 					if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 					{
 						//4 colour clocks, fetch 16 pixels
 						//1 colour clock, draw 4 pixel
 						pixelLoop = 4;
+						pixmod = 4;
 					}
-					else if ((bplcon0 & (uint)BPLCON0.SuperHiRes)!=0)
+					else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0)
 					{
 						//2 colour clocks, fetch 16 pixels
 						//1 colour clock, draw 8 pixel
 						pixelLoop = 8;
+						pixmod = 2;
 					}
 					else
 					{
 						//8 colour clocks, fetch 16 pixels
 						//1 colour clock, draw 2 pixel
 						pixelLoop = 2;
-					}
-					in_fetch = /*pixelCountdown != 0 ||*/ (h >= ddfstrt && h < ddfstop+ (3*pixelLoop) 
-					                                                    && v >= (diwstrt >> 8) &&  v < ((diwstop>>8)+(((diwstop&0x8000)^0x8000)>>7)));
+						pixmod = 8;
 
-					if (v == 100 && h == 0)
-					{
-						logger.LogInformation($"DDF {ddfstrt:X4} {ddfstop:X4} {ddfstrt} {ddfstop} {ddfstop - ddfstrt}");
-						logger.LogInformation($"DIW {diwstrt:X4} {diwstop:X4} {diwstrt} {diwstop} {diwstop - diwstrt} {diwhigh:X4}");
 					}
 
-					for (int p = 0; p < pixelLoop; p++)
+					int planes = (bplcon0 >> 12) & 7;
+					int diwstrth = diwstrt&0xff;
+					int diwstrtv = diwstrt>>8;
+					int diwstoph = (diwstop&0xff)|0x100;
+					int diwstopv = (diwstop >> 8) | (((diwstop&0x8000) >> 7) ^ 0x100);
+
+					//round up ddfstop to nearest 8 pixels difference from ddfstart, and add one extra cycle for luck
+					ushort d = (ushort)(((ddfstop-ddfstrt)+ 7)&~7);
+					ushort ddfstopfix = (ushort)(ddfstrt + d + 8);
+
+					int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1};
+					int[] fetchHi = { 4, 2, 3, 1};
+
+					if (v == dbugLine)
 					{
-						//are we within the bitplane fetch area defined by DDF?
-						if (in_fetch && (dmacon&0b110000000) == 0b110000000)
+						fetch[h] = '-';
+						write[h] = '-';
+					}
+
+					//is it the visible area, vertically?
+					if (v >= diwstrtv && v < diwstopv)
+					{
+						//is it time to do bitplane DMA
+						//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
+						if (h >= ddfstrt && h < ddfstopfix && (dmacon & 0b110000000) == 0b110000000)//bitplane DMA is on
 						{
-							int planes = (bplcon0 >> 12) & 7;
+							int planeIdx = (h - ddfstrt) % pixmod;
 
-							//is it time to fetch some more bitplane data?
-							if (pixelCountdown <= 0)
+							int plane;
+							if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
+								plane = fetchHi[planeIdx] - 1;
+							else
+								plane = fetchLo[planeIdx] - 1;
+							if (plane < planes)
 							{
+								bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
+								bplpt[plane] += 2;
 
-								//if (v == 100)
-								//	Logger.Write($"{h:X2} ");
-								for (int i = 0; i < planes; i++)
-								{
-									bpldat[i] = (ushort)memory.Read(0, bplpt[i], Size.Word);
-									bplpt[i] += 2;
-								}
+								cnt[plane]++;
+								if (v == dbugLine)
+									fetch[h] = Convert.ToChar(plane+48);
+							}
+						}
 
-								pixelCountdown = 0x8000;
+						//is it the visible area horizontally
+						//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
+						if (h >= diwstrth >> 1 && h < diwstoph >> 1)
+						{
+							if (pixelCountdown == 0x8000)
+							{
+								if (v == dbugLine)
+									write[h] = 'x';
+								for (int i = 0; i < 8; i++)
+									bpldat[i] = bpldatdma[i];
+							}
+							else
+							{
+								if (v == dbugLine)
+									write[h] = '.';
 							}
 
-							//decode the colour
-							byte pix = 0;
+							for (int p = 0; p < pixelLoop; p++)
+							{
+								//decode the colour
+								byte pix = 0;
 
-							for (int i = 0; i < planes; i++)
-								pix |= (byte)((bpldat[i] & (pixelCountdown)) != 0 ? (1 << i) : 0);
+								for (int i = 0; i < planes; i++)
+									pix |= (byte)((bpldat[i] & pixelCountdown) != 0 ? (1 << i) : 0);
 
-							//pix is the Amiga colour
-							int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+								//pix is the Amiga colour
+								int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+								col = truecolour[pix + bank];
 
-							col = truecolour[pix + bank];
-							
-							pixelCountdown >>= 1;
+								//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+								//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
+								for (int k = 0; k < 4 / pixelLoop; k++)
+									screen[dptr++] = (int)col;
+
+								pixelCountdown = (ushort)((pixelCountdown >> 1) | (pixelCountdown << 15)); //next bit
+							}
 						}
 						else
 						{
+							//outside horizontal area
+
 							//output colour 0 pixels
 							col = truecolour[0];
-							col = 0xff0000;
-						}
+							//col = 0xff0000;
 
-						//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-						//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
-						for (int k = 0; k < 4 / pixelLoop; k++)
+							for (int k = 0; k < 4; k++)
+								screen[dptr++] = (int)col;
+						}
+					}
+					else
+					{
+						//outside vertical area
+
+						//output colour 0 pixels
+						col = truecolour[0];
+						//col = 0xff0000;
+
+						for (int k = 0; k < 4; k++)
 							screen[dptr++] = (int)col;
 					}
-
 				}
 
-				//if (v == 100)
-				//	logger.LogTrace("\\");
+				if (v == 100)
+				{
+					logger.LogInformation($"DDF {ddfstrt:X4} {ddfstop:X4} FMOD {fmode:X4}");
+					logger.LogInformation($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4}");
+					logger.LogInformation($"MOD {bpl1mod:X4} {bpl2mod:X4}");
+					logger.LogInformation($"BPL {bplcon0:X4} {bplcon1:X4} {bplcon2:X4} {bplcon3:X4} {bplcon4:X4}");
+					logger.LogTrace($"{cnt[0]} {cnt[1]}");
+					var sb = new StringBuilder();
+					sb.AppendLine();
+					for (int i = 0; i < 227; i++)
+						sb.Append(fetch[i]);
+
+					logger.LogTrace(sb.ToString());
+					sb.Clear();
+					sb.AppendLine();
+					for (int i = 0; i < 227; i++)
+						sb.Append(write[i]);
+					logger.LogTrace(sb.ToString());
+				}
 
 				//next horizontal line
 				{
