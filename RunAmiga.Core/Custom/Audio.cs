@@ -42,15 +42,15 @@ namespace RunAmiga.Core.Custom
 				var dmaconchanges = (ushort)(dmacon ^ lastdmacon);
 				lastdmacon = dmacon;
 
-				ChannelToggle(0, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD0) != 0);
-				ChannelToggle(1, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD1) != 0);
-				ChannelToggle(2, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD2) != 0);
-				ChannelToggle(3, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD3) != 0);
+				ChannelToggle(0, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD0EN) != 0);
+				ChannelToggle(1, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD1EN) != 0);
+				ChannelToggle(2, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD2EN) != 0);
+				ChannelToggle(3, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD3EN) != 0);
 				
-				if ((dmacon & (uint)ChipRegs.DMA.AUD0) != 0) Playing(0);
-				if ((dmacon & (uint)ChipRegs.DMA.AUD1) != 0) Playing(1);
-				if ((dmacon & (uint)ChipRegs.DMA.AUD2) != 0) Playing(2);
-				if ((dmacon & (uint)ChipRegs.DMA.AUD3) != 0) Playing(3);
+				if ((dmacon & (uint)ChipRegs.DMA.AUD0EN) != 0) Playing(0);
+				if ((dmacon & (uint)ChipRegs.DMA.AUD1EN) != 0) Playing(1);
+				if ((dmacon & (uint)ChipRegs.DMA.AUD2EN) != 0) Playing(2);
+				if ((dmacon & (uint)ChipRegs.DMA.AUD3EN) != 0) Playing(3);
 			}
 		}
 

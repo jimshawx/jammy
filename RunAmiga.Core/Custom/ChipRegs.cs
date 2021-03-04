@@ -513,21 +513,22 @@ namespace RunAmiga.Core.Custom
 		[Flags]
 		public enum DMA
 		{
-			INTEN = 0x4000,
-			EXTER = 0x2000,
-			DSKSYN= 0x1000,
-			RBF   = 0x0800,
-			AUD3  = 0x0400,
-			AUD2  = 0x0200,
-			AUD1  = 0x0100,
-			AUD0  = 0x0080,
-			BLIT  = 0x0040,
-			VERTB = 0x0020,
-			COPER = 0x0010,
-			PORTS = 0x0008,
-			SOFT  = 0x0004,
-			DSKBLK= 0x0002,
-			TBE   = 0x0001,
+			SETCLR = 0x8000,
+			BBUSY = 0x4000,
+			BZERO = 0x2000,
+			unused0 = 0x1000,
+			unused1 = 0x0800,
+			BLTPRI = 0x0400,
+			DMAEN = 0x0200,
+			BPLEN = 0x00100,
+			COPEN = 0x0080,
+			BLTEN = 0x0040,
+			SPREN = 0x0020,
+			DSKEN = 0x0010,
+			AUD0EN = 0x0008,
+			AUD1EN = 0x0004,
+			AUD2EN = 0x0002,
+			AUD3EN = 0x0001,
 		}
 
 		public static string Name(uint address)

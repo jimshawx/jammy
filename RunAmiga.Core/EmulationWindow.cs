@@ -1,4 +1,6 @@
 ﻿using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 
@@ -8,6 +10,8 @@ namespace RunAmiga.Core
 	{
 		Form GetForm();
 		bool IsCaptured { get; }
+		void SetPicture(int screenWidth, int screenHeight);
+		void Blit(int[] screen);
 	}
 
 	public class EmulationWindow : IEmulationWindow
@@ -64,6 +68,41 @@ namespace RunAmiga.Core
 		{
 			if (e.KeyChar == 0x1B)
 				Release("KeyPress");
+		}
+
+		private Bitmap bitmap;
+		private PictureBox picture;
+		private int screenWidth;
+		private int screenHeight;
+
+		public void SetPicture(int width, int height)
+		{
+			screenWidth = width;
+			screenHeight = height;
+
+			emulation.ClientSize = new Size(screenWidth, screenHeight);
+			bitmap = new Bitmap(screenWidth, screenHeight, PixelFormat.Format32bppRgb);
+			picture = new PictureBox { Image = bitmap, ClientSize = new System.Drawing.Size(screenWidth, screenHeight), Enabled = false };
+
+			//try to scale the box
+			//picture.SizeMode = PictureBoxSizeMode.StretchImage;
+			//int scaledHeight = (SCREEN_HEIGHT * 6) / 5;
+			//emulation.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
+			//picture.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
+
+			emulation.Controls.Add(picture);
+			emulation.Show();
+
+		}
+
+		public void Blit(int[] screen)
+		{
+			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, screenWidth, screenHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
+			Marshal.Copy(screen, 0, bitmapData.Scan0, screen.Length);
+			bitmap.UnlockBits(bitmapData);
+			picture.Image = bitmap;
+			emulation.Invalidate();
+			Application.DoEvents();
 		}
 	}
 }

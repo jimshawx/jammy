@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
-using Size = RunAmiga.Core.Types.Types.Size;
+using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
 {
@@ -14,18 +10,15 @@ namespace RunAmiga.Core.Custom
 	{
 		private readonly IMemoryMappedDevice memory;
 		private readonly IChips custom;
+		private readonly IEmulationWindow emulationWindow;
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
-
-		private readonly Form form;
-		private readonly Bitmap bitmap;
-		private readonly PictureBox picture;
 
 		//private const int SCREEN_WIDTH = 1280;
 		//private const int SCREEN_HEIGHT = 1024;
 
 		private const int SCREEN_WIDTH = DMA_WIDTH*4;//227 * 4;
-		private const int SCREEN_HEIGHT = 313;
+		private const int SCREEN_HEIGHT = 313*2;//x2 for scan double
 
 		//sprite DMA starts at 0x18, but can be eaten into by bitmap DMA
 		//normal bitmap DMA start at 0x38
@@ -38,29 +31,17 @@ namespace RunAmiga.Core.Custom
 
 		private const int DMA_WIDTH = DMA_END - DMA_START;
 
-
 		private readonly int[] screen = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
 
 		public Copper(IMemory memory, IChips custom, IEmulationWindow emulationWindow, IInterrupt interrupt, ILogger<Copper> logger)
 		{
 			this.memory = memory;
 			this.custom = custom;
+			this.emulationWindow = emulationWindow;
 			this.interrupt = interrupt;
 			this.logger = logger;
 
-			form = emulationWindow.GetForm();
-			form.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, SCREEN_HEIGHT);
-			bitmap = new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT, PixelFormat.Format32bppRgb);
-			picture = new PictureBox {Image = bitmap, ClientSize = new System.Drawing.Size(SCREEN_WIDTH, SCREEN_HEIGHT), Enabled = false};
-			
-			//try to scale the box
-			//picture.SizeMode = PictureBoxSizeMode.StretchImage;
-			//int scaledHeight = (SCREEN_HEIGHT * 10) / 5;
-			//form.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
-			//picture.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
-
-			form.Controls.Add(picture);
-			form.Show();
+			emulationWindow.SetPicture(SCREEN_WIDTH, SCREEN_HEIGHT);
 		}
 
 		private ulong copperTime;
@@ -218,7 +199,7 @@ namespace RunAmiga.Core.Custom
 					ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
 					//copper instruction every even clock (and copper DMA is on)
-					if ((h & 1) == 0 && (dmacon & 0b101000000) == 0b101000000)
+					if ((h & 1) == 0 && (dmacon & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.COPEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.COPEN))
 					{
 						if (state == CopperState.Running)
 						{
@@ -353,7 +334,7 @@ namespace RunAmiga.Core.Custom
 					{
 						//is it time to do bitplane DMA
 						//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
-						if (h >= ddfstrt && h < ddfstopfix && (dmacon & 0b110000000) == 0b110000000)//bitplane DMA is on
+						if (h >= ddfstrt && h < ddfstopfix && (dmacon & (ushort)(ChipRegs.DMA.DMAEN|ChipRegs.DMA.BPLEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.BPLEN))//bitplane DMA is on
 						{
 							int planeIdx = (h - ddfstrt) % pixmod;
 
@@ -466,10 +447,15 @@ namespace RunAmiga.Core.Custom
 
 				//this should be a no-op
 				dptr += SCREEN_WIDTH - (dptr - lineStart);
+
+				//scan double
+				for (int i = lineStart; i < lineStart + SCREEN_WIDTH; i++)
+					screen[dptr++] = screen[i];
 			}
 
 			// sprites
-			if ((custom.Read(0, ChipRegs.DMACONR, Size.Word) & 0b100100000) == 0b100100000)
+			ushort dmaconr = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			if ((dmaconr & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.SPREN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.SPREN))
 			{
 				for (int s = 7; s >= 0; s--)
 				{
@@ -492,7 +478,8 @@ namespace RunAmiga.Core.Custom
 						hstart -= DMA_START<<1;
 
 						//x2 because they are low-res pixels on our high-res bitmap
-						dptr = (hstart * 2) + vstart * SCREEN_WIDTH;
+						//dptr = (hstart * 2) + vstart * SCREEN_WIDTH;
+						dptr = (hstart * 2) + vstart *2* SCREEN_WIDTH;//scan double
 						for (int r = vstart; r < vstop; r++)
 						{
 							sprdata[s] = (ushort)memory.Read(0, sprpt[s], Size.Word); sprpt[s] += 2;
@@ -516,12 +503,7 @@ namespace RunAmiga.Core.Custom
 				}
 			}
 
-			var bitmapData = bitmap.LockBits(new Rectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
-			Marshal.Copy(screen, 0, bitmapData.Scan0, screen.Length);
-			bitmap.UnlockBits(bitmapData);
-			picture.Image = bitmap;
-			form.Invalidate();
-			Application.DoEvents();
+			emulationWindow.Blit(screen);
 		}
 /*
 					//227 (E3) hclocks @ 3.5MHz,
