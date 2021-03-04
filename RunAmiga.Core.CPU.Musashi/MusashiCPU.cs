@@ -12,6 +12,7 @@ namespace RunAmiga.Core.CPU.Musashi
 		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
 		private readonly ILogger logger;
+		private readonly IMemory memory;
 
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_init(IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
@@ -31,6 +32,39 @@ namespace RunAmiga.Core.CPU.Musashi
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_set_irq(uint levels);
 
+
+		private Musashi_Reader r32;
+		private Musashi_Reader r16;
+		private Musashi_Reader r8;
+		private Musashi_Writer w32;
+		private Musashi_Writer w16;
+		private Musashi_Writer w8;
+
+		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ILogger<MusashiCPU> logger, IMemory memory)
+		{
+			this.interrupt = interrupt;
+			this.memoryMapper = memoryMapper;
+			this.breakpoints = breakpoints;
+			this.logger = logger;
+			this.memory = memory;
+
+			r32 = new Musashi_Reader(Musashi_read32);
+			r16 = new Musashi_Reader(Musashi_read16);
+			r8 = new Musashi_Reader(Musashi_read8);
+			w32 = new Musashi_Writer(Musashi_write32);
+			w16 = new Musashi_Writer(Musashi_write16);
+			w8 = new Musashi_Writer(Musashi_write8);
+
+			Musashi_init(
+				Marshal.GetFunctionPointerForDelegate(r32),
+				Marshal.GetFunctionPointerForDelegate(r16),
+				Marshal.GetFunctionPointerForDelegate(r8),
+				Marshal.GetFunctionPointerForDelegate(w32),
+				Marshal.GetFunctionPointerForDelegate(w16),
+				Marshal.GetFunctionPointerForDelegate(w8)
+			);
+		}
+
 		private void CheckInterrupt()
 		{
 			ushort interruptLevel = interrupt.GetInterruptLevel();
@@ -48,11 +82,13 @@ namespace RunAmiga.Core.CPU.Musashi
 			int ticks = 0;
 			uint pc = Musashi_execute(ref ticks);
 
-			totalTicks += (ulong)ticks;
-			tickCount++;
-
-			if ((tickCount&0xffffff)==0)
-				logger.LogTrace($"{(double)totalTicks/tickCount}");
+			if (memory.Read16(pc) != 0x4e72)//stop
+			{
+				totalTicks += (ulong)ticks;
+				tickCount++;
+				if ((tickCount & 0xffffff) == 0)
+					logger.LogTrace($"{(double)totalTicks / tickCount}");
+			}
 
 			instructionStartPC = pc;
 
@@ -62,37 +98,6 @@ namespace RunAmiga.Core.CPU.Musashi
 		public void Reset()
 		{
 			//Musashi_set_pc(4);
-		}
-
-		private Musashi_Reader r32;
-		private Musashi_Reader r16;
-		private Musashi_Reader r8;
-		private Musashi_Writer w32;
-		private Musashi_Writer w16;
-		private Musashi_Writer w8;
-
-		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ILogger<MusashiCPU> logger)
-		{
-			this.interrupt = interrupt;
-			this.memoryMapper = memoryMapper;
-			this.breakpoints = breakpoints;
-			this.logger = logger;
-
-			r32 = new Musashi_Reader(Musashi_read32);
-			r16 = new Musashi_Reader(Musashi_read16);
-			r8 = new Musashi_Reader(Musashi_read8);
-			w32 = new Musashi_Writer(Musashi_write32);
-			w16 = new Musashi_Writer(Musashi_write16);
-			w8 = new Musashi_Writer(Musashi_write8);
-
-			Musashi_init(
-				Marshal.GetFunctionPointerForDelegate(r32),
-				Marshal.GetFunctionPointerForDelegate(r16),
-				Marshal.GetFunctionPointerForDelegate(r8),
-				Marshal.GetFunctionPointerForDelegate(w32),
-				Marshal.GetFunctionPointerForDelegate(w16),
-				Marshal.GetFunctionPointerForDelegate(w8)
-			);
 		}
 
 		public Regs GetRegs()
