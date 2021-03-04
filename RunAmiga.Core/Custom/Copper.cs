@@ -14,6 +14,7 @@ namespace RunAmiga.Core.Custom
 	{
 		private readonly IMemoryMappedDevice memory;
 		private readonly IChips custom;
+		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 
 		private readonly Form form;
@@ -35,10 +36,11 @@ namespace RunAmiga.Core.Custom
 
 		private readonly int[] screen = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
 
-		public Copper(IMemory memory, IChips custom, IEmulationWindow emulationWindow, ILogger<Copper> logger)
+		public Copper(IMemory memory, IChips custom, IEmulationWindow emulationWindow, IInterrupt interrupt, ILogger<Copper> logger)
 		{
 			this.memory = memory;
 			this.custom = custom;
+			this.interrupt = interrupt;
 			this.logger = logger;
 
 			form = emulationWindow.GetForm();
@@ -47,10 +49,10 @@ namespace RunAmiga.Core.Custom
 			picture = new PictureBox {Image = bitmap, ClientSize = new System.Drawing.Size(SCREEN_WIDTH, SCREEN_HEIGHT), Enabled = false};
 			
 			//try to scale the box
-			picture.SizeMode = PictureBoxSizeMode.StretchImage;
-			int scaledHeight = (SCREEN_HEIGHT*5)/4;
-			form.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
-			picture.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
+			//picture.SizeMode = PictureBoxSizeMode.StretchImage;
+			//int scaledHeight = (SCREEN_HEIGHT * 10) / 5;
+			//form.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
+			//picture.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
 
 			form.Controls.Add(picture);
 			form.Show();
@@ -62,7 +64,6 @@ namespace RunAmiga.Core.Custom
 		private uint copperVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 
 		private bool dbug=false;
-		private int cf = 0;
 		public void Emulate(ulong cycles)
 		{
 			copperTime += cycles;
@@ -72,20 +73,14 @@ namespace RunAmiga.Core.Custom
 			{
 				copperTime -= 140_000;
 
-				//RunCopperList(cop1lc, false);
-				if ((cf++ % 20) == 0)
-					RunCopperList(cop1lc, false);
+				RunCopperList(cop1lc, false);
 
 				if (dbug)
 				{
 					DebugCopperList(cop1lc);
 					dbug = false;
 				}
-
-				//if (((25 + cf++) % 50) == 0)
-				//	RunCopperList(cop2lc, false);
-
-				custom.Write(0, ChipRegs.INTREQ, 0x8000 + (1u << (int)Interrupt.VERTB), Size.Word);
+				interrupt.AssertInterrupt(Interrupt.VERTB);
 			}
 
 			//roughly
@@ -104,11 +99,7 @@ namespace RunAmiga.Core.Custom
 		{
 			if (copPC == 0) return;
 
-			//ParseCopperList(copPC);
-
 			logger.LogTrace($"Copper List @{copPC:X8}");
-
-			uint copStartPC = copPC;
 
 			int counter = MAX_COPPER_ENTRIES;
 			while (counter-- > 0)
@@ -523,7 +514,6 @@ namespace RunAmiga.Core.Custom
 			bitmap.UnlockBits(bitmapData);
 			picture.Image = bitmap;
 			form.Invalidate();
-
 			Application.DoEvents();
 		}
 /*
