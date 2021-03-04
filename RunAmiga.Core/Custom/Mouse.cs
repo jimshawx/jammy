@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -7,7 +9,9 @@ namespace RunAmiga.Core.Custom
 {
 	public class Mouse : IMouse
 	{
+		private readonly IEmulationWindow emulationWindow;
 		private readonly ILogger logger;
+		private readonly Form mouse;
 
 		[DllImport("user32.dll")]
 		private static extern short GetAsyncKeyState(int key);
@@ -22,9 +26,11 @@ namespace RunAmiga.Core.Custom
 		private uint pot1dat;
 		private uint joytest;
 
-		public Mouse(ILogger<Mouse> logger)
+		public Mouse(IEmulationWindow emulationWindow, ILogger<Mouse> logger)
 		{
+			this.emulationWindow = emulationWindow;
 			this.logger = logger;
+			this.mouse = emulationWindow.GetForm();
 		}
 
 		private int oldMouseX, oldMouseY;
@@ -112,8 +118,11 @@ namespace RunAmiga.Core.Custom
 					int dx = mousex - oldMouseX;
 					int dy = mousey - oldMouseY;
 
-					dx = dx + (dx >> 1);
-					dy = dy + (dy >> 1);
+					if (Math.Abs(dx) > 255 || Math.Abs(dy) > 255) logger.LogTrace($"mouse too fast {dx},{dy}");
+					//dx = dx + (dx >> 1);
+					//dy = dy + (dy >> 1);
+					dx >>= 1;
+					dy >>= 1;
 
 					sbyte x = (sbyte)(joy0dat & 0xff);
 					sbyte y = (sbyte)(joy0dat >> 8);
@@ -124,8 +133,28 @@ namespace RunAmiga.Core.Custom
 					joy0dat = (uint)((y << 8) | (byte)x);
 				}
 
-				oldMouseX = mousex;
-				oldMouseY = mousey;
+				if (emulationWindow.IsCaptured)
+				{
+					if (!mouse.IsDisposed)
+					{
+						mouse.Invoke((Action)delegate()
+						{
+							//put the cursor back in the middle of the emulation window
+							var emuRect = mouse.RectangleToScreen(mouse.ClientRectangle);
+							var centre = new Point(emuRect.X + emuRect.Width / 2, emuRect.Y + emuRect.Height / 2);
+							Cursor.Position = centre;
+							oldMouseX = centre.X;
+							oldMouseY = centre.Y;
+						});
+
+						Application.DoEvents();
+					}
+				}
+				else
+				{
+					oldMouseX = mousex;
+					oldMouseY = mousey;
+				}
 
 				//clock++;
 				//clock &= 3;

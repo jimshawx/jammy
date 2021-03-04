@@ -1,5 +1,4 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 
@@ -8,6 +7,7 @@ namespace RunAmiga.Core
 	public interface IEmulationWindow
 	{
 		Form GetForm();
+		bool IsCaptured { get; }
 	}
 
 	public class EmulationWindow : IEmulationWindow
@@ -28,14 +28,14 @@ namespace RunAmiga.Core
 			return emulation;
 		}
 
-		private bool isCaptured = false;
+		public bool IsCaptured { get; private set; } = false;
 
 		private void Capture(string where)
 		{
-			if (!isCaptured)
+			if (!IsCaptured)
 			{
 				logger.LogTrace($"Capture {where}");
-				isCaptured = true;
+				IsCaptured = true;
 				Cursor.Hide();
 				Cursor.Clip = emulation.RectangleToScreen(emulation.ClientRectangle);
 			}
@@ -43,13 +43,10 @@ namespace RunAmiga.Core
 
 		private void Release(string where)
 		{
-			//if (isCaptured)
-			{
-				logger.LogTrace($"Release {where}");
-				isCaptured = false;
-				Cursor.Show();
-				Cursor.Clip = new Rectangle(0, 0, 0, 0);
-			}
+			logger.LogTrace($"Release {where}");
+			IsCaptured = false;
+			Cursor.Show();
+			Cursor.Clip = new Rectangle(0, 0, 0, 0);
 		}
 
 		private void Emulation_MouseClick(object sender, MouseEventArgs e)

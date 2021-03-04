@@ -32,7 +32,12 @@ namespace RunAmiga.Core.Custom
 		private const int DMA_START = 0x38;
 		//bitmap DMA ends at 0xD8, with 8 slots after that
 		private const int DMA_END = 0xE0;
+
+		//private const int DMA_START = 0;
+		//private const int DMA_END = 227;
+
 		private const int DMA_WIDTH = DMA_END - DMA_START;
+
 
 		private readonly int[] screen = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
 
@@ -483,6 +488,8 @@ namespace RunAmiga.Core.Custom
 						vstart += (sprctl[s] & 4) << 6; //bit 2 is high bit of vstart
 						vstop += (sprctl[s] & 2) << 7; //bit 1 is high bit of vstop
 						hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
+
+						hstart -= DMA_START<<1;
 
 						//x2 because they are low-res pixels on our high-res bitmap
 						dptr = (hstart * 2) + vstart * SCREEN_WIDTH;
