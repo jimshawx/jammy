@@ -37,7 +37,7 @@ namespace RunAmiga.Core.Custom
 		{
 			int key = e.KeyValue;
 
-			logger.LogTrace($"KeyDown {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2} ");
+			//logger.LogTrace($"KeyDown {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2} ");
 
 			switch (key)
 			{
@@ -54,7 +54,7 @@ namespace RunAmiga.Core.Custom
 		{
 			int key = e.KeyValue;
 
-			logger.LogTrace($"KeyUp   {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2}");
+			//logger.LogTrace($"KeyUp   {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2}");
 
 			switch (key)
 			{
