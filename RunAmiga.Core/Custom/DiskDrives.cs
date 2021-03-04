@@ -245,7 +245,6 @@ namespace RunAmiga.Core.Custom
 		private uint dskpt;
 		private uint dsklen;
 		private uint dskdat;
-		private uint adkcon;
 
 		private int upcomingDiskDMA = -1;
 
@@ -319,9 +318,6 @@ namespace RunAmiga.Core.Custom
 					break;
 				case ChipRegs.DSKDAT:
 					dskdat = value;
-					break;
-				case ChipRegs.ADKCON:
-					adkcon = value;
 					break;
 			}
 		}

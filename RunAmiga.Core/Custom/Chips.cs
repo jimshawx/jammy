@@ -111,8 +111,7 @@ namespace RunAmiga.Core.Custom
 				regs[reg] = blitter.Read(insaddr, address);
 			}
 			else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
-			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT 
-			         )//|| address == ChipRegs.ADKCON || address == ChipRegs.ADKCONR)//these last two shared with audio
+			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT)
 			{
 				regs[reg] = diskDrives.Read(insaddr, address);
 			}

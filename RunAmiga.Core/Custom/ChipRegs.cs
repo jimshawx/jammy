@@ -510,6 +510,26 @@ namespace RunAmiga.Core.Custom
 		public const uint ChipBase = 0xdff000;
 		public const uint ChipAddressMask = 0x1ffffe;//2MB limit, always word aligned
 
+		[Flags]
+		public enum DMA
+		{
+			INTEN = 0x4000,
+			EXTER = 0x2000,
+			DSKSYN= 0x1000,
+			RBF   = 0x0800,
+			AUD3  = 0x0400,
+			AUD2  = 0x0200,
+			AUD1  = 0x0100,
+			AUD0  = 0x0080,
+			BLIT  = 0x0040,
+			VERTB = 0x0020,
+			COPER = 0x0010,
+			PORTS = 0x0008,
+			SOFT  = 0x0004,
+			DSKBLK= 0x0002,
+			TBE   = 0x0001,
+		}
+
 		public static string Name(uint address)
 		{
 			if (customRegisterDetails.TryGetValue(address, out Tuple<string, string> item))
