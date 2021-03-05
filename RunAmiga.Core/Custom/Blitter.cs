@@ -227,8 +227,8 @@ namespace RunAmiga.Core.Custom
 			//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
 			//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
 			//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
-			//if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
-			//	logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
+				logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 
 			bool dont_blit = false;
 			//these ones are weird

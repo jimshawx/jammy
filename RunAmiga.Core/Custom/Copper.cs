@@ -263,7 +263,7 @@ namespace RunAmiga.Core.Custom
 						{
 							if ((v & waitVMask) == waitV)
 							{
-								if ((h & waitHMask) == waitH)
+								if ((h & waitHMask) >= waitH)
 								{
 									//logger.LogTrace($"RUN  {h},{v}");
 									state = CopperState.Running;
@@ -336,6 +336,7 @@ namespace RunAmiga.Core.Custom
 								plane = fetchHi[planeIdx] - 1;
 							else
 								plane = fetchLo[planeIdx] - 1;
+							
 							if (plane < planes)
 							{
 								bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
@@ -411,6 +412,7 @@ namespace RunAmiga.Core.Custom
 
 				if (v == dbugLine)
 				{
+					logger.LogInformation($"LINE {dbugLine}");
 					logger.LogInformation($"DDF {ddfstrt:X4} {ddfstop:X4} FMOD {fmode:X4}");
 					logger.LogInformation($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4}");
 					logger.LogInformation($"MOD {bpl1mod:X4} {bpl2mod:X4}");
