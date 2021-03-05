@@ -3,7 +3,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Web;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 
@@ -11,11 +10,11 @@ namespace RunAmiga.Core
 {
 	public interface IEmulationWindow
 	{
-		Form GetForm();
 		bool IsCaptured { get; }
 		void SetPicture(int screenWidth, int screenHeight);
 		void Blit(int[] screen);
 		Point RecentreMouse();
+		void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp);
 	}
 
 	public class EmulationWindow : IEmulationWindow
@@ -47,11 +46,6 @@ namespace RunAmiga.Core
 			t.SetApartmentState(ApartmentState.STA);
 			t.Start();
 			ss.Wait();
-		}
-
-		public Form GetForm()
-		{
-			return emulation;
 		}
 
 		public bool IsCaptured { get; private set; } = false;
@@ -99,6 +93,8 @@ namespace RunAmiga.Core
 
 		public void SetPicture(int width, int height)
 		{
+			if (emulation.IsDisposed) return;
+
 			emulation.Invoke((Action)delegate
 			{
 				screenWidth = width;
@@ -106,7 +102,7 @@ namespace RunAmiga.Core
 
 				emulation.ClientSize = new Size(screenWidth, screenHeight);
 				bitmap = new Bitmap(screenWidth, screenHeight, PixelFormat.Format32bppRgb);
-				picture = new PictureBox {Image = bitmap, ClientSize = new System.Drawing.Size(screenWidth, screenHeight), Enabled = false};
+				picture = new PictureBox {Image = bitmap, ClientSize = new Size(screenWidth, screenHeight), Enabled = false};
 
 				//try to scale the box
 				//picture.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -121,6 +117,8 @@ namespace RunAmiga.Core
 
 		public void Blit(int[] screen)
 		{
+			if (emulation.IsDisposed) return;
+
 			emulation.Invoke((Action)delegate
 			{
 				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, screenWidth, screenHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
@@ -147,6 +145,12 @@ namespace RunAmiga.Core
 			}
 
 			return centre;
+		}
+
+		public void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp)
+		{
+			emulation.KeyDown += (sender, e) => addKeyDown(e.KeyValue);
+			emulation.KeyUp += (sender, e) => addKeyUp(e.KeyValue);
 		}
 	}
 }

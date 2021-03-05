@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -202,20 +203,21 @@ namespace RunAmiga.Core.Custom
 		private void Blit(uint width, uint height)
 		{
 			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
-			if ((dmacon & (1<<6))==0)
+			if ((dmacon & (1 << 6)) == 0)
 				logger.LogTrace("BLTEN is off!");
 			if ((dmacon & (1 << 9)) == 0)
 				logger.LogTrace("DMAEN is off!");
 
 			//todo: assumes blitter DMA is enabled
 
-			//logger.LogTrace($"BLIT! {width}x{height} = {width*16}bits x {height} = {width * 16 * height} bits = {width*height*2} bytes");
+			//logger.LogTrace($"BLIT! {width}x{height} = {width * 16}bits x {height} = {width * 16 * height} bits = {width * height * 2} bytes");
 
 			//logger.LogTrace($"->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
 			//logger.LogTrace($"->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
 			//logger.LogTrace($"->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
 			//logger.LogTrace($"->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
-			//logger.LogTrace($"cookie: {bltcon0&0xff:X2} {((bltcon1&2)!=0?"descending":"ascending")}");
+			//logger.LogTrace($"M {Convert.ToString(bltafwm, 2).PadLeft(16, '0')} {Convert.ToString(bltalwm, 2).PadLeft(16, '0')}");
+			//logger.LogTrace($"cookie: {bltcon0 & 0xff:X2} {((bltcon1 & 2) != 0 ? "descending" : "ascending")}");
 			//logger.LogTrace("ABC");
 			//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
 			//if ((bltcon0 & 0x02) != 0) logger.LogTrace("001");
@@ -225,13 +227,19 @@ namespace RunAmiga.Core.Custom
 			//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
 			//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
 			//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
-			if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
-				logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			//if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
+			//	logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 
 			bool dont_blit = false;
 			//these ones are weird
-			//if ((bltcon0 & 0xff) == 0x1a && (bltcon1 & 2) != 0)//00,1a,2a,3a,ca,ea
+			//if ((bltcon0 & 0xff) == 0x1a && (bltcon1 & 2) != 0) //00,1a,2a,3a,ca,ea
+			//if (width == 20 && height == 200 && (bltcon1 & 2) != 0)
+			//if ((bltcon0 >> 12) != 0 || (bltcon1 >> 12) != 0)
+			//if (width == 1 && height>1)
+			//{
 			//	dont_blit = true;
+			//	logger.LogTrace("********* NOT DRAWN!");
+			//}
 
 			int ashift = (int)(bltcon0 >> 12);
 			int bshift = (int)(bltcon1 >> 12);
@@ -255,7 +263,7 @@ namespace RunAmiga.Core.Custom
 					s_bltadat = bltadat;
 
 					if (w == 0) s_bltadat &= bltafwm;
-					else if (w == width - 1) s_bltadat &= bltalwm;
+					if (w == width - 1) s_bltadat &= bltalwm;
 
 					if ((bltcon1 & (1u << 1)) != 0)
 					{

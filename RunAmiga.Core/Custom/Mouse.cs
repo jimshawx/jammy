@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
@@ -11,7 +10,6 @@ namespace RunAmiga.Core.Custom
 	{
 		private readonly IEmulationWindow emulationWindow;
 		private readonly ILogger logger;
-		private readonly Form mouse;
 
 		[DllImport("user32.dll")]
 		private static extern short GetAsyncKeyState(int key);
@@ -30,7 +28,6 @@ namespace RunAmiga.Core.Custom
 		{
 			this.emulationWindow = emulationWindow;
 			this.logger = logger;
-			this.mouse = emulationWindow.GetForm();
 		}
 
 		private int oldMouseX, oldMouseY;

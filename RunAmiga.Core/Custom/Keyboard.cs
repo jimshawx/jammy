@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Enums;
@@ -19,24 +18,19 @@ namespace RunAmiga.Core.Custom
 
 		private readonly ILogger logger;
 		private ICIAAOdd cia;
-		private readonly Form keys;
 
 		public Keyboard(ILogger<Keyboard> logger, IEmulationWindow emulationWindow)
 		{
 			this.logger = logger;
-			keys = emulationWindow.GetForm();
 
-			keys.KeyDown += AddKeyDown;
-			keys.KeyUp += AddKeyUp;
+			emulationWindow.SetKeyHandlers(AddKeyDown, AddKeyUp);
 		}
 
 		private readonly ConcurrentQueue<byte> keyQueue = new ConcurrentQueue<byte>();
 
-		private void AddKeyDown(object sender, KeyEventArgs e)
+		private void AddKeyDown(int key)
 		{
-			int key = e.KeyValue;
-
-			//logger.LogTrace($"KeyDown {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2} ");
+			//logger.LogTrace($"KeyDown {Convert.ToUInt32(key):X8} {key} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2} ");
 
 			switch (key)
 			{
@@ -49,11 +43,9 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
-		private void AddKeyUp(object sender, KeyEventArgs e)
+		private void AddKeyUp(int key)
 		{
-			int key = e.KeyValue;
-
-			//logger.LogTrace($"KeyUp   {Convert.ToUInt32(key):X8} {key} {e.KeyCode:X} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2}");
+			//logger.LogTrace($"KeyUp   {Convert.ToUInt32(key):X8} {key} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2}");
 
 			switch (key)
 			{
