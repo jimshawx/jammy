@@ -133,22 +133,12 @@ namespace RunAmiga.Core.Custom
 					joy0dat = (uint)((y << 8) | (byte)x);
 				}
 
+
 				if (emulationWindow.IsCaptured)
 				{
-					if (!mouse.IsDisposed)
-					{
-						mouse.Invoke((Action)delegate()
-						{
-							//put the cursor back in the middle of the emulation window
-							var emuRect = mouse.RectangleToScreen(mouse.ClientRectangle);
-							var centre = new Point(emuRect.X + emuRect.Width / 2, emuRect.Y + emuRect.Height / 2);
-							Cursor.Position = centre;
-							oldMouseX = centre.X;
-							oldMouseY = centre.Y;
-						});
-
-						Application.DoEvents();
-					}
+					var centre = emulationWindow.RecentreMouse();
+					oldMouseX = centre.X;
+					oldMouseY = centre.Y;
 				}
 				else
 				{

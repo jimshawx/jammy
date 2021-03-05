@@ -285,7 +285,7 @@ namespace RunAmiga.Disassembler
 			var tmp = new StringBuilder();
 			int line = 0;
 
-			foreach (var range in ranges)
+			foreach (var range in ranges.OrderBy(x=>x.Item1))
 			{
 				uint address = range.Item1;
 				uint size = range.Item2;

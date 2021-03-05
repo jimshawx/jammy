@@ -73,10 +73,8 @@ namespace RunAmiga.Core
 			custom.Write(0, ChipRegs.INTREQ, mask, Size.Word);
 		}
 
-		public void SetCPUInterruptLevel(uint intreq)
+		public void SetCPUInterruptLevel(uint intreq, uint intena)
 		{
-			uint intena = custom.Read(0, ChipRegs.INTENAR, Size.Word);
-
 			interruptPending = 0;
 
 			//all interrupts disabled

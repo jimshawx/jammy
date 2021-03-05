@@ -837,7 +837,7 @@ namespace RunAmiga.Core.Custom
 			blitter.bltcpt = bltcpt_local;
 			blitter.bltdpt = bltdpt_local;
 			blitter.bltzero = bltzero_local;
-			memoryWriteWord(0x8040, 0x00DFF09C);
+			//memoryWriteWord(0x8040, 0x00DFF09C);
 		}
 	}
 }

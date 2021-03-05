@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -8,9 +7,11 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
@@ -27,8 +28,13 @@ namespace RunAmiga.Main
 		private readonly IDisassembly disassembly;
 		private readonly ILogger logger;
 
+		private EmulationSettings settings;
+
 		public RunAmiga(IEmulation emulation)
 		{
+			if (this.Handle == IntPtr.Zero)
+				throw new ApplicationException("RG");
+
 			this.emulation = emulation;
 			InitializeComponent();
 
@@ -36,6 +42,7 @@ namespace RunAmiga.Main
 			cbTypes.SelectedIndex = 0;
 
 			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<RunAmiga>>();
+			settings = ServiceProviderFactory.ServiceProvider.GetRequiredService<IOptions<EmulationSettings>>().Value;
 
 			this.debugger = emulation.GetDebugger();
 			this.disassembly = debugger.GetDisassembly();
@@ -49,19 +56,12 @@ namespace RunAmiga.Main
 		private CancellationTokenSource uiUpdateTokenSource;
 		private Task uiUpdateTask;
 
-		private CancellationTokenSource uiMessagePumpTokenSource;
-		private Task uiMessagePumpTask;
-
 		public void Init()
 		{
 			UpdateDisassembly();
 			UpdateDisplay();
 
-			while (this.Handle == IntPtr.Zero)
-				Application.DoEvents();
-
 			uiUpdateTokenSource = new CancellationTokenSource();
-			uiMessagePumpTokenSource = new CancellationTokenSource();
 
 			uiUpdateTask = new Task(() =>
 			{
@@ -83,16 +83,6 @@ namespace RunAmiga.Main
 				}
 			}, uiUpdateTokenSource.Token);
 			uiUpdateTask.Start();
-
-			uiMessagePumpTask = new Task(() =>
-			{
-				while (!uiMessagePumpTokenSource.IsCancellationRequested)
-				{
-					Application.DoEvents();
-					Task.Delay(500).Wait(uiMessagePumpTokenSource.Token);
-				}
-			}, uiMessagePumpTokenSource.Token);
-			uiMessagePumpTask.Start();
 		}
 
 		private void UpdateDisassembly()
@@ -139,14 +129,18 @@ namespace RunAmiga.Main
 			//	new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
 			//File.WriteAllText("cia.resource_disassembly.txt", dmp);
 
+			var ranges = new List<Tuple<uint, uint>>
+			{
+				new Tuple<uint, uint>(0x000000, 0x400),
+				//new Tuple<uint, uint> (0xc00000, 0xa000),
+				//new Tuple<uint, uint> (0xf80000, 0x40000),
+				new Tuple<uint, uint>(0xfc0000, 0x40000),
+			};
+			if (settings.KickStart == "3.1" || settings.KickStart == "2.04")
+				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x40000));
+
 			var disasm = disassembly.DisassembleTxt(
-				new List<Tuple<uint, uint>>
-				{
-					new Tuple<uint, uint>(0x000000, 0x400),
-					//new Tuple<uint, uint> (0xc00000, 0xa000),
-					//new Tuple<uint, uint> (0xf80000, 0x40000),
-					new Tuple<uint, uint>(0xfc0000, 0x40000),
-				},
+				ranges,
 				new List<uint>
 				{
 					0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2,
@@ -307,9 +301,6 @@ namespace RunAmiga.Main
 
 			uiUpdateTokenSource.Cancel();
 			uiUpdateTask.Wait(1000);
-
-			uiMessagePumpTokenSource.Cancel();
-			uiMessagePumpTask.Wait();
 
 			Machine.SetEmulationMode(EmulationMode.Exit);
 		}

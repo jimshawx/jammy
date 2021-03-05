@@ -28,7 +28,6 @@ namespace RunAmiga.Core.Custom
 
 			keys.KeyDown += AddKeyDown;
 			keys.KeyUp += AddKeyUp;
-			keys.Show();
 		}
 
 		private readonly ConcurrentQueue<byte> keyQueue = new ConcurrentQueue<byte>();

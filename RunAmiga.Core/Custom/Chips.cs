@@ -226,8 +226,11 @@ namespace RunAmiga.Core.Custom
 				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
 				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
-				regs[REG(ChipRegs.INTENAR)] = regs[reg];
+				regs[REG(ChipRegs.INTENAR)] = (ushort)(regs[reg]&0x7fff);
+
+				interrupt.SetCPUInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
 			}
+			else if (address == ChipRegs.INTENAR) { /* can't write here */}
 			else if (address == ChipRegs.INTREQ)
 			{
 				if ((value & 0x8000) != 0)
@@ -240,8 +243,6 @@ namespace RunAmiga.Core.Custom
 					regs[reg] &= (ushort)~value;
 				}
 				
-				interrupt.SetCPUInterruptLevel(regs[reg]);
-
 				//logger.LogTrace($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
 
 				//if ((regs[reg] & 0x4000) != 0) Logger.Write("INTEN ");
@@ -261,8 +262,11 @@ namespace RunAmiga.Core.Custom
 				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
 				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
-				regs[REG(ChipRegs.INTREQR)] = regs[reg];
+				regs[REG(ChipRegs.INTREQR)] = (ushort)(regs[reg]&0x7fff);
+
+				interrupt.SetCPUInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
 			}
+			else if (address == ChipRegs.INTREQR) { /* can't write here */}
 			else if (address == ChipRegs.ADKCON)
 			{
 				if ((value & 0x8000) != 0)
