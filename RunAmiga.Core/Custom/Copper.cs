@@ -114,29 +114,22 @@ namespace RunAmiga.Core.Custom
 				{
 					//WAIT/SKIP
 
+					uint hp = (uint)(ins & 0xfe);
+					uint vp = (uint)((ins >> 8) & 0xff);
+
+					uint he = (uint)((data & 0xfe) | 0xff00);
+					uint ve = (uint)(((data >> 8) & 0x7f) | 0x80);
+					uint blit = (uint)(data >> 15);
+
 					if ((data & 1) == 0)
 					{
 						//WAIT
-						uint hp = (uint)((ins >> 1) & 0x7f);
-						uint vp = (uint)((ins >> 8) & 0xff);
-
-						uint he = (uint)((data >> 1) & 0x7f);
-						uint ve = (uint)((data >> 8) & 0x7f);
-						uint blit = (uint)(data >> 15);
-
-						logger.LogTrace($"{copPC:X8} WAIT vp:{vp:X4} hp:{hp:X4} he:{he:X4} ve:{ve:X4} b:{blit}");
+						logger.LogTrace($"{copPC:X8} WAIT vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
 					}
 					else
 					{
 						//SKIP
-						uint horz = (uint)((ins >> 1) & 0x7f);
-						uint vert = (uint)((ins >> 8) & 0xff);
-
-						uint horzC = (uint)((data >> 1) & 0x7f);
-						uint vertC = (uint)((data >> 8) & 0x3f);
-						uint blitC = (uint)(data >> 15);
-
-						logger.LogTrace($"{copPC:X8} SKIP v:{vert:X4} h:{horz:X4} vC:{vertC} hC:{horzC} bC:{blitC}");
+						logger.LogTrace($"{copPC:X8} SKIP vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
 					}
 
 					//this is usually how a copper list ends
@@ -268,9 +261,9 @@ namespace RunAmiga.Core.Custom
 						}
 						else if (state == CopperState.Waiting)
 						{
-							if ((v & waitVMask) >= waitV)
+							if ((v & waitVMask) == waitV)
 							{
-								if ((h & waitHMask) >= waitH)
+								if ((h & waitHMask) == waitH)
 								{
 									//logger.LogTrace($"RUN  {h},{v}");
 									state = CopperState.Running;
