@@ -9,6 +9,23 @@ namespace RunAmiga.Core
 {
 	public class Machine : IMachine
 	{
+		public class Constants
+		{
+			//PAL
+			public const double CPUHz = 7.09379;
+			public const int CyclesPerFrame = 140968;
+			public const int RefreshRate = 50;
+			public const int ScanlinesPerFrame = 312;
+			public const int CyclesPerScanline = 452;
+
+			//NTSC
+			//public const double CPUHz = 7.15909;   //NTSC 3.579545 * 2
+			//public const int CyclesPerFrame = 139682;
+			//public const int RefreshRate = 60;
+			//public const int ScanlinesPerFrame = 262;
+			//public const int CyclesPerScanline = 533;
+		}
+
 		private readonly ICPU cpu;
 		private readonly IBreakpointCollection breakpointCollection;
 		private readonly IChips custom;

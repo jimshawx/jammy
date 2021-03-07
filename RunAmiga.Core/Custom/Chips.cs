@@ -198,8 +198,14 @@ namespace RunAmiga.Core.Custom
 				//if ((regs[reg] & 0x0001) != 0) Logger.Write("AUD0EN ");
 				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
+				//if ((value & (int)(ChipRegs.DMA.SETCLR | ChipRegs.DMA.AUD3EN))== (int)(ChipRegs.DMA.SETCLR | ChipRegs.DMA.AUD3EN))
+				//	logger.LogTrace("AUD3EN ON!");
+				//else if ((value & (int)(ChipRegs.DMA.SETCLR | ChipRegs.DMA.AUD3EN)) == (int)ChipRegs.DMA.AUD3EN)
+				//	logger.LogTrace("AUD3EN OFF!");
+
 				regs[REG(ChipRegs.DMACONR)] = regs[reg];
 			}
+			else if (address == ChipRegs.DMACONR) { /* can't write here */ }
 			else if (address == ChipRegs.INTENA)
 			{
 				//logger.LogTrace($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");
@@ -275,6 +281,7 @@ namespace RunAmiga.Core.Custom
 					regs[reg] &= (ushort) ~value;
 				regs[REG(ChipRegs.ADKCONR)] = regs[reg];
 			}
+			else if (address == ChipRegs.ADKCONR) { /* can't write here */ }
 			else
 			{
 				regs[reg] = (ushort)value;

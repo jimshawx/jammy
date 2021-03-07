@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
+using RunAmiga.Core.Custom;
 
 namespace RunAmiga.Core
 {
@@ -19,6 +20,9 @@ namespace RunAmiga.Core
 
 	public class EmulationWindow : IEmulationWindow
 	{
+		[DllImport("user32.dll")]
+		private static extern short GetAsyncKeyState(int key);
+
 		private readonly ILogger logger;
 		private Form emulation;
 
@@ -39,6 +43,7 @@ namespace RunAmiga.Core
 
 				emulation.MouseClick += Emulation_MouseClick;
 				emulation.KeyPress += Emulation_KeyPress;
+				emulation.KeyDown += Emulation_KeyDown;
 				emulation.Show();
 
 				Application.Run(emulation);
@@ -78,12 +83,29 @@ namespace RunAmiga.Core
 				else
 					Capture("Click");
 			}
+
+			if (e.Button == MouseButtons.Middle)
+			{
+				Release("Middle");
+			}
 		}
 
 		private void Emulation_KeyPress(object sender, KeyPressEventArgs e)
 		{
+			if (e.KeyChar == 0x9 && (GetAsyncKeyState((int)Keyboard.VK.VK_MENU)&0x8000)!=0)
+				Release("AltTab");
+
 			if (e.KeyChar == 0x1B)
 				Release("KeyPress");
+		}
+
+		private void Emulation_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.KeyValue == (int)Keyboard.VK.VK_TAB && (GetAsyncKeyState((int)Keyboard.VK.VK_MENU) & 0x8000) != 0)
+				Release("DnAltTab");
+
+			if (e.KeyValue == (int)Keyboard.VK.VK_ESCAPE)
+				Release("DnKeyPress");
 		}
 
 		private Bitmap bitmap;
