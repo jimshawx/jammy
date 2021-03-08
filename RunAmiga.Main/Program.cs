@@ -41,7 +41,7 @@ namespace RunAmiga.Main
 					x.AddDebugAsync();
 				})
 				.AddSingleton<IMachine, Machine>()
-				.AddSingleton<IAudio, Audio>()
+				.AddSingleton<IAudio, AudioV2>()
 				.AddSingleton<IBattClock, BattClock>()
 				.AddSingleton<IBlitter, Blitter>()
 				.AddSingleton<ICIAAOdd, CIAAOdd>()

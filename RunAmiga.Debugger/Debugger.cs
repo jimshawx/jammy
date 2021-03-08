@@ -298,8 +298,12 @@ namespace RunAmiga.Debugger
 
 		public void IRQ(uint irq)
 		{
-			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1<<(int)irq), Size.Word);
 			interrupt.AssertInterrupt(irq);
+		}
+
+		public void INTENA(uint irq)
+		{
+			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1 << (int)irq), Size.Word);
 		}
 
 		public IDisassembly GetDisassembly()

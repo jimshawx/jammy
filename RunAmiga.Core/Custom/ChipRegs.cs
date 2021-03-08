@@ -525,10 +525,10 @@ namespace RunAmiga.Core.Custom
 			BLTEN = 0x0040,
 			SPREN = 0x0020,
 			DSKEN = 0x0010,
-			AUD0EN = 0x0008,
-			AUD1EN = 0x0004,
-			AUD2EN = 0x0002,
-			AUD3EN = 0x0001,
+			AUD3EN = 0x0008,
+			AUD2EN = 0x0004,
+			AUD1EN = 0x0002,
+			AUD0EN = 0x0001,
 		}
 
 		public static string Name(uint address)

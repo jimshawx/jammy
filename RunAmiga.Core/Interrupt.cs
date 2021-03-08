@@ -13,10 +13,10 @@ namespace RunAmiga.Core
 		public const uint EXTER = 13;
 		public const uint DSKSYNC = 12;
 		public const uint RBF = 11;
-		public const uint AUD1 = 10;
-		public const uint AUD3 = 9;
-		public const uint AUD0 = 8;
-		public const uint AUD2 = 7;
+		public const uint AUD3 = 10;
+		public const uint AUD2 = 9;
+		public const uint AUD1 = 8;
+		public const uint AUD0 = 7;
 		public const uint BLIT = 6;
 		public const uint VERTB = 5;
 		public const uint COPPER = 4;

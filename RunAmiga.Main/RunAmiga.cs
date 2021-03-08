@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core;
+using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
@@ -27,6 +28,7 @@ namespace RunAmiga.Main
 
 		private readonly IDisassembly disassembly;
 		private readonly ILogger logger;
+		private readonly IChips custom;
 
 		private EmulationSettings settings;
 
@@ -46,6 +48,7 @@ namespace RunAmiga.Main
 
 			this.debugger = emulation.GetDebugger();
 			this.disassembly = debugger.GetDisassembly();
+			this.custom = ServiceProviderFactory.ServiceProvider.GetRequiredService<IChips>();
 
 			UpdateDisplay();
 
@@ -139,6 +142,8 @@ namespace RunAmiga.Main
 			if (settings.KickStart == "3.1" || settings.KickStart == "2.04")
 				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x40000));
 
+			ranges.Add(new Tuple<uint, uint>(0xc10000, 0x5000));
+
 			var disasm = disassembly.DisassembleTxt(
 				ranges,
 				new List<uint>
@@ -170,8 +175,13 @@ namespace RunAmiga.Main
 			Machine.LockEmulation();
 			var regs = debugger.GetRegs();
 			var memory = debugger.GetMemory();
-			Machine.UnlockEmulation();
 
+			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Core.Types.Types.Size.Word);
+			ushort intreq = (ushort)custom.Read(0, ChipRegs.INTREQR, Core.Types.Types.Size.Word);
+			ushort intena = (ushort)custom.Read(0, ChipRegs.INTENAR, Core.Types.Types.Size.Word);
+
+			Machine.UnlockEmulation();
+			
 			var mem = new List<Tuple<uint, uint>>();
 			long sp = (long)regs.SP;
 			long ssp = (long)regs.SSP;
@@ -191,6 +201,50 @@ namespace RunAmiga.Main
 
 			lbRegisters.Items.Clear();
 			lbRegisters.Items.AddRange(regs.Items().Cast<object>().ToArray());
+
+			string hdr =
+				"   D           S\n" +
+				"   S       C  DO\n" +
+				" IEK      VOP SF\n" +
+				" NXS AAAABEPO KT\n" +
+				"NTTYRUUUULRPRTBI\n" +
+				"MEENBDDDDITETBLN\n" +
+				"INTCF3210TBRSEKT";
+
+			lbCustom.Items.Clear();
+			lbCustom.Items.AddRange(hdr.Split('\n'));
+			lbCustom.Items.Add("INTENA W:DFF09A R:DFF01C");
+			lbCustom.Items.Add($"{Convert.ToString(intena, 2).PadLeft(16, '0')}");
+			lbCustom.Items.Add("INTREQ W:DFF09C R:DFF01E");
+			lbCustom.Items.Add($"{Convert.ToString(intreq, 2).PadLeft(16, '0')}");
+			/*
+			 * 			SETCLR = 0x8000,
+						BBUSY = 0x4000,
+						BZERO = 0x2000,
+						unused0 = 0x1000,
+						unused1 = 0x0800,
+						BLTPRI = 0x0400,
+						DMAEN = 0x0200,
+						BPLEN = 0x00100,
+						COPEN = 0x0080,
+						BLTEN = 0x0040,
+						SPREN = 0x0020,
+						DSKEN = 0x0010,
+						AUD3EN = 0x0008,
+						AUD2EN = 0x0004,
+						AUD1EN = 0x0002,
+						AUD0EN = 0x0001,
+			 */
+			hdr =
+				"S    B      AAAA\n" +
+				"EBB  LDBCBSDUUUU\n" +
+				"TBZ  TMPOLPSDDDD\n" +
+				"CUE  PALPTRK3210\n" +
+				"LSR  REEEEEEEEEE\n" +
+				"RYO  INNNNNNNNNN";
+			lbCustom.Items.AddRange(hdr.Split('\n'));
+			lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
+			lbCustom.Items.Add($"{Convert.ToString(dmacon, 2).PadLeft(16, '0')}");
 		}
 
 		private uint ValueFromRegName(Regs regs, string txt)
@@ -430,15 +484,18 @@ namespace RunAmiga.Main
 
 		private void btnCIAInt_Click(object sender, EventArgs e)
 		{
+			Machine.LockEmulation();
 			if (cbCIA.Text == "TIMERA") debugger.CIAInt(ICRB.TIMERA);
 			if (cbCIA.Text == "TIMERB") debugger.CIAInt(ICRB.TIMERB);
 			if (cbCIA.Text == "TODALARM") debugger.CIAInt(ICRB.TODALARM);
 			if (cbCIA.Text == "SERIAL") debugger.CIAInt(ICRB.SERIAL);
 			if (cbCIA.Text == "FLAG") debugger.CIAInt(ICRB.FLAG);
+			Machine.UnlockEmulation();
 		}
 
 		private void btnIRQ_Click(object sender, EventArgs e)
 		{
+			Machine.LockEmulation();
 			if (cbIRQ.Text == "EXTER") debugger.IRQ(Interrupt.EXTER);
 			if (cbIRQ.Text == "DSKBLK") debugger.IRQ(Interrupt.DSKBLK);
 			if (cbIRQ.Text == "PORTS") debugger.IRQ(Interrupt.PORTS);
@@ -449,6 +506,23 @@ namespace RunAmiga.Main
 			if (cbIRQ.Text == "AUD1") debugger.IRQ(Interrupt.AUD1);
 			if (cbIRQ.Text == "AUD2") debugger.IRQ(Interrupt.AUD2);
 			if (cbIRQ.Text == "AUD3") debugger.IRQ(Interrupt.AUD3);
+			Machine.UnlockEmulation();
+		}
+
+		private void btnINTENA_Click(object sender, EventArgs e)
+		{
+			Machine.LockEmulation();
+			if (cbIRQ.Text == "EXTER") debugger.INTENA(Interrupt.EXTER);
+			if (cbIRQ.Text == "DSKBLK") debugger.INTENA(Interrupt.DSKBLK);
+			if (cbIRQ.Text == "PORTS") debugger.INTENA(Interrupt.PORTS);
+			if (cbIRQ.Text == "BLIT") debugger.INTENA(Interrupt.BLIT);
+			if (cbIRQ.Text == "COPPER") debugger.INTENA(Interrupt.COPPER);
+			if (cbIRQ.Text == "DSKSYNC") debugger.INTENA(Interrupt.DSKSYNC);
+			if (cbIRQ.Text == "AUD0") debugger.INTENA(Interrupt.AUD0);
+			if (cbIRQ.Text == "AUD1") debugger.INTENA(Interrupt.AUD1);
+			if (cbIRQ.Text == "AUD2") debugger.INTENA(Interrupt.AUD2);
+			if (cbIRQ.Text == "AUD3") debugger.INTENA(Interrupt.AUD3);
+			Machine.UnlockEmulation();
 		}
 
 		private void menuDisassembly_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
@@ -541,5 +615,7 @@ namespace RunAmiga.Main
 		{
 			UpdateExecBase();
 		}
+
+
 	}
 }

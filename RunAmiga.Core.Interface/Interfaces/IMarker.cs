@@ -31,7 +31,14 @@ namespace RunAmiga.Core.Interface.Interfaces
 
 	public interface ICustomReadWrite : ICustomRead, ICustomWrite { }
 
-	public interface IAudio : IEmulate, ICustomReadWrite { } 
+	public interface IAudio : IEmulate, ICustomReadWrite
+	{
+		public void WriteDMACON(ushort v);
+		public void WriteADKCON(ushort v);
+		public void WriteINTREQ(ushort v);
+		public void WriteINTENA(ushort v);
+	}
+
 	public interface IBattClock : IEmulate, IMemoryMappedDevice { }
 	public interface IBlitter: IEmulate, ICustomReadWrite { }
 	public interface ICIA : IEmulate, IMemoryMappedDevice
@@ -112,6 +119,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void RemoveDisk();
 		void CIAInt(ICRB icr);
 		void IRQ(uint irq);
+		void INTENA(uint irq);
 		void SetTracer(ITracer tracer);
 		IDisassembly GetDisassembly();
 	}

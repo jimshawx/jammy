@@ -203,6 +203,8 @@ namespace RunAmiga.Core.Custom
 				//else if ((value & (int)(ChipRegs.DMA.SETCLR | ChipRegs.DMA.AUD3EN)) == (int)ChipRegs.DMA.AUD3EN)
 				//	logger.LogTrace("AUD3EN OFF!");
 
+				audio.WriteDMACON((ushort)(regs[reg]&0x7fff));
+
 				regs[REG(ChipRegs.DMACONR)] = regs[reg];
 			}
 			else if (address == ChipRegs.DMACONR) { /* can't write here */ }
@@ -231,6 +233,7 @@ namespace RunAmiga.Core.Custom
 				//if ((regs[reg] & 0x0002) != 0) Logger.Write("DSKBLK ");
 				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
 				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
+				audio.WriteINTENA((ushort)(regs[reg]&0x7fff));
 
 				regs[REG(ChipRegs.INTENAR)] = (ushort)(regs[reg]&0x7fff);
 
@@ -268,6 +271,8 @@ namespace RunAmiga.Core.Custom
 				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
 				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
+				audio.WriteINTREQ((ushort)(regs[reg]&0x7fff));
+
 				regs[REG(ChipRegs.INTREQR)] = (ushort)(regs[reg]&0x7fff);
 
 				interrupt.SetCPUInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
@@ -279,6 +284,9 @@ namespace RunAmiga.Core.Custom
 					regs[reg] |= (ushort) value;
 				else
 					regs[reg] &= (ushort) ~value;
+
+				audio.WriteADKCON(regs[reg]);
+
 				regs[REG(ChipRegs.ADKCONR)] = regs[reg];
 			}
 			else if (address == ChipRegs.ADKCONR) { /* can't write here */ }

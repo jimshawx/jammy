@@ -86,6 +86,8 @@ namespace RunAmiga.Main
 			this.cbTypes = new System.Windows.Forms.ComboBox();
 			this.lbCallStack = new System.Windows.Forms.ListBox();
 			this.btnStepOut = new System.Windows.Forms.Button();
+			this.btnINTENA = new System.Windows.Forms.Button();
+			this.lbCustom = new System.Windows.Forms.ListBox();
 			this.menuDisassembly.SuspendLayout();
 			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -721,11 +723,33 @@ namespace RunAmiga.Main
 			this.btnStepOut.UseVisualStyleBackColor = true;
 			this.btnStepOut.Click += new System.EventHandler(this.btnStepOut_Click);
 			// 
+			// btnINTENA
+			// 
+			this.btnINTENA.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnINTENA.Location = new System.Drawing.Point(1039, 478);
+			this.btnINTENA.Name = "btnINTENA";
+			this.btnINTENA.Size = new System.Drawing.Size(71, 23);
+			this.btnINTENA.TabIndex = 37;
+			this.btnINTENA.Text = "INTENA";
+			this.btnINTENA.UseVisualStyleBackColor = true;
+			this.btnINTENA.Click += new System.EventHandler(this.btnINTENA_Click);
+			// 
+			// lbCustom
+			// 
+			this.lbCustom.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+			this.lbCustom.FormattingEnabled = true;
+			this.lbCustom.Location = new System.Drawing.Point(1219, 256);
+			this.lbCustom.Name = "lbCustom";
+			this.lbCustom.Size = new System.Drawing.Size(167, 303);
+			this.lbCustom.TabIndex = 38;
+			// 
 			// RunAmiga
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1414, 605);
+			this.Controls.Add(this.lbCustom);
+			this.Controls.Add(this.btnINTENA);
 			this.Controls.Add(this.btnStepOut);
 			this.Controls.Add(this.lbCallStack);
 			this.Controls.Add(this.cbTypes);
@@ -853,6 +877,8 @@ namespace RunAmiga.Main
 		private System.Windows.Forms.ComboBox cbTypes;
 		private System.Windows.Forms.ListBox lbCallStack;
 		private System.Windows.Forms.Button btnStepOut;
+		private System.Windows.Forms.Button btnINTENA;
+		private System.Windows.Forms.ListBox lbCustom;
 	}
 }
 

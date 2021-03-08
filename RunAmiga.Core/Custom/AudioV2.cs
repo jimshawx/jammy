@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Core.Types.Types;
 using SharpDX;
 using SharpDX.Multimedia;
 using SharpDX.XAudio2;
@@ -13,10 +12,10 @@ namespace RunAmiga.Core.Custom
 	public class AudioV2 : IAudio
 	{
 		private readonly IMemory memory;
-		private readonly IChips custom;
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 		private readonly uint[] intr = { Interrupt.AUD0, Interrupt.AUD1, Interrupt.AUD2, Interrupt.AUD3 };
+		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4];
 		private readonly AudioChannel[] shadowch = new AudioChannel[4];
 
@@ -51,10 +50,9 @@ namespace RunAmiga.Core.Custom
 		private const int SAMPLE_RATE = 31200;
 		private const int BUFFER_SIZE = 3120;
 
-		public AudioV2(IMemory memory, IChips custom, IInterrupt interrupt, ILogger<Audio> logger)
+		public AudioV2(IMemory memory, IInterrupt interrupt, ILogger<Audio> logger)
 		{
 			this.memory = memory;
-			this.custom = custom;
 			this.interrupt = interrupt;
 			this.logger = logger;
 			for (int i = 0; i < 4; i++)
@@ -110,8 +108,6 @@ namespace RunAmiga.Core.Custom
 		//On PAL  there are 312 scanlines @ 50Hz, so the rate is 2*50*312Hz = 31.200KHz max
 		//On NTSC there are 262 scanlines @ 60Hz, so the rate is 2*60*262Hz = 31.440KHz max
 
-		private ushort lastdmacon = 0;
-
 		public void Emulate(ulong cycles)
 		{
 			audioTime += cycles;
@@ -120,127 +116,134 @@ namespace RunAmiga.Core.Custom
 			{
 				audioTime -= 140_000 / 312;
 
-				ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
-				ushort adkcon = (ushort)custom.Read(0, ChipRegs.ADKCONR, Size.Word);
-
-				var dmaconchanges = (ushort)(dmacon ^ lastdmacon);
-				lastdmacon = dmacon;
-
-				ChannelToggle(0, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD0EN) != 0);
-				ChannelToggle(1, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD1EN) != 0);
-				ChannelToggle(2, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD2EN) != 0);
-				ChannelToggle(3, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD3EN) != 0);
-
-				if ((dmacon & (int)ChipRegs.DMA.DMAEN) != 0)
-				{
-					if ((dmacon & (uint)ChipRegs.DMA.AUD0EN) != 0) Playing(0);
-					if ((dmacon & (uint)ChipRegs.DMA.AUD1EN) != 0) Playing(1);
-					if ((dmacon & (uint)ChipRegs.DMA.AUD2EN) != 0) Playing(2);
-					if ((dmacon & (uint)ChipRegs.DMA.AUD3EN) != 0) Playing(3);
-				}
-
-				//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
 				for (int i = 0; i < 4; i++)
 				{
-					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)((sbyte)(ch[i].auddat >> 8)+128);
-					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)((sbyte)ch[i].auddat+128);
-
-					if (channels[i].xaudioCIndex == channels[i].xaudioCBuffer.Length)
-					{
-						var state = channels[i].xaudioVoice.State;
-						logger.LogTrace($"{i} Q:{state.BuffersQueued} S;{state.SamplesPlayed}");
-						if (state.BuffersQueued >= 2)
-						{
-							do
-							{
-								Thread.Yield();
-							} while (channels[i].xaudioVoice.State.BuffersQueued >= 2);
-						}
-
-						Marshal.Copy(channels[i].xaudioCBuffer, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, channels[i].xaudioCBuffer.Length);
-						channels[i].xaudioCIndex = 0;
-						channels[i].xaudioVoice.SubmitSourceBuffer(channels[i].xaudioBuffer[channels[i].currentBuffer], null);
-						channels[i].xaudioVoice.Start();
-						channels[i].currentBuffer ^= 1;
-					}
-
-					channels[i].xaudioVoice.SetVolume(ch[i].audvol / 64.0f);
+					if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
+					else if (ch[i].mode == AudioMode.Interrupt) PlayingIRQ(i);
 				}
+
+				AudioMix();
 			}
 		}
 
 		private int rate = 124;
 
-		private void Playing(int channel)
+		private void PlayingDMA(int channel)
 		{
+			//All DMA is off
+			if ((dmacon & (int)ChipRegs.DMA.DMAEN) == 0)
+				return;
 
-			//todo: what happens if CPU is bashing audper after sample is started?
-			int audper = shadowch[channel].audpercurr;
+			int audper = shadowch[channel].audper;
 			audper -= rate;
-			shadowch[channel].audpercurr -= (ushort)rate;
+			shadowch[channel].audper -= (ushort)rate;
 			if (audper < 0)
 			{
 				//read the sample into live audXdat
 				ch[channel].auddat = memory.Read16(shadowch[channel].audlc);
-
 				shadowch[channel].audlc += 2;
 				shadowch[channel].audlen--;
 
-				//loop restart?
-				if (shadowch[channel].audlen == 0)
+				//DMA has been turned off, what's the right thing to do now?
+				if ((dmacon & chanbit[channel]) == 0)
 				{
-					ChannelToggle(channel, true);
+					//todo: unsure asseting the interrupt is the right thing to do
+					ch[channel].mode = AudioMode.Idle;
 					interrupt.AssertInterrupt(intr[channel]);
+					return;
 				}
 
-				//say audper is -100, we want the new audper to be the reset value of audper + 100
+				//loop restart?
+				if (shadowch[channel].audlen == 1)
+				{
+					//ChannelDMAToggle(channel, true);
+					shadowch[channel].audlc = ch[channel].audlc;
+					shadowch[channel].audlen = ch[channel].audlen;
 
-				audper = -audper;//+100
-				shadowch[channel].audpercurr = (ushort)(shadowch[channel].audper + (ushort)audper);
-				shadowch[channel].audpercurr = shadowch[channel].audper;
+					interrupt.AssertInterrupt(intr[channel]);
+					if (channel == 3)
+						logger.LogTrace($"I3x {channel} {ch[channel].mode} {shadowch[channel].audper}");
+				}
+
+				//reset the period
+				shadowch[channel].audper = ch[channel].audper;
+
+				if (channel == 3)
+					logger.LogTrace($"D {channel} {ch[channel].mode} {shadowch[channel].audper}");
 			}
 		}
 
-		private void ChannelToggle(int channel, bool onOff)
+		private void PlayingIRQ(int channel)
 		{
-			if (onOff)
+			int audper = shadowch[channel].audper;
+			audper -= rate;
+			shadowch[channel].audper -= (ushort)rate;
+			if (audper < 0)
 			{
-				Dump($"AUD{channel} ON", channel);
-
-				ch[channel].CopyTo(shadowch[channel]);
+				//play the 2 bytes in audXdat, until we get here and the IRQ remains unacknowledged when period is out
+				if ((intreq & (1 << (int)intr[channel])) != 0)
+				{
+					ch[channel].mode = AudioMode.Idle;
+				}
+				else
+				{
+					shadowch[channel].audper = ch[channel].audper;
+					interrupt.AssertInterrupt(intr[channel]);
+				}
+				if (channel == 3)
+					logger.LogTrace($"I {channel} {ch[channel].mode} {shadowch[channel].audper}");
 			}
-			//else
-			//{
-			//	logger.LogTrace($"AUD{channel} OFF");
-			//}
+		}
+
+		private void ChannelDMAOn(int channel)
+		{
+			ch[channel].CopyTo(shadowch[channel]);
+			ch[channel].mode = AudioMode.DMA;
+		}
+
+		private void ChannelIRQOn(int channel)
+		{
+			ch[channel].mode = AudioMode.Interrupt;
+			interrupt.AssertInterrupt(intr[channel]);
 		}
 
 		private void Dump(string msg, int channel)
 		{
 			var cp = ch[channel];
-			logger.LogTrace($"{msg} {cp.audlc:X6} L:{cp.audlen} V:{cp.audvol} P:{cp.audper}");
+			//logger.LogTrace($"{msg} {cp.audlc:X6} L:{cp.audlen} V:{cp.audvol} P:{cp.audper}");
 		}
 
 		public void Reset()
 		{
 			for (int i = 0; i < 4; i++)
 				ch[i].Clear();
+
+			adkcon = 0;
+			dmacon = 0;
+			intreq = 0;
+			intena = 0;
+		}
+
+		public enum AudioMode
+		{
+			Idle,
+			DMA,
+			Interrupt
 		}
 
 		public class AudioChannel
 		{
 			public ushort audper { get; set; }
-			public ushort audpercurr { get; set; }
-
 			public ushort audvol { get; set; }
 			public ushort audlen { get; set; }
 			public ushort auddat { get; set; }
 			public uint audlc { get; set; }
 
+			public AudioMode mode { get; set; }
+
 			public void CopyTo(AudioChannel cp)
 			{
 				cp.audper = this.audper;
-				cp.audpercurr = 0;
 				cp.audvol = this.audvol;
 				cp.audlen = this.audlen;
 				cp.auddat = this.auddat;
@@ -254,7 +257,56 @@ namespace RunAmiga.Core.Custom
 				audlen = 0;
 				auddat = 0;
 				audlc = 0;
+				mode = AudioMode.Idle;
 			}
+		}
+
+		private ushort dmacon = 0;
+
+		public void WriteDMACON(ushort v)
+		{
+			ushort lastdmacon = dmacon;
+			dmacon = v;
+			ushort dmaconchanges = (ushort)(dmacon ^ lastdmacon);
+
+			for (int i = 0; i < 4; i++)
+			{
+				if ((dmaconchanges & dmacon & (int)chanbit[i]) != 0)
+					ChannelDMAOn(i);
+			}
+		}
+
+		private ushort adkcon = 0;
+
+		public void WriteADKCON(ushort v)
+		{
+			adkcon = v;
+		}
+
+		private ushort intreq = 0;
+
+		public void WriteINTREQ(ushort v)
+		{
+			ushort lastintreq = intreq;
+			intreq = v;
+
+			var intreqchanges = (ushort)(intreq ^ lastintreq);
+			if ((intreqchanges & (1 << (int)Interrupt.AUD3)) != 0)
+				logger.LogTrace($"IRQ3");
+		}
+
+		private ushort intena = 0;
+
+		public void WriteINTENA(ushort v)
+		{
+			ushort lastintena = intena;
+			intena = v;
+
+			var intenachanges = (ushort)(intena ^ lastintena);
+			if ((intenachanges & (1 << (int)Interrupt.AUD3)) != 0 && (intena & (1 << (int)Interrupt.AUD3)) != 0)
+				logger.LogTrace($"E3");
+			if ((intenachanges & (1 << (int)Interrupt.AUD3)) != 0 && (intena & (1 << (int)Interrupt.AUD3)) == 0)
+				logger.LogTrace($"D3");
 		}
 
 		public void Write(uint insaddr, uint address, ushort value)
@@ -264,28 +316,28 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.AUD0PER: ch[0].audper = value; break;
 				case ChipRegs.AUD0VOL: ch[0].audvol = value; break;
 				case ChipRegs.AUD0LEN: ch[0].audlen = value; break;
-				case ChipRegs.AUD0DAT: ch[0].auddat = value; break;
+				case ChipRegs.AUD0DAT: ch[0].auddat = value; ChannelIRQOn(0); break;
 				case ChipRegs.AUD0LCH: ch[0].audlc = (ch[0].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD0LCL: ch[0].audlc = ((ch[0].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
 
 				case ChipRegs.AUD1PER: ch[1].audper = value; break;
 				case ChipRegs.AUD1VOL: ch[1].audvol = value; break;
 				case ChipRegs.AUD1LEN: ch[1].audlen = value; break;
-				case ChipRegs.AUD1DAT: ch[1].auddat = value; break;
+				case ChipRegs.AUD1DAT: ch[1].auddat = value; ChannelIRQOn(1); break;
 				case ChipRegs.AUD1LCH: ch[1].audlc = (ch[1].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD1LCL: ch[1].audlc = ((ch[1].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
 
 				case ChipRegs.AUD2PER: ch[2].audper = value; break;
 				case ChipRegs.AUD2VOL: ch[2].audvol = value; break;
 				case ChipRegs.AUD2LEN: ch[2].audlen = value; break;
-				case ChipRegs.AUD2DAT: ch[2].auddat = value; break;
+				case ChipRegs.AUD2DAT: ch[2].auddat = value; ChannelIRQOn(2); break;
 				case ChipRegs.AUD2LCH: ch[2].audlc = (ch[2].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD2LCL: ch[2].audlc = ((ch[2].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
 
 				case ChipRegs.AUD3PER: ch[3].audper = value; break;
 				case ChipRegs.AUD3VOL: ch[3].audvol = value; break;
 				case ChipRegs.AUD3LEN: ch[3].audlen = value; break;
-				case ChipRegs.AUD3DAT: ch[3].auddat = value; break;
+				case ChipRegs.AUD3DAT: ch[3].auddat = value; ChannelIRQOn(3); break;
 				case ChipRegs.AUD3LCH: ch[3].audlc = (ch[3].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD3LCL: ch[3].audlc = ((ch[3].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
 
@@ -326,6 +378,37 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.AUD3LCL: value = (ushort)ch[3].audlc; break;
 			}
 			return value;
+		}
+
+		private void AudioMix()
+		{
+			//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
+			for (int i = 0; i < 4; i++)
+			{
+				channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)((sbyte)(ch[i].auddat >> 8) + 128);
+				channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)((sbyte)ch[i].auddat + 128);
+
+				if (channels[i].xaudioCIndex == channels[i].xaudioCBuffer.Length)
+				{
+					var state = channels[i].xaudioVoice.State;
+					//logger.LogTrace($"{i} Q:{state.BuffersQueued} S;{state.SamplesPlayed}");
+					if (state.BuffersQueued >= 2)
+					{
+						do
+						{
+							Thread.Yield();
+						} while (channels[i].xaudioVoice.State.BuffersQueued >= 2);
+					}
+
+					Marshal.Copy(channels[i].xaudioCBuffer, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, channels[i].xaudioCBuffer.Length);
+					channels[i].xaudioCIndex = 0;
+					channels[i].xaudioVoice.SubmitSourceBuffer(channels[i].xaudioBuffer[channels[i].currentBuffer], null);
+					channels[i].xaudioVoice.Start();
+					channels[i].currentBuffer ^= 1;
+				}
+
+				channels[i].xaudioVoice.SetVolume(ch[i].audvol / 64.0f);
+			}
 		}
 	}
 }

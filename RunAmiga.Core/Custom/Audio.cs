@@ -1,23 +1,21 @@
 ﻿using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
 {
 	public class Audio : IAudio
 	{
 		private readonly IMemory memory;
-		private readonly IChips custom;
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 		private readonly uint[] intr = { Interrupt.AUD0, Interrupt.AUD1, Interrupt.AUD2, Interrupt.AUD3 };
+		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4];
 		private readonly AudioChannel[] shadowch = new AudioChannel[4];
 
-		public Audio(IMemory memory, IChips custom, IInterrupt interrupt, ILogger<Audio> logger)
+		public Audio(IMemory memory, IInterrupt interrupt, ILogger<Audio> logger)
 		{
 			this.memory = memory;
-			this.custom = custom;
 			this.interrupt = interrupt;
 			this.logger = logger;
 			for (int i = 0; i < 4; i++)
@@ -28,10 +26,8 @@ namespace RunAmiga.Core.Custom
 		}
 
 		private ulong audioTime;
-		private ulong audioDbugTime;
 
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
-		private ushort lastdmacon = 0;
 		public void Emulate(ulong cycles)
 		{
 			audioTime += cycles;
@@ -40,58 +36,93 @@ namespace RunAmiga.Core.Custom
 			{
 				audioTime -= 140_000 / 312;
 
-				ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
-				ushort adkcon = (ushort)custom.Read(0, ChipRegs.ADKCONR, Size.Word);
-
-				var dmaconchanges = (ushort)(dmacon ^ lastdmacon);
-				lastdmacon = dmacon;
-
-				ChannelToggle(0, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD0EN) != 0);
-				ChannelToggle(1, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD1EN) != 0);
-				ChannelToggle(2, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD2EN) != 0);
-				ChannelToggle(3, (dmaconchanges & dmacon & (uint)ChipRegs.DMA.AUD3EN) != 0);
-
-				if ((dmacon & (int)ChipRegs.DMA.DMAEN) != 0)
+				for (int i = 0; i < 4; i++)
 				{
-					if ((dmacon & (uint)ChipRegs.DMA.AUD0EN) != 0) Playing(0);
-					if ((dmacon & (uint)ChipRegs.DMA.AUD1EN) != 0) Playing(1);
-					if ((dmacon & (uint)ChipRegs.DMA.AUD2EN) != 0) Playing(2);
-					if ((dmacon & (uint)ChipRegs.DMA.AUD3EN) != 0) Playing(3);
+					if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
+					else if (ch[i].mode == AudioMode.Interrupt) PlayingIRQ(i);
 				}
 			}
+		}
 
-			audioDbugTime += cycles;
-			if (audioDbugTime > 140_000)
+		private int rate = 124;
+
+		private void PlayingDMA(int channel)
+		{
+			//All DMA is off
+			if ((dmacon & (int)ChipRegs.DMA.DMAEN) == 0)
+				return;
+
+			int audper = shadowch[channel].audper;
+			audper -= rate;
+			shadowch[channel].audper -= (ushort)rate;
+			if (audper < 0)
 			{
-				audioDbugTime -= 140_000;
-				for (int i = 0; i < 4; i++)
-				Dump($"DBG{i}", i);
+				//read the sample into live audXdat
+				ch[channel].auddat = memory.Read16(shadowch[channel].audlc);
+				shadowch[channel].audlc += 2;
+				shadowch[channel].audlen--;
+
+				//DMA has been turned off, what's the right thing to do now?
+				if ((dmacon & chanbit[channel]) == 0)
+				{
+					//todo: unsure asseting the interrupt is the right thing to do
+					ch[channel].mode = AudioMode.Idle;
+					interrupt.AssertInterrupt(intr[channel]);
+					return;
+				}
+
+				//loop restart?
+				if (shadowch[channel].audlen == 1)
+				{
+					//ChannelDMAToggle(channel, true);
+					shadowch[channel].audlc = ch[channel].audlc;
+					shadowch[channel].audlen = ch[channel].audlen;
+
+					interrupt.AssertInterrupt(intr[channel]);
+					if (channel == 3)
+						logger.LogTrace($"I3x {channel} {ch[channel].mode} {shadowch[channel].audper}");
+				}
+
+				//reset the period
+				shadowch[channel].audper = ch[channel].audper;
+
+				if (channel == 3)
+					logger.LogTrace($"D {channel} {ch[channel].mode} {shadowch[channel].audper}");
 			}
 		}
 
-		private void Playing(int channel)
+		private void PlayingIRQ(int channel)
 		{
-			//loop restart?
-			if (shadowch[channel].audlen == 0)
-				ChannelToggle(channel, true);
-
-			//read the sample into live audXdat
-			ch[channel].auddat = memory.Read16(shadowch[channel].audlc);
-
-			//these should tick more slowly based on audper
-			shadowch[channel].audlc += 2;
-			shadowch[channel].audlen--;
+			int audper = shadowch[channel].audper;
+			audper -= rate;
+			shadowch[channel].audper -= (ushort)rate;
+			if (audper < 0)
+			{
+				//play the 2 bytes in audXdat, until we get here and the IRQ remains unacknowledged when period is out
+				if ((intreq & (1 << (int)intr[channel])) != 0)
+				{
+					ch[channel].mode = AudioMode.Idle;
+				}
+				else
+				{
+					shadowch[channel].audper = ch[channel].audper;
+					interrupt.AssertInterrupt(intr[channel]);
+				}
+				if (channel == 3)
+					logger.LogTrace($"I {channel} {ch[channel].mode} {shadowch[channel].audper}");
+			}
 		}
 
-		private void ChannelToggle(int channel, bool onOff)
+		private void ChannelDMAOn(int channel)
 		{
-			if (onOff)
-			{
-				Dump($"AUD{channel} ON", channel);
+			ch[channel].CopyTo(shadowch[channel]);
+			ch[channel].mode = AudioMode.DMA;
+		}
 
-				ch[channel].CopyTo(shadowch[channel]);
-				interrupt.AssertInterrupt(intr[channel]);
-			}
+		private void ChannelIRQOn(int channel)
+		{
+			ch[channel].mode = AudioMode.Interrupt;
+			interrupt.AssertInterrupt(intr[channel]);
 		}
 
 		private void Dump(string msg, int channel)
@@ -108,6 +139,18 @@ namespace RunAmiga.Core.Custom
 		{
 			for (int i = 0; i < 4; i++)
 				ch[i].Clear();
+
+			adkcon = 0;
+			dmacon = 0;
+			intreq = 0;
+			intena = 0;
+		}
+
+		public enum AudioMode
+		{
+			Idle,
+			DMA,
+			Interrupt
 		}
 
 		public class AudioChannel
@@ -117,6 +160,8 @@ namespace RunAmiga.Core.Custom
 			public ushort audlen { get; set; }
 			public ushort auddat { get; set; }
 			public uint audlc { get; set; }
+
+			public AudioMode mode { get; set; }
 
 			public void CopyTo(AudioChannel cp)
 			{
@@ -134,7 +179,56 @@ namespace RunAmiga.Core.Custom
 				audlen = 0;
 				auddat = 0;
 				audlc = 0;
+				mode = AudioMode.Idle;
 			}
+		}
+
+		private ushort dmacon = 0;
+
+		public void WriteDMACON(ushort v)
+		{
+			ushort lastdmacon = dmacon;
+			dmacon = v;
+			ushort dmaconchanges = (ushort)(dmacon ^ lastdmacon);
+
+			for (int i = 0; i < 4; i++)
+			{
+				if ((dmaconchanges & dmacon & (int)chanbit[i]) != 0)
+					ChannelDMAOn(i);
+			}
+		}
+
+		private ushort adkcon = 0;
+
+		public void WriteADKCON(ushort v)
+		{
+			adkcon = v;
+		}
+
+		private ushort intreq = 0;
+
+		public void WriteINTREQ(ushort v)
+		{
+			ushort lastintreq = intreq;
+			intreq = v;
+
+			var intreqchanges = (ushort)(intreq ^ lastintreq);
+			if ((intreqchanges & (1 << (int)Interrupt.AUD3)) != 0)
+				logger.LogTrace($"IRQ3");
+		}
+
+		private ushort intena = 0;
+
+		public void WriteINTENA(ushort v)
+		{
+			ushort lastintena = intena;
+			intena = v;
+
+			var intenachanges = (ushort)(intena ^ lastintena);
+			if ((intenachanges & (1 << (int)Interrupt.AUD3)) != 0 && (intena & (1 << (int)Interrupt.AUD3)) != 0)
+				logger.LogTrace($"E3");
+			if ((intenachanges & (1 << (int)Interrupt.AUD3)) != 0 && (intena & (1 << (int)Interrupt.AUD3)) == 0)
+				logger.LogTrace($"D3");
 		}
 
 		public void Write(uint insaddr, uint address, ushort value)
@@ -144,28 +238,28 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.AUD0PER: ch[0].audper = value; break;
 				case ChipRegs.AUD0VOL: ch[0].audvol = value; break;
 				case ChipRegs.AUD0LEN: ch[0].audlen = value; break;
-				case ChipRegs.AUD0DAT: ch[0].auddat = value; break;
+				case ChipRegs.AUD0DAT: ch[0].auddat = value; ChannelIRQOn(0); break;
 				case ChipRegs.AUD0LCH: ch[0].audlc = (ch[0].audlc & 0x0000ffff) | ((uint)value << 16); break;
-				case ChipRegs.AUD0LCL: ch[0].audlc = ((ch[0].audlc & 0xffff0000) |value) & ChipRegs.ChipAddressMask; break;
+				case ChipRegs.AUD0LCL: ch[0].audlc = ((ch[0].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
 
 				case ChipRegs.AUD1PER: ch[1].audper = value; break;
 				case ChipRegs.AUD1VOL: ch[1].audvol = value; break;
 				case ChipRegs.AUD1LEN: ch[1].audlen = value; break;
-				case ChipRegs.AUD1DAT: ch[1].auddat = value; break;
+				case ChipRegs.AUD1DAT: ch[1].auddat = value; ChannelIRQOn(1); break;
 				case ChipRegs.AUD1LCH: ch[1].audlc = (ch[1].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD1LCL: ch[1].audlc = ((ch[1].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
 
 				case ChipRegs.AUD2PER: ch[2].audper = value; break;
 				case ChipRegs.AUD2VOL: ch[2].audvol = value; break;
 				case ChipRegs.AUD2LEN: ch[2].audlen = value; break;
-				case ChipRegs.AUD2DAT: ch[2].auddat = value; break;
+				case ChipRegs.AUD2DAT: ch[2].auddat = value; ChannelIRQOn(2); break;
 				case ChipRegs.AUD2LCH: ch[2].audlc = (ch[2].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD2LCL: ch[2].audlc = ((ch[2].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
 
 				case ChipRegs.AUD3PER: ch[3].audper = value; break;
 				case ChipRegs.AUD3VOL: ch[3].audvol = value; break;
 				case ChipRegs.AUD3LEN: ch[3].audlen = value; break;
-				case ChipRegs.AUD3DAT: ch[3].auddat = value; break;
+				case ChipRegs.AUD3DAT: ch[3].auddat = value; ChannelIRQOn(3); break;
 				case ChipRegs.AUD3LCH: ch[3].audlc = (ch[3].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD3LCL: ch[3].audlc = ((ch[3].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
 
@@ -181,9 +275,9 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.AUD0VOL: value = ch[0].audvol; break;
 				case ChipRegs.AUD0LEN: value = ch[0].audlen; break;
 				case ChipRegs.AUD0DAT: value = ch[0].auddat; break;
-				case ChipRegs.AUD0LCH: value = (ushort)(ch[0].audlc>>16); break;
+				case ChipRegs.AUD0LCH: value = (ushort)(ch[0].audlc >> 16); break;
 				case ChipRegs.AUD0LCL: value = (ushort)ch[0].audlc; break;
-				
+
 				case ChipRegs.AUD1PER: value = ch[1].audper; break;
 				case ChipRegs.AUD1VOL: value = ch[1].audvol; break;
 				case ChipRegs.AUD1LEN: value = ch[1].audlen; break;
