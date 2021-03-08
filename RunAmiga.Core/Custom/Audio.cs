@@ -10,22 +10,28 @@ namespace RunAmiga.Core.Custom
 		private readonly ILogger logger;
 		private readonly uint[] intr = { Interrupt.AUD0, Interrupt.AUD1, Interrupt.AUD2, Interrupt.AUD3 };
 		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
-		private readonly AudioChannel[] ch = new AudioChannel[4];
-		private readonly AudioChannel[] shadowch = new AudioChannel[4];
+		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
 		public Audio(IMemory memory, IInterrupt interrupt, ILogger<Audio> logger)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
-			for (int i = 0; i < 4; i++)
-			{
-				ch[i] = new AudioChannel();
-				shadowch[i] = new AudioChannel();
-			}
 		}
 
 		private ulong audioTime;
+
+		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
+
+		//HRM p141
+		//NTSC 2 samples/ line * 262.5 lines/frame * 59.94 frames/ second= 31,469 samples/ sec
+		//PAL  2 samples/ line * 312 lines/frame * 50 frames/ second= 31,200 samples/ sec
+		//hardware says it's designed to do a max of 28867
+
+		//Thinking out loud:
+		//The audio hardware can DMA 1 word per channel (2 8bit samples) per scanline
+		//On PAL  there are 312 scanlines @ 50Hz, so the rate is 2*50*312Hz = 31.200KHz max
+		//On NTSC there are 262 scanlines @ 60Hz, so the rate is 2*60*262Hz = 31.440KHz max
 
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
 		public void Emulate(ulong cycles)
@@ -52,50 +58,45 @@ namespace RunAmiga.Core.Custom
 			if ((dmacon & (int)ChipRegs.DMA.DMAEN) == 0)
 				return;
 
-			int audper = shadowch[channel].audper;
-			audper -= rate;
-			shadowch[channel].audper -= (ushort)rate;
-			if (audper < 0)
+			ch[channel].working_audper -= rate;
+			if (ch[channel].working_audper < 0)
 			{
 				//read the sample into live audXdat
-				ch[channel].auddat = memory.Read16(shadowch[channel].audlc);
-				shadowch[channel].audlc += 2;
-				shadowch[channel].audlen--;
+				ch[channel].auddat = memory.Read16(ch[channel].working_audlc);
+				//update the pointers and reset the period
+				ch[channel].working_audlc += 2;
+				ch[channel].working_audlen--;
+				ch[channel].working_audper = ch[channel].audper;
+
+				//loop restart?
+				if (ch[channel].working_audlen == 1)
+				{
+					ch[channel].working_audlc = ch[channel].audlc;
+					ch[channel].working_audlen = ch[channel].audlen;
+
+					interrupt.AssertInterrupt(intr[channel]);
+				}
 
 				//DMA has been turned off, what's the right thing to do now?
 				if ((dmacon & chanbit[channel]) == 0)
 				{
-					//todo: unsure asseting the interrupt is the right thing to do
+					//todo: unsure asserting the interrupt is the right thing to do
+					//but there are games that do
+					//interrupts off, clear channel interrupt
+					//channel period = 1, channel volume = 0
+					//channel DMA off
+					//wait for channel IRQ
 					ch[channel].mode = AudioMode.Idle;
 					interrupt.AssertInterrupt(intr[channel]);
-					return;
 				}
-
-				//loop restart?
-				if (shadowch[channel].audlen == 1)
-				{
-					//ChannelDMAToggle(channel, true);
-					shadowch[channel].audlc = ch[channel].audlc;
-					shadowch[channel].audlen = ch[channel].audlen;
-
-					interrupt.AssertInterrupt(intr[channel]);
-					if (channel == 3)
-						logger.LogTrace($"I3x {channel} {ch[channel].mode} {shadowch[channel].audper}");
-				}
-
-				//reset the period
-				shadowch[channel].audper = ch[channel].audper;
-
-				if (channel == 3)
-					logger.LogTrace($"D {channel} {ch[channel].mode} {shadowch[channel].audper}");
 			}
 		}
 
 		private void PlayingIRQ(int channel)
 		{
-			int audper = shadowch[channel].audper;
+			int audper = ch[channel].working_audper;
 			audper -= rate;
-			shadowch[channel].audper -= (ushort)rate;
+			ch[channel].working_audper -= (ushort)rate;
 			if (audper < 0)
 			{
 				//play the 2 bytes in audXdat, until we get here and the IRQ remains unacknowledged when period is out
@@ -105,18 +106,20 @@ namespace RunAmiga.Core.Custom
 				}
 				else
 				{
-					shadowch[channel].audper = ch[channel].audper;
+					ch[channel].working_audper = ch[channel].audper;
 					interrupt.AssertInterrupt(intr[channel]);
 				}
-				if (channel == 3)
-					logger.LogTrace($"I {channel} {ch[channel].mode} {shadowch[channel].audper}");
 			}
 		}
 
 		private void ChannelDMAOn(int channel)
 		{
-			ch[channel].CopyTo(shadowch[channel]);
+			ch[channel].working_audper = ch[channel].audper;
+			ch[channel].working_audlen = ch[channel].audlen;
+			ch[channel].working_audlc = ch[channel].audlc;
+
 			ch[channel].mode = AudioMode.DMA;
+			interrupt.AssertInterrupt(intr[channel]);
 		}
 
 		private void ChannelIRQOn(int channel)
@@ -124,17 +127,7 @@ namespace RunAmiga.Core.Custom
 			ch[channel].mode = AudioMode.Interrupt;
 			interrupt.AssertInterrupt(intr[channel]);
 		}
-
-		private void Dump(string msg, int channel)
-		{
-			//var cp = ch[channel];
-			//logger.LogTrace($"{msg} A {cp.audlc:X6} L:{cp.audlen} V:{cp.audvol} P:{cp.audper}");
-			//cp = shadowch[channel];
-			//logger.LogTrace($"{msg} S {cp.audlc:X6} L:{cp.audlen} V:{cp.audvol} P:{cp.audper}");
-			//ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
-			//logger.LogTrace($"{msg} D 0-3:{(dmacon&(ushort)ChipRegs.DMA.AUD0EN)!=0}{(dmacon & (ushort)ChipRegs.DMA.AUD1EN) != 0}{(dmacon & (ushort)ChipRegs.DMA.AUD2EN) != 0}{(dmacon & (ushort)ChipRegs.DMA.AUD3EN) != 0} DMA {(dmacon & (ushort)ChipRegs.DMA.DMAEN) != 0}");
-		}
-
+		
 		public void Reset()
 		{
 			for (int i = 0; i < 4; i++)
@@ -161,6 +154,10 @@ namespace RunAmiga.Core.Custom
 			public ushort auddat { get; set; }
 			public uint audlc { get; set; }
 
+			public ushort working_audlen { get;set; }
+			public int working_audper { get; set; }
+			public uint working_audlc { get; set; }
+
 			public AudioMode mode { get; set; }
 
 			public void CopyTo(AudioChannel cp)
@@ -179,6 +176,9 @@ namespace RunAmiga.Core.Custom
 				audlen = 0;
 				auddat = 0;
 				audlc = 0;
+				working_audper = 0;
+				working_audlc = 0;
+				working_audlen = 0;
 				mode = AudioMode.Idle;
 			}
 		}
@@ -193,7 +193,7 @@ namespace RunAmiga.Core.Custom
 
 			for (int i = 0; i < 4; i++)
 			{
-				if ((dmaconchanges & dmacon & (int)chanbit[i]) != 0)
+				if ((dmaconchanges & dmacon & chanbit[i]) != 0)
 					ChannelDMAOn(i);
 			}
 		}
@@ -203,6 +203,16 @@ namespace RunAmiga.Core.Custom
 		public void WriteADKCON(ushort v)
 		{
 			adkcon = v;
+
+			if ((v & 1) != 0) logger.LogTrace("C0 modulates volume");
+			if ((v & 2) != 0) logger.LogTrace("C1 modulates volume");
+			if ((v & 4) != 0) logger.LogTrace("C2 modulates volume");
+			if ((v & 8) != 0) logger.LogTrace("C3 modulates volume");
+			v >>= 4;
+			if ((v & 1) != 0) logger.LogTrace("C0 modulates frequency");
+			if ((v & 2) != 0) logger.LogTrace("C1 modulates frequency");
+			if ((v & 4) != 0) logger.LogTrace("C2 modulates frequency");
+			if ((v & 8) != 0) logger.LogTrace("C3 modulates frequency");
 		}
 
 		private ushort intreq = 0;
@@ -262,8 +272,8 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.AUD3DAT: ch[3].auddat = value; ChannelIRQOn(3); break;
 				case ChipRegs.AUD3LCH: ch[3].audlc = (ch[3].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD3LCL: ch[3].audlc = ((ch[3].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
-
 			}
+			DumpDiff();
 		}
 
 		public ushort Read(uint insaddr, uint address)
@@ -300,6 +310,21 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.AUD3LCL: value = (ushort)ch[3].audlc; break;
 			}
 			return value;
+		}
+
+		private AudioChannel[] dc = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel() };
+
+		private void DumpDiff()
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				if (dc[i].audper != ch[i].audper) logger.LogTrace($"AUD{i}PER {dc[i].audper}->{ch[i].audper}");
+				if (dc[i].audvol != ch[i].audvol) logger.LogTrace($"AUD{i}VOL {dc[i].audvol}->{ch[i].audvol}");
+				if (dc[i].audlen != ch[i].audlen) logger.LogTrace($"AUD{i}LEN {dc[i].audlen}->{ch[i].audlen}");
+				if (dc[i].audlc != ch[i].audlc) logger.LogTrace($"AUD{i}LC {dc[i].audlc:X8}->{ch[i].audlc:X8}");
+				//if (dc[i].auddat != ch[i].auddat) logger.LogTrace($"AUD{i}DAT {dc[i].auddat}->{ch[i].auddat}");
+				ch[i].CopyTo(dc[i]);
+			}
 		}
 	}
 }
