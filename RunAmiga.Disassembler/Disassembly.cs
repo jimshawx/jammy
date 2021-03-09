@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using RunAmiga.Core;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
@@ -45,13 +46,163 @@ namespace RunAmiga.Disassembler
 			this.breakpoints = breakpoints;
 			disassembler = new Disassembler();
 			labeller = new Labeller(settings);
+
+			Array.Clear(memType, 0, memType.Length);
+
+			Analysis();
+			ROMTags();
 			LoadComments(settings);
+		}
+
+		private void ROMTags()
+		{
+			var romtags = KickstartAnalysis.GetRomTags(memory, 0);
+			foreach (var tag in romtags)
+			{
+				var com = KickstartAnalysis.ROMTagLines(tag);
+				uint address = tag.MatchTag;
+
+				//F8574C  4AFC                                    RTC_MATCHWORD(start of ROMTAG marker)
+				//F8574E  00F8574C                                RT_MATCHTAG(pointer RTC_MATCHWORD)
+				//F85752  00F86188                                RT_ENDSKIP(pointer to end of code)
+				//F85756  01                                      RT_FLAGS(RTF_COLDSTART)
+				//F85757  25                                      RT_VERSION(version number)
+				//F85758  08                                      RT_TYPE(NT_RESOURCE)
+				//F85759  2D                                      RT_PRI(priority = 45)
+				//F8575A  00F85766                                RT_NAME(pointer to name)
+				//F8575E  00F85798                                RT_IDSTRING(pointer to ID string)
+				//F85762  00F85804                                RT_INIT(execution address)
+
+				MakeMemType(address, MemType.Word, null); AddComment(address, com[0]); address += 2;
+				MakeMemType(address, MemType.Long, null); AddComment(address, com[1]); address += 4;
+				MakeMemType(address, MemType.Long, null); AddComment(address, com[2]); address += 4;
+				MakeMemType(address, MemType.Byte, null); AddComment(address, com[3]); address++;
+				MakeMemType(address, MemType.Byte, null); AddComment(address, com[4]); address++;
+				MakeMemType(address, MemType.Byte, null); AddComment(address, com[5]); address++;
+				MakeMemType(address, MemType.Byte, null); AddComment(address, com[6]); address++;
+				MakeMemType(address, MemType.Long, null); AddComment(address, com[7]); MakeMemType(tag.NamePtr, MemType.Str, null); address += 4;
+				MakeMemType(address, MemType.Long, null); AddComment(address, com[8]); MakeMemType(tag.IdStringPtr, MemType.Str, null); address += 4;
+				MakeMemType(address, MemType.Long, null); AddComment(address, com[9]);
+			}
+		}
+
+		private void AddComment(uint address, string s)
+		{
+			comments[address] = new Comment {Address = address, Text = s};
+		}
+
+		private void Analysis()
+		{
+			uint i;
+
+			i = 0;
+			foreach (uint s in memory.AsULong())
+			{
+				if (s == 0x4e750000)
+					MakeMemType(i + 2, MemType.Word, null);
+				i += 4;
+			}
+
+			i = 0;
+			foreach (ushort s in memory.AsUWord())
+			{
+				//bra
+				if ((s & 0xff00) == 0x6000)
+				{
+					byte d = (byte)s;
+					uint target;
+					if (d == 0)
+					{
+						ReplaceHeader(i + 4, "");
+						target = (uint)(short)((memory[i + 2] << 8) + memory[i + 3]);
+					}
+					else if (d == 0xff)
+					{
+						ReplaceHeader(i + 6, "");
+						target = (uint)((memory[i+2]<<24)+(memory[i+3]<<16)+(memory[i + 4] << 8) + memory[i + 5]);
+					}
+					else
+					{
+						ReplaceHeader(i + 2, "");
+						target = (uint)(sbyte)d;
+					}
+					ReplaceHeader(i+target+2, "");
+				}
+
+				//bsr
+				if ((s & 0xff00) == 0x6100)
+				{
+					byte d = (byte)s;
+					uint target;
+					if (d == 0)
+						target = (uint)(short)((memory[i + 2] << 8) + memory[i + 3]);
+					else if (d == 0xff)
+						target = (uint)((memory[i + 2] << 24) + (memory[i + 3] << 16) + (memory[i + 4] << 8) + memory[i + 5]);
+					else
+						target = (uint)(sbyte)d;
+					ReplaceHeader(target+i+2, "");
+				}
+
+				//jmp
+				if ((s & 0xffc0) == 0x4ec0)
+					ReplaceHeader(i+2, "");
+
+				//rts
+				if (s == 0x4e75)
+					ReplaceHeader(i+2, "");
+
+				//rte
+				if (s == 0x4e73)
+					ReplaceHeader(i+2, "");
+
+				//movem.l r,-(a7)
+				if (s == 0b01001_0_001_1_100_111)
+					ReplaceHeader(i, "");
+
+				//link
+				if ((s&0xfff8)==0x4e50)
+					ReplaceHeader(i, "");
+
+				i += 2;
+			}
+		}
+
+		private void AddHeader(uint address, string hdr)
+		{
+			if (!headers.ContainsKey(address))
+				headers[address] = new Header {Address = address};
+
+			headers[address].TextLines.Add(hdr);
+		}
+
+		private void AddHeader(uint address, List<string> hdr)
+		{
+			if (!headers.ContainsKey(address))
+				headers[address] = new Header { Address = address };
+
+			headers[address].TextLines.AddRange(hdr);
+		}
+
+		private void ReplaceHeader(uint address, string hdr)
+		{
+			if (!headers.ContainsKey(address))
+				headers[address] = new Header { Address = address };
+
+			headers[address].TextLines.Clear();
+			headers[address].TextLines.Add(hdr);
+		}
+
+		private void ReplaceHeader(uint address, List<string> hdr)
+		{
+			if (!headers.ContainsKey(address))
+				headers[address] = new Header { Address = address };
+
+			headers[address].TextLines.Clear();
+			headers[address].TextLines.AddRange(hdr);
 		}
 
 		private void LoadComments(EmulationSettings settings)
 		{
-			Array.Clear(memType, 0, memType.Length);
-
 			if (settings.KickStart == "1.2")
 			{
 				LoadComment("exec_disassembly.txt");
@@ -130,8 +281,7 @@ namespace RunAmiga.Disassembler
 							if (hdrs.Any())
 							{
 								//attach any previous headers to the new address and start collecting new ones
-								headers[currentAddress] = new Header {Address = currentAddress};
-								headers[currentAddress].TextLines.AddRange(hdrs);
+								ReplaceHeader(currentAddress, hdrs);
 								hdrs.Clear();
 							}
 
@@ -242,30 +392,49 @@ namespace RunAmiga.Disassembler
 			return true;
 		}
 
-		private uint MakeMemType(uint nextAddress, MemType mt, string s)
+		private uint MakeMemType(uint address, MemType type, string str)
 		{
-			if (mt == MemType.Byte) { memType[nextAddress] = mt; return 1;}
-			else if (mt == MemType.Word) { memType[nextAddress] = mt; memType[nextAddress + 1] = mt; return 2; }
-			else if (mt == MemType.Long) { memType[nextAddress] = mt; memType[nextAddress + 1] = mt; memType[nextAddress + 2] = mt; memType[nextAddress + 3] = mt; return 4; }
-			else if (mt == MemType.Str)
+			if (type == MemType.Byte) { memType[address] = type; return 1;}
+			else if (type == MemType.Word) { memType[address] = type; memType[address + 1] = type; return 2; }
+			else if (type == MemType.Long) { memType[address] = type; memType[address + 1] = type; memType[address + 2] = type; memType[address + 3] = type; return 4; }
+			else if (type == MemType.Str)
 			{
-				var bits = s.SplitSmart(',', StringSplitOptions.RemoveEmptyEntries);
-
-				//remove any comment off the end
-				if (bits.Length > 1)
-					bits[^1] = bits[^1].Split(' ', StringSplitOptions.RemoveEmptyEntries).First();
-
-				uint c = 0;
-				foreach (var b in bits)
+				if (str == null)
 				{
-					if (IsStr(b)) c += (uint)b.Length - 2;
-					else if (IsChr(b)) c++;
+					if (address == 0)
+						return 0;
+
+					uint a = address;
+					uint c = 0;
+					do
+					{
+						memType[a] = type;
+						c++;
+					} while (memory[a] != 0);
+
+					return c;
+				}
+				else
+				{
+					var bits = str.SplitSmart(',', StringSplitOptions.RemoveEmptyEntries);
+
+					//remove any comment off the end
+					if (bits.Length > 1)
+						bits[^1] = bits[^1].Split(' ', StringSplitOptions.RemoveEmptyEntries).First();
+
+					uint c = 0;
+					foreach (var b in bits)
+					{
+						if (IsStr(b)) c += (uint)b.Length - 2;
+						else if (IsChr(b)) c++;
+					}
+
+					for (uint i = address; i < address + c; i++)
+						memType[i] = type;
+
+					return c;
 				}
 
-				for (uint i = nextAddress; i < nextAddress + c; i++)
-					memType[i] = mt;
-
-				return c;
 			}
 			return 0;
 		}

@@ -92,51 +92,10 @@ namespace RunAmiga.Main
 		{
 			Machine.LockEmulation();
 
-			//string dmp;
-			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>> {new Tuple<uint, uint>(0xfe88d6, 0xfe8e18 - 0xfe88d6 + 1)}, new DisassemblyOptions{IncludeBytes = false, CommentPad = true});
-			//File.WriteAllText("boot_disassembly.txt", dmp);
-
-			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
-			//{
-			//	new Tuple<uint, uint>(0xFEa734, 0xFEB460 - 0xFEa734 + 1),
-			//	//new Tuple<uint, uint>(0xFE9930, 0xFEB460 - 0xFE9930 + 1),
-			//}, new DisassemblyOptions{ IncludeBytes = false, CommentPad = true});
-			//File.WriteAllText("trackdisk_disassembly.txt", dmp);
-
-			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
-			//{
-			//	new Tuple<uint, uint>(0xfe489a , 0xFE889E  - 0xfe489a + 1),
-			//},
-			//new List<uint>(), 
-			//new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
-			//File.WriteAllText("keymap.resource_disassembly.txt", dmp);
-
-			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
-			//	{
-			//		new Tuple<uint, uint>(0xFE90EC, 0xfe98e4 - 0xFE90EC + 1)
-			//	}, new List<uint>(),
-			//	new DisassemblyOptions {IncludeBytes = false, CommentPad = true});
-			//File.WriteAllText("timer.device_disassembly.txt", dmp);
-
-			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
-			//	{
-			//		new Tuple<uint, uint>(0x00F8574C, 0x00F8618C - 0x00F8574C + 1)
-			//	}, new List<uint>(),
-			//	new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
-			//File.WriteAllText("battclock.resource_disassembly.txt", dmp);
-
-			//dmp = debugger.DisassembleTxt(new List<Tuple<uint, uint>>
-			//	{
-			//		new Tuple<uint, uint>(0x00FC450C, 0x00FC4794 - 0x00FC450C + 1)
-			//	}, new List<uint>(),
-			//	new DisassemblyOptions { IncludeBytes = false, CommentPad = true });
-			//File.WriteAllText("cia.resource_disassembly.txt", dmp);
-
 			var ranges = new List<Tuple<uint, uint>>
 			{
 				new Tuple<uint, uint>(0x000000, 0x400),
-				//new Tuple<uint, uint> (0xc00000, 0xa000),
-				//new Tuple<uint, uint> (0xf80000, 0x40000),
+				new Tuple<uint, uint>(0xc00000, 0x1000),
 				new Tuple<uint, uint>(0xfc0000, 0x40000),
 			};
 			if (settings.KickStart == "3.1" || settings.KickStart == "2.04")
@@ -144,16 +103,18 @@ namespace RunAmiga.Main
 
 			ranges.Add(new Tuple<uint, uint>(0xc10000, 0x5000));
 
-			var disasm = disassembly.DisassembleTxt(
-				ranges,
-				new List<uint>
+			var restarts = new List<uint>();
+			if (settings.KickStart == "1.2")
+				restarts.AddRange(new List<uint>
 				{
 					0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2,
 					0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2, 0xFE571C, 0xFC5170, 0xFE5A04, 0xfe61d0, 0x00FE6FD4,
-
 					0xFE43CC, 0xFE4588, 0xFE46CC, 0xfe42ee, 0xFC3A40, 0xfc43f4, 0xfc4408, 0xfc441c, 0xfc4474, 0xfc44a4, 0xfc44d0,0xFE62D4
+				}); 
 
-				},
+			var disasm = disassembly.DisassembleTxt(
+				ranges,
+				restarts,
 				new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 
 			Machine.UnlockEmulation();
