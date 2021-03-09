@@ -7,12 +7,12 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types.Types.Kickstart;
 using RunAmiga.Extensions.Extensions;
 
 namespace RunAmiga.Disassembler
@@ -26,6 +26,7 @@ namespace RunAmiga.Disassembler
 		
 		private readonly Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
 		private readonly Dictionary<uint, Header> headers = new Dictionary<uint, Header>();
+		private readonly Dictionary<string, List<LVO>> lvos = new Dictionary<string, List<LVO>>();
 		private readonly ILogger logger;
 
 		private enum MemType : byte
@@ -49,9 +50,62 @@ namespace RunAmiga.Disassembler
 
 			Array.Clear(memType, 0, memType.Length);
 
+			LoadLVOs();
+			StartUp();
 			Analysis();
 			ROMTags();
+			DeDupe();
 			LoadComments(settings);
+		}
+
+		private void LoadLVOs()
+		{
+			string filename = "LVOs.i.txt";
+			using (var f = File.OpenText(Path.Combine("c:/source/programming/amiga/", filename)))
+			{
+				if (f == null)
+				{
+					logger.LogTrace($"Can't find {filename} LVOs file");
+					return;
+				}
+
+				string currentLib = string.Empty;
+				for (;;)
+				{
+					string line = f.ReadLine();
+					if (line == null) break;
+
+					if (string.IsNullOrWhiteSpace(line))
+						continue;
+
+					if (line.StartsWith("***"))
+					{
+						if (!line.Contains("LVO"))
+							continue;
+						
+						currentLib = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)[3];
+						lvos[currentLib] = new List<LVO>();
+					}
+					else
+					{
+						var bits = line.Split(new []{' ', '\t'}, StringSplitOptions.RemoveEmptyEntries);
+						lvos[currentLib].Add(new LVO
+						{
+							Name = bits[0].Substring(4),
+							Offset = int.Parse(bits[2])
+						});
+					}
+				}
+			}
+		}
+
+		private void StartUp()
+		{
+			MakeMemType(0, MemType.Word, null);
+			MakeMemType(2, MemType.Code, null);
+
+			MakeMemType(0xfc0000, MemType.Word, null);
+			MakeMemType(0xfc0002, MemType.Code, null);
 		}
 
 		private void ROMTags()
@@ -73,6 +127,10 @@ namespace RunAmiga.Disassembler
 				//F8575E  00F85798                                RT_IDSTRING(pointer to ID string)
 				//F85762  00F85804                                RT_INIT(execution address)
 
+				AddHeader(address, "");
+				AddHeader(address, $"\t; The {tag.Name} RomTag Structure");
+				AddHeader(address, "");
+
 				MakeMemType(address, MemType.Word, null); AddComment(address, com[0]); address += 2;
 				MakeMemType(address, MemType.Long, null); AddComment(address, com[1]); address += 4;
 				MakeMemType(address, MemType.Long, null); AddComment(address, com[2]); address += 4;
@@ -80,10 +138,193 @@ namespace RunAmiga.Disassembler
 				MakeMemType(address, MemType.Byte, null); AddComment(address, com[4]); address++;
 				MakeMemType(address, MemType.Byte, null); AddComment(address, com[5]); address++;
 				MakeMemType(address, MemType.Byte, null); AddComment(address, com[6]); address++;
-				MakeMemType(address, MemType.Long, null); AddComment(address, com[7]); MakeMemType(tag.NamePtr, MemType.Str, null); address += 4;
-				MakeMemType(address, MemType.Long, null); AddComment(address, com[8]); MakeMemType(tag.IdStringPtr, MemType.Str, null); address += 4;
-				MakeMemType(address, MemType.Long, null); AddComment(address, com[9]);
+				MakeMemType(address, MemType.Long, null); AddComment(address, com[7]); address += 4;
+				MakeMemType(address, MemType.Long, null); AddComment(address, com[8]); address += 4;
+				MakeMemType(address, MemType.Long, null); AddComment(address, com[9]); address += 4;
+				AddHeader(address, "");
+
+				MakeMemType(tag.NamePtr, MemType.Str, null);
+				MakeMemType(tag.IdStringPtr, MemType.Str, null);
+
+				if ((tag.Flags & RTF.RTF_AUTOINIT) != 0)
+				{
+					address = tag.Init;
+
+					AddHeader(address, "");
+					AddHeader(address, $"\t; {tag.Name} init struct");
+					AddComment(address, "size");
+					MakeMemType(address, MemType.Long, null); address += 4;
+					uint fntable = ReadLong(address);
+					AddComment(address, "vectors");
+					MakeMemType(address, MemType.Long, null); address += 4;
+					uint structure = ReadLong(address);
+					AddComment(address, "init struct");
+					MakeMemType(address, MemType.Long, null); address += 4;
+					uint fninit = ReadLong(address);
+					AddComment(address, "init");
+					MakeMemType(address, MemType.Long, null); address += 4;
+					AddHeader(address, "");
+
+					if (structure != 0)
+					{
+						address = structure;
+						ushort s;
+						while ((s = ReadWord(address)) != 0x0000)
+						{
+							MakeMemType(address, MemType.Word, null);
+							address += 2;
+							if (s == 0xE000 || s == 0xD000)
+							{
+								MakeMemType(address, MemType.Word, null);
+								address += 2;
+								MakeMemType(address, MemType.Word, null);
+								address += 2;
+							}
+							else if (s == 0xC000)
+							{
+								MakeMemType(address, MemType.Word, null);
+								address += 2;
+								MakeMemType(address, MemType.Long, null);
+								address += 4;
+							}
+						}
+
+						MakeMemType(address, MemType.Word, null);
+						address += 2;
+						AddHeader(address, "");
+					}
+
+					if (fntable != 0)
+					{
+						ushort s;
+
+						address = fntable;
+
+						AddHeader(address, "");
+						AddHeader(address, $"\t; {tag.Name} vectors");
+
+						s = ReadWord(address);
+						int idx = 0;
+						if (s == 0xFFFF)
+						{
+							MakeMemType(address, MemType.Word, null);
+							address += 2;
+							while ((s = ReadWord(address)) != 0xFFFF)
+							{
+								uint u = fntable + s;
+								string lvo = LVO(tag, idx);
+								AddHeader(u, "");
+								AddHeader(u, "---------------------------------------------------------------------------");
+								AddHeader(u, $"\t{lvo}");
+								AddHeader(u, "---------------------------------------------------------------------------");
+								AddHeader(u, "");
+
+								AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
+								MakeMemType(address, MemType.Word, null);
+								address += 2;
+								idx++;
+							}
+
+							MakeMemType(address, MemType.Word, null);
+							address += 2;
+							AddHeader(address, "");
+						}
+						else
+						{
+							uint u;
+							while ((u = ReadLong(address)) != 0xFFFFFFFF)
+							{
+								string lvo = LVO(tag, idx);
+								AddHeader(u,"");
+								AddHeader(u, "---------------------------------------------------------------------------");
+								AddHeader(u, $"\t{lvo}");
+								AddHeader(u, "---------------------------------------------------------------------------");
+								AddHeader(u, "");
+
+								AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
+								MakeMemType(address, MemType.Long, null);
+								address += 4;
+								idx++;
+							}
+
+							MakeMemType(address, MemType.Long, null);
+							address += 4;
+							AddHeader(address, "");
+						}
+					}
+
+					if (fninit != 0)
+					{
+						address = fninit;
+
+						AddHeader(address, "");
+						AddHeader(address, $"\t; {tag.Name} init");
+						AddHeader(address, "");
+					}
+				}
+				else
+				{
+					if (tag.Init != 0)
+					{
+						address = tag.Init;
+
+						AddHeader(address, "");
+						AddHeader(address, $"\t; {tag.Name} init");
+						AddHeader(address, "");
+					}
+				}
 			}
+		}
+
+		private readonly string[] fixedLVOs = {"LibOpen", "LibClose", "LibExpunge", "LibReserved", "DevBeginIO", "DevAbortIO" };
+
+		private string LVO(Resident res, int idx)
+		{
+			if (res.Type == NT_Type.NT_LIBRARY)
+			{
+				if (idx < 4) return $"{fixedLVOs[idx]}() {res.Name}";
+			}
+			else if (res.Type == NT_Type.NT_DEVICE)
+			{
+				if (idx < 6) return $"{fixedLVOs[idx]}() {res.Name}";
+			}
+
+			if (lvos.TryGetValue(res.Name, out var lvolist))
+			{
+				var lvo = lvolist.SingleOrDefault(x => x.Index == idx);
+				if (lvo != null)
+					return $"{lvo.Name}()";
+			}
+
+			return "";
+		}
+
+		private void DeDupe()
+		{
+			foreach (var vals in headers.Values)
+			{
+				bool lastBlank = false;
+				var newHdrs = new List<string>();
+				foreach (var hdr in vals.TextLines)
+				{
+					bool thisBlank = string.IsNullOrWhiteSpace(hdr);
+					if (!(lastBlank && thisBlank))
+						newHdrs.Add(hdr);
+					lastBlank = thisBlank;
+				}
+				vals.TextLines.Clear();
+				vals.TextLines.AddRange(newHdrs);
+			}
+		}
+
+		private uint ReadLong(uint i)
+		{
+			return (uint)((memory[i] << 24) + (memory[i + 1] << 16) + (memory[i + 2] << 8) + memory[i + 3]);
+		}
+
+		private ushort ReadWord(uint i)
+		{
+			return (ushort)((memory[i] << 8) + memory[i + 1]);
 		}
 
 		private void AddComment(uint address, string s)
@@ -113,20 +354,20 @@ namespace RunAmiga.Disassembler
 					uint target;
 					if (d == 0)
 					{
-						ReplaceHeader(i + 4, "");
+						AddHeader(i + 4, "");
 						target = (uint)(short)((memory[i + 2] << 8) + memory[i + 3]);
 					}
 					else if (d == 0xff)
 					{
-						ReplaceHeader(i + 6, "");
+						AddHeader(i + 6, "");
 						target = (uint)((memory[i+2]<<24)+(memory[i+3]<<16)+(memory[i + 4] << 8) + memory[i + 5]);
 					}
 					else
 					{
-						ReplaceHeader(i + 2, "");
+						AddHeader(i + 2, "");
 						target = (uint)(sbyte)d;
 					}
-					ReplaceHeader(i+target+2, "");
+					AddHeader(i+target+2, "");
 				}
 
 				//bsr
@@ -140,28 +381,62 @@ namespace RunAmiga.Disassembler
 						target = (uint)((memory[i + 2] << 24) + (memory[i + 3] << 16) + (memory[i + 4] << 8) + memory[i + 5]);
 					else
 						target = (uint)(sbyte)d;
-					ReplaceHeader(target+i+2, "");
+					AddHeader(target+i+2, "");
 				}
 
 				//jmp
 				if ((s & 0xffc0) == 0x4ec0)
-					ReplaceHeader(i+2, "");
+					AddHeader(i+2, "");
 
 				//rts
 				if (s == 0x4e75)
-					ReplaceHeader(i+2, "");
+					AddHeader(i+2, "");
 
 				//rte
 				if (s == 0x4e73)
-					ReplaceHeader(i+2, "");
+					AddHeader(i+2, "");
 
 				//movem.l r,-(a7)
 				if (s == 0b01001_0_001_1_100_111)
-					ReplaceHeader(i, "");
+					AddHeader(i, "");
 
 				//link
 				if ((s&0xfff8)==0x4e50)
-					ReplaceHeader(i, "");
+					AddHeader(i, "");
+
+				//Disable()
+				//FC37B2  33FC 4000 00DF F09A move.w    #$4000,$DFF09A
+				//FC37BA  522E 0126           addq.b    #1,$0126(a6)
+				if (s == 0x33fc &&
+				    ReadWord(i+2)==0x4000 &&
+				    ReadWord(i+4) == 0x00DF &&
+				    ReadWord(i+6) == 0xF09A &&
+				    (ReadWord(i+8)&0x5228)==0x5228 &&
+				    ReadWord(i+10)== 0x126)
+				{
+					AddHeader(i, "");
+					AddComment(i, "Disable()");
+					AddHeader(i+12, "");
+				}
+
+				//Enable()
+				//FC37E4  532E 0126           subq.b    #1,$0126(a6)
+				//FC37E8  6C08                bge.b     #$FC37F2
+				//FC37EA  33FC C000 00DF F09A move.w    #$C000,$DFF09A
+				if ((s & 0x5328) == 0x5328 &&
+				    ReadWord(i + 2) == 0x126 &&
+				    ReadWord(i + 4) == 0x6C08 &&
+				    ReadWord(i + 6) == 0x33FC &&
+				    ReadWord(i + 8) == 0xC000 &&
+				    ReadWord(i + 10) == 0x00DF &&
+				    ReadWord(i + 12) == 0xF09A)
+				{
+					AddHeader(i, "");
+					AddComment(i, "Enable()");
+					AddHeader(i+14,"");
+				}
+
+				//todo: other candidates
 
 				i += 2;
 			}
@@ -376,7 +651,6 @@ namespace RunAmiga.Disassembler
 			//FC0018  "exec 33.192 (8 Oct 1986)", CR, LF, 00, 00
 			//FE0DC6  "Brought to you by not a mere Wizard, but the Wizard Extraordinaire: Dale Luck!",00,00,00,00
 
-			//todo: broken for embedded commas
 			var bits = s.SplitSmart(',', StringSplitOptions.RemoveEmptyEntries);
 
 			//remove any comment off the end
@@ -410,7 +684,7 @@ namespace RunAmiga.Disassembler
 					{
 						memType[a] = type;
 						c++;
-					} while (memory[a] != 0);
+					} while (memory[a++] != 0);
 
 					return c;
 				}
@@ -435,6 +709,12 @@ namespace RunAmiga.Disassembler
 					return c;
 				}
 
+			}
+			else if (type == MemType.Code)
+			{
+				var asm = disassembler.Disassemble(address, memory.AsSpan((int)address));
+				for (uint i = address; i < address + asm.Bytes.Length; i++)
+					memType[i] = type;
 			}
 			return 0;
 		}
@@ -561,9 +841,29 @@ namespace RunAmiga.Disassembler
 					}
 					else
 					{
-						var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
-						asm = dasm.ToString(options);
-						address += (uint)dasm.Bytes.Length;
+						if ((address & 1) != 0)
+						{
+							asm = $"{address:X6}  { memory[address]:X2}";
+							address += 1;
+						}
+						else
+						{
+							var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
+							asm = dasm.ToString(options);
+
+							uint start = address, end = (uint)(address + dasm.Bytes.Length);
+							for (uint i = start; i < end && i < memory.Length; i++)
+							{
+								if (memType[i] != MemType.Code && memType[i] != MemType.Unknown)
+								{
+									break; //todo: the instruction overlapped something we know isn't code, so we could mark it as data
+								}
+
+								address++;
+							}
+
+							//address += (uint)dasm.Bytes.Length;
+						}
 					}
 
 					if (options.IncludeComments)
