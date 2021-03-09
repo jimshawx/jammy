@@ -76,7 +76,7 @@ namespace RunAmiga.Core.Custom
 				//update the pointers and reset the period
 				ch[channel].working_audlc += 2;
 				ch[channel].working_audlen--;
-				ch[channel].working_audper = ch[channel].audper;
+				ch[channel].working_audper += ch[channel].audper;
 
 				//loop restart?
 				if (ch[channel].working_audlen == 1)
