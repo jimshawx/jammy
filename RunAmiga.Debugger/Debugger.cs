@@ -25,7 +25,7 @@ namespace RunAmiga.Debugger
 		private readonly ICIABEven ciab;
 		private readonly IDiskDrives diskDrives;
 		private readonly IInterrupt interrupt;
-		private readonly Disassembly disassembly;
+		private readonly IDisassembly disassembly;
 		private readonly ILogger logger;
 		private ITracer tracer;
 
@@ -37,6 +37,9 @@ namespace RunAmiga.Debugger
 			this.breakpoints = breakpoints;
 
 			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints, settings.Value);
+
+			//dump the kickstart ROM details and disassemblies
+			KickstartAnalysis.Run(memory, logger, disassembly, settings.Value);
 
 			this.memory = memory;
 			this.cpu = cpu;
