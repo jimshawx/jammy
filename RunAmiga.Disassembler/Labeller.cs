@@ -8,7 +8,47 @@ namespace RunAmiga.Disassembler
 {
 	public class Labeller :ILabeller
 	{
-		private string[] fns = {
+		private readonly Dictionary<uint, Label> asmLabels = new Dictionary<uint, Label>();
+
+		public Labeller(IOptions<EmulationSettings> settings)
+		{
+			if (settings.Value.KickStart == "1.2")
+			{
+				ExecLabels();
+				MiscLabels();
+			}
+		}
+
+		public bool HasLabel(uint address)
+		{
+			return asmLabels.ContainsKey(address);
+		}
+
+		public string LabelName(uint address)
+		{
+			if (asmLabels.TryGetValue(address, out Label label))
+				return label.Name;
+			return "";
+		}
+
+		public Dictionary<uint, Label> GetLabels()
+		{
+			return asmLabels;
+		}
+
+		private void MiscLabels()
+		{
+			foreach (var t in miscLabels)
+				asmLabels.Add(t.Address, t);
+		}
+
+		private void ExecLabels()
+		{
+			for (int i = 4; i < fnoffs.Length; i++)
+				asmLabels[fnbase + fnoffs[i]] = new Label { Address = fnbase + fnoffs[i], Name = fns[i - 4] };
+		}
+
+		private readonly string[] fns = {
 			"Supervisor",
 			"ExitIntr",
 			"Schedule",
@@ -139,9 +179,9 @@ namespace RunAmiga.Disassembler
 			"ExecReserved04",
 		};
 
-		uint fnbase = 0xFC1A40;
+		private const uint fnbase = 0xFC1A40;
 
-		ushort[] fnoffs = {
+		private readonly ushort[] fnoffs = {
 			0x08A0, 0x08A8,
 			0x08AC, 0x08AC,
 			0xEE6A, 0xF420,
@@ -196,18 +236,7 @@ namespace RunAmiga.Disassembler
 			0xFFAA, 0x1504,
 			0x1500};
 
-		Dictionary<uint, Label> asmLabels = new Dictionary<uint, Label>();
-
-		public Labeller(IOptions<EmulationSettings> settings)
-		{
-			if (settings.Value.KickStart == "1.2") 
-			{
-				ExecLabels();
-				MiscLabels();
-			}
-		}
-
-		private List<Label> miscLabels = new List<Label>
+		private readonly List<Label> miscLabels = new List<Label>
 		{
 			new Label (0xfc2fb4, "TaskCrash"),
 			new Label (0xfc305e, "IrrecoverableCrash"),
@@ -241,30 +270,6 @@ namespace RunAmiga.Disassembler
 
 			new Label(0xFE8E1C, "KickstartLogoData"),
 		};
-
-		private void MiscLabels()
-		{
-			foreach (var t in miscLabels)
-				asmLabels.Add(t.Address, t);
-		}
-
-		private void ExecLabels()
-		{
-			for (int i = 4; i < fnoffs.Length; i++)
-				asmLabels[fnbase + fnoffs[i]] = new Label { Address = fnbase + fnoffs[i], Name = fns[i - 4] };
-		}
-
-		public bool HasLabel(uint address)
-		{
-			return asmLabels.ContainsKey(address);
-		}
-
-		public string LabelName(uint address)
-		{
-			if (asmLabels.TryGetValue(address, out Label label))
-				return label.Name;
-			return "";
-		}
 
 	}
 }

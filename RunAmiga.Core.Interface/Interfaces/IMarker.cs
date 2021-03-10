@@ -99,6 +99,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 	{
 		string LabelName(uint address);
 		bool HasLabel(uint address);
+		Dictionary<uint, Label> GetLabels();
 	}
 
 	public interface IBreakpointCollection : IMemoryInterceptor
@@ -164,5 +165,12 @@ namespace RunAmiga.Core.Interface.Interfaces
 	public interface IKickstartAnalysis
 	{
 		List<Resident> GetRomTags();
+	}
+
+	public interface IAnalyser
+	{
+		MemType[] GetMemTypes();
+		Dictionary<uint, Header> GetHeaders();
+		Dictionary<uint, Comment> GetComments();
 	}
 }

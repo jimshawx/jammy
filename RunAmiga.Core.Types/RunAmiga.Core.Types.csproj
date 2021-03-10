@@ -16,4 +16,8 @@
     <Folder Include="Enums\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\RunAmiga.Extensions\RunAmiga.Extensions.csproj" />
+  </ItemGroup>
+
 </Project>

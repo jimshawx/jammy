@@ -15,6 +15,7 @@ using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Debugger;
 using RunAmiga.Disassembler;
+using RunAmiga.Disassembler.Analysers;
 using Size = RunAmiga.Core.Types.Types.Size;
 
 namespace RunAmiga.Tests
@@ -43,7 +44,7 @@ namespace RunAmiga.Tests
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILogger<CPU>>(x => new NullLogger<CPU>())
 				.AddSingleton<IDisassembly, Disassembly>()
-
+				.AddSingleton<IAnalyser,Analyser>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, Tracer>()

@@ -14,7 +14,6 @@ namespace RunAmiga.Debugger
 {
 	public class Debugger : IDebugger
 	{
-		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
 		private readonly IMemory memory;
 		private readonly ICPU cpu;
@@ -25,19 +24,15 @@ namespace RunAmiga.Debugger
 		private readonly IInterrupt interrupt;
 		private readonly IDisassembly disassembly;
 		private readonly ILogger logger;
-		private ITracer tracer;
+		private readonly ITracer tracer;
 
 		public Debugger(IMemoryMapper memoryMapper, IMemory memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
 			IBreakpointCollection breakpoints, IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer)
 		{
-			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
 			this.disassembly = disassembly;
-
-			//dump the kickstart ROM details and disassemblies
-			disassembly.ShowRomTags();
-
+			this.tracer = tracer;
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
@@ -47,7 +42,10 @@ namespace RunAmiga.Debugger
 			this.ciab = ciab;
 			this.logger = logger;
 
-			this.memoryMapper.AddMemoryIntercept(this.breakpoints);
+			memoryMapper.AddMemoryIntercept(this.breakpoints);
+
+			//dump the kickstart ROM details and disassemblies
+			disassembly.ShowRomTags();
 
 			if (settings.Value.KickStart != "1.2")
 				return;

@@ -12,6 +12,7 @@ using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Debugger;
 using RunAmiga.Disassembler;
+using RunAmiga.Disassembler.Analysers;
 using RunAmiga.Logger.SQLite;
 using RunAmiga.Logger.DebugAsync;
 
@@ -65,6 +66,7 @@ namespace RunAmiga.Main
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, Tracer>()
 				.AddSingleton<IDisassembly, Disassembly>()
+				.AddSingleton<IAnalyser,Analyser>()
 				.AddSingleton<RunAmiga>()
 				.Configure<EmulationSettings>(o=>configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
