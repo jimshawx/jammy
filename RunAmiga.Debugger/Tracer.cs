@@ -28,11 +28,11 @@ namespace RunAmiga.Debugger
 
 		private readonly List<TraceEntry> traces = new List<TraceEntry>();
 
-		private readonly Disassembly disassembly;
-		private readonly Labeller labeller;
+		private readonly IDisassembly disassembly;
+		private readonly ILabeller labeller;
 		private readonly ILogger logger;
 
-		public Tracer(Disassembly disassembly, Labeller labeller)
+		public Tracer(IDisassembly disassembly, ILabeller labeller)
 		{
 			this.disassembly = disassembly;
 			this.labeller = labeller;

@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
+using Microsoft.Extensions.Options;
+using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Disassembler
 {
-	public class Labeller
+	public class Labeller :ILabeller
 	{
 		private string[] fns = {
 			"Supervisor",
@@ -196,9 +198,9 @@ namespace RunAmiga.Disassembler
 
 		Dictionary<uint, Label> asmLabels = new Dictionary<uint, Label>();
 
-		public Labeller(EmulationSettings settings)
+		public Labeller(IOptions<EmulationSettings> settings)
 		{
-			if (settings.KickStart == "1.2") 
+			if (settings.Value.KickStart == "1.2") 
 			{
 				ExecLabels();
 				MiscLabels();

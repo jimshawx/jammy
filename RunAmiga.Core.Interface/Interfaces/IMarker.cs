@@ -5,6 +5,7 @@ using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
 using RunAmiga.Core.Types.Types.Debugger;
+using RunAmiga.Core.Types.Types.Kickstart;
 
 namespace RunAmiga.Core.Interface.Interfaces
 {
@@ -94,6 +95,12 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void TraceAsm(uint pc, Regs regs);
 	}
 
+	public interface ILabeller
+	{
+		string LabelName(uint address);
+		bool HasLabel(uint address);
+	}
+
 	public interface IBreakpointCollection : IMemoryInterceptor
 	{
 		bool IsBreakpoint(uint pc);
@@ -120,8 +127,6 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void CIAInt(ICRB icr);
 		void IRQ(uint irq);
 		void INTENA(uint irq);
-		void SetTracer(ITracer tracer);
-		IDisassembly GetDisassembly();
 	}
 
 	public interface IMemoryInterceptor
@@ -143,9 +148,8 @@ namespace RunAmiga.Core.Interface.Interfaces
 
 	public interface IEmulation
 	{
-		void Reset();
 		void Start();
-		IDebugger GetDebugger();
+		void Reset();
 	}
 
 	public interface IDisassembly
@@ -153,5 +157,12 @@ namespace RunAmiga.Core.Interface.Interfaces
 		string DisassembleTxt(List<Tuple<uint, uint>> ranges, List<uint> restartsList, DisassemblyOptions options);
 		int GetAddressLine(uint address);
 		uint GetLineAddress(int line);
+		string DisassembleAddress(uint pc);
+		void ShowRomTags();
+	}
+
+	public interface IKickstartAnalysis
+	{
+		List<Resident> GetRomTags();
 	}
 }

@@ -10,20 +10,22 @@ namespace RunAmiga.Core
 		public byte[] ROM { get; set; }
 		public uint Origin { get; set; }
 
-		//private ILogger logger;
-
 		public Kickstart(string path, string name)
 		{
-			//logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<Kickstart>>();
-
 			Path = path;
 			Name = name;
 
-			ROM = File.ReadAllBytes(path);
-			Debug.Assert(ROM.Length == 512 * 1024 || ROM.Length == 256 * 1024);
+			try
+			{
+				ROM = File.ReadAllBytes(path);
+				Debug.Assert(ROM.Length == 512 * 1024 || ROM.Length == 256 * 1024);
 
-			Origin = 0xfc0000;
-			if (ROM.Length == 512 * 1024) Origin = 0xf80000;
+				Origin = 0xfc0000;
+				if (ROM.Length == 512 * 1024) Origin = 0xf80000;
+			}
+			catch (FileNotFoundException)
+			{
+			}
 		}
 	}
 }

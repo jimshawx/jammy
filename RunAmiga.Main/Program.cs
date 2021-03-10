@@ -10,6 +10,8 @@ using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
+using RunAmiga.Debugger;
+using RunAmiga.Disassembler;
 using RunAmiga.Logger.SQLite;
 using RunAmiga.Logger.DebugAsync;
 
@@ -59,6 +61,11 @@ namespace RunAmiga.Main
 				.AddSingleton<IMemoryMapper, MemoryMapper>()
 				.AddSingleton<IEmulationWindow, EmulationWindow>()
 				.AddSingleton<IEmulation, Emulation>()
+				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
+				.AddSingleton<ILabeller, Labeller>()
+				.AddSingleton<ITracer, Tracer>()
+				.AddSingleton<IDisassembly, Disassembly>()
+				.AddSingleton<RunAmiga>()
 				.Configure<EmulationSettings>(o=>configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 
@@ -67,10 +74,7 @@ namespace RunAmiga.Main
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");
 
-			var emulation = serviceProvider.GetRequiredService<IEmulation>();
-
-			var form = new RunAmiga(emulation);
-			form.Init();
+			var form = serviceProvider.GetRequiredService<RunAmiga>();
 			Application.Run(form);
 		}
 	}

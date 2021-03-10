@@ -9,21 +9,15 @@ namespace RunAmiga.Main
 	public class Emulation : IEmulation
 	{
 		private readonly IMachine machine;
-		private readonly IDebugger debugger;
 
-		public Emulation(IMachine machine, IDebugger debugger, IMemory memory, 
-			IBreakpointCollection breakpointCollection, IOptions<EmulationSettings> settings)
+		public Emulation(IMachine machine, IDebugger debugger,
+			IOptions<EmulationSettings> settings, IDisassembly disassembly)
 		{
 			this.machine = machine;
-			this.debugger = debugger;
+			//var labeller = new Labeller(settings.Value);
+			//var tracer = new Tracer(disassembly, labeller);
 
-			//memoryMapper.AddMapper(debugger);
-
-			var disassembly = new Disassembly(memory.GetMemoryArray(), breakpointCollection, settings.Value);
-			var labeller = new Labeller(settings.Value);
-			var tracer = new Tracer(disassembly, labeller);
-
-			debugger.SetTracer(tracer);
+			//debugger.SetTracer(tracer);
 		}
 
 		public void Reset()
@@ -34,11 +28,6 @@ namespace RunAmiga.Main
 		public void Start()
 		{
 			machine.Start();
-		}
-
-		public IDebugger GetDebugger()
-		{
-			return debugger;
 		}
 	}
 }

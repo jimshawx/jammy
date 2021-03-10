@@ -5,12 +5,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core;
 using RunAmiga.Core.Custom;
-using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Enums;
@@ -24,33 +22,35 @@ namespace RunAmiga.Main
 	public partial class RunAmiga : Form
 	{
 		private readonly IEmulation emulation;
-		private readonly IDebugger debugger;
-
 		private readonly IDisassembly disassembly;
-		private readonly ILogger logger;
+		private readonly IDebugger debugger;
 		private readonly IChips custom;
+		private readonly ILogger logger;
+		private readonly EmulationSettings settings;
 
-		private EmulationSettings settings;
-
-		public RunAmiga(IEmulation emulation)
+		public RunAmiga(IEmulation emulation, IDisassembly disassembly, IDebugger debugger,
+			IChips custom, ILogger<RunAmiga> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
-				throw new ApplicationException("RG");
+				throw new ApplicationException("RunAmiga can't create Handle");
 
 			this.emulation = emulation;
+			this.disassembly = disassembly;
+			this.debugger = debugger;
+			this.custom = custom;
+			this.logger = logger;
+
 			InitializeComponent();
 
 			addressFollowBox.SelectedIndex = 0;
 			cbTypes.SelectedIndex = 0;
 
-			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<RunAmiga>>();
-			settings = ServiceProviderFactory.ServiceProvider.GetRequiredService<IOptions<EmulationSettings>>().Value;
+			settings = options.Value;
 
-			this.debugger = emulation.GetDebugger();
-			this.disassembly = debugger.GetDisassembly();
-			this.custom = ServiceProviderFactory.ServiceProvider.GetRequiredService<IChips>();
-
+			UpdateDisassembly();
 			UpdateDisplay();
+
+			InitUIRefreshThread();
 
 			Machine.SetEmulationMode(EmulationMode.Stopped);
 			emulation.Start();
@@ -59,11 +59,8 @@ namespace RunAmiga.Main
 		private CancellationTokenSource uiUpdateTokenSource;
 		private Task uiUpdateTask;
 
-		public void Init()
+		private void InitUIRefreshThread()
 		{
-			UpdateDisassembly();
-			UpdateDisplay();
-
 			uiUpdateTokenSource = new CancellationTokenSource();
 
 			uiUpdateTask = new Task(() =>
@@ -260,7 +257,10 @@ namespace RunAmiga.Main
 
 		private void SetSelection()
 		{
+			Machine.LockEmulation();
 			uint pc = debugger.GetRegs().PC;
+			Machine.UnlockEmulation();
+
 			int line = disassembly.GetAddressLine(pc);
 			if (line == 0) return;
 
@@ -312,12 +312,12 @@ namespace RunAmiga.Main
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
+			Machine.SetEmulationMode(EmulationMode.Exit);
+
 			UI.UI.IsDirty = false;
 
 			uiUpdateTokenSource.Cancel();
 			uiUpdateTask.Wait(1000);
-
-			Machine.SetEmulationMode(EmulationMode.Exit);
 		}
 
 		private void btnRefresh_Click(object sender, EventArgs e)

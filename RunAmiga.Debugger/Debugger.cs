@@ -9,8 +9,6 @@ using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
 using RunAmiga.Core.Types.Types.Debugger;
-using RunAmiga.Disassembler;
-using Machine = RunAmiga.Core.Machine;
 
 namespace RunAmiga.Debugger
 {
@@ -31,15 +29,14 @@ namespace RunAmiga.Debugger
 
 		public Debugger(IMemoryMapper memoryMapper, IMemory memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
-			IBreakpointCollection breakpoints, IOptions<EmulationSettings> settings)
+			IBreakpointCollection breakpoints, IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer)
 		{
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
-
-			disassembly = new Disassembly(memory.GetMemoryArray(), breakpoints, settings.Value);
+			this.disassembly = disassembly;
 
 			//dump the kickstart ROM details and disassemblies
-			KickstartAnalysis.Run(memory, logger, disassembly, settings.Value);
+			disassembly.ShowRomTags();
 
 			this.memory = memory;
 			this.cpu = cpu;
@@ -164,11 +161,6 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0xfe9550);//TR_ADDREQUEST
 			//C037C8
 
-		}
-
-		public void SetTracer(ITracer trace)
-		{
-			this.tracer = trace;
 		}
 
 		readonly MemoryRange memoryRange = new MemoryRange(0x0, 0x1000000);
@@ -307,11 +299,6 @@ namespace RunAmiga.Debugger
 		public void INTENA(uint irq)
 		{
 			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1 << (int)irq), Size.Word);
-		}
-
-		public IDisassembly GetDisassembly()
-		{
-			return disassembly;
 		}
 	}
 }

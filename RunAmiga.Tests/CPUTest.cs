@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using RunAmiga.Core;
 using RunAmiga.Core.CPU.CSharp;
@@ -41,12 +42,14 @@ namespace RunAmiga.Tests
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILogger<CPU>>(x => new NullLogger<CPU>())
-				.AddSingleton<ICSharpCPU>(x=>new CPU(
-					x.GetRequiredService<IInterrupt>(),
-					x.GetRequiredService<IMemoryMapper>(),
-					x.GetRequiredService<IBreakpointCollection>(),
-					new Tracer(new Disassembly(x.GetRequiredService<IMemory>().GetMemoryArray(), x.GetRequiredService<IBreakpointCollection>(), new EmulationSettings()), new Labeller(new EmulationSettings())),
-					x.GetRequiredService<ILogger<CPU>>()))
+				.AddSingleton<IDisassembly, Disassembly>()
+
+				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
+				.AddSingleton<ILabeller, Labeller>()
+				.AddSingleton<ITracer, Tracer>()
+				.AddSingleton<IOptions<EmulationSettings>>(x=>new OptionsWrapper<EmulationSettings>(new EmulationSettings()))
+				.AddSingleton<ICSharpCPU, CPU>()
+				
 				.AddSingleton<IMemoryMapper>(x => new MemoryMapper(new List<IMemoryMappedDevice> { x.GetRequiredService<IMemory>() }))
 				.AddSingleton<IMemory, Memory>()
 				.BuildServiceProvider();
