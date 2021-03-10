@@ -1,8 +1,11 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
+
+// ReSharper disable InconsistentNaming
 
 namespace RunAmiga.Core.CPU.CSharp
 {
@@ -48,20 +51,24 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private readonly IInterrupt interrupt;
 		private readonly ITracer tracer;
+		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 
 		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
 
-		public CPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ITracer tracer, ILogger<CPU> logger)
+		public CPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
+			IBreakpointCollection breakpoints, ITracer tracer,
+			IOptions<EmulationSettings> settings,
+			ILogger<CPU> logger)
 		{
 			a = new A(Supervisor);
-
 
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
 			this.tracer = tracer;
+			this.settings = settings.Value;
 			this.logger = logger;
 
 			//Reset();
@@ -114,7 +121,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (fetchMode == FetchMode.Stopped)
 				return;
 
-			try
+			//try
 			{
 				int ins = Fetch(pc);
 				pc += 2;
@@ -165,25 +172,24 @@ namespace RunAmiga.Core.CPU.CSharp
 					case 15:
 						internalTrap(11);
 						break;
-					default:
-						throw new UnknownInstructionException(pc, ins);
 				}
 			}
-			catch (MC68000Exception ex)
-			{
-				logger.LogTrace($"Caught an exception {ex}");
-				if (ex is UnknownInstructionException)
-					internalTrap(4);
-				else if (ex is UnknownInstructionSizeException)
-					internalTrap(4);
-				else if (ex is UnknownEffectiveAddressException)
-					internalTrap(4);
-				else if (ex is InstructionAlignmentException)
-					internalTrap(3);
 
-				tracer.DumpTrace();
-				breakpoints.SignalBreakpoint(instructionStartPC);
-			}
+			//catch (MC68000Exception ex)
+			//{
+			//	logger.LogTrace($"Caught an exception {ex}");
+			//	if (ex is UnknownInstructionException)
+			//		internalTrap(4);
+			//	else if (ex is UnknownInstructionSizeException)
+			//		internalTrap(4);
+			//	else if (ex is UnknownEffectiveAddressException)
+			//		internalTrap(4);
+			//	else if (ex is InstructionAlignmentException)
+			//		internalTrap(3);
+
+			//	tracer.DumpTrace();
+			//	breakpoints.SignalBreakpoint(instructionStartPC);
+			//}
 
 			breakpoints.CheckBreakpoints(pc);
 		}
@@ -345,7 +351,12 @@ namespace RunAmiga.Core.CPU.CSharp
 				case Size.Long: c = (int)val; break;
 				case Size.Word: c = (int)(short)val; break;
 				case Size.Byte: c = (int)(sbyte)val; break;
-				default: throw new UnknownInstructionSizeException(pc, 0);
+				default:
+					if (settings.UnknownInstructionSizeExceptions)
+						throw new UnknownInstructionSizeException(pc, 0);
+					logger.LogTrace($"Unknown Instruction Size");
+					c = 0;
+					break;
 			}
 
 			//Z
@@ -522,12 +533,20 @@ namespace RunAmiga.Core.CPU.CSharp
 						case 0b100://#imm
 							return pc;
 						default:
-							throw new UnknownEffectiveAddressException(pc, type);
+							//if (settings.UnknownEffectiveAddressExceptions)
+							//	throw new UnknownEffectiveAddressException(pc, type);
+							//logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
+							internalTrap(3);
+							return 0;
 					}
 					break;
 			}
 
-			throw new UnknownEffectiveAddressException(pc, type);
+			//if (settings.UnknownEffectiveAddressExceptions)
+			//	throw new UnknownEffectiveAddressException(pc, type);
+			//logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
+			internalTrap(3);
+			return 0;
 		}
 
 		private uint fetchOpSize(uint ea, Size size)
@@ -539,7 +558,10 @@ namespace RunAmiga.Core.CPU.CSharp
 				return (uint)(short)read16(ea);
 			if (size == Size.Byte)
 				return (uint)(sbyte)read8(ea);
-			throw new UnknownEffectiveAddressException(pc, 0);
+			if (settings.UnknownEffectiveAddressExceptions)
+				throw new UnknownEffectiveAddressException(pc, 0);
+			logger.LogTrace($"Unknown Effective Address {pc:X8}");
+			return 0;
 		}
 
 		private uint fetchImm(Size size)
@@ -636,11 +658,17 @@ namespace RunAmiga.Core.CPU.CSharp
 						case 0b100://#imm
 							return fetchImm(size);//ea==pc
 						default:
-							throw new UnknownEffectiveAddressException(pc, type);
+							if (settings.UnknownEffectiveAddressExceptions)
+								throw new UnknownEffectiveAddressException(pc, type);
+							logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
+							return 0;
 					}
 			}
 
-			throw new UnknownEffectiveAddressException(pc, type);
+			if (settings.UnknownEffectiveAddressExceptions)
+				throw new UnknownEffectiveAddressException(pc, type);
+			logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
+			return 0;
 		}
 
 		private void writeOp(uint ea, uint val, Size size)
@@ -652,7 +680,9 @@ namespace RunAmiga.Core.CPU.CSharp
 			{ write16(ea, (ushort)val); return; }
 			if (size == Size.Byte)
 			{ write8(ea, (byte)val); return; }
-			throw new UnknownEffectiveAddressException(pc, 0);
+			if (settings.UnknownEffectiveAddressExceptions)
+				throw new UnknownEffectiveAddressException(pc, 0);
+			logger.LogTrace($"Unknown Effective Address {pc:X8}");
 		}
 
 		private void writeEA(int type, uint ea, Size size, uint value)
@@ -669,14 +699,25 @@ namespace RunAmiga.Core.CPU.CSharp
 						d[Xn] = (d[Xn] & 0xffff0000) | (value & 0x0000ffff);
 					else if (size == Size.Byte)
 						d[Xn] = (d[Xn] & 0xffffff00) | (value & 0x000000ff);
+					else
+					{
+						if (settings.UnknownInstructionSizeExceptions)
+							throw new UnknownInstructionSizeException(0, type);
+						logger.LogTrace($"Unknown Instruction Size {type:X4}");
+					}
+
 					break;
 				case 1:
 					if (size == Size.Long)
 						a[Xn] = value;
 					else if (size == Size.Word)
 						a[Xn] = (a[Xn] & 0xffff0000) | (value & 0x0000ffff);
-					else if (size == Size.Byte)
-						throw new UnknownInstructionSizeException(0,type);
+					else
+					{
+						if (settings.UnknownInstructionSizeExceptions)
+							throw new UnknownInstructionSizeException(0,type);
+						logger.LogTrace($"Unknown Instruction Size {type:X4}");
+					}
 					break;
 				case 2:
 					writeOp(ea, value, size);
@@ -694,6 +735,12 @@ namespace RunAmiga.Core.CPU.CSharp
 						else
 							a[Xn] += 1;
 					}
+					else
+					{
+						if (settings.UnknownInstructionSizeExceptions)
+							throw new UnknownInstructionSizeException(0, type);
+						logger.LogTrace($"Unknown Instruction Size {type:X4}");
+					}
 					break;
 				case 4:
 					if (size == Size.Long)
@@ -706,6 +753,12 @@ namespace RunAmiga.Core.CPU.CSharp
 							a[Xn] -= 2;
 						else
 							a[Xn] -= 1;
+					}
+					else
+					{
+						if (settings.UnknownInstructionSizeExceptions)
+							throw new UnknownInstructionSizeException(0, type);
+						logger.LogTrace($"Unknown Instruction Size {type:X4}");
 					}
 					writeOp(a[Xn], value, size);//yes, a[Xn]
 					break;
@@ -758,7 +811,11 @@ namespace RunAmiga.Core.CPU.CSharp
 					case 1: lsd(type, 1, lr, Size.Word); break;
 					case 2: roxd(type, 1, lr, Size.Word); break;
 					case 3: rod(type, 1, lr, Size.Word); break;
-					default: throw new UnknownInstructionException(instructionStartPC, type);
+					default: 
+						if (settings.UnknownInstructionExceptions)
+							throw new UnknownInstructionException(instructionStartPC, type);
+						logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+						break;
 				}
 			}
 			else
@@ -832,7 +889,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			setNZ(val, size);
 			clrV();
-			writeEA(type, ea, size, val);
+			writeOp(ea, val, size);
 		}
 
 		private void roxd(int type, int rot, int lr, Size size)
@@ -919,7 +976,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					}
 				}
 			}
-			writeEA(type, ea, size, val);
+			writeOp(ea, val, size);
 			setNZ(val, size);
 			clrV();
 		}
@@ -967,7 +1024,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			setNZ(val, size);
 			clrV();
-			writeEA(type, ea, size, val);
+			writeOp(ea, val, size);
 		}
 
 		private void asd(int type, int shift, int lr, Size size)
@@ -1026,7 +1083,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 			}
 			setNZ(val, size);
-			writeEA(type, ea, size, val);
+			writeOp(ea, val, size);
 		}
 
 		private void t_thirteen(int type)
@@ -1070,7 +1127,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				else
 				{
 					op += d[Xn] + x;
-					writeEA(type, ea, size, op);
+					writeOp(ea, op, size);
 					setNZ(op, size);
 				}
 			}
@@ -1095,7 +1152,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				else
 				{
 					op += d[Xn];
-					writeEA(type, ea, size, op);
+					writeOp( ea, op, size);
 					setNZ(op, size);
 				}
 			}
@@ -1120,7 +1177,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//R->M
 				op &= d[Xn];
-				writeEA(type, ea, size, op);
+				writeOp(ea, op, size);
 				setNZ(op, size);
 			}
 			else
@@ -1148,13 +1205,18 @@ namespace RunAmiga.Core.CPU.CSharp
 				case 0b10001://DA
 					tmp = d[Xn]; d[Xn] = a[Yn]; a[Yn] = tmp; break;
 				default:
-					throw new UnknownInstructionException(pc, type);
+					if (settings.UnknownInstructionExceptions)
+						throw new UnknownInstructionException(pc, type);
+					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+					break;
 			}
 		}
 
 		private void abcd(int type)
 		{
-			throw new NotImplementedException();
+			if (settings.NotImplementedExceptions)
+				throw new NotImplementedException();
+			logger.LogTrace("Not Implemented Instruction abcd");
 		}
 
 		private void muls(int type)
@@ -1198,7 +1260,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//R->M
 				op ^= d[Xn];
-				writeEA(type, ea, size, op);
+				writeOp(ea,  op, size);
 				setNZ(op, size);
 			}
 			else
@@ -1298,7 +1360,9 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//subx
 				//d[Xn] -= op + (X()?1:0);
-				throw new UnknownInstructionException(pc, type);
+				if (settings.UnknownInstructionExceptions)
+					throw new UnknownInstructionException(pc, type);
+				logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 			}
 			else
 			{
@@ -1312,7 +1376,6 @@ namespace RunAmiga.Core.CPU.CSharp
 				{
 					setC_sub(d[Xn], op, size);
 					setV_sub(d[Xn], op, size);
-					//d[Xn] -= op;
 					writeEA(Xn, 0, size, d[Xn] - op);
 					setNZ(d[Xn], size);
 				}
@@ -1321,7 +1384,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					setC_sub(op, d[Xn], size);
 					setV_sub(op, d[Xn], size);
 					op -= d[Xn];
-					writeEA(type, ea, size, op);
+					writeOp(ea, op, size);
 					setNZ(op, size);
 				}
 				setX(C());
@@ -1346,7 +1409,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//R->M
 				op |= d[Xn];
-				writeEA(type, ea, size, op);
+				writeOp( ea,  op, size);
 				setNZ(op, size);
 			}
 			else
@@ -1361,7 +1424,9 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void sbcd(int type)
 		{
-			throw new NotImplementedException();
+			if (settings.NotImplementedExceptions)
+				throw new NotImplementedException();
+			logger.LogTrace("Not Implemented Instruction sbcd");
 		}
 
 		private void divs(int type)
@@ -1371,7 +1436,10 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint op = fetchOp(type, ea, Size.Word);
 
 			if (op == 0)
+			{
 				internalTrap(5);
+				return;
+			}
 
 			uint lo = (uint)((int)d[Xn] / (short)op);
 			uint hi = (uint)((int)d[Xn] % (short)op);
@@ -1391,7 +1459,10 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint op = fetchOp(type, ea, Size.Word);
 
 			if (op == 0)
+			{
 				internalTrap(5);
+				return;
+			}
 
 			uint lo = d[Xn] / (ushort)op;
 			uint hi = d[Xn] % (ushort)op;
@@ -1417,7 +1488,9 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			else
 			{
-				throw new UnknownInstructionException(pc, type);
+				if (settings.UnknownInstructionExceptions)
+					throw new UnknownInstructionException(pc, type);
+				logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 			}
 		}
 
@@ -1733,7 +1806,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if ((type & 0b111000) != 0b001_000)
 				setNZ(op, size);
 
-			writeEA(type, ea, size, op);
+			writeOp( ea, op, size);
 		}
 
 		private void addq(int type, Size size)
@@ -1755,7 +1828,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if ((type & 0b111000) != 0b001_000)
 				setNZ(op, size);
 
-			writeEA(type, ea, size, op);
+			writeOp( ea,  op, size);
 		}
 
 		private void t_four(int type)
@@ -1887,7 +1960,10 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void negx(int type)
 		{
-			throw new NotImplementedException();
+			if (settings.NotImplementedExceptions)
+				throw new NotImplementedException();
+			logger.LogTrace($"Not Implemented Instruction negx");
+
 		}
 
 		private void pea(int type)
@@ -1906,7 +1982,9 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void nbcd(int type)
 		{
-			throw new NotImplementedException();
+			if (settings.NotImplementedExceptions)
+				throw new NotImplementedException();
+			logger.LogTrace("Not Implemented Instruction nbcd");
 		}
 
 		private void ext(int type)
@@ -1927,7 +2005,11 @@ namespace RunAmiga.Core.CPU.CSharp
 					d[Xn] = (uint)(sbyte)d[Xn];
 					setNZ(d[Xn], Size.Byte);
 					break;
-				default: throw new UnknownInstructionException(pc, type);
+				default: 
+					if (settings.UnknownInstructionExceptions)
+						throw new UnknownInstructionException(pc, type);
+					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+					break;
 			}
 			clrCV();
 		}
@@ -2114,7 +2196,10 @@ namespace RunAmiga.Core.CPU.CSharp
 						cmpi(type);
 						break;
 					default:
-						throw new UnknownInstructionException(pc, type);
+						if (settings.UnknownInstructionExceptions)
+							throw new UnknownInstructionException(pc, type);
+						logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+						break;
 				}
 			}
 			else
@@ -2124,7 +2209,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				{
 					case 0://bit or movep
 						if (((type >> 3) & 7) == 0b001)
-							throw new UnknownInstructionException(pc, type);//movep
+							movep(type);
 						else
 							bit(type);
 						break;
@@ -2137,6 +2222,44 @@ namespace RunAmiga.Core.CPU.CSharp
 					case 2://move long
 						movel(type);
 						break;
+				}
+			}
+		}
+
+		private void movep(int type)
+		{
+			Size size;
+			int Xn = (type>>9) & 7;
+			
+			if ((type & 0xb1_000000) != 0)
+				size = Size.Long;
+			else
+				size = Size.Word;
+
+			uint ea = fetchEA((type & 7) | 0b101<<3);
+
+			if ((type & 0xb10000000) != 0)
+			{
+				//M->R
+				if (size == Size.Long)
+					d[Xn] = (fetchOpSize(ea,Size.Byte) << 24) | (fetchOpSize(ea + 2, Size.Byte) << 16) | (fetchOpSize(ea + 4, Size.Byte) << 8) + fetchOpSize(ea + 6, Size.Byte);
+				else
+					d[Xn] = (fetchOpSize(ea, Size.Byte) << 8) | fetchOpSize(ea + 2, Size.Byte);
+			}
+			else
+			{
+				//R->M
+				if (size == Size.Long)
+				{
+					writeOp(ea, d[Xn] >> 24, Size.Byte);
+					writeOp(ea+2, d[Xn] >> 16, Size.Byte);
+					writeOp(ea+4, d[Xn] >> 8, Size.Byte);
+					writeOp(ea+6, d[Xn] , Size.Byte);
+				}
+				else
+				{
+					writeOp(ea, d[Xn] >> 8, Size.Byte);
+					writeOp(ea+2, d[Xn], Size.Byte);
 				}
 			}
 		}
@@ -2237,7 +2360,9 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				else
 				{
-					throw new UnknownInstructionException(pc, type);
+					if (settings.UnknownInstructionExceptions)
+						throw new UnknownInstructionException(pc, type);
+					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 				}
 				return;
 			}
@@ -2293,15 +2418,15 @@ namespace RunAmiga.Core.CPU.CSharp
 					break;
 				case 1://bchg
 					op0 ^= bit;
-					writeEA(type, ea, size, op0);
+					writeOp( ea,  op0, size);
 					break;
 				case 2://bclr
 					op0 &= ~bit;
-					writeEA(type, ea, size, op0);
+					writeOp(ea, op0, size);
 					break;
 				case 3://bset
 					op0 |= bit;
-					writeEA(type, ea, size, op0);
+					writeOp( ea, op0, size);
 					break;
 			}
 		}
@@ -2362,7 +2487,9 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				else
 				{
-					throw new UnknownInstructionException(pc, type);
+					if (settings.UnknownInstructionExceptions)
+						throw new UnknownInstructionException(pc, type);
+					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 				}
 				return;
 			}
@@ -2403,7 +2530,9 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				else
 				{
-					throw new UnknownInstructionException(pc, type);
+					if (settings.UnknownInstructionExceptions)
+						throw new UnknownInstructionException(pc, type);
+					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 				}
 				return;
 			}
@@ -2419,13 +2548,20 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			uint ea = fetchEA(type);
 			int Xn = (type >> 9) & 7;
-			if (d[Xn] < 0)
+			int v = (int)signExtend(d[Xn], Size.Word);
+
+			//undocumented
+			clrCV();
+			setNZ(d[Xn],Size.Word);
+			//undocumented
+
+			if (v < 0)
 			{
 				setN();
 				internalTrap(6);
 			}
 
-			if (d[Xn] > ea)
+			if (v > (int)ea)
 			{
 				clrN();
 				internalTrap(6);

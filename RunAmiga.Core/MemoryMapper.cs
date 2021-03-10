@@ -66,6 +66,7 @@ namespace RunAmiga.Core
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
+			address &= Memory.memoryMask;
 			uint value = mappedDevice[address&1][address >> 16].Read(insaddr, address, size);
 			if (interceptor != null) interceptor.Read(insaddr, address, value, size);
 			return value;
@@ -73,6 +74,7 @@ namespace RunAmiga.Core
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			address &= Memory.memoryMask;
 			if (interceptor != null) interceptor.Write(insaddr, address, value, size);
 			mappedDevice[address&1][address>>16].Write(insaddr, address, value, size);
 		}

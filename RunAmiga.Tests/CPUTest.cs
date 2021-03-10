@@ -16,7 +16,6 @@ using RunAmiga.Core.Types.Types;
 using RunAmiga.Debugger;
 using RunAmiga.Disassembler;
 using RunAmiga.Disassembler.Analysers;
-using Size = RunAmiga.Core.Types.Types.Size;
 
 namespace RunAmiga.Tests
 {
@@ -30,7 +29,8 @@ namespace RunAmiga.Tests
 		public void CPUTestInit()
 		{
 			var serviceCollection = new ServiceCollection();
-			serviceProvider1 = serviceCollection.AddLogging()
+			serviceProvider1 = serviceCollection
+				.AddLogging(x=>x.AddDebug())
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILogger<MusashiCPU>>(x=>new NullLogger<MusashiCPU>())
@@ -39,7 +39,8 @@ namespace RunAmiga.Tests
 				.AddSingleton<IMemory, Memory>()
 				.BuildServiceProvider();
 
-			serviceProvider2 = serviceCollection.AddLogging()
+			serviceProvider2 = serviceCollection
+				.AddLogging(x=>x.AddDebug())
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILogger<CPU>>(x => new NullLogger<CPU>())
@@ -70,6 +71,19 @@ namespace RunAmiga.Tests
 				var r = new Random(0x24061972);
 				for (uint i = 0; i < 16*1024*1024; i+=4)
 					memory.Write(0,i, (uint)(r.Next()*2)&0xfffffffe, Size.Long);
+
+				uint trapSentinel;
+				memory.Write(0, 0, 0x800000, Size.Long);//sp
+				memory.Write(0, 4, 0x10004, Size.Long);//pc loaded with 0x10004 at boot
+				memory.Write(0, 0x10004, 0x4e72,Size.Word);//4e72 = stop
+
+				trapSentinel= 0xABAD0008;
+				for (uint i = 8; i < 0x1000; i+=4)
+					memory.Write(0, i, trapSentinel+4, Size.Long);
+
+				trapSentinel = 0xDEAD0000;
+				for (uint i = 0x19*4; i <= 0x1f*4; i+=4)
+					memory.Write(0, i, trapSentinel+=4,Size.Long);
 
 				disassembler = new Disassembler.Disassembler();
 			}
@@ -123,20 +137,19 @@ namespace RunAmiga.Tests
 			var cpu1 = new CPUTestRig((ICPU)serviceProvider2.GetRequiredService<ICSharpCPU>(),
 				serviceProvider2.GetRequiredService<IMemory>());
 
-			cpu0.Emulate();
+			cpu0.Reset();
 			cpu1.Reset();
 
 			var regs = new Regs();
-			regs.SR = 0x2700;
 
-			var r = new Random();
+			var r = new Random(0x02011964);
 			bool allSuccessful = true;
 			for (int i = 0; i < 100; i++)
 			{
 				uint pc = (uint)(r.Next() * 2) & 0x007ffffe;
 
 				regs.PC = pc;
-
+				regs.SR = 0x2700;//(ushort)(0x2700 + r.Next(0x100));
 				cpu0.SetRegs(regs);
 				cpu1.SetRegs(regs);
 
@@ -157,23 +170,55 @@ namespace RunAmiga.Tests
 					var r0 = cpu0.GetRegs();
 					var r1 = cpu1.GetRegs();
 
-					Assert.IsFalse(r0.Compare(r1));
+					Assert.IsFalse(r0.Compare(r1), "Test #{0} {1}\n{2}", i+1, cpu0.Disassemble(pc), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
 
-					TestContext.Out.WriteLine($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
+					TestContext.WriteLine($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
 				}
 				catch (AssertionException)
 				{
 					allSuccessful = false;
-					TestContext.Out.WriteLine($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
-				}
-				catch (Exception ex)
-				{
-					allSuccessful = false;
-					TestContext.Out.WriteLine($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
-					TestContext.Out.WriteLine(ex.ToString());
 				}
 			}
 			Assert.IsTrue(allSuccessful, "Some instructions failed the test");
+		}
+
+		[Test]
+		public void TestSpecific()
+		{
+			var instructions = new []{ new ushort[] { 0xe3d8 } };//lsl.w     #1,(a0)+
+
+			ServiceProviderFactory.ServiceProvider = serviceProvider1;
+			var cpu0 = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<IMusashiCPU>(),
+				serviceProvider1.GetRequiredService<IMemory>());
+
+			ServiceProviderFactory.ServiceProvider = serviceProvider2;
+			var cpu1 = new CPUTestRig((ICPU)serviceProvider2.GetRequiredService<ICSharpCPU>(),
+				serviceProvider2.GetRequiredService<IMemory>());
+
+			cpu0.Emulate();
+			cpu1.Reset();
+
+			foreach (var instruction in instructions)
+			{
+				uint address = 0x10000;
+				foreach (var word in instruction)
+				{
+					cpu0.Write(address, word);
+					cpu1.Write(address, word);
+					address += 2;
+				}
+
+				cpu0.SetPC(0x10000);
+				cpu1.SetPC(0x10000);
+
+				cpu0.Emulate();
+				cpu1.Emulate();
+
+				var r0 = cpu0.GetRegs();
+				var r1 = cpu1.GetRegs();
+
+				Assert.IsFalse(r0.Compare(r1), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
+			}
 		}
 	}
 }

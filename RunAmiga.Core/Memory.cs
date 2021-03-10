@@ -11,13 +11,15 @@ namespace RunAmiga.Core
 	public class Memory : IMemory
 	{
 		private readonly byte[] memory;
-		private const uint memoryMask = 0x00ffffff;
+		public const uint memoryMask = 0x00ffffff;
 		
 		private readonly ILogger logger;
+		private readonly EmulationSettings settings;
 
 		public Memory(ILogger<Memory> logger, IOptions<EmulationSettings> settings)
 		{
 			this.logger = logger;
+			this.settings = settings.Value;
 			this.memory = new byte[16 * 1024 * 1024];
 
 			Kickstart ks;
@@ -52,19 +54,25 @@ namespace RunAmiga.Core
 
 		private uint read32(uint address)
 		{
-			if ((address & 1) != 0)
-				throw new MemoryAlignmentException(address);
+			if (settings.AlignmentExceptions)
+			{
+				if ((address & 1) != 0)
+					throw new MemoryAlignmentException(address);
+			}
 
 			return ((uint)memory[address & memoryMask] << 24) +
-				((uint)memory[(address + 1) & memoryMask] << 16) +
-				((uint)memory[(address + 2) & memoryMask] << 8) +
-				(uint)memory[(address + 3) & memoryMask];
+			       ((uint)memory[(address + 1) & memoryMask] << 16) +
+			       ((uint)memory[(address + 2) & memoryMask] << 8) +
+			       (uint)memory[(address + 3) & memoryMask];
 		}
 
 		private ushort read16(uint address)
 		{
-			if ((address & 1) != 0)
-				throw new MemoryAlignmentException(address);
+			if (settings.AlignmentExceptions)
+			{
+				if ((address & 1) != 0)
+					throw new MemoryAlignmentException(address);
+			}
 
 			return (ushort)(
 				((ushort)memory[address & memoryMask] << 8) +
@@ -78,8 +86,11 @@ namespace RunAmiga.Core
 
 		private void write32(uint address, uint value)
 		{
-			if ((address & 1) != 0)
-				throw new MemoryAlignmentException(address);
+			if (settings.AlignmentExceptions)
+			{
+				if ((address & 1) != 0)
+					throw new MemoryAlignmentException(address);
+			}
 
 			memory[address & memoryMask] = (byte)(value >> 24);
 			memory[(address + 1) & memoryMask] = (byte)(value >> 16);
@@ -89,8 +100,11 @@ namespace RunAmiga.Core
 
 		private void write16(uint address, ushort value)
 		{
-			if ((address & 1) != 0)
-				throw new MemoryAlignmentException(address);
+			if (settings.AlignmentExceptions)
+			{
+				if ((address & 1) != 0)
+					throw new MemoryAlignmentException(address);
+			}
 
 			memory[address & memoryMask] = (byte)(value >> 8);
 			memory[(address + 1) & memoryMask] = (byte)value;

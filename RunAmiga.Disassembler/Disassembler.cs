@@ -2,6 +2,8 @@
 using System.Text;
 using RunAmiga.Core.Types.Types;
 
+// ReSharper disable InconsistentNaming
+
 namespace RunAmiga.Disassembler
 {
 	public class Disassembler
@@ -1532,7 +1534,7 @@ namespace RunAmiga.Disassembler
 				{
 					case 0://bit or movep
 						if (((type >> 3) & 7) == 0b001)
-							Append($"unknown instruction {type}");
+							movep(type);
 						else
 							bit(type);
 						break;
@@ -1546,6 +1548,34 @@ namespace RunAmiga.Disassembler
 						movel(type);
 						break;
 				}
+			}
+		}
+
+		private void movep(int type)
+		{
+			Append("movep");
+
+			Size size;
+			int Xn = (type >> 9) & 7;
+
+			if ((type & 0xb1_000000) != 0)
+				size = Size.Long;
+			else
+				size = Size.Word;
+
+			Append(size);
+
+			if ((type & 0xb10000000) != 0)
+			{
+				fetchEA((type & 7) | 0b101 << 3);
+				Append(",");
+				Append($"d{Xn}");
+			}
+			else
+			{
+				Append($"d{Xn}");
+				Append(",");
+				fetchEA((type & 7) | 0b101 << 3);
 			}
 		}
 
