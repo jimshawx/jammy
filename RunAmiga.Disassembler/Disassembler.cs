@@ -576,14 +576,17 @@ namespace RunAmiga.Disassembler
 				//addx
 				int Xn = (type >> 9) & 7;
 
-				if ((type & 0b1_00_000_000) != 0)
+				if ((type & 0b1_000) != 0)
 				{
-					Append($"d{Xn},");
+					//M->M
+					Append($"-(a{Xn}),");
+					type ^= 0b101_000;
 					uint ea = fetchEA(type);
 					uint op = fetchOp(type, ea, size);
 				}
 				else
 				{
+					//R->R
 					uint ea = fetchEA(type);
 					uint op = fetchOp(type, ea, size);
 					Append($",d{Xn}");
@@ -801,13 +804,28 @@ namespace RunAmiga.Disassembler
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
 				Append("subx");
+
 				if (s == 0) size = Size.Byte;
 				else if (s == 1) size = Size.Word;
 				else if (s == 2) size = Size.Long;
 				Append(size);
 				//subx
-				//d[Xn] -= op + (X()?1:0);
-				Append(" - incomplete");
+				int Xn = (type >> 9) & 7;
+
+				if ((type & 0b1_000) != 0)
+				{
+					//M->M
+					Append($"-(a{Xn}),");
+					type ^= 0b101_000;
+					uint ea = fetchEA(type);
+					uint op = fetchOp(type, ea, size);
+				}
+				else
+				{
+					uint ea = fetchEA(type);
+					uint op = fetchOp(type, ea, size);
+					Append($",d{Xn}");
+				}
 			}
 			else
 			{
@@ -898,7 +916,7 @@ namespace RunAmiga.Disassembler
 			{
 				//moveq
 				int Xn = (type >> 9) & 7;
-				uint imm8 = (uint)(sbyte)(type & 0xff);
+				sbyte imm8 = (sbyte)(type & 0xff);
 				Append($"moveq.l #{imm8},d{Xn}");
 			}
 			else

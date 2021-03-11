@@ -11,8 +11,6 @@ namespace RunAmiga.Core.CPU.Musashi
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
-		private readonly ILogger logger;
-		private readonly IMemory memory;
 
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_init(IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
@@ -40,13 +38,11 @@ namespace RunAmiga.Core.CPU.Musashi
 		private Musashi_Writer w16;
 		private Musashi_Writer w8;
 
-		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ILogger<MusashiCPU> logger, IMemory memory)
+		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints)
 		{
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
-			this.logger = logger;
-			this.memory = memory;
 
 			r32 = new Musashi_Reader(Musashi_read32);
 			r16 = new Musashi_Reader(Musashi_read16);
@@ -81,14 +77,6 @@ namespace RunAmiga.Core.CPU.Musashi
 			
 			int ticks = 0;
 			uint pc = Musashi_execute(ref ticks);
-
-			if (memory.Read16(pc) != 0x4e72)//stop
-			{
-				totalTicks += (ulong)ticks;
-				tickCount++;
-				if ((tickCount & 0xffffff) == 0)
-					logger.LogTrace($"{(double)totalTicks / tickCount}");
-			}
 
 			instructionStartPC = pc;
 

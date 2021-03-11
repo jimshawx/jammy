@@ -121,12 +121,12 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (fetchMode == FetchMode.Stopped)
 				return;
 
-			//try
+			try
 			{
 				int ins = Fetch(pc);
 				pc += 2;
 
-				int type = (int) (ins >> 12);
+				int type = (int)(ins >> 12);
 
 				switch (type)
 				{
@@ -173,6 +173,9 @@ namespace RunAmiga.Core.CPU.CSharp
 						internalTrap(11);
 						break;
 				}
+			}
+			catch (AbandonInstructionException)
+			{ 
 			}
 
 			//catch (MC68000Exception ex)
@@ -559,7 +562,7 @@ namespace RunAmiga.Core.CPU.CSharp
 							//	throw new UnknownEffectiveAddressException(pc, type);
 							//logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
 							internalTrap(3);
-							return 0;
+							throw new AbandonInstructionException();
 					}
 					break;
 			}
@@ -568,7 +571,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			//	throw new UnknownEffectiveAddressException(pc, type);
 			//logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
 			internalTrap(3);
-			return 0;
+			throw new AbandonInstructionException();
 		}
 
 		private uint fetchOpSize(uint ea, Size size)
@@ -583,7 +586,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (settings.UnknownEffectiveAddressExceptions)
 				throw new UnknownEffectiveAddressException(pc, 0);
 			logger.LogTrace($"Unknown Effective Address {pc:X8}");
-			return 0;
+			throw new AbandonInstructionException();
 		}
 
 		private uint fetchImm(Size size)
@@ -683,14 +686,14 @@ namespace RunAmiga.Core.CPU.CSharp
 							if (settings.UnknownEffectiveAddressExceptions)
 								throw new UnknownEffectiveAddressException(pc, type);
 							logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
-							return 0;
+							throw new AbandonInstructionException();
 					}
 			}
 
 			if (settings.UnknownEffectiveAddressExceptions)
 				throw new UnknownEffectiveAddressException(pc, type);
 			logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
-			return 0;
+			throw new AbandonInstructionException();
 		}
 
 		private void writeOp(uint ea, uint val, Size size)
@@ -845,6 +848,7 @@ namespace RunAmiga.Core.CPU.CSharp
 						if (settings.UnknownInstructionExceptions)
 							throw new UnknownInstructionException(instructionStartPC, type);
 						logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+						internalTrap(3);
 						break;
 				}
 			}
@@ -1138,6 +1142,9 @@ namespace RunAmiga.Core.CPU.CSharp
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
 				//addx
+				//only Dx,Dy and -(Ax),-(Ay) allowed
+				if ((type & 0b1_000) != 0) type ^= 0b101_000;
+
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
 
@@ -1153,14 +1160,22 @@ namespace RunAmiga.Core.CPU.CSharp
 				if (op != 0) clrZ();
 				setN(op, size);
 
-				if ((type & 0b1_00_000_000) == 0)
-					writeEA(Xn, 0, size, op);
+				if ((type & 0b1_000) == 0)
+					writeEA(Xn, 0, size, op);//Dx,Dy
 				else
-					writeEA(ReUse(type), ea, size, op);
+					writeEA(0b100_000|Xn, ea, size, op);//-(Ax),-(Ay)
 			}
 			else
 			{
 				//add
+
+				//byte size not allowed for address registers
+				if (size == Size.Byte && ((type>>3)&7)==0b001)
+				{
+					internalTrap(3);
+					return;
+				}
+
 				uint ea = fetchEA(type);
 				uint op = fetchOp(type, ea, size);
 
@@ -1230,6 +1245,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					if (settings.UnknownInstructionExceptions)
 						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+					internalTrap(3);
 					break;
 			}
 		}
@@ -1287,7 +1303,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			else
 			{
-				//M-R
+				//M->R
 				//d[Xn] ^= op;
 				writeEA(Xn, 0, size, d[Xn] ^ op);
 				setNZ(d[Xn], size);
@@ -1381,10 +1397,29 @@ namespace RunAmiga.Core.CPU.CSharp
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
 				//subx
-				//d[Xn] -= op + (X()?1:0);
-				if (settings.UnknownInstructionExceptions)
-					throw new UnknownInstructionException(pc, type);
-				logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+
+				//only Dx,Dy and -(Ax),-(Ay) allowed
+				if ((type & 0b1_000) != 0) type ^= 0b101_000;
+
+				uint ea = fetchEA(type);
+				uint op = fetchOp(type, ea, size);
+
+				int Xn = (type >> 9) & 7;
+
+				uint x = X() ? 1u : 0u;
+
+				setV_sub(d[Xn], op + x, size);
+				setC_sub(d[Xn], op + x, size);
+				setX(C());
+
+				op -= d[Xn] + x;
+				if (op != 0) clrZ();
+				setN(op, size);
+
+				if ((type & 0b1_00_000_000) == 0)
+					writeEA(Xn, 0, size, op);//Dx->Dy
+				else
+					writeEA(0b100_000 | Xn, ea, size, op);//-(Ax),-(Ay)
 			}
 			else
 			{
@@ -1436,7 +1471,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			else
 			{
-				//M-R
+				//M->R
 				//d[Xn] |= op;
 				writeEA(Xn, 0, size, d[Xn] | op);
 				setNZ(d[Xn], size);
@@ -1468,7 +1503,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			setV(lo, Size.Word);
 
-			d[Xn] = (hi << 16) | (uint)(short)lo;
+			d[Xn] = (hi << 16) | (ushort)lo;
 
 			setNZ(d[Xn], Size.Word);
 			clrC();
@@ -1499,7 +1534,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void t_seven(int type)
 		{
-			if (((type >> 16) & 1) == 0)
+			if (((type >> 8) & 1) == 0)
 			{
 				//moveq
 				int Xn = (type >> 9) & 7;
@@ -1513,6 +1548,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				if (settings.UnknownInstructionExceptions)
 					throw new UnknownInstructionException(pc, type);
 				logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+				internalTrap(3);
 			}
 		}
 
@@ -1822,12 +1858,23 @@ namespace RunAmiga.Core.CPU.CSharp
 				setC_sub(op, imm, size);
 				setX(C());
 			}
+			else if (size == Size.Byte)
+			{
+				//no byte-sized ops on address registers
+				internalTrap(3);
+				return;
+			}
 
 			op -= imm;
 
 			if ((type & 0b111000) != 0b001_000)
+			{
 				setNZ(op, size);
-
+			}
+			else
+			{
+				if (size == Size.Word) { op = (uint)(short)op; size = Size.Long; }
+			}
 			writeEA(ReUse(type), ea, size, op);
 		}
 
@@ -1843,6 +1890,12 @@ namespace RunAmiga.Core.CPU.CSharp
 				setV(op, imm, size);
 				setC(op, imm, size);
 				setX(C());
+			}
+			else if (size == Size.Byte)
+			{
+				//no byte-sized ops on address registers
+				internalTrap(3);
+				return;
 			}
 
 			op += imm;
@@ -1990,7 +2043,16 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void pea(int type)
 		{
-			uint ea = fetchEA(type);
+			//some EA are not valid
+			uint ea = (uint)((type >> 3) & 7);
+			switch (ea)
+			{
+				case 0b000: case 0b001: case 0b011: case 0b100: case 0b111:
+					internalTrap(3);
+					return;
+			}
+			
+			ea = fetchEA(type);
 			push32(ea);
 		}
 
@@ -2031,6 +2093,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					if (settings.UnknownInstructionExceptions)
 						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+					internalTrap(3);
 					break;
 			}
 			clrCV();
@@ -2221,6 +2284,7 @@ namespace RunAmiga.Core.CPU.CSharp
 						if (settings.UnknownInstructionExceptions)
 							throw new UnknownInstructionException(pc, type);
 						logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+						internalTrap(3);
 						break;
 				}
 			}
@@ -2385,6 +2449,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					if (settings.UnknownInstructionExceptions)
 						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+					internalTrap(3);
 				}
 				return;
 			}
@@ -2512,6 +2577,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					if (settings.UnknownInstructionExceptions)
 						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+					internalTrap(3);
 				}
 				return;
 			}
@@ -2555,6 +2621,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					if (settings.UnknownInstructionExceptions)
 						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
+					internalTrap(3);
 				}
 				return;
 			}
@@ -2563,7 +2630,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			op |= imm;
 			setNZ(op, size);
 			clrCV();
-			writeEA(type, ea, size, op);
+			writeEA(ReUse(type), ea, size, op);
 		}
 
 		private void chk(int type)

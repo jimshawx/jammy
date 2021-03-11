@@ -108,4 +108,6 @@ namespace RunAmiga.Core.Types
 			return $"Invalid Custom Register Size @{pc:X6} {reg:X6} {size}. {base.ToString()}";
 		}
 	}
+
+	public class AbandonInstructionException : MC68000Exception { }
 }

@@ -72,18 +72,19 @@ namespace RunAmiga.Tests
 				for (uint i = 0; i < 16*1024*1024; i+=4)
 					memory.Write(0,i, (uint)(r.Next()*2)&0xfffffffe, Size.Long);
 
-				uint trapSentinel;
 				memory.Write(0, 0, 0x800000, Size.Long);//sp
 				memory.Write(0, 4, 0x10004, Size.Long);//pc loaded with 0x10004 at boot
-				memory.Write(0, 0x10004, 0x4e72,Size.Word);//4e72 = stop
+				memory.Write(0, 0x10004, 0x4e71,Size.Word);//4e71 = nop
+				memory.Write(0, 0x10006, 0x4e71, Size.Word);//4e71 = nop
 
-				trapSentinel= 0xABAD0008;
+				uint trapSentinel;
+				trapSentinel = 0xABAD0008;
 				for (uint i = 8; i < 0x1000; i+=4)
 					memory.Write(0, i, trapSentinel+4, Size.Long);
 
 				trapSentinel = 0xDEAD0000;
 				for (uint i = 0x19*4; i <= 0x1f*4; i+=4)
-					memory.Write(0, i, trapSentinel+=4,Size.Long);
+					memory.Write(0, i, trapSentinel+=4, Size.Long);
 
 				disassembler = new Disassembler.Disassembler();
 			}
@@ -140,11 +141,14 @@ namespace RunAmiga.Tests
 			cpu0.Reset();
 			cpu1.Reset();
 
+			cpu0.Emulate();
+			cpu1.Emulate();
+
 			var regs = new Regs();
 
 			var r = new Random(0x02011964);
 			bool allSuccessful = true;
-			for (int i = 0; i < 100; i++)
+			for (int i = 0; i < 1000; i++)
 			{
 				uint pc = (uint)(r.Next() * 2) & 0x007ffffe;
 
