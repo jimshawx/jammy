@@ -286,6 +286,7 @@ namespace RunAmiga.Disassembler
 								return ea;
 							}
 						case 0b100://#imm
+							Append($"{fmtX8(address+pc)}");
 							return pc;
 						default:
 							Append($"unknown effective address mode {type:X4}");

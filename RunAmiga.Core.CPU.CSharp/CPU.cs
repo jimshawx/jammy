@@ -368,6 +368,28 @@ namespace RunAmiga.Core.CPU.CSharp
 			else sr &= 0b11111111_11110111;
 		}
 
+		private void setN(uint val, Size size)
+		{
+			int c;
+
+			switch (size)
+			{
+				case Size.Long: c = (int)val; break;
+				case Size.Word: c = (int)(short)val; break;
+				case Size.Byte: c = (int)(sbyte)val; break;
+				default:
+					if (settings.UnknownInstructionSizeExceptions)
+						throw new UnknownInstructionSizeException(pc, 0);
+					logger.LogTrace($"Unknown Instruction Size");
+					c = 0;
+					break;
+			}
+
+			//N
+			if (c < 0) sr |= 0b00000000_00001000;
+			else sr &= 0b11111111_11110111;
+		}
+
 		private void setC(uint v, uint op, Size size)
 		{
 			//ulong r = (ulong)signExtend(v, size) + (ulong)signExtend(op, size);
@@ -797,6 +819,14 @@ namespace RunAmiga.Core.CPU.CSharp
 			return (long)(int)val;
 		}
 
+		private int ReUse(int type)
+		{
+			//remove any pre/post decement/increment from EA
+			if      ((type & 0b111_000) == 0b011_000) type ^= 0b001_000;//(An)+ 011_000->010_000
+			else if ((type & 0b111_000) == 0b100_000) type ^= 0b110_000;//-(An) 100_000->010_000
+			return type;
+		}
+
 		private void t_fourteen(int type)
 		{
 			int mode = (type & 0b11_000_000) >> 6;
@@ -889,7 +919,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			setNZ(val, size);
 			clrV();
-			writeOp(ea, val, size);
+			writeEA(ReUse(type), ea, size, val);
 		}
 
 		private void roxd(int type, int rot, int lr, Size size)
@@ -976,7 +1006,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					}
 				}
 			}
-			writeOp(ea, val, size);
+			writeEA(ReUse(type), ea, size, val);
 			setNZ(val, size);
 			clrV();
 		}
@@ -1024,7 +1054,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			setNZ(val, size);
 			clrV();
-			writeOp(ea, val, size);
+			writeEA(ReUse(type), ea, size, val);
 		}
 
 		private void asd(int type, int shift, int lr, Size size)
@@ -1083,7 +1113,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 			}
 			setNZ(val, size);
-			writeOp(ea, val, size);
+			writeEA(ReUse(type), ea, size, val);
 		}
 
 		private void t_thirteen(int type)
@@ -1119,17 +1149,14 @@ namespace RunAmiga.Core.CPU.CSharp
 				setC(d[Xn], op+x, size);
 				setX(C());
 
+				op += d[Xn] + x;
+				if (op != 0) clrZ();
+				setN(op, size);
+
 				if ((type & 0b1_00_000_000) == 0)
-				{
-					writeEA(Xn, 0, size, d[Xn] + op + x);
-					setNZ(d[Xn], size);
-				}
+					writeEA(Xn, 0, size, op);
 				else
-				{
-					op += d[Xn] + x;
-					writeOp(ea, op, size);
-					setNZ(op, size);
-				}
+					writeEA(ReUse(type), ea, size, op);
 			}
 			else
 			{
@@ -1143,18 +1170,13 @@ namespace RunAmiga.Core.CPU.CSharp
 				setC(d[Xn], op, size);
 				setX(C());
 
+				op += d[Xn];
+				setNZ(op, size);
+
 				if ((type & 0b1_00_000_000) == 0)
-				{
-					//d[Xn] += op; 
-					writeEA(Xn, 0, size, d[Xn] + op);
-					setNZ(d[Xn], size);
-				}
+					writeEA(Xn, 0, size, op);
 				else
-				{
-					op += d[Xn];
-					writeOp( ea, op, size);
-					setNZ(op, size);
-				}
+					writeEA(ReUse(type), ea, size, op);
 			}
 		}
 
@@ -1177,7 +1199,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//R->M
 				op &= d[Xn];
-				writeOp(ea, op, size);
+				writeEA(ReUse(type), ea, size, op);
 				setNZ(op, size);
 			}
 			else
@@ -1260,7 +1282,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//R->M
 				op ^= d[Xn];
-				writeOp(ea,  op, size);
+				writeEA(ReUse(type), ea, size, op);
 				setNZ(op, size);
 			}
 			else
@@ -1384,7 +1406,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					setC_sub(op, d[Xn], size);
 					setV_sub(op, d[Xn], size);
 					op -= d[Xn];
-					writeOp(ea, op, size);
+					writeEA(ReUse(type), ea, size, op);
 					setNZ(op, size);
 				}
 				setX(C());
@@ -1409,7 +1431,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//R->M
 				op |= d[Xn];
-				writeOp( ea,  op, size);
+				writeEA(ReUse(type), ea, size, op);
 				setNZ(op, size);
 			}
 			else
@@ -1806,7 +1828,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if ((type & 0b111000) != 0b001_000)
 				setNZ(op, size);
 
-			writeOp( ea, op, size);
+			writeEA(ReUse(type), ea, size, op);
 		}
 
 		private void addq(int type, Size size)
@@ -1828,7 +1850,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if ((type & 0b111000) != 0b001_000)
 				setNZ(op, size);
 
-			writeOp( ea,  op, size);
+			writeEA(ReUse(type), ea, size, op);
 		}
 
 		private void t_four(int type)
@@ -2236,7 +2258,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			else
 				size = Size.Word;
 
-			uint ea = fetchEA((type & 7) | 0b101<<3);
+			uint ea = fetchEA((type & 7) | (0b101<<3));
 
 			if ((type & 0xb10000000) != 0)
 			{
@@ -2418,15 +2440,15 @@ namespace RunAmiga.Core.CPU.CSharp
 					break;
 				case 1://bchg
 					op0 ^= bit;
-					writeOp( ea,  op0, size);
+					writeEA(ReUse(type), ea, size, op0);
 					break;
 				case 2://bclr
 					op0 &= ~bit;
-					writeOp(ea, op0, size);
+					writeEA(ReUse(type), ea, size, op0);
 					break;
 				case 3://bset
 					op0 |= bit;
-					writeOp( ea, op0, size);
+					writeEA(ReUse(type), ea, size, op0);
 					break;
 			}
 		}
