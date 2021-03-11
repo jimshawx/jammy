@@ -335,6 +335,10 @@ namespace RunAmiga.Disassembler
 				pc += 2;
 				Append($"#{fmtX2(v)}");
 			}
+			else
+			{
+				Append("Unknown immediate size");
+			}
 			return v;
 		}
 
@@ -674,8 +678,23 @@ namespace RunAmiga.Disassembler
 
 		private void abcd(int type)
 		{
-			Append("abcd");
-			Append(" - incomplete");
+			Append("abcd ");
+
+			//abcd
+			int Xn = (type >> 9) & 7;
+
+			if ((type & 0b1_000) != 0)
+			{
+				//M->M
+				Append($"-(a{Xn}),");
+				type ^= 0b101_000;
+				uint ea = fetchEA(type);
+			}
+			else
+			{
+				uint ea = fetchEA(type);
+				Append($",d{Xn}");
+			}
 		}
 
 		private void muls(int type)
@@ -888,8 +907,23 @@ namespace RunAmiga.Disassembler
 
 		private void sbcd(int type)
 		{
-			Append("sbcd");
-			Append(" - incomplete");
+			Append("sbcd ");
+			
+			//sbcd
+			int Xn = (type >> 9) & 7;
+
+			if ((type & 0b1_000) != 0)
+			{
+				//M->M
+				Append($"-(a{Xn}),");
+				type ^= 0b101_000;
+				uint ea = fetchEA(type);
+			}
+			else
+			{
+				uint ea = fetchEA(type);
+				Append($",d{Xn}");
+			}
 		}
 
 		private void divs(int type)
@@ -1400,7 +1434,8 @@ namespace RunAmiga.Disassembler
 		private void negx(int type)
 		{
 			Append("negx");
-			Append(" - incomplete");
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
 		}
 
 		private void pea(int type)
@@ -1417,8 +1452,9 @@ namespace RunAmiga.Disassembler
 
 		private void nbcd(int type)
 		{
-			Append("nbcd");
-			Append(" - incomplete");
+			Append("nbcd ");
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, Size.Byte);
 		}
 
 		private void ext(int type)
@@ -1670,7 +1706,6 @@ namespace RunAmiga.Disassembler
 				Append(",sr");
 				return;
 			}
-
 			uint imm = fetchImm(size);
 			Append(",");
 			uint ea = fetchEA(type);

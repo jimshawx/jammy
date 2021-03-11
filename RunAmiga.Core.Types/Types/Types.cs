@@ -4,7 +4,8 @@
 	{
 		Byte,
 		Word,
-		Long
+		Long,
+		Extension
 	}
 
 }

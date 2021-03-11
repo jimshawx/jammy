@@ -586,6 +586,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (settings.UnknownEffectiveAddressExceptions)
 				throw new UnknownEffectiveAddressException(pc, 0);
 			logger.LogTrace($"Unknown Effective Address {pc:X8}");
+			internalTrap(3);
 			throw new AbandonInstructionException();
 		}
 
@@ -609,11 +610,22 @@ namespace RunAmiga.Core.CPU.CSharp
 				v = (uint)(sbyte)v;
 				pc += 2;
 			}
+			else if (size == Size.Extension)
+			{
+				internalTrap(3);
+				throw new AbandonInstructionException();
+			}
 			return v;
 		}
 
 		private uint fetchOp(int type, uint ea, Size size)
 		{
+			if (size == Size.Extension)
+			{
+				internalTrap(3);
+				throw new AbandonInstructionException();
+			}
+
 			int m = (type >> 3) & 7;
 			int x = type & 7;
 
@@ -686,6 +698,7 @@ namespace RunAmiga.Core.CPU.CSharp
 							if (settings.UnknownEffectiveAddressExceptions)
 								throw new UnknownEffectiveAddressException(pc, type);
 							logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
+							internalTrap(3);
 							throw new AbandonInstructionException();
 					}
 			}
@@ -693,6 +706,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (settings.UnknownEffectiveAddressExceptions)
 				throw new UnknownEffectiveAddressException(pc, type);
 			logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
+			internalTrap(3);
 			throw new AbandonInstructionException();
 		}
 
@@ -805,7 +819,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (s == 0) return Size.Byte;
 			if (s == 1) return Size.Word;
 			if (s == 2) return Size.Long;
-			return (Size)3;
+			return Size.Extension;
 		}
 
 		private ulong zeroExtend(uint val, Size size)
@@ -1149,28 +1163,30 @@ namespace RunAmiga.Core.CPU.CSharp
 				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
-
 				uint x = X() ? 1u : 0u;
 
-				setV(d[Xn], op+x, size);
-				setC(d[Xn], op+x, size);
-				setX(C());
+				int type2;
+				if ((type & 0b100_000) == 0)
+					type2 = Xn; //Dx,Dy
+				else
+					type2 = 0b100_000 | Xn;//-(Ax),-(Ay)
 
-				op += d[Xn] + x;
+				uint ea2 = fetchEA(type2);
+				uint op2 = fetchOp(type2, ea2, size);
+				setV_sub(op, op2 + x, size);
+				setC_sub(op, op2 + x, size);
+				setX(C());
+				op += op2 + x;
 				if (op != 0) clrZ();
 				setN(op, size);
-
-				if ((type & 0b1_000) == 0)
-					writeEA(Xn, 0, size, op);//Dx,Dy
-				else
-					writeEA(0b100_000|Xn, ea, size, op);//-(Ax),-(Ay)
+				writeEA(ReUse(type), ea, size, op);
 			}
 			else
 			{
 				//add
 
 				//byte size not allowed for address registers
-				if (size == Size.Byte && ((type>>3)&7)==0b001)
+				if (size == Size.Byte && (type & 0b111000) == 0b001000)
 				{
 					internalTrap(3);
 					return;
@@ -1181,13 +1197,26 @@ namespace RunAmiga.Core.CPU.CSharp
 
 				int Xn = (type >> 9) & 7;
 
-				setV(d[Xn], op, size);
-				setC(d[Xn], op, size);
-				setX(C());
+				if ((type & 0b111000) != 0b001000)
+				{
+					setV(d[Xn], op, size);
+					setC(d[Xn], op, size);
+					setX(C());
+				}
 
 				op += d[Xn];
-				setNZ(op, size);
-
+				if ((type & 0b111000) != 0b001000)
+				{
+					setNZ(op, size);
+				}
+				else
+				{
+					if (size == Size.Word)
+					{
+						op = (uint)signExtend(op, Size.Word);
+						size = Size.Long;
+					}
+				}
 				if ((type & 0b1_00_000_000) == 0)
 					writeEA(Xn, 0, size, op);
 				else
@@ -1219,8 +1248,14 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			else
 			{
-				//M-R
-				//d[Xn] &= op;
+				//M->R
+				//can't be and ax,dy
+				if ((type & 0b111_000) == 0b001_000)
+				{
+					internalTrap(3);
+					return;
+				}
+
 				writeEA(Xn, 0, size, d[Xn] & op);
 				setNZ(d[Xn], size);
 			}
@@ -1252,9 +1287,68 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void abcd(int type)
 		{
-			if (settings.NotImplementedExceptions)
-				throw new NotImplementedException();
-			logger.LogTrace("Not Implemented Instruction abcd");
+			//only Dx,Dy and -(Ax),-(Ay) allowed
+			if ((type & 0b1_000) != 0) type ^= 0b101_000;
+
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, Size.Byte);
+
+			int Xn = (type >> 9) & 7;
+
+			int type2;
+			if ((type & 0b100_000) == 0)
+				type2 = Xn; //Dx,Dy
+			else
+				type2 = 0b100_000 | Xn;//-(Ax),-(Ay)
+
+			uint ea2 = fetchEA(type2);
+			uint op2 = fetchOp(type2, ea2, Size.Byte);
+
+			op = add_bcd(op, op2);
+
+			setC(op, Size.Byte);
+			setX(C());
+			if (op != 0) clrZ();
+
+			writeEA(ReUse(type), ea, Size.Byte, op);
+		}
+
+		private uint add_bcd(uint op, uint op2)
+		{
+			byte c= (byte)(X() ? 1 : 0);
+			byte d0;
+			byte d1;
+			uint r0;
+			
+			d0 = (byte)(op2 & 0xf);
+			d1 = (byte)(op & 0xf);
+			d0 += (byte)(d1 + c);
+			if (d0 >= 10)
+			{
+				c = 1;
+				d0 -= 10;
+			}
+			else
+			{
+				c = 0;
+			}
+			r0 = d0;
+
+			d0 = (byte)(op2 >> 4);
+			d1 = (byte)(op >> 4);
+			d0 += (byte)(d1 + c);
+			if (d0 >= 10)
+			{
+				setC();
+				d0 -= 10;
+			}
+			else
+			{
+				clrC();
+			}
+			r0 += (byte)(d0 * 10);
+
+			return r0;
 		}
 
 		private void muls(int type)
@@ -1405,21 +1499,23 @@ namespace RunAmiga.Core.CPU.CSharp
 				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
-
 				uint x = X() ? 1u : 0u;
 
-				setV_sub(d[Xn], op + x, size);
-				setC_sub(d[Xn], op + x, size);
-				setX(C());
+				int type2;
+				if ((type & 0b100_000) == 0)
+					type2 = Xn; //Dx,Dy
+				else
+					type2 = 0b100_000 | Xn;//-(Ax),-(Ay)
 
-				op -= d[Xn] + x;
+				uint ea2 = fetchEA(type2);
+				uint op2 = fetchOp(type2, ea2, size);
+				setV_sub(op, op2 + x, size);
+				setC_sub(op, op2 + x, size);
+				setX(C());
+				op -= op2 + x;
 				if (op != 0) clrZ();
 				setN(op, size);
-
-				if ((type & 0b1_00_000_000) == 0)
-					writeEA(Xn, 0, size, op);//Dx->Dy
-				else
-					writeEA(0b100_000 | Xn, ea, size, op);//-(Ax),-(Ay)
+				writeEA(ReUse(type), ea, size, op); 
 			}
 			else
 			{
@@ -1481,9 +1577,69 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void sbcd(int type)
 		{
-			if (settings.NotImplementedExceptions)
-				throw new NotImplementedException();
-			logger.LogTrace("Not Implemented Instruction sbcd");
+			//only Dx,Dy and -(Ax),-(Ay) allowed
+			if ((type & 0b1_000) != 0) type ^= 0b101_000;
+
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, Size.Byte);
+
+			int Xn = (type >> 9) & 7;
+
+			int type2;
+			if ((type & 0b100_000) == 0)
+				type2 = Xn; //Dx,Dy
+			else
+				type2 = 0b100_000 | Xn;//-(Ax),-(Ay)
+
+			uint ea2 = fetchEA(type2);
+			uint op2 = fetchOp(type2, ea2, Size.Byte);
+
+			op = sub_bcd(op, op2);
+
+			setC(op, Size.Byte);
+			setX(C());
+			if (op != 0) clrZ();
+
+			writeEA(ReUse(type), ea, Size.Byte, op);
+		}
+
+		private uint sub_bcd(uint op, uint op2)
+		{
+			//op-op2
+			sbyte c = (sbyte)(X() ? 1 : 0);
+			sbyte d0;
+			sbyte d1;
+			uint r0;
+
+			d0 = (sbyte)(op & 0xf);
+			d1 = (sbyte)(op2 & 0xf);
+			d0 -= (sbyte)(d1+c);
+			if (d0 < 0)
+			{
+				c = 1;
+				d0 += 10;
+			}
+			else
+			{
+				c = 0;
+			}
+			r0 = (uint)d0;
+
+			d0 = (sbyte)(op >> 4);
+			d1 = (sbyte)(op2 >> 4);
+			d0 -= (sbyte)(d1+c);
+			if (d0 < 0)
+			{
+				setC();
+				d0 += 10;
+			}
+			else
+			{
+				clrC();
+			}
+			r0 += (uint)(d0 * 10);
+
+			return r0;
 		}
 
 		private void divs(int type)
@@ -1873,7 +2029,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			else
 			{
-				if (size == Size.Word) { op = (uint)(short)op; size = Size.Long; }
+				if (size == Size.Word) { op = (uint)signExtend(op, Size.Word); size = Size.Long; }
 			}
 			writeEA(ReUse(type), ea, size, op);
 		}
@@ -1901,8 +2057,14 @@ namespace RunAmiga.Core.CPU.CSharp
 			op += imm;
 
 			if ((type & 0b111000) != 0b001_000)
+			{
 				setNZ(op, size);
-
+			}
+			else
+			{
+				op = (uint)signExtend(op, Size.Word);
+				size = Size.Long;
+			}
 			writeEA(ReUse(type), ea, size, op);
 		}
 
@@ -2007,7 +2169,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			op = ~op;
 			setNZ(op, size);
 			clrCV();
-			writeEA(type, ea, size, op);
+			writeEA(ReUse(type), ea, size, op);
 		}
 
 		private void neg(int type)
@@ -2020,7 +2182,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			setC(op != 0);
 			setX(C());
 			setNZ(op, size);
-			writeEA(type, ea, size, op);
+			writeEA(ReUse(type), ea, size, op);
 		}
 
 		private void clr(int type)
@@ -2035,10 +2197,21 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void negx(int type)
 		{
-			if (settings.NotImplementedExceptions)
-				throw new NotImplementedException();
-			logger.LogTrace($"Not Implemented Instruction negx");
+			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
 
+			uint x = X() ? 1u : 0u;
+
+			setV_sub(0, op + x, size);
+			setC_sub(0, op + x, size);
+			setX(C());
+
+			op -= x;
+			if (op != 0) clrZ();
+			setN(op, size);
+
+			writeEA(ReUse(type), ea, size, op);
 		}
 
 		private void pea(int type)
@@ -2066,9 +2239,16 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void nbcd(int type)
 		{
-			if (settings.NotImplementedExceptions)
-				throw new NotImplementedException();
-			logger.LogTrace("Not Implemented Instruction nbcd");
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, Size.Byte);
+
+			op = sub_bcd(0, op);
+
+			setC(op, Size.Byte);
+			setX(C());
+			if (op != 0) clrZ();
+
+			writeEA(ReUse(type), ea, Size.Byte, op);
 		}
 
 		private void ext(int type)
@@ -2395,10 +2575,21 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void moveb(int type)
 		{
+			if((type &0b111_000)==0xb001_000)
+			{
+				internalTrap(3);
+				return;
+			}
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Byte);
 
 			type = swizzle(type);
+			if ((type & 0b111_000) == 0xb001_000)
+			{
+				internalTrap(3);
+				return;
+			}
+
 			ea = fetchEA(type);
 			writeEA(type, ea, Size.Byte, op);
 
@@ -2460,7 +2651,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			op ^= imm;
 			setNZ(op, size);
 			clrCV();
-			writeEA(type, ea, size, op);
+			writeEA(ReUse(type), ea, size, op);
 		}
 
 		private void bit(int type)
@@ -2529,7 +2720,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			setX(C());
 			op += imm;
 			setNZ(op, size);
-			writeEA(type, ea, size, op);
+			writeEA( ReUse(type), ea, size, op);
 		}
 
 		private void subi(int type)
@@ -2543,7 +2734,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			setX(C());
 			op -= imm;
 			setNZ(op, size);
-			writeEA(type, ea, size, op);
+			writeEA(ReUse(type), ea, size, op);
 		}
 
 		private void andi(int type)
@@ -2587,7 +2778,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			op &= imm;
 			setNZ(op, size);
 			clrCV();
-			writeEA(type, ea, size, op);
+			writeEA(ReUse(type), ea, size, op);
 		}
 
 		private void ori(int type)
@@ -2649,8 +2840,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				setN();
 				internalTrap(6);
 			}
-
-			if (v > (int)ea)
+			else if (v > (int)ea)
 			{
 				clrN();
 				internalTrap(6);
