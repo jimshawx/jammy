@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RunAmiga.Core.CPU.Musashi": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core;
+using RunAmiga.Core.CPU.CSharp;
 using RunAmiga.Core.CPU.Musashi;
 using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface;
@@ -45,6 +46,7 @@ namespace RunAmiga.Main
 				})
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IAudio, Audio>()
+				//.AddSingleton<IAudio, AudioV2>()
 				.AddSingleton<IBattClock, BattClock>()
 				.AddSingleton<IBlitter, Blitter>()
 				.AddSingleton<ICIAAOdd, CIAAOdd>()
@@ -56,6 +58,7 @@ namespace RunAmiga.Main
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ICPU, MusashiCPU>()
+				//.AddSingleton<ICPU, CPU>()
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
 				.AddSingleton<IMemory, Memory>()

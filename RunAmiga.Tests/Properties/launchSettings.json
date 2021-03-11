@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RunAmiga.Tests": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
