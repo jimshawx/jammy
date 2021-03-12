@@ -60,7 +60,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 						if (propType == typeof(TaskPtr))
 						{
 							var tp = new TaskPtr();
-							tp.Address = memory.Read32(addr); addr += 4;
+							tp.Address = memory.UnsafeRead32(addr); addr += 4;
 							if (tp.Address != 0 && tp.Address < 0x1000000)
 							{
 								tp.Task = new Task();
@@ -75,7 +75,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 						else if (propType == typeof(NodePtr))
 						{
 							var tp = new NodePtr();
-							tp.Address = memory.Read32(addr); addr += 4;
+							tp.Address = memory.UnsafeRead32(addr); addr += 4;
 							if (tp.Address != 0 && tp.Address < 0x1000000)
 							{
 								tp.Node = new Node();
@@ -90,7 +90,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 						else if (propType == typeof(MinNodePtr))
 						{
 							var tp = new MinNodePtr();
-							tp.Address = memory.Read32(addr); addr += 4;
+							tp.Address = memory.UnsafeRead32(addr); addr += 4;
 							if (tp.Address != 0 && tp.Address < 0x1000000)
 							{
 								tp.MinNode = new MinNode();
@@ -107,7 +107,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 							var genericT = propType.GetInterfaces().Single(x => x.GenericTypeArguments.Length > 0).GenericTypeArguments[0];
 
 							dynamic tp = Activator.CreateInstance(propType);
-							tp.Address = memory.Read32(addr); addr += 4;
+							tp.Address = memory.UnsafeRead32(addr); addr += 4;
 							if (tp.Address != 0 && tp.Address < 0x1000000)
 							{
 								tp.Wrapped = (dynamic)Convert.ChangeType(Activator.CreateInstance(genericT), genericT);
@@ -194,7 +194,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 
 		private string MapString(uint addr)
 		{
-			uint strPtr = memory.Read32(addr);
+			uint strPtr = memory.UnsafeRead32(addr);
 
 			if (strPtr == 0)
 				return "(null)";
@@ -202,7 +202,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 			var str = new StringBuilder();
 			for (; ; )
 			{
-				byte c = memory.Read8(strPtr);
+				byte c = memory.UnsafeRead8(strPtr);
 				if (c == 0)
 					return str.ToString();
 

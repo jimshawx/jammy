@@ -32,11 +32,11 @@ namespace RunAmiga.Debugger
 		private readonly ILabeller labeller;
 		private readonly ILogger logger;
 
-		public Tracer(IDisassembly disassembly, ILabeller labeller)
+		public Tracer(IDisassembly disassembly, ILabeller labeller, ILogger<Tracer> logger)
 		{
 			this.disassembly = disassembly;
 			this.labeller = labeller;
-			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<Tracer>>();
+			this.logger = logger;
 		}
 
 		public void Trace(uint pc)

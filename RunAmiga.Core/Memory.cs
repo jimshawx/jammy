@@ -14,28 +14,30 @@ namespace RunAmiga.Core
 		public const uint memoryMask = 0x00ffffff;
 		
 		private readonly ILogger logger;
+		private readonly IMachineIdentifier machineIdentifier;
 		private readonly EmulationSettings settings;
+		private Kickstart kickstart;
 
-		public Memory(ILogger<Memory> logger, IOptions<EmulationSettings> settings)
+		public Memory(ILogger<Memory> logger, IOptions<EmulationSettings> settings, IMachineIdentifier machineIdentifier)
 		{
 			this.logger = logger;
+			this.machineIdentifier = machineIdentifier;
 			this.settings = settings.Value;
 			this.memory = new byte[16 * 1024 * 1024];
 
-			Kickstart ks;
-			switch (settings.Value.KickStart)
+			if (!string.IsNullOrEmpty(settings.Value.KickStart))
 			{
-				default:
-				case "1.2": ks = new Kickstart("../../../../kick12.rom", "Kickstart 1.2");
-					break;
-				case "1.3": ks = new Kickstart("../../../../kick13.rom", "Kickstart 1.3");
-					break;
-				case "2.04": ks = new Kickstart("../../../../kick204.rom", "Kickstart 2.04");
-					break;
-				case "3.1": ks = new Kickstart("../../../../kick31.rom", "Kickstart 3.1");
-					break;
+				Kickstart ks = null;
+				switch (settings.Value.KickStart)
+				{
+					case "1.2":  ks = new Kickstart("../../../../kick12.rom", "Kickstart 1.2"); break;
+					case "1.3":  ks = new Kickstart("../../../../kick13.rom", "Kickstart 1.3"); break;
+					case "2.04": ks = new Kickstart("../../../../kick204.rom", "Kickstart 2.04"); break;
+					case "3.1":  ks = new Kickstart("../../../../kick31.rom", "Kickstart 3.1"); break;
+				}
+				if (ks != null)
+					SetKickstart(ks);
 			}
-			SetKickstart(ks);
 
 			Reset();
 		}
@@ -60,10 +62,14 @@ namespace RunAmiga.Core
 					throw new MemoryAlignmentException(address);
 			}
 
-			return ((uint)memory[address & memoryMask] << 24) +
-			       ((uint)memory[(address + 1) & memoryMask] << 16) +
-			       ((uint)memory[(address + 2) & memoryMask] << 8) +
-			       (uint)memory[(address + 3) & memoryMask];
+			uint value = (uint)((memory[address & memoryMask] << 24) +
+								(memory[(address + 1) & memoryMask] << 16) +
+								(memory[(address + 2) & memoryMask] << 8) +
+								memory[(address + 3) & memoryMask]);
+
+			logger.LogTrace($"{machineIdentifier.Id} R32 {address:X8} {value:X8}");
+			
+			return value;
 		}
 
 		private ushort read16(uint address)
@@ -74,18 +80,27 @@ namespace RunAmiga.Core
 					throw new MemoryAlignmentException(address);
 			}
 
-			return (ushort)(
-				((ushort)memory[address & memoryMask] << 8) +
-				(ushort)memory[(address + 1) & memoryMask]);
+			ushort value = (ushort)((memory[address & memoryMask] << 8) + 
+									memory[(address + 1) & memoryMask]);
+
+			logger.LogTrace($"{machineIdentifier.Id} R16 {address:X8} {value:X4}");
+			
+			return value;
 		}
 
 		private byte read8(uint address)
 		{
-			return memory[address & memoryMask];
+			byte value = memory[address & memoryMask];
+
+			logger.LogTrace($"{machineIdentifier.Id} R8 {address:X8} {value:X2}");
+			
+			return value;
 		}
 
 		private void write32(uint address, uint value)
 		{
+			logger.LogTrace($"{machineIdentifier.Id} W32 {address:X8} {value:X8}");
+
 			if (settings.AlignmentExceptions)
 			{
 				if ((address & 1) != 0)
@@ -100,6 +115,8 @@ namespace RunAmiga.Core
 
 		private void write16(uint address, ushort value)
 		{
+			logger.LogTrace($"{machineIdentifier.Id} W16 {address:X8} {value:X4}");
+
 			if (settings.AlignmentExceptions)
 			{
 				if ((address & 1) != 0)
@@ -112,21 +129,23 @@ namespace RunAmiga.Core
 
 		private void write8(uint address, byte value)
 		{
+			logger.LogTrace($"{machineIdentifier.Id} W8 {address:X8} {value:X2}");
+
 			memory[address & memoryMask] = value;
 		}
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			if (size == Size.Byte) return read8(address);
 			if (size == Size.Word) return read16(address);
+			if (size == Size.Byte) return read8(address);
 			if (size == Size.Long) return read32(address);
 			throw new UnknownInstructionSizeException(insaddr, 0);
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (size == Size.Byte) { write8(address, (byte)value); return; }
 			if (size == Size.Word) { write16(address, (ushort)value); return; }
+			if (size == Size.Byte) { write8(address, (byte)value); return; }
 			if (size == Size.Long) { write32(address, value); return; }
 			throw new UnknownInstructionSizeException(insaddr, 0);
 		}
@@ -136,53 +155,49 @@ namespace RunAmiga.Core
 			return memory;
 		}
 
-		public byte Read8(uint address)
+		public byte UnsafeRead8(uint address)
 		{
-			if (address >= 0x1000000)
-			{
-				//logger.LogTrace($"Memory Read Byte from {address:X8}");
-				return 0;
-			}
+			address &= memoryMask;
 			return memory[address];
 		}
 
-		public ushort Read16(uint address)
+		public ushort UnsafeRead16(uint address)
 		{
-			if (address >= 0xfffffe)
-			{
-				logger.LogTrace($"Memory Read Word from ${address:X8}");
-				return 0;
-			}
-			if ((address & 1) != 0)
-			{
-				logger.LogTrace($"Memory Read Unaligned Word from ${address:X8}");
-				return 0;
-			}
-			return (ushort)(((ushort)memory[address] << 8) +
-							(ushort)memory[(address + 1)]);
+			address &= memoryMask;
+			return (ushort)((memory[address] << 8) +
+							memory[address + 1]);
 		}
 
-		public uint Read32(uint address)
+		public uint UnsafeRead32(uint address)
 		{
-			if (address >= 0xfffffc)
-			{
-				logger.LogTrace($"Memory Read Int from ${address:X8}");
-				return 0;
-			}
-			if ((address & 1) != 0)
-			{
-				logger.LogTrace($"Memory Read Unaligned Int from ${address:X8}");
-				return 0;
-			}
-			return ((uint)memory[address] << 24) +
-					((uint)memory[(address + 1)] << 16) +
-					((uint)memory[(address + 2)] << 8) +
-					(uint)memory[(address + 3)];
+			address &= memoryMask;
+			return (uint)((memory[address] << 24) +
+					(memory[address + 1] << 16) +
+					(memory[address + 2] << 8) +
+					memory[address + 3]);
+		}
+
+		public void UnsafeWrite32(uint address, uint value)
+		{
+			memory[address & memoryMask] = (byte)(value >> 24);
+			memory[(address + 1) & memoryMask] = (byte)(value >> 16);
+			memory[(address + 2) & memoryMask] = (byte)(value >> 8);
+			memory[(address + 3) & memoryMask] = (byte)value;
+		}
+
+		public void UnsafeWrite16(uint address, ushort value)
+		{
+			memory[address & memoryMask] = (byte)(value >> 8);
+			memory[(address + 1) & memoryMask] = (byte)value;
+		}
+
+		public void UnsafeWrite8(uint address, byte value)
+		{
+			memory[address & memoryMask] = value;
 		}
 
 		public void Emulate(ulong cycles)
 		{
-
 		}
 
 		public void BulkWrite(uint dst, byte[] src, int length)
@@ -190,12 +205,14 @@ namespace RunAmiga.Core
 			Array.Copy(src, 0, memory, dst, length);
 		}
 
-		private Kickstart kickstart;
-
-		public void SetKickstart(Kickstart kickstart)
+		public void SetKickstart(Kickstart ks)
 		{
-			this.kickstart = kickstart;
+			this.kickstart = ks;
+			CopyKickstart();
+		}
 
+		private void CopyKickstart()
+		{
 			BulkWrite(kickstart.Origin, kickstart.ROM, kickstart.ROM.Length);
 			BulkWrite(0, kickstart.ROM, kickstart.ROM.Length);
 		}
@@ -205,15 +222,12 @@ namespace RunAmiga.Core
 			Array.Clear(memory, 0, memory.Length);
 
 			if (kickstart != null)
-			{
-				BulkWrite(kickstart.Origin, kickstart.ROM, kickstart.ROM.Length);
-				BulkWrite(0, kickstart.ROM, kickstart.ROM.Length);
-			}
+				CopyKickstart();
 		}
 
 		public uint FindSequence(byte[] bytes)
 		{
-			for (int i = 0xfc0000; i < memory.Length - bytes.Length; i++)
+			for (int i = 0; i < memory.Length - bytes.Length; i++)
 			{
 				if (bytes.SequenceEqual(memory.Skip(i).Take(bytes.Length)))
 					return (uint)i;

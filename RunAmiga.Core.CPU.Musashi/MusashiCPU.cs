@@ -67,9 +67,6 @@ namespace RunAmiga.Core.CPU.Musashi
 			Musashi_set_irq(interruptLevel);
 		}
 
-		private ulong totalTicks = 0;
-		private ulong tickCount = 0;
-
 		private uint instructionStartPC = 0;
 		public void Emulate(ulong cycles)
 		{

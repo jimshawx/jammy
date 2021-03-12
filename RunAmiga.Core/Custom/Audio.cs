@@ -1,11 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
 {
 	public class Audio : IAudio
 	{
-		private readonly IMemory memory;
+		private readonly IMemoryMappedDevice memory;
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 		private readonly uint[] intr = { Interrupt.AUD0, Interrupt.AUD1, Interrupt.AUD2, Interrupt.AUD3 };
@@ -62,7 +63,7 @@ namespace RunAmiga.Core.Custom
 			if (ch[channel].working_audper < 0)
 			{
 				//read the sample into live audXdat
-				ch[channel].auddat = memory.Read16(ch[channel].working_audlc);
+				ch[channel].auddat = (ushort)memory.Read(0, ch[channel].working_audlc, Size.Word);
 				//update the pointers and reset the period
 				ch[channel].working_audlc += 2;
 				ch[channel].working_audlen--;

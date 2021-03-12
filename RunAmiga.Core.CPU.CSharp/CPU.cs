@@ -492,7 +492,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			return val;
 		}
 
-		private uint fetchEA(int type)
+		private uint fetchEA(int type, Size size)
 		{
 			int m = (type >> 3) & 7;
 			int x = type & 7;
@@ -508,7 +508,20 @@ namespace RunAmiga.Core.CPU.CSharp
 				case 3:
 					return a[x];
 				case 4:
-					return a[x];
+					{
+						if (size == Size.Long)
+							return a[x] - 4;
+						if (size == Size.Word)
+							return a[x] - 2;
+						if (size == Size.Byte)
+						{
+							if (x == 7)
+								return a[x] - 2;
+							return a[x] - 1;
+						}
+						//never gets here
+						throw new ArgumentOutOfRangeException();
+					}
 				case 5://(d16,An)
 					{
 						ushort d16 = read16(pc);
@@ -897,7 +910,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void rod(int type, int rot, int lr, Size size)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint val = fetchOp(type, ea, size);
 			val = (uint)zeroExtend(val, size);
 			if (rot == 0)
@@ -942,7 +955,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void roxd(int type, int rot, int lr, Size size)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint val = fetchOp(type, ea, size);
 			val = (uint)zeroExtend(val, size);
 			if (rot == 0)
@@ -1031,7 +1044,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void lsd(int type, int shift, int lr, Size size)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint val = fetchOp(type, ea, size);
 			val = (uint)zeroExtend(val, size);
 			if (shift == 0)
@@ -1077,7 +1090,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void asd(int type, int shift, int lr, Size size)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint val = fetchOp(type, ea, size);
 			val = (uint)signExtend(val, size);
 			if (shift == 0)
@@ -1147,7 +1160,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				else
 					size = Size.Word;
 
-				uint ea = fetchEA(type);
+				uint ea = fetchEA(type, size);
 				uint op = fetchOp(type, ea, size);
 				int Xn = (type >> 9) & 7;
 				//a[Xn] += op;
@@ -1159,7 +1172,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				//only Dx,Dy and -(Ax),-(Ay) allowed
 				if ((type & 0b1_000) != 0) type ^= 0b101_000;
 
-				uint ea = fetchEA(type);
+				uint ea = fetchEA(type, size);
 				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
@@ -1171,7 +1184,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				else
 					type2 = 0b100_000 | Xn;//-(Ax),-(Ay)
 
-				uint ea2 = fetchEA(type2);
+				uint ea2 = fetchEA(type2, size);
 				uint op2 = fetchOp(type2, ea2, size);
 				setV_sub(op, op2 + x, size);
 				setC_sub(op, op2 + x, size);
@@ -1192,7 +1205,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					return;
 				}
 
-				uint ea = fetchEA(type);
+				uint ea = fetchEA(type, size);
 				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
@@ -1236,7 +1249,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void and(int type)
 		{
 			Size size = getSize(type);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			int Xn = (type >> 9) & 7;
 			if ((type & 0b1_00_000000) != 0)
@@ -1290,9 +1303,9 @@ namespace RunAmiga.Core.CPU.CSharp
 			//only Dx,Dy and -(Ax),-(Ay) allowed
 			if ((type & 0b1_000) != 0) type ^= 0b101_000;
 
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Byte);
 			uint op = fetchOp(type, ea, Size.Byte);
-
+			
 			int Xn = (type >> 9) & 7;
 
 			int type2;
@@ -1301,7 +1314,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			else
 				type2 = 0b100_000 | Xn;//-(Ax),-(Ay)
 
-			uint ea2 = fetchEA(type2);
+			uint ea2 = fetchEA(type2, Size.Byte);
 			uint op2 = fetchOp(type2, ea2, Size.Byte);
 
 			op = add_bcd(op, op2);
@@ -1354,7 +1367,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void muls(int type)
 		{
 			int Xn = (type >> 9) & 7;
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
 			long v = (long)(short)d[Xn] * (short)op;
 			setV(v, Size.Long);
@@ -1366,7 +1379,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void mulu(int type)
 		{
 			int Xn = (type >> 9) & 7;
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
 			d[Xn] = (uint)(ushort)d[Xn] * (uint)(ushort)op;
 			setNZ(d[Xn], Size.Long);
@@ -1385,7 +1398,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void eor(int type)
 		{
 			Size size = getSize(type);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			int Xn = (type >> 9) & 7;
 			if ((type & 0b1_00_000000) != 0)
@@ -1439,10 +1452,10 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void cmp(int type)
 		{
 			Size size = getSize(type);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op0 = fetchOp(type, ea, size);
 			type = swizzle(type) & 7;
-			ea = fetchEA(type);
+			ea = fetchEA(type, size);
 			uint op1 = fetchOp(type, ea, size);
 
 			setC_sub(op1, op0, size);
@@ -1458,10 +1471,10 @@ namespace RunAmiga.Core.CPU.CSharp
 			else
 				size = Size.Word;
 
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op0 = fetchOp(type, ea, size);
 			type = (swizzle(type) & 7) | 8;
-			ea = fetchEA(type);
+			ea = fetchEA(type, size);
 			uint op1 = fetchOp(type, ea, size);
 
 			setC_sub(op1, op0, size);
@@ -1482,7 +1495,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				else
 					size = Size.Word;
 
-				uint ea = fetchEA(type);
+				uint ea = fetchEA(type, size);
 				uint op = fetchOp(type, ea, size);
 				int Xn = (type >> 9) & 7;
 				//a[Xn] -= op;
@@ -1495,7 +1508,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				//only Dx,Dy and -(Ax),-(Ay) allowed
 				if ((type & 0b1_000) != 0) type ^= 0b101_000;
 
-				uint ea = fetchEA(type);
+				uint ea = fetchEA(type, size);
 				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
@@ -1507,7 +1520,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				else
 					type2 = 0b100_000 | Xn;//-(Ax),-(Ay)
 
-				uint ea2 = fetchEA(type2);
+				uint ea2 = fetchEA(type2, size);
 				uint op2 = fetchOp(type2, ea2, size);
 				setV_sub(op, op2 + x, size);
 				setC_sub(op, op2 + x, size);
@@ -1520,7 +1533,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			else
 			{
 				//sub
-				uint ea = fetchEA(type);
+				uint ea = fetchEA(type, size);
 				uint op = fetchOp(type, ea, size);
 
 				int Xn = (type >> 9) & 7;
@@ -1555,7 +1568,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void or(int type)
 		{
 			Size size = getSize(type);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			int Xn = (type >> 9) & 7;
 			if ((type & 0b1_00_000000) != 0)
@@ -1580,7 +1593,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			//only Dx,Dy and -(Ax),-(Ay) allowed
 			if ((type & 0b1_000) != 0) type ^= 0b101_000;
 
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Byte);
 			uint op = fetchOp(type, ea, Size.Byte);
 
 			int Xn = (type >> 9) & 7;
@@ -1591,7 +1604,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			else
 				type2 = 0b100_000 | Xn;//-(Ax),-(Ay)
 
-			uint ea2 = fetchEA(type2);
+			uint ea2 = fetchEA(type2, Size.Byte);
 			uint op2 = fetchOp(type2, ea2, Size.Byte);
 
 			op = sub_bcd(op, op2);
@@ -1645,7 +1658,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void divs(int type)
 		{
 			int Xn = (type >> 9) & 7;
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
 
 			if (op == 0)
@@ -1668,7 +1681,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void divu(int type)
 		{
 			int Xn = (type >> 9) & 7;
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
 
 			if (op == 0)
@@ -1878,7 +1891,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void scc(int type)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Byte);
 			int cond = (type >> 8) & 0xf;
 			switch (cond)
 			{
@@ -2004,7 +2017,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void subq(int type, Size size)
 		{
 			uint imm = (uint)((type >> 9) & 7);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			if (imm == 0) imm = 8;
 
@@ -2037,7 +2050,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void addq(int type, Size size)
 		{
 			uint imm = (uint)((type >> 9) & 7);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			if (imm == 0) imm = 8;
 
@@ -2155,7 +2168,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void tst(int type)
 		{
 			Size size = getSize(type);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			setNZ(op, size);
 			clrCV();
@@ -2164,7 +2177,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void not(int type)
 		{
 			Size size = getSize(type);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			op = ~op;
 			setNZ(op, size);
@@ -2175,7 +2188,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void neg(int type)
 		{
 			Size size = getSize(type);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			setV_sub(0, op, size);
 			op = ~op + 1;//same as neg
@@ -2188,7 +2201,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void clr(int type)
 		{
 			Size size = getSize(type);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			writeEA(type, ea, size, 0);
 			clrN();
 			setZ();
@@ -2198,7 +2211,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void negx(int type)
 		{
 			Size size = getSize(type);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 
 			uint x = X() ? 1u : 0u;
@@ -2225,7 +2238,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					return;
 			}
 			
-			ea = fetchEA(type);
+			ea = fetchEA(type, Size.Extension);
 			push32(ea);
 		}
 
@@ -2239,7 +2252,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void nbcd(int type)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Byte);
 			uint op = fetchOp(type, ea, Size.Byte);
 
 			op = sub_bcd(0, op);
@@ -2281,7 +2294,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void movetosr(int type)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Word);
 			if (Supervisor())
 			{
 				sr = (ushort) fetchOp(type, ea, Size.Word); //naturally sets the flags
@@ -2295,14 +2308,14 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void movetoccr(int type)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
 			sr = (ushort)((sr & 0xff00u) | (op & 0x00ffu)); //naturally sets the flags
 		}
 
 		private void movefromsr(int type)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Word);
 			writeEA(type, ea, Size.Word, sr);
 		}
 
@@ -2502,7 +2515,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			else
 				size = Size.Word;
 
-			uint ea = fetchEA((type & 7) | (0b101<<3));
+			uint ea = fetchEA((type & 7) | (0b101<<3), size);
 
 			if ((type & 0xb10000000) != 0)
 			{
@@ -2538,11 +2551,11 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void movel(int type)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Long);
 			uint op = fetchOp(type, ea, Size.Long);
 
 			type = swizzle(type);
-			ea = fetchEA(type);
+			ea = fetchEA(type, Size.Long);
 			writeEA(type, ea, Size.Long, op);
 
 			//movea.l does not change the flags
@@ -2555,10 +2568,10 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void movew(int type)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
 			type = swizzle(type);
-			ea = fetchEA(type);
+			ea = fetchEA(type, Size.Word);
 
 			//movea.w is sign extended and does not change the flags
 			if ((type & 0b111_000) == 0b001_000)
@@ -2580,7 +2593,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				internalTrap(3);
 				return;
 			}
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Byte);
 			uint op = fetchOp(type, ea, Size.Byte);
 
 			type = swizzle(type);
@@ -2590,7 +2603,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				return;
 			}
 
-			ea = fetchEA(type);
+			ea = fetchEA(type, Size.Byte);
 			writeEA(type, ea, Size.Byte, op);
 
 			setNZ(op, Size.Byte);
@@ -2601,7 +2614,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			Size size = getSize(type);
 			uint imm = fetchImm(size);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			setC_sub(op, imm, size);
 			setV_sub(op, imm, size);
@@ -2645,7 +2658,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				return;
 			}
 
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 
 			op ^= imm;
@@ -2684,7 +2697,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			bit = 1u << (int)bit;
 
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op0 = fetchOp(type, ea, size);
 
 			setZ((op0 & bit) == 0);
@@ -2713,7 +2726,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			Size size = getSize(type);
 			uint imm = fetchImm(size);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			setC(op, imm, size);
 			setV(op, imm, size);
@@ -2727,7 +2740,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			Size size = getSize(type);
 			uint imm = fetchImm(size);
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			setC_sub(op, imm, size);
 			setV_sub(op, imm, size);
@@ -2773,7 +2786,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				return;
 			}
 
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			op &= imm;
 			setNZ(op, size);
@@ -2816,7 +2829,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				return;
 			}
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			op |= imm;
 			setNZ(op, size);
@@ -2826,7 +2839,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void chk(int type)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Word);
 			int Xn = (type >> 9) & 7;
 			int v = (int)signExtend(d[Xn], Size.Word);
 
@@ -2849,7 +2862,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void lea(int type)
 		{
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Extension);
 			int An = (type >> 9) & 7;
 			a[An] = ea;
 		}
@@ -2858,7 +2871,6 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			uint mask = fetchImm(Size.Word);
 
-			uint ea = fetchEA(type);
 			Size size;
 			uint eastep;
 			if ((type & 0b1000000) != 0)
@@ -2871,6 +2883,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				size = Size.Word;
 				eastep = 2;
 			}
+			uint ea = fetchEA(type, size);
 
 			if ((type & 0b1_0000_000000) != 0)
 			{
@@ -2964,7 +2977,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			tracer.Trace("jmp", instructionStartPC, GetRegs());
 
-			pc = fetchEA(type);
+			pc = fetchEA(type, Size.Extension);
 
 			tracer.Trace(pc);
 		}
@@ -2973,7 +2986,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			tracer.Trace("jsr", instructionStartPC, GetRegs());
 
-			uint ea = fetchEA(type);
+			uint ea = fetchEA(type, Size.Extension);
 			push32(pc);
 			pc = ea;
 

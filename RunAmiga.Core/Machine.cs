@@ -150,7 +150,7 @@ namespace RunAmiga.Core
 					case EmulationMode.StepOut:
 						var regs = cpu.GetRegs();
 						if (stepOutSp == 0xffffffff) stepOutSp = regs.A[7];
-						ushort ins = memory.Read16(regs.PC);
+						ushort ins = memory.UnsafeRead16(regs.PC);
 						bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] >= stepOutSp; //rts or rte
 						RunEmulations(8);
 						if (stopping)

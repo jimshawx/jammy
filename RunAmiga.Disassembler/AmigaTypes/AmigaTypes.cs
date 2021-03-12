@@ -33,15 +33,15 @@ namespace RunAmiga.Disassembler.AmigaTypes
 
 		public static object MapSimple(IMemory memory, Type type, uint addr)
 		{
-			if (type == typeof(NodeType)) return (NodeType)memory.Read8(addr);
-			if (type == typeof(BYTE)) return (BYTE)memory.Read8(addr);
-			if (type == typeof(UBYTE)) return (UBYTE)memory.Read8(addr);
-			if (type == typeof(UWORD)) return (UWORD)memory.Read16(addr);
-			if (type == typeof(WORD)) return (WORD)memory.Read16(addr);
-			if (type == typeof(ULONG)) return (ULONG)memory.Read32(addr);
-			if (type == typeof(LONG)) return (LONG)memory.Read32(addr);
-			if (type == typeof(APTR)) return (APTR)memory.Read32(addr);
-			if (type == typeof(FunctionPtr)) return (FunctionPtr)memory.Read32(addr);
+			if (type == typeof(NodeType)) return (NodeType)memory.UnsafeRead8(addr);
+			if (type == typeof(BYTE)) return (BYTE)memory.UnsafeRead8(addr);
+			if (type == typeof(UBYTE)) return (UBYTE)memory.UnsafeRead8(addr);
+			if (type == typeof(UWORD)) return (UWORD)memory.UnsafeRead16(addr);
+			if (type == typeof(WORD)) return (WORD)memory.UnsafeRead16(addr);
+			if (type == typeof(ULONG)) return (ULONG)memory.UnsafeRead32(addr);
+			if (type == typeof(LONG)) return (LONG)memory.UnsafeRead32(addr);
+			if (type == typeof(APTR)) return (APTR)memory.UnsafeRead32(addr);
+			if (type == typeof(FunctionPtr)) return (FunctionPtr)memory.UnsafeRead32(addr);
 			throw new ApplicationException();
 		}
 	}

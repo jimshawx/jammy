@@ -77,9 +77,12 @@ namespace RunAmiga.Core.Interface.Interfaces
 	{
 		byte[] GetMemoryArray();
 		uint FindSequence(byte[] bytes);
-		byte Read8(uint address);
-		ushort Read16(uint address);
-		uint Read32(uint address);
+		byte UnsafeRead8(uint address);
+		ushort UnsafeRead16(uint address);
+		uint UnsafeRead32(uint address);
+		void UnsafeWrite32(uint address, uint value);
+		void UnsafeWrite16(uint address, ushort value);
+		void UnsafeWrite8(uint address, byte value);
 	}
 
 	public interface IChips : IEmulate, IMemoryMappedDevice
@@ -172,5 +175,10 @@ namespace RunAmiga.Core.Interface.Interfaces
 		MemType[] GetMemTypes();
 		Dictionary<uint, Header> GetHeaders();
 		Dictionary<uint, Comment> GetComments();
+	}
+
+	public interface IMachineIdentifier
+	{
+		public string Id { get; }
 	}
 }

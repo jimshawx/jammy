@@ -70,6 +70,7 @@ namespace RunAmiga.Main
 				.AddSingleton<ITracer, Tracer>()
 				.AddSingleton<IDisassembly, Disassembly>()
 				.AddSingleton<IAnalyser,Analyser>()
+				.AddSingleton<IMachineIdentifier>(x=>new MachineIdentifer("Amiga"))
 				.AddSingleton<RunAmiga>()
 				.Configure<EmulationSettings>(o=>configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
