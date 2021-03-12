@@ -67,7 +67,7 @@ namespace RunAmiga.Core
 								(memory[(address + 2) & memoryMask] << 8) +
 								memory[(address + 3) & memoryMask]);
 
-			logger.LogTrace($"{machineIdentifier.Id} R32 {address:X8} {value:X8}");
+			//logger.LogTrace($"{machineIdentifier.Id} R32 {address:X8} {value:X8}");
 			
 			return value;
 		}
@@ -83,7 +83,7 @@ namespace RunAmiga.Core
 			ushort value = (ushort)((memory[address & memoryMask] << 8) + 
 									memory[(address + 1) & memoryMask]);
 
-			logger.LogTrace($"{machineIdentifier.Id} R16 {address:X8} {value:X4}");
+			//logger.LogTrace($"{machineIdentifier.Id} R16 {address:X8} {value:X4}");
 			
 			return value;
 		}
@@ -92,14 +92,14 @@ namespace RunAmiga.Core
 		{
 			byte value = memory[address & memoryMask];
 
-			logger.LogTrace($"{machineIdentifier.Id} R8 {address:X8} {value:X2}");
+			//logger.LogTrace($"{machineIdentifier.Id} R8 {address:X8} {value:X2}");
 			
 			return value;
 		}
 
 		private void write32(uint address, uint value)
 		{
-			logger.LogTrace($"{machineIdentifier.Id} W32 {address:X8} {value:X8}");
+			//logger.LogTrace($"{machineIdentifier.Id} W32 {address:X8} {value:X8}");
 
 			if (settings.AlignmentExceptions)
 			{
@@ -115,7 +115,7 @@ namespace RunAmiga.Core
 
 		private void write16(uint address, ushort value)
 		{
-			logger.LogTrace($"{machineIdentifier.Id} W16 {address:X8} {value:X4}");
+			//logger.LogTrace($"{machineIdentifier.Id} W16 {address:X8} {value:X4}");
 
 			if (settings.AlignmentExceptions)
 			{
@@ -129,7 +129,7 @@ namespace RunAmiga.Core
 
 		private void write8(uint address, byte value)
 		{
-			logger.LogTrace($"{machineIdentifier.Id} W8 {address:X8} {value:X2}");
+			//logger.LogTrace($"{machineIdentifier.Id} W8 {address:X8} {value:X2}");
 
 			memory[address & memoryMask] = value;
 		}

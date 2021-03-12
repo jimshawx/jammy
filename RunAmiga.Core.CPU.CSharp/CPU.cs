@@ -648,6 +648,11 @@ namespace RunAmiga.Core.CPU.CSharp
 					return ea;
 
 				case 1:
+					if (size == Size.Byte)
+					{
+						internalTrap(3);
+						throw new AbandonInstructionException();
+					}
 					return ea;
 
 				case 2:
@@ -763,12 +768,15 @@ namespace RunAmiga.Core.CPU.CSharp
 					if (size == Size.Long)
 						a[Xn] = value;
 					else if (size == Size.Word)
-						a[Xn] = (a[Xn] & 0xffff0000) | (value & 0x0000ffff);
+						a[Xn] = (uint)(short)value;
 					else
 					{
 						if (settings.UnknownInstructionSizeExceptions)
 							throw new UnknownInstructionSizeException(0,type);
 						logger.LogTrace($"Unknown Instruction Size {type:X4}");
+
+						internalTrap(3);
+						throw new AbandonInstructionException();
 					}
 					break;
 				case 2:
@@ -857,6 +865,16 @@ namespace RunAmiga.Core.CPU.CSharp
 			return type;
 		}
 
+		private bool IsAddressReg(int type)
+		{
+			return (type & 0b111_000) == 0b001_000;
+		}
+		
+		private bool IsDataReg(int type)
+		{
+			return (type & 0b111_000) == 0b000_000;
+		}
+
 		private void t_fourteen(int type)
 		{
 			int mode = (type & 0b11_000_000) >> 6;
@@ -865,6 +883,12 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (mode == 3)
 			{
 				int op = (type & 0b111_000_000_000) >> 9;
+				//EA must be in memory, not a register
+				if (IsAddressReg(type) || IsDataReg(type))
+				{
+					internalTrap(3);
+					return;
+				}
 				switch (op)
 				{
 					case 0: asd(type, 1, lr, Size.Word); break;
@@ -1210,7 +1234,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 				int Xn = (type >> 9) & 7;
 
-				if ((type & 0b111000) != 0b001000)
+				if (!IsAddressReg(type))
 				{
 					setV(d[Xn], op, size);
 					setC(d[Xn], op, size);
@@ -1218,7 +1242,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 
 				op += d[Xn];
-				if ((type & 0b111000) != 0b001000)
+				if (!IsAddressReg(type))
 				{
 					setNZ(op, size);
 				}
@@ -1263,7 +1287,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//M->R
 				//can't be and ax,dy
-				if ((type & 0b111_000) == 0b001_000)
+				if (IsAddressReg(type))
 				{
 					internalTrap(3);
 					return;
@@ -2021,7 +2045,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint op = fetchOp(type, ea, size);
 			if (imm == 0) imm = 8;
 
-			if ((type & 0b111000) != 0b001_000)
+			if (!IsAddressReg(type))
 			{
 				setV_sub(op, imm, size);
 				setC_sub(op, imm, size);
@@ -2036,7 +2060,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			op -= imm;
 
-			if ((type & 0b111000) != 0b001_000)
+			if (!IsAddressReg(type))
 			{
 				setNZ(op, size);
 			}
@@ -2054,7 +2078,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint op = fetchOp(type, ea, size);
 			if (imm == 0) imm = 8;
 
-			if ((type & 0b111000) != 0b001_000)
+			if (!IsAddressReg(type))
 			{
 				setV(op, imm, size);
 				setC(op, imm, size);
@@ -2069,7 +2093,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			op += imm;
 
-			if ((type & 0b111000) != 0b001_000)
+			if (!IsAddressReg(type))
 			{
 				setNZ(op, size);
 			}
@@ -2167,6 +2191,12 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void tst(int type)
 		{
+			//MC68000 doesn't support tst on address registers
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
 			Size size = getSize(type);
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
@@ -2510,14 +2540,14 @@ namespace RunAmiga.Core.CPU.CSharp
 			Size size;
 			int Xn = (type>>9) & 7;
 			
-			if ((type & 0xb1_000000) != 0)
+			if ((type & 0b1_000000) != 0)
 				size = Size.Long;
 			else
 				size = Size.Word;
 
 			uint ea = fetchEA((type & 7) | (0b101<<3), size);
 
-			if ((type & 0xb10000000) != 0)
+			if ((type & 0b10000000) != 0)
 			{
 				//M->R
 				if (size == Size.Long)
@@ -2559,7 +2589,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			writeEA(type, ea, Size.Long, op);
 
 			//movea.l does not change the flags
-			if ((type & 0b111_000) != 0b001_000)
+			if (!IsAddressReg(type))
 			{
 				setNZ(op, Size.Long);
 				clrCV();
@@ -2574,7 +2604,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			ea = fetchEA(type, Size.Word);
 
 			//movea.w is sign extended and does not change the flags
-			if ((type & 0b111_000) == 0b001_000)
+			if (IsAddressReg(type))
 			{
 				writeEA(type, ea, Size.Long, (uint)(short)op);
 			}
@@ -2588,7 +2618,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void moveb(int type)
 		{
-			if((type &0b111_000)==0xb001_000)
+			if(IsAddressReg(type))
 			{
 				internalTrap(3);
 				return;
@@ -2597,7 +2627,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint op = fetchOp(type, ea, Size.Byte);
 
 			type = swizzle(type);
-			if ((type & 0b111_000) == 0xb001_000)
+			if (IsAddressReg(type))
 			{
 				internalTrap(3);
 				return;
@@ -2725,6 +2755,13 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void addi(int type)
 		{
 			Size size = getSize(type);
+
+			if (size == Size.Byte && IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			uint imm = fetchImm(size);
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
@@ -2862,6 +2899,19 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void lea(int type)
 		{
+			//some EA are not valid
+			uint ei = (uint)((type >> 3) & 7);
+			switch (ei)
+			{
+				case 0b000:
+				case 0b001:
+				case 0b011:
+				case 0b100:
+				case 0b111:
+					internalTrap(3);
+					return;
+			}
+
 			uint ea = fetchEA(type, Size.Extension);
 			int An = (type >> 9) & 7;
 			a[An] = ea;
