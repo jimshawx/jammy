@@ -64,27 +64,28 @@ namespace RunAmiga.Core.Types.Types
 		public bool Compare(Regs other)
 		{
 			return 
-				((this.PC != other.PC) ||    
-				(this.D[0] != other.D[0]) || 
-				(this.D[1] != other.D[1]) || 
-				(this.D[2] != other.D[2]) || 
-				(this.D[3] != other.D[3]) || 
-				(this.D[4] != other.D[4]) || 
-				(this.D[5] != other.D[5]) || 
-				(this.D[6] != other.D[6]) || 
-				(this.D[7] != other.D[7]) || 
+				((this.PC != other.PC)
+				||(this.D[0] != other.D[0])
+				||(this.D[1] != other.D[1])
+				||(this.D[2] != other.D[2])
+				||(this.D[3] != other.D[3])
+				||(this.D[4] != other.D[4])
+				||(this.D[5] != other.D[5])
+				||(this.D[6] != other.D[6])
+				||(this.D[7] != other.D[7])
 
-				(this.A[0] != other.A[0]) || 
-				(this.A[1] != other.A[1]) || 
-				(this.A[2] != other.A[2]) || 
-				(this.A[3] != other.A[3]) || 
-				(this.A[4] != other.A[4]) || 
-				(this.A[5] != other.A[5]) || 
-				(this.A[6] != other.A[6]) || 
-				//(this.A[7] != other.A[7]) ||
-				//(this.SSP != other.SSP) ||
-				(this.SP != other.SP) ||
-				(this.SR != other.SR));
+				||(this.A[0] != other.A[0])
+				||(this.A[1] != other.A[1])
+				||(this.A[2] != other.A[2])
+				||(this.A[3] != other.A[3])
+				||(this.A[4] != other.A[4])
+				||(this.A[5] != other.A[5])
+				||(this.A[6] != other.A[6])
+				//||(this.A[7] != other.A[7])
+				//||(this.SSP != other.SSP)
+				||(this.SP != other.SP)
+				||(this.SR != other.SR)
+				);
 		}
 
 		public List<string> CompareSummary(Regs other)

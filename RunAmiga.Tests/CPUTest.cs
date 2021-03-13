@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using Accessibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,6 +20,7 @@ using RunAmiga.Core.Types.Types;
 using RunAmiga.Debugger;
 using RunAmiga.Disassembler;
 using RunAmiga.Disassembler.Analysers;
+using RunAmiga.Extensions.Extensions;
 using RunAmiga.Logger.DebugAsync;
 
 namespace RunAmiga.Tests
@@ -146,6 +150,11 @@ namespace RunAmiga.Tests
 			{
 				cpu.Reset();
 			}
+
+			public byte[] GetMemory()
+			{
+				return memory.GetMemoryArray();
+			}
 		}
 		
 		[Test]
@@ -196,17 +205,28 @@ namespace RunAmiga.Tests
 					var r0 = cpu0.GetRegs();
 					var r1 = cpu1.GetRegs();
 
-					Assert.IsFalse(r0.Compare(r1), "Test #{0} {1}\n{2}", i+1, cpu0.Disassemble(pc), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
-
-					ushort m0 = cpu0.Read(0);
-					ushort m1 = cpu1.Read(0);
-
-					Assert.AreEqual(m0, m1, $"M {m0:X4}<>{m1:X4} Test #{i + 1} {cpu0.Disassemble(pc)}");
+					if (r0.PC >> 16 == 0xABAD && r0.PC == r1.PC)
+					{
+						//emulation TRAPped, don't really care if the exception stack frame doesn't match (for now)
+						bool memoriesMatch = cpu0.GetMemory().SequenceEqual(cpu1.GetMemory());
+						if (!memoriesMatch)
+						{
+							TestContext.WriteLine($"ALERT memories don't match!\n{cpu0.GetMemory().DiffSummary(cpu1.GetMemory())}");
+							Array.Copy(cpu0.GetMemory(), cpu1.GetMemory(), cpu0.GetMemory().Length);
+						}
+					}
+					else
+					{
+						Assert.IsFalse(r0.Compare(r1), "Test #{0} {1}\n{2}", i + 1, cpu0.Disassemble(pc), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
+						Assert.IsTrue(cpu0.GetMemory().SequenceEqual(cpu1.GetMemory()), $"Test {i + 1} Memory Contents Differ!\n{cpu0.Disassemble(pc)}\n{cpu0.GetMemory().DiffSummary(cpu1.GetMemory())}");
+					}
 
 					TestContext.WriteLine($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
 				}
 				catch (AssertionException)
 				{
+					TestContext.WriteLine($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
+					Array.Copy(cpu0.GetMemory(), cpu1.GetMemory(), cpu0.GetMemory().Length);
 					failcount++;
 					//Assert.Fail();
 				}

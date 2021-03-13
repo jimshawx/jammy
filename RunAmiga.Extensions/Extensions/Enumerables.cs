@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace RunAmiga.Extensions.Extensions
@@ -56,5 +57,17 @@ namespace RunAmiga.Extensions.Extensions
 			foreach (var s in copy)
 				yield return (byte)(s & 0x55);
 		}
+
+		public static string DiffSummary(this byte[] m0, byte[] m1)
+		{
+			var diffs = new List<Tuple<int, uint, uint>>();
+			foreach (var p in m0.AsULong().Zip(m1.AsULong().Zip(Enumerable.Range(0, int.MaxValue))))
+			{
+				if (p.First != p.Second.First)
+					diffs.Add(new Tuple<int, uint, uint>(p.Second.Second, p.First, p.Second.First));
+			}
+			return string.Join(Environment.NewLine, diffs.Select(x => $"{x.Item1*4:X6} {x.Item2:X8} {x.Item3:X8}"));
+		}
+
 	}
 }

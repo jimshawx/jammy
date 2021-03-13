@@ -285,8 +285,8 @@ namespace RunAmiga.Disassembler
 								Append($"{fmtX8(ea)}");
 								return ea;
 							}
-						case 0b100://#imm
-							Append($"{fmtX8(address+pc)}");
+						case 0b100: //#imm
+							//Append($"{fmtX8(address + pc)}");
 							return pc;
 						default:
 							Append($"unknown effective address mode {type:X4}");
@@ -415,6 +415,7 @@ namespace RunAmiga.Disassembler
 			if (s == 0) { Append(".b "); return Size.Byte; }
 			if (s == 1) { Append(".w "); return Size.Word; }
 			if (s == 2) { Append(".l "); return Size.Long; }
+			Append($".unknown ");
 			return (Size)3;
 		}
 
@@ -1488,7 +1489,7 @@ namespace RunAmiga.Disassembler
 
 		private void movetoccr(int type)
 		{
-			Append("move.b ");
+			Append("move.w ");
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Word);
 			Append(",ccr");
@@ -1845,8 +1846,18 @@ namespace RunAmiga.Disassembler
 		private void chk(int type)
 		{
 			int Xn = (type >> 9) & 7;
-			Append($"chk d{Xn},");
-			fetchEA(type);
+			Append($"chk");
+			Size size;
+			if ((type & 0b11_0000000) == 0b11_0000000)
+				size = Size.Word;
+			else if ((type & 0b11_0000000) == 0b10_0000000)
+				size = Size.Long;
+			else
+				size = Size.Extension;
+			Append(size);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+			Append($",d{Xn}");
 		}
 
 		private void lea(int type)
