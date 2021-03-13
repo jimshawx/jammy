@@ -42,6 +42,8 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private uint pc;
 
+		//                              T.S._._210_..._XNZVC
+		private const ushort SRmask = 0b1010_0_111_000_11111;
 		//T.S..210...XNZVC
 		private ushort sr;
 
@@ -1233,8 +1235,8 @@ namespace RunAmiga.Core.CPU.CSharp
 
 				uint ea2 = fetchEA(type2, size);
 				uint op2 = fetchOp(type2, ea2, size);
-				setV_sub(op, op2 + x, size);
-				setC_sub(op, op2 + x, size);
+				setV(op, op2 + x, size);
+				setC(op, op2 + x, size);
 				setX(C());
 				op += op2 + x;
 				if (op != 0) clrZ();
@@ -1257,7 +1259,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 				int Xn = (type >> 9) & 7;
 
-				if (!IsAddressReg(type))
+				if (!IsAddressReg(type) || (type & 0b1_00_000_000) == 0)
 				{
 					setV(d[Xn], op, size);
 					setC(d[Xn], op, size);
@@ -1265,18 +1267,11 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 
 				op += d[Xn];
-				if (!IsAddressReg(type))
+				if (!IsAddressReg(type) || (type & 0b1_00_000_000) == 0)
 				{
 					setNZ(op, size);
 				}
-				else
-				{
-					if (size == Size.Word)
-					{
-						op = (uint)signExtend(op, Size.Word);
-						size = Size.Long;
-					}
-				}
+
 				if ((type & 0b1_00_000_000) == 0)
 					writeEA(Xn, 0, size, op);
 				else
@@ -1385,8 +1380,10 @@ namespace RunAmiga.Core.CPU.CSharp
 			d0 += (byte)(d1 + c);
 			if (d0 >= 10)
 			{
-				c = 1;
-				d0 -= 10;
+				//c = 1;
+				//d0 -= 10;
+				c = 0;
+				d0 += 6;
 			}
 			else
 			{
@@ -1689,15 +1686,18 @@ namespace RunAmiga.Core.CPU.CSharp
 			d0 = (sbyte)(op & 0xf);
 			d1 = (sbyte)(op2 & 0xf);
 			d0 -= (sbyte)(d1+c);
-			if (d0 < 0)
-			{
-				c = 1;
-				d0 += 10;
-			}
-			else
-			{
-				c = 0;
-			}
+			//if (d0 < 0)
+			//{
+			//	c = 1;
+			//	d0 += 10;
+			//}
+			//else
+			//{
+			//	c = 0;
+			//}
+			if (d0 > 9)
+				d0 -= 6;
+			c = 0;
 			r0 = (uint)d0;
 
 			d0 = (sbyte)(op >> 4);
@@ -2316,7 +2316,11 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint ea = (uint)((type >> 3) & 7);
 			switch (ea)
 			{
-				case 0b000: case 0b001: case 0b011: case 0b100: case 0b111:
+				case 0b000:
+				case 0b001:
+				case 0b011:
+				case 0b100:
+				case 0b111:
 					internalTrap(3);
 					return;
 			}
@@ -2386,7 +2390,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint ea = fetchEA(type, Size.Word);
 			if (Supervisor())
 			{
-				sr = (ushort) fetchOp(type, ea, Size.Word); //naturally sets the flags
+				sr = (ushort)(fetchOp(type, ea, Size.Word) & SRmask); //naturally sets the flags
 				//CheckInterrupt();
 			}
 			else
@@ -2405,7 +2409,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
-			sr = (ushort)((sr & 0xff00u) | (op & 0x00ffu)); //naturally sets the flags
+			sr = (ushort)((sr & 0xff00u) | (op & SRmask & 0x00ff)); //naturally sets the flags
 		}
 
 		private void movefromsr(int type)
@@ -2536,7 +2540,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			if (Supervisor())
 			{
-				sr = read16(pc);//naturally sets the flags
+				sr = (ushort)(read16(pc)&SRmask);//naturally sets the flags
 				pc += 2;
 				fetchMode = FetchMode.Stopped;
 				//CheckInterrupt();
@@ -2675,14 +2679,10 @@ namespace RunAmiga.Core.CPU.CSharp
 			type = swizzle(type);
 			ea = fetchEA(type, Size.Word);
 
-			//movea.w is sign extended and does not change the flags
-			if (IsAddressReg(type))
-			{
-				writeEA(type, ea, Size.Long, (uint)(short)op);
-			}
-			else
-			{
-				writeEA(type, ea, Size.Word, op);
+			writeEA(type, ea, Size.Word, op);
+
+			if (!IsAddressReg(type)) 
+			{ 
 				setNZ(op, Size.Word);
 				clrCV();
 			}
@@ -2735,6 +2735,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				{
 					ushort immsr = (ushort)imm;
 					sr ^= immsr; //naturally sets the flags
+					sr &= SRmask;
 					//CheckInterrupt();
 				}
 				else if (size == Size.Word)
@@ -2743,6 +2744,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					{
 						ushort immsr = (ushort)imm;
 						sr ^= immsr; //naturally sets the flags
+						sr &= SRmask;
 						//CheckInterrupt();
 					}
 					else
@@ -2914,6 +2916,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				{
 					ushort immsr = (ushort)imm;
 					sr |= immsr;//naturally sets the flags
+					sr &= SRmask;
 					//CheckInterrupt();
 				}
 				else if (size == Size.Word)
@@ -2922,6 +2925,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					{
 						ushort immsr = (ushort)imm;
 						sr |= immsr;//naturally sets the flags
+						sr &= SRmask;
 						//CheckInterrupt();
 					}
 					else
@@ -2995,7 +2999,6 @@ namespace RunAmiga.Core.CPU.CSharp
 				case 0b001:
 				case 0b011:
 				case 0b100:
-				case 0b111:
 					internalTrap(3);
 					return;
 			}
@@ -3161,7 +3164,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void rtr(int type)
 		{
-			sr = (ushort)((sr & 0xff00) | (pop16() & 0x00ff));//naturally sets the flags
+			sr = (ushort)((sr & 0xff00) | (pop16() & SRmask));//naturally sets the flags
 			pc = pop32();
 			//CheckInterrupt();
 		}
