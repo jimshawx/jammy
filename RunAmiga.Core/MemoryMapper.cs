@@ -14,10 +14,13 @@ namespace RunAmiga.Core
 
 		private readonly IMemoryMappedDevice[][] mappedDevice = { new IMemoryMappedDevice[0x100], new IMemoryMappedDevice[0x100]};
 
+		private readonly uint memoryMask;
+
 		public MemoryMapper(IMemory memory, ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IBattClock battClock, ILogger<MemoryMapper> logger)
 		{
 			this.logger = logger;
 			devices.Add(memory);
+			memoryMask = (uint)(memory.GetMemoryArray().Length - 1);
 			devices.Add(ciaa);
 			devices.Add(ciab);
 			devices.Add(custom);
@@ -27,6 +30,9 @@ namespace RunAmiga.Core
 
 		public MemoryMapper(List<IMemoryMappedDevice> memoryDevices)
 		{
+			var memory = (IMemory)memoryDevices.Single(x => x is IMemory);
+			memoryMask = (uint)(memory.GetMemoryArray().Length - 1);
+
 			devices.AddRange(memoryDevices);
 			BuildMappedDevices();
 		}
@@ -66,7 +72,7 @@ namespace RunAmiga.Core
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			address &= Memory.memoryMask;
+			address &= memoryMask;
 			uint value = mappedDevice[address&1][address >> 16].Read(insaddr, address, size);
 			if (interceptor != null) interceptor.Read(insaddr, address, value, size);
 			return value;
@@ -74,7 +80,7 @@ namespace RunAmiga.Core
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			address &= Memory.memoryMask;
+			address &= memoryMask;
 			if (interceptor != null) interceptor.Write(insaddr, address, value, size);
 			mappedDevice[address&1][address>>16].Write(insaddr, address, value, size);
 		}

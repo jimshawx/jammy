@@ -233,7 +233,8 @@ namespace RunAmiga.Disassembler
 
 		public string DisassembleAddress(uint pc)
 		{
-			var dasm = disassembler.Disassemble(pc, mem.GetSpan().Slice((int)pc, Math.Min(12, (int)(0x1000000 - pc))));
+			if (pc >= mem.Length) return "";
+			var dasm = disassembler.Disassemble(pc, mem.GetSpan().Slice((int)pc, Math.Min(12, (int)(mem.Length - pc))));
 			return dasm.ToString();
 		}
 

@@ -26,7 +26,7 @@ namespace RunAmiga.Disassembler.Analysers
 		private readonly Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
 		private readonly Dictionary<uint, Header> headers = new Dictionary<uint, Header>();
 		private readonly Dictionary<string, List<LVO>> lvos = new Dictionary<string, List<LVO>>();
-		private readonly MemType[] memType = new MemType[16 * 1024 * 1024];
+		private readonly MemType[] memType;
 
 		public Analyser(IKickstartAnalysis kickstartAnalysis, ILabeller labeller,
 			IMemory memory, IOptions<EmulationSettings> settings, ILogger<Analyser> logger)
@@ -34,6 +34,8 @@ namespace RunAmiga.Disassembler.Analysers
 			this.kickstartAnalysis = kickstartAnalysis;
 			this.labeller = labeller;
 			this.logger = logger;
+
+			memType = new MemType[settings.Value.MemorySize];
 
 			mem = new ByteArrayWrapper(memory.GetMemoryArray());
 			disassembler = new Disassembler();
@@ -671,6 +673,8 @@ namespace RunAmiga.Disassembler.Analysers
 
 		private uint MakeMemType(uint address, MemType type, string str)
 		{
+			if (address >= memType.Length) return 0;
+
 			if (type == MemType.Byte) { memType[address] = type; return 1; }
 			else if (type == MemType.Word) { memType[address] = type; memType[address + 1] = type; return 2; }
 			else if (type == MemType.Long) { memType[address] = type; memType[address + 1] = type; memType[address + 2] = type; memType[address + 3] = type; return 4; }

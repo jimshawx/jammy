@@ -105,6 +105,7 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0xFC559C);
 			//AddBreakpoint(0xFC7C28);
 
+			AddBreakpoint(0xfc0546);//CPU detection
 			//AddBreakpoint(0xfc0e86);//Schedule().
 			//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 

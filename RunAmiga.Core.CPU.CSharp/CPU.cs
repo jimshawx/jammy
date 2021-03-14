@@ -398,6 +398,28 @@ namespace RunAmiga.Core.CPU.CSharp
 			else sr &= 0b11111111_11110111;
 		}
 
+		private void setZ(uint val, Size size)
+		{
+			int c;
+
+			switch (size)
+			{
+				case Size.Long: c = (int)val; break;
+				case Size.Word: c = (int)(short)val; break;
+				case Size.Byte: c = (int)(sbyte)val; break;
+				default:
+					if (settings.UnknownInstructionSizeExceptions)
+						throw new UnknownInstructionSizeException(pc, 0);
+					logger.LogTrace($"Unknown Instruction Size");
+					c = 0;
+					break;
+			}
+
+			//Z
+			if (c == 0) sr |= 0b00000000_00000100;
+			else sr &= 0b11111111_11111011;
+		}
+
 		private void setC(uint v, uint op, Size size)
 		{
 			//ulong r = (ulong)signExtend(v, size) + (ulong)signExtend(op, size);
@@ -1410,6 +1432,11 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void muls(int type)
 		{
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
 			int Xn = (type >> 9) & 7;
 			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
@@ -1422,6 +1449,11 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void mulu(int type)
 		{
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
 			int Xn = (type >> 9) & 7;
 			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
@@ -1474,22 +1506,38 @@ namespace RunAmiga.Core.CPU.CSharp
 			int Xn = type & 7;
 			uint op0 = fetchOpSize(a[Xn], size);
 
+			if (size == Size.Byte)
+			{
+				if (Xn == 7)
+					a[Xn] += 2;
+				else
+					a[Xn]++;
+			}
+			else if (size == Size.Word)
+			{
+				a[Xn] += 2;
+			}
+			else if (size == Size.Long)
+			{
+				a[Xn] += 4;
+			}
+
 			int Ax = (type >> 9) & 7;
 			uint op1 = fetchOpSize(a[Ax], size);
 
 			if (size == Size.Byte)
 			{
-				a[Xn]++;
-				a[Ax]++;
+				if (Ax == 7)
+					a[Ax] += 2;
+				else
+					a[Ax]++;
 			}
 			else if (size == Size.Word)
 			{
-				a[Xn] += 2;
 				a[Ax] += 2;
 			}
 			else if (size == Size.Long)
 			{
-				a[Xn] += 4;
 				a[Ax] += 4;
 			}
 
@@ -1719,6 +1767,12 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void divs(int type)
 		{
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			int Xn = (type >> 9) & 7;
 			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
@@ -1742,6 +1796,12 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void divu(int type)
 		{
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			int Xn = (type >> 9) & 7;
 			uint ea = fetchEA(type, Size.Word);
 			uint op = fetchOp(type, ea, Size.Word);
@@ -2025,7 +2085,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				case 0:
 					//if (!true) ...
-					throw new UnknownInstructionException(pc, type);
+					//throw new UnknownInstructionException(pc, type);
 					break;
 				case 1:
 					//if (!false) ...
@@ -2214,6 +2274,8 @@ namespace RunAmiga.Core.CPU.CSharp
 						neg(type);
 					else if ((subins & 0b1111_00000000) == 0b0110_00000000)
 						not(type);
+					else if ((subins & 0b1111_11_000000) == 0b1010_11_000000)
+						tas(type);
 					else if ((subins & 0b1111_00000000) == 0b1010_00000000)
 						tst(type);
 					else
@@ -2226,7 +2288,7 @@ namespace RunAmiga.Core.CPU.CSharp
 					break;
 			}
 		}
-
+		
 		private void tst(int type)
 		{
 			//MC68000 doesn't support tst on address registers
@@ -2236,15 +2298,26 @@ namespace RunAmiga.Core.CPU.CSharp
 				return;
 			}
 			Size size = getSize(type);
-			if (size == Size.Extension)
-			{
-				internalTrap(3);
-				return;
-			}
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
 			setNZ(op, size);
 			clrCV();
+		}
+
+		private void tas(int type)
+		{
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+			Size size = Size.Byte;
+			uint ea = fetchEA(type, size);
+			uint op = fetchOp(type, ea, size);
+			setN((op&0x80)!=0);
+			setZ(op, size);
+			clrCV();
+			writeEA(ReUse(type), ea, size, op|0x80);
 		}
 
 		private void not(int type)
@@ -2313,19 +2386,13 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void pea(int type)
 		{
 			//some EA are not valid
-			uint ea = (uint)((type >> 3) & 7);
-			switch (ea)
+			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
 			{
-				case 0b000:
-				case 0b001:
-				case 0b011:
-				case 0b100:
-				case 0b111:
-					internalTrap(3);
-					return;
+				internalTrap(3);
+				return;
 			}
 			
-			ea = fetchEA(type, Size.Extension);
+			uint ea = fetchEA(type, Size.Extension);
 			push32(ea);
 		}
 
@@ -2627,9 +2694,9 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//M->R
 				if (size == Size.Long)
-					d[Xn] = (fetchOpSize(ea,Size.Byte) << 24) | (fetchOpSize(ea + 2, Size.Byte) << 16) | (fetchOpSize(ea + 4, Size.Byte) << 8) + fetchOpSize(ea + 6, Size.Byte);
+					d[Xn] = (fetchOpSize(ea, Size.Byte) << 24) | (fetchOpSize(ea + 2, Size.Byte) << 16) | (fetchOpSize(ea + 4, Size.Byte) << 8) + fetchOpSize(ea + 6, Size.Byte);
 				else
-					d[Xn] = (fetchOpSize(ea, Size.Byte) << 8) | fetchOpSize(ea + 2, Size.Byte);
+					d[Xn] = (fetchOpSize(ea+1, Size.Byte) << 8) | fetchOpSize(ea + 3, Size.Byte);
 			}
 			else
 			{
@@ -2643,8 +2710,8 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				else
 				{
-					writeOp(ea, d[Xn] >> 8, Size.Byte);
-					writeOp(ea+2, d[Xn], Size.Byte);
+					writeOp(ea+1, d[Xn] >> 8, Size.Byte);
+					writeOp(ea+3, d[Xn], Size.Byte);
 				}
 			}
 		}
@@ -2714,6 +2781,11 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void cmpi(int type)
 		{
+			if (IsAddressReg(type) || IsImmediate(type))
+			{
+				internalTrap(3);
+				return;
+			}
 			Size size = getSize(type);
 			uint imm = fetchImm(size);
 			uint ea = fetchEA(type, size);
@@ -2762,9 +2834,14 @@ namespace RunAmiga.Core.CPU.CSharp
 				return;
 			}
 
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
-
 			op ^= imm;
 			setNZ(op, size);
 			clrCV();
@@ -2896,6 +2973,11 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				return;
 			}
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
 
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
@@ -2940,6 +3022,12 @@ namespace RunAmiga.Core.CPU.CSharp
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 					internalTrap(3);
 				}
+				return;
+			}
+
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
 				return;
 			}
 			uint ea = fetchEA(type, size);
@@ -2992,15 +3080,10 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void lea(int type)
 		{
 			//some EA are not valid
-			uint ei = (uint)((type >> 3) & 7);
-			switch (ei)
+			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
 			{
-				case 0b000:
-				case 0b001:
-				case 0b011:
-				case 0b100:
-					internalTrap(3);
-					return;
+				internalTrap(3);
+				return;
 			}
 
 			uint ea = fetchEA(type, Size.Extension);
@@ -3130,17 +3213,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			tracer.Trace("jmp", instructionStartPC, GetRegs());
 
 			//some EA are not valid
-			uint ea = (uint)((type >> 3) & 7);
-			switch (ea)
-			{
-				case 0b000:
-				case 0b001:
-				case 0b011:
-				case 0b100:
-					internalTrap(3);
-					return;
-			}
-			if ((type & 0b111_111) == 0b111_100)
+			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
 			{
 				internalTrap(3);
 				return;
@@ -3154,6 +3227,13 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void jsr(int type)
 		{
 			tracer.Trace("jsr", instructionStartPC, GetRegs());
+
+			//some EA are not valid
+			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
+			{
+				internalTrap(3);
+				return;
+			}
 
 			uint ea = fetchEA(type, Size.Extension);
 			push32(pc);

@@ -52,6 +52,7 @@ namespace RunAmiga.Tests
 				.AddSingleton<IMusashiCPU, MusashiCPU>()
 				.AddSingleton<IMemoryMapper>(x=> new MemoryMapper(new List<IMemoryMappedDevice>{ x.GetRequiredService<IMemory>() }))
 				.AddSingleton<IMemory, Memory>()
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 
 			serviceProvider1 = new ServiceCollection()
@@ -69,11 +70,10 @@ namespace RunAmiga.Tests
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, Tracer>()
-				.AddSingleton<IOptions<EmulationSettings>>(x=>new OptionsWrapper<EmulationSettings>(new EmulationSettings()))
 				.AddSingleton<ICSharpCPU, CPU>()
-				
 				.AddSingleton<IMemoryMapper>(x => new MemoryMapper(new List<IMemoryMappedDevice> { x.GetRequiredService<IMemory>() }))
 				.AddSingleton<IMemory, Memory>()
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 		}
 
@@ -89,14 +89,13 @@ namespace RunAmiga.Tests
 				this.cpu = cpu;
 
 				var r = new Random(0x24061972);
-				for (uint i = 0; i < 16*1024*1024; i+=4)
+				for (uint i = 0; i < memory.GetMemoryArray().Length; i+=4)
 					memory.UnsafeWrite32(i, (uint)(r.Next()*2)&0xfffffffe);
 
 				memory.UnsafeWrite32(0, 0x800000);//sp
 				memory.UnsafeWrite32(4, 0x10004);//pc loaded with 0x10004 at boot
 				memory.UnsafeWrite16(0x10004, 0x4e71);//4e71 = nop
 				memory.UnsafeWrite16(0x10006, 0x4e71);//4e71 = nop
-
 
 				uint trapSentinel;
 				trapSentinel = 0xDEAD0000;
@@ -146,6 +145,7 @@ namespace RunAmiga.Tests
 
 			public string Disassemble(uint address)
 			{
+				if (address >= memory.GetMemoryArray().Length) return "";
 				var roMemory = new ReadOnlySpan<byte>(memory.GetMemoryArray());
 				var dasm = disassembler.Disassemble(address, roMemory.Slice((int)address, 20));
 				return dasm.ToString(new DisassemblyOptions{IncludeBytes = true});
@@ -161,9 +161,65 @@ namespace RunAmiga.Tests
 				return memory.GetMemoryArray();
 			}
 		}
+
+		[Test(Description = "ALU0")]
+		public void FuzzCPU0() { FuzzCPU(0x0000); }
+
+		[Ignore("All Pass")]
+		[Test(Description = "MOVE.B")]
+		public void FuzzCPU1() { FuzzCPU(0x1000); }
+
+		[Ignore("All Pass")]
+		[Test(Description = "MOVE.W")]
+		public void FuzzCPU2() { FuzzCPU(0x2000); }
+
+		[Ignore("All Pass")]
+		[Test(Description = "MOVE.L")]
+		public void FuzzCPU3() { FuzzCPU(0x3000); }
+
+		[Test(Description = "ALU1")]
+		public void FuzzCPU4() { FuzzCPU(0x4000); }
+
+		[Ignore("All Pass")]
+		[Test(Description = "ADD/SUBQ,Scc,DBcc")]
+		public void FuzzCPU5() { FuzzCPU(0x5000); }
+
+		[Ignore("All Pass")]
+		[Test(Description = "BRANCHES")]
+		public void FuzzCPU6() { FuzzCPU(0x6000); }
+
+		[Ignore("All Pass")]
+		[Test(Description = "MOVEQ")]
+		public void FuzzCPU7() { FuzzCPU(0x7000); }
+
+		[Test(Description = "DIVU/S,SBCD,OR")]
+		public void FuzzCPU8() { FuzzCPU(0x8000); }
+
+		[Test(Description = "SUB/A/X")]
+		public void FuzzCPU9() { FuzzCPU(0x9000); }
+
+		[Ignore("Not Implemented")]
+		[Test(Description = "Coprocessor")]
+		public void FuzzCPUA() { FuzzCPU(0xA000); }
+
+		[Ignore("All Pass")]
+		[Test(Description = "EOR,CMP")]
+		public void FuzzCPUB() { FuzzCPU(0xB000); }
 		
-		[Test]
-		public void FuzzCPU()
+		[Test(Description = "MULU/S,ABCD,EXG,AND")]
+		public void FuzzCPUC() { FuzzCPU(0xC000); }
+		
+		[Test(Description = "ADD/A/X")]
+		public void FuzzCPUD() { FuzzCPU(0xD000); }
+
+		[Test(Description = "SHIFT/RORATE")]
+		public void FuzzCPUE() { FuzzCPU(0xE000); }
+
+		[Ignore("Not Implemented")]
+		[Test(Description="FPU MC68881")]
+		public void FuzzCPUF() { FuzzCPU(0xF000); }
+
+		public void FuzzCPU(ushort prefix, int size=0x1000)
 		{
 			ServiceProviderFactory.ServiceProvider = serviceProvider0;
 			var cpu0 = new CPUTestRig((ICPU)serviceProvider0.GetRequiredService<IMusashiCPU>(),
@@ -184,9 +240,9 @@ namespace RunAmiga.Tests
 			var r = new Random(0x02011964);
 
 			uint failcount = 0;
-			for (int i = 0; i < 5000; i++)
+			for (int i = 0; i < size; i++)
 			{
-				uint pc = (uint)(r.Next() * 2) & 0x007ffffe;
+				uint pc = (uint)((r.Next() * 2) & ((cpu0.GetMemory().Length/2)-1) & 0xffffffc) + 0x10000;
 
 				regs.PC = pc;
 				regs.SR = 0x2700;//(ushort)(0x2700 + r.Next(0x100));
@@ -197,11 +253,7 @@ namespace RunAmiga.Tests
 				cpu0.SetTraps();
 				cpu1.SetTraps();
 				
-				ushort ins;
-				do
-				{
-					ins = (ushort)r.Next();
-				} while ((ins >> 12) == 0b1010 || (ins >> 12) == 0b1111);
+				ushort ins = (ushort)(i|prefix);
 
 				cpu0.Write(pc, ins);
 				cpu1.Write(pc, ins);
@@ -227,7 +279,7 @@ namespace RunAmiga.Tests
 					else
 					{
 						Assert.IsFalse(r0.Compare(r1), "Test #{0} {1}\n{2}", i + 1, cpu0.Disassemble(pc), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
-						//Assert.IsTrue(cpu0.GetMemory().SequenceEqual(cpu1.GetMemory()), $"Test {i + 1} Memory Contents Differ!\n{cpu0.Disassemble(pc)}\n{cpu0.GetMemory().DiffSummary(cpu1.GetMemory())}");
+						Assert.IsTrue(cpu0.GetMemory().SequenceEqual(cpu1.GetMemory()), $"Test {i + 1} Memory Contents Differ!\n{cpu0.Disassemble(pc)}\n{cpu0.GetMemory().DiffSummary(cpu1.GetMemory())}");
 					}
 
 					TestContext.WriteLine($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
@@ -237,49 +289,10 @@ namespace RunAmiga.Tests
 					TestContext.WriteLine($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
 					Array.Copy(cpu0.GetMemory(), cpu1.GetMemory(), cpu0.GetMemory().Length);
 					failcount++;
-					//Assert.Fail();
+					Assert.Fail();
 				}
 			}
 			Assert.AreEqual(0, failcount, "Some instructions failed the test");
-		}
-
-		[Test]
-		public void TestSpecific()
-		{
-			var instructions = new []{ new ushort[] { 0xe3d8 } };//lsl.w     #1,(a0)+
-
-			ServiceProviderFactory.ServiceProvider = serviceProvider0;
-			var cpu0 = new CPUTestRig((ICPU)serviceProvider0.GetRequiredService<IMusashiCPU>(),
-				serviceProvider0.GetRequiredService<IMemory>());
-
-			ServiceProviderFactory.ServiceProvider = serviceProvider1;
-			var cpu1 = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<ICSharpCPU>(),
-				serviceProvider1.GetRequiredService<IMemory>());
-
-			cpu0.Emulate();
-			cpu1.Reset();
-
-			foreach (var instruction in instructions)
-			{
-				uint address = 0x10000;
-				foreach (var word in instruction)
-				{
-					cpu0.Write(address, word);
-					cpu1.Write(address, word);
-					address += 2;
-				}
-
-				cpu0.SetPC(0x10000);
-				cpu1.SetPC(0x10000);
-
-				cpu0.Emulate();
-				cpu1.Emulate();
-
-				var r0 = cpu0.GetRegs();
-				var r1 = cpu1.GetRegs();
-
-				Assert.IsFalse(r0.Compare(r1), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
-			}
 		}
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Disassembler.AmigaTypes;
 
 // ReSharper disable InconsistentNaming
 
@@ -1393,6 +1394,8 @@ namespace RunAmiga.Disassembler
 						neg(type);
 					else if ((subins & 0b1111_00000000) == 0b0110_00000000)
 						not(type);
+					else if ((subins & 0b1111_11_000000) == 0b1010_11_000000)
+						tas(type);
 					else if ((subins & 0b1111_00000000) == 0b1010_00000000)
 						tst(type);
 					else
@@ -1405,6 +1408,14 @@ namespace RunAmiga.Disassembler
 		{
 			Append("tst");
 			Size size = getSize(type);
+			uint ea = fetchEA(type);
+			uint op = fetchOp(type, ea, size);
+		}
+
+		private void tas(int type)
+		{
+			Append("tas ");
+			Size size = Size.Byte;
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, size);
 		}
@@ -1621,7 +1632,7 @@ namespace RunAmiga.Disassembler
 
 			Append(size);
 
-			if ((type & 0xb10000000) != 0)
+			if ((type & 0xb10000000) == 0)
 			{
 				fetchEA((type & 7) | 0b101 << 3);
 				Append(",");

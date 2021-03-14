@@ -11,19 +11,22 @@ namespace RunAmiga.Core
 	public class Memory : IMemory
 	{
 		private readonly byte[] memory;
-		public const uint memoryMask = 0x00ffffff;
+		private uint memoryMask;
 		
 		private readonly ILogger logger;
 		private readonly IMachineIdentifier machineIdentifier;
 		private readonly EmulationSettings settings;
 		private Kickstart kickstart;
+		private readonly MemoryRange memoryRange;
 
 		public Memory(ILogger<Memory> logger, IOptions<EmulationSettings> settings, IMachineIdentifier machineIdentifier)
 		{
 			this.logger = logger;
 			this.machineIdentifier = machineIdentifier;
 			this.settings = settings.Value;
-			this.memory = new byte[16 * 1024 * 1024];
+			this.memory = new byte[settings.Value.MemorySize];
+			memoryRange = new MemoryRange(0x0, (uint)memory.Length);
+			memoryMask = (uint)(memory.Length - 1);
 
 			if (!string.IsNullOrEmpty(settings.Value.KickStart))
 			{
@@ -42,7 +45,6 @@ namespace RunAmiga.Core
 			Reset();
 		}
 
-		readonly MemoryRange memoryRange = new MemoryRange(0x0, 0x1000000);
 
 		public bool IsMapped(uint address)
 		{
