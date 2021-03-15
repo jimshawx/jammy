@@ -206,7 +206,8 @@ namespace RunAmiga.Tests
 		[Ignore("All Pass")]
 		[Test(Description = "EOR,CMP")]
 		public void FuzzCPUB() { FuzzCPU(0xB000); }
-		
+
+		[Ignore("All Pass")]
 		[Test(Description = "MULU/S,ABCD,EXG,AND")]
 		public void FuzzCPUC() { FuzzCPU(0xC000); }
 
@@ -214,6 +215,7 @@ namespace RunAmiga.Tests
 		[Test(Description = "ADD/A/X")]
 		public void FuzzCPUD() { FuzzCPU(0xD000); }
 
+		[Ignore("All Pass")]
 		[Test(Description = "SHIFT/ROTATE")]
 		public void FuzzCPUE() { FuzzCPU(0xE000); }
 

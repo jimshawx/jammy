@@ -1048,6 +1048,7 @@ namespace RunAmiga.Core.CPU.CSharp
 						{
 							uint x = X() ? 1u : 0;
 							setX(val & (1u << 31));
+							setC(val & (1u << 31));
 							val <<= 1;
 							val |= x;
 						}
@@ -1058,6 +1059,7 @@ namespace RunAmiga.Core.CPU.CSharp
 						{
 							uint x = X() ? 1u : 0;
 							setX(val & (1u << 15));
+							setC(val & (1u << 15));
 							val <<= 1;
 							val &= 0xffff;
 							val |= x;
@@ -1069,12 +1071,12 @@ namespace RunAmiga.Core.CPU.CSharp
 						{
 							uint x = X() ? 1u : 0;
 							setX(val & (1u << 7));
+							setC(val & (1u << 7));
 							val <<= 1;
 							val &= 0xff;
 							val |= x;
 						}
 					}
-					setC(val & 1);
 				}
 				else
 				{
@@ -1084,6 +1086,7 @@ namespace RunAmiga.Core.CPU.CSharp
 						{
 							uint x = X() ? 1u : 0;
 							setX(val & 1);
+							setC(val & 1);
 							val >>= 1;
 							val |= (x << 31);
 						}
@@ -1095,10 +1098,10 @@ namespace RunAmiga.Core.CPU.CSharp
 						{
 							uint x = X() ? 1u : 0;
 							setX(val & 1);
+							setC(val & 1);
 							val >>= 1;
 							val |= (x << 15);
 						}
-						setC(val & (1u << 15));
 					}
 					else if (size == Size.Byte)
 					{
@@ -1106,10 +1109,10 @@ namespace RunAmiga.Core.CPU.CSharp
 						{
 							uint x = X() ? 1u : 0;
 							setX(val & 1);
+							setC(val & 1);
 							val >>= 1;
 							val |= (x << 7);
 						}
-						setC(val & (1u << 7));
 					}
 				}
 			}
@@ -1177,33 +1180,24 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				if (lr == 1)
 				{
-					uint signmask = 0;
+					uint signmask = (1u<<(shift+1))-1;
 					if (size == Size.Long)
 					{
 						setC(val & (1u << (32 - shift)));
-						signmask = ((1u << shift) - 1) << (32 - shift);
+						signmask <<= 31 - shift;
 					}
 					else if (size == Size.Word)
 					{
 						setC(val & (1u << (16 - shift)));
-						signmask = ((1u << shift) - 1) << (16 - shift);
+						signmask <<= 15 - shift;
 					}
 					else if (size == Size.Byte)
 					{
 						setC(val & (1u << (8 - shift)));
-						signmask = ((1u << shift) - 1) << (8 - shift);
+						signmask <<= 7 - shift;
 					}
 					setX(C());
-					//algorithm - if the bits shifted out do not all equal sign bit, set V
-					//let's say .w << 3, then if we AND with shiftmask == 0xb111_00000_00000000 == ((1<<shift)-1)<<(.w-shift)
-					//and sign is ((int)v>>shift)&(signmask)
-					uint sign = (uint)((int)val>>shift)&signmask;
-
-					//logger.LogTrace($"asl #{shift},{Convert.ToString(val, 2).PadLeft(32, '0')}");
-					//logger.LogTrace($"mask {Convert.ToString(signmask, 2).PadLeft(32, '0')}");
-					//logger.LogTrace($"sign {Convert.ToString(sign,2).PadLeft(32,'0')}");
-					//logger.LogTrace($"vm   {Convert.ToString(val&signmask, 2).PadLeft(32, '0')}");
-					setV((val&signmask) != sign);
+					setV((val&signmask)!=0 && (val&signmask)!=signmask);
 					val <<= shift;
 				}
 				else
@@ -1387,8 +1381,6 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint op2 = fetchOp(type2, ea2, Size.Byte);
 
 			op = add_bcd(op, op2);
-
-			setC(op, Size.Byte);
 			setX(C());
 			if (op != 0) clrZ();
 
@@ -1401,16 +1393,16 @@ namespace RunAmiga.Core.CPU.CSharp
 			byte d0;
 			byte d1;
 			uint r0;
-			
+			byte v;
+
 			d0 = (byte)(op2 & 0xf);
 			d1 = (byte)(op & 0xf);
 			d0 += (byte)(d1 + c);
+			v=(byte)~d0;
 			if (d0 >= 10)
 			{
-				//c = 1;
-				//d0 -= 10;
-				c = 0;
-				d0 += 6;
+				c = 1;
+				d0 -= 10;
 			}
 			else
 			{
@@ -1418,8 +1410,8 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			r0 = d0;
 
-			d0 = (byte)(op2 >> 4);
-			d1 = (byte)(op >> 4);
+			d0 = (byte)((byte)op2 >> 4);
+			d1 = (byte)((byte)op >> 4);
 			d0 += (byte)(d1 + c);
 			if (d0 >= 10)
 			{
@@ -1430,8 +1422,14 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				clrC();
 			}
-			r0 += (byte)(d0 * 10);
 
+			r0 += (byte)(d0 << 4);
+			
+			//undocumented
+			setV((v&r0&0x80) != 0);
+			setV((v&r0&0x80) != 0);
+			setN((r0&0x80) !=0);
+			//undocumented
 			return r0;
 		}
 
@@ -1719,9 +1717,8 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint ea2 = fetchEA(type2, Size.Byte);
 			uint op2 = fetchOp(type2, ea2, Size.Byte);
 
-			op = sub_bcd(op, op2);
+			op = sub_bcd(op2, op);
 
-			setC(op, Size.Byte);
 			setX(C());
 			if (op != 0) clrZ();
 
@@ -1735,10 +1732,13 @@ namespace RunAmiga.Core.CPU.CSharp
 			sbyte d0;
 			sbyte d1;
 			uint r0;
-
+			byte v;
 			d0 = (sbyte)(op & 0xf);
 			d1 = (sbyte)(op2 & 0xf);
 			d0 -= (sbyte)(d1+c);
+			v = (byte)~d0;
+
+			if (d0 >= 10) d0 -= 6;
 			if (d0 < 0)
 			{
 				c = 1;
@@ -1753,10 +1753,15 @@ namespace RunAmiga.Core.CPU.CSharp
 			//c = 0;
 			r0 = (uint)d0;
 
-			d0 = (sbyte)(op >> 4);
-			d1 = (sbyte)(op2 >> 4);
+			d0 = (sbyte)((byte)op >> 4);
+			d1 = (sbyte)((byte)op2 >> 4);
 			d0 -= (sbyte)(d1+c);
-			if (d0 < 0)
+			if (d0 >= 10)
+			{
+				setC();
+				d0 -= 6;
+			}
+			else if (d0 < 0)
 			{
 				setC();
 				d0 += 10;
@@ -1765,8 +1770,13 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				clrC();
 			}
-			r0 += (uint)(d0 * 10);
+			r0 += (uint)(d0 << 4);
 
+			//XNZVC
+			//undocumented
+			setV((v&r0&0x80)!=0);
+			setN((r0&0x80)!=0);
+			//undocumented
 			return r0;
 		}
 
@@ -2436,7 +2446,6 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			op = sub_bcd(0, op);
 
-			setC(op, Size.Byte);
 			setX(C());
 			if (op != 0) clrZ();
 
