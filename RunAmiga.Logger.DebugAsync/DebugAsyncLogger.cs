@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -17,15 +18,22 @@ namespace RunAmiga.Logger.DebugAsync
 		public void Dispose() { }
 	}
 
+	public class DbMessage
+	{
+		public string Message { get; set; }
+		public string Name { get; set; }
+		public LogLevel LogLevel { get; set; }
+	}
+
 	public class DebugAsyncLogger : ILogger
 	{
 		private readonly string name;
-		private ConcurrentQueue<DebugAsyncLoggerProvider.DbMessage> messageQueue;
+		private ConcurrentQueue<DbMessage> messageQueue;
 
-		public DebugAsyncLogger(string name)
+		public DebugAsyncLogger(string name, ConcurrentQueue<DbMessage> messageQueue)
 		{
 			this.name = name;
-			this.messageQueue = DebugAsyncLoggerProvider.MessageQueue;
+			this.messageQueue = messageQueue;
 		}
 
 		public IDisposable BeginScope<TState>(TState state)
@@ -56,7 +64,7 @@ namespace RunAmiga.Logger.DebugAsync
 			if (exception != null)
 				message += Environment.NewLine + Environment.NewLine + exception;
 
-			messageQueue.Enqueue(new DebugAsyncLoggerProvider.DbMessage
+			messageQueue.Enqueue(new DbMessage
 			{
 				LogLevel = logLevel,
 				Message = message,
@@ -68,23 +76,27 @@ namespace RunAmiga.Logger.DebugAsync
 	[ProviderAlias("DebugAsync")]
 	public class DebugAsyncLoggerProvider : ILoggerProvider
 	{
-		internal class DbMessage
+		private sealed class DebugAsyncLoggerInstance
 		{
-			public string Message { get; set; }
-			public string Name { get; set; }
-			public LogLevel LogLevel { get; set; }
+			public DebugAsyncConsoleLoggerReader Reader { get; private set; }
+			public ConcurrentQueue<DbMessage> MessageQueue { get; private set; }
+
+			private DebugAsyncLoggerInstance()
+			{
+				MessageQueue = new ConcurrentQueue<DbMessage>();
+				Reader = new DebugAsyncConsoleLoggerReader(MessageQueue);
+			}
+
+			private static DebugAsyncLoggerInstance instance;
+
+			public static DebugAsyncLoggerInstance Instance
+			{
+				get { return instance ??= new DebugAsyncLoggerInstance(); }
+			}
 		}
 
-		private DebugAsyncConsoleLoggerReader reader;
-		internal static ConcurrentQueue<DbMessage> MessageQueue = new ConcurrentQueue<DbMessage>();
-
-		public DebugAsyncLoggerProvider()
-		{
-			reader = new DebugAsyncConsoleLoggerReader();
-		}
-
-		public ILogger CreateLogger(string name) { return new DebugAsyncLogger(name); }
-		public void Dispose() { reader.Dispose(); }
+		public ILogger CreateLogger(string name) { return new DebugAsyncLogger(name, DebugAsyncLoggerInstance.Instance.MessageQueue); }
+		public void Dispose() { DebugAsyncLoggerInstance.Instance.Reader.Dispose(); }
 	}
 
 	public static class DebugAsyncExtensions
@@ -101,20 +113,46 @@ namespace RunAmiga.Logger.DebugAsync
 		[DllImport("kernel32.dll")]
 		static extern bool AllocConsole();
 		[DllImport("kernel32.dll")]
+		static extern bool AttachConsole(uint dwProcessId);
+		[DllImport("kernel32.dll")]
 		static extern bool FreeConsole();
+		[DllImport("kernel32.dll")]
+		static extern uint GetLastError();
+
+		private const uint ERROR_ACCESS_DENIED = 5;
+		private const uint ERROR_INVALID_HANDLE = 6;
+		private const uint ERROR_INVALID_PARAMETER = 87;
 
 		private readonly CancellationTokenSource cancellation;
 		private readonly Task readerTask;
 
-		public DebugAsyncConsoleLoggerReader()
+		public DebugAsyncConsoleLoggerReader(ConcurrentQueue<DbMessage> messageQueue)
 		{
 			cancellation = new CancellationTokenSource();
 			readerTask = new Task(() =>
 			{
-				AllocConsole();
-				var writer = Console.Out;
+				bool consoleAllocated = true;
+				if (!AllocConsole())
+				{
+					consoleAllocated = false;
 
-				var messageQueue = DebugAsyncLoggerProvider.MessageQueue;
+					//ERROR_ACCESS_DENIED means we're already attached to a console
+					if (GetLastError() != ERROR_ACCESS_DENIED)
+					{
+						Trace.WriteLine($"AllocConsole LastError {GetLastError()}");
+						if (!AttachConsole(0xffffffff))
+						{
+							Trace.WriteLine($"AttachConsole LastError {GetLastError()}");
+							Trace.WriteLine("Can't get a console for logging");
+							return;
+						}
+
+						//attached to an existing console, need to call FreeConsole()
+						consoleAllocated = true;
+					}
+				}
+
+				var writer = Console.Out;
 				int backoff = 1;
 				var sb = new StringBuilder();
 
@@ -123,7 +161,7 @@ namespace RunAmiga.Logger.DebugAsync
 					if (!messageQueue.IsEmpty)
 					{
 						sb.Clear();
-						while (messageQueue.TryDequeue(out DebugAsyncLoggerProvider.DbMessage rv))
+						while (messageQueue.TryDequeue(out DbMessage rv))
 						{
 							sb.AppendLine($"{rv.Name}: {rv.LogLevel}: {rv.Message}");
 						}
@@ -140,7 +178,8 @@ namespace RunAmiga.Logger.DebugAsync
 					}
 				}
 
-				FreeConsole();
+				if (consoleAllocated)
+					FreeConsole();
 
 			}, cancellation.Token);
 
