@@ -922,6 +922,11 @@ namespace RunAmiga.Core.CPU.CSharp
 			return (type & 0b111_111) == 0b111_100;
 		}
 
+		private bool IsPCRelative(int type)
+		{
+			return (type & 0b111_111) == 0b111_010 || (type & 0b111_111) == 0b111_011;
+		}
+
 		private void t_fourteen(int type)
 		{
 			int mode = (type & 0b11_000_000) >> 6;
@@ -1263,7 +1268,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				op += op2 + x;
 				if (op != 0) clrZ();
 				setN(op, size);
-				writeEA(ReUse(type), ea, size, op);
+				writeEA(ReUse(type2), ea2, size, op);
 			}
 			else
 			{
@@ -1387,7 +1392,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			setX(C());
 			if (op != 0) clrZ();
 
-			writeEA(ReUse(type), ea, Size.Byte, op);
+			writeEA(ReUse(type2), ea2, Size.Byte, op);
 		}
 
 		private uint add_bcd(uint op, uint op2)
@@ -1625,7 +1630,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				op -= op2 + x;
 				if (op != 0) clrZ();
 				setN(op, size);
-				writeEA(ReUse(type), ea, size, op); 
+				writeEA(ReUse(type2), ea2, size, op); 
 			}
 			else
 			{
@@ -1720,7 +1725,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			setX(C());
 			if (op != 0) clrZ();
 
-			writeEA(ReUse(type), ea, Size.Byte, op);
+			writeEA(ReUse(type2), ea2, Size.Byte, op);
 		}
 
 		private uint sub_bcd(uint op, uint op2)
@@ -1734,18 +1739,18 @@ namespace RunAmiga.Core.CPU.CSharp
 			d0 = (sbyte)(op & 0xf);
 			d1 = (sbyte)(op2 & 0xf);
 			d0 -= (sbyte)(d1+c);
-			//if (d0 < 0)
-			//{
-			//	c = 1;
-			//	d0 += 10;
-			//}
-			//else
-			//{
-			//	c = 0;
-			//}
-			if (d0 > 9)
-				d0 -= 6;
-			c = 0;
+			if (d0 < 0)
+			{
+				c = 1;
+				d0 += 10;
+			}
+			else
+			{
+				c = 0;
+			}
+			//if (d0 > 9)
+			//	d0 -= 6;
+			//c = 0;
 			r0 = (uint)d0;
 
 			d0 = (sbyte)(op >> 4);
@@ -2297,6 +2302,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				internalTrap(3);
 				return;
 			}
+
 			Size size = getSize(type);
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
@@ -2311,6 +2317,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				internalTrap(3);
 				return;
 			}
+
 			Size size = Size.Byte;
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
@@ -2322,6 +2329,12 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void not(int type)
 		{
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			Size size = getSize(type);
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
@@ -2333,6 +2346,12 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void neg(int type)
 		{
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			Size size = getSize(type);
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
@@ -2366,6 +2385,12 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void negx(int type)
 		{
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			Size size = getSize(type);
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
@@ -2694,9 +2719,9 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//M->R
 				if (size == Size.Long)
-					d[Xn] = (fetchOpSize(ea, Size.Byte) << 24) | (fetchOpSize(ea + 2, Size.Byte) << 16) | (fetchOpSize(ea + 4, Size.Byte) << 8) + fetchOpSize(ea + 6, Size.Byte);
+					d[Xn] = (uint)((uint)(byte)fetchOpSize(ea, Size.Byte) << 24) | ((uint)(byte)fetchOpSize(ea + 2, Size.Byte) << 16) | ((uint)(byte)fetchOpSize(ea + 4, Size.Byte) << 8) + (uint)(byte)fetchOpSize(ea + 6, Size.Byte);
 				else
-					d[Xn] = (fetchOpSize(ea+1, Size.Byte) << 8) | fetchOpSize(ea + 3, Size.Byte);
+					d[Xn] = (uint)(ushort)((byte)fetchOpSize(ea, Size.Byte) << 8) | (byte)fetchOpSize(ea + 2, Size.Byte);
 			}
 			else
 			{
@@ -2710,8 +2735,8 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				else
 				{
-					writeOp(ea+1, d[Xn] >> 8, Size.Byte);
-					writeOp(ea+3, d[Xn], Size.Byte);
+					writeOp(ea, d[Xn] >> 8, Size.Byte);
+					writeOp(ea+2, d[Xn], Size.Byte);
 				}
 			}
 		}
@@ -2781,7 +2806,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void cmpi(int type)
 		{
-			if (IsAddressReg(type) || IsImmediate(type))
+			if (IsAddressReg(type) || IsImmediate(type) || IsPCRelative(type)/*MC68000*/)
 			{
 				internalTrap(3);
 				return;
@@ -2805,7 +2830,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				if (size == Size.Byte)
 				{
-					ushort immsr = (ushort)imm;
+					ushort immsr = (ushort)(imm&0xff);
 					sr ^= immsr; //naturally sets the flags
 					sr &= SRmask;
 					//CheckInterrupt();
@@ -2852,6 +2877,12 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			Size size;
 
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			//if target is a register, then it's a long else it's a byte
 			if (((type & 0b111000) >> 3) == 0)
 				size = Size.Long;
@@ -2869,9 +2900,14 @@ namespace RunAmiga.Core.CPU.CSharp
 				//bit number is in immediate byte following
 				ushort imm16 = read16(pc);
 				bit = (uint)(imm16 & 0xff); pc += 2;
+				if (IsImmediate(type))
+				{
+					internalTrap(3);
+					return;
+				}
 			}
 
-			if (size == Size.Byte)
+				if (size == Size.Byte)
 				bit &= 7;//0-7
 			else
 				bit &= 31;//0-31
@@ -2905,14 +2941,13 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void addi(int type)
 		{
-			Size size = getSize(type);
-
-			if (size == Size.Byte && IsAddressReg(type))
+			if (IsAddressReg(type))
 			{
 				internalTrap(3);
 				return;
 			}
 
+			Size size = getSize(type);
 			uint imm = fetchImm(size);
 			uint ea = fetchEA(type, size);
 			uint op = fetchOp(type, ea, size);
@@ -2926,6 +2961,12 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void subi(int type)
 		{
+			if (IsAddressReg(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			Size size = getSize(type);
 			uint imm = fetchImm(size);
 			uint ea = fetchEA(type, size);
@@ -2947,7 +2988,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				if (size == Size.Byte)
 				{
-					ushort immsr = (ushort)imm;
+					ushort immsr = (ushort)((imm&0xff)|0xff00);
 					sr &= immsr;//naturally clears the flags
 					//CheckInterrupt();
 				}
@@ -2996,7 +3037,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				if (size == Size.Byte)
 				{
-					ushort immsr = (ushort)imm;
+					ushort immsr = (ushort)(imm&0xff);
 					sr |= immsr;//naturally sets the flags
 					sr &= SRmask;
 					//CheckInterrupt();

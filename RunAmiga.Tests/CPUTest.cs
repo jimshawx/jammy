@@ -162,6 +162,7 @@ namespace RunAmiga.Tests
 			}
 		}
 
+		[Ignore("All Pass")]
 		[Test(Description = "ALU0")]
 		public void FuzzCPU0() { FuzzCPU(0x0000); }
 
@@ -208,11 +209,12 @@ namespace RunAmiga.Tests
 		
 		[Test(Description = "MULU/S,ABCD,EXG,AND")]
 		public void FuzzCPUC() { FuzzCPU(0xC000); }
-		
+
+		[Ignore("All Pass")]
 		[Test(Description = "ADD/A/X")]
 		public void FuzzCPUD() { FuzzCPU(0xD000); }
 
-		[Test(Description = "SHIFT/RORATE")]
+		[Test(Description = "SHIFT/ROTATE")]
 		public void FuzzCPUE() { FuzzCPU(0xE000); }
 
 		[Ignore("Not Implemented")]
