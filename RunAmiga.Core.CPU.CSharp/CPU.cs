@@ -592,7 +592,11 @@ namespace RunAmiga.Core.CPU.CSharp
 								uint ext = read16(pc);
 								uint Xn = (ext >> 12) & 7;
 								uint d8 = ext & 0xff;
-								uint dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
+								uint dx;
+								if ((ext & 0x8000) != 0)
+									dx = (((ext >> 11) & 1) != 0) ? a[(int)Xn] : (uint)(short)a[(int)Xn];
+								else
+									dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
 								uint ea = pc + dx + (uint)(sbyte)d8;
 								pc += 2;
 								return ea;
@@ -2193,7 +2197,8 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			else
 			{
-				if (size == Size.Word) { op = (uint)signExtend(op, Size.Word); size = Size.Long; }
+				//if (size == Size.Word) { op = (uint)signExtend(op, Size.Word); size = Size.Long; }
+				size = Size.Long;
 			}
 			writeEA(ReUse(type), ea, size, op);
 		}
@@ -2226,7 +2231,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			else
 			{
-				op = (uint)signExtend(op, Size.Word);
+				//op = (uint)signExtend(op, Size.Word);
 				size = Size.Long;
 			}
 			writeEA(ReUse(type), ea, size, op);
@@ -2763,9 +2768,9 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				//M->R
 				if (size == Size.Long)
-					d[Xn] = (uint)((uint)(byte)fetchOpSize(ea, Size.Byte) << 24) | ((uint)(byte)fetchOpSize(ea + 2, Size.Byte) << 16) | ((uint)(byte)fetchOpSize(ea + 4, Size.Byte) << 8) + (uint)(byte)fetchOpSize(ea + 6, Size.Byte);
+					d[Xn] = ((uint)(byte)fetchOpSize(ea, Size.Byte) << 24) | ((uint)(byte)fetchOpSize(ea + 2, Size.Byte) << 16) | ((uint)(byte)fetchOpSize(ea + 4, Size.Byte) << 8) + (uint)(byte)fetchOpSize(ea + 6, Size.Byte);
 				else
-					d[Xn] = (uint)(ushort)((byte)fetchOpSize(ea, Size.Byte) << 8) | (byte)fetchOpSize(ea + 2, Size.Byte);
+					d[Xn] = (d[Xn] & 0xffff0000) | (uint)((byte)fetchOpSize(ea, Size.Byte) << 8) | (byte)fetchOpSize(ea + 2, Size.Byte);
 			}
 			else
 			{

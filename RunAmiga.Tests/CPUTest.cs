@@ -254,6 +254,14 @@ namespace RunAmiga.Tests
 
 				regs.PC = pc;
 				regs.SR = (ushort)(0x2700 + r.Next(1<<5));
+
+				for (int x = 0; x < 8; x++)
+				{
+					regs.D[x] = (uint)((r.Next() << 1) ^ r.Next());
+					if (x < 7)
+						regs.A[x] = (uint)((r.Next() << 1) ^ r.Next());
+				}
+
 				cpu0.SetRegs(regs);
 				cpu1.SetRegs(regs);
 
