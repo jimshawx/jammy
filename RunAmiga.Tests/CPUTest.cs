@@ -177,43 +177,43 @@ namespace RunAmiga.Tests
 			}
 		}
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "ALU0")]
 		public void FuzzCPU0() { FuzzCPU(0x0000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "MOVE.B")]
 		public void FuzzCPU1() { FuzzCPU(0x1000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "MOVE.W")]
 		public void FuzzCPU2() { FuzzCPU(0x2000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "MOVE.L")]
 		public void FuzzCPU3() { FuzzCPU(0x3000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "ALU1")]
 		public void FuzzCPU4() { FuzzCPU(0x4000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "ADD/SUBQ,Scc,DBcc")]
 		public void FuzzCPU5() { FuzzCPU(0x5000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "BRANCHES")]
 		public void FuzzCPU6() { FuzzCPU(0x6000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "MOVEQ")]
 		public void FuzzCPU7() { FuzzCPU(0x7000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "DIVU/S,SBCD,OR")]
 		public void FuzzCPU8() { FuzzCPU(0x8000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "SUB/A/X")]
 		public void FuzzCPU9() { FuzzCPU(0x9000); }
 
@@ -221,19 +221,19 @@ namespace RunAmiga.Tests
 		[Test(Description = "Coprocessor")]
 		public void FuzzCPUA() { FuzzCPU(0xA000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "EOR,CMP")]
 		public void FuzzCPUB() { FuzzCPU(0xB000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "MULU/S,ABCD,EXG,AND")]
 		public void FuzzCPUC() { FuzzCPU(0xC000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "ADD/A/X")]
 		public void FuzzCPUD() { FuzzCPU(0xD000); }
 
-		[Ignore("All Pass")]
+		//[Ignore("All Pass")]
 		[Test(Description = "SHIFT/ROTATE")]
 		public void FuzzCPUE() { FuzzCPU(0xE000); }
 
@@ -253,7 +253,7 @@ namespace RunAmiga.Tests
 				uint pc = (uint)((r.Next() * 2) & ((cpu0.GetMemory().Length/2)-1) & 0xffffffc) + 0x10000;
 
 				regs.PC = pc;
-				regs.SR = 0x2700;// (ushort)(0x2700 + r.Next(1<<5));
+				regs.SR = (ushort)(0x2700 + r.Next(1<<5));
 				cpu0.SetRegs(regs);
 				cpu1.SetRegs(regs);
 

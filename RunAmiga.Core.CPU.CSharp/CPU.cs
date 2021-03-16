@@ -422,15 +422,19 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void setC(uint v, uint op, Size size)
 		{
-			//ulong r = (ulong)signExtend(v, size) + (ulong)signExtend(op, size);
 			ulong r = (ulong)zeroExtend(v, size) + (ulong)zeroExtend(op, size);
 			setC(r, size);
 		}
 
 		private void setC_sub(uint v, uint op, Size size)
 		{
-			//ulong r = (ulong)signExtend(v, size) - (ulong)signExtend(op, size);
 			ulong r = zeroExtend(v, size) - zeroExtend(op, size);
+			setC(r, size);
+		}
+
+		private void setC_subx(uint v, uint op, Size size)
+		{
+			ulong r = zeroExtend(v, size) - zeroExtend(op, size) - (X()?1ul:0ul);
 			setC(r, size);
 		}
 
@@ -443,6 +447,12 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void setV_sub(uint v, uint op, Size size)
 		{
 			long r = signExtend(v, size) - signExtend(op, size);
+			setV(r, size);
+		}
+
+		private void setV_subx(uint v, uint op, Size size)
+		{
+			long r = signExtend(v, size) - signExtend(op, size) - (X() ? 1L : 0L);
 			setV(r, size);
 		}
 
@@ -1094,7 +1104,6 @@ namespace RunAmiga.Core.CPU.CSharp
 							val >>= 1;
 							val |= (x << 31);
 						}
-						setC(val & (1u << 31));
 					}
 					else if (size == Size.Word)
 					{
@@ -1179,6 +1188,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (shift == 0)
 			{
 				clrC();
+				clrV();
 			}
 			else
 			{
@@ -1626,8 +1636,8 @@ namespace RunAmiga.Core.CPU.CSharp
 
 				uint ea2 = fetchEA(type2, size);
 				uint op2 = fetchOp(type2, ea2, size);
-				setV_sub(op2, op + x, size);
-				setC_sub(op2, op + x, size);
+				setV_subx(op2, op, size);
+				setC_subx(op2, op, size);
 				setX(C());
 				op = op2 - op - x;
 				if (op != 0) clrZ();
@@ -2457,7 +2467,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			else
 			{
-				op = 0x9a - op;
+				op = 0x9a - op - (X()?1u:0u);
 				byte v = (byte)~op;
 				byte dl = (byte)(op & 0xf);
 				byte dh = (byte)(op >> 4);
@@ -3137,17 +3147,17 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			//undocumented
 			clrCV();
-			setNZ(d[Xn], size);
+			setZ(d[Xn], size);
 			//undocumented
 
 			if (v < 0)
 			{
-				setN();
+				setN();//undocumented
 				internalTrap(6);
 			}
 			else if (v > (int)op)
 			{
-				clrN();
+				clrN();//undocumented
 				internalTrap(6);
 			}
 		}
