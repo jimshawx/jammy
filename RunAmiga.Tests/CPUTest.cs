@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Accessibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using RunAmiga.Core;
 using RunAmiga.Core.CPU.CSharp;
@@ -30,6 +27,8 @@ namespace RunAmiga.Tests
 	{
 		private ServiceProvider serviceProvider0;
 		private ServiceProvider serviceProvider1;
+		private CPUTestRig cpu1;
+		private CPUTestRig cpu0;
 
 		[OneTimeSetUp]
 		public void CPUTestInit()
@@ -75,6 +74,21 @@ namespace RunAmiga.Tests
 				.AddSingleton<IMemory, Memory>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
+
+				ServiceProviderFactory.ServiceProvider = serviceProvider0;
+				cpu0 = new CPUTestRig((ICPU)serviceProvider0.GetRequiredService<IMusashiCPU>(),
+					serviceProvider0.GetRequiredService<IMemory>());
+
+				ServiceProviderFactory.ServiceProvider = serviceProvider1;
+				cpu1 = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<ICSharpCPU>(),
+					serviceProvider1.GetRequiredService<IMemory>());
+
+				cpu0.Reset();
+				cpu1.Reset();
+
+				cpu0.Emulate();
+				cpu1.Emulate();
+
 		}
 
 		private class CPUTestRig
@@ -103,6 +117,7 @@ namespace RunAmiga.Tests
 					memory.UnsafeWrite32(i, trapSentinel+=4);
 
 				disassembler = new Disassembler.Disassembler();
+
 			}
 
 			public void SetTraps()
@@ -228,20 +243,6 @@ namespace RunAmiga.Tests
 
 		public void FuzzCPU(ushort prefix, int size=0x1000)
 		{
-			ServiceProviderFactory.ServiceProvider = serviceProvider0;
-			var cpu0 = new CPUTestRig((ICPU)serviceProvider0.GetRequiredService<IMusashiCPU>(),
-				serviceProvider0.GetRequiredService<IMemory>());
-
-			ServiceProviderFactory.ServiceProvider = serviceProvider1;
-			var cpu1 = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<ICSharpCPU>(),
-				serviceProvider1.GetRequiredService<IMemory>());
-
-			cpu0.Reset();
-			cpu1.Reset();
-
-			cpu0.Emulate();
-			cpu1.Emulate();
-
 			var regs = new Regs();
 
 			var r = new Random(0x02011964);
@@ -252,7 +253,7 @@ namespace RunAmiga.Tests
 				uint pc = (uint)((r.Next() * 2) & ((cpu0.GetMemory().Length/2)-1) & 0xffffffc) + 0x10000;
 
 				regs.PC = pc;
-				regs.SR = 0x2700;//(ushort)(0x2700 + r.Next(0x100));
+				regs.SR = 0x2700;// (ushort)(0x2700 + r.Next(1<<5));
 				cpu0.SetRegs(regs);
 				cpu1.SetRegs(regs);
 

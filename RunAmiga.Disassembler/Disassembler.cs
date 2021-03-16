@@ -239,7 +239,10 @@ namespace RunAmiga.Disassembler
 						uint Xn = (ext >> 12) & 7;
 						uint d8 = ext & 0xff;
 						string s = (((ext>>11)&1) != 0)?"l":"w";
-						Append($"{fmtX2(d8)}(a{x},d{Xn}.{s})");
+						if ((ext & 0x8000)!=0)
+							Append($"{fmtX2(d8)}(a{x},a{Xn}.{s})");
+						else
+							Append($"{fmtX2(d8)}(a{x},d{Xn}.{s})");
 						return 0;
 					}
 				case 7:

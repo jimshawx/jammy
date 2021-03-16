@@ -560,7 +560,11 @@ namespace RunAmiga.Core.CPU.CSharp
 						uint ext = read16(pc); pc += 2;
 						uint Xn = (ext >> 12) & 7;
 						uint d8 = ext & 0xff;
-						uint dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
+						uint dx;
+						if ((ext&0x8000)!=0)
+							dx = (((ext >> 11) & 1) != 0) ? a[(int)Xn] : (uint)(short)a[(int)Xn];
+						else
+							dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
 						return a[x] + dx + (uint)(sbyte)d8;
 					}
 				case 7:
