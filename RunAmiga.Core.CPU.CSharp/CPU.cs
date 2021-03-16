@@ -1622,10 +1622,10 @@ namespace RunAmiga.Core.CPU.CSharp
 
 				uint ea2 = fetchEA(type2, size);
 				uint op2 = fetchOp(type2, ea2, size);
-				setV_sub(op, op2 + x, size);
-				setC_sub(op, op2 + x, size);
+				setV_sub(op2, op + x, size);
+				setC_sub(op2, op + x, size);
 				setX(C());
-				op -= op2 + x;
+				op = op2 - op - x;
 				if (op != 0) clrZ();
 				setN(op, size);
 				writeEA(ReUse(type2), ea2, size, op); 

@@ -198,6 +198,7 @@ namespace RunAmiga.Tests
 		[Test(Description = "DIVU/S,SBCD,OR")]
 		public void FuzzCPU8() { FuzzCPU(0x8000); }
 
+		[Ignore("All Pass")]
 		[Test(Description = "SUB/A/X")]
 		public void FuzzCPU9() { FuzzCPU(0x9000); }
 
