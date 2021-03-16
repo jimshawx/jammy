@@ -2306,8 +2306,8 @@ namespace RunAmiga.Core.CPU.CSharp
 		
 		private void tst(int type)
 		{
-			//MC68000 doesn't support tst on address registers
-			if (IsAddressReg(type))
+			//MC68000 doesn't support tst on address registers or PC relative or immeditate
+			if (IsAddressReg(type) || IsPCRelative(type) || IsImmediate(type))
 			{
 				internalTrap(3);
 				return;
@@ -2443,11 +2443,32 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			uint ea = fetchEA(type, Size.Byte);
 			uint op = fetchOp(type, ea, Size.Byte);
+			op &= 0xff;
 
-			op = sub_bcd(0, op);
-
-			setX(C());
-			if (op != 0) clrZ();
+			if (op == 0 && !X())
+			{
+				clrV();
+				clrC(); 
+				setN();
+			}
+			else
+			{
+				op = 0x9a - op;
+				byte v = (byte)~op;
+				byte dl = (byte)(op & 0xf);
+				byte dh = (byte)(op >> 4);
+				if (dl == 10)
+				{
+					dh++;
+					dl = 0;
+				}
+				op = (uint)((dh<<4)+dl);
+				setV((op&v&0x80)!=0);
+				setC();
+				setX();
+				if (op != 0) clrZ();
+				setN((op & 0x80) != 0);
+			}
 
 			writeEA(ReUse(type), ea, Size.Byte, op);
 		}
@@ -2598,7 +2619,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void link(int type)
 		{
 			int An = type & 7;
-			push32(a[An]);
+			push32(a[An]-(An==7?4:0u));
 			a[An] = a[7];
 			a[7] += (uint)(short)read16(pc);
 			pc += 2;
@@ -3143,6 +3164,12 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void movem(int type)
 		{
+			if (IsAddressReg(type) || IsDataReg(type) || IsImmediate(type))
+			{
+				internalTrap(3);
+				return;
+			}
+
 			uint mask = fetchImm(Size.Word);
 
 			Size size;
@@ -3223,6 +3250,11 @@ namespace RunAmiga.Core.CPU.CSharp
 				//	}
 
 				//}
+				if (IsPCRelative(type))
+				{
+					internalTrap(3);
+					return;
+				}
 
 				//R->M
 				//if it's pre-decrement mode
@@ -3235,12 +3267,12 @@ namespace RunAmiga.Core.CPU.CSharp
 						{
 							int m = (i & 7) ^ 7;
 							uint op = i <= 7 ? a[m] : d[m];
-							ea -= eastep;
 							writeOp(ea, op, size);
+							ea -= eastep;
 						}
 					}
 					int Xn = type & 7;
-					a[Xn] = ea;
+					a[Xn] = ea+eastep;
 				}
 				else
 				{

@@ -178,6 +178,7 @@ namespace RunAmiga.Tests
 		[Test(Description = "MOVE.L")]
 		public void FuzzCPU3() { FuzzCPU(0x3000); }
 
+		[Ignore("All Pass")]
 		[Test(Description = "ALU1")]
 		public void FuzzCPU4() { FuzzCPU(0x4000); }
 
@@ -193,6 +194,7 @@ namespace RunAmiga.Tests
 		[Test(Description = "MOVEQ")]
 		public void FuzzCPU7() { FuzzCPU(0x7000); }
 
+		[Ignore("All Pass")]
 		[Test(Description = "DIVU/S,SBCD,OR")]
 		public void FuzzCPU8() { FuzzCPU(0x8000); }
 
