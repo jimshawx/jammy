@@ -340,6 +340,16 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (val != 0) setC(); else clrC();
 		}
 
+		private void setC(ulong val)
+		{
+			if (val != 0) setC(); else clrC();
+		}
+
+		private void setC(long val)
+		{
+			if (val != 0) setC(); else clrC();
+		}
+
 		private void setC(ulong val, Size size)
 		{
 			if (size == Size.Long)
@@ -1016,27 +1026,39 @@ namespace RunAmiga.Core.CPU.CSharp
 				if (lr == 1)
 				{
 					if (size == Size.Long)
+					{
+						rot &= 31;
 						val = (val << rot) | (val >> (32 - rot));
+					}
 					else if (size == Size.Word)
+					{
+						rot &= 15;
 						val = (val << rot) | ((val & 0xffff) >> (16 - rot));
+					}
 					else if (size == Size.Byte)
+					{
+						rot &= 7;
 						val = (val << rot) | ((val & 0xff) >> (8 - rot));
+					}
 					setC(val & 1);
 				}
 				else
 				{
 					if (size == Size.Long)
 					{
+						rot &= 31;
 						val = (val >> rot) | (val << (32 - rot));
 						setC(val & (1u << 31));
 					}
 					else if (size == Size.Word)
 					{
+						rot &= 15;
 						val = ((val & 0xffff) >> rot) | (val << (16 - rot));
 						setC(val & (1u << 15));
 					}
 					else if (size == Size.Byte)
 					{
+						rot &= 7;
 						val = ((val & 0xff) >> rot) | (val << (8 - rot));
 						setC(val & (1u << 7));
 					}
@@ -1141,8 +1163,8 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void lsd(int type, int shift, int lr, Size size)
 		{
 			uint ea = fetchEA(type, size);
-			uint val = fetchOp(type, ea, size);
-			val = (uint)zeroExtend(val, size);
+			ulong val = fetchOp(type, ea, size);
+			val = zeroExtend((uint)val, size);
 			if (shift == 0)
 			{
 				clrC();
@@ -1151,44 +1173,33 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				if (lr == 1)
 				{
-					if (size == Size.Long)
-					{
-						setX(val & (1u << (32 - shift)));
-						setC(val & (1u << (32 - shift)));
-					}
-					else if (size == Size.Word)
-					{
-						setX(val & (1u << (16 - shift)));
-						setC(val & (1u << (16 - shift)));
-					}
-					else if (size == Size.Byte)
-					{
-						setX(val & (1u << (8 - shift)));
-						setC(val & (1u << (8 - shift)));
-					}
+					if (size == Size.Long && shift <= 32)
+						setC(val & (1ul << (32 - shift)));
+					else if (size == Size.Word && shift <= 16)
+						setC(val & (1ul << (16 - shift)));
+					else if (size == Size.Byte && shift <= 8)
+						setC(val & (1ul << (8 - shift)));
+					else
+						clrC();
 					val <<= shift;
 				}
 				else
 				{
-					if (size == Size.Word)
-						val &= 0xffff;
-					if (size == Size.Byte)
-						val &= 0xff;
-					setX(val & (1u << (shift - 1)));
-					setC(val & (1u << (shift - 1)));
+					setC(val & (1ul << (shift-1)));
 					val >>= shift;
 				}
+				setX(C());
 			}
-			setNZ(val, size);
+			setNZ((uint)val, size);
 			clrV();
-			writeEA(ReUse(type), ea, size, val);
+			writeEA(ReUse(type), ea, size, (uint)val);
 		}
 
 		private void asd(int type, int shift, int lr, Size size)
 		{
 			uint ea = fetchEA(type, size);
-			uint val = fetchOp(type, ea, size);
-			val = (uint)signExtend(val, size);
+			long val = fetchOp(type, ea, size);
+			val = signExtend((uint)val, size);
 			if (shift == 0)
 			{
 				clrC();
@@ -1198,41 +1209,30 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				if (lr == 1)
 				{
-					uint signmask = (1u<<(shift+1))-1;
-					if (size == Size.Long)
-					{
-						setC(val & (1u << (32 - shift)));
-						signmask <<= 31 - shift;
-					}
-					else if (size == Size.Word)
-					{
-						setC(val & (1u << (16 - shift)));
-						signmask <<= 15 - shift;
-					}
-					else if (size == Size.Byte)
-					{
-						setC(val & (1u << (8 - shift)));
-						signmask <<= 7 - shift;
-					}
+					long signmask = (1L<<(Math.Min(shift,32)+1))-1;
+					if (size == Size.Long && shift <= 32)
+						setC(val & (1L << (32 - shift)));
+					else if (size == Size.Word && shift <= 16)
+						setC(val & (1L << (16 - shift)));
+					else if (size == Size.Byte && shift <= 8)
+						setC(val & (1L << (8 - shift)));
+					else
+						clrC();
+
 					setX(C());
 					setV((val&signmask)!=0 && (val&signmask)!=signmask);
 					val <<= shift;
 				}
 				else
 				{
-					setC(val & (1u << (shift - 1)));
+					setC(val & (1L << (shift - 1)));
+					val >>= shift;
 					setX(C());
-					if (size == Size.Long)
-						val = (uint)((int)val >> shift);
-					else if (size == Size.Word)
-						val = (uint)((short)val >> shift);
-					else if (size == Size.Byte)
-						val = (uint)((sbyte)val >> shift);
 					clrV();
 				}
 			}
-			setNZ(val, size);
-			writeEA(ReUse(type), ea, size, val);
+			setNZ((uint)val, size);
+			writeEA(ReUse(type), ea, size, (uint)val);
 		}
 
 		private void t_thirteen(int type)
@@ -1819,12 +1819,14 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint lo = (uint)((int)d[Xn] / (short)op);
 			uint hi = (uint)((int)d[Xn] % (short)op);
 
-			setV(lo, Size.Word);
+			setV((int)lo, Size.Word);
+			if (!V())
+			{
+				d[Xn] = (hi << 16) | (ushort)lo;
 
-			d[Xn] = (hi << 16) | (ushort)lo;
-
-			setNZ(d[Xn], Size.Word);
-			clrC();
+				setNZ(d[Xn], Size.Word);
+				clrC();
+			}
 		}
 
 		private void divu(int type)
@@ -1848,12 +1850,18 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint lo = d[Xn] / (ushort)op;
 			uint hi = d[Xn] % (ushort)op;
 
-			setV(lo > 0xffff);
+			if (lo > 0xffff)
+			{
+				setV();
+			}
+			else
+			{
+				d[Xn] = (hi << 16) | (ushort)lo;
 
-			d[Xn] = (hi << 16) | (ushort)lo;
-
-			setNZ(d[Xn], Size.Word);
-			clrC();
+				setNZ(d[Xn], Size.Word);
+				clrC();
+				clrV();
+			}
 		}
 
 		private void t_seven(int type)
@@ -2464,10 +2472,10 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint op = fetchOp(type, ea, Size.Byte);
 			op &= 0xff;
 
-			if (op == 0 && !X())
+			if ((byte)(op + (X()?1:0)) == 0)
 			{
 				clrV();
-				clrC(); 
+				clrC();
 				setN();
 			}
 			else
@@ -3146,7 +3154,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				return;
 			}
 			uint ea = fetchEA(type, size);
-			uint op = fetchOp(type, ea, size);
+			int op = (int)signExtend(fetchOp(type, ea, size), Size.Word);
 			int Xn = (type >> 9) & 7;
 			int v = (int)signExtend(d[Xn], size);
 
@@ -3160,7 +3168,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				setN();//undocumented
 				internalTrap(6);
 			}
-			else if (v > (int)op)
+			else if (v > op)
 			{
 				clrN();//undocumented
 				internalTrap(6);
