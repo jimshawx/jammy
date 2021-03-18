@@ -448,6 +448,12 @@ namespace RunAmiga.Core.CPU.CSharp
 			setC(r, size);
 		}
 
+		private void setC_addx(uint v, uint op, Size size)
+		{
+			ulong r = (ulong)zeroExtend(v, size) + (ulong)zeroExtend(op, size) + (X()?1UL:0UL);
+			setC(r, size);
+		}
+
 		private void setV(uint v, uint op, Size size)
 		{
 			long r = signExtend(v, size) + signExtend(op, size);
@@ -463,6 +469,12 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void setV_subx(uint v, uint op, Size size)
 		{
 			long r = signExtend(v, size) - signExtend(op, size) - (X() ? 1L : 0L);
+			setV(r, size);
+		}
+
+		private void setV_addx(uint v, uint op, Size size)
+		{
+			long r = signExtend(v, size) + signExtend(op, size) + (X() ? 1L : 0L);
 			setV(r, size);
 		}
 
@@ -1209,19 +1221,20 @@ namespace RunAmiga.Core.CPU.CSharp
 			{
 				if (lr == 1)
 				{
-					long signmask = (1L<<(Math.Min(shift,32)+1))-1;
-					if (size == Size.Long && shift <= 32)
-						setC(val & (1L << (32 - shift)));
-					else if (size == Size.Word && shift <= 16)
-						setC(val & (1L << (16 - shift)));
-					else if (size == Size.Byte && shift <= 8)
-						setC(val & (1L << (8 - shift)));
-					else
-						clrC();
-
+					uint signMask;
+					if (size == Size.Long) signMask = 0x80000000;
+					else if (size == Size.Word) signMask = 0x8000;
+					else signMask = 0x80;
+					uint sign = (uint)(val & signMask);
+					clrV();
+					for (int i = 0; i < shift; i++)
+					{
+						setC(val & signMask);
+						val <<= 1;
+						if ((val & signMask) != sign)
+							setV();
+					}
 					setX(C());
-					setV((val&signmask)!=0 && (val&signmask)!=signmask);
-					val <<= shift;
 				}
 				else
 				{
@@ -1250,9 +1263,10 @@ namespace RunAmiga.Core.CPU.CSharp
 
 				uint ea = fetchEA(type, size);
 				uint op = fetchOp(type, ea, size);
+				if (size == Size.Word) op = (uint)signExtend(op, Size.Word);
 				int Xn = (type >> 9) & 7;
-				//a[Xn] += op;
-				writeEA(Xn + 0b001_000, 0, size, a[Xn] + op);
+				a[Xn] += op;
+				//writeEA(Xn + 0b001_000, 0, Size.Long, a[Xn] + op);
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
@@ -1274,11 +1288,11 @@ namespace RunAmiga.Core.CPU.CSharp
 
 				uint ea2 = fetchEA(type2, size);
 				uint op2 = fetchOp(type2, ea2, size);
-				setV(op, op2 + x, size);
-				setC(op, op2 + x, size);
+				setV_addx(op, op2, size);
+				setC_addx(op, op2, size);
 				setX(C());
 				op += op2 + x;
-				if (op != 0) clrZ();
+				if (zeroExtend(op,size) != 0) clrZ();
 				setN(op, size);
 				writeEA(ReUse(type2), ea2, size, op);
 			}
@@ -1616,8 +1630,9 @@ namespace RunAmiga.Core.CPU.CSharp
 				uint ea = fetchEA(type, size);
 				uint op = fetchOp(type, ea, size);
 				int Xn = (type >> 9) & 7;
-				//a[Xn] -= op;
-				writeEA(Xn + 0b001_000, 0, size, a[Xn] - op);
+				if (size == Size.Word) op = (uint)signExtend(op, Size.Word);
+				a[Xn] -= op;
+				//writeEA(Xn + 0b001_000, 0, size, a[Xn] - op);
 			}
 			else if ((type & 0b1_00_110_000) == 0b1_00_000_000)
 			{
