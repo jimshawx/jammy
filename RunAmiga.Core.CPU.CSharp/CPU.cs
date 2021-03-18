@@ -2451,8 +2451,8 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			uint x = X() ? 1u : 0u;
 
-			setV_sub(0, op + x, size);
-			setC_sub(0, op + x, size);
+			setV_subx(0, op, size);
+			setC_subx(0, op, size);
 			setX(C());
 
 			op = 0 - op - x;
@@ -2509,10 +2509,10 @@ namespace RunAmiga.Core.CPU.CSharp
 				op = (uint)((dh<<4)+dl);
 				setV((op&v&0x80)!=0);
 				setC();
-				setX();
 				if (op != 0) clrZ();
 				setN((op & 0x80) != 0);
 			}
+			setX(C());
 
 			writeEA(ReUse(type), ea, Size.Byte, op);
 		}
