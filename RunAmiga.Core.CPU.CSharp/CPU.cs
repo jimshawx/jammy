@@ -1605,13 +1605,15 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			uint ea = fetchEA(type, size);
 			uint op0 = fetchOp(type, ea, size);
-			type = (swizzle(type) & 7) | 8;
-			ea = fetchEA(type, size);
-			uint op1 = fetchOp(type, ea, size);
+			op0 = (uint)signExtend(op0, size);
 
-			setC_sub(op1, op0, size);
-			setV_sub(op1, op0, size);
-			setNZ(op1 - op0, size);
+			type = (swizzle(type) & 7) | 8;
+			ea = fetchEA(type, Size.Long);
+			uint op1 = fetchOp(type, ea, Size.Long);
+
+			setC_sub(op1, op0, Size.Long);
+			setV_sub(op1, op0, Size.Long);
+			setNZ(op1 - op0, Size.Long);
 		}
 
 		private void t_nine(int type)
@@ -1630,7 +1632,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				uint ea = fetchEA(type, size);
 				uint op = fetchOp(type, ea, size);
 				int Xn = (type >> 9) & 7;
-				if (size == Size.Word) op = (uint)signExtend(op, Size.Word);
+				op = (uint)signExtend(op, size);
 				a[Xn] -= op;
 				//writeEA(Xn + 0b001_000, 0, size, a[Xn] - op);
 			}
