@@ -251,10 +251,7 @@ namespace RunAmiga.Disassembler
 							{
 								ushort d16 = read16(pc);
 								//uint ea = pc + (uint)(short)d16;
-
 								uint d32 = (uint)(address + pc + (short)d16);
-
-
 								pc += 2;
 								//Append($"(${d16:X4},pc)");
 								Append($"{fmtX8(d32)}(pc)");
@@ -270,8 +267,10 @@ namespace RunAmiga.Disassembler
 								//Append($"{fmtX2(d8)}(pc,d{Xn}.{s})");
 								d8 += (address + pc);
 								pc += 2;
-								Append($"{fmtX8(d8)}(d{Xn}.{s})");
-
+								if ((ext&0x8000)!=0)
+									Append($"{fmtX8(d8)}(a{Xn}.{s})");
+								else
+									Append($"{fmtX8(d8)}(d{Xn}.{s})");
 								return 0;
 							}
 						case 0b000://(xxx).w
