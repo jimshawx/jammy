@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -42,7 +43,7 @@ namespace RunAmiga.Core
 		public Machine(IInterrupt interrupt, IMemory memory, IBattClock battClock, 
 			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, 
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
-			IBreakpointCollection breakpointCollection)
+			IBreakpointCollection breakpointCollection, IExpansion expansion)
 		{
 			this.memory = memory;
 			this.ciaa = ciaa;
@@ -57,6 +58,7 @@ namespace RunAmiga.Core
 
 			interrupt.Init(custom);
 
+			emulations.Add(expansion);
 			emulations.Add(battClock);
 			emulations.Add(ciaa);
 			emulations.Add(ciab);

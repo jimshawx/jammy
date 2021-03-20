@@ -55,6 +55,7 @@ namespace RunAmiga.Main
 				.AddSingleton<IDiskDrives, DiskDrives>()
 				.AddSingleton<IKeyboard, Keyboard>()
 				.AddSingleton<IMouse, Mouse>()
+				.AddSingleton<IExpansion, Expansion>()
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				//.AddSingleton<ICPU, MusashiCPU>()

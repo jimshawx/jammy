@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -16,7 +17,7 @@ namespace RunAmiga.Core
 
 		private readonly uint memoryMask;
 
-		public MemoryMapper(IMemory memory, ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IBattClock battClock, ILogger<MemoryMapper> logger)
+		public MemoryMapper(IMemory memory, ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IBattClock battClock, IExpansion expansion, ILogger<MemoryMapper> logger)
 		{
 			this.logger = logger;
 			devices.Add(memory);
@@ -25,6 +26,7 @@ namespace RunAmiga.Core
 			devices.Add(ciab);
 			devices.Add(custom);
 			devices.Add(battClock);
+			devices.Add(expansion);
 			BuildMappedDevices();
 		}
 
