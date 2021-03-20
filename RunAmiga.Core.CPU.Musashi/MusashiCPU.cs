@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Net.Mime;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -11,6 +11,7 @@ namespace RunAmiga.Core.CPU.Musashi
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
+		private readonly ITracer tracer;
 
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_init(IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
@@ -38,11 +39,13 @@ namespace RunAmiga.Core.CPU.Musashi
 		private Musashi_Writer w16;
 		private Musashi_Writer w8;
 
-		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints)
+		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
+			IBreakpointCollection breakpoints, ITracer tracer)
 		{
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
+			this.tracer = tracer;
 
 			r32 = new Musashi_Reader(Musashi_read32);
 			r16 = new Musashi_Reader(Musashi_read16);
@@ -71,9 +74,61 @@ namespace RunAmiga.Core.CPU.Musashi
 		public void Emulate(ulong cycles)
 		{
 			CheckInterrupt();
-			
+
+			//tracer
+			var regs = GetRegs();
+			tracer.TraceAsm(regs.PC, regs);
+			ushort ins = (ushort)memoryMapper.Read(0, regs.PC, Size.Word);
+			//bsr, bra, jmp, jsr, rts, rte
+			uint ipc = regs.PC; regs.PC += 2;
+			//tracer
+
 			int ticks = 0;
 			uint pc = Musashi_execute(ref ticks);
+
+			//tracer
+			if ((ins & 0xff00) == 0x6100)
+			{
+				uint disp = (uint)(sbyte)ins & 0xff;
+				if (disp == 0) { regs.PC += 2; }
+				else if (disp == 0xff) { regs.PC += 4; }
+
+				tracer.Trace("bsr", ipc, regs); //bsr
+				tracer.Trace(pc); //bsr
+			}
+			else if ((ins & 0xf000) == 0x6000)
+			{
+				uint inssize = 2;
+				uint disp = (uint)(sbyte)ins & 0xff;
+				if (disp == 0) { inssize += 2; regs.PC += 2; }
+				else if (disp == 0xff) { inssize+=4; regs.PC += 4;}
+				if (pc != ipc+inssize)
+				{
+					tracer.Trace("bra", ipc, regs); //bcc
+					tracer.Trace(pc); //bsr
+				}
+			}
+			else if ((ins & 0xffc0) == 0x4e80)
+			{
+				tracer.Trace("jsr", ipc, regs);//jsr
+				tracer.Trace(pc); //bsr
+			}
+			else if ((ins & 0xffc0) == 0x4ec0)
+			{
+				tracer.Trace("jmp", ipc, regs);//jmp
+				tracer.Trace(pc); //bsr
+			}
+			else if (ins == 0x4e75)
+			{
+				tracer.Trace("rts", ipc, regs);//rts
+				tracer.Trace(pc); //bsr
+			}
+			else if (ins == 0x4e73)
+			{
+				tracer.Trace("rte", ipc, regs);//rte
+				tracer.Trace(pc); //bsr
+			}
+			//tracer
 
 			instructionStartPC = pc;
 
@@ -121,7 +176,7 @@ namespace RunAmiga.Core.CPU.Musashi
 		public void SetRegs(Regs regs)
 		{
 			var musashiRegs = new Musashi_regs();
-			
+
 			musashiRegs.d0 = regs.D[0];
 			musashiRegs.d1 = regs.D[1];
 			musashiRegs.d2 = regs.D[2];

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text;
 using RunAmiga.Core.Types.Types;
-using RunAmiga.Disassembler.AmigaTypes;
 
 // ReSharper disable InconsistentNaming
 

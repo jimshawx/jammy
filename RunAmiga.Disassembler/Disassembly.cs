@@ -231,13 +231,6 @@ namespace RunAmiga.Disassembler
 			return 0;
 		}
 
-		public string DisassembleAddress(uint pc)
-		{
-			if (pc >= mem.Length) return "";
-			var dasm = disassembler.Disassemble(pc, mem.GetSpan().Slice((int)pc, Math.Min(12, (int)(mem.Length - pc))));
-			return dasm.ToString();
-		}
-
 		private void Disassemble(List<Resident> resident)
 		{
 			for (int i = 0; i < resident.Count; i++)
@@ -320,7 +313,7 @@ namespace RunAmiga.Disassembler
 			foreach (var rt in resident)
 				logger.LogTrace($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
 
-			//Disassemble(resident, disassembly, settings);
+			//Disassemble(resident);
 
 			//KickLogo.KSLogo(this);
 		}

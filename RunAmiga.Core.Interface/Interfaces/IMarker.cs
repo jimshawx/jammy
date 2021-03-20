@@ -96,6 +96,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void Trace(string v, uint pc, Regs regs);
 		void DumpTrace();
 		void TraceAsm(uint pc, Regs regs);
+		void WriteTrace();
 	}
 
 	public interface ILabeller
@@ -161,7 +162,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		string DisassembleTxt(List<Tuple<uint, uint>> ranges, List<uint> restartsList, DisassemblyOptions options);
 		int GetAddressLine(uint address);
 		uint GetLineAddress(int line);
-		string DisassembleAddress(uint pc);
+		//string DisassembleAddress(uint pc);
 		void ShowRomTags();
 	}
 

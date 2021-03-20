@@ -1,14 +1,37 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
+using System.Text;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
-using RunAmiga.Disassembler;
 
 namespace RunAmiga.Debugger
 {
+	public class NullTracer : ITracer
+	{
+		private readonly ILogger logger;
+
+		public NullTracer(ILogger<NullTracer> logger)
+		{
+			this.logger = logger;
+		}
+
+		public void Trace(uint pc) { }
+
+		public void Trace(string v, uint pc, Regs regs) { }
+
+		public void DumpTrace()
+		{
+			logger.LogTrace("There is no trace being recorded");
+		}
+
+		public void TraceAsm(uint pc, Regs regs) { }
+
+		public void WriteTrace() { }
+	}
+
 	public class Tracer : ITracer
 	{
 		private class TraceEntry
@@ -28,15 +51,17 @@ namespace RunAmiga.Debugger
 
 		private readonly List<TraceEntry> traces = new List<TraceEntry>();
 
-		private readonly IDisassembly disassembly;
 		private readonly ILabeller labeller;
 		private readonly ILogger logger;
+		private readonly Disassembler.Disassembler disassembler;
+		private readonly ByteArrayWrapper mem;
 
-		public Tracer(IDisassembly disassembly, ILabeller labeller, ILogger<Tracer> logger)
+		public Tracer(IMemory memory, ILabeller labeller, ILogger<Tracer> logger)
 		{
-			this.disassembly = disassembly;
 			this.labeller = labeller;
 			this.logger = logger;
+			this.disassembler = new Disassembler.Disassembler();
+			this.mem = new ByteArrayWrapper(memory.GetMemoryArray());
 		}
 
 		public void Trace(uint pc)
@@ -50,7 +75,7 @@ namespace RunAmiga.Debugger
 
 		public void Trace(string v, uint pc, Regs regs)
 		{
-			traces.Add(new TraceEntry { Type = v, FromPC = pc, FromLabel = labeller.LabelName(pc), Regs = regs });
+			traces.Add(new TraceEntry { Type = v, FromPC = pc, FromLabel = labeller.LabelName(pc), Regs = regs.Clone() });
 		}
 
 		public void DumpTrace()
@@ -62,9 +87,25 @@ namespace RunAmiga.Debugger
 			traces.Clear();
 		}
 
+		public void WriteTrace()
+		{
+			using var f = File.OpenWrite($"trace{DateTime.Now:yyyy-MM-dd-HHmmss}.txt");
+			using var s = new StreamWriter(f, Encoding.UTF8);
+
+			foreach (var t in traces)
+				s.WriteLine(t);
+		}
+
 		public void TraceAsm(uint pc, Regs regs)
 		{
-			Trace(disassembly.DisassembleAddress(pc), pc, regs);
+			Trace(DisassembleAddress(pc), pc, regs.Clone());
+		}
+
+		private string DisassembleAddress(uint pc)
+		{
+			if (pc >= mem.Length) return "";
+			var dasm = disassembler.Disassemble(pc, mem.GetSpan().Slice((int)pc, Math.Min(12, (int)(mem.Length - pc))));
+			return dasm.ToString();
 		}
 	}
 }

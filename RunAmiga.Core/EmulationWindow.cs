@@ -44,6 +44,7 @@ namespace RunAmiga.Core
 				emulation.MouseClick += Emulation_MouseClick;
 				emulation.KeyPress += Emulation_KeyPress;
 				emulation.KeyDown += Emulation_KeyDown;
+				emulation.Deactivate += Emulation_Deactivate;
 				emulation.Show();
 
 				Application.Run(emulation);
@@ -106,6 +107,11 @@ namespace RunAmiga.Core
 
 			if (e.KeyValue == (int)Keyboard.VK.VK_ESCAPE)
 				Release("DnKeyPress");
+		}
+
+		private void Emulation_Deactivate(object? sender, EventArgs e)
+		{
+			Release("Deactivate");
 		}
 
 		private Bitmap bitmap;

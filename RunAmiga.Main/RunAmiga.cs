@@ -26,10 +26,12 @@ namespace RunAmiga.Main
 		private readonly IDebugger debugger;
 		private readonly IChips custom;
 		private readonly ILogger logger;
+		private readonly ITracer tracer;
+		private readonly IInterrupt interrupt;
 		private readonly EmulationSettings settings;
 
 		public RunAmiga(IEmulation emulation, IDisassembly disassembly, IDebugger debugger,
-			IChips custom, ILogger<RunAmiga> logger, IOptions<EmulationSettings> options)
+			IChips custom, ILogger<RunAmiga> logger, ITracer tracer, IOptions<EmulationSettings> options, IInterrupt interrupt)
 		{
 			if (this.Handle == IntPtr.Zero)
 				throw new ApplicationException("RunAmiga can't create Handle");
@@ -39,6 +41,8 @@ namespace RunAmiga.Main
 			this.debugger = debugger;
 			this.custom = custom;
 			this.logger = logger;
+			this.tracer = tracer;
+			this.interrupt = interrupt;
 
 			InitializeComponent();
 
@@ -160,21 +164,37 @@ namespace RunAmiga.Main
 			lbRegisters.Items.Clear();
 			lbRegisters.Items.AddRange(regs.Items().Cast<object>().ToArray());
 
-			string hdr =
-				"   D           S\n" +
-				"   S       C  DO\n" +
-				" IEK      VOP SF\n" +
-				" NXS AAAABEPO KT\n" +
-				"NTTYRUUUULRPRTBI\n" +
-				"MEENBDDDDITETBLN\n" +
-				"INTCF3210TBRSEKT";
-
 			lbCustom.Items.Clear();
-			lbCustom.Items.AddRange(hdr.Split('\n'));
-			lbCustom.Items.Add("INTENA W:DFF09A R:DFF01C");
-			lbCustom.Items.Add($"{Convert.ToString(intena, 2).PadLeft(16, '0')}");
-			lbCustom.Items.Add("INTREQ W:DFF09C R:DFF01E");
-			lbCustom.Items.Add($"{Convert.ToString(intreq, 2).PadLeft(16, '0')}");
+			{
+				//string hdr =
+				//	"   D           S\n" +
+				//	"   S       C  DO\n" +
+				//	" IEK      VOP SF\n" +
+				//	" NXS AAAABEPO KT\n" +
+				//	"NTTYRUUUULRPRTBI\n" +
+				//	"MEENBDDDDITETBLN\n" +
+				//	"INTCF3210TBRSEKT";
+
+				//lbCustom.Items.AddRange(hdr.Split('\n'));
+				//lbCustom.Items.Add("INTENA W:DFF09A R:DFF01C");
+				//lbCustom.Items.Add($"{Convert.ToString(intena, 2).PadLeft(16, '0')}");
+				//lbCustom.Items.Add("INTREQ W:DFF09C R:DFF01E");
+				//lbCustom.Items.Add($"{Convert.ToString(intreq, 2).PadLeft(16, '0')}");
+			}
+
+			{
+				lbCustom.Items.Add($"SR: {(regs.SR >> 8) & 7} IRQ: {interrupt.GetInterruptLevel()}");
+				lbCustom.Items.Add("INTENA W:DFF09A R:DFF01C");
+				lbCustom.Items.Add("INTREQ W:DFF09C R:DFF01E");
+				lbCustom.Items.Add("        ENA REQ");
+				string[] names = new String [16] {"NMI", "INTEN", "EXTEN", "DSKSYNC", "RBF", "AUD3", "AUD2", "AUD1", "AUD0", "BLIT", "VERTB", "COPPER", "PORTS", "TBE", "DSKBLJ", "SOFTINT"};
+				for (int i = 0; i < 16; i++)
+				{
+					int bit = 1 << (i ^ 15);
+					lbCustom.Items.Add($"{names[i],8} {((intena & bit) != 0 ? 1 : 0)}   {((intreq & bit) != 0 ? 1 : 0)}");
+				}
+			}
+
 			/*
 			 * 			SETCLR = 0x8000,
 						BBUSY = 0x4000,
@@ -193,16 +213,18 @@ namespace RunAmiga.Main
 						AUD1EN = 0x0002,
 						AUD0EN = 0x0001,
 			 */
-			hdr =
-				"S    B      AAAA\n" +
-				"EBB  LDBCBSDUUUU\n" +
-				"TBZ  TMPOLPSDDDD\n" +
-				"CUE  PALPTRK3210\n" +
-				"LSR  REEEEEEEEEE\n" +
-				"RYO  INNNNNNNNNN";
-			lbCustom.Items.AddRange(hdr.Split('\n'));
-			lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
-			lbCustom.Items.Add($"{Convert.ToString(dmacon, 2).PadLeft(16, '0')}");
+			{
+				string hdr =
+					"S    B      AAAA\n" +
+					"EBB  LDBCBSDUUUU\n" +
+					"TBZ  TMPOLPSDDDD\n" +
+					"CUE  PALPTRK3210\n" +
+					"LSR  REEEEEEEEEE\n" +
+					"RYO  INNNNNNNNNN";
+				lbCustom.Items.AddRange(hdr.Split('\n'));
+				lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
+				lbCustom.Items.Add($"{Convert.ToString(dmacon, 2).PadLeft(16, '0')}");
+			}
 		}
 
 		private uint ValueFromRegName(Regs regs, string txt)
@@ -577,6 +599,11 @@ namespace RunAmiga.Main
 			UpdateExecBase();
 		}
 
-
+		private void btnDumpTrace_Click(object sender, EventArgs e)
+		{
+			Machine.LockEmulation();
+			tracer.WriteTrace();
+			Machine.UnlockEmulation();
+		}
 	}
 }

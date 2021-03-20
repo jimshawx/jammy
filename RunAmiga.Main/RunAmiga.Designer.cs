@@ -88,6 +88,7 @@ namespace RunAmiga.Main
 			this.btnStepOut = new System.Windows.Forms.Button();
 			this.btnINTENA = new System.Windows.Forms.Button();
 			this.lbCustom = new System.Windows.Forms.ListBox();
+			this.btnDumpTrace = new System.Windows.Forms.Button();
 			this.menuDisassembly.SuspendLayout();
 			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -207,7 +208,7 @@ namespace RunAmiga.Main
 			// btnReset
 			// 
 			this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnReset.Location = new System.Drawing.Point(1039, 268);
+			this.btnReset.Location = new System.Drawing.Point(1038, 268);
 			this.btnReset.Name = "btnReset";
 			this.btnReset.Size = new System.Drawing.Size(71, 23);
 			this.btnReset.TabIndex = 5;
@@ -315,7 +316,7 @@ namespace RunAmiga.Main
 			this.btnDisassemble.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnDisassemble.Location = new System.Drawing.Point(1120, 332);
 			this.btnDisassemble.Name = "btnDisassemble";
-			this.btnDisassemble.Size = new System.Drawing.Size(77, 23);
+			this.btnDisassemble.Size = new System.Drawing.Size(93, 23);
 			this.btnDisassemble.TabIndex = 12;
 			this.btnDisassemble.Text = "Disassemble";
 			this.btnDisassemble.UseVisualStyleBackColor = true;
@@ -717,7 +718,7 @@ namespace RunAmiga.Main
 			this.btnStepOut.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnStepOut.Location = new System.Drawing.Point(1120, 208);
 			this.btnStepOut.Name = "btnStepOut";
-			this.btnStepOut.Size = new System.Drawing.Size(75, 23);
+			this.btnStepOut.Size = new System.Drawing.Size(71, 23);
 			this.btnStepOut.TabIndex = 36;
 			this.btnStepOut.Text = "Step Out";
 			this.btnStepOut.UseVisualStyleBackColor = true;
@@ -736,6 +737,7 @@ namespace RunAmiga.Main
 			// 
 			// lbCustom
 			// 
+			this.lbCustom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.lbCustom.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 			this.lbCustom.FormattingEnabled = true;
 			this.lbCustom.Location = new System.Drawing.Point(1219, 256);
@@ -743,11 +745,23 @@ namespace RunAmiga.Main
 			this.lbCustom.Size = new System.Drawing.Size(167, 303);
 			this.lbCustom.TabIndex = 38;
 			// 
+			// btnDumpTrace
+			// 
+			this.btnDumpTrace.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnDumpTrace.Location = new System.Drawing.Point(1120, 303);
+			this.btnDumpTrace.Name = "btnDumpTrace";
+			this.btnDumpTrace.Size = new System.Drawing.Size(93, 23);
+			this.btnDumpTrace.TabIndex = 39;
+			this.btnDumpTrace.Text = "Dump Trace";
+			this.btnDumpTrace.UseVisualStyleBackColor = true;
+			this.btnDumpTrace.Click += new System.EventHandler(this.btnDumpTrace_Click);
+			// 
 			// RunAmiga
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1414, 605);
+			this.Controls.Add(this.btnDumpTrace);
 			this.Controls.Add(this.lbCustom);
 			this.Controls.Add(this.btnINTENA);
 			this.Controls.Add(this.btnStepOut);
@@ -879,6 +893,7 @@ namespace RunAmiga.Main
 		private System.Windows.Forms.Button btnStepOut;
 		private System.Windows.Forms.Button btnINTENA;
 		private System.Windows.Forms.ListBox lbCustom;
+		private System.Windows.Forms.Button btnDumpTrace;
 	}
 }
 

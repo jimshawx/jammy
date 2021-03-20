@@ -20,6 +20,23 @@ namespace RunAmiga.Core.Types.Types
 			A = new uint[8];
 		}
 
+		public Regs Clone()
+		{
+			var regs = new Regs();
+			for (int i = 0; i < 8; i++)
+			{
+				regs.A[i] = this.A[i];
+				regs.D[i] = this.D[i];
+			}
+
+			regs.PC = this.PC;
+			regs.SP = this.SP;
+			regs.SSP = this.SSP;
+			regs.SR = this.SR;
+
+			return regs;
+		}
+
 		public List<string> Items()
 		{
 			var items = new List<string>();
@@ -56,7 +73,7 @@ namespace RunAmiga.Core.Types.Types
 			for (int i = 0; i < 8; i++)
 				sb.Append($"{A[i]:X8} ");
 
-			sb.Append($" PC {PC:X8}");
+			sb.Append($"SR {SR:X4} PC {PC:X8}");
 
 			return sb.ToString();
 		}

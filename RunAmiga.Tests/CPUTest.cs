@@ -48,6 +48,8 @@ namespace RunAmiga.Tests
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Musashi"))
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
+				.AddSingleton<ILabeller, Labeller>()
+				.AddSingleton<ITracer, NullTracer>()
 				.AddSingleton<IMusashiCPU, MusashiCPU>()
 				.AddSingleton<IMemoryMapper>(x=> new MemoryMapper(new List<IMemoryMappedDevice>{ x.GetRequiredService<IMemory>() }))
 				.AddSingleton<IMemory, Memory>()
@@ -64,11 +66,8 @@ namespace RunAmiga.Tests
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("CSharp"))
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
-				.AddSingleton<IDisassembly, Disassembly>()
-				.AddSingleton<IAnalyser,Analyser>()
-				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<ILabeller, Labeller>()
-				.AddSingleton<ITracer, Tracer>()
+				.AddSingleton<ITracer, NullTracer>()
 				.AddSingleton<ICSharpCPU, CPU>()
 				.AddSingleton<IMemoryMapper>(x => new MemoryMapper(new List<IMemoryMappedDevice> { x.GetRequiredService<IMemory>() }))
 				.AddSingleton<IMemory, Memory>()
@@ -162,6 +161,10 @@ namespace RunAmiga.Tests
 			{
 				if (address >= memory.GetMemoryArray().Length) return "";
 				var roMemory = new ReadOnlySpan<byte>(memory.GetMemoryArray());
+				
+				if (address + 20 > roMemory.Length)
+					address -= address + 20 - (uint)roMemory.Length; 
+				
 				var dasm = disassembler.Disassemble(address, roMemory.Slice((int)address, 20));
 				return dasm.ToString(new DisassemblyOptions{IncludeBytes = true});
 			}
@@ -217,7 +220,7 @@ namespace RunAmiga.Tests
 		[Test(Description = "SUB/A/X")]
 		public void FuzzCPU9() { FuzzCPU(0x9000); }
 
-		[Ignore("Not Implemented")]
+		[Ignore("Not Implemented COP")]
 		[Test(Description = "Coprocessor")]
 		public void FuzzCPUA() { FuzzCPU(0xA000); }
 
@@ -237,15 +240,35 @@ namespace RunAmiga.Tests
 		[Test(Description = "SHIFT/ROTATE")]
 		public void FuzzCPUE() { FuzzCPU(0xE000); }
 
-		[Ignore("Not Implemented")]
+		[Ignore("Not Implemented MC6888x")]
 		[Test(Description="FPU MC68881")]
 		public void FuzzCPUF() { FuzzCPU(0xF000); }
 
-		public void FuzzCPU(ushort prefix, int size=0x1000)
+		[Test(Description = "More random instructions")]
+		public void FuzzCPUMore()
+		{
+			var r = new Random(0x11071950);
+			for (int j = 0; j < 100; j++)
+			{
+				TestContext.WriteLine($"Test Run #{j+1}");
+
+				for (int i = 0; i < 16; i++)
+				{
+					TestContext.WriteLine($"Test Block #{i}:{j+1}");
+
+					if (i == 15) continue;
+					if (i == 10) continue;
+
+					FuzzCPU((ushort)(i << 12), seed: r.Next());
+				}
+			}
+		}
+
+		public void FuzzCPU(ushort prefix, int size=0x1000, int seed=0x02011964)
 		{
 			var regs = new Regs();
 
-			var r = new Random(0x02011964);
+			var r = new Random(seed);
 
 			uint failcount = 0;
 			for (int i = 0; i < size; i++)
@@ -253,7 +276,7 @@ namespace RunAmiga.Tests
 				uint pc = (uint)((r.Next() * 2) & ((cpu0.GetMemory().Length/2)-1) & 0xffffffc) + 0x10000;
 
 				regs.PC = pc;
-				regs.SR = (ushort)(0x2700 + r.Next(1<<5));
+				regs.SR = (ushort)(0x0700 + r.Next(1<<5));
 
 				for (int x = 0; x < 8; x++)
 				{
@@ -305,7 +328,7 @@ namespace RunAmiga.Tests
 					TestContext.WriteLine($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
 					Array.Copy(cpu0.GetMemory(), cpu1.GetMemory(), cpu0.GetMemory().Length);
 					failcount++;
-					Assert.Fail();
+					break;
 				}
 			}
 			Assert.AreEqual(0, failcount, "Some instructions failed the test");

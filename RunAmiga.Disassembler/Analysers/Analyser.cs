@@ -27,6 +27,7 @@ namespace RunAmiga.Disassembler.Analysers
 		private readonly Dictionary<uint, Header> headers = new Dictionary<uint, Header>();
 		private readonly Dictionary<string, List<LVO>> lvos = new Dictionary<string, List<LVO>>();
 		private readonly MemType[] memType;
+		private readonly EmulationSettings settings;
 
 		public Analyser(IKickstartAnalysis kickstartAnalysis, ILabeller labeller,
 			IMemory memory, IOptions<EmulationSettings> settings, ILogger<Analyser> logger)
@@ -34,6 +35,7 @@ namespace RunAmiga.Disassembler.Analysers
 			this.kickstartAnalysis = kickstartAnalysis;
 			this.labeller = labeller;
 			this.logger = logger;
+			this.settings = settings.Value;
 
 			memType = new MemType[settings.Value.MemorySize];
 
@@ -46,7 +48,7 @@ namespace RunAmiga.Disassembler.Analysers
 			ROMTags();
 			Labeller();
 			DeDupe();
-			LoadComments(settings.Value);
+			LoadComments();
 		}
 
 		public MemType[] GetMemTypes()
@@ -481,7 +483,7 @@ namespace RunAmiga.Disassembler.Analysers
 			headers[address].TextLines.AddRange(hdr);
 		}
 
-		private void LoadComments(EmulationSettings settings)
+		private void LoadComments()
 		{
 			if (settings.KickStart == "1.2")
 			{
@@ -514,14 +516,16 @@ namespace RunAmiga.Disassembler.Analysers
 			var hex8 = new Regex(@"^[\d|a-f|A-F]{8}$", RegexOptions.Compiled);
 			var reg = new Regex("^[A|D][0-7]$", RegexOptions.Compiled);
 
-			using (var f = File.OpenText(Path.Combine("c:/source/programming/amiga/", filename)))
-			{
-				if (f == null)
-				{
-					logger.LogTrace($"Can't find {filename} comments file");
-					return;
-				}
+			string fullPath = Path.Combine($"c:/source/programming/amiga/KS{settings.KickStart}", filename);
 
+			if (!File.Exists(fullPath))
+			{
+				logger.LogTrace($"Can't find {filename} comments file");
+				return;
+			}
+
+			using (var f = File.OpenText(fullPath))
+			{
 				uint currentAddress = 0;
 				var hdrs = new List<string> { "" };
 

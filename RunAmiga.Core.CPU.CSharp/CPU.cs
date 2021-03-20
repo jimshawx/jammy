@@ -1413,13 +1413,39 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint op2 = fetchOp(type2, ea2, Size.Byte);
 
 			op = add_bcd(op, op2);
-			setX(C());
-			if (op != 0) clrZ();
 
 			writeEA(ReUse(type2), ea2, Size.Byte, op);
 		}
 
-		private uint add_bcd(uint op, uint op2)
+		private uint add_bcd(uint dst, uint src)
+		{
+
+			uint res = (uint)((src&0xf) + (dst&0xf) + (X()?1:0));
+
+			//FLAG_V = ~res; /* Undefined V behavior */
+			setV(((~res) & 0x80) != 0);
+
+			if (res > 9)
+				res += 6;
+			res += (src&0xf0) + (dst&0xf0);
+			setC(res>0x99);
+			setX(C());
+			if (C())
+				res -= 0xa0;
+
+			res &= 0xff;
+
+			//FLAG_V &= res; /* Undefined V behavior part II */
+			if ((res & 0x80) == 0)
+				clrV();
+			//FLAG_N = NFLAG_8(res); /* Undefined N behavior */
+			setN((res & 0x80) != 0);
+			if (res != 0) clrZ();
+			
+			return res;
+		}
+
+		private uint add_bcd2(uint op, uint op2)
 		{
 			byte c= (byte)(X() ? 1 : 0);
 			byte d0;
@@ -1462,6 +1488,10 @@ namespace RunAmiga.Core.CPU.CSharp
 			setV((v&r0&0x80) != 0);
 			setN((r0&0x80) !=0);
 			//undocumented
+
+			setX(C());
+			if (r0 != 0) clrZ();
+
 			return r0;
 		}
 
@@ -1660,7 +1690,7 @@ namespace RunAmiga.Core.CPU.CSharp
 				setV_subx(op2, op, size);
 				setC_subx(op2, op, size);
 				setX(C());
-				op = op2 - op - x;
+				op = (uint)zeroExtend(op2 - op - x, size);
 				if (op != 0) clrZ();
 				setN(op, size);
 				writeEA(ReUse(type2), ea2, size, op); 
@@ -1752,15 +1782,41 @@ namespace RunAmiga.Core.CPU.CSharp
 			uint ea2 = fetchEA(type2, Size.Byte);
 			uint op2 = fetchOp(type2, ea2, Size.Byte);
 
-			op = sub_bcd(op2, op);
+			uint op3 = sub_bcd(op2, op);
 
-			setX(C());
-			if (op != 0) clrZ();
+			//logger.LogTrace($"2: {op2:X8} 1: {op:X8} X: {(X() ? 1 : 0)} -> 3: {op3:X8} SR: {sr:X4}");
 
-			writeEA(ReUse(type2), ea2, Size.Byte, op);
+			writeEA(ReUse(type2), ea2, Size.Byte, op3);
 		}
 
-		private uint sub_bcd(uint op, uint op2)
+		private uint sub_bcd(uint dst, uint src)
+		{
+			uint res =(uint)((dst&0xf) - (src&0xf) - (X()?1:0));
+
+			//FLAG_V = ~res; /* Undefined V behavior */
+			setV(((~res)&0x80)!=0);
+
+			if (res > 9)
+				res -= 6;
+			res += (dst&0xf0) - (src&0xf0);
+			setC(res>0x99);
+			setX(C());
+			if (C())
+				res += 0xa0;
+
+			res &= 0xff;
+
+			//FLAG_V &= res; /* Undefined V behavior part II */
+			if ((res&0x80)==0)
+				clrV();
+			//FLAG_N = NFLAG_8(res); /* Undefined N behavior */
+			setN((res&0x80)!=0);
+			if (res != 0) clrZ();
+
+			return res;
+		}
+
+		private uint sub_bcd2(uint op, uint op2)
 		{
 			//op-op2
 			sbyte c = (sbyte)(X() ? 1 : 0);
@@ -1812,6 +1868,10 @@ namespace RunAmiga.Core.CPU.CSharp
 			setV((v&r0&0x80)!=0);
 			setN((r0&0x80)!=0);
 			//undocumented
+
+			setX(C());
+			if (r0 != 0) clrZ();
+
 			return r0;
 		}
 
@@ -2431,7 +2491,9 @@ namespace RunAmiga.Core.CPU.CSharp
 				return;;
 			}
 			uint ea = fetchEA(type, size);
-			writeEA(type, ea, size, 0);
+			//MC68000 generates a read here which is discarded
+			fetchOp(type, ea, size);
+			writeEA(ReUse(type), ea, size, 0);
 			clrN();
 			setZ();
 			clrCV();
@@ -2616,7 +2678,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		void internalTrap(uint vector)
 		{
-			ushort oldSR = undisturbedSR;
+			ushort oldSR = sr;
 			uint oldPC = instructionStartPC;
 
 			if (vector >= 0x19 && vector <= 0x1f)
@@ -3370,7 +3432,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 		private void rtr(int type)
 		{
-			sr = (ushort)((sr & 0xff00) | (pop16() & SRmask));//naturally sets the flags
+			sr = (ushort)((sr & 0xff00) | (pop16() & SRmask & 0xff));//naturally sets the flags
 			pc = pop32();
 			//CheckInterrupt();
 		}
@@ -3393,7 +3455,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (Supervisor())
 			{
 				tracer.Trace("rte", instructionStartPC, GetRegs());
-				ushort tmpsr = pop16();//may clear the supervisor bit, causing following pop to come of the wrong stack
+				ushort tmpsr = pop16();//may clear the supervisor bit, causing following pop to come off the wrong stack
 				pc = pop32();
 				sr = tmpsr;
 				//CheckInterrupt();
