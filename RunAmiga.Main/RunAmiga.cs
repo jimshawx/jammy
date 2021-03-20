@@ -97,6 +97,7 @@ namespace RunAmiga.Main
 			{
 				new Tuple<uint, uint>(0x000000, 0x400),
 				new Tuple<uint, uint>(0xc00000, 0x1000),
+				new Tuple<uint, uint>(0xc0a000, 0x1000),
 				new Tuple<uint, uint>(0xfc0000, 0x40000),
 			};
 			if (settings.KickStart == "3.1" || settings.KickStart == "2.04")

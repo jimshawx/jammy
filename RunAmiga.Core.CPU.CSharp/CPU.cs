@@ -2371,7 +2371,7 @@ namespace RunAmiga.Core.CPU.CSharp
 						unlk(type);
 					else if ((subins & 0b1111_1111_1000) == 0b1110_0101_0000)
 						link(type);
-					else if ((subins & 0b1111_1111_0000) == 0b1110_0001_0000)
+					else if ((subins & 0b1111_1111_0000) == 0b1110_0100_0000)
 						trap(type);
 					else if ((subins & 0b111111_000000) == 0b000011_000000)
 						movefromsr(type);
@@ -2719,6 +2719,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private void trap(int type)
 		{
 			uint vector = (uint)(type & 0xf) + 32;
+			instructionStartPC += 2;
 			internalTrap(vector);
 		}
 

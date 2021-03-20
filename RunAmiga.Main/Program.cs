@@ -67,7 +67,7 @@ namespace RunAmiga.Main
 				.AddSingleton<IEmulation, Emulation>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<ILabeller, Labeller>()
-				.AddSingleton<ITracer, Tracer>()
+				.AddSingleton<ITracer, NullTracer>()
 				.AddSingleton<IDisassembly, Disassembly>()
 				.AddSingleton<IAnalyser,Analyser>()
 				.AddSingleton<IMachineIdentifier>(x=>new MachineIdentifer("Amiga"))
