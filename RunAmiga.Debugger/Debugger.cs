@@ -47,6 +47,12 @@ namespace RunAmiga.Debugger
 			//dump the kickstart ROM details and disassemblies
 			disassembly.ShowRomTags();
 
+			if (settings.Value.KickStart == "1.3")
+			{
+				//AddBreakpoint(0xFC509A);//expansion.library
+				return;
+			}
+
 			if (settings.Value.KickStart != "1.2")
 				return;
 

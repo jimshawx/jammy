@@ -43,7 +43,7 @@ namespace RunAmiga.Core
 		public Machine(IInterrupt interrupt, IMemory memory, IBattClock battClock, 
 			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, 
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
-			IBreakpointCollection breakpointCollection, IExpansion expansion)
+			IBreakpointCollection breakpointCollection)
 		{
 			this.memory = memory;
 			this.ciaa = ciaa;
@@ -58,7 +58,6 @@ namespace RunAmiga.Core
 
 			interrupt.Init(custom);
 
-			emulations.Add(expansion);
 			emulations.Add(battClock);
 			emulations.Add(ciaa);
 			emulations.Add(ciab);
