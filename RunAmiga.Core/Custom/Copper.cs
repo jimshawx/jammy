@@ -472,6 +472,9 @@ namespace RunAmiga.Core.Custom
 
 						hstart -= DMA_START<<1;
 
+						if (hstart < 0)
+							break;
+
 						//x2 because they are low-res pixels on our high-res bitmap
 						//dptr = (hstart * 2) + vstart * SCREEN_WIDTH;
 						dptr = (hstart * 2) + vstart *2* SCREEN_WIDTH;//scan double

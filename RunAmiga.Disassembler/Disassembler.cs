@@ -177,22 +177,24 @@ namespace RunAmiga.Disassembler
 
 		public uint read32(uint address)
 		{
+			if (address + 3 >= memory.Length) return 0;
 			return ((uint)memory[address] << 24) +
-					((uint)memory[address + 1] << 16) +
-					((uint)memory[address + 2] << 8) +
+					((uint)memory[address  + 1] << 16) +
+					((uint)memory[address  + 2] << 8) +
 					(uint)memory[address + 3];
 		}
 
 		public ushort read16(uint address)
 		{
-
+			if (address + 1 >= memory.Length) return 0;
 			return (ushort)(
 				((ushort)memory[address] << 8) +
-				(ushort)memory[address + 1]);
+				(ushort)memory[address+1]);
 		}
 
 		public byte read8(uint address)
 		{
+			if (address >= memory.Length) return 0;
 			return memory[address];
 		}
 

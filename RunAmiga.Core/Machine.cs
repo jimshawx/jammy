@@ -97,21 +97,6 @@ namespace RunAmiga.Core
 			UnlockEmulation();
 		}
 
-		//public static void WaitEmulationMode(EmulationMode mode)
-		//{
-		//	for (; ; )
-		//	{
-		//		LockEmulation();
-		//		if (emulationMode == mode)
-		//		{
-		//			UnlockEmulation();
-		//			break;
-		//		}
-		//		UnlockEmulation();
-		//		Thread.Sleep(100);
-		//	}
-		//}
-
 		public static void UnlockEmulation()
 		{
 			emulationSemaphore.Release();
