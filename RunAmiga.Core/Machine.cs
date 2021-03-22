@@ -94,7 +94,6 @@ namespace RunAmiga.Core
 
 		public static void UnlockEmulation()
 		{
-			emulationModeChange = EmulationMode.UnlockAccess;
 			emulationSemaphore.Release();
 		}
 
@@ -102,22 +101,23 @@ namespace RunAmiga.Core
 		{
 			emulationModeChange = EmulationMode.LockAccess;
 			emulationSemaphore.Wait();
+			emulationModeChange = EmulationMode.NoChange;
 		}
 
-		private static EmulationMode? emulationModeChange;
+		private static EmulationMode emulationModeChange;
 
 		public void Emulate()
 		{
 			uint stepOutSp = 0xffffffff;
 
 			emulationMode = EmulationMode.Stopped;
-			emulationModeChange = null;
+			emulationModeChange = EmulationMode.NoChange;
 
 			emulationSemaphore.Wait();
 
 			while (emulationMode != EmulationMode.Exit)
 			{
-				while (!emulationModeChange.HasValue)
+				while (emulationModeChange == EmulationMode.NoChange)
 				{
 					switch (emulationMode)
 					{
@@ -145,33 +145,32 @@ namespace RunAmiga.Core
 						emulationModeChange = EmulationMode.Stopped;
 				}
 
-				if (emulationModeChange.HasValue)
+				var newEmulationMode = emulationModeChange;
+
+				if (newEmulationMode == EmulationMode.Exit)
+					break;
+
+				if (newEmulationMode == EmulationMode.Stopped)
 				{
-					if (emulationModeChange.Value == EmulationMode.Exit)
-						break;
-
-					if (emulationModeChange.Value == EmulationMode.Stopped)
-					{
-						stepOutSp = 0xffffffff;
-						UI.UI.IsDirty = true;
-					}
-
-					if (emulationModeChange.Value == EmulationMode.LockAccess)
-					{
-						emulationSemaphore.Release();
-						//Locker should now be able to do its work
-						while (emulationModeChange.Value != EmulationMode.UnlockAccess)
-							Thread.Yield();
-						emulationSemaphore.Wait();
-						//do not update emulation mode
-					}
-					else
-					{
-						emulationMode = emulationModeChange.Value;
-					}
-
-					emulationModeChange = null;
+					stepOutSp = 0xffffffff;
+					UI.UI.IsDirty = true;
 				}
+
+				if (newEmulationMode == EmulationMode.LockAccess)
+				{
+					emulationSemaphore.Release();
+					//Locker should now be able to do its work
+					while (emulationModeChange == EmulationMode.LockAccess)
+						Thread.Yield();
+					emulationSemaphore.Wait();
+					//do not update emulation mode
+				}
+				else
+				{
+					emulationMode = newEmulationMode;
+				}
+
+				emulationModeChange = EmulationMode.NoChange;
 			}
 			emulationSemaphore.Release();
 		}
