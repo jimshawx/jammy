@@ -56,7 +56,6 @@ namespace RunAmiga.Main
 
 			InitUIRefreshThread();
 
-			Machine.SetEmulationMode(EmulationMode.Stopped);
 			emulation.Start();
 		}
 
@@ -327,7 +326,10 @@ namespace RunAmiga.Main
 		private void btnReset_Click(object sender, EventArgs e)
 		{
 			Machine.SetEmulationMode(EmulationMode.Stopped);
+
+			Machine.LockEmulation();
 			emulation.Reset();
+			Machine.UnlockEmulation();
 
 			SetSelection();
 			UpdateDisplay();

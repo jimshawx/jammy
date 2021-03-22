@@ -6,6 +6,8 @@
 		Step,
 		Running,
 		Exit,
-		StepOut
+		StepOut,
+		LockAccess,
+		UnlockAccess
 	}
 }

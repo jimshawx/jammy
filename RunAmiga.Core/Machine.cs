@@ -84,79 +84,96 @@ namespace RunAmiga.Core
 			emuThread.Start();
 		}
 		
-		public static void SetEmulationMode(EmulationMode mode, bool omitLock = false)
+		public static void SetEmulationMode(EmulationMode mode, bool changeWhileLocked = false)
 		{
-			if (omitLock)
-			{
+			if (changeWhileLocked)
 				emulationMode = mode;
-				return;
-			}
-
-			LockEmulation();
-			emulationMode = mode;
-			UnlockEmulation();
+			else
+				emulationModeChange = mode;
 		}
 
 		public static void UnlockEmulation()
 		{
+			emulationModeChange = EmulationMode.UnlockAccess;
 			emulationSemaphore.Release();
 		}
 
 		public static void LockEmulation()
 		{
+			emulationModeChange = EmulationMode.LockAccess;
 			emulationSemaphore.Wait();
 		}
+
+		private static EmulationMode? emulationModeChange;
 
 		public void Emulate()
 		{
 			uint stepOutSp = 0xffffffff;
 
-			ciaa.Reset();
-			ciab.Reset();
-			custom.Reset();
-			cpu.Reset();
+			emulationMode = EmulationMode.Stopped;
+			emulationModeChange = null;
+
+			emulationSemaphore.Wait();
 
 			while (emulationMode != EmulationMode.Exit)
 			{
-				if (breakpointCollection.BreakpointHit())
-					Machine.SetEmulationMode(EmulationMode.Stopped, true);
-
-				LockEmulation();
-
-				switch (emulationMode)
+				while (!emulationModeChange.HasValue)
 				{
-					case EmulationMode.Running:
-						RunEmulations(8);
-						break;
-					case EmulationMode.Step:
-						RunEmulations(8);
-						emulationMode = EmulationMode.Stopped;
-						UI.UI.IsDirty = true;
-						break;
-					case EmulationMode.StepOut:
-						var regs = cpu.GetRegs();
-						if (stepOutSp == 0xffffffff) stepOutSp = regs.A[7];
-						ushort ins = memory.UnsafeRead16(regs.PC);
-						bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] >= stepOutSp; //rts or rte
-						RunEmulations(8);
-						if (stopping)
-						{
-							emulationMode = EmulationMode.Stopped;
-							stepOutSp = 0xffffffff;
-							UI.UI.IsDirty = true;
-						}
-						break;
-					case EmulationMode.Exit:
-						break;
-					case EmulationMode.Stopped:
-						//Thread.Sleep(50);
-						break;
-					default:
-						throw new ApplicationException("unknown emulation mode");
+					switch (emulationMode)
+					{
+						case EmulationMode.Running:
+							RunEmulations(8);
+							break;
+
+						case EmulationMode.Step:
+							RunEmulations(8);
+							emulationModeChange = EmulationMode.Stopped;
+							break;
+
+						case EmulationMode.StepOut:
+							var regs = cpu.GetRegs();
+							if (stepOutSp == 0xffffffff) stepOutSp = regs.A[7];
+							ushort ins = memory.UnsafeRead16(regs.PC);
+							bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] >= stepOutSp; //rts or rte
+							RunEmulations(8);
+							if (stopping)
+								emulationModeChange = EmulationMode.Stopped;
+							break;
+					}
+
+					if (breakpointCollection.BreakpointHit())
+						emulationModeChange = EmulationMode.Stopped;
 				}
 
-				UnlockEmulation();
+				if (emulationModeChange.HasValue)
+				{
+					if (emulationModeChange.Value == EmulationMode.Exit)
+						break;
+
+					if (emulationModeChange.Value == EmulationMode.Stopped)
+					{
+						stepOutSp = 0xffffffff;
+						UI.UI.IsDirty = true;
+					}
+
+					if (emulationModeChange.Value == EmulationMode.LockAccess)
+					{
+						emulationSemaphore.Release();
+						//Locker should now be able to do its work
+						while (emulationModeChange.Value != EmulationMode.UnlockAccess)
+							Thread.Yield();
+						emulationSemaphore.Wait();
+						//do not update emulation mode
+					}
+					else
+					{
+						emulationMode = emulationModeChange.Value;
+					}
+
+					emulationModeChange = null;
+				}
 			}
+			emulationSemaphore.Release();
 		}
 
 		public void Reset()

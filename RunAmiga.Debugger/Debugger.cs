@@ -198,7 +198,7 @@ namespace RunAmiga.Debugger
 			{
 				tracer.DumpTrace();
 				logger.LogTrace($"Trying to read a {size} from {address:X8} @{insaddr:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				Machine.SetEmulationMode(EmulationMode.Stopped);
 			}
 
 			//if (IsMemoryBreakpoint(address, BreakpointType.Read))
@@ -220,7 +220,7 @@ namespace RunAmiga.Debugger
 			{
 				tracer.DumpTrace();
 				logger.LogTrace($"Trying to write a {size} ({value:X8} {value}) to {address:X8} @{insaddr:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped, true);
+				Machine.SetEmulationMode(EmulationMode.Stopped);
 			}
 
 			//if (address == 0xb328 || address == 0xb32a) System.Diagnostics.Debugger.Break();
