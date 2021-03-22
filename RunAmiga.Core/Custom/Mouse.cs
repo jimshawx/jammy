@@ -37,6 +37,9 @@ namespace RunAmiga.Core.Custom
 
 		public void Emulate(ulong cycles)
 		{
+			if (!emulationWindow.IsActive())
+				return;
+
 			EmulateMouse(cycles);
 			EmulateJoystick(cycles);
 		}

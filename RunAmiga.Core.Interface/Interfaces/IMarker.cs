@@ -119,10 +119,12 @@ namespace RunAmiga.Core.Interface.Interfaces
 		bool BreakpointHit();
 	}
 
-	public interface IDebugger : IMemoryMappedDevice
+	public interface IDebugger : IMemoryInterceptor
 	{
 		void ToggleBreakpoint(uint pc);
 		MemoryDump GetMemory();
+		ChipState GetChipRegs();
+		ushort GetInterruptLevel();
 		Regs GetRegs();
 		void BreakAtNextPC();
 		void SetPC(uint pc);
@@ -132,6 +134,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void CIAInt(ICRB icr);
 		void IRQ(uint irq);
 		void INTENA(uint irq);
+		void WriteTrace();
 	}
 
 	public interface IMemoryInterceptor
@@ -176,6 +179,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		MemType[] GetMemTypes();
 		Dictionary<uint, Header> GetHeaders();
 		Dictionary<uint, Comment> GetComments();
+		Dictionary<string, LVOCollection> GetLVOs();
 	}
 
 	public interface IMachineIdentifier

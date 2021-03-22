@@ -23,6 +23,14 @@ namespace RunAmiga.Core.Types.Types
 	{
 		public string Name { get; set; }
 		public int Offset { get; set; }
+		public uint Address { get; set; }
 		public int Index { get { return Offset/-6-1;} }
+	}
+
+	public class LVOCollection
+	{
+		public string Name { get; set; }
+		public uint BaseAddress { get; set; }
+		public List<LVO> LVOs { get; } = new List<LVO>();
 	}
 }

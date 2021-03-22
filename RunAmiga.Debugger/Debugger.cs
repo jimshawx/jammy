@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core;
@@ -9,6 +12,7 @@ using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
 using RunAmiga.Core.Types.Types.Debugger;
+using RunAmiga.Disassembler.AmigaTypes;
 
 namespace RunAmiga.Debugger
 {
@@ -25,14 +29,17 @@ namespace RunAmiga.Debugger
 		private readonly IDisassembly disassembly;
 		private readonly ILogger logger;
 		private readonly ITracer tracer;
+		private readonly IAnalyser analyser;
 
 		public Debugger(IMemoryMapper memoryMapper, IMemory memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
-			IBreakpointCollection breakpoints, IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer)
+			IBreakpointCollection breakpoints,
+			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser)
 		{
 			this.breakpoints = breakpoints;
 			this.disassembly = disassembly;
 			this.tracer = tracer;
+			this.analyser = analyser;
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
@@ -42,10 +49,15 @@ namespace RunAmiga.Debugger
 			this.ciab = ciab;
 			this.logger = logger;
 
-			memoryMapper.AddMemoryIntercept(this.breakpoints);
+			memoryMapper.AddMemoryIntercept(this);
 
 			//dump the kickstart ROM details and disassemblies
 			disassembly.ShowRomTags();
+
+			libraryBaseAddresses["exec.library"] = memory.UnsafeRead32(4);
+			//AddLVOIntercept("exec.library", "OpenLibrary", OpenLibraryLogger);
+			//AddLVOIntercept("exec.library", "OpenResource", OpenResourceLogger);
+			//AddLVOIntercept("exec.library", "MakeLibrary", MakeLibraryLogger);
 
 			if (settings.Value.KickStart == "1.3")
 			{
@@ -170,79 +182,92 @@ namespace RunAmiga.Debugger
 
 		}
 
-		readonly MemoryRange memoryRange = new MemoryRange(0x0, 0x1000000);
-
-		public bool IsMapped(uint address)
+		private void OpenLibraryLogger(LVO lvo)
 		{
-			return true;
+			var regs = cpu.GetRegs();
+			logger.LogTrace($"{lvo.Name}() libname {regs.A[1]:X8} {GetString(regs.A[1])} version: {regs.D[0]:X8}");
+		}
+		private void OpenResourceLogger(LVO lvo)
+		{
+			var regs = cpu.GetRegs();
+			logger.LogTrace($"{lvo.Name}() resName: {regs.A[1]:X8} {GetString(regs.A[1])}");
+		}
+		private void MakeLibraryLogger(LVO lvo)
+		{
+			var regs = cpu.GetRegs();
+			logger.LogTrace($"{lvo.Name}() vectors: {regs.A[0]:X8} structure: {regs.A[1]:X8} init: {regs.A[2]:X8} dataSize: {regs.D[0]:X8} segList: {regs.D[1]:X8}");
 		}
 
-		public MemoryRange MappedRange()
+		private class LVOInterceptor
 		{
-			return memoryRange;
+			public string Library { get; set; }
+			public LVO LVO { get; set; }
+			public Action<LVO> Action { get; set; }
 		}
 
-		private bool isROM(uint address)
-		{
-			return address >= 0xf80000 && address <= 0xffffff;
-		}
+		private Dictionary<string, uint> libraryBaseAddresses = new Dictionary<string, uint>();
 
-		private bool isOutOfRange(uint address)
-		{
-			return address >= 0x1000000;
-		}
+		private List<LVOInterceptor> LVOInterceptors { get; } = new List<LVOInterceptor>();
 
-		public uint Read(uint insaddr, uint address, Size size)
+		private void AddLVOIntercept(string library, string vectorName, Action<LVO> action)
 		{
-			if (isOutOfRange(address))
+			var lvos = analyser.GetLVOs();
+			if (lvos.TryGetValue(library, out var lib))
 			{
-				tracer.DumpTrace();
-				logger.LogTrace($"Trying to read a {size} from {address:X8} @{insaddr:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped);
+				var vector = lib.LVOs.SingleOrDefault(x => x.Name == vectorName);
+				if (vector != null)
+				{
+					uint baseAddress = lib.BaseAddress;
+					if (library == "exec.library")
+						baseAddress = memory.UnsafeRead32(4);
+
+					LVOInterceptors.Add(new LVOInterceptor{ 
+						Library = library,
+						LVO = vector,
+						Action = action});
+				}
+			}
+		}
+
+		//occurs after Read
+		public void Read(uint insaddr, uint address, uint value, Size size)
+		{
+			if (size == Size.Word)
+			{
+				var lvo = LVOInterceptors.SingleOrDefault(x => memory.UnsafeRead32((uint)(libraryBaseAddresses[x.Library] + x.LVO.Offset + 2)) == address);
+				if (lvo != null)
+				{
+					//breakpoints.SignalBreakpoint(address);
+					lvo.Action(lvo.LVO);
+				}
 			}
 
-			//if (IsMemoryBreakpoint(address, BreakpointType.Read))
-			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
-
-			return 0;
+			breakpoints.Read(insaddr, address, value, size);
 		}
 
+		//occurs before Write
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			//if (address >= 0xc004d2 && address < 0xc004d2+48) 
-			//{
-			//	DumpTrace();
-			//	logger.LogTrace($"Wrote to {address:X8}");
-			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
-			//}
-
-			if (isROM(address) || isOutOfRange(address))
-			{
-				tracer.DumpTrace();
-				logger.LogTrace($"Trying to write a {size} ({value:X8} {value}) to {address:X8} @{insaddr:X8}");
-				Machine.SetEmulationMode(EmulationMode.Stopped);
-			}
-
-			//if (address == 0xb328 || address == 0xb32a) System.Diagnostics.Debugger.Break();
-
-			//if (IsMemoryBreakpoint(address, BreakpointType.Write))
-			//	Machine.SetEmulationMode(EmulationMode.Stopped, true);
+			//update execbase
+			if (address == 4 && size == Size.Long)
+				libraryBaseAddresses["exec.library"] = value;
+			
+			breakpoints.Write(insaddr, address, value, size);
 		}
 
-		//private string GetString(uint str)
-		//{
-		//	var sb = new StringBuilder();
-		//	for (; ; )
-		//	{
-		//		byte c = memory.Read8(str);
-		//		if (c == 0)
-		//			return sb.ToString();
+		private string GetString(uint str)
+		{
+			var sb = new StringBuilder();
+			for (; ; )
+			{
+				byte c = memory.UnsafeRead8(str);
+				if (c == 0)
+					return sb.ToString();
 
-		//		sb.Append(Convert.ToChar(c));
-		//		str++;
-		//	}
-		//	return null;
-		//}
+				sb.Append(Convert.ToChar(c));
+				str++;
+			}
+		}
 
 		public void ToggleBreakpoint(uint pc)
 		{
@@ -306,6 +331,25 @@ namespace RunAmiga.Debugger
 		public void INTENA(uint irq)
 		{
 			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1 << (int)irq), Size.Word);
+		}
+
+		public ChipState GetChipRegs()
+		{
+			var regs = new ChipState();
+			regs.dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Core.Types.Types.Size.Word);
+			regs.intreq = (ushort)custom.Read(0, ChipRegs.INTREQR, Core.Types.Types.Size.Word);
+			regs.intena = (ushort)custom.Read(0, ChipRegs.INTENAR, Core.Types.Types.Size.Word);
+			return regs;
+		}
+
+		public ushort GetInterruptLevel()
+		{
+			return interrupt.GetInterruptLevel();
+		}
+
+		public void WriteTrace()
+		{
+			tracer.WriteTrace();
 		}
 	}
 }

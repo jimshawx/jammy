@@ -16,6 +16,7 @@ namespace RunAmiga.Core
 		void Blit(int[] screen);
 		Point RecentreMouse();
 		void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp);
+		bool IsActive();
 	}
 
 	public class EmulationWindow : IEmulationWindow
@@ -69,10 +70,13 @@ namespace RunAmiga.Core
 
 		private void Release(string where)
 		{
-			logger.LogTrace($"Release {where}");
-			IsCaptured = false;
-			Cursor.Show();
-			Cursor.Clip = new Rectangle(0, 0, 0, 0);
+			logger.LogTrace($"Release {where} Was Captured? {IsCaptured}");
+			if (IsCaptured)
+			{
+				IsCaptured = false;
+				Cursor.Show();
+				Cursor.Clip = new Rectangle(0, 0, 0, 0);
+			}
 		}
 
 		private void Emulation_MouseClick(object sender, MouseEventArgs e)
@@ -179,6 +183,11 @@ namespace RunAmiga.Core
 		{
 			emulation.KeyDown += (sender, e) => addKeyDown(e.KeyValue);
 			emulation.KeyUp += (sender, e) => addKeyUp(e.KeyValue);
+		}
+
+		public bool IsActive()
+		{
+			return Form.ActiveForm == emulation;
 		}
 	}
 }

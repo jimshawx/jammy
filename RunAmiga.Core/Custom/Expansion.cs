@@ -11,9 +11,43 @@ namespace RunAmiga.Core.Custom
 	internal static class RamExpansion
 	{
 		//8MB RAM Expansion
-		public static byte[] Config = new byte[]
+		public static byte[] Config_8MB = new byte[]
 		{
 			0b11_1_0_0_000,//type, size
+			0,//product number
+			//0b1_0_0_0_1010,//location, size
+			0b1_0_0_0_0000,//location, size
+			0,//reserved
+			0x24,0x06,//manufacturer hi/low
+			0x00,0x00,0x00,0x00,//serial number
+			0x00,0x00,//optional rom vector hi/lo (boot rom location, if bit 4 of byte 0 is set)
+			0,0,0,0,0,//reserved
+			0,0,//address base (written to)
+			0,//shut up (written to)
+			0,0,0,0,0,0,0,0,0,0,0,0,//reserved
+		};
+
+		//2MB RAM Expansion
+		public static byte[] Config_2MB = new byte[]
+		{
+			0b11_1_0_0_110,//type, size
+			0,//product number
+			//0b1_0_0_0_1010,//location, size
+			0b1_0_0_0_0000,//location, size
+			0,//reserved
+			0x24,0x06,//manufacturer hi/low
+			0x00,0x00,0x00,0x00,//serial number
+			0x00,0x00,//optional rom vector hi/lo (boot rom location, if bit 4 of byte 0 is set)
+			0,0,0,0,0,//reserved
+			0,0,//address base (written to)
+			0,//shut up (written to)
+			0,0,0,0,0,0,0,0,0,0,0,0,//reserved
+		};
+
+		//4MB RAM Expansion
+		public static byte[] Config_4MB = new byte[]
+		{
+			0b11_1_0_0_111,//type, size
 			0,//product number
 			//0b1_0_0_0_1010,//location, size
 			0b1_0_0_0_0000,//location, size
@@ -35,7 +69,9 @@ namespace RunAmiga.Core.Custom
 
 		public class Configurations
 		{
+			public string Name { get; set; }
 			public bool IsConfigured { get; set; }
+			public uint BaseAddress { get; set; }
 			public byte [] Config { get; set; }
 		}
 
@@ -44,7 +80,10 @@ namespace RunAmiga.Core.Custom
 		public Expansion(ILogger<Expansion> logger)
 		{
 			this.logger = logger;
-			configurations.Add( new Configurations{ Config = RamExpansion.Config });
+			configurations.Add( new Configurations{ Config = RamExpansion.Config_8MB, Name = "8MB RAM Expansion" });
+			//configurations.Add(new Configurations { Config = RamExpansion.Config_2MB, Name = "2MB RAM Expansion"});
+			//configurations.Add(new Configurations { Config = RamExpansion.Config_4MB, Name = "4MB RAM Expansion" });
+			//configurations.Add(new Configurations { Config = RamExpansion.Config_2MB, Name = "2MB RAM Expansion" });
 		}
 
 		public bool IsMapped(uint address)
@@ -84,7 +123,7 @@ namespace RunAmiga.Core.Custom
 					value = (byte)(v << 4);
 			}
 
-			logger.LogTrace($"Expansion R {insaddr:X8} {address:X8} {value:X2} {size}");
+			//logger.LogTrace($"Expansion R {insaddr:X8} {address:X8} {value:X2} {size}");
 
 			return value;
 		}
@@ -95,9 +134,22 @@ namespace RunAmiga.Core.Custom
 
 			address -= 0xe80000;
 
+			if (address == 0x4A && configurations.Any())
+				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 16;
+			
+			if (address == 0x48 && configurations.Any())
+				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 20;
+
+			if (address == 0x46 && configurations.Any())
+				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 24;
+
+			if (address == 0x44 && configurations.Any())
+				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 28;
+
 			//writing here finishes the configuration (Zorro II)
 			if (address == 0x48 && configurations.Any())
 			{
+				logger.LogTrace($"{configurations[0].Name} configured at {configurations[0].BaseAddress:X8}");
 				configurations[0].IsConfigured = true;
 				configurations.RemoveAt(0);
 			}

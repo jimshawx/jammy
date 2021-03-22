@@ -8,7 +8,6 @@ using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core;
-using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Enums;
@@ -24,14 +23,11 @@ namespace RunAmiga.Main
 		private readonly IEmulation emulation;
 		private readonly IDisassembly disassembly;
 		private readonly IDebugger debugger;
-		private readonly IChips custom;
 		private readonly ILogger logger;
-		private readonly ITracer tracer;
-		private readonly IInterrupt interrupt;
 		private readonly EmulationSettings settings;
 
 		public RunAmiga(IEmulation emulation, IDisassembly disassembly, IDebugger debugger,
-			IChips custom, ILogger<RunAmiga> logger, ITracer tracer, IOptions<EmulationSettings> options, IInterrupt interrupt)
+			ILogger<RunAmiga> logger,IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
 				throw new ApplicationException("RunAmiga can't create Handle");
@@ -39,10 +35,7 @@ namespace RunAmiga.Main
 			this.emulation = emulation;
 			this.disassembly = disassembly;
 			this.debugger = debugger;
-			this.custom = custom;
 			this.logger = logger;
-			this.tracer = tracer;
-			this.interrupt = interrupt;
 
 			InitializeComponent();
 
@@ -96,7 +89,6 @@ namespace RunAmiga.Main
 			{
 				new Tuple<uint, uint>(0x000000, 0x400),
 				new Tuple<uint, uint>(0xc00000, 0x1000),
-				new Tuple<uint, uint>(0xc0a000, 0x1000),
 				new Tuple<uint, uint>(0xfc0000, 0x40000),
 			};
 			if (settings.KickStart == "3.1" || settings.KickStart == "2.04")
@@ -137,11 +129,7 @@ namespace RunAmiga.Main
 			Machine.LockEmulation();
 			var regs = debugger.GetRegs();
 			var memory = debugger.GetMemory();
-
-			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Core.Types.Types.Size.Word);
-			ushort intreq = (ushort)custom.Read(0, ChipRegs.INTREQR, Core.Types.Types.Size.Word);
-			ushort intena = (ushort)custom.Read(0, ChipRegs.INTENAR, Core.Types.Types.Size.Word);
-
+			var chipRegs = debugger.GetChipRegs();
 			Machine.UnlockEmulation();
 			
 			var mem = new List<Tuple<uint, uint>>();
@@ -183,7 +171,7 @@ namespace RunAmiga.Main
 			}
 
 			{
-				lbCustom.Items.Add($"SR: {(regs.SR >> 8) & 7} IRQ: {interrupt.GetInterruptLevel()}");
+				lbCustom.Items.Add($"SR: {(regs.SR >> 8) & 7} IRQ: {debugger.GetInterruptLevel()}");
 				lbCustom.Items.Add("INTENA W:DFF09A R:DFF01C");
 				lbCustom.Items.Add("INTREQ W:DFF09C R:DFF01E");
 				lbCustom.Items.Add("        ENA REQ");
@@ -191,7 +179,7 @@ namespace RunAmiga.Main
 				for (int i = 0; i < 16; i++)
 				{
 					int bit = 1 << (i ^ 15);
-					lbCustom.Items.Add($"{names[i],8} {((intena & bit) != 0 ? 1 : 0)}   {((intreq & bit) != 0 ? 1 : 0)}");
+					lbCustom.Items.Add($"{names[i],8} {((chipRegs.intena & bit) != 0 ? 1 : 0)}   {((chipRegs.intreq & bit) != 0 ? 1 : 0)}");
 				}
 			}
 
@@ -223,7 +211,7 @@ namespace RunAmiga.Main
 					"RYO  INNNNNNNNNN";
 				lbCustom.Items.AddRange(hdr.Split('\n'));
 				lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
-				lbCustom.Items.Add($"{Convert.ToString(dmacon, 2).PadLeft(16, '0')}");
+				lbCustom.Items.Add($"{Convert.ToString(chipRegs.dmacon, 2).PadLeft(16, '0')}");
 			}
 		}
 
@@ -576,7 +564,10 @@ namespace RunAmiga.Main
 			{
 				string typeName = (string)cbTypes.SelectedItem;
 
+				Machine.LockEmulation();
+
 				var regs = debugger.GetRegs();
+
 				uint address = ValueFromRegName(regs, (string)addressFollowBox.SelectedItem);
 
 				var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == "RunAmiga.Disassembler");
@@ -590,10 +581,12 @@ namespace RunAmiga.Main
 						{
 							Machine.LockEmulation();
 							txtExecBase.Text = ObjectMapper.MapObject(tp, address);
-							Machine.UnlockEmulation();
+
 						}
 					}
 				}
+
+				Machine.UnlockEmulation();
 			}
 		}
 
@@ -605,7 +598,7 @@ namespace RunAmiga.Main
 		private void btnDumpTrace_Click(object sender, EventArgs e)
 		{
 			Machine.LockEmulation();
-			tracer.WriteTrace();
+			debugger.WriteTrace();
 			Machine.UnlockEmulation();
 		}
 	}

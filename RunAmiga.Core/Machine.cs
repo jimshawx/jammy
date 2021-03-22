@@ -83,13 +83,17 @@ namespace RunAmiga.Core
 			emuThread = new Task(Emulate);
 			emuThread.Start();
 		}
-		
+
 		public static void SetEmulationMode(EmulationMode mode, bool changeWhileLocked = false)
 		{
 			if (changeWhileLocked)
 				emulationMode = mode;
 			else
+			{
 				emulationModeChange = mode;
+				while (emulationModeChange != EmulationMode.NoChange)
+					Thread.Yield();
+			}
 		}
 
 		public static void UnlockEmulation()

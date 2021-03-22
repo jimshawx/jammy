@@ -25,7 +25,7 @@ namespace RunAmiga.Disassembler.Analysers
 
 		private readonly Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
 		private readonly Dictionary<uint, Header> headers = new Dictionary<uint, Header>();
-		private readonly Dictionary<string, List<LVO>> lvos = new Dictionary<string, List<LVO>>();
+		private readonly Dictionary<string, LVOCollection> lvos = new Dictionary<string, LVOCollection>();
 		private readonly MemType[] memType;
 		private readonly EmulationSettings settings;
 
@@ -66,6 +66,11 @@ namespace RunAmiga.Disassembler.Analysers
 			return comments;
 		}
 
+		public Dictionary<string, LVOCollection> GetLVOs()
+		{
+			return lvos;
+		}
+
 		private void Labeller()
 		{
 			var labels = labeller.GetLabels();
@@ -100,12 +105,12 @@ namespace RunAmiga.Disassembler.Analysers
 							continue;
 
 						currentLib = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)[3];
-						lvos[currentLib] = new List<LVO>();
+						lvos[currentLib] = new LVOCollection();
 					}
 					else
 					{
 						var bits = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-						lvos[currentLib].Add(new LVO
+						lvos[currentLib].LVOs.Add(new LVO
 						{
 							Name = bits[0].Substring(4),
 							Offset = int.Parse(bits[2])
@@ -307,7 +312,7 @@ namespace RunAmiga.Disassembler.Analysers
 
 			if (lvos.TryGetValue(res.Name, out var lvolist))
 			{
-				var lvo = lvolist.SingleOrDefault(x => x.Index == idx);
+				var lvo = lvolist.LVOs.SingleOrDefault(x => x.Index == idx);
 				if (lvo != null)
 					return $"{lvo.Name}()";
 			}
