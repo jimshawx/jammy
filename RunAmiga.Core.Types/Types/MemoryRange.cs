@@ -13,7 +13,7 @@
 
 		public bool Contains(uint address)
 		{
-			return address >= Start && address < Start+Length;
+			return address >= Start && address-Start < Length;
 		}
 	}
 }

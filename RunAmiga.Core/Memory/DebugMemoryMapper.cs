@@ -106,7 +106,12 @@ namespace RunAmiga.Core.Memory
 		public IEnumerable<byte> GetEnumerable(int start)
 		{
 			for (int i = start; i < memoryRange.Length; i++)
-				yield return UnsafeRead8((uint)i);
+			{
+				if (mappedDevice[i >> 16] is IUnmappedMemory)
+					yield return 0;
+				else
+					yield return UnsafeRead8((uint)i);
+			}
 		}
 
 		public IEnumerable<uint> AsULong(int start)

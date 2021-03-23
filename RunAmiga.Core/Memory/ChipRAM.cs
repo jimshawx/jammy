@@ -18,6 +18,7 @@ namespace RunAmiga.Core.Memory
 		{
 			uint chipSize = (uint)(Math.Max(settings.Value.ChipMemory, 0.5) * 1024 * 1024);
 			
+			//chip RAM is just mirrored across the first 2MB
 			memory = new byte[chipSize];
 			addressMask = chipSize - 1;
 			memoryRange = new MemoryRange(0, 0x200000);

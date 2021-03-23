@@ -27,7 +27,7 @@ namespace RunAmiga.Core.Memory
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			//logger.LogTrace($"Unmapped Memory Read {address:X8} @{insaddr:X8} {size}");
+			logger.LogTrace($"Unmapped Memory Read {address:X8} @{insaddr:X8} {size}");
 			return 0;
 		}
 

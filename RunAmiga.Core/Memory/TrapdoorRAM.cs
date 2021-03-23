@@ -25,6 +25,7 @@ namespace RunAmiga.Core.Memory
 			}
 			else
 			{
+				//allow for chip memory shadows to fill the space
 				memoryRange = new MemoryRange(0, 0);
 			}
 		}

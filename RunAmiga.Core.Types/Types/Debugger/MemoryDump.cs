@@ -7,15 +7,8 @@ namespace RunAmiga.Core.Types.Types.Debugger
 {
 	public class MemoryDump
 	{
-		//private readonly ILogger logger;
 		private readonly byte[] memory = new byte[16 * 1024 * 1024];
 		private readonly Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
-
-		public MemoryDump(byte[] src)
-		{
-			Array.Copy(src, memory, 16 * 1024 * 1024);
-			//logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<MemoryDump>>();
-		}
 
 		public MemoryDump(IEnumerable<byte> b)
 		{
