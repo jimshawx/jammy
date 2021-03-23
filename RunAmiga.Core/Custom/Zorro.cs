@@ -6,7 +6,7 @@ using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
 {
-	public interface IExpansion :  IMemoryMappedDevice { }
+	public interface IZorro :  IMemoryMappedDevice { }
 
 	internal static class RamExpansion
 	{
@@ -63,7 +63,7 @@ namespace RunAmiga.Core.Custom
 	}
 
 	// HRM pp 431
-	public class Expansion : IExpansion
+	public class Zorro : IZorro
 	{
 		private readonly ILogger logger;
 
@@ -77,7 +77,7 @@ namespace RunAmiga.Core.Custom
 
 		private readonly List<Configurations> configurations = new List<Configurations>();
 
-		public Expansion(ILogger<Expansion> logger)
+		public Zorro(ILogger<Zorro> logger)
 		{
 			this.logger = logger;
 			configurations.Add( new Configurations{ Config = RamExpansion.Config_8MB, Name = "8MB RAM Expansion" });

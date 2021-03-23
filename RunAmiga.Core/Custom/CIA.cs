@@ -355,4 +355,43 @@ namespace RunAmiga.Core.Custom
 			AssertICR(ICRB.SERIAL);
 		}
 	}
+
+	public class CIAMemory : ICIAMemory
+	{
+		private readonly ICIAAOdd ciaa;
+		private readonly ICIABEven ciab;
+
+		public CIAMemory(ICIAAOdd ciaa, ICIABEven ciab)
+		{
+			this.ciaa = ciaa;
+			this.ciab = ciab;
+		}
+
+		public bool IsMapped(uint address)
+		{
+			return address >> 16 == 0xbf;
+		}
+
+		readonly MemoryRange memoryRange = new MemoryRange(0xbf0000, 0x10000);
+		public MemoryRange MappedRange()
+		{
+			return memoryRange;
+		}
+
+		public uint Read(uint insaddr, uint address, Size size)
+		{
+			if ((address & 1) != 0)
+				return ciaa.Read(insaddr, address, size);
+			else
+				return ciab.Read(insaddr, address, size);
+		}
+
+		public void Write(uint insaddr, uint address, uint value, Size size)
+		{
+			if ((address & 1) != 0)
+				ciaa.Write(insaddr, address, value, size);
+			else
+				ciab.Write(insaddr, address, value, size);
+		}
+	}
 }

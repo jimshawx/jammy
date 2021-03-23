@@ -50,6 +50,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 	}
 	public interface ICIAAOdd : ICIA { }
 	public interface ICIABEven : ICIA { }
+	public interface ICIAMemory : IMemoryMappedDevice { }
 	public interface ICopper : IEmulate, ICustomReadWrite { }
 	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB
 	{

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Mime;
 using System.Runtime.InteropServices;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
