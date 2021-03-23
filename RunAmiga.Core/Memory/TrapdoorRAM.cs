@@ -18,6 +18,8 @@ namespace RunAmiga.Core.Memory
 		{
 			if (settings.Value.TrapdoorMemory != 0.0)
 			{
+				if (settings.Value.TrapdoorMemory > 1.75) settings.Value.TrapdoorMemory = 1.75f;
+
 				uint trapdoorSize = (uint)(settings.Value.TrapdoorMemory * 1024 * 1024);
 				memoryRange = new MemoryRange(0xC00000, trapdoorSize);
 				memory = new byte[trapdoorSize];

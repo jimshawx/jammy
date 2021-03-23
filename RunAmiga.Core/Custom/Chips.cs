@@ -62,11 +62,11 @@ namespace RunAmiga.Core.Custom
 			//regs[REG(ChipRegs.VPOSR)] = 0x2300;//Alice
 		}
 
-		readonly MemoryRange memoryRange = new MemoryRange(0xdf0000, 0x10000);
+		readonly MemoryRange memoryRange = new MemoryRange(0xc00000, 0x200000);
 
 		public bool IsMapped(uint address)
 		{
-			return (address >> 16) == 0xdf || (address >> 16) == 0xc0;//there's a mirror at 0xc0
+			return (address >> 21) == 6;
 		}
 
 		public MemoryRange MappedRange()
@@ -81,7 +81,7 @@ namespace RunAmiga.Core.Custom
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			if (address >> 16 == 0xc0) address = 0x1f0000;
+			address |= 0xdf0000;
 
 			if (size == Size.Byte)
 			{
@@ -142,7 +142,7 @@ namespace RunAmiga.Core.Custom
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (address >> 16 == 0xc0) address = 0x1f0000;
+			address |= 0xdf0000;
 
 			if (size == Size.Byte)
 			{

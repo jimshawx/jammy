@@ -88,9 +88,10 @@ namespace RunAmiga.Main
 			var ranges = new List<Tuple<uint, uint>>
 			{
 				new Tuple<uint, uint>(0x000000, 0x400),
-				new Tuple<uint, uint>(0xc00000, 0x1000),
 				new Tuple<uint, uint>(0xfc0000, 0x40000),
 			};
+			if (settings.TrapdoorMemory != 0.0)
+				ranges.Add(new Tuple<uint, uint>(0xc00000, 0x1000));
 			if (settings.KickStart == "3.1" || settings.KickStart == "2.04")
 				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x40000));
 

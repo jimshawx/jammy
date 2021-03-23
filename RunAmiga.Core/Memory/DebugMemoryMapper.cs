@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
@@ -99,8 +100,11 @@ namespace RunAmiga.Core.Memory
 
 		public IEnumerable<byte> GetEnumerable(int start, int length)
 		{
-			for (int i = start; i < start+length; i++)
-				yield return UnsafeRead8((uint)i);
+			for (int i = start; i < Math.Min(start+length, memoryRange.Length); i++)
+				if (mappedDevice[i >> 16] is IUnmappedMemory)
+					yield return 0;
+				else 
+					yield return UnsafeRead8((uint)i);
 		}
 
 		public IEnumerable<byte> GetEnumerable(int start)
@@ -117,15 +121,20 @@ namespace RunAmiga.Core.Memory
 		public IEnumerable<uint> AsULong(int start)
 		{
 			for (uint i = (uint)start; i < memoryRange.Length; i += 4)
-				yield return UnsafeRead32(i);
+				if (mappedDevice[i >> 16] is IUnmappedMemory)
+					yield return 0;
+				else 
+					yield return UnsafeRead32(i);
 		}
 
 		public IEnumerable<ushort> AsUWord(int start)
 		{
 			for (uint i = (uint)start; i < memoryRange.Length; i += 2)
-				yield return UnsafeRead8(i);
+				if (mappedDevice[i >> 16] is IUnmappedMemory)
+					yield return 0;
+				else
+					yield return UnsafeRead8(i);
 		}
-
 
 		public int Length => (int)memoryRange.Length;
 	}

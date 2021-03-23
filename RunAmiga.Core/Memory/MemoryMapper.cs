@@ -22,7 +22,8 @@ namespace RunAmiga.Core.Memory
 
 		public MemoryMapper(ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
 			IZorro expansion, IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IUnmappedMemory unmappedMemory,
-			IKickstartROM kickstartROM, ILogger<MemoryMapper> logger, IOptions<EmulationSettings> settings)
+			IKickstartROM kickstartROM, IIDEController ideController,
+			ILogger<MemoryMapper> logger, IOptions<EmulationSettings> settings)
 		{
 			this.chipRAM = chipRAM;
 			this.kickstartROM = kickstartROM;
@@ -38,6 +39,7 @@ namespace RunAmiga.Core.Memory
 			devices.Add(kickstartROM);
 			devices.Add(battClock);
 			devices.Add(expansion);
+			devices.Add(ideController);
 
 			CopyKickstart();
 			

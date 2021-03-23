@@ -206,4 +206,6 @@ namespace RunAmiga.Core.Interface.Interfaces
 	public interface ITrapdoorRAM : IMemoryMappedDevice { }
 	public interface IUnmappedMemory : IMemoryMappedDevice { }
 	public interface IZorroRAM : IMemoryMappedDevice { }
+
+	public interface IIDEController : IMemoryMappedDevice { }
 }

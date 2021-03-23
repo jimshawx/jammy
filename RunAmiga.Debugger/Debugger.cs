@@ -68,6 +68,8 @@ namespace RunAmiga.Debugger
 			if (settings.Value.KickStart != "1.2")
 				return;
 
+			//AddBreakpoint(0xFC061A);//trapdoor RAM detection
+
 			//AddBreakpoint(0xfc0af0);//InitCode
 			//AddBreakpoint(0xfc0afe);
 			//AddBreakpoint(0xfc0af0);
