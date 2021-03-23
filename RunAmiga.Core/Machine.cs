@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -30,9 +28,7 @@ namespace RunAmiga.Core
 		private readonly ICPU cpu;
 		private readonly IBreakpointCollection breakpointCollection;
 		private readonly IChips custom;
-		private readonly IMemory memory;
-		private readonly ICIAAOdd ciaa;
-		private readonly ICIABEven ciab;
+		private readonly IDebugMemoryMapper memoryMapper;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
 
@@ -40,14 +36,12 @@ namespace RunAmiga.Core
 
 		private readonly List<IEmulate> emulations = new List<IEmulate>();
 
-		public Machine(IInterrupt interrupt, IMemory memory, IBattClock battClock, 
+		public Machine(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock, 
 			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, 
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IBreakpointCollection breakpointCollection)
 		{
-			this.memory = memory;
-			this.ciaa = ciaa;
-			this.ciab = ciab;
+			this.memoryMapper = memoryMapper;
 			this.custom = custom;
 			this.cpu = cpu;
 			this.breakpointCollection = breakpointCollection;
@@ -62,7 +56,6 @@ namespace RunAmiga.Core
 			emulations.Add(ciaa);
 			emulations.Add(ciab);
 			emulations.Add(custom);
-			emulations.Add(memory);
 			emulations.Add(cpu);
 			emulations.Add(interrupt);
 
@@ -137,7 +130,7 @@ namespace RunAmiga.Core
 						case EmulationMode.StepOut:
 							var regs = cpu.GetRegs();
 							if (stepOutSp == 0xffffffff) stepOutSp = regs.A[7];
-							ushort ins = memory.UnsafeRead16(regs.PC);
+							ushort ins = memoryMapper.UnsafeRead16(regs.PC);
 							bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] >= stepOutSp; //rts or rte
 							RunEmulations(8);
 							if (stopping)

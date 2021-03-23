@@ -31,7 +31,7 @@ namespace RunAmiga.Disassembler.AmigaTypes
 			throw new ApplicationException();
 		}
 
-		public static object MapSimple(IMemory memory, Type type, uint addr)
+		public static object MapSimple(IDebugMemoryMapper memory, Type type, uint addr)
 		{
 			if (type == typeof(NodeType)) return (NodeType)memory.UnsafeRead8(addr);
 			if (type == typeof(BYTE)) return (BYTE)memory.UnsafeRead8(addr);

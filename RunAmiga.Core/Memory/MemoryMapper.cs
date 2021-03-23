@@ -1,14 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Custom;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Core.Memory
 {
 	public class MemoryMapper : IMemoryMapper
 	{
+		private readonly IChipRAM chipRAM;
+		private readonly IKickstartROM kickstartROM;
 		private readonly ILogger logger;
 		private IMemoryInterceptor interceptor;
 		private readonly List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
@@ -17,26 +20,62 @@ namespace RunAmiga.Core
 
 		private readonly uint memoryMask;
 
-		public MemoryMapper(IMemory memory, ICIAMemory ciaMemory, IChips custom, IBattClock battClock, IZorro expansion, ILogger<MemoryMapper> logger)
+		public MemoryMapper(ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
+			IZorro expansion, IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IUnmappedMemory unmappedMemory,
+			IKickstartROM kickstartROM, ILogger<MemoryMapper> logger, IOptions<EmulationSettings> settings)
 		{
+			this.chipRAM = chipRAM;
+			this.kickstartROM = kickstartROM;
 			this.logger = logger;
-			devices.Add(memory);
-			memoryMask = (uint)(memory.GetMemoryArray().Length - 1);
+
+			memoryMask = (uint)(settings.Value.MemorySize - 1);
+
+			devices.Add(unmappedMemory);
 			devices.Add(ciaMemory);
 			devices.Add(custom);
+			devices.Add(chipRAM);
+			devices.Add(trapdoorRAM);
+			devices.Add(kickstartROM);
 			devices.Add(battClock);
 			devices.Add(expansion);
+
+			CopyKickstart();
+			
 			BuildMappedDevices();
 		}
 
-		public MemoryMapper(List<IMemoryMappedDevice> memoryDevices)
+		public MemoryMapper(List<IMemoryMappedDevice> memoryDevices, IOptions<EmulationSettings> settings)
 		{
-			var memory = (IMemory)memoryDevices.Single(x => x is IMemory);
-			memoryMask = (uint)(memory.GetMemoryArray().Length - 1);
-
+			memoryMask = (uint)(settings.Value.MemorySize - 1);
 			devices.AddRange(memoryDevices);
 			BuildMappedDevices();
 		}
+
+		public void Emulate(ulong cycles)
+		{
+		}
+
+		public void Reset()
+		{
+			CopyKickstart();
+		}
+
+		private void CopyKickstart()
+		{
+			//hack: this is a hack to put the kickstart at 0x0 at reset time
+			//todo: should be looking at CIA-A PRA OVL bit (0) and update the mappings
+			uint src = kickstartROM.MappedRange().Start;
+			uint dst = chipRAM.MappedRange().Start;
+			uint len = kickstartROM.MappedRange().Length/4;
+			while (len-- != 0)
+			{
+				uint v = kickstartROM.Read(0, src, Size.Long);
+				chipRAM.Write(0, dst, v, Size.Long);
+				src += 4;
+				dst += 4;
+			}
+		}
+
 
 		public void AddMemoryIntercept(IMemoryInterceptor interceptor)
 		{
@@ -51,7 +90,7 @@ namespace RunAmiga.Core
 				uint end = (dev.range.Start + dev.range.Length)>>16;
 				for (uint i = start; i < end; i++)
 				{
-					if (dev.device.IsMapped(i<<16))
+					if (dev.device.IsMapped(i << 16))
 						mappedDevice[i] = dev.device;
 				}
 			}

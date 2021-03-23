@@ -66,7 +66,7 @@ namespace RunAmiga.Core.Custom
 
 		public bool IsMapped(uint address)
 		{
-			return (address >> 16) == 0xdf;
+			return (address >> 16) == 0xdf || (address >> 16) == 0xc0;//there's a mirror at 0xc0
 		}
 
 		public MemoryRange MappedRange()
@@ -81,6 +81,8 @@ namespace RunAmiga.Core.Custom
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
+			if (address >> 16 == 0xc0) address = 0x1f0000;
+
 			if (size == Size.Byte)
 			{
 				uint r0 = Read(insaddr, address&~1u, Size.Word);
@@ -140,6 +142,8 @@ namespace RunAmiga.Core.Custom
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			if (address >> 16 == 0xc0) address = 0x1f0000;
+
 			if (size == Size.Byte)
 			{
 				/*

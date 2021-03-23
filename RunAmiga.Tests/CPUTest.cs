@@ -5,18 +5,19 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using RunAmiga.Core;
 using RunAmiga.Core.CPU.CSharp;
 using RunAmiga.Core.CPU.Musashi;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Memory;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Debugger;
 using RunAmiga.Disassembler;
-using RunAmiga.Disassembler.Analysers;
 using RunAmiga.Extensions.Extensions;
 using RunAmiga.Logger.DebugAsync;
 
@@ -51,8 +52,13 @@ namespace RunAmiga.Tests
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
 				.AddSingleton<IMusashiCPU, MusashiCPU>()
-				.AddSingleton<IMemoryMapper>(x=> new MemoryMapper(new List<IMemoryMappedDevice>{ x.GetRequiredService<IMemory>() }))
-				.AddSingleton<IMemory, Memory>()
+				.AddSingleton<IMemoryMapper>(x=>
+				{
+					return new MemoryMapper(new List<IMemoryMappedDevice> {x.GetRequiredService<IMemoryMappedDevice>()},
+											x.GetRequiredService<IOptions<EmulationSettings>>());
+				})
+				.AddSingleton<IDebugMemoryMapper>(x => new DebugMemoryMapper(x.GetRequiredService<IMemoryMappedDevice>()))
+				.AddSingleton<IMemoryMappedDevice, TestMemory>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 
@@ -69,40 +75,48 @@ namespace RunAmiga.Tests
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
 				.AddSingleton<ICSharpCPU, CPU>()
-				.AddSingleton<IMemoryMapper>(x => new MemoryMapper(new List<IMemoryMappedDevice> { x.GetRequiredService<IMemory>() }))
-				.AddSingleton<IMemory, Memory>()
+				.AddSingleton<IMemoryMapper>(x =>
+				{
+					return new MemoryMapper(new List<IMemoryMappedDevice> {x.GetRequiredService<IMemoryMappedDevice>()},
+											x.GetRequiredService<IOptions<EmulationSettings>>());
+				})
+				.AddSingleton<IDebugMemoryMapper>(x=>new DebugMemoryMapper(x.GetRequiredService<IMemoryMappedDevice>()))
+				.AddSingleton<IMemoryMappedDevice, TestMemory>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 
 				ServiceProviderFactory.ServiceProvider = serviceProvider0;
 				cpu0 = new CPUTestRig((ICPU)serviceProvider0.GetRequiredService<IMusashiCPU>(),
-					serviceProvider0.GetRequiredService<IMemory>());
+					serviceProvider0.GetRequiredService<IDebugMemoryMapper>(),
+					(ITestMemory)serviceProvider0.GetRequiredService<IMemoryMappedDevice>());
 
 				ServiceProviderFactory.ServiceProvider = serviceProvider1;
 				cpu1 = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<ICSharpCPU>(),
-					serviceProvider1.GetRequiredService<IMemory>());
+					serviceProvider1.GetRequiredService<IDebugMemoryMapper>(),
+					(ITestMemory)serviceProvider0.GetRequiredService<IMemoryMappedDevice>());
 
 				cpu0.Reset();
 				cpu1.Reset();
 
 				cpu0.Emulate();
 				cpu1.Emulate();
-
 		}
 
 		private class CPUTestRig
 		{
-			private readonly IMemory memory;
+			private readonly IDebugMemoryMapper memory;
 			private readonly ICPU cpu;
 			private readonly Disassembler.Disassembler disassembler;
+			private readonly ITestMemory testMemory;
 
-			public CPUTestRig(ICPU cpu, IMemory memory)
+			public CPUTestRig(ICPU cpu, IDebugMemoryMapper memory, ITestMemory testMemory)
 			{
 				this.memory = memory;
+				this.testMemory = testMemory;
 				this.cpu = cpu;
 
 				var r = new Random(0x24061972);
-				for (uint i = 0; i < memory.GetMemoryArray().Length; i+=4)
+				for (uint i = 0; i < memory.MappedRange().Length; i+=4)
 					memory.UnsafeWrite32(i, (uint)(r.Next()*2)&0xfffffffe);
 
 				memory.UnsafeWrite32(0, 0x800000);//sp
@@ -159,13 +173,10 @@ namespace RunAmiga.Tests
 
 			public string Disassemble(uint address)
 			{
-				if (address >= memory.GetMemoryArray().Length) return "";
-				var roMemory = new ReadOnlySpan<byte>(memory.GetMemoryArray());
+				if (address + 20 > memory.Length)
+					address -= address + 20 - (uint)memory.Length; 
 				
-				if (address + 20 > roMemory.Length)
-					address -= address + 20 - (uint)roMemory.Length; 
-				
-				var dasm = disassembler.Disassemble(address, roMemory.Slice((int)address, 20));
+				var dasm = disassembler.Disassemble(address, memory.GetEnumerable((int)address, 20));
 				return dasm.ToString(new DisassemblyOptions{IncludeBytes = true});
 			}
 
@@ -176,7 +187,7 @@ namespace RunAmiga.Tests
 
 			public byte[] GetMemory()
 			{
-				return memory.GetMemoryArray();
+				return testMemory.GetMemoryArray();
 			}
 		}
 

@@ -10,6 +10,7 @@ using RunAmiga.Core.CPU.Musashi;
 using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Memory;
 using RunAmiga.Core.Types;
 using RunAmiga.Debugger;
 using RunAmiga.Disassembler;
@@ -57,14 +58,19 @@ namespace RunAmiga.Main
 				.AddSingleton<IKeyboard, Keyboard>()
 				.AddSingleton<IMouse, Mouse>()
 				.AddSingleton<IZorro, Zorro>()
+				.AddSingleton<IChipRAM, ChipRAM>()
+				.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()
+				.AddSingleton<IKickstartROM, KickstartROM>()
+				.AddSingleton<IZorroRAM, ZorroRAM>()
+				.AddSingleton<IUnmappedMemory, UnmappedMemory>()
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				//.AddSingleton<ICPU, MusashiCPU>()
 				.AddSingleton<ICPU, CPU>()
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
-				.AddSingleton<IMemory, Memory>()
 				.AddSingleton<IMemoryMapper, MemoryMapper>()
+				.AddSingleton<IDebugMemoryMapper, DebugMemoryMapper>()
 				.AddSingleton<IEmulationWindow, EmulationWindow>()
 				.AddSingleton<IEmulation, Emulation>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()

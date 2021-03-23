@@ -1,14 +1,18 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core
+namespace RunAmiga.Tests
 {
-	public class Memory : IMemory
+	public interface ITestMemory
+	{
+		public byte[] GetMemoryArray();
+	}
+
+	public class TestMemory : IMemoryMappedDevice, ITestMemory
 	{
 		private readonly byte[] memory;
 		private uint memoryMask;
@@ -16,10 +20,9 @@ namespace RunAmiga.Core
 		private readonly ILogger logger;
 		private readonly IMachineIdentifier machineIdentifier;
 		private readonly EmulationSettings settings;
-		private Kickstart kickstart;
 		private readonly MemoryRange memoryRange;
 
-		public Memory(ILogger<Memory> logger, IOptions<EmulationSettings> settings, IMachineIdentifier machineIdentifier)
+		public TestMemory(ILogger<TestMemory> logger, IOptions<EmulationSettings> settings, IMachineIdentifier machineIdentifier)
 		{
 			this.logger = logger;
 			this.machineIdentifier = machineIdentifier;
@@ -28,21 +31,21 @@ namespace RunAmiga.Core
 			memoryRange = new MemoryRange(0x0, (uint)memory.Length);
 			memoryMask = (uint)(memory.Length - 1);
 
-			if (!string.IsNullOrEmpty(settings.Value.KickStart))
-			{
-				Kickstart ks = null;
-				switch (settings.Value.KickStart)
-				{
-					case "1.2":  ks = new Kickstart("../../../../kick12.rom", "Kickstart 1.2"); break;
-					case "1.3":  ks = new Kickstart("../../../../kick13.rom", "Kickstart 1.3"); break;
-					case "2.04": ks = new Kickstart("../../../../kick204.rom", "Kickstart 2.04"); break;
-					case "3.1":  ks = new Kickstart("../../../../kick31.rom", "Kickstart 3.1"); break;
-				}
-				if (ks != null)
-					SetKickstart(ks);
-			}
+			//if (!string.IsNullOrEmpty(settings.Value.KickStart))
+			//{
+			//	Kickstart ks = null;
+			//	switch (settings.Value.KickStart)
+			//	{
+			//		case "1.2":  ks = new Kickstart("../../../../kick12.rom", "Kickstart 1.2"); break;
+			//		case "1.3":  ks = new Kickstart("../../../../kick13.rom", "Kickstart 1.3"); break;
+			//		case "2.04": ks = new Kickstart("../../../../kick204.rom", "Kickstart 2.04"); break;
+			//		case "3.1":  ks = new Kickstart("../../../../kick31.rom", "Kickstart 3.1"); break;
+			//	}
+			//	if (ks != null)
+			//		SetKickstart(ks);
+			//}
 
-			Reset();
+			//Reset();
 		}
 
 
@@ -196,35 +199,6 @@ namespace RunAmiga.Core
 		public void UnsafeWrite8(uint address, byte value)
 		{
 			memory[address & memoryMask] = value;
-		}
-
-		public void Emulate(ulong cycles)
-		{
-		}
-
-		public void BulkWrite(uint dst, byte[] src, int length)
-		{
-			Array.Copy(src, 0, memory, dst, length);
-		}
-
-		public void SetKickstart(Kickstart ks)
-		{
-			this.kickstart = ks;
-			CopyKickstart();
-		}
-
-		private void CopyKickstart()
-		{
-			BulkWrite(kickstart.Origin, kickstart.ROM, kickstart.ROM.Length);
-			BulkWrite(0, kickstart.ROM, kickstart.ROM.Length);
-		}
-
-		public void Reset()
-		{
-			Array.Clear(memory, 0, memory.Length);
-
-			if (kickstart != null)
-				CopyKickstart();
 		}
 
 		public uint FindSequence(byte[] bytes)

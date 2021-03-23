@@ -19,7 +19,7 @@ namespace RunAmiga.Debugger
 	public class Debugger : IDebugger
 	{
 		private readonly IBreakpointCollection breakpoints;
-		private readonly IMemory memory;
+		private readonly IDebugMemoryMapper memory;
 		private readonly ICPU cpu;
 		private readonly IChips custom;
 		private readonly ICIAAOdd ciaa;
@@ -31,7 +31,7 @@ namespace RunAmiga.Debugger
 		private readonly ITracer tracer;
 		private readonly IAnalyser analyser;
 
-		public Debugger(IMemoryMapper memoryMapper, IMemory memory, ICPU cpu, IChips custom,
+		public Debugger(IMemoryMapper memoryMapper, IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
 			IBreakpointCollection breakpoints,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser)
@@ -288,7 +288,7 @@ namespace RunAmiga.Debugger
 
 		public MemoryDump GetMemory()
 		{
-			return new MemoryDump(memory.GetMemoryArray());
+			return new MemoryDump(memory.GetEnumerable(0));
 		}
 
 		public Regs GetRegs()

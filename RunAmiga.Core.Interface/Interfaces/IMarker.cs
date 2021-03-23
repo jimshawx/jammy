@@ -9,7 +9,6 @@ using RunAmiga.Core.Types.Types.Kickstart;
 
 namespace RunAmiga.Core.Interface.Interfaces
 {
-
 	public interface ICustomRead
 	{
 		ushort Read(uint insaddr, uint address);
@@ -74,9 +73,8 @@ namespace RunAmiga.Core.Interface.Interfaces
 		ushort GetInterruptLevel();
 	}
 
-	public interface IMemory : IEmulate, IMemoryMappedDevice
+	public interface IDebugMemoryMapper 
 	{
-		byte[] GetMemoryArray();
 		uint FindSequence(byte[] bytes);
 		byte UnsafeRead8(uint address);
 		ushort UnsafeRead16(uint address);
@@ -84,6 +82,12 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void UnsafeWrite32(uint address, uint value);
 		void UnsafeWrite16(uint address, ushort value);
 		void UnsafeWrite8(uint address, byte value);
+		IEnumerable<byte> GetEnumerable(int start, int length);
+		IEnumerable<byte> GetEnumerable(int start);
+		IEnumerable<uint> AsULong(int start);
+		IEnumerable<ushort> AsUWord(int start);
+		int Length { get; }
+		MemoryRange MappedRange();
 	}
 
 	public interface IChips : IEmulate, IMemoryMappedDevice
@@ -144,7 +148,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void Read(uint insaddr, uint address, uint value, Size size);
 	}
 
-	public interface IMemoryMapper : IMemoryMappedDevice
+	public interface IMemoryMapper : IMemoryMappedDevice, IEmulate
 	{
 		void AddMemoryIntercept(IMemoryInterceptor interceptor);
 	}
@@ -185,6 +189,21 @@ namespace RunAmiga.Core.Interface.Interfaces
 
 	public interface IMachineIdentifier
 	{
-		public string Id { get; }
+		string Id { get; }
 	}
+
+	public interface IKickstartROM : IMemoryMappedDevice
+	{
+		void SetMirror(bool mirrored);
+	}
+
+	public interface IZorro : IMemoryMappedDevice
+	{
+		void AddConfiguration(ZorroConfiguration configuration);
+	}
+
+	public interface IChipRAM : IMemoryMappedDevice { }
+	public interface ITrapdoorRAM : IMemoryMappedDevice { }
+	public interface IUnmappedMemory : IMemoryMappedDevice { }
+	public interface IZorroRAM : IMemoryMappedDevice { }
 }

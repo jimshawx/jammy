@@ -8,11 +8,11 @@ namespace RunAmiga.Core.Custom
 	public class Blitter : IBlitter
 	{
 		private readonly IChips custom;
-		private readonly IMemory memory;
+		private readonly IMemoryMappedDevice memory;
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IMemory memory, IInterrupt interrupt, ILogger<Blitter> logger)
+		public Blitter(IChips custom, IChipRAM memory, IInterrupt interrupt, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
 			this.memory = memory;

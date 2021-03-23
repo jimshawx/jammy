@@ -12,7 +12,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 {
 	public class BaseMapper
 	{
-		private readonly IMemory memory;
+		private readonly IDebugMemoryMapper memory;
 		private readonly ILogger logger;
 		
 		private uint baseAddress;
@@ -21,7 +21,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 
 		public BaseMapper()
 		{
-			this.memory = ServiceProviderFactory.ServiceProvider.GetRequiredService<IMemory>();
+			this.memory = ServiceProviderFactory.ServiceProvider.GetRequiredService<IDebugMemoryMapper>();
 			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerProvider>().CreateLogger("BaseMapper");
 		}
 

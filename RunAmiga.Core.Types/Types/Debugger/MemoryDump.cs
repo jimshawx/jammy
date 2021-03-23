@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace RunAmiga.Core.Types.Types.Debugger
@@ -14,6 +15,11 @@ namespace RunAmiga.Core.Types.Types.Debugger
 		{
 			Array.Copy(src, memory, 16 * 1024 * 1024);
 			//logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<MemoryDump>>();
+		}
+
+		public MemoryDump(IEnumerable<byte> b)
+		{
+			Array.Copy(b.ToArray(), memory, 16*1024*1024);
 		}
 
 		private string BlockToString(List<Tuple<uint, uint>> ranges)

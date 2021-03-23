@@ -9,32 +9,34 @@ namespace RunAmiga.Disassembler
 {
 	public class KickstartAnalysis : IKickstartAnalysis
 	{
-		private readonly IMemory memory;
+		private readonly IDebugMemoryMapper memory;
 		private readonly ILogger logger;
+		private readonly IKickstartROM kickstartROM;
 
 		private const int RTC_MATCHWORD = 0x4AFC;
 
-		public KickstartAnalysis(IMemory memory, ILogger<KickstartAnalysis> logger)
+		public KickstartAnalysis(IDebugMemoryMapper memory, ILogger<KickstartAnalysis> logger, IKickstartROM kickstartROM)
 		{
 			this.memory = memory;
 			this.logger = logger;
+			this.kickstartROM = kickstartROM;
 		}
 
 		public List<Resident> GetRomTags()
 		{
-			return GetRomTags(memory.GetMemoryArray(), 0);
+			return GetRomTags(kickstartROM, memory, 0);
 		}
 
-		private static List<Resident> GetRomTags(byte[] bytes, uint rombase)
+		private static List<Resident> GetRomTags(IKickstartROM kickstartROM, IDebugMemoryMapper memory, uint rombase)
 		{
 			var resident = new List<Resident>();
-
-			for (int i = 0; i < bytes.Length; i += 2)
+			var range = kickstartROM.MappedRange();
+			for (uint i = range.Start; i < range.Start + range.Length; i += 2)
 			{
-				ushort matchWord = (ushort)(bytes[i] * 256 + bytes[i + 1]);
+				ushort matchWord = (ushort)memory.UnsafeRead16(i);
 				if (matchWord == RTC_MATCHWORD)
 				{
-					uint matchTag = (uint)((bytes[2 + i] << 24) + (bytes[2 + i + 1] << 16) + (bytes[2 + i + 2] << 8) + bytes[2 + i + 3]);
+					uint matchTag = memory.UnsafeRead32(i + 2);
 					if (matchTag == i + rombase)
 					{
 						i += 6;
@@ -43,67 +45,67 @@ namespace RunAmiga.Disassembler
 						rt.MatchWord = RTC_MATCHWORD;
 						rt.MatchTag = matchTag;
 
-						rt.EndSkip = (uint)((bytes[i] << 24) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3]);
-						i += 4;
-						rt.Flags = (RTF)bytes[i++];
-						rt.Version = bytes[i++];
-						rt.Type = (NT_Type)bytes[i++];
-						rt.Pri = (sbyte)bytes[i++];
+						rt.EndSkip = memory.UnsafeRead32(i); i += 4;
+						rt.Flags = (RTF)memory.UnsafeRead8(i++);
+						rt.Version = (byte)memory.UnsafeRead8(i++);
+						rt.Type = (NT_Type)memory.UnsafeRead8(i++);
+						rt.Pri = (sbyte)memory.UnsafeRead8(i++);
 
 						{
-							uint s = (uint)((bytes[i] << 24) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3]);
+							uint s = memory.UnsafeRead32(i);
 							i += 4;
 							rt.NamePtr = s;
 							s -= rombase;
 							var n = new StringBuilder();
-							while (bytes[s] != 0)
+							while (memory.UnsafeRead8(s) != 0)
 							{
-								if (bytes[s] == 0xd)
+								if (memory.UnsafeRead8(s) == 0xd)
 								{
-									n.Append(",CR");
-									s++;
+									n.Append(",CR"); s++;
 								}
-								else if (bytes[s] == 0xa)
+								else if (memory.UnsafeRead8(s) == 0xa)
 								{
-									n.Append(",LF");
-									s++;
+									n.Append(",LF"); s++;
 								}
-								else n.Append(Convert.ToChar(bytes[s++]));
+								else
+								{
+									n.Append(Convert.ToChar(memory.UnsafeRead8(s++)));
+								}
 							}
 
 							rt.Name = n.ToString();
 						}
 
 						{
-							uint s = (uint)((bytes[i] << 24) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3]);
+							uint s = memory.UnsafeRead32(i);
 							i += 4;
 							rt.IdStringPtr = s;
 							s -= rombase;
 							var n = new StringBuilder();
-							while (bytes[s] != 0)
+							while (memory.UnsafeRead8(s) != 0)
 							{
-								if (bytes[s] == 0xd)
+								if (memory.UnsafeRead8(s) == 0xd)
 								{
-									n.Append(",CR");
-									s++;
+									n.Append(",CR"); s++;
 								}
-								else if (bytes[s] == 0xa)
+								else if (memory.UnsafeRead8(s) == 0xa)
 								{
-									n.Append(",LF");
-									s++;
+									n.Append(",LF"); s++;
 								}
-								else n.Append(Convert.ToChar(bytes[s++]));
+								else
+								{
+									n.Append(Convert.ToChar(memory.UnsafeRead8(s++)));
+								}
 							}
 
 							rt.IdString = n.ToString();
 						}
 
-						rt.Init = (uint)((bytes[i] << 24) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3]);
-						i += 4;
+						rt.Init = memory.UnsafeRead32(i); i += 4;
 
 						resident.Add(rt);
 
-						i = (int)(rt.EndSkip - rombase - 2);
+						i = (uint)(rt.EndSkip - rombase - 2);
 					}
 				}
 			}

@@ -113,7 +113,7 @@ namespace RunAmiga.Core
 				Release("DnKeyPress");
 		}
 
-		private void Emulation_Deactivate(object? sender, EventArgs e)
+		private void Emulation_Deactivate(object sender, EventArgs e)
 		{
 			Release("Deactivate");
 		}

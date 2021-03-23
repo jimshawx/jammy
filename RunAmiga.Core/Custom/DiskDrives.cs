@@ -75,7 +75,7 @@ namespace RunAmiga.Core.Custom
 
 	public class DiskDrives : IDiskDrives
 	{
-		private readonly IMemory memory;
+		private readonly IMemoryMappedDevice memory;
 
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
@@ -84,7 +84,7 @@ namespace RunAmiga.Core.Custom
 
 		private readonly Drive[] drive;
 
-		public DiskDrives(IMemory memory, IInterrupt interrupt, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
+		public DiskDrives(IChipRAM memory, IInterrupt interrupt, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;
@@ -304,7 +304,7 @@ namespace RunAmiga.Core.Custom
 					if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814 && (dsklen & 0x3fff) != 6784)
 						logger.LogTrace($"DSKLEN looks funny {dsklen&0x3fff:X4} {dsklen:X4}");
 
-					logger.LogTrace($"Reading T: {drive[0].track} S: {drive[0].side}");
+					logger.LogTrace($"Reading T: {drive[0].track} S: {drive[0].side} L: {dsklen&0x3fff:X4} L/11: {(dsklen&0x3fff)/11}");
 
 					byte[] mfm = new byte[1088*11+720];//12688 bytes, 6344 words hmm.
 					MFM.FloppyTrackMfmEncode((drive[0].track <<1)+ drive[0].side, drive[0].disk.data, mfm, 0x4489);

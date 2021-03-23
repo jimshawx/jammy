@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using RunAmiga.Core;
 using RunAmiga.Core.Interface;
+using RunAmiga.Core.Memory;
 
 namespace RunAmiga.Tests
 {
@@ -47,13 +48,14 @@ namespace RunAmiga.Tests
 
 		private static readonly List<Form> forms = new List<Form>();
 
-		public static void KSLogo(Kickstart kickstart)
+		public static void KSLogo(KickstartROM kickstart)
 		{
-			for (uint i = kickstart.Origin; i < kickstart.Origin + kickstart.ROM.Length- kslogo.Length; i++)
+			var range = kickstart.MappedRange();
+			for (uint i = 0; i < kickstart.MappedRange().Length- kslogo.Length; i++)
 			{
-				if (kslogo.SequenceEqual(kickstart.ROM.Skip((int)(i - kickstart.Origin)).Take(kslogo.Length)))
+				//if (kslogo.SequenceEqual(kickstart.Skip((int)i).Take(kslogo.Length)))
 				{
-					logger.LogTrace($"Found the kickstart logo at {i:X8}");
+					logger.LogTrace($"Found the kickstart logo at {i+range.Start:X8}");
 					break;
 				}
 			}

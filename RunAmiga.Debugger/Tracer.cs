@@ -51,17 +51,17 @@ namespace RunAmiga.Debugger
 
 		private readonly List<TraceEntry> traces = new List<TraceEntry>();
 
+		private readonly IDebugMemoryMapper mem;
 		private readonly ILabeller labeller;
 		private readonly ILogger logger;
 		private readonly Disassembler.Disassembler disassembler;
-		private readonly ByteArrayWrapper mem;
 
-		public Tracer(IMemory memory, ILabeller labeller, ILogger<Tracer> logger)
+		public Tracer(IDebugMemoryMapper memory, ILabeller labeller, ILogger<Tracer> logger)
 		{
+			this.mem = memory;
 			this.labeller = labeller;
 			this.logger = logger;
 			this.disassembler = new Disassembler.Disassembler();
-			this.mem = new ByteArrayWrapper(memory.GetMemoryArray());
 		}
 
 		public void Trace(uint pc)
@@ -104,7 +104,7 @@ namespace RunAmiga.Debugger
 		private string DisassembleAddress(uint pc)
 		{
 			if (pc >= mem.Length) return "";
-			var dasm = disassembler.Disassemble(pc, mem.GetSpan().Slice((int)pc, Math.Min(12, (int)(mem.Length - pc))));
+			var dasm = disassembler.Disassemble(pc, mem.GetEnumerable((int)pc, 20));
 			return dasm.ToString();
 		}
 	}

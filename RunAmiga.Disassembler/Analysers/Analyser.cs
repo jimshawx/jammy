@@ -16,11 +16,11 @@ namespace RunAmiga.Disassembler.Analysers
 {
 	public class Analyser : IAnalyser
 	{
-		private readonly ByteArrayWrapper mem;
-
+		private readonly IDebugMemoryMapper mem;
 		private readonly IKickstartAnalysis kickstartAnalysis;
 		private readonly ILabeller labeller;
 		private readonly ILogger logger;
+		private readonly IKickstartROM kickstartROM;
 		private readonly Disassembler disassembler;
 
 		private readonly Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
@@ -30,16 +30,17 @@ namespace RunAmiga.Disassembler.Analysers
 		private readonly EmulationSettings settings;
 
 		public Analyser(IKickstartAnalysis kickstartAnalysis, ILabeller labeller,
-			IMemory memory, IOptions<EmulationSettings> settings, ILogger<Analyser> logger)
+			IDebugMemoryMapper mem, IOptions<EmulationSettings> settings, ILogger<Analyser> logger, IKickstartROM kickstartROM)
 		{
 			this.kickstartAnalysis = kickstartAnalysis;
 			this.labeller = labeller;
 			this.logger = logger;
+			this.kickstartROM = kickstartROM;
 			this.settings = settings.Value;
+			this.mem = mem;
 
 			memType = new MemType[settings.Value.MemorySize];
 
-			mem = new ByteArrayWrapper(memory.GetMemoryArray());
 			disassembler = new Disassembler();
 			
 			LoadLVOs();
@@ -175,13 +176,13 @@ namespace RunAmiga.Disassembler.Analysers
 					AddHeader(address, $"\t; {tag.Name} init struct");
 					AddComment(address, "size");
 					MakeMemType(address, MemType.Long, null); address += 4;
-					uint fntable = mem.ReadLong(address);
+					uint fntable = mem.UnsafeRead32(address);
 					AddComment(address, "vectors");
 					MakeMemType(address, MemType.Long, null); address += 4;
-					uint structure = mem.ReadLong(address);
+					uint structure = mem.UnsafeRead32(address);
 					AddComment(address, "init struct");
 					MakeMemType(address, MemType.Long, null); address += 4;
-					uint fninit = mem.ReadLong(address);
+					uint fninit = mem.UnsafeRead32(address);
 					AddComment(address, "init");
 					MakeMemType(address, MemType.Long, null); address += 4;
 					AddHeader(address, "");
@@ -190,7 +191,7 @@ namespace RunAmiga.Disassembler.Analysers
 					{
 						address = structure;
 						ushort s;
-						while ((s = mem.ReadWord(address)) != 0x0000)
+						while ((s = mem.UnsafeRead16(address)) != 0x0000)
 						{
 							MakeMemType(address, MemType.Word, null);
 							address += 2;
@@ -224,13 +225,13 @@ namespace RunAmiga.Disassembler.Analysers
 						AddHeader(address, "");
 						AddHeader(address, $"\t; {tag.Name} vectors");
 
-						s = mem.ReadWord(address);
+						s = mem.UnsafeRead16(address);
 						int idx = 0;
 						if (s == 0xFFFF)
 						{
 							MakeMemType(address, MemType.Word, null);
 							address += 2;
-							while ((s = mem.ReadWord(address)) != 0xFFFF)
+							while ((s = mem.UnsafeRead16(address)) != 0xFFFF)
 							{
 								uint u = fntable + s;
 								string lvo = LVO(tag, idx);
@@ -253,7 +254,7 @@ namespace RunAmiga.Disassembler.Analysers
 						else
 						{
 							uint u;
-							while ((u = mem.ReadLong(address)) != 0xFFFFFFFF)
+							while ((u = mem.UnsafeRead32(address)) != 0xFFFFFFFF)
 							{
 								string lvo = LVO(tag, idx);
 								AddHeader(u, "");
@@ -349,7 +350,7 @@ namespace RunAmiga.Disassembler.Analysers
 			uint i;
 
 			i = 0;
-			foreach (uint s in mem.AsULong())
+			foreach (uint s in mem.AsULong((int)kickstartROM.MappedRange().Start))
 			{
 				if (s == 0x4e750000)
 					MakeMemType(i + 2, MemType.Word, null);
@@ -357,7 +358,7 @@ namespace RunAmiga.Disassembler.Analysers
 			}
 
 			i = 0;
-			foreach (ushort s in mem.AsUWord())
+			foreach (ushort s in mem.AsUWord((int)kickstartROM.MappedRange().Start))
 			{
 				//bra
 				if ((s & 0xff00) == 0x6000)
@@ -367,12 +368,12 @@ namespace RunAmiga.Disassembler.Analysers
 					if (d == 0)
 					{
 						AddHeader(i + 4, "");
-						target = (uint)(short)mem.ReadWord(i + 2);
+						target = (uint)(short)mem.UnsafeRead16(i + 2);
 					}
 					else if (d == 0xff)
 					{
 						AddHeader(i + 6, "");
-						target = mem.ReadLong(i + 2);
+						target = mem.UnsafeRead32(i + 2);
 					}
 					else
 					{
@@ -388,9 +389,9 @@ namespace RunAmiga.Disassembler.Analysers
 					byte d = (byte)s;
 					uint target;
 					if (d == 0)
-						target = (uint)(short)mem.ReadWord(i + 2);
+						target = (uint)(short)mem.UnsafeRead16(i + 2);
 					else if (d == 0xff)
-						target = mem.ReadLong(i + 2);
+						target = mem.UnsafeRead32(i + 2);
 					else
 						target = (uint)(sbyte)d;
 					AddHeader(target + i + 2, "");
@@ -420,11 +421,11 @@ namespace RunAmiga.Disassembler.Analysers
 				//FC37B2  33FC 4000 00DF F09A move.w    #$4000,$DFF09A
 				//FC37BA  522E 0126           addq.b    #1,$0126(a6)
 				if (s == 0x33fc &&
-					mem.ReadWord(i + 2) == 0x4000 &&
-					mem.ReadWord(i + 4) == 0x00DF &&
-					mem.ReadWord(i + 6) == 0xF09A &&
-					(mem.ReadWord(i + 8) & 0x5228) == 0x5228 &&
-					mem.ReadWord(i + 10) == 0x126)
+					mem.UnsafeRead16(i + 2) == 0x4000 &&
+					mem.UnsafeRead16(i + 4) == 0x00DF &&
+					mem.UnsafeRead16(i + 6) == 0xF09A &&
+					(mem.UnsafeRead16(i + 8) & 0x5228) == 0x5228 &&
+					mem.UnsafeRead16(i + 10) == 0x126)
 				{
 					AddHeader(i, "");
 					AddComment(i, "Disable()");
@@ -436,12 +437,12 @@ namespace RunAmiga.Disassembler.Analysers
 				//FC37E8  6C08                bge.b     #$FC37F2
 				//FC37EA  33FC C000 00DF F09A move.w    #$C000,$DFF09A
 				if ((s & 0x5328) == 0x5328 &&
-					mem.ReadWord(i + 2) == 0x126 &&
-					mem.ReadWord(i + 4) == 0x6C08 &&
-					mem.ReadWord(i + 6) == 0x33FC &&
-					mem.ReadWord(i + 8) == 0xC000 &&
-					mem.ReadWord(i + 10) == 0x00DF &&
-					mem.ReadWord(i + 12) == 0xF09A)
+					mem.UnsafeRead16(i + 2) == 0x126 &&
+					mem.UnsafeRead16(i + 4) == 0x6C08 &&
+					mem.UnsafeRead16(i + 6) == 0x33FC &&
+					mem.UnsafeRead16(i + 8) == 0xC000 &&
+					mem.UnsafeRead16(i + 10) == 0x00DF &&
+					mem.UnsafeRead16(i + 12) == 0xF09A)
 				{
 					AddHeader(i, "");
 					AddComment(i, "Enable()");
@@ -700,7 +701,7 @@ namespace RunAmiga.Disassembler.Analysers
 					{
 						memType[a] = type;
 						c++;
-					} while (mem.ReadByte(a++) != 0);
+					} while (mem.UnsafeRead8(a++) != 0);
 
 					return c;
 				}
@@ -727,7 +728,7 @@ namespace RunAmiga.Disassembler.Analysers
 			}
 			else if (type == MemType.Code)
 			{
-				var asm = disassembler.Disassemble(address, mem.GetSpan().Slice((int)address));
+				var asm = disassembler.Disassemble(address, mem.GetEnumerable((int)address, 20));
 				for (uint i = address; i < address + asm.Bytes.Length; i++)
 					memType[i] = type;
 			}

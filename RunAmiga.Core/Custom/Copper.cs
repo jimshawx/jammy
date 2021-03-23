@@ -33,7 +33,7 @@ namespace RunAmiga.Core.Custom
 
 		private readonly int[] screen = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
 
-		public Copper(IMemory memory, IChips custom, IEmulationWindow emulationWindow, IInterrupt interrupt, ILogger<Copper> logger)
+		public Copper(IChipRAM memory, IChips custom, IEmulationWindow emulationWindow, IInterrupt interrupt, ILogger<Copper> logger)
 		{
 			this.memory = memory;
 			this.custom = custom;

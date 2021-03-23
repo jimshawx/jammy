@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using RunAmiga.Core.Types.Types;
 
@@ -13,14 +15,14 @@ namespace RunAmiga.Disassembler
 		private byte[] memory;
 		private uint address;
 
-		public DAsm Disassemble(uint address, ReadOnlySpan<byte> m)
+		public DAsm Disassemble(uint add, IEnumerable<byte> m)
 		{
 			try
 			{
 				var dasm = new DAsm();
 				memory = m.ToArray();
 				pc = 0;
-				this.address = address;
+				this.address = add;
 				asm = new StringBuilder();
 				ushort ins = read16(pc);
 				pc += 2;
@@ -71,7 +73,7 @@ namespace RunAmiga.Disassembler
 				}
 
 				dasm.Asm = asm.ToString();
-				dasm.Bytes = m.Slice(0, (int)pc).ToArray();
+				dasm.Bytes = memory[0..(int)pc];
 				dasm.Address = address;
 
 				return dasm;

@@ -6,84 +6,21 @@ using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
 {
-	public interface IZorro :  IMemoryMappedDevice { }
-
-	internal static class RamExpansion
-	{
-		//8MB RAM Expansion
-		public static byte[] Config_8MB = new byte[]
-		{
-			0b11_1_0_0_000,//type, size
-			0,//product number
-			//0b1_0_0_0_1010,//location, size
-			0b1_0_0_0_0000,//location, size
-			0,//reserved
-			0x24,0x06,//manufacturer hi/low
-			0x00,0x00,0x00,0x00,//serial number
-			0x00,0x00,//optional rom vector hi/lo (boot rom location, if bit 4 of byte 0 is set)
-			0,0,0,0,0,//reserved
-			0,0,//address base (written to)
-			0,//shut up (written to)
-			0,0,0,0,0,0,0,0,0,0,0,0,//reserved
-		};
-
-		//2MB RAM Expansion
-		public static byte[] Config_2MB = new byte[]
-		{
-			0b11_1_0_0_110,//type, size
-			0,//product number
-			//0b1_0_0_0_1010,//location, size
-			0b1_0_0_0_0000,//location, size
-			0,//reserved
-			0x24,0x06,//manufacturer hi/low
-			0x00,0x00,0x00,0x00,//serial number
-			0x00,0x00,//optional rom vector hi/lo (boot rom location, if bit 4 of byte 0 is set)
-			0,0,0,0,0,//reserved
-			0,0,//address base (written to)
-			0,//shut up (written to)
-			0,0,0,0,0,0,0,0,0,0,0,0,//reserved
-		};
-
-		//4MB RAM Expansion
-		public static byte[] Config_4MB = new byte[]
-		{
-			0b11_1_0_0_111,//type, size
-			0,//product number
-			//0b1_0_0_0_1010,//location, size
-			0b1_0_0_0_0000,//location, size
-			0,//reserved
-			0x24,0x06,//manufacturer hi/low
-			0x00,0x00,0x00,0x00,//serial number
-			0x00,0x00,//optional rom vector hi/lo (boot rom location, if bit 4 of byte 0 is set)
-			0,0,0,0,0,//reserved
-			0,0,//address base (written to)
-			0,//shut up (written to)
-			0,0,0,0,0,0,0,0,0,0,0,0,//reserved
-		};
-	}
-
 	// HRM pp 431
 	public class Zorro : IZorro
 	{
 		private readonly ILogger logger;
 
-		public class Configurations
-		{
-			public string Name { get; set; }
-			public bool IsConfigured { get; set; }
-			public uint BaseAddress { get; set; }
-			public byte [] Config { get; set; }
-		}
-
-		private readonly List<Configurations> configurations = new List<Configurations>();
+		private readonly List<ZorroConfiguration> configurations = new List<ZorroConfiguration>();
 
 		public Zorro(ILogger<Zorro> logger)
 		{
 			this.logger = logger;
-			configurations.Add( new Configurations{ Config = RamExpansion.Config_8MB, Name = "8MB RAM Expansion" });
-			//configurations.Add(new Configurations { Config = RamExpansion.Config_2MB, Name = "2MB RAM Expansion"});
-			//configurations.Add(new Configurations { Config = RamExpansion.Config_4MB, Name = "4MB RAM Expansion" });
-			//configurations.Add(new Configurations { Config = RamExpansion.Config_2MB, Name = "2MB RAM Expansion" });
+		}
+
+		public void AddConfiguration(ZorroConfiguration zorroConfiguration)
+		{
+			this.configurations.Add(zorroConfiguration);
 		}
 
 		public bool IsMapped(uint address)
@@ -157,6 +94,11 @@ namespace RunAmiga.Core.Custom
 			//shut up (OK then!)
 			if ((address == 0x4C || address == 0x4e) && configurations.Any())
 				configurations.RemoveAt(0);
+		}
+
+		public List<IMemoryMappedDevice> GetRAMDevices()
+		{
+			throw new System.NotImplementedException();
 		}
 	}
 }

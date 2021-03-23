@@ -21,15 +21,15 @@ namespace RunAmiga.Disassembler
 		private readonly ILogger logger;
 		private readonly IKickstartAnalysis kickstartAnalysis;
 		private readonly IAnalyser analyser;
-		private ByteArrayWrapper mem;
+		private readonly IDebugMemoryMapper mem;
 
-		public Disassembly(IMemory memory, IBreakpointCollection breakpoints, IOptions<EmulationSettings> settings,
+		public Disassembly(IDebugMemoryMapper memory, IBreakpointCollection breakpoints, IOptions<EmulationSettings> settings,
 			ILogger<Disassembly> logger, IKickstartAnalysis kickstartAnalysis, IAnalyser analyser)
 		{
 			this.logger = logger;
 			this.kickstartAnalysis = kickstartAnalysis;
 			this.analyser = analyser;
-			mem = new ByteArrayWrapper(memory.GetMemoryArray());
+			this.mem = memory;
 			this.breakpoints = breakpoints;
 			this.settings = settings;
 			disassembler = new Disassembler();
@@ -48,7 +48,6 @@ namespace RunAmiga.Disassembler
 
 			var restarts = (IEnumerable<uint>)restartsList.OrderBy(x => x).ToList();
 
-			var memorySpan = mem.GetSpan();
 			var txt = new StringBuilder();
 			var tmp = new StringBuilder();
 			int line = 0;
@@ -98,17 +97,17 @@ namespace RunAmiga.Disassembler
 					{
 						if (memType[address] == MemType.Byte)
 						{
-							asm = $"{address:X6}  { mem.ReadByte(address):X2}";
+							asm = $"{address:X6}  { mem.UnsafeRead8(address):X2}";
 							address += 1;
 						}
 						else if (memType[address] == MemType.Word)
 						{
-							asm = $"{address:X6}  { mem.ReadWord(address):X4}";
+							asm = $"{address:X6}  { mem.UnsafeRead16(address):X4}";
 							address += 2;
 						}
 						else if (memType[address] == MemType.Long)
 						{
-							asm = $"{address:X6}  { mem.ReadLong(address):X8}";
+							asm = $"{address:X6}  { mem.UnsafeRead32(address):X8}";
 							address += 4;
 						}
 						else if (memType[address] == MemType.Str)
@@ -117,17 +116,17 @@ namespace RunAmiga.Disassembler
 
 							while (memType[address] == MemType.Str)
 							{
-								if (mem.ReadByte(address) == 0)
+								if (mem.UnsafeRead8(address) == 0)
 								{
 									str.Add("00");
 									address++;
 									break;
 								}
-								else if (mem.ReadByte(address) == 0xD)
+								else if (mem.UnsafeRead8(address) == 0xD)
 								{
 									str.Add("CR");
 								}
-								else if (mem.ReadByte(address) == 0xA)
+								else if (mem.UnsafeRead8(address) == 0xA)
 								{ 
 									str.Add("LF");
 								}
@@ -135,9 +134,9 @@ namespace RunAmiga.Disassembler
 								{
 									tmp.Clear();
 									tmp.Append('"');
-									while (mem.ReadByte(address) != 0 && mem.ReadByte(address) != 0x0d && mem.ReadByte(address) != 0xa)
+									while (mem.UnsafeRead8(address) != 0 && mem.UnsafeRead8(address) != 0x0d && mem.UnsafeRead8(address) != 0xa)
 									{
-										tmp.Append(Convert.ToChar(mem.ReadByte(address)));
+										tmp.Append(Convert.ToChar(mem.UnsafeRead8(address)));
 										address++;
 									}
 									tmp.Append('"');
@@ -156,12 +155,12 @@ namespace RunAmiga.Disassembler
 					{
 						if ((address & 1) != 0)
 						{
-							asm = $"{address:X6}  { mem.ReadByte(address):X2}";
+							asm = $"{address:X6}  { mem.UnsafeRead8(address):X2}";
 							address += 1;
 						}
 						else
 						{
-							var dasm = disassembler.Disassemble(address, memorySpan.Slice((int)address, Math.Min(12, (int)(0x1000000 - address))));
+							var dasm = disassembler.Disassemble(address, mem.GetEnumerable((int)address, 20));
 							asm = dasm.ToString(options);
 
 							uint start = address, end = (uint)(address + dasm.Bytes.Length);
