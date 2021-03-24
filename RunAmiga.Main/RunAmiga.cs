@@ -92,10 +92,8 @@ namespace RunAmiga.Main
 			};
 			if (settings.TrapdoorMemory != 0.0)
 				ranges.Add(new Tuple<uint, uint>(0xc00000, 0x1000));
-			if (settings.KickStart == "3.1" || settings.KickStart == "2.04")
+			if (debugger.KickstartSize() == 512*1024)
 				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x40000));
-
-			ranges.Add(new Tuple<uint, uint>(0xc10000, 0x5000));
 
 			var restarts = new List<uint>();
 			if (settings.KickStart == "1.2")

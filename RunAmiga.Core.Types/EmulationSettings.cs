@@ -13,5 +13,7 @@
 		public float ZorroIIMemory { get; set; }
 		public float TrapdoorMemory { get; set; }
 		public float ChipMemory { get; set; }
+
+		public bool ProduceDisassemblies { get; set; }
 	}
 }

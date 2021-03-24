@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Xml;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
@@ -81,6 +82,7 @@ namespace RunAmiga.Core.Custom
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
+			uint originalAddress = address;
 			address |= 0xdf0000;
 
 			if (size == Size.Byte)
@@ -126,6 +128,10 @@ namespace RunAmiga.Core.Custom
 			{
 				regs[reg] = audio.Read(insaddr, address);
 			}
+			else if (address == 0xdf1000)
+			{
+				regs[reg] = GayleCheck();
+			}
 			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
 			                     address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
 			                     /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
@@ -134,14 +140,24 @@ namespace RunAmiga.Core.Custom
 			}
 			else
 			{
-				logger.LogTrace($"R {ChipRegs.Name(address)} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
+				logger.LogTrace($"R {ChipRegs.Name(address)} {originalAddress:X8} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
 			}
 
 			return (uint)regs[reg];
 		}
 
+		private int gayleBits = 0xDDDD;
+		private ushort GayleCheck()
+		{
+			ushort v = (ushort)(gayleBits & 0x8000);
+			int c = (gayleBits >> 15) & 1;
+			gayleBits += gayleBits + c;
+			return v;
+		}
+
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			uint originalAddress = address;
 			address |= 0xdf0000;
 
 			if (size == Size.Byte)
@@ -334,7 +350,7 @@ namespace RunAmiga.Core.Custom
 			}
 			else 
 			{
-				logger.LogTrace($"W {ChipRegs.Name(address)} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+				logger.LogTrace($"W {ChipRegs.Name(address)} {originalAddress:X8} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 			}
 		}
 

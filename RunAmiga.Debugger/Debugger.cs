@@ -19,6 +19,7 @@ namespace RunAmiga.Debugger
 	public class Debugger : IDebugger
 	{
 		private readonly IBreakpointCollection breakpoints;
+		private readonly IKickstartROM kickstart;
 		private readonly IDebugMemoryMapper memory;
 		private readonly ICPU cpu;
 		private readonly IChips custom;
@@ -33,10 +34,11 @@ namespace RunAmiga.Debugger
 
 		public Debugger(IMemoryMapper memoryMapper, IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
-			IBreakpointCollection breakpoints,
+			IBreakpointCollection breakpoints, IKickstartROM kickstart,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser)
 		{
 			this.breakpoints = breakpoints;
+			this.kickstart = kickstart;
 			this.disassembly = disassembly;
 			this.tracer = tracer;
 			this.analyser = analyser;
@@ -58,6 +60,13 @@ namespace RunAmiga.Debugger
 			//AddLVOIntercept("exec.library", "OpenLibrary", OpenLibraryLogger);
 			//AddLVOIntercept("exec.library", "OpenResource", OpenResourceLogger);
 			//AddLVOIntercept("exec.library", "MakeLibrary", MakeLibraryLogger);
+
+			if (settings.Value.KickStart == "2.05")
+			{
+				//AddBreakpoint(0xFC0BE2);//card.resource Gayle detection
+				AddBreakpoint(0xFC120C);//poll Gayle INTREQ
+				return;
+			}
 
 			if (settings.Value.KickStart == "1.3")
 			{
@@ -352,6 +361,11 @@ namespace RunAmiga.Debugger
 		public void WriteTrace()
 		{
 			tracer.WriteTrace();
+		}
+
+		public uint KickstartSize()
+		{
+			return kickstart.MappedRange().Length;
 		}
 	}
 }

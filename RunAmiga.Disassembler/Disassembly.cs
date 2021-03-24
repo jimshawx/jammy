@@ -148,7 +148,7 @@ namespace RunAmiga.Disassembler
 								address++;
 							}
 							
-							asm = $"{address:X6}  {string.Join(',', str)}";
+							asm = $"{lineAddress:X6}  {string.Join(',', str)}";
 						}
 					}
 					else
@@ -303,7 +303,6 @@ namespace RunAmiga.Disassembler
 
 				File.WriteAllText($"{rt.Name}_disassembly.txt", dmp.ToString());
 			}
-
 		}
 
 		public void ShowRomTags()
@@ -312,7 +311,8 @@ namespace RunAmiga.Disassembler
 			foreach (var rt in resident)
 				logger.LogTrace($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
 
-			//Disassemble(resident);
+			if (settings.Value.ProduceDisassemblies)
+				Disassemble(resident);
 
 			//KickLogo.KSLogo(this);
 		}

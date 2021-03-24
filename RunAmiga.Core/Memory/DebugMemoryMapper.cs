@@ -64,7 +64,7 @@ namespace RunAmiga.Core.Memory
 		public uint UnsafeRead32(uint address)
 		{
 			address &= memoryMask;
-			return (ushort)mappedDevice[address >> 16].Read(0, address, Size.Word);
+			return mappedDevice[address >> 16].Read(0, address, Size.Long);
 		}
 
 		public void UnsafeWrite32(uint address, uint value)
@@ -133,7 +133,7 @@ namespace RunAmiga.Core.Memory
 				if (mappedDevice[i >> 16] is IUnmappedMemory)
 					yield return 0;
 				else
-					yield return UnsafeRead8(i);
+					yield return UnsafeRead16(i);
 		}
 
 		public int Length => (int)memoryRange.Length;

@@ -70,6 +70,8 @@ namespace RunAmiga.Main
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
 				.AddSingleton<IIDEController,IDEController>()
+				.AddSingleton<ISCSIController, SCSIController>()
+				.AddSingleton<IAkiko, Akiko>()
 				.AddSingleton<IMemoryMapper, MemoryMapper>()
 				.AddSingleton<IDebugMemoryMapper, DebugMemoryMapper>()
 				.AddSingleton<IEmulationWindow, EmulationWindow>()

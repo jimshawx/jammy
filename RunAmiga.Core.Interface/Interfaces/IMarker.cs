@@ -140,6 +140,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void IRQ(uint irq);
 		void INTENA(uint irq);
 		void WriteTrace();
+		uint KickstartSize();
 	}
 
 	public interface IMemoryInterceptor
@@ -208,4 +209,6 @@ namespace RunAmiga.Core.Interface.Interfaces
 	public interface IZorroRAM : IMemoryMappedDevice { }
 
 	public interface IIDEController : IMemoryMappedDevice { }
+	public interface ISCSIController : IMemoryMappedDevice { }
+	public interface IAkiko : IMemoryMappedDevice { }
 }

@@ -2,23 +2,23 @@
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core.Memory
+namespace RunAmiga.Core.Custom
 {
-	public class UnmappedMemory : IUnmappedMemory, IMemoryMappedDevice
+	//SCSI/IDE Controller on the A3000 and A4000
+	public class SCSIController : ISCSIController
 	{
 		private readonly ILogger logger;
+		private readonly MemoryRange memoryRange = new MemoryRange(0xdd0000, 0x10000);
 
-		public UnmappedMemory(ILogger<UnmappedMemory> logger)
+		public SCSIController(ILogger<IDEController> logger)
 		{
 			this.logger = logger;
 		}
 
 		public bool IsMapped(uint address)
 		{
-			return true;
+			return memoryRange.Contains(address);
 		}
-
-		private readonly MemoryRange memoryRange = new MemoryRange(0, 0x1000000);
 
 		public MemoryRange MappedRange()
 		{
@@ -27,13 +27,13 @@ namespace RunAmiga.Core.Memory
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			//logger.LogTrace($"Unmapped Memory Read {address:X8} @{insaddr:X8} {size}");
+			logger.LogTrace($"SCSI Controller Read {address:X8} @{insaddr:X8} {size}");
 			return 0;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			logger.LogTrace($"Unmapped Memory Write {address:X8} @{insaddr:X8} {value:X8} {size}");
+			logger.LogTrace($"SCSI Controller Write {address:X8} @{insaddr:X8} {value:X8} {size}");
 		}
 	}
 }

@@ -349,7 +349,7 @@ namespace RunAmiga.Disassembler.Analysers
 		{
 			uint i;
 
-			i = 0;
+			i = kickstartROM.MappedRange().Start;
 			foreach (uint s in mem.AsULong((int)kickstartROM.MappedRange().Start))
 			{
 				if (s == 0x4e750000)
@@ -357,7 +357,7 @@ namespace RunAmiga.Disassembler.Analysers
 				i += 4;
 			}
 
-			i = 0;
+			i = kickstartROM.MappedRange().Start;
 			foreach (ushort s in mem.AsUWord((int)kickstartROM.MappedRange().Start))
 			{
 				//bra
@@ -491,30 +491,13 @@ namespace RunAmiga.Disassembler.Analysers
 
 		private void LoadComments()
 		{
-			if (settings.KickStart == "1.2")
-			{
-				LoadComment("exec_disassembly.txt");
-				LoadComment("trackdisk.device_disassembly.txt");
-				LoadComment("strap_disassembly.txt");
-				LoadComment("misc.resource_disassembly.txt");
-				LoadComment("keymap.resource_disassembly.txt");
-				LoadComment("timer.device_disassembly.txt");
-				LoadComment("cia.resource_disassembly.txt");
-				LoadComment("potgo.resource_disassembly.txt");
-				LoadComment("ramlib.library_disassembly.txt");
-				LoadComment("workbench.task_disassembly.txt");
-				LoadComment("mathffp.library_disassembly.txt");
-				LoadComment("layers.library_disassembly.txt");
-				LoadComment("intuition.library_disassembly.txt");
-				LoadComment("graphics.library_disassembly.txt");
-				LoadComment("expansion.library_disassembly.txt");
-				LoadComment("dos.library_disassembly.txt");
-				LoadComment("disk.resource_disassembly.txt");
-				LoadComment("audio.device_disassembly.txt");
-			}
+			string fullPath = Path.Combine($"c:/source/programming/amiga/KS{settings.KickStart}");
+			var files = Directory.GetFiles(fullPath, "*_disassembly.txt");
+			foreach (var file in files)
+				LoadComment(file);
 		}
 
-		private void LoadComment(string filename)
+		private void LoadComment(string fullPath)
 		{
 			var hex6 = new Regex(@"^[\d|a-f|A-F]{6}", RegexOptions.Compiled);
 			var hex2 = new Regex(@"^[\d|a-f|A-F]{2}$", RegexOptions.Compiled);
@@ -522,11 +505,9 @@ namespace RunAmiga.Disassembler.Analysers
 			var hex8 = new Regex(@"^[\d|a-f|A-F]{8}$", RegexOptions.Compiled);
 			var reg = new Regex("^[A|D][0-7]$", RegexOptions.Compiled);
 
-			string fullPath = Path.Combine($"c:/source/programming/amiga/KS{settings.KickStart}", filename);
-
 			if (!File.Exists(fullPath))
 			{
-				logger.LogTrace($"Can't find {filename} comments file");
+				logger.LogTrace($"Can't find {Path.GetFileName(fullPath)} comments file in {Path.GetDirectoryName(fullPath)}");
 				return;
 			}
 
@@ -610,9 +591,15 @@ namespace RunAmiga.Disassembler.Analysers
 									}
 									else if (split.Length < 3)
 									{
-										//it's probably comments
-										comments[currentAddress] = new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(1)) };
+										var oneWordOps = new List<string> {"rts", "nop", "illegal", "reset", "stop", "rte", "trapv", "rtr"};
+										if (split.Length < 2 || !oneWordOps.Contains(split[1]))
+										{
+											//it's probably comments
+											comments[currentAddress] = new Comment {Address = currentAddress, Text = string.Join(" ", split.Skip(1))};
+										}
 									}
+
+									//== 3 means it's just disassembled code
 								}
 							}
 						}

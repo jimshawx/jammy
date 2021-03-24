@@ -39,6 +39,7 @@ namespace RunAmiga.Tests
 			//		case "1.2":  ks = new Kickstart("../../../../kick12.rom", "Kickstart 1.2"); break;
 			//		case "1.3":  ks = new Kickstart("../../../../kick13.rom", "Kickstart 1.3"); break;
 			//		case "2.04": ks = new Kickstart("../../../../kick204.rom", "Kickstart 2.04"); break;
+			//		case "2.05": ks = new Kickstart("../../../../kick205.rom", "Kickstart 2.05"); break;
 			//		case "3.1":  ks = new Kickstart("../../../../kick31.rom", "Kickstart 3.1"); break;
 			//	}
 			//	if (ks != null)
