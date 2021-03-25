@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -65,15 +66,14 @@ namespace RunAmiga.Main
 				{
 					this.Invoke((Action)UpdatePowerLight);
 
-					if (UI.UI.IsDirty)
+					this.Invoke((Action)delegate()
 					{
-						this.Invoke((Action)delegate()
+						if (UI.UI.IsDirty)
 						{
 							SetSelection();
 							UpdateDisplay();
-						});
-						UI.UI.IsDirty = false;
-					}
+						}
+					});
 
 					Task.Delay(500).Wait(uiUpdateTokenSource.Token);
 				}
@@ -116,38 +116,21 @@ namespace RunAmiga.Main
 		private void UpdateDisplay()
 		{
 			UpdateRegs();
-			UpdateMem();
+			//UpdateMem();
 			UpdatePowerLight();
 			UpdateDiskLight();
 			UpdateColours();
 			UpdateExecBase();
+			UI.UI.IsDirty = false;
 		}
 
 		private void UpdateRegs()
 		{
 			Machine.LockEmulation();
 			var regs = debugger.GetRegs();
-			var memory = debugger.GetMemory();
 			var chipRegs = debugger.GetChipRegs();
 			Machine.UnlockEmulation();
 			
-			var mem = new List<Tuple<uint, uint>>();
-			long sp = (long)regs.SP;
-			long ssp = (long)regs.SSP;
-			int cnt = 32;
-			while (sp > 0 && cnt-- > 0)
-			{
-				uint spv = 0xffffffff, sspv = 0xffffffff;
-				if (sp >= 0) spv = memory.Read32((uint)sp);
-				if (ssp >= 0) sspv = memory.Read32((uint)ssp);
-				mem.Add(new Tuple<uint, uint>(spv, sspv));
-				sp -= 4;
-				ssp -= 4;
-			}
-			lbCallStack.Items.Clear();
-			lbCallStack.Items.Add("   SP       SSP   ");
-			lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
-
 			lbRegisters.Items.Clear();
 			lbRegisters.Items.AddRange(regs.Items().Cast<object>().ToArray());
 
@@ -249,7 +232,28 @@ namespace RunAmiga.Main
 			var regs = debugger.GetRegs();
 			Machine.UnlockEmulation();
 
-			txtMemory.Text = memory.ToString();
+			{
+			var mem = new List<Tuple<uint, uint>>();
+			long sp = (long)regs.SP;
+			long ssp = (long)regs.SSP;
+			int cnt = 32;
+			while (sp > 0 && cnt-- > 0)
+			{
+				uint spv = 0xffffffff, sspv = 0xffffffff;
+				if (sp >= 0) spv = memory.Read32((uint)sp);
+				if (ssp >= 0) sspv = memory.Read32((uint)ssp);
+				mem.Add(new Tuple<uint, uint>(spv, sspv));
+				sp -= 4;
+				ssp -= 4;
+			}
+
+			lbCallStack.Items.Clear();
+			lbCallStack.Items.Add("   SP       SSP   ");
+			lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
+			}
+
+			{
+				txtMemory.Text = memory.ToString();
 
 			if (addressFollowBox.SelectedIndex != 0)
 			{
@@ -261,6 +265,7 @@ namespace RunAmiga.Main
 					txtMemory.ScrollToCaret();
 				}
 				UpdateExecBase();
+			}
 			}
 		}
 
@@ -299,9 +304,6 @@ namespace RunAmiga.Main
 		{
 			txtDisassembly.DeselectAll();
 			Machine.SetEmulationMode(EmulationMode.Stopped);
-
-			SetSelection();
-			UpdateDisplay();
 		}
 
 		private void btnGo_Click(object sender, EventArgs e)
@@ -558,7 +560,6 @@ namespace RunAmiga.Main
 
 		private void UpdateExecBase()
 		{
-
 			if (cbTypes.SelectedIndex != 0 && addressFollowBox.SelectedIndex != 0)
 			{
 				string typeName = (string)cbTypes.SelectedItem;

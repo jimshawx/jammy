@@ -27,19 +27,22 @@ namespace RunAmiga.Core.Memory
 			this.chipRAM = chipRAM;
 			this.kickstartROM = kickstartROM;
 			this.memoryManager = memoryManager;
+			_ = zorroConfigurator;
 
-			var devices = new List<IMemoryMappedDevice>();
-			devices.Add(unmappedMemory);
-			devices.Add(ciaMemory);
-			devices.Add(custom);
-			devices.Add(chipRAM);
-			devices.Add(trapdoorRAM);
-			devices.Add(kickstartROM);
-			devices.Add(battClock);
-			devices.Add(expansion);
-			devices.Add(ideController);
-			devices.Add(scsiController);
-			devices.Add(akiko);
+			var devices = new List<IMemoryMappedDevice>
+			{
+				unmappedMemory,
+				ciaMemory,
+				custom,
+				chipRAM,
+				trapdoorRAM,
+				kickstartROM,
+				battClock,
+				expansion,
+				ideController,
+				scsiController,
+				akiko
+			};
 
 			memoryManager.AddDevices(devices);
 

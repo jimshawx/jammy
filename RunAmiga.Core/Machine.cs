@@ -169,6 +169,8 @@ namespace RunAmiga.Core
 
 				emulationModeChange = EmulationMode.NoChange;
 			}
+
+			emulationModeChange = EmulationMode.NoChange;
 			emulationSemaphore.Release();
 		}
 

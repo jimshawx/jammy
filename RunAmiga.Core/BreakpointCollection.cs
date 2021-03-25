@@ -116,8 +116,6 @@ namespace RunAmiga.Core
 		{
 			logger.LogTrace($"Breakpoint @{pc:X8}");
 			breakpointHit = true;
-			
-			UI.UI.IsDirty = true;
 		}
 	}
 }

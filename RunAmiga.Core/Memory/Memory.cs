@@ -6,9 +6,9 @@ namespace RunAmiga.Core.Memory
 {
 	public abstract class Memory : IMemoryMappedDevice
 	{
-		private protected uint addressMask = 0;
-		private protected byte[] memory;
-		private protected MemoryRange memoryRange;
+		protected uint addressMask = 0;
+		protected byte[] memory;
+		protected MemoryRange memoryRange;
 
 		//protected Memory(uint addressMask, byte[] memory, MemoryRange memoryRange)
 		//{

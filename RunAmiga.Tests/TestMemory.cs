@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Memory;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Extensions.Extensions;
@@ -15,148 +16,19 @@ namespace RunAmiga.Tests
 		public byte[] GetMemoryArray();
 	}
 
-	public class TestMemory : IMemoryMappedDevice, ITestMemory, IDebugMemoryMapper, IMemoryMapper
+	public class TestMemory : Memory, ITestMemory, IDebugMemoryMapper, IMemoryMapper
 	{
-		private readonly byte[] memory;
-		private uint memoryMask;
-
-		private readonly ILogger logger;
+		private readonly ILogger<TestMemory> logger;
 		private readonly IMachineIdentifier machineIdentifier;
-		private readonly EmulationSettings settings;
-		private readonly MemoryRange memoryRange;
 
 		public TestMemory(ILogger<TestMemory> logger, IOptions<EmulationSettings> settings, IMachineIdentifier machineIdentifier)
 		{
 			this.logger = logger;
 			this.machineIdentifier = machineIdentifier;
-			this.settings = settings.Value;
-			this.memory = new byte[settings.Value.MemorySize];
+
+			memory = new byte[settings.Value.MemorySize];
 			memoryRange = new MemoryRange(0x0, (uint)memory.Length);
-			memoryMask = (uint)(memory.Length - 1);
-
-			//if (!string.IsNullOrEmpty(settings.Value.KickStart))
-			//{
-			//	Kickstart ks = null;
-			//	switch (settings.Value.KickStart)
-			//	{
-			//		case "1.2":  ks = new Kickstart("../../../../kick12.rom", "Kickstart 1.2"); break;
-			//		case "1.3":  ks = new Kickstart("../../../../kick13.rom", "Kickstart 1.3"); break;
-			//		case "2.04": ks = new Kickstart("../../../../kick204.rom", "Kickstart 2.04"); break;
-			//		case "2.05": ks = new Kickstart("../../../../kick205.rom", "Kickstart 2.05"); break;
-			//		case "3.1":  ks = new Kickstart("../../../../kick31.rom", "Kickstart 3.1"); break;
-			//	}
-			//	if (ks != null)
-			//		SetKickstart(ks);
-			//}
-
-			//Reset();
-		}
-
-
-		public bool IsMapped(uint address)
-		{
-			return true;
-		}
-
-		public MemoryRange MappedRange()
-		{
-			return memoryRange;
-		}
-
-		private uint read32(uint address)
-		{
-			if (settings.AlignmentExceptions)
-			{
-				if ((address & 1) != 0)
-					throw new MemoryAlignmentException(address);
-			}
-
-			uint value = (uint)((memory[address & memoryMask] << 24) +
-			                    (memory[(address + 1) & memoryMask] << 16) +
-			                    (memory[(address + 2) & memoryMask] << 8) +
-			                    memory[(address + 3) & memoryMask]);
-
-			//logger.LogTrace($"{machineIdentifier.Id} R32 {address:X8} {value:X8}");
-
-			return value;
-		}
-
-		private ushort read16(uint address)
-		{
-			if (settings.AlignmentExceptions)
-			{
-				if ((address & 1) != 0)
-					throw new MemoryAlignmentException(address);
-			}
-
-			ushort value = (ushort)((memory[address & memoryMask] << 8) +
-			                        memory[(address + 1) & memoryMask]);
-
-			//logger.LogTrace($"{machineIdentifier.Id} R16 {address:X8} {value:X4}");
-
-			return value;
-		}
-
-		private byte read8(uint address)
-		{
-			byte value = memory[address & memoryMask];
-
-			//logger.LogTrace($"{machineIdentifier.Id} R8 {address:X8} {value:X2}");
-
-			return value;
-		}
-
-		private void write32(uint address, uint value)
-		{
-			//logger.LogTrace($"{machineIdentifier.Id} W32 {address:X8} {value:X8}");
-
-			if (settings.AlignmentExceptions)
-			{
-				if ((address & 1) != 0)
-					throw new MemoryAlignmentException(address);
-			}
-
-			memory[address & memoryMask] = (byte)(value >> 24);
-			memory[(address + 1) & memoryMask] = (byte)(value >> 16);
-			memory[(address + 2) & memoryMask] = (byte)(value >> 8);
-			memory[(address + 3) & memoryMask] = (byte)value;
-		}
-
-		private void write16(uint address, ushort value)
-		{
-			//logger.LogTrace($"{machineIdentifier.Id} W16 {address:X8} {value:X4}");
-
-			if (settings.AlignmentExceptions)
-			{
-				if ((address & 1) != 0)
-					throw new MemoryAlignmentException(address);
-			}
-
-			memory[address & memoryMask] = (byte)(value >> 8);
-			memory[(address + 1) & memoryMask] = (byte)value;
-		}
-
-		private void write8(uint address, byte value)
-		{
-			//logger.LogTrace($"{machineIdentifier.Id} W8 {address:X8} {value:X2}");
-
-			memory[address & memoryMask] = value;
-		}
-
-		public uint Read(uint insaddr, uint address, Size size)
-		{
-			if (size == Size.Word) return read16(address);
-			if (size == Size.Byte) return read8(address);
-			if (size == Size.Long) return read32(address);
-			throw new UnknownInstructionSizeException(insaddr, 0);
-		}
-
-		public void Write(uint insaddr, uint address, uint value, Size size)
-		{
-			if (size == Size.Word) { write16(address, (ushort)value); return; }
-			if (size == Size.Byte) { write8(address, (byte)value); return; }
-			if (size == Size.Long) { write32(address, value); return; }
-			throw new UnknownInstructionSizeException(insaddr, 0);
+			addressMask = (uint)(memory.Length - 1);
 		}
 
 		public byte[] GetMemoryArray()
@@ -164,46 +36,33 @@ namespace RunAmiga.Tests
 			return memory;
 		}
 
-		public byte UnsafeRead8(uint address)
+		public new uint Read(uint insaddr, uint address, Size size)
 		{
-			address &= memoryMask;
-			return memory[address];
+			uint value = base.Read(insaddr, address, size);
+
+			//if (size == Size.Long) logger.LogTrace($"{machineIdentifier.Id} R32 {address:X8} {value:X8}");
+			//else if (size == Size.Word) logger.LogTrace($"{machineIdentifier.Id} R16 {address:X8} {value:X4}");
+			//else if (size == Size.Byte) logger.LogTrace($"{machineIdentifier.Id} R8 {address:X8} {value:X2}");
+
+			return value;
 		}
 
-		public ushort UnsafeRead16(uint address)
+		public new void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			address &= memoryMask;
-			return (ushort)((memory[address] << 8) +
-			                memory[address + 1]);
+			base.Write(insaddr, address, value, size);
+
+			//if (size == Size.Long) logger.LogTrace($"{machineIdentifier.Id} W32 {address:X8} {value:X8}");
+			//else if (size == Size.Word) logger.LogTrace($"{machineIdentifier.Id} W16 {address:X8} {value:X4}");
+			//else if (size == Size.Byte) logger.LogTrace($"{machineIdentifier.Id} W8 {address:X8} {value:X2}");
 		}
 
-		public uint UnsafeRead32(uint address)
-		{
-			address &= memoryMask;
-			return (uint)((memory[address] << 24) +
-			              (memory[address + 1] << 16) +
-			              (memory[address + 2] << 8) +
-			              memory[address + 3]);
-		}
+		public byte UnsafeRead8(uint address) { return (byte)base.Read(0, address, Size.Byte); }
+		public ushort UnsafeRead16(uint address) { return (ushort)base.Read(0, address, Size.Word); }
+		public uint UnsafeRead32(uint address) { return base.Read(0, address, Size.Long); }
 
-		public void UnsafeWrite32(uint address, uint value)
-		{
-			memory[address & memoryMask] = (byte)(value >> 24);
-			memory[(address + 1) & memoryMask] = (byte)(value >> 16);
-			memory[(address + 2) & memoryMask] = (byte)(value >> 8);
-			memory[(address + 3) & memoryMask] = (byte)value;
-		}
-
-		public void UnsafeWrite16(uint address, ushort value)
-		{
-			memory[address & memoryMask] = (byte)(value >> 8);
-			memory[(address + 1) & memoryMask] = (byte)value;
-		}
-
-		public void UnsafeWrite8(uint address, byte value)
-		{
-			memory[address & memoryMask] = value;
-		}
+		public void UnsafeWrite8(uint address, byte value) { base.Write(0, address, value, Size.Byte); }
+		public void UnsafeWrite16(uint address, ushort value) { base.Write(0, address, value, Size.Word); }
+		public void UnsafeWrite32(uint address, uint value) { base.Write(0, address, value, Size.Long); }
 
 		public uint FindSequence(byte[] bytes)
 		{
