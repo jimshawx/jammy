@@ -15,6 +15,11 @@ namespace RunAmiga.Core.Types.Types.Debugger
 			Array.Copy(b.ToArray(), memory, 16*1024*1024);
 		}
 
+		public void ClearMapping()
+		{
+			addressToLine.Clear();
+		}
+
 		private string BlockToString(List<Tuple<uint, uint>> ranges)
 		{
 			var sb = new StringBuilder();

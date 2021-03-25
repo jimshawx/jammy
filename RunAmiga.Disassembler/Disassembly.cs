@@ -231,10 +231,12 @@ namespace RunAmiga.Disassembler
 			return 0;
 		}
 
-		private void Disassemble(List<Resident> resident)
+		private void Disassemble(List<Resident> resident, MemoryDump memoryDump)
 		{
 			for (int i = 0; i < resident.Count; i++)
 			{
+				memoryDump.ClearMapping();
+
 				var rt = resident[i];
 				var endAddress = 0xfffff0u;
 				if (i != resident.Count - 1)
@@ -274,9 +276,8 @@ namespace RunAmiga.Disassembler
 
 				dmp.Append(asm);
 
-				var mem = new MemoryDump(memory.GetEnumerable(0));
 				dmp.Append("^Z");
-				dmp.AppendLine(mem.ToString(rt.MatchTag & 0xffffffe0u, endAddress - rt.MatchTag + 1 + 31));
+				dmp.AppendLine(memoryDump.ToString(rt.MatchTag & 0xffffffe0u, endAddress - rt.MatchTag + 1 + 31));
 
 				File.WriteAllText($"{rt.Name}_disassembly.txt", dmp.ToString());
 			}
@@ -289,7 +290,10 @@ namespace RunAmiga.Disassembler
 				logger.LogTrace($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
 
 			if (settings.Value.ProduceDisassemblies)
-				Disassemble(resident);
+			{
+				var memoryDump = new MemoryDump(memory.GetEnumerable(0));
+				Disassemble(resident, memoryDump);
+			}
 
 			//KickLogo.KSLogo(this);
 		}
