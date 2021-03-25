@@ -242,14 +242,14 @@ namespace RunAmiga.Disassembler
 				if (i != resident.Count - 1)
 					endAddress = resident[i + 1].MatchTag;
 
-				var dmp = new StringBuilder();
 				string asm = DisassembleTxt(new List<Tuple<uint, uint>>
 					{
 						new Tuple<uint, uint>(rt.MatchTag, endAddress - rt.MatchTag + 1)
 					}, new List<uint>(),
 					new DisassemblyOptions { IncludeBytes = false, CommentPad = true, IncludeComments = true });
 
-				if (!asm.StartsWith("******"))
+				var dmp = new StringBuilder();
+				if (!asm.StartsWith("******") && !asm.StartsWith("\r\n******"))
 				{
 					dmp.Append($"****************************************************************************\n" +
 							 "*                                                                          *\n" +
@@ -276,7 +276,7 @@ namespace RunAmiga.Disassembler
 
 				dmp.Append(asm);
 
-				dmp.Append("^Z");
+				dmp.AppendLine("^Z");
 				dmp.AppendLine(memoryDump.ToString(rt.MatchTag & 0xffffffe0u, endAddress - rt.MatchTag + 1 + 31));
 
 				File.WriteAllText($"{rt.Name}_disassembly.txt", dmp.ToString());

@@ -1,5 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
@@ -12,9 +16,60 @@ namespace RunAmiga.Core.Custom
 		public const uint Config = 0xdab000;
 	}
 
+	public class IDE 
+	{
+		public const uint Data = 0xda2000;//1f0
+		public const uint Error_Feature = 0xda2004; //1f1
+		public const uint SectorCount = 0xda2008;//1f2
+		public const uint SectorNumber = 0xda200c;//1f3
+		public const uint CylinderLow = 0xda2010;//1f4
+		public const uint CylinderHigh = 0xda2014;//1f5
+		public const uint DriveHead = 0xda2018;//1f6 //aka. DeviceHead
+		public const uint Status_Command = 0xda201c; //1f7
+		public const uint AltStatus_DevControl = 0xda3018; //3f7
+	}
+
+	[Flags]
+	public enum IDE_STATUS : byte 
+	{
+		ERR=1,
+		IDX=2,
+		CORR=4,
+		DRQ=8,
+		DSC=16,
+		DWF=32,
+		DRDY=64,
+		BSY=128
+	}
+
 	//IDE Controller on the A600 and A1200
 	public class IDEController : IIDEController
 	{
+		private readonly Dictionary<uint, string> registerNames = new Dictionary<uint, string>
+		{
+			{Gayle.Status, "Gayle.Status"},
+			{Gayle.INTREQ, "Gayle.INTREQ"},
+			{Gayle.INTENA, "Gayle.INTENA"},
+			{Gayle.Config, "Gayle.Config"},
+
+			{IDE.Data, "IDE.DATA"}, //1f0
+			{IDE.Error_Feature, "IDE.Error_Feature"}, //1f1
+			{IDE.SectorCount, "IDE.SectorCount"}, //1f2
+			{IDE.SectorNumber, "IDE.SectorNumber"}, //1f3
+			{IDE.CylinderLow, "IDE.CylinderLow"}, //1f4
+			{IDE.CylinderHigh, "IDE.CylinderHigh"}, //1f5
+			{IDE.DriveHead, "IDE.DriveHead"}, //1f6 //aka. DeviceHead
+			{IDE.Status_Command, "IDE.Status_Command"}, //1f7
+			{IDE.AltStatus_DevControl, "IDE.AltStatus_DevControl"} //3f7
+		};
+
+		private string GetName(uint address)
+		{
+			if (registerNames.TryGetValue(address, out var m))
+				return m;
+			return $"UNKNOWN_{address:X8}";
+		}
+
 		/*
 http://eab.abime.net/showthread.php?t=23924
 
@@ -83,11 +138,42 @@ D1: 0, A1: $DE1000
 
 		 */
 
+		/*
+$DA3018 ; (read) alt status, doesn't clear int
+$DA3018 ; (write) device control - int/reset
+
+[table]
+
+; auxiliary status register bit definitions
+BITDEF WDC,INT,7 an interrupt is pending
+BITDEF WDC,LCI,6 last command ignored
+BITDEF WDC,BSY,5 chip is busy with a level 2 command
+BITDEF WDC,CIP,4 command in progress
+BITDEF WDC,PE,1 a parity error was detected
+BITDEF WDC,DBR,0 data buffer ready during programmed I/O
+
+; control register bit definitions
+BITDEF WDC,DMA,7 DMA mode is enabled for data transfers
+BITDEF WDC,WDB,6 direct buffer access for data transfers
+BITDEF WDC,HA,1 halt on attention (target mode only)
+BITDEF WDC,HPE,0 halt on parity error enable
+
+; source ID register control bits
+BITDEF WDC,ER,7 enable reselection
+BITDEF WDC,ES,6 enable selection (target or multiple initiators only)
+BITDEF WDC,SIV,3 source ID valid
+
+; command register control bits
+BITDEF WDC,SBT,7 enable single byte transfer mode
+
+		 */
+		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 		private readonly MemoryRange memoryRange = new MemoryRange(0xda0000, 0x20000);
 
-		public IDEController(ILogger<IDEController> logger)
+		public IDEController(IInterrupt interrupt, ILogger<IDEController> logger)
 		{
+			this.interrupt = interrupt;
 			this.logger = logger;
 		}
 
@@ -128,13 +214,21 @@ RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120
 
 		 */
 
-		private ushort gayleStatus;
-		private ushort gayleINTENA;
-		private ushort gayleINTREQ;
-		private ushort gayleConfig;
+		private byte gayleStatus;
+		private byte gayleINTENA;
+		private byte gayleINTREQ;
+		private byte gayleConfig;
+
+		private byte ideStatus = 0;
+		private byte driveHead = 0;
+		private byte cylinderLow = 0;
+		private byte cylingderHigh = 0;
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
+			if (size != Size.Byte)
+				throw new UnknownInstructionSizeException(insaddr, 0);
+
 			uint value = 0;
 			switch (address)
 			{
@@ -142,24 +236,82 @@ RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120
 				case Gayle.INTENA: value = gayleINTENA; break;
 				case Gayle.INTREQ: value = gayleINTREQ; break;
 				case Gayle.Config: value = gayleConfig; break;
+
+				case IDE.AltStatus_DevControl: value = ideStatus; break;
+				case IDE.Status_Command: value = ideStatus; Clr(); break;
+
+				case IDE.DriveHead: value = driveHead; break;
+				case IDE.CylinderLow: value = cylinderLow; break;
+				case IDE.CylinderHigh: value = cylingderHigh; break;
 			}
 
-			logger.LogTrace($"IDE Controller Read {address:X8} @{insaddr:X8} {value>>8:X2}{size}");
+			logger.LogTrace($"IDE Controller R {GetName(address)} {address:X8} @{insaddr:X8} {value:X8} {size}");
 
 			return value;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			if (size != Size.Byte)
+				throw new UnknownInstructionSizeException(insaddr,0);
+
+			logger.LogTrace($"IDE Controller W {GetName(address)} {address:X8} @{insaddr:X8} {value:X8} {size}");
+
 			switch (address)
 			{
-				case Gayle.Status: gayleStatus = (ushort)value; break;
-				case Gayle.INTENA: gayleINTENA = (ushort)value; break;
-				case Gayle.INTREQ: gayleINTREQ = (ushort)value; break;
-				case Gayle.Config: gayleConfig = (ushort)value; break;
+				case Gayle.Status: gayleStatus = (byte)value; break;
+				case Gayle.INTENA: gayleINTENA = (byte)value; break;
+				case Gayle.INTREQ: gayleINTREQ = (byte)value; break;
+				case Gayle.Config: gayleConfig = (byte)value; break;
+				case IDE.DriveHead: Ack(); driveHead = (byte)value; break;
+				case IDE.CylinderLow: Ack(); cylinderLow = (byte)value; break;
+				case IDE.CylinderHigh: Ack(); cylingderHigh = (byte)value; break;
+				case IDE.AltStatus_DevControl: break;
+
+				case IDE.Status_Command: Command((byte)value); break;
+			}
+		}
+
+		private void BsyInterrupt()
+		{
+			interrupt.AssertInterrupt((gayleINTENA & 1) == 0 ? Interrupt.TBE : Interrupt.BLIT);
+		}
+
+		private void BvdInterrupt()
+		{
+			interrupt.AssertInterrupt((gayleINTENA & 2) == 0 ? Interrupt.TBE : Interrupt.BLIT);
+		}
+
+		private void Ack()
+		{
+			gayleINTREQ |= 0x81;//flag gayle interrupt
+			BsyInterrupt();
+			ideStatus &= (byte)~IDE_STATUS.BSY;
+			ideStatus |= (byte)IDE_STATUS.DRDY;
+			ideStatus |= (byte)IDE_STATUS.DRQ;//always ready
+		}
+
+		private void Clr()
+		{
+			//clear IDE interrupt
+			//todo:
+			//clear Gayle interrupt
+			gayleINTREQ &= 0x7e;
+		}
+
+		private void Command(byte value)
+		{
+			string cmd;
+			switch (value)
+			{
+				case 0x10: cmd = "Recalibrate"; Ack(); break;
+				case 0x48: cmd = "???"; Ack(); break;
+				default: cmd = "Unknown"; break;
 			}
 
-			logger.LogTrace($"IDE Controller Write {address:X8} @{insaddr:X8} {value:X8} {size}");
+			logger.LogTrace($"IDE Command {cmd} {value}");
+
 		}
+
 	}
 }

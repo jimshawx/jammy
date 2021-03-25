@@ -64,7 +64,7 @@ namespace RunAmiga.Debugger
 			if (settings.Value.KickStart == "2.05")
 			{
 				//AddBreakpoint(0xFC0BE2);//card.resource Gayle detection
-				AddBreakpoint(0xFC120C);//poll Gayle INTREQ
+				//AddBreakpoint(0xFC120C);//poll Gayle INTREQ
 				return;
 			}
 

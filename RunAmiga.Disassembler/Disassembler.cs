@@ -68,7 +68,7 @@ namespace RunAmiga.Disassembler
 						t_fourteen(ins);
 						break;
 					default:
-						Append($"unknown instruction {type}");
+						Append($"unknown_instruction_{type:X4}");
 						break;
 				}
 
@@ -164,7 +164,7 @@ namespace RunAmiga.Disassembler
 			if (s == Size.Byte) return fmtX2(x);
 			if (s == Size.Word) return fmtX4(x);
 			if (s == Size.Long) return fmtX8(x);
-			return $"unknown size {s}";
+			return $"unknown_size_{s}";
 		}
 
 		private void Append(uint imm, Size s)
@@ -295,13 +295,13 @@ namespace RunAmiga.Disassembler
 							//Append($"{fmtX8(address + pc)}");
 							return pc;
 						default:
-							Append($"unknown effective address mode {type:X4}");
+							Append($"unknown_effective_address_mode_{type:X4}");
 							return 0;
 					}
 					break;
 			}
 
-			Append($"unknown effective address mode {type:X4}");
+			Append($"unknown_effective_address_mode_{type:X4}");
 			return 0;
 		}
 
@@ -314,7 +314,7 @@ namespace RunAmiga.Disassembler
 				return (uint)(short)read16(ea);
 			if (size == Size.Byte)
 				return (uint)(sbyte)read8(ea);
-			Append(" - unknown size");
+			Append("unknown_size");
 			return 0;
 		}
 
@@ -343,7 +343,7 @@ namespace RunAmiga.Disassembler
 			}
 			else
 			{
-				Append("Unknown immediate size");
+				Append("unknown_immediate_size");
 			}
 			return v;
 		}
@@ -408,7 +408,7 @@ namespace RunAmiga.Disassembler
 							uint imm = fetchImm(size);//ea==pc
 							return imm;
 						default:
-							Append($"unknown effective address mode {type}");
+							Append($"unknown_effective_address_mode_{type:X4}");
 							return 0;
 					}
 			}
@@ -440,7 +440,7 @@ namespace RunAmiga.Disassembler
 					case 1: lsd(type, rots, lr, Size.Word); break;
 					case 2: roxd(type, rots, lr, Size.Word); break;
 					case 3: rod(type, rots, lr, Size.Word); break;
-					default: Append($"unknown instruction {type}"); break;
+					default: Append($"unknown_instruction_{type:X4}"); break;
 				}
 			}
 			else
@@ -679,7 +679,7 @@ namespace RunAmiga.Disassembler
 				case 0b10001://DA
 					Append($" d{Xn},a{Yn}"); break;
 				default:
-					Append(" - unknown mode"); break;
+					Append(" unknown_mode"); break;
 			}
 		}
 
@@ -962,7 +962,7 @@ namespace RunAmiga.Disassembler
 			}
 			else
 			{
-				Append($"unknown instruction {type}");
+				Append($"unknown_instruction_{type:X4}");
 			}
 		}
 
@@ -1404,7 +1404,7 @@ namespace RunAmiga.Disassembler
 					else if ((subins & 0b1111_00000000) == 0b1010_00000000)
 						tst(type);
 					else
-						Append($"unknown instruction {type:X4}");
+						Append($"unknown_instruction_{type:X4}");
 					break;
 			}
 		}
@@ -1490,7 +1490,7 @@ namespace RunAmiga.Disassembler
 					Append($"extb.l d{Xn}");
 					break;
 				default:
-					Append($"unknown instruction {type}");
+					Append($"unknown_instruction_{type:X4}");
 					break;
 			}
 		}
@@ -1595,7 +1595,7 @@ namespace RunAmiga.Disassembler
 						cmpi(type);
 						break;
 					default:
-						Append($"unknown instruction {type}");
+						Append($"unknown_instruction_{type:X4}");
 						break;
 				}
 			}

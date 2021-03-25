@@ -146,7 +146,9 @@ namespace RunAmiga.Core.Custom
 			return (uint)regs[reg];
 		}
 
-		private int gayleBits = 0xDDDD;
+		//todo: A4000 says 0xD1
+		private const int GAYLE_BITS = 0xD0D0;
+		private int gayleBits = GAYLE_BITS;
 		private ushort GayleCheck()
 		{
 			ushort v = (ushort)(gayleBits & 0x8000);
@@ -341,6 +343,10 @@ namespace RunAmiga.Core.Custom
 			else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
 			{
 				audio.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == 0xdf1000)
+			{
+				gayleBits = GAYLE_BITS;
 			}
 			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
 			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
