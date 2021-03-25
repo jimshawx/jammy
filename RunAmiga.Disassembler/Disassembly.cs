@@ -9,6 +9,7 @@ using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types.Types.Debugger;
 using RunAmiga.Core.Types.Types.Kickstart;
 
 namespace RunAmiga.Disassembler
@@ -21,7 +22,7 @@ namespace RunAmiga.Disassembler
 		private readonly ILogger logger;
 		private readonly IKickstartAnalysis kickstartAnalysis;
 		private readonly IAnalyser analyser;
-		private readonly IDebugMemoryMapper mem;
+		private readonly IDebugMemoryMapper memory;
 
 		public Disassembly(IDebugMemoryMapper memory, IBreakpointCollection breakpoints, IOptions<EmulationSettings> settings,
 			ILogger<Disassembly> logger, IKickstartAnalysis kickstartAnalysis, IAnalyser analyser)
@@ -29,7 +30,7 @@ namespace RunAmiga.Disassembler
 			this.logger = logger;
 			this.kickstartAnalysis = kickstartAnalysis;
 			this.analyser = analyser;
-			this.mem = memory;
+			this.memory = memory;
 			this.breakpoints = breakpoints;
 			this.settings = settings;
 			disassembler = new Disassembler();
@@ -97,17 +98,17 @@ namespace RunAmiga.Disassembler
 					{
 						if (memType[address] == MemType.Byte)
 						{
-							asm = $"{address:X6}  { mem.UnsafeRead8(address):X2}";
+							asm = $"{address:X6}  { memory.UnsafeRead8(address):X2}";
 							address += 1;
 						}
 						else if (memType[address] == MemType.Word)
 						{
-							asm = $"{address:X6}  { mem.UnsafeRead16(address):X4}";
+							asm = $"{address:X6}  { memory.UnsafeRead16(address):X4}";
 							address += 2;
 						}
 						else if (memType[address] == MemType.Long)
 						{
-							asm = $"{address:X6}  { mem.UnsafeRead32(address):X8}";
+							asm = $"{address:X6}  { memory.UnsafeRead32(address):X8}";
 							address += 4;
 						}
 						else if (memType[address] == MemType.Str)
@@ -116,17 +117,17 @@ namespace RunAmiga.Disassembler
 
 							while (memType[address] == MemType.Str)
 							{
-								if (mem.UnsafeRead8(address) == 0)
+								if (memory.UnsafeRead8(address) == 0)
 								{
 									str.Add("00");
 									address++;
 									break;
 								}
-								else if (mem.UnsafeRead8(address) == 0xD)
+								else if (memory.UnsafeRead8(address) == 0xD)
 								{
 									str.Add("CR");
 								}
-								else if (mem.UnsafeRead8(address) == 0xA)
+								else if (memory.UnsafeRead8(address) == 0xA)
 								{ 
 									str.Add("LF");
 								}
@@ -134,9 +135,9 @@ namespace RunAmiga.Disassembler
 								{
 									tmp.Clear();
 									tmp.Append('"');
-									while (mem.UnsafeRead8(address) != 0 && mem.UnsafeRead8(address) != 0x0d && mem.UnsafeRead8(address) != 0xa)
+									while (memory.UnsafeRead8(address) != 0 && memory.UnsafeRead8(address) != 0x0d && memory.UnsafeRead8(address) != 0xa)
 									{
-										tmp.Append(Convert.ToChar(mem.UnsafeRead8(address)));
+										tmp.Append(Convert.ToChar(memory.UnsafeRead8(address)));
 										address++;
 									}
 									tmp.Append('"');
@@ -155,16 +156,16 @@ namespace RunAmiga.Disassembler
 					{
 						if ((address & 1) != 0)
 						{
-							asm = $"{address:X6}  { mem.UnsafeRead8(address):X2}";
+							asm = $"{address:X6}  { memory.UnsafeRead8(address):X2}";
 							address += 1;
 						}
 						else
 						{
-							var dasm = disassembler.Disassemble(address, mem.GetEnumerable((int)address, 20));
+							var dasm = disassembler.Disassemble(address, memory.GetEnumerable((int)address, 20));
 							asm = dasm.ToString(options);
 
 							uint start = address, end = (uint)(address + dasm.Bytes.Length);
-							for (uint i = start; i < end && i < mem.Length; i++)
+							for (uint i = start; i < end && i < memory.Length; i++)
 							{
 								if (memType[i] != MemType.Code && memType[i] != MemType.Unknown)
 								{
@@ -246,19 +247,9 @@ namespace RunAmiga.Disassembler
 					}, new List<uint>(),
 					new DisassemblyOptions { IncludeBytes = false, CommentPad = true, IncludeComments = true });
 
-
-				//F8574C  4AFC                                    RTC_MATCHWORD(start of ROMTAG marker)
-				//F8574E  00F8574C                                RT_MATCHTAG(pointer RTC_MATCHWORD)
-				//F85752  00F86188                                RT_ENDSKIP(pointer to end of code)
-				//F85756  01                                      RT_FLAGS(RTF_COLDSTART)
-				//F85757  25                                      RT_VERSION(version number)
-				//F85758  08                                      RT_TYPE(NT_RESOURCE)
-				//F85759  2D                                      RT_PRI(priority = 45)
-				//F8575A  00F85766                                RT_NAME(pointer to name)
-				//F8575E  00F85798                                RT_IDSTRING(pointer to ID string)
-				//F85762  00F85804                                RT_INIT(execution address)
-
-				dmp.Append($"****************************************************************************\n" +
+				if (!asm.StartsWith("******"))
+				{
+					dmp.Append($"****************************************************************************\n" +
 							 "*                                                                          *\n" +
 							 "*  Comments Copyright (C) 2021 James Shaw                                  *\n" +
 							 "*                                                                          *\n" +
@@ -278,28 +269,14 @@ namespace RunAmiga.Disassembler
 							 "*  \"All Rights Reserved.\"                                                  *\n" +
 							 "*                                                                          *\n" +
 							 "****************************************************************************\n" +
-							 //"\n" +
-							 //$"\t; The {rt.Name} RomTag Structure\n" +
-							 //"\n");
 							 "");
-
-				//uint b = rt.MatchTag;
-				//dmp.AppendLine($"{b:X6}  {rt.MatchWord:X4}                                    RTC_MATCHWORD   (start of ROMTAG marker)"); b += 2;
-				//dmp.AppendLine($"{b:X6}  {rt.MatchTag:X8}                                RT_MATCHTAG     (pointer RTC_MATCHWORD)"); b += 4;
-				//dmp.AppendLine($"{b:X6}  {rt.EndSkip:X8}                                RT_ENDSKIP      (pointer to end of code)"); b += 4;
-				//dmp.AppendLine($"{b:X6}  {rt.Flags:X2}                                      RT_FLAGS        ({rt.Flags})"); b += 1;
-				//dmp.AppendLine($"{b:X6}  {rt.Version:X2}                                      RT_VERSION      (version number = {rt.Version})"); b += 1;
-				//dmp.AppendLine($"{b:X6}  {rt.Type:X2}                                      RT_TYPE         ({rt.Type})"); b += 1;
-				//dmp.AppendLine($"{b:X6}  {rt.Pri:X2}                                      RT_PRI          (priority = {rt.Pri})"); b += 1;
-				//dmp.AppendLine($"{b:X6}  {rt.NamePtr:X8}                                RT_NAME         (pointer to name)"); b += 4;
-				//dmp.AppendLine($"{b:X6}  {rt.IdStringPtr:X8}                                RT_IDSTRING     (pointer to ID string)"); b += 4;
-				//dmp.AppendLine($"{b:X6}  {rt.Init:X8}                                RT_INIT         (execution address)"); b += 4;
-				//dmp.AppendLine($"{b:X6}");
+				}
 
 				dmp.Append(asm);
 
-				//var mem = new MemoryDump(memory.GetMemoryArray());
-				//dmp.AppendLine(mem.ToString(rt.MatchTag & 0xffffffe0u, endAddress - rt.MatchTag + 1 + 31));
+				var mem = new MemoryDump(memory.GetEnumerable(0));
+				dmp.Append("^Z");
+				dmp.AppendLine(mem.ToString(rt.MatchTag & 0xffffffe0u, endAddress - rt.MatchTag + 1 + 31));
 
 				File.WriteAllText($"{rt.Name}_disassembly.txt", dmp.ToString());
 			}

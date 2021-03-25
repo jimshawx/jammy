@@ -89,6 +89,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		int Length { get; }
 		MemoryRange MappedRange();
 	}
+	public interface IDebuggableMemory { }
 
 	public interface IChips : IEmulate, IMemoryMappedDevice
 	{
@@ -193,7 +194,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		string Id { get; }
 	}
 
-	public interface IKickstartROM : IMemoryMappedDevice
+	public interface IKickstartROM : IMemoryMappedDevice, IDebuggableMemory
 	{
 		void SetMirror(bool mirrored);
 	}
@@ -203,12 +204,13 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void AddConfiguration(ZorroConfiguration configuration);
 	}
 
-	public interface IChipRAM : IMemoryMappedDevice { }
-	public interface ITrapdoorRAM : IMemoryMappedDevice { }
-	public interface IUnmappedMemory : IMemoryMappedDevice { }
-	public interface IZorroRAM : IMemoryMappedDevice { }
+	public interface IChipRAM : IMemoryMappedDevice, IDebuggableMemory { }
+	public interface ITrapdoorRAM : IMemoryMappedDevice, IDebuggableMemory { }
+	public interface IUnmappedMemory : IMemoryMappedDevice, IDebuggableMemory { }
+	public interface IZorroRAM : IMemoryMappedDevice, IDebuggableMemory { }
 
 	public interface IIDEController : IMemoryMappedDevice { }
 	public interface ISCSIController : IMemoryMappedDevice { }
 	public interface IAkiko : IMemoryMappedDevice { }
+	public interface IZorroConfigurator { }
 }

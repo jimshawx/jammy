@@ -108,6 +108,7 @@ namespace RunAmiga.Core.Custom
 						workbenchDisk = new Disk("../../../../workbench1.3.adf");
 						break;
 					case "2.04":
+					case "2.05":
 						workbenchDisk = new Disk("../../../../workbench2.04.adf");
 						break;
 					case "3.1":

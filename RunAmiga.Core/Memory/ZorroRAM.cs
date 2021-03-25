@@ -59,21 +59,28 @@ namespace RunAmiga.Core.Memory
 		};
 	}
 
-	public class ZorroRAM : Memory, IZorroRAM
+	public class ZorroConfigurator : IZorroConfigurator
 	{
-		public ZorroRAM(IZorro zorro, IOptions<EmulationSettings> settings)
+		public ZorroConfigurator(IZorro zorro, IOptions<EmulationSettings> settings)
 		{
 			if (settings.Value.ZorroIIMemory != 0.0)
 			{
-				//zorro.AddConfiguration(new ZorroConfiguration {Config = RamExpansion.Config_8MB, Name = "8MB RAM Expansion"});
+				zorro.AddConfiguration(new ZorroConfiguration { Config = RamExpansion.Config_8MB, Name = "8MB RAM Expansion", Size = 8 * 1024 * 1024 });
 
 				//zorro.AddConfiguration(new Configurations { Config = RamExpansion.Config_2MB, Name = "2MB RAM Expansion"});
 				//zorro.AddConfiguration(new Configurations { Config = RamExpansion.Config_4MB, Name = "4MB RAM Expansion" });
 				//zorro.AddConfiguration(new Configurations { Config = RamExpansion.Config_2MB, Name = "2MB RAM Expansion" });
-				memory = new byte[8 * 1024 * 1024];
-				memoryRange = new MemoryRange(0x200000, 0x800000);
-				addressMask = memoryRange.Length - 1;
 			}
+		}
+	}
+
+	public class ZorroRAM : Memory, IZorroRAM
+	{
+		public ZorroRAM(uint address, uint size)
+		{
+			memory = new byte[size];
+			memoryRange = new MemoryRange(address, size);
+			addressMask = memoryRange.Length - 1;
 		}
 	}
 }

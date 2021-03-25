@@ -1,37 +1,34 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Memory
 {
-	public class MemoryMapper : IMemoryMapper
+	public class MemoryMapper : IMemoryMapper, IDebugMemoryMapper
 	{
 		private readonly IChipRAM chipRAM;
 		private readonly IKickstartROM kickstartROM;
-		private readonly ILogger logger;
+		private readonly IMemoryManager memoryManager;
 		private IMemoryInterceptor interceptor;
-		private readonly List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 
-		private readonly IMemoryMappedDevice [] mappedDevice = new IMemoryMappedDevice[0x100];
+		public MemoryMapper(
+			IMemoryManager memoryManager, IZorroConfigurator zorroConfigurator,
 
-		private readonly uint memoryMask;
-
-		public MemoryMapper(ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
+			ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
 			IZorro expansion, IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IUnmappedMemory unmappedMemory,
 			IKickstartROM kickstartROM, IIDEController ideController, ISCSIController scsiController,
 			IAkiko akiko,
-			ILogger<MemoryMapper> logger, IOptions<EmulationSettings> settings)
+
+			ILogger<MemoryMapper> logger)
 		{
 			this.chipRAM = chipRAM;
 			this.kickstartROM = kickstartROM;
-			this.logger = logger;
+			this.memoryManager = memoryManager;
 
-			memoryMask = (uint)(settings.Value.MemorySize - 1);
-
+			var devices = new List<IMemoryMappedDevice>();
 			devices.Add(unmappedMemory);
 			devices.Add(ciaMemory);
 			devices.Add(custom);
@@ -44,16 +41,15 @@ namespace RunAmiga.Core.Memory
 			devices.Add(scsiController);
 			devices.Add(akiko);
 
+			memoryManager.AddDevices(devices);
+
 			CopyKickstart();
-			
-			BuildMappedDevices();
 		}
 
-		public MemoryMapper(List<IMemoryMappedDevice> memoryDevices, IOptions<EmulationSettings> settings)
+		public MemoryMapper(IMemoryManager memoryManager, IMemoryMappedDevice memory)
 		{
-			memoryMask = (uint)(settings.Value.MemorySize - 1);
-			devices.AddRange(memoryDevices);
-			BuildMappedDevices();
+			this.memoryManager = memoryManager;
+			memoryManager.AddDevice(memory);
 		}
 
 		public void Emulate(ulong cycles)
@@ -81,24 +77,9 @@ namespace RunAmiga.Core.Memory
 			}
 		}
 
-
 		public void AddMemoryIntercept(IMemoryInterceptor interceptor)
 		{
 			this.interceptor = interceptor;
-		}
-
-		private void BuildMappedDevices()
-		{
-			foreach (var dev in devices.Select(x => new { device = x, range = x.MappedRange()}) )
-			{
-				uint start = dev.range.Start>>16;
-				uint end = (dev.range.Start + dev.range.Length)>>16;
-				for (uint i = start; i < end; i++)
-				{
-					if (dev.device.IsMapped(i << 16))
-						mappedDevice[i] = dev.device;
-				}
-			}
 		}
 
 		readonly MemoryRange memoryRange = new MemoryRange(0x0, 0x1000000);
@@ -115,17 +96,101 @@ namespace RunAmiga.Core.Memory
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			address &= memoryMask;
-			uint value = mappedDevice[address >> 16].Read(insaddr, address, size);
+			uint value = memoryManager.MappedDevice[address].Read(insaddr, address, size);
 			if (interceptor != null) interceptor.Read(insaddr, address, value, size);
 			return value;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			address &= memoryMask;
 			if (interceptor != null) interceptor.Write(insaddr, address, value, size);
-			mappedDevice[address>>16].Write(insaddr, address, value, size);
+			memoryManager.MappedDevice[address].Write(insaddr, address, value, size);
 		}
+
+		// IDebuggableMemoryMapper
+
+		//todo: these should NOT be using the emulation's Read/Write methods
+		public byte UnsafeRead8(uint address)
+		{
+			return (byte)memoryManager.DebugMappedDevice[address].Read(0, address, Size.Byte);
+		}
+
+		public ushort UnsafeRead16(uint address)
+		{
+			return (ushort)memoryManager.DebugMappedDevice[address].Read(0, address, Size.Word);
+		}
+
+		public uint UnsafeRead32(uint address)
+		{
+			return memoryManager.DebugMappedDevice[address].Read(0, address, Size.Long);
+		}
+
+		public void UnsafeWrite32(uint address, uint value)
+		{
+			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Long);
+		}
+
+		public void UnsafeWrite16(uint address, ushort value)
+		{
+			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Word);
+		}
+
+		public void UnsafeWrite8(uint address, byte value)
+		{
+			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Byte);
+		}
+
+		public uint FindSequence(byte[] bytes)
+		{
+			//todo: expensive!
+			byte[] find = GetEnumerable(0).ToArray();
+			for (int i = 0; i < Length - bytes.Length; i++)
+			{
+				if (bytes.SequenceEqual(find.Skip(i).Take(bytes.Length)))
+					return (uint)i;
+			}
+
+			return 0;
+		}
+
+		public IEnumerable<byte> GetEnumerable(int start, int length)
+		{
+			for (int i = start; i < Math.Min(start + length, memoryRange.Length); i++)
+				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
+					yield return 0;
+				else
+					yield return UnsafeRead8((uint)i);
+		}
+
+		public IEnumerable<byte> GetEnumerable(int start)
+		{
+			for (int i = start; i < memoryRange.Length; i++)
+			{
+				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
+					yield return 0;
+				else
+					yield return UnsafeRead8((uint)i);
+			}
+		}
+
+		public IEnumerable<uint> AsULong(int start)
+		{
+			for (uint i = (uint)start; i < memoryRange.Length; i += 4)
+				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
+					yield return 0;
+				else
+					yield return UnsafeRead32(i);
+		}
+
+		public IEnumerable<ushort> AsUWord(int start)
+		{
+			for (uint i = (uint)start; i < memoryRange.Length; i += 2)
+				if (memoryManager.DebugMappedDevice[(uint)i]  is IUnmappedMemory)
+					yield return 0;
+				else
+					yield return UnsafeRead16(i);
+		}
+
+		public int Length => (int)memoryRange.Length;
 	}
 }

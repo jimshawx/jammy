@@ -52,13 +52,10 @@ namespace RunAmiga.Tests
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
 				.AddSingleton<IMusashiCPU, MusashiCPU>()
-				.AddSingleton<IMemoryMapper>(x=>
-				{
-					return new MemoryMapper(new List<IMemoryMappedDevice> {x.GetRequiredService<IMemoryMappedDevice>()},
-											x.GetRequiredService<IOptions<EmulationSettings>>());
-				})
-				.AddSingleton<IDebugMemoryMapper>(x => new DebugMemoryMapper(x.GetRequiredService<IMemoryMappedDevice>()))
-				.AddSingleton<IMemoryMappedDevice, TestMemory>()
+				.AddSingleton<TestMemory>()
+				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 
@@ -75,13 +72,10 @@ namespace RunAmiga.Tests
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
 				.AddSingleton<ICSharpCPU, CPU>()
-				.AddSingleton<IMemoryMapper>(x =>
-				{
-					return new MemoryMapper(new List<IMemoryMappedDevice> {x.GetRequiredService<IMemoryMappedDevice>()},
-											x.GetRequiredService<IOptions<EmulationSettings>>());
-				})
-				.AddSingleton<IDebugMemoryMapper>(x=>new DebugMemoryMapper(x.GetRequiredService<IMemoryMappedDevice>()))
-				.AddSingleton<IMemoryMappedDevice, TestMemory>()
+				.AddSingleton<TestMemory>()
+				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 

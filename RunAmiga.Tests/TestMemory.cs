@@ -1,9 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Extensions.Extensions;
 
 namespace RunAmiga.Tests
 {
@@ -12,11 +15,11 @@ namespace RunAmiga.Tests
 		public byte[] GetMemoryArray();
 	}
 
-	public class TestMemory : IMemoryMappedDevice, ITestMemory
+	public class TestMemory : IMemoryMappedDevice, ITestMemory, IDebugMemoryMapper, IMemoryMapper
 	{
 		private readonly byte[] memory;
 		private uint memoryMask;
-		
+
 		private readonly ILogger logger;
 		private readonly IMachineIdentifier machineIdentifier;
 		private readonly EmulationSettings settings;
@@ -69,12 +72,12 @@ namespace RunAmiga.Tests
 			}
 
 			uint value = (uint)((memory[address & memoryMask] << 24) +
-								(memory[(address + 1) & memoryMask] << 16) +
-								(memory[(address + 2) & memoryMask] << 8) +
-								memory[(address + 3) & memoryMask]);
+			                    (memory[(address + 1) & memoryMask] << 16) +
+			                    (memory[(address + 2) & memoryMask] << 8) +
+			                    memory[(address + 3) & memoryMask]);
 
 			//logger.LogTrace($"{machineIdentifier.Id} R32 {address:X8} {value:X8}");
-			
+
 			return value;
 		}
 
@@ -86,11 +89,11 @@ namespace RunAmiga.Tests
 					throw new MemoryAlignmentException(address);
 			}
 
-			ushort value = (ushort)((memory[address & memoryMask] << 8) + 
-									memory[(address + 1) & memoryMask]);
+			ushort value = (ushort)((memory[address & memoryMask] << 8) +
+			                        memory[(address + 1) & memoryMask]);
 
 			//logger.LogTrace($"{machineIdentifier.Id} R16 {address:X8} {value:X4}");
-			
+
 			return value;
 		}
 
@@ -99,7 +102,7 @@ namespace RunAmiga.Tests
 			byte value = memory[address & memoryMask];
 
 			//logger.LogTrace($"{machineIdentifier.Id} R8 {address:X8} {value:X2}");
-			
+
 			return value;
 		}
 
@@ -171,16 +174,16 @@ namespace RunAmiga.Tests
 		{
 			address &= memoryMask;
 			return (ushort)((memory[address] << 8) +
-							memory[address + 1]);
+			                memory[address + 1]);
 		}
 
 		public uint UnsafeRead32(uint address)
 		{
 			address &= memoryMask;
 			return (uint)((memory[address] << 24) +
-					(memory[address + 1] << 16) +
-					(memory[address + 2] << 8) +
-					memory[address + 3]);
+			              (memory[address + 1] << 16) +
+			              (memory[address + 2] << 8) +
+			              memory[address + 3]);
 		}
 
 		public void UnsafeWrite32(uint address, uint value)
@@ -211,6 +214,40 @@ namespace RunAmiga.Tests
 			}
 
 			return 0;
+		}
+
+		public IEnumerable<byte> GetEnumerable(int start, int length)
+		{
+			return memory[start..Math.Min(memory.Length, start+length)];
+		}
+
+		public IEnumerable<byte> GetEnumerable(int start)
+		{
+			return memory[start..];
+		}
+
+		public IEnumerable<uint> AsULong(int start)
+		{
+			return memory[start..].AsULong();
+		}
+
+		public IEnumerable<ushort> AsUWord(int start)
+		{
+			return memory[start..].AsUWord();
+		}
+
+		public int Length => memory.Length;
+
+		public void Emulate(ulong cycles)
+		{
+		}
+
+		public void Reset()
+		{
+		}
+
+		public void AddMemoryIntercept(IMemoryInterceptor interceptor)
+		{
 		}
 	}
 }

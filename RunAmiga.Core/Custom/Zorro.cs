@@ -2,6 +2,7 @@
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Memory;
 using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
@@ -9,12 +10,14 @@ namespace RunAmiga.Core.Custom
 	// HRM pp 431
 	public class Zorro : IZorro
 	{
+		private readonly IMemoryManager memoryManager;
 		private readonly ILogger logger;
 
 		private readonly List<ZorroConfiguration> configurations = new List<ZorroConfiguration>();
 
-		public Zorro(ILogger<Zorro> logger)
+		public Zorro(IMemoryManager memoryManager, ILogger<Zorro> logger)
 		{
+			this.memoryManager = memoryManager;
 			this.logger = logger;
 		}
 
@@ -88,6 +91,10 @@ namespace RunAmiga.Core.Custom
 			{
 				logger.LogTrace($"{configurations[0].Name} configured at {configurations[0].BaseAddress:X8}");
 				configurations[0].IsConfigured = true;
+				
+				if (configurations[0].Mapping == ZorroConfiguration.MappingType.MemoryMapped)
+					AddNewMemoryDevice(configurations[0]);
+				
 				configurations.RemoveAt(0);
 			}
 
@@ -96,9 +103,10 @@ namespace RunAmiga.Core.Custom
 				configurations.RemoveAt(0);
 		}
 
-		public List<IMemoryMappedDevice> GetRAMDevices()
+		private void AddNewMemoryDevice(ZorroConfiguration configuration)
 		{
-			throw new System.NotImplementedException();
+			var zorroRAM = new ZorroRAM(configuration.BaseAddress, configuration.Size);
+			memoryManager.AddDevice(zorroRAM);
 		}
 	}
 }
