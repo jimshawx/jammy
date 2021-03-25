@@ -1903,57 +1903,89 @@ namespace RunAmiga.Disassembler
 			{
 				uint ea = fetchEA(type);
 				Append(",");
-				//M->R
-				for (int i = 0; i < 16; i++)
-				{
-					if ((mask & (1<<i)) != 0)
-					{
-						int m = i & 7;
-						if (i > 7)
-							Append($"a{m}/");
-						else
-							Append($"d{m}/");
-					}
-				}
-				Remove(1);
+				AppendRegSetDA(mask);
 			}
 			else
 			{
 				//R->M
 				//if it's pre-decrement mode
 				if ((type & 0b111_000) == 0b100_000)
-				{
-					for (int i = 15; i >= 0; i--)
-					{
-						if ((mask & (1<<i)) != 0)
-						{
-							int m = (i & 7)^7;
-							if (i <= 7)
-								Append($"a{m}/");
-							else
-								Append($"d{m}/");
-						}
-					}
-					Remove(1);
-				}
+					AppendRegSetAD(mask);
 				else
-				{
-					for (int i = 0; i < 16; i++)
-					{
-						if ((mask & (1<<i)) != 0)
-						{
-							int m = i & 7;
-							if (i > 7)
-								Append($"a{m}/");
-							else
-								Append($"d{m}/");
-						}
-					}
-					Remove(1);
-				}
+					AppendRegSetDA(mask);
 				Append(",");
 				uint ea = fetchEA(type);
 			}
+		}
+
+		private class RRange
+		{
+			private readonly char R;
+			private readonly int S;
+			private int E;
+
+			public RRange(char r, int s)
+			{
+				R = r;
+				S = s;
+			}
+
+			public void End(int e)
+			{
+				E = e;
+			}
+
+			public override string ToString()
+			{
+				if (S == E) return $"{R}{S}";
+				if (S+1 == E) return $"{R}{S}/{R}{E}";//or $"{R}{S}-{R}{E}";
+				return $"{R}{S}-{R}{E}";
+			}
+		}
+
+		private void AppendRegSetAD(uint mask)
+		{
+			//reverse the bits
+			uint flip = 0;
+			for (int i = 0; i < 16; i++)
+			{
+				flip <<= 1;
+				flip |= mask & 1;
+				mask >>= 1;
+			}
+			AppendRegSetDA(flip);
+		}
+
+		private void AppendRegSetDA(uint mask)
+		{
+			var ranges = new List<RRange>();
+
+			var inb = false;
+			var reg = 'd';
+			for (int j = 0; j <= 8; j += 8)
+			{
+				for (int i = 0; i < 8; i++)
+				{
+					bool bit = (mask & (1 << (i+j))) != 0;
+					if (!inb && bit)
+					{
+						//going in
+						inb = true;
+						ranges.Add(new RRange(reg, i));
+					}
+					else if (inb && !bit)
+					{
+						//going out
+						inb = false;
+						ranges.Last().End(i - 1);
+					}
+				}
+				if (inb) ranges.Last().End(7);
+				inb = false;
+				reg = 'a';
+			}
+
+			Append(string.Join('/', ranges.Select(x=>x.ToString())));
 		}
 
 		private void jmp(int type)
