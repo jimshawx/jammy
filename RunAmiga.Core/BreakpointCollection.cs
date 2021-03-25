@@ -29,6 +29,10 @@ namespace RunAmiga.Core
 		{
 		}
 
+		public void Fetch(uint insaddr, uint address, uint value, Size size)
+		{
+		}
+
 		private bool IsMemoryBreakpoint(uint pc, BreakpointType type)
 		{
 			//for (uint i = 0; i < 4; i++)

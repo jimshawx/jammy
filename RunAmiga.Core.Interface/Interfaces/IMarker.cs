@@ -148,11 +148,13 @@ namespace RunAmiga.Core.Interface.Interfaces
 	{
 		void Write(uint insaddr, uint address, uint value, Size size);
 		void Read(uint insaddr, uint address, uint value, Size size);
+		void Fetch(uint insaddr, uint address, uint value, Size size);
 	}
 
 	public interface IMemoryMapper : IMemoryMappedDevice, IEmulate
 	{
 		void AddMemoryIntercept(IMemoryInterceptor interceptor);
+		uint Fetch(uint insaddr, uint address, Size size);
 	}
 
 	public interface IMachine
@@ -187,6 +189,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		Dictionary<uint, Header> GetHeaders();
 		Dictionary<uint, Comment> GetComments();
 		Dictionary<string, LVOCollection> GetLVOs();
+		void MarkAsType(uint address, MemType memType, Size size);
 	}
 
 	public interface IMachineIdentifier

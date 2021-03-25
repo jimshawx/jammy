@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
@@ -168,12 +167,14 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 
 		 */
 		private readonly IInterrupt interrupt;
+		private readonly IChips custom;
 		private readonly ILogger logger;
 		private readonly MemoryRange memoryRange = new MemoryRange(0xda0000, 0x20000);
 
-		public IDEController(IInterrupt interrupt, ILogger<IDEController> logger)
+		public IDEController(IInterrupt interrupt, IChips custom, ILogger<IDEController> logger)
 		{
 			this.interrupt = interrupt;
+			this.custom = custom;
 			this.logger = logger;
 		}
 
@@ -260,8 +261,8 @@ RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120
 			switch (address)
 			{
 				case Gayle.Status: gayleStatus = (byte)value; break;
-				case Gayle.INTENA: gayleINTENA = (byte)value; break;
-				case Gayle.INTREQ: gayleINTREQ = (byte)value; break;
+				case Gayle.INTENA: gayleINTENA = (byte)value; UpdateInterrupt(); break;
+				case Gayle.INTREQ: gayleINTREQ = (byte)value; UpdateInterrupt(); break;
 				case Gayle.Config: gayleConfig = (byte)value; break;
 				case IDE.DriveHead: Ack(); driveHead = (byte)value; break;
 				case IDE.CylinderLow: Ack(); cylinderLow = (byte)value; break;
@@ -272,21 +273,51 @@ RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120
 			}
 		}
 
-		private void BsyInterrupt()
+		private void UpdateInterrupt()
 		{
-			interrupt.AssertInterrupt((gayleINTENA & 1) == 0 ? Interrupt.TBE : Interrupt.BLIT);
+			uint intreq = 0;
+
+			byte masked = (byte)(gayleINTENA & gayleINTREQ & 0xfc);
+			if ((masked & (byte)GAYLE_INTENA.IRQ) != 0)
+			{
+				intreq |= 1 << 3;
+
+				int bvd = (gayleINTENA & (byte)GAYLE_INTENA.CCSTATUS_BVDIRQ) != 0 ? 6 : 2;
+				int bsy = (gayleINTENA & (byte)GAYLE_INTENA.BERR_BUSYIRQ) != 0 ? 6 : 2;
+
+				if ((masked & (byte)GAYLE_INTENA.CC) != 0) intreq |= 1 << 6;
+				if ((masked & (byte)GAYLE_INTENA.BVD2) != 0) intreq |= (uint)(1 << bvd);
+				if ((masked & (byte)GAYLE_INTENA.BVD1) != 0) intreq |= (uint)(1 << bvd);
+				if ((masked & (byte)GAYLE_INTENA.WR) != 0) intreq |= (uint)(1 << bsy);
+				if ((masked & (byte)GAYLE_INTENA.BSY) != 0) intreq |= (uint)(1 << bsy);
+
+				custom.Write(0, ChipRegs.INTREQ, 0x8000|intreq, Size.Word);
+			}
 		}
 
-		private void BvdInterrupt()
+		[Flags]
+		public enum GAYLE_INTENA : byte
 		{
-			interrupt.AssertInterrupt((gayleINTENA & 2) == 0 ? Interrupt.TBE : Interrupt.BLIT);
+			BERR_BUSYIRQ = 1,
+			CCSTATUS_BVDIRQ = 2,
+			BSY = 4,
+			WR = 8,
+			BVD1 = 16,
+			BVD2 = 32,
+			CC = 64,
+			IRQ = 128
+		}
+
+		private void ClearBusy()
+		{
+			ideStatus &= (byte)~IDE_STATUS.BSY;
+			gayleINTREQ |= (byte)(GAYLE_INTENA.BSY | GAYLE_INTENA.IRQ);
+			UpdateInterrupt();
 		}
 
 		private void Ack()
 		{
-			gayleINTREQ |= 0x81;//flag gayle interrupt
-			BsyInterrupt();
-			ideStatus &= (byte)~IDE_STATUS.BSY;
+			ClearBusy();
 			ideStatus |= (byte)IDE_STATUS.DRDY;
 			ideStatus |= (byte)IDE_STATUS.DRQ;//always ready
 		}
@@ -296,7 +327,7 @@ RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120
 			//clear IDE interrupt
 			//todo:
 			//clear Gayle interrupt
-			gayleINTREQ &= 0x7e;
+			//gayleINTREQ &= 0x7c;
 		}
 
 		private void Command(byte value)
@@ -306,12 +337,11 @@ RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120
 			{
 				case 0x10: cmd = "Recalibrate"; Ack(); break;
 				case 0x48: cmd = "???"; Ack(); break;
+				case 0xEC: cmd = "Identify Drive"; Ack(); break;
 				default: cmd = "Unknown"; break;
 			}
 
 			logger.LogTrace($"IDE Command {cmd} {value}");
-
 		}
-
 	}
 }

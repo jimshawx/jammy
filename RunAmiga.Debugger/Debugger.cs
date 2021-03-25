@@ -253,6 +253,8 @@ namespace RunAmiga.Debugger
 				}
 			}
 
+			//analyser.MarkAsType(address, MemType.Byte, size);
+
 			breakpoints.Read(insaddr, address, value, size);
 		}
 
@@ -264,6 +266,12 @@ namespace RunAmiga.Debugger
 				libraryBaseAddresses["exec.library"] = value;
 			
 			breakpoints.Write(insaddr, address, value, size);
+		}
+
+		public void Fetch(uint insaddr, uint address, uint value, Size size)
+		{
+			//analyser.MarkAsType(address, MemType.Code, size);
+			breakpoints.Read(insaddr, address, value, size);
 		}
 
 		private string GetString(uint str)

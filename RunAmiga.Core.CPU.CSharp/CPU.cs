@@ -88,7 +88,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		private ushort Fetch(uint pc)
 		{
 			tracer.TraceAsm(pc, GetRegs());
-			return read16(pc);
+			return fetch16(pc);
 		}
 
 		private bool CheckInterrupt()
@@ -498,9 +498,21 @@ namespace RunAmiga.Core.CPU.CSharp
 			return value;
 		}
 
+		public uint fetch32(uint address)
+		{
+			uint value = memoryMapper.Fetch(instructionStartPC, address, Size.Long);
+			return value;
+		}
+
 		public ushort read16(uint address)
 		{
 			ushort value = (ushort)memoryMapper.Read(instructionStartPC, address, Size.Word);
+			return value;
+		}
+
+		public ushort fetch16(uint address)
+		{
+			ushort value = (ushort)memoryMapper.Fetch(instructionStartPC, address, Size.Word);
 			return value;
 		}
 
@@ -583,13 +595,13 @@ namespace RunAmiga.Core.CPU.CSharp
 					}
 				case 5://(d16,An)
 					{
-						ushort d16 = read16(pc);
+						ushort d16 = fetch16(pc);
 						pc += 2;
 						return a[x] + (uint)(short)d16;
 					}
 				case 6://(d8,An,Xn)
 					{
-						uint ext = read16(pc); pc += 2;
+						uint ext = fetch16(pc); pc += 2;
 						uint Xn = (ext >> 12) & 7;
 						uint d8 = ext & 0xff;
 						uint dx;
@@ -604,14 +616,14 @@ namespace RunAmiga.Core.CPU.CSharp
 					{
 						case 0b010://(d16,pc)
 							{
-								ushort d16 = read16(pc);
+								ushort d16 = fetch16(pc);
 								uint ea = pc + (uint)(short)d16;
 								pc += 2;
 								return ea;
 							}
 						case 0b011://(d8,pc,Xn)
 							{
-								uint ext = read16(pc);
+								uint ext = fetch16(pc);
 								uint Xn = (ext >> 12) & 7;
 								uint d8 = ext & 0xff;
 								uint dx;
@@ -625,13 +637,13 @@ namespace RunAmiga.Core.CPU.CSharp
 							}
 						case 0b000://(xxx).w
 							{
-								uint ea = (uint)(short)read16(pc);
+								uint ea = (uint)(short)fetch16(pc);
 								pc += 2;
 								return ea;
 							}
 						case 0b001://(xxx).l
 							{
-								uint ea = read32(pc);
+								uint ea = fetch32(pc);
 								pc += 4;
 								return ea;
 							}
@@ -658,15 +670,28 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			//todo: trap on odd aligned access
 			if (size == Size.Long)
+			{
+				if (ea == pc)
+					return fetch32(ea);
 				return read32(ea);
+			}
+
 			if (size == Size.Word)
+			{
+				if (ea == pc)
+					return (uint)(short)fetch16(ea);
 				return (uint)(short)read16(ea);
+			}
+
 			if (size == Size.Byte)
 				return (uint)(sbyte)read8(ea);
+			
 			if (settings.UnknownEffectiveAddressExceptions)
 				throw new UnknownEffectiveAddressException(pc, 0);
+
 			logger.LogTrace($"Unknown Effective Address {pc:X8}");
 			internalTrap(3);
+			
 			throw new AbandonInstructionException();
 		}
 
@@ -2195,7 +2220,7 @@ namespace RunAmiga.Core.CPU.CSharp
 
 			int Xn = type & 7;
 
-			uint target = pc + (uint)(short)read16(pc);
+			uint target = pc + (uint)(short)fetch16(pc);
 			pc += 2;
 
 			int cond = (type >> 8) & 0xf;
@@ -2728,7 +2753,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			int An = type & 7;
 			push32(a[An]-(An==7?4:0u));
 			a[An] = a[7];
-			a[7] += (uint)(short)read16(pc);
+			a[7] += (uint)(short)fetch16(pc);
 			pc += 2;
 		}
 
@@ -2769,7 +2794,7 @@ namespace RunAmiga.Core.CPU.CSharp
 		{
 			if (Supervisor())
 			{
-				sr = (ushort)(read16(pc)&SRmask);//naturally sets the flags
+				sr = (ushort)(fetch16(pc)&SRmask);//naturally sets the flags
 				pc += 2;
 				fetchMode = FetchMode.Stopped;
 				//CheckInterrupt();
@@ -3035,7 +3060,7 @@ namespace RunAmiga.Core.CPU.CSharp
 			else
 			{
 				//bit number is in immediate byte following
-				ushort imm16 = read16(pc);
+				ushort imm16 = fetch16(pc);
 				bit = (uint)(imm16 & 0xff); pc += 2;
 				if (IsImmediate(type))
 				{

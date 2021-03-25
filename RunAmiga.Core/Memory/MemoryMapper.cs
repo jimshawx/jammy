@@ -110,6 +110,13 @@ namespace RunAmiga.Core.Memory
 			memoryManager.MappedDevice[address].Write(insaddr, address, value, size);
 		}
 
+		public uint Fetch(uint insaddr, uint address, Size size)
+		{
+			uint value = memoryManager.MappedDevice[address].Read(insaddr, address, size);
+			if (interceptor != null) interceptor.Fetch(insaddr, address, value, size);
+			return value;
+		}
+
 		// IDebuggableMemoryMapper
 
 		//todo: these should NOT be using the emulation's Read/Write methods

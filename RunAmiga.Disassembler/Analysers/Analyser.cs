@@ -48,8 +48,26 @@ namespace RunAmiga.Disassembler.Analysers
 			Analysis();
 			ROMTags();
 			Labeller();
+			//NoNL();
 			DeDupe();
 			LoadComments();
+		}
+
+		private void NoNL()
+		{
+			foreach (var h in headers.Values)
+			{
+				var lines = new List<string>(h.TextLines);
+				h.TextLines.Clear();
+				foreach (var l in lines)
+					h.TextLines.Add(l.Replace("\r\n", "").Replace("\n","".Replace("\r","")));
+			}
+
+			foreach (var c in comments.Values)
+			{
+				string l = c.Text;
+				c.Text = l.Replace("\r\n", "").Replace("\n", "".Replace("\r", ""));
+			}
 		}
 
 		public MemType[] GetMemTypes()
@@ -666,6 +684,18 @@ namespace RunAmiga.Disassembler.Analysers
 			}
 
 			return true;
+		}
+
+		public void MarkAsType(uint address, MemType memType, Size size)
+		{
+			if (memType == MemType.Code)
+				MakeMemType(address, MemType.Code, null);
+			else if (memType == MemType.Byte)
+			{
+				if (size == Size.Byte) MakeMemType(address, MemType.Byte, null);
+				else if (size == Size.Word) MakeMemType(address, MemType.Word, null);
+				else if (size == Size.Long) MakeMemType(address, MemType.Long, null);
+			}
 		}
 
 		private uint MakeMemType(uint address, MemType type, string str)

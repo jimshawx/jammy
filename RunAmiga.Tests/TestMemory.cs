@@ -56,6 +56,11 @@ namespace RunAmiga.Tests
 			//else if (size == Size.Byte) logger.LogTrace($"{machineIdentifier.Id} W8 {address:X8} {value:X2}");
 		}
 
+		public uint Fetch(uint insaddr, uint address, Size size)
+		{
+			return Read(insaddr, address, size);
+		}
+
 		public byte UnsafeRead8(uint address) { return (byte)base.Read(0, address, Size.Byte); }
 		public ushort UnsafeRead16(uint address) { return (ushort)base.Read(0, address, Size.Word); }
 		public uint UnsafeRead32(uint address) { return base.Read(0, address, Size.Long); }
