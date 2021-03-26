@@ -206,92 +206,10 @@ namespace RunAmiga.Disassembler.Analysers
 					AddHeader(address, "");
 
 					if (structure != 0)
-					{
-						address = structure;
-						ushort s;
-						while ((s = mem.UnsafeRead16(address)) != 0x0000)
-						{
-							MakeMemType(address, MemType.Word, null);
-							address += 2;
-							if (s == 0xE000 || s == 0xD000)
-							{
-								MakeMemType(address, MemType.Word, null);
-								address += 2;
-								MakeMemType(address, MemType.Word, null);
-								address += 2;
-							}
-							else if (s == 0xC000)
-							{
-								MakeMemType(address, MemType.Word, null);
-								address += 2;
-								MakeMemType(address, MemType.Long, null);
-								address += 4;
-							}
-						}
-
-						MakeMemType(address, MemType.Word, null);
-						address += 2;
-						AddHeader(address, "");
-					}
+						ExtractStructureInit(structure);
 
 					if (fntable != 0)
-					{
-						ushort s;
-
-						address = fntable;
-
-						AddHeader(address, "");
-						AddHeader(address, $"\t; {tag.Name} vectors");
-
-						s = mem.UnsafeRead16(address);
-						int idx = 0;
-						if (s == 0xFFFF)
-						{
-							MakeMemType(address, MemType.Word, null);
-							address += 2;
-							while ((s = mem.UnsafeRead16(address)) != 0xFFFF)
-							{
-								uint u = fntable + s;
-								string lvo = LVO(tag, idx);
-								AddHeader(u, "");
-								AddHeader(u, "---------------------------------------------------------------------------");
-								AddHeader(u, $"\t{lvo}");
-								AddHeader(u, "---------------------------------------------------------------------------");
-								AddHeader(u, "");
-
-								AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
-								MakeMemType(address, MemType.Word, null);
-								address += 2;
-								idx++;
-							}
-
-							MakeMemType(address, MemType.Word, null);
-							address += 2;
-							AddHeader(address, "");
-						}
-						else
-						{
-							uint u;
-							while ((u = mem.UnsafeRead32(address)) != 0xFFFFFFFF)
-							{
-								string lvo = LVO(tag, idx);
-								AddHeader(u, "");
-								AddHeader(u, "---------------------------------------------------------------------------");
-								AddHeader(u, $"\t{lvo}");
-								AddHeader(u, "---------------------------------------------------------------------------");
-								AddHeader(u, "");
-
-								AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
-								MakeMemType(address, MemType.Long, null);
-								address += 4;
-								idx++;
-							}
-
-							MakeMemType(address, MemType.Long, null);
-							address += 4;
-							AddHeader(address, "");
-						}
-					}
+						ExtractFunctionTable(fntable, tag.Type, tag.Name);
 
 					if (fninit != 0)
 					{
@@ -316,20 +234,156 @@ namespace RunAmiga.Disassembler.Analysers
 			}
 		}
 
+		public void ExtractFunctionTable(uint fntable, int count, string name, Size size)
+		{
+			uint address = fntable;
+			ushort s;
+			int idx = 0;
+
+			if (name == null) name = $"fntable_{fntable:X8}";
+
+			AddHeader(address, "");
+			AddHeader(address, $"\t; {name} vectors");
+
+			if (size == Size.Word)
+			{
+				while (count-- > 0)
+				{
+					s = mem.UnsafeRead16(address);
+
+					uint u = fntable + s;
+					AddHeader(u, "");
+					AddHeader(u, "---------------------------------------------------------------------------");
+					AddHeader(u, $"\t{name}_{idx}");
+					AddHeader(u, "---------------------------------------------------------------------------");
+					AddHeader(u, "");
+
+					AddComment(address, $"{name}_{idx}");
+					MakeMemType(address, MemType.Word, null);
+					address += 2;
+					idx++;
+				}
+			}
+			else
+			{
+				while (count-- > 0)
+				{
+					uint u = mem.UnsafeRead32(address);
+
+					AddHeader(u, "");
+					AddHeader(u, "---------------------------------------------------------------------------");
+					AddHeader(u, $"\t{name}_{idx}");
+					AddHeader(u, "---------------------------------------------------------------------------");
+					AddHeader(u, "");
+
+					AddComment(address, $"{name}_{idx}");
+					MakeMemType(address, MemType.Long, null);
+					address += 4;
+					idx++;
+				}
+			}
+			AddHeader(address, "");
+		}
+
+		public void ExtractFunctionTable(uint fntable, NT_Type type, string name)
+		{
+			uint address = fntable;
+
+			AddHeader(address, "");
+			AddHeader(address, $"\t; {name} vectors");
+
+			ushort s = mem.UnsafeRead16(address);
+			int idx = 0;
+			if (s == 0xFFFF)
+			{
+				MakeMemType(address, MemType.Word, null);
+				address += 2;
+				while ((s = mem.UnsafeRead16(address)) != 0xFFFF)
+				{
+					uint u = fntable + s;
+					string lvo = LVO(type, name, idx);
+					AddHeader(u, "");
+					AddHeader(u, "---------------------------------------------------------------------------");
+					AddHeader(u, $"\t{lvo}");
+					AddHeader(u, "---------------------------------------------------------------------------");
+					AddHeader(u, "");
+
+					AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
+					MakeMemType(address, MemType.Word, null);
+					address += 2;
+					idx++;
+				}
+
+				MakeMemType(address, MemType.Word, null);
+				address += 2;
+				AddHeader(address, "");
+			}
+			else
+			{
+				uint u;
+				while ((u = mem.UnsafeRead32(address)) != 0xFFFFFFFF)
+				{
+					string lvo = LVO(type, name, idx);
+					AddHeader(u, "");
+					AddHeader(u, "---------------------------------------------------------------------------");
+					AddHeader(u, $"\t{lvo}");
+					AddHeader(u, "---------------------------------------------------------------------------");
+					AddHeader(u, "");
+
+					AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
+					MakeMemType(address, MemType.Long, null);
+					address += 4;
+					idx++;
+				}
+
+				MakeMemType(address, MemType.Long, null);
+				address += 4;
+				AddHeader(address, "");
+			}
+		}
+
+		public void ExtractStructureInit(uint address)
+		{
+			ushort s;
+			while ((s = mem.UnsafeRead16(address)) != 0x0000)
+			{
+				MakeMemType(address, MemType.Word, null);
+				address += 2;
+				if (s == 0xE000 || s == 0xD000)
+				{
+					MakeMemType(address, MemType.Word, null);
+					address += 2;
+					MakeMemType(address, MemType.Word, null);
+					address += 2;
+				}
+				else if (s == 0xC000)
+				{
+					MakeMemType(address, MemType.Word, null);
+					address += 2;
+					MakeMemType(address, MemType.Long, null);
+					address += 4;
+				}
+			}
+
+			MakeMemType(address, MemType.Word, null);
+			address += 2;
+			AddHeader(address, "");
+		}
+
 		private readonly string[] fixedLVOs = { "LibOpen", "LibClose", "LibExpunge", "LibReserved", "DevBeginIO", "DevAbortIO" };
 
-		private string LVO(Resident res, int idx)
+		private string LVO(NT_Type type, string name, int idx)
 		{
-			if (res.Type == NT_Type.NT_LIBRARY)
+			if (type == NT_Type.NT_LIBRARY)
 			{
-				if (idx < 4) return $"{fixedLVOs[idx]}() {res.Name}";
+				if (idx < 4) return $"{fixedLVOs[idx]}() {name}";
 			}
-			else if (res.Type == NT_Type.NT_DEVICE)
+			else if (type == NT_Type.NT_DEVICE)
 			{
-				if (idx < 6) return $"{fixedLVOs[idx]}() {res.Name}";
+				if (idx < 6) return $"{fixedLVOs[idx]}() {name}";
 			}
 
-			if (lvos.TryGetValue(res.Name, out var lvolist))
+			if (lvos.TryGetValue(name, out var lvolist))
 			{
 				var lvo = lvolist.LVOs.SingleOrDefault(x => x.Index == idx);
 				if (lvo != null)
@@ -686,15 +740,17 @@ namespace RunAmiga.Disassembler.Analysers
 			return true;
 		}
 
-		public void MarkAsType(uint address, MemType memType, Size size)
+		public void MarkAsType(uint address, MemType type, Size size)
 		{
-			if (memType == MemType.Code)
-				MakeMemType(address, MemType.Code, null);
-			else if (memType == MemType.Byte)
+			if (type == MemType.Code)
 			{
-				if (size == Size.Byte) MakeMemType(address, MemType.Byte, null);
-				else if (size == Size.Word) MakeMemType(address, MemType.Word, null);
-				else if (size == Size.Long) MakeMemType(address, MemType.Long, null);
+				MakeMemType(address, MemType.Code, null);
+			}
+			else if (type == MemType.Byte)
+			{
+				if (size == Size.Word) type = MemType.Word;
+				else if (size == Size.Long) type = MemType.Long;
+				MakeMemType(address, type, null);
 			}
 		}
 

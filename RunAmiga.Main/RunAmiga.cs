@@ -77,7 +77,7 @@ namespace RunAmiga.Main
 
 					Task.Delay(500).Wait(uiUpdateTokenSource.Token);
 				}
-			}, uiUpdateTokenSource.Token);
+			}, uiUpdateTokenSource.Token, TaskCreationOptions.LongRunning);
 			uiUpdateTask.Start();
 		}
 
@@ -600,6 +600,11 @@ namespace RunAmiga.Main
 			Machine.LockEmulation();
 			debugger.WriteTrace();
 			Machine.UnlockEmulation();
+		}
+
+		private void btnIDEACK_Click(object sender, EventArgs e)
+		{
+			debugger.IDEACK();
 		}
 	}
 }

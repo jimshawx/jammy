@@ -181,7 +181,7 @@ namespace RunAmiga.Logger.DebugAsync
 				if (consoleAllocated)
 					FreeConsole();
 
-			}, cancellation.Token);
+			}, cancellation.Token, TaskCreationOptions.LongRunning);
 
 			readerTask.Start();
 		}

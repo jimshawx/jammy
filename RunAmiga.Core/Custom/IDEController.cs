@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Custom
@@ -34,10 +34,10 @@ namespace RunAmiga.Core.Custom
 		ERR=1,
 		IDX=2,
 		CORR=4,
-		DRQ=8,
-		DSC=16,
+		DRQ=8,//data request ready
+		DSC=16,//drive seek complete
 		DWF=32,
-		DRDY=64,
+		DRDY=64,//drive ready
 		BSY=128
 	}
 
@@ -176,6 +176,8 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 			this.interrupt = interrupt;
 			this.custom = custom;
 			this.logger = logger;
+
+			InitDriveId();
 		}
 
 		public bool IsMapped(uint address)
@@ -187,17 +189,6 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 		{
 			return memoryRange;
 		}
-
-		/*
-		trying to do something...
-
-RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Write 00DA2018 @00F88238 00000000 Byte
-RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA2010 @00F8823C Byte
-RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA3018 @00F88240 Byte
-RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120C Byte
-RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120C Byte
-RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120C Byte
-		 */
 
 		/*
 		DA .... .... ........ = IDE
@@ -216,76 +207,139 @@ RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120
 		 */
 
 		private byte gayleStatus;
-		private byte gayleINTENA;
-		private byte gayleINTREQ;
+		private GAYLE_INTENA gayleINTENA;
+		private GAYLE_INTENA gayleINTREQ;
 		private byte gayleConfig;
 
-		private byte ideStatus = 0;
+		private IDE_STATUS ideStatus = IDE_STATUS.DRDY;
 		private byte driveHead = 0;
 		private byte cylinderLow = 0;
-		private byte cylingderHigh = 0;
+		private byte cylinderHigh = 0;
+		private byte sectorNumber = 0;
+		private byte sectorCount = 0;
+		private byte errorFeature = 0;
+
+		private uint lbaAddress = 0;//28 bit address, 
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			if (size != Size.Byte)
-				throw new UnknownInstructionSizeException(insaddr, 0);
-
 			uint value = 0;
 			switch (address)
 			{
 				case Gayle.Status: value = gayleStatus; break;
-				case Gayle.INTENA: value = gayleINTENA; break;
-				case Gayle.INTREQ: value = gayleINTREQ; break;
+				case Gayle.INTENA: value = (byte)gayleINTENA; break;
+				case Gayle.INTREQ: value = (byte)gayleINTREQ; break;
 				case Gayle.Config: value = gayleConfig; break;
 
-				case IDE.AltStatus_DevControl: value = ideStatus; break;
-				case IDE.Status_Command: value = ideStatus; Clr(); break;
+				case IDE.AltStatus_DevControl: value = (byte)ideStatus; break;
+				case IDE.Status_Command: value = (byte)ideStatus; Clr(); break;
+				case IDE.Error_Feature: value = errorFeature; break;
 
 				case IDE.DriveHead: value = driveHead; break;
 				case IDE.CylinderLow: value = cylinderLow; break;
-				case IDE.CylinderHigh: value = cylingderHigh; break;
+				case IDE.CylinderHigh: value = cylinderHigh; break;
+				case IDE.SectorNumber: value = sectorNumber; break;
+				case IDE.SectorCount: value = sectorCount; break;
+
+				case IDE.Data: value = ReadDataWord(); break;
 			}
 
-			logger.LogTrace($"IDE Controller R {GetName(address)} {address:X8} @{insaddr:X8} {value:X8} {size}");
+			if (address != IDE.Data) logger.LogTrace($"IDE Controller R {GetName(address)} {value:X2} {ideStatus} {address:X8} @{insaddr:X8} {size} ");
 
 			return value;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (size != Size.Byte)
-				throw new UnknownInstructionSizeException(insaddr,0);
-
-			logger.LogTrace($"IDE Controller W {GetName(address)} {address:X8} @{insaddr:X8} {value:X8} {size}");
+			if (address != IDE.Data) logger.LogTrace($"IDE Controller W {GetName(address)} {value:X2} {address:X8} @{insaddr:X8} {size}");
 
 			switch (address)
 			{
 				case Gayle.Status: gayleStatus = (byte)value; break;
-				case Gayle.INTENA: gayleINTENA = (byte)value; UpdateInterrupt(); break;
-				case Gayle.INTREQ: gayleINTREQ = (byte)value; UpdateInterrupt(); break;
+				case Gayle.INTENA: gayleINTENA = (GAYLE_INTENA)value; UpdateInterrupt(); break;
+				case Gayle.INTREQ: gayleINTREQ &= (GAYLE_INTENA)value; UpdateInterrupt(); break;
 				case Gayle.Config: gayleConfig = (byte)value; break;
-				case IDE.DriveHead: Ack(); driveHead = (byte)value; break;
-				case IDE.CylinderLow: Ack(); cylinderLow = (byte)value; break;
-				case IDE.CylinderHigh: Ack(); cylingderHigh = (byte)value; break;
-				case IDE.AltStatus_DevControl: break;
 
+				case IDE.AltStatus_DevControl: DevControl((byte)value); break;
 				case IDE.Status_Command: Command((byte)value); break;
+				case IDE.Error_Feature: Feature((byte)value); break;
+
+				case IDE.DriveHead:
+					driveHead = (byte)value;
+					logger.LogTrace($"drive: {(driveHead>>4)&1} lba: {(driveHead>>6)&1}");
+					lbaAddress = (lbaAddress & 0xf0ffffff) | ((value << 25) & 0x0f000000);
+					break;
+				case IDE.CylinderLow:
+					cylinderLow = (byte)value;
+					lbaAddress = (lbaAddress & 0xffff00ff) | ((value << 8) & 0x0000ff00);
+					break;
+				case IDE.CylinderHigh:
+					cylinderHigh = (byte)value;
+					lbaAddress = (lbaAddress & 0xff00ffff) | ((value << 16) & 0x00ff0000);
+					break;
+				case IDE.SectorNumber: 
+					sectorNumber = (byte)value;
+					lbaAddress = (lbaAddress & 0xffffff00) | (byte)value;
+					break;
+					
+				case IDE.SectorCount: sectorCount = (byte)value; break;
+
+				case IDE.Data: WriteDataWord((ushort)value); break;
 			}
 		}
+
+		private void DevControl(byte value)
+		{
+			logger.LogTrace($"IDE DevControl {value}");
+		}
+
+		private void Feature(byte value)
+		{
+			logger.LogTrace($"IDE Feature {value}");
+		}
+
+		/*
+		public const uint NMI = 15;
+		public const uint INTEN = 14;
+		public const uint EXTER = 13;
+		public const uint DSKSYNC = 12;
+		public const uint RBF = 11;
+		public const uint AUD3 = 10;
+		public const uint AUD2 = 9;
+		public const uint AUD1 = 8;
+		public const uint AUD0 = 7;
+		public const uint BLIT = 6;
+		public const uint VERTB = 5;
+		public const uint COPPER = 4;
+		public const uint PORTS = 3;
+		public const uint TBE = 2;
+		public const uint DSKBLK = 1;
+		public const uint SOFTINT = 0;
+
+		public static uint[] priority = new uint[]{ 1,1,1,2,3,3,3,4,4,4,4,5,5,6,6,7};
+		 */
+
+		//something that generates a CPU level interrupt
+		private const int INT_2 = (int)Interrupt.PORTS;
+		private const int INT_3 = (int)Interrupt.COPPER;
+		private const int INT_6 = (int)Interrupt.EXTER;
 
 		private void UpdateInterrupt()
 		{
 			uint intreq = 0;
 
-			byte masked = (byte)(gayleINTENA & gayleINTREQ & 0xfc);
+			logger.LogTrace($"INTENA {(GAYLE_INTENA)gayleINTENA}");
+			logger.LogTrace($"INTREQ {(GAYLE_INTENA)gayleINTREQ}");
+
+			byte masked = (byte)(gayleINTENA & gayleINTREQ);
 			if ((masked & (byte)GAYLE_INTENA.IRQ) != 0)
 			{
-				intreq |= 1 << 3;
+				intreq |= 1 << INT_3;
 
-				int bvd = (gayleINTENA & (byte)GAYLE_INTENA.CCSTATUS_BVDIRQ) != 0 ? 6 : 2;
-				int bsy = (gayleINTENA & (byte)GAYLE_INTENA.BERR_BUSYIRQ) != 0 ? 6 : 2;
+				int bvd = (gayleINTENA & GAYLE_INTENA.CCSTATUS_BVDIRQ) != 0 ? INT_6 : INT_2;
+				int bsy = (gayleINTENA & GAYLE_INTENA.BERR_BUSYIRQ) != 0 ? INT_6: INT_2;
 
-				if ((masked & (byte)GAYLE_INTENA.CC) != 0) intreq |= 1 << 6;
+				if ((masked & (byte)GAYLE_INTENA.CC) != 0) intreq |= 1 << INT_6;
 				if ((masked & (byte)GAYLE_INTENA.BVD2) != 0) intreq |= (uint)(1 << bvd);
 				if ((masked & (byte)GAYLE_INTENA.BVD1) != 0) intreq |= (uint)(1 << bvd);
 				if ((masked & (byte)GAYLE_INTENA.WR) != 0) intreq |= (uint)(1 << bsy);
@@ -300,7 +354,7 @@ RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120
 		{
 			BERR_BUSYIRQ = 1,
 			CCSTATUS_BVDIRQ = 2,
-			BSY = 4,
+			BSY = 4,//busy changed
 			WR = 8,
 			BVD1 = 16,
 			BVD2 = 32,
@@ -310,38 +364,257 @@ RunAmiga.Core.Custom.IDEController: Trace: IDE Controller Read 00DA9000 @00FC120
 
 		private void ClearBusy()
 		{
-			ideStatus &= (byte)~IDE_STATUS.BSY;
-			gayleINTREQ |= (byte)(GAYLE_INTENA.BSY | GAYLE_INTENA.IRQ);
+			ideStatus &= ~IDE_STATUS.BSY;
+			ideStatus |= IDE_STATUS.DRDY;//drive is always ready
+
+			gayleINTREQ |= GAYLE_INTENA.BSY | GAYLE_INTENA.IRQ;
+			gayleINTREQ |= (GAYLE_INTENA)1;//Master
+			//gayleINTREQ |= (GAYLE_INTENA)2;//Slave
+
 			UpdateInterrupt();
 		}
 
-		private void Ack()
+		public void Ack()
 		{
 			ClearBusy();
-			ideStatus |= (byte)IDE_STATUS.DRDY;
-			ideStatus |= (byte)IDE_STATUS.DRQ;//always ready
 		}
 
 		private void Clr()
 		{
-			//clear IDE interrupt
-			//todo:
-			//clear Gayle interrupt
-			//gayleINTREQ &= 0x7c;
+			gayleINTREQ = 0;
+			UpdateInterrupt();
 		}
+
+		private void InitDriveId()
+		{
+			//cylinders * heads * sectors = number of blocks
+			//cylinders * heads * sectors * 512 = size of disk
+			//blocks per track = sectors
+			//tracks per cylinder = heads
+			//blocks per cylinder = sectors * heads
+			//cylinders * blocks per cylinder = total number of blocks on the drive
+
+			//let's say we want a 10MB Hard Disk
+
+			uint sectorSize = 512;//common standard for sector size
+			uint bytes = 10 * 1024 * 1024; // 10,485,760 bytes
+			uint blocks = bytes / sectorSize; // 20480
+
+			//uint heads = 16;//these are 4 bits in ATA spec for head number
+			//uint sectors = 256;//there are 8 bits for sector number
+			//uint cylindes = 65536;//these are 16 bits for cylinder number
+
+			uint heads = 16;//maximum number of heads
+
+			uint sectorCylinders = blocks / heads;//1280 = sectors * cylinders
+			uint sectors = 64;//let's pick 64 sectors
+			uint cylinders = sectorCylinders / sectors;
+
+			//configuration
+			driveId[0] = 1 << 6;//fixed drive
+
+			//geometry
+			driveId[1] = (ushort)cylinders;
+			driveId[3] = (ushort)heads;
+			driveId[4] = (ushort)(sectors * sectorSize);//sectors = blocks per track
+			driveId[5] = (ushort)sectorSize;
+			driveId[6] = (ushort)sectors;
+			
+			//vendor
+			driveId[7] = 'J';
+			driveId[8] = 'I';
+			driveId[9] = 'M';
+
+			//serial number
+			driveId[10] = '3';
+			driveId[11] = '.';
+			driveId[12] = '1';
+			driveId[13] = '4';
+			driveId[14] = '1';
+			driveId[15] = '5';
+			driveId[16] = '9';
+			driveId[17] = '2';
+			driveId[18] = '6';
+			driveId[19] = '5';
+
+			//firmware revision
+			driveId[23] = 24;
+			driveId[24] = 06;
+			driveId[26] = 19;
+			driveId[27] = 72;
+
+			//model number
+			driveId[27] = 'J';
+			driveId[28] = 'I';
+			driveId[29] = 'M';
+			driveId[30] = 'S';
+			driveId[31] = 'H';
+			driveId[32] = 'D';
+			driveId[33] = 'J';
+			driveId[34] = 'I';
+			driveId[35] = 'M';
+			driveId[36] = 'S';
+			driveId[37] = 'H';
+			driveId[38] = 'D';
+			driveId[39] = 'J';
+			driveId[40] = 'I';
+			driveId[41] = 'M';
+			driveId[42] = 'S';
+			driveId[43] = 'H';
+			driveId[44] = 'D';
+			driveId[45] = 'J';
+			driveId[46] = 'I';
+
+			//supports LBA
+			driveId[49] = 1 << 9;
+
+			//LBA number of sectors
+			uint total = cylinders * heads * sectors;
+			driveId[60] = (ushort)total;
+			driveId[61] = (ushort)(total >> 16);
+
+			//it's little-endian, need to swap to big-endian for Amiga
+			for (int i = 0; i < driveId.Length; i++)
+				driveId[i] = (ushort)((driveId[i] >> 8) | (driveId[i] << 8));
+		}
+
+		//drive identification
+		private readonly ushort[] driveId = new ushort[256]
+		{
+			0,// 0 general configuration
+			0,// 1 number of cylinders
+			0,// 2 reserved
+			0,// 3 number of heads
+			0,// 4 number of unformatted bytes per track
+			0,// 5 number of unformatted bytes per sector
+			0,// 6 number of sectors per track
+			0,0,0,//7-9 vendor unique
+			0,0,0,0,0,0,0,0,0,0,//10-19 serial number ASCII
+			0,//20 buffer type
+			0,//21 buffer size in 512 bytes increments (0 - not specified)
+			0,//22 # of ECC byte available on read/write long commands (0 - not specified)
+			0,0,0,0,//23-26 firmware revision
+			0,0,0,0,0,0,0,0,0,0,//27-46 model number
+			0,0,0,0,0,0,0,0,0,0,
+			0,//47 bits 15-8 vendor unique, 7-0 00 = read/write multiple commands not implemented, xx = maximum # of sectors that can be transferred per interrupt
+			0,//48 0 - cannot perform double-word IO
+			0,//49 capabilities 15-10 reserved, 9 - LBA supported 1/0, 8 - DMA supported 1/0, 7-0 vendor unique
+			0,//50 reserved
+			0,//51 15-8 PIO data transfer cycle timing mode, 7-0 vendor unique
+			0,//52 15-8 DMA data transfer cycle timing mode, 7-0 vendor unique
+			0,//53 15-1 reserved, 0 - words 48-58 are valid 1/0
+			0,//54 number of current cylinders
+			0,//55 number of current heads
+			0,//56 number of sectors per track
+			0,0,//57-58 current capacity in sectors
+			0,//59 15-9 reserved, 8 - multiple sector setting is valid 1/0, 7-0 xx = current setting for maximum number of settings transferred per interrupt
+			0,0,//60-61 total number of addressable sectors (LBA mode only)
+			0,//62 15-8 single word DMA transfer mode active, 7-0 single word DMA transfer modes supported
+			0,//63 15-8 multiword DMA transfer mode active, 7-0 multiword DMA transfer modes supported
+			
+			0,0,0,0,0,0,0,0,//64-127 reserved
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+
+			0,0,0,0,0,0,0,0,//128-159 vendor specific
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+
+			0,0,0,0,0,0,0,0,//160-255 reserved
+			0,0,0,0,0,0,0,0,//168
+			0,0,0,0,0,0,0,0,//176
+			0,0,0,0,0,0,0,0,//184
+			0,0,0,0,0,0,0,0,//192
+			0,0,0,0,0,0,0,0,//200
+			0,0,0,0,0,0,0,0,//208
+			0,0,0,0,0,0,0,0,//216
+			0,0,0,0,0,0,0,0,//224
+			0,0,0,0,0,0,0,0,//232
+			0,0,0,0,0,0,0,0,//240
+			0,0,0,0,0,0,0,0,//248
+		};
+
+		//drive geometry
+		private byte sectorsPerTrack;
+		private byte heads;
 
 		private void Command(byte value)
 		{
+			ideStatus = IDE_STATUS.DRDY;
+
 			string cmd;
 			switch (value)
 			{
-				case 0x10: cmd = "Recalibrate"; Ack(); break;
-				case 0x48: cmd = "???"; Ack(); break;
-				case 0xEC: cmd = "Identify Drive"; Ack(); break;
-				default: cmd = "Unknown"; break;
+				case 0x10:
+					cmd = "Recalibrate";
+					cylinderLow = cylinderHigh = 0;
+					ideStatus |= IDE_STATUS.DSC;
+					Ack();
+					break;
+				
+				case 0xEC:
+					cmd = "Identify Drive";
+					ideStatus |= IDE_STATUS.DRQ;
+					dataSource = driveId.AsEnumerable().GetEnumerator();
+					Ack();
+					break;
+
+				case 0x91:
+					cmd = "Initialise Drive Parameters";
+					sectorsPerTrack = sectorCount;
+					heads = driveHead;
+					logger.LogTrace($"Drive Parameters sph: {sectorsPerTrack} h: {heads}");
+					Ack();
+					break;
+
+				case 0x20:
+					cmd = "Read Sector(s)";
+					logger.LogTrace($"sector count {sectorCount} {lbaAddress}");
+					ideStatus |= IDE_STATUS.DRQ;
+					dataSource = new ushort[sectorCount * 256].AsEnumerable().GetEnumerator();
+					Ack();
+					break;
+
+				default:
+					cmd = "Unknown";
+					break;
 			}
 
-			logger.LogTrace($"IDE Command {cmd} {value}");
+			logger.LogTrace($"IDE Command {cmd} ${value:X2} {value}");
 		}
+
+		private IEnumerator<ushort> dataSource = null;
+
+		private ushort ReadDataWord()
+		{
+			ushort v = 0xffff;
+			if (dataSource != null)
+			{
+				if (!dataSource.MoveNext())
+				{
+					dataSource.Dispose();
+					dataSource = null;
+				}
+				else
+				{
+					v = dataSource.Current;
+				}
+			}
+
+			logger.LogTrace($"R {v:X4}");
+			return v;
+		}
+
+		private void WriteDataWord(ushort data)
+		{
+			logger.LogTrace($"W {data:X4}");
+		}
+
 	}
 }

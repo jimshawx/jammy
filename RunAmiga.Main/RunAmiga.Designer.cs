@@ -89,6 +89,7 @@ namespace RunAmiga.Main
 			this.btnINTENA = new System.Windows.Forms.Button();
 			this.lbCustom = new System.Windows.Forms.ListBox();
 			this.btnDumpTrace = new System.Windows.Forms.Button();
+			this.btnIDEACK = new System.Windows.Forms.Button();
 			this.menuDisassembly.SuspendLayout();
 			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -756,11 +757,22 @@ namespace RunAmiga.Main
 			this.btnDumpTrace.UseVisualStyleBackColor = true;
 			this.btnDumpTrace.Click += new System.EventHandler(this.btnDumpTrace_Click);
 			// 
+			// btnIDEACK
+			// 
+			this.btnIDEACK.Location = new System.Drawing.Point(1039, 507);
+			this.btnIDEACK.Name = "btnIDEACK";
+			this.btnIDEACK.Size = new System.Drawing.Size(70, 23);
+			this.btnIDEACK.TabIndex = 40;
+			this.btnIDEACK.Text = "IDEACK";
+			this.btnIDEACK.UseVisualStyleBackColor = true;
+			this.btnIDEACK.Click += new System.EventHandler(this.btnIDEACK_Click);
+			// 
 			// RunAmiga
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1414, 605);
+			this.Controls.Add(this.btnIDEACK);
 			this.Controls.Add(this.btnDumpTrace);
 			this.Controls.Add(this.lbCustom);
 			this.Controls.Add(this.btnINTENA);
@@ -894,6 +906,7 @@ namespace RunAmiga.Main
 		private System.Windows.Forms.Button btnINTENA;
 		private System.Windows.Forms.ListBox lbCustom;
 		private System.Windows.Forms.Button btnDumpTrace;
+		private System.Windows.Forms.Button btnIDEACK;
 	}
 }
 

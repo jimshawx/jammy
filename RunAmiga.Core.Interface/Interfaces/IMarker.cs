@@ -142,6 +142,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void INTENA(uint irq);
 		void WriteTrace();
 		uint KickstartSize();
+		void IDEACK();
 	}
 
 	public interface IMemoryInterceptor
@@ -189,7 +190,10 @@ namespace RunAmiga.Core.Interface.Interfaces
 		Dictionary<uint, Header> GetHeaders();
 		Dictionary<uint, Comment> GetComments();
 		Dictionary<string, LVOCollection> GetLVOs();
-		void MarkAsType(uint address, MemType memType, Size size);
+		void MarkAsType(uint address, MemType type, Size size);
+		void ExtractFunctionTable(uint fntable, NT_Type type, string name);
+		void ExtractStructureInit(uint address);
+		void ExtractFunctionTable(uint fntable, int count, string name, Size size);
 	}
 
 	public interface IMachineIdentifier
@@ -212,7 +216,10 @@ namespace RunAmiga.Core.Interface.Interfaces
 	public interface IUnmappedMemory : IMemoryMappedDevice, IDebuggableMemory { }
 	public interface IZorroRAM : IMemoryMappedDevice, IDebuggableMemory { }
 
-	public interface IIDEController : IMemoryMappedDevice { }
+	public interface IIDEController : IMemoryMappedDevice
+	{
+		void Ack();
+	}
 	public interface ISCSIController : IMemoryMappedDevice { }
 	public interface IAkiko : IMemoryMappedDevice { }
 	public interface IZorroConfigurator { }

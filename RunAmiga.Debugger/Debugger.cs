@@ -12,7 +12,7 @@ using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
 using RunAmiga.Core.Types.Types.Debugger;
-using RunAmiga.Disassembler.AmigaTypes;
+using RunAmiga.Core.Types.Types.Kickstart;
 
 namespace RunAmiga.Debugger
 {
@@ -20,6 +20,7 @@ namespace RunAmiga.Debugger
 	{
 		private readonly IBreakpointCollection breakpoints;
 		private readonly IKickstartROM kickstart;
+		private readonly IIDEController ideController;
 		private readonly IDebugMemoryMapper memory;
 		private readonly ICPU cpu;
 		private readonly IChips custom;
@@ -34,11 +35,12 @@ namespace RunAmiga.Debugger
 
 		public Debugger(IMemoryMapper memoryMapper, IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
-			IBreakpointCollection breakpoints, IKickstartROM kickstart,
+			IBreakpointCollection breakpoints, IKickstartROM kickstart, IIDEController ideController,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser)
 		{
 			this.breakpoints = breakpoints;
 			this.kickstart = kickstart;
+			this.ideController = ideController;
 			this.disassembly = disassembly;
 			this.tracer = tracer;
 			this.analyser = analyser;
@@ -203,10 +205,20 @@ namespace RunAmiga.Debugger
 			var regs = cpu.GetRegs();
 			logger.LogTrace($"{lvo.Name}() resName: {regs.A[1]:X8} {GetString(regs.A[1])}");
 		}
+
+		private HashSet<uint> librariesMade = new HashSet<uint>();
+
 		private void MakeLibraryLogger(LVO lvo)
 		{
 			var regs = cpu.GetRegs();
 			logger.LogTrace($"{lvo.Name}() vectors: {regs.A[0]:X8} structure: {regs.A[1]:X8} init: {regs.A[2]:X8} dataSize: {regs.D[0]:X8} segList: {regs.D[1]:X8}");
+
+			if (!librariesMade.Contains(regs.A[0]))
+			{
+				librariesMade.Add(regs.A[0]);
+				analyser.ExtractFunctionTable(regs.A[0], NT_Type.NT_LIBRARY, $"unknown_{regs.A[0]}");
+				analyser.ExtractStructureInit(regs.A[1]);
+			}
 		}
 
 		private class LVOInterceptor
@@ -218,21 +230,19 @@ namespace RunAmiga.Debugger
 
 		private Dictionary<string, uint> libraryBaseAddresses = new Dictionary<string, uint>();
 
-		private List<LVOInterceptor> LVOInterceptors { get; } = new List<LVOInterceptor>();
+		private List<LVOInterceptor> lvoInterceptors { get; } = new List<LVOInterceptor>();
 
 		private void AddLVOIntercept(string library, string vectorName, Action<LVO> action)
 		{
+			libraryBaseAddresses["exec.library"] = memory.UnsafeRead32(4);
+
 			var lvos = analyser.GetLVOs();
 			if (lvos.TryGetValue(library, out var lib))
 			{
 				var vector = lib.LVOs.SingleOrDefault(x => x.Name == vectorName);
 				if (vector != null)
 				{
-					uint baseAddress = lib.BaseAddress;
-					if (library == "exec.library")
-						baseAddress = memory.UnsafeRead32(4);
-
-					LVOInterceptors.Add(new LVOInterceptor{ 
+					lvoInterceptors.Add(new LVOInterceptor{ 
 						Library = library,
 						LVO = vector,
 						Action = action});
@@ -243,15 +253,7 @@ namespace RunAmiga.Debugger
 		//occurs after Read
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
-			if (size == Size.Word)
-			{
-				var lvo = LVOInterceptors.SingleOrDefault(x => memory.UnsafeRead32((uint)(libraryBaseAddresses[x.Library] + x.LVO.Offset + 2)) == address);
-				if (lvo != null)
-				{
-					//breakpoints.SignalBreakpoint(address);
-					lvo.Action(lvo.LVO);
-				}
-			}
+			CheckLVOAccess(address, size);
 
 			//analyser.MarkAsType(address, MemType.Byte, size);
 
@@ -270,8 +272,23 @@ namespace RunAmiga.Debugger
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
+			CheckLVOAccess(address, size);
+
 			//analyser.MarkAsType(address, MemType.Code, size);
 			breakpoints.Read(insaddr, address, value, size);
+		}
+
+		private void CheckLVOAccess(uint address, Size size)
+		{
+			if (size == Size.Word)
+			{
+				var lvo = lvoInterceptors.SingleOrDefault(x => memory.UnsafeRead32((uint)(libraryBaseAddresses[x.Library] + x.LVO.Offset + 2)) == address);
+				if (lvo != null)
+				{
+					//breakpoints.SignalBreakpoint(address);
+					lvo.Action(lvo.LVO);
+				}
+			}
 		}
 
 		private string GetString(uint str)
@@ -350,6 +367,11 @@ namespace RunAmiga.Debugger
 		public void INTENA(uint irq)
 		{
 			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1 << (int)irq), Size.Word);
+		}
+
+		public void IDEACK()
+		{
+			ideController.Ack();
 		}
 
 		public ChipState GetChipRegs()
