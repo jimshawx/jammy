@@ -1,4 +1,5 @@
-﻿using RunAmiga.Core.Custom;
+﻿using System;
+using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -44,27 +45,19 @@ namespace RunAmiga.Core
 
 		public void Reset()
 		{
-			interruptPending = 0;
+			paulaInterruptLevel = 0;
+			gayleInterruptLevel = 0;
 		}
 
 		//level is the IPLx interrupt bits in SR
 
-		private uint interruptPending;
+		private uint paulaInterruptLevel;
+		private uint gayleInterruptLevel;
 
 		public ushort GetInterruptLevel()
 		{
-			return (ushort)interruptPending;
+			return (ushort)Math.Max(paulaInterruptLevel, gayleInterruptLevel);
 		}
-
-		//public void EnableSchedulerAttention()
-		//{
-		//	//enable scheduler attention
-		//	uint execBase = memory.Read(0, 4, Size.Long);
-		//	uint sysflags = memory.Read(0, execBase + 0x124, Size.Byte);
-		//	sysflags |= 0x80;
-		//	memory.Write(0, execBase + 0x124, sysflags, Size.Byte);
-		//	musashiMemory.Write(0, execBase + 0x124, sysflags, Size.Byte);
-		//}
 
 		public void AssertInterrupt(uint intreq, bool asserted = true)
 		{
@@ -73,9 +66,9 @@ namespace RunAmiga.Core
 			custom.Write(0, ChipRegs.INTREQ, mask, Size.Word);
 		}
 
-		public void SetCPUInterruptLevel(uint intreq, uint intena)
+		public void SetPaulaInterruptLevel(uint intreq, uint intena)
 		{
-			interruptPending = 0;
+			paulaInterruptLevel = 0;
 
 			//all interrupts disabled
 			if ((intena & (1<<(int)Interrupt.INTEN))==0) return;
@@ -87,18 +80,30 @@ namespace RunAmiga.Core
 			{
 				if ((intreq & (1u<<i))!=0)
 				{
-					interruptPending = CPUPriority((uint)i);
+					paulaInterruptLevel = CPUPriority((uint)i);
 					break;
 				}
 			}
 		}
 
-		//private void EnableInterrupt(uint interrupt)
-		//{
-		//	uint intenar = custom.Read(0, ChipRegs.INTENAR, Size.Word);
-		//	//only write the bit if necessary
-		//	if ((intenar & (1u << (int)interrupt)) == 0)
-		//		custom.Write(0, ChipRegs.INTENA, 0x8000 + (1u << (int)interrupt), Size.Word);
-		//}
+		public void SetGayleInterruptLevel(uint level)
+		{
+			//set CPU level outside of Paula
+
+			//gayleInterruptLevel = 0;
+			//for (int i = 6; i >= 0; i--)
+			//{
+			//	if ((level & (1 << i)) != 0)
+			//	{
+			//		gayleInterruptLevel = (uint)i;
+			//		break;
+			//	}
+			//}
+
+			//set CPU level using Paula INTREQ
+			if ((level & (1 << 2)) != 0) AssertInterrupt(PORTS);
+			if ((level & (1 << 3)) != 0) AssertInterrupt(COPPER);
+			if ((level & (1 << 6)) != 0) AssertInterrupt(EXTER);
+		}
 	}
 }

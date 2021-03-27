@@ -259,7 +259,7 @@ namespace RunAmiga.Core.Custom
 
 				regs[REG(ChipRegs.INTENAR)] = (ushort)(regs[reg]&0x7fff);
 
-				interrupt.SetCPUInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
+				interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
 			}
 			else if (address == ChipRegs.INTENAR) { /* can't write here */}
 			else if (address == ChipRegs.INTREQ)
@@ -297,7 +297,7 @@ namespace RunAmiga.Core.Custom
 
 				regs[REG(ChipRegs.INTREQR)] = (ushort)(regs[reg]&0x7fff);
 
-				interrupt.SetCPUInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
+				interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
 			}
 			else if (address == ChipRegs.INTREQR) { /* can't write here */}
 			else if (address == ChipRegs.ADKCON)

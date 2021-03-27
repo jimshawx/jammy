@@ -15,7 +15,7 @@ namespace RunAmiga.Core.Custom
 		public const uint Config = 0xdab000;
 	}
 
-	public class IDE 
+	public class IDE
 	{
 		public const uint Data = 0xda2000;//1f0
 		public const uint Error_Feature = 0xda2004; //1f1
@@ -29,21 +29,86 @@ namespace RunAmiga.Core.Custom
 	}
 
 	[Flags]
-	public enum IDE_STATUS : byte 
+	public enum IDE_STATUS : byte
 	{
-		ERR=1,
-		IDX=2,
-		CORR=4,
-		DRQ=8,//data request ready
-		DSC=16,//drive seek complete
-		DWF=32,
-		DRDY=64,//drive ready
-		BSY=128
+		ERR = 1,
+		IDX = 2,
+		CORR = 4,
+		DRQ = 8,//data request ready
+		DSC = 16,//drive seek complete
+		DWF = 32,
+		DRDY = 64,//drive ready
+		BSY = 128
+	}
+
+	internal class HardDrive
+	{
+		private byte driveHead;
+		private byte cylinderLow;
+		private byte cylinderHigh;
+		private byte sectorNumber;
+
+		//registers
+		public IDE_STATUS IdeStatus { get; set; } = IDE_STATUS.DRDY;
+
+		public byte SectorCount { get; set; }
+		public byte ErrorFeature { get; set; }
+
+		public byte DriveHead { get => driveHead; set { driveHead = value; UpdateAddress(); }}
+		public byte CylinderHigh { get => cylinderHigh; set { cylinderHigh = value; UpdateAddress(); } }
+		public byte CylinderLow { get => cylinderLow; set { cylinderLow = value; UpdateAddress(); }}
+		public byte SectorNumber { get => sectorNumber; set { sectorNumber = value; UpdateAddress(); }}
+
+		//drive id bit
+		public int DriveIRQBit { get; set; }
+
+		//derived values
+		public uint LbaAddress { get; private set; }//28 bit address
+
+		//drive geometry provided by OS
+		public byte SectorsPerTrack { get; set; }
+		public byte Heads { get; set; }
+
+		private void UpdateAddress()
+		{
+			LbaAddress = 0;
+			LbaAddress = (LbaAddress & 0xf0ffffff) | (uint)((driveHead << 24) & 0x0f000000);
+			LbaAddress = (LbaAddress & 0xff00ffff) | (uint)((cylinderHigh << 16) & 0x00ff0000);
+			LbaAddress = (LbaAddress & 0xffff00ff) | (uint)((cylinderLow << 8) & 0x0000ff00);
+			LbaAddress = (LbaAddress & 0xffffff00) | sectorNumber;
+		}
+
+		public void IncrementAddress()
+		{
+			//add sector count to lba address and put it back in the registers
+			LbaAddress += SectorCount;
+
+			sectorNumber = (byte)(LbaAddress & 0xff);
+			cylinderLow = (byte)((LbaAddress >> 8) & 0xff);
+			cylinderHigh = (byte)((LbaAddress >> 16) & 0xff);
+			driveHead &= 0xf0;
+			driveHead |= (byte)((LbaAddress >> 24) & 0x0f);
+		}
 	}
 
 	//IDE Controller on the A600 and A1200
 	public class IDEController : IIDEController
 	{
+		private readonly IInterrupt interrupt;
+		private readonly ILogger logger;
+		private readonly MemoryRange memoryRange = new MemoryRange(0xda0000, 0x20000);
+
+		public IDEController(IInterrupt interrupt, ILogger<IDEController> logger)
+		{
+			this.interrupt = interrupt;
+			this.logger = logger;
+
+			hardDrives = new HardDrive[2] {new HardDrive {DriveIRQBit = 1}, new HardDrive {DriveIRQBit = 2}};
+			currentDrive = hardDrives[0];
+
+			InitDriveId();
+		}
+
 		private readonly Dictionary<uint, string> registerNames = new Dictionary<uint, string>
 		{
 			{Gayle.Status, "Gayle.Status"},
@@ -69,117 +134,6 @@ namespace RunAmiga.Core.Custom
 			return $"UNKNOWN_{address:X8}";
 		}
 
-		/*
-http://eab.abime.net/showthread.php?t=23924
-
-0xda0000	// Data
-0xda0006	// Error | Feature
-0xda000a	// Sector Count
-0xda000e	// Sector Number
-0xda0012	// Cylinder Low
-0xda0016	// Cylinder High
-0xda001a	// Device / Head
-0xda001e	// Status | Command
-0xda101a	// Control
-
-0xda8000	// Gayle Status
-0xda9000	// Gayle INTREQ
-0xdaa000	// Gayle INTENA
-0xdab000	// Gayle Config
-
-0xda9000 Gayle INTREQ:
-0x80 IDE
-0X02 IDE1ACK (Slave)
-0x01 IDE0ACK (Master)
-
-If a Interrupt (Level 2) occurs and it is caused by an IDE Device Gayle INTREQ IDE bit 7 is set.
-I'm not sure if, the corresponding IDExACK will be set. When done with interrupt handling these bits will be set to 0 by the device driver.
-
-0xdaa000 Gayle INTENA:
-0x80 IDE
-
-Setting bit 7 of Gayle INTENA enables ATA Interrupts.
-
-As usual for Amiga adresses are not fully decoded. Kickstart uses the following adresses for IDE.
-The above mentioned adresses are used by Linux. If you want the project to be compatible with Linux you should implement a similiar incomplete decoding.
-
-0xda2000 Data
-0xda2004 Error | Feature
-0xda2008 SectorCount
-0xda200c SectorNumber
-0xda2010 CylinderLow
-0xda2014 CylinderHigh
-0xda2018 Device/Head
-0xda201c Status | Command
-0xda3018 Control
-
-
-0xde1000's MSB should actually be interpreted as a 8 bit serial shift register, which reads 0xd0.
-Fat Garys (A3000,A4000) have the very same mechanism at 0xde1002 this register is called GaryID (see: http://www.thule.no/haynie/research/...ocs/a3000p.pdf).
-
-
-The "Gayle-check" is:
-
-write 00h to 0xde1000
-read byte 0xde1000 with bit 7 set
-read byte 0xde1000 with bit 7 set
-read byte 0xde1000 with bit 7 cleared
-read byte 0xde1000 with bit 7 set
-
-D1: 0, A1: $DE1000
- FC0C22  7403                moveq.l   #3,d2
- FC0C24  1281                move.b    d1,(a1)
- FC0C26  1011                move.b    (a1),d0
- FC0C28  E308                lsl.b     #1,d0
- FC0C2A  D301                addx.b    d1,d1
- FC0C2C  51CA FFF8           dbra      d2,#$FC0C26(pc)
- FC0C30  0C01 000D           cmpi.b    #$D,d1
-
-		 */
-
-		/*
-$DA3018 ; (read) alt status, doesn't clear int
-$DA3018 ; (write) device control - int/reset
-
-[table]
-
-; auxiliary status register bit definitions
-BITDEF WDC,INT,7 an interrupt is pending
-BITDEF WDC,LCI,6 last command ignored
-BITDEF WDC,BSY,5 chip is busy with a level 2 command
-BITDEF WDC,CIP,4 command in progress
-BITDEF WDC,PE,1 a parity error was detected
-BITDEF WDC,DBR,0 data buffer ready during programmed I/O
-
-; control register bit definitions
-BITDEF WDC,DMA,7 DMA mode is enabled for data transfers
-BITDEF WDC,WDB,6 direct buffer access for data transfers
-BITDEF WDC,HA,1 halt on attention (target mode only)
-BITDEF WDC,HPE,0 halt on parity error enable
-
-; source ID register control bits
-BITDEF WDC,ER,7 enable reselection
-BITDEF WDC,ES,6 enable selection (target or multiple initiators only)
-BITDEF WDC,SIV,3 source ID valid
-
-; command register control bits
-BITDEF WDC,SBT,7 enable single byte transfer mode
-
-		 */
-		private readonly IInterrupt interrupt;
-		private readonly IChips custom;
-		private readonly ILogger logger;
-		private readonly MemoryRange memoryRange = new MemoryRange(0xda0000, 0x20000);
-
-		public IDEController(IInterrupt interrupt, IChips custom, ILogger<IDEController> logger)
-		{
-			this.interrupt = interrupt;
-			this.custom = custom;
-			this.logger = logger;
-
-			InitDriveId();
-		}
-
 		public bool IsMapped(uint address)
 		{
 			return memoryRange.Contains(address);
@@ -190,36 +144,13 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 			return memoryRange;
 		}
 
-		/*
-		DA .... .... ........ = IDE
-		   x000 .... ........ = CS1, 8bit
-		   x001 .... ........ = CS2, 8bit
-		   x010 .... ........ = CS1, 16bit
-		   x011 .... ........ = CS2, 16bit
-		   x10x .... ........ = None, 8bit
-		   x11x .... ........ = None, 16bit
-
-0	->	DA2018 - device control DA0018
-	<-	DA2010 - cylinder low
-	<-	DA3018 - control
-	<-	DA9000 - INTREQ
-
-		 */
-
 		private byte gayleStatus;
 		private GAYLE_INTENA gayleINTENA;
 		private GAYLE_INTENA gayleINTREQ;
 		private byte gayleConfig;
 
-		private IDE_STATUS ideStatus = IDE_STATUS.DRDY;
-		private byte driveHead = 0;
-		private byte cylinderLow = 0;
-		private byte cylinderHigh = 0;
-		private byte sectorNumber = 0;
-		private byte sectorCount = 0;
-		private byte errorFeature = 0;
-
-		private uint lbaAddress = 0;//28 bit address, 
+		private readonly HardDrive[] hardDrives;
+		private HardDrive currentDrive;
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
@@ -231,27 +162,27 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 				case Gayle.INTREQ: value = (byte)gayleINTREQ; break;
 				case Gayle.Config: value = gayleConfig; break;
 
-				case IDE.AltStatus_DevControl: value = (byte)ideStatus; break;
-				case IDE.Status_Command: value = (byte)ideStatus; Clr(); break;
-				case IDE.Error_Feature: value = errorFeature; break;
+				case IDE.AltStatus_DevControl: value = (byte)currentDrive.IdeStatus; break;
+				case IDE.Status_Command: value = (byte)currentDrive.IdeStatus; Clr(); break;
+				case IDE.Error_Feature: value = currentDrive.ErrorFeature; break;
 
-				case IDE.DriveHead: value = driveHead; break;
-				case IDE.CylinderLow: value = cylinderLow; break;
-				case IDE.CylinderHigh: value = cylinderHigh; break;
-				case IDE.SectorNumber: value = sectorNumber; break;
-				case IDE.SectorCount: value = sectorCount; break;
+				case IDE.DriveHead: value = currentDrive.DriveHead; break;
+				case IDE.CylinderLow: value = currentDrive.CylinderLow; break;
+				case IDE.CylinderHigh: value = currentDrive.CylinderHigh; break;
+				case IDE.SectorNumber: value = currentDrive.SectorNumber; break;
+				case IDE.SectorCount: value = currentDrive.SectorCount; break;
 
 				case IDE.Data: value = ReadDataWord(); break;
 			}
 
-			if (address != IDE.Data) logger.LogTrace($"IDE Controller R {GetName(address)} {value:X2} {ideStatus} {address:X8} @{insaddr:X8} {size} ");
+			if (address != IDE.Data) logger.LogTrace($"IDE Controller R {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size} ");
 
 			return value;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (address != IDE.Data) logger.LogTrace($"IDE Controller W {GetName(address)} {value:X2} {address:X8} @{insaddr:X8} {size}");
+			if (address != IDE.Data) logger.LogTrace($"IDE Controller W {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size}");
 
 			switch (address)
 			{
@@ -263,26 +194,15 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 				case IDE.AltStatus_DevControl: DevControl((byte)value); break;
 				case IDE.Status_Command: Command((byte)value); break;
 				case IDE.Error_Feature: Feature((byte)value); break;
+				case IDE.SectorCount: currentDrive.SectorCount = (byte)value; break;
 
 				case IDE.DriveHead:
-					driveHead = (byte)value;
-					logger.LogTrace($"drive: {(driveHead>>4)&1} lba: {(driveHead>>6)&1}");
-					lbaAddress = (lbaAddress & 0xf0ffffff) | ((value << 25) & 0x0f000000);
+					currentDrive = hardDrives[(value >> 4) & 1];
+					currentDrive.DriveHead = (byte)value;
 					break;
-				case IDE.CylinderLow:
-					cylinderLow = (byte)value;
-					lbaAddress = (lbaAddress & 0xffff00ff) | ((value << 8) & 0x0000ff00);
-					break;
-				case IDE.CylinderHigh:
-					cylinderHigh = (byte)value;
-					lbaAddress = (lbaAddress & 0xff00ffff) | ((value << 16) & 0x00ff0000);
-					break;
-				case IDE.SectorNumber: 
-					sectorNumber = (byte)value;
-					lbaAddress = (lbaAddress & 0xffffff00) | (byte)value;
-					break;
-					
-				case IDE.SectorCount: sectorCount = (byte)value; break;
+				case IDE.CylinderLow: currentDrive.CylinderLow = (byte)value; break;
+				case IDE.CylinderHigh: currentDrive.CylinderHigh = (byte)value; break;
+				case IDE.SectorNumber: currentDrive.SectorNumber = (byte)value; break;
 
 				case IDE.Data: WriteDataWord((ushort)value); break;
 			}
@@ -298,55 +218,33 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 			logger.LogTrace($"IDE Feature {value}");
 		}
 
-		/*
-		public const uint NMI = 15;
-		public const uint INTEN = 14;
-		public const uint EXTER = 13;
-		public const uint DSKSYNC = 12;
-		public const uint RBF = 11;
-		public const uint AUD3 = 10;
-		public const uint AUD2 = 9;
-		public const uint AUD1 = 8;
-		public const uint AUD0 = 7;
-		public const uint BLIT = 6;
-		public const uint VERTB = 5;
-		public const uint COPPER = 4;
-		public const uint PORTS = 3;
-		public const uint TBE = 2;
-		public const uint DSKBLK = 1;
-		public const uint SOFTINT = 0;
-
-		public static uint[] priority = new uint[]{ 1,1,1,2,3,3,3,4,4,4,4,5,5,6,6,7};
-		 */
-
-		//something that generates a CPU level interrupt
-		private const int INT_2 = (int)Interrupt.PORTS;
-		private const int INT_3 = (int)Interrupt.COPPER;
-		private const int INT_6 = (int)Interrupt.EXTER;
+		private const int INT_2 = 2;
+		private const int INT_3 = 3;
+		private const int INT_6 = 6;
 
 		private void UpdateInterrupt()
 		{
 			uint intreq = 0;
 
-			logger.LogTrace($"INTENA {(GAYLE_INTENA)gayleINTENA}");
-			logger.LogTrace($"INTREQ {(GAYLE_INTENA)gayleINTREQ}");
+			logger.LogTrace($"INTENA {gayleINTENA}");
+			logger.LogTrace($"INTREQ {gayleINTREQ}");
 
-			byte masked = (byte)(gayleINTENA & gayleINTREQ);
-			if ((masked & (byte)GAYLE_INTENA.IRQ) != 0)
+			GAYLE_INTENA masked = gayleINTENA & gayleINTREQ & (GAYLE_INTENA)0xfc;
+			if ((masked & GAYLE_INTENA.IRQ) != 0)
 			{
 				intreq |= 1 << INT_3;
 
 				int bvd = (gayleINTENA & GAYLE_INTENA.CCSTATUS_BVDIRQ) != 0 ? INT_6 : INT_2;
-				int bsy = (gayleINTENA & GAYLE_INTENA.BERR_BUSYIRQ) != 0 ? INT_6: INT_2;
+				int bsy = (gayleINTENA & GAYLE_INTENA.BERR_BUSYIRQ) != 0 ? INT_6 : INT_2;
 
-				if ((masked & (byte)GAYLE_INTENA.CC) != 0) intreq |= 1 << INT_6;
-				if ((masked & (byte)GAYLE_INTENA.BVD2) != 0) intreq |= (uint)(1 << bvd);
-				if ((masked & (byte)GAYLE_INTENA.BVD1) != 0) intreq |= (uint)(1 << bvd);
-				if ((masked & (byte)GAYLE_INTENA.WR) != 0) intreq |= (uint)(1 << bsy);
-				if ((masked & (byte)GAYLE_INTENA.BSY) != 0) intreq |= (uint)(1 << bsy);
-
-				custom.Write(0, ChipRegs.INTREQ, 0x8000|intreq, Size.Word);
+				if ((masked & GAYLE_INTENA.CC) != 0) intreq |= 1 << INT_6;
+				if ((masked & GAYLE_INTENA.BVD2) != 0) intreq |= (uint)(1 << bvd);
+				if ((masked & GAYLE_INTENA.BVD1) != 0) intreq |= (uint)(1 << bvd);
+				if ((masked & GAYLE_INTENA.WR) != 0) intreq |= (uint)(1 << bsy);
+				if ((masked & GAYLE_INTENA.BSY) != 0) intreq |= (uint)(1 << bsy);
 			}
+
+			interrupt.SetGayleInterruptLevel(intreq);
 		}
 
 		[Flags]
@@ -364,12 +262,13 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 
 		private void ClearBusy()
 		{
-			ideStatus &= ~IDE_STATUS.BSY;
-			ideStatus |= IDE_STATUS.DRDY;//drive is always ready
+			currentDrive.IdeStatus &= ~IDE_STATUS.BSY;
+			currentDrive.IdeStatus |= IDE_STATUS.DRDY;//drive is always ready
 
+			//flag the BSY bit change interrupt
 			gayleINTREQ |= GAYLE_INTENA.BSY | GAYLE_INTENA.IRQ;
-			gayleINTREQ |= (GAYLE_INTENA)1;//Master
-			//gayleINTREQ |= (GAYLE_INTENA)2;//Slave
+			//flag which drive it was
+			gayleINTREQ |= (GAYLE_INTENA)currentDrive.DriveIRQBit;
 
 			UpdateInterrupt();
 		}
@@ -407,7 +306,7 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 			uint heads = 16;//maximum number of heads
 
 			uint sectorCylinders = blocks / heads;//1280 = sectors * cylinders
-			uint sectors = 64;//let's pick 64 sectors
+			uint sectors = 63;//let's pick 64 sectors
 			uint cylinders = sectorCylinders / sectors;
 
 			//configuration
@@ -419,7 +318,7 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 			driveId[4] = (ushort)(sectors * sectorSize);//sectors = blocks per track
 			driveId[5] = (ushort)sectorSize;
 			driveId[6] = (ushort)sectors;
-			
+
 			//vendor
 			driveId[7] = 'J';
 			driveId[8] = 'I';
@@ -537,56 +436,61 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 			0,0,0,0,0,0,0,0,//224
 			0,0,0,0,0,0,0,0,//232
 			0,0,0,0,0,0,0,0,//240
-			0,0,0,0,0,0,0,0,//248
+			0,0,0,0,0,0,0,0,//248...255
 		};
 
-		//drive geometry
-		private byte sectorsPerTrack;
-		private byte heads;
 
 		private void Command(byte value)
 		{
-			ideStatus = IDE_STATUS.DRDY;
+			currentDrive.IdeStatus = IDE_STATUS.DRDY;
 
 			string cmd;
 			switch (value)
 			{
 				case 0x10:
 					cmd = "Recalibrate";
-					cylinderLow = cylinderHigh = 0;
-					ideStatus |= IDE_STATUS.DSC;
+					currentDrive.CylinderLow = currentDrive.CylinderHigh = 0;
+					currentDrive.IdeStatus |= IDE_STATUS.DSC;
 					Ack();
 					break;
-				
+
 				case 0xEC:
 					cmd = "Identify Drive";
-					ideStatus |= IDE_STATUS.DRQ;
+					currentDrive.IdeStatus |= IDE_STATUS.DRQ;
 					dataSource = driveId.AsEnumerable().GetEnumerator();
 					Ack();
 					break;
 
 				case 0x91:
 					cmd = "Initialise Drive Parameters";
-					sectorsPerTrack = sectorCount;
-					heads = driveHead;
-					logger.LogTrace($"Drive Parameters sph: {sectorsPerTrack} h: {heads}");
+					currentDrive.SectorsPerTrack = currentDrive.SectorCount;
+					currentDrive.Heads = (byte)((currentDrive.DriveHead&0xf)+1);
+					logger.LogTrace($"Drive Parameters spt: {currentDrive.SectorsPerTrack} h: {currentDrive.Heads}");
 					Ack();
 					break;
 
 				case 0x20:
 					cmd = "Read Sector(s)";
-					logger.LogTrace($"sector count {sectorCount} {lbaAddress}");
-					ideStatus |= IDE_STATUS.DRQ;
-					dataSource = new ushort[sectorCount * 256].AsEnumerable().GetEnumerator();
+					logger.LogTrace($"cnt: {currentDrive.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead>>6)&1}");
+					currentDrive.IdeStatus |= IDE_STATUS.DRQ;
+					dataSource = new ushort[currentDrive.SectorCount * 256].AsEnumerable().GetEnumerator();
+					currentDrive.IncrementAddress();
+					Ack();
+					break;
+
+				case 0x30:
+					cmd = "Write Sector(s)";
+					logger.LogTrace($"cnt: {currentDrive.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
+					currentDrive.IdeStatus |= IDE_STATUS.DRQ;
+					currentDrive.IncrementAddress();
 					Ack();
 					break;
 
 				default:
-					cmd = "Unknown";
-					break;
+					throw new NotImplementedException($"unknown command {value:X2} {value}");
 			}
 
-			logger.LogTrace($"IDE Command {cmd} ${value:X2} {value}");
+			logger.LogTrace($"IDE Command {cmd} ${value:X2} {value} drive: {(currentDrive.DriveHead >> 4) & 1}");
 		}
 
 		private IEnumerator<ushort> dataSource = null;
@@ -607,14 +511,128 @@ BITDEF WDC,SBT,7 enable single byte transfer mode
 				}
 			}
 
-			logger.LogTrace($"R {v:X4}");
+			//logger.LogTrace($"R {v:X4}");
 			return v;
 		}
 
 		private void WriteDataWord(ushort data)
 		{
-			logger.LogTrace($"W {data:X4}");
+			//logger.LogTrace($"W {data:X4}");
 		}
 
 	}
+
+	/*
+DA .... .... ........ = IDE
+   x000 .... ........ = CS1, 8bit
+   x001 .... ........ = CS2, 8bit
+   x010 .... ........ = CS1, 16bit
+   x011 .... ........ = CS2, 16bit
+   x10x .... ........ = None, 8bit
+   x11x .... ........ = None, 16bit
+
+0	->	DA2018 - device control DA0018
+<-	DA2010 - cylinder low
+<-	DA3018 - control
+<-	DA9000 - INTREQ
+
+ */
+
+	/*
+http://eab.abime.net/showthread.php?t=23924
+
+0xda0000	// Data
+0xda0006	// Error | Feature
+0xda000a	// Sector Count
+0xda000e	// Sector Number
+0xda0012	// Cylinder Low
+0xda0016	// Cylinder High
+0xda001a	// Device / Head
+0xda001e	// Status | Command
+0xda101a	// Control
+
+0xda8000	// Gayle Status
+0xda9000	// Gayle INTREQ
+0xdaa000	// Gayle INTENA
+0xdab000	// Gayle Config
+
+0xda9000 Gayle INTREQ:
+0x80 IDE
+0X02 IDE1ACK (Slave)
+0x01 IDE0ACK (Master)
+
+If a Interrupt (Level 2) occurs and it is caused by an IDE Device Gayle INTREQ IDE bit 7 is set.
+I'm not sure if, the corresponding IDExACK will be set. When done with interrupt handling these bits will be set to 0 by the device driver.
+
+0xdaa000 Gayle INTENA:
+0x80 IDE
+
+Setting bit 7 of Gayle INTENA enables ATA Interrupts.
+
+As usual for Amiga adresses are not fully decoded. Kickstart uses the following adresses for IDE.
+The above mentioned adresses are used by Linux. If you want the project to be compatible with Linux you should implement a similiar incomplete decoding.
+
+0xda2000 Data
+0xda2004 Error | Feature
+0xda2008 SectorCount
+0xda200c SectorNumber
+0xda2010 CylinderLow
+0xda2014 CylinderHigh
+0xda2018 Device/Head
+0xda201c Status | Command
+0xda3018 Control
+
+
+0xde1000's MSB should actually be interpreted as a 8 bit serial shift register, which reads 0xd0.
+Fat Garys (A3000,A4000) have the very same mechanism at 0xde1002 this register is called GaryID (see: http://www.thule.no/haynie/research/...ocs/a3000p.pdf).
+
+
+The "Gayle-check" is:
+
+write 00h to 0xde1000
+read byte 0xde1000 with bit 7 set
+read byte 0xde1000 with bit 7 set
+read byte 0xde1000 with bit 7 cleared
+read byte 0xde1000 with bit 7 set
+
+D1: 0, A1: $DE1000
+FC0C22  7403                moveq.l   #3,d2
+FC0C24  1281                move.b    d1,(a1)
+FC0C26  1011                move.b    (a1),d0
+FC0C28  E308                lsl.b     #1,d0
+FC0C2A  D301                addx.b    d1,d1
+FC0C2C  51CA FFF8           dbra      d2,#$FC0C26(pc)
+FC0C30  0C01 000D           cmpi.b    #$D,d1
+
+	 */
+
+	/*
+$DA3018 ; (read) alt status, doesn't clear int
+$DA3018 ; (write) device control - int/reset
+
+[table]
+
+; auxiliary status register bit definitions
+BITDEF WDC,INT,7 an interrupt is pending
+BITDEF WDC,LCI,6 last command ignored
+BITDEF WDC,BSY,5 chip is busy with a level 2 command
+BITDEF WDC,CIP,4 command in progress
+BITDEF WDC,PE,1 a parity error was detected
+BITDEF WDC,DBR,0 data buffer ready during programmed I/O
+
+; control register bit definitions
+BITDEF WDC,DMA,7 DMA mode is enabled for data transfers
+BITDEF WDC,WDB,6 direct buffer access for data transfers
+BITDEF WDC,HA,1 halt on attention (target mode only)
+BITDEF WDC,HPE,0 halt on parity error enable
+
+; source ID register control bits
+BITDEF WDC,ER,7 enable reselection
+BITDEF WDC,ES,6 enable selection (target or multiple initiators only)
+BITDEF WDC,SIV,3 source ID valid
+
+; command register control bits
+BITDEF WDC,SBT,7 enable single byte transfer mode
+
+	 */
 }

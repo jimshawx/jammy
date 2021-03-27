@@ -68,9 +68,10 @@ namespace RunAmiga.Core.Interface.Interfaces
 	public interface IInterrupt : IEmulate
 	{
 		void AssertInterrupt(uint intreq, bool asserted = true);
-		void SetCPUInterruptLevel(uint intreq, uint intena);
+		void SetPaulaInterruptLevel(uint intreq, uint intena);
 		void Init(IChips custom);
 		ushort GetInterruptLevel();
+		void SetGayleInterruptLevel(uint level);
 	}
 
 	public interface IDebugMemoryMapper 
