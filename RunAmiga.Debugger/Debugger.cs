@@ -371,7 +371,7 @@ namespace RunAmiga.Debugger
 
 		public void IDEACK()
 		{
-			ideController.Ack();
+			ideController.DebugAck();
 		}
 
 		public ChipState GetChipRegs()

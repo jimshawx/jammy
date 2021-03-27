@@ -219,7 +219,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 
 	public interface IIDEController : IMemoryMappedDevice
 	{
-		void Ack();
+		void DebugAck();
 	}
 	public interface ISCSIController : IMemoryMappedDevice { }
 	public interface IAkiko : IMemoryMappedDevice { }

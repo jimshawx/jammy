@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Extensions.Extensions;
 
 namespace RunAmiga.Core.Custom
 {
@@ -175,7 +177,8 @@ namespace RunAmiga.Core.Custom
 				case IDE.Data: value = ReadDataWord(); break;
 			}
 
-			if (address != IDE.Data) logger.LogTrace($"IDE Controller R {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size} ");
+			if (address != IDE.Data && address != Gayle.INTREQ && address != IDE.Status_Command)
+				logger.LogTrace($"IDE Controller R {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size} ");
 
 			return value;
 		}
@@ -266,23 +269,131 @@ namespace RunAmiga.Core.Custom
 			currentDrive.IdeStatus |= IDE_STATUS.DRDY;//drive is always ready
 
 			//flag the BSY bit change interrupt
-			gayleINTREQ |= GAYLE_INTENA.BSY | GAYLE_INTENA.IRQ;
+			//gayleINTREQ |= GAYLE_INTENA.BSY | GAYLE_INTENA.IRQ;
+			gayleINTREQ |= GAYLE_INTENA.IRQ;
 			//flag which drive it was
-			gayleINTREQ |= (GAYLE_INTENA)currentDrive.DriveIRQBit;
+			//gayleINTREQ |= (GAYLE_INTENA)currentDrive.DriveIRQBit;
 
 			UpdateInterrupt();
 		}
 
-		public void Ack()
+		public void DebugAck()
+		{
+			var thisDrive = currentDrive;
+			currentDrive = hardDrives[0];
+			ClearBusy();
+			currentDrive = hardDrives[1];
+			ClearBusy();
+			currentDrive = thisDrive;
+		}
+
+		private void Ack()
 		{
 			ClearBusy();
 		}
+
+		private class Transfer
+		{
+			public Transfer(byte sectorCount, TransferDirection hostWrite)
+			{
+				this.SectorCount = sectorCount;
+				if (this.SectorCount == 0) this.SectorCount = 256;
+				Direction = hostWrite;
+			}
+
+			public enum TransferDirection
+			{
+				HostRead,
+				HostWrite,
+			}
+
+			public int WordCount { get; set; }
+			public int SectorCount { get; set; }
+			public TransferDirection Direction { get; set; }
+
+		}
+
+		private string hardfileName = "../../../../hd.hdf";
+		private void SyncDisk()
+		{
+			File.WriteAllBytes(hardfileName, disk.AsByte().ToArray());
+		}
+
+		private void LoadDisk()
+		{
+			try
+			{
+				byte[]b=File.ReadAllBytes(hardfileName);
+				ushort[]s = b.AsUWord().ToArray();
+				Array.Copy(s, disk, Math.Min(disk.Length,s.Length));
+			}
+			catch { }
+		}
+
+		private void NextWord()
+		{
+			currentTransfer.WordCount--;
+			if (currentTransfer.WordCount <= 0)
+			{
+				if (currentTransfer.Direction == Transfer.TransferDirection.HostRead)
+				{
+					NextSector();
+				}
+				else if(currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
+				{
+					Ack();
+					NextSector();
+				}
+			}
+		}
+
+		private void NextSector()
+		{
+			if (currentTransfer.SectorCount <= 0)
+			{
+				//end of sectors
+
+				if (currentTransfer.Direction == Transfer.TransferDirection.HostRead)
+				{
+					
+				}
+				else if (currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
+				{
+					currentDrive.IdeStatus &= ~IDE_STATUS.DRQ;
+					SyncDisk();
+				}
+				currentDrive.IncrementAddress();
+				currentTransfer = null;
+			}
+			else
+			{
+				currentDrive.IdeStatus |= IDE_STATUS.DRQ;
+
+				//next sector
+				if (currentTransfer.Direction == Transfer.TransferDirection.HostRead)
+				{
+					//trigger an interrupt, the data is read and available
+					Ack();
+				}
+				else if (currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
+				{
+					//reset the write counter so an interrupt is generated when the last word is written
+				}
+				currentTransfer.WordCount = 256;
+				currentTransfer.SectorCount--;
+			}
+			
+		}
+
+		private Transfer currentTransfer = null;
 
 		private void Clr()
 		{
 			gayleINTREQ = 0;
 			UpdateInterrupt();
 		}
+
+		private ushort[] disk;
 
 		private void InitDriveId()
 		{
@@ -296,8 +407,11 @@ namespace RunAmiga.Core.Custom
 			//let's say we want a 10MB Hard Disk
 
 			uint sectorSize = 512;//common standard for sector size
-			uint bytes = 10 * 1024 * 1024; // 10,485,760 bytes
+			uint bytes = 165 * 1024 * 1024; // 10,485,760 bytes
 			uint blocks = bytes / sectorSize; // 20480
+
+			disk = new ushort[bytes/2];
+			LoadDisk();
 
 			//uint heads = 16;//these are 4 bits in ATA spec for head number
 			//uint sectors = 256;//there are 8 bits for sector number
@@ -343,7 +457,7 @@ namespace RunAmiga.Core.Custom
 			driveId[27] = 72;
 
 			//model number
-			driveId[27] = 'J';
+			driveId[27] = 0x4848;
 			driveId[28] = 'I';
 			driveId[29] = 'M';
 			driveId[30] = 'S';
@@ -401,7 +515,7 @@ namespace RunAmiga.Core.Custom
 			0,//50 reserved
 			0,//51 15-8 PIO data transfer cycle timing mode, 7-0 vendor unique
 			0,//52 15-8 DMA data transfer cycle timing mode, 7-0 vendor unique
-			0,//53 15-1 reserved, 0 - words 48-58 are valid 1/0
+			0,//53 15-1 reserved, 0 - words 54-58 are valid 1/0
 			0,//54 number of current cylinders
 			0,//55 number of current heads
 			0,//56 number of sectors per track
@@ -439,7 +553,6 @@ namespace RunAmiga.Core.Custom
 			0,0,0,0,0,0,0,0,//248...255
 		};
 
-
 		private void Command(byte value)
 		{
 			currentDrive.IdeStatus = IDE_STATUS.DRDY;
@@ -456,9 +569,9 @@ namespace RunAmiga.Core.Custom
 
 				case 0xEC:
 					cmd = "Identify Drive";
-					currentDrive.IdeStatus |= IDE_STATUS.DRQ;
+					currentTransfer = new Transfer(1, Transfer.TransferDirection.HostRead);
 					dataSource = driveId.AsEnumerable().GetEnumerator();
-					Ack();
+					NextSector();
 					break;
 
 				case 0x91:
@@ -471,19 +584,18 @@ namespace RunAmiga.Core.Custom
 
 				case 0x20:
 					cmd = "Read Sector(s)";
-					logger.LogTrace($"cnt: {currentDrive.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead>>6)&1}");
-					currentDrive.IdeStatus |= IDE_STATUS.DRQ;
-					dataSource = new ushort[currentDrive.SectorCount * 256].AsEnumerable().GetEnumerator();
-					currentDrive.IncrementAddress();
-					Ack();
+					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostRead);
+					logger.LogTrace($"cnt: {currentTransfer.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead>>6)&1}");
+					dataSource = disk.AsEnumerable().Skip((int)currentDrive.LbaAddress/2).GetEnumerator(); 
+					NextSector();
 					break;
 
 				case 0x30:
 					cmd = "Write Sector(s)";
-					logger.LogTrace($"cnt: {currentDrive.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
-					currentDrive.IdeStatus |= IDE_STATUS.DRQ;
-					currentDrive.IncrementAddress();
-					Ack();
+					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostWrite);
+					NextSector();
+					logger.LogTrace($"cnt: {currentTransfer.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
+					dataDest = currentDrive.LbaAddress / 2;
 					break;
 
 				default:
@@ -512,14 +624,43 @@ namespace RunAmiga.Core.Custom
 			}
 
 			//logger.LogTrace($"R {v:X4}");
+			NextWord();
 			return v;
 		}
 
+		//if (currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
+		//{
+		//	bi = 0;
+		//	var sb = new StringBuilder();
+		//	sb.AppendLine();
+		//	for (int i = 0; i < 16; i++)
+		//	{
+		//		for (int j = 0; j < 16; j++)
+		//			sb.Append($"{b[bi++]:X4} ");
+		//		sb.AppendLine();
+		//	}
+		//	bi = 0;
+		//	for (int i = 0; i < 4; i++)
+		//	{
+		//		for (int j = 0; j < 64; j++, bi++)
+		//			sb.Append($"{((b[bi]>=32 && b[bi]<127 )?Convert.ToChar(b[bi]) : '.')}");
+		//		sb.AppendLine();
+		//	}
+
+		//	logger.LogTrace(sb.ToString());
+		//	bi = 0;
+		//}
+		private uint dataDest;
+		//private ushort[] b = new ushort[256];
+		//private int bi;
 		private void WriteDataWord(ushort data)
 		{
+			//b[bi++] = data;
+			disk[dataDest++] = data;
 			//logger.LogTrace($"W {data:X4}");
-		}
 
+			NextWord();
+		}
 	}
 
 	/*

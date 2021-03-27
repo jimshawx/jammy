@@ -69,5 +69,13 @@ namespace RunAmiga.Extensions.Extensions
 			return string.Join(Environment.NewLine, diffs.Select(x => $"{x.Item1*4:X6} {x.Item2:X8} {x.Item3:X8}"));
 		}
 
+		public static IEnumerable<byte> AsByte(this ushort[] src)
+		{
+			foreach (var s in src)
+			{
+				yield return (byte)(s >> 8);
+				yield return (byte)s;
+			}
+		}
 	}
 }
