@@ -108,7 +108,7 @@ namespace RunAmiga.Core.Types.Types.Debugger
 		{
 			return BlockToString(new List<Tuple<uint, uint>>
 			{
-				new Tuple<uint, uint> ( start, length),
+				new Tuple<uint, uint> ( start, (uint)Math.Min(length, memory.Length-start)),
 			});
 		}
 	}

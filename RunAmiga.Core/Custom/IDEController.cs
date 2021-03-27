@@ -45,6 +45,9 @@ namespace RunAmiga.Core.Custom
 
 	internal class HardDrive
 	{
+		public ushort[] Disk { get; set; }
+		public uint DiskNumber { get; set; }
+		
 		private byte driveHead;
 		private byte cylinderLow;
 		private byte cylinderHigh;
@@ -91,6 +94,25 @@ namespace RunAmiga.Core.Custom
 			driveHead &= 0xf0;
 			driveHead |= (byte)((LbaAddress >> 24) & 0x0f);
 		}
+
+		private string hardfilePath = "../../../../";
+
+		public void LoadDisk()
+		{
+			try
+			{
+				byte[] b = File.ReadAllBytes(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"));
+				ushort[] s = b.AsUWord().ToArray();
+				Array.Copy(s, Disk, Math.Min(Disk.Length, s.Length));
+			}
+			catch { }
+		}
+
+		public void SyncDisk()
+		{
+			File.WriteAllBytes(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"), Disk.AsByte().ToArray());
+		}
+
 	}
 
 	//IDE Controller on the A600 and A1200
@@ -285,6 +307,9 @@ namespace RunAmiga.Core.Custom
 			currentDrive = hardDrives[1];
 			ClearBusy();
 			currentDrive = thisDrive;
+
+			hardDrives[0].LoadDisk();
+			hardDrives[1].LoadDisk();
 		}
 
 		private void Ack()
@@ -311,23 +336,6 @@ namespace RunAmiga.Core.Custom
 			public int SectorCount { get; set; }
 			public TransferDirection Direction { get; set; }
 
-		}
-
-		private string hardfileName = "../../../../hd.hdf";
-		private void SyncDisk()
-		{
-			File.WriteAllBytes(hardfileName, disk.AsByte().ToArray());
-		}
-
-		private void LoadDisk()
-		{
-			try
-			{
-				byte[]b=File.ReadAllBytes(hardfileName);
-				ushort[]s = b.AsUWord().ToArray();
-				Array.Copy(s, disk, Math.Min(disk.Length,s.Length));
-			}
-			catch { }
 		}
 
 		private void NextWord()
@@ -360,7 +368,7 @@ namespace RunAmiga.Core.Custom
 				else if (currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
 				{
 					currentDrive.IdeStatus &= ~IDE_STATUS.DRQ;
-					SyncDisk();
+					currentDrive.SyncDisk();
 				}
 				currentDrive.IncrementAddress();
 				currentTransfer = null;
@@ -393,8 +401,6 @@ namespace RunAmiga.Core.Custom
 			UpdateInterrupt();
 		}
 
-		private ushort[] disk;
-
 		private void InitDriveId()
 		{
 			//cylinders * heads * sectors = number of blocks
@@ -410,8 +416,12 @@ namespace RunAmiga.Core.Custom
 			uint bytes = 165 * 1024 * 1024; // 10,485,760 bytes
 			uint blocks = bytes / sectorSize; // 20480
 
-			disk = new ushort[bytes/2];
-			LoadDisk();
+			hardDrives[0].Disk = new ushort[bytes / 2];
+			hardDrives[0].DiskNumber = 0;
+			hardDrives[0].LoadDisk();
+			hardDrives[1].Disk = new ushort[bytes / 2];
+			hardDrives[1].DiskNumber = 1;
+			hardDrives[1].LoadDisk();
 
 			//uint heads = 16;//these are 4 bits in ATA spec for head number
 			//uint sectors = 256;//there are 8 bits for sector number
@@ -586,7 +596,7 @@ namespace RunAmiga.Core.Custom
 					cmd = "Read Sector(s)";
 					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostRead);
 					logger.LogTrace($"cnt: {currentTransfer.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead>>6)&1}");
-					dataSource = disk.AsEnumerable().Skip((int)currentDrive.LbaAddress/2).GetEnumerator(); 
+					dataSource = currentDrive.Disk.AsEnumerable().Skip((int)currentDrive.LbaAddress*512/2).GetEnumerator(); 
 					NextSector();
 					break;
 
@@ -595,7 +605,7 @@ namespace RunAmiga.Core.Custom
 					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostWrite);
 					NextSector();
 					logger.LogTrace($"cnt: {currentTransfer.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
-					dataDest = currentDrive.LbaAddress / 2;
+					dataDest = currentDrive.LbaAddress*512 / 2;
 					break;
 
 				default:
@@ -650,13 +660,11 @@ namespace RunAmiga.Core.Custom
 		//	logger.LogTrace(sb.ToString());
 		//	bi = 0;
 		//}
+
 		private uint dataDest;
-		//private ushort[] b = new ushort[256];
-		//private int bi;
 		private void WriteDataWord(ushort data)
 		{
-			//b[bi++] = data;
-			disk[dataDest++] = data;
+			currentDrive.Disk[dataDest++] = data;
 			//logger.LogTrace($"W {data:X4}");
 
 			NextWord();
