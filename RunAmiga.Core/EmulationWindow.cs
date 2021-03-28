@@ -100,8 +100,8 @@ namespace RunAmiga.Core
 			if (e.KeyChar == 0x9 && (GetAsyncKeyState((int)Keyboard.VK.VK_MENU)&0x8000)!=0)
 				Release("AltTab");
 
-			if (e.KeyChar == 0x1B)
-				Release("KeyPress");
+			//if (e.KeyChar == 0x1B)
+			//	Release("KeyPress");
 		}
 
 		private void Emulation_KeyDown(object sender, KeyEventArgs e)
@@ -109,8 +109,8 @@ namespace RunAmiga.Core
 			if (e.KeyValue == (int)Keyboard.VK.VK_TAB && (GetAsyncKeyState((int)Keyboard.VK.VK_MENU) & 0x8000) != 0)
 				Release("DnAltTab");
 
-			if (e.KeyValue == (int)Keyboard.VK.VK_ESCAPE)
-				Release("DnKeyPress");
+			//if (e.KeyValue == (int)Keyboard.VK.VK_ESCAPE)
+			//	Release("DnKeyPress");
 		}
 
 		private void Emulation_Deactivate(object sender, EventArgs e)

@@ -53,7 +53,7 @@ namespace RunAmiga.Core.Memory
 			foreach (var dev in devices.Select(x => new {device = x, range = x.MappedRange()}))
 			{
 				uint start = dev.range.Start >> 16;
-				uint end = (dev.range.Start + dev.range.Length) >> 16;
+				uint end = (uint)((dev.range.Start + dev.range.Length) >> 16);
 				for (uint i = start; i < end; i++)
 				{
 					if (dev.device.IsMapped(i << 16))

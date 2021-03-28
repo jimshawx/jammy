@@ -9,11 +9,11 @@
 		}
 
 		public uint Start { get; set; }
-		public uint Length { get; set; }
+		public long Length { get; set; }
 
 		public bool Contains(uint address)
 		{
-			return address >= Start && address-Start < Length;
+			return address >= Start && address < Start+Length;
 		}
 	}
 }

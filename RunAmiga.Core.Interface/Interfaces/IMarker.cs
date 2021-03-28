@@ -55,6 +55,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 	{
 		void InsertDisk();
 		void RemoveDisk();
+		void ChangeDisk(string fileName);
 	}
 	public interface IKeyboard : IEmulate
 	{
@@ -83,7 +84,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void UnsafeWrite32(uint address, uint value);
 		void UnsafeWrite16(uint address, ushort value);
 		void UnsafeWrite8(uint address, byte value);
-		IEnumerable<byte> GetEnumerable(int start, int length);
+		IEnumerable<byte> GetEnumerable(int start, long length);
 		IEnumerable<byte> GetEnumerable(int start);
 		IEnumerable<uint> AsULong(int start);
 		IEnumerable<ushort> AsUWord(int start);
@@ -138,6 +139,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		uint FindMemoryText(string txt);
 		void InsertDisk();
 		void RemoveDisk();
+		void ChangeDisk(string fileName);
 		void CIAInt(ICRB icr);
 		void IRQ(uint irq);
 		void INTENA(uint irq);

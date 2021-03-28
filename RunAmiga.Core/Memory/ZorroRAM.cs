@@ -80,7 +80,7 @@ namespace RunAmiga.Core.Memory
 		{
 			memory = new byte[size];
 			memoryRange = new MemoryRange(address, size);
-			addressMask = memoryRange.Length - 1;
+			addressMask = (uint)(memoryRange.Length - 1);
 		}
 	}
 }

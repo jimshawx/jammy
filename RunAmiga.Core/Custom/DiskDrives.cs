@@ -468,5 +468,12 @@ namespace RunAmiga.Core.Custom
 		{
 			drive[0].state = DriveState.DiskChange;
 		}
+
+		public void ChangeDisk(string filename)
+		{
+			drive[0].state = DriveState.DiskChange;
+			drive[0].disk = new Disk(filename);
+			drive[0].diskinserted = true;
+		}
 	}
 }

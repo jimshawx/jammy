@@ -70,7 +70,7 @@ namespace RunAmiga.Core.Memory
 			//todo: should be looking at CIA-A PRA OVL bit (0) and update the mappings
 			uint src = kickstartROM.MappedRange().Start;
 			uint dst = chipRAM.MappedRange().Start;
-			uint len = kickstartROM.MappedRange().Length/4;
+			uint len = (uint)(kickstartROM.MappedRange().Length/4);
 			while (len-- != 0)
 			{
 				uint v = kickstartROM.Read(0, src, Size.Long);
@@ -163,9 +163,9 @@ namespace RunAmiga.Core.Memory
 			return 0;
 		}
 
-		public IEnumerable<byte> GetEnumerable(int start, int length)
+		public IEnumerable<byte> GetEnumerable(int start, long length)
 		{
-			for (int i = start; i < Math.Min(start + length, memoryRange.Length); i++)
+			for (long i = start; i < Math.Min(start + length, memoryRange.Length); i++)
 				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
 					yield return 0;
 				else
@@ -174,7 +174,7 @@ namespace RunAmiga.Core.Memory
 
 		public IEnumerable<byte> GetEnumerable(int start)
 		{
-			for (int i = start; i < memoryRange.Length; i++)
+			for (long i = start; i < memoryRange.Length; i++)
 			{
 				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
 					yield return 0;
@@ -185,20 +185,20 @@ namespace RunAmiga.Core.Memory
 
 		public IEnumerable<uint> AsULong(int start)
 		{
-			for (uint i = (uint)start; i < memoryRange.Length; i += 4)
+			for (long i = start; i < memoryRange.Length; i += 4)
 				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
 					yield return 0;
 				else
-					yield return UnsafeRead32(i);
+					yield return UnsafeRead32((uint)i);
 		}
 
 		public IEnumerable<ushort> AsUWord(int start)
 		{
-			for (uint i = (uint)start; i < memoryRange.Length; i += 2)
+			for (long i = start; i < memoryRange.Length; i += 2)
 				if (memoryManager.DebugMappedDevice[(uint)i]  is IUnmappedMemory)
 					yield return 0;
 				else
-					yield return UnsafeRead16(i);
+					yield return UnsafeRead16((uint)i);
 		}
 
 		public int Length => (int)memoryRange.Length;

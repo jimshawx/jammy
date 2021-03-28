@@ -80,9 +80,9 @@ namespace RunAmiga.Tests
 			return 0;
 		}
 
-		public IEnumerable<byte> GetEnumerable(int start, int length)
+		public IEnumerable<byte> GetEnumerable(int start, long length)
 		{
-			return memory[start..Math.Min(memory.Length, start+length)];
+			return memory[start..(int)Math.Min(memory.Length, start+length)];
 		}
 
 		public IEnumerable<byte> GetEnumerable(int start)

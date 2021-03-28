@@ -90,6 +90,7 @@ namespace RunAmiga.Main
 			this.lbCustom = new System.Windows.Forms.ListBox();
 			this.btnDumpTrace = new System.Windows.Forms.Button();
 			this.btnIDEACK = new System.Windows.Forms.Button();
+			this.btnChange = new System.Windows.Forms.Button();
 			this.menuDisassembly.SuspendLayout();
 			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -326,7 +327,7 @@ namespace RunAmiga.Main
 			// colour0
 			// 
 			this.colour0.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour0.Location = new System.Drawing.Point(1136, 485);
+			this.colour0.Location = new System.Drawing.Point(1136, 514);
 			this.colour0.Name = "colour0";
 			this.colour0.Size = new System.Drawing.Size(12, 16);
 			this.colour0.TabIndex = 13;
@@ -335,7 +336,7 @@ namespace RunAmiga.Main
 			// colour1
 			// 
 			this.colour1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour1.Location = new System.Drawing.Point(1158, 485);
+			this.colour1.Location = new System.Drawing.Point(1158, 514);
 			this.colour1.Name = "colour1";
 			this.colour1.Size = new System.Drawing.Size(12, 16);
 			this.colour1.TabIndex = 14;
@@ -344,7 +345,7 @@ namespace RunAmiga.Main
 			// colour2
 			// 
 			this.colour2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour2.Location = new System.Drawing.Point(1180, 485);
+			this.colour2.Location = new System.Drawing.Point(1180, 514);
 			this.colour2.Name = "colour2";
 			this.colour2.Size = new System.Drawing.Size(12, 16);
 			this.colour2.TabIndex = 15;
@@ -353,7 +354,7 @@ namespace RunAmiga.Main
 			// colour3
 			// 
 			this.colour3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour3.Location = new System.Drawing.Point(1202, 485);
+			this.colour3.Location = new System.Drawing.Point(1202, 514);
 			this.colour3.Name = "colour3";
 			this.colour3.Size = new System.Drawing.Size(12, 16);
 			this.colour3.TabIndex = 16;
@@ -362,7 +363,7 @@ namespace RunAmiga.Main
 			// colour7
 			// 
 			this.colour7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour7.Location = new System.Drawing.Point(1202, 507);
+			this.colour7.Location = new System.Drawing.Point(1202, 536);
 			this.colour7.Name = "colour7";
 			this.colour7.Size = new System.Drawing.Size(12, 16);
 			this.colour7.TabIndex = 20;
@@ -371,7 +372,7 @@ namespace RunAmiga.Main
 			// colour6
 			// 
 			this.colour6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour6.Location = new System.Drawing.Point(1180, 507);
+			this.colour6.Location = new System.Drawing.Point(1180, 536);
 			this.colour6.Name = "colour6";
 			this.colour6.Size = new System.Drawing.Size(12, 16);
 			this.colour6.TabIndex = 19;
@@ -380,7 +381,7 @@ namespace RunAmiga.Main
 			// colour5
 			// 
 			this.colour5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour5.Location = new System.Drawing.Point(1158, 507);
+			this.colour5.Location = new System.Drawing.Point(1158, 536);
 			this.colour5.Name = "colour5";
 			this.colour5.Size = new System.Drawing.Size(12, 16);
 			this.colour5.TabIndex = 18;
@@ -389,7 +390,7 @@ namespace RunAmiga.Main
 			// colour4
 			// 
 			this.colour4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour4.Location = new System.Drawing.Point(1136, 507);
+			this.colour4.Location = new System.Drawing.Point(1136, 536);
 			this.colour4.Name = "colour4";
 			this.colour4.Size = new System.Drawing.Size(12, 16);
 			this.colour4.TabIndex = 17;
@@ -398,7 +399,7 @@ namespace RunAmiga.Main
 			// colour11
 			// 
 			this.colour11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour11.Location = new System.Drawing.Point(1202, 529);
+			this.colour11.Location = new System.Drawing.Point(1202, 558);
 			this.colour11.Name = "colour11";
 			this.colour11.Size = new System.Drawing.Size(12, 16);
 			this.colour11.TabIndex = 24;
@@ -407,7 +408,7 @@ namespace RunAmiga.Main
 			// colour10
 			// 
 			this.colour10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour10.Location = new System.Drawing.Point(1180, 529);
+			this.colour10.Location = new System.Drawing.Point(1180, 558);
 			this.colour10.Name = "colour10";
 			this.colour10.Size = new System.Drawing.Size(12, 16);
 			this.colour10.TabIndex = 23;
@@ -416,7 +417,7 @@ namespace RunAmiga.Main
 			// colour9
 			// 
 			this.colour9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour9.Location = new System.Drawing.Point(1158, 529);
+			this.colour9.Location = new System.Drawing.Point(1158, 558);
 			this.colour9.Name = "colour9";
 			this.colour9.Size = new System.Drawing.Size(12, 16);
 			this.colour9.TabIndex = 22;
@@ -425,7 +426,7 @@ namespace RunAmiga.Main
 			// colour8
 			// 
 			this.colour8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour8.Location = new System.Drawing.Point(1136, 529);
+			this.colour8.Location = new System.Drawing.Point(1136, 558);
 			this.colour8.Name = "colour8";
 			this.colour8.Size = new System.Drawing.Size(12, 16);
 			this.colour8.TabIndex = 21;
@@ -434,7 +435,7 @@ namespace RunAmiga.Main
 			// colour15
 			// 
 			this.colour15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour15.Location = new System.Drawing.Point(1202, 551);
+			this.colour15.Location = new System.Drawing.Point(1202, 580);
 			this.colour15.Name = "colour15";
 			this.colour15.Size = new System.Drawing.Size(12, 16);
 			this.colour15.TabIndex = 20;
@@ -443,7 +444,7 @@ namespace RunAmiga.Main
 			// colour14
 			// 
 			this.colour14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour14.Location = new System.Drawing.Point(1180, 551);
+			this.colour14.Location = new System.Drawing.Point(1180, 580);
 			this.colour14.Name = "colour14";
 			this.colour14.Size = new System.Drawing.Size(12, 16);
 			this.colour14.TabIndex = 19;
@@ -452,7 +453,7 @@ namespace RunAmiga.Main
 			// colour13
 			// 
 			this.colour13.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour13.Location = new System.Drawing.Point(1158, 551);
+			this.colour13.Location = new System.Drawing.Point(1158, 580);
 			this.colour13.Name = "colour13";
 			this.colour13.Size = new System.Drawing.Size(12, 16);
 			this.colour13.TabIndex = 18;
@@ -461,7 +462,7 @@ namespace RunAmiga.Main
 			// colour12
 			// 
 			this.colour12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour12.Location = new System.Drawing.Point(1136, 551);
+			this.colour12.Location = new System.Drawing.Point(1136, 580);
 			this.colour12.Name = "colour12";
 			this.colour12.Size = new System.Drawing.Size(12, 16);
 			this.colour12.TabIndex = 17;
@@ -605,7 +606,7 @@ namespace RunAmiga.Main
 			this.btnInsertDisk.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnInsertDisk.Location = new System.Drawing.Point(1039, 392);
 			this.btnInsertDisk.Name = "btnInsertDisk";
-			this.btnInsertDisk.Size = new System.Drawing.Size(71, 23);
+			this.btnInsertDisk.Size = new System.Drawing.Size(72, 23);
 			this.btnInsertDisk.TabIndex = 27;
 			this.btnInsertDisk.Text = "Insert Disk";
 			this.btnInsertDisk.UseVisualStyleBackColor = true;
@@ -625,9 +626,9 @@ namespace RunAmiga.Main
 			// btnCIAInt
 			// 
 			this.btnCIAInt.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnCIAInt.Location = new System.Drawing.Point(1039, 422);
+			this.btnCIAInt.Location = new System.Drawing.Point(1039, 451);
 			this.btnCIAInt.Name = "btnCIAInt";
-			this.btnCIAInt.Size = new System.Drawing.Size(71, 23);
+			this.btnCIAInt.Size = new System.Drawing.Size(72, 23);
 			this.btnCIAInt.TabIndex = 29;
 			this.btnCIAInt.Text = "CIA Int";
 			this.btnCIAInt.UseVisualStyleBackColor = true;
@@ -636,9 +637,9 @@ namespace RunAmiga.Main
 			// btnIRQ
 			// 
 			this.btnIRQ.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnIRQ.Location = new System.Drawing.Point(1039, 451);
+			this.btnIRQ.Location = new System.Drawing.Point(1039, 480);
 			this.btnIRQ.Name = "btnIRQ";
-			this.btnIRQ.Size = new System.Drawing.Size(71, 23);
+			this.btnIRQ.Size = new System.Drawing.Size(72, 23);
 			this.btnIRQ.TabIndex = 31;
 			this.btnIRQ.Text = "IRQ";
 			this.btnIRQ.UseVisualStyleBackColor = true;
@@ -661,7 +662,7 @@ namespace RunAmiga.Main
             "PORTS",
             "DSKBLK",
             "SOFTINT"});
-			this.cbIRQ.Location = new System.Drawing.Point(1120, 451);
+			this.cbIRQ.Location = new System.Drawing.Point(1120, 480);
 			this.cbIRQ.Name = "cbIRQ";
 			this.cbIRQ.Size = new System.Drawing.Size(71, 23);
 			this.cbIRQ.TabIndex = 32;
@@ -677,7 +678,7 @@ namespace RunAmiga.Main
             "TODALARM",
             "SERIAL",
             "FLAG"});
-			this.cbCIA.Location = new System.Drawing.Point(1120, 422);
+			this.cbCIA.Location = new System.Drawing.Point(1120, 451);
 			this.cbCIA.Name = "cbCIA";
 			this.cbCIA.Size = new System.Drawing.Size(71, 23);
 			this.cbCIA.TabIndex = 33;
@@ -728,9 +729,9 @@ namespace RunAmiga.Main
 			// btnINTENA
 			// 
 			this.btnINTENA.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnINTENA.Location = new System.Drawing.Point(1039, 478);
+			this.btnINTENA.Location = new System.Drawing.Point(1039, 507);
 			this.btnINTENA.Name = "btnINTENA";
-			this.btnINTENA.Size = new System.Drawing.Size(71, 23);
+			this.btnINTENA.Size = new System.Drawing.Size(72, 23);
 			this.btnINTENA.TabIndex = 37;
 			this.btnINTENA.Text = "INTENA";
 			this.btnINTENA.UseVisualStyleBackColor = true;
@@ -759,19 +760,32 @@ namespace RunAmiga.Main
 			// 
 			// btnIDEACK
 			// 
-			this.btnIDEACK.Location = new System.Drawing.Point(1039, 507);
+			this.btnIDEACK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnIDEACK.Location = new System.Drawing.Point(1039, 536);
 			this.btnIDEACK.Name = "btnIDEACK";
-			this.btnIDEACK.Size = new System.Drawing.Size(70, 23);
+			this.btnIDEACK.Size = new System.Drawing.Size(72, 23);
 			this.btnIDEACK.TabIndex = 40;
 			this.btnIDEACK.Text = "IDEACK";
 			this.btnIDEACK.UseVisualStyleBackColor = true;
 			this.btnIDEACK.Click += new System.EventHandler(this.btnIDEACK_Click);
+			// 
+			// btnChange
+			// 
+			this.btnChange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnChange.Location = new System.Drawing.Point(1039, 422);
+			this.btnChange.Name = "btnChange";
+			this.btnChange.Size = new System.Drawing.Size(72, 23);
+			this.btnChange.TabIndex = 41;
+			this.btnChange.Text = "Change";
+			this.btnChange.UseVisualStyleBackColor = true;
+			this.btnChange.Click += new System.EventHandler(this.btnChange_Click);
 			// 
 			// RunAmiga
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1414, 605);
+			this.Controls.Add(this.btnChange);
 			this.Controls.Add(this.btnIDEACK);
 			this.Controls.Add(this.btnDumpTrace);
 			this.Controls.Add(this.lbCustom);
@@ -907,6 +921,7 @@ namespace RunAmiga.Main
 		private System.Windows.Forms.ListBox lbCustom;
 		private System.Windows.Forms.Button btnDumpTrace;
 		private System.Windows.Forms.Button btnIDEACK;
+		private System.Windows.Forms.Button btnChange;
 	}
 }
 

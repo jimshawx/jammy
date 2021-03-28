@@ -46,9 +46,9 @@ namespace RunAmiga.Core.Custom
 
 	internal class HardDrive : IDisposable
 	{
-		private int diskNumber;
+		public int DiskNumber { get; private set; }
 		private long diskSizeBytes;
-		
+
 		private byte driveHead;
 		private byte cylinderLow;
 		private byte cylinderHigh;
@@ -121,9 +121,9 @@ namespace RunAmiga.Core.Custom
 		private MemoryMappedViewAccessor diskAccessor;
 		public void Init(long bytes, int diskNo)
 		{
-			diskNumber = diskNo;
+			DiskNumber = diskNo;
 			diskSizeBytes = bytes;
-			diskMap = MemoryMappedFile.CreateFromFile(Path.Combine(hardfilePath, $"dh{diskNumber}.hdf"), FileMode.OpenOrCreate,$"dh{diskNumber}", bytes, MemoryMappedFileAccess.ReadWrite);
+			diskMap = MemoryMappedFile.CreateFromFile(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"), FileMode.OpenOrCreate,$"dh{DiskNumber}", bytes, MemoryMappedFileAccess.ReadWrite);
 			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
 		}
 
@@ -290,15 +290,15 @@ namespace RunAmiga.Core.Custom
 				case IDE.Data: value = ReadDataWord(); break;
 			}
 
-			if (address != IDE.Data && address != Gayle.INTREQ && address != IDE.Status_Command)
-				logger.LogTrace($"IDE Controller R {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size} ");
+			//if (address != IDE.Data && address != Gayle.INTREQ && address != IDE.Status_Command)
+			//	logger.LogTrace($"IDE Controller R {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size} ");
 
 			return value;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (address != IDE.Data) logger.LogTrace($"IDE Controller W {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size}");
+			//if (address != IDE.Data) logger.LogTrace($"IDE Controller W {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size}");
 
 			switch (address)
 			{
@@ -342,8 +342,8 @@ namespace RunAmiga.Core.Custom
 		{
 			uint intreq = 0;
 
-			logger.LogTrace($"INTENA {gayleINTENA}");
-			logger.LogTrace($"INTREQ {gayleINTREQ}");
+			//logger.LogTrace($"INTENA {gayleINTENA}");
+			//logger.LogTrace($"INTREQ {gayleINTREQ}");
 
 			GAYLE_INTENA masked = gayleINTENA & gayleINTREQ & (GAYLE_INTENA)0xfc;
 			if ((masked & GAYLE_INTENA.IRQ) != 0)
@@ -407,9 +407,15 @@ namespace RunAmiga.Core.Custom
 
 		private class Transfer
 		{
-			public Transfer(byte sectorCount, TransferDirection hostWrite)
+			private HardDrive drive;
+			public int WordCount { get; set; }
+			public int SectorCount { get; set; }
+			public TransferDirection Direction { get; set; }
+
+			public Transfer(byte sectorCount, TransferDirection hostWrite, HardDrive drive)
 			{
 				this.SectorCount = sectorCount;
+				this.drive = drive;
 				if (this.SectorCount == 0) this.SectorCount = 256;
 				Direction = hostWrite;
 			}
@@ -419,11 +425,6 @@ namespace RunAmiga.Core.Custom
 				HostRead,
 				HostWrite,
 			}
-
-			public int WordCount { get; set; }
-			public int SectorCount { get; set; }
-			public TransferDirection Direction { get; set; }
-
 		}
 
 		private void NextWord()
@@ -638,7 +639,7 @@ namespace RunAmiga.Core.Custom
 			string cmd;
 			switch (value)
 			{
-				case 0x10:
+				case var v when (v >= 0x10 && v <= 0x1f):
 					cmd = "Recalibrate";
 					currentDrive.CylinderLow = currentDrive.CylinderHigh = 0;
 					currentDrive.IdeStatus |= IDE_STATUS.DSC;
@@ -647,7 +648,7 @@ namespace RunAmiga.Core.Custom
 
 				case 0xEC:
 					cmd = "Identify Drive";
-					currentTransfer = new Transfer(1, Transfer.TransferDirection.HostRead);
+					currentTransfer = new Transfer(1, Transfer.TransferDirection.HostRead, currentDrive);
 					currentDrive.BeginRead(driveId);
 					NextSector();
 					break;
@@ -660,27 +661,64 @@ namespace RunAmiga.Core.Custom
 					Ack();
 					break;
 
-				case 0x20:
+				case 0x20: case 0x21:
 					cmd = "Read Sector(s)";
-					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostRead);
-					logger.LogTrace($"cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
+					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostRead, currentDrive);
+					logger.LogTrace($"READ drv: {currentDrive.DiskNumber} cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
 					currentDrive.BeginRead();
 					NextSector();
 					break;
 
-				case 0x30:
+				case 0x30: case 0x31:
 					cmd = "Write Sector(s)";
-					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostWrite);
-					logger.LogTrace($"cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
+					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostWrite, currentDrive);
+					logger.LogTrace($"WRITE drv: {currentDrive.DiskNumber} cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
 					currentDrive.BeginWrite();
 					NextSector();
 					break;
 
+				case 0x40: case 0x41:
+					cmd = "Verify Sector(s)";
+					Ack();//all good :)
+					break;
+
+				case var v when (v >= 0x70 && v <= 0x7f):
+					cmd = "Seek";
+					currentDrive.IdeStatus |= IDE_STATUS.DSC;
+					Ack();
+					break;
+
+				//other mandatory commands not supported (do nothing)
+				case 0x50:
+					cmd = "Format Track";
+					Ack();
+					break;
+
+				case 0x90:
+					cmd = "Execute Drive Diagnostic";
+					Ack();//all good here :)s
+					break;
+
+				case 0x22: case 0x23:
+					cmd = "Read Long";
+					Ack();
+					break;
+
+				case 0x32: case 0x33:
+					cmd = "Write Long";
+					Ack();
+					break;
+
+				//other non-mandatory commands not supported
 				default:
-					throw new NotImplementedException($"unknown command {value:X2} {value}");
+					cmd = $"unknown command {value:X2} {value}";
+					currentDrive.ErrorFeature = 1 << 2;//ABRT
+					currentDrive.IdeStatus |= IDE_STATUS.ERR;
+					Ack();
+					break;
 			}
 
-			logger.LogTrace($"IDE Command {cmd} ${value:X2} {value} drive: {(currentDrive.DriveHead >> 4) & 1}");
+			//logger.LogTrace($"IDE Command {cmd} ${value:X2} {value} drive: {(currentDrive.DriveHead >> 4) & 1}");
 		}
 
 		private ushort ReadDataWord()

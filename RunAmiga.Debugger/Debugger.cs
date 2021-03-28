@@ -352,6 +352,11 @@ namespace RunAmiga.Debugger
 			diskDrives.RemoveDisk();
 		}
 
+		public void ChangeDisk(string fileName)
+		{
+			diskDrives.ChangeDisk(fileName);
+		}
+
 		public void CIAInt(ICRB icr)
 		{
 			ciaa.DebugSetICR(icr);
@@ -395,7 +400,7 @@ namespace RunAmiga.Debugger
 
 		public uint KickstartSize()
 		{
-			return kickstart.MappedRange().Length;
+			return (uint)kickstart.MappedRange().Length;
 		}
 	}
 }

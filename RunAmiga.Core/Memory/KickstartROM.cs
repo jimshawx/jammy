@@ -50,7 +50,7 @@ namespace RunAmiga.Core.Memory
 				{
 					throw new ArgumentOutOfRangeException();
 				}
-				addressMask = memoryRange.Length - 1;
+				addressMask = (uint)(memoryRange.Length - 1);
 			}
 			catch
 			{
