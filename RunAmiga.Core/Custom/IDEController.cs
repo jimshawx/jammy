@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -43,10 +44,10 @@ namespace RunAmiga.Core.Custom
 		BSY = 128
 	}
 
-	internal class HardDrive
+	internal class HardDrive : IDisposable
 	{
-		public ushort[] Disk { get; set; }
-		public uint DiskNumber { get; set; }
+		private int diskNumber;
+		private long diskSizeBytes;
 		
 		private byte driveHead;
 		private byte cylinderLow;
@@ -104,28 +105,109 @@ namespace RunAmiga.Core.Custom
 			driveHead |= (byte)((LbaAddress >> 24) & 0x0f);
 		}
 
-		private string hardfilePath = "../../../../";
-
-		public void LoadDisk()
+		private bool IsLBA()
 		{
-			try
-			{
-				byte[] b = File.ReadAllBytes(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"));
-				ushort[] s = b.AsUWord().ToArray();
-				Array.Copy(s, Disk, Math.Min(Disk.Length, s.Length));
-			}
-			catch { }
+			return ((driveHead >> 6) & 1) != 0;
 		}
+
+		private string hardfilePath = "../../../../";
 
 		public void SyncDisk()
 		{
-			File.WriteAllBytes(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"), Disk.AsByte().ToArray());
+			diskAccessor.Flush();
 		}
 
+		private MemoryMappedFile diskMap;
+		private MemoryMappedViewAccessor diskAccessor;
+		public void Init(long bytes, int diskNo)
+		{
+			diskNumber = diskNo;
+			diskSizeBytes = bytes;
+			diskMap = MemoryMappedFile.CreateFromFile(Path.Combine(hardfilePath, $"dh{diskNumber}.hdf"), FileMode.OpenOrCreate,$"dh{diskNumber}", bytes, MemoryMappedFileAccess.ReadWrite);
+			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
+		}
+
+		// Write
+
+		private long currentWriteIndex = -1;
+		public void BeginWrite()
+		{
+			if (IsLBA())
+				currentWriteIndex = LbaAddress;
+			else
+				currentWriteIndex = ChsAddress;
+			currentWriteIndex *= 512;
+		}
+
+		public void Write(ushort v)
+		{
+			if (currentWriteIndex == -1) throw new IndexOutOfRangeException();
+
+			diskAccessor.Write(currentWriteIndex, v);
+			currentWriteIndex += 2;
+		}
+
+		// Read
+
+		private IEnumerator<ushort> dataSource = null;
+		public void BeginRead(ushort [] src)
+		{
+			dataSource = src.AsEnumerable().GetEnumerator();
+			currentReadIndex = -1;
+		}
+
+		private long currentReadIndex = -1;
+		public void BeginRead()
+		{
+			if (IsLBA())
+				currentReadIndex = LbaAddress;
+			else
+				currentReadIndex = ChsAddress;
+			currentReadIndex *= 512;
+
+			if (dataSource != null)
+			{
+				dataSource.Dispose();
+				dataSource = null;
+			}
+		}
+
+		public ushort Read()
+		{
+			ushort v=0;
+			if (dataSource != null)
+			{
+				if (!dataSource.MoveNext())
+				{
+					dataSource.Dispose();
+					dataSource = null;
+				}
+				else
+				{
+					v = dataSource.Current;
+				}
+			}
+			else
+			{
+				if (currentReadIndex == -1) throw new IndexOutOfRangeException();
+
+				v = diskAccessor.ReadUInt16(currentReadIndex);
+				currentReadIndex += 2;
+			}
+			return v;
+		}
+
+		public void Dispose()
+		{
+			SyncDisk();
+			dataSource?.Dispose();
+			diskAccessor.Dispose();
+			diskMap.Dispose();
+		}
 	}
 
 	//IDE Controller on the A600 and A1200
-	public class IDEController : IIDEController
+	public class IDEController : IIDEController, IDisposable
 	{
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
@@ -316,9 +398,6 @@ namespace RunAmiga.Core.Custom
 			currentDrive = hardDrives[1];
 			ClearBusy();
 			currentDrive = thisDrive;
-
-			hardDrives[0].LoadDisk();
-			hardDrives[1].LoadDisk();
 		}
 
 		private void Ack()
@@ -419,28 +498,24 @@ namespace RunAmiga.Core.Custom
 			//blocks per cylinder = sectors * heads
 			//cylinders * blocks per cylinder = total number of blocks on the drive
 
-			//let's say we want a 10MB Hard Disk
+			//let's say we want a 165MB Hard Disk
 
 			uint sectorSize = 512;//common standard for sector size
-			uint bytes = 165 * 1024 * 1024; // 10,485,760 bytes
-			uint blocks = bytes / sectorSize; // 20480
+			long bytes = 165 * 1024 * 1024; // 173,015,040 bytes
 
-			hardDrives[0].Disk = new ushort[bytes / 2];
-			hardDrives[0].DiskNumber = 0;
-			hardDrives[0].LoadDisk();
-			hardDrives[1].Disk = new ushort[bytes / 2];
-			hardDrives[1].DiskNumber = 1;
-			hardDrives[1].LoadDisk();
+			hardDrives[0].Init(bytes, 0);
+			hardDrives[1].Init(bytes, 1);
 
 			//uint heads = 16;//these are 4 bits in ATA spec for head number
 			//uint sectors = 256;//there are 8 bits for sector number
 			//uint cylindes = 65536;//these are 16 bits for cylinder number
 
-			uint heads = 16;//maximum number of heads
+			uint heads = 16;//standard (maximum) number of heads
+			uint sectors = 63;//standard is 63 sectors
 
-			uint sectorCylinders = blocks / heads;//1280 = sectors * cylinders
-			uint sectors = 63;//let's pick 64 sectors
-			uint cylinders = sectorCylinders / sectors;
+			uint blocks = (uint)(bytes / sectorSize); // 335,872
+			uint sectorCylinders = blocks / heads;//20,992 = sectors * cylinders
+			uint cylinders = sectorCylinders / sectors;//332
 
 			//configuration
 			driveId[0] = 1 << 6;//fixed drive
@@ -467,6 +542,8 @@ namespace RunAmiga.Core.Custom
 
 			//model number (27-46)
 			SetString(27,46, "JIMHD");
+
+			//seems like Amiga ignores this and always uses CHS
 
 			//supports LBA
 			driveId[49] = 1 << 9;
@@ -571,7 +648,7 @@ namespace RunAmiga.Core.Custom
 				case 0xEC:
 					cmd = "Identify Drive";
 					currentTransfer = new Transfer(1, Transfer.TransferDirection.HostRead);
-					dataSource = driveId.AsEnumerable().GetEnumerator();
+					currentDrive.BeginRead(driveId);
 					NextSector();
 					break;
 
@@ -586,24 +663,17 @@ namespace RunAmiga.Core.Custom
 				case 0x20:
 					cmd = "Read Sector(s)";
 					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostRead);
-					logger.LogTrace($"cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead>>6)&1}");
-					if (((currentDrive.DriveHead >> 6) & 1) != 0)
-						dataSource = currentDrive.Disk.AsEnumerable().Skip((int)currentDrive.LbaAddress * 512 / 2).GetEnumerator();
-					else
-						dataSource = currentDrive.Disk.AsEnumerable().Skip((int)currentDrive.ChsAddress * 512 / 2).GetEnumerator();
-
+					logger.LogTrace($"cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
+					currentDrive.BeginRead();
 					NextSector();
 					break;
 
 				case 0x30:
 					cmd = "Write Sector(s)";
 					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostWrite);
-					NextSector();
 					logger.LogTrace($"cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
-					if (((currentDrive.DriveHead >> 6) & 1) != 0)
-						dataDest = currentDrive.LbaAddress * 512 / 2;
-					else
-						dataDest = currentDrive.ChsAddress * 512 / 2;
+					currentDrive.BeginWrite();
+					NextSector();
 					break;
 
 				default:
@@ -613,59 +683,25 @@ namespace RunAmiga.Core.Custom
 			logger.LogTrace($"IDE Command {cmd} ${value:X2} {value} drive: {(currentDrive.DriveHead >> 4) & 1}");
 		}
 
-		private IEnumerator<ushort> dataSource = null;
-
 		private ushort ReadDataWord()
 		{
-			ushort v = 0xffff;
-			if (dataSource != null)
-			{
-				if (!dataSource.MoveNext())
-				{
-					dataSource.Dispose();
-					dataSource = null;
-				}
-				else
-				{
-					v = dataSource.Current;
-				}
-			}
-
+			ushort v = currentDrive.Read();
 			//logger.LogTrace($"R {v:X4}");
 			NextWord();
 			return v;
 		}
 
-		//if (currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
-		//{
-		//	bi = 0;
-		//	var sb = new StringBuilder();
-		//	sb.AppendLine();
-		//	for (int i = 0; i < 16; i++)
-		//	{
-		//		for (int j = 0; j < 16; j++)
-		//			sb.Append($"{b[bi++]:X4} ");
-		//		sb.AppendLine();
-		//	}
-		//	bi = 0;
-		//	for (int i = 0; i < 4; i++)
-		//	{
-		//		for (int j = 0; j < 64; j++, bi++)
-		//			sb.Append($"{((b[bi]>=32 && b[bi]<127 )?Convert.ToChar(b[bi]) : '.')}");
-		//		sb.AppendLine();
-		//	}
-
-		//	logger.LogTrace(sb.ToString());
-		//	bi = 0;
-		//}
-
-		private uint dataDest;
 		private void WriteDataWord(ushort data)
 		{
-			currentDrive.Disk[dataDest++] = data;
+			currentDrive.Write(data);
 			//logger.LogTrace($"W {data:X4}");
-
 			NextWord();
+		}
+
+		public void Dispose()
+		{
+			hardDrives[0].Dispose();
+			hardDrives[1].Dispose();
 		}
 	}
 
