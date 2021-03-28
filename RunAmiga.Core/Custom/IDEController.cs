@@ -69,6 +69,7 @@ namespace RunAmiga.Core.Custom
 
 		//derived values
 		public uint LbaAddress { get; private set; }//28 bit address
+		public uint ChsAddress { get; private set; }//28 bit address
 
 		//drive geometry provided by OS
 		public byte SectorsPerTrack { get; set; }
@@ -81,6 +82,14 @@ namespace RunAmiga.Core.Custom
 			LbaAddress = (LbaAddress & 0xff00ffff) | (uint)((cylinderHigh << 16) & 0x00ff0000);
 			LbaAddress = (LbaAddress & 0xffff00ff) | (uint)((cylinderLow << 8) & 0x0000ff00);
 			LbaAddress = (LbaAddress & 0xffffff00) | sectorNumber;
+
+			ChsAddress = 0;
+			int HPC = 16;
+			int SPT = 63;
+			int C = cylinderLow + (cylinderHigh << 8);
+			int H = driveHead & 0xf;
+			int S = sectorNumber;
+			ChsAddress = (uint)((C * HPC + H) * SPT + (S - 1));
 		}
 
 		public void IncrementAddress()
@@ -443,50 +452,21 @@ namespace RunAmiga.Core.Custom
 			driveId[5] = (ushort)sectorSize;
 			driveId[6] = (ushort)sectors;
 
-			//vendor
-			driveId[7] = 'J';
-			driveId[8] = 'I';
-			driveId[9] = 'M';
+			//vendor (7-9)
+			SetString(7, 9, "JIM");
 
-			//serial number
-			driveId[10] = '3';
-			driveId[11] = '.';
-			driveId[12] = '1';
-			driveId[13] = '4';
-			driveId[14] = '1';
-			driveId[15] = '5';
-			driveId[16] = '9';
-			driveId[17] = '2';
-			driveId[18] = '6';
-			driveId[19] = '5';
+			//serial number (10-19)
+			SetString(10,19, "3.14159265");
 
-			//firmware revision
+			//firmware revision (23-26)
+			SetString(23,26,"24.06.72");
 			driveId[23] = 24;
 			driveId[24] = 06;
-			driveId[26] = 19;
-			driveId[27] = 72;
+			driveId[25] = 19;
+			driveId[26] = 72;
 
-			//model number
-			driveId[27] = 0x4848;
-			driveId[28] = 'I';
-			driveId[29] = 'M';
-			driveId[30] = 'S';
-			driveId[31] = 'H';
-			driveId[32] = 'D';
-			driveId[33] = 'J';
-			driveId[34] = 'I';
-			driveId[35] = 'M';
-			driveId[36] = 'S';
-			driveId[37] = 'H';
-			driveId[38] = 'D';
-			driveId[39] = 'J';
-			driveId[40] = 'I';
-			driveId[41] = 'M';
-			driveId[42] = 'S';
-			driveId[43] = 'H';
-			driveId[44] = 'D';
-			driveId[45] = 'J';
-			driveId[46] = 'I';
+			//model number (27-46)
+			SetString(27,46, "JIMHD");
 
 			//supports LBA
 			driveId[49] = 1 << 9;
@@ -499,6 +479,17 @@ namespace RunAmiga.Core.Custom
 			//it's little-endian, need to swap to big-endian for Amiga
 			for (int i = 0; i < driveId.Length; i++)
 				driveId[i] = (ushort)((driveId[i] >> 8) | (driveId[i] << 8));
+		}
+
+		private void SetString(int start, int end, string txt)
+		{
+			int wordLength = end - start + 1;
+			var b = new byte[Math.Max(txt.Length,wordLength*2)];
+			Array.Fill(b, Convert.ToByte(' '));
+			for (int i = 0; i < txt.Length; i++)
+				b[i] = Convert.ToByte(txt[i]);
+			var src = b.AsUWord().Take(wordLength).ToArray();
+			Array.Copy(src, 0, driveId, start, src.Length);
 		}
 
 		//drive identification
@@ -595,8 +586,12 @@ namespace RunAmiga.Core.Custom
 				case 0x20:
 					cmd = "Read Sector(s)";
 					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostRead);
-					logger.LogTrace($"cnt: {currentTransfer.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead>>6)&1}");
-					dataSource = currentDrive.Disk.AsEnumerable().Skip((int)currentDrive.LbaAddress*512/2).GetEnumerator(); 
+					logger.LogTrace($"cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead>>6)&1}");
+					if (((currentDrive.DriveHead >> 6) & 1) != 0)
+						dataSource = currentDrive.Disk.AsEnumerable().Skip((int)currentDrive.LbaAddress * 512 / 2).GetEnumerator();
+					else
+						dataSource = currentDrive.Disk.AsEnumerable().Skip((int)currentDrive.ChsAddress * 512 / 2).GetEnumerator();
+
 					NextSector();
 					break;
 
@@ -604,8 +599,11 @@ namespace RunAmiga.Core.Custom
 					cmd = "Write Sector(s)";
 					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostWrite);
 					NextSector();
-					logger.LogTrace($"cnt: {currentTransfer.SectorCount} addr: {currentDrive.LbaAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
-					dataDest = currentDrive.LbaAddress*512 / 2;
+					logger.LogTrace($"cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
+					if (((currentDrive.DriveHead >> 6) & 1) != 0)
+						dataDest = currentDrive.LbaAddress * 512 / 2;
+					else
+						dataDest = currentDrive.ChsAddress * 512 / 2;
 					break;
 
 				default:
