@@ -4,6 +4,9 @@
 	{
 		public string KickStart { get; set; }
 		public string DF0 { get; set; }
+		public string DF1 { get; set; }
+		public string DF2 { get; set; }
+		public string DF3 { get; set; }
 		public int MemorySize { get;set; }
 		public bool AlignmentExceptions { get; set; }
 		public bool UnknownInstructionExceptions { get; set; }

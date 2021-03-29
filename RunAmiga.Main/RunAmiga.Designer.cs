@@ -91,6 +91,10 @@ namespace RunAmiga.Main
 			this.btnDumpTrace = new System.Windows.Forms.Button();
 			this.btnIDEACK = new System.Windows.Forms.Button();
 			this.btnChange = new System.Windows.Forms.Button();
+			this.radioDF0 = new System.Windows.Forms.RadioButton();
+			this.radioDF1 = new System.Windows.Forms.RadioButton();
+			this.radioDF2 = new System.Windows.Forms.RadioButton();
+			this.radioDF3 = new System.Windows.Forms.RadioButton();
 			this.menuDisassembly.SuspendLayout();
 			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -780,11 +784,64 @@ namespace RunAmiga.Main
 			this.btnChange.UseVisualStyleBackColor = true;
 			this.btnChange.Click += new System.EventHandler(this.btnChange_Click);
 			// 
+			// radioDF0
+			// 
+			this.radioDF0.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.radioDF0.AutoSize = true;
+			this.radioDF0.Location = new System.Drawing.Point(1116, 424);
+			this.radioDF0.Name = "radioDF0";
+			this.radioDF0.Size = new System.Drawing.Size(14, 13);
+			this.radioDF0.TabIndex = 42;
+			this.radioDF0.TabStop = true;
+			this.radioDF0.UseVisualStyleBackColor = true;
+			this.radioDF0.CheckedChanged += new System.EventHandler(this.radioDF2_CheckedChanged);
+			this.radioDF0.Checked = true;
+			// 
+			// radioDF1
+			// 
+			this.radioDF1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.radioDF1.AutoSize = true;
+			this.radioDF1.Location = new System.Drawing.Point(1136, 424);
+			this.radioDF1.Name = "radioDF1";
+			this.radioDF1.Size = new System.Drawing.Size(14, 13);
+			this.radioDF1.TabIndex = 43;
+			this.radioDF1.TabStop = true;
+			this.radioDF1.UseVisualStyleBackColor = true;
+			this.radioDF1.CheckedChanged += new System.EventHandler(this.radioDF2_CheckedChanged);
+			// 
+			// radioDF2
+			// 
+			this.radioDF2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.radioDF2.AutoSize = true;
+			this.radioDF2.Location = new System.Drawing.Point(1156, 424);
+			this.radioDF2.Name = "radioDF2";
+			this.radioDF2.Size = new System.Drawing.Size(14, 13);
+			this.radioDF2.TabIndex = 44;
+			this.radioDF2.TabStop = true;
+			this.radioDF2.UseVisualStyleBackColor = true;
+			this.radioDF2.CheckedChanged += new System.EventHandler(this.radioDF2_CheckedChanged);
+			// 
+			// radioDF3
+			// 
+			this.radioDF3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.radioDF3.AutoSize = true;
+			this.radioDF3.Location = new System.Drawing.Point(1177, 424);
+			this.radioDF3.Name = "radioDF3";
+			this.radioDF3.Size = new System.Drawing.Size(14, 13);
+			this.radioDF3.TabIndex = 45;
+			this.radioDF3.TabStop = true;
+			this.radioDF3.UseVisualStyleBackColor = true;
+			this.radioDF3.CheckedChanged += new System.EventHandler(this.radioDF2_CheckedChanged);
+			// 
 			// RunAmiga
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1414, 605);
+			this.Controls.Add(this.radioDF3);
+			this.Controls.Add(this.radioDF2);
+			this.Controls.Add(this.radioDF1);
+			this.Controls.Add(this.radioDF0);
 			this.Controls.Add(this.btnChange);
 			this.Controls.Add(this.btnIDEACK);
 			this.Controls.Add(this.btnDumpTrace);
@@ -857,6 +914,7 @@ namespace RunAmiga.Main
 			((System.ComponentModel.ISupportInitialize)(this.colour13)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.colour12)).EndInit();
 			this.ResumeLayout(false);
+			this.PerformLayout();
 
 		}
 
@@ -922,6 +980,10 @@ namespace RunAmiga.Main
 		private System.Windows.Forms.Button btnDumpTrace;
 		private System.Windows.Forms.Button btnIDEACK;
 		private System.Windows.Forms.Button btnChange;
+		private System.Windows.Forms.RadioButton radioDF0;
+		private System.Windows.Forms.RadioButton radioDF1;
+		private System.Windows.Forms.RadioButton radioDF2;
+		private System.Windows.Forms.RadioButton radioDF3;
 	}
 }
 

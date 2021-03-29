@@ -35,10 +35,14 @@ namespace RunAmiga.Core.Custom
 
 	public class Disk
 	{
-		public byte[] data = new byte [0];
+		private const string floppyPath = "../../../../";
+
+		public byte[] data;
 
 		public Disk(string adfFileName)
 		{
+			if (!adfFileName.StartsWith(floppyPath))
+				adfFileName = Path.Combine(floppyPath, adfFileName);
 			data = File.ReadAllBytes(adfFileName);
 		}
 	}
@@ -91,10 +95,10 @@ namespace RunAmiga.Core.Custom
 			this.logger = logger;
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
-			Disk workbenchDisk;
-			if (settings.Value.DF0 != null)
+			Disk[] disks = new Disk[4];
+			if (!string.IsNullOrEmpty(settings.Value.DF0))
 			{
-				workbenchDisk = new Disk($"../../../../{settings.Value.DF0}");
+				disks[0] = new Disk(settings.Value.DF0);
 			}
 			else
 			{
@@ -102,21 +106,25 @@ namespace RunAmiga.Core.Custom
 				{
 					default:
 					case "1.2":
-						workbenchDisk = new Disk("../../../../workbench1.2.adf");
+						disks[0] = new Disk("workbench1.2.adf");
 						break;
 					case "1.3":
-						workbenchDisk = new Disk("../../../../workbench1.3.adf");
+						disks[0] = new Disk("workbench1.3.adf");
 						break;
 					case "2.04":
 					case "2.05":
-						workbenchDisk = new Disk("../../../../workbench2.04.adf");
+						disks[0] = new Disk("workbench2.04.adf");
 						break;
 					case "3.1":
-						workbenchDisk = new Disk("../../../../workbench3.1.adf");
+						disks[0] = new Disk("workbench3.1.adf");
 						break;
-					
+
 				}
 			}
+
+			if (!string.IsNullOrEmpty(settings.Value.DF1)) disks[1] = new Disk(settings.Value.DF1);
+			if (!string.IsNullOrEmpty(settings.Value.DF2)) disks[2] = new Disk(settings.Value.DF2);
+			if (!string.IsNullOrEmpty(settings.Value.DF3)) disks[3] = new Disk(settings.Value.DF3);
 
 			drive = new Drive[4];
 			for (int i = 0; i < 4; i++)
@@ -132,8 +140,14 @@ namespace RunAmiga.Core.Custom
 			drive[2].attached = false;
 			drive[3].attached = false;
 
-			drive[0].disk = workbenchDisk;
-			drive[0].diskinserted = true;
+			for (int i = 0; i < 4; i++)
+			{
+				//drive[0].attached = true;
+
+				drive[0].disk = disks[i];
+				if (drive[0].disk != null)
+					drive[0].diskinserted = true;
+			}
 		}
 
 		public enum DriveState
@@ -458,22 +472,22 @@ namespace RunAmiga.Core.Custom
 		}
 
 		//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)
-		public void InsertDisk()
+		public void InsertDisk(int df)
 		{
-			drive[0].state = DriveState.DiskNotChanged;
-			drive[0].stateCounter = 0;
+			drive[df].state = DriveState.DiskNotChanged;
+			drive[df].stateCounter = 0;
 		}
 
-		public void RemoveDisk()
+		public void RemoveDisk(int df)
 		{
-			drive[0].state = DriveState.DiskChange;
+			drive[df].state = DriveState.DiskChange;
 		}
 
-		public void ChangeDisk(string filename)
+		public void ChangeDisk(int df, string filename)
 		{
-			drive[0].state = DriveState.DiskChange;
-			drive[0].disk = new Disk(filename);
-			drive[0].diskinserted = true;
+			drive[df].state = DriveState.DiskChange;
+			drive[df].disk = new Disk(filename);
+			drive[df].diskinserted = true;
 		}
 	}
 }

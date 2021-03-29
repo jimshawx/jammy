@@ -343,19 +343,19 @@ namespace RunAmiga.Debugger
 			return memory.FindSequence(Encoding.ASCII.GetBytes(txt));
 		}
 
-		public void InsertDisk()
+		public void InsertDisk(int df)
 		{
-			diskDrives.InsertDisk();
+			diskDrives.InsertDisk(df);
 		}
 
-		public void RemoveDisk()
+		public void RemoveDisk(int df)
 		{
-			diskDrives.RemoveDisk();
+			diskDrives.RemoveDisk(df);
 		}
 
-		public void ChangeDisk(string fileName)
+		public void ChangeDisk(int df, string fileName)
 		{
-			diskDrives.ChangeDisk(fileName);
+			diskDrives.ChangeDisk(df, fileName);
 		}
 
 		public void CIAInt(ICRB icr)

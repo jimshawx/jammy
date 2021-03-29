@@ -450,16 +450,6 @@ namespace RunAmiga.Main
 			UpdateDisplay();
 		}
 
-		private void btnInsertDisk_Click(object sender, EventArgs e)
-		{
-			debugger.InsertDisk();
-		}
-
-		private void btnRemoveDisk_Click(object sender, EventArgs e)
-		{
-			debugger.RemoveDisk();
-		}
-
 		private void btnCIAInt_Click(object sender, EventArgs e)
 		{
 			Machine.LockEmulation();
@@ -610,13 +600,50 @@ namespace RunAmiga.Main
 			debugger.IDEACK();
 		}
 
+		private int currentDrive = 0;
 		private void btnChange_Click(object sender, EventArgs e)
 		{
 			using (var ofd = new OpenFileDialog())
 			{
 				if (ofd.ShowDialog() == DialogResult.OK)
-					debugger.ChangeDisk(ofd.FileName);
+					debugger.ChangeDisk(currentDrive, ofd.FileName);
 			}
+		}
+
+		private void btnInsertDisk_Click(object sender, EventArgs e)
+		{
+			debugger.InsertDisk(currentDrive);
+		}
+
+		private void btnRemoveDisk_Click(object sender, EventArgs e)
+		{
+			debugger.RemoveDisk(currentDrive);
+		}
+
+		private void radioDF2_CheckedChanged(object sender, EventArgs e)
+		{
+			var button = (RadioButton)sender;
+
+			radioDF0.CheckedChanged -= radioDF2_CheckedChanged;
+			radioDF1.CheckedChanged -= radioDF2_CheckedChanged;
+			radioDF2.CheckedChanged -= radioDF2_CheckedChanged;
+			radioDF3.CheckedChanged -= radioDF2_CheckedChanged;
+			
+			radioDF0.Checked = false;
+			radioDF1.Checked = false;
+			radioDF2.Checked = false;
+			radioDF3.Checked = false;
+			button.Checked = true;
+
+			if (button == radioDF0) currentDrive = 0;
+			if (button == radioDF1) currentDrive = 1;
+			if (button == radioDF2) currentDrive = 2;
+			if (button == radioDF3) currentDrive = 3;
+
+			radioDF0.CheckedChanged += radioDF2_CheckedChanged;
+			radioDF1.CheckedChanged += radioDF2_CheckedChanged;
+			radioDF2.CheckedChanged += radioDF2_CheckedChanged;
+			radioDF3.CheckedChanged += radioDF2_CheckedChanged;
 		}
 	}
 }

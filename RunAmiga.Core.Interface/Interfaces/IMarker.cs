@@ -53,9 +53,9 @@ namespace RunAmiga.Core.Interface.Interfaces
 	public interface ICopper : IEmulate, ICustomReadWrite { }
 	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB
 	{
-		void InsertDisk();
-		void RemoveDisk();
-		void ChangeDisk(string fileName);
+		void InsertDisk(int df);
+		void RemoveDisk(int df);
+		void ChangeDisk(int df, string fileName);
 	}
 	public interface IKeyboard : IEmulate
 	{
@@ -137,9 +137,9 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void BreakAtNextPC();
 		void SetPC(uint pc);
 		uint FindMemoryText(string txt);
-		void InsertDisk();
-		void RemoveDisk();
-		void ChangeDisk(string fileName);
+		void InsertDisk(int df);
+		void RemoveDisk(int df);
+		void ChangeDisk(int df, string fileName);
 		void CIAInt(ICRB icr);
 		void IRQ(uint irq);
 		void INTENA(uint irq);
