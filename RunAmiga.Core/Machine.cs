@@ -153,7 +153,7 @@ namespace RunAmiga.Core
 		{
 			uint stepOutSp = 0xffffffff;
 
-			emulationMode = EmulationMode.Stopped;
+			emulationMode = EmulationMode.Running;
 			emulationModeChange = EmulationMode.NoChange;
 
 			emulationSemaphore.Wait();

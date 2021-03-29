@@ -61,7 +61,7 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
-		private int rate = 124;
+		private int rate = 100;
 
 		private void PlayingDMA(int channel)
 		{
@@ -70,17 +70,17 @@ namespace RunAmiga.Core.Custom
 				return;
 
 			ch[channel].working_audper -= rate;
-			if (ch[channel].working_audper < 0)
+			if (ch[channel].working_audper <= 0)
 			{
 				//read the sample into live audXdat
-				ch[channel].auddat = ch[channel].auddat = (ushort)memory.Read(0, ch[channel].working_audlc, Size.Word);
+				ch[channel].auddat = (ushort)memory.Read(0, ch[channel].working_audlc, Size.Word);
 				//update the pointers and reset the period
 				ch[channel].working_audlc += 2;
 				ch[channel].working_audlen--;
 				ch[channel].working_audper += ch[channel].audper;
 
 				//loop restart?
-				if (ch[channel].working_audlen == 1)
+				if (ch[channel].working_audlen <= 0)
 				{
 					ch[channel].working_audlc = ch[channel].audlc;
 					ch[channel].working_audlen = ch[channel].audlen;
@@ -165,20 +165,11 @@ namespace RunAmiga.Core.Custom
 			public ushort auddat { get; set; }
 			public uint audlc { get; set; }
 
-			public ushort working_audlen { get;set; }
+			public int working_audlen { get;set; }
 			public int working_audper { get; set; }
 			public uint working_audlc { get; set; }
 
 			public AudioMode mode { get; set; }
-
-			public void CopyTo(AudioChannel cp)
-			{
-				cp.audper = this.audper;
-				cp.audvol = this.audvol;
-				cp.audlen = this.audlen;
-				cp.auddat = this.auddat;
-				cp.audlc = this.audlc;
-			}
 
 			public void Clear()
 			{
@@ -357,6 +348,7 @@ namespace RunAmiga.Core.Custom
 		{
 			xaudio = new XAudio2();
 			masteringVoice = new MasteringVoice(xaudio);
+			masteringVoice.GetVoiceDetails(out VoiceDetails masteringChannelDetails);
 
 			xaudio.SetDebugConfiguration(new DebugConfiguration
 			{
@@ -374,18 +366,21 @@ namespace RunAmiga.Core.Custom
 				channels[i].xaudioVoice.Start();
 
 				channels[i].xaudioBuffer = new AudioBuffer[2];
-				channels[i].xaudioBuffer[0] = new AudioBuffer { AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE };
-				channels[i].xaudioBuffer[1] = new AudioBuffer { AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE };
+				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE};
+				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE};
 				channels[i].xaudioCBuffer = new byte[BUFFER_SIZE];
 				channels[i].xaudioCIndex = 0;
 				channels[i].currentBuffer = 0;
+
+				//panning 1,2 left   0,3 right
+				channels[i].xaudioVoice.GetVoiceDetails(out VoiceDetails channelDetails);
+				float[] outputMatrix = new float[channelDetails.InputChannelCount * masteringChannelDetails.InputChannelCount];
+
+				if (i == 0 || i == 3) { outputMatrix[0] = 0.0f; outputMatrix[1] = 1.0f; }//hard right
+				else { outputMatrix[0] = 1.0f; outputMatrix[1] = 0.0f; }//hard left
+
+				channels[i].xaudioVoice.SetOutputMatrix(null, channelDetails.InputChannelCount, masteringChannelDetails.InputChannelCount, outputMatrix);
 			}
-			//1,2 left
-			//0,3 right
-			//channels[0].xaudioVoice.SetOutputMatrix(1, 1, new float[2] {});
-			//channels[1].xaudioVoice.SetOutputMatrix(1, 1,);
-			//channels[2].xaudioVoice.SetOutputMatrix(1, 1,);
-			//channels[3].xaudioVoice.SetOutputMatrix(1, 1,);
 		}
 
 		private void AudioMix()

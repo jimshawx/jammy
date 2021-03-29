@@ -142,11 +142,11 @@ namespace RunAmiga.Core.Custom
 
 			for (int i = 0; i < 4; i++)
 			{
-				//drive[0].attached = true;
+				//drive[i].attached = true;
 
-				drive[0].disk = disks[i];
-				if (drive[0].disk != null)
-					drive[0].diskinserted = true;
+				drive[i].disk = disks[i];
+				if (drive[i].disk != null)
+					drive[i].diskinserted = true;
 			}
 		}
 

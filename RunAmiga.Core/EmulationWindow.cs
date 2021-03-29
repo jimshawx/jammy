@@ -35,7 +35,7 @@ namespace RunAmiga.Core
 			ss.Wait();
 			var t = new Thread(() =>
 			{
-				emulation = new Form {Name = "Emulation", Text = "RunAmiga : Alt-Tab or Middle Mouse Click to detach mouse"};
+				emulation = new Form {Name = "Emulation", Text = "RunAmiga : Alt-Tab or Middle Mouse Click to detach mouse", ControlBox = false};
 
 				if (emulation.Handle == IntPtr.Zero)
 					throw new ApplicationException();
