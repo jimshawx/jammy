@@ -61,55 +61,8 @@ namespace RunAmiga.Core.Custom
 			DriveIRQBit = 1 << diskNo;
 		}
 
-		private byte driveHead;
-		private byte cylinderLow;
-		private byte cylinderHigh;
-		private byte sectorNumber;
-
-
-		//registers
-		public IDE_STATUS IdeStatus { get; set; } = IDE_STATUS.DRDY;
-
-		public byte SectorCount { get; set; }
-		public byte ErrorFeature { get; set; }
-
-		public byte DriveHead { get => driveHead; set => driveHead = value; }
-		public byte CylinderHigh { get => cylinderHigh; set => cylinderHigh = value; }
-		public byte CylinderLow { get => cylinderLow; set => cylinderLow = value; }
-		public byte SectorNumber { get => sectorNumber; set => sectorNumber = value; }
-
 		//drive id bit
 		public int DriveIRQBit { get; private set; }
-
-		//derived values
-
-		//28 bit address
-		public uint LbaAddress
-		{
-			get
-			{
-				uint address = 0;
-				address = (address & 0xf0ffffff) | (uint)((driveHead << 24) & 0x0f000000);
-				address = (address & 0xff00ffff) | (uint)((cylinderHigh << 16) & 0x00ff0000);
-				address = (address & 0xffff00ff) | (uint)((cylinderLow << 8) & 0x0000ff00);
-				address = (address & 0xffffff00) | sectorNumber;
-				return address;
-			}
-		}
-
-		//28 bit address
-		public uint ChsAddress
-		{
-			get
-			{
-				int HPC = this.Heads;//always 16
-				int SPT = this.Sectors;//always 63
-				int C = cylinderLow + (cylinderHigh << 8);
-				int H = driveHead & 0xf;
-				int S = Math.Max((byte)1, sectorNumber);
-				return (uint)((C * HPC + H) * SPT + (S - 1));
-			}
-		}
 
 		//drive geometry provided by OS
 		public byte ConfiguredParamsSectorsPerTrack { get; set; }
@@ -123,42 +76,6 @@ namespace RunAmiga.Core.Custom
 		//0 Primary or 1 Secondary
 		public int DiskNumber { get; }
 
-		public void IncrementAddress(int count = 1)
-		{
-			while (count-- > 0)
-			{
-				if (IsLBA())
-				{
-					int nextSector = sectorNumber + 1;
-					int nextCylinderLow = cylinderLow + (nextSector >> 8);
-					int nextCylinderHigh = cylinderHigh + (nextCylinderLow >> 8);
-					int nextHead = (driveHead & 0xf) + (nextCylinderHigh >> 8);
-
-					sectorNumber = (byte)nextSector;
-					cylinderLow = (byte)nextCylinderLow;
-					cylinderHigh = (byte)nextCylinderHigh;
-					driveHead = (byte)((driveHead & 0xf0) | (nextHead & 0x0f));
-				}
-				else
-				{
-					int nextSector = sectorNumber + 1;
-					int nextHead = (driveHead & 0x0f) + (nextSector >> 6);
-					int nextCylinderLow = cylinderLow + (nextHead >> 4);
-					int nextCylinderHigh = cylinderHigh + (nextCylinderLow >> 8);
-
-					sectorNumber = (byte)(nextSector == 64 ? 1 : nextSector);
-					driveHead = (byte)((driveHead & 0xf0) | (nextHead & 0x0f));
-					cylinderLow = (byte)nextCylinderLow;
-					cylinderHigh = (byte)nextCylinderHigh;
-				}
-			}
-		}
-
-		private bool IsLBA()
-		{
-			return ((driveHead >> 6) & 1) != 0;
-		}
-
 		private string hardfilePath = "../../../../";
 
 		// Sync
@@ -171,13 +88,9 @@ namespace RunAmiga.Core.Custom
 		// Write
 
 		private long currentWriteIndex = -1;
-		public void BeginWrite()
+		public void BeginWrite(uint address)
 		{
-			if (IsLBA())
-				currentWriteIndex = LbaAddress;
-			else
-				currentWriteIndex = ChsAddress;
-			currentWriteIndex *= 512;
+			currentWriteIndex = (long)address * 512;
 		}
 
 		public void Write(ushort v)
@@ -198,13 +111,9 @@ namespace RunAmiga.Core.Custom
 		}
 
 		private long currentReadIndex = -1;
-		public void BeginRead()
+		public void BeginRead(uint address)
 		{
-			if (IsLBA())
-				currentReadIndex = LbaAddress;
-			else
-				currentReadIndex = ChsAddress;
-			currentReadIndex *= 512;
+			currentReadIndex = (long)address * 512;
 
 			if (dataSource != null)
 			{
@@ -311,6 +220,100 @@ namespace RunAmiga.Core.Custom
 		private readonly HardDrive[] hardDrives = new HardDrive[2];
 		private HardDrive currentDrive;
 
+
+		private byte driveHead;
+		private byte cylinderLow;
+		private byte cylinderHigh;
+		private byte sectorNumber;
+
+
+		//registers
+		public IDE_STATUS IdeStatus { get; set; } = IDE_STATUS.DRDY;
+
+		public byte SectorCount { get; set; }
+		public byte ErrorFeature { get; set; }
+
+		public byte DriveHead { get => driveHead; set => driveHead = value; }
+		public byte CylinderHigh { get => cylinderHigh; set => cylinderHigh = value; }
+		public byte CylinderLow { get => cylinderLow; set => cylinderLow = value; }
+		public byte SectorNumber { get => sectorNumber; set => sectorNumber = value; }
+
+		//derived values
+
+		//28 bit address
+		public uint LbaAddress
+		{
+			get
+			{
+				uint address = 0;
+				address = (address & 0xf0ffffff) | (uint)((driveHead << 24) & 0x0f000000);
+				address = (address & 0xff00ffff) | (uint)((cylinderHigh << 16) & 0x00ff0000);
+				address = (address & 0xffff00ff) | (uint)((cylinderLow << 8) & 0x0000ff00);
+				address = (address & 0xffffff00) | sectorNumber;
+				return address;
+			}
+		}
+
+		//28 bit address
+		public uint ChsAddress
+		{
+			get
+			{
+				int HPC = currentDrive.Heads;//always 16
+				int SPT = currentDrive.Sectors;//always 63
+				int C = cylinderLow + (cylinderHigh << 8);
+				int H = driveHead & 0xf;
+				int S = Math.Max((byte)1, sectorNumber);
+				return (uint)((C * HPC + H) * SPT + (S - 1));
+			}
+		}
+
+		private bool IsLBA()
+		{
+			return ((driveHead >> 6) & 1) != 0;
+		}
+
+		private uint CurrentAddress()
+		{
+			if (IsLBA())
+				return LbaAddress;
+			else
+				return ChsAddress;
+		}
+
+		public void IncrementAddress(int count = 1)
+		{
+			if (count == 0) count = 256;
+			while (count-- > 0)
+			{
+				if (IsLBA())
+				{
+					int nextSector = sectorNumber + 1;
+					int nextCylinderLow = cylinderLow + (nextSector >> 8);
+					int nextCylinderHigh = cylinderHigh + (nextCylinderLow >> 8);
+					int nextHead = (driveHead & 0xf) + (nextCylinderHigh >> 8);
+
+					sectorNumber = (byte)nextSector;
+					cylinderLow = (byte)nextCylinderLow;
+					cylinderHigh = (byte)nextCylinderHigh;
+					driveHead = (byte)((driveHead & 0xf0) | (nextHead & 0x0f));
+				}
+				else
+				{
+					int nextSector = sectorNumber + 1;
+					int nextHead = (driveHead & 0x0f) + (nextSector >> 6);
+					int nextCylinderLow = cylinderLow + (nextHead >> 4);
+					int nextCylinderHigh = cylinderHigh + (nextCylinderLow >> 8);
+
+					sectorNumber = (byte)(nextSector == 64 ? 1 : nextSector);
+					driveHead = (byte)((driveHead & 0xf0) | (nextHead & 0x0f));
+					cylinderLow = (byte)nextCylinderLow;
+					cylinderHigh = (byte)nextCylinderHigh;
+				}
+			}
+		}
+
+
 		public uint Read(uint insaddr, uint address, Size size)
 		{
 			uint value = 0;
@@ -321,28 +324,28 @@ namespace RunAmiga.Core.Custom
 				case Gayle.INTREQ: value = (byte)gayleINTREQ; break;
 				case Gayle.Config: value = gayleConfig; break;
 
-				case IDE.AltStatus_DevControl: value = (byte)currentDrive.IdeStatus; break;
-				case IDE.Status_Command: value = (byte)currentDrive.IdeStatus; Clr(); break;
-				case IDE.Error_Feature: value = currentDrive.ErrorFeature; break;
+				case IDE.AltStatus_DevControl: value = (byte)IdeStatus; break;
+				case IDE.Status_Command: value = (byte)IdeStatus; Clr(); break;
+				case IDE.Error_Feature: value = ErrorFeature; break;
 
-				case IDE.DriveHead: value = currentDrive.DriveHead; break;
-				case IDE.CylinderLow: value = currentDrive.CylinderLow; break;
-				case IDE.CylinderHigh: value = currentDrive.CylinderHigh; break;
-				case IDE.SectorNumber: value = currentDrive.SectorNumber; break;
-				case IDE.SectorCount: value = currentDrive.SectorCount; break;
+				case IDE.DriveHead: value = DriveHead; break;
+				case IDE.CylinderLow: value = CylinderLow; break;
+				case IDE.CylinderHigh: value = CylinderHigh; break;
+				case IDE.SectorNumber: value = SectorNumber; break;
+				case IDE.SectorCount: value = SectorCount; break;
 
 				case IDE.Data: value = ReadDataWord(); break;
 			}
 
 			//if (address != IDE.Data && address != Gayle.INTREQ && address != IDE.Status_Command)
-			//	logger.LogTrace($"IDE Controller R {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size} ");
+			//	logger.LogTrace($"IDE Controller R {GetName(address)} {value:X2} status: {IdeStatus} drive: {(DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size} ");
 
 			return value;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			//if (address != IDE.Data) logger.LogTrace($"IDE Controller W {GetName(address)} {value:X2} status: {currentDrive.IdeStatus} drive: {(currentDrive.DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size}");
+			//if (address != IDE.Data) logger.LogTrace($"IDE Controller W {GetName(address)} {value:X2} status: {IdeStatus} drive: {(DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size}");
 
 			switch (address)
 			{
@@ -354,22 +357,22 @@ namespace RunAmiga.Core.Custom
 				case IDE.AltStatus_DevControl: DevControl((byte)value); break;
 				case IDE.Status_Command: Command((byte)value); break;
 				case IDE.Error_Feature: Feature((byte)value); break;
-				case IDE.SectorCount: currentDrive.SectorCount = (byte)value; break;
+				case IDE.SectorCount: SectorCount = (byte)value; break;
 
 				case IDE.DriveHead:
 					currentDrive = hardDrives[(value >> 4) & 1];
-					currentDrive.DriveHead = (byte)value;
+					DriveHead = (byte)value;
 					break;
-				case IDE.CylinderLow: currentDrive.CylinderLow = (byte)value; break;
-				case IDE.CylinderHigh: currentDrive.CylinderHigh = (byte)value; break;
-				case IDE.SectorNumber: currentDrive.SectorNumber = (byte)value; break;
+				case IDE.CylinderLow: CylinderLow = (byte)value; break;
+				case IDE.CylinderHigh: CylinderHigh = (byte)value; break;
+				case IDE.SectorNumber: SectorNumber = (byte)value; break;
 
 				case IDE.Data: WriteDataWord((ushort)value); break;
 			}
 
 			if (address == IDE.CylinderLow || address == IDE.CylinderHigh || address == IDE.SectorNumber || address == IDE.DriveHead)
 			{
-				logger.LogTrace($"W {GetName(address)} {value:X2} {currentDrive.ChsAddress:X8}");
+				logger.LogTrace($"W {GetName(address)} {value:X2} {ChsAddress:X8}");
 			}
 		}
 
@@ -427,8 +430,8 @@ namespace RunAmiga.Core.Custom
 
 		private void ClearBusy()
 		{
-			currentDrive.IdeStatus &= ~IDE_STATUS.BSY;
-			currentDrive.IdeStatus |= IDE_STATUS.DRDY;//drive is always ready
+			IdeStatus &= ~IDE_STATUS.BSY;
+			IdeStatus |= IDE_STATUS.DRDY;//drive is always ready
 
 			//flag the BSY bit change interrupt
 			//gayleINTREQ |= GAYLE_INTENA.BSY | GAYLE_INTENA.IRQ;
@@ -505,17 +508,17 @@ namespace RunAmiga.Core.Custom
 				}
 				else if (currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
 				{
-					currentDrive.IdeStatus &= ~IDE_STATUS.DRQ;
+					IdeStatus &= ~IDE_STATUS.DRQ;
 					currentDrive.SyncDisk();
 				}
-				currentDrive.IncrementAddress();
+				IncrementAddress();
 				currentTransfer = null;
 			}
 			else
 			{
-				currentDrive.IncrementAddress();
+				IncrementAddress();
 
-				currentDrive.IdeStatus |= IDE_STATUS.DRQ;
+				IdeStatus |= IDE_STATUS.DRQ;
 
 				//next sector
 				if (currentTransfer.Direction == Transfer.TransferDirection.HostRead)
@@ -700,15 +703,15 @@ namespace RunAmiga.Core.Custom
 
 		private void Command(byte value)
 		{
-			currentDrive.IdeStatus = IDE_STATUS.DRDY;
+			IdeStatus = IDE_STATUS.DRDY;
 
 			string cmd;
 			switch (value)
 			{
 				case var v when (v >= 0x10 && v <= 0x1f):
 					cmd = "Recalibrate";
-					currentDrive.CylinderLow = currentDrive.CylinderHigh = 0;
-					currentDrive.IdeStatus |= IDE_STATUS.DSC;
+					CylinderLow = CylinderHigh = 0;
+					IdeStatus |= IDE_STATUS.DSC;
 					Ack();
 					break;
 
@@ -722,8 +725,8 @@ namespace RunAmiga.Core.Custom
 
 				case 0x91:
 					cmd = "Initialise Drive Parameters";
-					currentDrive.ConfiguredParamsSectorsPerTrack = currentDrive.SectorCount;
-					currentDrive.ConfiguredParamsHeads = (byte)((currentDrive.DriveHead & 0xf) + 1);
+					currentDrive.ConfiguredParamsSectorsPerTrack = SectorCount;
+					currentDrive.ConfiguredParamsHeads = (byte)((DriveHead & 0xf) + 1);
 					logger.LogTrace($"Drive Parameters spt: {currentDrive.ConfiguredParamsSectorsPerTrack} h: {currentDrive.ConfiguredParamsHeads}");
 					Ack();
 					break;
@@ -731,31 +734,31 @@ namespace RunAmiga.Core.Custom
 				case 0x20:
 				case 0x21:
 					cmd = "Read Sector(s)";
-					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostRead, currentDrive);
-					logger.LogTrace($"READ drv: {currentDrive.DiskNumber} cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
-					currentDrive.BeginRead();
+					currentTransfer = new Transfer(SectorCount, Transfer.TransferDirection.HostRead, currentDrive);
+					logger.LogTrace($"READ drv: {currentDrive.DiskNumber} cnt: {currentTransfer.SectorCount} LBA: {LbaAddress:X8} CHS: {ChsAddress:X8} lba: {(DriveHead >> 6) & 1}");
+					currentDrive.BeginRead(CurrentAddress());
 					NextSector();
 					break;
 
 				case 0x30:
 				case 0x31:
 					cmd = "Write Sector(s)";
-					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostWrite, currentDrive);
-					logger.LogTrace($"WRITE drv: {currentDrive.DiskNumber} cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
-					currentDrive.BeginWrite();
+					currentTransfer = new Transfer(SectorCount, Transfer.TransferDirection.HostWrite, currentDrive);
+					logger.LogTrace($"WRITE drv: {currentDrive.DiskNumber} cnt: {SectorCount} LBA: {LbaAddress:X8} CHS: {ChsAddress:X8} lba: {(DriveHead >> 6) & 1}");
+					currentDrive.BeginWrite(CurrentAddress());
 					NextSector();
 					break;
 
 				case 0x40:
 				case 0x41:
 					cmd = "Verify Sector(s)";
-					currentDrive.IncrementAddress(currentDrive.SectorCount);
+					IncrementAddress(SectorCount);
 					Ack();//all good :)
 					break;
 
 				case var v when (v >= 0x70 && v <= 0x7f):
 					cmd = "Seek";
-					currentDrive.IdeStatus |= IDE_STATUS.DSC;
+					IdeStatus |= IDE_STATUS.DSC;
 					Ack();
 					break;
 
@@ -785,8 +788,8 @@ namespace RunAmiga.Core.Custom
 				//other non-mandatory commands not supported
 				default:
 					cmd = $"unknown command {value:X2} {value}";
-					currentDrive.ErrorFeature = 1 << 2;//ABRT
-					currentDrive.IdeStatus |= IDE_STATUS.ERR;
+					ErrorFeature = 1 << 2;//ABRT
+					IdeStatus |= IDE_STATUS.ERR;
 					Ack();
 					break;
 			}
