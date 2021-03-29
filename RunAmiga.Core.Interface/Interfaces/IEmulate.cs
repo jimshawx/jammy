@@ -1,8 +1,12 @@
 ﻿namespace RunAmiga.Core.Interface.Interfaces
 {
-	public interface IEmulate
+	public interface IReset
+	{
+		public void Reset();
+	}
+
+	public interface IEmulate : IReset
 	{
 		public void Emulate(ulong cycles);
-		public void Reset();
 	}
 }

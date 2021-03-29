@@ -39,8 +39,8 @@ namespace RunAmiga.Core.Interface.Interfaces
 		public void WriteINTENA(ushort v);
 	}
 
-	public interface IBattClock : IEmulate, IMemoryMappedDevice { }
-	public interface IBlitter: IEmulate, ICustomReadWrite { }
+	public interface IBattClock : IReset, IMemoryMappedDevice { }
+	public interface IBlitter: IReset, ICustomReadWrite { }
 	public interface ICIA : IEmulate, IMemoryMappedDevice
 	{
 		byte SnoopICRR();
@@ -66,7 +66,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 
 	public interface IMouse : IEmulate, ICustomReadWrite, IReadWritePRA { }
 
-	public interface IInterrupt : IEmulate
+	public interface IInterrupt : IReset
 	{
 		void AssertInterrupt(uint intreq, bool asserted = true);
 		void SetPaulaInterruptLevel(uint intreq, uint intena);
@@ -93,7 +93,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 	}
 	public interface IDebuggableMemory { }
 
-	public interface IChips : IEmulate, IMemoryMappedDevice
+	public interface IChips : IReset, IMemoryMappedDevice
 	{
 		void Init(IBlitter blitter, ICopper copper, IAudio audio);
 	}
@@ -155,7 +155,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void Fetch(uint insaddr, uint address, uint value, Size size);
 	}
 
-	public interface IMemoryMapper : IMemoryMappedDevice, IEmulate
+	public interface IMemoryMapper : IMemoryMappedDevice, IReset
 	{
 		void AddMemoryIntercept(IMemoryInterceptor interceptor);
 		uint Fetch(uint insaddr, uint address, Size size);
@@ -219,7 +219,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 	public interface IUnmappedMemory : IMemoryMappedDevice, IDebuggableMemory { }
 	public interface IZorroRAM : IMemoryMappedDevice, IDebuggableMemory { }
 
-	public interface IIDEController : IMemoryMappedDevice
+	public interface IIDEController : IMemoryMappedDevice, IReset
 	{
 		void DebugAck();
 	}

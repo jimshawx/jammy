@@ -55,10 +55,6 @@ namespace RunAmiga.Core.Memory
 			memoryManager.AddDevice(memory);
 		}
 
-		public void Emulate(ulong cycles)
-		{
-		}
-
 		public void Reset()
 		{
 			CopyKickstart();

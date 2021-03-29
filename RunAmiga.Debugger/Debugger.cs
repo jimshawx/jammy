@@ -53,7 +53,7 @@ namespace RunAmiga.Debugger
 			this.ciab = ciab;
 			this.logger = logger;
 
-			memoryMapper.AddMemoryIntercept(this);
+			//memoryMapper.AddMemoryIntercept(this);
 
 			//dump the kickstart ROM details and disassemblies
 			disassembly.ShowRomTags();
@@ -275,6 +275,7 @@ namespace RunAmiga.Debugger
 			CheckLVOAccess(address, size);
 
 			//analyser.MarkAsType(address, MemType.Code, size);
+			
 			breakpoints.Read(insaddr, address, value, size);
 		}
 

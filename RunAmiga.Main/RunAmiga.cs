@@ -64,16 +64,19 @@ namespace RunAmiga.Main
 			{
 				while (!uiUpdateTokenSource.IsCancellationRequested)
 				{
-					this.Invoke((Action)UpdatePowerLight);
+					//this.Invoke((Action)UpdatePowerLight);
 
-					this.Invoke((Action)delegate()
+					if (UI.UI.IsDirty)
 					{
-						if (UI.UI.IsDirty)
+						this.Invoke((Action)delegate()
 						{
-							SetSelection();
-							UpdateDisplay();
-						}
-					});
+							if (UI.UI.IsDirty)
+							{
+								SetSelection();
+								UpdateDisplay();
+							}
+						});
+					}
 
 					Task.Delay(500).Wait(uiUpdateTokenSource.Token);
 				}
@@ -331,7 +334,7 @@ namespace RunAmiga.Main
 			UI.UI.IsDirty = false;
 
 			uiUpdateTokenSource.Cancel();
-			uiUpdateTask.Wait(1000);
+			//uiUpdateTask.Wait(1000);
 		}
 
 		private void btnRefresh_Click(object sender, EventArgs e)
@@ -605,6 +608,15 @@ namespace RunAmiga.Main
 		private void btnIDEACK_Click(object sender, EventArgs e)
 		{
 			debugger.IDEACK();
+		}
+
+		private void btnChange_Click(object sender, EventArgs e)
+		{
+			using (var ofd = new OpenFileDialog())
+			{
+				if (ofd.ShowDialog() == DialogResult.OK)
+					debugger.ChangeDisk(ofd.FileName);
+			}
 		}
 	}
 }

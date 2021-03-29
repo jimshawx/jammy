@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using Microsoft.Extensions.Logging;
@@ -17,16 +18,14 @@ namespace RunAmiga.Core.Custom
 		private ICopper copper;
 		private IBlitter blitter;
 		private readonly IMouse mouse;
-		private readonly IKeyboard keyboard;
 		private readonly ILogger logger;
 		private IAudio audio;
 
-		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, ILogger<Chips> logger)
+		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, ILogger<Chips> logger)
 		{
 			this.interrupt = interrupt;
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
-			this.keyboard = keyboard;
 			this.logger = logger;
 		}
 
@@ -37,25 +36,8 @@ namespace RunAmiga.Core.Custom
 			this.audio = audio;
 		}
 
-		public void Emulate(ulong cycles)
-		{
-			copper.Emulate(cycles);
-			blitter.Emulate(cycles);
-			diskDrives.Emulate(cycles);
-			mouse.Emulate(cycles);
-			keyboard.Emulate(cycles);
-			audio.Emulate(cycles);
-		}
-
 		public void Reset()
 		{
-			copper.Reset();
-			blitter.Reset();
-			diskDrives.Reset();
-			mouse.Reset();
-			keyboard.Reset();
-			audio.Reset();
-
 			//http://eab.abime.net/showthread.php?t=72300
 			regs[REG(ChipRegs.LISAID)] = 0x00fc;//LISA (0x00fc ECS Denise 8373) (OCS Denise 8362 just returns last value on bus).
 			regs[REG(ChipRegs.LISAID)] = 0x00f8;//Lisa returns 0xF8

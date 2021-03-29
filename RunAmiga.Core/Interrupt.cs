@@ -38,11 +38,6 @@ namespace RunAmiga.Core
 			this.custom = custom;
 		}
 
-		public void Emulate(ulong cycles)
-		{
-			
-		}
-
 		public void Reset()
 		{
 			paulaInterruptLevel = 0;

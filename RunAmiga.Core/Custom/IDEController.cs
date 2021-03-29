@@ -46,13 +46,26 @@ namespace RunAmiga.Core.Custom
 
 	internal class HardDrive : IDisposable
 	{
-		public int DiskNumber { get; private set; }
-		private long diskSizeBytes;
+		private readonly MemoryMappedFile diskMap;
+		private readonly MemoryMappedViewAccessor diskAccessor;
+
+		public HardDrive(long bytes, int diskNo, uint C, uint H, uint S)
+		{
+			DiskNumber = diskNo;
+			this.Cylinders = (int)C;
+			this.Heads = (int)H;
+			this.Sectors = (int)S;
+			diskMap = MemoryMappedFile.CreateFromFile(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"), FileMode.OpenOrCreate, $"dh{DiskNumber}", bytes, MemoryMappedFileAccess.ReadWrite);
+			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
+
+			DriveIRQBit = 1 << diskNo;
+		}
 
 		private byte driveHead;
 		private byte cylinderLow;
 		private byte cylinderHigh;
 		private byte sectorNumber;
+
 
 		//registers
 		public IDE_STATUS IdeStatus { get; set; } = IDE_STATUS.DRDY;
@@ -60,49 +73,85 @@ namespace RunAmiga.Core.Custom
 		public byte SectorCount { get; set; }
 		public byte ErrorFeature { get; set; }
 
-		public byte DriveHead { get => driveHead; set { driveHead = value; UpdateAddress(); }}
-		public byte CylinderHigh { get => cylinderHigh; set { cylinderHigh = value; UpdateAddress(); } }
-		public byte CylinderLow { get => cylinderLow; set { cylinderLow = value; UpdateAddress(); }}
-		public byte SectorNumber { get => sectorNumber; set { sectorNumber = value; UpdateAddress(); }}
+		public byte DriveHead { get => driveHead; set => driveHead = value; }
+		public byte CylinderHigh { get => cylinderHigh; set => cylinderHigh = value; }
+		public byte CylinderLow { get => cylinderLow; set => cylinderLow = value; }
+		public byte SectorNumber { get => sectorNumber; set => sectorNumber = value; }
 
 		//drive id bit
-		public int DriveIRQBit { get; set; }
+		public int DriveIRQBit { get; private set; }
 
 		//derived values
-		public uint LbaAddress { get; private set; }//28 bit address
-		public uint ChsAddress { get; private set; }//28 bit address
 
-		//drive geometry provided by OS
-		public byte SectorsPerTrack { get; set; }
-		public byte Heads { get; set; }
-
-		private void UpdateAddress()
+		//28 bit address
+		public uint LbaAddress
 		{
-			LbaAddress = 0;
-			LbaAddress = (LbaAddress & 0xf0ffffff) | (uint)((driveHead << 24) & 0x0f000000);
-			LbaAddress = (LbaAddress & 0xff00ffff) | (uint)((cylinderHigh << 16) & 0x00ff0000);
-			LbaAddress = (LbaAddress & 0xffff00ff) | (uint)((cylinderLow << 8) & 0x0000ff00);
-			LbaAddress = (LbaAddress & 0xffffff00) | sectorNumber;
-
-			ChsAddress = 0;
-			int HPC = 16;
-			int SPT = 63;
-			int C = cylinderLow + (cylinderHigh << 8);
-			int H = driveHead & 0xf;
-			int S = sectorNumber;
-			ChsAddress = (uint)((C * HPC + H) * SPT + (S - 1));
+			get
+			{
+				uint address = 0;
+				address = (address & 0xf0ffffff) | (uint)((driveHead << 24) & 0x0f000000);
+				address = (address & 0xff00ffff) | (uint)((cylinderHigh << 16) & 0x00ff0000);
+				address = (address & 0xffff00ff) | (uint)((cylinderLow << 8) & 0x0000ff00);
+				address = (address & 0xffffff00) | sectorNumber;
+				return address;
+			}
 		}
 
-		public void IncrementAddress()
+		//28 bit address
+		public uint ChsAddress
 		{
-			//add sector count to lba address and put it back in the registers
-			LbaAddress += SectorCount;
+			get
+			{
+				int HPC = this.Heads;//always 16
+				int SPT = this.Sectors;//always 63
+				int C = cylinderLow + (cylinderHigh << 8);
+				int H = driveHead & 0xf;
+				int S = Math.Max((byte)1, sectorNumber);
+				return (uint)((C * HPC + H) * SPT + (S - 1));
+			}
+		}
 
-			sectorNumber = (byte)(LbaAddress & 0xff);
-			cylinderLow = (byte)((LbaAddress >> 8) & 0xff);
-			cylinderHigh = (byte)((LbaAddress >> 16) & 0xff);
-			driveHead &= 0xf0;
-			driveHead |= (byte)((LbaAddress >> 24) & 0x0f);
+		//drive geometry provided by OS
+		public byte ConfiguredParamsSectorsPerTrack { get; set; }
+		public byte ConfiguredParamsHeads { get; set; }
+
+		//drive geometry provided by Drive
+		public int Cylinders { get; }
+		public int Heads { get; }
+		public int Sectors { get; }
+
+		//0 Primary or 1 Secondary
+		public int DiskNumber { get; }
+
+		public void IncrementAddress(int count = 1)
+		{
+			while (count-- > 0)
+			{
+				if (IsLBA())
+				{
+					int nextSector = sectorNumber + 1;
+					int nextCylinderLow = cylinderLow + (nextSector >> 8);
+					int nextCylinderHigh = cylinderHigh + (nextCylinderLow >> 8);
+					int nextHead = (driveHead & 0xf) + (nextCylinderHigh >> 8);
+
+					sectorNumber = (byte)nextSector;
+					cylinderLow = (byte)nextCylinderLow;
+					cylinderHigh = (byte)nextCylinderHigh;
+					driveHead = (byte)((driveHead & 0xf0) | (nextHead & 0x0f));
+				}
+				else
+				{
+					int nextSector = sectorNumber + 1;
+					int nextHead = (driveHead & 0x0f) + (nextSector >> 6);
+					int nextCylinderLow = cylinderLow + (nextHead >> 4);
+					int nextCylinderHigh = cylinderHigh + (nextCylinderLow >> 8);
+
+					sectorNumber = (byte)(nextSector == 64 ? 1 : nextSector);
+					driveHead = (byte)((driveHead & 0xf0) | (nextHead & 0x0f));
+					cylinderLow = (byte)nextCylinderLow;
+					cylinderHigh = (byte)nextCylinderHigh;
+				}
+			}
 		}
 
 		private bool IsLBA()
@@ -112,19 +161,11 @@ namespace RunAmiga.Core.Custom
 
 		private string hardfilePath = "../../../../";
 
+		// Sync
+
 		public void SyncDisk()
 		{
 			diskAccessor.Flush();
-		}
-
-		private MemoryMappedFile diskMap;
-		private MemoryMappedViewAccessor diskAccessor;
-		public void Init(long bytes, int diskNo)
-		{
-			DiskNumber = diskNo;
-			diskSizeBytes = bytes;
-			diskMap = MemoryMappedFile.CreateFromFile(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"), FileMode.OpenOrCreate,$"dh{DiskNumber}", bytes, MemoryMappedFileAccess.ReadWrite);
-			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
 		}
 
 		// Write
@@ -150,7 +191,7 @@ namespace RunAmiga.Core.Custom
 		// Read
 
 		private IEnumerator<ushort> dataSource = null;
-		public void BeginRead(ushort [] src)
+		public void BeginRead(ushort[] src)
 		{
 			dataSource = src.AsEnumerable().GetEnumerator();
 			currentReadIndex = -1;
@@ -174,7 +215,7 @@ namespace RunAmiga.Core.Custom
 
 		public ushort Read()
 		{
-			ushort v=0;
+			ushort v = 0;
 			if (dataSource != null)
 			{
 				if (!dataSource.MoveNext())
@@ -218,10 +259,13 @@ namespace RunAmiga.Core.Custom
 			this.interrupt = interrupt;
 			this.logger = logger;
 
-			hardDrives = new HardDrive[2] {new HardDrive {DriveIRQBit = 1}, new HardDrive {DriveIRQBit = 2}};
-			currentDrive = hardDrives[0];
 
 			InitDriveId();
+		}
+
+		public void Reset()
+		{
+
 		}
 
 		private readonly Dictionary<uint, string> registerNames = new Dictionary<uint, string>
@@ -264,7 +308,7 @@ namespace RunAmiga.Core.Custom
 		private GAYLE_INTENA gayleINTREQ;
 		private byte gayleConfig;
 
-		private readonly HardDrive[] hardDrives;
+		private readonly HardDrive[] hardDrives = new HardDrive[2];
 		private HardDrive currentDrive;
 
 		public uint Read(uint insaddr, uint address, Size size)
@@ -321,6 +365,11 @@ namespace RunAmiga.Core.Custom
 				case IDE.SectorNumber: currentDrive.SectorNumber = (byte)value; break;
 
 				case IDE.Data: WriteDataWord((ushort)value); break;
+			}
+
+			if (address == IDE.CylinderLow || address == IDE.CylinderHigh || address == IDE.SectorNumber || address == IDE.DriveHead)
+			{
+				logger.LogTrace($"W {GetName(address)} {value:X2} {currentDrive.ChsAddress:X8}");
 			}
 		}
 
@@ -436,7 +485,7 @@ namespace RunAmiga.Core.Custom
 				{
 					NextSector();
 				}
-				else if(currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
+				else if (currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
 				{
 					Ack();
 					NextSector();
@@ -452,7 +501,7 @@ namespace RunAmiga.Core.Custom
 
 				if (currentTransfer.Direction == Transfer.TransferDirection.HostRead)
 				{
-					
+
 				}
 				else if (currentTransfer.Direction == Transfer.TransferDirection.HostWrite)
 				{
@@ -464,6 +513,8 @@ namespace RunAmiga.Core.Custom
 			}
 			else
 			{
+				currentDrive.IncrementAddress();
+
 				currentDrive.IdeStatus |= IDE_STATUS.DRQ;
 
 				//next sector
@@ -479,7 +530,7 @@ namespace RunAmiga.Core.Custom
 				currentTransfer.WordCount = 256;
 				currentTransfer.SectorCount--;
 			}
-			
+
 		}
 
 		private Transfer currentTransfer = null;
@@ -504,12 +555,9 @@ namespace RunAmiga.Core.Custom
 			uint sectorSize = 512;//common standard for sector size
 			long bytes = 165 * 1024 * 1024; // 173,015,040 bytes
 
-			hardDrives[0].Init(bytes, 0);
-			hardDrives[1].Init(bytes, 1);
-
 			//uint heads = 16;//these are 4 bits in ATA spec for head number
 			//uint sectors = 256;//there are 8 bits for sector number
-			//uint cylindes = 65536;//these are 16 bits for cylinder number
+			//uint cylinders = 65536;//these are 16 bits for cylinder number
 
 			uint heads = 16;//standard (maximum) number of heads
 			uint sectors = 63;//standard is 63 sectors
@@ -517,6 +565,11 @@ namespace RunAmiga.Core.Custom
 			uint blocks = (uint)(bytes / sectorSize); // 335,872
 			uint sectorCylinders = blocks / heads;//20,992 = sectors * cylinders
 			uint cylinders = sectorCylinders / sectors;//332
+
+			hardDrives[0] = new HardDrive(bytes, 0, cylinders, heads, sectors);
+			hardDrives[1] = new HardDrive(bytes, 1, cylinders, heads, sectors);
+
+			currentDrive = hardDrives[0];
 
 			//configuration
 			driveId[0] = 1 << 6;//fixed drive
@@ -532,17 +585,17 @@ namespace RunAmiga.Core.Custom
 			SetString(7, 9, "JIM");
 
 			//serial number (10-19)
-			SetString(10,19, "3.14159265");
+			SetString(10, 19, "3.14159265");
 
 			//firmware revision (23-26)
-			SetString(23,26,"24.06.72");
+			SetString(23, 26, "24.06.72");
 			driveId[23] = 24;
 			driveId[24] = 06;
 			driveId[25] = 19;
 			driveId[26] = 72;
 
 			//model number (27-46)
-			SetString(27,46, "JIMHD");
+			SetString(27, 46, "JIMHD");
 
 			//seems like Amiga ignores this and always uses CHS
 
@@ -554,6 +607,14 @@ namespace RunAmiga.Core.Custom
 			driveId[60] = (ushort)total;
 			driveId[61] = (ushort)(total >> 16);
 
+			//preconfigured drive params
+			//driveId[53] = 1;
+			//driveId[54] = (ushort)cylinders;
+			//driveId[55] = (ushort)heads;
+			//driveId[56] = (ushort)sectors;
+			//driveId[57] = (ushort)(cylinders * heads * sectors);
+			//driveId[58] = (ushort)((cylinders * heads * sectors)>>16);
+
 			//it's little-endian, need to swap to big-endian for Amiga
 			for (int i = 0; i < driveId.Length; i++)
 				driveId[i] = (ushort)((driveId[i] >> 8) | (driveId[i] << 8));
@@ -562,12 +623,17 @@ namespace RunAmiga.Core.Custom
 		private void SetString(int start, int end, string txt)
 		{
 			int wordLength = end - start + 1;
-			var b = new byte[Math.Max(txt.Length,wordLength*2)];
+			var b = new byte[Math.Max(txt.Length, wordLength * 2)];
 			Array.Fill(b, Convert.ToByte(' '));
 			for (int i = 0; i < txt.Length; i++)
 				b[i] = Convert.ToByte(txt[i]);
 			var src = b.AsUWord().Take(wordLength).ToArray();
 			Array.Copy(src, 0, driveId, start, src.Length);
+		}
+
+		private void SetSerialNumber(string serial)
+		{
+			SetString(10,19,serial);
 		}
 
 		//drive identification
@@ -649,19 +715,21 @@ namespace RunAmiga.Core.Custom
 				case 0xEC:
 					cmd = "Identify Drive";
 					currentTransfer = new Transfer(1, Transfer.TransferDirection.HostRead, currentDrive);
+					SetSerialNumber($"0000000{currentDrive.DiskNumber}");
 					currentDrive.BeginRead(driveId);
 					NextSector();
 					break;
 
 				case 0x91:
 					cmd = "Initialise Drive Parameters";
-					currentDrive.SectorsPerTrack = currentDrive.SectorCount;
-					currentDrive.Heads = (byte)((currentDrive.DriveHead&0xf)+1);
-					logger.LogTrace($"Drive Parameters spt: {currentDrive.SectorsPerTrack} h: {currentDrive.Heads}");
+					currentDrive.ConfiguredParamsSectorsPerTrack = currentDrive.SectorCount;
+					currentDrive.ConfiguredParamsHeads = (byte)((currentDrive.DriveHead & 0xf) + 1);
+					logger.LogTrace($"Drive Parameters spt: {currentDrive.ConfiguredParamsSectorsPerTrack} h: {currentDrive.ConfiguredParamsHeads}");
 					Ack();
 					break;
 
-				case 0x20: case 0x21:
+				case 0x20:
+				case 0x21:
 					cmd = "Read Sector(s)";
 					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostRead, currentDrive);
 					logger.LogTrace($"READ drv: {currentDrive.DiskNumber} cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
@@ -669,7 +737,8 @@ namespace RunAmiga.Core.Custom
 					NextSector();
 					break;
 
-				case 0x30: case 0x31:
+				case 0x30:
+				case 0x31:
 					cmd = "Write Sector(s)";
 					currentTransfer = new Transfer(currentDrive.SectorCount, Transfer.TransferDirection.HostWrite, currentDrive);
 					logger.LogTrace($"WRITE drv: {currentDrive.DiskNumber} cnt: {currentTransfer.SectorCount} LBA: {currentDrive.LbaAddress:X8} CHS: {currentDrive.ChsAddress:X8} lba: {(currentDrive.DriveHead >> 6) & 1}");
@@ -677,8 +746,10 @@ namespace RunAmiga.Core.Custom
 					NextSector();
 					break;
 
-				case 0x40: case 0x41:
+				case 0x40:
+				case 0x41:
 					cmd = "Verify Sector(s)";
+					currentDrive.IncrementAddress(currentDrive.SectorCount);
 					Ack();//all good :)
 					break;
 
@@ -699,12 +770,14 @@ namespace RunAmiga.Core.Custom
 					Ack();//all good here :)s
 					break;
 
-				case 0x22: case 0x23:
+				case 0x22:
+				case 0x23:
 					cmd = "Read Long";
 					Ack();
 					break;
 
-				case 0x32: case 0x33:
+				case 0x32:
+				case 0x33:
 					cmd = "Write Long";
 					Ack();
 					break;

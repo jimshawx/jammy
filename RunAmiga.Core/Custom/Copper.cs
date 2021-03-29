@@ -157,7 +157,7 @@ namespace RunAmiga.Core.Custom
 
 		private void RunCopperList(uint copPC, bool isEvenFrame)
 		{
-			Array.Clear(screen,0,screen.Length);
+			//Array.Clear(screen,0,screen.Length);
 			
 			if (copPC == 0) return;
 

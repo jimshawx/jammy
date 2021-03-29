@@ -36,6 +36,11 @@ namespace RunAmiga.Tests
 			return memory;
 		}
 
+		public void Reset()
+		{
+			
+		}
+
 		public new uint Read(uint insaddr, uint address, Size size)
 		{
 			uint value = base.Read(insaddr, address, size);
@@ -101,14 +106,6 @@ namespace RunAmiga.Tests
 		}
 
 		public int Length => memory.Length;
-
-		public void Emulate(ulong cycles)
-		{
-		}
-
-		public void Reset()
-		{
-		}
 
 		public void AddMemoryIntercept(IMemoryInterceptor interceptor)
 		{
