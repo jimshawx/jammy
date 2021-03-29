@@ -51,7 +51,7 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
-		private int rate = 124;
+		private int rate = 100;
 
 		private void PlayingDMA(int channel)
 		{
@@ -60,7 +60,7 @@ namespace RunAmiga.Core.Custom
 				return;
 
 			ch[channel].working_audper -= rate;
-			if (ch[channel].working_audper < 0)
+			if (ch[channel].working_audper <= 0)
 			{
 				//read the sample into live audXdat
 				ch[channel].auddat = (ushort)memory.Read(0, ch[channel].working_audlc, Size.Word);
@@ -70,7 +70,7 @@ namespace RunAmiga.Core.Custom
 				ch[channel].working_audper += ch[channel].audper;
 
 				//loop restart?
-				if (ch[channel].working_audlen == 1)
+				if (ch[channel].working_audlen <= 0)
 				{
 					ch[channel].working_audlc = ch[channel].audlc;
 					ch[channel].working_audlen = ch[channel].audlen;
@@ -155,7 +155,7 @@ namespace RunAmiga.Core.Custom
 			public ushort auddat { get; set; }
 			public uint audlc { get; set; }
 
-			public ushort working_audlen { get;set; }
+			public int working_audlen { get;set; }
 			public int working_audper { get; set; }
 			public uint working_audlc { get; set; }
 
