@@ -339,10 +339,11 @@ namespace RunAmiga.Core.Custom
 			public int currentBuffer { get; set; }
 		}
 
-		private AmigaChannel[] channels = new[] { new AmigaChannel(), new AmigaChannel(), new AmigaChannel(), new AmigaChannel() };
+		private readonly AmigaChannel[] channels = new[] { new AmigaChannel(), new AmigaChannel(), new AmigaChannel(), new AmigaChannel() };
 
 		private const int SAMPLE_RATE = 31200;
-		private const int BUFFER_SIZE = 3120;
+		private const int SAMPLE_SIZE = 2;//1 for 8bit, 2 for 16bit
+		private const int BUFFER_SIZE = 3120*SAMPLE_SIZE;
 
 		private void InitMixer()
 		{
@@ -362,12 +363,12 @@ namespace RunAmiga.Core.Custom
 
 			for (int i = 0; i < 4; i++)
 			{
-				channels[i].xaudioVoice = new SourceVoice(xaudio, new WaveFormat(SAMPLE_RATE, 8, 1), VoiceFlags.None);
+				channels[i].xaudioVoice = new SourceVoice(xaudio, new WaveFormat(SAMPLE_RATE, 8*SAMPLE_SIZE, 1), VoiceFlags.None);
 				channels[i].xaudioVoice.Start();
 
 				channels[i].xaudioBuffer = new AudioBuffer[2];
-				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE};
-				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE};
+				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
+				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
 				channels[i].xaudioCBuffer = new byte[BUFFER_SIZE];
 				channels[i].xaudioCIndex = 0;
 				channels[i].currentBuffer = 0;
@@ -388,13 +389,37 @@ namespace RunAmiga.Core.Custom
 			//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
 			for (int i = 0; i < 4; i++)
 			{
-				channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)((sbyte)(ch[i].auddat >> 8) + 128);
-				channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)((sbyte)ch[i].auddat + 128);
+				//Amiga samples are two 8-bit signed values packed into a word, range -128 to +127
+				short s0 = (sbyte)(ch[i].auddat >> 8);
+				short s1 = (sbyte)ch[i].auddat;
+
+				if (SAMPLE_SIZE == 1)
+				{
+					//(-128 * 64)>>6 = -128
+					//(+127 * 64)>>6 = +127;
+					s0 = (short)((s0 * ch[i].audvol) >> 6);
+					s1 = (short)((s1 * ch[i].audvol) >> 6);
+					//8-bit PCM is unsigned
+					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s0 + 128);
+					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s1 + 128);
+				}
+				else
+				{
+					//(-128 * 64)<<2 = -32768
+					//(+127 * 64)<<2 = +32767;
+					s0 = (short)((s0 * ch[i].audvol)<<2); s0 |= (short)((s0 >> 14) & 3);
+					s1 = (short)((s1 * ch[i].audvol)<<2); s1 |= (short)((s1 >> 14) & 3);
+
+					//16-bit PCM is signed
+					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)s0;
+					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s0>>8);
+					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)s1;
+					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s1>>8);
+				}
 
 				if (channels[i].xaudioCIndex == channels[i].xaudioCBuffer.Length)
 				{
 					var state = channels[i].xaudioVoice.State;
-					//logger.LogTrace($"{i} Q:{state.BuffersQueued} S;{state.SamplesPlayed}");
 					if (state.BuffersQueued >= 2)
 					{
 						do
@@ -409,8 +434,6 @@ namespace RunAmiga.Core.Custom
 					channels[i].xaudioVoice.Start();
 					channels[i].currentBuffer ^= 1;
 				}
-
-				channels[i].xaudioVoice.SetVolume(ch[i].audvol / 64.0f);
 			}
 		}
 	}
