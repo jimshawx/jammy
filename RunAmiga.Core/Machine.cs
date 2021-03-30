@@ -31,8 +31,8 @@ namespace RunAmiga.Core
 
 		private readonly ICPU cpu;
 		private readonly IBreakpointCollection breakpointCollection;
-		private readonly ILogger logger;
-		private readonly IChips custom;
+		//private readonly ILogger logger;
+		//private readonly IChips custom;
 		private readonly IDebugMemoryMapper memoryMapper;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
@@ -49,10 +49,10 @@ namespace RunAmiga.Core
 			IBreakpointCollection breakpointCollection, ILogger<Machine> logger)
 		{
 			this.memoryMapper = memoryMapper;
-			this.custom = custom;
+			//this.custom = custom;
 			this.cpu = cpu;
 			this.breakpointCollection = breakpointCollection;
-			this.logger = logger;
+			//this.logger = logger;
 
 			//fulfil the circular dependencies
 			custom.Init(blitter, copper, audio);
@@ -95,32 +95,27 @@ namespace RunAmiga.Core
 			emuThread.Start();
 		}
 
+		private static bool modeChangeApplied = false;
 		public static void SetEmulationMode(EmulationMode mode, bool changeWhileLocked = false)
 		{
-			var logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<Machine>>();
-
 			if (changeWhileLocked)
 			{
-				logger.LogTrace($"SEM1 em: {emulationMode} emc: {emulationModeChange}");
 				emulationMode = mode;
-				logger.LogTrace($"SEM2 em: {emulationMode} emc: {emulationModeChange}");
 			}
 			else
 			{
-				//logger.LogTrace($"SEM3 em: {emulationMode} emc: {emulationModeChange}");
-				//emulationModeChange = mode;
-				//logger.LogTrace($"SEM4 em: {emulationMode} emc: {emulationModeChange}");
-				//while (emulationModeChange == mode)
-				//	Thread.Yield();
-				//logger.LogTrace($"SEM5 em: {emulationMode} emc: {emulationModeChange}");
+				modeChangeApplied = false;
+				emulationModeChange = mode;
+				while (!modeChangeApplied)
+					Thread.Yield();
 
-				logger.LogTrace($"SEM3 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
-				LockEmulation();
-				logger.LogTrace($"SEM4 em: {emulationMode} emc: {emulationModeChange}");
-				emulationMode = mode;
-				logger.LogTrace($"SEM5 em: {emulationMode} emc: {emulationModeChange}");
-				UnlockEmulation();
-				logger.LogTrace($"SEM6 em: {emulationMode} emc: {emulationModeChange}");
+				//logger.LogTrace($"SEM3 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
+				//LockEmulation();
+				//logger.LogTrace($"SEM4 em: {emulationMode} emc: {emulationModeChange}");
+				//emulationMode = mode;
+				//logger.LogTrace($"SEM5 em: {emulationMode} emc: {emulationModeChange}");
+				//UnlockEmulation();
+				//logger.LogTrace($"SEM6 em: {emulationMode} emc: {emulationModeChange}");
 			}
 		}
 
@@ -193,8 +188,6 @@ namespace RunAmiga.Core
 						emulationModeChange = EmulationMode.Stopped;
 				}
 
-				logger.LogTrace("A");
-
 				var newEmulationMode = emulationModeChange;
 
 				if (newEmulationMode == EmulationMode.Exit)
@@ -202,43 +195,31 @@ namespace RunAmiga.Core
 
 				if (newEmulationMode == EmulationMode.Stopped)
 				{
-					logger.LogTrace("B");
-
 					stepOutSp = 0xffffffff;
 					UI.UI.IsDirty = true;
 				}
 
 				if (newEmulationMode == EmulationMode.LockAccess)
 				{
-					logger.LogTrace("C");
-
 					lockedThreadId = -1;
 					emulationSemaphore.Release();
-
-					logger.LogTrace("D");
 
 					//Locker should now be able to do its work
 					while (emulationModeChange == EmulationMode.LockAccess)
 						Thread.Yield();
 
-					logger.LogTrace("E");
-
 					emulationSemaphore.Wait();
 					lockedThreadId = Thread.CurrentThread.ManagedThreadId;
 					//do not update emulation mode
-
-					logger.LogTrace("F");
 				}
 				else
 				{
 					emulationMode = newEmulationMode;
-					logger.LogTrace("G");
 				}
 
 				emulationModeChange = EmulationMode.NoChange;
+				modeChangeApplied = true;
 			}
-
-			logger.LogTrace("H");
 
 			emulationModeChange = EmulationMode.NoChange;
 			emulationSemaphore.Release();

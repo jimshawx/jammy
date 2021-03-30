@@ -411,6 +411,16 @@ namespace RunAmiga.Disassembler.Analysers
 			}
 		}
 
+		private bool IgnoreComment(Comment comment)
+		{
+			return false;
+		}
+
+		private void AddComment(Comment comment)
+		{
+			if (!IgnoreComment(comment))
+				comments[comment.Address] = comment;
+		}
 
 		private void AddComment(uint address, string s)
 		{
@@ -648,7 +658,7 @@ namespace RunAmiga.Disassembler.Analysers
 									//the comments are what's left after the i'th split
 									if (split.Length > i)
 									{
-										comments[currentAddress] = new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) };
+										AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
 									}
 
 									currentAddress = nextAddress;
@@ -659,15 +669,15 @@ namespace RunAmiga.Disassembler.Analysers
 									if (split.Length > 3)
 									{
 										//the comments are what's left after the second split, usually starting at column 49
-										comments[currentAddress] = new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(3)) };
+										AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(3)) });
 									}
 									else if (split.Length < 3)
 									{
-										var oneWordOps = new List<string> {"rts", "nop", "illegal", "reset", "stop", "rte", "trapv", "rtr"};
+										var oneWordOps = new List<string> {"rts", "nop", "illegal", "reset", "stop", "rte", "trapv", "rtr", "unknown"};
 										if (split.Length < 2 || !oneWordOps.Contains(split[1]))
 										{
 											//it's probably comments
-											comments[currentAddress] = new Comment {Address = currentAddress, Text = string.Join(" ", split.Skip(1))};
+											AddComment(new Comment {Address = currentAddress, Text = string.Join(" ", split.Skip(1))});
 										}
 									}
 
@@ -692,7 +702,7 @@ namespace RunAmiga.Disassembler.Analysers
 							//the comments are what's left after the i'th split
 							if (split.Length > i)
 							{
-								comments[currentAddress] = new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) };
+								AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
 							}
 
 							currentAddress = nextAddress;

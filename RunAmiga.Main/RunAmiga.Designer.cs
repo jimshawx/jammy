@@ -51,22 +51,6 @@ namespace RunAmiga.Main
 			this.picPower = new System.Windows.Forms.PictureBox();
 			this.picDisk = new System.Windows.Forms.PictureBox();
 			this.btnDisassemble = new System.Windows.Forms.Button();
-			this.colour0 = new System.Windows.Forms.PictureBox();
-			this.colour1 = new System.Windows.Forms.PictureBox();
-			this.colour2 = new System.Windows.Forms.PictureBox();
-			this.colour3 = new System.Windows.Forms.PictureBox();
-			this.colour7 = new System.Windows.Forms.PictureBox();
-			this.colour6 = new System.Windows.Forms.PictureBox();
-			this.colour5 = new System.Windows.Forms.PictureBox();
-			this.colour4 = new System.Windows.Forms.PictureBox();
-			this.colour11 = new System.Windows.Forms.PictureBox();
-			this.colour10 = new System.Windows.Forms.PictureBox();
-			this.colour9 = new System.Windows.Forms.PictureBox();
-			this.colour8 = new System.Windows.Forms.PictureBox();
-			this.colour15 = new System.Windows.Forms.PictureBox();
-			this.colour14 = new System.Windows.Forms.PictureBox();
-			this.colour13 = new System.Windows.Forms.PictureBox();
-			this.colour12 = new System.Windows.Forms.PictureBox();
 			this.radioButton10 = new System.Windows.Forms.RadioButton();
 			this.radioButton11 = new System.Windows.Forms.RadioButton();
 			this.radioButton12 = new System.Windows.Forms.RadioButton();
@@ -103,22 +87,6 @@ namespace RunAmiga.Main
 			this.splitContainer1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.picPower)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.picDisk)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour0)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour1)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour2)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour3)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour7)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour6)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour5)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour4)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour11)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour10)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour9)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour8)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour15)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour14)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour13)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour12)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// lbRegisters
@@ -327,150 +295,6 @@ namespace RunAmiga.Main
 			this.btnDisassemble.Text = "Disassemble";
 			this.btnDisassemble.UseVisualStyleBackColor = true;
 			this.btnDisassemble.Click += new System.EventHandler(this.btnDisassemble_Click);
-			// 
-			// colour0
-			// 
-			this.colour0.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour0.Location = new System.Drawing.Point(1136, 514);
-			this.colour0.Name = "colour0";
-			this.colour0.Size = new System.Drawing.Size(12, 16);
-			this.colour0.TabIndex = 13;
-			this.colour0.TabStop = false;
-			// 
-			// colour1
-			// 
-			this.colour1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour1.Location = new System.Drawing.Point(1158, 514);
-			this.colour1.Name = "colour1";
-			this.colour1.Size = new System.Drawing.Size(12, 16);
-			this.colour1.TabIndex = 14;
-			this.colour1.TabStop = false;
-			// 
-			// colour2
-			// 
-			this.colour2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour2.Location = new System.Drawing.Point(1180, 514);
-			this.colour2.Name = "colour2";
-			this.colour2.Size = new System.Drawing.Size(12, 16);
-			this.colour2.TabIndex = 15;
-			this.colour2.TabStop = false;
-			// 
-			// colour3
-			// 
-			this.colour3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour3.Location = new System.Drawing.Point(1202, 514);
-			this.colour3.Name = "colour3";
-			this.colour3.Size = new System.Drawing.Size(12, 16);
-			this.colour3.TabIndex = 16;
-			this.colour3.TabStop = false;
-			// 
-			// colour7
-			// 
-			this.colour7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour7.Location = new System.Drawing.Point(1202, 536);
-			this.colour7.Name = "colour7";
-			this.colour7.Size = new System.Drawing.Size(12, 16);
-			this.colour7.TabIndex = 20;
-			this.colour7.TabStop = false;
-			// 
-			// colour6
-			// 
-			this.colour6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour6.Location = new System.Drawing.Point(1180, 536);
-			this.colour6.Name = "colour6";
-			this.colour6.Size = new System.Drawing.Size(12, 16);
-			this.colour6.TabIndex = 19;
-			this.colour6.TabStop = false;
-			// 
-			// colour5
-			// 
-			this.colour5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour5.Location = new System.Drawing.Point(1158, 536);
-			this.colour5.Name = "colour5";
-			this.colour5.Size = new System.Drawing.Size(12, 16);
-			this.colour5.TabIndex = 18;
-			this.colour5.TabStop = false;
-			// 
-			// colour4
-			// 
-			this.colour4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour4.Location = new System.Drawing.Point(1136, 536);
-			this.colour4.Name = "colour4";
-			this.colour4.Size = new System.Drawing.Size(12, 16);
-			this.colour4.TabIndex = 17;
-			this.colour4.TabStop = false;
-			// 
-			// colour11
-			// 
-			this.colour11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour11.Location = new System.Drawing.Point(1202, 558);
-			this.colour11.Name = "colour11";
-			this.colour11.Size = new System.Drawing.Size(12, 16);
-			this.colour11.TabIndex = 24;
-			this.colour11.TabStop = false;
-			// 
-			// colour10
-			// 
-			this.colour10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour10.Location = new System.Drawing.Point(1180, 558);
-			this.colour10.Name = "colour10";
-			this.colour10.Size = new System.Drawing.Size(12, 16);
-			this.colour10.TabIndex = 23;
-			this.colour10.TabStop = false;
-			// 
-			// colour9
-			// 
-			this.colour9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour9.Location = new System.Drawing.Point(1158, 558);
-			this.colour9.Name = "colour9";
-			this.colour9.Size = new System.Drawing.Size(12, 16);
-			this.colour9.TabIndex = 22;
-			this.colour9.TabStop = false;
-			// 
-			// colour8
-			// 
-			this.colour8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour8.Location = new System.Drawing.Point(1136, 558);
-			this.colour8.Name = "colour8";
-			this.colour8.Size = new System.Drawing.Size(12, 16);
-			this.colour8.TabIndex = 21;
-			this.colour8.TabStop = false;
-			// 
-			// colour15
-			// 
-			this.colour15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour15.Location = new System.Drawing.Point(1202, 580);
-			this.colour15.Name = "colour15";
-			this.colour15.Size = new System.Drawing.Size(12, 16);
-			this.colour15.TabIndex = 20;
-			this.colour15.TabStop = false;
-			// 
-			// colour14
-			// 
-			this.colour14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour14.Location = new System.Drawing.Point(1180, 580);
-			this.colour14.Name = "colour14";
-			this.colour14.Size = new System.Drawing.Size(12, 16);
-			this.colour14.TabIndex = 19;
-			this.colour14.TabStop = false;
-			// 
-			// colour13
-			// 
-			this.colour13.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour13.Location = new System.Drawing.Point(1158, 580);
-			this.colour13.Name = "colour13";
-			this.colour13.Size = new System.Drawing.Size(12, 16);
-			this.colour13.TabIndex = 18;
-			this.colour13.TabStop = false;
-			// 
-			// colour12
-			// 
-			this.colour12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.colour12.Location = new System.Drawing.Point(1136, 580);
-			this.colour12.Name = "colour12";
-			this.colour12.Size = new System.Drawing.Size(12, 16);
-			this.colour12.TabIndex = 17;
-			this.colour12.TabStop = false;
 			// 
 			// radioButton10
 			// 
@@ -788,14 +612,14 @@ namespace RunAmiga.Main
 			// 
 			this.radioDF0.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.radioDF0.AutoSize = true;
+			this.radioDF0.Checked = true;
 			this.radioDF0.Location = new System.Drawing.Point(1116, 424);
 			this.radioDF0.Name = "radioDF0";
 			this.radioDF0.Size = new System.Drawing.Size(14, 13);
 			this.radioDF0.TabIndex = 42;
 			this.radioDF0.TabStop = true;
 			this.radioDF0.UseVisualStyleBackColor = true;
-			this.radioDF0.CheckedChanged += new System.EventHandler(this.radioDF2_CheckedChanged);
-			this.radioDF0.Checked = true;
+			this.radioDF0.CheckedChanged += new System.EventHandler(this.radioDFx_CheckedChanged);
 			// 
 			// radioDF1
 			// 
@@ -807,7 +631,7 @@ namespace RunAmiga.Main
 			this.radioDF1.TabIndex = 43;
 			this.radioDF1.TabStop = true;
 			this.radioDF1.UseVisualStyleBackColor = true;
-			this.radioDF1.CheckedChanged += new System.EventHandler(this.radioDF2_CheckedChanged);
+			this.radioDF1.CheckedChanged += new System.EventHandler(this.radioDFx_CheckedChanged);
 			// 
 			// radioDF2
 			// 
@@ -819,7 +643,7 @@ namespace RunAmiga.Main
 			this.radioDF2.TabIndex = 44;
 			this.radioDF2.TabStop = true;
 			this.radioDF2.UseVisualStyleBackColor = true;
-			this.radioDF2.CheckedChanged += new System.EventHandler(this.radioDF2_CheckedChanged);
+			this.radioDF2.CheckedChanged += new System.EventHandler(this.radioDFx_CheckedChanged);
 			// 
 			// radioDF3
 			// 
@@ -831,7 +655,7 @@ namespace RunAmiga.Main
 			this.radioDF3.TabIndex = 45;
 			this.radioDF3.TabStop = true;
 			this.radioDF3.UseVisualStyleBackColor = true;
-			this.radioDF3.CheckedChanged += new System.EventHandler(this.radioDF2_CheckedChanged);
+			this.radioDF3.CheckedChanged += new System.EventHandler(this.radioDFx_CheckedChanged);
 			// 
 			// RunAmiga
 			// 
@@ -858,22 +682,6 @@ namespace RunAmiga.Main
 			this.Controls.Add(this.btnInsertDisk);
 			this.Controls.Add(this.txtExecBase);
 			this.Controls.Add(this.addressFollowBox);
-			this.Controls.Add(this.colour15);
-			this.Controls.Add(this.colour11);
-			this.Controls.Add(this.colour14);
-			this.Controls.Add(this.colour10);
-			this.Controls.Add(this.colour13);
-			this.Controls.Add(this.colour12);
-			this.Controls.Add(this.colour9);
-			this.Controls.Add(this.colour8);
-			this.Controls.Add(this.colour7);
-			this.Controls.Add(this.colour6);
-			this.Controls.Add(this.colour5);
-			this.Controls.Add(this.colour4);
-			this.Controls.Add(this.colour3);
-			this.Controls.Add(this.colour2);
-			this.Controls.Add(this.colour1);
-			this.Controls.Add(this.colour0);
 			this.Controls.Add(this.btnDisassemble);
 			this.Controls.Add(this.picDisk);
 			this.Controls.Add(this.picPower);
@@ -897,22 +705,6 @@ namespace RunAmiga.Main
 			this.splitContainer1.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.picPower)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.picDisk)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour0)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour1)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour2)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour3)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour7)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour6)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour5)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour4)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour11)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour10)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour9)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour8)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour15)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour14)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour13)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.colour12)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -933,22 +725,6 @@ namespace RunAmiga.Main
 		private System.Windows.Forms.PictureBox picPower;
 		private System.Windows.Forms.PictureBox picDisk;
 		private System.Windows.Forms.Button btnDisassemble;
-		private System.Windows.Forms.PictureBox colour0;
-		private System.Windows.Forms.PictureBox colour1;
-		private System.Windows.Forms.PictureBox colour2;
-		private System.Windows.Forms.PictureBox colour3;
-		private System.Windows.Forms.PictureBox colour7;
-		private System.Windows.Forms.PictureBox colour6;
-		private System.Windows.Forms.PictureBox colour5;
-		private System.Windows.Forms.PictureBox colour4;
-		private System.Windows.Forms.PictureBox colour11;
-		private System.Windows.Forms.PictureBox colour10;
-		private System.Windows.Forms.PictureBox colour9;
-		private System.Windows.Forms.PictureBox colour8;
-		private System.Windows.Forms.PictureBox colour15;
-		private System.Windows.Forms.PictureBox colour14;
-		private System.Windows.Forms.PictureBox colour13;
-		private System.Windows.Forms.PictureBox colour12;
 		private System.Windows.Forms.RadioButton radioButton10;
 		private System.Windows.Forms.RadioButton radioButton11;
 		private System.Windows.Forms.RadioButton radioButton12;

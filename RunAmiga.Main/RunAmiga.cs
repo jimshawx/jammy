@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -122,7 +121,6 @@ namespace RunAmiga.Main
 			//UpdateMem();
 			UpdatePowerLight();
 			UpdateDiskLight();
-			UpdateColours();
 			UpdateExecBase();
 			UI.UI.IsDirty = false;
 		}
@@ -363,32 +361,6 @@ namespace RunAmiga.Main
 			picDisk.BackColor = disk ? Color.LightGreen : Color.DarkGreen;
 		}
 
-		private void UpdateColours()
-		{
-			var colours = new uint[256];
-			UI.UI.GetColours(colours);
-
-			for (int i = 0; i < colours.Length; i++)
-				colours[i] |= 0xff000000;
-
-			colour0.BackColor = Color.FromArgb((int)colours[0]);
-			colour1.BackColor = Color.FromArgb((int)colours[1]);
-			colour2.BackColor = Color.FromArgb((int)colours[2]);
-			colour3.BackColor = Color.FromArgb((int)colours[3]);
-			colour4.BackColor = Color.FromArgb((int)colours[4]);
-			colour5.BackColor = Color.FromArgb((int)colours[5]);
-			colour6.BackColor = Color.FromArgb((int)colours[6]);
-			colour7.BackColor = Color.FromArgb((int)colours[7]);
-			colour8.BackColor = Color.FromArgb((int)colours[8]);
-			colour9.BackColor = Color.FromArgb((int)colours[9]);
-			colour10.BackColor = Color.FromArgb((int)colours[10]);
-			colour11.BackColor = Color.FromArgb((int)colours[11]);
-			colour12.BackColor = Color.FromArgb((int)colours[12]);
-			colour13.BackColor = Color.FromArgb((int)colours[13]);
-			colour14.BackColor = Color.FromArgb((int)colours[14]);
-			colour15.BackColor = Color.FromArgb((int)colours[15]);
-		}
-
 		private void btnDisassemble_Click(object sender, EventArgs e)
 		{
 			UpdateDisassembly();
@@ -620,14 +592,14 @@ namespace RunAmiga.Main
 			debugger.RemoveDisk(currentDrive);
 		}
 
-		private void radioDF2_CheckedChanged(object sender, EventArgs e)
+		private void radioDFx_CheckedChanged(object sender, EventArgs e)
 		{
 			var button = (RadioButton)sender;
 
-			radioDF0.CheckedChanged -= radioDF2_CheckedChanged;
-			radioDF1.CheckedChanged -= radioDF2_CheckedChanged;
-			radioDF2.CheckedChanged -= radioDF2_CheckedChanged;
-			radioDF3.CheckedChanged -= radioDF2_CheckedChanged;
+			radioDF0.CheckedChanged -= radioDFx_CheckedChanged;
+			radioDF1.CheckedChanged -= radioDFx_CheckedChanged;
+			radioDF2.CheckedChanged -= radioDFx_CheckedChanged;
+			radioDF3.CheckedChanged -= radioDFx_CheckedChanged;
 			
 			radioDF0.Checked = false;
 			radioDF1.Checked = false;
@@ -640,10 +612,10 @@ namespace RunAmiga.Main
 			if (button == radioDF2) currentDrive = 2;
 			if (button == radioDF3) currentDrive = 3;
 
-			radioDF0.CheckedChanged += radioDF2_CheckedChanged;
-			radioDF1.CheckedChanged += radioDF2_CheckedChanged;
-			radioDF2.CheckedChanged += radioDF2_CheckedChanged;
-			radioDF3.CheckedChanged += radioDF2_CheckedChanged;
+			radioDF0.CheckedChanged += radioDFx_CheckedChanged;
+			radioDF1.CheckedChanged += radioDFx_CheckedChanged;
+			radioDF2.CheckedChanged += radioDFx_CheckedChanged;
+			radioDF3.CheckedChanged += radioDFx_CheckedChanged;
 		}
 	}
 }

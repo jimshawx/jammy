@@ -1,13 +1,10 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 
 namespace RunAmiga.UI
 {
 	public sealed class UI
 	{
-		private static readonly object padlock = new object();
-
-		private static SemaphoreSlim uiSemaphore = new SemaphoreSlim(1);
+		private static readonly SemaphoreSlim uiSemaphore = new SemaphoreSlim(1);
 
 		private static void Lock()
 		{
@@ -19,60 +16,9 @@ namespace RunAmiga.UI
 			uiSemaphore.Release();
 		}
 
-		private static bool powerLight;
-		public static bool PowerLight
-		{
-			set
-			{
-				powerLight = value;
-			}
-			get
-			{
-				return powerLight;
-			}
-		}
-
-		private static bool diskLight;
-		public static bool DiskLight
-		{
-			set
-			{
-				diskLight = value;
-			}
-			get
-			{
-				return diskLight;
-			}
-		}
-
-		private static bool isDirty;
-		public static bool IsDirty
-		{
-			set
-			{
-				isDirty = value;
-			}
-			get
-			{
-				return isDirty;
-			}
-		}
-
-		private static uint [] colours = new uint[256];
-		public static void SetColour(int index, ushort value)
-		{
-			Lock();
-			uint colour = value;
-			colours[index] = ((colour&0xf)*0x11)+((colour&0xf0)*0x110)+((colour&0xf00)*0x1100);
-			Unlock();
-		}
-
-		public static void GetColours(uint[] dst)
-		{
-			Lock();
-			Array.Copy(colours, dst, colours.Length);
-			Unlock();
-		}
+		public static bool PowerLight { set; get; }
+		public static bool DiskLight { set; get; }
+		public static bool IsDirty { set; get; }
 	}
 }
 

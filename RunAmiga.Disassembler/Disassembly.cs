@@ -249,7 +249,7 @@ namespace RunAmiga.Disassembler
 					new DisassemblyOptions { IncludeBytes = false, CommentPad = true, IncludeComments = true });
 
 				var dmp = new StringBuilder();
-				if (!asm.StartsWith("******") && !asm.StartsWith("\r\n******"))
+				if (!asm.TrimStart().StartsWith("******"))
 				{
 					dmp.Append($"****************************************************************************\n" +
 							 "*                                                                          *\n" +
