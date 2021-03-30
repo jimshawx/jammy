@@ -135,18 +135,21 @@ namespace RunAmiga.Core.Custom
 			drive[2].DSKSEL = (uint)PRB.DSKSEL2;
 			drive[3].DSKSEL = (uint)PRB.DSKSEL3;
 
-			drive[0].attached = true;
-			drive[1].attached = false;
-			drive[2].attached = false;
-			drive[3].attached = false;
-
 			for (int i = 0; i < 4; i++)
 			{
-				//drive[i].attached = true;
+				drive[i].attached = false;
 
 				drive[i].disk = disks[i];
 				if (drive[i].disk != null)
 					drive[i].diskinserted = true;
+			}
+
+			drive[0].attached = true;
+
+			if (settings.Value.FloppyCount > 1 && settings.Value.FloppyCount <= 4)
+			{
+				for (int i = 0; i < settings.Value.FloppyCount; i++)
+					drive[i].attached = true;
 			}
 		}
 
@@ -315,14 +318,16 @@ namespace RunAmiga.Core.Custom
 						break;
 					}
 
+					int df = SelectedDrive();
+
 					//dsklen is number of MFM encoded words (usually a track, 7358 = 668 x 11words, 1336 x 11 bytes)
 					if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814 && (dsklen & 0x3fff) != 6784)
 						logger.LogTrace($"DSKLEN looks funny {dsklen&0x3fff:X4} {dsklen:X4}");
 
-					logger.LogTrace($"Reading T: {drive[0].track} S: {drive[0].side} L: {dsklen&0x3fff:X4} L/11: {(dsklen&0x3fff)/11}");
+					logger.LogTrace($"Reading D: {df} T: {drive[df].track} S: {drive[df].side} L: {dsklen&0x3fff:X4} L/11: {(dsklen&0x3fff)/11}");
 
 					byte[] mfm = new byte[1088*11+720];//12688 bytes, 6344 words hmm.
-					MFM.FloppyTrackMfmEncode((drive[0].track <<1)+ drive[0].side, drive[0].disk.data, mfm, 0x4489);
+					MFM.FloppyTrackMfmEncode((drive[df].track << 1)+ drive[df].side, drive[df].disk.data, mfm, 0x4489);
 
 					foreach (var w in mfm.AsUWord())
 					{
