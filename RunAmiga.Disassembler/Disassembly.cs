@@ -289,7 +289,7 @@ namespace RunAmiga.Disassembler
 			foreach (var rt in resident)
 				logger.LogTrace($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
 
-			if (settings.Value.ProduceDisassemblies)
+			if (settings.Value.Disassemblies == Feature.Enabled)
 			{
 				var memoryDump = new MemoryDump(memory.GetEnumerable(0));
 				Disassemble(resident, memoryDump);

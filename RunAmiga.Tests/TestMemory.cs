@@ -26,7 +26,7 @@ namespace RunAmiga.Tests
 			this.logger = logger;
 			this.machineIdentifier = machineIdentifier;
 
-			memory = new byte[settings.Value.MemorySize];
+			memory = new byte[1ul<<settings.Value.AddressBits];
 			memoryRange = new MemoryRange(0x0, (uint)memory.Length);
 			addressMask = (uint)(memory.Length - 1);
 		}

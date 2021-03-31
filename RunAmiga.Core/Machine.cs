@@ -128,18 +128,18 @@ namespace RunAmiga.Core
 		private static int lockedThreadId = -1;
 		public static void LockEmulation()
 		{
-			var logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<Machine>>();
-			logger.LogTrace($"Lock1 em: {emulationMode} emc: {emulationModeChange}");
+			//var logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<Machine>>();
+			//logger.LogTrace($"Lock1 em: {emulationMode} emc: {emulationModeChange}");
 			emulationModeChange = EmulationMode.LockAccess;
-			logger.LogTrace($"Lock2 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
+			//logger.LogTrace($"Lock2 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
 			if (lockedThreadId == Thread.CurrentThread.ManagedThreadId)
 				Debugger.Break();
 			
 			//emulationSemaphore.Wait();
-			logger.LogTrace($"Lock3 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
+			//logger.LogTrace($"Lock3 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
 			lockedThreadId = Thread.CurrentThread.ManagedThreadId;
 			emulationModeChange = EmulationMode.NoChange;
-			logger.LogTrace($"Lock4 em: {emulationMode} emc: {emulationModeChange}");
+			//logger.LogTrace($"Lock4 em: {emulationMode} emc: {emulationModeChange}");
 		}
 
 		private static EmulationMode emulationModeChange;

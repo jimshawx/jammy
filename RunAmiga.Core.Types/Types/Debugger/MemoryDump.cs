@@ -7,12 +7,12 @@ namespace RunAmiga.Core.Types.Types.Debugger
 {
 	public class MemoryDump
 	{
-		private readonly byte[] memory = new byte[16 * 1024 * 1024];
+		private readonly byte[] memory;
 		private readonly Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
 
 		public MemoryDump(IEnumerable<byte> b)
 		{
-			Array.Copy(b.ToArray(), memory, 16*1024*1024);
+			memory = b.ToArray();
 		}
 
 		public void ClearMapping()

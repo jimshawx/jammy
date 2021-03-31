@@ -35,19 +35,20 @@ namespace RunAmiga.Main
 				.AddJsonFile("appsettings.json", false)
 				.Build();
 
+			var settings = new EmulationSettings();
+			configuration.Bind("Emulation", settings);
+
 			var serviceCollection = new ServiceCollection();
-			var serviceProvider = serviceCollection
+			var services = serviceCollection
 				.AddSingleton<IConfigurationRoot>(configuration)
 				.AddLogging(x=>
 				{
 					x.AddConfiguration(configuration.GetSection("Logging"));
-					//x.AddDebug();
+					x.AddDebug();
 					//x.AddSQLite();
-					x.AddDebugAsync();
+					//x.AddDebugAsync();
 				})
 				.AddSingleton<IMachine, Machine>()
-				.AddSingleton<IAudio, Audio>()
-				//.AddSingleton<IAudio, AudioV2>()
 				.AddSingleton<IBattClock, BattClock>()
 				.AddSingleton<IBlitter, Blitter>()
 				.AddSingleton<ICIAAOdd, CIAAOdd>()
@@ -65,8 +66,6 @@ namespace RunAmiga.Main
 				.AddSingleton<IUnmappedMemory, UnmappedMemory>()
 				.AddSingleton<IInterrupt, Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
-				//.AddSingleton<ICPU, MusashiCPU>()
-				.AddSingleton<ICPU, CPU>()
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
 				.AddSingleton<IIDEController,IDEController>()
@@ -80,13 +79,31 @@ namespace RunAmiga.Main
 				.AddSingleton<IEmulation, Emulation>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<ILabeller, Labeller>()
-				.AddSingleton<ITracer, NullTracer>()
 				.AddSingleton<IDisassembly, Disassembly>()
 				.AddSingleton<IAnalyser,Analyser>()
 				.AddSingleton<IMachineIdentifier>(x=>new MachineIdentifer("Amiga"))
 				.AddSingleton<RunAmiga>()
-				.Configure<EmulationSettings>(o=>configuration.GetSection("Emulation").Bind(o))
-				.BuildServiceProvider();
+				.Configure<EmulationSettings>(o=>configuration.Bind("Emulation", o));
+
+			//configure audio
+			if (settings.Audio == AudioDriver.XAudio2)
+				services.AddSingleton<IAudio, Audio>();
+			else
+				services.AddSingleton<IAudio, AudioV2>();
+
+			//configure CPU
+			if (settings.CPU == CPUType.Musashi)
+				services.AddSingleton<ICPU, MusashiCPU>();
+			else
+				services.AddSingleton<ICPU, CPU>();
+
+			//configure Traching
+			if (settings.Tracer == Feature.Enabled)
+				services.AddSingleton<ITracer, Tracer>();
+			else
+				services.AddSingleton<ITracer, NullTracer>();
+
+			var serviceProvider = services	.BuildServiceProvider();
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider;
 

@@ -377,8 +377,10 @@ namespace RunAmiga.Core.Custom
 				channels[i].xaudioVoice.GetVoiceDetails(out VoiceDetails channelDetails);
 				float[] outputMatrix = new float[channelDetails.InputChannelCount * masteringChannelDetails.InputChannelCount];
 
-				if (i == 0 || i == 3) { outputMatrix[0] = 0.0f; outputMatrix[1] = 1.0f; }//hard right
-				else { outputMatrix[0] = 1.0f; outputMatrix[1] = 0.0f; }//hard left
+				//if (i == 0 || i == 3) { outputMatrix[0] = 0.0f; outputMatrix[1] = 1.0f; }//hard right
+				//else { outputMatrix[0] = 1.0f; outputMatrix[1] = 0.0f; }//hard left
+				if (i == 0 || i == 3) { outputMatrix[0] = 0.2f; outputMatrix[1] = 0.8f; }//soft right
+				else { outputMatrix[0] = 0.8f; outputMatrix[1] = 0.2f; }//soft left
 
 				channels[i].xaudioVoice.SetOutputMatrix(null, channelDetails.InputChannelCount, masteringChannelDetails.InputChannelCount, outputMatrix);
 			}
@@ -428,11 +430,58 @@ namespace RunAmiga.Core.Custom
 						} while (channels[i].xaudioVoice.State.BuffersQueued >= 2);
 					}
 
+					//LowPassFilter(i);
+
 					Marshal.Copy(channels[i].xaudioCBuffer, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, channels[i].xaudioCBuffer.Length);
 					channels[i].xaudioCIndex = 0;
 					channels[i].xaudioVoice.SubmitSourceBuffer(channels[i].xaudioBuffer[channels[i].currentBuffer], null);
 					channels[i].xaudioVoice.Start();
 					channels[i].currentBuffer ^= 1;
+				}
+			}
+		}
+
+		private void LowPassFilter(int i)
+		{
+			if (SAMPLE_SIZE == 2)
+			{
+				double o2, o1;
+				double i0, i1, i2;
+
+				o2 = o1 = 0.0;
+				i2 = i1 = 0.0;
+
+				//double sr = 3546895.0;
+				double sr = SAMPLE_RATE;
+				double r = Math.Sqrt(2.0);
+				//double f = 3275.0;
+				double f = 32000.0;
+				double c = 1.0 / Math.Tan(Math.PI * f / sr);
+				double a1, a2, a3;
+				double b1, b2;
+
+				a1 = 1.0 / (1.0 + r * c + c * c);
+				a2 = 2.0 * a1;
+				a3 = a1;
+				b1 = 2.0 * (1.0 - c * c) * a1;
+				b2 = (1.0 - r * c + c * c) * a1;
+
+				double[] outputs = new double[channels[i].xaudioCBuffer.Length / 2];
+				for (int s = 0; s < channels[i].xaudioCBuffer.Length; s += 2)
+				{
+					i0 = (channels[i].xaudioCBuffer[s] + (channels[i].xaudioCBuffer[s+1] << 8)) / 32768.0f;
+
+					outputs[s / 2] = a1 * i0 + a2 * i1 + a3 * i2 - b1 * o1 - b2 * o2;
+					o2 = o1;
+					i2 = i1;
+					i1 = i0;
+				}
+
+				for (int s = 0; s < outputs.Length; s++)
+				{
+					short v = (short)Math.Clamp(outputs[s]*32768.0, -32768.0, 32767.0);
+					channels[i].xaudioCBuffer[s * 2] = (byte)v;
+					channels[i].xaudioCBuffer[s * 2+1] = (byte)(v>>8);
 				}
 			}
 		}

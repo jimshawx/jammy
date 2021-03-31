@@ -39,7 +39,7 @@ namespace RunAmiga.Disassembler.Analysers
 			this.settings = settings.Value;
 			this.mem = mem;
 
-			memType = new MemType[settings.Value.MemorySize];
+			memType = new MemType[1ul<<settings.Value.AddressBits];
 
 			disassembler = new Disassembler();
 			

@@ -64,6 +64,7 @@ namespace RunAmiga.Core.Custom
 		{
 			uint originalAddress = address;
 			address |= 0xdf0000;
+			address &= 0xdfffff;
 
 			if (size == Size.Byte)
 			{
@@ -153,6 +154,7 @@ namespace RunAmiga.Core.Custom
 		{
 			uint originalAddress = address;
 			address |= 0xdf0000;
+			address &= 0xdfffff;
 
 			if (size == Size.Byte)
 			{

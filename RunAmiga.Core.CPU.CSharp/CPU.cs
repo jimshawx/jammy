@@ -650,18 +650,13 @@ namespace RunAmiga.Core.CPU.CSharp
 						case 0b100://#imm
 							return pc;
 						default:
-							//if (settings.UnknownEffectiveAddressExceptions)
-							//	throw new UnknownEffectiveAddressException(pc, type);
-							//logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
+							logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
 							internalTrap(3);
 							throw new AbandonInstructionException();
 					}
 					break;
 			}
-
-			//if (settings.UnknownEffectiveAddressExceptions)
-			//	throw new UnknownEffectiveAddressException(pc, type);
-			//logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
+			logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
 			internalTrap(3);
 			throw new AbandonInstructionException();
 		}
@@ -686,12 +681,8 @@ namespace RunAmiga.Core.CPU.CSharp
 			if (size == Size.Byte)
 				return (uint)(sbyte)read8(ea);
 			
-			if (settings.UnknownEffectiveAddressExceptions)
-				throw new UnknownEffectiveAddressException(pc, 0);
-
 			logger.LogTrace($"Unknown Effective Address {pc:X8}");
 			internalTrap(3);
-			
 			throw new AbandonInstructionException();
 		}
 
@@ -805,16 +796,12 @@ namespace RunAmiga.Core.CPU.CSharp
 						case 0b100://#imm
 							return fetchImm(size);//ea==pc
 						default:
-							if (settings.UnknownEffectiveAddressExceptions)
-								throw new UnknownEffectiveAddressException(pc, type);
 							logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
 							internalTrap(3);
 							throw new AbandonInstructionException();
 					}
 			}
 
-			if (settings.UnknownEffectiveAddressExceptions)
-				throw new UnknownEffectiveAddressException(pc, type);
 			logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
 			internalTrap(3);
 			throw new AbandonInstructionException();
@@ -829,9 +816,10 @@ namespace RunAmiga.Core.CPU.CSharp
 			{ write16(ea, (ushort)val); return; }
 			if (size == Size.Byte)
 			{ write8(ea, (byte)val); return; }
-			if (settings.UnknownEffectiveAddressExceptions)
-				throw new UnknownEffectiveAddressException(pc, 0);
+
 			logger.LogTrace($"Unknown Effective Address {pc:X8}");
+			internalTrap(3);
+			throw new AbandonInstructionException();
 		}
 
 		private void writeEA(int type, uint ea, Size size, uint value)
@@ -1013,8 +1001,6 @@ namespace RunAmiga.Core.CPU.CSharp
 					case 2: roxd(type, 1, lr, Size.Word); break;
 					case 3: rod(type, 1, lr, Size.Word); break;
 					default: 
-						if (settings.UnknownInstructionExceptions)
-							throw new UnknownInstructionException(instructionStartPC, type);
 						logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 						internalTrap(3);
 						break;
@@ -1410,8 +1396,6 @@ namespace RunAmiga.Core.CPU.CSharp
 				case 0b10001://DA
 					tmp = d[Xn]; d[Xn] = a[Yn]; a[Yn] = tmp; break;
 				default:
-					if (settings.UnknownInstructionExceptions)
-						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 					internalTrap(3);
 					break;
@@ -1979,8 +1963,6 @@ namespace RunAmiga.Core.CPU.CSharp
 			}
 			else
 			{
-				if (settings.UnknownInstructionExceptions)
-					throw new UnknownInstructionException(pc, type);
 				logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 				internalTrap(3);
 			}
@@ -2623,8 +2605,6 @@ namespace RunAmiga.Core.CPU.CSharp
 					setNZ(d[Xn], Size.Byte);
 					break;
 				default: 
-					if (settings.UnknownInstructionExceptions)
-						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 					internalTrap(3);
 					break;
@@ -2834,8 +2814,6 @@ namespace RunAmiga.Core.CPU.CSharp
 						cmpi(type);
 						break;
 					default:
-						if (settings.UnknownInstructionExceptions)
-							throw new UnknownInstructionException(pc, type);
 						logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 						internalTrap(3);
 						break;
@@ -3013,8 +2991,6 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				else
 				{
-					if (settings.UnknownInstructionExceptions)
-						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 					internalTrap(3);
 				}
@@ -3169,8 +3145,6 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				else
 				{
-					if (settings.UnknownInstructionExceptions)
-						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 					internalTrap(3);
 				}
@@ -3220,8 +3194,6 @@ namespace RunAmiga.Core.CPU.CSharp
 				}
 				else
 				{
-					if (settings.UnknownInstructionExceptions)
-						throw new UnknownInstructionException(pc, type);
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
 					internalTrap(3);
 				}

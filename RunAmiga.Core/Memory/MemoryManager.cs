@@ -13,8 +13,8 @@ namespace RunAmiga.Core.Memory
 
 		public MemoryManager(IOptions<EmulationSettings> settings)
 		{
-			MappedDevice = new MemoryMappedDeviceCollection(settings.Value.MemorySize);
-			DebugMappedDevice = new MemoryMappedDeviceCollection(settings.Value.MemorySize);
+			MappedDevice = new MemoryMappedDeviceCollection(settings.Value.AddressBits);
+			DebugMappedDevice = new MemoryMappedDeviceCollection(settings.Value.AddressBits);
 		}
 
 		public void AddDevices(List<IMemoryMappedDevice> devs)
@@ -43,9 +43,9 @@ namespace RunAmiga.Core.Memory
 		private readonly IMemoryMappedDevice[] mapping = new IMemoryMappedDevice[0x100];
 		private readonly uint memoryMask;
 
-		public MemoryMappedDeviceCollection(int memorySize)
+		public MemoryMappedDeviceCollection(int addressBits)
 		{
-			memoryMask = (uint)(memorySize - 1);
+			memoryMask = (uint)((1ul<<addressBits) - 1);
 		}
 
 		public void BuildMappedDevices()
