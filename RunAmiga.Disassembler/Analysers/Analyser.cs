@@ -21,25 +21,24 @@ namespace RunAmiga.Disassembler.Analysers
 		private readonly ILabeller labeller;
 		private readonly ILogger logger;
 		private readonly IKickstartROM kickstartROM;
+		private readonly IAnalysis analysis;
 		private readonly Disassembler disassembler;
 
-		private readonly Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
-		private readonly Dictionary<uint, Header> headers = new Dictionary<uint, Header>();
-		private readonly Dictionary<string, LVOCollection> lvos = new Dictionary<string, LVOCollection>();
-		private readonly MemType[] memType;
 		private readonly EmulationSettings settings;
 
 		public Analyser(IKickstartAnalysis kickstartAnalysis, ILabeller labeller,
-			IDebugMemoryMapper mem, IOptions<EmulationSettings> settings, ILogger<Analyser> logger, IKickstartROM kickstartROM)
+			IDebugMemoryMapper mem, IOptions<EmulationSettings> settings,
+			ILogger<Analyser> logger, IKickstartROM kickstartROM, IAnalysis analysis)
 		{
 			this.kickstartAnalysis = kickstartAnalysis;
 			this.labeller = labeller;
 			this.logger = logger;
 			this.kickstartROM = kickstartROM;
+			this.analysis = analysis;
 			this.settings = settings.Value;
 			this.mem = mem;
 
-			memType = new MemType[1ul<<settings.Value.AddressBits];
+			//memType = new MemType[1ul<<settings.Value.AddressBits];
 
 			disassembler = new Disassembler();
 			
@@ -55,6 +54,7 @@ namespace RunAmiga.Disassembler.Analysers
 
 		private void NoNL()
 		{
+			var headers = analysis.GetHeaders();
 			foreach (var h in headers.Values)
 			{
 				var lines = new List<string>(h.TextLines);
@@ -63,6 +63,7 @@ namespace RunAmiga.Disassembler.Analysers
 					h.TextLines.Add(l.Replace("\r\n", "").Replace("\n","".Replace("\r","")));
 			}
 
+			var comments = analysis.GetComments();
 			foreach (var c in comments.Values)
 			{
 				string l = c.Text;
@@ -70,32 +71,12 @@ namespace RunAmiga.Disassembler.Analysers
 			}
 		}
 
-		public MemType[] GetMemTypes()
-		{
-			return memType;
-		}
-
-		public Dictionary<uint, Header> GetHeaders()
-		{
-			return headers;
-		}
-
-		public Dictionary<uint, Comment> GetComments()
-		{
-			return comments;
-		}
-
-		public Dictionary<string, LVOCollection> GetLVOs()
-		{
-			return lvos;
-		}
-
 		private void Labeller()
 		{
 			var labels = labeller.GetLabels();
 
 			foreach (var label in labels.Values)
-				AddHeader(label.Address, $"{label.Name}:");
+				analysis.AddHeader(label.Address, $"{label.Name}:");
 		}
 
 		private void LoadLVOs()
@@ -124,12 +105,14 @@ namespace RunAmiga.Disassembler.Analysers
 							continue;
 
 						currentLib = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)[3];
-						lvos[currentLib] = new LVOCollection();
+						//lvos[currentLib] = new LVOCollection();
+						analysis.SetLVO(currentLib, new LVOCollection());
 					}
 					else
 					{
 						var bits = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-						lvos[currentLib].LVOs.Add(new LVO
+						//lvos[currentLib].LVOs.Add(new LVO
+						analysis.AddLVO(currentLib, new LVO
 						{
 							Name = bits[0].Substring(4),
 							Offset = int.Parse(bits[2])
@@ -167,21 +150,21 @@ namespace RunAmiga.Disassembler.Analysers
 				//F8575E  00F85798                                RT_IDSTRING(pointer to ID string)
 				//F85762  00F85804                                RT_INIT(execution address)
 
-				AddHeader(address, "");
-				AddHeader(address, $"\t; The {tag.Name} RomTag Structure");
-				AddHeader(address, "");
+				analysis.AddHeader(address, "");
+				analysis.AddHeader(address, $"\t; The {tag.Name} RomTag Structure");
+				analysis.AddHeader(address, "");
 
-				MakeMemType(address, MemType.Word, null); AddComment(address, com[0]); address += 2;
-				MakeMemType(address, MemType.Long, null); AddComment(address, com[1]); address += 4;
-				MakeMemType(address, MemType.Long, null); AddComment(address, com[2]); address += 4;
-				MakeMemType(address, MemType.Byte, null); AddComment(address, com[3]); address++;
-				MakeMemType(address, MemType.Byte, null); AddComment(address, com[4]); address++;
-				MakeMemType(address, MemType.Byte, null); AddComment(address, com[5]); address++;
-				MakeMemType(address, MemType.Byte, null); AddComment(address, com[6]); address++;
-				MakeMemType(address, MemType.Long, null); AddComment(address, com[7]); address += 4;
-				MakeMemType(address, MemType.Long, null); AddComment(address, com[8]); address += 4;
-				MakeMemType(address, MemType.Long, null); AddComment(address, com[9]); address += 4;
-				AddHeader(address, "");
+				MakeMemType(address, MemType.Word, null); analysis.AddComment(address, com[0]); address += 2;
+				MakeMemType(address, MemType.Long, null); analysis.AddComment(address, com[1]); address += 4;
+				MakeMemType(address, MemType.Long, null); analysis.AddComment(address, com[2]); address += 4;
+				MakeMemType(address, MemType.Byte, null); analysis.AddComment(address, com[3]); address++;
+				MakeMemType(address, MemType.Byte, null); analysis.AddComment(address, com[4]); address++;
+				MakeMemType(address, MemType.Byte, null); analysis.AddComment(address, com[5]); address++;
+				MakeMemType(address, MemType.Byte, null); analysis.AddComment(address, com[6]); address++;
+				MakeMemType(address, MemType.Long, null); analysis.AddComment(address, com[7]); address += 4;
+				MakeMemType(address, MemType.Long, null); analysis.AddComment(address, com[8]); address += 4;
+				MakeMemType(address, MemType.Long, null); analysis.AddComment(address, com[9]); address += 4;
+				analysis.AddHeader(address, "");
 
 				MakeMemType(tag.NamePtr, MemType.Str, null);
 				MakeMemType(tag.IdStringPtr, MemType.Str, null);
@@ -190,20 +173,20 @@ namespace RunAmiga.Disassembler.Analysers
 				{
 					address = tag.Init;
 
-					AddHeader(address, "");
-					AddHeader(address, $"\t; {tag.Name} init struct");
-					AddComment(address, "size");
+					analysis.AddHeader(address, "");
+					analysis.AddHeader(address, $"\t; {tag.Name} init struct");
+					analysis.AddComment(address, "size");
 					MakeMemType(address, MemType.Long, null); address += 4;
 					uint fntable = mem.UnsafeRead32(address);
-					AddComment(address, "vectors");
+					analysis.AddComment(address, "vectors");
 					MakeMemType(address, MemType.Long, null); address += 4;
 					uint structure = mem.UnsafeRead32(address);
-					AddComment(address, "init struct");
+					analysis.AddComment(address, "init struct");
 					MakeMemType(address, MemType.Long, null); address += 4;
 					uint fninit = mem.UnsafeRead32(address);
-					AddComment(address, "init");
+					analysis.AddComment(address, "init");
 					MakeMemType(address, MemType.Long, null); address += 4;
-					AddHeader(address, "");
+					analysis.AddHeader(address, "");
 
 					if (structure != 0)
 						ExtractStructureInit(structure);
@@ -215,9 +198,9 @@ namespace RunAmiga.Disassembler.Analysers
 					{
 						address = fninit;
 
-						AddHeader(address, "");
-						AddHeader(address, $"\t; {tag.Name} init");
-						AddHeader(address, "");
+						analysis.AddHeader(address, "");
+						analysis.AddHeader(address, $"\t; {tag.Name} init");
+						analysis.AddHeader(address, "");
 					}
 				}
 				else
@@ -226,9 +209,9 @@ namespace RunAmiga.Disassembler.Analysers
 					{
 						address = tag.Init;
 
-						AddHeader(address, "");
-						AddHeader(address, $"\t; {tag.Name} init");
-						AddHeader(address, "");
+						analysis.AddHeader(address, "");
+						analysis.AddHeader(address, $"\t; {tag.Name} init");
+						analysis.AddHeader(address, "");
 					}
 				}
 			}
@@ -242,8 +225,8 @@ namespace RunAmiga.Disassembler.Analysers
 
 			if (name == null) name = $"fntable_{fntable:X8}";
 
-			AddHeader(address, "");
-			AddHeader(address, $"\t; {name} vectors");
+			analysis.AddHeader(address, "");
+			analysis.AddHeader(address, $"\t; {name} vectors");
 
 			if (size == Size.Word)
 			{
@@ -252,13 +235,13 @@ namespace RunAmiga.Disassembler.Analysers
 					s = mem.UnsafeRead16(address);
 
 					uint u = fntable + s;
-					AddHeader(u, "");
-					AddHeader(u, "---------------------------------------------------------------------------");
-					AddHeader(u, $"\t{name}_{idx}");
-					AddHeader(u, "---------------------------------------------------------------------------");
-					AddHeader(u, "");
+					analysis.AddHeader(u, "");
+					analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					analysis.AddHeader(u, $"\t{name}_{idx}");
+					analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					analysis.AddHeader(u, "");
 
-					AddComment(address, $"{name}_{idx}");
+					analysis.AddComment(address, $"{name}_{idx}");
 					MakeMemType(address, MemType.Word, null);
 					address += 2;
 					idx++;
@@ -270,27 +253,27 @@ namespace RunAmiga.Disassembler.Analysers
 				{
 					uint u = mem.UnsafeRead32(address);
 
-					AddHeader(u, "");
-					AddHeader(u, "---------------------------------------------------------------------------");
-					AddHeader(u, $"\t{name}_{idx}");
-					AddHeader(u, "---------------------------------------------------------------------------");
-					AddHeader(u, "");
+					analysis.AddHeader(u, "");
+					analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					analysis.AddHeader(u, $"\t{name}_{idx}");
+					analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					analysis.AddHeader(u, "");
 
-					AddComment(address, $"{name}_{idx}");
+					analysis.AddComment(address, $"{name}_{idx}");
 					MakeMemType(address, MemType.Long, null);
 					address += 4;
 					idx++;
 				}
 			}
-			AddHeader(address, "");
+			analysis.AddHeader(address, "");
 		}
 
 		public void ExtractFunctionTable(uint fntable, NT_Type type, string name)
 		{
 			uint address = fntable;
 
-			AddHeader(address, "");
-			AddHeader(address, $"\t; {name} vectors");
+			analysis.AddHeader(address, "");
+			analysis.AddHeader(address, $"\t; {name} vectors");
 
 			ushort s = mem.UnsafeRead16(address);
 			int idx = 0;
@@ -302,13 +285,13 @@ namespace RunAmiga.Disassembler.Analysers
 				{
 					uint u = fntable + s;
 					string lvo = LVO(type, name, idx);
-					AddHeader(u, "");
-					AddHeader(u, "---------------------------------------------------------------------------");
-					AddHeader(u, $"\t{lvo}");
-					AddHeader(u, "---------------------------------------------------------------------------");
-					AddHeader(u, "");
+					analysis.AddHeader(u, "");
+					analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					analysis.AddHeader(u, $"\t{lvo}");
+					analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					analysis.AddHeader(u, "");
 
-					AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
+					analysis.AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
 					MakeMemType(address, MemType.Word, null);
 					address += 2;
 					idx++;
@@ -316,7 +299,7 @@ namespace RunAmiga.Disassembler.Analysers
 
 				MakeMemType(address, MemType.Word, null);
 				address += 2;
-				AddHeader(address, "");
+				analysis.AddHeader(address, "");
 			}
 			else
 			{
@@ -324,13 +307,13 @@ namespace RunAmiga.Disassembler.Analysers
 				while ((u = mem.UnsafeRead32(address)) != 0xFFFFFFFF)
 				{
 					string lvo = LVO(type, name, idx);
-					AddHeader(u, "");
-					AddHeader(u, "---------------------------------------------------------------------------");
-					AddHeader(u, $"\t{lvo}");
-					AddHeader(u, "---------------------------------------------------------------------------");
-					AddHeader(u, "");
+					analysis.AddHeader(u, "");
+					analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					analysis.AddHeader(u, $"\t{lvo}");
+					analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					analysis.AddHeader(u, "");
 
-					AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
+					analysis.AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
 					MakeMemType(address, MemType.Long, null);
 					address += 4;
 					idx++;
@@ -338,7 +321,7 @@ namespace RunAmiga.Disassembler.Analysers
 
 				MakeMemType(address, MemType.Long, null);
 				address += 4;
-				AddHeader(address, "");
+				analysis.AddHeader(address, "");
 			}
 		}
 
@@ -367,7 +350,7 @@ namespace RunAmiga.Disassembler.Analysers
 
 			MakeMemType(address, MemType.Word, null);
 			address += 2;
-			AddHeader(address, "");
+			analysis.AddHeader(address, "");
 		}
 
 		private readonly string[] fixedLVOs = { "LibOpen", "LibClose", "LibExpunge", "LibReserved", "DevBeginIO", "DevAbortIO" };
@@ -383,6 +366,7 @@ namespace RunAmiga.Disassembler.Analysers
 				if (idx < 6) return $"{fixedLVOs[idx]}() {name}";
 			}
 
+			var lvos = analysis.GetLVOs();
 			if (lvos.TryGetValue(name, out var lvolist))
 			{
 				var lvo = lvolist.LVOs.SingleOrDefault(x => x.Index == idx);
@@ -395,6 +379,7 @@ namespace RunAmiga.Disassembler.Analysers
 
 		private void DeDupe()
 		{
+			var headers = analysis.GetHeaders();
 			foreach (var vals in headers.Values)
 			{
 				bool lastBlank = false;
@@ -409,22 +394,6 @@ namespace RunAmiga.Disassembler.Analysers
 				vals.TextLines.Clear();
 				vals.TextLines.AddRange(newHdrs);
 			}
-		}
-
-		private bool IgnoreComment(Comment comment)
-		{
-			return false;
-		}
-
-		private void AddComment(Comment comment)
-		{
-			if (!IgnoreComment(comment))
-				comments[comment.Address] = comment;
-		}
-
-		private void AddComment(uint address, string s)
-		{
-			comments[address] = new Comment { Address = address, Text = s };
 		}
 
 		private void Analysis()
@@ -449,20 +418,20 @@ namespace RunAmiga.Disassembler.Analysers
 					uint target;
 					if (d == 0)
 					{
-						AddHeader(i + 4, "");
+						analysis.AddHeader(i + 4, "");
 						target = (uint)(short)mem.UnsafeRead16(i + 2);
 					}
 					else if (d == 0xff)
 					{
-						AddHeader(i + 6, "");
+						analysis.AddHeader(i + 6, "");
 						target = mem.UnsafeRead32(i + 2);
 					}
 					else
 					{
-						AddHeader(i + 2, "");
+						analysis.AddHeader(i + 2, "");
 						target = (uint)(sbyte)d;
 					}
-					AddHeader(i + target + 2, "");
+					analysis.AddHeader(i + target + 2, "");
 				}
 
 				//bsr
@@ -476,28 +445,28 @@ namespace RunAmiga.Disassembler.Analysers
 						target = mem.UnsafeRead32(i + 2);
 					else
 						target = (uint)(sbyte)d;
-					AddHeader(target + i + 2, "");
+					analysis.AddHeader(target + i + 2, "");
 				}
 
 				//jmp
 				if ((s & 0xffc0) == 0x4ec0)
-					AddHeader(i + 2, "");
+					analysis.AddHeader(i + 2, "");
 
 				//rts
 				if (s == 0x4e75)
-					AddHeader(i + 2, "");
+					analysis.AddHeader(i + 2, "");
 
 				//rte
 				if (s == 0x4e73)
-					AddHeader(i + 2, "");
+					analysis.AddHeader(i + 2, "");
 
 				//movem.l r,-(a7)
 				if (s == 0b01001_0_001_1_100_111)
-					AddHeader(i, "");
+					analysis.AddHeader(i, "");
 
 				//link
 				if ((s & 0xfff8) == 0x4e50)
-					AddHeader(i, "");
+					analysis.AddHeader(i, "");
 
 				//Disable()
 				//FC37B2  33FC 4000 00DF F09A move.w    #$4000,$DFF09A
@@ -509,9 +478,9 @@ namespace RunAmiga.Disassembler.Analysers
 					(mem.UnsafeRead16(i + 8) & 0x5228) == 0x5228 &&
 					mem.UnsafeRead16(i + 10) == 0x126)
 				{
-					AddHeader(i, "");
-					AddComment(i, "Disable()");
-					AddHeader(i + 12, "");
+					analysis.AddHeader(i, "");
+					analysis.AddComment(i, "Disable()");
+					analysis.AddHeader(i + 12, "");
 				}
 
 				//Enable()
@@ -526,9 +495,9 @@ namespace RunAmiga.Disassembler.Analysers
 					mem.UnsafeRead16(i + 10) == 0x00DF &&
 					mem.UnsafeRead16(i + 12) == 0xF09A)
 				{
-					AddHeader(i, "");
-					AddComment(i, "Enable()");
-					AddHeader(i + 14, "");
+					analysis.AddHeader(i, "");
+					analysis.AddComment(i, "Enable()");
+					analysis.AddHeader(i + 14, "");
 				}
 
 				//todo: other candidates
@@ -537,39 +506,6 @@ namespace RunAmiga.Disassembler.Analysers
 			}
 		}
 
-		private void AddHeader(uint address, string hdr)
-		{
-			if (!headers.ContainsKey(address))
-				headers[address] = new Header { Address = address };
-
-			headers[address].TextLines.Add(hdr);
-		}
-
-		private void AddHeader(uint address, List<string> hdr)
-		{
-			if (!headers.ContainsKey(address))
-				headers[address] = new Header { Address = address };
-
-			headers[address].TextLines.AddRange(hdr);
-		}
-
-		private void ReplaceHeader(uint address, string hdr)
-		{
-			if (!headers.ContainsKey(address))
-				headers[address] = new Header { Address = address };
-
-			headers[address].TextLines.Clear();
-			headers[address].TextLines.Add(hdr);
-		}
-
-		private void ReplaceHeader(uint address, List<string> hdr)
-		{
-			if (!headers.ContainsKey(address))
-				headers[address] = new Header { Address = address };
-
-			headers[address].TextLines.Clear();
-			headers[address].TextLines.AddRange(hdr);
-		}
 
 		private void LoadComments()
 		{
@@ -634,7 +570,7 @@ namespace RunAmiga.Disassembler.Analysers
 							if (hdrs.Any())
 							{
 								//attach any previous headers to the new address and start collecting new ones
-								ReplaceHeader(currentAddress, hdrs);
+								analysis.ReplaceHeader(currentAddress, hdrs);
 								hdrs.Clear();
 							}
 
@@ -658,7 +594,7 @@ namespace RunAmiga.Disassembler.Analysers
 									//the comments are what's left after the i'th split
 									if (split.Length > i)
 									{
-										AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
+										analysis.AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
 									}
 
 									currentAddress = nextAddress;
@@ -669,7 +605,7 @@ namespace RunAmiga.Disassembler.Analysers
 									if (split.Length > 3)
 									{
 										//the comments are what's left after the second split, usually starting at column 49
-										AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(3)) });
+										analysis.AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(3)) });
 									}
 									else if (split.Length < 3)
 									{
@@ -677,7 +613,7 @@ namespace RunAmiga.Disassembler.Analysers
 										if (split.Length < 2 || !oneWordOps.Contains(split[1]))
 										{
 											//it's probably comments
-											AddComment(new Comment {Address = currentAddress, Text = string.Join(" ", split.Skip(1))});
+											analysis.AddComment(new Comment {Address = currentAddress, Text = string.Join(" ", split.Skip(1))});
 										}
 									}
 
@@ -702,7 +638,7 @@ namespace RunAmiga.Disassembler.Analysers
 							//the comments are what's left after the i'th split
 							if (split.Length > i)
 							{
-								AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
+								analysis.AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
 							}
 
 							currentAddress = nextAddress;
@@ -766,11 +702,11 @@ namespace RunAmiga.Disassembler.Analysers
 
 		private uint MakeMemType(uint address, MemType type, string str)
 		{
-			if (address >= memType.Length) return 0;
+			if (analysis.OutOfMemtypeRange(address)) return 0;
 
-			if (type == MemType.Byte) { memType[address] = type; return 1; }
-			else if (type == MemType.Word) { memType[address] = type; memType[address + 1] = type; return 2; }
-			else if (type == MemType.Long) { memType[address] = type; memType[address + 1] = type; memType[address + 2] = type; memType[address + 3] = type; return 4; }
+			if (type == MemType.Byte) { analysis.SetMemType(address, type); return 1; }
+			else if (type == MemType.Word) { analysis.SetMemType(address, type); analysis.SetMemType(address + 1, type); return 2; }
+			else if (type == MemType.Long) { analysis.SetMemType(address, type); analysis.SetMemType(address + 1, type); analysis.SetMemType(address + 2, type); analysis.SetMemType(address + 3, type); return 4; }
 			else if (type == MemType.Str)
 			{
 				if (str == null)
@@ -782,7 +718,7 @@ namespace RunAmiga.Disassembler.Analysers
 					uint c = 0;
 					do
 					{
-						memType[a] = type;
+						analysis.SetMemType(a, type);
 						c++;
 					} while (mem.UnsafeRead8(a++) != 0);
 
@@ -804,7 +740,7 @@ namespace RunAmiga.Disassembler.Analysers
 					}
 
 					for (uint i = address; i < address + c; i++)
-						memType[i] = type;
+						analysis.SetMemType(i, type);
 
 					return c;
 				}
@@ -813,7 +749,7 @@ namespace RunAmiga.Disassembler.Analysers
 			{
 				var asm = disassembler.Disassemble(address, mem.GetEnumerable((int)address, 20));
 				for (uint i = address; i < address + asm.Bytes.Length; i++)
-					memType[i] = type;
+					analysis.SetMemType(i, type);
 			}
 			return 0;
 		}

@@ -15,11 +15,6 @@ namespace RunAmiga.Core.Custom
 			this.logger = logger;
 		}
 
-		public void Emulate(ulong cycles)
-		{
-			
-		}
-
 		public void Reset()
 		{
 			for (int i = 0; i < 16; i++)
@@ -114,14 +109,14 @@ namespace RunAmiga.Core.Custom
 					regs[8] = (byte)(month % 10);
 					regs[9] = (byte)(month / 10);
 
-					//kickstart 3 battclock is clever enough to say:
+					//kickstart 2/3 battclock is clever enough to say:
 					// year = 1900 + clock value
 					// if (year < 1978) year += 100
 					// which means it'll work 'til 2078.
 					//kickstart 1.2/1.3 unfortunately...
 					// year = 1900 + clock value
 					// if (year < 1978) year = 1978
-					int year = (t.Year - 1900) % 100;
+					int year = t.Year % 100;
 					regs[10] = (byte)(year % 10);
 					regs[11] = (byte)(year / 10);
 

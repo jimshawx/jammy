@@ -179,24 +179,38 @@ namespace RunAmiga.Core.Interface.Interfaces
 		int GetAddressLine(uint address);
 		uint GetLineAddress(int line);
 		//string DisassembleAddress(uint pc);
-		void ShowRomTags();
 	}
 
 	public interface IKickstartAnalysis
 	{
 		List<Resident> GetRomTags();
+		void ShowRomTags();
 	}
 
 	public interface IAnalyser
+	{
+		void MarkAsType(uint address, MemType type, Size size);
+		void ExtractFunctionTable(uint fntable, NT_Type type, string name);
+		void ExtractStructureInit(uint address);
+		void ExtractFunctionTable(uint fntable, int count, string name, Size size);
+	}
+
+	public interface IAnalysis
 	{
 		MemType[] GetMemTypes();
 		Dictionary<uint, Header> GetHeaders();
 		Dictionary<uint, Comment> GetComments();
 		Dictionary<string, LVOCollection> GetLVOs();
-		void MarkAsType(uint address, MemType type, Size size);
-		void ExtractFunctionTable(uint fntable, NT_Type type, string name);
-		void ExtractStructureInit(uint address);
-		void ExtractFunctionTable(uint fntable, int count, string name, Size size);
+		void AddComment(Comment comment);
+		void AddComment(uint address, string s);
+		void AddHeader(uint address, string hdr);
+		void AddHeader(uint address, List<string> hdr);
+		void ReplaceHeader(uint address, string hdr);
+		void ReplaceHeader(uint address, List<string> hdr);
+		void SetMemType(uint address, MemType type);
+		void AddLVO(string currentLib, LVO lvo);
+		void SetLVO(string currentLib, LVOCollection lvoCollection);
+		bool OutOfMemtypeRange(uint address);
 	}
 
 	public interface IMachineIdentifier

@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
+using RunAmiga.Core.Types.Options;
+using RunAmiga.Core.Types.Types.Debugger;
 using RunAmiga.Core.Types.Types.Kickstart;
 
 namespace RunAmiga.Disassembler
@@ -12,14 +17,21 @@ namespace RunAmiga.Disassembler
 		private readonly IDebugMemoryMapper memory;
 		private readonly ILogger logger;
 		private readonly IKickstartROM kickstartROM;
+		private readonly IDisassembly disassembly;
+		private readonly EmulationSettings settings;
 
 		private const int RTC_MATCHWORD = 0x4AFC;
 
-		public KickstartAnalysis(IDebugMemoryMapper memory, ILogger<KickstartAnalysis> logger, IKickstartROM kickstartROM)
+		public KickstartAnalysis(IDebugMemoryMapper memory, ILogger<KickstartAnalysis> logger, IKickstartROM kickstartROM,
+			IOptions<EmulationSettings> settings, IDisassembly disassembly)
 		{
 			this.memory = memory;
 			this.logger = logger;
 			this.kickstartROM = kickstartROM;
+			this.disassembly = disassembly;
+			this.settings = settings.Value;
+
+			ShowRomTags();
 		}
 
 		public List<Resident> GetRomTags()
@@ -143,6 +155,73 @@ namespace RunAmiga.Disassembler
 				lines.Add($"RT_INIT       (execution address)");
 
 			return lines;
+		}
+
+		private void Disassemble(List<Resident> resident, MemoryDump memoryDump)
+		{
+			for (int i = 0; i < resident.Count; i++)
+			{
+				memoryDump.ClearMapping();
+
+				var rt = resident[i];
+				var endAddress = 0xfffff0u;
+				if (i != resident.Count - 1)
+					endAddress = resident[i + 1].MatchTag;
+
+				string asm = disassembly.DisassembleTxt(new List<Tuple<uint, uint>>
+					{
+						new Tuple<uint, uint>(rt.MatchTag, endAddress - rt.MatchTag + 1)
+					}, new List<uint>(),
+					new DisassemblyOptions { IncludeBytes = false, CommentPad = true, IncludeComments = true });
+
+				var dmp = new StringBuilder();
+				if (!asm.TrimStart().StartsWith("******"))
+				{
+					dmp.Append($"****************************************************************************\n" +
+							 "*                                                                          *\n" +
+							 "*  Comments Copyright (C) 2021 James Shaw                                  *\n" +
+							 "*                                                                          *\n" +
+							 "*  Release date:  2021.                                                    *\n" +
+							 "*                                                                          *\n" +
+							 $"*  The following is a complete disassembly of the Amiga {settings.KickStart,4}               *\n" +
+							 $"*  \"{rt.Name}\"                                                    *\n" +
+							 "*                                                                          *\n" +
+							 "*  Absolutely no guarantee is made of the correctness of any of the        *\n" +
+							 "*  information supplied below.                                             *\n" +
+							 "*                                                                          *\n" +
+							 "*  This work was inspired by the disassembly of AmigaOS 1.2 Exec by        *\n" +
+							 "*  Markus Wandel (http://wandel.ca/homepage/execdis/exec_disassembly.txt)  *\n" +
+							 "*                                                                          *\n" +
+							 "*  \"AMIGA ROM Operating System and Libraries\"                              *\n" +
+							 "*  \"Copyright (C) 1985-1993, Commodore-Amiga, Inc.\"                        *\n" +
+							 "*  \"All Rights Reserved.\"                                                  *\n" +
+							 "*                                                                          *\n" +
+							 "****************************************************************************\n" +
+							 "");
+				}
+
+				dmp.Append(asm);
+
+				dmp.AppendLine("^Z");
+				dmp.AppendLine(memoryDump.ToString(rt.MatchTag & 0xffffffe0u, endAddress - rt.MatchTag + 1 + 31));
+
+				File.WriteAllText($"{rt.Name}_disassembly.txt", dmp.ToString());
+			}
+		}
+
+		public void ShowRomTags()
+		{
+			var resident = GetRomTags();
+			foreach (var rt in resident)
+				logger.LogTrace($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
+
+			if (settings.Disassemblies == Feature.Enabled)
+			{
+				var memoryDump = new MemoryDump(memory.GetEnumerable(0));
+				Disassemble(resident, memoryDump);
+			}
+
+			//KickLogo.KSLogo(this);
 		}
 	}
 }

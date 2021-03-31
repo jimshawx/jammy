@@ -32,11 +32,12 @@ namespace RunAmiga.Debugger
 		private readonly ILogger logger;
 		private readonly ITracer tracer;
 		private readonly IAnalyser analyser;
+		private readonly IAnalysis analysis;
 
-		public Debugger(IMemoryMapper memoryMapper, IDebugMemoryMapper memory, ICPU cpu, IChips custom,
+		public Debugger(IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
 			IBreakpointCollection breakpoints, IKickstartROM kickstart, IIDEController ideController,
-			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser)
+			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser, IAnalysis analysis)
 		{
 			this.breakpoints = breakpoints;
 			this.kickstart = kickstart;
@@ -44,6 +45,7 @@ namespace RunAmiga.Debugger
 			this.disassembly = disassembly;
 			this.tracer = tracer;
 			this.analyser = analyser;
+			this.analysis = analysis;
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
@@ -54,9 +56,6 @@ namespace RunAmiga.Debugger
 			this.logger = logger;
 
 			//memoryMapper.AddMemoryIntercept(this);
-
-			//dump the kickstart ROM details and disassemblies
-			disassembly.ShowRomTags();
 
 			libraryBaseAddresses["exec.library"] = memory.UnsafeRead32(4);
 			//AddLVOIntercept("exec.library", "OpenLibrary", OpenLibraryLogger);
@@ -236,7 +235,7 @@ namespace RunAmiga.Debugger
 		{
 			libraryBaseAddresses["exec.library"] = memory.UnsafeRead32(4);
 
-			var lvos = analyser.GetLVOs();
+			var lvos = analysis.GetLVOs();
 			if (lvos.TryGetValue(library, out var lib))
 			{
 				var vector = lib.LVOs.SingleOrDefault(x => x.Name == vectorName);
