@@ -97,18 +97,8 @@ namespace RunAmiga.Main
 			if (debugger.KickstartSize() == 512*1024)
 				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x40000));
 
-			var restarts = new List<uint>();
-			if (settings.KickStart == "1.2")
-				restarts.AddRange(new List<uint>
-				{
-					0xC0937b, 0xfe490c, 0xfe4916, 0xfe4f70, 0xfe5388, 0xFE53E8, 0xFE5478, 0xFE57D0, 0xFE5BC2,
-					0xFE5D4C, 0xFE6994, 0xfe6dec, 0xFE6332, 0xfe66d8, 0xFE93C2, 0xFE571C, 0xFC5170, 0xFE5A04, 0xfe61d0, 0x00FE6FD4,
-					0xFE43CC, 0xFE4588, 0xFE46CC, 0xfe42ee, 0xFC3A40, 0xfc43f4, 0xfc4408, 0xfc441c, 0xfc4474, 0xfc44a4, 0xfc44d0,0xFE62D4
-				}); 
-
 			var disasm = disassembly.DisassembleTxt(
 				ranges,
-				restarts,
 				new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 
 			Machine.UnlockEmulation();
@@ -276,10 +266,15 @@ namespace RunAmiga.Main
 			uint pc = debugger.GetRegs().PC;
 			Machine.UnlockEmulation();
 
-			int line = disassembly.GetAddressLine(pc);
-			if (line == 0) return;
+			//int line = disassembly.GetAddressLine(pc);
+			//if (line == 0) return;
 
 			txtDisassembly.SuspendLayout();
+
+			var view = disassembly.DisassemblyView(pc, 5, 100, new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
+			int line = view.GetAddressLine(pc);
+			txtDisassembly.Text = view.Text;
+
 			txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
 			txtDisassembly.ScrollToCaret();
 			txtDisassembly.Select(txtDisassembly.GetFirstCharIndexFromLine(line),

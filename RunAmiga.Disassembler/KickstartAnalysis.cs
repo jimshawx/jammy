@@ -171,7 +171,7 @@ namespace RunAmiga.Disassembler
 				string asm = disassembly.DisassembleTxt(new List<Tuple<uint, uint>>
 					{
 						new Tuple<uint, uint>(rt.MatchTag, endAddress - rt.MatchTag + 1)
-					}, new List<uint>(),
+					},
 					new DisassemblyOptions { IncludeBytes = false, CommentPad = true, IncludeComments = true });
 
 				var dmp = new StringBuilder();

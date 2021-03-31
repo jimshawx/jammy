@@ -173,12 +173,19 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void Reset();
 	}
 
-	public interface IDisassembly
+	public interface IDisassemblyView
 	{
-		string DisassembleTxt(List<Tuple<uint, uint>> ranges, List<uint> restartsList, DisassemblyOptions options);
 		int GetAddressLine(uint address);
 		uint GetLineAddress(int line);
-		//string DisassembleAddress(uint pc);
+		string Text { get; }
+	}
+
+	public interface IDisassembly
+	{
+		string DisassembleTxt(List<Tuple<uint, uint>> ranges, DisassemblyOptions options);
+		int GetAddressLine(uint address);
+		uint GetLineAddress(int line);
+		IDisassemblyView DisassemblyView(uint address, int linesBefore, int linesAfter, DisassemblyOptions options);
 	}
 
 	public interface IKickstartAnalysis

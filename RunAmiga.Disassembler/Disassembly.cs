@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -25,201 +26,344 @@ namespace RunAmiga.Disassembler
 			this.memory = memory;
 			this.breakpoints = breakpoints;
 			disassembler = new Disassembler();
+
+			globalAddressToLine.Clear();
+			globalLineToAddress.Clear();
 		}
-		private readonly Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
-		private readonly Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
 
-		public string DisassembleTxt(List<Tuple<uint, uint>> ranges, List<uint> restartsList, DisassemblyOptions options)
+		public class AddressEntry
 		{
-			addressToLine.Clear();
-			lineToAddress.Clear();
+			public int Line { get; set; }
+			public List<string> Lines { get; } = new List<string>();
+		}
 
-			var memType = analysis.GetMemTypes();
-			var comments = analysis.GetComments();
-			var headers = analysis.GetHeaders();
+		private readonly Dictionary<uint, AddressEntry> globalAddressToLine = new Dictionary<uint, AddressEntry>();
+		private readonly Dictionary<int, uint> globalLineToAddress = new Dictionary<int, uint>();
 
-			var restarts = (IEnumerable<uint>)restartsList.OrderBy(x => x).ToList();
-
-			var txt = new StringBuilder();
-			var tmp = new StringBuilder();
-			int line = 0;
-
+		public string DisassembleTxt(List<Tuple<uint, uint>> ranges, DisassemblyOptions options)
+		{
+			var lines = new List<string>();
 			foreach (var range in ranges.OrderBy(x=>x.Item1))
 			{
 				uint address = range.Item1;
 				uint size = range.Item2;
-				uint addressEnd = address + size;
-				while (address < addressEnd)
+				lines.AddRange(DisassembleBlock(options, address, size));
+			}
+			return string.Join('\n', lines);
+		}
+
+		private IEnumerable<string> DisassembleBlock(DisassemblyOptions options, uint address, uint size)
+		{
+			int line = 0;
+
+			var tmp = new StringBuilder();
+			var memType = analysis.GetMemTypes();
+			var comments = analysis.GetComments();
+			var headers = analysis.GetHeaders();
+
+			uint startAddress = address;
+			uint endAddress = address + size;
+
+			Dictionary<uint, AddressEntry> addressToLine = new Dictionary<uint, AddressEntry>();
+			Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
+
+			while (address < endAddress)
+			{
+				while (memType[address] != MemType.Byte && memType[address] != MemType.Str && (address & 1) != 0)
+					address++;
+
+				var ade = new AddressEntry();
+				addressToLine.Add(address, ade);
+
+				if (options.IncludeComments && headers.TryGetValue(address, out Header hdrs))
 				{
-					while (memType[address] != MemType.Byte && memType[address] != MemType.Str && (address & 1) != 0)
-						address++;
-
-					if (restarts.Any())
+					foreach (var hdr in hdrs.TextLines)
 					{
-						if (address == restarts.First())
-						{
-							restarts = restarts.Skip(1);
-						}
-						else if (address > restarts.First() && address - restarts.First() < 0x20)
-						{
-							address = restarts.First();
-							restarts = restarts.Skip(1);
-						}
+						ade.Lines.Add(hdr);
+						line++;
 					}
+				}
 
-					if (options.IncludeComments && headers.TryGetValue(address, out Header hdrs))
+				ade.Line = line;
+				lineToAddress.Add(line, address);
+
+				uint lineAddress = address;
+
+				string asm;
+
+				if (options.IncludeBreakpoints)
+					asm = breakpoints.IsBreakpoint(address) ? "*" : " ";
+				else
+					asm = "";
+
+				if (memType[address] != MemType.Code && memType[address] != MemType.Unknown)
+				{
+					if (memType[address] == MemType.Byte)
 					{
-						foreach (var hdr in hdrs.TextLines)
-						{
-							txt.AppendLine(hdr);
-							line++;
-						}
+						asm = $"{address:X6}  {memory.UnsafeRead8(address):X2}";
+						address += 1;
 					}
-
-					addressToLine.Add(address, line);
-					lineToAddress.Add(line, address);
-
-					uint lineAddress = address;
-
-					if (options.IncludeBreakpoints)
-						txt.Append(breakpoints.IsBreakpoint(address) ? '*' : ' ');
-
-					string asm = "";
-					if (memType[address] != MemType.Code && memType[address] != MemType.Unknown)
+					else if (memType[address] == MemType.Word)
 					{
-						if (memType[address] == MemType.Byte)
-						{
-							asm = $"{address:X6}  { memory.UnsafeRead8(address):X2}";
-							address += 1;
-						}
-						else if (memType[address] == MemType.Word)
-						{
-							asm = $"{address:X6}  { memory.UnsafeRead16(address):X4}";
-							address += 2;
-						}
-						else if (memType[address] == MemType.Long)
-						{
-							asm = $"{address:X6}  { memory.UnsafeRead32(address):X8}";
-							address += 4;
-						}
-						else if (memType[address] == MemType.Str)
-						{
-							var str = new List<string>();
+						asm = $"{address:X6}  {memory.UnsafeRead16(address):X4}";
+						address += 2;
+					}
+					else if (memType[address] == MemType.Long)
+					{
+						asm = $"{address:X6}  {memory.UnsafeRead32(address):X8}";
+						address += 4;
+					}
+					else if (memType[address] == MemType.Str)
+					{
+						var str = new List<string>();
 
-							while (memType[address] == MemType.Str)
+						while (memType[address] == MemType.Str)
+						{
+							if (memory.UnsafeRead8(address) == 0)
 							{
-								if (memory.UnsafeRead8(address) == 0)
-								{
-									str.Add("00");
-									address++;
-									break;
-								}
-								else if (memory.UnsafeRead8(address) == 0xD)
-								{
-									str.Add("CR");
-								}
-								else if (memory.UnsafeRead8(address) == 0xA)
-								{ 
-									str.Add("LF");
-								}
-								else
-								{
-									tmp.Clear();
-									tmp.Append('"');
-									while (memory.UnsafeRead8(address) != 0 && memory.UnsafeRead8(address) != 0x0d && memory.UnsafeRead8(address) != 0xa)
-									{
-										tmp.Append(Convert.ToChar(memory.UnsafeRead8(address)));
-										address++;
-									}
-									tmp.Append('"');
-
-									address--;
-									str.Add(tmp.ToString());
-								}
-
+								str.Add("00");
 								address++;
+								break;
 							}
-							
-							asm = $"{lineAddress:X6}  {string.Join(',', str)}";
-						}
-					}
-					else
-					{
-						if ((address & 1) != 0)
-						{
-							asm = $"{address:X6}  { memory.UnsafeRead8(address):X2}";
-							address += 1;
-						}
-						else
-						{
-							var dasm = disassembler.Disassemble(address, memory.GetEnumerable((int)address, 20));
-							asm = dasm.ToString(options);
-
-							uint start = address, end = (uint)(address + dasm.Bytes.Length);
-							for (uint i = start; i < end && i < memory.Length; i++)
+							else if (memory.UnsafeRead8(address) == 0xD)
 							{
-								if (memType[i] != MemType.Code && memType[i] != MemType.Unknown)
-								{
-									break; //todo: the instruction overlapped something we know isn't code, so we could mark it as data
-								}
-
-								address++;
+								str.Add("CR");
 							}
-
-							//address += (uint)dasm.Bytes.Length;
-						}
-					}
-
-					if (options.IncludeComments)
-					{
-						if (comments.TryGetValue(lineAddress, out Comment comment))
-						{
-							if (asm.Length < 64)
-								txt.AppendLine($"{asm.PadRight(64)} {comment.Text}");
+							else if (memory.UnsafeRead8(address) == 0xA)
+							{
+								str.Add("LF");
+							}
 							else
-								txt.AppendLine($" {comment.Text}");
+							{
+								tmp.Clear();
+								tmp.Append('"');
+								while (memory.UnsafeRead8(address) != 0 && memory.UnsafeRead8(address) != 0x0d && memory.UnsafeRead8(address) != 0xa)
+								{
+									tmp.Append(Convert.ToChar(memory.UnsafeRead8(address)));
+									address++;
+								}
+
+								tmp.Append('"');
+
+								address--;
+								str.Add(tmp.ToString());
+							}
+
+							address++;
 						}
-						else
-						{
-							txt.AppendLine(asm);
-						}
+
+						asm = $"{lineAddress:X6}  {string.Join(',', str)}";
+					}
+				}
+				else
+				{
+					if ((address & 1) != 0)
+					{
+						asm = $"{address:X6}  {memory.UnsafeRead8(address):X2}";
+						address += 1;
 					}
 					else
 					{
-						txt.AppendLine(asm);
-					}
+						var dasm = disassembler.Disassemble(address, memory.GetEnumerable((int)address, 20));
+						asm = dasm.ToString(options);
 
-					line++;
+						uint start = address, end = (uint)(address + dasm.Bytes.Length);
+						for (uint i = start; i < end && i < memory.Length; i++)
+						{
+							if (memType[i] != MemType.Code && memType[i] != MemType.Unknown)
+							{
+								break; //todo: the instruction overlapped something we know isn't code, so we could mark it as data
+							}
+
+							address++;
+						}
+					}
+				}
+
+				if (options.IncludeComments)
+				{
+					if (comments.TryGetValue(lineAddress, out Comment comment))
+					{
+						if (asm.Length < 64)
+							ade.Lines.Add($"{asm.PadRight(64)} {comment.Text}");
+						else
+							ade.Lines.Add($" {comment.Text}");
+					}
+					else
+					{
+						ade.Lines.Add(asm);
+					}
+				}
+				else
+				{
+					ade.Lines.Add(asm);
+				}
+
+				line++;
+			}
+
+			MergeBlock(addressToLine, lineToAddress, startAddress, endAddress);
+
+			return addressToLine.SelectMany(x=>x.Value.Lines);
+		}
+
+		private void MergeBlock(Dictionary<uint, AddressEntry> addressToLine, Dictionary<int, uint> lineToAddress, uint startAddress, uint endAddress)
+		{
+			//any lines lower than incoming start line can be left alone
+			//any lines higher than that need to be incremented by the number of lines in the incoming block
+
+			//start line of the incoming block
+			int firstLine = GetAddressLine(startAddress);
+			int lineCount = addressToLine.Sum(x => x.Value.Lines.Count);
+			
+			//update addresses pointing to lines
+			{
+				foreach (var v in globalAddressToLine.Values.Where(x => x.Line >= firstLine))
+					v.Line += lineCount;
+			}
+			//update lines pointing to addresses
+			{
+				var updates = new List<KeyValuePair<int, uint>>();
+				foreach (var kvp in globalLineToAddress.Where(x=>x.Key >= firstLine))
+					updates.Add(kvp);
+				foreach (var u in updates)
+				{
+					globalLineToAddress.Remove(u.Key);
+					globalLineToAddress.Add(u.Key + lineCount, u.Value);
 				}
 			}
-			return txt.ToString();
+
+			//merge in the incoming data, it will overwrite any existing keys
+			foreach (var kvp in addressToLine)
+				globalAddressToLine[kvp.Key] = kvp.Value;
+
+			foreach (var kvp in lineToAddress)
+				globalLineToAddress[kvp.Key] = kvp.Value;
 		}
 
 		public int GetAddressLine(uint address)
 		{
-			if (addressToLine.TryGetValue(address, out int line))
-				return line;
+			if (globalAddressToLine.TryGetValue(address, out AddressEntry line))
+				return line.Line;
 
-			uint inc = 1;
-			int sign = 1;
-			while (Math.Abs(inc) < 16)
-			{
-				address += (uint)(sign * inc);
-				if (addressToLine.TryGetValue(address, out int linex))
-					return linex;
-				if (sign == -1)
-					inc++;
-				sign = -sign;
-			}
+			//do a quick scan above and below
+			//uint inc = 1;
+			//int sign = 1;
+			//while (Math.Abs(inc) < 16)
+			//{
+			//	address += (uint)(sign * inc);
+			//	if (globalAddressToLine.TryGetValue(address, out int linex))
+			//		return linex;
+			//	if (sign == -1)
+			//		inc++;
+			//	sign = -sign;
+			//}
+
+			//we want the maximum line number (plus one) which is less than address, if any
+			if (globalAddressToLine.Any(x=>x.Value.Line < address))
+				return globalAddressToLine.Where(x=>x.Value.Line < address)
+										.Max(x => x.Value.Line) + 1;
 
 			return 0;
 		}
 
 		public uint GetLineAddress(int line)
 		{
-			if (lineToAddress.TryGetValue(line, out uint address))
+			if (globalLineToAddress.TryGetValue(line, out uint address))
 				return address;
 			return 0;
 		}
+
+		public AddressEntry GetAddressEntry(uint address)
+		{
+			if (globalAddressToLine.TryGetValue(address, out AddressEntry line))
+				return line;
+			return null;
+		}
+
+		public string GetDisassembly(uint addressStart, uint addressEnd)
+		{
+			return string.Join("\n", globalAddressToLine
+				.Where(x=>x.Key >= addressStart && x.Key < addressEnd)
+				.OrderBy(x=>x.Key)
+				.SelectMany(x=>x.Value.Lines));
+		}
+
+		public IDisassemblyView DisassemblyView(uint address, int linesBefore, int linesAfter, DisassemblyOptions options)
+		{
+			address &= 0xfffffffe;
+
+			var startLine = GetAddressLine(address);
+			
+			if (GetLineAddress(startLine) != address)
+			{
+				//it's not been disassembled yet
+				DisassembleBlock(options, (uint)Math.Max((long)address-100,0), 0x10000);
+			}
+
+			long addressStart = address;
+			long addressEnd = address;
+
+			if (GetLineAddress(startLine) == address)
+			{
+				//it exists exactly
+				addressStart -= 2;
+				while (linesBefore > 0 && addressStart > 0)
+				{
+					var v = GetAddressEntry((uint)addressStart);
+					if (v != null)
+						linesBefore -= v.Lines.Count;
+					addressStart -= 2;
+				}
+				addressStart += 2;
+
+				while (linesAfter > 0 && addressEnd < Math.Min((long)address + 0x10000, 0x100000000))
+				{
+					var v = GetAddressEntry((uint)addressEnd);
+					if (v != null)
+						linesAfter += v.Lines.Count;
+					addressEnd += 2;
+				}
+				addressEnd -= 2;
+			}
+			else
+			{
+				//it's off by a bit, what now?
+				Debugger.Break();
+			}
+
+			var rv = new DisassemblyView(this, GetAddressLine((uint)addressStart), GetDisassembly((uint)addressStart, (uint)addressEnd));
+			return rv;
+		}
 	}
+
+	public class DisassemblyView : IDisassemblyView
+	{
+		private readonly int startLine;
+		private readonly IDisassembly disassembly;
+		private readonly string text;
+
+		public DisassemblyView(IDisassembly disassembly, int startLine, string asm)
+		{
+			this.startLine = startLine;
+			this.disassembly = disassembly;
+
+			text = asm;
+		}
+
+		//given an address, return the line in the view
+		public int GetAddressLine(uint address)
+		{
+			return disassembly.GetAddressLine(address) - startLine;
+		}
+
+		//given a line in the view, return the address
+		public uint GetLineAddress(int line)
+		{
+			return disassembly.GetLineAddress(line + startLine);
+		}
+
+		public string Text => text;
+	}
+
 }
