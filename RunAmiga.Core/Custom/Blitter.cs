@@ -227,8 +227,8 @@ namespace RunAmiga.Core.Custom
 			//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
 			//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
 			//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
-			if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
-				logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			//if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
+			//	logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 
 			bool dont_blit = false;
 			//these ones are weird
@@ -313,7 +313,7 @@ namespace RunAmiga.Core.Custom
 					if ((bltcon0 & 0x40) != 0) bltddat |=  s_bltadat &  s_bltbdat & ~bltcdat;
 					if ((bltcon0 & 0x80) != 0) bltddat |=  s_bltadat &  s_bltbdat &  bltcdat;
 
-					//todo: apply fill here
+					Fill();
 
 					bltzero |= bltddat;
 
@@ -362,6 +362,64 @@ namespace RunAmiga.Core.Custom
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
+		}
+
+		private void Fill()
+		{
+			uint mode = (bltcon1 >> 3) & 3;
+			//descending mode and one of the fill modes must be set
+			if (mode ==0 || (bltcon1&(1<<1))==0) return;
+
+			ushort dbg_bltddat = (ushort)bltddat;
+			ushort dbg_bltcon1 = (ushort)bltcon1;
+
+			//carry in
+			bool inside = (bltcon1&(1<<2))!=0;
+			if (mode == 1)
+			{
+				//inclusive fill
+				uint obltddat = bltddat;
+				for (uint b = 1; b <= 0x8000; b <<= 1)
+				{
+					bool bit = (b & obltddat) != 0;
+					if (!inside && bit)
+						inside = true;
+					else if (inside && bit)
+						inside = false;
+					if (inside)
+						bltddat |= b;
+				}
+				//update carry
+				bltcon1 &= ~(1u << 2);
+				if (inside) bltcon1 |= 1 << 2;
+			}
+			else if (mode == 2)
+			{
+				//exclusive fill
+				uint obltddat = bltddat;
+				for (uint b = 1; b <= 0x8000; b <<= 1)
+				{
+					bool bit = (b & obltddat) != 0;
+					if (!inside && bit)
+					{
+						inside = true;
+					}
+					else if (inside && bit)
+					{
+						inside = false;
+						bltddat &= ~b;
+						continue;
+					}
+
+					if (inside)
+						bltddat |= b;
+				}
+				//update carry
+				bltcon1 &= ~(1u << 2);
+				if (inside) bltcon1 |= 1 << 2;
+			}
+
+			//logger.LogTrace($"{(mode==1?"IFE":"EFE")} C:{(dbg_bltcon1>>2)&1} {Convert.ToString(dbg_bltddat,2).PadLeft(16,'0')} {Convert.ToString(bltddat, 2).PadLeft(16, '0')}");
 		}
 
 		private void Line(uint insaddr)
