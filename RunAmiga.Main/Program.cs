@@ -44,9 +44,9 @@ namespace RunAmiga.Main
 				.AddLogging(x=>
 				{
 					x.AddConfiguration(configuration.GetSection("Logging"));
-					x.AddDebug();
+					//x.AddDebug();
 					//x.AddSQLite();
-					//x.AddDebugAsync();
+					x.AddDebugAsync();
 				})
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IBattClock, BattClock>()

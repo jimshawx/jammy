@@ -34,6 +34,7 @@ namespace RunAmiga.Disassembler
 		public class AddressEntry
 		{
 			public int Line { get; set; }
+			public uint Address { get; set; }
 			public List<string> Lines { get; } = new List<string>();
 		}
 
@@ -47,13 +48,14 @@ namespace RunAmiga.Disassembler
 			{
 				uint address = range.Item1;
 				uint size = range.Item2;
-				lines.AddRange(DisassembleBlock(options, address, size));
+				lines.AddRange(DisassembleBlock(options, address, size).SelectMany(x=>x.Lines));
 			}
 			return string.Join('\n', lines);
 		}
 
-		private IEnumerable<string> DisassembleBlock(DisassemblyOptions options, uint address, uint size)
+		private IEnumerable<AddressEntry> DisassembleBlock(DisassemblyOptions options, uint address, uint size)
 		{
+			logger.LogTrace($"Disassembling Block {address:X8} {size}");
 			int line = 0;
 
 			var tmp = new StringBuilder();
@@ -73,6 +75,7 @@ namespace RunAmiga.Disassembler
 					address++;
 
 				var ade = new AddressEntry();
+				ade.Address = address;
 				addressToLine.Add(address, ade);
 
 				if (options.IncludeComments && headers.TryGetValue(address, out Header hdrs))
@@ -85,6 +88,7 @@ namespace RunAmiga.Disassembler
 				}
 
 				ade.Line = line;
+
 				lineToAddress.Add(line, address);
 
 				uint lineAddress = address;
@@ -202,43 +206,90 @@ namespace RunAmiga.Disassembler
 				line++;
 			}
 
+			endAddress = address;
+
 			MergeBlock(addressToLine, lineToAddress, startAddress, endAddress);
 
-			return addressToLine.SelectMany(x=>x.Value.Lines);
+			return addressToLine.Select(x=>x.Value);
 		}
 
 		private void MergeBlock(Dictionary<uint, AddressEntry> addressToLine, Dictionary<int, uint> lineToAddress, uint startAddress, uint endAddress)
 		{
+			logger.LogTrace($"Merging Block {startAddress:X8} {endAddress:X8}");
 			//any lines lower than incoming start line can be left alone
 			//any lines higher than that need to be incremented by the number of lines in the incoming block
 
 			//start line of the incoming block
 			int firstLine = GetAddressLine(startAddress);
 			int lineCount = addressToLine.Sum(x => x.Value.Lines.Count);
-			
-			//update addresses pointing to lines
+			int overwritten = 0;
+
+			//count the lines that'll be overwritten (any of those within the range of the incoming block)
+
+			//remove any existing address mappings in the range
+			{
+				var removals = globalAddressToLine.Where(x => x.Key >= startAddress && x.Key < endAddress);
+				foreach (var u in removals)
+				{
+					overwritten += globalAddressToLine[u.Key].Lines.Count;
+					globalAddressToLine.Remove(u.Key);
+				}
+				lineCount -= overwritten;
+			}
+
+			//update remaining existing addresses pointing to lines
 			{
 				foreach (var v in globalAddressToLine.Values.Where(x => x.Line >= firstLine))
 					v.Line += lineCount;
 			}
-			//update lines pointing to addresses
+			//update remaining existing lines pointing to addresses
 			{
-				var updates = new List<KeyValuePair<int, uint>>();
-				foreach (var kvp in globalLineToAddress.Where(x=>x.Key >= firstLine))
-					updates.Add(kvp);
+				var updates = globalLineToAddress.Where(x=>x.Key >= firstLine).ToList();
 				foreach (var u in updates)
-				{
 					globalLineToAddress.Remove(u.Key);
+				foreach (var u in updates)
 					globalLineToAddress.Add(u.Key + lineCount, u.Value);
-				}
 			}
+
+			//remove any existing line mappings in the range
+			{
+				//var removals = globalLineToAddress.Where(x => x.Key >= firstLine && x.Key < firstLine + lineCount);
+				var removals = globalLineToAddress.Where(x => x.Value >= startAddress && x.Value < endAddress).ToList();
+				int validateOverwritten = removals.Count;
+				foreach (var u in removals)
+					globalLineToAddress.Remove(u.Key);
+				if (validateOverwritten != overwritten)
+					Trace.WriteLine($"Overwritten mismatch {overwritten} <> {validateOverwritten}");
+			}
+
+			Check(1);
 
 			//merge in the incoming data, it will overwrite any existing keys
 			foreach (var kvp in addressToLine)
+			{
+				kvp.Value.Line += firstLine;
 				globalAddressToLine[kvp.Key] = kvp.Value;
+			}
 
 			foreach (var kvp in lineToAddress)
-				globalLineToAddress[kvp.Key] = kvp.Value;
+				globalLineToAddress[kvp.Key + firstLine] = kvp.Value;
+
+			Check(2);
+		}
+
+		private void Check(int chk)
+		{
+			//address to line -> line to address = identity
+			foreach (var g in globalAddressToLine)
+			{
+				int line = g.Value.Line;
+				uint a = GetLineAddress(line);
+				if (g.Key != a)
+				{
+					logger.LogTrace($"Line Map Check {chk} Fail {g.Key:X8} {a:X8} {line}");
+					break;
+				}
+			}
 		}
 
 		public int GetAddressLine(uint address)
@@ -294,42 +345,46 @@ namespace RunAmiga.Disassembler
 			address &= 0xfffffffe;
 
 			var startLine = GetAddressLine(address);
-			
-			if (GetLineAddress(startLine) != address)
-			{
-				//it's not been disassembled yet
-				DisassembleBlock(options, (uint)Math.Max((long)address-100,0), 0x10000);
-			}
 
 			long addressStart = address;
 			long addressEnd = address;
 
+			if (GetLineAddress(startLine) != address)
+			{
+				//it's not been disassembled yet
+				var lines = DisassembleBlock(options, (uint)Math.Max((long)address-100,0), 0x10000);
+				addressEnd = lines.Last().Address;
+			}
+
+			//it exists exactly
 			if (GetLineAddress(startLine) == address)
 			{
-				//it exists exactly
-				addressStart -= 2;
-				while (linesBefore > 0 && addressStart > 0)
+				long searchAddress = address;
+				searchAddress = address;
+				while (linesBefore >= 0 && searchAddress > 0)
 				{
-					var v = GetAddressEntry((uint)addressStart);
+					var v = GetAddressEntry((uint)searchAddress);
 					if (v != null)
+					{
 						linesBefore -= v.Lines.Count;
-					addressStart -= 2;
-				}
-				addressStart += 2;
+						addressStart = searchAddress;
+					}
 
-				while (linesAfter > 0 && addressEnd < Math.Min((long)address + 0x10000, 0x100000000))
-				{
-					var v = GetAddressEntry((uint)addressEnd);
-					if (v != null)
-						linesAfter += v.Lines.Count;
-					addressEnd += 2;
+					searchAddress -= 2;
 				}
-				addressEnd -= 2;
-			}
-			else
-			{
-				//it's off by a bit, what now?
-				Debugger.Break();
+
+				searchAddress = address;
+				while (linesAfter > 0 && searchAddress < Math.Min((long)address + 0x10000, 0x100000000))
+				{
+					var v = GetAddressEntry((uint)searchAddress);
+					if (v != null)
+					{
+						linesAfter += v.Lines.Count;
+						addressEnd = searchAddress;
+					}
+
+					searchAddress += 2;
+				}
 			}
 
 			var rv = new DisassemblyView(this, GetAddressLine((uint)addressStart), GetDisassembly((uint)addressStart, (uint)addressEnd));

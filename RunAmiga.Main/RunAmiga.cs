@@ -27,7 +27,7 @@ namespace RunAmiga.Main
 		private readonly EmulationSettings settings;
 
 		public RunAmiga(IEmulation emulation, IDisassembly disassembly, IDebugger debugger,
-			ILogger<RunAmiga> logger,IOptions<EmulationSettings> options)
+			ILogger<RunAmiga> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
 				throw new ApplicationException("RunAmiga can't create Handle");
@@ -94,7 +94,7 @@ namespace RunAmiga.Main
 			};
 			if (settings.TrapdoorMemory != 0.0)
 				ranges.Add(new Tuple<uint, uint>(0xc00000, 0x1000));
-			if (debugger.KickstartSize() == 512*1024)
+			if (debugger.KickstartSize() == 512 * 1024)
 				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x40000));
 
 			var disasm = disassembly.DisassembleTxt(
@@ -121,7 +121,7 @@ namespace RunAmiga.Main
 			var regs = debugger.GetRegs();
 			var chipRegs = debugger.GetChipRegs();
 			Machine.UnlockEmulation();
-			
+
 			lbRegisters.Items.Clear();
 			lbRegisters.Items.AddRange(regs.Items().Cast<object>().ToArray());
 
@@ -224,39 +224,39 @@ namespace RunAmiga.Main
 			Machine.UnlockEmulation();
 
 			{
-			var mem = new List<Tuple<uint, uint>>();
-			long sp = (long)regs.SP;
-			long ssp = (long)regs.SSP;
-			int cnt = 32;
-			while (sp > 0 && cnt-- > 0)
-			{
-				uint spv = 0xffffffff, sspv = 0xffffffff;
-				if (sp >= 0) spv = memory.Read32((uint)sp);
-				if (ssp >= 0) sspv = memory.Read32((uint)ssp);
-				mem.Add(new Tuple<uint, uint>(spv, sspv));
-				sp -= 4;
-				ssp -= 4;
-			}
+				var mem = new List<Tuple<uint, uint>>();
+				long sp = (long)regs.SP;
+				long ssp = (long)regs.SSP;
+				int cnt = 32;
+				while (sp > 0 && cnt-- > 0)
+				{
+					uint spv = 0xffffffff, sspv = 0xffffffff;
+					if (sp >= 0) spv = memory.Read32((uint)sp);
+					if (ssp >= 0) sspv = memory.Read32((uint)ssp);
+					mem.Add(new Tuple<uint, uint>(spv, sspv));
+					sp -= 4;
+					ssp -= 4;
+				}
 
-			lbCallStack.Items.Clear();
-			lbCallStack.Items.Add("   SP       SSP   ");
-			lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
+				lbCallStack.Items.Clear();
+				lbCallStack.Items.Add("   SP       SSP   ");
+				lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
 			}
 
 			{
 				txtMemory.Text = memory.ToString();
 
-			if (addressFollowBox.SelectedIndex != 0)
-			{
-				uint address = ValueFromRegName(regs, (string)addressFollowBox.SelectedItem);
-				var line = memory.AddressToLine(address);
-				if (line != 0)
+				if (addressFollowBox.SelectedIndex != 0)
 				{
-					txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
-					txtMemory.ScrollToCaret();
+					uint address = ValueFromRegName(regs, (string)addressFollowBox.SelectedItem);
+					var line = memory.AddressToLine(address);
+					if (line != 0)
+					{
+						txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
+						txtMemory.ScrollToCaret();
+					}
+					UpdateExecBase();
 				}
-				UpdateExecBase();
-			}
 			}
 		}
 
@@ -269,9 +269,10 @@ namespace RunAmiga.Main
 			//int line = disassembly.GetAddressLine(pc);
 			//if (line == 0) return;
 
-			txtDisassembly.SuspendLayout();
-
-			var view = disassembly.DisassemblyView(pc, 5, 100, new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
+			//txtDisassembly.SuspendLayout();
+			txtDisassembly.ReallySuspendLayout();
+			txtDisassembly.DeselectAll();
+			var view = disassembly.DisassemblyView(pc, 10, 100, new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 			int line = view.GetAddressLine(pc);
 			txtDisassembly.Text = view.Text;
 
@@ -279,26 +280,23 @@ namespace RunAmiga.Main
 			txtDisassembly.ScrollToCaret();
 			txtDisassembly.Select(txtDisassembly.GetFirstCharIndexFromLine(line),
 				txtDisassembly.GetFirstCharIndexFromLine(line + 1) - txtDisassembly.GetFirstCharIndexFromLine(line));
-			txtDisassembly.Invalidate();
-			txtDisassembly.ResumeLayout();
-			txtDisassembly.Update();
+			//txtDisassembly.ResumeLayout();
+			txtDisassembly.ReallyResumeLayout();
+			txtDisassembly.Refresh();
 		}
 
 		private void btnStep_Click(object sender, EventArgs e)
 		{
-			txtDisassembly.DeselectAll();
 			Machine.SetEmulationMode(EmulationMode.Step);
 		}
 
 		private void btnStepOut_Click(object sender, EventArgs e)
 		{
-			txtDisassembly.DeselectAll();
 			Machine.SetEmulationMode(EmulationMode.StepOut);
 		}
 
 		private void btnStop_Click(object sender, EventArgs e)
 		{
-			txtDisassembly.DeselectAll();
 			Machine.SetEmulationMode(EmulationMode.Stopped);
 		}
 
@@ -595,7 +593,7 @@ namespace RunAmiga.Main
 			radioDF1.CheckedChanged -= radioDFx_CheckedChanged;
 			radioDF2.CheckedChanged -= radioDFx_CheckedChanged;
 			radioDF3.CheckedChanged -= radioDFx_CheckedChanged;
-			
+
 			radioDF0.Checked = false;
 			radioDF1.Checked = false;
 			radioDF2.Checked = false;
@@ -611,6 +609,23 @@ namespace RunAmiga.Main
 			radioDF1.CheckedChanged += radioDFx_CheckedChanged;
 			radioDF2.CheckedChanged += radioDFx_CheckedChanged;
 			radioDF3.CheckedChanged += radioDFx_CheckedChanged;
+		}
+	}
+
+	public static class LayoutExtensions
+	{
+		private const int WM_SETREDRAW = 0xB;
+
+		public static void ReallySuspendLayout(this Control c)
+		{
+			var msg = Message.Create(c.Handle, WM_SETREDRAW, IntPtr.Zero, IntPtr.Zero);
+			NativeWindow.FromHandle(c.Handle).DefWndProc(ref msg);
+		}
+
+		public static void ReallyResumeLayout(this Control c)
+		{
+			var msg = Message.Create(c.Handle, WM_SETREDRAW, new IntPtr(1), IntPtr.Zero);
+			NativeWindow.FromHandle(c.Handle).DefWndProc(ref msg);
 		}
 	}
 }
