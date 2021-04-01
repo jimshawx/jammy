@@ -88,9 +88,9 @@ namespace RunAmiga.Main
 
 			//configure audio
 			if (settings.Audio == AudioDriver.XAudio2)
-				services.AddSingleton<IAudio, Audio>();
-			else
 				services.AddSingleton<IAudio, AudioV2>();
+			else
+				services.AddSingleton<IAudio, Audio>();
 
 			//configure CPU
 			if (settings.CPU == CPUType.Musashi)

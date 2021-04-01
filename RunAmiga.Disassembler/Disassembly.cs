@@ -332,7 +332,7 @@ namespace RunAmiga.Disassembler
 			return null;
 		}
 
-		public string GetDisassembly(uint addressStart, uint addressEnd)
+		public string GetDisassembly(uint addressStart, long addressEnd)
 		{
 			return string.Join("\n", globalAddressToLine
 				.Where(x=>x.Key >= addressStart && x.Key < addressEnd)
@@ -387,8 +387,13 @@ namespace RunAmiga.Disassembler
 				}
 			}
 
-			var rv = new DisassemblyView(this, GetAddressLine((uint)addressStart), GetDisassembly((uint)addressStart, (uint)addressEnd));
+			var rv = new DisassemblyView(this, GetAddressLine((uint)addressStart), GetDisassembly((uint)addressStart, addressEnd));
 			return rv;
+		}
+
+		public IDisassemblyView FullDisassemblyView(DisassemblyOptions options)
+		{
+			return new DisassemblyView(this, 0, GetDisassembly(0, 0x1000000));
 		}
 	}
 

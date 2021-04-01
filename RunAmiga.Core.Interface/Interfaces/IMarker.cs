@@ -186,6 +186,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		int GetAddressLine(uint address);
 		uint GetLineAddress(int line);
 		IDisassemblyView DisassemblyView(uint address, int linesBefore, int linesAfter, DisassemblyOptions options);
+		IDisassemblyView FullDisassemblyView(DisassemblyOptions options);
 	}
 
 	public interface IKickstartAnalysis

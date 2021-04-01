@@ -13,6 +13,7 @@ using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Disassembler;
 using RunAmiga.Disassembler.TypeMapper;
 using RunAmiga.Main.Dialogs;
 
@@ -21,6 +22,7 @@ namespace RunAmiga.Main
 	public partial class RunAmiga : Form
 	{
 		private readonly IEmulation emulation;
+		private IDisassemblyView disassemblyView;
 		private readonly IDisassembly disassembly;
 		private readonly IDebugger debugger;
 		private readonly ILogger logger;
@@ -87,6 +89,7 @@ namespace RunAmiga.Main
 		{
 			Machine.LockEmulation();
 
+			//prime the disassembly with a decent starting point
 			var ranges = new List<Tuple<uint, uint>>
 			{
 				new Tuple<uint, uint>(0x000000, 0x400),
@@ -102,7 +105,11 @@ namespace RunAmiga.Main
 				new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 
 			Machine.UnlockEmulation();
-			txtDisassembly.Text = disasm;
+
+			//this is the new view
+			//disassemblyView = disassembly.DisassemblyView(0, 0, 100, new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
+			disassemblyView = disassembly.FullDisassemblyView(new DisassemblyOptions { IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true });
+			txtDisassembly.Text = disassemblyView.Text;
 		}
 
 		private void UpdateDisplay()
@@ -272,9 +279,10 @@ namespace RunAmiga.Main
 			//txtDisassembly.SuspendLayout();
 			txtDisassembly.ReallySuspendLayout();
 			txtDisassembly.DeselectAll();
-			var view = disassembly.DisassemblyView(pc, 10, 100, new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
-			int line = view.GetAddressLine(pc);
-			txtDisassembly.Text = view.Text;
+
+			//disassemblyView = disassembly.DisassemblyView(pc, 10, 100, new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
+			int line = disassemblyView.GetAddressLine(pc);
+			txtDisassembly.Text = disassemblyView.Text;
 
 			txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
 			txtDisassembly.ScrollToCaret();
@@ -473,7 +481,7 @@ namespace RunAmiga.Main
 				logger.LogTrace($"char {c}");
 				int line = txtDisassembly.GetLineFromCharIndex(c) - 1;
 				logger.LogTrace($"line {line}");
-				pc = disassembly.GetLineAddress(line);
+				pc = disassemblyView.GetLineAddress(line);
 				logger.LogTrace($"PC {pc:X8}");
 			}
 
@@ -498,7 +506,7 @@ namespace RunAmiga.Main
 				if (res == DialogResult.OK)
 				{
 					uint address = gotoForm.GotoLocation;
-					int gotoLine = disassembly.GetAddressLine(address);
+					int gotoLine = disassemblyView.GetAddressLine(address);
 					txtDisassembly.SuspendLayout();
 					txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, gotoLine - 5));
 					txtDisassembly.ScrollToCaret();
@@ -510,7 +518,7 @@ namespace RunAmiga.Main
 				}
 			}
 
-			UpdateDisassembly();
+			//UpdateDisassembly();
 
 			SetSelection();
 			UpdateDisplay();

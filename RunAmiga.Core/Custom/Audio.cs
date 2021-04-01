@@ -220,26 +220,26 @@ namespace RunAmiga.Core.Custom
 
 		public void WriteINTREQ(ushort v)
 		{
-			ushort lastintreq = intreq;
+			//ushort lastintreq = intreq;
 			intreq = v;
 
-			var intreqchanges = (ushort)(intreq ^ lastintreq);
-			if ((intreqchanges & (1 << (int)Interrupt.AUD3)) != 0)
-				logger.LogTrace($"IRQ3");
+			//var intreqchanges = (ushort)(intreq ^ lastintreq);
+			//if ((intreqchanges & (1 << (int)Interrupt.AUD3)) != 0)
+			//	logger.LogTrace($"IRQ3");
 		}
 
 		private ushort intena = 0;
 
 		public void WriteINTENA(ushort v)
 		{
-			ushort lastintena = intena;
+			//ushort lastintena = intena;
 			intena = v;
 
-			var intenachanges = (ushort)(intena ^ lastintena);
-			if ((intenachanges & (1 << (int)Interrupt.AUD3)) != 0 && (intena & (1 << (int)Interrupt.AUD3)) != 0)
-				logger.LogTrace($"E3");
-			if ((intenachanges & (1 << (int)Interrupt.AUD3)) != 0 && (intena & (1 << (int)Interrupt.AUD3)) == 0)
-				logger.LogTrace($"D3");
+			//var intenachanges = (ushort)(intena ^ lastintena);
+			//if ((intenachanges & (1 << (int)Interrupt.AUD3)) != 0 && (intena & (1 << (int)Interrupt.AUD3)) != 0)
+			//	logger.LogTrace($"E3");
+			//if ((intenachanges & (1 << (int)Interrupt.AUD3)) != 0 && (intena & (1 << (int)Interrupt.AUD3)) == 0)
+			//	logger.LogTrace($"D3");
 		}
 
 		public void Write(uint insaddr, uint address, ushort value)
@@ -274,7 +274,7 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.AUD3LCH: ch[3].audlc = (ch[3].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD3LCL: ch[3].audlc = ((ch[3].audlc & 0xffff0000) | value) & ChipRegs.ChipAddressMask; break;
 			}
-			DumpDiff();
+			//DumpDiff();
 		}
 
 		public ushort Read(uint insaddr, uint address)

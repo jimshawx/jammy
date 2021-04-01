@@ -34,7 +34,13 @@ namespace RunAmiga.Core.Custom
 
 			switch (key)
 			{
-				case 0x14://Caps Lock - ignore the keydown, keyup will report if caps is enabled or not
+				case (int)VK.VK_CAPITAL://Caps Lock - ignore the keydown, keyup will report if caps is enabled or not
+					break;
+				case (int)VK.VK_F11:
+					//keyQueue.Enqueue(0x78);
+					keyQueue.Enqueue(0x63);
+					keyQueue.Enqueue(0x66);
+					keyQueue.Enqueue(0x67);
 					break;
 				default:
 					if (scanConvert.ContainsKey(key))
@@ -49,7 +55,7 @@ namespace RunAmiga.Core.Custom
 
 			switch (key)
 			{
-				case 0x14://Caps Lock
+				case (int)VK.VK_CAPITAL://Caps Lock
 					var keyState = new byte[256];
 					GetKeyboardState(keyState);
 					if (keyState[(int)VK.VK_CAPITAL]==1)//the caps key is now activated
@@ -57,16 +63,16 @@ namespace RunAmiga.Core.Custom
 					else
 						keyQueue.Enqueue((byte)(scanConvert[key] | 0x80));
 					break;
+				case (int)VK.VK_F11:
+					keyQueue.Enqueue(0x63 | 0x80);
+					keyQueue.Enqueue(0x66 | 0x80);
+					keyQueue.Enqueue(0x67 | 0x80);
+					break;
 				default:
 					if (scanConvert.ContainsKey(key))
 						keyQueue.Enqueue((byte)(scanConvert[key] | 0x80));
 					break;
 			}
-		}
-
-		private void AddReset(object sender, EventArgs e)
-		{
-			keyQueue.Enqueue(0x78);
 		}
 
 		private enum KeyboardState
