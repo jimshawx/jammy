@@ -39,9 +39,9 @@ namespace RunAmiga.Core.Custom
 		{
 			audioTime += cycles;
 
-			if (audioTime > 140_000 / 312)
+			if (audioTime > 139_776 / 312)
 			{
-				audioTime -= 140_000 / 312;
+				audioTime -= 139_776 / 312;
 
 				for (int i = 0; i < 4; i++)
 				{

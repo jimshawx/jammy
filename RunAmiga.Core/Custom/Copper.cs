@@ -65,30 +65,45 @@ namespace RunAmiga.Core.Custom
 		private uint copperVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 
 		private bool dbug = false;
-		int dbugLine = -1;//diwstrt >> 8;
 
 		public void Emulate(ulong cycles)
 		{
 			copperTime += cycles;
 
-			//every 50Hz, reset the copper list
-			if (copperTime > 140_000)
+			//end of scanline?
+			if (copperTime > 448)
 			{
-				copperTime -= 140_000;
+				copperTime -= 448;
 
-				RunCopperList(cop1lc, false);
+				//new horz count
+				copperHorz = (uint)copperTime;
+				//next scanline
+				copperVert++;
 
-				if (dbug)
+				//last scanline?
+				if (copperVert >= 312)
 				{
-					DebugCopperList(cop1lc);
-					dbug = false;
-				}
-				interrupt.AssertInterrupt(Interrupt.VERTB);
-			}
+					copperVert = 0;
 
-			//roughly
-			copperVert = (uint)((copperTime * 312) / 140_000);
-			copperHorz = (uint)(copperTime % (140_000 / 312));
+					//end the current frame
+					RunCopperVerticalBlankEnd();
+
+					interrupt.AssertInterrupt(Interrupt.VERTB);
+
+					if (dbug)
+					{
+						DebugCopperList(cop1lc);
+						dbug = false;
+					}
+
+					//start the next frame
+					RunCopperVerticalBlankStart(cop1lc);
+				}
+
+				//run the next scanline
+				currentLine = (int)copperVert;
+				RunCopperLine();
+			}
 		}
 
 		public void Reset()
@@ -179,9 +194,11 @@ namespace RunAmiga.Core.Custom
 		private CopperState state = CopperState.Running;
 		private uint copPC;
 		private int currentLine;
+		int dbugLine = -1;//diwstrt >> 8;
 
-		private void RunCopperList(uint copperPC, bool isEvenFrame)
+		private void RunCopperVerticalBlankStart(uint copperPC)
 		{
+			copPC = copperPC;
 			if (copperPC == 0) return;
 
 			dptr = 0;
@@ -190,23 +207,20 @@ namespace RunAmiga.Core.Custom
 			waitHMask = 0xff;
 			waitVMask = 0xff;
 			state = CopperState.Running;
-			copPC = copperPC;
+		}
 
-			int lines = isEvenFrame ? 312 : 313;
-
-			for (int v = 0; v < lines; v++)
-			{
-				currentLine = v;
-				RunCopperLine();
-			}
+		private void RunCopperVerticalBlankEnd()
+		{
+			if (copPC == 0) return;
 
 			RunSprites();
-
 			emulationWindow.Blit(screen);
 		}
 
 		private void RunCopperLine()
 		{
+			if (copPC == 0) return;
+
 			ushort pixelMask;
 			uint col;
 

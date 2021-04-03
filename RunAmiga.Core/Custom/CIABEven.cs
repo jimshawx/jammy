@@ -46,9 +46,9 @@ namespace RunAmiga.Core.Custom
 		{
 			beamTime += cycles;
 
-			if (beamTime > 140_000 / 312)
+			if (beamTime > 139_776 / 312)
 			{
-				beamTime -= 140_000 / 312;
+				beamTime -= 139_776 / 312;
 
 				IncrementTODTimer();
 			}

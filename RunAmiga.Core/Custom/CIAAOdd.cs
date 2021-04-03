@@ -50,9 +50,9 @@ namespace RunAmiga.Core.Custom
 		{
 			beamTime += cycles;
 
-			if (beamTime > 140_000) // 50Hz = 1/50th cpu clock = 7MHz/50 = 140k 
+			if (beamTime > 139_776) // 50Hz = 1/50th cpu clock = 7MHz/50 = 140k 
 			{
-				beamTime -= 140_000;
+				beamTime -= 139_776;
 
 				IncrementTODTimer();
 			}
