@@ -391,6 +391,8 @@ namespace RunAmiga.Core.Custom
 			//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
 			for (int i = 0; i < 4; i++)
 			{
+				ushort volume = (ushort)((ch[i].audvol & (1 << 6)) != 0 ? 64 : (ch[i].audvol & 0x3f));
+
 				//Amiga samples are two 8-bit signed values packed into a word, range -128 to +127
 				short s0 = (sbyte)(ch[i].auddat >> 8);
 				short s1 = (sbyte)ch[i].auddat;
@@ -399,8 +401,8 @@ namespace RunAmiga.Core.Custom
 				{
 					//(-128 * 64)>>6 = -128
 					//(+127 * 64)>>6 = +127;
-					s0 = (short)((s0 * ch[i].audvol) >> 6);
-					s1 = (short)((s1 * ch[i].audvol) >> 6);
+					s0 = (short)((s0 * volume) >> 6);
+					s1 = (short)((s1 * volume) >> 6);
 					//8-bit PCM is unsigned
 					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s0 + 128);
 					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s1 + 128);
@@ -409,8 +411,8 @@ namespace RunAmiga.Core.Custom
 				{
 					//(-128 * 64)<<2 = -32768
 					//(+127 * 64)<<2 = +32767;
-					s0 = (short)((s0 * ch[i].audvol)<<2); s0 |= (short)((s0 >> 14) & 3);
-					s1 = (short)((s1 * ch[i].audvol)<<2); s1 |= (short)((s1 >> 14) & 3);
+					s0 = (short)((s0 * volume) << 2); s0 |= (short)((s0 >> 14) & 3);
+					s1 = (short)((s1 * volume) << 2); s1 |= (short)((s1 >> 14) & 3);
 
 					//16-bit PCM is signed
 					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)s0;
