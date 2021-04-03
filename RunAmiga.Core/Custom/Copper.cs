@@ -585,12 +585,13 @@ namespace RunAmiga.Core.Custom
 							{
 								int pix = (sprdata[s] & x)!=0?1:0 + (sprdatb[s] & x)!=0?2:0;
 								if (pix != 0)
-									screen[dptr] = (int)truecolour[16 + 4*(s>>1) + pix];
-								dptr++;
-								if (dptr >= screen.Length) break;
+									screen[dptr] = screen[dptr+1] = screen[dptr+SCREEN_WIDTH] = screen[dptr + SCREEN_WIDTH+1]=(int)truecolour[16 + 4 * (s >> 1) + pix];
+								dptr+=2;
+								if (dptr +SCREEN_WIDTH+1 >= screen.Length) break;
 							}
 
-							dptr += SCREEN_WIDTH - 16;
+							dptr += (SCREEN_WIDTH - 16)*2;
+
 							if (dptr >= screen.Length) break;
 						}
 
