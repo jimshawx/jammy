@@ -24,7 +24,7 @@ namespace RunAmiga.Core.Custom
 		//normal bitmap DMA start at 0x38, overscan at 0x30
 		private const int DMA_START = 0x30;
 		//bitmap DMA ends at 0xD8, with 8 slots after that
-		private const int DMA_END = 0xE0;
+		private const int DMA_END = 0xF0;
 
 		//private const int DMA_START = 0;
 		//private const int DMA_END = 227;
@@ -193,8 +193,8 @@ namespace RunAmiga.Core.Custom
 			ushort[] bpldatdma = new ushort[8];
 			bool copperEarlyOut = false;
 
-			char[] fetch = new char[227];
-			char[] write = new char[227];
+			char[] fetch = new char[256];
+			char[] write = new char[256];
 			int dma = 0;
 
 			int planes;
@@ -214,12 +214,12 @@ namespace RunAmiga.Core.Custom
 
 				int lineStart = dptr;
 				pixelMask = 0x8000;
-				for (int h = 0; h < 227; h++)
+				for (int h = 0; h < 256; h++)
 				{
 					ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
 					//copper instruction every even clock (and copper DMA is on)
-					if ((h & 1) == 0 && (dmacon & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.COPEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.COPEN))
+					if ((h & 1) == 0 && h < 227 && (dmacon & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.COPEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.COPEN))
 					{
 						if (state == CopperState.Running)
 						{
@@ -344,6 +344,8 @@ namespace RunAmiga.Core.Custom
 					{
 						ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
 						wordCount = (ddfstop - ddfstrt) / 4 + 2;
+						//thing is, word count needs to be a multiple of planes
+						wordCount = ((wordCount / planes) + (planes - 1)) * planes;
 						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
 						diwstrth &= 0xf8;
 						diwstoph &= 0x1f8;
@@ -517,13 +519,13 @@ namespace RunAmiga.Core.Custom
 					logger.LogTrace($"{cnt[0]} {cnt[1]}");
 					var sb = new StringBuilder();
 					sb.AppendLine();
-					for (int i = 0; i < 227; i++)
+					for (int i = 0; i < 256; i++)
 						sb.Append(fetch[i]);
 
 					logger.LogTrace(sb.ToString());
 					sb.Clear();
 					sb.AppendLine();
-					for (int i = 0; i < 227; i++)
+					for (int i = 0; i < 256; i++)
 						sb.Append(write[i]);
 					sb.Append($"({dma})");
 					logger.LogTrace(sb.ToString());
