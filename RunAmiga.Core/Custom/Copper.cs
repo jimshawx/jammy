@@ -21,8 +21,8 @@ namespace RunAmiga.Core.Custom
 		private const int SCREEN_HEIGHT = 313*2;//x2 for scan double
 
 		//sprite DMA starts at 0x18, but can be eaten into by bitmap DMA
-		//normal bitmap DMA start at 0x38
-		private const int DMA_START = 0x38;
+		//normal bitmap DMA start at 0x38, overscan at 0x30
+		private const int DMA_START = 0x30;
 		//bitmap DMA ends at 0xD8, with 8 slots after that
 		private const int DMA_END = 0xE0;
 
@@ -42,6 +42,21 @@ namespace RunAmiga.Core.Custom
 			this.logger = logger;
 
 			emulationWindow.SetPicture(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
+		}
+
+		private void dbug_Keyup(int obj)
+		{
+		}
+
+		private void dbug_Keydown(int obj)
+		{
+			if (obj == (int)Keyboard.VK.VK_F11) dbug = true;
+			if (obj == (int)Keyboard.VK.VK_UP) dbugLine--;
+			if (obj == (int)Keyboard.VK.VK_DOWN) dbugLine++;
+			if (obj == (int)Keyboard.VK.VK_RIGHT) dbugLine = -1;
+			if (obj == (int)Keyboard.VK.VK_LEFT) dbugLine = diwstrt>>8;
 		}
 
 		private ulong copperTime;
@@ -49,7 +64,9 @@ namespace RunAmiga.Core.Custom
 		private uint copperHorz;//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
 		private uint copperVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 
-		private bool dbug=false;
+		private bool dbug = false;
+		int dbugLine = -1;//diwstrt >> 8;
+
 		public void Emulate(ulong cycles)
 		{
 			copperTime += cycles;
@@ -175,10 +192,20 @@ namespace RunAmiga.Core.Custom
 
 			ushort[] bpldatdma = new ushort[8];
 			bool copperEarlyOut = false;
-			int dbugLine = -1;//diwstrt >> 8;
 
 			char[] fetch = new char[227];
 			char[] write = new char[227];
+			int dma = 0;
+
+			int planes;
+			int diwstrth=0;
+			int diwstrtv=0;
+			int diwstoph=0;
+			int diwstopv=0;
+
+			ushort ddfstrtfix = 0;
+			ushort ddfstopfix = 0;
+			int wordCount = 0;
 
 			for (int v = 0; v < lines; v++)
 			{
@@ -303,15 +330,32 @@ namespace RunAmiga.Core.Custom
 
 					}
 
-					int planes = (bplcon0 >> 12) & 7;
-					int diwstrth = diwstrt&0xff;
-					int diwstrtv = diwstrt>>8;
-					int diwstoph = (diwstop&0xff)|0x100;
-					int diwstopv = (diwstop >> 8) | (((diwstop&0x8000) >> 7) ^ 0x100);
+					planes = (bplcon0 >> 12) & 7;
+					diwstrth = diwstrt&0xff;
+					diwstrtv = diwstrt>>8;
+					diwstoph = (diwstop&0xff)|0x100;
+					diwstopv = (diwstop >> 8) | (((diwstop&0x8000) >> 7) ^ 0x100);
 
 					//round up ddfstop to nearest 8 pixels difference from ddfstart, and add one extra cycle for luck
-					ushort d = (ushort)(((ddfstop-ddfstrt)+ 7)&~7);
-					ushort ddfstopfix = (ushort)(ddfstrt + d + 8);
+					//ushort d = (ushort)(((ddfstop-ddfstrt)+ 7)&~7);
+					//ushort ddfstopfix = (ushort)(ddfstrt + d + 8);
+
+					if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
+					{
+						ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
+						wordCount = (ddfstop - ddfstrt) / 4 + 2;
+						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
+						diwstrth &= 0xf8;
+						diwstoph &= 0x1f8;
+					}
+					else
+					{
+						ddfstrtfix = (ushort)(ddfstrt & 0xfff8);
+						wordCount = (ddfstop - ddfstrt) / 8 + 1;
+						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8);
+						diwstrth &= 0xf0;
+						diwstoph &= 0x1f0;
+					}
 
 					int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1};
 					int[] fetchHi = { 4, 2, 3, 1};
@@ -325,18 +369,21 @@ namespace RunAmiga.Core.Custom
 					//is it the visible area, vertically?
 					if (v >= diwstrtv && v < diwstopv)
 					{
-						//is it time to do bitplane DMA
+						if (v == dbugLine)
+							write[h] = fetch[h] = ':';
+
+						//is it time to do bitplane DMA?
 						//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
-						if (h >= ddfstrt && h < ddfstopfix && (dmacon & (ushort)(ChipRegs.DMA.DMAEN|ChipRegs.DMA.BPLEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.BPLEN))//bitplane DMA is on
+						if (h >= ddfstrtfix && h < ddfstopfix && (dmacon & (ushort)(ChipRegs.DMA.DMAEN|ChipRegs.DMA.BPLEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.BPLEN))//bitplane DMA is on
 						{
-							int planeIdx = (h - ddfstrt) % pixmod;
+							int planeIdx = (h - ddfstrtfix) % pixmod;
 
 							int plane;
 							if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 								plane = fetchHi[planeIdx] - 1;
 							else
 								plane = fetchLo[planeIdx] - 1;
-							
+
 							if (plane < planes)
 							{
 								bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
@@ -344,18 +391,27 @@ namespace RunAmiga.Core.Custom
 
 								cnt[plane]++;
 								if (v == dbugLine)
-									fetch[h] = Convert.ToChar(plane+48);
+									fetch[h] = Convert.ToChar(plane+48+1);
+							}
+							else
+							{
+								if (v == dbugLine)
+									fetch[h] = '+';
 							}
 						}
 
-						//is it the visible area horizontally
+
+						//is it the visible area horizontally?
 						//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
-						if (h >= diwstrth >> 1 && h < diwstoph >> 1)
+						if (h >= diwstrth >> 1 && h < (diwstoph+1) >> 1)
 						{
 							if (pixelMask == 0x8000)
 							{
 								if (v == dbugLine)
+								{
 									write[h] = 'x';
+									dma++;
+								}
 								for (int i = 0; i < 8; i++)
 									bpldat[i] = bpldatdma[i];
 							}
@@ -396,6 +452,47 @@ namespace RunAmiga.Core.Custom
 							for (int k = 0; k < 4; k++)
 								screen[dptr++] = (int)col;
 						}
+
+						////is it time to latch the DMAd bitplanes into the DAT registers
+						//if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
+						//{
+						//	//40, 44, 48, 4C
+						//	if (((h) & 3) == 0)
+						//	{
+						//		for (int i = 0; i < 8; i++)
+						//			bpldat[i] = bpldatdma[i];
+						//		if (v == dbugLine)
+						//		{
+						//			write[h] = 'x';
+						//			dma++;
+						//		}
+						//	}
+						//	else
+						//	{
+						//		if (v == dbugLine)
+						//			write[h] = '.';
+						//	}
+						//}
+						//else
+						//{
+						//	//40, 48, 50, 58
+						//	if (((h) & 7) == 0)
+						//	{
+						//		for (int i = 0; i < 8; i++)
+						//			bpldat[i] = bpldatdma[i];
+						//		if (v == dbugLine)
+						//		{
+						//			write[h] = 'x';
+						//			dma++;
+						//		}
+						//	}
+						//	else
+						//	{
+						//		if (v == dbugLine)
+						//			write[h] = '.';
+						//	}
+						//}
+
 					}
 					else
 					{
@@ -413,8 +510,8 @@ namespace RunAmiga.Core.Custom
 				if (v == dbugLine)
 				{
 					logger.LogInformation($"LINE {dbugLine}");
-					logger.LogInformation($"DDF {ddfstrt:X4} {ddfstop:X4} FMOD {fmode:X4}");
-					logger.LogInformation($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4}");
+					logger.LogInformation($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfstrtfix:X4} {ddfstopfix:X4} FMOD {fmode:X4}");
+					logger.LogInformation($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({diwstopv-diwstrtv}) H:{diwstrth}->{diwstoph}({diwstoph-diwstrth}/16={(diwstoph - diwstrth)/16})");
 					logger.LogInformation($"MOD {bpl1mod:X4} {bpl2mod:X4}");
 					logger.LogInformation($"BPL {bplcon0:X4} {bplcon1:X4} {bplcon2:X4} {bplcon3:X4} {bplcon4:X4}");
 					logger.LogTrace($"{cnt[0]} {cnt[1]}");
@@ -428,13 +525,14 @@ namespace RunAmiga.Core.Custom
 					sb.AppendLine();
 					for (int i = 0; i < 227; i++)
 						sb.Append(write[i]);
+					sb.Append($"({dma})");
 					logger.LogTrace(sb.ToString());
 				}
 
 				//next horizontal line
 				{
-					int planes = (bplcon0 >> 12) & 7;
-					for (int i = 0; i < planes; i++)
+					int planesz = (bplcon0 >> 12) & 7;
+					for (int i = 0; i < planesz; i++)
 					{
 						bplpt[i] += ((i & 1) == 0) ? bpl2mod : bpl1mod;
 					}

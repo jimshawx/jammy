@@ -4,7 +4,9 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
+using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Extensions.Extensions;
 
@@ -55,8 +57,11 @@ namespace RunAmiga.Core.Custom
 			this.Cylinders = (int)C;
 			this.Heads = (int)H;
 			this.Sectors = (int)S;
+
 			diskMap = MemoryMappedFile.CreateFromFile(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"), FileMode.OpenOrCreate, $"dh{DiskNumber}", bytes, MemoryMappedFileAccess.ReadWrite);
 			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
+
+			Swab();
 
 			DriveIRQBit = 1 << diskNo;
 		}
@@ -78,6 +83,37 @@ namespace RunAmiga.Core.Custom
 
 		private string hardfilePath = "../../../../";
 
+		// Swab
+
+		private void Swab()
+		{
+			if (diskAccessor.Capacity < 4)
+				return;
+
+			var id = new char[4];
+			id[0] = (char)diskAccessor.ReadByte(0);
+			id[1] = (char)diskAccessor.ReadByte(1);
+			id[2] = (char)diskAccessor.ReadByte(2);
+			id[3] = (char)diskAccessor.ReadByte(3);
+
+			//it doesn't need swapping
+			if (id[0] == 'R' && id[1] == 'D' && id[2] == 'S' && id[3] == 'K')
+				return;
+
+			//it's not a disk image
+			if (!(id[0] == 'D' && id[1] == 'R' && id[2] == 'K' && id[3] == 'S'))
+				return;
+
+			for (long i = 0; i < diskAccessor.Capacity; i += 2)
+			{
+				byte b0 = diskAccessor.ReadByte(i);
+				byte b1 = diskAccessor.ReadByte(i+1);
+				diskAccessor.Write(i,b1);
+				diskAccessor.Write(i+1, b0);
+			}
+			SyncDisk();
+		}
+
 		// Sync
 
 		public void SyncDisk()
@@ -97,6 +133,7 @@ namespace RunAmiga.Core.Custom
 		{
 			if (currentWriteIndex == -1) throw new IndexOutOfRangeException();
 
+			v = (ushort)((v >> 8) | (v << 8));
 			diskAccessor.Write(currentWriteIndex, v);
 			currentWriteIndex += 2;
 		}
@@ -142,6 +179,7 @@ namespace RunAmiga.Core.Custom
 				if (currentReadIndex == -1) throw new IndexOutOfRangeException();
 
 				v = diskAccessor.ReadUInt16(currentReadIndex);
+				v = (ushort)((v >> 8) | (v << 8));
 				currentReadIndex += 2;
 			}
 			return v;
@@ -160,12 +198,14 @@ namespace RunAmiga.Core.Custom
 	public class IDEController : IIDEController, IDisposable
 	{
 		private readonly IInterrupt interrupt;
+		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 		private readonly MemoryRange memoryRange = new MemoryRange(0xda0000, 0x20000);
 
-		public IDEController(IInterrupt interrupt, ILogger<IDEController> logger)
+		public IDEController(IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<IDEController> logger)
 		{
 			this.interrupt = interrupt;
+			this.settings = settings.Value;
 			this.logger = logger;
 
 
@@ -552,8 +592,8 @@ namespace RunAmiga.Core.Custom
 			uint sectorCylinders = blocks / heads;//20,992 = sectors * cylinders
 			uint cylinders = sectorCylinders / sectors;//332
 
-			hardDrives[0] = new HardDrive(bytes, 0, cylinders, heads, sectors);
-			hardDrives[1] = new HardDrive(bytes, 1, cylinders, heads, sectors);
+			for (int i = 0; i < settings.HardDiskCount; i++)
+				hardDrives[i] = new HardDrive(bytes, i, cylinders, heads, sectors);
 
 			currentDrive = hardDrives[0];
 
@@ -682,6 +722,14 @@ namespace RunAmiga.Core.Custom
 
 		private void Command(byte value)
 		{
+			if (currentDrive == null)
+			{
+				errorFeature |= 1 << 2;//ABRT
+				ideStatus = IDE_STATUS.ERR;
+				Ack();
+				return;
+			}
+
 			ideStatus = IDE_STATUS.DRDY;
 
 			string cmd;

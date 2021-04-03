@@ -74,6 +74,8 @@ namespace RunAmiga.Core.CPU.Musashi
 		{
 			CheckInterrupt();
 
+			/*
+
 			//tracer
 			var regs = GetRegs();
 			tracer.TraceAsm(regs.PC, regs);
@@ -82,8 +84,12 @@ namespace RunAmiga.Core.CPU.Musashi
 			uint ipc = regs.PC; regs.PC += 2;
 			//tracer
 
+			*/
+
 			int ticks = 0;
 			uint pc = Musashi_execute(ref ticks);
+
+			/*
 
 			//tracer
 			if ((ins & 0xff00) == 0x6100)
@@ -128,6 +134,8 @@ namespace RunAmiga.Core.CPU.Musashi
 				tracer.Trace(pc); //bsr
 			}
 			//tracer
+			
+			*/
 
 			instructionStartPC = pc;
 

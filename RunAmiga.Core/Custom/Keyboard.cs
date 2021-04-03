@@ -36,12 +36,12 @@ namespace RunAmiga.Core.Custom
 			{
 				case (int)VK.VK_CAPITAL://Caps Lock - ignore the keydown, keyup will report if caps is enabled or not
 					break;
-				case (int)VK.VK_F11:
-					//keyQueue.Enqueue(0x78);
-					keyQueue.Enqueue(0x63);
-					keyQueue.Enqueue(0x66);
-					keyQueue.Enqueue(0x67);
-					break;
+				//case (int)VK.VK_F11:
+				//	//keyQueue.Enqueue(0x78);
+				//	keyQueue.Enqueue(0x63);
+				//	keyQueue.Enqueue(0x66);
+				//	keyQueue.Enqueue(0x67);
+				//	break;
 				default:
 					if (scanConvert.ContainsKey(key))
 						keyQueue.Enqueue(scanConvert[key]);
@@ -63,11 +63,11 @@ namespace RunAmiga.Core.Custom
 					else
 						keyQueue.Enqueue((byte)(scanConvert[key] | 0x80));
 					break;
-				case (int)VK.VK_F11:
-					keyQueue.Enqueue(0x63 | 0x80);
-					keyQueue.Enqueue(0x66 | 0x80);
-					keyQueue.Enqueue(0x67 | 0x80);
-					break;
+				//case (int)VK.VK_F11:
+				//	keyQueue.Enqueue(0x63 | 0x80);
+				//	keyQueue.Enqueue(0x66 | 0x80);
+				//	keyQueue.Enqueue(0x67 | 0x80);
+				//	break;
 				default:
 					if (scanConvert.ContainsKey(key))
 						keyQueue.Enqueue((byte)(scanConvert[key] | 0x80));

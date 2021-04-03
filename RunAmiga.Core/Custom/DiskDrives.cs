@@ -324,7 +324,7 @@ namespace RunAmiga.Core.Custom
 					if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814 && (dsklen & 0x3fff) != 6784)
 						logger.LogTrace($"DSKLEN looks funny {dsklen&0x3fff:X4} {dsklen:X4}");
 
-					logger.LogTrace($"Reading D: {df} T: {drive[df].track} S: {drive[df].side} L: {dsklen&0x3fff:X4} L/11: {(dsklen&0x3fff)/11}");
+					logger.LogTrace($"Reading DF{df} T: {drive[df].track} S: {drive[df].side} L: {dsklen&0x3fff:X4} ({dsklen & 0x3fff}) L/11: {(dsklen&0x3fff)/11}");
 
 					byte[] mfm = new byte[1088*11+720];//12688 bytes, 6344 words hmm.
 					MFM.FloppyTrackMfmEncode((drive[df].track << 1)+ drive[df].side, drive[df].disk.data, mfm, 0x4489);
