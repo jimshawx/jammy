@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -610,6 +611,23 @@ namespace RunAmiga.Core.Custom
 					cdbg.write[h] = '.';
 			}
 
+			//if ((bplcon1 & (1 << 10))!=0)
+			//{
+			//	Debugger.Break();//dual playfield
+			//}
+
+			//if (cln.planes == 6)
+			//{
+			//	if ((bplcon1 & (1 << 11)) != 0)
+			//	{
+			//		Debugger.Break();//HAM
+			//	}
+			//	else
+			//	{
+			//		Debugger.Break();//EHB
+			//	}
+			//}
+
 			for (int p = 0; p < cln.pixelLoop; p++)
 			{
 				uint col;
@@ -617,8 +635,8 @@ namespace RunAmiga.Core.Custom
 				//decode the colour
 				byte pix = 0;
 
-				for (int i = 0; i < cln.planes; i++)
-					pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? (1 << i) : 0);
+				for (int i = 0, b = 1; i < cln.planes; i++, b<<=1)
+					pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
 				//pix is the Amiga colour
 				int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
