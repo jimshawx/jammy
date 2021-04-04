@@ -122,7 +122,7 @@ namespace RunAmiga.Core
 		public static void UnlockEmulation()
 		{
 			lockedThreadId = -1;
-			//emulationSemaphore.Release();
+			emulationSemaphore.Release();
 		}
 
 		private static int lockedThreadId = -1;
@@ -135,7 +135,7 @@ namespace RunAmiga.Core
 			if (lockedThreadId == Thread.CurrentThread.ManagedThreadId)
 				Debugger.Break();
 			
-			//emulationSemaphore.Wait();
+			emulationSemaphore.Wait();
 			//logger.LogTrace($"Lock3 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
 			lockedThreadId = Thread.CurrentThread.ManagedThreadId;
 			emulationModeChange = EmulationMode.NoChange;

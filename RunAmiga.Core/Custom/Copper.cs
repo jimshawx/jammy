@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -69,7 +68,8 @@ namespace RunAmiga.Core.Custom
 		{
 			copperTime += cycles;
 
-			copperHorz = (uint)copperTime%448;
+			//new horz count
+			copperHorz = (uint)copperTime;
 
 			//end of scanline?
 			if (copperTime >= 448)
@@ -77,7 +77,7 @@ namespace RunAmiga.Core.Custom
 				copperTime -= 448;
 
 				//new horz count
-				//copperHorz = (uint)copperTime;
+				copperHorz = (uint)copperTime;
 				//next scanline
 				copperVert++;
 
@@ -294,6 +294,7 @@ namespace RunAmiga.Core.Custom
 
 			public int pixelLoop;
 			public int pixmod;
+			public uint lastcol = 0;
 
 			public void InitLine(ushort bplcon0, ushort diwstrt, ushort diwstop, ushort ddfstrt, ushort ddfstop)
 			{
@@ -619,38 +620,101 @@ namespace RunAmiga.Core.Custom
 			//	Debugger.Break();//dual playfield
 			//}
 
-			//if (cln.planes == 6)
-			//{
-			//	if ((bplcon1 & (1 << 11)) != 0)
-			//	{
-			//		Debugger.Break();//HAM
-			//	}
-			//	else
-			//	{
-			//		Debugger.Break();//EHB
-			//	}
-			//}
-
-			for (int p = 0; p < cln.pixelLoop; p++)
+			if (cln.planes == 6)
 			{
-				uint col;
+				if ((bplcon0 & (1 << 11)) != 0)
+				{
+					//HAM6
 
-				//decode the colour
-				byte pix = 0;
+					for (int p = 0; p < cln.pixelLoop; p++)
+					{
+						uint col;
 
-				for (int i = 0, b = 1; i < cln.planes; i++, b<<=1)
-					pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
+						//decode the colour
+						byte pix = 0;
 
-				//pix is the Amiga colour
-				int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
-				col = truecolour[pix + bank];
+						for (int i = 0, b = 1; i < 6; i++, b <<= 1)
+							pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
-				//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-				//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
-				for (int k = 0; k < 4 / cln.pixelLoop; k++)
-					screen[cop.dptr++] = (int)col;
+						byte ham = (byte)(pix & 0b11_0000);
+						//pix is the Amiga colour
+						if (ham == 0)
+						{
+							col = truecolour[pix & 0xf];
+						}
+						else if (ham == 1)
+						{
+							//col+B
+							col = (uint)((cln.lastcol & 0xffffff00)|((pix&0x0f)<<4));
+						}
+						else if (ham == 2)
+						{
+							//col+R
+							col = (uint)((cln.lastcol & 0xffff00ff) | ((pix & 0x0f) << (4+8)));
+						}
+						else
+						{
+							//col + G
+							col = (uint)((cln.lastcol & 0xff00ffff) | ((pix & 0x0f) << (4+8+8)));
+						}
 
-				cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+						//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+						//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
+						for (int k = 0; k < 4 / cln.pixelLoop; k++)
+							screen[cop.dptr++] = (int)col;
+
+						cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+						cln.lastcol = col;
+					}
+				}
+				else
+				{
+					//EHB
+					for (int p = 0; p < cln.pixelLoop; p++)
+					{
+						//decode the colour
+						byte pix = 0;
+
+						for (int i = 0, b = 1; i < 6; i++, b <<= 1)
+							pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
+
+						//pix is the Amiga colour
+						var col = truecolour[pix & 0x1f];
+						if ((pix&0b100000)!=0)
+							col = ((truecolour[pix&0x1f] & 0x00fefefe)>>1)|0xff000000;
+
+						//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+						//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
+						for (int k = 0; k < 4 / cln.pixelLoop; k++)
+							screen[cop.dptr++] = (int)col;
+
+						cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+					}
+				}
+			}
+			else
+			{
+				for (int p = 0; p < cln.pixelLoop; p++)
+				{
+					uint col;
+
+					//decode the colour
+					byte pix = 0;
+
+					for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
+						pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
+
+					//pix is the Amiga colour
+					int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+					col = truecolour[pix + bank];
+
+					//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
+					for (int k = 0; k < 4 / cln.pixelLoop; k++)
+						screen[cop.dptr++] = (int)col;
+
+					cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+				}
 			}
 		}
 
