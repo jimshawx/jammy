@@ -69,13 +69,15 @@ namespace RunAmiga.Core.Custom
 		{
 			copperTime += cycles;
 
+			copperHorz = (uint)copperTime%448;
+
 			//end of scanline?
-			if (copperTime > 448)
+			if (copperTime >= 448)
 			{
 				copperTime -= 448;
 
 				//new horz count
-				copperHorz = (uint)copperTime;
+				//copperHorz = (uint)copperTime;
 				//next scanline
 				copperVert++;
 
@@ -317,7 +319,7 @@ namespace RunAmiga.Core.Custom
 					ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
 					wordCount = (ddfstop - ddfstrt) / 4 + 2;
 					//word count needs to be a multiple of planes
-					wordCount = ((wordCount / planes) + (planes - 1)) * planes;
+					//wordCount = ((wordCount / planes) + (planes - 1)) * planes;
 					ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
 					diwstrth &= 0xf8;
 					diwstoph &= 0x1f8;
@@ -343,7 +345,7 @@ namespace RunAmiga.Core.Custom
 					diwstoph &= 0x1f0;
 				}
 
-				pixelMask = 0x8000;
+				//pixelMask = 0x8000;
 			}
 
 		}
@@ -352,12 +354,13 @@ namespace RunAmiga.Core.Custom
 		{
 			if (cop.copPC == 0) return;
 
-			cln.InitLine(bplcon0, diwstrt, diwstop, ddfstrt, ddfstop);
-
 			int lineStart = cop.dptr;
 
+			cln.pixelMask = 0x8000;
 			for (int h = 0; h < 256; h++)
 			{
+				cln.InitLine(bplcon0, diwstrt, diwstop, ddfstrt, ddfstop);
+
 				ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
 				//Copper DMA is ON
