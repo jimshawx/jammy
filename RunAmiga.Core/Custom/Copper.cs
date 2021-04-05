@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -615,12 +616,50 @@ namespace RunAmiga.Core.Custom
 					cdbg.write[h] = '.';
 			}
 
-			//if ((bplcon1 & (1 << 10))!=0)
-			//{
-			//	Debugger.Break();//dual playfield
-			//}
+			if ((bplcon0 & (1 << 10)) != 0)
+			{
+				//DPF
 
-			if (cln.planes == 6)
+				for (int p = 0; p < cln.pixelLoop; p++)
+				{
+					uint col0;
+					uint col1;
+					uint col;
+
+					int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+
+					//decode the colours
+					byte pix0 = 0;
+
+					for (int i = 0, b = 1; i < cln.planes; i+=2, b <<= 1)
+						pix0 |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
+
+					//pix is the Amiga colour
+					col0 = truecolour[pix0 + bank];
+
+					byte pix1 = 0;
+
+					for (int i = 1, b = 1; i < cln.planes; i += 2, b <<= 1)
+						pix1 |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
+
+					//pix is the Amiga colour
+					col1 = truecolour[pix1 + 8 + bank];
+
+					//which playfield is in front?
+					if ((bplcon2 & (1 << 6)) != 0)
+						col = pix1 != 0 ? col1 : col0;
+					else
+						col = pix0 != 0 ? col0 : col1;
+
+					//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
+					for (int k = 0; k < 4 / cln.pixelLoop; k++)
+						screen[cop.dptr++] = (int)col;
+
+					cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+				}
+			}
+			else if (cln.planes == 6)
 			{
 				if ((bplcon0 & (1 << 11)) != 0)
 				{
@@ -630,6 +669,8 @@ namespace RunAmiga.Core.Custom
 					{
 						uint col;
 
+						int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+
 						//decode the colour
 						byte pix = 0;
 
@@ -637,25 +678,31 @@ namespace RunAmiga.Core.Custom
 							pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
 						byte ham = (byte)(pix & 0b11_0000);
+						pix &= 0xf;
 						//pix is the Amiga colour
 						if (ham == 0)
 						{
-							col = truecolour[pix & 0xf];
-						}
-						else if (ham == 1)
-						{
-							//col+B
-							col = (uint)((cln.lastcol & 0xffffff00)|((pix&0x0f)<<4));
-						}
-						else if (ham == 2)
-						{
-							//col+R
-							col = (uint)((cln.lastcol & 0xffff00ff) | ((pix & 0x0f) << (4+8)));
+							col = truecolour[pix+bank];
 						}
 						else
 						{
-							//col + G
-							col = (uint)((cln.lastcol & 0xff00ffff) | ((pix & 0x0f) << (4+8+8)));
+							ham >>= 4;
+							uint px = (uint)(pix*0x11);
+							if (ham == 1)
+							{
+								//col+B
+								col = (cln.lastcol & 0xffffff00) | px;
+							}
+							else if (ham == 3)
+							{
+								//col+G
+								col = (cln.lastcol & 0xffff00ff) | (px <<  8);
+							}
+							else
+							{
+								//col+R
+								col = (cln.lastcol & 0xff00ffff) | (px << (8 + 8));
+							}
 						}
 
 						//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
@@ -681,7 +728,7 @@ namespace RunAmiga.Core.Custom
 						//pix is the Amiga colour
 						var col = truecolour[pix & 0x1f];
 						if ((pix&0b100000)!=0)
-							col = ((truecolour[pix&0x1f] & 0x00fefefe)>>1)|0xff000000;
+							col = ((col & 0x00fefefe)>>1)|0xff000000;
 
 						//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
 						//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
