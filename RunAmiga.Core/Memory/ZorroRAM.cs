@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System;
+using System.Linq;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
@@ -57,19 +59,45 @@ namespace RunAmiga.Core.Memory
 			0,//shut up (written to)
 			0,0,0,0,0,0,0,0,0,0,0,0,//reserved
 		};
+
+		public static byte[] ConfigForSize(float size)
+		{
+			var cfg = Config_8MB.ToArray();
+			switch (size)
+			{
+				case 8.0f:    cfg[0] = (byte)((cfg[0] & 0xfc) | 0b000); break;
+				case 0.0625f: cfg[0] = (byte)((cfg[0] & 0xfc) | 0b001); break;
+				case 0.125f:  cfg[0] = (byte)((cfg[0] & 0xfc) | 0b010); break;
+				case 0.25f:   cfg[0] = (byte)((cfg[0] & 0xfc) | 0b011); break;
+				case 0.5f:    cfg[0] = (byte)((cfg[0] & 0xfc) | 0b100); break;
+				case 1.0f:    cfg[0] = (byte)((cfg[0] & 0xfc) | 0b101); break;
+				case 2.0f:    cfg[0] = (byte)((cfg[0] & 0xfc) | 0b110); break;
+				case 4.0f:    cfg[0] = (byte)((cfg[0] & 0xfc) | 0b111); break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+
+			return cfg;
+		}
 	}
 
 	public class ZorroConfigurator : IZorroConfigurator
 	{
 		public ZorroConfigurator(IZorro zorro, IOptions<EmulationSettings> settings)
 		{
-			if (settings.Value.ZorroIIMemory != 0.0)
+			if (!string.IsNullOrEmpty(settings.Value.ZorroIIMemory))
 			{
-				zorro.AddConfiguration(new ZorroConfiguration { Config = RamExpansion.Config_8MB, Name = "8MB RAM Expansion", Size = 8 * 1024 * 1024 });
+				var expansions = settings.Value.ZorroIIMemory
+					.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(Convert.ToSingle);
 
-				//zorro.AddConfiguration(new Configurations { Config = RamExpansion.Config_2MB, Name = "2MB RAM Expansion"});
-				//zorro.AddConfiguration(new Configurations { Config = RamExpansion.Config_4MB, Name = "4MB RAM Expansion" });
-				//zorro.AddConfiguration(new Configurations { Config = RamExpansion.Config_2MB, Name = "2MB RAM Expansion" });
+				foreach (var v in expansions)
+					zorro.AddConfiguration(new ZorroConfiguration
+					{
+						Config = RamExpansion.ConfigForSize(v),
+						Name = $"{v}MB RAM Expansion",
+						Size = (uint)(v * 1024.0f * 1024.0f)
+					});
 			}
 		}
 	}
