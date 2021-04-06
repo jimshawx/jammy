@@ -33,10 +33,10 @@ namespace RunAmiga.Core.Interface.Interfaces
 
 	public interface IAudio : IEmulate, ICustomReadWrite
 	{
-		public void WriteDMACON(ushort v);
-		public void WriteADKCON(ushort v);
-		public void WriteINTREQ(ushort v);
-		public void WriteINTENA(ushort v);
+		void WriteDMACON(ushort v);
+		void WriteADKCON(ushort v);
+		void WriteINTREQ(ushort v);
+		void WriteINTENA(ushort v);
 	}
 
 	public interface IBattClock : IReset, IMemoryMappedDevice { }
@@ -73,6 +73,11 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void Init(IChips custom);
 		ushort GetInterruptLevel();
 		void SetGayleInterruptLevel(uint level);
+	}
+
+	public interface ISerial : IEmulate, ICustomReadWrite
+	{
+		void WriteINTREQ(ushort v);
 	}
 
 	public interface IDebugMemoryMapper 

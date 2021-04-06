@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,7 +47,7 @@ namespace RunAmiga.Core
 		public Machine(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock, 
 			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IMemoryMapper memory,
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
-			IDiskDrives diskDrives, IMouse mouse, IIDEController ideController,
+			IDiskDrives diskDrives, IMouse mouse, IIDEController ideController, ISerial serial,
 			IBreakpointCollection breakpointCollection, ILogger<Machine> logger)
 		{
 			this.memoryMapper = memoryMapper;
@@ -67,6 +69,7 @@ namespace RunAmiga.Core
 			emulations.Add(audio);
 			emulations.Add(ciaa);
 			emulations.Add(ciab);
+			emulations.Add(serial);
 			emulations.Add(cpu);
 
 			resetters.Add(ideController);
@@ -75,6 +78,9 @@ namespace RunAmiga.Core
 			resetters.Add(battClock);
 			resetters.Add(blitter);
 			resetters.Add(custom);
+			if (resetters.Any(x => x is IEmulate))
+				throw new AmbiguousImplementationException();
+
 			resetters.AddRange(emulations);
 
 			Reset();

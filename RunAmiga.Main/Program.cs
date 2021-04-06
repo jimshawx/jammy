@@ -58,6 +58,7 @@ namespace RunAmiga.Main
 				.AddSingleton<IDiskDrives, DiskDrives>()
 				.AddSingleton<IKeyboard, Keyboard>()
 				.AddSingleton<IMouse, Mouse>()
+				.AddSingleton<ISerial, Serial>()
 				.AddSingleton<IZorro, Zorro>()
 				.AddSingleton<IChipRAM, ChipRAM>()
 				.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()

@@ -510,9 +510,13 @@ namespace RunAmiga.Disassembler.Analysers
 		private void LoadComments()
 		{
 			string fullPath = Path.Combine($"c:/source/programming/amiga/KS{settings.KickStart}");
-			var files = Directory.GetFiles(fullPath, "*_disassembly.txt");
-			foreach (var file in files)
-				LoadComment(file);
+			try
+			{
+				var files = Directory.GetFiles(fullPath, "*_disassembly.txt");
+				foreach (var file in files)
+					LoadComment(file);
+			}
+			catch (DirectoryNotFoundException) { }
 		}
 
 		private void LoadComment(string fullPath)

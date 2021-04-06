@@ -27,6 +27,10 @@ namespace RunAmiga.Core.Memory
 				case "2.04": path = "kick204.rom"; name = "Kickstart 2.04"; break;
 				case "2.05": path = "kick205.rom"; name = "Kickstart 2.05"; break;
 				case "3.1": path = "kick31.rom"; name = "Kickstart 3.1"; break;
+				default:
+					path = settings.Value.KickStart;
+					name = Path.GetFileName(settings.Value.KickStart);
+					break;
 			}
 
 			string fullName = Path.Combine("../../../../", path);

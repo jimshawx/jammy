@@ -16,14 +16,16 @@ namespace RunAmiga.Core.Custom
 		private ICopper copper;
 		private IBlitter blitter;
 		private readonly IMouse mouse;
+		private readonly ISerial serial;
 		private readonly ILogger logger;
 		private IAudio audio;
 
-		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, ILogger<Chips> logger)
+		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, ISerial serial, ILogger<Chips> logger)
 		{
 			this.interrupt = interrupt;
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
+			this.serial = serial;
 			this.logger = logger;
 		}
 
@@ -122,6 +124,10 @@ namespace RunAmiga.Core.Custom
 			                     /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
 			{
 
+			}
+			else if (address == ChipRegs.SERDATR || address == ChipRegs.SERDAT || address == ChipRegs.SERPER)
+			{
+				regs[reg] = serial.Read(insaddr, address);
 			}
 			else
 			{
@@ -288,6 +294,7 @@ namespace RunAmiga.Core.Custom
 				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
 				audio.WriteINTREQ((ushort)(regs[reg]&0x7fff));
+				serial.WriteINTREQ((ushort)(regs[reg] & 0x7fff));
 
 				regs[REG(ChipRegs.INTREQR)] = (ushort)(regs[reg]&0x7fff);
 
@@ -351,6 +358,10 @@ namespace RunAmiga.Core.Custom
 			         /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
 			{
 
+			}
+			else if (address == ChipRegs.SERDAT || address == ChipRegs.SERDATR || address == ChipRegs.SERPER)
+			{
+				serial.Write(insaddr, address, (ushort)value);
 			}
 			else 
 			{

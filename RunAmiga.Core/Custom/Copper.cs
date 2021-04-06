@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -596,7 +597,7 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
-
+		[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneConvert(int h)
 		{
 			if (cln.pixelMask == 0x8000)
