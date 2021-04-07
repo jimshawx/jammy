@@ -288,7 +288,7 @@ namespace RunAmiga.Core.Custom
 
 		private class CopperLine
 		{
-			public ushort pixelMask;
+			public ulong pixelMask;
 			public ulong[] bpldatdma = new ulong[8];
 			public bool copperEarlyOut = false;
 
@@ -348,17 +348,17 @@ namespace RunAmiga.Core.Custom
 
 					ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
 					
-					if (settings.ChipSet != ChipSet.OCS && fmode != 0)
-					{
-						wordCount = (ddfstop - ddfstrt) / 16 + 1;
-						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 16);
-					}
-					else
+					if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 					{
 						wordCount = (ddfstop - ddfstrt) / 4 + 2;
 						//word count needs to be a multiple of planes
 						//wordCount = ((wordCount / planes) + (planes - 1)) * planes;
 						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
+					}
+					else
+					{
+						wordCount = (ddfstop - ddfstrt) / 16 + 1;
+						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 16);
 					}
 
 					diwstrth &= 0xf8;
@@ -380,15 +380,15 @@ namespace RunAmiga.Core.Custom
 
 					ddfstrtfix = (ushort)(ddfstrt & 0xfff8);
 
-					if (settings.ChipSet != ChipSet.OCS && fmode != 0)
+					if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 					{
-						wordCount = (ddfstop - ddfstrt) / 32 + 1;
-						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 32);
+						wordCount = (ddfstop - ddfstrt) / 8 + 1;
+						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8); 
 					}
 					else
 					{
-						wordCount = (ddfstop - ddfstrt) / 8 + 1;
-						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8);
+						wordCount = (ddfstop - ddfstrt) / 32 + 1;
+						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 32);
 					}
 
 					diwstrth &= 0xf0;
@@ -406,7 +406,7 @@ namespace RunAmiga.Core.Custom
 
 			int lineStart = cop.dptr;
 
-			cln.pixelMask = 0x8000;
+			ResetPixelMask();
 			cln.lastcol = truecolour[0];//should be colour 0 at time of diwstrt
 			for (int h = 0; h < 256; h++)
 			{
@@ -634,8 +634,27 @@ namespace RunAmiga.Core.Custom
 
 			if (plane < cln.planes)
 			{
-				cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
-				bplpt[plane] += 2;
+				if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+				{
+					bplpt[plane] &= ~1u;
+
+					cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
+					bplpt[plane] += 2;
+				}
+				else if (fmode == 3)
+				{
+					bplpt[plane] &= ~7u;
+
+					cln.bpldatdma[plane] = ((ulong)memory.Read(0, bplpt[plane], Size.Long) << 32) | memory.Read(0, bplpt[plane] + 4, Size.Long);
+					bplpt[plane] += 8;
+				}
+				else
+				{
+					bplpt[plane] &= ~3u;
+
+					cln.bpldatdma[plane] = memory.Read(0, bplpt[plane], Size.Long);
+					bplpt[plane] += 4;
+				}
 
 				if (cop.currentLine == cdbg.dbugLine)
 					cdbg.fetch[h] = Convert.ToChar(plane + 48 + 1);
@@ -647,10 +666,44 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
+		private const ulong pixelMask_64 = 0x8000_0000_0000_0000;
+		private const ulong pixelMask_32 = 0x8000_0000;
+		private const ulong pixelMask_16 = 0x8000;
+
+		private void ResetPixelMask()
+		{
+			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+				cln.pixelMask = pixelMask_16;
+			else if (fmode == 3)
+				cln.pixelMask = pixelMask_64;
+			else
+				cln.pixelMask = pixelMask_32;
+		}
+
+		private bool IsNewPixelMask()
+		{
+			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+				return cln.pixelMask == pixelMask_16;
+			else if (fmode == 3)
+				return cln.pixelMask == pixelMask_64;
+			else
+				return cln.pixelMask == pixelMask_32;
+		}
+
+		private void UpdatePixelMask()
+		{
+			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+				cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+			else if (fmode == 3)
+				cln.pixelMask =(cln.pixelMask >> 1) | (cln.pixelMask << 63); //next bit
+			else
+				cln.pixelMask = (uint)((cln.pixelMask >> 1) | (cln.pixelMask << 31)); //next bit
+		}
+
 		[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneConvert(int h)
 		{
-			if (cln.pixelMask == 0x8000)
+			if (IsNewPixelMask())
 			{
 				if (cop.currentLine == cdbg.dbugLine)
 				{
@@ -707,7 +760,7 @@ namespace RunAmiga.Core.Custom
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
 
-					cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+					UpdatePixelMask();
 				}
 			}
 			else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) != 0))
@@ -759,7 +812,7 @@ namespace RunAmiga.Core.Custom
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
 
-					cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+					UpdatePixelMask();
 					cln.lastcol = col;
 				}
 			}
@@ -785,7 +838,7 @@ namespace RunAmiga.Core.Custom
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
 
-					cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+					UpdatePixelMask();
 				}
 			}
 			else if (cln.planes == 8 && ((bplcon0 & (1 << 11)) != 0))
@@ -836,7 +889,7 @@ namespace RunAmiga.Core.Custom
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
 
-					cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+					UpdatePixelMask();
 					cln.lastcol = col;
 				}
 			}
@@ -862,7 +915,7 @@ namespace RunAmiga.Core.Custom
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
 
-					cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+					UpdatePixelMask();
 				}
 			}
 		}
@@ -978,7 +1031,7 @@ namespace RunAmiga.Core.Custom
 		private ushort copjmp2;
 		private ushort copins;
 
-		private ushort[] bpldat = new ushort[8];
+		private ulong[] bpldat = new ulong[8];
 		private uint[] bplpt = new uint[8];
 		private ushort diwstrt;
 		private ushort diwstop;
@@ -1066,14 +1119,14 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.BPLCON3: value = bplcon3; break;
 				case ChipRegs.BPLCON4: value = bplcon4; break;
 
-				case ChipRegs.BPL1DAT: value = bpldat[0]; break;
-				case ChipRegs.BPL2DAT: value = bpldat[1]; break;
-				case ChipRegs.BPL3DAT: value = bpldat[2]; break;
-				case ChipRegs.BPL4DAT: value = bpldat[3]; break;
-				case ChipRegs.BPL5DAT: value = bpldat[4]; break;
-				case ChipRegs.BPL6DAT: value = bpldat[5]; break;
-				case ChipRegs.BPL7DAT: value = bpldat[6]; break;
-				case ChipRegs.BPL8DAT: value = bpldat[7]; break;
+				case ChipRegs.BPL1DAT: value = (ushort)bpldat[0]; break;
+				case ChipRegs.BPL2DAT: value = (ushort)bpldat[1]; break;
+				case ChipRegs.BPL3DAT: value = (ushort)bpldat[2]; break;
+				case ChipRegs.BPL4DAT: value = (ushort)bpldat[3]; break;
+				case ChipRegs.BPL5DAT: value = (ushort)bpldat[4]; break;
+				case ChipRegs.BPL6DAT: value = (ushort)bpldat[5]; break;
+				case ChipRegs.BPL7DAT: value = (ushort)bpldat[6]; break;
+				case ChipRegs.BPL8DAT: value = (ushort)bpldat[7]; break;
 
 				case ChipRegs.BPL1PTL: value = (ushort)bplpt[0]; break;
 				case ChipRegs.BPL1PTH: value = (ushort)(bplpt[0]>>16); break;
