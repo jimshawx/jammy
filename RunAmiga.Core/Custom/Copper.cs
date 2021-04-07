@@ -619,18 +619,36 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
+		private int modulo = 0;
 		private void CopperBitplaneFetch(int h)
 		{
-			int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
-			int[] fetchHi = { 4, 2, 3, 1 };
 
-			int planeIdx = (h - ddfstrt) % cln.pixmod;
-
+			int planeIdx;
 			int plane;
-			if ((bplcon0 & (uint)BPLCON0.HiRes) != 0 && cln.planes <= 4)
-				plane = fetchHi[planeIdx] - 1;
+
+			if (settings.ChipSet == ChipSet.OCS)
+			{
+				int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
+				int[] fetchHi = { 4, 2, 3, 1 };
+
+				planeIdx = (h - ddfstrt) % cln.pixmod;
+
+				if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
+					plane = fetchHi[planeIdx] - 1;
+				else
+					plane = fetchLo[planeIdx] - 1;
+			}
 			else
-				plane = fetchLo[planeIdx] - 1;
+			{
+				int[] fetchF = {8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10};
+
+				int mod = 8;
+				if (fmode == 3) mod = 32;
+				else if (fmode != 0) mod = 16;
+
+				planeIdx = (h - ddfstrt) % mod;
+				plane = fetchF[planeIdx] - 1;
+			}
 
 			if (plane < cln.planes)
 			{
@@ -712,7 +730,7 @@ namespace RunAmiga.Core.Custom
 				}
 
 				for (int i = 0; i < 8; i++)
-					bpldat[i] = (ushort)cln.bpldatdma[i];
+					bpldat[i] = cln.bpldatdma[i];
 			}
 			else
 			{
