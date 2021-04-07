@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Configuration;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
@@ -17,15 +19,17 @@ namespace RunAmiga.Core.Custom
 		private IBlitter blitter;
 		private readonly IMouse mouse;
 		private readonly ISerial serial;
+		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 		private IAudio audio;
 
-		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, ISerial serial, ILogger<Chips> logger)
+		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, ISerial serial, IOptions<EmulationSettings> settings, ILogger<Chips> logger)
 		{
 			this.interrupt = interrupt;
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
 			this.serial = serial;
+			this.settings = settings.Value;
 			this.logger = logger;
 		}
 
@@ -39,10 +43,20 @@ namespace RunAmiga.Core.Custom
 		public void Reset()
 		{
 			//http://eab.abime.net/showthread.php?t=72300
-			regs[REG(ChipRegs.LISAID)] = 0x00fc;//LISA (0x00fc ECS Denise 8373) (OCS Denise 8362 just returns last value on bus).
-			regs[REG(ChipRegs.LISAID)] = 0x00f8;//Lisa returns 0xF8
-			regs[REG(ChipRegs.LISAID)] = 0xffff;//OCS, setting this means KS3.1 sees OCS and gets copper list right for this
-			//regs[REG(ChipRegs.VPOSR)] = 0x2300;//Alice
+			switch (settings.ChipSet)
+			{
+				case ChipSet.OCS:
+					//OCS, setting this means KS3.1 sees OCS and gets copper list right for this
+					//LISAID doesn't exist on OCS (OCS Denise 8362 just returns last value on bus).
+					regs[REG(ChipRegs.LISAID)] = 0xffff;
+					break;
+				case ChipSet.ECS:
+					regs[REG(ChipRegs.LISAID)] = 0x00fc;//LISA (0x00fc ECS Denise 8373) 
+					break;
+				case ChipSet.AGA:
+					regs[REG(ChipRegs.LISAID)] = 0x00f8;//Lisa returns 0xF8, upper byte is 0 for A1200, non-zero for A4000
+					break;
+			}
 		}
 
 		readonly MemoryRange memoryRange = new MemoryRange(0xc00000, 0x200000);
@@ -89,6 +103,7 @@ namespace RunAmiga.Core.Custom
 				(address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31)||
 				address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
 				|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
+				|| address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
 				|| address == ChipRegs.FMODE)
 			{
 				regs[reg] = copper.Read(insaddr, address);
@@ -313,6 +328,7 @@ namespace RunAmiga.Core.Custom
 				regs[REG(ChipRegs.ADKCONR)] = regs[reg];
 			}
 			else if (address == ChipRegs.ADKCONR) { /* can't write here */ }
+			else if (address == ChipRegs.LISAID && settings.ChipSet == ChipSet.AGA) { /* can't write here on AGA */}
 			else
 			{
 				regs[reg] = (ushort)value;
@@ -322,7 +338,8 @@ namespace RunAmiga.Core.Custom
 			    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31) ||
 			    address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
 			    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
-			    || address == ChipRegs.FMODE || address == ChipRegs.BEAMCON0)
+			    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
+				|| address == ChipRegs.FMODE || address == ChipRegs.BEAMCON0)
 			{
 				copper.Write(insaddr, address, (ushort)value);
 			}
@@ -355,7 +372,7 @@ namespace RunAmiga.Core.Custom
 			}
 			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
 			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
-			         /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
+			         || /*address == ChipRegs.LISAID  ||*/ address == ChipRegs.NO_OP)
 			{
 
 			}

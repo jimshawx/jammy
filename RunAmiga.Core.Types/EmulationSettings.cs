@@ -18,6 +18,13 @@
 		Enabled
 	}
 
+	public enum ChipSet
+	{
+		OCS,
+		ECS,
+		AGA,
+	}
+
 	public class EmulationSettings
 	{
 		public string KickStart { get; set; }
@@ -42,5 +49,6 @@
 		public CPUType CPU { get; set; }
 		public AudioDriver Audio { get; set; }
 		public Feature Tracer { get; set; }
+		public ChipSet ChipSet { get; set; }
 	}
 }
