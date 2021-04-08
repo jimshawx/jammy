@@ -26,6 +26,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
+    <PackageReference Include="Moq" Version="4.16.1" />
     <PackageReference Include="NUnit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.16.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.5.0" />
@@ -38,6 +39,12 @@
     <ProjectReference Include="..\RunAmiga.Debugger\RunAmiga.Debugger.csproj" />
     <ProjectReference Include="..\RunAmiga.Disassembler\RunAmiga.Disassembler.csproj" />
     <ProjectReference Include="..\RunAmiga.Logger.DebugAsync\RunAmiga.Logger.DebugAsync.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="blitter-2021-04-08-144513.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

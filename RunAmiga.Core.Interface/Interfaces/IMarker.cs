@@ -40,7 +40,11 @@ namespace RunAmiga.Core.Interface.Interfaces
 	}
 
 	public interface IBattClock : IReset, IMemoryMappedDevice { }
-	public interface IBlitter: IReset, ICustomReadWrite { }
+
+	public interface IBlitter : IReset, ICustomReadWrite
+	{
+		void SetLineMode(bool benchmark);
+	}
 	public interface ICIA : IEmulate, IMemoryMappedDevice
 	{
 		byte SnoopICRR();
