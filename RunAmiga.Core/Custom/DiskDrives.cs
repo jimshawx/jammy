@@ -84,6 +84,8 @@ namespace RunAmiga.Core.Custom
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 
+		private readonly MFM mfmEncoder;
+
 		//HRM pp241
 
 		private readonly Drive[] drive;
@@ -93,6 +95,8 @@ namespace RunAmiga.Core.Custom
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
+
+			this.mfmEncoder = new MFM();
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
 			Disk[] disks = new Disk[4];
@@ -289,7 +293,6 @@ namespace RunAmiga.Core.Custom
 					break;
 				case ChipRegs.DSKLEN:
 					dsklen = value;
-					//logger.LogTrace($"dma:{(dsklen >> 16) & 1} rw:{(dsklen >> 15) & 1} len:{dsklen & 0x3fff} {dsklen & 0x3fff:X4} /11:{(dsklen & 0x3fff)/11}");
 
 					//turn OFF disk DMA
 					if (dsklen == 0x4000)
@@ -321,13 +324,19 @@ namespace RunAmiga.Core.Custom
 					int df = SelectedDrive();
 
 					//dsklen is number of MFM encoded words (usually a track, 7358 = 668 x 11words, 1336 x 11 bytes)
-					if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814 && (dsklen & 0x3fff) != 6784)
-						logger.LogTrace($"DSKLEN looks funny {dsklen&0x3fff:X4} {dsklen:X4}");
+					//if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814 && (dsklen & 0x3fff) != 6784)
+					//	logger.LogTrace($"DSKLEN looks funny {dsklen&0x3fff:X4} {dsklen:X4}");
 
 					logger.LogTrace($"Reading DF{df} T: {drive[df].track} S: {drive[df].side} L: {dsklen&0x3fff:X4} ({dsklen & 0x3fff}) L/11: {(dsklen&0x3fff)/11}");
 
-					byte[] mfm = new byte[1088*11+720];//12688 bytes, 6344 words hmm.
-					MFM.FloppyTrackMfmEncode((drive[df].track << 1)+ drive[df].side, drive[df].disk.data, mfm, 0x4489);
+					if (drive[df].track > 161)
+					{
+						logger.LogTrace($"Track {drive[df].track} {drive[df].track / 2}:{drive[df].track & 1} Out of range!");
+						interrupt.AssertInterrupt(Interrupt.DSKBLK);
+						return;
+					}
+
+					byte[] mfm = mfmEncoder.EncodeTrack((drive[df].track << 1)+ drive[df].side, drive[df].disk.data, 0x4489);
 
 					foreach (var w in mfm.AsUWord())
 					{

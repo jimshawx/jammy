@@ -50,12 +50,18 @@ namespace RunAmiga.Extensions.Extensions
 		//all the odd bits, followed by all the even bits
 		public static IEnumerable<byte> OddEven(this IEnumerable<byte> src)
 		{
-			byte[] copy = src.ToArray();
+			var copy = src;//.ToArray();
 
 			foreach (var s in copy)
 				yield return (byte)((s >> 1) & 0x55);
 			foreach (var s in copy)
 				yield return (byte)(s & 0x55);
+		}
+
+		//all the odd bits, followed by all the even bits
+		public static IEnumerable<byte> OddEven(this Span<byte> src)
+		{
+			return src.ToArray().OddEven();
 		}
 
 		public static string DiffSummary(this byte[] m0, byte[] m1)
