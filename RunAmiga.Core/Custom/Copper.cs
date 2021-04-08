@@ -283,7 +283,27 @@ namespace RunAmiga.Core.Custom
 
 			RunSprites();
 
+			DebugPalette();
+
 			emulationWindow.Blit(screen);
+		}
+
+		private void DebugPalette()
+		{
+			int px=5;
+			for (int y = 0; y < 4; y++)
+			{
+				for (int x = 0; x < 64; x++)
+				{
+					for (int p = 0; p < px; p++)
+					{
+						for (int q = 0; q < px; q++)
+						{
+							screen[x * px + q + (512 + (y*px) + p) * SCREEN_WIDTH] = (int)truecolour[x + y * 64];
+						}
+					}
+				}
+			}
 		}
 
 		private class CopperLine
@@ -640,10 +660,13 @@ namespace RunAmiga.Core.Custom
 			}
 			else
 			{
-				int[] fetchF = {8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10};
+				int[] fetchF = {
+					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10,
+					//10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10
+				};
 
 				int mod = 8;
-				if (fmode == 3) mod = 32;
+				if (fmode == 3) mod = 16;
 				else if (fmode != 0) mod = 16;
 
 				planeIdx = (h - ddfstrt) % mod;
@@ -718,7 +741,7 @@ namespace RunAmiga.Core.Custom
 				cln.pixelMask = (uint)((cln.pixelMask >> 1) | (cln.pixelMask << 31)); //next bit
 		}
 
-		[MethodImpl(MethodImplOptions.NoOptimization)]
+		//[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneConvert(int h)
 		{
 			if (IsNewPixelMask())
@@ -1079,6 +1102,7 @@ namespace RunAmiga.Core.Custom
 		private ushort beamcon0;
 
 		public ushort[] colour = new ushort[256];
+		public ushort[] lowcolour = new ushort[256];
 		public uint[] truecolour = new uint[256];
 
 		public ushort Read(uint insaddr, uint address)
@@ -1241,9 +1265,15 @@ namespace RunAmiga.Core.Custom
 				//uint bank = (custom.Read(0, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
 				int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
 
+				int loct = bplcon3 & (1 << 9);
+
 				//Amiga colour
 				int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
-				value = colour[index] = value;
+				
+				if (loct != 0)
+					value = lowcolour[index];
+				else
+					value = colour[index];
 			}
 
 			return value;
@@ -1405,13 +1435,26 @@ namespace RunAmiga.Core.Custom
 
 				//Amiga colour
 				int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
-				colour[index] = value;
+
+				int loct = bplcon3 & (1 << 9);
+				if (loct != 0)
+				{
+					lowcolour[index] = value;
+				}
+				else
+				{
+					colour[index] = value;
+					lowcolour[index] = value;
+				}
 
 				//24bit colour
-				uint col = value;
-				truecolour[index] = ((col & 0xf) * 0x11) + ((col & 0xf0) * 0x110) + ((col & 0xf00) * 0x1100);
+				truecolour[index] = Explode(colour[index]) | (Explode(lowcolour[index])>>4);
 			}
 		}
 
+		private uint Explode(ushort c)
+		{
+			return (uint)(((c & 0xf)<<4) | ((c & 0xf0) << 8) | ((c & 0xf00) << 12));
+		}
 	}
 }
