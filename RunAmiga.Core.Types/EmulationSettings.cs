@@ -25,6 +25,13 @@
 		AGA,
 	}
 
+	public enum SerialConsole
+	{
+		Null,
+		ANSI,
+		Emulation
+	}
+
 	public class EmulationSettings
 	{
 		public string KickStart { get; set; }
@@ -50,5 +57,6 @@
 		public AudioDriver Audio { get; set; }
 		public Feature Tracer { get; set; }
 		public ChipSet ChipSet { get; set; }
+		public SerialConsole Console { get; set; }
 	}
 }

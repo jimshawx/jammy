@@ -164,7 +164,7 @@ namespace RunAmiga.Tests
 
 			for (int a = 0; a < 2; a++)
 			{
-				blitter.SetLineMode(a == 0);
+				blitter.SetLineMode(a == 1);
 
 				chipRAM.Clear();
 

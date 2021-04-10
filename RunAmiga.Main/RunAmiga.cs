@@ -155,7 +155,7 @@ namespace RunAmiga.Main
 				lbCustom.Items.Add("INTENA W:DFF09A R:DFF01C");
 				lbCustom.Items.Add("INTREQ W:DFF09C R:DFF01E");
 				lbCustom.Items.Add("        ENA REQ");
-				string[] names = new String [16] {"NMI", "INTEN", "EXTEN", "DSKSYNC", "RBF", "AUD3", "AUD2", "AUD1", "AUD0", "BLIT", "VERTB", "COPPER", "PORTS", "TBE", "DSKBLJ", "SOFTINT"};
+				string[] names = new String [16] {"NMI", "INTEN", "EXTEN", "DSKSYNC", "RBF", "AUD3", "AUD2", "AUD1", "AUD0", "BLIT", "VERTB", "COPPER", "PORTS", "SOFTINT", "DSKBLK", "TBE"};
 				for (int i = 0; i < 16; i++)
 				{
 					int bit = 1 << (i ^ 15);
@@ -163,35 +163,45 @@ namespace RunAmiga.Main
 				}
 			}
 
-			/*
-			 * 			SETCLR = 0x8000,
-						BBUSY = 0x4000,
-						BZERO = 0x2000,
-						unused0 = 0x1000,
-						unused1 = 0x0800,
-						BLTPRI = 0x0400,
-						DMAEN = 0x0200,
-						BPLEN = 0x00100,
-						COPEN = 0x0080,
-						BLTEN = 0x0040,
-						SPREN = 0x0020,
-						DSKEN = 0x0010,
-						AUD3EN = 0x0008,
-						AUD2EN = 0x0004,
-						AUD1EN = 0x0002,
-						AUD0EN = 0x0001,
-			 */
+			///*
+			// * 			SETCLR = 0x8000,
+			//			BBUSY = 0x4000,
+			//			BZERO = 0x2000,
+			//			unused0 = 0x1000,
+			//			unused1 = 0x0800,
+			//			BLTPRI = 0x0400,
+			//			DMAEN = 0x0200,
+			//			BPLEN = 0x00100,
+			//			COPEN = 0x0080,
+			//			BLTEN = 0x0040,
+			//			SPREN = 0x0020,
+			//			DSKEN = 0x0010,
+			//			AUD3EN = 0x0008,
+			//			AUD2EN = 0x0004,
+			//			AUD1EN = 0x0002,
+			//			AUD0EN = 0x0001,
+			// */
+			//{
+			//	string hdr =
+			//		"S    B      AAAA\n" +
+			//		"EBB  LDBCBSDUUUU\n" +
+			//		"TBZ  TMPOLPSDDDD\n" +
+			//		"CUE  PALPTRK3210\n" +
+			//		"LSR  REEEEEEEEEE\n" +
+			//		"RYO  INNNNNNNNNN";
+			//	lbCustom.Items.AddRange(hdr.Split('\n'));
+			//	lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
+			//	lbCustom.Items.Add($"{Convert.ToString(chipRegs.dmacon, 2).PadLeft(16, '0')}");
+			//}
 			{
-				string hdr =
-					"S    B      AAAA\n" +
-					"EBB  LDBCBSDUUUU\n" +
-					"TBZ  TMPOLPSDDDD\n" +
-					"CUE  PALPTRK3210\n" +
-					"LSR  REEEEEEEEEE\n" +
-					"RYO  INNNNNNNNNN";
-				lbCustom.Items.AddRange(hdr.Split('\n'));
 				lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
-				lbCustom.Items.Add($"{Convert.ToString(chipRegs.dmacon, 2).PadLeft(16, '0')}");
+				lbCustom.Items.Add("        ENA");
+				string[] names = new string[16] {"SETCLR", "BBUSY", "BZERO", "UNUSED0", "UNUSED1", "BLTPRI", "DMAEN", "BPLEN", "COPEN", "BLTEN", "SPREN", "DSKEN", "AUD3EN", "AUD2EN", "AUD1EN", "AUD0EN"};
+				for (int i = 0; i < 16; i++)
+				{
+					int bit = 1 << (i ^ 15);
+					lbCustom.Items.Add($"{names[i],8} {((chipRegs.dmacon & bit) != 0 ? 1 : 0)}");
+				}
 			}
 		}
 

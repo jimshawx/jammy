@@ -45,9 +45,9 @@ namespace RunAmiga.Core.Custom
 			}
 
 			serialInTimer++;
-			if (serialInTimer >= 20)
+			if (serialInTimer >= 150000)
 			{
-				serialInTimer -= 20;
+				serialInTimer -= 150000;
 				if ((serdat & (ushort)SERDAT.RBF) == 0)
 				{
 					int c = serialConsole.ReadChar();
@@ -151,6 +151,13 @@ namespace RunAmiga.Core.Custom
 			RBF=16384,
 			OVRUN=32768
 		}
+	}
+
+	public class NullConsole : ISerialConsole
+	{
+		public int ReadChar() { return -1; }
+		public void WriteChar(int c) { }
+		public void Reset() { }
 	}
 
 	public class EmulationConsole : ISerialConsole

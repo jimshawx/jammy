@@ -144,12 +144,12 @@ namespace RunAmiga.Core.Custom
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					csb.AppendLine($"{copPC:X8} MOVE {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
+					csb.AppendLine($"{copPC-4:X8} MOVE {ins:X4} {data:X4} {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
 
 					if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
-						copPC = custom.Read(copPC, ChipRegs.COP1LCH, Size.Long);//COP1LC
+						copPC = custom.Read(copPC-4, ChipRegs.COP1LCH, Size.Long);//COP1LC
 					else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2) 
-						copPC = custom.Read(copPC, ChipRegs.COP2LCH, Size.Long);//COP2LC
+						copPC = custom.Read(copPC-4, ChipRegs.COP2LCH, Size.Long);//COP2LC
 				}
 				else if ((ins & 0x0001) == 1)
 				{
@@ -165,12 +165,12 @@ namespace RunAmiga.Core.Custom
 					if ((data & 1) == 0)
 					{
 						//WAIT
-						csb.AppendLine($"{copPC:X8} WAIT vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
+						csb.AppendLine($"{copPC-4:X8} WAIT {ins:X4} {data:X4} vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
 					}
 					else
 					{
 						//SKIP
-						csb.AppendLine($"{copPC:X8} SKIP vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
+						csb.AppendLine($"{copPC-4:X8} SKIP {ins:X4} {data:X4} vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
 					}
 
 					//this is usually how a copper list ends
@@ -210,6 +210,7 @@ namespace RunAmiga.Core.Custom
 			public CopperStatus status;
 			public uint copPC;
 			public int currentLine;
+			public uint waitMask;
 
 			public void Reset(uint copperPC)
 			{
@@ -245,11 +246,12 @@ namespace RunAmiga.Core.Custom
 			if (cdbg.dbugLine != cf.currentLine)
 				return;
 
-			logger.LogInformation($"LINE {cdbg.dbugLine}");
-			logger.LogInformation($"DDF {ddfstrt:X4} {ddfstop:X4} ({cl.wordCount}) {cl.ddfstrtfix:X4} {cl.ddfstopfix:X4} FMODE {fmode:X4}");
-			logger.LogInformation($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{cl.diwstrtv}->{cl.diwstopv}({cl.diwstopv - cl.diwstrtv}) H:{cl.diwstrth}->{cl.diwstoph}({cl.diwstoph - cl.diwstrth}/16={(cl.diwstoph - cl.diwstrth) / 16})");
-			logger.LogInformation($"MOD {bpl1mod:X4} {bpl2mod:X4}");
-			logger.LogInformation($"BPL {bplcon0:X4} {bplcon1:X4} {bplcon2:X4} {bplcon3:X4} {bplcon4:X4}");
+			logger.LogTrace($"LINE {cdbg.dbugLine}");
+			logger.LogTrace($"DDF {ddfstrt:X4} {ddfstop:X4} ({cl.wordCount}) {cl.ddfstrtfix:X4} {cl.ddfstopfix:X4} FMODE {fmode:X4}");
+			logger.LogTrace($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{cl.diwstrtv}->{cl.diwstopv}({cl.diwstopv - cl.diwstrtv}) H:{cl.diwstrth}->{cl.diwstoph}({cl.diwstoph - cl.diwstrth}/16={(cl.diwstoph - cl.diwstrth) / 16})");
+			logger.LogTrace($"MOD {bpl1mod:X4} {bpl2mod:X4}");
+			logger.LogTrace($"BCN {bplcon0:X4} {bplcon1:X4} {bplcon2:X4} {bplcon3:X4} {bplcon4:X4}");
+			logger.LogTrace($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} ");
 			var sb = new StringBuilder();
 			sb.AppendLine();
 			for (int i = 0; i < 256; i++)
@@ -596,6 +598,8 @@ namespace RunAmiga.Core.Custom
 						cop.waitHMask = (data & 0xfe) | 0xff00;
 						cop.waitVMask = ((data >> 8) & 0x7f) | 0x80;
 
+						cop.waitMask = (uint)((cop.waitHMask & 0xff) | ((cop.waitVMask & 0xff) << 8));
+
 						uint blit = (uint)(data >> 15);
 
 						//todo: blitter is immediate, so currently ignored.
@@ -627,14 +631,19 @@ namespace RunAmiga.Core.Custom
 				}
 				else if (cop.status == CopperStatus.Waiting)
 				{
-					if ((cop.currentLine & cop.waitVMask) == cop.waitV)
-					{
-						if ((h & cop.waitHMask) >= cop.waitH)
-						{
-							//logger.LogTrace($"RUN  {h},{v}");
-							cop.status = CopperStatus.Running;
-						}
-					}
+					//if ((cop.currentLine & cop.waitVMask) == cop.waitV)
+					//{
+					//	if ((h & cop.waitHMask) >= cop.waitH)
+					//	{
+					//		//logger.LogTrace($"RUN  {h},{v}");
+					//		cop.status = CopperStatus.Running;
+					//	}
+					//}
+					uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h&0xff));
+					coppos &= cop.waitMask;
+					uint waitpos = (uint)(((cop.waitV&0xff)<<8)|(cop.waitH & 0xff));
+					if (coppos >= waitpos)
+						cop.status = CopperStatus.Running;
 				}
 			}
 		}
@@ -788,7 +797,10 @@ namespace RunAmiga.Core.Custom
 						pix1 |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
 					//pix is the Amiga colour
-					col1 = truecolour[pix1 + 8 + bank];
+					if (pix1 != 0)
+						col1 = truecolour[pix1 + 8 + bank];
+					else
+						col1 = truecolour[0];
 
 					//which playfield is in front?
 					if ((bplcon2 & (1 << 6)) != 0)
@@ -1005,11 +1017,11 @@ namespace RunAmiga.Core.Custom
 
 							for (int x = 0x8000; x > 0; x >>= 1)
 							{
+								if (dptr + SCREEN_WIDTH + 1 >= screen.Length) break;
 								int pix = (sprdata[s] & x) != 0 ? 1 : 0 + (sprdatb[s] & x) != 0 ? 2 : 0;
 								if (pix != 0)
 									screen[dptr] = screen[dptr + 1] = screen[dptr + SCREEN_WIDTH] = screen[dptr + SCREEN_WIDTH + 1] = (int)truecolour[16 + 4 * (s >> 1) + pix];
 								dptr += 2;
-								if (dptr + SCREEN_WIDTH + 1 >= screen.Length) break;
 							}
 
 							dptr += (SCREEN_WIDTH - 16) * 2;
@@ -1295,7 +1307,6 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.COP1LCL:
 					cop1lc = (cop1lc & 0xffff0000) | value;
 					cop1lc &= ChipRegs.ChipAddressMask;
-					//DebugCopperList(cop1lc);
 					break;
 				case ChipRegs.COP2LCH:
 					cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16);
@@ -1304,15 +1315,12 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.COP2LCL:
 					cop2lc = (cop2lc & 0xffff0000) | value;
 					cop2lc &= ChipRegs.ChipAddressMask;
-					//DebugCopperList(cop2lc);
 					break;
 				case ChipRegs.COPJMP1:
 					copjmp1 = value;
-					//SetCopperPC(cop1lc);
 					break;
 				case ChipRegs.COPJMP2:
 					copjmp2 = value;
-					//SetCopperPC(cop2lc);
 					break;
 				case ChipRegs.COPINS:
 					copins = value;

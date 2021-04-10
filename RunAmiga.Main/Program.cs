@@ -44,9 +44,9 @@ namespace RunAmiga.Main
 				.AddLogging(x=>
 				{
 					x.AddConfiguration(configuration.GetSection("Logging"));
-					x.AddDebug();
+					//x.AddDebug();
 					//x.AddSQLite();
-					//x.AddDebugAsync();
+					x.AddDebugAsync();
 				})
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IBattClock, BattClock>()
@@ -59,8 +59,6 @@ namespace RunAmiga.Main
 				.AddSingleton<IKeyboard, Keyboard>()
 				.AddSingleton<IMouse, Mouse>()
 				.AddSingleton<ISerial, Serial>()
-				.AddSingleton<ISerialConsole, ANSIConsole>()
-				//.AddSingleton<ISerialConsole, EmulationConsole>()
 				.AddSingleton<IZorro, Zorro>()
 				.AddSingleton<IChipRAM, ChipRAM>()
 				.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()
@@ -89,7 +87,7 @@ namespace RunAmiga.Main
 				.AddSingleton<RunAmiga>()
 				.Configure<EmulationSettings>(o=>configuration.Bind("Emulation", o));
 
-			//configure audio
+			//configure Audio
 			if (settings.Audio == AudioDriver.XAudio2)
 				services.AddSingleton<IAudio, AudioV2>();
 			else
@@ -101,12 +99,20 @@ namespace RunAmiga.Main
 			else
 				services.AddSingleton<ICPU, CPU>();
 
-			//configure Traching
+			//configure Tracing
 			if (settings.Tracer == Feature.Enabled)
 				services.AddSingleton<ITracer, Tracer>();
 			else
 				services.AddSingleton<ITracer, NullTracer>();
 
+			//configure Serial Console
+			if (settings.Console == SerialConsole.ANSI)
+				services.AddSingleton<ISerialConsole, ANSIConsole>();
+			else if (settings.Console == SerialConsole.Emulation)
+				services.AddSingleton<ISerialConsole, EmulationConsole>();
+			else
+				services.AddSingleton<ISerialConsole, NullConsole>();
+			
 			var serviceProvider = services	.BuildServiceProvider();
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider;
