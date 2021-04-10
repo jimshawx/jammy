@@ -44,9 +44,9 @@ namespace RunAmiga.Main
 				.AddLogging(x=>
 				{
 					x.AddConfiguration(configuration.GetSection("Logging"));
-					//x.AddDebug();
+					x.AddDebug();
 					//x.AddSQLite();
-					x.AddDebugAsync();
+					//x.AddDebugAsync();
 				})
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IBattClock, BattClock>()
@@ -59,6 +59,8 @@ namespace RunAmiga.Main
 				.AddSingleton<IKeyboard, Keyboard>()
 				.AddSingleton<IMouse, Mouse>()
 				.AddSingleton<ISerial, Serial>()
+				.AddSingleton<ISerialConsole, ANSIConsole>()
+				//.AddSingleton<ISerialConsole, EmulationConsole>()
 				.AddSingleton<IZorro, Zorro>()
 				.AddSingleton<IChipRAM, ChipRAM>()
 				.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()

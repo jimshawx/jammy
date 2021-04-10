@@ -61,7 +61,7 @@ namespace RunAmiga.Core
 		{
 			if (!IsCaptured)
 			{
-				logger.LogTrace($"Capture {where}");
+				//logger.LogTrace($"Capture {where}");
 				IsCaptured = true;
 				Cursor.Hide();
 				Cursor.Clip = emulation.RectangleToScreen(emulation.ClientRectangle);
@@ -70,7 +70,7 @@ namespace RunAmiga.Core
 
 		private void Release(string where)
 		{
-			logger.LogTrace($"Release {where} Was Captured? {IsCaptured}");
+			//logger.LogTrace($"Release {where} Was Captured? {IsCaptured}");
 			if (IsCaptured)
 			{
 				IsCaptured = false;

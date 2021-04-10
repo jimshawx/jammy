@@ -123,7 +123,10 @@ namespace RunAmiga.Core.Custom
 			else
 			{
 				//shouldn't get here since key is only read when we say one is ready
-				sdr = 0xF9;//bad key code
+				//sdr = 0xF9;//bad key code
+
+				//we get here because people bash the keyboard without using interrupts
+				sdr = 0;
 			}
 			return sdr;
 		}

@@ -61,7 +61,7 @@ namespace RunAmiga.Core.Custom
 		public virtual void Emulate(ulong cycles)
 		{
 			timerTime += cycles;
-			if (timerTime > 10)// timers tick at 1/10th cpu clock
+			if (timerTime >= 10)// timers tick at 1/10th cpu clock
 			{
 				timerTime -= 10;
 
@@ -142,7 +142,7 @@ namespace RunAmiga.Core.Custom
 			for (int i = 0; i < 16; i++)
 				regs[i] = 0;
 			
-			regs[CIA.PRA] = 0xff;
+			//regs[CIA.PRA] = 0xff;
 			
 			timerA = 0xffff;
 			timerB = 0xffff;

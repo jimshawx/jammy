@@ -56,6 +56,12 @@ namespace RunAmiga.Core.Custom
 			base.Emulate(cycles);
 		}
 
+		public override void Reset()
+		{
+			base.Reset();
+			regs[CIA.PRA] = 0x8c;
+		}
+
 		public override bool IsMapped(uint address)
 		{
 			return base.IsMapped(address) && (address & 1) == 0;

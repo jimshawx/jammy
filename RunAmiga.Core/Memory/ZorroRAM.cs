@@ -91,7 +91,7 @@ namespace RunAmiga.Core.Memory
 					.Split(',', StringSplitOptions.RemoveEmptyEntries)
 					.Select(Convert.ToSingle);
 
-				foreach (var v in expansions)
+				foreach (var v in expansions.Where(x =>x != 0.0))
 					zorro.AddConfiguration(new ZorroConfiguration
 					{
 						Config = RamExpansion.ConfigForSize(v),

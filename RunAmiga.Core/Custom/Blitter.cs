@@ -212,10 +212,10 @@ namespace RunAmiga.Core.Custom
 			counter++;
 		}
 
-		private bool benchmark = false;
+		private bool future = false;
 		public void SetLineMode(bool benchmark)
 		{
-			this.benchmark = benchmark;
+			this.future = benchmark;
 		}
 
 		private void BlitSmall(uint insaddr)
@@ -227,7 +227,7 @@ namespace RunAmiga.Core.Custom
 				//{
 				//	WriteBlitterState();
 				//}
-				if (benchmark)
+				if (!future)
 					Line2(insaddr);
 				else
 					Line(insaddr);
@@ -244,7 +244,7 @@ namespace RunAmiga.Core.Custom
 		{
 			if ((bltcon1 & 1) != 0)
 			{
-				if (benchmark)
+				if (!future)
 					Line2(insaddr);
 				else
 					Line(insaddr);

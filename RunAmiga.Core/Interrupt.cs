@@ -22,9 +22,9 @@ namespace RunAmiga.Core
 		public const uint VERTB = 5;
 		public const uint COPPER = 4;
 		public const uint PORTS = 3;
-		public const uint TBE = 2;
+		public const uint SOFTINT = 2;
 		public const uint DSKBLK = 1;
-		public const uint SOFTINT = 0;
+		public const uint TBE = 0;
 
 		public static uint[] priority = new uint[]{ 1,1,1,2,3,3,3,4,4,4,4,5,5,6,6,7};
 
