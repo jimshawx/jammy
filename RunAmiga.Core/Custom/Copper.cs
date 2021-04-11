@@ -1457,6 +1457,8 @@ namespace RunAmiga.Core.Custom
 
 				//24bit colour
 				truecolour[index] = Explode(colour[index]) | (Explode(lowcolour[index])>>4);
+
+				//logger.LogTrace($"{index,3} {colour[index]:X4} {truecolour[index]:X8}");
 			}
 		}
 

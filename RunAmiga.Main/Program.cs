@@ -17,6 +17,7 @@ using RunAmiga.Disassembler;
 using RunAmiga.Disassembler.Analysers;
 using RunAmiga.Logger.SQLite;
 using RunAmiga.Logger.DebugAsync;
+using RunAmiga.Logger.DebugAsyncRTF;
 
 namespace RunAmiga.Main
 {
@@ -41,12 +42,13 @@ namespace RunAmiga.Main
 			var serviceCollection = new ServiceCollection();
 			var services = serviceCollection
 				.AddSingleton<IConfigurationRoot>(configuration)
-				.AddLogging(x=>
+				.AddLogging(x =>
 				{
 					x.AddConfiguration(configuration.GetSection("Logging"));
 					//x.AddDebug();
 					//x.AddSQLite();
-					x.AddDebugAsync();
+					//x.AddDebugAsync();
+					x.AddDebugAsyncRTF();
 				})
 				.AddSingleton<IMachine, Machine>()
 				.AddSingleton<IBattClock, BattClock>()
@@ -69,12 +71,12 @@ namespace RunAmiga.Main
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
-				.AddSingleton<IIDEController,IDEController>()
+				.AddSingleton<IIDEController, IDEController>()
 				.AddSingleton<ISCSIController, SCSIController>()
 				.AddSingleton<IAkiko, Akiko>()
 				.AddSingleton<MemoryMapper>()
-				.AddSingleton<IMemoryMapper>(x=>x.GetRequiredService<MemoryMapper>())
-				.AddSingleton<IDebugMemoryMapper>(x=>x.GetRequiredService<MemoryMapper>())
+				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
+				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
 				.AddSingleton<IMemoryManager, MemoryManager>()
 				.AddSingleton<IEmulationWindow, EmulationWindow>()
 				.AddSingleton<IEmulation, Emulation>()
@@ -82,10 +84,10 @@ namespace RunAmiga.Main
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<IDisassembly, Disassembly>()
 				.AddSingleton<IAnalysis, Analysis>()
-				.AddSingleton<IAnalyser,Analyser>()
-				.AddSingleton<IMachineIdentifier>(x=>new MachineIdentifer("Amiga"))
+				.AddSingleton<IAnalyser, Analyser>()
+				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 				.AddSingleton<RunAmiga>()
-				.Configure<EmulationSettings>(o=>configuration.Bind("Emulation", o));
+				.Configure<EmulationSettings>(o => configuration.Bind("Emulation", o));
 
 			//configure Audio
 			if (settings.Audio == AudioDriver.XAudio2)
@@ -112,8 +114,8 @@ namespace RunAmiga.Main
 				services.AddSingleton<ISerialConsole, EmulationConsole>();
 			else
 				services.AddSingleton<ISerialConsole, NullConsole>();
-			
-			var serviceProvider = services	.BuildServiceProvider();
+
+			var serviceProvider = services.BuildServiceProvider();
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider;
 

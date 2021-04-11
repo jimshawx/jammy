@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Drawing;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
-namespace RunAmiga.Logger.DebugAsync
+namespace RunAmiga.Logger.DebugAsyncRTF
 {
 	public class NullScope : IDisposable
 	{
@@ -25,12 +25,12 @@ namespace RunAmiga.Logger.DebugAsync
 		public LogLevel LogLevel { get; set; }
 	}
 
-	public class DebugAsyncLogger : ILogger
+	public class DebugAsyncRTFLogger : ILogger
 	{
 		private readonly string name;
 		private readonly ConcurrentQueue<DbMessage> messageQueue;
 
-		public DebugAsyncLogger(string name, ConcurrentQueue<DbMessage> messageQueue)
+		public DebugAsyncRTFLogger(string name, ConcurrentQueue<DbMessage> messageQueue)
 		{
 			this.name = name;
 			this.messageQueue = messageQueue;
@@ -73,18 +73,18 @@ namespace RunAmiga.Logger.DebugAsync
 		}
 	}
 
-	[ProviderAlias("DebugAsync")]
-	public class DebugAsyncLoggerProvider : ILoggerProvider
+	[ProviderAlias("DebugAsyncRTF")]
+	public class DebugAsyncRTFLoggerProvider : ILoggerProvider
 	{
 		private sealed class DebugAsyncLoggerInstance
 		{
-			public DebugAsyncConsoleLoggerReader Reader { get; private set; }
+			public DebugAsyncRTFLoggerReader Reader { get; private set; }
 			public ConcurrentQueue<DbMessage> MessageQueue { get; private set; }
 
 			private DebugAsyncLoggerInstance()
 			{
 				MessageQueue = new ConcurrentQueue<DbMessage>();
-				Reader = new DebugAsyncConsoleLoggerReader(MessageQueue);
+				Reader = new DebugAsyncRTFLoggerReader(MessageQueue);
 			}
 
 			private static DebugAsyncLoggerInstance instance;
@@ -95,66 +95,65 @@ namespace RunAmiga.Logger.DebugAsync
 			}
 		}
 
-		public ILogger CreateLogger(string name) { return new DebugAsyncLogger(name, DebugAsyncLoggerInstance.Instance.MessageQueue); }
+		public ILogger CreateLogger(string name) { return new DebugAsyncRTFLogger(name, DebugAsyncLoggerInstance.Instance.MessageQueue); }
 		public void Dispose() { DebugAsyncLoggerInstance.Instance.Reader.Dispose(); }
 	}
 
-	public static class DebugAsyncExtensions
+	public static class DebugAsyncRTFExtensions
 	{
-		public static ILoggingBuilder AddDebugAsync(this ILoggingBuilder builder)
+		public static ILoggingBuilder AddDebugAsyncRTF(this ILoggingBuilder builder)
 		{
-			builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, DebugAsyncLoggerProvider>());
+			builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, DebugAsyncRTFLoggerProvider>());
 			return builder;
 		}
 	}
 
-	public class DebugAsyncConsoleLoggerReader : IDisposable
+	public class DebugAsyncRTFLoggerReader : IDisposable
 	{
-		[DllImport("kernel32.dll")]
-		static extern bool AllocConsole();
-		[DllImport("kernel32.dll")]
-		static extern bool AttachConsole(uint dwProcessId);
-		[DllImport("kernel32.dll")]
-		static extern bool FreeConsole();
-		[DllImport("kernel32.dll")]
-		static extern uint GetLastError();
-
-		private const uint ERROR_ACCESS_DENIED = 5;
-		private const uint ERROR_INVALID_HANDLE = 6;
-		private const uint ERROR_INVALID_PARAMETER = 87;
-
 		private readonly CancellationTokenSource cancellation;
 		private readonly Task readerTask;
 
-		public DebugAsyncConsoleLoggerReader(ConcurrentQueue<DbMessage> messageQueue)
+		public DebugAsyncRTFLoggerReader(ConcurrentQueue<DbMessage> messageQueue)
 		{
+			Form window = null;
+			RichTextBox debugTxt = null;
+			var ss = new SemaphoreSlim(1);
+			ss.Wait();
+			var t = new Thread(() =>
+			{
+				debugTxt = new RichTextBox
+				{
+					ClientSize = new Size(800, 600), 
+					Multiline = true,
+					BorderStyle = BorderStyle.None,
+					BackColor = Color.Black,
+					ForeColor = Color.LightGray,
+					Font = new Font(new FontFamily("Consolas"), 8),
+					ReadOnly = true,
+					Anchor = AnchorStyles.Bottom|AnchorStyles.Left|AnchorStyles.Right|AnchorStyles.Top
+				};
+				window = new Form { Name = "Debug", Text = "Debug", ClientSize = debugTxt.Size };
+
+				if (window.Handle == IntPtr.Zero)
+					throw new ApplicationException();
+				window.Controls.Add(debugTxt);
+
+				ss.Release();
+				window.Show();
+
+				Application.Run(window);
+			});
+
+			t.SetApartmentState(ApartmentState.STA);
+			t.Start();
+			ss.Wait();
+
 			cancellation = new CancellationTokenSource();
 			readerTask = new Task(() =>
 			{
-				bool consoleAllocated = true;
-				if (!AllocConsole())
-				{
-					consoleAllocated = false;
-
-					//ERROR_ACCESS_DENIED means we're already attached to a console
-					if (GetLastError() != ERROR_ACCESS_DENIED)
-					{
-						Trace.WriteLine($"AllocConsole LastError {GetLastError()}");
-						if (!AttachConsole(0xffffffff))
-						{
-							Trace.WriteLine($"AttachConsole LastError {GetLastError()}");
-							Trace.WriteLine("Can't get a console for logging");
-							return;
-						}
-
-						//attached to an existing console, need to call FreeConsole()
-						consoleAllocated = true;
-					}
-				}
-
-				var writer = Console.Out;
 				int backoff = 1;
 				var sb = new StringBuilder();
+				const int maxTextLength = 1000000;
 
 				while (!cancellation.IsCancellationRequested)
 				{
@@ -166,7 +165,15 @@ namespace RunAmiga.Logger.DebugAsync
 							sb.AppendLine($"{rv.Name}: {rv.LogLevel}: {rv.Message}");
 						}
 
-						writer.Write(sb.ToString());
+						window.Invoke((Action)delegate
+						{
+							debugTxt.AppendText(sb.ToString());
+							if (debugTxt.TextLength > maxTextLength * 2)
+							{
+								debugTxt.Text = debugTxt.Text.Substring(debugTxt.TextLength - maxTextLength, maxTextLength);
+								debugTxt.ScrollToCaret();
+							}
+						});
 
 						backoff = 1;
 					}
@@ -178,8 +185,7 @@ namespace RunAmiga.Logger.DebugAsync
 					}
 				}
 
-				if (consoleAllocated)
-					FreeConsole();
+				window.Close();
 
 			}, cancellation.Token, TaskCreationOptions.LongRunning);
 
