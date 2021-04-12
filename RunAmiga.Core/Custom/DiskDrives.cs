@@ -289,7 +289,7 @@ namespace RunAmiga.Core.Custom
 					dskpt = (dskpt & 0x0000ffff) | ((uint) value << 16);
 					break;
 				case ChipRegs.DSKPTL:
-					dskpt = (dskpt & 0xffff0000) | value;
+					dskpt = (dskpt & 0xffff0000) | (uint)(value & 0xfffe);
 					break;
 				case ChipRegs.DSKLEN:
 					dsklen = value;

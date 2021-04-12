@@ -508,7 +508,6 @@ namespace RunAmiga.Core.Custom
 		public const uint NO_OP = 0xdff1fe;
 
 		public const uint ChipBase = 0xdff000;
-		public const uint ChipAddressMask = 0x1ffffe;//2MB limit, always word aligned
 
 		[Flags]
 		public enum DMA

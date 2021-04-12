@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -104,28 +103,28 @@ namespace RunAmiga.Core.Custom
 					break;
 
 				case ChipRegs.BLTCPTH:
-					bltcpt = ((bltcpt & 0x0000ffff) | ((uint)value << 16)) & ChipRegs.ChipAddressMask;
+					bltcpt = ((bltcpt & 0x0000ffff) | ((uint)value << 16));
 					break;
 				case ChipRegs.BLTCPTL:
-					bltcpt = ((bltcpt & 0xffff0000) | value) & ChipRegs.ChipAddressMask;
+					bltcpt = ((bltcpt & 0xffff0000) | (uint)(value & 0xfffe));
 					break;
 				case ChipRegs.BLTBPTH:
-					bltbpt = ((bltbpt & 0x0000ffff) | ((uint)value << 16)) & ChipRegs.ChipAddressMask;
+					bltbpt = ((bltbpt & 0x0000ffff) | ((uint)value << 16));
 					break;
 				case ChipRegs.BLTBPTL:
-					bltbpt = ((bltbpt & 0xffff0000) | value) & ChipRegs.ChipAddressMask;
+					bltbpt = ((bltbpt & 0xffff0000) | (uint)(value & 0xfffe));
 					break;
 				case ChipRegs.BLTAPTH:
-					bltapt = ((bltapt & 0x0000ffff) | ((uint)value << 16)) & ChipRegs.ChipAddressMask;
+					bltapt = ((bltapt & 0x0000ffff) | ((uint)value << 16));
 					break;
 				case ChipRegs.BLTAPTL:
-					bltapt = ((bltapt & 0xffff0000) | value) & ChipRegs.ChipAddressMask;
+					bltapt = ((bltapt & 0xffff0000) | (uint)(value & 0xfffe));
 					break;
 				case ChipRegs.BLTDPTH:
-					bltdpt = ((bltdpt & 0x0000ffff) | ((uint)value << 16)) & ChipRegs.ChipAddressMask;
+					bltdpt = ((bltdpt & 0x0000ffff) | ((uint)value << 16));
 					break;
 				case ChipRegs.BLTDPTL:
-					bltdpt = ((bltdpt & 0xffff0000) | value) & ChipRegs.ChipAddressMask;
+					bltdpt = ((bltdpt & 0xffff0000) | (uint)(value & 0xfffe));
 					break;
 
 				case ChipRegs.BLTSIZE:
@@ -764,7 +763,7 @@ namespace RunAmiga.Core.Custom
 
 		private static uint chipsetMaskPtr(uint c)
 		{
-			return c & ChipRegs.ChipAddressMask;
+			return c;// & ChipRegs.ChipAddressMask;
 		}
 
 		private static void blitterLineIncreaseX(ref uint a_shift, ref uint cpt)

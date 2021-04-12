@@ -104,7 +104,7 @@ namespace RunAmiga.Core.Custom
 					}
 
 					//start the next frame
-					RunCopperVerticalBlankStart(cop1lc);
+					RunCopperVerticalBlankStart();
 				}
 
 				//run the next scanline
@@ -211,6 +211,7 @@ namespace RunAmiga.Core.Custom
 			public uint copPC;
 			public int currentLine;
 			public uint waitMask;
+			public uint waitPos;
 
 			public void Reset(uint copperPC)
 			{
@@ -270,18 +271,16 @@ namespace RunAmiga.Core.Custom
 		private CopperDebug cdbg = new CopperDebug();
 		private CopperLine cln = new CopperLine();
 
-		private void RunCopperVerticalBlankStart(uint copperPC)
+		private void RunCopperVerticalBlankStart()
 		{
-			cop.Reset(copperPC);
+			//logger.LogTrace("VB");
+			cop.Reset(cop1lc);
 			cdbg.Reset();
-
-			if (copperPC == 0) return;
-
 		}
 
 		private void RunCopperVerticalBlankEnd()
 		{
-			if (cop.copPC == 0) return;
+			//if (cop.copPC == 0) return;
 
 			RunSprites();
 
@@ -424,12 +423,16 @@ namespace RunAmiga.Core.Custom
 
 		private void RunCopperLine()
 		{
-			if (cop.copPC == 0) return;
+			//if (cop.copPC == 0) return;
 
 			int lineStart = cop.dptr;
 
 			ResetPixelMask();
 			cln.lastcol = truecolour[0];//should be colour 0 at time of diwstrt
+
+			//for (int i = 0; i < 8; i++)
+			//	bpldat[i] = cln.bpldatdma[i] = 0;
+
 			for (int h = 0; h < 256; h++)
 			{
 				cln.InitLine(bplcon0, diwstrt, diwstop, diwhigh, ddfstrt, ddfstop, fmode, settings);
@@ -557,8 +560,6 @@ namespace RunAmiga.Core.Custom
 
 		private void CopperInstruction(int h)
 		{
-			bool copperEarlyOut = false;
-
 			//copper instruction every even clock (and copper DMA is on)
 			if ((h & 1) == 0 && h < 227)
 			{
@@ -578,16 +579,16 @@ namespace RunAmiga.Core.Custom
 
 						custom.Write(0, regAddress, data, Size.Word);
 
-						if (regAddress == ChipRegs.COPJMP1)
-						{
-							cop.copPC = cop1lc;
-							//logger.LogTrace($"JMP1 {copPC:X6}");
-						}
-						else if (regAddress == ChipRegs.COPJMP2)
-						{
-							cop.copPC = cop2lc;
-							//logger.LogTrace($"JMP2 {copPC:X6}");
-						}
+						//if (regAddress == ChipRegs.COPJMP1)
+						//{
+						//	cop.copPC = cop1lc;
+						//	logger.LogTrace($"JMP1 {cop.copPC:X6}");
+						//}
+						//else if (regAddress == ChipRegs.COPJMP2)
+						//{
+						//	cop.copPC = cop2lc;
+						//	logger.LogTrace($"JMP2 {cop.copPC:X6}");
+						//}
 					}
 					else if ((ins & 0x0001) == 1)
 					{
@@ -599,7 +600,8 @@ namespace RunAmiga.Core.Custom
 						cop.waitVMask = ((data >> 8) & 0x7f) | 0x80;
 
 						cop.waitMask = (uint)((cop.waitHMask & 0xff) | ((cop.waitVMask & 0xff) << 8));
-
+						cop.waitPos = (uint)(((cop.waitV & 0xff) << 8) | (cop.waitH & 0xff));
+						
 						uint blit = (uint)(data >> 15);
 
 						//todo: blitter is immediate, so currently ignored.
@@ -608,11 +610,12 @@ namespace RunAmiga.Core.Custom
 						if ((data & 1) == 0)
 						{
 							//WAIT
-							//logger.LogTrace($"WAIT {waitH},{waitV} {waitHMask:X3} {waitVMask:X3}");
+							//logger.LogTrace($"WAIT until ({cop.waitH},{cop.waitV}) @({h},{cop.currentLine}) hm:{cop.waitHMask:X3} vm:{cop.waitVMask:X3} m:{cop.waitMask:X4} p:{cop.waitPos:X4}");
 							cop.status = CopperStatus.Waiting;
 						}
 						else
 						{
+							logger.LogTrace("SKIP");
 							//SKIP
 							if ((cop.currentLine & cop.waitVMask) >= cop.waitV)
 							{
@@ -621,29 +624,25 @@ namespace RunAmiga.Core.Custom
 							}
 						}
 					}
-
-					//this is usually how a copper list ends
-					if (copperEarlyOut)
-					{
-						if (ins == 0xffff && data == 0xfffe)
-							h = cop.currentLine = 1000;
-					}
 				}
 				else if (cop.status == CopperStatus.Waiting)
 				{
-					//if ((cop.currentLine & cop.waitVMask) == cop.waitV)
+					if ((cop.currentLine & cop.waitVMask) == cop.waitV)
+					{
+						if ((h & cop.waitHMask) >= cop.waitH)
+						{
+							//logger.LogTrace($"RUN ({h},{cop.currentLine})");
+							cop.status = CopperStatus.Running;
+						}
+					}
+					//uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
+					//coppos &= cop.waitMask;
+
+					//if (coppos >= cop.waitPos)
 					//{
-					//	if ((h & cop.waitHMask) >= cop.waitH)
-					//	{
-					//		//logger.LogTrace($"RUN  {h},{v}");
-					//		cop.status = CopperStatus.Running;
-					//	}
+					//	//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
+					//	cop.status = CopperStatus.Running;
 					//}
-					uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h&0xff));
-					coppos &= cop.waitMask;
-					uint waitpos = (uint)(((cop.waitV&0xff)<<8)|(cop.waitH & 0xff));
-					if (coppos >= waitpos)
-						cop.status = CopperStatus.Running;
 				}
 			}
 		}
@@ -660,7 +659,7 @@ namespace RunAmiga.Core.Custom
 				int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
 				int[] fetchHi = { 4, 2, 3, 1 };
 
-				planeIdx = (h - ddfstrt) % cln.pixmod;
+				planeIdx = (h ) % cln.pixmod;
 
 				if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 					plane = fetchHi[planeIdx] - 1;
@@ -1297,39 +1296,19 @@ namespace RunAmiga.Core.Custom
 			{
 				//copper specific
 
-				case ChipRegs.COPCON:
-					copcon = value;
-					break;
-				case ChipRegs.COP1LCH:
-					cop1lc = (cop1lc & 0x0000ffff) | ((uint)value << 16);
-					cop1lc &= ChipRegs.ChipAddressMask;
-					break;
-				case ChipRegs.COP1LCL:
-					cop1lc = (cop1lc & 0xffff0000) | value;
-					cop1lc &= ChipRegs.ChipAddressMask;
-					break;
-				case ChipRegs.COP2LCH:
-					cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16);
-					cop2lc &= ChipRegs.ChipAddressMask;
-					break;
-				case ChipRegs.COP2LCL:
-					cop2lc = (cop2lc & 0xffff0000) | value;
-					cop2lc &= ChipRegs.ChipAddressMask;
-					break;
-				case ChipRegs.COPJMP1:
-					copjmp1 = value;
-					break;
-				case ChipRegs.COPJMP2:
-					copjmp2 = value;
-					break;
-				case ChipRegs.COPINS:
-					copins = value;
-					break;
+				case ChipRegs.COPCON: copcon = value; break;
+				case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); break;
+				case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); break;
+				case ChipRegs.COPJMP1: copjmp1 = value; cop.copPC = cop1lc; break;
+				case ChipRegs.COPJMP2: copjmp2 = value; cop.copPC = cop2lc; break;
+				case ChipRegs.COPINS: copins = value; break;
 
 				//bitplane specific
 
-				case ChipRegs.BPL1MOD: bpl1mod = (uint)(short)value; break;
-				case ChipRegs.BPL2MOD: bpl2mod = (uint)(short)value; break;
+				case ChipRegs.BPL1MOD: bpl1mod = (uint)(short)value&0xfffffffe; break;
+				case ChipRegs.BPL2MOD: bpl2mod = (uint)(short)value&0xfffffffe; break;
 
 				case ChipRegs.BPLCON0: bplcon0 = value; break;
 				case ChipRegs.BPLCON1: bplcon1 = value; break;
@@ -1346,21 +1325,21 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.BPL7DAT: bpldat[6] = value; break;
 				case ChipRegs.BPL8DAT: bpldat[7] = value; break;
 
-				case ChipRegs.BPL1PTL: bplpt[0] = (bplpt[0] & 0xffff0000) | value; break;
+				case ChipRegs.BPL1PTL: bplpt[0] = (bplpt[0] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.BPL1PTH: bplpt[0] = (bplpt[0] & 0x0000ffff) | ((uint)value << 16); break;
-				case ChipRegs.BPL2PTL: bplpt[1] = (bplpt[1] & 0xffff0000) | value; break;
+				case ChipRegs.BPL2PTL: bplpt[1] = (bplpt[1] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.BPL2PTH: bplpt[1] = (bplpt[1] & 0x0000ffff) | ((uint)value << 16); break;
-				case ChipRegs.BPL3PTL: bplpt[2] = (bplpt[2] & 0xffff0000) | value; break;
+				case ChipRegs.BPL3PTL: bplpt[2] = (bplpt[2] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.BPL3PTH: bplpt[2] = (bplpt[2] & 0x0000ffff) | ((uint)value << 16); break;
-				case ChipRegs.BPL4PTL: bplpt[3] = (bplpt[3] & 0xffff0000) | value; break;
+				case ChipRegs.BPL4PTL: bplpt[3] = (bplpt[3] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.BPL4PTH: bplpt[3] = (bplpt[3] & 0x0000ffff) | ((uint)value << 16); break;
-				case ChipRegs.BPL5PTL: bplpt[4] = (bplpt[4] & 0xffff0000) | value; break;
+				case ChipRegs.BPL5PTL: bplpt[4] = (bplpt[4] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.BPL5PTH: bplpt[4] = (bplpt[4] & 0x0000ffff) | ((uint)value << 16); break;
-				case ChipRegs.BPL6PTL: bplpt[5] = (bplpt[5] & 0xffff0000) | value; break;
+				case ChipRegs.BPL6PTL: bplpt[5] = (bplpt[5] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.BPL6PTH: bplpt[5] = (bplpt[5] & 0x0000ffff) | ((uint)value << 16); break;
-				case ChipRegs.BPL7PTL: bplpt[6] = (bplpt[6] & 0xffff0000) | value; break;
+				case ChipRegs.BPL7PTL: bplpt[6] = (bplpt[6] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.BPL7PTH: bplpt[6] = (bplpt[6] & 0x0000ffff) | ((uint)value << 16); break;
-				case ChipRegs.BPL8PTL: bplpt[7] = (bplpt[7] & 0xffff0000) | value; break;
+				case ChipRegs.BPL8PTL: bplpt[7] = (bplpt[7] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.BPL8PTH: bplpt[7] = (bplpt[7] & 0x0000ffff) | ((uint)value << 16); break;
 
 				case ChipRegs.DIWSTRT: diwstrt = value; diwhigh = 0; break;
@@ -1370,56 +1349,56 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.DDFSTRT: ddfstrt = value; break;
 				case ChipRegs.DDFSTOP: ddfstop = value; break;
 
-				case ChipRegs.SPR0PTL: sprpt[0] = (sprpt[0] & 0xffff0000) | value; break;
+				case ChipRegs.SPR0PTL: sprpt[0] = (sprpt[0] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR0PTH: sprpt[0] = (sprpt[0] & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.SPR0POS: sprpos[0] = value; break;
 				case ChipRegs.SPR0CTL: sprctl[0] = value; break;
 				case ChipRegs.SPR0DATA: sprdata[0] = value; break;
 				case ChipRegs.SPR0DATB: sprdatb[0] = value; break;
 
-				case ChipRegs.SPR1PTL: sprpt[1] = (sprpt[1] & 0xffff0000) | value; break;
+				case ChipRegs.SPR1PTL: sprpt[1] = (sprpt[1] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR1PTH: sprpt[1] = (sprpt[1] & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.SPR1POS: sprpos[1] = value; break;
 				case ChipRegs.SPR1CTL: sprctl[1] = value; break;
 				case ChipRegs.SPR1DATA: sprdata[1] = value; break;
 				case ChipRegs.SPR1DATB: sprdatb[1] = value; break;
 
-				case ChipRegs.SPR2PTL: sprpt[2] = (sprpt[2] & 0xffff0000) | value; break;
+				case ChipRegs.SPR2PTL: sprpt[2] = (sprpt[2] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR2PTH: sprpt[2] = (sprpt[2] & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.SPR2POS: sprpos[2] = value; break;
 				case ChipRegs.SPR2CTL: sprctl[2] = value; break;
 				case ChipRegs.SPR2DATA: sprdata[2] = value; break;
 				case ChipRegs.SPR2DATB: sprdatb[2] = value; break;
 
-				case ChipRegs.SPR3PTL: sprpt[3] = (sprpt[3] & 0xffff0000) | value; break;
+				case ChipRegs.SPR3PTL: sprpt[3] = (sprpt[3] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR3PTH: sprpt[3] = (sprpt[3] & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.SPR3POS: sprpos[3] = value; break;
 				case ChipRegs.SPR3CTL: sprctl[3] = value; break;
 				case ChipRegs.SPR3DATA: sprdata[3] = value; break;
 				case ChipRegs.SPR3DATB: sprdatb[3] = value; break;
 
-				case ChipRegs.SPR4PTL: sprpt[4] = (sprpt[4] & 0xffff0000) | value; break;
+				case ChipRegs.SPR4PTL: sprpt[4] = (sprpt[4] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR4PTH: sprpt[4] = (sprpt[4] & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.SPR4POS: sprpos[4] = value; break;
 				case ChipRegs.SPR4CTL: sprctl[4] = value; break;
 				case ChipRegs.SPR4DATA: sprdata[4] = value; break;
 				case ChipRegs.SPR4DATB: sprdatb[4] = value; break;
 				
-				case ChipRegs.SPR5PTL: sprpt[5] = (sprpt[5] & 0xffff0000) | value; break;
+				case ChipRegs.SPR5PTL: sprpt[5] = (sprpt[5] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR5PTH: sprpt[5] = (sprpt[5] & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.SPR5POS: sprpos[5] = value; break;
 				case ChipRegs.SPR5CTL: sprctl[5] = value; break;
 				case ChipRegs.SPR5DATA: sprdata[5] = value; break;
 				case ChipRegs.SPR5DATB: sprdatb[5] = value; break;
 
-				case ChipRegs.SPR6PTL: sprpt[6] = (sprpt[6] & 0xffff0000) | value; break;
+				case ChipRegs.SPR6PTL: sprpt[6] = (sprpt[6] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR6PTH: sprpt[6] = (sprpt[6] & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.SPR6POS: sprpos[6] = value; break;
 				case ChipRegs.SPR6CTL: sprctl[6] = value; break;
 				case ChipRegs.SPR6DATA: sprdata[6] = value; break;
 				case ChipRegs.SPR6DATB: sprdatb[6] = value; break;
 
-				case ChipRegs.SPR7PTL: sprpt[7] = (sprpt[7] & 0xffff0000) | value; break;
+				case ChipRegs.SPR7PTL: sprpt[7] = (sprpt[7] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR7PTH: sprpt[7] = (sprpt[7] & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.SPR7POS: sprpos[7] = value; break;
 				case ChipRegs.SPR7CTL: sprctl[7] = value; break;
