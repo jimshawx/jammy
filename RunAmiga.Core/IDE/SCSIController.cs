@@ -2,7 +2,7 @@
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.IDE
 {
 	//SCSI/IDE Controller on the A3000 and A4000
 	public class SCSIController : ISCSIController

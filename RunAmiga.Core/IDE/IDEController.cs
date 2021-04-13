@@ -10,7 +10,7 @@ using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Extensions.Extensions;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.IDE
 {
 	public class Gayle
 	{

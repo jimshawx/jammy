@@ -12,6 +12,7 @@ using RunAmiga.Core.Custom.Audio;
 using RunAmiga.Core.Custom.CIA;
 using RunAmiga.Core.Custom.IO;
 using RunAmiga.Core.Floppy;
+using RunAmiga.Core.IDE;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Memory;
 using RunAmiga.Core.Types;
@@ -54,7 +55,7 @@ namespace RunAmiga.Main
 					//x.AddDebugAsync();
 					x.AddDebugAsyncRTF();
 				})
-				.AddSingleton<IMachine, Machine>()
+				.AddSingleton<IAmiga, Amiga>()
 				.AddSingleton<IBattClock, BattClock>()
 				.AddSingleton<IBlitter, Blitter>()
 				.AddSingleton<ICIAAOdd, CIAAOdd>()

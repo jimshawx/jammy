@@ -129,7 +129,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		uint Fetch(uint insaddr, uint address, Size size);
 	}
 
-	public interface IMachine
+	public interface IAmiga
 	{
 		void Start();
 		void Reset();

@@ -87,7 +87,7 @@ namespace RunAmiga.Main
 
 		private void UpdateDisassembly()
 		{
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 
 			//prime the disassembly with a decent starting point
 			var ranges = new List<Tuple<uint, uint>>
@@ -104,7 +104,7 @@ namespace RunAmiga.Main
 				ranges,
 				new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
 
-			Machine.UnlockEmulation();
+			Amiga.UnlockEmulation();
 
 			//this is the new view
 			//disassemblyView = disassembly.DisassemblyView(0, 0, 100, new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
@@ -124,10 +124,10 @@ namespace RunAmiga.Main
 
 		private void UpdateRegs()
 		{
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 			var regs = debugger.GetRegs();
 			var chipRegs = debugger.GetChipRegs();
-			Machine.UnlockEmulation();
+			Amiga.UnlockEmulation();
 
 			lbRegisters.Items.Clear();
 			lbRegisters.Items.AddRange(regs.Items().Cast<object>().ToArray());
@@ -235,10 +235,10 @@ namespace RunAmiga.Main
 
 		private void UpdateMem()
 		{
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 			var memory = debugger.GetMemory();
 			var regs = debugger.GetRegs();
-			Machine.UnlockEmulation();
+			Amiga.UnlockEmulation();
 
 			{
 				var mem = new List<Tuple<uint, uint>>();
@@ -279,9 +279,9 @@ namespace RunAmiga.Main
 
 		private void SetSelection()
 		{
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 			uint pc = debugger.GetRegs().PC;
-			Machine.UnlockEmulation();
+			Amiga.UnlockEmulation();
 
 			//int line = disassembly.GetAddressLine(pc);
 			//if (line == 0) return;
@@ -305,32 +305,32 @@ namespace RunAmiga.Main
 
 		private void btnStep_Click(object sender, EventArgs e)
 		{
-			Machine.SetEmulationMode(EmulationMode.Step);
+			Amiga.SetEmulationMode(EmulationMode.Step);
 		}
 
 		private void btnStepOut_Click(object sender, EventArgs e)
 		{
-			Machine.SetEmulationMode(EmulationMode.StepOut);
+			Amiga.SetEmulationMode(EmulationMode.StepOut);
 		}
 
 		private void btnStop_Click(object sender, EventArgs e)
 		{
-			Machine.SetEmulationMode(EmulationMode.Stopped);
+			Amiga.SetEmulationMode(EmulationMode.Stopped);
 		}
 
 		private void btnGo_Click(object sender, EventArgs e)
 		{
 			txtDisassembly.DeselectAll();
-			Machine.SetEmulationMode(EmulationMode.Running);
+			Amiga.SetEmulationMode(EmulationMode.Running);
 		}
 
 		private void btnReset_Click(object sender, EventArgs e)
 		{
-			Machine.SetEmulationMode(EmulationMode.Stopped);
+			Amiga.SetEmulationMode(EmulationMode.Stopped);
 
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 			emulation.Reset();
-			Machine.UnlockEmulation();
+			Amiga.UnlockEmulation();
 
 			SetSelection();
 			UpdateDisplay();
@@ -338,7 +338,7 @@ namespace RunAmiga.Main
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			Machine.SetEmulationMode(EmulationMode.Exit);
+			Amiga.SetEmulationMode(EmulationMode.Exit);
 
 			UI.UI.IsDirty = false;
 
@@ -354,10 +354,10 @@ namespace RunAmiga.Main
 
 		private void btnStepOver_Click(object sender, EventArgs e)
 		{
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 			debugger.BreakAtNextPC();
-			Machine.SetEmulationMode(EmulationMode.Running, true);
-			Machine.UnlockEmulation();
+			Amiga.SetEmulationMode(EmulationMode.Running, true);
+			Amiga.UnlockEmulation();
 		}
 
 		private void UpdatePowerLight()
@@ -410,10 +410,10 @@ namespace RunAmiga.Main
 					{
 						uint address = debugger.FindMemoryText(findForm.SearchText);
 
-						Machine.LockEmulation();
+						Amiga.LockEmulation();
 						var memory = debugger.GetMemory();
 						int gotoLine = memory.AddressToLine(address);
-						Machine.UnlockEmulation();
+						Amiga.UnlockEmulation();
 
 						txtMemory.SuspendLayout();
 						txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(Math.Max(0, gotoLine - 5));
@@ -435,18 +435,18 @@ namespace RunAmiga.Main
 
 		private void btnCIAInt_Click(object sender, EventArgs e)
 		{
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 			if (cbCIA.Text == "TIMERA") debugger.CIAInt(ICRB.TIMERA);
 			if (cbCIA.Text == "TIMERB") debugger.CIAInt(ICRB.TIMERB);
 			if (cbCIA.Text == "TODALARM") debugger.CIAInt(ICRB.TODALARM);
 			if (cbCIA.Text == "SERIAL") debugger.CIAInt(ICRB.SERIAL);
 			if (cbCIA.Text == "FLAG") debugger.CIAInt(ICRB.FLAG);
-			Machine.UnlockEmulation();
+			Amiga.UnlockEmulation();
 		}
 
 		private void btnIRQ_Click(object sender, EventArgs e)
 		{
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 			if (cbIRQ.Text == "EXTER") debugger.IRQ(Interrupt.EXTER);
 			if (cbIRQ.Text == "DSKBLK") debugger.IRQ(Interrupt.DSKBLK);
 			if (cbIRQ.Text == "PORTS") debugger.IRQ(Interrupt.PORTS);
@@ -457,12 +457,12 @@ namespace RunAmiga.Main
 			if (cbIRQ.Text == "AUD1") debugger.IRQ(Interrupt.AUD1);
 			if (cbIRQ.Text == "AUD2") debugger.IRQ(Interrupt.AUD2);
 			if (cbIRQ.Text == "AUD3") debugger.IRQ(Interrupt.AUD3);
-			Machine.UnlockEmulation();
+			Amiga.UnlockEmulation();
 		}
 
 		private void btnINTENA_Click(object sender, EventArgs e)
 		{
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 			if (cbIRQ.Text == "EXTER") debugger.INTENA(Interrupt.EXTER);
 			if (cbIRQ.Text == "DSKBLK") debugger.INTENA(Interrupt.DSKBLK);
 			if (cbIRQ.Text == "PORTS") debugger.INTENA(Interrupt.PORTS);
@@ -473,7 +473,7 @@ namespace RunAmiga.Main
 			if (cbIRQ.Text == "AUD1") debugger.INTENA(Interrupt.AUD1);
 			if (cbIRQ.Text == "AUD2") debugger.INTENA(Interrupt.AUD2);
 			if (cbIRQ.Text == "AUD3") debugger.INTENA(Interrupt.AUD3);
-			Machine.UnlockEmulation();
+			Amiga.UnlockEmulation();
 		}
 
 		private void menuDisassembly_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
@@ -498,16 +498,16 @@ namespace RunAmiga.Main
 			if (e.ClickedItem == toolStripBreakpoint)
 			{
 				logger.LogTrace($"BP {pc:X8}");
-				Machine.LockEmulation();
+				Amiga.LockEmulation();
 				debugger.ToggleBreakpoint(pc);
-				Machine.UnlockEmulation();
+				Amiga.UnlockEmulation();
 			}
 			else if (e.ClickedItem == toolStripSkip)
 			{
 				logger.LogTrace($"SKIP {pc:X8}");
-				Machine.LockEmulation();
+				Amiga.LockEmulation();
 				debugger.SetPC(pc);
-				Machine.UnlockEmulation();
+				Amiga.UnlockEmulation();
 			}
 			else if (e.ClickedItem == toolStripGoto)
 			{
@@ -540,7 +540,7 @@ namespace RunAmiga.Main
 			{
 				string typeName = (string)cbTypes.SelectedItem;
 
-				Machine.LockEmulation();
+				Amiga.LockEmulation();
 
 				var regs = debugger.GetRegs();
 
@@ -555,14 +555,14 @@ namespace RunAmiga.Main
 						object tp = Activator.CreateInstance(type);
 						if (tp != null)
 						{
-							Machine.LockEmulation();
+							Amiga.LockEmulation();
 							txtExecBase.Text = ObjectMapper.MapObject(tp, address);
 
 						}
 					}
 				}
 
-				Machine.UnlockEmulation();
+				Amiga.UnlockEmulation();
 			}
 		}
 
@@ -573,9 +573,9 @@ namespace RunAmiga.Main
 
 		private void btnDumpTrace_Click(object sender, EventArgs e)
 		{
-			Machine.LockEmulation();
+			Amiga.LockEmulation();
 			debugger.WriteTrace();
-			Machine.UnlockEmulation();
+			Amiga.UnlockEmulation();
 		}
 
 		private void btnIDEACK_Click(object sender, EventArgs e)

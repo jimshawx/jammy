@@ -4,21 +4,21 @@ namespace RunAmiga.Main
 {
 	public class Emulation : IEmulation
 	{
-		private readonly IMachine machine;
+		private readonly IAmiga amiga;
 
-		public Emulation(IMachine machine)
+		public Emulation(IAmiga amiga)
 		{
-			this.machine = machine;
+			this.amiga = amiga;
 		}
 
 		public void Reset()
 		{
-			machine.Reset();
+			amiga.Reset();
 		}
 
 		public void Start()
 		{
-			machine.Start();
+			amiga.Start();
 		}
 	}
 }

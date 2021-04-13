@@ -4,15 +4,13 @@ using System.Linq;
 using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core
 {
-	public class Machine : IMachine
+	public class Amiga : IAmiga
 	{
 		public class Constants
 		{
@@ -43,11 +41,11 @@ namespace RunAmiga.Core
 		private readonly List<IEmulate> emulations = new List<IEmulate>();
 		private readonly List<IReset> resetters = new List<IReset>();
 
-		public Machine(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock, 
+		public Amiga(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock, 
 			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IMemoryMapper memory,
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IDiskDrives diskDrives, IMouse mouse, IIDEController ideController, ISerial serial,
-			IBreakpointCollection breakpointCollection, ILogger<Machine> logger)
+			IBreakpointCollection breakpointCollection, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
 			//this.custom = custom;
