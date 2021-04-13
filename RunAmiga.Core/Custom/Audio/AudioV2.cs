@@ -8,7 +8,7 @@ using SharpDX;
 using SharpDX.Multimedia;
 using SharpDX.XAudio2;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.Custom.Audio
 {
 	public class AudioV2 : IAudio
 	{
@@ -19,7 +19,7 @@ namespace RunAmiga.Core.Custom
 		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
-		public AudioV2(IChipRAM memory, IInterrupt interrupt, ILogger<Audio> logger)
+		public AudioV2(IChipRAM memory, IInterrupt interrupt, ILogger<Custom.Audio.Audio> logger)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;

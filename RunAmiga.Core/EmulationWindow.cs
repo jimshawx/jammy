@@ -6,6 +6,7 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Custom;
+using RunAmiga.Core.Custom.IO;
 
 namespace RunAmiga.Core
 {

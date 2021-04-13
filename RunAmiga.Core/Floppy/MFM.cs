@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RunAmiga.Extensions.Extensions;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.Floppy
 {
 	public class MFM
 	{

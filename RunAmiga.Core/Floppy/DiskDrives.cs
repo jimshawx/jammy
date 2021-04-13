@@ -1,13 +1,13 @@
 ﻿using System;
-using System.IO;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using RunAmiga.Core.Custom;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Extensions.Extensions;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.Floppy
 {
 	[Flags]
 	public enum PRB
@@ -31,50 +31,6 @@ namespace RunAmiga.Core.Custom
 		DSKRDY = 32,
 
 		MASK = DSKCHANGE|DSKPROT|DSKTRACK0|DSKRDY
-	}
-
-	public class Disk
-	{
-		private const string floppyPath = "../../../../";
-
-		public byte[] data;
-
-		public Disk(string adfFileName)
-		{
-			if (!adfFileName.StartsWith(floppyPath))
-				adfFileName = Path.Combine(floppyPath, adfFileName);
-			data = File.ReadAllBytes(adfFileName);
-		}
-	}
-
-	public class Drive
-	{
-		public bool motor;
-		public uint track;
-		public uint side;
-
-		public int stateCounter;
-		public DiskDrives.DriveState state;
-
-		public uint DSKSEL;
-
-		public bool attached;
-		public bool diskinserted;
-
-		public uint pra;
-		public uint prb;
-
-		public Disk disk;
-
-		public void Reset()
-		{
-			state = DiskDrives.DriveState.Idle;
-			stateCounter = 10;
-
-			motor = false;
-			track = 0;
-			side = 0;
-		}
 	}
 
 	public class DiskDrives : IDiskDrives

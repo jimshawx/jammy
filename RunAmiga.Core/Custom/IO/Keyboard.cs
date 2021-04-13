@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Enums;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.Custom.IO
 {
 	public class Keyboard : IKeyboard
 	{

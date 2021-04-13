@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.Custom.CIA
 {
 	public class CIABEven : CIA, ICIABEven
 	{
@@ -59,7 +59,7 @@ namespace RunAmiga.Core.Custom
 		public override void Reset()
 		{
 			base.Reset();
-			regs[CIA.PRA] = 0x8c;
+			regs[Custom.CIA.CIA.PRA] = 0x8c;
 		}
 
 		public override bool IsMapped(uint address)
@@ -71,7 +71,7 @@ namespace RunAmiga.Core.Custom
 		{
 			byte reg = GetReg(address, size);
 
-			if (reg == CIA.PRB)
+			if (reg == Custom.CIA.CIA.PRB)
 			{
 				return diskDrives.ReadPRB(insaddr);
 			}
@@ -84,7 +84,7 @@ namespace RunAmiga.Core.Custom
 		{
 			byte reg = GetReg(address, size);
 
-			if (reg == CIA.PRB)
+			if (reg == Custom.CIA.CIA.PRB)
 			{
 				diskDrives.WritePRB(insaddr, (byte)value);
 				return;

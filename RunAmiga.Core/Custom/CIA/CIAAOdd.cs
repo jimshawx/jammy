@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.Custom.CIA
 {
 	public class CIAAOdd : CIA, ICIAAOdd
 	{
@@ -70,14 +70,14 @@ namespace RunAmiga.Core.Custom
 			byte value;
 			byte reg = GetReg(address, size);
 
-			if (reg == CIA.PRA)
+			if (reg == Custom.CIA.CIA.PRA)
 			{
 				byte p = 0;
 				p |= diskDrives.ReadPRA(insaddr);
 				p |= mouse.ReadPRA(insaddr);
 				value = p;
 			}
-			else if (reg == CIA.SDR)
+			else if (reg == Custom.CIA.CIA.SDR)
 			{
 				value = keyboard.ReadKey();
 			}
@@ -96,14 +96,14 @@ namespace RunAmiga.Core.Custom
 		{
 			byte reg = GetReg(address, size);
 
-			if (reg == CIA.PRA)
+			if (reg == Custom.CIA.CIA.PRA)
 			{
-				UI.UI.PowerLight = (regs[CIA.PRA] & 2) == 0;
+				UI.UI.PowerLight = (regs[Custom.CIA.CIA.PRA] & 2) == 0;
 
 				diskDrives.WritePRA(insaddr, (byte)value);
 				mouse.WritePRA(insaddr, (byte)value);
 			}
-			else if (reg == CIA.CRA)
+			else if (reg == Custom.CIA.CIA.CRA)
 			{
 				keyboard.WriteCRA(insaddr, (byte)value);
 				base.Write(reg, value);

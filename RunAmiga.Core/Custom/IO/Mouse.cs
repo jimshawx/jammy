@@ -4,7 +4,7 @@ using System.Windows.Forms;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.Custom.IO
 {
 	public class Mouse : IMouse
 	{

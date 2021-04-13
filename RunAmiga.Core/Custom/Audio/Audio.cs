@@ -2,7 +2,7 @@
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
-namespace RunAmiga.Core.Custom
+namespace RunAmiga.Core.Custom.Audio
 {
 	public class Audio : IAudio
 	{
