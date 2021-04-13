@@ -374,6 +374,7 @@ namespace RunAmiga.Core.Custom
 						wordCount = (ddfstop - ddfstrt) / 4 + 2;
 						//word count needs to be a multiple of planes
 						//wordCount = ((wordCount / planes) + (planes - 1)) * planes;
+						if ((wordCount & 1) != 0) wordCount++;
 						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
 					}
 					else
@@ -430,8 +431,8 @@ namespace RunAmiga.Core.Custom
 			ResetPixelMask();
 			cln.lastcol = truecolour[0];//should be colour 0 at time of diwstrt
 
-			//for (int i = 0; i < 8; i++)
-			//	bpldat[i] = cln.bpldatdma[i] = 0;
+			for (int i = 0; i < 8; i++)
+				bpldat[i] = cln.bpldatdma[i] = 0;
 
 			for (int h = 0; h < 256; h++)
 			{
@@ -485,46 +486,6 @@ namespace RunAmiga.Core.Custom
 						for (int k = 0; k < 4; k++)
 							screen[cop.dptr++] = (int)col;
 					}
-
-					//is it time to latch the DMAd bitplanes into the DAT registers
-					//if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
-					//{
-					//	//40, 44, 48, 4C
-					//	if (((h) & 3) == 0)
-					//	{
-					//		for (int i = 0; i < 8; i++)
-					//			bpldat[i] = bpldatdma[i];
-					//		if (cop.currentLine == cop.dbugLine)
-					//		{
-					//			write[h] = 'x';
-					//			dma++;
-					//		}
-					//	}
-					//	else
-					//	{
-					//		if (cop.currentLine == cop.dbugLine)
-					//			write[h] = '.';
-					//	}
-					//}
-					//else
-					//{
-					//	//40, 48, 50, 58
-					//	if (((h) & 7) == 0)
-					//	{
-					//		for (int i = 0; i < 8; i++)
-					//			bpldat[i] = bpldatdma[i];
-					//		if (cop.currentLine == cop.dbugLine)
-					//		{
-					//			write[h] = 'x';
-					//			dma++;
-					//		}
-					//	}
-					//	else
-					//	{
-					//		if (cop.currentLine == cop.dbugLine)
-					//			write[h] = '.';
-					//	}
-					//}
 				}
 				else
 				{

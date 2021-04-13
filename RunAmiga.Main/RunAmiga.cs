@@ -11,11 +11,11 @@ using RunAmiga.Core;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Enums;
-using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
-using RunAmiga.Disassembler;
 using RunAmiga.Disassembler.TypeMapper;
+using RunAmiga.Interface;
 using RunAmiga.Main.Dialogs;
+using RunAmiga.Types.Options;
 
 namespace RunAmiga.Main
 {

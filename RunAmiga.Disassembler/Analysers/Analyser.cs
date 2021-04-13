@@ -9,8 +9,10 @@ using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
-using RunAmiga.Core.Types.Types.Kickstart;
 using RunAmiga.Extensions.Extensions;
+using RunAmiga.Interface;
+using RunAmiga.Types;
+using RunAmiga.Types.Kickstart;
 
 namespace RunAmiga.Disassembler.Analysers
 {

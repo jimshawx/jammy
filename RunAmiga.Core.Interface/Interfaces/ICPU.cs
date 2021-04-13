@@ -1,4 +1,5 @@
-﻿using RunAmiga.Core.Types.Types;
+﻿using RunAmiga.Core.Types;
+using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Interface.Interfaces
 {

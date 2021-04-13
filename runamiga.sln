@@ -28,7 +28,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Logger.SQLite", "R
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Logger.DebugAsync", "RunAmiga.Logger.DebugAsync\RunAmiga.Logger.DebugAsync.csproj", "{7B943371-BA63-4887-8C73-7C703A319933}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAmiga.Logger.DebugAsyncRTF", "RunAmiga.Logger.DebugAsyncRTF\RunAmiga.Logger.DebugAsyncRTF.csproj", "{FCA17E44-0A77-43AE-8672-5C474D6630AE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Logger.DebugAsyncRTF", "RunAmiga.Logger.DebugAsyncRTF\RunAmiga.Logger.DebugAsyncRTF.csproj", "{FCA17E44-0A77-43AE-8672-5C474D6630AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAmiga.Interface", "RunAmiga.Interface\RunAmiga.Interface.csproj", "{F14D1BCC-997B-4FDF-9ABA-C7446EAD0E02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAmiga.Types", "RunAmiga.Types\RunAmiga.Types.csproj", "{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -92,6 +96,14 @@ Global
 		{FCA17E44-0A77-43AE-8672-5C474D6630AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FCA17E44-0A77-43AE-8672-5C474D6630AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FCA17E44-0A77-43AE-8672-5C474D6630AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F14D1BCC-997B-4FDF-9ABA-C7446EAD0E02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F14D1BCC-997B-4FDF-9ABA-C7446EAD0E02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F14D1BCC-997B-4FDF-9ABA-C7446EAD0E02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F14D1BCC-997B-4FDF-9ABA-C7446EAD0E02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,7 +1,4 @@
-﻿using System;
-using RunAmiga.Core.Interface.Interfaces;
-
-namespace RunAmiga.Disassembler.AmigaTypes
+﻿namespace RunAmiga.Types.AmigaTypes
 {
 	using UBYTE = System.Byte;
 	using BYTE = System.SByte;
@@ -20,31 +17,6 @@ namespace RunAmiga.Disassembler.AmigaTypes
 	using VoidPtr = System.UInt32;
 	using UBYTEPtr = System.UInt32;
 	using ULONGPtr = System.UInt32;
-
-	public static class AmigaTypesMapper
-	{
-		public static uint GetSize(object s)
-		{
-			if (s.GetType() == typeof(BYTE) || s.GetType() == typeof(UBYTE) || s.GetType() == typeof(NodeType)) return 1;
-			if (s.GetType() == typeof(WORD) || s.GetType() == typeof(UWORD)) return 2;
-			if (s.GetType() == typeof(LONG) || s.GetType() == typeof(ULONG) || s.GetType() == typeof(APTR) || s.GetType() == typeof(FunctionPtr)) return 4;
-			throw new ApplicationException();
-		}
-
-		public static object MapSimple(IDebugMemoryMapper memory, Type type, uint addr)
-		{
-			if (type == typeof(NodeType)) return (NodeType)memory.UnsafeRead8(addr);
-			if (type == typeof(BYTE)) return (BYTE)memory.UnsafeRead8(addr);
-			if (type == typeof(UBYTE)) return (UBYTE)memory.UnsafeRead8(addr);
-			if (type == typeof(UWORD)) return (UWORD)memory.UnsafeRead16(addr);
-			if (type == typeof(WORD)) return (WORD)memory.UnsafeRead16(addr);
-			if (type == typeof(ULONG)) return (ULONG)memory.UnsafeRead32(addr);
-			if (type == typeof(LONG)) return (LONG)memory.UnsafeRead32(addr);
-			if (type == typeof(APTR)) return (APTR)memory.UnsafeRead32(addr);
-			if (type == typeof(FunctionPtr)) return (FunctionPtr)memory.UnsafeRead32(addr);
-			throw new ApplicationException();
-		}
-	}
 
 	public enum NodeType
 	{

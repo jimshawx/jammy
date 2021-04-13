@@ -33,8 +33,7 @@ namespace RunAmiga.Core
 
 		private readonly ICPU cpu;
 		private readonly IBreakpointCollection breakpointCollection;
-		//private readonly ILogger logger;
-		//private readonly IChips custom;
+
 		private readonly IDebugMemoryMapper memoryMapper;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;

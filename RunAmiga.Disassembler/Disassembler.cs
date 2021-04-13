@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Types;
 
 // ReSharper disable InconsistentNaming
 

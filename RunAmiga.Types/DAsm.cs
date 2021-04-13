@@ -1,8 +1,8 @@
 ﻿using System.Linq;
 using System.Text;
-using RunAmiga.Core.Types.Options;
+using RunAmiga.Types.Options;
 
-namespace RunAmiga.Core.Types.Types
+namespace RunAmiga.Types
 {
 	public class DAsm
 	{

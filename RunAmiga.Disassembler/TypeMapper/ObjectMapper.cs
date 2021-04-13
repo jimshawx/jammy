@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Disassembler.AmigaTypes;
+using RunAmiga.Interface;
+using RunAmiga.Types.AmigaTypes;
 
 namespace RunAmiga.Disassembler.TypeMapper
 {

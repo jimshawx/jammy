@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RunAmiga.Core;
 using RunAmiga.Core.Interface;
 using RunAmiga.Core.Memory;
+using RunAmiga.Interface;
 
 namespace RunAmiga.Tests
 {

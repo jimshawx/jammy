@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
-using RunAmiga.Core.Types.Types;
+using RunAmiga.Interface;
+using RunAmiga.Types;
 
 namespace RunAmiga.Disassembler.Analysers
 {

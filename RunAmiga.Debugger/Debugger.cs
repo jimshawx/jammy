@@ -11,8 +11,10 @@ using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Enums;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
-using RunAmiga.Core.Types.Types.Debugger;
-using RunAmiga.Core.Types.Types.Kickstart;
+using RunAmiga.Interface;
+using RunAmiga.Types;
+using RunAmiga.Types.Debugger;
+using RunAmiga.Types.Kickstart;
 
 namespace RunAmiga.Debugger
 {

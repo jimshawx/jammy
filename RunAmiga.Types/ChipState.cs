@@ -1,5 +1,5 @@
 ﻿// ReSharper disable InconsistentNaming
-namespace RunAmiga.Core.Types.Types
+namespace RunAmiga.Types
 {
 	public class ChipState
 	{

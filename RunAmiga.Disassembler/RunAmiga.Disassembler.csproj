@@ -21,10 +21,7 @@
     <ProjectReference Include="..\RunAmiga.Core.Interface\RunAmiga.Core.Interface.csproj" />
     <ProjectReference Include="..\RunAmiga.Core.Types\RunAmiga.Core.Types.csproj" />
     <ProjectReference Include="..\RunAmiga.Extensions\RunAmiga.Extensions.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="AmigaTypes\" />
+    <ProjectReference Include="..\RunAmiga.Interface\RunAmiga.Interface.csproj" />
   </ItemGroup>
 
 </Project>

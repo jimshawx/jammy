@@ -6,9 +6,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
-using RunAmiga.Core.Types.Options;
-using RunAmiga.Core.Types.Types.Debugger;
-using RunAmiga.Core.Types.Types.Kickstart;
+using RunAmiga.Interface;
+using RunAmiga.Types.Debugger;
+using RunAmiga.Types.Kickstart;
+using RunAmiga.Types.Options;
 
 namespace RunAmiga.Disassembler
 {

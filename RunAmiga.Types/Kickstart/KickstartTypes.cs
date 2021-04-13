@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RunAmiga.Core.Types.Types.Kickstart
+namespace RunAmiga.Types.Kickstart
 {
 	[Flags]
 	public enum RTF

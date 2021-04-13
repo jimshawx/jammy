@@ -5,7 +5,8 @@ using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types;
+using RunAmiga.Interface;
 
 namespace RunAmiga.Debugger
 {

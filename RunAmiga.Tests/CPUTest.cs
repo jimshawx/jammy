@@ -8,15 +8,14 @@ using NUnit.Framework;
 using RunAmiga.Core;
 using RunAmiga.Core.CPU.CSharp;
 using RunAmiga.Core.CPU.Musashi;
-using RunAmiga.Core.Interface;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
-using RunAmiga.Core.Types.Options;
-using RunAmiga.Core.Types.Types;
 using RunAmiga.Debugger;
 using RunAmiga.Disassembler;
 using RunAmiga.Extensions.Extensions;
+using RunAmiga.Interface;
 using RunAmiga.Logger.DebugAsync;
+using RunAmiga.Types.Options;
 
 namespace RunAmiga.Tests
 {

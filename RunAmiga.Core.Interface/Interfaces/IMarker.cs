@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using RunAmiga.Core.Types.Enums;
-using RunAmiga.Core.Types.Options;
 using RunAmiga.Core.Types.Types;
 using RunAmiga.Core.Types.Types.Breakpoints;
-using RunAmiga.Core.Types.Types.Debugger;
-using RunAmiga.Core.Types.Types.Kickstart;
 
 namespace RunAmiga.Core.Interface.Interfaces
 {
@@ -107,22 +103,6 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void Init(IBlitter blitter, ICopper copper, IAudio audio);
 	}
 
-	public interface ITracer
-	{
-		void Trace(uint pc);
-		void Trace(string v, uint pc, Regs regs);
-		void DumpTrace();
-		void TraceAsm(uint pc, Regs regs);
-		void WriteTrace();
-	}
-
-	public interface ILabeller
-	{
-		string LabelName(uint address);
-		bool HasLabel(uint address);
-		Dictionary<uint, Label> GetLabels();
-	}
-
 	public interface IBreakpointCollection : IMemoryInterceptor
 	{
 		bool IsBreakpoint(uint pc);
@@ -134,27 +114,6 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long);
 		void ToggleBreakpoint(uint pc);
 		bool BreakpointHit();
-	}
-
-	public interface IDebugger : IMemoryInterceptor
-	{
-		void ToggleBreakpoint(uint pc);
-		MemoryDump GetMemory();
-		ChipState GetChipRegs();
-		ushort GetInterruptLevel();
-		Regs GetRegs();
-		void BreakAtNextPC();
-		void SetPC(uint pc);
-		uint FindMemoryText(string txt);
-		void InsertDisk(int df);
-		void RemoveDisk(int df);
-		void ChangeDisk(int df, string fileName);
-		void CIAInt(ICRB icr);
-		void IRQ(uint irq);
-		void INTENA(uint irq);
-		void WriteTrace();
-		uint KickstartSize();
-		void IDEACK();
 	}
 
 	public interface IMemoryInterceptor
@@ -180,54 +139,6 @@ namespace RunAmiga.Core.Interface.Interfaces
 	{
 		void Start();
 		void Reset();
-	}
-
-	public interface IDisassemblyView
-	{
-		int GetAddressLine(uint address);
-		uint GetLineAddress(int line);
-		string Text { get; }
-	}
-
-	public interface IDisassembly
-	{
-		string DisassembleTxt(List<Tuple<uint, uint>> ranges, DisassemblyOptions options);
-		int GetAddressLine(uint address);
-		uint GetLineAddress(int line);
-		IDisassemblyView DisassemblyView(uint address, int linesBefore, int linesAfter, DisassemblyOptions options);
-		IDisassemblyView FullDisassemblyView(DisassemblyOptions options);
-	}
-
-	public interface IKickstartAnalysis
-	{
-		List<Resident> GetRomTags();
-		void ShowRomTags();
-	}
-
-	public interface IAnalyser
-	{
-		void MarkAsType(uint address, MemType type, Size size);
-		void ExtractFunctionTable(uint fntable, NT_Type type, string name);
-		void ExtractStructureInit(uint address);
-		void ExtractFunctionTable(uint fntable, int count, string name, Size size);
-	}
-
-	public interface IAnalysis
-	{
-		MemType[] GetMemTypes();
-		Dictionary<uint, Header> GetHeaders();
-		Dictionary<uint, Comment> GetComments();
-		Dictionary<string, LVOCollection> GetLVOs();
-		void AddComment(Comment comment);
-		void AddComment(uint address, string s);
-		void AddHeader(uint address, string hdr);
-		void AddHeader(uint address, List<string> hdr);
-		void ReplaceHeader(uint address, string hdr);
-		void ReplaceHeader(uint address, List<string> hdr);
-		void SetMemType(uint address, MemType type);
-		void AddLVO(string currentLib, LVO lvo);
-		void SetLVO(string currentLib, LVOCollection lvoCollection);
-		bool OutOfMemtypeRange(uint address);
 	}
 
 	public interface IMachineIdentifier

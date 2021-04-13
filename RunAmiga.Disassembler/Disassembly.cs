@@ -5,8 +5,9 @@ using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
-using RunAmiga.Core.Types.Options;
-using RunAmiga.Core.Types.Types;
+using RunAmiga.Interface;
+using RunAmiga.Types;
+using RunAmiga.Types.Options;
 
 namespace RunAmiga.Disassembler
 {
