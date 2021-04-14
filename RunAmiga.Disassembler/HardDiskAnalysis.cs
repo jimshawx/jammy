@@ -58,8 +58,8 @@ namespace RunAmiga.Disassembler
 
 		public void Extract()
 		{
-			hd = File.ReadAllBytes("c:/users/jim/desktop/uae_dh0.hdf");
-			//hd = File.ReadAllBytes(Path.Combine("../../../../", "dh0.hdf"));
+			//hd = File.ReadAllBytes("c:/users/jim/desktop/uae_dh0.hdf");
+			hd = File.ReadAllBytes(Path.Combine("../../../../", "dh0.hdf"));
 			//hd = File.ReadAllBytes(Path.Combine("../../../../", "dh1.hdf"));
 
 			var amigaDisk = new AmigaRigidDisk();
