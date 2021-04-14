@@ -2,6 +2,6 @@
 {
 	public interface IHardDiskAnalysis
 	{
-		
+		public void Extract();
 	}
 }

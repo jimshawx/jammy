@@ -503,7 +503,7 @@ namespace RunAmiga.Disassembler.AmigaTypes
 		public uint Protect { get;set; }
 		public uint Byte_size { get; set; }
 		public byte Comm_len { get;set; }
-		public byte[] comment { get; set; } = new byte[79];
+		public byte[] Comment { get; set; } = new byte[79];
 		public byte[] Unused1 { get; set; } = new byte[12];
 		public uint Days { get; set; }
 		public uint Mins { get; set; }
@@ -590,7 +590,7 @@ namespace RunAmiga.Disassembler.AmigaTypes
 
 	public class FFSDataBlock
 	{
-		public byte[] data { get; set; }= new byte [HardDisk.BSIZE];
+		public byte[] Data { get; set; }= new byte [HardDisk.BSIZE];
 	}
 
 	/*
@@ -746,7 +746,7 @@ namespace RunAmiga.Disassembler.AmigaTypes
 	{
 		public uint Type { get; set; }
 		public uint Header_key { get; set; }
-		public uint Unused0 { get; set; }
+		public uint[] Unused0 { get; set; } = new uint[3];
 		public uint Chksum { get; set; }
 		public uint[] Unused1 { get; set; } = new uint[HardDisk.BSIZE / 4 - 54];
 		public uint Protect { get; set; }
@@ -829,7 +829,7 @@ namespace RunAmiga.Disassembler.AmigaTypes
 	{
 		public uint Type { get; set; }
 		public uint Header_key { get; set; }
-		public uint Unused0 { get; set; }
+		public uint[] Unused0 { get; set; } = new uint[3];
 		public uint Chksum { get; set; }
 		public byte[] Symbolic_name { get; set; } = new byte[HardDisk.BSIZE -224-1];
 		public uint Unused1 { get; set; }
@@ -916,8 +916,27 @@ namespace RunAmiga.Disassembler.AmigaTypes
 	*/
 	public class IdBlockEntry
 	{
-		public uint[] Padding { get; set; } = new uint[512 / 4 - 1];
-		public int Sec_type { get; set; }
+		public uint[] BlockInts { get; set; } = new uint[512/4];
+
+		public int Sec_type
+		{
+			get { return (int)BlockInts[BlockInts.Length - 1]; }
+		}
+
+		public uint Chksum
+		{
+			get { return BlockInts[6]; }
+		}
+
+		public uint Type
+		{
+			get { return BlockInts[0]; }
+		}
+
+		public uint Header_Key
+		{
+			get { return BlockInts[1]; }
+		}
 	}
 
 }

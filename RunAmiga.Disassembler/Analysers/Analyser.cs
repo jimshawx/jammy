@@ -33,7 +33,6 @@ namespace RunAmiga.Disassembler.Analysers
 			ILogger<Analyser> logger, IKickstartROM kickstartROM, IAnalysis analysis, IHardDiskAnalysis hardDiskAnalysis)
 		{
 			this.kickstartAnalysis = kickstartAnalysis;
-			_ = hardDiskAnalysis;
 			this.labeller = labeller;
 			this.logger = logger;
 			this.kickstartROM = kickstartROM;
@@ -42,6 +41,8 @@ namespace RunAmiga.Disassembler.Analysers
 			this.mem = mem;
 
 			//memType = new MemType[1ul<<settings.Value.AddressBits];
+
+			hardDiskAnalysis.Extract();
 
 			disassembler = new Disassembler();
 			

@@ -36,7 +36,7 @@ namespace RunAmiga.Disassembler.TypeMapper
 			lookup.Add(addr+type.GetHashCode());
 
 			uint startAddr = addr;
-			var properties = type.GetProperties().OrderBy(x => x.MetadataToken).ToList();
+			var properties = type.GetProperties().Where(x=>x.CanWrite).OrderBy(x => x.MetadataToken).ToList();
 
 			if (!properties.Any())
 				throw new ApplicationException();
