@@ -86,6 +86,7 @@ namespace RunAmiga.Main
 				.AddSingleton<IEmulationWindow, EmulationWindow>()
 				.AddSingleton<IEmulation, Emulation>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
+				.AddSingleton<IHardDiskAnalysis, HardDiskAnalysis>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<IDisassembly, Disassembly>()
 				.AddSingleton<IAnalysis, Analysis>()

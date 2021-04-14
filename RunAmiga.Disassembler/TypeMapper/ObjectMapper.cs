@@ -13,15 +13,17 @@ namespace RunAmiga.Disassembler.TypeMapper
 	public class BaseMapper
 	{
 		private readonly IDebugMemoryMapper memory;
+		private readonly IAmigaTypesMapper mapper;
 		private readonly ILogger logger;
 		
 		private uint baseAddress;
 		private readonly HashSet<long> lookup = new HashSet<long>();
 		private StringBuilder sb;
 
-		public BaseMapper()
+		public BaseMapper(IDebugMemoryMapper memory)
 		{
-			this.memory = ServiceProviderFactory.ServiceProvider.GetRequiredService<IDebugMemoryMapper>();
+			this.memory = memory;
+			mapper = new AmigaTypesMapper(memory);
 			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerProvider>().CreateLogger("BaseMapper");
 		}
 
@@ -146,9 +148,9 @@ namespace RunAmiga.Disassembler.TypeMapper
 						{
 							for (int i = 0; i < array.Length; i++)
 							{
-								object s = AmigaTypesMapper.MapSimple(memory, arrayType, addr);
+								object s = mapper.MapSimple(arrayType, addr);
 								array.SetValue(s, i);
-								addr += AmigaTypesMapper.GetSize(s);
+								addr += mapper.GetSize(s);
 								
 							}
 						}
@@ -171,8 +173,8 @@ namespace RunAmiga.Disassembler.TypeMapper
 					}
 					else
 					{
-						rv = AmigaTypesMapper.MapSimple(memory, propType, addr);
-						addr += AmigaTypesMapper.GetSize(rv);
+						rv = mapper.MapSimple(propType, addr);
+						addr += mapper.GetSize(rv);
 					}
 					
 					prop.SetValue(obj, rv);
@@ -231,7 +233,14 @@ namespace RunAmiga.Disassembler.TypeMapper
 	{
 		public static string MapObject(object tp, uint address)
 		{
-			return new BaseMapper().FromAddress(tp, address);
+			var memory = ServiceProviderFactory.ServiceProvider.GetRequiredService<IDebugMemoryMapper>();
+			return new BaseMapper(memory).FromAddress(tp, address);
+		}
+
+		public static string MapObject(object tp, byte[] b, uint address)
+		{
+			var memory = new ByteArrayDebugMemoryMapper(b);
+			return new BaseMapper(memory).FromAddress(tp, address);
 		}
 	}
 }

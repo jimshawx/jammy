@@ -1,0 +1,18 @@
+﻿using RunAmiga.Core.Types.Types;
+using RunAmiga.Core.Types.Types.Breakpoints;
+
+namespace RunAmiga.Core.Interface.Interfaces
+{
+	public interface IBreakpointCollection : IMemoryInterceptor
+	{
+		bool IsBreakpoint(uint pc);
+		//cpu interface
+		void SignalBreakpoint(uint address);
+		bool CheckBreakpoints(uint address);
+
+		//machine interface
+		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long);
+		void ToggleBreakpoint(uint pc);
+		bool BreakpointHit();
+	}
+}

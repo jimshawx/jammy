@@ -30,9 +30,10 @@ namespace RunAmiga.Disassembler.Analysers
 
 		public Analyser(IKickstartAnalysis kickstartAnalysis, ILabeller labeller,
 			IDebugMemoryMapper mem, IOptions<EmulationSettings> settings,
-			ILogger<Analyser> logger, IKickstartROM kickstartROM, IAnalysis analysis)
+			ILogger<Analyser> logger, IKickstartROM kickstartROM, IAnalysis analysis, IHardDiskAnalysis hardDiskAnalysis)
 		{
 			this.kickstartAnalysis = kickstartAnalysis;
+			_ = hardDiskAnalysis;
 			this.labeller = labeller;
 			this.logger = logger;
 			this.kickstartROM = kickstartROM;
