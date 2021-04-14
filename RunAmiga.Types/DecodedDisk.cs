@@ -12,6 +12,13 @@ namespace RunAmiga.Types
 	public class AmigaRigidDisk
 	{
 		public List<AmigaPartition> Partitions { get; } = new List<AmigaPartition>();
+
+		public string DiskVendor { get; set; }
+		public string DiskProduct { get; set; }
+		public string DiskRevision { get; set; }
+		public string ControllerVendor { get; set; }
+		public string ControllerProduct { get; set; }
+		public string ControllerRevision { get; set; }
 	}
 
 	public class AmigaPartition

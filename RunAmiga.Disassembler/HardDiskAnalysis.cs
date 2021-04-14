@@ -14,23 +14,22 @@ namespace RunAmiga.Disassembler
 	public class HardDiskAnalysis : IHardDiskAnalysis
 	{
 		private readonly ILogger logger;
-		private readonly byte[] hd;
+		private byte[] hd;
 
 		public HardDiskAnalysis(ILogger<HardDiskAnalysis> logger)
 		{
 			this.logger = logger;
-			hd = File.ReadAllBytes(Path.Combine("../../../../", "dh0.hdf"));
 
-			var rdsk = new RigidDiskBlock();
-			string rdskStr = ObjectMapper.MapObject(rdsk, hd, 0);
-			logger.LogTrace($"\nId: {ByteString(rdsk.Id)} ----------------------------------------");
-			//logger.LogTrace(rdskStr);
-			logger.LogTrace($"DiskVendor: {ByteString(rdsk.DiskVendor)}");
-			logger.LogTrace($"DiskProduct: {ByteString(rdsk.DiskProduct)}");
-			logger.LogTrace($"DiskRevision: {ByteString(rdsk.DiskRevision)}");
-			logger.LogTrace($"ControllerVendor: {ByteString(rdsk.ControllerVendor)}");
-			logger.LogTrace($"ControllerProduct: {ByteString(rdsk.ControllerProduct)}");
-			logger.LogTrace($"ControllerRevision: {ByteString(rdsk.ControllerRevision)}");
+			//var rdsk = new RigidDiskBlock();
+			//string rdskStr = ObjectMapper.MapObject(rdsk, hd, 0);
+			//logger.LogTrace($"\nId: {ByteString(rdsk.Id)} ----------------------------------------");
+			////logger.LogTrace(rdskStr);
+			//logger.LogTrace($"DiskVendor: {ByteString(rdsk.DiskVendor)}");
+			//logger.LogTrace($"DiskProduct: {ByteString(rdsk.DiskProduct)}");
+			//logger.LogTrace($"DiskRevision: {ByteString(rdsk.DiskRevision)}");
+			//logger.LogTrace($"ControllerVendor: {ByteString(rdsk.ControllerVendor)}");
+			//logger.LogTrace($"ControllerProduct: {ByteString(rdsk.ControllerProduct)}");
+			//logger.LogTrace($"ControllerRevision: {ByteString(rdsk.ControllerRevision)}");
 
 			//uint next;
 			//next = rdsk.PartitionList;
@@ -59,10 +58,21 @@ namespace RunAmiga.Disassembler
 
 		public void Extract()
 		{
+			hd = File.ReadAllBytes("c:/users/jim/desktop/uae_dh0.hdf");
+			//hd = File.ReadAllBytes(Path.Combine("../../../../", "dh0.hdf"));
+			//hd = File.ReadAllBytes(Path.Combine("../../../../", "dh1.hdf"));
+
 			var amigaDisk = new AmigaRigidDisk();
 
 			var rdsk = new RigidDiskBlock();
 			ObjectMapper.MapObject(rdsk, hd, 0);
+
+			amigaDisk.DiskVendor = ByteString(rdsk.DiskVendor);
+			amigaDisk.DiskProduct = ByteString(rdsk.DiskProduct);
+			amigaDisk.DiskRevision = ByteString(rdsk.DiskRevision);
+			amigaDisk.ControllerVendor = ByteString(rdsk.ControllerVendor);
+			amigaDisk.ControllerProduct = ByteString(rdsk.ControllerProduct);
+			amigaDisk.ControllerRevision = ByteString(rdsk.ControllerRevision);
 
 			uint next = rdsk.PartitionList;
 			do
@@ -70,10 +80,12 @@ namespace RunAmiga.Disassembler
 				var part = new PartitionBlock();
 				ObjectMapper.MapObject(part, hd, next * 512);
 
-				amigaDisk.Partitions.Add(DumpPartition(part));
+				amigaDisk.Partitions.Add(ExtractPartition(part));
 
 				next = part.Next;
 			} while (next != 0xffffffff);
+
+			DumpDisk(amigaDisk);
 		}
 
 		public class ExtractState
@@ -89,7 +101,7 @@ namespace RunAmiga.Disassembler
 			}
 		}
 
-		private AmigaPartition DumpPartition(PartitionBlock part)
+		private AmigaPartition ExtractPartition(PartitionBlock part)
 		{
 			//where is the Root Block?
 			uint surfaceBlocks = part.Surfaces * part.BlocksPerTrack;
@@ -106,6 +118,7 @@ namespace RunAmiga.Disassembler
 			};
 
 			var partition = new AmigaPartition();
+			partition.FileSystem = state.FileSystem;
 
 			var root = new RootBlock();
 			string rootStr = ObjectMapper.MapObject(root, hd, rootKey);
@@ -113,8 +126,8 @@ namespace RunAmiga.Disassembler
 
 			var id = new IdBlockEntry();
 			ObjectMapper.MapObject(id, hd, rootKey);
-			if (root.Chksum != BlockChecksum(id.BlockInts))
-				logger.LogTrace($"The root checksum is bad {root.Chksum:X8} {RootChecksum(id.BlockInts):X8}");
+			//if (root.Chksum != BlockChecksum(id.BlockInts))
+			//	logger.LogTrace($"The root checksum is bad {root.Chksum:X8} {RootChecksum(id.BlockInts):X8}");
 
 			partition.RootDirectory = ExtractRootBlock(root, state);
 			partition.RootDate = ByteTime(root.R_Days, root.R_Mins, root.R_Ticks);
@@ -128,8 +141,8 @@ namespace RunAmiga.Disassembler
 		private AmigaDirectory ExtractRootBlock(RootBlock root, ExtractState state)
 		{
 			//Type should be 2
-			logger.LogTrace($"Type: {root.Type} ----------------------------------------");
-			logger.LogTrace($"Diskname: {ByteString(root.Diskname)}");
+			//logger.LogTrace($"Type: {root.Type} ----------------------------------------");
+			//logger.LogTrace($"Diskname: {ByteString(root.Diskname)}");
 
 			var dir = new AmigaDirectory();
 
@@ -157,20 +170,14 @@ namespace RunAmiga.Disassembler
 			switch (id.Sec_type)
 			{
 				case HardDisk.ST_FILE:
-					logger.LogTrace($"{ht:X8}");
-
 					var file = new FileHeaderBlock();
-					string fileStr = ObjectMapper.MapObject(file, hd, ht);
-					//logger.LogTrace(fileStr);
-					//logger.LogTrace($"Filename: {ByteString(file.Filename)}");
+					ObjectMapper.MapObject(file, hd, ht);
 					entries.AddRange(ExtractFile(file, state));
 					break;
 
 				case HardDisk.ST_USERDIR:
 					var dir = new UserDirectoryBlock();
-					string dirStr = ObjectMapper.MapObject(dir, hd, ht);
-					//logger.LogTrace(dirStr);
-					//logger.LogTrace($"Directory: {ByteString(dir.Dirname)}");
+					ObjectMapper.MapObject(dir, hd, ht);
 					entries.AddRange(ExtractDirectory(dir, state));
 					break;
 
@@ -191,6 +198,7 @@ namespace RunAmiga.Disassembler
 
 			amigaDir.Attributes.Name = ByteString(dir.Dirname, dir.Name_len);
 			amigaDir.Attributes.Comment = ByteString(dir.Comment, dir.Comm_len);
+			amigaDir.Attributes.Time = ByteTime(dir.Days, dir.Mins, dir.Ticks);
 
 			var dirEntries = new List<IAmigaDirectoryEntry>();
 			foreach (uint ht in dir.Ht.Where(x => x != 0))
@@ -221,6 +229,7 @@ namespace RunAmiga.Disassembler
 			amigaFile.Attributes.Comment = ByteString(file.Comment, file.Comm_len);
 			amigaFile.Attributes.Time = ByteTime(file.Days, file.Mins, file.Ticks);
 			amigaFile.Size = file.Byte_size;
+
 			//extract all the file blocks
 			for (; ; )
 			{
@@ -229,8 +238,7 @@ namespace RunAmiga.Disassembler
 				if (next == 0) break;
 
 				var feb = new FileExtensionBlock();
-				string febStr = ObjectMapper.MapObject(feb, hd, state.BlockAddress(next));
-				//logger.LogTrace(febStr);
+				ObjectMapper.MapObject(feb, hd, state.BlockAddress(next));
 
 				blocks = feb.Data_Blocks;
 				next = feb.Extension;
@@ -251,22 +259,12 @@ namespace RunAmiga.Disassembler
 				{
 					var ffs = new FFSDataBlock();
 					ObjectMapper.MapObject(ffs, hd, state.BlockAddress(db));
-					//foreach (var d in ffs.Data)
-					//{
-					//	logger.LogTrace($"{d:X2} ");
-					//}
-					//logger.LogTrace($"Bytes: {ffs.Data.Length}");
 					yield return ffs.Data;
 				}
 				else
 				{
 					var ofs = new OFSDataBlock();
 					ObjectMapper.MapObject(ofs, hd, state.BlockAddress(db));
-					//foreach (var d in ofs.Data)
-					//{
-					//	logger.LogTrace($"{d:X2} ");
-					//}
-					//logger.LogTrace($"Bytes: {ofs.Data.Length}");
 					yield return ofs.Data;
 				}
 			}
@@ -342,6 +340,49 @@ namespace RunAmiga.Disassembler
 			}
 			checksum = ~checksum;
 			return checksum;
+		}
+
+		private void DumpTxt(string s, int d)
+		{
+			logger.LogTrace($"{"".PadLeft(d*4)}{s}");
+		}
+
+		private void DumpDisk(AmigaRigidDisk disk)
+		{
+			int d = 0;
+
+			DumpTxt("RDSK",d);
+
+			DumpTxt($"{disk.DiskVendor} {disk.DiskProduct} {disk.DiskRevision}", d);
+			DumpTxt($"{disk.ControllerVendor} {disk.ControllerProduct} {disk.ControllerRevision}", d);
+
+			foreach (var p in disk.Partitions)
+				DumpPart(p, d+1);
+		}
+
+		private void DumpPart(AmigaPartition part, int d)
+		{
+			DumpTxt($"PART {part.FileSystem} {part.Diskname} {part.DiskDate:yyyy-MM-dd HH:mm:ss} {part.CreationDate:yyyy-MM-dd HH:mm:ss} {part.RootDate:yyyy-MM-dd HH:mm:ss}", d);
+			DumpDirs(part.RootDirectory.Directories, d+1);
+			DumpFiles(part.RootDirectory.Files, d+1);
+		}
+
+		private void DumpFiles(List<AmigaFile> files, int d)
+		{
+			foreach (var f in files.OrderBy(x=>x.Attributes.Name))
+			{
+				DumpTxt($"{f.Attributes.Name,-30} ({f.Size,10}) {f.Attributes.Time:yyyy-MM-dd HH:mm:ss} {f.Attributes.Comment}", d);
+			}
+		}
+
+		private void DumpDirs(List<AmigaDirectory> dirs, int d)
+		{
+			foreach (var p in dirs.OrderBy(x=>x.Attributes.Name))
+			{
+				DumpTxt($"<DIR> {p.Attributes.Name,-30} {p.Attributes.Time:yyyy-MM-dd HH:mm:ss} {p.Attributes.Comment}", d);
+				DumpDirs(p.Directories, d + 1);
+				DumpFiles(p.Files, d + 1);
+			}
 		}
 	}
 }
