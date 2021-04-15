@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
@@ -476,47 +477,20 @@ namespace RunAmiga.Core.Custom
 				return;
 			}
 
-			double ty = (double)(bltbmod / 4.0);
-			double tx = -(int)bltamod / 4.0 + ty;
+			int ty = (int)(bltbmod / 2);
+			int tx = -(int)bltamod / 2 + ty;
 
-			tx *= 2;
-			ty *= 2;
-
-			double dx = 0, dy = 0;
+			int dx = 0, dy = 0;
 			switch (octant)
 			{
-				case 0:
-					dx = ty;
-					dy = tx;
-					break;
-				case 1:
-					dx = ty;
-					dy = -tx;
-					break;
-				case 2:
-					dx = -ty;
-					dy = tx;
-					break;
-				case 3:
-					dx = -ty;
-					dy = -tx;
-					break;
-				case 4:
-					dx = tx;
-					dy = ty;
-					break;
-				case 5:
-					dx = -tx;
-					dy = ty;
-					break;
-				case 6:
-					dx = tx;
-					dy = -ty;
-					break;
-				case 7:
-					dx = -tx;
-					dy = -ty;
-					break;
+				case 0: dx =  ty; dy =  tx; break;
+				case 1: dx =  ty; dy = -tx; break;
+				case 2: dx = -ty; dy =  tx; break;
+				case 3: dx = -ty; dy = -tx; break;
+				case 4: dx =  tx; dy =  ty; break;
+				case 5: dx = -tx; dy =  ty; break;
+				case 6: dx =  tx; dy = -ty; break;
+				case 7: dx = -tx; dy = -ty; break;
 			}
 
 			int sx = dx > 0 ? 1 : -1;
@@ -532,22 +506,19 @@ namespace RunAmiga.Core.Custom
 			bool writeBit = true;
 
 			int x0 = (int)(bltcon0 >> 12);
-			int y0 = 0;
 
 			int x1, y1;
-			int dm= (int)Math.Max(dx, dy);
+			int dm = (int)Math.Max(dx, dy);
 			x1 = dm / 2; 
 			y1 = dm / 2;
 			
-			//x1 = 0;
-			//y1 = 0;
-
 			while (length-- > 0)
 			{
 				if ((bltcon0 & (1u << 9)) != 0)
 					bltcdat = memory.Read(insaddr, bltcpt, Size.Word);
 
-				bltadat = (1u << (x0^15));
+				//bltadat = (1u << (x0^15));
+				bltadat = 0x8000u >> x0;
 
 				bltddat = 0;
 				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdat & ~bltcdat;
@@ -559,7 +530,8 @@ namespace RunAmiga.Core.Custom
 				if ((bltcon0 & 0x40) != 0) bltddat |= bltadat & bltbdat & ~bltcdat;
 				if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdat & bltcdat;
 
-				if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
+				//oddly, USEC must be checked, not USED
+				if ((bltcon0 & (1u << 9)) != 0 && (bltcon1 & (1u << 7)) == 0)
 				{
 					if (writeBit)
 					{
@@ -583,7 +555,6 @@ namespace RunAmiga.Core.Custom
 				{
 					bltcpt += (uint)(bltcmod * sy);
 					y1 += dm;
-					y0 += sy; 
 					writeBit = true;
 				}
 
