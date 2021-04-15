@@ -9,6 +9,13 @@ namespace RunAmiga.Types
 		FFS
 	}
 
+	public class AmigaFloppyDisk
+	{
+		public AmigaDirectory RootDirectory { get; set; } = new AmigaDirectory();
+		public AmigaFileSystem FileSystem { get; set; }
+		public byte[] BootblockCode { get; set; }
+	}
+
 	public class AmigaRigidDisk
 	{
 		public List<AmigaPartition> Partitions { get; } = new List<AmigaPartition>();

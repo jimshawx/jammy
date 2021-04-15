@@ -8,64 +8,77 @@ using RunAmiga.Disassembler.AmigaTypes;
 using RunAmiga.Disassembler.TypeMapper;
 using RunAmiga.Interface;
 using RunAmiga.Types;
+using RunAmiga.Types.Options;
 
 namespace RunAmiga.Disassembler
 {
-	public class HardDiskAnalysis : IHardDiskAnalysis
+	public class DiskAnalysis : IDiskAnalysis
 	{
 		private readonly ILogger logger;
-		private byte[] hd;
 
-		public HardDiskAnalysis(ILogger<HardDiskAnalysis> logger)
+		public DiskAnalysis(ILogger<DiskAnalysis> logger)
 		{
 			this.logger = logger;
-
-			//var rdsk = new RigidDiskBlock();
-			//string rdskStr = ObjectMapper.MapObject(rdsk, hd, 0);
-			//logger.LogTrace($"\nId: {ByteString(rdsk.Id)} ----------------------------------------");
-			////logger.LogTrace(rdskStr);
-			//logger.LogTrace($"DiskVendor: {ByteString(rdsk.DiskVendor)}");
-			//logger.LogTrace($"DiskProduct: {ByteString(rdsk.DiskProduct)}");
-			//logger.LogTrace($"DiskRevision: {ByteString(rdsk.DiskRevision)}");
-			//logger.LogTrace($"ControllerVendor: {ByteString(rdsk.ControllerVendor)}");
-			//logger.LogTrace($"ControllerProduct: {ByteString(rdsk.ControllerProduct)}");
-			//logger.LogTrace($"ControllerRevision: {ByteString(rdsk.ControllerRevision)}");
-
-			//uint next;
-			//next = rdsk.PartitionList;
-			//do
-			//{
-			//	var part = new PartitionBlock();
-			//	string partStr = ObjectMapper.MapObject(part, hd, next * 512);
-			//	logger.LogTrace($"\nId: {ByteString(part.Id)} ----------------------------------------");
-			//	//logger.LogTrace(partStr);
-			//	logger.LogTrace($"DriveName: {ByteString(part.DriveName)}");
-			//	logger.LogTrace($"DosType: {ByteString(part.DosType)}");
-			//	next = part.Next;
-			//} while (next != 0xffffffff);
-
-			//next = rdsk.FileSysHdrList;
-			//do
-			//{
-			//	var fsys = new FileSystemHeaderBlock();
-			//	string fsysStr = ObjectMapper.MapObject(fsys, hd, next * 512);
-			//	logger.LogTrace($"\nId: {ByteString(fsys.Id)} ----------------------------------------");
-			//	//logger.LogTrace(fsysStr);
-			//	logger.LogTrace($"DosType: {ByteString(fsys.DosType)}");
-			//	next = fsys.Next;
-			//} while (next != 0xffffffff);
 		}
 
 		public void Extract()
 		{
-			//hd = File.ReadAllBytes("c:/users/jim/desktop/uae_dh0.hdf");
-			hd = File.ReadAllBytes(Path.Combine("../../../../", "dh0.hdf"));
-			//hd = File.ReadAllBytes(Path.Combine("../../../../", "dh1.hdf"));
+			ExtractHardDisk("dh0.hdf");
+			ExtractFloppyDisk("workbench1.2.adf");
+			ExtractFloppyDisk("workbench3.1.adf");
+		}
+
+		public void ExtractFloppyDisk(string disk)
+		{
+			var state = new ExtractState
+			{
+				hd = File.ReadAllBytes(Path.Combine("../../../../", disk)),
+				BlockOffset = 0,
+				BlockSize = 512,
+			};
+
+			var id = new IdBlockEntry();
+			ObjectMapper.MapObject(id, state.hd, 0);
+			if (ByteString(id.Id, 3) != "DOS")
+			{
+				logger.LogTrace($"{disk} isn't an ADF image");
+				return;
+			}
+
+			state.FileSystem = ((id.Id[3] & 1) != 0) ? AmigaFileSystem.FFS : AmigaFileSystem.OFS;
+
+			var amigaDisk = new AmigaFloppyDisk();
+			amigaDisk.FileSystem = state.FileSystem;
+
+			var boot = new BootBlock();
+			ObjectMapper.MapObject(boot, state.hd, 0);
+			amigaDisk.BootblockCode = boot.BootblockCode.Concat(state.hd[512..1024]).ToArray();
+
+			var root = new RootBlock(); 
+			ObjectMapper.MapObject(root, state.hd, 880*512);
+
+			amigaDisk.RootDirectory = ExtractRootBlock(root, state);
+
+			DumpDisk(amigaDisk);
+		}
+
+		public void ExtractHardDisk(string disk)
+		{
+			var state = new ExtractState
+			{
+				hd = File.ReadAllBytes(Path.Combine("../../../../", disk))
+			};
 
 			var amigaDisk = new AmigaRigidDisk();
 
 			var rdsk = new RigidDiskBlock();
-			ObjectMapper.MapObject(rdsk, hd, 0);
+			ObjectMapper.MapObject(rdsk, state.hd, 0);
+			if (ByteString(rdsk.Id) != "RDSK")
+			{
+				logger.LogTrace($"{disk} isn't an RDSK image");
+				return;
+				;
+			}
 
 			amigaDisk.DiskVendor = ByteString(rdsk.DiskVendor);
 			amigaDisk.DiskProduct = ByteString(rdsk.DiskProduct);
@@ -78,9 +91,9 @@ namespace RunAmiga.Disassembler
 			do
 			{
 				var part = new PartitionBlock();
-				ObjectMapper.MapObject(part, hd, next * 512);
+				ObjectMapper.MapObject(part, state.hd, next * 512);
 
-				amigaDisk.Partitions.Add(ExtractPartition(part));
+				amigaDisk.Partitions.Add(ExtractPartition(part, state));
 
 				next = part.Next;
 			} while (next != 0xffffffff);
@@ -93,6 +106,7 @@ namespace RunAmiga.Disassembler
 			public uint BlockOffset { get; set; }
 			public AmigaFileSystem FileSystem { get; set; }
 			public uint BlockSize { get; set; }
+			public byte[] hd { get; set; }
 
 			public uint BlockAddress(uint next)
 			{
@@ -101,7 +115,7 @@ namespace RunAmiga.Disassembler
 			}
 		}
 
-		private AmigaPartition ExtractPartition(PartitionBlock part)
+		private AmigaPartition ExtractPartition(PartitionBlock part, ExtractState state)
 		{
 			//where is the Root Block?
 			uint surfaceBlocks = part.Surfaces * part.BlocksPerTrack;
@@ -110,23 +124,20 @@ namespace RunAmiga.Disassembler
 			uint blockSize = part.SizeBlock * 4;
 			uint rootKey = ((numCyls * surfaceBlocks) / 2 + blockOffset) * blockSize;
 
-			var state = new ExtractState
-			{
-				BlockOffset = blockOffset,
-				FileSystem = ((part.DosType[3]&1)!=0)? AmigaFileSystem.FFS:AmigaFileSystem.OFS,
-				BlockSize = blockSize
-			};
+			state.BlockOffset = blockOffset;
+			state.FileSystem = ((part.DosType[3] & 1) != 0) ? AmigaFileSystem.FFS : AmigaFileSystem.OFS;
+			state.BlockSize = blockSize;
 
 			var partition = new AmigaPartition();
 			partition.FileSystem = state.FileSystem;
 
 			var root = new RootBlock();
-			string rootStr = ObjectMapper.MapObject(root, hd, rootKey);
+			string rootStr = ObjectMapper.MapObject(root, state.hd, rootKey);
 			//logger.LogTrace(rootStr);
 
 			var id = new IdBlockEntry();
-			ObjectMapper.MapObject(id, hd, rootKey);
-			//if (root.Chksum != BlockChecksum(id.BlockInts))
+			ObjectMapper.MapObject(id, state.hd, rootKey);
+			//if (root.Chksum != id.BlockChecksum())
 			//	logger.LogTrace($"The root checksum is bad {root.Chksum:X8} {RootChecksum(id.BlockInts):X8}");
 
 			partition.RootDirectory = ExtractRootBlock(root, state);
@@ -162,7 +173,7 @@ namespace RunAmiga.Disassembler
 			var entries = new List<IAmigaDirectoryEntry>();
 
 			var id = new IdBlockEntry();
-			ObjectMapper.MapObject(id, hd, ht);
+			ObjectMapper.MapObject(id, state.hd, ht);
 
 			if (state.BlockAddress(id.Header_Key) != ht)
 				logger.LogTrace($"Block doesn't point at itself: {state.BlockAddress(id.Header_Key)} {ht}");
@@ -171,13 +182,13 @@ namespace RunAmiga.Disassembler
 			{
 				case HardDisk.ST_FILE:
 					var file = new FileHeaderBlock();
-					ObjectMapper.MapObject(file, hd, ht);
+					ObjectMapper.MapObject(file, state.hd, ht);
 					entries.AddRange(ExtractFile(file, state));
 					break;
 
 				case HardDisk.ST_USERDIR:
 					var dir = new UserDirectoryBlock();
-					ObjectMapper.MapObject(dir, hd, ht);
+					ObjectMapper.MapObject(dir, state.hd, ht);
 					entries.AddRange(ExtractDirectory(dir, state));
 					break;
 
@@ -238,7 +249,7 @@ namespace RunAmiga.Disassembler
 				if (next == 0) break;
 
 				var feb = new FileExtensionBlock();
-				ObjectMapper.MapObject(feb, hd, state.BlockAddress(next));
+				ObjectMapper.MapObject(feb, state.hd, state.BlockAddress(next));
 
 				blocks = feb.Data_Blocks;
 				next = feb.Extension;
@@ -258,13 +269,13 @@ namespace RunAmiga.Disassembler
 				if (state.FileSystem == AmigaFileSystem.FFS)
 				{
 					var ffs = new FFSDataBlock();
-					ObjectMapper.MapObject(ffs, hd, state.BlockAddress(db));
+					ObjectMapper.MapObject(ffs, state.hd, state.BlockAddress(db));
 					yield return ffs.Data;
 				}
 				else
 				{
 					var ofs = new OFSDataBlock();
-					ObjectMapper.MapObject(ofs, hd, state.BlockAddress(db));
+					ObjectMapper.MapObject(ofs, state.hd, state.BlockAddress(db));
 					yield return ofs.Data;
 				}
 			}
@@ -320,31 +331,35 @@ namespace RunAmiga.Disassembler
 			return (hash);
 		}
 
-		private uint BlockChecksum(uint[] buf)
-		{
-			buf[6] = 0;
-			uint newsum = (uint)buf.Sum(x=>x);
-			newsum = (uint)-(int)newsum;
-			return newsum;
-		}
-
-		private uint RootChecksum(uint[]buf)
-		{
-			buf[6] = 0;
-			uint checksum = 0;
-			foreach (uint v in buf)
-			{
-				var precsum = checksum;
-				if ((checksum += v) < precsum)
-					++checksum;
-			}
-			checksum = ~checksum;
-			return checksum;
-		}
-
 		private void DumpTxt(string s, int d)
 		{
 			logger.LogTrace($"{"".PadLeft(d*4)}{s}");
+		}
+
+		private void DumpDisk(AmigaFloppyDisk amigaDisk)
+		{
+			int d = 0;
+			DumpTxt($"ADF {amigaDisk.FileSystem}", d);
+			DumpBoot(amigaDisk.BootblockCode,d);
+			DumpDirs(amigaDisk.RootDirectory.Directories, d + 1);
+			DumpFiles(amigaDisk.RootDirectory.Files, d + 1);
+		}
+
+		private void DumpBoot(IEnumerable<byte> code, int d)
+		{
+			var disassembler = new Disassembler();
+			var options = new DisassemblyOptions { IncludeBytes = true };
+			var sb = new StringBuilder();
+			uint address = 0;
+			do
+			{
+				var asm = disassembler.Disassemble(address, code.Take(20));
+				sb.AppendLine(asm.ToString(options));
+				address += (uint)asm.Bytes.Length;
+				code = code.Skip(asm.Bytes.Length);
+			} while (address < 1012 && (code.First() != 0 || code.Skip(1).First() != 0));
+
+			DumpTxt(sb.ToString(), d);
 		}
 
 		private void DumpDisk(AmigaRigidDisk disk)
@@ -372,7 +387,20 @@ namespace RunAmiga.Disassembler
 			foreach (var f in files.OrderBy(x=>x.Attributes.Name))
 			{
 				DumpTxt($"{f.Attributes.Name,-30} ({f.Size,10}) {f.Attributes.Time:yyyy-MM-dd HH:mm:ss} {f.Attributes.Comment}", d);
+
+				//if (f.Attributes.Name.Equals("startup-sequence", StringComparison.InvariantCultureIgnoreCase))
+				//{
+				//	DumpFile(f);
+				//}
 			}
+		}
+
+		private void DumpFile(AmigaFile file)
+		{
+			var sb = new StringBuilder((int)(file.Size + 1));
+			foreach (byte b in file.Data)
+				sb.Append((char)b);
+			logger.LogTrace(sb.ToString());
 		}
 
 		private void DumpDirs(List<AmigaDirectory> dirs, int d)

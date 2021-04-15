@@ -14,6 +14,7 @@ namespace RunAmiga.Disassembler
 		private StringBuilder asm;
 		private uint pc;
 		private byte[] memory;
+		//private IEnumerable<byte> memoryE;
 		private uint address;
 
 		public DAsm Disassemble(uint add, IEnumerable<byte> m)
@@ -22,6 +23,7 @@ namespace RunAmiga.Disassembler
 			{
 				var dasm = new DAsm();
 				memory = m.ToArray();
+				//memoryE = m;
 				pc = 0;
 				this.address = add;
 				asm = new StringBuilder();
@@ -75,6 +77,7 @@ namespace RunAmiga.Disassembler
 
 				dasm.Asm = asm.ToString();
 				dasm.Bytes = memory[0..(int)pc];
+				//dasm.Bytes = memoryE.Take((int)pc).ToArray();
 				dasm.Address = address;
 
 				return dasm;
@@ -178,27 +181,33 @@ namespace RunAmiga.Disassembler
 			asm.Length-=count;
 		}
 
-		public uint read32(uint address)
+		public uint read32(uint addr)
 		{
-			if (address + 3 >= memory.Length) return 0;
-			return ((uint)memory[address] << 24) +
-					((uint)memory[address  + 1] << 16) +
-					((uint)memory[address  + 2] << 8) +
-					(uint)memory[address + 3];
+			if (addr + 3 >= memory.Length) return 0;
+			return ((uint)memory[addr] << 24) +
+					((uint)memory[addr + 1] << 16) +
+					((uint)memory[addr + 2] << 8) +
+					(uint)memory[addr + 3];
+			//var mm = memoryE.Skip((int)addr).Take(4);
+			//return mm.Aggregate<byte, uint>(0, ( curr, next) => (curr<<8)|next);
 		}
 
-		public ushort read16(uint address)
+		public ushort read16(uint addr)
 		{
-			if (address + 1 >= memory.Length) return 0;
+			if (addr + 1 >= memory.Length) return 0;
 			return (ushort)(
-				((ushort)memory[address] << 8) +
-				(ushort)memory[address+1]);
+				((ushort)memory[addr] << 8) +
+				(ushort)memory[addr + 1]);
+			//var mm = memoryE.Skip((int)addr).Take(2);
+			//return mm.Aggregate<byte, ushort>(0, (curr, next) => (ushort)((curr << 8) | next));
 		}
 
-		public byte read8(uint address)
+		public byte read8(uint addr)
 		{
-			if (address >= memory.Length) return 0;
-			return memory[address];
+			if (addr >= memory.Length) return 0;
+			return memory[addr];
+			//var mm = memoryE.Skip((int)addr);
+			//return mm.FirstOrDefault();
 		}
 
 		uint fetchEA(int type)

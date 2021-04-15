@@ -30,7 +30,7 @@ namespace RunAmiga.Disassembler.Analysers
 
 		public Analyser(IKickstartAnalysis kickstartAnalysis, ILabeller labeller,
 			IDebugMemoryMapper mem, IOptions<EmulationSettings> settings,
-			ILogger<Analyser> logger, IKickstartROM kickstartROM, IAnalysis analysis, IHardDiskAnalysis hardDiskAnalysis)
+			ILogger<Analyser> logger, IKickstartROM kickstartROM, IAnalysis analysis, IDiskAnalysis diskAnalysis)
 		{
 			this.kickstartAnalysis = kickstartAnalysis;
 			this.labeller = labeller;
@@ -42,7 +42,7 @@ namespace RunAmiga.Disassembler.Analysers
 
 			//memType = new MemType[1ul<<settings.Value.AddressBits];
 
-			hardDiskAnalysis.Extract();
+			diskAnalysis.Extract();
 
 			disassembler = new Disassembler();
 			

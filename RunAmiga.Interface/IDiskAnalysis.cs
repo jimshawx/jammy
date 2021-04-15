@@ -1,6 +1,6 @@
 ﻿namespace RunAmiga.Interface
 {
-	public interface IHardDiskAnalysis
+	public interface IDiskAnalysis
 	{
 		public void Extract();
 	}

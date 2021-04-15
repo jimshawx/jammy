@@ -2,6 +2,7 @@
 // ReSharper disable All
 
 using System;
+using System.Linq;
 
 namespace RunAmiga.Disassembler.AmigaTypes
 {
@@ -14,6 +15,32 @@ namespace RunAmiga.Disassembler.AmigaTypes
 		public const int ST_USERDIR = 2;
 		public const int ST_SOFTLINK = 3;
 		public const int ST_LINKFILE = -4;
+	}
+	/*
+	* BootBlock
+	-------------------------------------------------------------------------------
+	offset	size    number	name		meaning
+	-------------------------------------------------------------------------------
+	0/0x00  char    4       DiskType	'D''O''S' + flags
+											flags = 3 least signifiant bits
+												   set         clr
+						  0    FFS         OFS
+											  1    INTL ONLY   NO_INTL ONLY
+											  2    DIRC&INTL   NO_DIRC&INTL
+	4/0x04  ulong   1       Chksum          special block checksum
+	8/0x08  ulong   1       Rootblock       Value is 880 for DD and HD 
+						 (yes, the 880 value is strange for HD)
+	12/0x0c char    *       Bootblock code  (see 5.2 'Bootable disk' for more info)
+											The size for a floppy disk is 1012,
+											for a harddisk it is
+											(DosEnvVec->Bootblocks * BSIZE) - 12
+	*/
+	public class BootBlock
+	{
+		public byte[] DiskType { get; set; }= new byte[4];
+		public uint Chksum { get; set; }
+		public uint Rootblock { get; set; }
+		public byte[] BootblockCode { get; set; } = new byte[HardDisk.BSIZE - 12];
 	}
 
 	/*
@@ -933,9 +960,48 @@ namespace RunAmiga.Disassembler.AmigaTypes
 			get { return BlockInts[0]; }
 		}
 
+		public byte[] Id
+		{
+			get
+			{
+				var b = new byte[4];
+				b[0] = (byte)(BlockInts[0] >> 24);
+				b[1] = (byte)(BlockInts[0] >> 16);
+				b[2] = (byte)(BlockInts[0] >> 8);
+				b[3] = (byte)BlockInts[0];
+				return b;
+			}
+		}
+
 		public uint Header_Key
 		{
 			get { return BlockInts[1]; }
+		}
+
+		public uint BlockChecksum()
+		{
+			uint tmp = Chksum;
+			BlockInts[6] = 0;
+			uint newsum = (uint)BlockInts.Sum(x => x);
+			newsum = (uint)-(int)newsum;
+			BlockInts[6] = tmp;
+			return newsum;
+		}
+
+		public uint RootChecksum()
+		{
+			uint tmp = Chksum;
+			BlockInts[6] = 0;
+			uint checksum = 0;
+			foreach (uint v in BlockInts)
+			{
+				var precsum = checksum;
+				if ((checksum += v) < precsum)
+					++checksum;
+			}
+			checksum = ~checksum;
+			BlockInts[6] = tmp;
+			return checksum;
 		}
 	}
 
