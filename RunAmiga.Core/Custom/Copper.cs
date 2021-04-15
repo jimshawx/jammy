@@ -281,8 +281,6 @@ namespace RunAmiga.Core.Custom
 
 		private void RunCopperVerticalBlankEnd()
 		{
-			//if (cop.copPC == 0) return;
-
 			RunSprites();
 
 			DebugPalette();
@@ -292,16 +290,19 @@ namespace RunAmiga.Core.Custom
 
 		private void DebugPalette()
 		{
-			int px=5;
+			int sx = 5;
+			int sy = 5;
+
+			int box = 5;
 			for (int y = 0; y < 4; y++)
 			{
 				for (int x = 0; x < 64; x++)
 				{
-					for (int p = 0; p < px; p++)
+					for (int p = 0; p < box; p++)
 					{
-						for (int q = 0; q < px; q++)
+						for (int q = 0; q < box; q++)
 						{
-							screen[x * px + q + (512 + (y*px) + p) * SCREEN_WIDTH] = (int)truecolour[x + y * 64];
+							screen[sx + x * box + q + (sy + (y*box) + p) * SCREEN_WIDTH] = (int)truecolour[x + y * 64];
 						}
 					}
 				}
@@ -312,7 +313,6 @@ namespace RunAmiga.Core.Custom
 		{
 			public ulong pixelMask;
 			public ulong[] bpldatdma = new ulong[8];
-			public bool copperEarlyOut = false;
 
 			public int planes;
 			public int diwstrth = 0;
@@ -373,19 +373,30 @@ namespace RunAmiga.Core.Custom
 					if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 					{
 						wordCount = (ddfstop - ddfstrt) / 4 + 2;
-						//word count needs to be a multiple of planes
-						//wordCount = ((wordCount / planes) + (planes - 1)) * planes;
+						//round up to multiple of 2 words
 						if ((wordCount & 1) != 0) wordCount++;
 						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
 					}
 					else
 					{
-						wordCount = (ddfstop - ddfstrt) / 16 + 1;
-						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 16);
+						if (fmode == 3)
+						{
+							//round to multiple of 4 words
+							int round = 15;
+							ddfstrtfix = (ushort)(ddfstrt & ~round);
+							ddfstopfix = (ushort)((ddfstop + round) & ~round);
+						}
+						else
+						{
+							//round up to multiple of 2 words
+							int round = 7;
+							ddfstrtfix = (ushort)(ddfstrt & ~round);
+							ddfstopfix = (ushort)((ddfstop + round) & ~round);
+						}
 					}
 
-					diwstrth &= 0xf8;
-					diwstoph &= 0x1f8;
+					//diwstrth &= 0xf8;
+					//diwstoph &= 0x1f8;
 				}
 				else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0)
 				{
@@ -439,6 +450,14 @@ namespace RunAmiga.Core.Custom
 			{
 				cln.InitLine(bplcon0, diwstrt, diwstop, diwhigh, ddfstrt, ddfstop, fmode, settings);
 
+				//debugging
+				if (cop.currentLine == cdbg.dbugLine)
+				{
+					cdbg.fetch[h] = '-';
+					cdbg.write[h] = '-';
+				}
+				//debugging
+
 				ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
 				//Copper DMA is ON
@@ -448,12 +467,6 @@ namespace RunAmiga.Core.Custom
 				//bitplane fetching (optimisation)
 				if (h < DMA_START || h >= DMA_END)
 					continue;
-
-				if (cop.currentLine == cdbg.dbugLine)
-				{
-					cdbg.fetch[h] = '-';
-					cdbg.write[h] = '-';
-				}
 
 				//is it the visible area, vertically?
 				if (cop.currentLine >= cln.diwstrtv && cop.currentLine < cln.diwstopv)
@@ -612,11 +625,10 @@ namespace RunAmiga.Core.Custom
 		private int modulo = 0;
 		private void CopperBitplaneFetch(int h)
 		{
-
 			int planeIdx;
 			int plane;
 
-			if (settings.ChipSet == ChipSet.OCS)
+			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 			{
 				int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
 				int[] fetchHi = { 4, 2, 3, 1 };
@@ -635,11 +647,11 @@ namespace RunAmiga.Core.Custom
 					//10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10
 				};
 
-				int mod = 8;
+				int mod;
 				if (fmode == 3) mod = 16;
-				else if (fmode != 0) mod = 16;
+				else mod = 8;
 
-				planeIdx = (h - ddfstrt) % mod;
+				planeIdx = (h ) % mod;
 				plane = fetchF[planeIdx] - 1;
 			}
 
@@ -647,21 +659,24 @@ namespace RunAmiga.Core.Custom
 			{
 				if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 				{
-					bplpt[plane] &= ~1u;
+					//bplpt[plane] &= ~1u;
 
-					cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
+					if (settings.ChipSet != ChipSet.OCS)
+						cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane]+12, Size.Word);//why?!
+					else
+						cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
 					bplpt[plane] += 2;
 				}
 				else if (fmode == 3)
 				{
-					bplpt[plane] &= ~7u;
+					//bplpt[plane] &= ~7u;
 
 					cln.bpldatdma[plane] = ((ulong)memory.Read(0, bplpt[plane], Size.Long) << 32) | memory.Read(0, bplpt[plane] + 4, Size.Long);
 					bplpt[plane] += 8;
 				}
 				else
 				{
-					bplpt[plane] &= ~3u;
+					//bplpt[plane] &= ~3u;
 
 					cln.bpldatdma[plane] = memory.Read(0, bplpt[plane], Size.Long);
 					bplpt[plane] += 4;
