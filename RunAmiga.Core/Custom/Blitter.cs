@@ -222,7 +222,7 @@ namespace RunAmiga.Core.Custom
 		{
 			if ((bltcon1 & 1) != 0)
 			{
-				Line3(insaddr);
+				Line(insaddr);
 				return;
 			}
 
@@ -236,7 +236,7 @@ namespace RunAmiga.Core.Custom
 		{
 			if ((bltcon1 & 1) != 0)
 			{
-				Line3(insaddr);
+				Line(insaddr);
 				return;
 			}
 
@@ -465,7 +465,7 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
-		private void Line3(uint insaddr)
+		private void Line(uint insaddr)
 		{
 			uint octant = (bltcon1 >> 2) & 7;
 			bool sing = (bltcon1 & (1 << 1)) != 0;
@@ -477,26 +477,15 @@ namespace RunAmiga.Core.Custom
 				return;
 			}
 
-			int ty = (int)(bltbmod / 2);
-			int tx = -(int)bltamod / 2 + ty;
+			int dy = (int)(bltbmod / 2);
+			int dx = -(int)bltamod / 2 + dy;
 
-			int dx = 0, dy = 0;
-			switch (octant)
-			{
-				case 0: dx =  ty; dy =  tx; break;
-				case 1: dx =  ty; dy = -tx; break;
-				case 2: dx = -ty; dy =  tx; break;
-				case 3: dx = -ty; dy = -tx; break;
-				case 4: dx =  tx; dy =  ty; break;
-				case 5: dx = -tx; dy =  ty; break;
-				case 6: dx =  tx; dy = -ty; break;
-				case 7: dx = -tx; dy = -ty; break;
-			}
+			if (octant < 4) (dx, dy) = (dy, dx);
 
-			int sx = dx > 0 ? 1 : -1;
-			int sy = dy > 0 ? 1 : -1;
-			dx = Math.Abs(dx);
-			dy = Math.Abs(dy);
+			int sx = 1;
+			if (octant == 2 || octant == 3 || octant == 5 || octant == 7) sx = -1;
+			int sy = 1;
+			if (octant == 1 || octant == 3 || octant == 6 || octant == 7) sy = -1;
 
 			uint bltzero = 0;
 
@@ -507,17 +496,15 @@ namespace RunAmiga.Core.Custom
 
 			int x0 = (int)(bltcon0 >> 12);
 
-			int x1, y1;
 			int dm = (int)Math.Max(dx, dy);
-			x1 = dm / 2; 
-			y1 = dm / 2;
+			int x1 = dm / 2; 
+			int y1 = dm / 2;
 			
 			while (length-- > 0)
 			{
 				if ((bltcon0 & (1u << 9)) != 0)
 					bltcdat = memory.Read(insaddr, bltcpt, Size.Word);
 
-				//bltadat = (1u << (x0^15));
 				bltadat = 0x8000u >> x0;
 
 				bltddat = 0;
@@ -542,7 +529,7 @@ namespace RunAmiga.Core.Custom
 
 				bltzero |= bltddat;
 
-				x1 -= (int)dx;
+				x1 -= dx;
 				if (x1 < 0)
 				{
 					x1 += dm;
@@ -550,7 +537,7 @@ namespace RunAmiga.Core.Custom
 					if (x0 >= 16) { x0 = 0; bltcpt += 2; }
 					if (x0 < 0)   { x0 =15; bltcpt -= 2; }
 				}
-				y1 -= (int)dy;
+				y1 -= dy;
 				if (y1 < 0)
 				{
 					bltcpt += (uint)(bltcmod * sy);
@@ -558,6 +545,7 @@ namespace RunAmiga.Core.Custom
 					writeBit = true;
 				}
 
+				//first write goes to bltdpt, thereafter bltdpt = bltcpt
 				bltdpt = bltcpt;
 			}
 
