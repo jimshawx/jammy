@@ -37,7 +37,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 
 	public interface IBlitter : IReset, ICustomReadWrite
 	{
-		void SetLineMode(bool benchmark);
+		void SetLineMode(int mode);
 	}
 	public interface ICIA : IEmulate, IMemoryMappedDevice
 	{

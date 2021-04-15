@@ -152,7 +152,7 @@ namespace RunAmiga.Tests
 			var blitter = serviceProvider0.GetRequiredService<IBlitter>();
 			var chipRAM = (LoggedChipRAM)serviceProvider0.GetRequiredService<IChipRAM>();
 
-			int i = 11;
+			int i = 6;
 			var testcases = BlitterLineTestCases.TestCases();
 			TestContext.WriteLine($"\n------- Test Case {i,4} -------");
 			RunBlitterLineTestCase(testcases[i-1], blitter, chipRAM);
@@ -164,7 +164,7 @@ namespace RunAmiga.Tests
 
 			for (int a = 0; a < 2; a++)
 			{
-				blitter.SetLineMode(a == 1);
+				blitter.SetLineMode(a==0?0:2);
 
 				chipRAM.Clear();
 
@@ -195,7 +195,7 @@ namespace RunAmiga.Tests
 
 				if (c.bltsize != 0)
 				{
-					TestContext.WriteLine($"BLTSIZE {c.bltsize & 0x3f} x {c.bltsize >> 6}");
+					TestContext.WriteLine($"BLTSIZE {c.bltsize & 0x3f} x {c.bltsize >> 6} mod: {(int)c.bltcmod}");
 					blitter.Write(0, ChipRegs.BLTSIZE, (ushort)c.bltsize);
 				}
 				else

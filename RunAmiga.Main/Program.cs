@@ -128,6 +128,9 @@ namespace RunAmiga.Main
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");
 
+			var blitter = serviceProvider.GetRequiredService<IBlitter>();
+			blitter.SetLineMode(2);
+
 			var form = serviceProvider.GetRequiredService<RunAmiga>();
 			Application.Run(form);
 		}
