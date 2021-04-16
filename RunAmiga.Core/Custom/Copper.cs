@@ -312,6 +312,7 @@ namespace RunAmiga.Core.Custom
 		private class CopperLine
 		{
 			public ulong pixelMask;
+			public uint pixelBits;
 			public ulong[] bpldatdma = new ulong[8];
 
 			public int planes;
@@ -437,7 +438,7 @@ namespace RunAmiga.Core.Custom
 
 			int lineStart = cop.dptr;
 
-			ResetPixelMask();
+			InitPixelMask();
 			cln.lastcol = truecolour[0];//should be colour 0 at time of diwstrt
 
 			for (int i = 0; i < 8; i++)
@@ -593,8 +594,8 @@ namespace RunAmiga.Core.Custom
 						}
 						else
 						{
-							logger.LogTrace("SKIP");
 							//SKIP
+							//logger.LogTrace("SKIP");
 							if ((cop.currentLine & cop.waitVMask) >= cop.waitV)
 							{
 								if ((h & cop.waitHMask) >= cop.waitH)
@@ -613,9 +614,9 @@ namespace RunAmiga.Core.Custom
 							cop.status = CopperStatus.Running;
 						}
 					}
+
 					//uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
 					//coppos &= cop.waitMask;
-
 					//if (coppos >= cop.waitPos)
 					//{
 					//	//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
@@ -699,60 +700,102 @@ namespace RunAmiga.Core.Custom
 		private const ulong pixelMask_64 = 0x8000_0000_0000_0000;
 		private const ulong pixelMask_32 = 0x8000_0000;
 		private const ulong pixelMask_16 = 0x8000;
+		private uint pixelMaskCounter = 0;
 
-		private void ResetPixelMask()
+		private void InitPixelMask()
 		{
 			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
-				cln.pixelMask = pixelMask_16;
+			{ cln.pixelMask = pixelMask_16; cln.pixelBits = 15;}
 			else if (fmode == 3)
-				cln.pixelMask = pixelMask_64;
+			{ cln.pixelMask = pixelMask_64; cln.pixelBits = 63; }
 			else
-				cln.pixelMask = pixelMask_32;
+			{ cln.pixelMask = pixelMask_32; cln.pixelBits = 31; }
+			pixelMaskCounter = 0;
 		}
 
-		private bool IsNewPixelMask()
-		{
-			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
-				return cln.pixelMask == pixelMask_16;
-			else if (fmode == 3)
-				return cln.pixelMask == pixelMask_64;
-			else
-				return cln.pixelMask == pixelMask_32;
-		}
+		//private void ResetPixelMask()
+		//{
+		//	if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+		//	{	 pixelMaskCounter=16;}
+		//	else if (fmode == 3)
+		//	{	 pixelMaskCounter=64;}
+		//	else
+		//	{	pixelMaskCounter=32;}
+		//}
 
-		private void UpdatePixelMask()
+		//private bool IsNewPixelMask()
+		//{
+		//	if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+		//		return cln.pixelMask == pixelMask_16;
+		//	else if (fmode == 3)
+		//		return cln.pixelMask == pixelMask_64;
+		//	else
+		//		return cln.pixelMask == pixelMask_32;
+		//}
+
+		private bool UpdatePixelMask()
 		{
-			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
-				cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
-			else if (fmode == 3)
-				cln.pixelMask =(cln.pixelMask >> 1) | (cln.pixelMask << 63); //next bit
+			//if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+			//	cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
+			//else if (fmode == 3)
+			//	cln.pixelMask =(cln.pixelMask >> 1) | (cln.pixelMask << 63); //next bit
+			//else
+			//	cln.pixelMask = (uint)((cln.pixelMask >> 1) | (cln.pixelMask << 31)); //next bit
+			bool freshBits = false;
+
+			if ((pixelMaskCounter&(cln.pixelBits)) == 0)
+			{
+				for (int i = 0; i < 8; i++)
+				{
+					bpldat[i] = cln.bpldatdma[i];
+					cln.bpldatdma[i] = 0;
+				}
+
+				//ResetPixelMask();
+
+				//if (cop.currentLine == cdbg.dbugLine)
+				//{
+				//	cdbg.write[h] = 'x';
+				//	cdbg.dma++;
+				//}
+				freshBits = true;
+			}
 			else
-				cln.pixelMask = (uint)((cln.pixelMask >> 1) | (cln.pixelMask << 31)); //next bit
+			{
+				for (int i = 0; i < 8; i++)
+					bpldat[i] <<= 1;
+
+				//if (cop.currentLine == cdbg.dbugLine)
+				//	cdbg.write[h] = '.';
+			}
+
+			pixelMaskCounter++;
+			return freshBits;
 		}
 
 		//[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneConvert(int h)
 		{
-			if (IsNewPixelMask())
-			{
-				//debugging
-				if (cop.currentLine == cdbg.dbugLine)
-				{
-					cdbg.write[h] = 'x';
-					cdbg.dma++;
-				}
-				//debugging
+			//if (IsNewPixelMask())
+			//{
+			//	//debugging
+			//	if (cop.currentLine == cdbg.dbugLine)
+			//	{
+			//		cdbg.write[h] = 'x';
+			//		cdbg.dma++;
+			//	}
+			//	//debugging
 
-				for (int i = 0; i < 8; i++)
-					bpldat[i] = cln.bpldatdma[i];
-			}
-			//debugging
-			else
-			{
-				if (cop.currentLine == cdbg.dbugLine)
-					cdbg.write[h] = '.';
-			}
-			//debugging
+			//	for (int i = 0; i < 8; i++)
+			//		bpldat[i] = cln.bpldatdma[i];
+			//}
+			////debugging
+			//else
+			//{
+			//	if (cop.currentLine == cdbg.dbugLine)
+			//		cdbg.write[h] = '.';
+			//}
+			////debugging
 
 			if ((bplcon0 & (1 << 10)) != 0)
 			{
@@ -760,6 +803,8 @@ namespace RunAmiga.Core.Custom
 
 				for (int p = 0; p < cln.pixelLoop; p++)
 				{
+					UpdatePixelMask();
+
 					uint col0;
 					uint col1;
 					uint col;
@@ -796,8 +841,6 @@ namespace RunAmiga.Core.Custom
 					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
-
-					UpdatePixelMask();
 				}
 			}
 			else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) != 0))
@@ -806,6 +849,8 @@ namespace RunAmiga.Core.Custom
 
 				for (int p = 0; p < cln.pixelLoop; p++)
 				{
+					UpdatePixelMask();
+
 					uint col;
 
 					int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
@@ -849,7 +894,7 @@ namespace RunAmiga.Core.Custom
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
 
-					UpdatePixelMask();
+
 					cln.lastcol = col;
 				}
 			}
@@ -859,6 +904,8 @@ namespace RunAmiga.Core.Custom
 
 				for (int p = 0; p < cln.pixelLoop; p++)
 				{
+					UpdatePixelMask();
+
 					//decode the colour
 					byte pix = 0;
 
@@ -874,8 +921,7 @@ namespace RunAmiga.Core.Custom
 					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
-
-					UpdatePixelMask();
+					
 				}
 			}
 			else if (cln.planes == 8 && ((bplcon0 & (1 << 11)) != 0))
@@ -884,6 +930,8 @@ namespace RunAmiga.Core.Custom
 
 				for (int p = 0; p < cln.pixelLoop; p++)
 				{
+					UpdatePixelMask();
+
 					uint col;
 
 					//int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
@@ -926,7 +974,6 @@ namespace RunAmiga.Core.Custom
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
 
-					UpdatePixelMask();
 					cln.lastcol = col;
 				}
 			}
@@ -934,6 +981,8 @@ namespace RunAmiga.Core.Custom
 			{
 				for (int p = 0; p < cln.pixelLoop; p++)
 				{
+					UpdatePixelMask();
+
 					uint col;
 
 					//decode the colour
@@ -951,8 +1000,6 @@ namespace RunAmiga.Core.Custom
 					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
 					for (int k = 0; k < 4 / cln.pixelLoop; k++)
 						screen[cop.dptr++] = (int)col;
-
-					UpdatePixelMask();
 				}
 			}
 		}
