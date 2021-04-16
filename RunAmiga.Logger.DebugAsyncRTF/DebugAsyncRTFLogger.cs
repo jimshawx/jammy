@@ -171,8 +171,8 @@ namespace RunAmiga.Logger.DebugAsyncRTF
 							if (debugTxt.TextLength > maxTextLength * 2)
 							{
 								debugTxt.Text = debugTxt.Text.Substring(debugTxt.TextLength - maxTextLength, maxTextLength);
-								debugTxt.ScrollToCaret();
 							}
+							debugTxt.ScrollToCaret();
 						});
 
 						backoff = 1;
