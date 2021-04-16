@@ -394,9 +394,6 @@ namespace RunAmiga.Core.Custom
 							ddfstopfix = (ushort)((ddfstop + round) & ~round);
 						}
 					}
-
-					//diwstrth &= 0xf8;
-					//diwstoph &= 0x1f8;
 				}
 				else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0)
 				{
@@ -515,8 +512,14 @@ namespace RunAmiga.Core.Custom
 			}
 
 			//next horizontal line
+			if (cop.currentLine >= cln.diwstrtv && cop.currentLine < cln.diwstopv)
 			{
 				int planesz = (bplcon0 >> 12) & 7;
+				if (settings.ChipSet == ChipSet.AGA)
+				{
+					if (planesz == 0 && (bplcon0 & (1 << 4)) != 0)
+						planesz = 8;
+				}
 				for (int i = 0; i < planesz; i++)
 				{
 					bplpt[i] += ((i & 1) == 0) ? bpl2mod : bpl1mod;
@@ -622,7 +625,8 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
-		private int modulo = 0;
+		//private int modulo = 0;
+		//[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneFetch(int h)
 		{
 			int planeIdx;
@@ -661,9 +665,9 @@ namespace RunAmiga.Core.Custom
 				{
 					//bplpt[plane] &= ~1u;
 
-					if (settings.ChipSet != ChipSet.OCS)
-						cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane]+12, Size.Word);//why?!
-					else
+					//if (settings.ChipSet != ChipSet.OCS)
+					//	cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane]-12, Size.Word);//why?!
+					//else
 						cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
 					bplpt[plane] += 2;
 				}
@@ -731,20 +735,24 @@ namespace RunAmiga.Core.Custom
 		{
 			if (IsNewPixelMask())
 			{
+				//debugging
 				if (cop.currentLine == cdbg.dbugLine)
 				{
 					cdbg.write[h] = 'x';
 					cdbg.dma++;
 				}
+				//debugging
 
 				for (int i = 0; i < 8; i++)
 					bpldat[i] = cln.bpldatdma[i];
 			}
+			//debugging
 			else
 			{
 				if (cop.currentLine == cdbg.dbugLine)
 					cdbg.write[h] = '.';
 			}
+			//debugging
 
 			if ((bplcon0 & (1 << 10)) != 0)
 			{
