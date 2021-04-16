@@ -23,8 +23,8 @@ namespace RunAmiga.Core.Custom
 		//private const int SCREEN_WIDTH = 1280;
 		//private const int SCREEN_HEIGHT = 1024;
 
-		private const int SCREEN_WIDTH = DMA_WIDTH*4;//227 * 4;
-		private const int SCREEN_HEIGHT = 313*2;//x2 for scan double
+		private const int SCREEN_WIDTH = DMA_WIDTH * 4;//227 * 4;
+		private const int SCREEN_HEIGHT = 313 * 2;//x2 for scan double
 
 		//sprite DMA starts at 0x18, but can be eaten into by bitmap DMA
 		//normal bitmap DMA start at 0x38, overscan at 0x30
@@ -63,7 +63,7 @@ namespace RunAmiga.Core.Custom
 			if (obj == (int)Keyboard.VK.VK_UP) cdbg.dbugLine--;
 			if (obj == (int)Keyboard.VK.VK_DOWN) cdbg.dbugLine++;
 			if (obj == (int)Keyboard.VK.VK_RIGHT) cdbg.dbugLine = -1;
-			if (obj == (int)Keyboard.VK.VK_LEFT) cdbg.dbugLine = diwstrt>>8;
+			if (obj == (int)Keyboard.VK.VK_LEFT) cdbg.dbugLine = diwstrt >> 8;
 		}
 
 		private ulong copperTime;
@@ -145,12 +145,12 @@ namespace RunAmiga.Core.Custom
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					csb.AppendLine($"{copPC-4:X8} MOVE {ins:X4} {data:X4} {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
+					csb.AppendLine($"{copPC - 4:X8} MOVE {ins:X4} {data:X4} {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
 
 					if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
-						copPC = custom.Read(copPC-4, ChipRegs.COP1LCH, Size.Long);//COP1LC
-					else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2) 
-						copPC = custom.Read(copPC-4, ChipRegs.COP2LCH, Size.Long);//COP2LC
+						copPC = custom.Read(copPC - 4, ChipRegs.COP1LCH, Size.Long);//COP1LC
+					else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2)
+						copPC = custom.Read(copPC - 4, ChipRegs.COP2LCH, Size.Long);//COP2LC
 				}
 				else if ((ins & 0x0001) == 1)
 				{
@@ -166,12 +166,12 @@ namespace RunAmiga.Core.Custom
 					if ((data & 1) == 0)
 					{
 						//WAIT
-						csb.AppendLine($"{copPC-4:X8} WAIT {ins:X4} {data:X4} vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
+						csb.AppendLine($"{copPC - 4:X8} WAIT {ins:X4} {data:X4} vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
 					}
 					else
 					{
 						//SKIP
-						csb.AppendLine($"{copPC-4:X8} SKIP {ins:X4} {data:X4} vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
+						csb.AppendLine($"{copPC - 4:X8} SKIP {ins:X4} {data:X4} vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
 					}
 
 					//this is usually how a copper list ends
@@ -195,8 +195,8 @@ namespace RunAmiga.Core.Custom
 		[Flags]
 		private enum BPLCON0 : uint
 		{
-			HiRes=1<<15,
-			SuperHiRes=1<<6,
+			HiRes = 1 << 15,
+			SuperHiRes = 1 << 6,
 		}
 
 		//global state of the copper
@@ -302,7 +302,7 @@ namespace RunAmiga.Core.Custom
 					{
 						for (int q = 0; q < box; q++)
 						{
-							screen[sx + x * box + q + (sy + (y*box) + p) * SCREEN_WIDTH] = (int)truecolour[x + y * 64];
+							screen[sx + x * box + q + (sy + (y * box) + p) * SCREEN_WIDTH] = (int)truecolour[x + y * 64];
 						}
 					}
 				}
@@ -338,8 +338,8 @@ namespace RunAmiga.Core.Custom
 
 				planes = (bplcon0 >> 12) & 7;
 				if (settings.ChipSet == ChipSet.AGA)
-				{	
-					if (planes == 0 && (bplcon0 & (1<<4))!=0)
+				{
+					if (planes == 0 && (bplcon0 & (1 << 4)) != 0)
 						planes = 8;
 				}
 				diwstrth = diwstrt & 0xff;
@@ -370,7 +370,7 @@ namespace RunAmiga.Core.Custom
 					pixmod = 4;
 
 					ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
-					
+
 					if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 					{
 						wordCount = (ddfstop - ddfstrt) / 4 + 2;
@@ -415,7 +415,7 @@ namespace RunAmiga.Core.Custom
 					if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 					{
 						wordCount = (ddfstop - ddfstrt) / 8 + 1;
-						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8); 
+						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8);
 					}
 					else
 					{
@@ -438,11 +438,10 @@ namespace RunAmiga.Core.Custom
 
 			int lineStart = cop.dptr;
 
-			InitPixelMask();
+			FirstPixel();
 			cln.lastcol = truecolour[0];//should be colour 0 at time of diwstrt
 
-			for (int i = 0; i < 8; i++)
-				bpldat[i] = cln.bpldatdma[i] = 0;
+
 
 			for (int h = 0; h < 256; h++)
 			{
@@ -515,16 +514,8 @@ namespace RunAmiga.Core.Custom
 			//next horizontal line
 			if (cop.currentLine >= cln.diwstrtv && cop.currentLine < cln.diwstopv)
 			{
-				int planesz = (bplcon0 >> 12) & 7;
-				if (settings.ChipSet == ChipSet.AGA)
-				{
-					if (planesz == 0 && (bplcon0 & (1 << 4)) != 0)
-						planesz = 8;
-				}
-				for (int i = 0; i < planesz; i++)
-				{
+				for (int i = 0; i < cln.planes; i++)
 					bplpt[i] += ((i & 1) == 0) ? bpl2mod : bpl1mod;
-				}
 			}
 
 			//this should be a no-op
@@ -557,17 +548,6 @@ namespace RunAmiga.Core.Custom
 						uint regAddress = ChipRegs.ChipBase + reg;
 
 						custom.Write(0, regAddress, data, Size.Word);
-
-						//if (regAddress == ChipRegs.COPJMP1)
-						//{
-						//	cop.copPC = cop1lc;
-						//	logger.LogTrace($"JMP1 {cop.copPC:X6}");
-						//}
-						//else if (regAddress == ChipRegs.COPJMP2)
-						//{
-						//	cop.copPC = cop2lc;
-						//	logger.LogTrace($"JMP2 {cop.copPC:X6}");
-						//}
 					}
 					else if ((ins & 0x0001) == 1)
 					{
@@ -580,7 +560,7 @@ namespace RunAmiga.Core.Custom
 
 						cop.waitMask = (uint)((cop.waitHMask & 0xff) | ((cop.waitVMask & 0xff) << 8));
 						cop.waitPos = (uint)(((cop.waitV & 0xff) << 8) | (cop.waitH & 0xff));
-						
+
 						uint blit = (uint)(data >> 15);
 
 						//todo: blitter is immediate, so currently ignored.
@@ -626,7 +606,6 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
-		//private int modulo = 0;
 		//[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneFetch(int h)
 		{
@@ -638,7 +617,7 @@ namespace RunAmiga.Core.Custom
 				int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
 				int[] fetchHi = { 4, 2, 3, 1 };
 
-				planeIdx = (h ) % cln.pixmod;
+				planeIdx = h % cln.pixmod;
 
 				if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 					plane = fetchHi[planeIdx] - 1;
@@ -649,14 +628,13 @@ namespace RunAmiga.Core.Custom
 			{
 				int[] fetchF = {
 					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10,
-					//10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10
 				};
 
 				int mod;
 				if (fmode == 3) mod = 16;
 				else mod = 8;
 
-				planeIdx = (h ) % mod;
+				planeIdx = h % mod;
 				plane = fetchF[planeIdx] - 1;
 			}
 
@@ -664,25 +642,16 @@ namespace RunAmiga.Core.Custom
 			{
 				if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 				{
-					//bplpt[plane] &= ~1u;
-
-					//if (settings.ChipSet != ChipSet.OCS)
-					//	cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane]-12, Size.Word);//why?!
-					//else
-						cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
+					cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
 					bplpt[plane] += 2;
 				}
 				else if (fmode == 3)
 				{
-					//bplpt[plane] &= ~7u;
-
 					cln.bpldatdma[plane] = ((ulong)memory.Read(0, bplpt[plane], Size.Long) << 32) | memory.Read(0, bplpt[plane] + 4, Size.Long);
 					bplpt[plane] += 8;
 				}
 				else
 				{
-					//bplpt[plane] &= ~3u;
-
 					cln.bpldatdma[plane] = memory.Read(0, bplpt[plane], Size.Long);
 					bplpt[plane] += 4;
 				}
@@ -697,53 +666,28 @@ namespace RunAmiga.Core.Custom
 			}
 		}
 
-		private const ulong pixelMask_64 = 0x8000_0000_0000_0000;
-		private const ulong pixelMask_32 = 0x8000_0000;
-		private const ulong pixelMask_16 = 0x8000;
-		private uint pixelMaskCounter = 0;
+		private uint pixelCounter = 0;
 
-		private void InitPixelMask()
+		private void FirstPixel()
 		{
 			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
-			{ cln.pixelMask = pixelMask_16; cln.pixelBits = 15;}
+				cln.pixelBits = 15; 
 			else if (fmode == 3)
-			{ cln.pixelMask = pixelMask_64; cln.pixelBits = 63; }
+				cln.pixelBits = 63; 
 			else
-			{ cln.pixelMask = pixelMask_32; cln.pixelBits = 31; }
-			pixelMaskCounter = 0;
+				cln.pixelBits = 31; 
+
+			cln.pixelMask = 1ul << (int)cln.pixelBits;
+
+			pixelCounter = 0;
+
+			for (int i = 0; i < 8; i++)
+				bpldat[i] = cln.bpldatdma[i] = 0;
 		}
 
-		//private void ResetPixelMask()
-		//{
-		//	if (settings.ChipSet == ChipSet.OCS || fmode == 0)
-		//	{	 pixelMaskCounter=16;}
-		//	else if (fmode == 3)
-		//	{	 pixelMaskCounter=64;}
-		//	else
-		//	{	pixelMaskCounter=32;}
-		//}
-
-		//private bool IsNewPixelMask()
-		//{
-		//	if (settings.ChipSet == ChipSet.OCS || fmode == 0)
-		//		return cln.pixelMask == pixelMask_16;
-		//	else if (fmode == 3)
-		//		return cln.pixelMask == pixelMask_64;
-		//	else
-		//		return cln.pixelMask == pixelMask_32;
-		//}
-
-		private bool UpdatePixelMask()
+		private void NextPixel(int h, int p)
 		{
-			//if (settings.ChipSet == ChipSet.OCS || fmode == 0)
-			//	cln.pixelMask = (ushort)((cln.pixelMask >> 1) | (cln.pixelMask << 15)); //next bit
-			//else if (fmode == 3)
-			//	cln.pixelMask =(cln.pixelMask >> 1) | (cln.pixelMask << 63); //next bit
-			//else
-			//	cln.pixelMask = (uint)((cln.pixelMask >> 1) | (cln.pixelMask << 31)); //next bit
-			bool freshBits = false;
-
-			if ((pixelMaskCounter&(cln.pixelBits)) == 0)
+			if ((pixelCounter & (cln.pixelBits)) == 0)
 			{
 				for (int i = 0; i < 8; i++)
 				{
@@ -751,119 +695,67 @@ namespace RunAmiga.Core.Custom
 					cln.bpldatdma[i] = 0;
 				}
 
-				//ResetPixelMask();
-
-				//if (cop.currentLine == cdbg.dbugLine)
-				//{
-				//	cdbg.write[h] = 'x';
-				//	cdbg.dma++;
-				//}
-				freshBits = true;
+				if (cop.currentLine == cdbg.dbugLine && p == 0)
+				{
+					cdbg.write[h] = 'x';
+					cdbg.dma++;
+				}
 			}
 			else
 			{
 				for (int i = 0; i < 8; i++)
 					bpldat[i] <<= 1;
 
-				//if (cop.currentLine == cdbg.dbugLine)
-				//	cdbg.write[h] = '.';
+				if (cop.currentLine == cdbg.dbugLine && p == 0)
+					cdbg.write[h] = '.';
 			}
 
-			pixelMaskCounter++;
-			return freshBits;
+			pixelCounter++;
 		}
 
 		//[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneConvert(int h)
 		{
-			//if (IsNewPixelMask())
-			//{
-			//	//debugging
-			//	if (cop.currentLine == cdbg.dbugLine)
-			//	{
-			//		cdbg.write[h] = 'x';
-			//		cdbg.dma++;
-			//	}
-			//	//debugging
+			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
 
-			//	for (int i = 0; i < 8; i++)
-			//		bpldat[i] = cln.bpldatdma[i];
-			//}
-			////debugging
-			//else
-			//{
-			//	if (cop.currentLine == cdbg.dbugLine)
-			//		cdbg.write[h] = '.';
-			//}
-			////debugging
-
-			if ((bplcon0 & (1 << 10)) != 0)
+			for (int p = 0; p < cln.pixelLoop; p++)
 			{
-				//DPF
+				//decode the colour
 
-				for (int p = 0; p < cln.pixelLoop; p++)
+				uint col;
+				byte pix = 0;
+
+				NextPixel(h,p);
+
+				if ((bplcon0 & (1 << 10)) != 0)
 				{
-					UpdatePixelMask();
-
-					uint col0;
-					uint col1;
-					uint col;
-
-					int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
-
-					//decode the colours
+					//DPF
 					byte pix0 = 0;
-
 					for (int i = 0, b = 1; i < cln.planes; i += 2, b <<= 1)
 						pix0 |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
-					//pix is the Amiga colour
-					col0 = truecolour[pix0 + bank];
+					uint col0 = truecolour[pix0 + bank];
 
 					byte pix1 = 0;
-
 					for (int i = 1, b = 1; i < cln.planes; i += 2, b <<= 1)
 						pix1 |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
-					//pix is the Amiga colour
-					if (pix1 != 0)
-						col1 = truecolour[pix1 + 8 + bank];
-					else
-						col1 = truecolour[0];
+					uint col1 = truecolour[pix1 == 0 ? 0: pix1 + 8 + bank];
 
 					//which playfield is in front?
 					if ((bplcon2 & (1 << 6)) != 0)
 						col = pix1 != 0 ? col1 : col0;
 					else
 						col = pix0 != 0 ? col0 : col1;
-
-					//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
-					for (int k = 0; k < 4 / cln.pixelLoop; k++)
-						screen[cop.dptr++] = (int)col;
 				}
-			}
-			else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) != 0))
-			{
-				//HAM6
-
-				for (int p = 0; p < cln.pixelLoop; p++)
+				else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) != 0))
 				{
-					UpdatePixelMask();
-
-					uint col;
-
-					int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
-
-					//decode the colour
-					byte pix = 0;
-
-					for (int i = 0, b = 1; i < 6; i++, b <<= 1)
+					//HAM6
+					for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
 						pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
 					byte ham = (byte)(pix & 0b11_0000);
 					pix &= 0xf;
-					//pix is the Amiga colour
 					if (ham == 0)
 					{
 						col = truecolour[pix + bank];
@@ -888,70 +780,32 @@ namespace RunAmiga.Core.Custom
 							col = (cln.lastcol & 0xff00ffff) | (px << (8 + 8));
 						}
 					}
-
-					//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
-					for (int k = 0; k < 4 / cln.pixelLoop; k++)
-						screen[cop.dptr++] = (int)col;
-
-
-					cln.lastcol = col;
 				}
-			}
-			else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) == 0 && (settings.ChipSet != ChipSet.AGA || (bplcon2&(1<<9))==0 )))
-			{
-				//EHB
-
-				for (int p = 0; p < cln.pixelLoop; p++)
+				else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) == 0 && (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0)))
 				{
-					UpdatePixelMask();
-
-					//decode the colour
-					byte pix = 0;
-
-					for (int i = 0, b = 1; i < 6; i++, b <<= 1)
+					//EHB
+					for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
 						pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
-					//pix is the Amiga colour
-					var col = truecolour[pix & 0x1f];
-					if ((pix&0b100000)!=0)
-						col = ((col & 0x00fefefe)>>1)|0xff000000;
-
-					//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
-					for (int k = 0; k < 4 / cln.pixelLoop; k++)
-						screen[cop.dptr++] = (int)col;
-					
+					col = truecolour[pix & 0x1f];
+					if ((pix & 0b100000) != 0)
+						col = ((col & 0x00fefefe) >> 1) | 0xff000000;
 				}
-			}
-			else if (cln.planes == 8 && ((bplcon0 & (1 << 11)) != 0))
-			{
-				//HAM8
-
-				for (int p = 0; p < cln.pixelLoop; p++)
+				else if (cln.planes == 8 && ((bplcon0 & (1 << 11)) != 0))
 				{
-					UpdatePixelMask();
-
-					uint col;
-
-					//int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
-
-					//decode the colour
-					byte pix = 0;
-
-					for (int i = 0, b = 1; i < 8; i++, b <<= 1)
+					//HAM8
+					for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
 						pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
 					byte ham = (byte)(pix & 0b11);
 					pix &= 0xfc;
-					//pix is the Amiga colour
 					if (ham == 0)
 					{
 						col = truecolour[pix];
 					}
 					else
 					{
-						uint px = (uint)(pix|(pix>>6));
+						uint px = (uint)(pix | (pix >> 6));
 						if (ham == 1)
 						{
 							//col+B
@@ -968,39 +822,22 @@ namespace RunAmiga.Core.Custom
 							col = (cln.lastcol & 0xff00ffff) | (px << (8 + 8));
 						}
 					}
-
-					//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
-					for (int k = 0; k < 4 / cln.pixelLoop; k++)
-						screen[cop.dptr++] = (int)col;
-
-					cln.lastcol = col;
 				}
-			}
-			else
-			{
-				for (int p = 0; p < cln.pixelLoop; p++)
+				else
 				{
-					UpdatePixelMask();
-
-					uint col;
-
-					//decode the colour
-					byte pix = 0;
-
 					for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
 						pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
-					//pix is the Amiga colour
-					//int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
-					//col = truecolour[pix + bank];
 					col = truecolour[pix];
-
-					//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-					//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
-					for (int k = 0; k < 4 / cln.pixelLoop; k++)
-						screen[cop.dptr++] = (int)col;
 				}
+
+				//pixel double
+				//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+				//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
+				for (int k = 0; k < 4 / cln.pixelLoop; k++)
+					screen[cop.dptr++] = (int)col;
+
+				cln.lastcol = col;
 			}
 		}
 
@@ -1013,7 +850,7 @@ namespace RunAmiga.Core.Custom
 			{
 				for (int s = 7; s >= 0; s--)
 				{
-					for (;;)
+					for (; ; )
 					{
 						sprpos[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
 						sprpt[s] += 2;
@@ -1214,7 +1051,7 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.BPL8DAT: value = (ushort)bpldat[7]; break;
 
 				case ChipRegs.BPL1PTL: value = (ushort)bplpt[0]; break;
-				case ChipRegs.BPL1PTH: value = (ushort)(bplpt[0]>>16); break;
+				case ChipRegs.BPL1PTH: value = (ushort)(bplpt[0] >> 16); break;
 				case ChipRegs.BPL2PTL: value = (ushort)bplpt[1]; break;
 				case ChipRegs.BPL2PTH: value = (ushort)(bplpt[1] >> 16); break;
 				case ChipRegs.BPL3PTL: value = (ushort)bplpt[2]; break;
@@ -1238,7 +1075,7 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.DDFSTOP: value = ddfstop; break;
 
 				case ChipRegs.SPR0PTL: value = (ushort)sprpt[0]; break;
-				case ChipRegs.SPR0PTH: value = (ushort)(sprpt[0]>>16); break;
+				case ChipRegs.SPR0PTH: value = (ushort)(sprpt[0] >> 16); break;
 				case ChipRegs.SPR0POS: value = sprpos[0]; break;
 				case ChipRegs.SPR0CTL: value = sprctl[0]; break;
 				case ChipRegs.SPR0DATA: value = sprdata[0]; break;
@@ -1312,7 +1149,7 @@ namespace RunAmiga.Core.Custom
 
 				//Amiga colour
 				int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
-				
+
 				if (loct != 0)
 					value = lowcolour[index];
 				else
@@ -1339,8 +1176,8 @@ namespace RunAmiga.Core.Custom
 
 				//bitplane specific
 
-				case ChipRegs.BPL1MOD: bpl1mod = (uint)(short)value&0xfffffffe; break;
-				case ChipRegs.BPL2MOD: bpl2mod = (uint)(short)value&0xfffffffe; break;
+				case ChipRegs.BPL1MOD: bpl1mod = (uint)(short)value & 0xfffffffe; break;
+				case ChipRegs.BPL2MOD: bpl2mod = (uint)(short)value & 0xfffffffe; break;
 
 				case ChipRegs.BPLCON0: bplcon0 = value; break;
 				case ChipRegs.BPLCON1: bplcon1 = value; break;
@@ -1415,7 +1252,7 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.SPR4CTL: sprctl[4] = value; break;
 				case ChipRegs.SPR4DATA: sprdata[4] = value; break;
 				case ChipRegs.SPR4DATB: sprdatb[4] = value; break;
-				
+
 				case ChipRegs.SPR5PTL: sprpt[5] = (sprpt[5] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR5PTH: sprpt[5] = (sprpt[5] & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.SPR5POS: sprpos[5] = value; break;
@@ -1467,7 +1304,7 @@ namespace RunAmiga.Core.Custom
 				}
 
 				//24bit colour
-				truecolour[index] = Explode(colour[index]) | (Explode(lowcolour[index])>>4);
+				truecolour[index] = Explode(colour[index]) | (Explode(lowcolour[index]) >> 4);
 
 				//logger.LogTrace($"{index,3} {colour[index]:X4} {truecolour[index]:X8}");
 			}
@@ -1475,7 +1312,7 @@ namespace RunAmiga.Core.Custom
 
 		private uint Explode(ushort c)
 		{
-			return (uint)(((c & 0xf)<<4) | ((c & 0xf0) << 8) | ((c & 0xf00) << 12));
+			return (uint)(((c & 0xf) << 4) | ((c & 0xf0) << 8) | ((c & 0xf00) << 12));
 		}
 	}
 }
