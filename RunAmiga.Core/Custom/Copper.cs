@@ -110,7 +110,9 @@ namespace RunAmiga.Core.Custom
 
 				//run the next scanline
 				cop.currentLine = (int)copperVert;
+				StartCopperLine();
 				RunCopperLine();
+				EndCopperLine();
 			}
 		}
 
@@ -188,7 +190,8 @@ namespace RunAmiga.Core.Custom
 		//private uint beamVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 		private enum CopperStatus
 		{
-			Running,
+			RunningWord1,
+			RunningWord2,
 			Waiting,
 		}
 
@@ -214,6 +217,9 @@ namespace RunAmiga.Core.Custom
 			public uint waitMask;
 			public uint waitPos;
 
+			public int lineStart;
+			public ushort ins;
+
 			public void Reset(uint copperPC)
 			{
 				copPC = copperPC;
@@ -223,7 +229,7 @@ namespace RunAmiga.Core.Custom
 				waitV = 0;
 				waitHMask = 0xff;
 				waitVMask = 0xff;
-				status = CopperStatus.Running;
+				status = CopperStatus.RunningWord1;
 			}
 		}
 
@@ -429,20 +435,18 @@ namespace RunAmiga.Core.Custom
 
 				//pixelMask = 0x8000;
 			}
+		}
 
+		private void StartCopperLine()
+		{
+			cop.lineStart = cop.dptr;
+
+			FirstPixel();
+			cln.lastcol = truecolour[0];//should be colour 0 at time of diwstrt
 		}
 
 		private void RunCopperLine()
 		{
-			//if (cop.copPC == 0) return;
-
-			int lineStart = cop.dptr;
-
-			FirstPixel();
-			cln.lastcol = truecolour[0];//should be colour 0 at time of diwstrt
-
-
-
 			for (int h = 0; h < 256; h++)
 			{
 				cln.InitLine(bplcon0, diwstrt, diwstop, diwhigh, ddfstrt, ddfstop, fmode, settings);
@@ -510,7 +514,10 @@ namespace RunAmiga.Core.Custom
 						screen[cop.dptr++] = (int)col;
 				}
 			}
+		}
 
+		private void EndCopperLine()
+		{
 			//next horizontal line
 			if (cop.currentLine >= cln.diwstrtv && cop.currentLine < cln.diwstopv)
 			{
@@ -519,10 +526,10 @@ namespace RunAmiga.Core.Custom
 			}
 
 			//this should be a no-op
-			cop.dptr += SCREEN_WIDTH - (cop.dptr - lineStart);
+			cop.dptr += SCREEN_WIDTH - (cop.dptr - cop.lineStart);
 
 			//scan double
-			for (int i = lineStart; i < lineStart + SCREEN_WIDTH; i++)
+			for (int i = cop.lineStart; i < cop.lineStart + SCREEN_WIDTH; i++)
 				screen[cop.dptr++] = screen[i];
 
 			Debug(cop, cdbg, cln);
@@ -533,13 +540,19 @@ namespace RunAmiga.Core.Custom
 			//copper instruction every even clock (and copper DMA is on)
 			if ((h & 1) == 0 && h < 227)
 			{
-				if (cop.status == CopperStatus.Running)
+				if (cop.status == CopperStatus.RunningWord1)
 				{
-					ushort ins = (ushort)memory.Read(0, cop.copPC, Size.Word);
+					cop.ins = (ushort)memory.Read(0, cop.copPC, Size.Word);
 					cop.copPC += 2;
+					cop.status = CopperStatus.RunningWord2;
+				}
+				else if (cop.status == CopperStatus.RunningWord2)
+				{
+					ushort ins = cop.ins;
 
 					ushort data = (ushort)memory.Read(0, cop.copPC, Size.Word);
 					cop.copPC += 2;
+					cop.status = CopperStatus.RunningWord1;
 
 					if ((ins & 0x0001) == 0)
 					{
@@ -568,6 +581,11 @@ namespace RunAmiga.Core.Custom
 
 						if ((data & 1) == 0)
 						{
+							//if (ins == 0xffff && data == 0xfffe)
+							//	cop.status = CopperStatus.Waiting;
+							//else
+							//	return;
+							
 							//WAIT
 							//logger.LogTrace($"WAIT until ({cop.waitH},{cop.waitV}) @({h},{cop.currentLine}) hm:{cop.waitHMask:X3} vm:{cop.waitVMask:X3} m:{cop.waitMask:X4} p:{cop.waitPos:X4}");
 							cop.status = CopperStatus.Waiting;
@@ -576,32 +594,40 @@ namespace RunAmiga.Core.Custom
 						{
 							//SKIP
 							//logger.LogTrace("SKIP");
-							if ((cop.currentLine & cop.waitVMask) >= cop.waitV)
+							//if ((cop.currentLine & cop.waitVMask) >= cop.waitV)
+							//{
+							//	if ((h & cop.waitHMask) >= cop.waitH)
+							//		cop.copPC += 4;
+							//}
+
+							uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
+							coppos &= cop.waitMask;
+							if (coppos >= (cop.waitPos & cop.waitMask))
 							{
-								if ((h & cop.waitHMask) >= cop.waitH)
-									cop.copPC += 4;
+								//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
+								cop.copPC += 4;
 							}
 						}
 					}
 				}
 				else if (cop.status == CopperStatus.Waiting)
 				{
-					if ((cop.currentLine & cop.waitVMask) == cop.waitV)
-					{
-						if ((h & cop.waitHMask) >= cop.waitH)
-						{
-							//logger.LogTrace($"RUN ({h},{cop.currentLine})");
-							cop.status = CopperStatus.Running;
-						}
-					}
-
-					//uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
-					//coppos &= cop.waitMask;
-					//if (coppos >= cop.waitPos)
+					//if ((cop.currentLine & cop.waitVMask) == cop.waitV)
 					//{
-					//	//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
-					//	cop.status = CopperStatus.Running;
+					//	if ((h & cop.waitHMask) >= cop.waitH)
+					//	{
+					//		logger.LogTrace($"RUN ({h},{cop.currentLine})");
+					//		cop.status = CopperStatus.RunningWord1;
+					//	}
 					//}
+
+					uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
+					coppos &= cop.waitMask;
+					if (coppos >= (cop.waitPos&cop.waitMask))
+					{
+						//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
+						cop.status = CopperStatus.RunningWord1;
+					}
 				}
 			}
 		}
