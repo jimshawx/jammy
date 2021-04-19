@@ -148,15 +148,21 @@ namespace RunAmiga.Core.IDE
 		}
 
 		private long currentReadIndex = -1;
-		public void BeginRead(uint address)
+		public void BeginRead(uint address, byte sectorCount)
 		{
-			currentReadIndex = (long)address * 512;
+			//pre-load the swabbed sectors - is it faster?
+			var src = new ushort[256 * sectorCount];
+			diskAccessor.ReadArray(address * 512, src, 0, 256 * sectorCount);
+			for (int i = 0; i < src.Length; i++)
+				src[i] = (ushort)((src[i] << 8) | (src[i] >> 8));
+			BeginRead(src);
 
-			if (dataSource != null)
-			{
-				dataSource.Dispose();
-				dataSource = null;
-			}
+			//currentReadIndex = (long)address * 512;
+			//if (dataSource != null)
+			//{
+			//	dataSource.Dispose();
+			//	dataSource = null;
+			//}
 		}
 
 		public ushort Read()
@@ -763,7 +769,7 @@ namespace RunAmiga.Core.IDE
 					cmd = "Read Sector(s)";
 					currentTransfer = new Transfer(sectorCount, Transfer.TransferDirection.HostRead);
 					//logger.LogTrace($"READ drv: {currentDrive.DiskNumber} cnt: {currentTransfer.SectorCount} LBA: {LbaAddress:X8} CHS: {ChsAddress:X8} lba: {(driveHead >> 6) & 1}");
-					currentDrive.BeginRead(CurrentAddress());
+					currentDrive.BeginRead(CurrentAddress(), sectorCount);
 					NextSector();
 					break;
 
