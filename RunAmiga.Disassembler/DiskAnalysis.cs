@@ -23,9 +23,9 @@ namespace RunAmiga.Disassembler
 
 		public void Extract()
 		{
-			ExtractHardDisk("dh0.hdf");
-			ExtractFloppyDisk("workbench1.2.adf");
-			ExtractFloppyDisk("workbench3.1.adf");
+			//ExtractHardDisk("dh0.hdf");
+			//ExtractFloppyDisk("workbench1.2.adf");
+			//ExtractFloppyDisk("workbench3.1.adf");
 		}
 
 		public void ExtractFloppyDisk(string disk)
