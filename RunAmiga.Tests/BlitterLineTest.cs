@@ -139,11 +139,14 @@ namespace RunAmiga.Tests
 
 			int i = 0;
 			var testcases = BlitterLineTestCases.TestCases();
+			int passes = 0;
 			foreach (var c in testcases)
 			{
 				TestContext.WriteLine($"\n------- Test Case {++i,4} -------");
-				RunBlitterLineTestCase(c, blitter, chipRAM);
+				if (RunBlitterLineTestCase(c, blitter, chipRAM))
+					passes++;
 			}
+			TestContext.WriteLine($"PASSES: {passes}/{testcases.Count}");
 		}
 
 		[Test]
@@ -158,13 +161,13 @@ namespace RunAmiga.Tests
 			RunBlitterLineTestCase(testcases[i-1], blitter, chipRAM);
 		}
 
-		private void RunBlitterLineTestCase(BlitterLineTestCases.BlitterLineTestCase c, IBlitter blitter, LoggedChipRAM chipRAM)
+		private bool RunBlitterLineTestCase(BlitterLineTestCases.BlitterLineTestCase c, IBlitter blitter, LoggedChipRAM chipRAM)
 		{
 			List<LoggedChipRAM.ChipLog>[] log = new List<LoggedChipRAM.ChipLog>[2];
 
 			for (int a = 0; a < 2; a++)
 			{
-				blitter.SetLineMode(a==0?0:2);
+				blitter.SetLineMode(a);
 
 				chipRAM.Clear();
 
@@ -195,7 +198,7 @@ namespace RunAmiga.Tests
 
 				if (c.bltsize != 0)
 				{
-					TestContext.WriteLine($"BLTSIZE {c.bltsize & 0x3f} x {c.bltsize >> 6} mod: {(int)c.bltcmod}");
+					TestContext.WriteLine($"BLTSIZE {c.bltsize & 0x3f} x {c.bltsize >> 6} mod: {(int)c.bltcmod} oct:{(c.bltcon1 >> 2) & 7}");
 					blitter.Write(0, ChipRegs.BLTSIZE, (ushort)c.bltsize);
 				}
 				else
@@ -215,11 +218,15 @@ namespace RunAmiga.Tests
 					TestContext.WriteLine($"{(a == 0 ? "Benchmark" : "Incoming")}");
 					chipRAM.LogOut(log[a]);
 				}
+
+				return false;
 			}
 			else
 			{
 				TestContext.WriteLine("PASS");
 			}
+
+			return true;
 		}
 	}
 
