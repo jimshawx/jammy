@@ -64,6 +64,9 @@ namespace RunAmiga.Core.Custom
 			if (obj == (int)Keyboard.VK.VK_DOWN) cdbg.dbugLine++;
 			if (obj == (int)Keyboard.VK.VK_RIGHT) cdbg.dbugLine = -1;
 			if (obj == (int)Keyboard.VK.VK_LEFT) cdbg.dbugLine = diwstrt >> 8;
+			if (obj == (int)Keyboard.VK.VK_F1) cdbg.ddfHack++;
+			if (obj == (int)Keyboard.VK.VK_F2) cdbg.ddfHack--;
+			if (obj == (int)Keyboard.VK.VK_F3) cdbg.ddfHack=0;
 		}
 
 		private ulong copperTime;
@@ -161,19 +164,19 @@ namespace RunAmiga.Core.Custom
 					uint hp = (uint)(ins & 0xfe);
 					uint vp = (uint)((ins >> 8) & 0xff);
 
-					uint he = (uint)((data & 0xfe) | 0xff00);
+					uint he = (uint)(data & 0xfe);
 					uint ve = (uint)(((data >> 8) & 0x7f) | 0x80);
 					uint blit = (uint)(data >> 15);
 
 					if ((data & 1) == 0)
 					{
 						//WAIT
-						csb.AppendLine($"{copPC - 4:X8} WAIT {ins:X4} {data:X4} vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
+						csb.AppendLine($"{copPC - 4:X8} WAIT {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
 					}
 					else
 					{
 						//SKIP
-						csb.AppendLine($"{copPC - 4:X8} SKIP {ins:X4} {data:X4} vp:{vp:X4} hp:{hp:X4} ve:{ve:X4} he:{he:X4} b:{blit}");
+						csb.AppendLine($"{copPC - 4:X8} SKIP {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
 					}
 
 					//this is usually how a copper list ends
@@ -219,6 +222,7 @@ namespace RunAmiga.Core.Custom
 
 			public int lineStart;
 			public ushort ins;
+			public ushort data;
 
 			public void Reset(uint copperPC)
 			{
@@ -240,6 +244,7 @@ namespace RunAmiga.Core.Custom
 			public int dma;
 			public int dbugLine = -1;
 			public bool dbug = false;
+			public int ddfHack;
 
 			public void Reset()
 			{
@@ -255,7 +260,7 @@ namespace RunAmiga.Core.Custom
 				return;
 
 			logger.LogTrace($"LINE {cdbg.dbugLine}");
-			logger.LogTrace($"DDF {ddfstrt:X4} {ddfstop:X4} ({cl.wordCount}) {cl.ddfstrtfix:X4} {cl.ddfstopfix:X4} FMODE {fmode:X4}");
+			logger.LogTrace($"DDF {ddfstrt:X4} {ddfstop:X4} ({cl.wordCount}) {cl.ddfstrtfix:X4} {cl.ddfstopfix:X4}{cdbg.ddfHack:+#0;-#0} FMODE {fmode:X4}");
 			logger.LogTrace($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{cl.diwstrtv}->{cl.diwstopv}({cl.diwstopv - cl.diwstrtv}) H:{cl.diwstrth}->{cl.diwstoph}({cl.diwstoph - cl.diwstrth}/16={(cl.diwstoph - cl.diwstrth) / 16})");
 			logger.LogTrace($"MOD {bpl1mod:X4} {bpl2mod:X4}");
 			logger.LogTrace($"BCN {bplcon0:X4} {bplcon1:X4} {bplcon2:X4} {bplcon3:X4} {bplcon4:X4}");
@@ -375,14 +380,19 @@ namespace RunAmiga.Core.Custom
 					pixelLoop = 4;
 					pixmod = 4;
 
-					ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
+					//ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
 
 					if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 					{
-						wordCount = (ddfstop - ddfstrt) / 4 + 2;
-						//round up to multiple of 2 words
-						if ((wordCount & 1) != 0) wordCount++;
-						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
+						//wordCount = (ddfstop - ddfstrt+3) / 4 + 2;
+						////round up to multiple of 2 words
+						//if ((wordCount & 1) != 0) wordCount++;
+						//ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
+						
+						//round up to multiple of 1 word
+						int round = 7;
+						ddfstrtfix = (ushort)(ddfstrt & ~round);
+						ddfstopfix = (ushort)(((ddfstop + round) & ~round)+8);
 					}
 					else
 					{
@@ -401,6 +411,8 @@ namespace RunAmiga.Core.Custom
 							ddfstopfix = (ushort)((ddfstop + round) & ~round);
 						}
 					}
+					diwstrth &= 0xf8;
+					diwstoph &= 0x1f8;
 				}
 				else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0)
 				{
@@ -420,8 +432,11 @@ namespace RunAmiga.Core.Custom
 
 					if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 					{
-						wordCount = (ddfstop - ddfstrt) / 8 + 1;
+						wordCount = (ddfstop - ddfstrt + 7) / 8 + 1;
 						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8);
+						//int round =15;
+						//ddfstrtfix = (ushort)(ddfstrt & ~round);
+						//ddfstopfix = (ushort)((ddfstop + round) & ~round);
 					}
 					else
 					{
@@ -480,7 +495,7 @@ namespace RunAmiga.Core.Custom
 					//bitplane DMA is ON
 					if ((dmacon & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.BPLEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.BPLEN))
 					{
-						if (h >= cln.ddfstrtfix && h < cln.ddfstopfix)
+						if (h >= cln.ddfstrtfix && h < cln.ddfstopfix+cdbg.ddfHack)
 							CopperBitplaneFetch(h);
 					}
 
@@ -550,7 +565,8 @@ namespace RunAmiga.Core.Custom
 				{
 					ushort ins = cop.ins;
 
-					ushort data = (ushort)memory.Read(0, cop.copPC, Size.Word);
+					cop.data = (ushort)memory.Read(0, cop.copPC, Size.Word);
+					ushort data = cop.data;
 					cop.copPC += 2;
 					cop.status = CopperStatus.RunningWord1;
 
@@ -568,11 +584,11 @@ namespace RunAmiga.Core.Custom
 						cop.waitH = ins & 0xfe;
 						cop.waitV = (ins >> 8) & 0xff;
 
-						cop.waitHMask = (data & 0xfe) | 0xff00;
+						cop.waitHMask = data & 0xfe;
 						cop.waitVMask = ((data >> 8) & 0x7f) | 0x80;
 
-						cop.waitMask = (uint)((cop.waitHMask & 0xff) | ((cop.waitVMask & 0xff) << 8));
-						cop.waitPos = (uint)(((cop.waitV & 0xff) << 8) | (cop.waitH & 0xff));
+						cop.waitMask = (uint)(cop.waitHMask | (cop.waitVMask << 8));
+						cop.waitPos = (uint)((cop.waitV << 8) | cop.waitH);
 
 						uint blit = (uint)(data >> 15);
 
@@ -616,17 +632,23 @@ namespace RunAmiga.Core.Custom
 					//{
 					//	if ((h & cop.waitHMask) >= cop.waitH)
 					//	{
-					//		logger.LogTrace($"RUN ({h},{cop.currentLine})");
+					//		//logger.LogTrace($"RUN ({h},{cop.currentLine})");
 					//		cop.status = CopperStatus.RunningWord1;
 					//	}
 					//}
 
 					uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
 					coppos &= cop.waitMask;
-					if (coppos >= (cop.waitPos&cop.waitMask))
+					if (coppos >= (cop.waitPos & cop.waitMask))
 					{
 						//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
 						cop.status = CopperStatus.RunningWord1;
+
+						if (cop.ins == 0xffff && cop.data == 0xfffe)
+						{
+							logger.LogTrace("Went off the end of the Copper List");
+							cop.status = CopperStatus.Waiting;
+						}
 					}
 				}
 			}
@@ -641,7 +663,7 @@ namespace RunAmiga.Core.Custom
 			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
 			{
 				int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
-				int[] fetchHi = { 4, 2, 3, 1 };
+				int[] fetchHi = { 4, 2, 3, 1, 4, 3, 2, 1 };
 
 				planeIdx = h % cln.pixmod;
 
@@ -1194,8 +1216,8 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.COPCON: copcon = value; break;
 				case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); break;
-				case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16); break;
-				case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); break;
+				case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16); /*logger.LogTrace($"{cop2lc:X8}"); */break;
+				case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); /*logger.LogTrace($"{cop2lc:X8}"); */break;
 				case ChipRegs.COPJMP1: copjmp1 = value; cop.copPC = cop1lc; break;
 				case ChipRegs.COPJMP2: copjmp2 = value; cop.copPC = cop2lc; break;
 				case ChipRegs.COPINS: copins = value; break;
