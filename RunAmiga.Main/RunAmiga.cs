@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core;
 using RunAmiga.Core.Interface.Interfaces;
@@ -16,6 +9,13 @@ using RunAmiga.Disassembler.TypeMapper;
 using RunAmiga.Interface;
 using RunAmiga.Main.Dialogs;
 using RunAmiga.Types.Options;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace RunAmiga.Main
 {
@@ -115,7 +115,7 @@ namespace RunAmiga.Main
 		private void UpdateDisplay()
 		{
 			UpdateRegs();
-			//UpdateMem();
+			UpdateMem();
 			UpdatePowerLight();
 			UpdateDiskLight();
 			UpdateExecBase();
@@ -240,6 +240,7 @@ namespace RunAmiga.Main
 			var regs = debugger.GetRegs();
 			Amiga.UnlockEmulation();
 
+			/*
 			{
 				var mem = new List<Tuple<uint, uint>>();
 				long sp = (long)regs.SP;
@@ -259,6 +260,7 @@ namespace RunAmiga.Main
 				lbCallStack.Items.Add("   SP       SSP   ");
 				lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
 			}
+			*/
 
 			{
 				txtMemory.Text = memory.ToString();

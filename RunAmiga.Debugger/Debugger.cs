@@ -100,6 +100,7 @@ namespace RunAmiga.Debugger
 			//AddBreakpoint(0xFC125C);//initialize exec interrupts
 
 			//AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
+			//AddBreakpoint(0xfc0222);
 			//AddBreakpoint(0xfc0240);
 			//AddBreakpoint(0xfc033e);
 			//AddBreakpoint(0xfcac92);
@@ -326,7 +327,8 @@ namespace RunAmiga.Debugger
 
 		public MemoryDump GetMemory()
 		{
-			return new MemoryDump(memory.GetEnumerable(0));
+			//return new MemoryDump(memory.GetEnumerable(0));
+			return new MemoryDump(memory.GetBulkRanges());
 		}
 
 		public Regs GetRegs()

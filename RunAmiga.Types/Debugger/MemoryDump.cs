@@ -2,17 +2,40 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Types.Debugger
 {
 	public class MemoryDump
 	{
-		private readonly byte[] memory;
+		private class MemRange
+		{
+			public MemRange()
+			{
+			}
+
+			public MemRange(uint start, ulong size)
+			{
+				this.start = start;
+				this.size = size;
+			}
+
+			public uint start;
+			public ulong size;
+			public uint end => (uint)(start + size - 1);
+		}
+
 		private readonly Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
+		private readonly List<BulkMemoryRange> memoryRanges = new List<BulkMemoryRange>();
 
 		public MemoryDump(IEnumerable<byte> b)
 		{
-			memory = b.ToArray();
+			memoryRanges.Add(new BulkMemoryRange { Memory = b.ToArray(), StartAddress = 0 });
+		}
+
+		public MemoryDump(List<BulkMemoryRange> ranges)
+		{
+			this.memoryRanges = ranges.Where(x=>x.Memory.Length > 0).OrderBy(x=>x.StartAddress).ToList();
 		}
 
 		public void ClearMapping()
@@ -20,41 +43,92 @@ namespace RunAmiga.Types.Debugger
 			addressToLine.Clear();
 		}
 
-		private string BlockToString(List<Tuple<uint, uint>> ranges)
+		int line;
+		private string AllBlocksToString(List<MemRange> ranges)
+		{
+			line = 0;
+			var sb = new StringBuilder();
+			foreach (var range in ranges.OrderBy(x => x.start))
+			{
+				foreach (var memoryRange in memoryRanges)
+				{
+					//intersect the two ranges, and write that block
+					if (range.start >= memoryRange.StartAddress && range.start < memoryRange.EndAddress)
+					{
+						var m = new MemRange();                     //the requested start is within the range
+						m.start = range.start;
+
+						if (range.end < memoryRange.EndAddress)
+						{
+							//the reqested end is within the range
+							m.size = range.end - m.start + 1;
+						}
+						else
+						{
+							m.size = memoryRange.EndAddress - m.start + 1;
+						}
+
+						m.start -= memoryRange.StartAddress;
+
+						sb.Append(BlockToString(m, memoryRange.StartAddress, memoryRange.Memory));
+					}
+					else if (range.end >= memoryRange.StartAddress && range.end < memoryRange.EndAddress)
+					{
+						var m = new MemRange();                     
+						//the requested range end is within the range
+
+						if (range.start >= memoryRange.StartAddress)
+						{
+							//the requested start is within the range
+							m.start = range.start;
+						}
+						else
+						{
+							m.start = memoryRange.StartAddress;
+						}
+
+						m.size = range.end - m.start + 1;
+						m.start -= memoryRange.StartAddress;
+
+						sb.Append(BlockToString(m, memoryRange.StartAddress, memoryRange.Memory));
+					}
+				}
+			}
+
+			return sb.ToString();
+		}
+
+		private string BlockToString(MemRange range, uint baseAddress, byte[] memory)
 		{
 			var sb = new StringBuilder();
 
-			int line = 0;
-			foreach (var range in ranges)
+			uint start = range.start;
+			ulong size = range.size;
+
+			for (ulong i = start; i < start + size; i += 32)
 			{
-				uint start = range.Item1;
-				uint size = range.Item2;
-
-				for (uint i = start; i < start + size; i += 32)
+				addressToLine.Add((uint)(i+baseAddress), line++);
+				sb.Append($"{i+baseAddress:X6} ");
+				for (uint k = 0; k < 4; k++)
 				{
-					addressToLine.Add(i, line++);
-					sb.Append($"{i:X6} ");
-					for (int k = 0; k < 4; k++)
+					for (uint j = 0; j < 8; j++)
 					{
-						for (int j = 0; j < 8; j++)
-						{
-							sb.Append($"{memory[i + k * 8 + j]:X2}");
-						}
-						sb.Append(" ");
+						sb.Append($"{memory[i + k * 8 + j]:X2}");
 					}
-
-					sb.Append("  ");
-
-					for (int k = 0; k < 32; k++)
-					{
-
-						byte c = memory[i + k];
-						if (c < 31 || c >= 127) c = (byte)'.';
-						sb.Append($"{Convert.ToChar(c)}");
-					}
-
-					sb.Append("\n");
+					sb.Append(" ");
 				}
+
+				sb.Append("  ");
+
+				for (uint k = 0; k < 32; k++)
+				{
+
+					byte c = memory[i + k];
+					if (c < 31 || c >= 127) c = (byte)'.';
+					sb.Append($"{Convert.ToChar(c)}");
+				}
+
+				sb.Append("\n");
 			}
 			return sb.ToString();
 		}
@@ -69,46 +143,46 @@ namespace RunAmiga.Types.Debugger
 			return 0;
 		}
 
-		public byte Read8(uint address)
-		{
-			//if (address >= 0x1000000) { logger.LogTrace($"Memory Read Byte from {address:X8}"); return 0; }
-			return memory[address];
-		}
+		//public byte Read8(uint address)
+		//{
+		//	//if (address >= 0x1000000) { logger.LogTrace($"Memory Read Byte from {address:X8}"); return 0; }
+		//	return memory[address];
+		//}
 
-		public ushort Read16(uint address)
-		{
-			//if (address >= 0xfffffe) { logger.LogTrace($"Memory Read Word from ${address:X8}"); return 0; }
-			//if ((address & 1) != 0) { logger.LogTrace($"Memory Read Unaligned Word from ${address:X8}"); return 0; }
-			return (ushort)(((ushort)memory[address] << 8) +
-							(ushort)memory[(address + 1) ]);
-		}
+		//public ushort Read16(uint address)
+		//{
+		//	//if (address >= 0xfffffe) { logger.LogTrace($"Memory Read Word from ${address:X8}"); return 0; }
+		//	//if ((address & 1) != 0) { logger.LogTrace($"Memory Read Unaligned Word from ${address:X8}"); return 0; }
+		//	return (ushort)(((ushort)memory[address] << 8) +
+		//					(ushort)memory[(address + 1)]);
+		//}
 
-		public uint Read32(uint address)
-		{
-			//if (address >= 0xfffffc) { logger.LogTrace($"Memory Read Int from ${address:X8}"); return 0; }
-			//if ((address & 1) != 0) { logger.LogTrace($"Memory Read Unaligned Int from ${address:X8}"); return 0; }
-			return ((uint)memory[address] << 24) +
-					((uint)memory[(address + 1) ] << 16) +
-					((uint)memory[(address + 2)] << 8) +
-					(uint)memory[(address + 3) ];
-		}
+		//public uint Read32(uint address)
+		//{
+		//	//if (address >= 0xfffffc) { logger.LogTrace($"Memory Read Int from ${address:X8}"); return 0; }
+		//	//if ((address & 1) != 0) { logger.LogTrace($"Memory Read Unaligned Int from ${address:X8}"); return 0; }
+		//	return ((uint)memory[address] << 24) +
+		//			((uint)memory[(address + 1) ] << 16) +
+		//			((uint)memory[(address + 2)] << 8) +
+		//			(uint)memory[(address + 3) ];
+		//}
 
 		public override string ToString()
 		{
-			return BlockToString(new List<Tuple<uint, uint>>
+			return AllBlocksToString(new List<MemRange>
 				{
-					new Tuple<uint, uint> ( 0x000000, 0xc000),
-					new Tuple<uint, uint> ( 0xc00000, 0xa000),
-					new Tuple<uint, uint> ( 0xf80000, 0x40000),
-					new Tuple<uint, uint> ( 0xfc0000, 0x40000)
+					new MemRange ( 0x000000, 0xc000),
+					new MemRange ( 0xc00000, 0xa000),
+					new MemRange ( 0xf80000, 0x40000),
+					new MemRange ( 0xfc0000, 0x40000)
 				});
 		}
 
-		public string ToString(uint start, uint length)
+		public string ToString(uint start, ulong length)
 		{
-			return BlockToString(new List<Tuple<uint, uint>>
+			return AllBlocksToString(new List<MemRange>
 			{
-				new Tuple<uint, uint> ( start, (uint)Math.Min(length, memory.Length-start)),
+				new MemRange (start, length),
 			});
 		}
 	}

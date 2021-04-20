@@ -4,7 +4,7 @@ using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.Memory
 {
-	public abstract class Memory : IMemoryMappedDevice
+	public abstract class Memory : IMemoryMappedDevice, IBulkMemoryRead
 	{
 		protected uint addressMask = 0;
 		protected byte[] memory;
@@ -67,6 +67,15 @@ namespace RunAmiga.Core.Memory
 			}
 
 			throw new ArgumentOutOfRangeException();
+		}
+
+		public BulkMemoryRange ReadBulk()
+		{
+			return new BulkMemoryRange
+			{
+				StartAddress = memoryRange.Start,
+				Memory = (byte[])memory.Clone()
+			};
 		}
 	}
 }

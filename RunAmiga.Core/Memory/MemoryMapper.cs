@@ -198,5 +198,12 @@ namespace RunAmiga.Core.Memory
 		}
 
 		public int Length => (int)memoryRange.Length;
+
+		public List<BulkMemoryRange> GetBulkRanges()
+		{
+			return memoryManager.MappedDevice.BulkReadableDevices()
+				.Select(x => x.ReadBulk())
+				.ToList();
+		}
 	}
 }

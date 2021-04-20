@@ -16,4 +16,11 @@
 			return address >= Start && address < Start+Length;
 		}
 	}
+
+	public class BulkMemoryRange
+	{
+		public uint StartAddress { get; set; }
+		public byte[] Memory { get; set; } = new byte[0];
+		public uint EndAddress => (uint)(StartAddress + Memory.Length);
+	}
 }

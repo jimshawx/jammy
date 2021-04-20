@@ -218,7 +218,8 @@ namespace RunAmiga.Disassembler
 
 			if (settings.Disassemblies == Feature.Enabled)
 			{
-				var memoryDump = new MemoryDump(memory.GetEnumerable(0));
+				//var memoryDump = new MemoryDump(memory.GetEnumerable(0));
+				var memoryDump = new MemoryDump(memory.GetBulkRanges());
 				Disassemble(resident, memoryDump);
 			}
 

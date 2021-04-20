@@ -73,6 +73,11 @@ namespace RunAmiga.Core.Memory
 		}
 
 		public IMemoryMappedDevice this[uint address] => mapping[(address&memoryMask) >> 16];
+
+		public List<IBulkMemoryRead> BulkReadableDevices()
+		{
+			return devices.OfType<IBulkMemoryRead>().ToList();
+		}
 	}
 
 	public interface IMemoryManager

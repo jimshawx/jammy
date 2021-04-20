@@ -116,5 +116,13 @@ namespace RunAmiga.Disassembler.TypeMapper
 		{
 			return memoryRange;
 		}
+
+		public List<BulkMemoryRange> GetBulkRanges()
+		{
+			return new List<BulkMemoryRange>
+			{
+				new BulkMemoryRange {Memory = memory, StartAddress = memoryRange.Start}
+			};
+		}
 	}
 }
