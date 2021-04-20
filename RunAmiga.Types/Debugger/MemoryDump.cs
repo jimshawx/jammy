@@ -157,15 +157,24 @@ namespace RunAmiga.Types.Debugger
 		//					(ushort)memory[(address + 1)]);
 		//}
 
-		//public uint Read32(uint address)
-		//{
-		//	//if (address >= 0xfffffc) { logger.LogTrace($"Memory Read Int from ${address:X8}"); return 0; }
-		//	//if ((address & 1) != 0) { logger.LogTrace($"Memory Read Unaligned Int from ${address:X8}"); return 0; }
-		//	return ((uint)memory[address] << 24) +
-		//			((uint)memory[(address + 1) ] << 16) +
-		//			((uint)memory[(address + 2)] << 8) +
-		//			(uint)memory[(address + 3) ];
-		//}
+		public uint Read32(uint address)
+		{
+			foreach (var b in memoryRanges)
+			{
+				if (address >= b.StartAddress && address+4 < b.EndAddress)
+				{
+					var memory = b.Memory;
+					address -= b.StartAddress;
+
+					return ((uint)memory[address] << 24) +
+					       ((uint)memory[(address + 1)] << 16) +
+					       ((uint)memory[(address + 2)] << 8) +
+					       (uint)memory[(address + 3)];
+
+				}
+			}
+			return 0;
+		}
 
 		public override string ToString()
 		{

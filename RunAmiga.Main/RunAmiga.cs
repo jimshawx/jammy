@@ -240,27 +240,24 @@ namespace RunAmiga.Main
 			var regs = debugger.GetRegs();
 			Amiga.UnlockEmulation();
 
-			/*
 			{
 				var mem = new List<Tuple<uint, uint>>();
 				long sp = (long)regs.SP;
 				long ssp = (long)regs.SSP;
 				int cnt = 32;
-				while (sp > 0 && cnt-- > 0)
+				while (cnt-- > 0)
 				{
-					uint spv = 0xffffffff, sspv = 0xffffffff;
-					if (sp >= 0) spv = memory.Read32((uint)sp);
-					if (ssp >= 0) sspv = memory.Read32((uint)ssp);
+					uint spv = memory.Read32((uint)sp);
+					uint sspv = memory.Read32((uint)ssp);
 					mem.Add(new Tuple<uint, uint>(spv, sspv));
-					sp -= 4;
-					ssp -= 4;
+					sp += 4;
+					ssp += 4;
 				}
 
 				lbCallStack.Items.Clear();
 				lbCallStack.Items.Add("   SP       SSP   ");
 				lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
 			}
-			*/
 
 			{
 				txtMemory.Text = memory.ToString();
