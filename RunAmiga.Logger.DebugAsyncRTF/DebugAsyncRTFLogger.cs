@@ -115,6 +115,7 @@ namespace RunAmiga.Logger.DebugAsyncRTF
 
 		public DebugAsyncRTFLoggerReader(ConcurrentQueue<DbMessage> messageQueue)
 		{
+			bool suspended = false;
 			Form window = null;
 			RichTextBox debugTxt = null;
 			var ss = new SemaphoreSlim(1);
@@ -134,6 +135,9 @@ namespace RunAmiga.Logger.DebugAsyncRTF
 				};
 				window = new Form { Name = "Debug", Text = "Debug", ClientSize = debugTxt.Size };
 
+				debugTxt.KeyDown += delegate (object sender, KeyEventArgs args) { if (args.KeyCode == Keys.Space) suspended = true; };
+				debugTxt.KeyUp += delegate (object sender, KeyEventArgs args) { if (args.KeyCode == Keys.Space) suspended = false; };
+				
 				if (window.Handle == IntPtr.Zero)
 					throw new ApplicationException();
 				window.Controls.Add(debugTxt);
@@ -157,7 +161,7 @@ namespace RunAmiga.Logger.DebugAsyncRTF
 
 				while (!cancellation.IsCancellationRequested)
 				{
-					if (!messageQueue.IsEmpty)
+					if (!messageQueue.IsEmpty && !suspended)
 					{
 						sb.Clear();
 						while (messageQueue.TryDequeue(out DbMessage rv))
