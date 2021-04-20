@@ -216,22 +216,22 @@ namespace RunAmiga.Core.Custom
 				else
 					regs[reg] &= (ushort)~value;
 				//logger.LogTrace($"DMACON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
-				
-				//if ((regs[reg] & 0x4000) != 0) Logger.Write("BBUSY ");
-				//if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
-				//if ((regs[reg] & 0x1000) != 0) Logger.Write("BZERO ");
-				//if ((regs[reg] & 0x0800) != 0) Logger.Write("unused ");
-				//if ((regs[reg] & 0x0400) != 0) Logger.Write("unused ");
-				//if ((regs[reg] & 0x0200) != 0) Logger.Write("BLTPRI ");
-				//if ((regs[reg] & 0x0100) != 0) Logger.Write("DMAEN ");
-				//if ((regs[reg] & 0x0080) != 0) Logger.Write("BPLEN ");
-				//if ((regs[reg] & 0x0040) != 0) Logger.Write("COPEN ");
-				//if ((regs[reg] & 0x0020) != 0) Logger.Write("BLTEN ");
-				//if ((regs[reg] & 0x0010) != 0) Logger.Write("DSKEN ");
-				//if ((regs[reg] & 0x0008) != 0) Logger.Write("AUD3EN ");
-				//if ((regs[reg] & 0x0004) != 0) Logger.Write("AUD2EN ");
-				//if ((regs[reg] & 0x0002) != 0) Logger.Write("AUD1EN ");
-				//if ((regs[reg] & 0x0001) != 0) Logger.Write("AUD0EN ");
+
+				//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("BBUSY ");
+				//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("BZERO ");
+				//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("unused ");
+				//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("unused ");
+				//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("BLTPRI ");
+				//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("DMAEN "); else logger.LogTrace("~DMAEN ");
+				//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("BPLEN ");
+				//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("COPEN "); else logger.LogTrace("~COPEN ");
+				//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLTEN ");
+				//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("SPREN ");
+				//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("DSKEN ");
+				//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("AUD3EN ");
+				//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("AUD2EN ");
+				//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("AUD1EN ");
+				//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("AUD0EN ");
 				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
 				//if ((value & (int)(ChipRegs.DMA.SETCLR | ChipRegs.DMA.AUD3EN))== (int)(ChipRegs.DMA.SETCLR | ChipRegs.DMA.AUD3EN))
@@ -253,21 +253,21 @@ namespace RunAmiga.Core.Custom
 					regs[reg] &= (ushort)~value;
 				//logger.LogTrace($"    -> {Convert.ToString(regs[reg],2).PadLeft(16,'0')} {regs[reg]:X4}");
 
-				//if ((regs[reg] & 0x4000) != 0) Logger.Write("INTEN ");
-				//if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
-				//if ((regs[reg] & 0x1000) != 0) Logger.Write("DSKSYN ");
-				//if ((regs[reg] & 0x0800) != 0) Logger.Write("RBF ");
-				//if ((regs[reg] & 0x0400) != 0) Logger.Write("AUD3 ");
-				//if ((regs[reg] & 0x0200) != 0) Logger.Write("AUD2 ");
-				//if ((regs[reg] & 0x0100) != 0) Logger.Write("AUD1 ");
-				//if ((regs[reg] & 0x0080) != 0) Logger.Write("AUD0 ");
-				//if ((regs[reg] & 0x0040) != 0) Logger.Write("BLIT ");
-				//if ((regs[reg] & 0x0020) != 0) Logger.Write("VERTB ");
-				//if ((regs[reg] & 0x0010) != 0) Logger.Write("COPER ");
-				//if ((regs[reg] & 0x0008) != 0) Logger.Write("PORTS ");
-				//if ((regs[reg] & 0x0004) != 0) Logger.Write("SOFT ");
-				//if ((regs[reg] & 0x0002) != 0) Logger.Write("DSKBLK ");
-				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
+				//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("INTEN ");
+				//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("EXTER ");
+				//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("DSKSYN ");
+				//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("RBF ");
+				//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("AUD3 ");
+				//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("AUD2 ");
+				//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("AUD1 ");
+				//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("AUD0 ");
+				//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLIT ");
+				//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("VERTB ");
+				//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("COPER ");
+				//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("PORTS ");
+				//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("SOFT ");
+				//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("DSKBLK ");
+				//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
 				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 				audio.WriteINTENA((ushort)(regs[reg]&0x7fff));
 
@@ -290,21 +290,21 @@ namespace RunAmiga.Core.Custom
 				
 				//logger.LogTrace($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
 
-				//if ((regs[reg] & 0x4000) != 0) Logger.Write("INTEN ");
-				//if ((regs[reg] & 0x2000) != 0) Logger.Write("EXTER ");
-				//if ((regs[reg] & 0x1000) != 0) Logger.Write("DSKSYN ");
-				//if ((regs[reg] & 0x0800) != 0) Logger.Write("RBF ");
-				//if ((regs[reg] & 0x0400) != 0) Logger.Write("AUD3 ");
-				//if ((regs[reg] & 0x0200) != 0) Logger.Write("AUD2 ");
-				//if ((regs[reg] & 0x0100) != 0) Logger.Write("AUD1 ");
-				//if ((regs[reg] & 0x0080) != 0) Logger.Write("AUD0 ");
-				//if ((regs[reg] & 0x0040) != 0) Logger.Write("BLIT ");
-				//if ((regs[reg] & 0x0020) != 0) Logger.Write("VERTB ");
-				//if ((regs[reg] & 0x0010) != 0) Logger.Write("COPER ");
-				//if ((regs[reg] & 0x0008) != 0) Logger.Write("PORTS ");
-				//if ((regs[reg] & 0x0004) != 0) Logger.Write("SOFT ");
-				//if ((regs[reg] & 0x0002) != 0) Logger.Write("DSKBLK ");
-				//if ((regs[reg] & 0x0001) != 0) Logger.Write("TBE ");
+				//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("INTEN ");
+				//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("EXTER ");
+				//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("DSKSYN ");
+				//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("RBF ");
+				//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("AUD3 ");
+				//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("AUD2 ");
+				//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("AUD1 ");
+				//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("AUD0 ");
+				//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLIT ");
+				//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("VERTB ");
+				//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("COPER ");
+				//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("PORTS ");
+				//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("SOFT ");
+				//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("DSKBLK ");
+				//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
 				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
 				audio.WriteINTREQ((ushort)(regs[reg]&0x7fff));
