@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -60,13 +60,24 @@ namespace RunAmiga.Core.Custom
 		private void dbug_Keydown(int obj)
 		{
 			if (obj == (int)Keyboard.VK.VK_F11) cdbg.dbug = true;
-			if (obj == (int)Keyboard.VK.VK_UP) cdbg.dbugLine--;
-			if (obj == (int)Keyboard.VK.VK_DOWN) cdbg.dbugLine++;
-			if (obj == (int)Keyboard.VK.VK_RIGHT) cdbg.dbugLine = -1;
-			if (obj == (int)Keyboard.VK.VK_LEFT) cdbg.dbugLine = diwstrt >> 8;
-			if (obj == (int)Keyboard.VK.VK_F1) cdbg.ddfHack++;
-			if (obj == (int)Keyboard.VK.VK_F2) cdbg.ddfHack--;
-			if (obj == (int)Keyboard.VK.VK_F3) cdbg.ddfHack=0;
+			if (obj == (int)Keyboard.VK.VK_F6) cdbg.dbugLine--;
+			if (obj == (int)Keyboard.VK.VK_F7) cdbg.dbugLine++;
+			if (obj == (int)Keyboard.VK.VK_F8) cdbg.dbugLine = -1;
+			if (obj == (int)Keyboard.VK.VK_F5) cdbg.dbugLine = diwstrt >> 8;
+
+			if (obj == (int)'Q') cdbg.ddfSHack++;
+			if (obj == (int)'W') cdbg.ddfSHack--;
+			if (obj == (int)'E') cdbg.ddfSHack = 0;
+			if (obj == (int)'R') cdbg.ddfEHack++;
+			if (obj == (int)'T') cdbg.ddfEHack--;
+			if (obj == (int)'Y') cdbg.ddfEHack=0;
+
+			if (obj == (int)'1') cdbg.diwSHack++;
+			if (obj == (int)'2') cdbg.diwSHack--;
+			if (obj == (int)'3') cdbg.diwSHack = 0;
+			if (obj == (int)'4') cdbg.diwEHack++;
+			if (obj == (int)'5') cdbg.diwEHack--;
+			if (obj == (int)'6') cdbg.diwEHack = 0;
 		}
 
 		private ulong copperTime;
@@ -134,6 +145,8 @@ namespace RunAmiga.Core.Custom
 
 			csb.AppendLine($"Copper List @{copPC:X8}");
 
+			var skipTaken = new HashSet<uint>();
+
 			int counter = MAX_COPPER_ENTRIES;
 			while (counter-- > 0)
 			{
@@ -177,6 +190,15 @@ namespace RunAmiga.Core.Custom
 					{
 						//SKIP
 						csb.AppendLine($"{copPC - 4:X8} SKIP {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
+						if (skipTaken.Contains(copPC - 4))
+						{
+							copPC += 4;
+							csb.AppendLine("SKIPPED");
+						}
+						else
+						{
+							skipTaken.Add(copPC - 4);
+						}
 					}
 
 					//this is usually how a copper list ends
@@ -244,11 +266,15 @@ namespace RunAmiga.Core.Custom
 			public int dma;
 			public int dbugLine = -1;
 			public bool dbug = false;
-			public int ddfHack;
+			public int ddfSHack;
+			public int ddfEHack;
+			public int diwSHack;
+			public int diwEHack;
 
 			public void Reset()
 			{
-				dma = 0;
+				dma = 0; 
+				//ddfSHack = ddfEHack = diwEHack = diwSHack = 0;
 			}
 		}
 
@@ -260,10 +286,10 @@ namespace RunAmiga.Core.Custom
 				return;
 
 			logger.LogTrace($"LINE {cdbg.dbugLine}");
-			logger.LogTrace($"DDF {ddfstrt:X4} {ddfstop:X4} ({cl.wordCount}) {cl.ddfstrtfix:X4} {cl.ddfstopfix:X4}{cdbg.ddfHack:+#0;-#0} FMODE {fmode:X4}");
-			logger.LogTrace($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{cl.diwstrtv}->{cl.diwstopv}({cl.diwstopv - cl.diwstrtv}) H:{cl.diwstrth}->{cl.diwstoph}({cl.diwstoph - cl.diwstrth}/16={(cl.diwstoph - cl.diwstrth) / 16})");
+			logger.LogTrace($"DDF {ddfstrt:X4} {ddfstop:X4} ({cl.wordCount}) {cl.ddfstrtfix:X4}{cdbg.ddfSHack:+#0;-#0} {cl.ddfstopfix:X4}{cdbg.ddfEHack:+#0;-#0} FMODE {fmode:X4}");
+			logger.LogTrace($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{cl.diwstrtv}->{cl.diwstopv}({cl.diwstopv - cl.diwstrtv}) H:{cl.diwstrth}{cdbg.diwSHack:+#0;-#0}->{cl.diwstoph}{cdbg.diwEHack:+#0;-#0}({cl.diwstoph - cl.diwstrth}/16={(cl.diwstoph - cl.diwstrth) / 16})");
 			logger.LogTrace($"MOD {bpl1mod:X4} {bpl2mod:X4}");
-			logger.LogTrace($"BCN {bplcon0:X4} {bplcon1:X4} {bplcon2:X4} {bplcon3:X4} {bplcon4:X4}");
+			logger.LogTrace($"BCN {bplcon0:X4} {Bplcon0()} {bplcon1:X4} {bplcon2:X4} {bplcon3:X4} {bplcon4:X4}");
 			logger.LogTrace($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} ");
 			var sb = new StringBuilder();
 			sb.AppendLine();
@@ -277,6 +303,24 @@ namespace RunAmiga.Core.Custom
 				sb.Append(cd.write[i]);
 			sb.Append($"({cd.dma})");
 			logger.LogTrace(sb.ToString());
+		}
+
+		private string Bplcon0()
+		{
+			var sb = new StringBuilder();
+			if ((bplcon0 & 0x8000)!=0) sb.Append("H ");
+			else if ((bplcon0 & 0x40) != 0) sb.Append("SH ");
+			else if ((bplcon0 & 0x80) != 0) sb.Append("UH ");
+			else sb.Append("N ");
+			if ((bplcon0 & 0x400)!=0) sb.Append("DPF ");
+			if ((bplcon0 & 0x800) != 0) sb.Append("HAM ");
+			if ((bplcon0 & 0x10) != 0) sb.Append("8");
+			else sb.Append($"{(bplcon0 >> 12) & 7} ");
+			if ((bplcon0 & 0x4) != 0) sb.Append("LACE");
+
+			if (((bplcon0 >> 12) & 7) == 6 && ((bplcon0 & (1 << 11)) == 0 && (bplcon0 & (1 << 10)) == 0 && (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0))) sb.Append("EHB ");
+
+			return sb.ToString();
 		}
 
 		private CopperFrame cop = new CopperFrame();
@@ -293,9 +337,7 @@ namespace RunAmiga.Core.Custom
 		private void RunCopperVerticalBlankEnd()
 		{
 			RunSprites();
-
-			DebugPalette();
-
+			DebugLocation();
 			emulationWindow.Blit(screen);
 		}
 
@@ -318,6 +360,15 @@ namespace RunAmiga.Core.Custom
 					}
 				}
 			}
+
+		}
+
+		private void DebugLocation()
+		{
+			if (cdbg.dbugLine < 0) return;
+
+			for (int x = 0; x < SCREEN_WIDTH; x += 4)
+				screen[x + cdbg.dbugLine * SCREEN_WIDTH * 2] ^= 0xffffff;
 		}
 
 		private class CopperLine
@@ -372,7 +423,7 @@ namespace RunAmiga.Core.Custom
 					//todo: there are also an extra two bottom bits for strth/stoph
 				}
 
-				//how many pixels should be fecthed per clock in the current mode?
+				//how many pixels should be fetched per clock in the current mode?
 				if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 				{
 					//4 colour clocks, fetch 16 pixels
@@ -390,27 +441,27 @@ namespace RunAmiga.Core.Custom
 						//ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
 						
 						//round up to multiple of 1 word
-						int round = 7;
+						//int round = 7;
+						//ddfstrtfix = (ushort)(ddfstrt & ~round);
+						//ddfstopfix = (ushort)(((ddfstop + round) & ~round)+8);
+						ddfstrtfix = ddfstrt;
+						ddfstopfix = (ushort)(ddfstop + 8);
+					}
+					else if (fmode == 3)
+					{
+						//round to multiple of 4 words
+						int round = 15;
 						ddfstrtfix = (ushort)(ddfstrt & ~round);
-						ddfstopfix = (ushort)(((ddfstop + round) & ~round)+8);
+						ddfstopfix = (ushort)((ddfstop + round) & ~round);
 					}
 					else
 					{
-						if (fmode == 3)
-						{
-							//round to multiple of 4 words
-							int round = 15;
-							ddfstrtfix = (ushort)(ddfstrt & ~round);
-							ddfstopfix = (ushort)((ddfstop + round) & ~round);
-						}
-						else
-						{
-							//round up to multiple of 2 words
-							int round = 7;
-							ddfstrtfix = (ushort)(ddfstrt & ~round);
-							ddfstopfix = (ushort)((ddfstop + round) & ~round);
-						}
+						//round up to multiple of 2 words
+						int round = 7;
+						ddfstrtfix = (ushort)(ddfstrt & ~round);
+						ddfstopfix = (ushort)((ddfstop + round) & ~round);
 					}
+
 					diwstrth &= 0xf8;
 					diwstoph &= 0x1f8;
 				}
@@ -458,6 +509,9 @@ namespace RunAmiga.Core.Custom
 
 			FirstPixel();
 			cln.lastcol = truecolour[0];//should be colour 0 at time of diwstrt
+
+			if (cop.currentLine == cdbg.dbugLine)
+				DebugPalette();
 		}
 
 		private void RunCopperLine()
@@ -495,13 +549,13 @@ namespace RunAmiga.Core.Custom
 					//bitplane DMA is ON
 					if ((dmacon & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.BPLEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.BPLEN))
 					{
-						if (h >= cln.ddfstrtfix && h < cln.ddfstopfix+cdbg.ddfHack)
+						if (h >= cln.ddfstrtfix+cdbg.ddfSHack && h < cln.ddfstopfix+cdbg.ddfEHack)
 							CopperBitplaneFetch(h);
 					}
 
 					//is it the visible area horizontally?
 					//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
-					if (h >= cln.diwstrth >> 1 && h < (cln.diwstoph + 1) >> 1)
+					if (h >= (cln.diwstrth >> 1) + cdbg.diwSHack && h < ((cln.diwstoph + 1) >> 1) + cdbg.diwEHack)
 					{
 						CopperBitplaneConvert(h);
 					}
@@ -829,15 +883,15 @@ namespace RunAmiga.Core.Custom
 						}
 					}
 				}
-				else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) == 0 && (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0)))
+				else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) == 0 && (bplcon0 & (1 << 10)) == 0 && (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0)))
 				{
 					//EHB
 					for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
 						pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
-					col = truecolour[pix & 0x1f];
+					col = truecolour[pix & 0xf];
 					if ((pix & 0b100000) != 0)
-						col = ((col & 0x00fefefe) >> 1) | 0xff000000;
+						col = ((col & 0x00fefefe) >> 1);// | 0xff000000;
 				}
 				else if (cln.planes == 8 && ((bplcon0 & (1 << 11)) != 0))
 				{
@@ -898,6 +952,8 @@ namespace RunAmiga.Core.Custom
 			{
 				for (int s = 7; s >= 0; s--)
 				{
+					int subspr = 0;
+					bool attached=false;
 					for (; ; )
 					{
 						sprpos[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
@@ -921,6 +977,16 @@ namespace RunAmiga.Core.Custom
 						if (hstart < 0)
 							break;
 
+						attached = (sprctl[s] & 0x80) != 0 && (s & 1) != 0;
+						if (attached)
+						{
+							s--;
+							sprpt[s] += 4;
+							s++;
+						}
+						//logger.LogTrace($"SPR{s}_{subspr} a:{(attached?1:0)}");
+						subspr++;
+
 						//x2 because they are low-res pixels on our high-res bitmap
 						//dptr = (hstart * 2) + vstart * SCREEN_WIDTH;
 						dptr = (hstart * 2) + vstart * 2 * SCREEN_WIDTH; //scan double
@@ -931,12 +997,36 @@ namespace RunAmiga.Core.Custom
 							sprdatb[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
 							sprpt[s] += 2;
 
+							if (attached)
+							{	
+								s--;
+								sprdata[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
+								sprpt[s] += 2;
+								sprdatb[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
+								sprpt[s] += 2;
+								s++;
+							}
+
 							for (int x = 0x8000; x > 0; x >>= 1)
 							{
 								if (dptr + SCREEN_WIDTH + 1 >= screen.Length) break;
 								int pix = (sprdata[s] & x) != 0 ? 1 : 0 + (sprdatb[s] & x) != 0 ? 2 : 0;
+								if (attached)
+								{
+									s--;
+									pix <<= 2;
+									pix += (sprdata[s] & x) != 0 ? 1 : 0 + (sprdatb[s] & x) != 0 ? 2 : 0;
+									s++;
+								}
+
 								if (pix != 0)
-									screen[dptr] = screen[dptr + 1] = screen[dptr + SCREEN_WIDTH] = screen[dptr + SCREEN_WIDTH + 1] = (int)truecolour[16 + 4 * (s >> 1) + pix];
+								{
+									if (attached)
+										screen[dptr] = screen[dptr + 1] = screen[dptr + SCREEN_WIDTH] = screen[dptr + SCREEN_WIDTH + 1] = (int)truecolour[16 + pix];
+									else
+										screen[dptr] = screen[dptr + 1] = screen[dptr + SCREEN_WIDTH] = screen[dptr + SCREEN_WIDTH + 1] = (int)truecolour[16 + 4 * (s >> 1) + pix];
+								}
+
 								dptr += 2;
 							}
 
@@ -947,6 +1037,7 @@ namespace RunAmiga.Core.Custom
 
 						if (dptr >= screen.Length) break;
 					}
+					if (attached) s--;
 				}
 			}
 		}
