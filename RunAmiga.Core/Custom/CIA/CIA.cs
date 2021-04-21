@@ -73,7 +73,7 @@ namespace RunAmiga.Core.Custom.CIA
 
 					if (timerA == 0xffff)
 					{
-						if ((regs[CIA.ICR] & (uint)ICRB.TIMERA) != 0)
+						//if ((regs[CIA.ICR] & (uint)ICRB.TIMERA) != 0)
 							AssertICR(ICRB.TIMERA);
 
 						//one shot mode?
@@ -92,7 +92,7 @@ namespace RunAmiga.Core.Custom.CIA
 
 					if (timerB == 0xffff)
 					{
-						if ((regs[CIA.ICR] & (uint)ICRB.TIMERB) != 0)
+						//if ((regs[CIA.ICR] & (uint)ICRB.TIMERB) != 0)
 							AssertICR(ICRB.TIMERB);
 
 						//one shot mode?
