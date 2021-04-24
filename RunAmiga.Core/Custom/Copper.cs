@@ -88,7 +88,18 @@ namespace RunAmiga.Core.Custom
 			if (obj == (int)'H') cdbg.bitplaneMask ^= 32;
 			if (obj == (int)'J') cdbg.bitplaneMask ^= 64;
 			if (obj == (int)'K') cdbg.bitplaneMask ^= 128;
-			if (obj == (int)'L') cdbg.bitplaneMask = 0xff;
+			if (obj == (int)'L') {cdbg.bitplaneMask = 0xff;cdbg.bitplaneMod=0;}
+
+			if (obj == (int)'Z') cdbg.bitplaneMod ^= 1;
+			if (obj == (int)'X') cdbg.bitplaneMod ^= 2;
+			if (obj == (int)'C') cdbg.bitplaneMod ^= 4;
+			if (obj == (int)'V') cdbg.bitplaneMod ^= 8;
+			if (obj == (int)'B') cdbg.bitplaneMod ^= 16;
+			if (obj == (int)'N') cdbg.bitplaneMod ^= 32;
+			if (obj == (int)'M') cdbg.bitplaneMod ^= 64;
+			if (obj == (int)Keyboard.VK.VK_OEM_COMMA) cdbg.bitplaneMod ^= 128;
+
+			if (obj == (int)Keyboard.VK.VK_F10) cdbg.ws = true;
 		}
 
 		private ulong copperTime;
@@ -283,6 +294,8 @@ namespace RunAmiga.Core.Custom
 			public int diwSHack;
 			public int diwEHack;
 			public byte bitplaneMask=0xff;
+			public byte bitplaneMod = 0;
+			public bool ws;
 
 			public void Reset()
 			{
@@ -303,7 +316,7 @@ namespace RunAmiga.Core.Custom
 			logger.LogTrace($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{cl.diwstrtv}->{cl.diwstopv}({cl.diwstopv - cl.diwstrtv}) H:{cl.diwstrth}{cdbg.diwSHack:+#0;-#0}->{cl.diwstoph}{cdbg.diwEHack:+#0;-#0}({cl.diwstoph - cl.diwstrth}/16={(cl.diwstoph - cl.diwstrth) / 16})");
 			logger.LogTrace($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
 			logger.LogTrace($"BCN {bplcon0:X4} {Bplcon0()} {bplcon1:X4} {bplcon2:X4} {bplcon3:X4} {bplcon4:X4}");
-			logger.LogTrace($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} {new string(Convert.ToString(cd.bitplaneMask,2).PadLeft(8,'0').Reverse().ToArray())}");
+			logger.LogTrace($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} {new string(Convert.ToString(cd.bitplaneMask,2).PadLeft(8,'0').Reverse().ToArray())} {new string(Convert.ToString(cd.bitplaneMod, 2).PadLeft(8, '0').Reverse().ToArray())}");
 			var sb = new StringBuilder();
 			sb.AppendLine();
 			for (int i = 0; i < 256; i++)
@@ -907,6 +920,7 @@ namespace RunAmiga.Core.Custom
 					pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
 				pix &= cdbg.bitplaneMask;
+				pix |= cdbg.bitplaneMod;
 
 				if ((bplcon0 & (1 << 10)) != 0)
 				{
@@ -1014,8 +1028,8 @@ namespace RunAmiga.Core.Custom
 				for (int s = 7; s >= 0; s--)
 				{
 					int subspr = 0;
-					bool attached=false;
-					for (; ; )
+					bool attached = false;
+					for (;;)
 					{
 						sprpos[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
 						sprpt[s] += 2;
@@ -1045,6 +1059,7 @@ namespace RunAmiga.Core.Custom
 							sprpt[s] += 4;
 							s++;
 						}
+
 						//logger.LogTrace($"SPR{s}_{subspr} a:{(attached?1:0)}");
 						subspr++;
 
@@ -1059,7 +1074,7 @@ namespace RunAmiga.Core.Custom
 							sprpt[s] += 2;
 
 							if (attached)
-							{	
+							{
 								s--;
 								sprdata[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
 								sprpt[s] += 2;
@@ -1071,12 +1086,12 @@ namespace RunAmiga.Core.Custom
 							for (int x = 0x8000; x > 0; x >>= 1)
 							{
 								if (dptr + SCREEN_WIDTH + 1 >= screen.Length) break;
-								int pix = (sprdata[s] & x) != 0 ? 1 : 0 + (sprdatb[s] & x) != 0 ? 2 : 0;
+								int pix = ((sprdata[s] & x) != 0 ? 1 : 0) + ((sprdatb[s] & x) != 0 ? 2 : 0);
 								if (attached)
 								{
 									s--;
 									pix <<= 2;
-									pix += (sprdata[s] & x) != 0 ? 1: 0 + (sprdatb[s] & x) != 0 ? 2 : 0;
+									pix += ((sprdata[s] & x) != 0 ? 1: 0) + ((sprdatb[s] & x) != 0 ? 2 : 0);
 									s++;
 								}
 
