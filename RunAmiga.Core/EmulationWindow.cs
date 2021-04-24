@@ -157,8 +157,7 @@ namespace RunAmiga.Core
 				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, screenWidth, screenHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
 				Marshal.Copy(screen, 0, bitmapData.Scan0, screen.Length);
 				bitmap.UnlockBits(bitmapData);
-				picture.Image = bitmap;
-				emulation.Invalidate();
+				picture.Refresh();
 			});
 		}
 
