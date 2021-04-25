@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
@@ -27,9 +28,27 @@ namespace RunAmiga.Core.Custom.IO
 
 		private readonly ConcurrentQueue<byte> keyQueue = new ConcurrentQueue<byte>();
 
+		bool r_alt=false;
+		bool l_alt=false;
+		bool l_shift = false;
+		bool r_shift = false;
+		
 		private void AddKeyDown(int key)
 		{
-			//logger.LogTrace($"KeyDown {Convert.ToUInt32(key):X8} {key} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2} ");
+			if (key == (int)VK.VK_MENU)
+			{
+				if ((GetAsyncKeyState((int)VK.VK_LMENU) & 0x8000) != 0 && !l_alt) { AddKeyDown((int)VK.VK_LMENU); l_alt = true; }
+				if ((GetAsyncKeyState((int)VK.VK_RMENU) & 0x8000) != 0 && !r_alt) { AddKeyDown((int)VK.VK_RMENU); r_alt = true; }
+				return;
+			}
+			if (key == (int)VK.VK_SHIFT)
+			{
+				if ((GetAsyncKeyState((int)VK.VK_LSHIFT) & 0x8000) != 0 && !l_shift) { AddKeyDown((int)VK.VK_LSHIFT); l_shift = true; }
+				if ((GetAsyncKeyState((int)VK.VK_RSHIFT) & 0x8000) != 0 && !r_shift) { AddKeyDown((int)VK.VK_RSHIFT); r_shift = true; }
+				return;
+			}
+
+			logger.LogTrace($"KeyDown {Convert.ToUInt32(key):X8} {key} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2} ");
 
 			switch (key)
 			{
@@ -50,7 +69,20 @@ namespace RunAmiga.Core.Custom.IO
 
 		private void AddKeyUp(int key)
 		{
-			//logger.LogTrace($"KeyUp   {Convert.ToUInt32(key):X8} {key} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2}");
+			if (key == (int)VK.VK_MENU)
+			{
+				if ((GetAsyncKeyState((int)VK.VK_LMENU) & 0x8000) == 0 && l_alt) { AddKeyUp((int)VK.VK_LMENU); l_alt = false; }
+				if ((GetAsyncKeyState((int)VK.VK_RMENU) & 0x8000) == 0 && r_alt) { AddKeyUp((int)VK.VK_RMENU); r_alt = false; }
+				return;
+			}
+			if (key == (int)VK.VK_SHIFT)
+			{
+				if ((GetAsyncKeyState((int)VK.VK_LSHIFT) & 0x8000) == 0 && l_shift) { AddKeyUp((int)VK.VK_LSHIFT); l_shift = false; }
+				if ((GetAsyncKeyState((int)VK.VK_RSHIFT) & 0x8000) == 0 && r_shift) { AddKeyUp((int)VK.VK_RSHIFT); r_shift = false; }
+				return;
+			}
+
+			logger.LogTrace($"KeyUp   {Convert.ToUInt32(key):X8} {key} {(scanConvert.TryGetValue(key, out byte v) ? v : 0xff):X2}");
 
 			switch (key)
 			{
@@ -106,6 +138,8 @@ namespace RunAmiga.Core.Custom.IO
 		{
 			keyQueue.Clear();
 			keyboardState = KeyboardState.Ready;
+			l_alt = r_alt = false;
+			l_shift = r_shift = false;
 		}
 
 		private byte sdr;
