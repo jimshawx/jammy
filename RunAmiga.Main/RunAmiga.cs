@@ -16,6 +16,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RunAmiga.Main
 {
@@ -626,6 +627,14 @@ namespace RunAmiga.Main
 			radioDF1.CheckedChanged += radioDFx_CheckedChanged;
 			radioDF2.CheckedChanged += radioDFx_CheckedChanged;
 			radioDF3.CheckedChanged += radioDFx_CheckedChanged;
+		}
+
+		private void btnGfxScan_Click(object sender, EventArgs e)
+		{
+			var gfxScan = new GfxScan(
+					ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<GfxScan>>(),
+					ServiceProviderFactory.ServiceProvider.GetRequiredService<IChipRAM>()
+				);
 		}
 	}
 

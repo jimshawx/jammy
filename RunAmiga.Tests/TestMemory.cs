@@ -110,5 +110,10 @@ namespace RunAmiga.Tests
 		public void AddMemoryIntercept(IMemoryInterceptor interceptor)
 		{
 		}
+
+		public List<BulkMemoryRange> GetBulkRanges()
+		{
+			return new List<BulkMemoryRange> {new BulkMemoryRange {Memory = memory, StartAddress = 0}};
+		}
 	}
 }

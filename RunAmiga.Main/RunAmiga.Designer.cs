@@ -79,6 +79,7 @@ namespace RunAmiga.Main
 			this.radioDF1 = new System.Windows.Forms.RadioButton();
 			this.radioDF2 = new System.Windows.Forms.RadioButton();
 			this.radioDF3 = new System.Windows.Forms.RadioButton();
+			this.btnGfxScan = new System.Windows.Forms.Button();
 			this.menuDisassembly.SuspendLayout();
 			this.menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -657,11 +658,22 @@ namespace RunAmiga.Main
 			this.radioDF3.UseVisualStyleBackColor = true;
 			this.radioDF3.CheckedChanged += new System.EventHandler(this.radioDFx_CheckedChanged);
 			// 
+			// btnGfxScan
+			// 
+			this.btnGfxScan.Location = new System.Drawing.Point(1120, 536);
+			this.btnGfxScan.Name = "btnGfxScan";
+			this.btnGfxScan.Size = new System.Drawing.Size(75, 23);
+			this.btnGfxScan.TabIndex = 46;
+			this.btnGfxScan.Text = "Gfx Scan";
+			this.btnGfxScan.UseVisualStyleBackColor = true;
+			this.btnGfxScan.Click += new System.EventHandler(this.btnGfxScan_Click);
+			// 
 			// RunAmiga
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1414, 605);
+			this.Controls.Add(this.btnGfxScan);
 			this.Controls.Add(this.radioDF3);
 			this.Controls.Add(this.radioDF2);
 			this.Controls.Add(this.radioDF1);
@@ -760,6 +772,7 @@ namespace RunAmiga.Main
 		private System.Windows.Forms.RadioButton radioDF1;
 		private System.Windows.Forms.RadioButton radioDF2;
 		private System.Windows.Forms.RadioButton radioDF3;
+		private System.Windows.Forms.Button btnGfxScan;
 	}
 }
 
