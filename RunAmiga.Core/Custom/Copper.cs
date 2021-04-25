@@ -299,7 +299,7 @@ namespace RunAmiga.Core.Custom
 
 			public void Reset()
 			{
-				dma = 0; 
+				dma = 0;
 				//ddfSHack = ddfEHack = diwEHack = diwSHack = 0;
 			}
 		}
@@ -408,6 +408,14 @@ namespace RunAmiga.Core.Custom
 				screen[x + cdbg.dbugLine * SCREEN_WIDTH * 2] ^= 0xffffff;
 		}
 
+		private enum CopperLineState
+		{
+			LineStart,
+			Fetching,
+			LineComplete,
+			LineTerminated
+		}
+
 		private class CopperLine
 		{
 			public ulong pixelMask;
@@ -427,6 +435,8 @@ namespace RunAmiga.Core.Custom
 			public uint lastcol = 0;
 
 			public int wordCount = 0;
+
+			public CopperLineState lineState;
 
 			public void InitLine(ushort bplcon0, ushort diwstrt, ushort diwstop, ushort diwhigh, ushort ddfstrt, ushort ddfstop, ushort fmode, EmulationSettings settings)
 			{
@@ -548,6 +558,7 @@ namespace RunAmiga.Core.Custom
 
 			FirstPixel();
 			cln.lastcol = truecolour[0];//should be colour 0 at time of diwstrt
+			cln.lineState = CopperLineState.LineStart;
 
 			if (cop.currentLine == cdbg.dbugLine)
 				DebugPalette();
@@ -588,8 +599,16 @@ namespace RunAmiga.Core.Custom
 					//bitplane DMA is ON
 					if ((dmacon & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.BPLEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.BPLEN))
 					{
-						if (h >= cln.ddfstrtfix+cdbg.ddfSHack && h < cln.ddfstopfix+cdbg.ddfEHack)
+						if (h >= cln.ddfstrtfix + cdbg.ddfSHack && h < cln.ddfstopfix + cdbg.ddfEHack && (cln.lineState == CopperLineState.Fetching || cln.lineState == CopperLineState.LineStart))
+						{
 							CopperBitplaneFetch(h);
+							cln.lineState = CopperLineState.Fetching;
+						}
+
+						if (h >= cln.ddfstopfix + cdbg.ddfEHack && cln.lineState == CopperLineState.Fetching)
+						{
+							cln.lineState = CopperLineState.LineComplete;
+						}
 					}
 
 					//is it the visible area horizontally?
@@ -626,11 +645,12 @@ namespace RunAmiga.Core.Custom
 
 		private void EndCopperLine()
 		{
-			//next horizontal line
-			if (cop.currentLine >= cln.diwstrtv && cop.currentLine < cln.diwstopv)
+			//next horizontal line, and we did fetching this line
+			if (cop.currentLine >= cln.diwstrtv && cop.currentLine < cln.diwstopv && cln.lineState == CopperLineState.LineComplete)
 			{
 				for (int i = 0; i < cln.planes; i++)
 					bplpt[i] += ((i & 1) == 0) ? bpl2mod : bpl1mod;
+				cln.lineState = CopperLineState.LineTerminated;
 			}
 
 			//this should be a no-op
@@ -699,7 +719,6 @@ namespace RunAmiga.Core.Custom
 								logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {copcon & 1}");
 							}
 						}
-
 					}
 					else if ((ins & 0x0001) == 1)
 					{
@@ -720,11 +739,6 @@ namespace RunAmiga.Core.Custom
 
 						if ((data & 1) == 0)
 						{
-							//if (ins == 0xffff && data == 0xfffe)
-							//	cop.status = CopperStatus.Waiting;
-							//else
-							//	return;
-							
 							//WAIT
 							//logger.LogTrace($"WAIT until ({cop.waitH},{cop.waitV}) @({h},{cop.currentLine}) hm:{cop.waitHMask:X3} vm:{cop.waitVMask:X3} m:{cop.waitMask:X4} p:{cop.waitPos:X4}");
 							cop.status = CopperStatus.Waiting;
@@ -733,11 +747,6 @@ namespace RunAmiga.Core.Custom
 						{
 							//SKIP
 							//logger.LogTrace("SKIP");
-							//if ((cop.currentLine & cop.waitVMask) >= cop.waitV)
-							//{
-							//	if ((h & cop.waitHMask) >= cop.waitH)
-							//		cop.copPC += 4;
-							//}
 
 							uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
 							coppos &= cop.waitMask;
@@ -967,12 +976,12 @@ namespace RunAmiga.Core.Custom
 						}
 					}
 				}
-				else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) == 0 && (bplcon0 & (1 << 10)) == 0 && (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0)))
+				else if (cln.planes == 6 && ((bplcon0 & (1 << 11)) == 0 && (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0)))
 				{
 					//EHB
 					col = truecolour[pix & 0x1f];
 					if ((pix & 0b100000) != 0)
-						col = ((col & 0x00fefefe) >> 1);
+						col = (col & 0x00fefefe) >> 1;
 				}
 				else if (cln.planes == 8 && ((bplcon0 & (1 << 11)) != 0))
 				{
@@ -1014,6 +1023,7 @@ namespace RunAmiga.Core.Custom
 				for (int k = 0; k < 4 / cln.pixelLoop; k++)
 					screen[cop.dptr++] = (int)col;
 
+				//remember the last colour for HAM modes
 				cln.lastcol = col;
 			}
 		}
@@ -1430,8 +1440,8 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.DIWSTOP: diwstop = value; diwhigh = 0; break;
 				case ChipRegs.DIWHIGH: diwhigh = value; break;
 
-				case ChipRegs.DDFSTRT: ddfstrt = value; break;
-				case ChipRegs.DDFSTOP: ddfstop = value; break;
+				case ChipRegs.DDFSTRT: ddfstrt = value; cln.lineState = CopperLineState.LineTerminated; break;
+				case ChipRegs.DDFSTOP: ddfstop = value; cln.lineState = CopperLineState.LineTerminated; break;
 
 				case ChipRegs.SPR0PTL: sprpt[0] = (sprpt[0] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR0PTH: sprpt[0] = (sprpt[0] & 0x0000ffff) | ((uint)value << 16); break;
