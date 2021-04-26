@@ -251,11 +251,13 @@ namespace RunAmiga.Disassembler
 						uint ext = read16(pc); pc += 2;
 						uint Xn = (ext >> 12) & 7;
 						uint d8 = ext & 0xff;
+						uint scale = (ext >>9)&3;
+						string ss = scale == 0 ? "" : $"*{1<<(int)scale}";
 						string s = (((ext>>11)&1) != 0)?"l":"w";
 						if ((ext & 0x8000)!=0)
-							Append($"{fmtX2(d8)}(a{x},a{Xn}.{s})");
+							Append($"{fmtX2(d8)}(a{x},a{Xn}.{s}{ss})");
 						else
-							Append($"{fmtX2(d8)}(a{x},d{Xn}.{s})");
+							Append($"{fmtX2(d8)}(a{x},d{Xn}.{s}{ss})");
 						return 0;
 					}
 				case 7:
@@ -264,12 +266,9 @@ namespace RunAmiga.Disassembler
 						case 0b010://(d16,pc)
 							{
 								ushort d16 = read16(pc);
-								//uint ea = pc + (uint)(short)d16;
 								uint d32 = (uint)(address + pc + (short)d16);
 								pc += 2;
-								//Append($"(${d16:X4},pc)");
 								Append($"{fmtX8(d32)}(pc)");
-								//return ea;
 								return 0;
 							}
 						case 0b011://(d8,pc,Xn)
@@ -277,14 +276,15 @@ namespace RunAmiga.Disassembler
 								uint ext = read16(pc);
 								uint Xn = (ext >> 12) & 7;
 								uint d8 = ext & 0xff;
+								uint scale = (ext >> 9) & 3;
+								string ss = scale == 0 ? "" : $"*{1 << (int)scale}";
 								string s = (((ext >> 11) & 1) != 0) ? "l" : "w";
-								//Append($"{fmtX2(d8)}(pc,d{Xn}.{s})");
 								d8 += (address + pc);
 								pc += 2;
 								if ((ext&0x8000)!=0)
-									Append($"{fmtX8(d8)}(a{Xn}.{s})");
+									Append($"{fmtX8(d8)}(a{Xn}.{s}{ss})");
 								else
-									Append($"{fmtX8(d8)}(d{Xn}.{s})");
+									Append($"{fmtX8(d8)}(d{Xn}.{s}{ss})");
 								return 0;
 							}
 						case 0b000://(xxx).w
