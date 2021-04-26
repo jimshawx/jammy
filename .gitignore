@@ -10,3 +10,5 @@
 /*.hdf
 /DiagROM
 /*.txt
+games/**
+roms/**

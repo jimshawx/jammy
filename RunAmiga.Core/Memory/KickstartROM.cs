@@ -33,7 +33,7 @@ namespace RunAmiga.Core.Memory
 					break;
 			}
 
-			string fullName = Path.Combine("../../../../", path);
+			string fullName = Path.Combine("../../../../roms", path);
 
 			try
 			{

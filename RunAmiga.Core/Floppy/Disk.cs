@@ -4,7 +4,7 @@ namespace RunAmiga.Core.Floppy
 {
 	public class Disk
 	{
-		private const string floppyPath = "../../../../";
+		private const string floppyPath = "../../../../games/";
 
 		public byte[] data;
 
