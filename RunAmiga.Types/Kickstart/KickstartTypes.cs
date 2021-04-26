@@ -53,4 +53,10 @@ namespace RunAmiga.Types.Kickstart
 		public uint IdStringPtr { get; set; }
 		public uint Init { get; set; }        /* pointer to init code	*/
 	}
+
+	public class KickstartVersion
+	{
+		public ushort Major { get; set; }
+		public ushort Minor { get; set; }
+	}
 }

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
+using RunAmiga.Core.Types.Types;
 using RunAmiga.Interface;
 using RunAmiga.Types.Debugger;
 using RunAmiga.Types.Kickstart;
@@ -31,13 +32,27 @@ namespace RunAmiga.Disassembler
 			this.kickstartROM = kickstartROM;
 			this.disassembly = disassembly;
 			this.settings = settings.Value;
-
-			ShowRomTags();
 		}
 
 		public List<Resident> GetRomTags()
 		{
 			return GetRomTags(kickstartROM, memory, 0);
+		}
+
+		public KickstartVersion GetVersion()
+		{
+			uint kickstartBaseAddress = kickstartROM.MappedRange().Start;
+			return new KickstartVersion
+			{
+				Major = (ushort)kickstartROM.Read(0, kickstartBaseAddress + 0x10, Size.Word),
+				Minor = (ushort)kickstartROM.Read(0, kickstartBaseAddress + 0x12, Size.Word)
+			};
+		}
+
+		public uint GetChecksum()
+		{
+			var mappedRange = kickstartROM.MappedRange();
+			return kickstartROM.Read(0, (uint)(mappedRange.Start + mappedRange.Length - 24), Size.Long);
 		}
 
 		private static List<Resident> GetRomTags(IKickstartROM kickstartROM, IDebugMemoryMapper memory, uint rombase)

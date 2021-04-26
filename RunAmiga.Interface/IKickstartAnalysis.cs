@@ -6,6 +6,8 @@ namespace RunAmiga.Interface
 	public interface IKickstartAnalysis
 	{
 		List<Resident> GetRomTags();
+		KickstartVersion GetVersion();
 		void ShowRomTags();
+		uint GetChecksum();
 	}
 }

@@ -54,6 +54,8 @@ namespace RunAmiga.Disassembler.Analysers
 			//NoNL();
 			DeDupe();
 			LoadComments();
+
+			kickstartAnalysis.ShowRomTags();
 		}
 
 		private void NoNL()
@@ -136,6 +138,57 @@ namespace RunAmiga.Disassembler.Analysers
 		}
 
 		private void ROMTags()
+		{
+			ExtractROMTags();
+			ExtractExecBase();
+		}
+
+		private struct ExecLocation
+		{
+			public string Version;
+			public string Kickstart;
+			public uint Address;
+
+			public ExecLocation(string version, string kickstart, uint address)
+			{
+				Version = version;
+				Kickstart = kickstart;
+				Address = address;
+			}
+		}
+
+		private ExecLocation[] execLocations = {
+			new ExecLocation("1.2", "1.0", 0x0),
+			new ExecLocation("31.34", "1.1", 0x0),
+			new ExecLocation("33.166", "1.2", 0x0),
+			new ExecLocation("33.180", "1.2", 0x0),
+			new ExecLocation("33.192", "1.2", 0x00FC1A40),
+			new ExecLocation("34.2", "1.3", 0x00FC1A7C),
+			new ExecLocation("37.132","2.04",0x00F81F84),
+			new ExecLocation("37.151","2.05",0x00F81FB0),
+			new ExecLocation("40.10", "3.1", 0x00F8236C),
+			new ExecLocation("40.63", "3.1", 0x00F8236C),
+		};
+
+		private void ExtractExecBase()
+		{
+			var version = kickstartAnalysis.GetVersion();
+			uint crc = kickstartAnalysis.GetChecksum();
+			logger.LogTrace($"Kickstart Checksum {crc:X8}");
+
+			foreach (var execLoc in execLocations)
+			{
+				var ver = execLoc.Version.Split('.').Select(x => Convert.ToInt32(x)).ToArray();
+				if (version.Major == ver[0] && version.Minor == ver[1])
+				{
+					ExtractFunctionTable(execLoc.Address, NT_Type.NT_LIBRARY, "exec.library", Size.Word);
+					return;
+				}
+			}
+			logger.LogTrace($"Did not find Execbase Function Table for {version.Major}.{version.Minor}");
+		}
+
+		private void ExtractROMTags()
 		{
 			var romtags = kickstartAnalysis.GetRomTags();
 			foreach (var tag in romtags)
@@ -272,7 +325,7 @@ namespace RunAmiga.Disassembler.Analysers
 			analysis.AddHeader(address, "");
 		}
 
-		public void ExtractFunctionTable(uint fntable, NT_Type type, string name)
+		public void ExtractFunctionTable(uint fntable, NT_Type type, string name, Size? size = null)
 		{
 			uint address = fntable;
 
@@ -281,10 +334,14 @@ namespace RunAmiga.Disassembler.Analysers
 
 			ushort s = mem.UnsafeRead16(address);
 			int idx = 0;
-			if (s == 0xFFFF)
+			if (s == 0xFFFF || size == Size.Word)
 			{
-				MakeMemType(address, MemType.Word, null);
-				address += 2;
+				if (size == null)
+				{
+					MakeMemType(address, MemType.Word, null);
+					address += 2;
+				}
+
 				while ((s = mem.UnsafeRead16(address)) != 0xFFFF)
 				{
 					uint u = fntable + s;
