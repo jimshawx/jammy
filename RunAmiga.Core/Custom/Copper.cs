@@ -58,48 +58,58 @@ namespace RunAmiga.Core.Custom
 		{
 		}
 
+		private bool keys = false;
 		private void dbug_Keydown(int obj)
 		{
-			if (obj == (int)Keyboard.VK.VK_F11) cdbg.dbug = true;
-			if (obj == (int)Keyboard.VK.VK_F7) cdbg.dbugLine--;
-			if (obj == (int)Keyboard.VK.VK_F6) cdbg.dbugLine++;
-			if (obj == (int)Keyboard.VK.VK_F8) cdbg.dbugLine = -1;
-			if (obj == (int)Keyboard.VK.VK_F5) cdbg.dbugLine = diwstrt >> 8;
+			if (obj == (int)Keyboard.VK.VK_F9) {keys ^= true; logger.LogTrace($"KEYS {keys}");}
 
-			if (obj == (int)'Q') cdbg.ddfSHack++;
-			if (obj == (int)'W') cdbg.ddfSHack--;
-			if (obj == (int)'E') cdbg.ddfSHack = 0;
-			if (obj == (int)'R') cdbg.ddfEHack++;
-			if (obj == (int)'T') cdbg.ddfEHack--;
-			if (obj == (int)'Y') cdbg.ddfEHack=0;
+			if (keys)
+			{
+				if (obj == (int)Keyboard.VK.VK_F11) cdbg.dbug = true;
+				if (obj == (int)Keyboard.VK.VK_F7) cdbg.dbugLine--;
+				if (obj == (int)Keyboard.VK.VK_F6) cdbg.dbugLine++;
+				if (obj == (int)Keyboard.VK.VK_F8) cdbg.dbugLine = -1;
+				if (obj == (int)Keyboard.VK.VK_F5) cdbg.dbugLine = diwstrt >> 8;
 
-			if (obj == (int)'1') cdbg.diwSHack++;
-			if (obj == (int)'2') cdbg.diwSHack--;
-			if (obj == (int)'3') cdbg.diwSHack = 0;
-			if (obj == (int)'4') cdbg.diwEHack++;
-			if (obj == (int)'5') cdbg.diwEHack--;
-			if (obj == (int)'6') cdbg.diwEHack = 0;
+				if (obj == (int)'Q') cdbg.ddfSHack++;
+				if (obj == (int)'W') cdbg.ddfSHack--;
+				if (obj == (int)'E') cdbg.ddfSHack = 0;
+				if (obj == (int)'R') cdbg.ddfEHack++;
+				if (obj == (int)'T') cdbg.ddfEHack--;
+				if (obj == (int)'Y') cdbg.ddfEHack = 0;
 
-			if (obj == (int)'A') cdbg.bitplaneMask ^= 1;
-			if (obj == (int)'S') cdbg.bitplaneMask ^= 2;
-			if (obj == (int)'D') cdbg.bitplaneMask ^= 4;
-			if (obj == (int)'F') cdbg.bitplaneMask ^= 8;
-			if (obj == (int)'G') cdbg.bitplaneMask ^= 16;
-			if (obj == (int)'H') cdbg.bitplaneMask ^= 32;
-			if (obj == (int)'J') cdbg.bitplaneMask ^= 64;
-			if (obj == (int)'K') cdbg.bitplaneMask ^= 128;
-			if (obj == (int)'L') {cdbg.bitplaneMask = 0xff;cdbg.bitplaneMod=0;}
+				if (obj == (int)'1') cdbg.diwSHack++;
+				if (obj == (int)'2') cdbg.diwSHack--;
+				if (obj == (int)'3') cdbg.diwSHack = 0;
+				if (obj == (int)'4') cdbg.diwEHack++;
+				if (obj == (int)'5') cdbg.diwEHack--;
+				if (obj == (int)'6') cdbg.diwEHack = 0;
 
-			if (obj == (int)'Z') cdbg.bitplaneMod ^= 1;
-			if (obj == (int)'X') cdbg.bitplaneMod ^= 2;
-			if (obj == (int)'C') cdbg.bitplaneMod ^= 4;
-			if (obj == (int)'V') cdbg.bitplaneMod ^= 8;
-			if (obj == (int)'B') cdbg.bitplaneMod ^= 16;
-			if (obj == (int)'N') cdbg.bitplaneMod ^= 32;
-			if (obj == (int)'M') cdbg.bitplaneMod ^= 64;
-			if (obj == (int)Keyboard.VK.VK_OEM_COMMA) cdbg.bitplaneMod ^= 128;
+				if (obj == (int)'A') cdbg.bitplaneMask ^= 1;
+				if (obj == (int)'S') cdbg.bitplaneMask ^= 2;
+				if (obj == (int)'D') cdbg.bitplaneMask ^= 4;
+				if (obj == (int)'F') cdbg.bitplaneMask ^= 8;
+				if (obj == (int)'G') cdbg.bitplaneMask ^= 16;
+				if (obj == (int)'H') cdbg.bitplaneMask ^= 32;
+				if (obj == (int)'J') cdbg.bitplaneMask ^= 64;
+				if (obj == (int)'K') cdbg.bitplaneMask ^= 128;
+				if (obj == (int)'L')
+				{
+					cdbg.bitplaneMask = 0xff;
+					cdbg.bitplaneMod = 0;
+				}
 
-			if (obj == (int)Keyboard.VK.VK_F10) cdbg.ws = true;
+				if (obj == (int)'Z') cdbg.bitplaneMod ^= 1;
+				if (obj == (int)'X') cdbg.bitplaneMod ^= 2;
+				if (obj == (int)'C') cdbg.bitplaneMod ^= 4;
+				if (obj == (int)'V') cdbg.bitplaneMod ^= 8;
+				if (obj == (int)'B') cdbg.bitplaneMod ^= 16;
+				if (obj == (int)'N') cdbg.bitplaneMod ^= 32;
+				if (obj == (int)'M') cdbg.bitplaneMod ^= 64;
+				if (obj == (int)Keyboard.VK.VK_OEM_COMMA) cdbg.bitplaneMod ^= 128;
+
+				if (obj == (int)Keyboard.VK.VK_F10) cdbg.ws = true;
+			}
 		}
 
 		private ulong copperTime;
@@ -908,6 +918,11 @@ namespace RunAmiga.Core.Custom
 			0, 1, 0, 1, 2, 3, 2, 3,
 			0, 1, 0, 1, 2, 3, 2, 3,
 			4, 5, 4, 5, 6, 7, 6, 7,
+			4, 5, 4, 5, 6, 7, 6, 7,
+
+			0, 1, 0, 1, 2, 3, 2, 3,
+			0, 1, 0, 1, 2, 3, 2, 3,
+			4, 5, 4, 5, 6, 7, 6, 7,
 			4, 5, 4, 5, 6, 7, 6, 7
 		};
 
@@ -1404,7 +1419,7 @@ namespace RunAmiga.Core.Custom
 				case ChipRegs.BPL1MOD: bpl1mod = (uint)(short)value & 0xfffffffe; break;
 				case ChipRegs.BPL2MOD: bpl2mod = (uint)(short)value & 0xfffffffe; break;
 
-				case ChipRegs.BPLCON0: bplcon0 = value; break;
+				case ChipRegs.BPLCON0: bplcon0 = value; /*logger.LogTrace($"BPLCON0 {bplcon0:X4} {(bplcon0>>12)&7}");*/ break;
 				case ChipRegs.BPLCON1: bplcon1 = value; break;
 				case ChipRegs.BPLCON2: bplcon2 = value; break;
 				case ChipRegs.BPLCON3: bplcon3 = value; break;
