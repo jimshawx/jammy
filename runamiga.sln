@@ -30,9 +30,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Logger.DebugAsync"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Logger.DebugAsyncRTF", "RunAmiga.Logger.DebugAsyncRTF\RunAmiga.Logger.DebugAsyncRTF.csproj", "{FCA17E44-0A77-43AE-8672-5C474D6630AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAmiga.Interface", "RunAmiga.Interface\RunAmiga.Interface.csproj", "{F14D1BCC-997B-4FDF-9ABA-C7446EAD0E02}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Interface", "RunAmiga.Interface\RunAmiga.Interface.csproj", "{F14D1BCC-997B-4FDF-9ABA-C7446EAD0E02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAmiga.Types", "RunAmiga.Types\RunAmiga.Types.csproj", "{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Types", "RunAmiga.Types\RunAmiga.Types.csproj", "{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Core.CPU.CSharp.MC68020", "RunAmiga.Core.CPU.CSharp.MC68020\RunAmiga.Core.CPU.CSharp.MC68020.csproj", "{80C47CC5-11A1-489B-BAC1-0388FF30EC75}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Core.CPU.Musashi.MC68020", "RunAmiga.Core.CPU.Musashi.MC68020\RunAmiga.Core.CPU.Musashi.MC68020.csproj", "{5A696A65-F371-4450-9D33-3BCF2709B262}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -104,6 +108,14 @@ Global
 		{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BEF0C3A2-AB27-46C2-9C16-558D7BE670B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80C47CC5-11A1-489B-BAC1-0388FF30EC75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80C47CC5-11A1-489B-BAC1-0388FF30EC75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80C47CC5-11A1-489B-BAC1-0388FF30EC75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80C47CC5-11A1-489B-BAC1-0388FF30EC75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A696A65-F371-4450-9D33-3BCF2709B262}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A696A65-F371-4450-9D33-3BCF2709B262}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A696A65-F371-4450-9D33-3BCF2709B262}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A696A65-F371-4450-9D33-3BCF2709B262}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

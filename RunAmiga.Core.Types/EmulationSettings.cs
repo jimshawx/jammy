@@ -6,6 +6,12 @@
 		Musashi
 	}
 
+	public enum CPUSku
+	{
+		MC68000,
+		MC68EC020
+	}
+
 	public enum AudioDriver
 	{
 		Null,
@@ -54,6 +60,7 @@
 		public Feature Disassemblies { get; set; }
 
 		public CPUType CPU { get; set; }
+		public CPUSku Sku { get; set; }
 		public AudioDriver Audio { get; set; }
 		public Feature Tracer { get; set; }
 		public ChipSet ChipSet { get; set; }

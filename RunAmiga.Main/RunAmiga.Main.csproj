@@ -34,7 +34,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RunAmiga.Core.CPU.CSharp.MC68020\RunAmiga.Core.CPU.CSharp.MC68020.csproj" />
     <ProjectReference Include="..\RunAmiga.Core.CPU.CSharp\RunAmiga.Core.CPU.CSharp.csproj" />
+    <ProjectReference Include="..\RunAmiga.Core.CPU.Musashi.MC68020\RunAmiga.Core.CPU.Musashi.MC68020.csproj" />
     <ProjectReference Include="..\RunAmiga.Core.CPU.Musashi\RunAmiga.Core.CPU.Musashi.csproj" />
     <ProjectReference Include="..\RunAmiga.Core\RunAmiga.Core.csproj" />
     <ProjectReference Include="..\RunAmiga.Debugger\RunAmiga.Debugger.csproj" />
