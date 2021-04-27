@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -52,6 +53,8 @@ namespace RunAmiga.Core.Custom
 			emulationWindow.SetPicture(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
+
+			ComputeDPFLookup();
 		}
 
 		private void dbug_Keyup(int obj)
@@ -173,8 +176,7 @@ namespace RunAmiga.Core.Custom
 		{
 			if (copPC == 0) return;
 
-			var csb = new StringBuilder();
-
+			var csb = cdbg.GetStringBuilder();
 			csb.AppendLine($"Copper List @{copPC:X8}");
 
 			var skipTaken = new HashSet<uint>();
@@ -306,11 +308,18 @@ namespace RunAmiga.Core.Custom
 			public byte bitplaneMask=0xff;
 			public byte bitplaneMod = 0;
 			public bool ws;
+			private StringBuilder sb = new StringBuilder();
 
 			public void Reset()
 			{
 				dma = 0;
 				//ddfSHack = ddfEHack = diwEHack = diwSHack = 0;
+			}
+
+			public StringBuilder GetStringBuilder()
+			{
+				sb.Length = 0;
+				return sb;
 			}
 		}
 
@@ -325,9 +334,9 @@ namespace RunAmiga.Core.Custom
 			logger.LogTrace($"DDF {ddfstrt:X4} {ddfstop:X4} ({cl.wordCount}) {cl.ddfstrtfix:X4}{cdbg.ddfSHack:+#0;-#0} {cl.ddfstopfix:X4}{cdbg.ddfEHack:+#0;-#0} FMODE {fmode:X4}");
 			logger.LogTrace($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{cl.diwstrtv}->{cl.diwstopv}({cl.diwstopv - cl.diwstrtv}) H:{cl.diwstrth}{cdbg.diwSHack:+#0;-#0}->{cl.diwstoph}{cdbg.diwEHack:+#0;-#0}({cl.diwstoph - cl.diwstrth}/16={(cl.diwstoph - cl.diwstrth) / 16})");
 			logger.LogTrace($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
-			logger.LogTrace($"BCN {bplcon0:X4} {Bplcon0()} {bplcon1:X4} {bplcon2:X4} {bplcon3:X4} {bplcon4:X4}");
+			logger.LogTrace($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()} 3:{bplcon3:X4} {Bplcon3()} 4:{bplcon4:X4} {Bplcon4()}");
 			logger.LogTrace($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} {new string(Convert.ToString(cd.bitplaneMask,2).PadLeft(8,'0').Reverse().ToArray())} {new string(Convert.ToString(cd.bitplaneMod, 2).PadLeft(8, '0').Reverse().ToArray())}");
-			var sb = new StringBuilder();
+			var sb = cdbg.GetStringBuilder();
 			sb.AppendLine();
 			for (int i = 0; i < 256; i++)
 				sb.Append(cd.fetch[i]);
@@ -343,7 +352,7 @@ namespace RunAmiga.Core.Custom
 
 		private string Dmacon(ushort dmacon)
 		{
-			var sb = new StringBuilder();
+			var sb = cdbg.GetStringBuilder();
 			if ((dmacon & 0x200) != 0) sb.Append("DMA ");
 			if ((dmacon & 0x100) != 0) sb.Append("BPL ");
 			if ((dmacon & 0x80) != 0) sb.Append("COP ");
@@ -354,7 +363,7 @@ namespace RunAmiga.Core.Custom
 
 		private string Bplcon0()
 		{
-			var sb = new StringBuilder();
+			var sb = cdbg.GetStringBuilder();
 			if ((bplcon0 & 0x8000)!=0) sb.Append("H ");
 			else if ((bplcon0 & 0x40) != 0) sb.Append("SH ");
 			else if ((bplcon0 & 0x80) != 0) sb.Append("UH ");
@@ -367,6 +376,41 @@ namespace RunAmiga.Core.Custom
 
 			if (((bplcon0 >> 12) & 7) == 6 && ((bplcon0 & (1 << 11)) == 0 && (bplcon0 & (1 << 10)) == 0 && (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0))) sb.Append("EHB ");
 
+			return sb.ToString();
+		}
+
+		private string Bplcon1()
+		{
+			int pf0 = bplcon1 & 0xf;
+			int pf1 = (bplcon1 >>4)&0xf;
+			return $"SCR{pf0}:{pf1} ";
+		}
+
+		private string Bplcon2()
+		{
+			var sb = cdbg.GetStringBuilder();
+			if ((bplcon2 & (1 << 9)) != 0) sb.Append("KILLEHB ");
+			if ((bplcon2 & (1 << 6)) != 0) sb.Append("PF2PRI ");
+			return sb.ToString();
+		}
+
+		private string Bplcon3()
+		{
+			var sb = cdbg.GetStringBuilder();
+			sb.Append($"BNK{bplcon3 >> 13} ");
+			sb.Append($"PF2O{(bplcon3 >> 10) & 7} ");
+			sb.Append($"SPRRES{(bplcon3 >> 6) & 3} ");
+			if ((bplcon3 & (1 << 9)) != 0) sb.Append("LOCT ");
+			return sb.ToString();
+		}
+
+		private string Bplcon4()
+		{
+			var sb = cdbg.GetStringBuilder();
+			sb.Append($"BPLAM{bplcon4 >> 8:X2} ");
+			sb.Append($"ESPRM{(bplcon4 >> 4)&15:X2} ");
+			sb.Append($"OSPRM{bplcon4&15:X2} ");
+			if ((bplcon3 & (1 << 9)) != 0) sb.Append("LOCT ");
 			return sb.ToString();
 		}
 
@@ -438,6 +482,8 @@ namespace RunAmiga.Core.Custom
 			public int diwstoph = 0;
 			public int diwstopv = 0;
 
+			//public int fetchMode = 0;
+
 			public ushort ddfstrtfix = 0;
 			public ushort ddfstopfix = 0;
 			public int pixelLoop;
@@ -454,6 +500,8 @@ namespace RunAmiga.Core.Custom
 
 				//don't expect these to change within a scanline, weird undocumented things
 				//will happen which this emulator probably will never understand
+				//if (settings.ChipSet == ChipSet.AGA)
+				//	fetchMode = fmode & 3;
 
 				planes = (bplcon0 >> 12) & 7;
 				if (settings.ChipSet == ChipSet.AGA)
@@ -490,7 +538,7 @@ namespace RunAmiga.Core.Custom
 
 					//ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
 
-					if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 					{
 						//wordCount = (ddfstop - ddfstrt+3) / 4 + 2;
 						////round up to multiple of 2 words
@@ -506,7 +554,7 @@ namespace RunAmiga.Core.Custom
 						int diff = (ddfstop-ddfstrt)&7;
 						if (diff != 0) ddfstopfix += (ushort)(8 - diff);
 					}
-					else if (fmode == 3)
+					else if ((fmode&3) == 3)
 					{
 						//round to multiple of 4 words
 						int round = 15;
@@ -540,7 +588,7 @@ namespace RunAmiga.Core.Custom
 
 					ddfstrtfix = (ushort)(ddfstrt & 0xfff8);
 
-					if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 					{
 						wordCount = (ddfstop - ddfstrt + 7) / 8 + 1;
 						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8);
@@ -802,7 +850,7 @@ namespace RunAmiga.Core.Custom
 			int planeIdx;
 			int plane;
 
-			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+			if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 			{
 				int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
 				int[] fetchHi = { 4, 2, 3, 1, 4, 3, 2, 1 };
@@ -821,7 +869,7 @@ namespace RunAmiga.Core.Custom
 				};
 
 				int mod;
-				if (fmode == 3) mod = 16;
+				if ((fmode&3) == 3) mod = 16;
 				else mod = 8;
 
 				planeIdx = h % mod;
@@ -830,12 +878,12 @@ namespace RunAmiga.Core.Custom
 
 			if (plane < cln.planes)
 			{
-				if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+				if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 				{
 					cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
 					bplpt[plane] += 2;
 				}
-				else if (fmode == 3)
+				else if ((fmode&3) == 3)
 				{
 					cln.bpldatdma[plane] = ((ulong)memory.Read(0, bplpt[plane], Size.Long) << 32) | memory.Read(0, bplpt[plane] + 4, Size.Long);
 					bplpt[plane] += 8;
@@ -860,9 +908,9 @@ namespace RunAmiga.Core.Custom
 
 		private void FirstPixel()
 		{
-			if (settings.ChipSet == ChipSet.OCS || fmode == 0)
+			if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 				cln.pixelBits = 15; 
-			else if (fmode == 3)
+			else if ((fmode&3) == 3)
 				cln.pixelBits = 63; 
 			else
 				cln.pixelBits = 31; 
@@ -903,7 +951,7 @@ namespace RunAmiga.Core.Custom
 			pixelCounter++;
 		}
 
-		//x&1 + x&3 *2 + x&4 *4
+		//(x&(1<<0))*1 + x&(1<<2)*2 + x&(1<<4)*4 + x&(1<<6) *8
 		//00000 -> 0  01000 -> 0  10000 -> 4  11000 -> 4
 		//00001 -> 1  01001 -> 1  10001 -> 5  11001 -> 5
 		//00010 -> 0  01010 -> 0  10010 -> 4  11010 -> 4
@@ -913,24 +961,24 @@ namespace RunAmiga.Core.Custom
 		//00110 -> 2  01110 -> 2  10110 -> 6  11110 -> 6
 		//00111 -> 3  01111 -> 3  10111 -> 7  11111 -> 7
 
-		private readonly byte[] lookup =
-		{
-			0, 1, 0, 1, 2, 3, 2, 3,
-			0, 1, 0, 1, 2, 3, 2, 3,
-			4, 5, 4, 5, 6, 7, 6, 7,
-			4, 5, 4, 5, 6, 7, 6, 7,
+		private readonly byte[] dpfLookup = new byte[256];
 
-			0, 1, 0, 1, 2, 3, 2, 3,
-			0, 1, 0, 1, 2, 3, 2, 3,
-			4, 5, 4, 5, 6, 7, 6, 7,
-			4, 5, 4, 5, 6, 7, 6, 7
-		};
+		private void ComputeDPFLookup()
+		{
+			for (int i = 0; i < 256; i++)
+			{
+				dpfLookup[i] = (byte)(
+						((i &  1) != 0 ? 1 : 0) +
+						((i &  4) != 0 ? 2 : 0) +
+						((i & 16) != 0 ? 4 : 0) +
+						((i & 64) != 0 ? 8 : 0)
+					);
+			}
+		}
 
 		//[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneConvert(int h)
 		{
-			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
-
 			for (int p = 0; p < cln.pixelLoop; p++)
 			{
 				//decode the colour
@@ -943,17 +991,20 @@ namespace RunAmiga.Core.Custom
 				for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
 					pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
 
+				//BPLAM
+				pix ^= (byte)(bplcon4 >> 8);
+
 				pix &= cdbg.bitplaneMask;
 				pix |= cdbg.bitplaneMod;
 
 				if ((bplcon0 & (1 << 10)) != 0)
 				{
 					//DPF
-					byte pix0 = lookup[pix];
-					byte pix1 = lookup[pix >> 1];
+					byte pix0 = dpfLookup[pix];
+					byte pix1 = dpfLookup[pix >> 1];
 
-					uint col0 = truecolour[pix0 + bank];
-					uint col1 = truecolour[pix1 == 0 ? 0: pix1 + 8 + bank];
+					uint col0 = truecolour[pix0];
+					uint col1 = truecolour[pix1 == 0 ? 0: pix1 + 8];
 
 					//which playfield is in front?
 					if ((bplcon2 & (1 << 6)) != 0)
@@ -968,7 +1019,7 @@ namespace RunAmiga.Core.Custom
 					pix &= 0xf;
 					if (ham == 0)
 					{
-						col = truecolour[pix + bank];
+						col = truecolour[pix];
 					}
 					else
 					{
