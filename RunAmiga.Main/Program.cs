@@ -9,6 +9,7 @@ using RunAmiga.Core.CPU.CSharp;
 using RunAmiga.Core.CPU.CSharp.MC68020;
 using RunAmiga.Core.CPU.Musashi;
 using RunAmiga.Core.CPU.Musashi.MC68020;
+using RunAmiga.Core.CPU.Musashi.MC68030;
 using RunAmiga.Core.Custom;
 using RunAmiga.Core.Custom.Audio;
 using RunAmiga.Core.Custom.CIA;
@@ -108,6 +109,8 @@ namespace RunAmiga.Main
 			{
 				if (settings.Sku == CPUSku.MC68EC020)
 					services.AddSingleton<ICPU, Musashi68020CPU>();
+				else if (settings.Sku == CPUSku.MC68030)
+					services.AddSingleton<ICPU, Musashi68030CPU>();
 				else
 					services.AddSingleton<ICPU, MusashiCPU>();
 			}

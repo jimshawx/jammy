@@ -9,7 +9,8 @@
 	public enum CPUSku
 	{
 		MC68000,
-		MC68EC020
+		MC68EC020,
+		MC68030
 	}
 
 	public enum AudioDriver
