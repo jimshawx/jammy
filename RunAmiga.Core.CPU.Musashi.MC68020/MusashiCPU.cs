@@ -6,7 +6,7 @@ using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.CPU.Musashi.MC68020
 {
-	public class Musashi68020CPU : ICPU, IMusashiCPU
+	public class Musashi68EC020CPU : ICPU, IMusashiCPU
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
@@ -39,7 +39,7 @@ namespace RunAmiga.Core.CPU.Musashi.MC68020
 		private Musashi_Writer w16;
 		private Musashi_Writer w8;
 
-		public Musashi68020CPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
+		public Musashi68EC020CPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
 			IBreakpointCollection breakpoints, ITracer tracer)
 		{
 			this.interrupt = interrupt;

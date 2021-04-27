@@ -9,7 +9,7 @@ using RunAmiga.Core.Types.Types;
 
 namespace RunAmiga.Core.CPU.CSharp.MC68020
 {
-	public class CPU68020 : ICPU, ICSharpCPU
+	public class CPU68EC020 : ICPU, ICSharpCPU
 	{
 		private enum FetchMode
 		{
@@ -60,10 +60,10 @@ namespace RunAmiga.Core.CPU.CSharp.MC68020
 		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
 
-		public CPU68020(IInterrupt interrupt, IMemoryMapper memoryMapper,
+		public CPU68EC020(IInterrupt interrupt, IMemoryMapper memoryMapper,
 			IBreakpointCollection breakpoints, ITracer tracer,
 			IOptions<EmulationSettings> settings,
-			ILogger<CPU68020> logger)
+			ILogger<CPU68EC020> logger)
 		{
 			a = new A(Supervisor);
 

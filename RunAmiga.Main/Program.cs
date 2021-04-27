@@ -108,7 +108,7 @@ namespace RunAmiga.Main
 			if (settings.CPU == CPUType.Musashi)
 			{
 				if (settings.Sku == CPUSku.MC68EC020)
-					services.AddSingleton<ICPU, Musashi68020CPU>();
+					services.AddSingleton<ICPU, Musashi68EC020CPU>();
 				else if (settings.Sku == CPUSku.MC68030)
 					services.AddSingleton<ICPU, Musashi68030CPU>();
 				else
@@ -117,7 +117,7 @@ namespace RunAmiga.Main
 			else
 			{
 				if (settings.Sku == CPUSku.MC68EC020)
-					services.AddSingleton<ICPU, CPU68020>();
+					services.AddSingleton<ICPU, CPU68EC020>();
 				else
 					services.AddSingleton<ICPU, CPU>();
 			}
