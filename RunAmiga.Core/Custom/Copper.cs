@@ -755,26 +755,26 @@ namespace RunAmiga.Core.Custom
 						//in ECS/AGA mode CDANG in COPCON means can access ALL chip regs, otherwise only >= 080
 						if (settings.ChipSet == ChipSet.OCS)
 						{
-							if (((copcon & 1) == 1 && reg >= 0x40) || reg >= 0x80)
+							if (((copcon & 2) != 0 && reg >= 0x40) || reg >= 0x80)
 							{
 								custom.Write(0, regAddress, data, Size.Word);
 							}
 							else
 							{
 								cop.status = CopperStatus.Stopped;
-								logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {copcon&1}");
+								logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {((copcon&2)!=0?1:0)}");
 							}
 						}
 						else
 						{
-							if ((copcon & 1) == 1 || reg >= 0x80)
+							if ((copcon & 2) !=0 || reg >= 0x80)
 							{
 								custom.Write(0, regAddress, data, Size.Word);
 							}
 							else
 							{
 								cop.status = CopperStatus.Stopped;
-								logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {copcon & 1}");
+								logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {((copcon&2)!=0?1:0)}");
 							}
 						}
 					}

@@ -636,6 +636,11 @@ namespace RunAmiga.Main
 					ServiceProviderFactory.ServiceProvider.GetRequiredService<IChipRAM>()
 				);
 		}
+
+		private void btnClearBBUSY_Click(object sender, EventArgs e)
+		{
+			debugger.ClearBBUSY();
+		}
 	}
 
 	public static class LayoutExtensions

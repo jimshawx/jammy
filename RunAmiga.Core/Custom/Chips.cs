@@ -103,7 +103,7 @@ namespace RunAmiga.Core.Custom
 				address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
 				|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
 				|| address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-				|| address == ChipRegs.FMODE)
+				|| address == ChipRegs.FMODE || address == ChipRegs.COPCON)
 			{
 				regs[reg] = copper.Read(insaddr, address);
 			}
@@ -338,7 +338,7 @@ namespace RunAmiga.Core.Custom
 			    address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
 			    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
 			    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-				|| address == ChipRegs.FMODE || address == ChipRegs.BEAMCON0)
+				|| address == ChipRegs.FMODE || address == ChipRegs.BEAMCON0 || address == ChipRegs.COPCON)
 			{
 				copper.Write(insaddr, address, (ushort)value);
 			}

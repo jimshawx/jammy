@@ -25,5 +25,6 @@ namespace RunAmiga.Interface
 		void WriteTrace();
 		uint KickstartSize();
 		void IDEACK();
+		void ClearBBUSY();
 	}
 }

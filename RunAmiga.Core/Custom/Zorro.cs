@@ -72,22 +72,25 @@ namespace RunAmiga.Core.Custom
 		{
 			logger.LogTrace($"Expansion W {insaddr:X8} {address:X8} {value:X8} {size}");
 
+			if (!configurations.Any())
+				return;
+
 			address -= 0xe80000;
 
-			if (address == 0x4A && configurations.Any())
+			if (address == 0x4A)
 				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 16;
 			
-			if (address == 0x48 && configurations.Any())
+			if (address == 0x48)
 				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 20;
 
-			if (address == 0x46 && configurations.Any())
+			if (address == 0x46)
 				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 24;
 
-			if (address == 0x44 && configurations.Any())
+			if (address == 0x44)
 				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 28;
 
 			//writing here finishes the configuration (Zorro II)
-			if (address == 0x48 && configurations.Any())
+			if (address == 0x48)
 			{
 				logger.LogTrace($"{configurations[0].Name} configured at {configurations[0].BaseAddress:X8}");
 				configurations[0].IsConfigured = true;
@@ -99,7 +102,7 @@ namespace RunAmiga.Core.Custom
 			}
 
 			//shut up (OK then!)
-			if ((address == 0x4C || address == 0x4e) && configurations.Any())
+			if (address == 0x4C || address == 0x4e)
 				configurations.RemoveAt(0);
 		}
 

@@ -383,6 +383,11 @@ namespace RunAmiga.Debugger
 			ideController.DebugAck();
 		}
 
+		public void ClearBBUSY()
+		{
+			custom.Write(0, ChipRegs.DMACON, 1<<14, Size.Word);
+		}
+
 		public ChipState GetChipRegs()
 		{
 			var regs = new ChipState();
