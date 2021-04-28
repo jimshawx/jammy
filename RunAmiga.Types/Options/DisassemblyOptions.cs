@@ -6,5 +6,6 @@
 		public bool CommentPad { get; set; }
 		public bool IncludeBreakpoints { get; set; }
 		public bool IncludeComments { get; set; }
+		public bool Full32BitAddress { get; set; }
 	}
 }

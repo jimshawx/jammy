@@ -59,7 +59,7 @@ namespace RunAmiga.Core.Custom.CIA
 		public override void Reset()
 		{
 			base.Reset();
-			regs[Custom.CIA.CIA.PRA] = 0x8c;
+			regs[PRA] = 0x8c;
 		}
 
 		public override bool IsMapped(uint address)
@@ -67,11 +67,11 @@ namespace RunAmiga.Core.Custom.CIA
 			return base.IsMapped(address) && (address & 1) == 0;
 		}
 
-		public override uint Read(uint insaddr, uint address, Size size)
+		public override uint ReadByte(uint insaddr, uint address)
 		{
-			byte reg = GetReg(address, size);
+			byte reg = GetReg(address, Size.Byte);
 
-			if (reg == Custom.CIA.CIA.PRB)
+			if (reg == PRB)
 			{
 				return diskDrives.ReadPRB(insaddr);
 			}
@@ -80,11 +80,11 @@ namespace RunAmiga.Core.Custom.CIA
 			return base.Read(reg);
 		}
 
-		public override void Write(uint insaddr, uint address, uint value, Size size)
+		public override void WriteByte(uint insaddr, uint address, uint value)
 		{
-			byte reg = GetReg(address, size);
+			byte reg = GetReg(address, Size.Byte);
 
-			if (reg == Custom.CIA.CIA.PRB)
+			if (reg == PRB)
 			{
 				diskDrives.WritePRB(insaddr, (byte)value);
 				return;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RunAmiga.Core.Types;
@@ -20,12 +21,13 @@ namespace RunAmiga.Disassembler.Analysers
 		{
 			this.settings = settings.Value;
 
-			memType = new MemType[1ul<<settings.Value.AddressBits];
+			//todo: make this work for full 32bit address space.
+			memType = new MemType[1ul<<Math.Min(settings.Value.AddressBits,24)];
 		}
 
-		public MemType[] GetMemTypes()
+		public MemTypeCollection GetMemTypes()
 		{
-			return memType;
+			return new MemTypeCollection(memType);
 		}
 
 		public Dictionary<uint, Header> GetHeaders()
@@ -95,7 +97,8 @@ namespace RunAmiga.Disassembler.Analysers
 
 		public void SetMemType(uint address, MemType type)
 		{
-			memType[address] = type;
+			if (address < memType.Length)
+				memType[address] = type;
 		}
 
 		public void AddLVO(string currentLib, LVO lvo)

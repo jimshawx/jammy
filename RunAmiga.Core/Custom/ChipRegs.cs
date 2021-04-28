@@ -540,7 +540,7 @@ namespace RunAmiga.Core.Custom
 		{
 			if (customRegisterDetails.TryGetValue(address, out Tuple<string, string> item))
 				return item.Item2;
-			return $"Uknown_{address:X6}";
+			return $"Unknown_{address:X6}";
 		}
 	}
 }

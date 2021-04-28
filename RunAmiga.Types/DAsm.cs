@@ -30,7 +30,10 @@ namespace RunAmiga.Types
 		public string ToString(DisassemblyOptions options)
 		{
 			var s = new StringBuilder();
-			s.Append($"{Address:X6}  ");
+			if (options.Full32BitAddress)
+				s.Append($"{Address:X8}  ");
+			else
+				s.Append($"{Address:X6}  ");
 
 			if (options.IncludeBytes)
 			{

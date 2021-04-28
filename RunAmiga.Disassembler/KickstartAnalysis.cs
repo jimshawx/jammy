@@ -177,6 +177,7 @@ namespace RunAmiga.Disassembler
 		{
 			for (int i = 0; i < resident.Count; i++)
 			{
+				disassembly.Clear();
 				memoryDump.ClearMapping();
 
 				var rt = resident[i];
@@ -223,6 +224,9 @@ namespace RunAmiga.Disassembler
 
 				File.WriteAllText($"{rt.Name}_disassembly.txt", dmp.ToString());
 			}
+
+			disassembly.Clear();
+			memoryDump.ClearMapping();
 		}
 
 		public void ShowRomTags()

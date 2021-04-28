@@ -105,10 +105,10 @@ namespace RunAmiga.Types.Debugger
 			uint start = range.start;
 			ulong size = range.size;
 
-			for (ulong i = start; i < start + size; i += 32)
+			for (ulong i = start; i < start + size-32; i += 32)
 			{
 				addressToLine.Add((uint)(i+baseAddress), line++);
-				sb.Append($"{i+baseAddress:X6} ");
+				sb.Append($"{i+baseAddress:X8} ");
 				for (uint k = 0; k < 4; k++)
 				{
 					for (uint j = 0; j < 8; j++)
@@ -122,7 +122,6 @@ namespace RunAmiga.Types.Debugger
 
 				for (uint k = 0; k < 32; k++)
 				{
-
 					byte c = memory[i + k];
 					if (c < 31 || c >= 127) c = (byte)'.';
 					sb.Append($"{Convert.ToChar(c)}");

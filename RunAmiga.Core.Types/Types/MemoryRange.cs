@@ -2,7 +2,7 @@
 {
 	public class MemoryRange
 	{
-		public MemoryRange(uint start, uint length)
+		public MemoryRange(uint start, long length)
 		{
 			Start = start;
 			Length = length;

@@ -35,6 +35,8 @@ namespace RunAmiga.Core.Interface.Interfaces
 
 	public interface IBattClock : IReset, IMemoryMappedDevice { }
 
+	public interface IMotherboard : IReset, IMemoryMappedDevice { }
+
 	public interface IBlitter : IReset, ICustomReadWrite
 	{
 		void SetLineMode(int mode);

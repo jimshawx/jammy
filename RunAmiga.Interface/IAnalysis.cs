@@ -5,7 +5,7 @@ namespace RunAmiga.Interface
 {
 	public interface IAnalysis
 	{
-		MemType[] GetMemTypes();
+		MemTypeCollection GetMemTypes();
 		Dictionary<uint, Header> GetHeaders();
 		Dictionary<uint, Comment> GetComments();
 		Dictionary<string, LVOCollection> GetLVOs();

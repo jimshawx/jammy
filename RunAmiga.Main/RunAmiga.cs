@@ -28,6 +28,7 @@ namespace RunAmiga.Main
 		private readonly IDebugger debugger;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
+		private readonly DisassemblyOptions disassemblyOptions;
 
 		public RunAmiga(IEmulation emulation, IDisassembly disassembly, IDebugger debugger,
 			ILogger<RunAmiga> logger, IOptions<EmulationSettings> options)
@@ -46,6 +47,8 @@ namespace RunAmiga.Main
 			cbTypes.SelectedIndex = 0;
 
 			settings = options.Value;
+
+			disassemblyOptions = new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true, Full32BitAddress = settings.AddressBits>24};
 
 			UpdateDisassembly();
 			UpdateDisplay();
@@ -100,26 +103,28 @@ namespace RunAmiga.Main
 				ranges.Add(new Tuple<uint, uint>(0xc00000, 0x1000));
 			if (debugger.KickstartSize() == 512 * 1024)
 				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x40000));
+			if (debugger.KickstartSize() == 0x2000)
+				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x2000));
 
 			var disasm = disassembly.DisassembleTxt(
 				ranges,
-				new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
+				disassemblyOptions);
 
 			Amiga.UnlockEmulation();
 
 			//this is the new view
-			//disassemblyView = disassembly.DisassemblyView(0, 0, 100, new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
-			disassemblyView = disassembly.FullDisassemblyView(new DisassemblyOptions { IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true });
+			//disassemblyView = disassembly.DisassemblyView(0, 0, 100, disassemblyOptions);
+			disassemblyView = disassembly.FullDisassemblyView(disassemblyOptions);
 			txtDisassembly.Text = disassemblyView.Text;
 		}
 
 		private void UpdateDisplay()
 		{
 			UpdateRegs();
-			UpdateMem();
+			//UpdateMem();
 			UpdatePowerLight();
 			UpdateDiskLight();
-			UpdateExecBase();
+			//UpdateExecBase();
 			UI.UI.IsDirty = false;
 		}
 
@@ -197,7 +202,7 @@ namespace RunAmiga.Main
 			{
 				lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
 				lbCustom.Items.Add("        ENA");
-				string[] names = new string[16] {"SETCLR", "BBUSY", "BZERO", "UNUSED0", "UNUSED1", "BLTPRI", "DMAEN", "BPLEN", "COPEN", "BLTEN", "SPREN", "DSKEN", "AUD3EN", "AUD2EN", "AUD1EN", "AUD0EN"};
+				string[] names = new string[16] {"SETCLR", "BBUSY", "BZERO", "x", "x", "BLTPRI", "DMAEN", "BPLEN", "COPEN", "BLTEN", "SPREN", "DSKEN", "AUD3EN", "AUD2EN", "AUD1EN", "AUD0EN"};
 				for (int i = 0; i < 16; i++)
 				{
 					int bit = 1 << (i ^ 15);
@@ -290,14 +295,17 @@ namespace RunAmiga.Main
 			txtDisassembly.ReallySuspendLayout();
 			txtDisassembly.DeselectAll();
 
-			//disassemblyView = disassembly.DisassemblyView(pc, 10, 100, new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true});
+			//disassemblyView = disassembly.DisassemblyView(pc, 10, 100, disassemblyOptions);
 			int line = disassemblyView.GetAddressLine(pc);
 			txtDisassembly.Text = disassemblyView.Text;
 
 			txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
 			txtDisassembly.ScrollToCaret();
-			txtDisassembly.Select(txtDisassembly.GetFirstCharIndexFromLine(line),
-				txtDisassembly.GetFirstCharIndexFromLine(line + 1) - txtDisassembly.GetFirstCharIndexFromLine(line));
+			int start = txtDisassembly.GetFirstCharIndexFromLine(line);
+			if (start >=0)
+				txtDisassembly.Select(start, txtDisassembly.GetFirstCharIndexFromLine(line + 1) - start);
+			else
+				txtDisassembly.DeselectAll();
 			//txtDisassembly.ResumeLayout();
 			txtDisassembly.ReallyResumeLayout();
 			txtDisassembly.Refresh();

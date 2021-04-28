@@ -18,7 +18,7 @@ namespace RunAmiga.Core.Memory
 			return true;
 		}
 
-		private readonly MemoryRange memoryRange = new MemoryRange(0, 0x1000000);
+		private readonly MemoryRange memoryRange = new MemoryRange(0, 0x100000000);
 
 		public MemoryRange MappedRange()
 		{
@@ -27,8 +27,13 @@ namespace RunAmiga.Core.Memory
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			//logger.LogTrace($"Unmapped Memory Read {address:X8} @{insaddr:X8} {size}");
-			return 0;
+			//if (address>0x1000000)
+			//	logger.LogTrace($"Unmapped Memory Read {address:X8} @{insaddr:X8} {size}");
+
+			uint empty = 0;
+			if (size == Size.Long) return empty;
+			if (size == Size.Word) return (ushort)empty;
+			return (byte)empty;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)

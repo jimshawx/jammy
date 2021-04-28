@@ -20,8 +20,7 @@ namespace RunAmiga.Core.Memory
 			ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
 			IZorro expansion, IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IUnmappedMemory unmappedMemory,
 			IKickstartROM kickstartROM, IIDEController ideController, ISCSIController scsiController,
-			IAkiko akiko,
-
+			IAkiko akiko, IMotherboard motherboard,
 			ILogger<MemoryMapper> logger)
 		{
 			this.chipRAM = chipRAM;
@@ -38,6 +37,7 @@ namespace RunAmiga.Core.Memory
 				trapdoorRAM,
 				kickstartROM,
 				battClock,
+				motherboard,
 				expansion,
 				ideController,
 				scsiController,

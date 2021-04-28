@@ -28,6 +28,11 @@ namespace RunAmiga.Disassembler
 			this.breakpoints = breakpoints;
 			disassembler = new Disassembler();
 
+			Clear();
+		}
+
+		public void Clear()
+		{
 			globalAddressToLine.Clear();
 			globalLineToAddress.Clear();
 		}
@@ -105,17 +110,27 @@ namespace RunAmiga.Disassembler
 				{
 					if (memType[address] == MemType.Byte)
 					{
-						asm = $"{address:X6}  {memory.UnsafeRead8(address):X2}";
+						if (options.Full32BitAddress)
+							asm = $"{address:X8}  {memory.UnsafeRead8(address):X2}";
+						else
+							asm = $"{address:X6}  {memory.UnsafeRead8(address):X2}";
 						address += 1;
 					}
 					else if (memType[address] == MemType.Word)
 					{
-						asm = $"{address:X6}  {memory.UnsafeRead16(address):X4}";
+						if (options.Full32BitAddress)
+							asm = $"{address:X8}  {memory.UnsafeRead16(address):X4}";
+						else
+							asm = $"{address:X6}  {memory.UnsafeRead16(address):X4}";
+
 						address += 2;
 					}
 					else if (memType[address] == MemType.Long)
 					{
-						asm = $"{address:X6}  {memory.UnsafeRead32(address):X8}";
+						if (options.Full32BitAddress)
+							asm = $"{address:X8}  {memory.UnsafeRead32(address):X8}";
+						else
+							asm = $"{address:X6}  {memory.UnsafeRead32(address):X8}";
 						address += 4;
 					}
 					else if (memType[address] == MemType.Str)
@@ -157,14 +172,20 @@ namespace RunAmiga.Disassembler
 							address++;
 						}
 
-						asm = $"{lineAddress:X6}  {string.Join(',', str)}";
+						if (options.Full32BitAddress)
+							asm = $"{lineAddress:X8}  {string.Join(',', str)}";
+						else
+							asm = $"{lineAddress:X6}  {string.Join(',', str)}";
 					}
 				}
 				else
 				{
 					if ((address & 1) != 0)
 					{
-						asm = $"{address:X6}  {memory.UnsafeRead8(address):X2}";
+						if (options.Full32BitAddress)
+							asm = $"{address:X8}  {memory.UnsafeRead8(address):X2}";
+						else
+							asm = $"{address:X6}  {memory.UnsafeRead8(address):X2}";
 						address += 1;
 					}
 					else

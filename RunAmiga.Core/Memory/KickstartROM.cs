@@ -50,6 +50,11 @@ namespace RunAmiga.Core.Memory
 					memoryRange = new MemoryRange(0xfc0000, 0x40000);
 					mirrorRange = new MemoryRange(0, 0x40000);
 				}
+				else if (memory.Length == 0x2000)
+				{
+					memoryRange = new MemoryRange(0xf80000, 0x2000);
+					mirrorRange = new MemoryRange(0, 0x2000);
+				}
 				else
 				{
 					throw new ArgumentOutOfRangeException();

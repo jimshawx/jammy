@@ -75,10 +75,19 @@ namespace RunAmiga.Disassembler
 						break;
 				}
 
-				dasm.Asm = asm.ToString();
-				dasm.Bytes = memory[0..(int)pc];
-				//dasm.Bytes = memoryE.Take((int)pc).ToArray();
-				dasm.Address = address;
+				if (pc > memory.Length)
+				{
+					dasm.Asm = "unknown";
+					dasm.Bytes = memory.Length >= 2 ? memory : new byte[] {0, 0};
+					dasm.Address = address;
+				}
+				else
+				{
+					dasm.Asm = asm.ToString();
+					dasm.Bytes = memory[0..(int)pc];
+					//dasm.Bytes = memoryE.Take((int)pc).ToArray();
+					dasm.Address = address;
+				}
 
 				return dasm;
 			}

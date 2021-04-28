@@ -45,6 +45,7 @@ namespace RunAmiga.Core
 			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IMemoryMapper memory,
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IDiskDrives diskDrives, IMouse mouse, IIDEController ideController, ISerial serial,
+			IMotherboard motherboard,
 			IBreakpointCollection breakpointCollection, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
@@ -73,8 +74,10 @@ namespace RunAmiga.Core
 			resetters.Add(interrupt);
 			resetters.Add(memory);
 			resetters.Add(battClock);
+			resetters.Add(motherboard);
 			resetters.Add(blitter);
 			resetters.Add(custom);
+
 			if (resetters.Any(x => x is IEmulate))
 				throw new AmbiguousImplementationException();
 
@@ -109,8 +112,8 @@ namespace RunAmiga.Core
 			{
 				modeChangeApplied = false;
 				emulationModeChange = mode;
-				while (!modeChangeApplied)
-					Thread.Yield();
+				//while (!modeChangeApplied)
+				//	Thread.Yield();
 
 				//logger.LogTrace($"SEM3 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
 				//LockEmulation();
@@ -125,7 +128,7 @@ namespace RunAmiga.Core
 		public static void UnlockEmulation()
 		{
 			lockedThreadId = -1;
-			emulationSemaphore.Release();
+			//emulationSemaphore.Release();
 		}
 
 		private static int lockedThreadId = -1;
@@ -138,7 +141,7 @@ namespace RunAmiga.Core
 			if (lockedThreadId == Thread.CurrentThread.ManagedThreadId)
 				Debugger.Break();
 			
-			emulationSemaphore.Wait();
+			//emulationSemaphore.Wait();
 			//logger.LogTrace($"Lock3 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
 			lockedThreadId = Thread.CurrentThread.ManagedThreadId;
 			emulationModeChange = EmulationMode.NoChange;
@@ -151,10 +154,10 @@ namespace RunAmiga.Core
 		{
 			uint stepOutSp = 0xffffffff;
 
-			emulationMode = EmulationMode.Running;
+			emulationMode = EmulationMode.Stopped;
 			emulationModeChange = EmulationMode.NoChange;
 
-			emulationSemaphore.Wait();
+			//emulationSemaphore.Wait();
 			lockedThreadId = Thread.CurrentThread.ManagedThreadId;
 
 			while (emulationMode != EmulationMode.Exit)
@@ -205,13 +208,13 @@ namespace RunAmiga.Core
 				if (newEmulationMode == EmulationMode.LockAccess)
 				{
 					lockedThreadId = -1;
-					emulationSemaphore.Release();
+					//emulationSemaphore.Release();
 
 					//Locker should now be able to do its work
-					while (emulationModeChange == EmulationMode.LockAccess)
-						Thread.Yield();
+					//while (emulationModeChange == EmulationMode.LockAccess)
+					//	Thread.Yield();
 
-					emulationSemaphore.Wait();
+					//emulationSemaphore.Wait();
 					lockedThreadId = Thread.CurrentThread.ManagedThreadId;
 					//do not update emulation mode
 				}
@@ -225,7 +228,7 @@ namespace RunAmiga.Core
 			}
 
 			emulationModeChange = EmulationMode.NoChange;
-			emulationSemaphore.Release();
+			//emulationSemaphore.Release();
 		}
 
 		public void Reset()

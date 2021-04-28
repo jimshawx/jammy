@@ -65,19 +65,19 @@ namespace RunAmiga.Core.Custom.CIA
 			return base.IsMapped(address) && (address & 1) == 1;
 		}
 
-		public override uint Read(uint insaddr, uint address, Size size)
+		public override uint ReadByte(uint insaddr, uint address)
 		{
 			byte value;
-			byte reg = GetReg(address, size);
+			byte reg = GetReg(address, Size.Byte);
 
-			if (reg == Custom.CIA.CIA.PRA)
+			if (reg == PRA)
 			{
 				byte p = 0;
 				p |= diskDrives.ReadPRA(insaddr);
 				p |= mouse.ReadPRA(insaddr);
 				value = p;
 			}
-			else if (reg == Custom.CIA.CIA.SDR)
+			else if (reg == SDR)
 			{
 				value = keyboard.ReadKey();
 			}
@@ -92,18 +92,18 @@ namespace RunAmiga.Core.Custom.CIA
 			return value;
 		}
 
-		public override void Write(uint insaddr, uint address, uint value, Size size)
+		public override void WriteByte(uint insaddr, uint address, uint value)
 		{
-			byte reg = GetReg(address, size);
+			byte reg = GetReg(address, Size.Byte);
 
-			if (reg == Custom.CIA.CIA.PRA)
+			if (reg == PRA)
 			{
-				UI.UI.PowerLight = (regs[Custom.CIA.CIA.PRA] & 2) == 0;
+				UI.UI.PowerLight = (regs[PRA] & 2) == 0;
 
 				diskDrives.WritePRA(insaddr, (byte)value);
 				mouse.WritePRA(insaddr, (byte)value);
 			}
-			else if (reg == Custom.CIA.CIA.CRA)
+			else if (reg == CRA)
 			{
 				keyboard.WriteCRA(insaddr, (byte)value);
 				base.Write(reg, value);

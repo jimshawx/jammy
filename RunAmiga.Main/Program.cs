@@ -55,11 +55,12 @@ namespace RunAmiga.Main
 					x.AddConfiguration(configuration.GetSection("Logging"));
 					//x.AddDebug();
 					//x.AddSQLite();
-					//x.AddDebugAsync();
-					x.AddDebugAsyncRTF();
+					x.AddDebugAsync();
+					//x.AddDebugAsyncRTF();
 				})
 				.AddSingleton<IAmiga, Amiga>()
 				.AddSingleton<IBattClock, BattClock>()
+				.AddSingleton<IMotherboard, Motherboard>()
 				.AddSingleton<IBlitter, Blitter>()
 				.AddSingleton<ICIAAOdd, CIAAOdd>()
 				.AddSingleton<ICIABEven, CIABEven>()

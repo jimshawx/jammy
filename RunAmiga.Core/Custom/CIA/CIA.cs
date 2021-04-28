@@ -175,9 +175,19 @@ namespace RunAmiga.Core.Custom.CIA
 				throw new UnknownInstructionSizeException(address, 0);
 
 			return (byte)((address >> 8) & 0xf);
-		} 
+		}
 
-		public abstract uint Read(uint insaddr, uint address, Size size);
+		public uint Read(uint insaddr, uint address, Size size)
+		{
+			if (size == Size.Byte) return ReadByte(insaddr, address);
+			if (size == Size.Word) return (ReadByte(insaddr, address) << 8) | ReadByte(insaddr, address + 1);
+			return (ReadByte(insaddr, address) << 24) |
+					(ReadByte(insaddr, address+1) << 16) |
+					(ReadByte(insaddr, address+2) << 8) |
+					ReadByte(insaddr, address+3);
+		}
+
+		public abstract uint ReadByte(uint insaddr, uint address);
 
 		protected uint Read(byte reg)
 		{
@@ -212,7 +222,17 @@ namespace RunAmiga.Core.Custom.CIA
 			}
 		}
 
-		public abstract void Write(uint insaddr, uint address, uint value, Size size);
+		public void Write(uint insaddr, uint address, uint value, Size size)
+		{
+			if (size == Size.Byte) { WriteByte(insaddr, address, value); return; }
+			if (size == Size.Word) { WriteByte(insaddr, address, value>>8); WriteByte(insaddr, address + 1, value); return; }
+			WriteByte(insaddr, address, value >> 24);
+			WriteByte(insaddr, address + 1, value >> 16);
+			WriteByte(insaddr, address + 2, value >> 8);
+			WriteByte(insaddr, address + 3, value);
+		}
+
+		public abstract void WriteByte(uint insaddr, uint address, uint value);
 
 		protected void Write(byte reg, uint value)
 		{

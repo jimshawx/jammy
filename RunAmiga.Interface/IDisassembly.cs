@@ -11,5 +11,6 @@ namespace RunAmiga.Interface
 		uint GetLineAddress(int line);
 		IDisassemblyView DisassemblyView(uint address, int linesBefore, int linesAfter, DisassemblyOptions options);
 		IDisassemblyView FullDisassemblyView(DisassemblyOptions options);
+		void Clear();
 	}
 }

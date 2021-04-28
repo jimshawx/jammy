@@ -40,7 +40,7 @@ namespace RunAmiga.Core.Memory
 	public class MemoryMappedDeviceCollection
 	{
 		private readonly List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
-		private readonly IMemoryMappedDevice[] mapping = new IMemoryMappedDevice[0x100];
+		private readonly IMemoryMappedDevice[] mapping = new IMemoryMappedDevice[0x10000];
 		private readonly uint memoryMask;
 
 		public MemoryMappedDeviceCollection(int addressBits)
