@@ -28,8 +28,8 @@ namespace RunAmiga.Core.Memory
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			//if (address>0x1000000)
-			//	logger.LogTrace($"Unmapped Memory Read {address:X8} @{insaddr:X8} {size}");
+			if (address>0x1000000 || address < 0xf00000)
+			logger.LogTrace($"Unmapped Memory Read {address:X8} @{insaddr:X8} {size}");
 
 			uint empty = 0;
 			if (size == Size.Long) return empty;

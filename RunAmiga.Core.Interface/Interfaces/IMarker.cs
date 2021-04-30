@@ -122,15 +122,19 @@ namespace RunAmiga.Core.Interface.Interfaces
 		void SetMirror(bool mirrored);
 	}
 
-	public interface IZorro : IMemoryMappedDevice
+	public interface IZorro
 	{
 		void AddConfiguration(ZorroConfiguration configuration);
 	}
+	public interface IZorro2 : IMemoryMappedDevice { }
+	public interface IZorro3 : IMemoryMappedDevice { }
 
 	public interface IChipRAM : IMemoryMappedDevice, IDebuggableMemory { }
 	public interface ITrapdoorRAM : IMemoryMappedDevice, IDebuggableMemory { }
 	public interface IUnmappedMemory : IMemoryMappedDevice, IDebuggableMemory { }
 	public interface IZorroRAM : IMemoryMappedDevice, IDebuggableMemory { }
+	public interface IMotherboardRAM : IMemoryMappedDevice, IDebuggableMemory { }
+	public interface ICPUSlotRAM : IMemoryMappedDevice, IDebuggableMemory { }
 
 	public interface IIDEController : IMemoryMappedDevice, IReset
 	{

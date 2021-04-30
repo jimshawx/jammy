@@ -18,9 +18,9 @@ namespace RunAmiga.Core.Memory
 			IMemoryManager memoryManager, IZorroConfigurator zorroConfigurator,
 
 			ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
-			IZorro expansion, IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IUnmappedMemory unmappedMemory,
+			IZorro2 zorro2, IZorro3 zorro3, IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IUnmappedMemory unmappedMemory,
 			IKickstartROM kickstartROM, IIDEController ideController, ISCSIController scsiController,
-			IAkiko akiko, IMotherboard motherboard,
+			IAkiko akiko, IMotherboard motherboard, IMotherboardRAM motherboardRAM, ICPUSlotRAM cpuSlotRAM,
 			ILogger<MemoryMapper> logger)
 		{
 			this.chipRAM = chipRAM;
@@ -38,10 +38,13 @@ namespace RunAmiga.Core.Memory
 				kickstartROM,
 				battClock,
 				motherboard,
-				expansion,
+				zorro2,
+				zorro3,
 				ideController,
 				scsiController,
-				akiko
+				akiko,
+				motherboardRAM,
+				cpuSlotRAM
 			};
 
 			memoryManager.AddDevices(devices);

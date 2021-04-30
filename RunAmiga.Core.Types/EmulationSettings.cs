@@ -55,8 +55,11 @@
 		public int HardDiskCount { get; set; }
 
 		public string ZorroIIMemory { get; set; }
+		public string ZorroIIIMemory { get; set; }
 		public float TrapdoorMemory { get; set; }
 		public float ChipMemory { get; set; }
+		public float MotherboardMemory { get; set; }
+		public float CPUSlotMemory { get; set; }
 
 		public Feature Disassemblies { get; set; }
 
