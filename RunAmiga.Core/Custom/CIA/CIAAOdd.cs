@@ -10,6 +10,7 @@ namespace RunAmiga.Core.Custom.CIA
 		private readonly IDiskDrives diskDrives;
 		private readonly IMouse mouse;
 		private readonly IKeyboard keyboard;
+		private readonly IKickstartROM kickstartROM;
 
 		private readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -33,11 +34,12 @@ namespace RunAmiga.Core.Custom.CIA
 
 		//BFE001 - BFEF01
 
-		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IInterrupt interrupt, ILogger<CIAAOdd> logger)
+		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IKickstartROM kickstartROM, IInterrupt interrupt, ILogger<CIAAOdd> logger)
 		{
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
 			this.keyboard = keyboard;
+			this.kickstartROM = kickstartROM;
 			this.interrupt = interrupt;
 			this.logger = logger;
 		}
@@ -63,6 +65,12 @@ namespace RunAmiga.Core.Custom.CIA
 		public override bool IsMapped(uint address)
 		{
 			return base.IsMapped(address) && (address & 1) == 1;
+		}
+
+		public override void Reset()
+		{
+			base.Reset();
+			regs[PRA] = 1;//OVL is set at boot time
 		}
 
 		public override uint ReadByte(uint insaddr, uint address)
@@ -98,10 +106,11 @@ namespace RunAmiga.Core.Custom.CIA
 
 			if (reg == PRA)
 			{
-				UI.UI.PowerLight = (regs[PRA] & 2) == 0;
+				UI.UI.PowerLight = (value&2) == 0;
 
 				diskDrives.WritePRA(insaddr, (byte)value);
 				mouse.WritePRA(insaddr, (byte)value);
+				kickstartROM.SetMirror((value&1)!=0);
 			}
 			else if (reg == CRA)
 			{

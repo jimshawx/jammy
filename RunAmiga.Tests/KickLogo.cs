@@ -51,8 +51,8 @@ namespace RunAmiga.Tests
 
 		public static void KSLogo(KickstartROM kickstart)
 		{
-			var range = kickstart.MappedRange();
-			for (uint i = 0; i < kickstart.MappedRange().Length- kslogo.Length; i++)
+			var range = kickstart.MappedRange().First();
+			for (uint i = 0; i < range.Length- kslogo.Length; i++)
 			{
 				//if (kslogo.SequenceEqual(kickstart.Skip((int)i).Take(kslogo.Length)))
 				{

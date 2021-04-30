@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Enums;
@@ -164,9 +165,9 @@ namespace RunAmiga.Core.Custom.CIA
 			return (address >> 16) == 0xbf;
 		}
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange> {memoryRange};
 		}
 
 		protected byte GetReg(uint address, Size size)
@@ -393,9 +394,9 @@ namespace RunAmiga.Core.Custom.CIA
 		}
 
 		readonly MemoryRange memoryRange = new MemoryRange(0xbf0000, 0x10000);
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange> {memoryRange};
 		}
 
 		public uint Read(uint insaddr, uint address, Size size)

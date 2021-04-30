@@ -17,7 +17,7 @@ namespace RunAmiga.Core.Interface.Interfaces
 		IEnumerable<uint> AsULong(int start);
 		IEnumerable<ushort> AsUWord(int start);
 		int Length { get; }
-		MemoryRange MappedRange();
+		List<MemoryRange> MappedRange();
 		List<BulkMemoryRange> GetBulkRanges();
 	}
 }

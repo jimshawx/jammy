@@ -409,7 +409,7 @@ namespace RunAmiga.Debugger
 
 		public uint KickstartSize()
 		{
-			return (uint)kickstart.MappedRange().Length;
+			return (uint)kickstart.MappedRange().First().Length;
 		}
 	}
 }

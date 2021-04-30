@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -21,9 +22,9 @@ namespace RunAmiga.Core.Custom
 		//Akiko registers are mapped between $b80000 to $b87fff and registers repeat after every 64 bytes
 		private readonly MemoryRange mappedRange = new MemoryRange(0xb80000, 0x8000);
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return mappedRange;
+			return new List<MemoryRange> {mappedRange};
 		}
 
 		public uint Read(uint insaddr, uint address, Size size)

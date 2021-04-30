@@ -1422,9 +1422,62 @@ namespace RunAmiga.Disassembler
 						tas(type);
 					else if ((subins & 0b1111_00000000) == 0b1010_00000000)
 						tst(type);
+					else if ((subins & 0b1111_1111_1110) == 0b1110_0111_1010)
+						movec(type);
 					else
 						Append($"unknown_instruction_{type:X4}");
 					break;
+			}
+		}
+
+		private void movec(int type)
+		{
+			Dictionary<uint, string> crs = new Dictionary<uint, string>
+			{
+				{0x000, "SFC"},//>=68010
+				{0x001, "DFC"},
+				{0x800, "USP"},
+				{0x801, "VBR"},
+				{0x002, "CACR"},//>=68020
+				{0x802, "CAAR"},
+				{0x803, "MSP"},
+				{0x804, "ISP"},
+				{0x003, "TC"},//>= 68040
+				{0x004, "ITT0"},
+				{0x005, "ITT1"},
+				{0x006, "DTT0"},
+				{0x007, "DTT1"},
+				{0x805, "MMUSR"},
+				{0x806, "URP"},
+				{0x807, "SRP"},
+				//{0x004, "IACR0"},//68EC040 only
+				//{0x005, "IACR1"},
+				//{0x006, "DACR1"},
+				//{0x007, "DACR2"}
+			};
+
+			Append("movec ");
+			uint imm = fetchOpSize(pc,Size.Word);pc+=2;
+			uint reg = (imm>>12)&7;
+			uint cw = imm & 0x0fff;
+			if ((type & 1) == 0)
+			{
+				//CR->reg
+				Append($"{crs[cw]},");
+				if ((imm & 0x8000)!=0)
+					Append($"a{reg}");
+				else
+
+					Append($"d{reg}");
+			}
+			else
+			{
+				//reg->CR
+				if ((imm & 0x8000) != 0)
+					Append($"a{reg},");
+				else
+					Append($"d{reg},");
+				Append($"{crs[cw]}");
 			}
 		}
 

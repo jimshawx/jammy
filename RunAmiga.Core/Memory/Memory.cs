@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -22,9 +23,9 @@ namespace RunAmiga.Core.Memory
 			return memoryRange.Contains(address);
 		}
 
-		public MemoryRange MappedRange()
+		public virtual List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange>{memoryRange};
 		}
 
 		public uint Read(uint insaddr, uint address, Size size)
@@ -69,13 +70,16 @@ namespace RunAmiga.Core.Memory
 			throw new ArgumentOutOfRangeException();
 		}
 
-		public BulkMemoryRange ReadBulk()
+		public virtual List<BulkMemoryRange> ReadBulk()
 		{
-			return new BulkMemoryRange
-			{
-				StartAddress = memoryRange.Start,
-				Memory = (byte[])memory.Clone()
-			};
+			return new List<BulkMemoryRange>
+				{
+					new BulkMemoryRange
+					{
+						StartAddress = memoryRange.Start,
+						Memory = (byte[])memory.Clone()
+					}
+				};
 		}
 	}
 }

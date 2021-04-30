@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
@@ -29,9 +30,9 @@ namespace RunAmiga.Core.Custom
 			return memoryRange.Contains(address);
 		}
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange> {memoryRange};
 		}
 
 		// the RTC is an OKI Semiconductor MSM6242B.

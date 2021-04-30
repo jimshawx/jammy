@@ -46,7 +46,7 @@ namespace RunAmiga.Core.Memory
 
 			memoryManager.AddDevices(devices);
 
-			CopyKickstart();
+			//CopyKickstart();
 		}
 
 		public MemoryMapper(IMemoryManager memoryManager, IMemoryMappedDevice memory)
@@ -57,24 +57,24 @@ namespace RunAmiga.Core.Memory
 
 		public void Reset()
 		{
-			CopyKickstart();
+			//CopyKickstart();
 		}
 
-		private void CopyKickstart()
-		{
-			//hack: this is a hack to put the kickstart at 0x0 at reset time
-			//todo: should be looking at CIA-A PRA OVL bit (0) and update the mappings
-			uint src = kickstartROM.MappedRange().Start;
-			uint dst = chipRAM.MappedRange().Start;
-			uint len = (uint)(kickstartROM.MappedRange().Length/4);
-			while (len-- != 0)
-			{
-				uint v = kickstartROM.Read(0, src, Size.Long);
-				chipRAM.Write(0, dst, v, Size.Long);
-				src += 4;
-				dst += 4;
-			}
-		}
+		//private void CopyKickstart()
+		//{
+		//	//hack: this is a hack to put the kickstart at 0x0 at reset time
+		//	//todo: should be looking at CIA-A PRA OVL bit (0) and update the mappings
+		//	uint src = kickstartROM.MappedRange().Start;
+		//	uint dst = chipRAM.MappedRange().Start;
+		//	uint len = (uint)(kickstartROM.MappedRange().Length/4);
+		//	while (len-- != 0)
+		//	{
+		//		uint v = kickstartROM.Read(0, src, Size.Long);
+		//		chipRAM.Write(0, dst, v, Size.Long);
+		//		src += 4;
+		//		dst += 4;
+		//	}
+		//}
 
 		public void AddMemoryIntercept(IMemoryInterceptor interceptor)
 		{
@@ -88,9 +88,9 @@ namespace RunAmiga.Core.Memory
 			return true;
 		}
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange> {memoryRange};
 		}
 
 		public uint Read(uint insaddr, uint address, Size size)
@@ -191,7 +191,7 @@ namespace RunAmiga.Core.Memory
 		public IEnumerable<ushort> AsUWord(int start)
 		{
 			for (long i = start; i < memoryRange.Length; i += 2)
-				if (memoryManager.DebugMappedDevice[(uint)i]  is IUnmappedMemory)
+				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
 					yield return 0;
 				else
 					yield return UnsafeRead16((uint)i);
@@ -202,7 +202,7 @@ namespace RunAmiga.Core.Memory
 		public List<BulkMemoryRange> GetBulkRanges()
 		{
 			return memoryManager.MappedDevice.BulkReadableDevices()
-				.Select(x => x.ReadBulk())
+				.SelectMany(x => x.ReadBulk())
 				.ToList();
 		}
 	}

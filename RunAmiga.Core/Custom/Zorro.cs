@@ -33,9 +33,9 @@ namespace RunAmiga.Core.Custom
 
 		private readonly MemoryRange mappedRange = new MemoryRange(0x00e80000, 0x80000);
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return mappedRange;
+			return new List<MemoryRange> {mappedRange};
 		}
 
 		public uint Read(uint insaddr, uint address, Size size)

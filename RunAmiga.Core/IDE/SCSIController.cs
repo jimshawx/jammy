@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -10,7 +11,7 @@ namespace RunAmiga.Core.IDE
 		private readonly ILogger logger;
 		private readonly MemoryRange memoryRange = new MemoryRange(0xdd0000, 0x10000);
 
-		public SCSIController(ILogger<IDEController> logger)
+		public SCSIController(ILogger<SCSIController> logger)
 		{
 			this.logger = logger;
 		}
@@ -20,10 +21,15 @@ namespace RunAmiga.Core.IDE
 			return memoryRange.Contains(address);
 		}
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange> {memoryRange};
 		}
+
+		//A4000 does this at boot 10x
+		//$dd203A W 0
+		//$dd2032 R
+		//$dd203e R
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{

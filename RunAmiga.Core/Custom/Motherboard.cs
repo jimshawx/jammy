@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -15,7 +16,8 @@ namespace RunAmiga.Core.Custom
 
 		public void Reset()
 		{
-			reg_DE0002 = 0x80;
+			reg_DE0002 = 0x80;//cold reboot
+			reg_DE0003 = 7;//required to pass boot up checks
 		}
 
 		readonly MemoryRange memoryRange = new MemoryRange(0xde0000, 0x10000);
@@ -25,14 +27,18 @@ namespace RunAmiga.Core.Custom
 			return memoryRange.Contains(address);
 		}
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange> {memoryRange};
 		}
 
-		private byte reg_DE0000;
-		private byte reg_DE0001;
-		private byte reg_DE0002;
+		//a3000p.pdf The Amiga 3000+ System Specification
+		//NB. A3000+ was never released. A4000 uses some of it.
+		private byte reg_DE0000;//TIMEOUT
+		private byte reg_DE0001;//TOENB*
+		private byte reg_DE0002;//COLDSTART
+		private byte reg_DE0003;//some kind of RAMSEY flags that won't boot unless set to 7
+		private byte reg_DE0043;//RAMSEY chip version
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
@@ -40,6 +46,8 @@ namespace RunAmiga.Core.Custom
 			if (address == 0xde0000) return reg_DE0000;
 			if (address == 0xde0001) return reg_DE0001;
 			if (address == 0xde0002) return reg_DE0002;
+			if (address == 0xde0003) return reg_DE0003;
+			if (address == 0xde0043) return reg_DE0043;
 			return 0;
 		}
 
@@ -49,6 +57,8 @@ namespace RunAmiga.Core.Custom
 			if (address == 0xde0000) reg_DE0000 = (byte)value;
 			if (address == 0xde0001) reg_DE0001 = (byte)value;
 			if (address == 0xde0002) reg_DE0002 = (byte)value;
+			if (address == 0xde0003) reg_DE0003 = (byte)value;
+			if (address == 0xde0043) reg_DE0043 = (byte)value;
 		}
 	}
 }

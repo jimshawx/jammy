@@ -466,16 +466,16 @@ namespace RunAmiga.Disassembler.Analysers
 		{
 			uint i;
 
-			i = kickstartROM.MappedRange().Start;
-			foreach (uint s in mem.AsULong((int)kickstartROM.MappedRange().Start))
+			i = kickstartROM.MappedRange().First().Start;
+			foreach (uint s in mem.AsULong((int)kickstartROM.MappedRange().First().Start))
 			{
 				if (s == 0x4e750000)
 					MakeMemType(i + 2, MemType.Word, null);
 				i += 4;
 			}
 
-			i = kickstartROM.MappedRange().Start;
-			foreach (ushort s in mem.AsUWord((int)kickstartROM.MappedRange().Start))
+			i = kickstartROM.MappedRange().First().Start;
+			foreach (ushort s in mem.AsUWord((int)kickstartROM.MappedRange().First().Start))
 			{
 				//bra
 				if ((s & 0xff00) == 0x6000)

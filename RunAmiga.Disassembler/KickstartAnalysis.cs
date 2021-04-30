@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -41,7 +42,7 @@ namespace RunAmiga.Disassembler
 
 		public KickstartVersion GetVersion()
 		{
-			uint kickstartBaseAddress = kickstartROM.MappedRange().Start;
+			uint kickstartBaseAddress = kickstartROM.MappedRange().First().Start;
 			return new KickstartVersion
 			{
 				Major = (ushort)kickstartROM.Read(0, kickstartBaseAddress + 0x10, Size.Word),
@@ -51,14 +52,14 @@ namespace RunAmiga.Disassembler
 
 		public uint GetChecksum()
 		{
-			var mappedRange = kickstartROM.MappedRange();
+			var mappedRange = kickstartROM.MappedRange().First();
 			return kickstartROM.Read(0, (uint)(mappedRange.Start + mappedRange.Length - 24), Size.Long);
 		}
 
 		private static List<Resident> GetRomTags(IKickstartROM kickstartROM, IDebugMemoryMapper memory, uint rombase)
 		{
 			var resident = new List<Resident>();
-			var range = kickstartROM.MappedRange();
+			var range = kickstartROM.MappedRange().First();
 			for (uint i = range.Start; i < range.Start + range.Length; i += 2)
 			{
 				ushort matchWord = (ushort)memory.UnsafeRead16(i);

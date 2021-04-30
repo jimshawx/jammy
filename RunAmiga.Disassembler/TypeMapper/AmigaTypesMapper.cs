@@ -112,9 +112,9 @@ namespace RunAmiga.Disassembler.TypeMapper
 
 		public int Length => memory.Length;
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange> {memoryRange};
 		}
 
 		public List<BulkMemoryRange> GetBulkRanges()

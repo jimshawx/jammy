@@ -253,9 +253,9 @@ namespace RunAmiga.Core.IDE
 			return memoryRange.Contains(address);
 		}
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange> {memoryRange};
 		}
 
 		private byte gayleStatus;

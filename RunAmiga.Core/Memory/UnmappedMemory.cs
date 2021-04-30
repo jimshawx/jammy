@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types.Types;
 
@@ -20,9 +21,9 @@ namespace RunAmiga.Core.Memory
 
 		private readonly MemoryRange memoryRange = new MemoryRange(0, 0x100000000);
 
-		public MemoryRange MappedRange()
+		public List<MemoryRange> MappedRange()
 		{
-			return memoryRange;
+			return new List<MemoryRange> {memoryRange};
 		}
 
 		public uint Read(uint insaddr, uint address, Size size)

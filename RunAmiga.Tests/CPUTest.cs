@@ -108,7 +108,7 @@ namespace RunAmiga.Tests
 				this.cpu = cpu;
 
 				var r = new Random(0x24061972);
-				for (uint i = 0; i < memory.MappedRange().Length; i+=4)
+				for (uint i = 0; i < memory.MappedRange().First().Length; i+=4)
 					memory.UnsafeWrite32(i, (uint)(r.Next()*2)&0xfffffffe);
 
 				memory.UnsafeWrite32(0, 0x800000);//sp

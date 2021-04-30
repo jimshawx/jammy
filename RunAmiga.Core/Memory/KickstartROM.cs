@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,15 +11,16 @@ namespace RunAmiga.Core.Memory
 {
 	public class KickstartROM : Memory, IKickstartROM
 	{
+		private readonly IMemoryManager memoryManager;
 		private readonly ILogger logger;
 		private string path;
 		private string name;
 
 		private readonly MemoryRange mirrorRange;
-		private bool isMirrored = false;
 
-		public KickstartROM(IOptions<EmulationSettings> settings, ILogger<KickstartROM> logger)
+		public KickstartROM(IMemoryManager memoryManager, IOptions<EmulationSettings> settings, ILogger<KickstartROM> logger)
 		{
+			this.memoryManager = memoryManager;
 			this.logger = logger;
 			switch (settings.Value.KickStart)
 			{
@@ -59,6 +61,7 @@ namespace RunAmiga.Core.Memory
 				{
 					throw new ArgumentOutOfRangeException();
 				}
+
 				addressMask = (uint)(memoryRange.Length - 1);
 			}
 			catch
@@ -76,17 +79,38 @@ namespace RunAmiga.Core.Memory
 			return mirrorRange.Contains(address) || memoryRange.Contains(address);
 		}
 
+		public override List<MemoryRange> MappedRange()
+		{
+			return new List<MemoryRange> {memoryRange, mirrorRange};
+		}
+
 		public void SetMirror(bool mirrored)
 		{
 			if (mirrored)
 				mirrorRange.Length = memoryRange.Length;
 			else
 				mirrorRange.Length = 0;
+			memoryManager.RefreshDevices();
 		}
 
 		public new void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			logger.LogTrace($"Write to ROM {address:X8} @{insaddr:X8} {value:X8} {size}");
+		}
+
+		public override List<BulkMemoryRange> ReadBulk()
+		{
+			var ranges = base.ReadBulk();
+
+			if (mirrorRange.Length != 0)
+			{
+				ranges.Add(new BulkMemoryRange
+				{
+					StartAddress = mirrorRange.Start,
+					Memory = (byte[])memory.Clone()
+				});
+			}
+			return ranges;
 		}
 	}
 }

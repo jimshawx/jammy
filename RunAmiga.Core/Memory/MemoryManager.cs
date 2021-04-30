@@ -25,6 +25,11 @@ namespace RunAmiga.Core.Memory
 			BuildMappedDevices();
 		}
 
+		public void RefreshDevices()
+		{
+			BuildMappedDevices();
+		}
+
 		public void AddDevice(IMemoryMappedDevice device)
 		{
 			AddDevices(new List<IMemoryMappedDevice>{device});
@@ -52,12 +57,15 @@ namespace RunAmiga.Core.Memory
 		{
 			foreach (var dev in devices.Select(x => new {device = x, range = x.MappedRange()}))
 			{
-				uint start = dev.range.Start >> 16;
-				uint end = (uint)((dev.range.Start + dev.range.Length) >> 16);
-				for (uint i = start; i < end; i++)
+				foreach (var range in dev.range)
 				{
-					if (dev.device.IsMapped(i << 16))
-						mapping[i] = dev.device;
+					uint start = range.Start >> 16;
+					uint end = (uint)((range.Start + range.Length) >> 16);
+					for (uint i = start; i < end; i++)
+					{
+						if (dev.device.IsMapped(i << 16))
+							mapping[i] = dev.device;
+					}
 				}
 			}
 		}
@@ -86,5 +94,6 @@ namespace RunAmiga.Core.Memory
 		MemoryMappedDeviceCollection DebugMappedDevice { get; }
 		void AddDevice(IMemoryMappedDevice device);
 		void AddDevices(List<IMemoryMappedDevice> devs);
+		void RefreshDevices();
 	}
 }

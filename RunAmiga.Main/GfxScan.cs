@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
@@ -20,7 +21,7 @@ namespace RunAmiga.Main
 		{
 			this.logger = logger;
 			this.chipRAM = chipRAM;
-			maxMemory = ((IBulkMemoryRead)chipRAM).ReadBulk().Memory.Length;
+			maxMemory = ((IBulkMemoryRead)chipRAM).ReadBulk().First().Memory.Length;
 			var ss = new SemaphoreSlim(1);
 			ss.Wait();
 			var t = new Thread(() =>
@@ -121,7 +122,7 @@ namespace RunAmiga.Main
 		{
 			int[] screen = new int[screenWidth * screenHeight];
 
-			var bulk = ((IBulkMemoryRead)chipRAM).ReadBulk();
+			var bulk = ((IBulkMemoryRead)chipRAM).ReadBulk().First();
 
 			int d=0;
 			for (int i = startAddress; i < Math.Min(bulk.EndAddress, startAddress+ (screenWidth*screenHeight)/16); i += 2)
