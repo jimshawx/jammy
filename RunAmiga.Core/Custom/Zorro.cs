@@ -110,7 +110,7 @@ namespace RunAmiga.Core.Custom
 				var expansion = configurations[0];
 				byte v = expansion.Config[index];
 				if (index != 0) v = (byte)~v;
-				if ((address & 0x100) != 0)
+				if ((address & 0x100) == 0)
 					value = (byte)(v & 0xf0);
 				else
 					value = (byte)(v << 4);
