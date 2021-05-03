@@ -9,7 +9,7 @@ namespace RunAmiga.Core.IDE
 	public class SCSIController : ISCSIController
 	{
 		private readonly ILogger logger;
-		private readonly MemoryRange memoryRange = new MemoryRange(0xdd0000, 0x10000);
+		private readonly MemoryRange memoryRange = new MemoryRange(0xdd0000, 0);
 
 		public SCSIController(ILogger<SCSIController> logger)
 		{

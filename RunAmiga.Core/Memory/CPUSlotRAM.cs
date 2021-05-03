@@ -11,7 +11,7 @@ namespace RunAmiga.Core.Memory
 		//A3000/A4000 CPU Slot Fast RAM
 		//Up to 128MB mapped from 0x08000000-0x07ffffff
 
-		public CPUSlotRAM(IOptions<EmulationSettings> settings, ILogger<MotherboardRAM> logger)
+		public CPUSlotRAM(IOptions<EmulationSettings> settings, ILogger<CPUSlotRAM> logger)
 		{
 			if (settings.Value.CPUSlotMemory != 0.0)
 			{
@@ -21,6 +21,12 @@ namespace RunAmiga.Core.Memory
 				memoryRange = new MemoryRange(0x08000000, memorySize);
 				memory = new byte[memorySize];
 				addressMask = memorySize - 1;
+			}
+			else
+			{
+				memoryRange = new MemoryRange(0, 0);
+				memory = new byte[0];
+				addressMask = 0;
 			}
 		}
 	}

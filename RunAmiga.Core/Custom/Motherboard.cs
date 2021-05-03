@@ -9,7 +9,7 @@ namespace RunAmiga.Core.Custom
 	{
 		private readonly ILogger logger;
 
-		public Motherboard(ILogger<BattClock> logger)
+		public Motherboard(ILogger<Motherboard> logger)
 		{
 			this.logger = logger;
 		}
@@ -48,6 +48,8 @@ namespace RunAmiga.Core.Custom
 			if (address == 0xde0002) return reg_DE0002;
 			if (address == 0xde0003) return reg_DE0003;
 			if (address == 0xde0043) return reg_DE0043;
+			if (address == 0xde1000) return (uint)(GayleCheck()>>8);
+			if (address == 0xde1002) return (uint)(GaryCheck()>>8);
 			return 0;
 		}
 
@@ -55,10 +57,35 @@ namespace RunAmiga.Core.Custom
 		{
 			logger.LogTrace($"[MOBO] W {address:X8} @ {insaddr:X8} {size} {value:X8}");
 			if (address == 0xde0000) reg_DE0000 = (byte)value;
-			if (address == 0xde0001) reg_DE0001 = (byte)value;
-			if (address == 0xde0002) reg_DE0002 = (byte)value;
-			if (address == 0xde0003) reg_DE0003 = (byte)value;
-			if (address == 0xde0043) reg_DE0043 = (byte)value;
+			else if (address == 0xde0001) reg_DE0001 = (byte)value;
+			else if (address == 0xde0002) reg_DE0002 = (byte)value;
+			else if (address == 0xde0003) reg_DE0003 = (byte)value;
+			else if (address == 0xde0043) reg_DE0043 = (byte)value;
+			else if (address == 0xde1000) gayleBits = GAYLE_BITS;
+			else if (address == 0xde1002) garyBits = GARY_BITS;
+			else if (address == 0xde109a) { /*something writes 0xbfff here at boot time */ }
+			else	logger.LogTrace($"W {address:X6} not mapped");
 		}
+
+
+		//todo: A4000 says 0xD1
+		private const int GAYLE_BITS = 0xD0D0;
+		private int gayleBits = GAYLE_BITS;
+		private ushort GayleCheck()
+		{
+			ushort v = (ushort)(gayleBits & 0x8000);
+			int c = (gayleBits >> 15) & 1;
+			gayleBits += gayleBits + c;
+			return v;
+		}
+
+		//todo: Fat Gary A3000, A4000. don't know what this does yet.
+		private const int GARY_BITS = 0xFFFF;
+		private int garyBits = GARY_BITS;
+		private ushort GaryCheck()
+		{
+			return (ushort)garyBits;
+		}
+
 	}
 }

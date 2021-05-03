@@ -126,17 +126,9 @@ namespace RunAmiga.Core.Custom
 			{
 				regs[reg] = audio.Read(insaddr, address);
 			}
-			else if (address == 0xdf1000)
-			{
-				regs[reg] = GayleCheck();
-			}
-			else if (address == 0xdf1002)
-			{
-				regs[reg] = GaryCheck();
-			}
 			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
-			                     address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
-			                     /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
+			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
+			         /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
 			{
 
 			}
@@ -150,25 +142,6 @@ namespace RunAmiga.Core.Custom
 			}
 
 			return (uint)regs[reg];
-		}
-
-		//todo: A4000 says 0xD1
-		private const int GAYLE_BITS = 0xD0D0;
-		private int gayleBits = GAYLE_BITS;
-		private ushort GayleCheck()
-		{
-			ushort v = (ushort)(gayleBits & 0x8000);
-			int c = (gayleBits >> 15) & 1;
-			gayleBits += gayleBits + c;
-			return v;
-		}
-
-		//todo: Fat Gary A3000, A4000. don't know what this does yet.
-		private const int GARY_BITS = 0xFFFF;
-		private int garyBits = GARY_BITS;
-		private ushort GaryCheck()
-		{
-			return (ushort)garyBits;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
@@ -362,14 +335,7 @@ namespace RunAmiga.Core.Custom
 			{
 				audio.Write(insaddr, address, (ushort)value);
 			}
-			else if (address == 0xdf1000)
-			{
-				gayleBits = GAYLE_BITS;
-			}
-			else if (address == 0xdf1002)
-			{
-				garyBits = GARY_BITS;
-			}
+
 			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
 			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
 			         || /*address == ChipRegs.LISAID  ||*/ address == ChipRegs.NO_OP)

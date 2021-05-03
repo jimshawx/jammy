@@ -24,6 +24,12 @@ namespace RunAmiga.Core.Memory
 				memory = new byte[memorySize];
 				addressMask = memorySize - 1;
 			}
+			else
+			{
+				memoryRange = new MemoryRange(0, 0);
+				memory = new byte[0];
+				addressMask = 0;
+			}
 		}
 	}
 }
