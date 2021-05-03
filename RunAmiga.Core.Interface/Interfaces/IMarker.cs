@@ -136,11 +136,24 @@ namespace RunAmiga.Core.Interface.Interfaces
 	public interface IMotherboardRAM : IMemoryMappedDevice, IDebuggableMemory { }
 	public interface ICPUSlotRAM : IMemoryMappedDevice, IDebuggableMemory { }
 
-	public interface IIDEController : IMemoryMappedDevice, IReset
+	public interface IIDEController : IReset
 	{
 		void DebugAck();
+		public uint Read(uint insaddr, uint address, Size size);
+		public void Write(uint insaddr, uint address, uint value, Size size);
 	}
-	public interface ISCSIController : IMemoryMappedDevice { }
+
+	public interface IDiskController : IMemoryMappedDevice, IReset { }
+	public interface IA4000IDEController : IReset { }
+	public interface IA1200IDEController : IDiskController { }
+	public interface IA4000DiskController : IDiskController { }
+	public interface IA3000DiskController : IDiskController { }
+
+	public interface ISCSIController : IReset
+	{
+		public uint Read(uint insaddr, uint address, Size size);
+		public void Write(uint insaddr, uint address, uint value, Size size);
+	}
 	public interface IAkiko : IMemoryMappedDevice { }
 	public interface IZorroConfigurator { }
 }

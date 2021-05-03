@@ -26,13 +26,14 @@ namespace RunAmiga.Disassembler
 			//ExtractHardDisk("dh0.hdf");
 			//ExtractFloppyDisk("workbench1.2.adf");
 			//ExtractFloppyDisk("workbench3.1.adf");
+			//ExtractFloppyDisk("Blood Money (1989)(Psygnosis)(Disk 1 of 2)[cr Defjam - CCS - SP][b dump].adf");
 		}
 
 		public void ExtractFloppyDisk(string disk)
 		{
 			var state = new ExtractState
 			{
-				hd = File.ReadAllBytes(Path.Combine("../../../../", disk)),
+				hd = File.ReadAllBytes(Path.Combine("../../../../games/", disk)),
 				BlockOffset = 0,
 				BlockSize = 512,
 			};

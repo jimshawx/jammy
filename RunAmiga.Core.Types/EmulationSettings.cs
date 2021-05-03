@@ -39,6 +39,14 @@
 		Emulation
 	}
 
+	public enum DiskController
+	{
+		None,
+		A600_A1200,
+		A3000,
+		A4000
+	}
+
 	public class EmulationSettings
 	{
 		public string KickStart { get; set; }
@@ -69,5 +77,6 @@
 		public Feature Tracer { get; set; }
 		public ChipSet ChipSet { get; set; }
 		public SerialConsole Console { get; set; }
+		public DiskController DiskController { get; set; }
 	}
 }

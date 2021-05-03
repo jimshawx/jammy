@@ -9,8 +9,6 @@ namespace RunAmiga.Core.Memory
 {
 	public class MemoryMapper : IMemoryMapper, IDebugMemoryMapper
 	{
-		private readonly IChipRAM chipRAM;
-		private readonly IKickstartROM kickstartROM;
 		private readonly IMemoryManager memoryManager;
 		private IMemoryInterceptor interceptor;
 
@@ -19,12 +17,10 @@ namespace RunAmiga.Core.Memory
 
 			ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
 			IZorro2 zorro2, IZorro3 zorro3, IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IUnmappedMemory unmappedMemory,
-			IKickstartROM kickstartROM, IIDEController ideController, ISCSIController scsiController,
+			IKickstartROM kickstartROM, IDiskController diskController,
 			IAkiko akiko, IMotherboard motherboard, IMotherboardRAM motherboardRAM, ICPUSlotRAM cpuSlotRAM,
 			ILogger<MemoryMapper> logger)
 		{
-			this.chipRAM = chipRAM;
-			this.kickstartROM = kickstartROM;
 			this.memoryManager = memoryManager;
 			_ = zorroConfigurator;
 
@@ -40,16 +36,13 @@ namespace RunAmiga.Core.Memory
 				motherboard,
 				zorro2,
 				zorro3,
-				ideController,
-				scsiController,
+				diskController,
 				akiko,
 				motherboardRAM,
 				cpuSlotRAM
 			};
 
 			memoryManager.AddDevices(devices);
-
-			//CopyKickstart();
 		}
 
 		public MemoryMapper(IMemoryManager memoryManager, IMemoryMappedDevice memory)
@@ -60,24 +53,7 @@ namespace RunAmiga.Core.Memory
 
 		public void Reset()
 		{
-			//CopyKickstart();
 		}
-
-		//private void CopyKickstart()
-		//{
-		//	//hack: this is a hack to put the kickstart at 0x0 at reset time
-		//	//todo: should be looking at CIA-A PRA OVL bit (0) and update the mappings
-		//	uint src = kickstartROM.MappedRange().Start;
-		//	uint dst = chipRAM.MappedRange().Start;
-		//	uint len = (uint)(kickstartROM.MappedRange().Length/4);
-		//	while (len-- != 0)
-		//	{
-		//		uint v = kickstartROM.Read(0, src, Size.Long);
-		//		chipRAM.Write(0, dst, v, Size.Long);
-		//		src += 4;
-		//		dst += 4;
-		//	}
-		//}
 
 		public void AddMemoryIntercept(IMemoryInterceptor interceptor)
 		{

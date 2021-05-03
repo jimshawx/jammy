@@ -22,7 +22,6 @@ namespace RunAmiga.Debugger
 	{
 		private readonly IBreakpointCollection breakpoints;
 		private readonly IKickstartROM kickstart;
-		private readonly IIDEController ideController;
 		private readonly IDebugMemoryMapper memory;
 		private readonly ICPU cpu;
 		private readonly IChips custom;
@@ -38,12 +37,11 @@ namespace RunAmiga.Debugger
 
 		public Debugger(IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
-			IBreakpointCollection breakpoints, IKickstartROM kickstart, IIDEController ideController,
+			IBreakpointCollection breakpoints, IKickstartROM kickstart,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser, IAnalysis analysis)
 		{
 			this.breakpoints = breakpoints;
 			this.kickstart = kickstart;
-			this.ideController = ideController;
 			this.disassembly = disassembly;
 			this.tracer = tracer;
 			this.analyser = analyser;
@@ -380,7 +378,7 @@ namespace RunAmiga.Debugger
 
 		public void IDEACK()
 		{
-			ideController.DebugAck();
+			logger.LogTrace("IDEACK is not implemented");
 		}
 
 		public void ClearBBUSY()

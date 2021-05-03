@@ -71,6 +71,7 @@ namespace RunAmiga.Core.Custom.CIA
 		{
 			base.Reset();
 			regs[PRA] = 1;//OVL is set at boot time
+			kickstartROM.SetMirror(true);
 		}
 
 		public override uint ReadByte(uint insaddr, uint address)

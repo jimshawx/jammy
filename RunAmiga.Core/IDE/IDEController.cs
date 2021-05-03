@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.MemoryMappedFiles;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -14,42 +12,24 @@ namespace RunAmiga.Core.IDE
 {
 	public class Gayle
 	{
-		public const uint Status = 0xd88000;
-		public const uint INTREQ = 0xd89000;//dd3020 on A4000, on A1200 da9000, masked = d81000 d89000
-		public const uint INTENA = 0xd8a000;
-		public const uint Config = 0xd8b000;
-	}
-	//INTREQ  A1200   A4000
-	//        da9000  dd3020 1101 1010 1001 0000 0000 0000 - 1101 1101 0011 0000 0010 0000 & 1111 1000 0011 0000 0000 0000 
-	public class A4000
-	{
-		public const uint INTREQ = 0xdd3020;
+		public const uint Status = 0xda8000;
+		public const uint INTREQ = 0xda9000;
+		public const uint INTENA = 0xdaa000;
+		public const uint Config = 0xdab000;
 	}
 
 	public class IDE
 	{
-		public const uint Data = 0xd82000;//1f0
-		public const uint Error_Feature = 0xd82004; //1f1
-		public const uint SectorCount = 0xd82008;//1f2
-		public const uint SectorNumber = 0xd8200c;//1f3
-		public const uint CylinderLow = 0xd82010;//1f4
-		public const uint CylinderHigh = 0xd82014;//1f5
-		public const uint DriveHead = 0xd82018;//1f6 //aka. DeviceHead
-		public const uint Status_Command = 0xd8201c; //1f7
-		public const uint AltStatus_DevControl = 0xd83018; //3f6
-
-		public const uint addressDecodeMask = 0xf8b01c;
+		public const uint Data = 0x1f0;
+		public const uint Error_Feature = 0x1f1;
+		public const uint SectorCount = 0x1f2;
+		public const uint SectorNumber = 0x1f3;
+		public const uint CylinderLow = 0x1f4;
+		public const uint CylinderHigh = 0x1f5;
+		public const uint DriveHead = 0x1f6; //aka. DeviceHead
+		public const uint Status_Command =  0x1f7;
+		public const uint AltStatus_DevControl = 0x3f6;
 	}
-	//ATA  A1200   A4000
-	//1f0  da2000  dd2020 1101 1010 0010 0000 0000 0000 - 1101 1101 0010 0000 0010 0000 & 1111 1000 1011 0000 0001 1100 = f8b01c
-	//1f1  da2004  dd2026 1101 1010 0010 0000 0000 0100 - 1101 1101 0010 0000 0010 0110
-	//1f2  da2008  dd202a 1101 1010 0010 0000 0000 1000 - 1101 1101 0010 0000 0010 1010
-	//1f3  da200c  dd202e 1101 1010 0010 0000 0000 1100 - 1101 1101 0010 0000 0010 1110
-	//1f4  da2010  dd2032 1101 1010 0010 0000 0001 0000 - 1101 1101 0010 0000 0011 0010
-	//1f5  da2014  dd2036 1101 1010 0010 0000 0001 0100 - 1101 1101 0010 0000 0011 0110
-	//1f6  da2018  dd203a 1101 1010 0010 0000 0001 1000 - 1101 1101 0010 0000 0011 1010
-	//1f7  da201c  dd203e 1101 1010 0010 0000 0001 1100 - 1101 1101 0010 0000 0011 1110
-	//3f6  da3018  dd303a 1101 1010 0011 0000 0001 1000 - 1101 1101 0011 0000 0011 1010
 
 	[Flags]
 	public enum IDE_STATUS : byte
@@ -64,167 +44,12 @@ namespace RunAmiga.Core.IDE
 		BSY = 128
 	}
 
-	internal class HardDrive : IDisposable
-	{
-		private readonly MemoryMappedFile diskMap;
-		private readonly MemoryMappedViewAccessor diskAccessor;
-
-		public HardDrive(long bytes, int diskNo, uint C, uint H, uint S)
-		{
-			DiskNumber = diskNo;
-			this.Cylinders = (int)C;
-			this.Heads = (int)H;
-			this.Sectors = (int)S;
-
-			diskMap = MemoryMappedFile.CreateFromFile(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"), FileMode.OpenOrCreate, $"dh{DiskNumber}", bytes, MemoryMappedFileAccess.ReadWrite);
-			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
-
-			Swab();
-
-			DriveIRQBit = 1 << diskNo;
-		}
-
-		//drive id bit
-		public int DriveIRQBit { get; private set; }
-
-		//drive geometry provided by OS
-		public byte ConfiguredParamsSectorsPerTrack { get; set; }
-		public byte ConfiguredParamsHeads { get; set; }
-
-		//drive geometry provided by Drive
-		public int Cylinders { get; }
-		public int Heads { get; }
-		public int Sectors { get; }
-
-		//0 Primary or 1 Secondary
-		public int DiskNumber { get; }
-
-		private string hardfilePath = "../../../../";
-
-		// Swab
-
-		private void Swab()
-		{
-			if (diskAccessor.Capacity < 4)
-				return;
-
-			var id = new char[4];
-			id[0] = (char)diskAccessor.ReadByte(0);
-			id[1] = (char)diskAccessor.ReadByte(1);
-			id[2] = (char)diskAccessor.ReadByte(2);
-			id[3] = (char)diskAccessor.ReadByte(3);
-
-			//it doesn't need swapping
-			if (id[0] == 'R' && id[1] == 'D' && id[2] == 'S' && id[3] == 'K')
-				return;
-
-			//it's not a disk image
-			if (!(id[0] == 'D' && id[1] == 'R' && id[2] == 'K' && id[3] == 'S'))
-				return;
-
-			for (long i = 0; i < diskAccessor.Capacity; i += 2)
-			{
-				byte b0 = diskAccessor.ReadByte(i);
-				byte b1 = diskAccessor.ReadByte(i+1);
-				diskAccessor.Write(i,b1);
-				diskAccessor.Write(i+1, b0);
-			}
-			SyncDisk();
-		}
-
-		// Sync
-
-		public void SyncDisk()
-		{
-			diskAccessor.Flush();
-		}
-
-		// Write
-
-		private long currentWriteIndex = -1;
-		public void BeginWrite(uint address)
-		{
-			currentWriteIndex = (long)address * 512;
-		}
-
-		public void Write(ushort v)
-		{
-			if (currentWriteIndex == -1) throw new IndexOutOfRangeException();
-
-			v = (ushort)((v >> 8) | (v << 8));
-			diskAccessor.Write(currentWriteIndex, v);
-			currentWriteIndex += 2;
-		}
-
-		// Read
-
-		private IEnumerator<ushort> dataSource = null;
-		public void BeginRead(ushort[] src)
-		{
-			dataSource = src.AsEnumerable().GetEnumerator();
-			currentReadIndex = -1;
-		}
-
-		private long currentReadIndex = -1;
-		public void BeginRead(uint address, byte sectorCount)
-		{
-			//pre-load the swabbed sectors - is it faster?
-			var src = new ushort[256 * sectorCount];
-			diskAccessor.ReadArray(address * 512, src, 0, 256 * sectorCount);
-			for (int i = 0; i < src.Length; i++)
-				src[i] = (ushort)((src[i] << 8) | (src[i] >> 8));
-			BeginRead(src);
-
-			//currentReadIndex = (long)address * 512;
-			//if (dataSource != null)
-			//{
-			//	dataSource.Dispose();
-			//	dataSource = null;
-			//}
-		}
-
-		public ushort Read()
-		{
-			ushort v = 0;
-			if (dataSource != null)
-			{
-				if (!dataSource.MoveNext())
-				{
-					dataSource.Dispose();
-					dataSource = null;
-				}
-				else
-				{
-					v = dataSource.Current;
-				}
-			}
-			else
-			{
-				if (currentReadIndex == -1) throw new IndexOutOfRangeException();
-
-				v = diskAccessor.ReadUInt16(currentReadIndex);
-				v = (ushort)((v >> 8) | (v << 8));
-				currentReadIndex += 2;
-			}
-			return v;
-		}
-
-		public void Dispose()
-		{
-			SyncDisk();
-			dataSource?.Dispose();
-			diskAccessor.Dispose();
-			diskMap.Dispose();
-		}
-	}
-
-	//IDE Controller on the A600 and A1200
-	public class IDEController : IIDEController, IDisposable
+	//IDE Controller on the A600, A1200 and A4000
+	public abstract class IDEController : IIDEController, IDisposable
 	{
 		private readonly IInterrupt interrupt;
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
-		private readonly MemoryRange memoryRange = new MemoryRange(0xda0000, 0x40000);
 
 		public IDEController(IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<IDEController> logger)
 		{
@@ -232,13 +57,11 @@ namespace RunAmiga.Core.IDE
 			this.settings = settings.Value;
 			this.logger = logger;
 
-
 			InitDriveId();
 		}
 
 		public void Reset()
 		{
-
 		}
 
 		private readonly Dictionary<uint, string> registerNames = new Dictionary<uint, string>
@@ -266,16 +89,6 @@ namespace RunAmiga.Core.IDE
 			if (registerNames.TryGetValue(address, out var m))
 				return m;
 			return $"UNKNOWN_{address:X8}";
-		}
-
-		public bool IsMapped(uint address)
-		{
-			return memoryRange.Contains(address);
-		}
-
-		public List<MemoryRange> MappedRange()
-		{
-			return new List<MemoryRange> {memoryRange};
 		}
 
 		private byte gayleStatus;
@@ -366,14 +179,10 @@ namespace RunAmiga.Core.IDE
 			}
 		}
 
+		public abstract uint Read(uint insaddr, uint address, Size size);
 
-		public uint Read(uint insaddr, uint fullAddress, Size size)
+		public uint ReadATA(uint insaddr, uint address, Size size)
 		{
-			if (fullAddress == A4000.INTREQ)
-				return ((gayleINTREQ & GAYLE_INTENA.IRQ) != 0) ? 0xffffffff : 0u;
-
-			uint address = fullAddress&IDE.addressDecodeMask;
-
 			uint value = 0;
 			switch (address)
 			{
@@ -393,10 +202,6 @@ namespace RunAmiga.Core.IDE
 				case IDE.SectorCount: value = sectorCount; break;
 
 				case IDE.Data: value = ReadDataWord(); break;
-				
-				default:
-					logger.LogTrace($"R missed {fullAddress:X6} {address:X6}");
-					break;
 			}
 
 			//if (address != IDE.Data && address != Gayle.INTREQ && address != IDE.Status_Command)
@@ -405,10 +210,10 @@ namespace RunAmiga.Core.IDE
 			return value;
 		}
 
-		public void Write(uint insaddr, uint fullAddress, uint value, Size size)
-		{
-			uint address = fullAddress&IDE.addressDecodeMask;
+		public abstract void Write(uint insaddr, uint address, uint value, Size size);
 
+		public void WriteATA(uint insaddr, uint address, uint value, Size size)
+		{
 			//if (address != IDE.Data) logger.LogTrace($"IDE Controller W {GetName(address)} {value:X2} status: {IdeStatus} drive: {(DriveHead >> 4) & 1} {address:X8} @{insaddr:X8} {size}");
 
 			switch (address)
@@ -432,11 +237,6 @@ namespace RunAmiga.Core.IDE
 				case IDE.SectorNumber: sectorNumber = (byte)value; break;
 
 				case IDE.Data: WriteDataWord((ushort)value); break;
-
-				default:
-					logger.LogTrace($"W missed {fullAddress:X6} {address:X6}");
-					break;
-
 			}
 
 			//if (address == IDE.CylinderLow || address == IDE.CylinderHigh || address == IDE.SectorNumber || address == IDE.DriveHead)
@@ -886,6 +686,17 @@ namespace RunAmiga.Core.IDE
 			hardDrives[0].Dispose();
 			hardDrives[1].Dispose();
 		}
+	}
+
+	public class NullDiskController : IDiskController
+	{
+		private readonly MemoryRange emptyRange = new MemoryRange(0,0);
+
+		public bool IsMapped(uint address) { return false; }
+		public List<MemoryRange> MappedRange() { return new List<MemoryRange> {emptyRange}; }
+		public uint Read(uint insaddr, uint address, Size size) { return 0; }
+		public void Write(uint insaddr, uint address, uint value, Size size) { }
+		public void Reset() { }
 	}
 
 	/*

@@ -44,15 +44,13 @@ namespace RunAmiga.Core
 		public Amiga(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock, 
 			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IMemoryMapper memory,
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
-			IDiskDrives diskDrives, IMouse mouse, IIDEController ideController, ISerial serial,
-			IMotherboard motherboard,
+			IDiskDrives diskDrives, IMouse mouse, IDiskController diskController,
+			ISerial serial, IMotherboard motherboard,
 			IBreakpointCollection breakpointCollection, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
-			//this.custom = custom;
 			this.cpu = cpu;
 			this.breakpointCollection = breakpointCollection;
-			//this.logger = logger;
 
 			//fulfil the circular dependencies
 			custom.Init(blitter, copper, audio);
@@ -70,7 +68,7 @@ namespace RunAmiga.Core
 			emulations.Add(serial);
 			emulations.Add(cpu);
 
-			resetters.Add(ideController);
+			resetters.Add(diskController);
 			resetters.Add(interrupt);
 			resetters.Add(memory);
 			resetters.Add(battClock);

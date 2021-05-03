@@ -83,8 +83,6 @@ namespace RunAmiga.Main
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
-				.AddSingleton<IIDEController, IDEController>()
-				.AddSingleton<ISCSIController, SCSIController>()
 				.AddSingleton<IAkiko, Akiko>()
 				.AddSingleton<MemoryMapper>()
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
@@ -139,6 +137,27 @@ namespace RunAmiga.Main
 				services.AddSingleton<ISerialConsole, EmulationConsole>();
 			else
 				services.AddSingleton<ISerialConsole, NullConsole>();
+
+			//configure Hard Disk Controller
+			if (settings.DiskController == DiskController.A600_A1200)
+			{
+				services.AddSingleton<IDiskController, A1200IDEController>();
+			}
+			else if (settings.DiskController == DiskController.A3000)
+			{
+				services.AddSingleton<IDiskController, A3000DiskController>()
+						.AddSingleton<ISCSIController, SCSIController>();
+			}
+			else if (settings.DiskController == DiskController.A4000)
+			{
+				services.AddSingleton<IDiskController, A4000DiskController>()
+						.AddSingleton<IA4000IDEController, A4000IDEController>()
+						.AddSingleton<ISCSIController, SCSIController>();
+			}
+			else
+			{
+				services.AddSingleton<IDiskController, NullDiskController>();
+			}
 
 			var serviceProvider = services.BuildServiceProvider();
 
