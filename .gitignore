@@ -12,3 +12,5 @@
 /*.txt
 games/**
 roms/**
+/config
+/emulationSettings.json

@@ -40,22 +40,29 @@ namespace RunAmiga.Main
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 
-			Application.Run(new Settings());
+			var set = new Settings();
+			Application.Run(set);
+			if (!set.ConfigOK) return;
 
-			var configuration = new ConfigurationBuilder()
+			var appConfig = new ConfigurationBuilder()
 				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
-				.AddJsonFile("appsettings.json", false)
+				.AddJsonFile("appSettings.json", false)
+				.Build();
+
+			var emuConfig = new ConfigurationBuilder()
+				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.AddJsonFile("emulationSettings.json", false)
 				.Build();
 
 			var settings = new EmulationSettings();
-			configuration.Bind("Emulation", settings);
+			emuConfig.Bind("Emulation", settings);
 
 			var serviceCollection = new ServiceCollection();
 			var services = serviceCollection
-				.AddSingleton<IConfigurationRoot>(configuration)
+				.AddSingleton<IConfigurationRoot>(appConfig)
 				.AddLogging(x =>
 				{
-					x.AddConfiguration(configuration.GetSection("Logging"));
+					x.AddConfiguration(appConfig.GetSection("Logging"));
 					//x.AddDebug();
 					//x.AddSQLite();
 					x.AddDebugAsync();
@@ -101,7 +108,7 @@ namespace RunAmiga.Main
 				.AddSingleton<IAnalyser, Analyser>()
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 				.AddSingleton<RunAmiga>()
-				.Configure<EmulationSettings>(o => configuration.Bind("Emulation", o));
+				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 			//configure Audio
 			if (settings.Audio == AudioDriver.XAudio2)
