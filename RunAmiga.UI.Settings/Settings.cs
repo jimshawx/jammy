@@ -11,6 +11,7 @@ namespace RunAmiga.UI.Settings
 	public partial class Settings : Form
 	{
 		private string configPath = "../../../../config";
+
 		public Settings()
 		{
 			InitializeComponent();
@@ -22,10 +23,9 @@ namespace RunAmiga.UI.Settings
 				return s;
 			};
 
-			//should store this somewhere
+			//Quickstart
 			cbQuickStart.SelectedIndex = 0;
 
-			//Quickstart
 			var cfgs = Directory.GetFiles(configPath, "*.cfg", SearchOption.TopDirectoryOnly);
 			cbQuickStart.Items.AddRange(cfgs.Select(Path.GetFileNameWithoutExtension).OrderBy(x => x).Cast<object>().ToArray());
 
@@ -202,7 +202,7 @@ namespace RunAmiga.UI.Settings
 		private string DecodeZorro2(string s)
 		{
 			if (string.IsNullOrEmpty(s)) return "0";
-			return string.Join('+', s.Split(',').Select(x => Convert.ToSingle(x).ToString("0.0")));
+			return string.Join('+', s.Split(',').Select(x => Convert.ToSingle(x).ToString("0.0;0.0;0")));
 		}
 
 		private void BindSettings()
@@ -219,10 +219,10 @@ namespace RunAmiga.UI.Settings
 			cbChipset.SelectedItem = currentSettings.ChipSet.ToString();
 			
 			//Memory
-			dudChipRAM.SelectedItem = currentSettings.ChipMemory.ToString();
+			dudChipRAM.SelectedItem = currentSettings.ChipMemory.ToString("0.0;0.0;0");
 			dudCPUSlot.SelectedItem = currentSettings.CPUSlotMemory.ToString();
 			dudMotherboard.SelectedItem = currentSettings.MotherboardMemory.ToString();
-			dudTrapdoor.SelectedItem = currentSettings.TrapdoorMemory.ToString();
+			dudTrapdoor.SelectedItem = currentSettings.TrapdoorMemory.ToString("0.0;0.0;0");
 			dudZ2.SelectedItem = DecodeZorro2(currentSettings.ZorroIIMemory);
 			dudZ3.SelectedItem = DecodeZorro3(currentSettings.ZorroIIIMemory);
 			
@@ -285,7 +285,7 @@ namespace RunAmiga.UI.Settings
 
 		private static EmulationSettings DefaultSettings()
 		{
-			return new EmulationSettings();
+			return new EmulationSettings{ ChipMemory = 0.5f};
 		}
 
 		public class Emulation
@@ -301,7 +301,7 @@ namespace RunAmiga.UI.Settings
 
 		private void SetQuickStart()
 		{
-			/*
+/*
 A500, 512KB+512KB, OCS, KS1.3
 A500+, 1MB+1MB, ECS, KS2.04
 A600, 1MB, ECS, KS2.05
