@@ -40,6 +40,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Core.CPU.Musashi.M
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RunAmiga.Core.CPU.Musashi.MC68030", "RunAmiga.Core.CPU.Musashi.MC68030\RunAmiga.Core.CPU.Musashi.MC68030.csproj", "{609945B6-8D42-416A-9C21-AC99937F5A52}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RunAmiga.UI.Settings", "RunAmiga.UI.Settings\RunAmiga.UI.Settings.csproj", "{18624203-E7E7-425D-944F-29DC0B65B388}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -122,6 +124,10 @@ Global
 		{609945B6-8D42-416A-9C21-AC99937F5A52}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{609945B6-8D42-416A-9C21-AC99937F5A52}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{609945B6-8D42-416A-9C21-AC99937F5A52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18624203-E7E7-425D-944F-29DC0B65B388}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18624203-E7E7-425D-944F-29DC0B65B388}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18624203-E7E7-425D-944F-29DC0B65B388}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18624203-E7E7-425D-944F-29DC0B65B388}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

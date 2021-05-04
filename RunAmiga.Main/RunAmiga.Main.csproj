@@ -46,6 +46,7 @@
     <ProjectReference Include="..\RunAmiga.Logger.DebugAsyncRTF\RunAmiga.Logger.DebugAsyncRTF.csproj" />
     <ProjectReference Include="..\RunAmiga.Logger.DebugAsync\RunAmiga.Logger.DebugAsync.csproj" />
     <ProjectReference Include="..\RunAmiga.Logger.SQLite\RunAmiga.Logger.SQLite.csproj" />
+    <ProjectReference Include="..\RunAmiga.UI.Settings\RunAmiga.UI.Settings.csproj" />
     <ProjectReference Include="..\RunAmiga.UI\RunAmiga.UI.csproj" />
   </ItemGroup>
 

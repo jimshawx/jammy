@@ -26,6 +26,7 @@ using RunAmiga.Interface;
 using RunAmiga.Logger.SQLite;
 using RunAmiga.Logger.DebugAsync;
 using RunAmiga.Logger.DebugAsyncRTF;
+using RunAmiga.UI.Settings;
 
 namespace RunAmiga.Main
 {
@@ -38,6 +39,8 @@ namespace RunAmiga.Main
 			Application.SetHighDpiMode(HighDpiMode.SystemAware);
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
+
+			Application.Run(new Settings());
 
 			var configuration = new ConfigurationBuilder()
 				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
