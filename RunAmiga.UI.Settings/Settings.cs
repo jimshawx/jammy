@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using RunAmiga.Core.Types;
 
 namespace RunAmiga.UI.Settings
@@ -14,8 +15,20 @@ namespace RunAmiga.UI.Settings
 		{
 			InitializeComponent();
 
+			JsonConvert.DefaultSettings = () =>
+			{
+				var s = new JsonSerializerSettings {Formatting = Formatting.Indented,  };
+				s.Converters.Add(new StringEnumConverter());
+				return s;
+			};
+
 			//should store this somewhere
 			cbQuickStart.SelectedIndex = 0;
+
+			//Quickstart
+			var cfgs = Directory.GetFiles(configPath, "*.cfg", SearchOption.TopDirectoryOnly);
+			cbQuickStart.Items.AddRange(cfgs.Select(Path.GetFileNameWithoutExtension).OrderBy(x => x).Cast<object>().ToArray());
+
 			LoadConfig("emulationSettings.json");
 		}
 
@@ -23,6 +36,7 @@ namespace RunAmiga.UI.Settings
 
 		private void btnQuickStart_Click(object sender, EventArgs e)
 		{
+			SaveConfig("emulationSettings.json");
 			ConfigOK = true;
 			Close();
 		}
@@ -142,7 +156,7 @@ namespace RunAmiga.UI.Settings
 			if (File.Exists(fileName))
 			{
 				string cfg = File.ReadAllText(fileName);
-				currentSettings = JsonConvert.DeserializeObject<EmulationSettings>(cfg);
+				currentSettings = JsonConvert.DeserializeObject<Emulation>(cfg).Settings;
 				BindSettings();
 				UpdateCurrentSettingFilename(fileName);
 			}
@@ -153,8 +167,8 @@ namespace RunAmiga.UI.Settings
 			if (string.IsNullOrEmpty(fileName))
 				fileName = currentSettingsFile;
 			UnbindSettings();
-			string cfg = JsonConvert.SerializeObject(currentSettings);
-			File.WriteAllText(currentSettingsFile, cfg);
+			string cfg = JsonConvert.SerializeObject(new Emulation{ Settings = currentSettings});
+			File.WriteAllText(fileName, cfg);
 			UpdateCurrentSettingFilename(fileName);
 		}
 
@@ -167,29 +181,50 @@ namespace RunAmiga.UI.Settings
 			}
 		}
 
+		private string EncodeZorro3(string s)
+		{
+			if (string.IsNullOrEmpty(s)) return "0";
+			return s.Replace('+', ',');
+		}
+
+		private string DecodeZorro3(string s)
+		{
+			if (string.IsNullOrEmpty(s)) return "0";
+			return string.Join('+', s.Split(',').Select(x => ((int)Convert.ToSingle(x)).ToString()));
+		}
+
+		private string EncodeZorro2(string s)
+		{
+			if (string.IsNullOrEmpty(s)) return "0";
+			return s.Replace('+', ',');
+		}
+
+		private string DecodeZorro2(string s)
+		{
+			if (string.IsNullOrEmpty(s)) return "0";
+			return string.Join('+', s.Split(',').Select(x => Convert.ToSingle(x).ToString("0.0")));
+		}
+
 		private void BindSettings()
 		{
 			//put currentSettings on to the UI
 
-			//Quickstart
-			var cfgs = Directory.GetFiles(configPath, "*.cfg", SearchOption.TopDirectoryOnly);
-			cbQuickStart.Items.AddRange(cfgs.Select(x=>Path.GetFileNameWithoutExtension(x)).OrderBy(x=>x).Cast<object>().ToArray());
-
 			//CPU
-			cbSku.SelectedValue = currentSettings.Sku.ToString();
+			cbSku.SelectedItem = currentSettings.Sku.ToString();
 			rbMusashi.Checked = currentSettings.CPU == CPUType.Musashi;
 			rbNative.Checked = currentSettings.CPU == CPUType.Native;
 			rbNative.Enabled = currentSettings.Sku == CPUSku.MC68000;
 
 			//Chipset
-			cbChipset.SelectedValue = currentSettings.ChipSet.ToString();
+			cbChipset.SelectedItem = currentSettings.ChipSet.ToString();
 			
 			//Memory
+			dudChipRAM.SelectedItem = currentSettings.ChipMemory.ToString();
 			dudCPUSlot.SelectedItem = currentSettings.CPUSlotMemory.ToString();
 			dudMotherboard.SelectedItem = currentSettings.MotherboardMemory.ToString();
 			dudTrapdoor.SelectedItem = currentSettings.TrapdoorMemory.ToString();
-			dudZ2.SelectedItem = currentSettings.ZorroIIMemory;
-			dudZ3.SelectedItem = currentSettings.ZorroIIIMemory;
+			dudZ2.SelectedItem = DecodeZorro2(currentSettings.ZorroIIMemory);
+			dudZ3.SelectedItem = DecodeZorro3(currentSettings.ZorroIIIMemory);
 			
 			//Floppies
 			txtDF0.Text = currentSettings.DF0;
@@ -200,6 +235,9 @@ namespace RunAmiga.UI.Settings
 			txtDF3.Enabled = btnDF3Pick.Enabled = nudFloppyCount.Value >= 4;
 			txtDF2.Enabled = btnDF2Pick.Enabled = nudFloppyCount.Value >= 3;
 			txtDF1.Enabled = btnDF1Pick.Enabled = nudFloppyCount.Value >= 2;
+
+			//Hard Disk
+			cbDiskController.SelectedItem = currentSettings.DiskController.ToString();
 
 			//Kickstart
 			txtKickstart.Text = currentSettings.KickStart;
@@ -213,19 +251,20 @@ namespace RunAmiga.UI.Settings
 			//fill currentSettings from the UI;
 
 			//CPU
-			currentSettings.Sku = Enum.Parse<CPUSku>(cbSku.SelectedText);
+			currentSettings.Sku = Enum.Parse<CPUSku>((string)cbSku.SelectedItem);
 			currentSettings.CPU = rbMusashi.Checked? CPUType.Musashi : CPUType.Native;
 			currentSettings.AddressBits = currentSettings.Sku == CPUSku.MC68030 ? 32 : 24;
 
 			//Chipset
-			currentSettings.ChipSet = Enum.Parse<ChipSet>(cbChipset.SelectedText);
+			currentSettings.ChipSet = Enum.Parse<ChipSet>((string)cbChipset.SelectedItem);
 
 			//Memory
+			currentSettings.ChipMemory = Convert.ToSingle(dudChipRAM.SelectedItem);
 			currentSettings.CPUSlotMemory = Convert.ToSingle(dudCPUSlot.SelectedItem);
 			currentSettings.MotherboardMemory = Convert.ToSingle(dudMotherboard.SelectedItem);
 			currentSettings.TrapdoorMemory = Convert.ToSingle(dudTrapdoor.SelectedItem);
-			currentSettings.ZorroIIMemory = (string)dudZ2.SelectedItem;
-			currentSettings.ZorroIIIMemory = (string)dudZ3.SelectedItem;
+			currentSettings.ZorroIIMemory = EncodeZorro2((string)dudZ2.SelectedItem);
+			currentSettings.ZorroIIIMemory = EncodeZorro3((string)dudZ3.SelectedItem);
 
 			//Floppies
 			currentSettings.DF0 = txtDF0.Text;
@@ -233,6 +272,9 @@ namespace RunAmiga.UI.Settings
 			currentSettings.DF2 = txtDF2.Text;
 			currentSettings.DF3 = txtDF3.Text;
 			currentSettings.FloppyCount = (int)nudFloppyCount.Value;
+
+			//Hard Disk
+			currentSettings.DiskController = Enum.Parse<DiskController>((string)cbDiskController.SelectedItem);
 
 			//Kickstart
 			currentSettings.KickStart = txtKickstart.Text;
@@ -244,6 +286,123 @@ namespace RunAmiga.UI.Settings
 		private static EmulationSettings DefaultSettings()
 		{
 			return new EmulationSettings();
+		}
+
+		public class Emulation
+		{
+			[JsonProperty("Emulation")]
+			public EmulationSettings Settings { get; set; }
+		}
+
+		private void cbQuickStart_SelectedValueChanged(object sender, EventArgs e)
+		{
+			SetQuickStart();
+		}
+
+		private void SetQuickStart()
+		{
+			/*
+A500, 512KB+512KB, OCS, KS1.3
+A500+, 1MB+1MB, ECS, KS2.04
+A600, 1MB, ECS, KS2.05
+A1200, 2MB, AGA, KS3.1
+A3000, 1MB+256MB, ECS, KS3.1
+A4000, 2MB+16MB+128MB, AGA, KS3.1
+*/
+			switch (cbQuickStart.SelectedIndex)
+			{
+				case 0: break;
+
+				case 1:
+					currentSettings = new EmulationSettings();
+					currentSettings.ChipMemory = 0.5f;
+					currentSettings.AddressBits = 24;
+					currentSettings.TrapdoorMemory = 0.5f;
+					currentSettings.Audio = AudioDriver.XAudio2;
+					currentSettings.DF0 = "workbench1.3.adf";
+					currentSettings.FloppyCount = 1;
+					currentSettings.KickStart = "kick13.rom";
+					break;
+
+				case 2:
+					currentSettings = new EmulationSettings();
+					currentSettings.ChipMemory = 1.0f;
+					currentSettings.AddressBits = 24;
+					currentSettings.TrapdoorMemory = 1.0f;
+					currentSettings.ChipSet = ChipSet.ECS;
+					currentSettings.Audio = AudioDriver.XAudio2;
+					currentSettings.DF0 = "workbench2.04.adf";
+					currentSettings.FloppyCount = 1;
+					currentSettings.KickStart = "kick204.rom";
+					break;
+
+				case 3:
+					currentSettings = new EmulationSettings();
+					currentSettings.ChipMemory = 1.0f;
+					currentSettings.AddressBits = 24;
+					currentSettings.ChipSet = ChipSet.ECS;
+					currentSettings.DiskController = DiskController.A600_A1200;
+					currentSettings.Audio = AudioDriver.XAudio2;
+					currentSettings.DF0 = "workbench2.04.adf";
+					currentSettings.FloppyCount = 1;
+					currentSettings.KickStart = "kick205.rom";
+					currentSettings.HardDiskCount = 2;
+					break;
+
+				case 4:
+					currentSettings = new EmulationSettings();
+					currentSettings.CPU = CPUType.Musashi;
+					currentSettings.Sku = CPUSku.MC68EC020;
+					currentSettings.ChipMemory = 2.0f;
+					currentSettings.AddressBits = 24;
+					currentSettings.ChipSet = ChipSet.AGA;
+					currentSettings.DiskController = DiskController.A600_A1200;
+					currentSettings.Audio = AudioDriver.XAudio2;
+					currentSettings.DF0 = "workbench3.1.adf";
+					currentSettings.FloppyCount = 1;
+					currentSettings.KickStart = "kick31_a1200.rom";
+					currentSettings.HardDiskCount = 2;
+					break;
+
+				case 5:
+					currentSettings = new EmulationSettings();
+					currentSettings.CPU = CPUType.Musashi;
+					currentSettings.Sku = CPUSku.MC68030;
+					currentSettings.ChipMemory = 1.0f;
+					currentSettings.ZorroIIIMemory = "256";
+					currentSettings.AddressBits = 32;
+					currentSettings.ChipSet = ChipSet.ECS;
+					currentSettings.DiskController = DiskController.A3000;
+					currentSettings.Audio = AudioDriver.XAudio2;
+					currentSettings.DF0 = "workbench3.1.adf";
+					currentSettings.FloppyCount = 1;
+					currentSettings.KickStart = "kick31_a3000.rom";
+					break;
+
+				case 6:
+					currentSettings = new EmulationSettings();
+					currentSettings.CPU = CPUType.Musashi;
+					currentSettings.Sku = CPUSku.MC68030;
+					currentSettings.ChipMemory = 2.0f;
+					currentSettings.MotherboardMemory = 16;
+					currentSettings.ZorroIIIMemory = "128";
+					currentSettings.AddressBits = 32;
+					currentSettings.ChipSet = ChipSet.AGA;
+					currentSettings.DiskController = DiskController.A4000;
+					currentSettings.Audio = AudioDriver.XAudio2;
+					currentSettings.DF0 = "workbench3.1.adf";
+					currentSettings.FloppyCount = 1;
+					currentSettings.KickStart = "kick31_a4000.rom";
+					currentSettings.HardDiskCount = 2;
+					break;
+
+				default:
+					string path = Path.Combine("../../../../config", (string)cbQuickStart.SelectedItem);
+					path = Path.ChangeExtension(path, "cfg");
+					LoadConfig(path);
+					break;
+			}
+			BindSettings();
 		}
 	}
 }

@@ -41,6 +41,8 @@ namespace RunAmiga.UI.Settings
 			this.cbChipset = new System.Windows.Forms.ComboBox();
 			this.txtKickstart = new System.Windows.Forms.TextBox();
 			this.panel3 = new System.Windows.Forms.Panel();
+			this.groupBox3 = new System.Windows.Forms.GroupBox();
+			this.btnROMPick = new System.Windows.Forms.Button();
 			this.panel4 = new System.Windows.Forms.Panel();
 			this.groupBox5 = new System.Windows.Forms.GroupBox();
 			this.btnDF3Pick = new System.Windows.Forms.Button();
@@ -52,12 +54,17 @@ namespace RunAmiga.UI.Settings
 			this.btnDF0Pick = new System.Windows.Forms.Button();
 			this.txtDF2 = new System.Windows.Forms.TextBox();
 			this.txtDF3 = new System.Windows.Forms.TextBox();
-			this.btnROMPick = new System.Windows.Forms.Button();
 			this.dudZ2 = new System.Windows.Forms.DomainUpDown();
 			this.dudTrapdoor = new System.Windows.Forms.DomainUpDown();
 			this.dudZ3 = new System.Windows.Forms.DomainUpDown();
-			this.groupBox3 = new System.Windows.Forms.GroupBox();
 			this.groupBox4 = new System.Windows.Forms.GroupBox();
+			this.label6 = new System.Windows.Forms.Label();
+			this.label5 = new System.Windows.Forms.Label();
+			this.label4 = new System.Windows.Forms.Label();
+			this.label3 = new System.Windows.Forms.Label();
+			this.label2 = new System.Windows.Forms.Label();
+			this.label1 = new System.Windows.Forms.Label();
+			this.dudChipRAM = new System.Windows.Forms.DomainUpDown();
 			this.dudCPUSlot = new System.Windows.Forms.DomainUpDown();
 			this.dudMotherboard = new System.Windows.Forms.DomainUpDown();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
@@ -70,23 +77,29 @@ namespace RunAmiga.UI.Settings
 			this.panel6 = new System.Windows.Forms.Panel();
 			this.groupBox6 = new System.Windows.Forms.GroupBox();
 			this.cbAudio = new System.Windows.Forms.CheckBox();
+			this.panel7 = new System.Windows.Forms.Panel();
+			this.groupBox7 = new System.Windows.Forms.GroupBox();
+			this.cbDiskController = new System.Windows.Forms.ComboBox();
 			this.panel1.SuspendLayout();
 			this.groupBox1.SuspendLayout();
-			this.panel2.SuspendLayout();
 			this.groupBox2.SuspendLayout();
+			this.panel3.SuspendLayout();
+			this.groupBox3.SuspendLayout();
 			this.panel4.SuspendLayout();
 			this.groupBox5.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.nudFloppyCount)).BeginInit();
-			this.groupBox3.SuspendLayout();
 			this.groupBox4.SuspendLayout();
 			this.panel5.SuspendLayout();
+			this.panel6.SuspendLayout();
 			this.groupBox6.SuspendLayout();
+			this.groupBox7.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// cbQuickStart
 			// 
 			this.cbQuickStart.FormattingEnabled = true;
 			this.cbQuickStart.Items.AddRange(new object[] {
+            "current configuration",
             "A500, 512KB+512KB, OCS, KS1.3",
             "A500+, 1MB+1MB, ECS, KS2.04",
             "A600, 1MB, ECS, KS2.05",
@@ -97,6 +110,7 @@ namespace RunAmiga.UI.Settings
 			this.cbQuickStart.Name = "cbQuickStart";
 			this.cbQuickStart.Size = new System.Drawing.Size(350, 23);
 			this.cbQuickStart.TabIndex = 1;
+			this.cbQuickStart.SelectedValueChanged += new System.EventHandler(this.cbQuickStart_SelectedValueChanged);
 			// 
 			// btnQuickStart
 			// 
@@ -167,19 +181,18 @@ namespace RunAmiga.UI.Settings
 			// 
 			// panel2
 			// 
-			this.panel2.Controls.Add(this.groupBox2);
 			this.panel2.Location = new System.Drawing.Point(12, 138);
 			this.panel2.Name = "panel2";
-			this.panel2.Size = new System.Drawing.Size(238, 70);
+			this.panel2.Size = new System.Drawing.Size(238, 54);
 			this.panel2.TabIndex = 8;
 			// 
 			// groupBox2
 			// 
 			this.groupBox2.Controls.Add(this.cbChipset);
 			this.groupBox2.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox2.Location = new System.Drawing.Point(0, 0);
+			this.groupBox2.Location = new System.Drawing.Point(12, 138);
 			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(226, 57);
+			this.groupBox2.Size = new System.Drawing.Size(226, 54);
 			this.groupBox2.TabIndex = 0;
 			this.groupBox2.TabStop = false;
 			this.groupBox2.Text = "Chipset";
@@ -206,17 +219,40 @@ namespace RunAmiga.UI.Settings
 			// 
 			// panel3
 			// 
-			this.panel3.Location = new System.Drawing.Point(256, 214);
+			this.panel3.Controls.Add(this.groupBox3);
+			this.panel3.Location = new System.Drawing.Point(256, 249);
 			this.panel3.Name = "panel3";
-			this.panel3.Size = new System.Drawing.Size(425, 74);
+			this.panel3.Size = new System.Drawing.Size(425, 60);
 			this.panel3.TabIndex = 10;
+			// 
+			// groupBox3
+			// 
+			this.groupBox3.Controls.Add(this.txtKickstart);
+			this.groupBox3.Controls.Add(this.btnROMPick);
+			this.groupBox3.ForeColor = System.Drawing.SystemColors.Highlight;
+			this.groupBox3.Location = new System.Drawing.Point(7, 1);
+			this.groupBox3.Name = "groupBox3";
+			this.groupBox3.Size = new System.Drawing.Size(418, 55);
+			this.groupBox3.TabIndex = 11;
+			this.groupBox3.TabStop = false;
+			this.groupBox3.Text = "Kickstart";
+			// 
+			// btnROMPick
+			// 
+			this.btnROMPick.Location = new System.Drawing.Point(320, 21);
+			this.btnROMPick.Name = "btnROMPick";
+			this.btnROMPick.Size = new System.Drawing.Size(35, 23);
+			this.btnROMPick.TabIndex = 10;
+			this.btnROMPick.Text = "...";
+			this.btnROMPick.UseVisualStyleBackColor = true;
+			this.btnROMPick.Click += new System.EventHandler(this.btnROMPick_Click);
 			// 
 			// panel4
 			// 
 			this.panel4.Controls.Add(this.groupBox5);
 			this.panel4.Location = new System.Drawing.Point(256, 42);
 			this.panel4.Name = "panel4";
-			this.panel4.Size = new System.Drawing.Size(425, 166);
+			this.panel4.Size = new System.Drawing.Size(425, 141);
 			this.panel4.TabIndex = 11;
 			// 
 			// groupBox5
@@ -330,25 +366,15 @@ namespace RunAmiga.UI.Settings
 			this.txtDF3.Size = new System.Drawing.Size(307, 23);
 			this.txtDF3.TabIndex = 4;
 			// 
-			// btnROMPick
-			// 
-			this.btnROMPick.Location = new System.Drawing.Point(320, 21);
-			this.btnROMPick.Name = "btnROMPick";
-			this.btnROMPick.Size = new System.Drawing.Size(35, 23);
-			this.btnROMPick.TabIndex = 10;
-			this.btnROMPick.Text = "...";
-			this.btnROMPick.UseVisualStyleBackColor = true;
-			this.btnROMPick.Click += new System.EventHandler(this.btnROMPick_Click);
-			// 
 			// dudZ2
 			// 
-			this.dudZ2.Items.Add("0");
-			this.dudZ2.Items.Add("0.5");
-			this.dudZ2.Items.Add("1.0");
-			this.dudZ2.Items.Add("2.0");
-			this.dudZ2.Items.Add("4.0");
 			this.dudZ2.Items.Add("8.0");
-			this.dudZ2.Location = new System.Drawing.Point(9, 51);
+			this.dudZ2.Items.Add("4.0");
+			this.dudZ2.Items.Add("2.0");
+			this.dudZ2.Items.Add("1.0");
+			this.dudZ2.Items.Add("0.5");
+			this.dudZ2.Items.Add("0");
+			this.dudZ2.Location = new System.Drawing.Point(90, 77);
 			this.dudZ2.Name = "dudZ2";
 			this.dudZ2.ReadOnly = true;
 			this.dudZ2.Size = new System.Drawing.Size(120, 23);
@@ -362,7 +388,7 @@ namespace RunAmiga.UI.Settings
 			this.dudTrapdoor.Items.Add("1.0");
 			this.dudTrapdoor.Items.Add("0.5");
 			this.dudTrapdoor.Items.Add("0");
-			this.dudTrapdoor.Location = new System.Drawing.Point(9, 22);
+			this.dudTrapdoor.Location = new System.Drawing.Point(90, 48);
 			this.dudTrapdoor.Name = "dudTrapdoor";
 			this.dudTrapdoor.ReadOnly = true;
 			this.dudTrapdoor.Size = new System.Drawing.Size(120, 23);
@@ -371,34 +397,30 @@ namespace RunAmiga.UI.Settings
 			// 
 			// dudZ3
 			// 
-			this.dudZ3.Items.Add("0");
-			this.dudZ3.Items.Add("256");
-			this.dudZ3.Items.Add("512");
-			this.dudZ3.Items.Add("1024");
-			this.dudZ3.Items.Add("256+256");
-			this.dudZ3.Items.Add("512+512");
 			this.dudZ3.Items.Add("512+512+512");
-			this.dudZ3.Location = new System.Drawing.Point(9, 80);
+			this.dudZ3.Items.Add("512+512");
+			this.dudZ3.Items.Add("256+256");
+			this.dudZ3.Items.Add("1024");
+			this.dudZ3.Items.Add("512");
+			this.dudZ3.Items.Add("256");
+			this.dudZ3.Items.Add("128");
+			this.dudZ3.Items.Add("0");
+			this.dudZ3.Location = new System.Drawing.Point(90, 106);
 			this.dudZ3.Name = "dudZ3";
 			this.dudZ3.ReadOnly = true;
 			this.dudZ3.Size = new System.Drawing.Size(120, 23);
 			this.dudZ3.TabIndex = 14;
 			this.dudZ3.Text = "ZorroIII RAM";
 			// 
-			// groupBox3
-			// 
-			this.groupBox3.Controls.Add(this.txtKickstart);
-			this.groupBox3.Controls.Add(this.btnROMPick);
-			this.groupBox3.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox3.Location = new System.Drawing.Point(256, 214);
-			this.groupBox3.Name = "groupBox3";
-			this.groupBox3.Size = new System.Drawing.Size(418, 61);
-			this.groupBox3.TabIndex = 11;
-			this.groupBox3.TabStop = false;
-			this.groupBox3.Text = "Kickstart";
-			// 
 			// groupBox4
 			// 
+			this.groupBox4.Controls.Add(this.label6);
+			this.groupBox4.Controls.Add(this.label5);
+			this.groupBox4.Controls.Add(this.label4);
+			this.groupBox4.Controls.Add(this.label3);
+			this.groupBox4.Controls.Add(this.label2);
+			this.groupBox4.Controls.Add(this.label1);
+			this.groupBox4.Controls.Add(this.dudChipRAM);
 			this.groupBox4.Controls.Add(this.dudCPUSlot);
 			this.groupBox4.Controls.Add(this.dudMotherboard);
 			this.groupBox4.Controls.Add(this.dudZ2);
@@ -407,20 +429,86 @@ namespace RunAmiga.UI.Settings
 			this.groupBox4.ForeColor = System.Drawing.SystemColors.Highlight;
 			this.groupBox4.Location = new System.Drawing.Point(0, 0);
 			this.groupBox4.Name = "groupBox4";
-			this.groupBox4.Size = new System.Drawing.Size(226, 174);
+			this.groupBox4.Size = new System.Drawing.Size(226, 197);
 			this.groupBox4.TabIndex = 16;
 			this.groupBox4.TabStop = false;
 			this.groupBox4.Text = "Memory";
 			// 
+			// label6
+			// 
+			this.label6.AutoSize = true;
+			this.label6.Location = new System.Drawing.Point(7, 164);
+			this.label6.Name = "label6";
+			this.label6.Size = new System.Drawing.Size(53, 15);
+			this.label6.TabIndex = 23;
+			this.label6.Text = "CPU Slot";
+			// 
+			// label5
+			// 
+			this.label5.AutoSize = true;
+			this.label5.Location = new System.Drawing.Point(7, 135);
+			this.label5.Name = "label5";
+			this.label5.Size = new System.Drawing.Size(77, 15);
+			this.label5.TabIndex = 22;
+			this.label5.Text = "Motherboard";
+			// 
+			// label4
+			// 
+			this.label4.AutoSize = true;
+			this.label4.Location = new System.Drawing.Point(6, 106);
+			this.label4.Name = "label4";
+			this.label4.Size = new System.Drawing.Size(48, 15);
+			this.label4.TabIndex = 21;
+			this.label4.Text = "Zorro III";
+			// 
+			// label3
+			// 
+			this.label3.AutoSize = true;
+			this.label3.Location = new System.Drawing.Point(7, 77);
+			this.label3.Name = "label3";
+			this.label3.Size = new System.Drawing.Size(45, 15);
+			this.label3.TabIndex = 20;
+			this.label3.Text = "Zorro II";
+			// 
+			// label2
+			// 
+			this.label2.AutoSize = true;
+			this.label2.Location = new System.Drawing.Point(7, 48);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(54, 15);
+			this.label2.TabIndex = 19;
+			this.label2.Text = "Trapdoor";
+			// 
+			// label1
+			// 
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(7, 19);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(32, 15);
+			this.label1.TabIndex = 18;
+			this.label1.Text = "Chip";
+			// 
+			// dudChipRAM
+			// 
+			this.dudChipRAM.Items.Add("2.0");
+			this.dudChipRAM.Items.Add("1.0");
+			this.dudChipRAM.Items.Add("0.5");
+			this.dudChipRAM.Location = new System.Drawing.Point(90, 19);
+			this.dudChipRAM.Name = "dudChipRAM";
+			this.dudChipRAM.ReadOnly = true;
+			this.dudChipRAM.Size = new System.Drawing.Size(120, 23);
+			this.dudChipRAM.TabIndex = 17;
+			this.dudChipRAM.Text = "Chip RAM";
+			// 
 			// dudCPUSlot
 			// 
-			this.dudCPUSlot.Items.Add("0");
-			this.dudCPUSlot.Items.Add("8");
-			this.dudCPUSlot.Items.Add("16");
-			this.dudCPUSlot.Items.Add("32");
-			this.dudCPUSlot.Items.Add("64");
 			this.dudCPUSlot.Items.Add("128");
-			this.dudCPUSlot.Location = new System.Drawing.Point(9, 138);
+			this.dudCPUSlot.Items.Add("64");
+			this.dudCPUSlot.Items.Add("32");
+			this.dudCPUSlot.Items.Add("16");
+			this.dudCPUSlot.Items.Add("8");
+			this.dudCPUSlot.Items.Add("0");
+			this.dudCPUSlot.Location = new System.Drawing.Point(90, 164);
 			this.dudCPUSlot.Name = "dudCPUSlot";
 			this.dudCPUSlot.ReadOnly = true;
 			this.dudCPUSlot.Size = new System.Drawing.Size(120, 23);
@@ -429,11 +517,12 @@ namespace RunAmiga.UI.Settings
 			// 
 			// dudMotherboard
 			// 
-			this.dudMotherboard.Items.Add("0");
-			this.dudMotherboard.Items.Add("16");
-			this.dudMotherboard.Items.Add("32");
 			this.dudMotherboard.Items.Add("64");
-			this.dudMotherboard.Location = new System.Drawing.Point(9, 109);
+			this.dudMotherboard.Items.Add("32");
+			this.dudMotherboard.Items.Add("16");
+			this.dudMotherboard.Items.Add("8");
+			this.dudMotherboard.Items.Add("0");
+			this.dudMotherboard.Location = new System.Drawing.Point(90, 135);
 			this.dudMotherboard.Name = "dudMotherboard";
 			this.dudMotherboard.ReadOnly = true;
 			this.dudMotherboard.Size = new System.Drawing.Size(120, 23);
@@ -464,9 +553,9 @@ namespace RunAmiga.UI.Settings
 			// panel5
 			// 
 			this.panel5.Controls.Add(this.groupBox4);
-			this.panel5.Location = new System.Drawing.Point(12, 214);
+			this.panel5.Location = new System.Drawing.Point(12, 198);
 			this.panel5.Name = "panel5";
-			this.panel5.Size = new System.Drawing.Size(238, 181);
+			this.panel5.Size = new System.Drawing.Size(238, 197);
 			this.panel5.TabIndex = 18;
 			// 
 			// btnLoadConfig
@@ -502,18 +591,19 @@ namespace RunAmiga.UI.Settings
 			// 
 			// panel6
 			// 
-			this.panel6.Location = new System.Drawing.Point(256, 294);
+			this.panel6.Controls.Add(this.groupBox6);
+			this.panel6.Location = new System.Drawing.Point(256, 315);
 			this.panel6.Name = "panel6";
-			this.panel6.Size = new System.Drawing.Size(425, 72);
+			this.panel6.Size = new System.Drawing.Size(425, 52);
 			this.panel6.TabIndex = 22;
 			// 
 			// groupBox6
 			// 
 			this.groupBox6.Controls.Add(this.cbAudio);
 			this.groupBox6.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox6.Location = new System.Drawing.Point(256, 294);
+			this.groupBox6.Location = new System.Drawing.Point(1, 0);
 			this.groupBox6.Name = "groupBox6";
-			this.groupBox6.Size = new System.Drawing.Size(418, 63);
+			this.groupBox6.Size = new System.Drawing.Size(418, 51);
 			this.groupBox6.TabIndex = 0;
 			this.groupBox6.TabStop = false;
 			this.groupBox6.Text = "Miscellaneous";
@@ -528,17 +618,49 @@ namespace RunAmiga.UI.Settings
 			this.cbAudio.Text = "Audio";
 			this.cbAudio.UseVisualStyleBackColor = true;
 			// 
+			// panel7
+			// 
+			this.panel7.Location = new System.Drawing.Point(256, 188);
+			this.panel7.Name = "panel7";
+			this.panel7.Size = new System.Drawing.Size(425, 56);
+			this.panel7.TabIndex = 23;
+			// 
+			// groupBox7
+			// 
+			this.groupBox7.Controls.Add(this.cbDiskController);
+			this.groupBox7.ForeColor = System.Drawing.SystemColors.Highlight;
+			this.groupBox7.Location = new System.Drawing.Point(256, 188);
+			this.groupBox7.Name = "groupBox7";
+			this.groupBox7.Size = new System.Drawing.Size(418, 55);
+			this.groupBox7.TabIndex = 0;
+			this.groupBox7.TabStop = false;
+			this.groupBox7.Text = "Hard Disk";
+			// 
+			// cbDiskController
+			// 
+			this.cbDiskController.FormattingEnabled = true;
+			this.cbDiskController.Items.AddRange(new object[] {
+            "None",
+            "A600_A1200",
+            "A3000",
+            "A4000"});
+			this.cbDiskController.Location = new System.Drawing.Point(13, 23);
+			this.cbDiskController.Name = "cbDiskController";
+			this.cbDiskController.Size = new System.Drawing.Size(175, 23);
+			this.cbDiskController.TabIndex = 0;
+			// 
 			// Settings
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(688, 408);
-			this.Controls.Add(this.groupBox6);
+			this.Controls.Add(this.groupBox2);
+			this.Controls.Add(this.groupBox7);
+			this.Controls.Add(this.panel7);
 			this.Controls.Add(this.panel6);
 			this.Controls.Add(this.btnSaveConfig);
 			this.Controls.Add(this.btnSaveAsConfig);
 			this.Controls.Add(this.btnLoadConfig);
-			this.Controls.Add(this.groupBox3);
 			this.Controls.Add(this.panel5);
 			this.Controls.Add(this.btnExit);
 			this.Controls.Add(this.btnGo);
@@ -554,18 +676,21 @@ namespace RunAmiga.UI.Settings
 			this.panel1.ResumeLayout(false);
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
-			this.panel2.ResumeLayout(false);
 			this.groupBox2.ResumeLayout(false);
+			this.panel3.ResumeLayout(false);
+			this.groupBox3.ResumeLayout(false);
+			this.groupBox3.PerformLayout();
 			this.panel4.ResumeLayout(false);
 			this.groupBox5.ResumeLayout(false);
 			this.groupBox5.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.nudFloppyCount)).EndInit();
-			this.groupBox3.ResumeLayout(false);
-			this.groupBox3.PerformLayout();
 			this.groupBox4.ResumeLayout(false);
+			this.groupBox4.PerformLayout();
 			this.panel5.ResumeLayout(false);
+			this.panel6.ResumeLayout(false);
 			this.groupBox6.ResumeLayout(false);
 			this.groupBox6.PerformLayout();
+			this.groupBox7.ResumeLayout(false);
 			this.ResumeLayout(false);
 
 		}
@@ -613,5 +738,15 @@ namespace RunAmiga.UI.Settings
 		private System.Windows.Forms.Panel panel6;
 		private System.Windows.Forms.GroupBox groupBox6;
 		private System.Windows.Forms.CheckBox cbAudio;
+		private System.Windows.Forms.Panel panel7;
+		private System.Windows.Forms.GroupBox groupBox7;
+		private System.Windows.Forms.ComboBox cbDiskController;
+		private System.Windows.Forms.DomainUpDown dudChipRAM;
+		private System.Windows.Forms.Label label6;
+		private System.Windows.Forms.Label label5;
+		private System.Windows.Forms.Label label4;
+		private System.Windows.Forms.Label label3;
+		private System.Windows.Forms.Label label2;
+		private System.Windows.Forms.Label label1;
 	}
 }

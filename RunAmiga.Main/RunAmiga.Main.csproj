@@ -17,13 +17,9 @@
 
   <ItemGroup>
     <None Remove="appSettings.json" />
-    <None Remove="emulationSettings.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="emulationSettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="appSettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
