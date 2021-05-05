@@ -74,34 +74,43 @@ namespace RunAmiga.Core.Custom.CIA
 
 					if (timerA == 0xffff)
 					{
-						//if ((regs[CIA.ICR] & (uint)ICRB.TIMERA) != 0)
-							AssertICR(ICRB.TIMERA);
+						AssertICR(ICRB.TIMERA);
 
 						//one shot mode?
 						if ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0)
 							regs[CIA.CRA] &= ~(uint)CR.START;
 						else
 							timerA = timerAreset;
+
+						//INMODE == 2, Timer B ticks when Timer A underflows
+						if (((regs[CIA.CRB] >> 5) & 3) == 2)
+							RunTimerB();
 					}
 				}
 
-				//timer B running
-				if ((regs[CIA.CRB] & (uint)CR.START) != 0)
+				//INMODE == 0, Timer B ticks on the CIA clock
+				if (((regs[CIA.CRB] >>5)&3) == 0)
+					RunTimerB();
+			}
+		}
+
+		private void RunTimerB()
+		{
+			//timer B running
+			if ((regs[CIA.CRB] & (uint)CR.START) != 0)
+			{
+				//timer B
+				timerB--;
+
+				if (timerB == 0xffff)
 				{
-					//timer B
-					timerB--;
+					AssertICR(ICRB.TIMERB);
 
-					if (timerB == 0xffff)
-					{
-						//if ((regs[CIA.ICR] & (uint)ICRB.TIMERB) != 0)
-							AssertICR(ICRB.TIMERB);
-
-						//one shot mode?
-						if ((regs[CIA.CRB] & (uint)CR.RUNMODE) != 0)
-							regs[CIA.CRB] &= ~(uint)CR.START;
-						else
-							timerB = timerBreset;
-					}
+					//one shot mode?
+					if ((regs[CIA.CRB] & (uint)CR.RUNMODE) != 0)
+						regs[CIA.CRB] &= ~(uint)CR.START;
+					else
+						timerB = timerBreset;
 				}
 			}
 		}
@@ -287,7 +296,7 @@ namespace RunAmiga.Core.Custom.CIA
 						timerB = timerBreset;
 					value &= ~(uint)CR.LOAD;
 
-					if (((value >> 5) & 3) != 0)
+					if (((value >> 5) & 3) != 0 && ((value >> 5) & 3) != 2)
 						logger.LogTrace($"B inmode: {(value >> 5) & 3}");
 
 					regs[CIA.CRB] = (byte)value;
