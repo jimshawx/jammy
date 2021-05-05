@@ -671,7 +671,7 @@ namespace RunAmiga.Core.Custom
 
 					//is it the visible area horizontally?
 					//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
-					if (h >= ((cln.diwstrth + cdbg.diwSHack) >> 1) && h < ((cln.diwstoph + cdbg.diwEHack + 1) >> 1))
+					if (h >= ((cln.diwstrth + cdbg.diwSHack) >> 1) && h < ((cln.diwstoph + cdbg.diwEHack) >> 1))
 					{
 						CopperBitplaneConvert(h);
 					}
