@@ -170,7 +170,7 @@ namespace RunAmiga.Main
 				}
 			}
 
-			///*
+			//*
 			// * 			SETCLR = 0x8000,
 			//			BBUSY = 0x4000,
 			//			BZERO = 0x2000,

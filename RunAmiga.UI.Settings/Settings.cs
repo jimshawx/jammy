@@ -18,14 +18,17 @@ namespace RunAmiga.UI.Settings
 
 			JsonConvert.DefaultSettings = () =>
 			{
-				var s = new JsonSerializerSettings {Formatting = Formatting.Indented,  };
+				var s = new JsonSerializerSettings { Formatting = Formatting.Indented };
 				s.Converters.Add(new StringEnumConverter());
 				return s;
 			};
 
 			//Quickstart
 			cbQuickStart.SelectedIndex = 0;
-
+			ActiveControl = btnQuickStart;
+			CancelButton = btnExit;
+			AcceptButton = btnGo;
+			
 			var cfgs = Directory.GetFiles(configPath, "*.cfg", SearchOption.TopDirectoryOnly);
 			cbQuickStart.Items.AddRange(cfgs.Select(Path.GetFileNameWithoutExtension).OrderBy(x => x).Cast<object>().ToArray());
 
@@ -57,7 +60,6 @@ namespace RunAmiga.UI.Settings
 
 		private void cbChipset_SelectedValueChanged(object sender, EventArgs e)
 		{
-
 		}
 
 		private void btnDF0Pick_Click(object sender, EventArgs e)
@@ -174,10 +176,15 @@ namespace RunAmiga.UI.Settings
 
 		private void UpdateCurrentSettingFilename(string fileName)
 		{
-			if (Path.GetFileName(fileName).ToLower() != "emulationsettings.json")
+			if (cbQuickStart.SelectedIndex > 6)
 			{
 				currentSettingsFile = fileName;
 				btnSaveConfig.Enabled = true;
+			}
+			else
+			{
+				currentSettingsFile = "";
+				btnSaveConfig.Enabled = false;
 			}
 		}
 
@@ -311,7 +318,10 @@ A4000, 2MB+16MB+128MB, AGA, KS3.1
 */
 			switch (cbQuickStart.SelectedIndex)
 			{
-				case 0: break;
+				case 0:
+					LoadConfig("emulationSettings.json");
+					btnSaveConfig.Enabled = false;
+					break;
 
 				case 1:
 					currentSettings = new EmulationSettings();
@@ -322,6 +332,8 @@ A4000, 2MB+16MB+128MB, AGA, KS3.1
 					currentSettings.DF0 = "workbench1.3.adf";
 					currentSettings.FloppyCount = 1;
 					currentSettings.KickStart = "kick13.rom";
+					BindSettings();
+					btnSaveConfig.Enabled = false;
 					break;
 
 				case 2:
@@ -334,6 +346,8 @@ A4000, 2MB+16MB+128MB, AGA, KS3.1
 					currentSettings.DF0 = "workbench2.04.adf";
 					currentSettings.FloppyCount = 1;
 					currentSettings.KickStart = "kick204.rom";
+					BindSettings();
+					btnSaveConfig.Enabled = false;
 					break;
 
 				case 3:
@@ -347,6 +361,8 @@ A4000, 2MB+16MB+128MB, AGA, KS3.1
 					currentSettings.FloppyCount = 1;
 					currentSettings.KickStart = "kick205.rom";
 					currentSettings.HardDiskCount = 2;
+					BindSettings();
+					btnSaveConfig.Enabled = false;
 					break;
 
 				case 4:
@@ -362,6 +378,8 @@ A4000, 2MB+16MB+128MB, AGA, KS3.1
 					currentSettings.FloppyCount = 1;
 					currentSettings.KickStart = "kick31_a1200.rom";
 					currentSettings.HardDiskCount = 2;
+					BindSettings();
+					btnSaveConfig.Enabled = false;
 					break;
 
 				case 5:
@@ -377,6 +395,8 @@ A4000, 2MB+16MB+128MB, AGA, KS3.1
 					currentSettings.DF0 = "workbench3.1.adf";
 					currentSettings.FloppyCount = 1;
 					currentSettings.KickStart = "kick31_a3000.rom";
+					BindSettings();
+					btnSaveConfig.Enabled = false;
 					break;
 
 				case 6:
@@ -394,15 +414,17 @@ A4000, 2MB+16MB+128MB, AGA, KS3.1
 					currentSettings.FloppyCount = 1;
 					currentSettings.KickStart = "kick31_a4000.rom";
 					currentSettings.HardDiskCount = 2;
+					BindSettings();
+					btnSaveConfig.Enabled = false;
 					break;
 
 				default:
 					string path = Path.Combine("../../../../config", (string)cbQuickStart.SelectedItem);
 					path = Path.ChangeExtension(path, "cfg");
 					LoadConfig(path);
+					btnSaveConfig.Enabled = true;
 					break;
 			}
-			BindSettings();
 		}
 	}
 }
