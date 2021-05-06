@@ -118,11 +118,11 @@ namespace RunAmiga.Core.Floppy
 			Track0NotReached = 8,
 			Track0Reached = 7,
 			DiskReady = 6,
-			DiskChange = 5,
-			DiskNotChanged = 4,
-			DiskNotStep = 3,
-			DiskStep = 2,
-			DiskStepDone = 1,
+			//DiskChange = 5,
+			//DiskNotChanged = 4,
+			//DiskNotStep = 3,
+			//DiskStep = 2,
+			//DiskStepDone = 1,
 
 			Idle = 0
 		}
@@ -156,26 +156,26 @@ namespace RunAmiga.Core.Floppy
 									drive[i].pra &= ~(uint) PRA.DSKRDY;
 									drive[i].state = DriveState.Idle;
 									break;
-								case DriveState.DiskChange:
-									drive[i].pra &= ~(uint) PRA.DSKCHANGE;
-									drive[i].state = DriveState.Idle;
-									break;
-								case DriveState.DiskNotChanged:
-									drive[i].pra |= (uint) PRA.DSKCHANGE;
-									drive[i].state = DriveState.DiskNotStep;
-									break;
-								case DriveState.DiskNotStep:
-									drive[i].prb |= (uint) PRB.DSKSTEP;
-									drive[i].state = DriveState.DiskStep;
-									break;
-								case DriveState.DiskStep:
-									drive[i].prb &= ~(uint) PRB.DSKSTEP;
-									drive[i].state = DriveState.DiskStepDone;
-									break;
-								case DriveState.DiskStepDone:
-									drive[i].prb |= (uint)PRB.DSKSTEP;
-									drive[i].state = DriveState.Idle;
-									break;
+								//case DriveState.DiskChange:
+								//	drive[i].pra &= ~(uint) PRA.DSKCHANGE;
+								//	drive[i].state = DriveState.Idle;
+								//	break;
+								//case DriveState.DiskNotChanged:
+								//	drive[i].pra |= (uint) PRA.DSKCHANGE;
+								//	drive[i].state = DriveState.DiskNotStep;
+								//	break;
+								//case DriveState.DiskNotStep:
+								//	drive[i].prb |= (uint) PRB.DSKSTEP;
+								//	drive[i].state = DriveState.DiskStep;
+								//	break;
+								//case DriveState.DiskStep:
+								//	drive[i].prb &= ~(uint) PRB.DSKSTEP;
+								//	drive[i].state = DriveState.DiskStepDone;
+								//	break;
+								//case DriveState.DiskStepDone:
+								//	drive[i].prb |= (uint)PRB.DSKSTEP;
+								//	drive[i].state = DriveState.Idle;
+								//	break;
 							}
 
 							drive[i].stateCounter = stateCycles;
@@ -323,6 +323,10 @@ namespace RunAmiga.Core.Floppy
 		{
 			uint oldvalue = pra;
 
+			value &= (byte)PRA.MASK;
+
+			//logger.LogTrace($"W PRA {value:X2}");
+
 			drive[SelectedDrive()].pra = value;
 			pra = value;
 			
@@ -367,6 +371,8 @@ namespace RunAmiga.Core.Floppy
 			//6 DSKSEL3
 			//7 DSKMOTOR
 			
+			//logger.LogTrace($"W PRB {Convert.ToString((prb>>3)&0xf,2).PadLeft(4,'0')} {prb:X2}");
+
 			//which bits changed?
 			uint changes = prb ^ oldvalue;
 
@@ -390,6 +396,8 @@ namespace RunAmiga.Core.Floppy
 					//step changed, and it's set
 					if ((changes & (uint) PRB.DSKSTEP) != 0 && ((prb & (uint)PRB.DSKSTEP) != 0)) //step bit changed (Lo->Hi == Step)
 					{
+						//logger.LogTrace($"step {i} {drive[i].track}");
+
 						if ((prb & (uint) PRB.DSKDIREC) != 0)
 						{
 							//step in
@@ -426,6 +434,7 @@ namespace RunAmiga.Core.Floppy
 		public byte ReadPRA(uint insaddr)
 		{
 			//logger.LogTrace($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')} @{insaddr:X6}");
+			//logger.LogTrace($"R PRA {Convert.ToString((prb >> 3) & 0xf, 2).PadLeft(4, '0')} {drive[SelectedDrive()].pra:X2}");
 
 			return (byte)(drive[SelectedDrive()].pra & (uint)PRA.MASK);
 
@@ -444,20 +453,24 @@ namespace RunAmiga.Core.Floppy
 		//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)
 		public void InsertDisk(int df)
 		{
-			drive[df].state = DriveState.DiskNotChanged;
-			drive[df].stateCounter = 0;
+			//drive[df].state = DriveState.DiskNotChanged;
+			//drive[df].stateCounter = 0;
+			//drive[df].diskinserted = true;
+			drive[df].pra |= (uint)PRA.DSKCHANGE;
 		}
 
 		public void RemoveDisk(int df)
 		{
-			drive[df].state = DriveState.DiskChange;
+			//drive[df].state = DriveState.DiskChange;
+			//drive[df].diskinserted = false;
+			drive[df].pra &= ~(uint)PRA.DSKCHANGE;
 		}
 
 		public void ChangeDisk(int df, string filename)
 		{
-			drive[df].state = DriveState.DiskChange;
+			//drive[df].state = DriveState.DiskChange;
 			drive[df].disk = new Disk(filename);
-			drive[df].diskinserted = true;
+			//drive[df].diskinserted = true;
 		}
 	}
 }
