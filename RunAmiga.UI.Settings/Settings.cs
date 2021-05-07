@@ -387,6 +387,7 @@ A4000, 2MB+16MB+128MB, AGA, KS3.1
 					currentSettings.CPU = CPUType.Musashi;
 					currentSettings.Sku = CPUSku.MC68030;
 					currentSettings.ChipMemory = 1.0f;
+					currentSettings.MotherboardMemory = 16;
 					currentSettings.ZorroIIIMemory = "256";
 					currentSettings.AddressBits = 32;
 					currentSettings.ChipSet = ChipSet.ECS;
@@ -405,7 +406,7 @@ A4000, 2MB+16MB+128MB, AGA, KS3.1
 					currentSettings.Sku = CPUSku.MC68030;
 					currentSettings.ChipMemory = 2.0f;
 					currentSettings.MotherboardMemory = 16;
-					currentSettings.ZorroIIIMemory = "128";
+					currentSettings.ZorroIIIMemory = "256";
 					currentSettings.AddressBits = 32;
 					currentSettings.ChipSet = ChipSet.AGA;
 					currentSettings.DiskController = DiskController.A4000;

@@ -104,8 +104,8 @@ namespace RunAmiga.UI.Settings
             "A500+, 1MB+1MB, ECS, KS2.04",
             "A600, 1MB, ECS, KS2.05",
             "A1200, 2MB, AGA, KS3.1",
-            "A3000, 1MB+256MB, ECS, KS3.1",
-            "A4000, 2MB+16MB+128MB, AGA, KS3.1"});
+            "A3000, 1MB+16MB+256MB, ECS, KS3.1",
+            "A4000, 2MB+16MB+256MB, AGA, KS3.1"});
 			this.cbQuickStart.Location = new System.Drawing.Point(12, 12);
 			this.cbQuickStart.Name = "cbQuickStart";
 			this.cbQuickStart.Size = new System.Drawing.Size(350, 23);

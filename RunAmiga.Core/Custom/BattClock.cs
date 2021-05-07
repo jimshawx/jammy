@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using RunAmiga.Core.Interface.Interfaces;
 using RunAmiga.Core.Types;
 using RunAmiga.Core.Types.Types;
+using RunAmiga.Extensions.Extensions;
 
 namespace RunAmiga.Core.Custom
 {
@@ -57,6 +59,27 @@ namespace RunAmiga.Core.Custom
 			if ((address & 3) == 3)
 				return (int)((address & 0xfffc) >> 2);
 			return -1;
+		}
+
+		private string RegName(int r)
+		{
+			if (r == 0) return "S1";
+			if (r == 1) return "S10";
+			if (r == 2) return "M1";
+			if (r == 3) return "M10";
+			if (r == 4) return "H1";
+			if (r == 5) return "H10";
+			if (r == 6) return "D1";
+			if (r == 7) return "D10";
+			if (r == 8) return "MO1";
+			if (r == 9) return "MO10";
+			if (r == 10) return "Y1";
+			if (r == 11) return "Y10";
+			if (r == 12) return "W";
+			if (r == 13) return "CD";
+			if (r == 14) return "CE";
+			if (r == 15) return "CF";
+			return $"UNKNOWN REGISTER {r}";
 		}
 
 		public uint Read(uint insaddr, uint address, Size size)
@@ -135,7 +158,7 @@ namespace RunAmiga.Core.Custom
 				value = regs[reg];
 			}
 
-			logger.LogTrace($"[BATTCLOCK] R {address:X8} @ {insaddr:X8} {size} {value:X2} R{reg}");
+			logger.LogTrace($"[BATTCLOCK] R {address:X8} @ {insaddr:X8} {size} {value:X2} {value.ToBin()} R{reg} {RegName(reg)}");
 			
 			return value;
 		}
@@ -156,7 +179,7 @@ namespace RunAmiga.Core.Custom
 			}
 
 			int reg = REG(address);
-			logger.LogTrace($"[BATTCLOCK] W {address:X8} @ {insaddr:X8} {size} {value:X2} R{reg}");
+			logger.LogTrace($"[BATTCLOCK] W {address:X8} @ {insaddr:X8} {size} {value:X2} {value.ToBin(8)} R{reg} {RegName(reg)}");
 			if (reg >= 0 && reg < 16)
 			{
 				regs[reg] = (byte)value;

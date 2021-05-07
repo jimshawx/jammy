@@ -234,7 +234,7 @@ namespace RunAmiga.Disassembler
 		{
 			var resident = GetRomTags();
 			foreach (var rt in resident)
-				logger.LogTrace($"{rt.MatchTag:X8}\n{rt.Name}\n{rt.IdString}\n{rt.Flags}\nv:{rt.Version}\n{rt.Type}\npri:{rt.Pri}\ninit:{rt.Init:X8}\n");
+				logger.LogTrace($"{rt.MatchTag:X8} {rt.Name} {rt.Flags} v:{rt.Version} {rt.Type} pri:{rt.Pri} init:{rt.Init:X8} {rt.IdString}");
 
 			if (settings.Disassemblies == Feature.Enabled)
 			{
