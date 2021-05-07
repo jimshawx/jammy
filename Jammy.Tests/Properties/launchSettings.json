@@ -1,0 +1,13 @@
+{
+  "profiles": {
+	"Jammy.Tests": {
+	  "commandName": "Project",
+	  "nativeDebugging": true
+	}
+  },
+  "Logging": {
+	  "LogLevel": {
+		  "Default": "Trace"
+	  }
+  }
+}

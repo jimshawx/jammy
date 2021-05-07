@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>amiga.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="appSettings.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jammy.Core.CPU.CSharp.MC68020\Jammy.Core.CPU.CSharp.MC68020.csproj" />
+    <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />
+    <ProjectReference Include="..\Jammy.Core.CPU.Musashi.MC68020\Jammy.Core.CPU.Musashi.MC68020.csproj" />
+    <ProjectReference Include="..\Jammy.Core.CPU.Musashi.MC68030\Jammy.Core.CPU.Musashi.MC68030.csproj" />
+    <ProjectReference Include="..\Jammy.Core.CPU.Musashi\Jammy.Core.CPU.Musashi.csproj" />
+    <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
+    <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
+    <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
+    <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
+    <ProjectReference Include="..\Jammy.Logger.DebugAsyncRTF\Jammy.Logger.DebugAsyncRTF.csproj" />
+    <ProjectReference Include="..\Jammy.Logger.DebugAsync\Jammy.Logger.DebugAsync.csproj" />
+    <ProjectReference Include="..\Jammy.Logger.SQLite\Jammy.Logger.SQLite.csproj" />
+    <ProjectReference Include="..\Jammy.UI.Settings\Jammy.UI.Settings.csproj" />
+    <ProjectReference Include="..\Jammy.UI\Jammy.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Dialogs\Find.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Dialogs\GoTo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Jammy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+
+</Project>
