@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime;
 using System.Threading;
@@ -87,7 +86,10 @@ namespace Jammy.Core
 
 			Reset();
 
-			emulationSemaphore = new SemaphoreSlim(1);
+			emulationMode = EmulationMode.Running;
+			requestExitEmulationMode = false;
+
+			emulationSemaphore = new SemaphoreSlim(0,1);
 		}
 
 		public void RunEmulations(ulong ns)
@@ -103,68 +105,44 @@ namespace Jammy.Core
 			emuThread.Start();
 		}
 
-		private static bool modeChangeApplied = false;
 		public static void SetEmulationMode(EmulationMode mode, bool changeWhileLocked = false)
 		{
 			if (changeWhileLocked)
 			{
-				emulationMode = mode;
+				desiredEmulationMode = mode;
 			}
 			else
 			{
-				modeChangeApplied = false;
-				emulationModeChange = mode;
-				//while (!modeChangeApplied)
-				//	Thread.Yield();
-
-				//logger.LogTrace($"SEM3 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
-				//LockEmulation();
-				//logger.LogTrace($"SEM4 em: {emulationMode} emc: {emulationModeChange}");
-				//emulationMode = mode;
-				//logger.LogTrace($"SEM5 em: {emulationMode} emc: {emulationModeChange}");
-				//UnlockEmulation();
-				//logger.LogTrace($"SEM6 em: {emulationMode} emc: {emulationModeChange}");
+				LockEmulation();
+				desiredEmulationMode = mode;
+				UnlockEmulation();
 			}
 		}
 
+		private static volatile bool requestExitEmulationMode;
+		private static volatile bool requestExitNonEmulationMode;
+
+		private static volatile EmulationMode desiredEmulationMode;
+
 		public static void UnlockEmulation()
 		{
-			lockedThreadId = -1;
-			//emulationSemaphore.Release();
+			requestExitNonEmulationMode = true;
+			emulationSemaphore.Release();
 		}
 
-		private static int lockedThreadId = -1;
 		public static void LockEmulation()
 		{
-			//var logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<Machine>>();
-			//logger.LogTrace($"Lock1 em: {emulationMode} emc: {emulationModeChange}");
-			emulationModeChange = EmulationMode.LockAccess;
-			//logger.LogTrace($"Lock2 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
-			if (lockedThreadId == Thread.CurrentThread.ManagedThreadId)
-				Debugger.Break();
-			
-			//emulationSemaphore.Wait();
-			//logger.LogTrace($"Lock3 em: {emulationMode} emc: {emulationModeChange} {Thread.CurrentThread.ManagedThreadId}");
-			lockedThreadId = Thread.CurrentThread.ManagedThreadId;
-			emulationModeChange = EmulationMode.NoChange;
-			//logger.LogTrace($"Lock4 em: {emulationMode} emc: {emulationModeChange}");
+			requestExitEmulationMode = true;
+			emulationSemaphore.Wait();
 		}
-
-		private static EmulationMode emulationModeChange;
 
 		public void Emulate()
 		{
 			uint stepOutSp = 0xffffffff;
 
-			emulationMode = EmulationMode.Running;
-			emulationModeChange = EmulationMode.NoChange;
-
-			//emulationSemaphore.Wait();
-			lockedThreadId = Thread.CurrentThread.ManagedThreadId;
-
 			while (emulationMode != EmulationMode.Exit)
 			{
-				while (emulationModeChange == EmulationMode.NoChange)
+				while (!requestExitEmulationMode)
 				{
 					switch (emulationMode)
 					{
@@ -174,7 +152,7 @@ namespace Jammy.Core
 
 						case EmulationMode.Step:
 							RunEmulations(8);
-							emulationModeChange = EmulationMode.Stopped;
+							emulationMode = EmulationMode.Stopped;
 							break;
 
 						case EmulationMode.StepOut:
@@ -184,53 +162,42 @@ namespace Jammy.Core
 							bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] >= stepOutSp; //rts or rte
 							RunEmulations(8);
 							if (stopping)
-								emulationModeChange = EmulationMode.Stopped;
+								emulationMode = EmulationMode.Stopped;
 							break;
 
 						case EmulationMode.Stopped:
-							Thread.Yield();
+							IdleThread();
 							break;
 					}
 
 					if (breakpointCollection.BreakpointHit())
-						emulationModeChange = EmulationMode.Stopped;
+						emulationMode = EmulationMode.Stopped;
 				}
 
-				var newEmulationMode = emulationModeChange;
-
-				if (newEmulationMode == EmulationMode.Exit)
-					break;
-
-				if (newEmulationMode == EmulationMode.Stopped)
-				{
-					stepOutSp = 0xffffffff;
+				if (emulationMode == EmulationMode.Stopped)
 					UI.UI.IsDirty = true;
-				}
 
-				if (newEmulationMode == EmulationMode.LockAccess)
-				{
-					lockedThreadId = -1;
-					//emulationSemaphore.Release();
+				desiredEmulationMode = emulationMode;
 
-					//Locker should now be able to do its work
-					//while (emulationModeChange == EmulationMode.LockAccess)
-					//	Thread.Yield();
+				requestExitNonEmulationMode = false;
+				requestExitEmulationMode = false;
 
-					//emulationSemaphore.Wait();
-					lockedThreadId = Thread.CurrentThread.ManagedThreadId;
-					//do not update emulation mode
-				}
-				else
-				{
-					emulationMode = newEmulationMode;
-				}
+				emulationSemaphore.Release();
 
-				emulationModeChange = EmulationMode.NoChange;
-				modeChangeApplied = true;
+				while (!requestExitNonEmulationMode)
+					IdleThread();
+
+				emulationSemaphore.Wait();
+
+				emulationMode = desiredEmulationMode;
 			}
 
-			emulationModeChange = EmulationMode.NoChange;
-			//emulationSemaphore.Release();
+			emulationSemaphore.Release();
+		}
+
+		private void IdleThread()
+		{
+			Thread.Yield();
 		}
 
 		public void Reset()

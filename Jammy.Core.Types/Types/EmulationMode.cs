@@ -10,8 +10,6 @@ namespace Jammy.Core.Types.Types
 		Step,
 		Running,
 		Exit,
-		StepOut,
-		LockAccess,
-		NoChange
+		StepOut
 	}
 }

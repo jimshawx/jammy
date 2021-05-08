@@ -54,12 +54,13 @@ namespace Jammy.Main
 
 			disassemblyOptions = new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true, Full32BitAddress = settings.AddressBits>24};
 
+			emulation.Start();
+
 			UpdateDisassembly();
 			UpdateDisplay();
 
 			InitUIRefreshThread();
 
-			emulation.Start();
 		}
 
 		private CancellationTokenSource uiUpdateTokenSource;
@@ -75,11 +76,11 @@ namespace Jammy.Main
 				{
 					//this.Invoke((Action)UpdatePowerLight);
 
-					if (global::Jammy.UI.UI.IsDirty)
+					if (UI.UI.IsDirty)
 					{
 						this.Invoke((Action)delegate()
 						{
-							if (global::Jammy.UI.UI.IsDirty)
+							if (UI.UI.IsDirty)
 							{
 								SetSelection();
 								UpdateDisplay();
@@ -130,7 +131,7 @@ namespace Jammy.Main
 			UpdatePowerLight();
 			UpdateDiskLight();
 			//UpdateExecBase();
-			global::Jammy.UI.UI.IsDirty = false;
+			UI.UI.IsDirty = false;
 		}
 
 		private void UpdateRegs()
@@ -353,7 +354,7 @@ namespace Jammy.Main
 		{
 			Amiga.SetEmulationMode(EmulationMode.Exit);
 
-			global::Jammy.UI.UI.IsDirty = false;
+			UI.UI.IsDirty = false;
 
 			uiUpdateTokenSource.Cancel();
 			//uiUpdateTask.Wait(1000);
