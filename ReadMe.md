@@ -33,24 +33,25 @@ So here is my humble attempt at an Amiga emulation.
 The C# 68000 is slightly faster than the Musashi one, not because I have made any specific effors to optimise it, but I think mostly because thunking out of C# into C
 and back again isn't particularly fast.
 
-Musashi 68030 supports the 68881 and MMU instructions. There didn't seem any real need to add a 68040 or 68060 option because of this.
+The Musashi 68030 option supports the 68881 and MMU instructions. There didn't seem any real need to add a 68040 or 68060 option because of this.
 
 The audio is pretty good, if you run with it switched on it will lock the emulation performance down so the sample rate is exact. With it switched off, everything is
 still emulated but there's no sound output. If the emulation is too slow, the audio will be choppy. There's some high-frequency hiss I'd like to get rid of.
 
 It's been a lot of fun writing this. In almost all cases I have worked from publicly available documents - the Hardware Reference Manual,
 online bits and pieces about future Amigas, the ATA mode 0 spec, the datasheets for the 68K series and the CIAs and clock chips. I don't have a real Amiga to hand,
-my trusty A500 my gran bought me in 1989 is trapped in storage somewhere in Australia. I booted it up a couple of years ago and it was still working then.
+the trusty A500 my gran bought me in 1989 is trapped in storage somewhere in Australia. I booted it up a couple of years ago and it was still working then.
 
 Anyway, Workbench is totally usable right now, and it plays a pretty mean Buggyboy and Pinball Fantasies. With a gigabyte of RAM.
 
-Thanks to Toni Wilen and Brian King and all the other contributors for WinUAE, the most complete Amiga emulation package. What a brilliant piece of software!
-Also thanks to Petter Schau, Torsten Enderling and all the others for WinFellow, which I have always admired for its simplicity and ability to play games.
-Thanks to Karl Stenerud for the amazing Musashi CPU emulation package.
+Thanks to Toni Wilen and Brian King and all the other contributors for [WinUAE](https://www.winuae.net), the most complete Amiga emulation package. What a brilliant piece of software!
+Also thanks to Petter Schau, Torsten Enderling and all the others for [WinFellow](http://petschau.github.io/WinFellow), which I have always admired for its simplicity and ability to play games.
+Thanks to Karl Stenerud for the amazing [Musashi](https://github.com/kstenerud/Musashi) CPU emulation package.
 
 Contributions, PRs and comments welcome!
 
 Cheers,
+
 Jim
 
 

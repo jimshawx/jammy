@@ -1,4 +1,8 @@
-﻿namespace Jammy.Core.Floppy
+﻿/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
+namespace Jammy.Core.Floppy
 {
 	public class Drive
 	{

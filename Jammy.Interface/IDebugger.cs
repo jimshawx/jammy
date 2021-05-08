@@ -4,6 +4,10 @@ using Jammy.Core.Types.Enums;
 using Jammy.Types;
 using Jammy.Types.Debugger;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Interface
 {
 	public interface IDebugger : IMemoryInterceptor

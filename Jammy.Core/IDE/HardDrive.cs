@@ -4,6 +4,10 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.IDE
 {
 	internal class HardDrive : IDisposable

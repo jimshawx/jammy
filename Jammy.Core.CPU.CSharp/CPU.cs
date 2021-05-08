@@ -7,6 +7,10 @@ using Microsoft.Extensions.Options;
 
 // ReSharper disable InconsistentNaming
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.CPU.CSharp
 {
 	public class CPU : ICPU, ICSharpCPU

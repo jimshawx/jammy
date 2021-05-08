@@ -4,6 +4,10 @@ using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Memory
 {
 	public class CPUSlotRAM : Memory, ICPUSlotRAM

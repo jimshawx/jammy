@@ -5,6 +5,10 @@ using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Custom.CIA
 {
 	//https://www.amigacoding.com/index.php?title=CIA_Memory_Map

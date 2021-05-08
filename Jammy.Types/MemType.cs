@@ -1,4 +1,8 @@
-﻿namespace Jammy.Types
+﻿/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
+namespace Jammy.Types
 {
 	public enum MemType : byte
 	{

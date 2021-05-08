@@ -2,6 +2,10 @@
 using System.Linq;
 using System.Text;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Disassembler.TypeMapper
 {
 	public class ObjectWalk

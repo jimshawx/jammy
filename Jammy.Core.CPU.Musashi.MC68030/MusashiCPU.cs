@@ -4,6 +4,10 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.CPU.Musashi.MC68030
 {
 	public class Musashi68030CPU : ICPU, IMusashiCPU

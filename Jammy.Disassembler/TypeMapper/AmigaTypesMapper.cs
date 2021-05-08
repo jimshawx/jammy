@@ -6,6 +6,10 @@ using Jammy.Extensions.Extensions;
 using Jammy.Interface;
 using Jammy.Types.AmigaTypes;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Disassembler.TypeMapper
 {
 	public class AmigaTypesMapper : IAmigaTypesMapper

@@ -1,4 +1,8 @@
-﻿namespace Jammy.Types.AmigaTypes
+﻿/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
+namespace Jammy.Types.AmigaTypes
 {
 	using UBYTE = System.Byte;
 	using BYTE = System.SByte;

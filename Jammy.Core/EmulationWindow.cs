@@ -7,6 +7,10 @@ using System.Windows.Forms;
 using Jammy.Core.Custom.IO;
 using Microsoft.Extensions.Logging;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core
 {
 	public interface IEmulationWindow

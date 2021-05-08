@@ -4,6 +4,10 @@ using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
 using Microsoft.Extensions.Logging;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core
 {
 	public class BreakpointCollection : IBreakpointCollection

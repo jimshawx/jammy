@@ -6,6 +6,10 @@ using Jammy.Core.Types;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.UI.Settings
 {
 	public partial class Settings : Form

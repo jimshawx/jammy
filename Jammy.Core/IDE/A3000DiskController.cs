@@ -2,6 +2,10 @@
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.IDE
 {
 	public class A3000DiskController : IA3000DiskController

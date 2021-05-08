@@ -3,6 +3,10 @@ using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core
 {
 	public class Interrupt : IInterrupt

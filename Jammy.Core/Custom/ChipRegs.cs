@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Custom
 {
 	public static class ChipRegs

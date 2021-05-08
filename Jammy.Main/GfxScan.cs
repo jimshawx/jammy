@@ -8,6 +8,10 @@ using System.Windows.Forms;
 using Jammy.Core.Interface.Interfaces;
 using Microsoft.Extensions.Logging;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Main
 {
 	public class GfxScan

@@ -4,6 +4,10 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Microsoft.Extensions.Options;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Memory
 {
 	public class MemoryManager : IMemoryManager

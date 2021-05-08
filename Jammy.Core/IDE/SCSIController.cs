@@ -2,6 +2,10 @@
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.IDE
 {
 	//SCSI/IDE Controller on the A3000 and A4000

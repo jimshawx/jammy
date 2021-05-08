@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Jammy.Extensions.Extensions;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Floppy
 {
 	public class MFM

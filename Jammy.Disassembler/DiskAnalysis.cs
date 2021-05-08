@@ -10,6 +10,10 @@ using Jammy.Types.Options;
 using Microsoft.Extensions.Logging;
 using Jammy.Disassembler.AmigaTypes;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Disassembler
 {
 	public class DiskAnalysis : IDiskAnalysis

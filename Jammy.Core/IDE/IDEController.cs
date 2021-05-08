@@ -8,6 +8,10 @@ using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.IDE
 {
 	public class Gayle

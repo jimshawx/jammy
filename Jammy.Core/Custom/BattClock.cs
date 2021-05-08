@@ -6,6 +6,10 @@ using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Custom
 {
 	public class BattClock : IBattClock

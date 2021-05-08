@@ -4,6 +4,10 @@
 using System;
 using System.Linq;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Disassembler.AmigaTypes
 {
 	public class HardDisk

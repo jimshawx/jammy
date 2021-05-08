@@ -5,6 +5,10 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Custom
 {
 	public class Blitter : IBlitter

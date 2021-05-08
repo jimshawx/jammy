@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Extensions.Extensions
 {
 	public static class StringExtensions

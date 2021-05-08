@@ -2,6 +2,10 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Types
 {
 	public class Regs

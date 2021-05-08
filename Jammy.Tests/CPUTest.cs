@@ -17,6 +17,10 @@ using Jammy.Interface;
 using Jammy.Logger.DebugAsync;
 using Jammy.Types.Options;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Tests
 {
 	[TestFixture]

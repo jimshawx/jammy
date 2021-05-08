@@ -8,6 +8,10 @@ using SharpDX;
 using SharpDX.Multimedia;
 using SharpDX.XAudio2;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Custom.Audio
 {
 	public class AudioV2 : IAudio

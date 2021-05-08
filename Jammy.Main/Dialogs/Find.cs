@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Windows.Forms;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Main.Dialogs
 {
 	public partial class Find : Form

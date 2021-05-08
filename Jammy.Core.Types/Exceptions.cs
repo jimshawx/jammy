@@ -1,6 +1,10 @@
 ﻿using System;
 using Jammy.Core.Types.Types;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Core.Types
 {
 	public class MC68000Exception : ApplicationException { }
