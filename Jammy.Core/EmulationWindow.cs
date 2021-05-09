@@ -23,7 +23,7 @@ namespace Jammy.Core
 		bool IsActive();
 	}
 
-	public class EmulationWindow : IEmulationWindow
+	public class EmulationWindow : IEmulationWindow, IDisposable
 	{
 		[DllImport("user32.dll")]
 		private static extern short GetAsyncKeyState(int key);
@@ -57,6 +57,11 @@ namespace Jammy.Core
 			t.SetApartmentState(ApartmentState.STA);
 			t.Start();
 			ss.Wait();
+		}
+
+		public void Dispose()
+		{
+			emulation.Close();
 		}
 
 		public bool IsCaptured { get; private set; } = false;

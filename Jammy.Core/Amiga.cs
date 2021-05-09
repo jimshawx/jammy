@@ -15,23 +15,6 @@ namespace Jammy.Core
 {
 	public class Amiga : IAmiga
 	{
-		public class Constants
-		{
-			//PAL
-			public const double CPUHz = 7.09379;
-			public const int CyclesPerFrame = 140968;
-			public const int RefreshRate = 50;
-			public const int ScanlinesPerFrame = 312;
-			public const int CyclesPerScanline = 452;
-
-			//NTSC
-			//public const double CPUHz = 7.15909;   //NTSC 3.579545 * 2
-			//public const int CyclesPerFrame = 139682;
-			//public const int RefreshRate = 60;
-			//public const int ScanlinesPerFrame = 262;
-			//public const int CyclesPerScanline = 533;
-		}
-
 		private readonly ICPU cpu;
 		private readonly IBreakpointCollection breakpointCollection;
 
@@ -40,6 +23,7 @@ namespace Jammy.Core
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
 
 		private static SemaphoreSlim emulationSemaphore;
+		private static AutoResetEvent nonEmulationCompleteEvent;
 
 		private readonly List<IEmulate> emulations = new List<IEmulate>();
 		private readonly List<IReset> resetters = new List<IReset>();
@@ -90,6 +74,12 @@ namespace Jammy.Core
 			requestExitEmulationMode = false;
 
 			emulationSemaphore = new SemaphoreSlim(0,1);
+			nonEmulationCompleteEvent = new AutoResetEvent(false);
+		}
+
+		public void Reset()
+		{
+			resetters.ForEach(x => x.Reset());
 		}
 
 		public void RunEmulations(ulong ns)
@@ -120,14 +110,13 @@ namespace Jammy.Core
 		}
 
 		private static volatile bool requestExitEmulationMode;
-		private static volatile bool requestExitNonEmulationMode;
-
 		private static volatile EmulationMode desiredEmulationMode;
 
 		public static void UnlockEmulation()
 		{
-			requestExitNonEmulationMode = true;
+			nonEmulationCompleteEvent.Set();
 			emulationSemaphore.Release();
+			requestExitEmulationMode = false;
 		}
 
 		public static void LockEmulation()
@@ -139,6 +128,7 @@ namespace Jammy.Core
 		public void Emulate()
 		{
 			uint stepOutSp = 0xffffffff;
+			bool emulationHasRun = false;
 
 			while (emulationMode != EmulationMode.Exit)
 			{
@@ -148,10 +138,12 @@ namespace Jammy.Core
 					{
 						case EmulationMode.Running:
 							RunEmulations(8);
+							emulationHasRun = true;
 							break;
 
 						case EmulationMode.Step:
 							RunEmulations(8);
+							emulationHasRun = true;
 							emulationMode = EmulationMode.Stopped;
 							break;
 
@@ -161,12 +153,13 @@ namespace Jammy.Core
 							ushort ins = memoryMapper.UnsafeRead16(regs.PC);
 							bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] >= stepOutSp; //rts or rte
 							RunEmulations(8);
+							emulationHasRun = true;
 							if (stopping)
 								emulationMode = EmulationMode.Stopped;
 							break;
 
-						case EmulationMode.Stopped:
-							IdleThread();
+						default:
+							requestExitEmulationMode = true;
 							break;
 					}
 
@@ -174,35 +167,25 @@ namespace Jammy.Core
 						emulationMode = EmulationMode.Stopped;
 				}
 
-				if (emulationMode == EmulationMode.Stopped)
+				if (emulationMode == EmulationMode.Stopped && emulationHasRun)
+				{
 					UI.UI.IsDirty = true;
+					emulationHasRun = false;
+				}
+
+				if (emulationMode == EmulationMode.Exit)
+					break;
 
 				desiredEmulationMode = emulationMode;
 
-				requestExitNonEmulationMode = false;
-				requestExitEmulationMode = false;
-
 				emulationSemaphore.Release();
 
-				while (!requestExitNonEmulationMode)
-					IdleThread();
+				nonEmulationCompleteEvent.WaitOne();
 
 				emulationSemaphore.Wait();
 
 				emulationMode = desiredEmulationMode;
 			}
-
-			emulationSemaphore.Release();
-		}
-
-		private void IdleThread()
-		{
-			Thread.Yield();
-		}
-
-		public void Reset()
-		{
-			resetters.ForEach(x => x.Reset());
 		}
 	}
 }

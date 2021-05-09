@@ -60,7 +60,6 @@ namespace Jammy.Main
 			UpdateDisplay();
 
 			InitUIRefreshThread();
-
 		}
 
 		private CancellationTokenSource uiUpdateTokenSource;
@@ -80,7 +79,7 @@ namespace Jammy.Main
 					{
 						this.Invoke((Action)delegate()
 						{
-							if (UI.UI.IsDirty)
+							//if (UI.UI.IsDirty)
 							{
 								SetSelection();
 								UpdateDisplay();
@@ -88,7 +87,7 @@ namespace Jammy.Main
 						});
 					}
 
-					Task.Delay(500).Wait(uiUpdateTokenSource.Token);
+					//Task.Delay(500).Wait(uiUpdateTokenSource.Token);
 				}
 			}, uiUpdateTokenSource.Token, TaskCreationOptions.LongRunning);
 			uiUpdateTask.Start();
@@ -352,12 +351,21 @@ namespace Jammy.Main
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			Amiga.SetEmulationMode(EmulationMode.Exit);
-
-			UI.UI.IsDirty = false;
-
+			//set the token to cancel the UI thread
 			uiUpdateTokenSource.Cancel();
-			//uiUpdateTask.Wait(1000);
+
+			//release the UI thread semaphore in case it's being awaited on
+			//(UI may well get redrawn now)
+			UI.UI.IsDirty = true;
+
+			//ensure Invokes are run
+			Application.DoEvents();
+
+			//wait for the Task to complete
+			uiUpdateTask.Wait();
+
+			//neatly exit the emulation thread
+			Amiga.SetEmulationMode(EmulationMode.Exit);
 		}
 
 		private void btnRefresh_Click(object sender, EventArgs e)
@@ -376,7 +384,7 @@ namespace Jammy.Main
 
 		private void UpdatePowerLight()
 		{
-			bool power = global::Jammy.UI.UI.PowerLight;
+			bool power = UI.UI.PowerLight;
 			picPower.BackColor = power ? Color.Red : Color.DarkRed;
 		}
 
