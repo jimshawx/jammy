@@ -13,6 +13,8 @@ using Jammy.Core.Types.Types;
 using Jammy.Disassembler.TypeMapper;
 using Jammy.Interface;
 using Jammy.Main.Dialogs;
+using Jammy.Types;
+using Jammy.Types.Debugger;
 using Jammy.Types.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -56,6 +58,7 @@ namespace Jammy.Main
 
 			emulation.Start();
 
+			FetchUI(FetchUIFlags.All);
 			UpdateDisassembly();
 			UpdateDisplay();
 
@@ -79,18 +82,42 @@ namespace Jammy.Main
 					{
 						this.Invoke((Action)delegate()
 						{
-							//if (UI.UI.IsDirty)
-							{
-								SetSelection();
-								UpdateDisplay();
-							}
+							FetchUI(FetchUIFlags.All);
+							SetSelection();
+							UpdateDisplay();
 						});
 					}
-
-					//Task.Delay(500).Wait(uiUpdateTokenSource.Token);
 				}
 			}, uiUpdateTokenSource.Token, TaskCreationOptions.LongRunning);
 			uiUpdateTask.Start();
+		}
+
+		[Flags]
+		private enum FetchUIFlags
+		{
+			Regs=1,
+			Memory=2,
+			ChipRegs=4,
+
+			All=Regs|Memory|ChipRegs,
+		}
+
+		private class FetchUIData
+		{
+			public Regs Regs { get; set; }
+			public MemoryDump Memory { get; set; }
+			public ChipState ChipRegs { get; set; }
+		}
+
+		private readonly FetchUIData uiData = new FetchUIData();
+
+		private void FetchUI(FetchUIFlags flags)
+		{
+			Amiga.LockEmulation();
+			if ((flags & FetchUIFlags.Regs) != 0) uiData.Regs = debugger.GetRegs();
+			if ((flags & FetchUIFlags.Memory) != 0) uiData.Memory = debugger.GetMemory();
+			if ((flags & FetchUIFlags.ChipRegs) != 0) uiData.ChipRegs = debugger.GetChipRegs();
+			Amiga.UnlockEmulation();
 		}
 
 		private void UpdateDisassembly()
@@ -135,31 +162,13 @@ namespace Jammy.Main
 
 		private void UpdateRegs()
 		{
-			Amiga.LockEmulation();
-			var regs = debugger.GetRegs();
-			var chipRegs = debugger.GetChipRegs();
-			Amiga.UnlockEmulation();
+			var regs = uiData.Regs;
+			var chipRegs = uiData.ChipRegs;
 
 			lbRegisters.Items.Clear();
 			lbRegisters.Items.AddRange(regs.Items().Cast<object>().ToArray());
 
 			lbCustom.Items.Clear();
-			{
-				//string hdr =
-				//	"   D           S\n" +
-				//	"   S       C  DO\n" +
-				//	" IEK      VOP SF\n" +
-				//	" NXS AAAABEPO KT\n" +
-				//	"NTTYRUUUULRPRTBI\n" +
-				//	"MEENBDDDDITETBLN\n" +
-				//	"INTCF3210TBRSEKT";
-
-				//lbCustom.Items.AddRange(hdr.Split('\n'));
-				//lbCustom.Items.Add("INTENA W:DFF09A R:DFF01C");
-				//lbCustom.Items.Add($"{Convert.ToString(intena, 2).PadLeft(16, '0')}");
-				//lbCustom.Items.Add("INTREQ W:DFF09C R:DFF01E");
-				//lbCustom.Items.Add($"{Convert.ToString(intreq, 2).PadLeft(16, '0')}");
-			}
 
 			{
 				lbCustom.Items.Add($"SR: {(regs.SR >> 8) & 7} IRQ: {debugger.GetInterruptLevel()}");
@@ -174,36 +183,6 @@ namespace Jammy.Main
 				}
 			}
 
-			//*
-			// * 			SETCLR = 0x8000,
-			//			BBUSY = 0x4000,
-			//			BZERO = 0x2000,
-			//			unused0 = 0x1000,
-			//			unused1 = 0x0800,
-			//			BLTPRI = 0x0400,
-			//			DMAEN = 0x0200,
-			//			BPLEN = 0x00100,
-			//			COPEN = 0x0080,
-			//			BLTEN = 0x0040,
-			//			SPREN = 0x0020,
-			//			DSKEN = 0x0010,
-			//			AUD3EN = 0x0008,
-			//			AUD2EN = 0x0004,
-			//			AUD1EN = 0x0002,
-			//			AUD0EN = 0x0001,
-			// */
-			//{
-			//	string hdr =
-			//		"S    B      AAAA\n" +
-			//		"EBB  LDBCBSDUUUU\n" +
-			//		"TBZ  TMPOLPSDDDD\n" +
-			//		"CUE  PALPTRK3210\n" +
-			//		"LSR  REEEEEEEEEE\n" +
-			//		"RYO  INNNNNNNNNN";
-			//	lbCustom.Items.AddRange(hdr.Split('\n'));
-			//	lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
-			//	lbCustom.Items.Add($"{Convert.ToString(chipRegs.dmacon, 2).PadLeft(16, '0')}");
-			//}
 			{
 				lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
 				lbCustom.Items.Add("        ENA");
@@ -246,10 +225,8 @@ namespace Jammy.Main
 
 		private void UpdateMem()
 		{
-			Amiga.LockEmulation();
-			var memory = debugger.GetMemory();
-			var regs = debugger.GetRegs();
-			Amiga.UnlockEmulation();
+			var memory = uiData.Memory;
+			var regs = uiData.Regs;
 
 			{
 				var mem = new List<Tuple<uint, uint>>();
@@ -289,14 +266,11 @@ namespace Jammy.Main
 
 		private void SetSelection()
 		{
-			Amiga.LockEmulation();
-			uint pc = debugger.GetRegs().PC;
-			Amiga.UnlockEmulation();
+			uint pc = uiData.Regs.PC;
 
 			//int line = disassembly.GetAddressLine(pc);
 			//if (line == 0) return;
 
-			//txtDisassembly.SuspendLayout();
 			txtDisassembly.ReallySuspendLayout();
 			txtDisassembly.DeselectAll();
 
@@ -311,7 +285,6 @@ namespace Jammy.Main
 				txtDisassembly.Select(start, txtDisassembly.GetFirstCharIndexFromLine(line + 1) - start);
 			else
 				txtDisassembly.DeselectAll();
-			//txtDisassembly.ResumeLayout();
 			txtDisassembly.ReallyResumeLayout();
 			txtDisassembly.Refresh();
 		}
@@ -345,6 +318,7 @@ namespace Jammy.Main
 			emulation.Reset();
 			Amiga.UnlockEmulation();
 
+			FetchUI(FetchUIFlags.All);
 			SetSelection();
 			UpdateDisplay();
 		}
@@ -370,6 +344,7 @@ namespace Jammy.Main
 
 		private void btnRefresh_Click(object sender, EventArgs e)
 		{
+			FetchUI(FetchUIFlags.All);
 			SetSelection();
 			UpdateDisplay();
 		}
@@ -396,6 +371,7 @@ namespace Jammy.Main
 
 		private void btnDisassemble_Click(object sender, EventArgs e)
 		{
+			FetchUI(FetchUIFlags.All);
 			UpdateDisassembly();
 			SetSelection();
 			UpdateDisplay();
@@ -403,6 +379,7 @@ namespace Jammy.Main
 
 		private void addressFollowBox_SelectionChangeCommitted(object sender, EventArgs e)
 		{
+			FetchUI(FetchUIFlags.All);
 			UpdateDisplay();
 		}
 
@@ -449,8 +426,8 @@ namespace Jammy.Main
 				}
 			}
 
+			FetchUI(FetchUIFlags.All);
 			UpdateDisassembly();
-
 			SetSelection();
 			UpdateDisplay();
 		}
@@ -550,8 +527,8 @@ namespace Jammy.Main
 				}
 			}
 
+			FetchUI(FetchUIFlags.All);
 			//UpdateDisassembly();
-
 			SetSelection();
 			UpdateDisplay();
 		}
@@ -602,7 +579,9 @@ namespace Jammy.Main
 
 		private void btnIDEACK_Click(object sender, EventArgs e)
 		{
+			Amiga.LockEmulation();
 			debugger.IDEACK();
+			Amiga.UnlockEmulation();
 		}
 
 		private int currentDrive = 0;
@@ -611,18 +590,26 @@ namespace Jammy.Main
 			using (var ofd = new OpenFileDialog())
 			{
 				if (ofd.ShowDialog() == DialogResult.OK)
+				{
+					Amiga.LockEmulation();
 					debugger.ChangeDisk(currentDrive, ofd.FileName);
+					Amiga.UnlockEmulation();
+				}
 			}
 		}
 
 		private void btnInsertDisk_Click(object sender, EventArgs e)
 		{
+			Amiga.LockEmulation();
 			debugger.InsertDisk(currentDrive);
+			Amiga.UnlockEmulation();
 		}
 
 		private void btnRemoveDisk_Click(object sender, EventArgs e)
 		{
+			Amiga.LockEmulation();
 			debugger.RemoveDisk(currentDrive);
+			Amiga.UnlockEmulation();
 		}
 
 		private void radioDFx_CheckedChanged(object sender, EventArgs e)
@@ -653,15 +640,19 @@ namespace Jammy.Main
 
 		private void btnGfxScan_Click(object sender, EventArgs e)
 		{
+			Amiga.LockEmulation();
 			var gfxScan = new GfxScan(
 					ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<GfxScan>>(),
 					ServiceProviderFactory.ServiceProvider.GetRequiredService<IChipRAM>()
 				);
+			Amiga.UnlockEmulation();
 		}
 
 		private void btnClearBBUSY_Click(object sender, EventArgs e)
 		{
+			Amiga.LockEmulation();
 			debugger.ClearBBUSY();
+			Amiga.UnlockEmulation();
 		}
 	}
 
