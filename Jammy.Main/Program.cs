@@ -20,11 +20,11 @@ using Jammy.Debugger;
 using Jammy.Disassembler;
 using Jammy.Disassembler.Analysers;
 using Jammy.Interface;
-using Jammy.Logger.DebugAsync;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Jammy.UI.Settings;
+using Parky.Logging;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -64,7 +64,7 @@ namespace Jammy.Main
 				.AddLogging(x =>
 				{
 					x.AddConfiguration(appConfig.GetSection("Logging"));
-					//x.AddDebug();
+					x.AddDebug();
 					//x.AddSQLite();
 					x.AddDebugAsync();
 					//x.AddDebugAsyncRTF();

@@ -14,8 +14,8 @@ using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Jammy.Extensions.Extensions;
 using Jammy.Interface;
-using Jammy.Logger.DebugAsync;
 using Jammy.Types.Options;
+using Parky.Logging;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.

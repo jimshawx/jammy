@@ -24,11 +24,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Disassembler", "Jammy
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.UI", "Jammy.UI\Jammy.UI.csproj", "{70DFFFED-66A7-477C-9561-CF0B1DC588D4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Logger.SQLite", "Jammy.Logger.SQLite\Jammy.Logger.SQLite.csproj", "{E5614F3B-4681-4315-BDD6-A4167332D2D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parky.Logging.SQLite", "Parky.Logging.SQLite\Parky.Logging.SQLite.csproj", "{E5614F3B-4681-4315-BDD6-A4167332D2D3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Logger.DebugAsync", "Jammy.Logger.DebugAsync\Jammy.Logger.DebugAsync.csproj", "{7B943371-BA63-4887-8C73-7C703A319933}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parky.Logging.DebugAsync", "Parky.Logging.DebugAsync\Parky.Logging.DebugAsync.csproj", "{7B943371-BA63-4887-8C73-7C703A319933}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Logger.DebugAsyncRTF", "Jammy.Logger.DebugAsyncRTF\Jammy.Logger.DebugAsyncRTF.csproj", "{FCA17E44-0A77-43AE-8672-5C474D6630AE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parky.Logging.DebugAsyncRTF", "Parky.Logging.DebugAsyncRTF\Parky.Logging.DebugAsyncRTF.csproj", "{FCA17E44-0A77-43AE-8672-5C474D6630AE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Interface", "Jammy.Interface\Jammy.Interface.csproj", "{F14D1BCC-997B-4FDF-9ABA-C7446EAD0E02}"
 EndProject

@@ -43,9 +43,9 @@
     <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
     <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
-    <ProjectReference Include="..\Jammy.Logger.DebugAsyncRTF\Jammy.Logger.DebugAsyncRTF.csproj" />
-    <ProjectReference Include="..\Jammy.Logger.DebugAsync\Jammy.Logger.DebugAsync.csproj" />
-    <ProjectReference Include="..\Jammy.Logger.SQLite\Jammy.Logger.SQLite.csproj" />
+    <ProjectReference Include="..\Parky.Logging.DebugAsyncRTF\Parky.Logging.DebugAsyncRTF.csproj" />
+    <ProjectReference Include="..\Parky.Logging.DebugAsync\Parky.Logging.DebugAsync.csproj" />
+    <ProjectReference Include="..\Parky.Logging.SQLite\Parky.Logging.SQLite.csproj" />
     <ProjectReference Include="..\Jammy.UI.Settings\Jammy.UI.Settings.csproj" />
     <ProjectReference Include="..\Jammy.UI\Jammy.UI.csproj" />
   </ItemGroup>

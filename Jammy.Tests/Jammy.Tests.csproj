@@ -38,7 +38,7 @@
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
     <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
     <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
-    <ProjectReference Include="..\Jammy.Logger.DebugAsync\Jammy.Logger.DebugAsync.csproj" />
+    <ProjectReference Include="..\Parky.Logging.DebugAsync\Parky.Logging.DebugAsync.csproj" />
   </ItemGroup>
 
   <ItemGroup>

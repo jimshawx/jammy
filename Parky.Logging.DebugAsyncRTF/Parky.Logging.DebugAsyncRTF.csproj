@@ -1,11 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-  </PropertyGroup>
+<UseWindowsForms>true</UseWindowsForms>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+
+    <RootNamespace>Parky.Logging</RootNamespace>
+
+    <AssemblyName>Parky.Logging.DebugAsyncRTF</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

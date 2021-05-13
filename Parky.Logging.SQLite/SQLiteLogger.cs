@@ -12,9 +12,9 @@ using Microsoft.Extensions.Logging;
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Logger.SQLite
+namespace Parky.Logging
 {
-	public class NullScope : IDisposable
+	internal class NullScope : IDisposable
 	{
 		public static NullScope Instance { get; } = new NullScope();
 		private NullScope() { }
