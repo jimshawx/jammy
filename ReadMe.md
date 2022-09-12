@@ -30,7 +30,7 @@ So here is my humble attempt at an Amiga emulation.
 * Sprite multiplexing doesn't work yet
 * All blits are immediate
 
-The C# 68000 is slightly faster than the Musashi one, not because I have made any specific effors to optimise it, but I think mostly because thunking out of C# into C
+The C# 68000 is slightly faster than the Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C
 and back again isn't particularly fast.
 
 The Musashi 68030 option supports the 68881 and MMU instructions. There didn't seem any real need to add a 68040 or 68060 option because of this.
