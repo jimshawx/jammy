@@ -549,13 +549,13 @@ namespace Jammy.Core.Custom
 						//ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
 						
 						//round up to multiple of 1 word
-						//int round = 7;
+						uint round = 7;
 						//ddfstrtfix = (ushort)(ddfstrt & ~round);
-						//ddfstopfix = (ushort)(((ddfstop + round) & ~round)+8);
+						ddfstopfix = (ushort)(((ddfstop + round) & ~round)+round+1);
 						ddfstrtfix = ddfstrt;
-						ddfstopfix = (ushort)(ddfstop + 8);
-						int diff = (ddfstop-ddfstrt)&7;
-						if (diff != 0) ddfstopfix += (ushort)(8 - diff);
+						//ddfstopfix = (ushort)(ddfstop + 8);
+						//int diff = (ddfstop-ddfstrt)&7;
+						//if (diff != 0) ddfstopfix += (ushort)(8 - diff);
 					}
 					else if ((fmode&3) == 3)
 					{
