@@ -58,6 +58,8 @@ namespace Jammy.Core.Custom
 			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 
 			ComputeDPFLookup();
+
+			logger.LogTrace("Press F9 to enable Copper debug");
 		}
 
 		private void dbug_Keyup(int obj)
@@ -551,7 +553,7 @@ namespace Jammy.Core.Custom
 						//round up to multiple of 1 word
 						uint round = 7;
 						//ddfstrtfix = (ushort)(ddfstrt & ~round);
-						ddfstopfix = (ushort)(((ddfstop + round) & ~round)+round+1);
+						ddfstopfix = (ushort)(((ddfstop + round) & ~round));//+round+1+round+1+round+1);
 						ddfstrtfix = ddfstrt;
 						//ddfstopfix = (ushort)(ddfstop + 8);
 						//int diff = (ddfstop-ddfstrt)&7;
@@ -856,7 +858,7 @@ namespace Jammy.Core.Custom
 			if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 			{
 				int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
-				int[] fetchHi = { 4, 2, 3, 1, 4, 3, 2, 1 };
+				int[] fetchHi = { 4, 2, 3, 1, 4, 2, 3, 1 };
 
 				planeIdx = h % cln.pixmod;
 
