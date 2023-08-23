@@ -545,6 +545,7 @@ namespace Jammy.Core.Custom
 
 					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 					{
+						/*
 						//wordCount = (ddfstop - ddfstrt+3) / 4 + 2;
 						////round up to multiple of 2 words
 						//if ((wordCount & 1) != 0) wordCount++;
@@ -558,6 +559,11 @@ namespace Jammy.Core.Custom
 						//ddfstopfix = (ushort)(ddfstop + 8);
 						//int diff = (ddfstop-ddfstrt)&7;
 						//if (diff != 0) ddfstopfix += (ushort)(8 - diff);
+						*/
+						ddfstrtfix = (ushort)(ddfstrt & 0xfff8);
+
+						wordCount = (ddfstop - ddfstrt + 7) / 8 + 1;
+						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8);
 					}
 					else if ((fmode&3) == 3)
 					{
