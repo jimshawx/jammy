@@ -246,33 +246,42 @@ namespace Jammy.Core.Custom.Audio
 			//	logger.LogTrace($"D3");
 		}
 
+		private ushort MapAudvol(ushort audvol)
+		{
+			//mask with 7f
+			//if bit 6 is set, 0x40 else return the value
+			audvol &= 0x7f;
+			if ((audvol & 0x40) != 0) return 0x40;
+			return audvol;
+		}
+
 		public void Write(uint insaddr, uint address, ushort value)
 		{
 			switch (address)
 			{
 				case ChipRegs.AUD0PER: ch[0].audper = value; break;
-				case ChipRegs.AUD0VOL: ch[0].audvol = value; break;
+				case ChipRegs.AUD0VOL: ch[0].audvol = MapAudvol(value); break;
 				case ChipRegs.AUD0LEN: ch[0].audlen = value; break;
 				case ChipRegs.AUD0DAT: ch[0].auddat = value; ChannelIRQOn(0); break;
 				case ChipRegs.AUD0LCH: ch[0].audlc = (ch[0].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD0LCL: ch[0].audlc = ((ch[0].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
 
 				case ChipRegs.AUD1PER: ch[1].audper = value; break;
-				case ChipRegs.AUD1VOL: ch[1].audvol = value; break;
+				case ChipRegs.AUD1VOL: ch[1].audvol = MapAudvol(value); break;
 				case ChipRegs.AUD1LEN: ch[1].audlen = value; break;
 				case ChipRegs.AUD1DAT: ch[1].auddat = value; ChannelIRQOn(1); break;
 				case ChipRegs.AUD1LCH: ch[1].audlc = (ch[1].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD1LCL: ch[1].audlc = ((ch[1].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
 
 				case ChipRegs.AUD2PER: ch[2].audper = value; break;
-				case ChipRegs.AUD2VOL: ch[2].audvol = value; break;
+				case ChipRegs.AUD2VOL: ch[2].audvol = MapAudvol(value); break;
 				case ChipRegs.AUD2LEN: ch[2].audlen = value; break;
 				case ChipRegs.AUD2DAT: ch[2].auddat = value; ChannelIRQOn(2); break;
 				case ChipRegs.AUD2LCH: ch[2].audlc = (ch[2].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD2LCL: ch[2].audlc = ((ch[2].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
 
 				case ChipRegs.AUD3PER: ch[3].audper = value; break;
-				case ChipRegs.AUD3VOL: ch[3].audvol = value; break;
+				case ChipRegs.AUD3VOL: ch[3].audvol = MapAudvol(value); break;
 				case ChipRegs.AUD3LEN: ch[3].audlen = value; break;
 				case ChipRegs.AUD3DAT: ch[3].auddat = value; ChannelIRQOn(3); break;
 				case ChipRegs.AUD3LCH: ch[3].audlc = (ch[3].audlc & 0x0000ffff) | ((uint)value << 16); break;
