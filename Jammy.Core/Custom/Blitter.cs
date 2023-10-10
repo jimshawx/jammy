@@ -365,6 +365,8 @@ namespace Jammy.Core.Custom
 
 					bltzero |= bltddat;
 
+					bltdpt &= 0xfffffffe;
+
 					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0) && !dont_blit)
 						memory.Write(0, bltdpt, (ushort)bltddat, Size.Word);
 
@@ -498,6 +500,9 @@ namespace Jammy.Core.Custom
 			bool writeBit = true;
 
 			int x0 = (int)(bltcon0 >> 12);
+			int ror = (int)(bltcon1 >> 12);
+
+			uint bltbdatror = (bltbdat << ror) | (bltbdat>>(16-ror));
 
 			int dm = (int)Math.Max(dx, dy);
 			int x1 = dm / 2; 
@@ -511,14 +516,14 @@ namespace Jammy.Core.Custom
 				bltadat = 0x8000u >> x0;
 
 				bltddat = 0;
-				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdat & ~bltcdat;
-				if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdat & bltcdat;
-				if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat & bltbdat & ~bltcdat;
-				if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat & bltbdat & bltcdat;
-				if ((bltcon0 & 0x10) != 0) bltddat |= bltadat & ~bltbdat & ~bltcdat;
-				if ((bltcon0 & 0x20) != 0) bltddat |= bltadat & ~bltbdat & bltcdat;
-				if ((bltcon0 & 0x40) != 0) bltddat |= bltadat & bltbdat & ~bltcdat;
-				if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdat & bltcdat;
+				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat;
+				if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdatror &  bltcdat;
+				if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat &  bltbdatror & ~bltcdat;
+				if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat &  bltbdatror &  bltcdat;
+				if ((bltcon0 & 0x10) != 0) bltddat |=  bltadat & ~bltbdatror & ~bltcdat;
+				if ((bltcon0 & 0x20) != 0) bltddat |=  bltadat & ~bltbdatror &  bltcdat;
+				if ((bltcon0 & 0x40) != 0) bltddat |=  bltadat &  bltbdatror & ~bltcdat;
+				if ((bltcon0 & 0x80) != 0) bltddat |=  bltadat &  bltbdatror &  bltcdat;
 
 				//oddly, USEC must be checked, not USED
 				if ((bltcon0 & (1u << 9)) != 0 && (bltcon1 & (1u << 7)) == 0)
@@ -547,6 +552,8 @@ namespace Jammy.Core.Custom
 					y1 += dm;
 					writeBit = true;
 				}
+				
+				bltcpt &= 0xfffffffe;
 
 				//first write goes to bltdpt, thereafter bltdpt = bltcpt
 				bltdpt = bltcpt;
