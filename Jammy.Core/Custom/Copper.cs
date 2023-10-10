@@ -479,7 +479,7 @@ namespace Jammy.Core.Custom
 		{
 			public ulong pixelMask;
 			public uint pixelBits;
-			public ulong[] bpldatdma = new ulong[8];
+			public ulong[] bpldatpix = new ulong[8];
 
 			public int planes;
 			public int diwstrth = 0;
@@ -545,25 +545,8 @@ namespace Jammy.Core.Custom
 
 					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 					{
-						/*
-						//wordCount = (ddfstop - ddfstrt+3) / 4 + 2;
-						////round up to multiple of 2 words
-						//if ((wordCount & 1) != 0) wordCount++;
-						//ddfstopfix = (ushort)(ddfstrtfix + wordCount * 4);
-						
-						//round up to multiple of 1 word
-						uint round = 7;
-						//ddfstrtfix = (ushort)(ddfstrt & ~round);
-						ddfstopfix = (ushort)(((ddfstop + round) & ~round));//+round+1+round+1+round+1);
 						ddfstrtfix = ddfstrt;
-						//ddfstopfix = (ushort)(ddfstop + 8);
-						//int diff = (ddfstop-ddfstrt)&7;
-						//if (diff != 0) ddfstopfix += (ushort)(8 - diff);
-						*/
-						ddfstrtfix = (ushort)(ddfstrt & 0xfff8);
-
-						wordCount = (ddfstop - ddfstrt + 7) / 8 + 1;
-						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8);
+						ddfstopfix=(ushort)(ddfstop+8);
 					}
 					else if ((fmode&3) == 3)
 					{
@@ -773,7 +756,7 @@ namespace Jammy.Core.Custom
 							else
 							{
 								cop.status = CopperStatus.Stopped;
-								logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {((copcon&2)!=0?1:0)}");
+								//logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {((copcon&2)!=0?1:0)}");
 							}
 						}
 						else
@@ -785,7 +768,7 @@ namespace Jammy.Core.Custom
 							else
 							{
 								cop.status = CopperStatus.Stopped;
-								logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {((copcon&2)!=0?1:0)}");
+								//logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {((copcon&2)!=0?1:0)}");
 							}
 						}
 					}
@@ -855,7 +838,6 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		//[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneFetch(int h)
 		{
 			int planeIdx;
@@ -891,18 +873,30 @@ namespace Jammy.Core.Custom
 			{
 				if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 				{
-					cln.bpldatdma[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
+					bpldat[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
 					bplpt[plane] += 2;
 				}
 				else if ((fmode&3) == 3)
 				{
-					cln.bpldatdma[plane] = ((ulong)memory.Read(0, bplpt[plane], Size.Long) << 32) | memory.Read(0, bplpt[plane] + 4, Size.Long);
+					bpldat[plane] = ((ulong)memory.Read(0, bplpt[plane], Size.Long) << 32) | memory.Read(0, bplpt[plane] + 4, Size.Long);
 					bplpt[plane] += 8;
 				}
 				else
 				{
-					cln.bpldatdma[plane] = memory.Read(0, bplpt[plane], Size.Long);
+					bpldat[plane] = memory.Read(0, bplpt[plane], Size.Long);
 					bplpt[plane] += 4;
+				}
+
+				if (plane == 0)
+				{
+					for (int i = 0; i < 8; i++)
+					{
+						//todo: shift these in based on the scroll register
+						//int odd = bplcon1&0xf;
+						//int even = (bplcon1>>4)&0xf;
+
+						cln.bpldatpix[i] = bpldat[i];
+					}
 				}
 
 				if (cop.currentLine == cdbg.dbugLine)
@@ -915,7 +909,7 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		private uint pixelCounter = 0;
+		//private uint pixelCounter = 0;
 
 		private void FirstPixel()
 		{
@@ -928,38 +922,34 @@ namespace Jammy.Core.Custom
 
 			cln.pixelMask = 1ul << (int)cln.pixelBits;
 
-			pixelCounter = 0;
+			//pixelCounter = 0;
 
 			for (int i = 0; i < 8; i++)
-				bpldat[i] = cln.bpldatdma[i] = 0;
+				cln.bpldatpix[i] = 0;
 		}
 
 		private void NextPixel(int h, int p)
 		{
-			if ((pixelCounter & (cln.pixelBits)) == 0)
-			{
-				for (int i = 0; i < 8; i++)
-				{
-					bpldat[i] = cln.bpldatdma[i];
-					cln.bpldatdma[i] = 0;
-				}
+			//if ((pixelCounter & (cln.pixelBits)) == 0)
+			//{
+			//	//for (int i = 0; i < 8; i++)
+			//	//{
+			//	//	cln.bpldatpix[i] = bpldat[i];
+			//	//}
 
-				if (cop.currentLine == cdbg.dbugLine && p == 0)
-				{
-					cdbg.write[h] = 'x';
-					cdbg.dma++;
-				}
-			}
-			else
-			{
-				for (int i = 0; i < 8; i++)
-					bpldat[i] <<= 1;
-
-				if (cop.currentLine == cdbg.dbugLine && p == 0)
-					cdbg.write[h] = '.';
-			}
-
-			pixelCounter++;
+			//	if (cop.currentLine == cdbg.dbugLine && p == 0)
+			//	{
+			//		cdbg.write[h] = 'x';
+			//		cdbg.dma++;
+			//	}
+			//}
+			//else
+			//{
+			//	if (cop.currentLine == cdbg.dbugLine && p == 0)
+			//		cdbg.write[h] = '.';
+			//}
+			for (int i = 0; i < 8; i++)
+				cln.bpldatpix[i] <<= 1;
 		}
 
 		//(x&(1<<0))*1 + x&(1<<2)*2 + x&(1<<4)*4 + x&(1<<6) *8
@@ -996,11 +986,11 @@ namespace Jammy.Core.Custom
 
 				uint col;
 
-				NextPixel(h,p);
-
 				byte pix = 0;
 				for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
-					pix |= (byte)((bpldat[i] & cln.pixelMask) != 0 ? b : 0);
+					pix |= (byte)((cln.bpldatpix[i] & cln.pixelMask) != 0 ? b : 0);
+
+				NextPixel(h, p);
 
 				//BPLAM
 				pix ^= (byte)(bplcon4 >> 8);
@@ -1324,9 +1314,11 @@ namespace Jammy.Core.Custom
 					break;
 				case ChipRegs.COPJMP1:
 					value = (ushort)copjmp1;
+					cop.copPC = cop1lc;
 					break;
 				case ChipRegs.COPJMP2:
 					value = (ushort)copjmp2;
+					cop.copPC = cop2lc;
 					break;
 				case ChipRegs.COPINS:
 					value = copins;
@@ -1517,8 +1509,8 @@ namespace Jammy.Core.Custom
 				case ChipRegs.DIWSTOP: diwstop = value; diwhigh = 0; break;
 				case ChipRegs.DIWHIGH: diwhigh = value; break;
 
-				case ChipRegs.DDFSTRT: ddfstrt = value; cln.lineState = CopperLineState.LineTerminated; break;
-				case ChipRegs.DDFSTOP: ddfstop = value; cln.lineState = CopperLineState.LineTerminated; break;
+				case ChipRegs.DDFSTRT: ddfstrt = (ushort)(value & 0xfc); cln.lineState = CopperLineState.LineTerminated; break;
+				case ChipRegs.DDFSTOP: ddfstop = (ushort)(value & 0xfc); cln.lineState = CopperLineState.LineTerminated; break;
 
 				case ChipRegs.SPR0PTL: sprpt[0] = (sprpt[0] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR0PTH: sprpt[0] = (sprpt[0] & 0x0000ffff) | ((uint)value << 16); break;
@@ -1588,6 +1580,8 @@ namespace Jammy.Core.Custom
 
 			if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
 			{
+				value &= 0x0fff;
+
 				//uint bank = (custom.Read(0, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
 				int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
 
