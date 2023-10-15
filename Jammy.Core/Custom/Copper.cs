@@ -546,7 +546,9 @@ namespace Jammy.Core.Custom
 					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 					{
 						ddfstrtfix = ddfstrt;
+						if ((ddfstrtfix&0x4)==0) ddfstrtfix += 4;
 						ddfstopfix=(ushort)(ddfstop+8);
+						if ((ddfstopfix & 0x4) == 0) ddfstopfix += 4;
 					}
 					else if ((fmode&3) == 3)
 					{
@@ -580,6 +582,7 @@ namespace Jammy.Core.Custom
 					pixelLoop = 2;
 					pixmod = 8;
 
+					//low-res ddfstrt ignores bit 2
 					ddfstrtfix = (ushort)(ddfstrt & 0xfff8);
 
 					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
@@ -618,10 +621,20 @@ namespace Jammy.Core.Custom
 
 		private void RunCopperLine()
 		{
+			if (cop.currentLine == 50)
+				cop.currentLine = 50;
+
+			//ddfstrt->ddfstop
+			//workbench
+			//KS2.04 3C->D4
+			//KS1.3  3C->D0
+			//kickstart
+			//KS2.04 40->D0
+
+			cln.InitLine(bplcon0, diwstrt, diwstop, diwhigh, ddfstrt, ddfstop, fmode, settings);
+
 			for (int h = 0; h < 256; h++)
 			{
-				cln.InitLine(bplcon0, diwstrt, diwstop, diwhigh, ddfstrt, ddfstop, fmode, settings);
-
 				//debugging
 				if (cop.currentLine == cdbg.dbugLine)
 				{
@@ -665,7 +678,8 @@ namespace Jammy.Core.Custom
 
 					//is it the visible area horizontally?
 					//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
-					if (h >= ((cln.diwstrth + cdbg.diwSHack) >> 1) && h < ((cln.diwstoph + cdbg.diwEHack) >> 1))
+					//HACK-the minus 1 is a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
+					if (h >= ((cln.diwstrth + cdbg.diwSHack) >> 1)-1 && h < ((cln.diwstoph + cdbg.diwEHack) >> 1))
 					{
 						CopperBitplaneConvert(h);
 					}
@@ -706,6 +720,7 @@ namespace Jammy.Core.Custom
 			}
 
 			//this should be a no-op
+			System.Diagnostics.Debug.Assert(SCREEN_WIDTH - (cop.dptr - cop.lineStart) == 0);
 			cop.dptr += SCREEN_WIDTH - (cop.dptr - cop.lineStart);
 
 			//scan double
@@ -848,7 +863,7 @@ namespace Jammy.Core.Custom
 				int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
 				int[] fetchHi = { 4, 2, 3, 1, 4, 2, 3, 1 };
 
-				planeIdx = h % cln.pixmod;
+				planeIdx = (h - cln.ddfstrtfix) % cln.pixmod;
 
 				if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 					plane = fetchHi[planeIdx] - 1;
@@ -865,7 +880,7 @@ namespace Jammy.Core.Custom
 				if ((fmode&3) == 3) mod = 16;
 				else mod = 8;
 
-				planeIdx = h % mod;
+				planeIdx = h-ddfstrt % mod;
 				plane = fetchF[planeIdx] - 1;
 			}
 
@@ -897,6 +912,17 @@ namespace Jammy.Core.Custom
 
 						cln.bpldatpix[i] = bpldat[i];
 					}
+
+					if (cop.currentLine == cdbg.dbugLine)
+					{
+						cdbg.write[h] = 'x';
+						cdbg.dma++;
+					}
+				}
+				else
+				{
+					if (cop.currentLine == cdbg.dbugLine)
+						cdbg.write[h] = '.';
 				}
 
 				if (cop.currentLine == cdbg.dbugLine)
@@ -928,26 +954,8 @@ namespace Jammy.Core.Custom
 				cln.bpldatpix[i] = 0;
 		}
 
-		private void NextPixel(int h, int p)
+		private void NextPixel()
 		{
-			//if ((pixelCounter & (cln.pixelBits)) == 0)
-			//{
-			//	//for (int i = 0; i < 8; i++)
-			//	//{
-			//	//	cln.bpldatpix[i] = bpldat[i];
-			//	//}
-
-			//	if (cop.currentLine == cdbg.dbugLine && p == 0)
-			//	{
-			//		cdbg.write[h] = 'x';
-			//		cdbg.dma++;
-			//	}
-			//}
-			//else
-			//{
-			//	if (cop.currentLine == cdbg.dbugLine && p == 0)
-			//		cdbg.write[h] = '.';
-			//}
 			for (int i = 0; i < 8; i++)
 				cln.bpldatpix[i] <<= 1;
 		}
@@ -980,6 +988,9 @@ namespace Jammy.Core.Custom
 		//[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneConvert(int h)
 		{
+			if (cop.currentLine == 50)
+				cop.currentLine = 50;
+
 			for (int p = 0; p < cln.pixelLoop; p++)
 			{
 				//decode the colour
@@ -990,7 +1001,7 @@ namespace Jammy.Core.Custom
 				for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
 					pix |= (byte)((cln.bpldatpix[i] & cln.pixelMask) != 0 ? b : 0);
 
-				NextPixel(h, p);
+				NextPixel();
 
 				//BPLAM
 				pix ^= (byte)(bplcon4 >> 8);
@@ -1262,6 +1273,9 @@ namespace Jammy.Core.Custom
 		private ushort[] sprctl = new ushort[8];
 		private ushort[] sprdata = new ushort[8];
 		private ushort[] sprdatb = new ushort[8];
+		private ushort clxdat;
+		private ushort clxcon;
+		private ushort clxcon2;
 
 		//ECS/AGA
 		private ushort vbstrt;
@@ -1424,6 +1438,12 @@ namespace Jammy.Core.Custom
 				case ChipRegs.SPR7DATA: value = sprdata[7]; break;
 				case ChipRegs.SPR7DATB: value = sprdatb[7]; break;
 
+				case ChipRegs.CLXDAT:
+					logger.LogTrace("CLXDAT accessed - no sprite collisions yet");
+					value = (ushort)(clxdat|0x8000);
+					clxdat = 0;
+					break;
+
 				//ECS/AGA
 				case ChipRegs.VBSTRT: value = vbstrt; break;
 				case ChipRegs.VBSTOP: value = vbstop; break;
@@ -1567,6 +1587,15 @@ namespace Jammy.Core.Custom
 				case ChipRegs.SPR7CTL: sprctl[7] = value; break;
 				case ChipRegs.SPR7DATA: sprdata[7] = value; break;
 				case ChipRegs.SPR7DATB: sprdatb[7] = value; break;
+
+				case ChipRegs.CLXCON:
+					clxcon = value;
+					logger.LogTrace("CLXCON accessed - no sprite collisions yet");
+					break;
+				case ChipRegs.CLXCON2:
+					clxcon2 = value;
+					logger.LogTrace("CLXCON2 accessed - no sprite collisions yet");
+					break;
 
 				//ECS/AGA
 				case ChipRegs.VBSTRT: vbstrt = value; break;
