@@ -61,6 +61,8 @@ namespace Jammy.Core.Custom
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			if (size == Size.Word && address == 0xde109a && value == 0xbfff) { return;/*something writes 0xbfff here at boot time */ }
+			if (size == Size.Word && address == 0xde109a && value == 0x4000) { return;/*something writes 0x4000 here at boot time */ }
 			if (size != Size.Byte) throw new InvalidCustomRegisterSizeException(insaddr, address, size);
 			logger.LogTrace($"[MOBO] W {address:X8} @ {insaddr:X8} {size} {value:X8}");
 			if (address == 0xde0000) reg_TIMEOUT = (byte)value;
