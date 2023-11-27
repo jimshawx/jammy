@@ -50,7 +50,7 @@ namespace Jammy.UI.Settings
 
 		private void cbCPU_SelectedValueChanged(object sender, EventArgs e)
 		{
-			if (cbSku.SelectedText != "MC68000")
+			if ((string)cbSku.SelectedItem != "MC68000")
 			{
 				rbNative.Checked = false;
 				rbNative.Enabled = false;
