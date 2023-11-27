@@ -164,10 +164,10 @@ namespace Jammy.Disassembler.Analysers
 		}
 
 		private ExecLocation[] execLocations = {
-			new ExecLocation("1.2", "1.0", "",0x00000000, 0x0),
-			new ExecLocation("31.34", "1.1", "", 0x00000000,0x0),
-			new ExecLocation("33.166", "1.2", "", 0x00000000,0x0),
-			new ExecLocation("33.180", "1.2", "", 0x00000000,0x0),
+			new ExecLocation("1.2", "1.0", "",0x00000001, 0x0),
+			new ExecLocation("31.34", "1.1", "", 0x00000002,0x0),
+			new ExecLocation("33.166", "1.2", "", 0x00000003,0x0),
+			new ExecLocation("33.180", "1.2", "", 0x00000004,0x0),
 			new ExecLocation("33.192", "1.2", "A500/A1000/A2000", 0x56F2E2A6,0xFC1A40),
 			new ExecLocation("34.2", "1.3", "A3000", 0x150B7DB3,0xFC1A7C),
 			new ExecLocation("34.2","1.3", "A500", 0x15267DB3,0xFC1A7C),
