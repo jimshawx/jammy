@@ -477,9 +477,9 @@ namespace Jammy.Core.Custom
 
 		private class CopperLine
 		{
-			public ulong pixelMask;
+			public UInt128 pixelMask;
 			public uint pixelBits;
-			public ulong[] bpldatpix = new ulong[8];
+			public UInt128[] bpldatpix = new UInt128[8];
 
 			public int planes;
 			public int diwstrth = 0;
@@ -625,11 +625,12 @@ namespace Jammy.Core.Custom
 				cop.currentLine = 50;
 
 			//ddfstrt->ddfstop
+			//HRM says DDFSTRT = DDFSTOP - (4 * (word count - 2)) for high resolution
 			//workbench
-			//KS2.04 3C->D4
-			//KS1.3  3C->D0
+			//KS2.04 3C->D4 => 3C = D4 - (4 * (40-2)) = D4-98 = 3C
+			//KS1.3  3C->D0 => 3C = D0 - (4 * (40-2)) = D0-98 = 38
 			//kickstart
-			//KS2.04 40->D0
+			//KS2.04 40->D0 => 40 = D0 - (4 * (40-2)) = D0-98 = 38
 
 			cln.InitLine(bplcon0, diwstrt, diwstop, diwhigh, ddfstrt, ddfstop, fmode, settings);
 
@@ -906,11 +907,13 @@ namespace Jammy.Core.Custom
 				{
 					for (int i = 0; i < 8; i++)
 					{
-						//todo: shift these in based on the scroll register
-						//int odd = bplcon1&0xf;
-						//int even = (bplcon1>>4)&0xf;
+						int odd = bplcon1&0xf;
+						int even = (bplcon1>>4)&0xf;
 
-						cln.bpldatpix[i] = bpldat[i];
+						if ((i&1)!=0)
+							cln.bpldatpix[i] |= (UInt128)bpldat[i] << (16-odd);
+						else
+							cln.bpldatpix[i] |= (UInt128)bpldat[i] << (16-even);
 					}
 
 					if (cop.currentLine == cdbg.dbugLine)
@@ -946,7 +949,7 @@ namespace Jammy.Core.Custom
 			else
 				cln.pixelBits = 31; 
 
-			cln.pixelMask = 1ul << (int)cln.pixelBits;
+			cln.pixelMask = UInt128.One << (int)(cln.pixelBits+16);
 
 			//pixelCounter = 0;
 
