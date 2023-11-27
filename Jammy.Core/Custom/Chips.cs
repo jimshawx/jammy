@@ -103,6 +103,8 @@ namespace Jammy.Core.Custom
 
 			int reg = REG(address);
 
+			if (address == 0xdf9000 || address == 0xdfa000) {return 0; }
+
 			if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.DDFSTOP) ||
 				(address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31)||
 				address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
@@ -156,6 +158,11 @@ namespace Jammy.Core.Custom
 
 			if (size == Size.Byte)
 			{
+				value &= 0xff;
+				value |= value<<8;
+				Write(insaddr, address & ~1u, value, Size.Word);
+				return;
+
 				/*
 	If AGA (or maybe any 68020+ hardware?)
 	- if odd address: 00xx is written to even address
