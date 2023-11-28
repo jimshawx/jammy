@@ -50,6 +50,8 @@ namespace Jammy.Core.Floppy
 
 		private readonly Drive[] drive;
 
+		private int diskInterruptPending = -1;
+
 		public DiskDrives(IChipRAM memory, IInterrupt interrupt, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
 		{
 			this.memory = memory;
@@ -186,12 +188,23 @@ namespace Jammy.Core.Floppy
 						}
 					}
 			}
+
+			if (diskInterruptPending != -1)
+			{
+				diskInterruptPending -= (int)cycles;
+				if (diskInterruptPending < 0)
+				{
+					interrupt.AssertInterrupt(Interrupt.DSKBLK);
+					diskInterruptPending = -1;
+				}
+			}
 		}
 
 		public void Reset()
 		{
 			for (int i = 0; i < 4; i++)
 				drive[i].Reset();
+			diskInterruptPending = -1;
 		}
 
 		public ushort Read(uint insaddr, uint address)
@@ -303,9 +316,11 @@ namespace Jammy.Core.Floppy
 						memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
 					}
 
-					interrupt.AssertInterrupt(Interrupt.DSKBLK);
-
+					//this is far too fast, try triggering an interrupt later (should actually be one scanline per word read)
+					//interrupt.AssertInterrupt(Interrupt.DSKBLK);
+					diskInterruptPending = 1000;
 					break;
+
 				case ChipRegs.DSKDAT:
 					dskdat = value;
 					break;
