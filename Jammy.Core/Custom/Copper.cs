@@ -31,9 +31,10 @@ namespace Jammy.Core.Custom
 		private const int SCREEN_WIDTH = DMA_WIDTH * 4;//227 * 4;
 		private const int SCREEN_HEIGHT = 313 * 2;//x2 for scan double
 
+		//hack: optimisation to avoid processing pixels too far left and right on the screen
 		//sprite DMA starts at 0x18, but can be eaten into by bitmap DMA
-		//normal bitmap DMA start at 0x38, overscan at 0x30
-		private const int DMA_START = 0x30;
+		//normal bitmap DMA start at 0x38, overscan at 0x30, Menace starts at 0x28
+		private const int DMA_START = 0x28;
 		//bitmap DMA ends at 0xD8, with 8 slots after that
 		private const int DMA_END = 0xF0;
 
@@ -499,6 +500,36 @@ namespace Jammy.Core.Custom
 
 			public CopperLineState lineState;
 
+			//https://eab.abime.net/showthread.php?t=111329
+			private const int OCS=0;
+			private const int AGA=1;
+			private int FetchWidth(int DDFSTRT, int DDFSTOP, int chipset, int res, int FMODE)
+			{
+				// validate bits
+				FMODE &= 3;
+				DDFSTRT &= (chipset!=0) ? 0xfe : 0xfc;
+				DDFSTOP &= (chipset!=0) ? 0xfe : 0xfc;
+				res = (chipset == OCS) ? res & 1 : res;
+
+				// fetch=log2(fetch_width)-4; fetch_width=16,32,64
+				int fetch = (chipset == AGA) ? ((FMODE <= 1) ? FMODE : FMODE - 1) : 0;
+
+				// sub-block (OCS/ECS) and large-block (AGA) stop pad
+				int pad = (fetch > res) ? (8 << (fetch - res)) - 1 : 8 - 1;
+
+				// OCS/ECS/(AGA) sub-block
+				int sub = (res > fetch) ? res - fetch : 0;
+
+				// AGA large-block
+				int large = (fetch > res) ? fetch - res : 0;
+
+				// DMA fetched blocks
+				int blocks = ((DDFSTOP - DDFSTRT + pad) >> (3 + large)) + 1;
+
+				// 16 pixels per fetch_width per sub-block per block
+				return blocks << (4 + fetch + sub);
+			}
+
 			public void InitLine(ushort bplcon0, ushort diwstrt, ushort diwstop, ushort diwhigh, ushort ddfstrt, ushort ddfstop, ushort fmode, EmulationSettings settings)
 			{
 				// start - pre-cache some useful per-scanline values
@@ -533,6 +564,17 @@ namespace Jammy.Core.Custom
 					//todo: there are also an extra two bottom bits for strth/stoph
 				}
 
+			//ddfstrt->ddfstop
+			//HRM says DDFSTRT = DDFSTOP - (4 * (word count - 2)) for high resolution
+			//workbench
+			//KS2.04 3C->D4 => 3C = D4 - (4 * (40-2)) = D4-98 = 3C
+			//KS1.3  3C->D0 => 3C = D0 - (4 * (40-2)) = D0-98 = 38
+			//kickstart
+			//KS2.04 40->D0 => 40 = D0 - (4 * (40-2)) = D0-98 = 38
+
+			//https://eab.abime.net/showthread.php?t=111329
+
+
 				//how many pixels should be fetched per clock in the current mode?
 				if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 				{
@@ -546,9 +588,8 @@ namespace Jammy.Core.Custom
 					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 					{
 						ddfstrtfix = ddfstrt;
-						if ((ddfstrtfix&0x4)==0) ddfstrtfix += 4;
-						ddfstopfix=(ushort)(ddfstop+8);
-						if ((ddfstopfix & 0x4) == 0) ddfstopfix += 4;
+						ddfstopfix=(ushort)(ddfstrt+((((ddfstop-ddfstrt+7)>>3)+1)<<3));
+						//FetchWidth(ddfstrt, ddfstop, OCS, 1, 0);
 					}
 					else if ((fmode&3) == 3)
 					{
@@ -587,11 +628,8 @@ namespace Jammy.Core.Custom
 
 					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 					{
-						wordCount = (ddfstop - ddfstrt + 7) / 8 + 1;
-						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 8);
-						//int round =15;
-						//ddfstrtfix = (ushort)(ddfstrt & ~round);
-						//ddfstopfix = (ushort)((ddfstop + round) & ~round);
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						FetchWidth(ddfstrt, ddfstop, OCS, 0, 0);
 					}
 					else
 					{
@@ -623,14 +661,6 @@ namespace Jammy.Core.Custom
 		{
 			if (cop.currentLine == 50)
 				cop.currentLine = 50;
-
-			//ddfstrt->ddfstop
-			//HRM says DDFSTRT = DDFSTOP - (4 * (word count - 2)) for high resolution
-			//workbench
-			//KS2.04 3C->D4 => 3C = D4 - (4 * (40-2)) = D4-98 = 3C
-			//KS1.3  3C->D0 => 3C = D0 - (4 * (40-2)) = D0-98 = 38
-			//kickstart
-			//KS2.04 40->D0 => 40 = D0 - (4 * (40-2)) = D0-98 = 38
 
 			cln.InitLine(bplcon0, diwstrt, diwstop, diwhigh, ddfstrt, ddfstop, fmode, settings);
 
@@ -679,14 +709,16 @@ namespace Jammy.Core.Custom
 
 					//is it the visible area horizontally?
 					//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
-					//HACK-the minus 1 is a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
-					if (h >= ((cln.diwstrth + cdbg.diwSHack) >> 1)-1 && h < ((cln.diwstoph + cdbg.diwEHack) >> 1))
+					//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
+					if (h >= ((cln.diwstrth + cdbg.diwSHack) >> 1)-2 && h < ((cln.diwstoph + cdbg.diwEHack) >> 1)-2)
 					{
 						CopperBitplaneConvert(h);
 					}
 					else
 					{
 						//outside horizontal area
+						for (int p = 0; p < cln.pixelLoop; p++)
+							NextPixel();
 
 						//output colour 0 pixels
 						uint col = truecolour[0];
@@ -871,17 +903,22 @@ namespace Jammy.Core.Custom
 				else
 					plane = fetchLo[planeIdx] - 1;
 			}
+			else if ((fmode&3) == 3)
+			{
+				int[] fetchF = {
+					 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
+				};
+
+				planeIdx = h - ddfstrt % 16;
+				plane = fetchF[planeIdx] - 1;
+			}
 			else
 			{
 				int[] fetchF = {
-					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10,
+					 10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
 				};
 
-				int mod;
-				if ((fmode&3) == 3) mod = 16;
-				else mod = 8;
-
-				planeIdx = h-ddfstrt % mod;
+				planeIdx = h-ddfstrt % 8;
 				plane = fetchF[planeIdx] - 1;
 			}
 
@@ -903,10 +940,12 @@ namespace Jammy.Core.Custom
 					bplpt[plane] += 4;
 				}
 
+				//we just filled BPL0DAT
 				if (plane == 0)
 				{
 					for (int i = 0; i < 8; i++)
 					{
+						//scrolling
 						int odd = bplcon1&0xf;
 						int even = (bplcon1>>4)&0xf;
 
@@ -1593,6 +1632,7 @@ namespace Jammy.Core.Custom
 
 				case ChipRegs.CLXCON:
 					clxcon = value;
+					clxcon2 = 0;
 					logger.LogTrace("CLXCON accessed - no sprite collisions yet");
 					break;
 				case ChipRegs.CLXCON2:
