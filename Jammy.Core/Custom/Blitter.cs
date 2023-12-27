@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Jammy.Core.Custom.IO;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -18,12 +19,24 @@ namespace Jammy.Core.Custom
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IChipRAM memory, IInterrupt interrupt, ILogger<Blitter> logger)
+		public Blitter(IChips custom, IChipRAM memory, IInterrupt interrupt, IEmulationWindow  emulationWindow, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
+
+			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
+		}
+
+		private bool blitterDump = false;
+
+		private void dbug_Keyup(int obj) { }
+
+		private void dbug_Keydown(int obj)
+		{
+			if (obj == (int)Keyboard.VK.VK_F2)
+				blitterDump ^= true;
 		}
 
 		public void Reset()
@@ -256,25 +269,28 @@ namespace Jammy.Core.Custom
 
 			//todo: assumes blitter DMA is enabled
 
-			//logger.LogTrace($"BLIT! {width}x{height} = {width * 16}bits x {height} = {width * 16 * height} bits = {width * height * 2} bytes");
+			if (blitterDump)
+			{
+				logger.LogTrace($"BLIT! {width}x{height} = {width * 16}bits x {height} = {width * 16 * height} bits = {width * height * 2} bytes");
 
-			//logger.LogTrace($"->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
-			//logger.LogTrace($"->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
-			//logger.LogTrace($"->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
-			//logger.LogTrace($"->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
-			//logger.LogTrace($"M {Convert.ToString(bltafwm, 2).PadLeft(16, '0')} {Convert.ToString(bltalwm, 2).PadLeft(16, '0')}");
-			//logger.LogTrace($"cookie: {bltcon0 & 0xff:X2} {((bltcon1 & 2) != 0 ? "descending" : "ascending")}");
-			//logger.LogTrace("ABC");
-			//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
-			//if ((bltcon0 & 0x02) != 0) logger.LogTrace("001");
-			//if ((bltcon0 & 0x04) != 0) logger.LogTrace("010");
-			//if ((bltcon0 & 0x08) != 0) logger.LogTrace("011");
-			//if ((bltcon0 & 0x10) != 0) logger.LogTrace("100");
-			//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
-			//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
-			//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
-			//if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
-			//	logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+				logger.LogTrace($"A->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
+				logger.LogTrace($"B->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
+				logger.LogTrace($"C->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
+				logger.LogTrace($"D->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
+				logger.LogTrace($"M {Convert.ToString(bltafwm, 2).PadLeft(16, '0')} {Convert.ToString(bltalwm, 2).PadLeft(16, '0')}");
+				logger.LogTrace($"cookie: {bltcon0 & 0xff:X2} {((bltcon1 & 2) != 0 ? "descending" : "ascending")}");
+					//logger.LogTrace("ABC");
+					//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
+					//if ((bltcon0 & 0x02) != 0) logger.LogTrace("001");
+					//if ((bltcon0 & 0x04) != 0) logger.LogTrace("010");
+					//if ((bltcon0 & 0x08) != 0) logger.LogTrace("011");
+					//if ((bltcon0 & 0x10) != 0) logger.LogTrace("100");
+					//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
+					//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
+					//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
+					if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
+						logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			}
 
 			bool dont_blit = false;
 			uint mode = (bltcon1 >> 3) & 3;
