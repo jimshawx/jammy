@@ -34,12 +34,9 @@ namespace Jammy.Core.Custom
 		//hack: optimisation to avoid processing pixels too far left and right on the screen
 		//sprite DMA starts at 0x18, but can be eaten into by bitmap DMA
 		//normal bitmap DMA start at 0x38, overscan at 0x30, Menace starts at 0x28
-		private const int DMA_START = 0x28;
+		private const int DMA_START = 0x18;
 		//bitmap DMA ends at 0xD8, with 8 slots after that
 		private const int DMA_END = 0xF0;
-
-		//private const int DMA_START = 0;
-		//private const int DMA_END = 227;
 
 		private const int DMA_WIDTH = DMA_END - DMA_START;
 
@@ -258,6 +255,7 @@ namespace Jammy.Core.Custom
 			RunningWord1,
 			RunningWord2,
 			Waiting,
+			WakingUp,
 			Stopped
 		}
 
@@ -282,6 +280,7 @@ namespace Jammy.Core.Custom
 			public int currentLine;
 			public uint waitMask;
 			public uint waitPos;
+			public int waitTimer;
 
 			public int lineStart;
 			public ushort ins;
@@ -748,7 +747,10 @@ namespace Jammy.Core.Custom
 			if (cop.currentLine >= cln.diwstrtv && cop.currentLine < cln.diwstopv && cln.lineState == CopperLineState.LineComplete)
 			{
 				for (int i = 0; i < cln.planes; i++)
-					bplpt[i] += ((i & 1) == 0) ? bpl2mod : bpl1mod;
+				{ 
+					bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
+					bplpt[i]&=0xfffffffe;
+				}
 				cln.lineState = CopperLineState.LineTerminated;
 			}
 
@@ -765,12 +767,19 @@ namespace Jammy.Core.Custom
 
 		private void CopperInstruction(int h)
 		{
-			//copper instruction every even clock (and copper DMA is on)
-			if ((h & 1) == 0 && h < 227)
+			//copper instruction every odd clock (and copper DMA is on)
+			if ((h & 1) == 1 && h < 227/*E3*/)
 			{
 				if (cop.status == CopperStatus.Stopped)
 				{
 					return;
+				}
+				else if (cop.status == CopperStatus.WakingUp)
+				{
+					//burn a cycle after waking up
+					cop.waitTimer--;
+					if (cop.waitTimer <= 0)
+						cop.status = CopperStatus.RunningWord1;
 				}
 				else if (cop.status == CopperStatus.RunningWord1)
 				{
@@ -850,7 +859,7 @@ namespace Jammy.Core.Custom
 
 							uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
 							coppos &= cop.waitMask;
-							if (coppos >= (cop.waitPos & cop.waitMask))
+							if (CopperCompare(coppos, (cop.waitPos & cop.waitMask)))
 							{
 								//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
 								cop.copPC += 4;
@@ -871,10 +880,11 @@ namespace Jammy.Core.Custom
 
 					uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
 					coppos &= cop.waitMask;
-					if (coppos >= (cop.waitPos & cop.waitMask))
+					if (CopperCompare(coppos, (cop.waitPos & cop.waitMask)))
 					{
 						//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
-						cop.status = CopperStatus.RunningWord1;
+						cop.waitTimer = 2;
+						cop.status = CopperStatus.WakingUp;
 
 						if (cop.ins == 0xffff && cop.data == 0xfffe)
 						{
@@ -884,6 +894,12 @@ namespace Jammy.Core.Custom
 					}
 				}
 			}
+		}
+
+		private bool CopperCompare(uint coppos, uint waitPos)
+		{
+			//return coppos >= waitPos;
+			return ((coppos&0xff00)==(waitPos&0xff00))&&((coppos&0xff)>=(waitPos&0xff));
 		}
 
 		private void CopperBitplaneFetch(int h)
