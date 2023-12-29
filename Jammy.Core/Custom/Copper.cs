@@ -898,8 +898,8 @@ namespace Jammy.Core.Custom
 
 		private bool CopperCompare(uint coppos, uint waitPos)
 		{
-			//return coppos >= waitPos;
-			return ((coppos&0xff00)==(waitPos&0xff00))&&((coppos&0xff)>=(waitPos&0xff));
+			return coppos >= waitPos;
+			//return ((coppos&0xff00)==(waitPos&0xff00))&&((coppos&0xff)>=(waitPos&0xff));
 		}
 
 		private void CopperBitplaneFetch(int h)
