@@ -593,16 +593,24 @@ namespace Jammy.Core.Custom
 					else if ((fmode&3) == 3)
 					{
 						//round to multiple of 4 words
-						int round = 15;
-						ddfstrtfix = (ushort)(ddfstrt & ~round);
-						ddfstopfix = (ushort)((ddfstop + round) & ~round);
+						//int round = 15;
+						//ddfstrtfix = (ushort)(ddfstrt & ~round);
+						//ddfstopfix = (ushort)((ddfstop + round) & ~round);
+						ddfstrtfix = ddfstrt;
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						//FetchWidth(ddfstrt, ddfstop, AGA, 1, 3);
+						pixmod = 16;
 					}
 					else
 					{
 						//round up to multiple of 2 words
-						int round = 7;
-						ddfstrtfix = (ushort)(ddfstrt & ~round);
-						ddfstopfix = (ushort)((ddfstop + round) & ~round);
+						//int round = 7;
+						//ddfstrtfix = (ushort)(ddfstrt & ~round);
+						//ddfstopfix = (ushort)((ddfstop + round) & ~round);
+						ddfstrtfix = ddfstrt;
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						//FetchWidth(ddfstrt, ddfstop, AGA, 1, 2);
+						pixmod = 8;
 					}
 
 					//diwstrth &= 0xf8;
@@ -623,21 +631,30 @@ namespace Jammy.Core.Custom
 					pixmod = 8;
 
 					//low-res ddfstrt ignores bit 2
-					ddfstrtfix = (ushort)(ddfstrt & 0xfff8);
+					ddfstrtfix = ddfstrt;//(ushort)(ddfstrt & 0xfff8);
 
 					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 					{
 						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						FetchWidth(ddfstrt, ddfstop, OCS, 0, 0);
+						//FetchWidth(ddfstrt, ddfstop, OCS, 0, 0);
+					}
+					else if ((fmode&3)==3)
+					{
+						//wordCount = (ddfstop - ddfstrt) / 32 + 1;
+						//ddfstopfix = (ushort)(ddfstrtfix + wordCount * 32);
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						//FetchWidth(ddfstrt, ddfstop, AGA, 0, 3);
+						pixmod =32;
 					}
 					else
 					{
-						wordCount = (ddfstop - ddfstrt) / 32 + 1;
-						ddfstopfix = (ushort)(ddfstrtfix + wordCount * 32);
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						//FetchWidth(ddfstrt, ddfstop, AGA, 0, 2);
+						pixmod = 16;
 					}
 
-					diwstrth &= 0xf0;
-					diwstoph &= 0x1f0;
+					//diwstrth &= 0xf0;
+					//diwstoph &= 0x1f0;
 				}
 
 				//pixelMask = 0x8000;
@@ -922,19 +939,21 @@ namespace Jammy.Core.Custom
 			else if ((fmode&3) == 3)
 			{
 				int[] fetchF = {
-					 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
+					 //10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
+					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 
 				};
 
-				planeIdx = h - ddfstrt % 16;
+				planeIdx = (h - cln.ddfstrtfix) % cln.pixmod;
 				plane = fetchF[planeIdx] - 1;
 			}
 			else
 			{
 				int[] fetchF = {
-					 10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
+					//10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
+					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 
 				};
 
-				planeIdx = h-ddfstrt % 8;
+				planeIdx = (h-cln.ddfstrtfix) % cln.pixmod;
 				plane = fetchF[planeIdx] - 1;
 			}
 
