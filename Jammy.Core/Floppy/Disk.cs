@@ -85,7 +85,7 @@ namespace Jammy.Core.Floppy
 				}
 			}
 			//is it a gzip (adz) file?
-			else if (data.Length > 3 && data[0] == 0x1F && data[1] == 0x8B)
+			else if (data.Length >= 2 && data[0] == 0x1F && data[1] == 0x8B)
 			{
 				try
 				{

@@ -506,8 +506,8 @@ namespace Jammy.Core.Custom
 			{
 				// validate bits
 				FMODE &= 3;
-				DDFSTRT &= (chipset!=0) ? 0xfe : 0xfc;
-				DDFSTOP &= (chipset!=0) ? 0xfe : 0xfc;
+				DDFSTRT &= (chipset!=OCS) ? 0xfe : 0xfc;
+				DDFSTOP &= (chipset!=OCS) ? 0xfe : 0xfc;
 				res = (chipset == OCS) ? res & 1 : res;
 
 				// fetch=log2(fetch_width)-4; fetch_width=16,32,64
@@ -597,7 +597,7 @@ namespace Jammy.Core.Custom
 						//ddfstrtfix = (ushort)(ddfstrt & ~round);
 						//ddfstopfix = (ushort)((ddfstop + round) & ~round);
 						ddfstrtfix = ddfstrt;
-						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 0xf) >> 4) + 1) << 4));
 						//FetchWidth(ddfstrt, ddfstop, AGA, 1, 3);
 						pixmod = 16;
 					}
@@ -1606,8 +1606,14 @@ namespace Jammy.Core.Custom
 				case ChipRegs.DIWSTOP: diwstop = value; diwhigh = 0; break;
 				case ChipRegs.DIWHIGH: diwhigh = value; break;
 
-				case ChipRegs.DDFSTRT: ddfstrt = (ushort)(value & 0xfc); cln.lineState = CopperLineState.LineTerminated; break;
-				case ChipRegs.DDFSTOP: ddfstop = (ushort)(value & 0xfc); cln.lineState = CopperLineState.LineTerminated; break;
+				case ChipRegs.DDFSTRT: 
+					ddfstrt = (ushort)(value & (settings.ChipSet == ChipSet.OCS ? 0xfc : 0xfe));
+					cln.lineState = CopperLineState.LineTerminated;
+					break;
+				case ChipRegs.DDFSTOP:
+					ddfstop = (ushort)(value & (settings.ChipSet == ChipSet.OCS ? 0xfc : 0xfe));
+					cln.lineState = CopperLineState.LineTerminated;
+					break;
 
 				case ChipRegs.SPR0PTL: sprpt[0] = (sprpt[0] & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.SPR0PTH: sprpt[0] = (sprpt[0] & 0x0000ffff) | ((uint)value << 16); break;
