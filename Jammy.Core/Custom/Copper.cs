@@ -122,6 +122,7 @@ namespace Jammy.Core.Custom
 		//HRM 3rd Ed, PP24
 		private uint copperHorz;//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
 		private uint copperVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
+		private uint copperFrame = 0;
 
 		public void Emulate(ulong cycles)
 		{
@@ -149,6 +150,8 @@ namespace Jammy.Core.Custom
 					RunCopperVerticalBlankEnd();
 
 					interrupt.AssertInterrupt(Interrupt.VERTB);
+
+					copperFrame++;
 
 					if (cdbg.dbug)
 					{
@@ -1377,6 +1380,18 @@ namespace Jammy.Core.Custom
 			{
 				case ChipRegs.VPOSR:
 					value = (ushort)((copperVert >> 8) & 1);
+					value |= (ushort)((copperVert & 1) << 7);//toggle LOL each alternate line (todo: should be NTSC only)
+
+					//if we're in interlace mode
+					if ((bplcon0 & (1<<2))!=0)
+					{
+						value |= (ushort)((copperFrame & 1) << 15);//set LOF=1/0 on alternate frames
+					}
+					else
+					{
+						value |= 1<<15;//set LOF=1
+					}
+
 					if (settings.ChipSet != ChipSet.OCS)
 					{
 						value &= 0x80ff;
