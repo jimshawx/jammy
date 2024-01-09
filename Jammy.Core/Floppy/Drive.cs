@@ -10,6 +10,7 @@ namespace Jammy.Core.Floppy
 		public uint track;
 		public uint side;
 
+		public int indexCounter;
 		public int stateCounter;
 		public DiskDrives.DriveState state;
 
@@ -27,6 +28,7 @@ namespace Jammy.Core.Floppy
 		{
 			state = DiskDrives.DriveState.Idle;
 			stateCounter = 10;
+			indexCounter = 0;
 
 			motor = false;
 			track = 0;

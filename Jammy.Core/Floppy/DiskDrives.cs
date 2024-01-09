@@ -4,6 +4,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
+using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -39,7 +40,11 @@ namespace Jammy.Core.Floppy
 
 	public class DiskDrives : IDiskDrives
 	{
+		//300rpm = 5Hz = 0.2s = @7.09MHz, that's 1_418_000
+		private const int INDEX_INTERRUPT_RATE = 1_418_000;
+
 		private readonly IMemoryMappedDevice memory;
+		private ICIABEven ciab { get { return (ICIABEven)ServiceProviderFactory.ServiceProvider.GetService(typeof(ICIABEven)); } }
 
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
@@ -141,52 +146,64 @@ namespace Jammy.Core.Floppy
 			{
 				if (!drive[i].attached) continue;
 
-					if (drive[i].state != DriveState.Idle)
+				if (drive[i].motor)
+				{
+					//while the motor is running, the disk generates an INDEX signal each revolution.
+					//this signal is attached to the FLG interrupt pin on CIAB
+					drive[i].indexCounter -= (int)cycles;
+					if (drive[i].indexCounter < 0)
 					{
-						drive[i].stateCounter--;
-						if (drive[i].stateCounter < 0)
-						{
-							switch (drive[i].state)
-							{
-								case DriveState.Track0NotReached:
-									drive[i].pra |= (uint)PRA.DSKTRACK0;
-									//prb |= (uint)PRB.DSKSTEP;
-									drive[i].state = DriveState.Idle;
-									break;
-								case DriveState.Track0Reached:
-									drive[i].pra &= ~(uint) PRA.DSKTRACK0;
-									//prb |= (uint)PRB.DSKSTEP;
-									drive[i].state = DriveState.Idle;
-									break;
-								case DriveState.DiskReady:
-									drive[i].pra &= ~(uint) PRA.DSKRDY;
-									drive[i].state = DriveState.Idle;
-									break;
-								//case DriveState.DiskChange:
-								//	drive[i].pra &= ~(uint) PRA.DSKCHANGE;
-								//	drive[i].state = DriveState.Idle;
-								//	break;
-								//case DriveState.DiskNotChanged:
-								//	drive[i].pra |= (uint) PRA.DSKCHANGE;
-								//	drive[i].state = DriveState.DiskNotStep;
-								//	break;
-								//case DriveState.DiskNotStep:
-								//	drive[i].prb |= (uint) PRB.DSKSTEP;
-								//	drive[i].state = DriveState.DiskStep;
-								//	break;
-								//case DriveState.DiskStep:
-								//	drive[i].prb &= ~(uint) PRB.DSKSTEP;
-								//	drive[i].state = DriveState.DiskStepDone;
-								//	break;
-								//case DriveState.DiskStepDone:
-								//	drive[i].prb |= (uint)PRB.DSKSTEP;
-								//	drive[i].state = DriveState.Idle;
-								//	break;
-							}
-
-							drive[i].stateCounter = stateCycles;
-						}
+						drive[i].indexCounter += INDEX_INTERRUPT_RATE;
+						ciab.FlagInterrupt();
 					}
+				}
+
+				if (drive[i].state != DriveState.Idle)
+				{
+					drive[i].stateCounter--;
+					if (drive[i].stateCounter < 0)
+					{
+						switch (drive[i].state)
+						{
+							case DriveState.Track0NotReached:
+								drive[i].pra |= (uint)PRA.DSKTRACK0;
+								//prb |= (uint)PRB.DSKSTEP;
+								drive[i].state = DriveState.Idle;
+								break;
+							case DriveState.Track0Reached:
+								drive[i].pra &= ~(uint) PRA.DSKTRACK0;
+								//prb |= (uint)PRB.DSKSTEP;
+								drive[i].state = DriveState.Idle;
+								break;
+							case DriveState.DiskReady:
+								drive[i].pra &= ~(uint) PRA.DSKRDY;
+								drive[i].state = DriveState.Idle;
+								break;
+							//case DriveState.DiskChange:
+							//	drive[i].pra &= ~(uint) PRA.DSKCHANGE;
+							//	drive[i].state = DriveState.Idle;
+							//	break;
+							//case DriveState.DiskNotChanged:
+							//	drive[i].pra |= (uint) PRA.DSKCHANGE;
+							//	drive[i].state = DriveState.DiskNotStep;
+							//	break;
+							//case DriveState.DiskNotStep:
+							//	drive[i].prb |= (uint) PRB.DSKSTEP;
+							//	drive[i].state = DriveState.DiskStep;
+							//	break;
+							//case DriveState.DiskStep:
+							//	drive[i].prb &= ~(uint) PRB.DSKSTEP;
+							//	drive[i].state = DriveState.DiskStepDone;
+							//	break;
+							//case DriveState.DiskStepDone:
+							//	drive[i].prb |= (uint)PRB.DSKSTEP;
+							//	drive[i].state = DriveState.Idle;
+							//	break;
+						}
+
+						drive[i].stateCounter = stateCycles;
+					}
+				}
 			}
 
 			if (diskInterruptPending != -1)
@@ -410,6 +427,8 @@ namespace Jammy.Core.Floppy
 					{
 						drive[i].motor = (prb & (uint) PRB.DSKMOTOR) == 0;
 						drive[i].state = DriveState.DiskReady;
+						if (drive[i].motor)
+							drive[i].indexCounter = INDEX_INTERRUPT_RATE;
 					}
 
 					//step changed, and it's set

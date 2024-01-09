@@ -49,6 +49,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		byte SnoopICRR();
 		void SerialInterrupt();
+		void FlagInterrupt();
 		void DebugSetICR(ICRB i);
 	}
 	public interface ICIAAOdd : ICIA { }

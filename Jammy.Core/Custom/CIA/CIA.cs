@@ -388,6 +388,11 @@ namespace Jammy.Core.Custom.CIA
 		{
 			AssertICR(ICRB.SERIAL);
 		}
+
+		public void FlagInterrupt()
+		{
+			AssertICR(ICRB.FLAG);
+		}
 	}
 
 	public class CIAMemory : ICIAMemory
