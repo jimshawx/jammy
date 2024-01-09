@@ -284,6 +284,12 @@ namespace Jammy.Core.Floppy
 				case ChipRegs.DSKLEN:
 					dsklen = value;
 
+					if (value == 0)
+					{
+						interrupt.AssertInterrupt(Interrupt.DSKBLK);
+						break;
+					}
+
 					//turn OFF disk DMA
 					if (dsklen == 0x4000)
 					{
@@ -333,7 +339,7 @@ namespace Jammy.Core.Floppy
 						memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
 					}
 
-					//this is far too fast, try triggering an interrupt later (should actually be one scanline per word read)
+					//this is far too fast, try triggering an interrupt later (should actually be one scanline per 3 words read)
 					//interrupt.AssertInterrupt(Interrupt.DSKBLK);
 					diskInterruptPending = 1000;
 					break;
