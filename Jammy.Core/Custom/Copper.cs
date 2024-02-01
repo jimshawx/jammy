@@ -6,6 +6,7 @@ using System.Text;
 using Jammy.Core.Custom.IO;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -67,15 +68,15 @@ namespace Jammy.Core.Custom
 		private bool keys = false;
 		private void dbug_Keydown(int obj)
 		{
-			if (obj == (int)Keyboard.VK.VK_F9) {keys ^= true; logger.LogTrace($"KEYS {keys}");}
+			if (obj == (int)VK.VK_F9) {keys ^= true; logger.LogTrace($"KEYS {keys}");}
 
 			if (keys)
 			{
-				if (obj == (int)Keyboard.VK.VK_F11) cdbg.dbug = true;
-				if (obj == (int)Keyboard.VK.VK_F7) cdbg.dbugLine--;
-				if (obj == (int)Keyboard.VK.VK_F6) cdbg.dbugLine++;
-				if (obj == (int)Keyboard.VK.VK_F8) cdbg.dbugLine = -1;
-				if (obj == (int)Keyboard.VK.VK_F5) cdbg.dbugLine = diwstrt >> 8;
+				if (obj == (int)VK.VK_F11) cdbg.dbug = true;
+				if (obj == (int)VK.VK_F7) cdbg.dbugLine--;
+				if (obj == (int)VK.VK_F6) cdbg.dbugLine++;
+				if (obj == (int)VK.VK_F8) cdbg.dbugLine = -1;
+				if (obj == (int)VK.VK_F5) cdbg.dbugLine = diwstrt >> 8;
 
 				if (obj == (int)'Q') cdbg.ddfSHack++;
 				if (obj == (int)'W') cdbg.ddfSHack--;
@@ -112,9 +113,9 @@ namespace Jammy.Core.Custom
 				if (obj == (int)'B') cdbg.bitplaneMod ^= 16;
 				if (obj == (int)'N') cdbg.bitplaneMod ^= 32;
 				if (obj == (int)'M') cdbg.bitplaneMod ^= 64;
-				if (obj == (int)Keyboard.VK.VK_OEM_COMMA) cdbg.bitplaneMod ^= 128;
+				if (obj == (int)VK.VK_OEM_COMMA) cdbg.bitplaneMod ^= 128;
 
-				if (obj == (int)Keyboard.VK.VK_F10) cdbg.ws = true;
+				if (obj == (int)VK.VK_F10) cdbg.ws = true;
 			}
 		}
 

@@ -25,6 +25,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Jammy.UI.Settings;
 using Parky.Logging;
+using Jammy.Core.IO.Windows;
+using Jammy.Core.EmulationWindow.GDI;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.

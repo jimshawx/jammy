@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Jammy.Core.Custom.IO;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 
@@ -35,7 +35,7 @@ namespace Jammy.Core.Custom
 
 		private void dbug_Keydown(int obj)
 		{
-			if (obj == (int)Keyboard.VK.VK_F2)
+			if (obj == (int)VK.VK_F2)
 				blitterDump ^= true;
 		}
 

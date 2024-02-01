@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types.Enums;
 using Microsoft.Extensions.Logging;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Core.Custom.IO
+namespace Jammy.Core.IO.Windows
 {
 	public class Mouse : IMouse
 	{
@@ -56,15 +58,15 @@ namespace Jammy.Core.Custom.IO
 			{
 				joystickTime -= 10000;
 
-				if ((GetAsyncKeyState((int)Keyboard.VK.VK_SPACE)&0x8000)!=0)
+				if ((GetAsyncKeyState((int)VK.VK_SPACE)&0x8000)!=0)
 					pra &= ~(1u << 7);
 				else
 					pra |= (1u << 7);
 
-				bool u = ((GetAsyncKeyState((int)Keyboard.VK.VK_UP) & 0x8000) != 0);
-				bool d = ((GetAsyncKeyState((int)Keyboard.VK.VK_DOWN) & 0x8000) != 0);
-				bool l = ((GetAsyncKeyState((int)Keyboard.VK.VK_LEFT) & 0x8000) != 0);
-				bool r = ((GetAsyncKeyState((int)Keyboard.VK.VK_RIGHT) & 0x8000) != 0);
+				bool u = ((GetAsyncKeyState((int)VK.VK_UP) & 0x8000) != 0);
+				bool d = ((GetAsyncKeyState((int)VK.VK_DOWN) & 0x8000) != 0);
+				bool l = ((GetAsyncKeyState((int)VK.VK_LEFT) & 0x8000) != 0);
+				bool r = ((GetAsyncKeyState((int)VK.VK_RIGHT) & 0x8000) != 0);
 
 				joy1dat = 0;
 				if (u ^ l) joy1dat |= 1 << 8;

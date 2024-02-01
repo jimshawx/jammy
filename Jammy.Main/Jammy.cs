@@ -127,8 +127,8 @@ namespace Jammy.Main
 			//prime the disassembly with a decent starting point
 			var ranges = new List<Tuple<uint, uint>>
 			{
-				new Tuple<uint, uint>(0x000000, 0x1000),
-				new Tuple<uint, uint>(0xfc0000, 0x40000),
+					new Tuple<uint, uint>(0x000000, 0x3000),
+					new Tuple<uint, uint>(0xfc0000, 0x40000),
 			};
 			if (settings.TrapdoorMemory != 0.0)
 				ranges.Add(new Tuple<uint, uint>(0xc00000, 0x1000));
@@ -136,6 +136,10 @@ namespace Jammy.Main
 				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x40000));
 			if (debugger.KickstartSize() == 0x2000)
 				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x2000));
+			ranges.Add(new Tuple<uint, uint>(0x78000, 0x1000));
+			ranges.Add(new Tuple<uint, uint>(0x60000, 0x1000));
+			ranges.Add(new Tuple<uint, uint>(0x70000, 0x1000));
+			ranges.Add(new Tuple<uint, uint>(0xD000, 0x1000));
 
 			disassembly.Clear();
 			var disasm = disassembly.DisassembleTxt(

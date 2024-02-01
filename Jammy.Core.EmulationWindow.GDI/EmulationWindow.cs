@@ -4,25 +4,16 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
-using Jammy.Core.Custom.IO;
+using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types.Enums;
 using Microsoft.Extensions.Logging;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Core
+namespace Jammy.Core.EmulationWindow.GDI
 {
-	public interface IEmulationWindow
-	{
-		bool IsCaptured { get; }
-		void SetPicture(int screenWidth, int screenHeight);
-		void Blit(int[] screen);
-		Point RecentreMouse();
-		void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp);
-		bool IsActive();
-	}
-
 	public class EmulationWindow : IEmulationWindow, IDisposable
 	{
 		[DllImport("user32.dll")]
@@ -106,7 +97,7 @@ namespace Jammy.Core
 
 		private void Emulation_KeyPress(object sender, KeyPressEventArgs e)
 		{
-			if (e.KeyChar == 0x9 && (GetAsyncKeyState((int)Keyboard.VK.VK_MENU)&0x8000)!=0)
+			if (e.KeyChar == 0x9 && (GetAsyncKeyState((int)VK.VK_MENU)&0x8000)!=0)
 				Release("AltTab");
 
 			//if (e.KeyChar == 0x1B)
@@ -115,10 +106,10 @@ namespace Jammy.Core
 
 		private void Emulation_KeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.KeyValue == (int)Keyboard.VK.VK_TAB && (GetAsyncKeyState((int)Keyboard.VK.VK_MENU) & 0x8000) != 0)
+			if (e.KeyValue == (int)VK.VK_TAB && (GetAsyncKeyState((int)VK.VK_MENU) & 0x8000) != 0)
 				Release("DnAltTab");
 
-			//if (e.KeyValue == (int)Keyboard.VK.VK_ESCAPE)
+			//if (e.KeyValue == (int)VK.VK_ESCAPE)
 			//	Release("DnKeyPress");
 		}
 
@@ -169,7 +160,7 @@ namespace Jammy.Core
 			});
 		}
 
-		public Point RecentreMouse()
+		public Types.Types.Point RecentreMouse()
 		{
 			var centre = new Point(0, 0);
 
@@ -184,7 +175,7 @@ namespace Jammy.Core
 				});
 			}
 
-			return centre;
+			return new Types.Types.Point { X = centre.X, Y = centre.Y };
 		}
 
 		public void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp)

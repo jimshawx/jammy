@@ -9,9 +9,6 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="Enums\" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
   </ItemGroup>
 </Project>
