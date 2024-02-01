@@ -15,6 +15,8 @@ namespace Jammy.Core.CPU.CSharp
 {
 	public class CPU : ICPU, ICSharpCPU
 	{
+#pragma warning disable IDE1006 // Naming Styles
+
 		private enum FetchMode
 		{
 			Running,
@@ -923,7 +925,7 @@ namespace Jammy.Core.CPU.CSharp
 			}
 		}
 
-		private Size getSize(int type)
+		private static Size getSize(int type)
 		{
 			int s = (type >> 6) & 3;
 			if (s == 0) return Size.Byte;
@@ -932,21 +934,21 @@ namespace Jammy.Core.CPU.CSharp
 			return Size.Extension;
 		}
 
-		private ulong zeroExtend(uint val, Size size)
+		private static ulong zeroExtend(uint val, Size size)
 		{
 			if (size == Size.Byte) return val & 0xff;
 			if (size == Size.Word) return val & 0xffff;
 			return val;
 		}
 
-		private long signExtend(uint val, Size size)
+		private static long signExtend(uint val, Size size)
 		{
 			if (size == Size.Byte) return (long)(sbyte)val;
 			if (size == Size.Word) return (long)(short)val;
 			return (long)(int)val;
 		}
 
-		private int ReUse(int type)
+		private static int ReUse(int type)
 		{
 			//remove any pre/post decement/increment from EA
 			if      ((type & 0b111_000) == 0b011_000) type ^= 0b001_000;//(An)+ 011_000->010_000
@@ -954,32 +956,32 @@ namespace Jammy.Core.CPU.CSharp
 			return type;
 		}
 
-		private bool IsAddressReg(int type)
+		private static bool IsAddressReg(int type)
 		{
 			return (type & 0b111_000) == 0b001_000;
 		}
 		
-		private bool IsDataReg(int type)
+		private static bool IsDataReg(int type)
 		{
 			return (type & 0b111_000) == 0b000_000;
 		}
 
-		private bool IsPreDecrement(int type)
+		private static bool IsPreDecrement(int type)
 		{
 			return (type & 0b111_000) == 0b100_000;
 		}
 
-		private bool IsPostIncrement(int type)
+		private static bool IsPostIncrement(int type)
 		{
 			return (type & 0b111_000) == 0b011_000;
 		}
 
-		private bool IsImmediate(int type)
+		private static bool IsImmediate(int type)
 		{
 			return (type & 0b111_111) == 0b111_100;
 		}
 
-		private bool IsPCRelative(int type)
+		private static bool IsPCRelative(int type)
 		{
 			return (type & 0b111_111) == 0b111_010 || (type & 0b111_111) == 0b111_011;
 		}
@@ -2666,7 +2668,7 @@ namespace Jammy.Core.CPU.CSharp
 			internalTrap(4);
 		}
 
-		string[] trapNames = new string[16] {
+		private readonly string[] trapNames = new string[16] {
 			"Initial SSP",
 			"Initial PC",
 			"Bus Error",
@@ -2885,7 +2887,7 @@ namespace Jammy.Core.CPU.CSharp
 			}
 		}
 
-		private int swizzle(int type)
+		private static int swizzle(int type)
 		{
 			//change a MOVE destination EA to look like a source one.
 			return ((type >> 9) & 0b000111) | ((type >> 3) & 0b111000);
