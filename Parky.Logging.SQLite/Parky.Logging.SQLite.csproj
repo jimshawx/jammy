@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Parky.Logging</RootNamespace>
     <AssemblyName>Parky.Logging.SQLite</AssemblyName>
   </PropertyGroup>
@@ -10,6 +10,6 @@
   <ItemGroup>
     <PackageReference Include="sqlite" Version="3.13.0" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.113.7" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
   </ItemGroup>
 </Project>

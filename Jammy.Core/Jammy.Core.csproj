@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <ApplicationIcon>
     </ApplicationIcon>
     <AssemblyName>Jammy.Core</AssemblyName>
@@ -15,8 +15,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="SharpDX.XAudio2" Version="4.2.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />

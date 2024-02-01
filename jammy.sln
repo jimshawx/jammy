@@ -42,9 +42,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.CPU.Musashi.MC68
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.UI.Settings", "Jammy.UI.Settings\Jammy.UI.Settings.csproj", "{18624203-E7E7-425D-944F-29DC0B65B388}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.EmulationWindow.GDI", "Jammy.Core.EmulationWindow.GDI\Jammy.Core.EmulationWindow.GDI.csproj", "{65B1C76E-0927-40C6-BDB7-8394ABE3EB7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.EmulationWindow.GDI", "Jammy.Core.EmulationWindow.GDI\Jammy.Core.EmulationWindow.GDI.csproj", "{65B1C76E-0927-40C6-BDB7-8394ABE3EB7D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.IO.Windows", "Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj", "{F1A983A3-0B8D-4A8B-A78C-5AF4086FDC37}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.IO.Windows", "Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj", "{F1A983A3-0B8D-4A8B-A78C-5AF4086FDC37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

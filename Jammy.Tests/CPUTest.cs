@@ -16,6 +16,7 @@ using Jammy.Extensions.Extensions;
 using Jammy.Interface;
 using Jammy.Types.Options;
 using Parky.Logging;
+using NUnit.Framework.Legacy;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -324,8 +325,8 @@ namespace Jammy.Tests
 					}
 					else
 					{
-						Assert.IsFalse(r0.Compare(r1), "Test #{0} {1}\n{2}", i + 1, cpu0.Disassemble(pc), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
-						Assert.IsTrue(cpu0.GetMemory().SequenceEqual(cpu1.GetMemory()), $"Test {i + 1} Memory Contents Differ!\n{cpu0.Disassemble(pc)}\n{cpu0.GetMemory().DiffSummary(cpu1.GetMemory())}");
+						ClassicAssert.IsFalse(r0.Compare(r1), "Test #{0} {1}\n{2}", i + 1, cpu0.Disassemble(pc), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
+						ClassicAssert.IsTrue(cpu0.GetMemory().SequenceEqual(cpu1.GetMemory()), $"Test {i + 1} Memory Contents Differ!\n{cpu0.Disassemble(pc)}\n{cpu0.GetMemory().DiffSummary(cpu1.GetMemory())}");
 					}
 
 					TestContext.WriteLine($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
@@ -338,7 +339,7 @@ namespace Jammy.Tests
 					break;
 				}
 			}
-			Assert.AreEqual(0, failcount, "Some instructions failed the test");
+			ClassicAssert.AreEqual(0, failcount, "Some instructions failed the test");
 		}
 	}
 }
