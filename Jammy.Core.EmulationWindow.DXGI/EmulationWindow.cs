@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Direct3D;
+using Vortice.Direct3D11.Debug;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -34,11 +35,15 @@ namespace Jammy.Core.EmulationWindow.DX
 			var t = new Thread(() =>
 			{
 				emulation = new Form {Name = "Emulation", Text = "Jammy : Alt-Tab or Middle Mouse Click to detach mouse", ControlBox = false, FormBorderStyle = FormBorderStyle.FixedSingle, MinimizeBox = true, MaximizeBox = true};
+				emulation.Width = screenWidth;
+				emulation.Height = screenHeight;
+				emulation.CreateControl();
+				emulation.Show();
 
 				if (emulation.Handle == IntPtr.Zero)
 					throw new ApplicationException();
 
-				DXGI.CreateDXGIFactory1<IDXGIFactory2>(out var factory);
+				DXGI.CreateDXGIFactory2<IDXGIFactory2>(true, out var factory);
 				if (factory == null)
 					throw new ApplicationException();
 
@@ -56,16 +61,19 @@ namespace Jammy.Core.EmulationWindow.DX
 				if (device == null)
 					throw new ApplicationException();
 
-				var swapchain = factory.CreateSwapChainForHwnd(device, emulation.Handle,
+				var swapchain = factory.CreateSwapChainForHwnd(
+					device,
+					emulation.Handle,
 					new SwapChainDescription1 {
-						Width = screenWidth, Height = screenHeight,
+						Width = screenWidth,
+						Height = screenHeight,
 						AlphaMode = AlphaMode.Ignore,
 						BufferCount = 2,
 						BufferUsage = 0,
 						Flags = 0,//SwapChainFlags.AllowTearing|SwapChainFlags.GdiCompatible ,
-						Format = Format.B8G8R8X8_UNorm,
+						Format = Format.B8G8R8A8_UNorm,
 						SampleDescription = new SampleDescription { Count = 1, Quality = 0},
-						Scaling = Scaling.None,
+						Scaling = Scaling.Stretch,
 						Stereo = false,
 						SwapEffect = SwapEffect.Discard
 					},
