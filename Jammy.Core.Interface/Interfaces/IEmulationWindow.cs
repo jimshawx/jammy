@@ -11,5 +11,6 @@ namespace Jammy.Core.Interface.Interfaces
 		Point RecentreMouse();
 		void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp);
 		bool IsActive();
+		int[] GetFramebuffer();
 	}
 }

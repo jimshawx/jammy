@@ -27,6 +27,7 @@ using Jammy.UI.Settings;
 using Parky.Logging;
 using Jammy.Core.IO.Windows;
 using Jammy.Core.EmulationWindow.GDI;
+using Jammy.Core.EmulationWindow.DX;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -101,7 +102,8 @@ namespace Jammy.Main
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
 				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
 				.AddSingleton<IMemoryManager, MemoryManager>()
-				.AddSingleton<IEmulationWindow, EmulationWindow>()
+				.AddSingleton<IEmulationWindow, Core.EmulationWindow.GDI.EmulationWindow>()
+				//.AddSingleton<IEmulationWindow, Core.EmulationWindow.DX.EmulationWindow>()
 				.AddSingleton<IEmulation, Emulation>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<IDiskAnalysis, DiskAnalysis>()
@@ -115,7 +117,7 @@ namespace Jammy.Main
 
 			//configure Audio
 			if (settings.Audio == AudioDriver.XAudio2)
-				services.AddSingleton<IAudio, AudioV2>();
+				services.AddSingleton<IAudio, AudioVortice>();
 			else
 				services.AddSingleton<IAudio, Audio>();
 

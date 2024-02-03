@@ -46,6 +46,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.EmulationWindow.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.IO.Windows", "Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj", "{F1A983A3-0B8D-4A8B-A78C-5AF4086FDC37}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.EmulationWindow.DXGI", "Jammy.Core.EmulationWindow.DXGI\Jammy.Core.EmulationWindow.DXGI.csproj", "{1423117B-CBB2-4D02-A7E9-9490F87F4E4E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -140,6 +142,10 @@ Global
 		{F1A983A3-0B8D-4A8B-A78C-5AF4086FDC37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1A983A3-0B8D-4A8B-A78C-5AF4086FDC37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1A983A3-0B8D-4A8B-A78C-5AF4086FDC37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1423117B-CBB2-4D02-A7E9-9490F87F4E4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1423117B-CBB2-4D02-A7E9-9490F87F4E4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1423117B-CBB2-4D02-A7E9-9490F87F4E4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1423117B-CBB2-4D02-A7E9-9490F87F4E4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

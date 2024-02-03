@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -25,6 +25,7 @@
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.MC68020\Jammy.Core.CPU.Musashi.MC68020.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.MC68030\Jammy.Core.CPU.Musashi.MC68030.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi\Jammy.Core.CPU.Musashi.csproj" />
+    <ProjectReference Include="..\Jammy.Core.EmulationWindow.DXGI\Jammy.Core.EmulationWindow.DXGI.csproj" />
     <ProjectReference Include="..\Jammy.Core.EmulationWindow.GDI\Jammy.Core.EmulationWindow.GDI.csproj" />
     <ProjectReference Include="..\Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj" />
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />

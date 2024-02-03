@@ -7,12 +7,15 @@ using System.Windows.Forms;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Enums;
 using Microsoft.Extensions.Logging;
+using Vortice.Direct3D11;
+using Vortice.DXGI;
+using Vortice.Direct3D;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Core.EmulationWindow.GDI
+namespace Jammy.Core.EmulationWindow.DX
 {
 	public class EmulationWindow : IEmulationWindow, IDisposable
 	{
@@ -21,7 +24,6 @@ namespace Jammy.Core.EmulationWindow.GDI
 
 		private readonly ILogger logger;
 		private Form emulation;
-		private int[] screen; 
 
 		public EmulationWindow(ILogger<EmulationWindow> logger)
 		{
@@ -35,6 +37,40 @@ namespace Jammy.Core.EmulationWindow.GDI
 
 				if (emulation.Handle == IntPtr.Zero)
 					throw new ApplicationException();
+
+				DXGI.CreateDXGIFactory1<IDXGIFactory2>(out var factory);
+				if (factory == null)
+					throw new ApplicationException();
+
+				factory.EnumAdapters(0, out var adapter);
+				if (adapter == null)
+					throw new ApplicationException();
+
+				var featureLevels = new FeatureLevel[]
+								{
+							FeatureLevel.Level_11_1,
+							FeatureLevel.Level_11_0,
+								};
+
+				D3D11.D3D11CreateDevice(adapter, DriverType.Unknown, DeviceCreationFlags.BgraSupport | DeviceCreationFlags.Debug, featureLevels, out var device);
+				if (device == null)
+					throw new ApplicationException();
+
+				var swapchain = factory.CreateSwapChainForHwnd(device, emulation.Handle,
+					new SwapChainDescription1 {
+						Width = screenWidth, Height = screenHeight,
+						AlphaMode = AlphaMode.Ignore,
+						BufferCount = 2,
+						BufferUsage = 0,
+						Flags = 0,//SwapChainFlags.AllowTearing|SwapChainFlags.GdiCompatible ,
+						Format = Format.B8G8R8X8_UNorm,
+						SampleDescription = new SampleDescription { Count = 1, Quality = 0},
+						Scaling = Scaling.None,
+						Stereo = false,
+						SwapEffect = SwapEffect.Discard
+					},
+					null,
+					null);
 
 				ss.Release();
 
@@ -128,8 +164,6 @@ namespace Jammy.Core.EmulationWindow.GDI
 		{
 			if (emulation.IsDisposed) return;
 
-			screen = new int[width * height];
-
 			emulation.Invoke((Action)delegate
 			{
 				screenWidth = width;
@@ -196,7 +230,7 @@ namespace Jammy.Core.EmulationWindow.GDI
 
 		public int[] GetFramebuffer()
 		{
-			return screen;
+			return null;
 		}
 	}
 }

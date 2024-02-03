@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+	<UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Vortice.Direct2D1" Version="3.3.4" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.3.4" />
+    <PackageReference Include="Vortice.DXGI" Version="3.3.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
+    <ProjectReference Include="..\Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj" />
+  </ItemGroup>
+
+</Project>

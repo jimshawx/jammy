@@ -41,7 +41,7 @@ namespace Jammy.Core.Custom
 
 		private const int DMA_WIDTH = DMA_END - DMA_START;
 
-		private readonly int[] screen = new int[SCREEN_WIDTH * SCREEN_HEIGHT];
+		private int[] screen;
 
 		public Copper(IChipRAM memory, IChips custom, IEmulationWindow emulationWindow, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<Copper> logger)
 		{
@@ -57,6 +57,9 @@ namespace Jammy.Core.Custom
 			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 
 			ComputeDPFLookup();
+
+			//start the first frame
+			RunCopperVerticalBlankStart();
 
 			logger.LogTrace("Press F9 to enable Copper debug");
 		}
@@ -430,6 +433,7 @@ namespace Jammy.Core.Custom
 		private void RunCopperVerticalBlankStart()
 		{
 			//logger.LogTrace("VB");
+			screen = emulationWindow.GetFramebuffer();
 			cop.Reset(cop1lc);
 			cdbg.Reset();
 		}
