@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
@@ -10,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Direct3D;
-using Vortice.Direct3D11.Debug;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -35,50 +33,8 @@ namespace Jammy.Core.EmulationWindow.DX
 			var t = new Thread(() =>
 			{
 				emulation = new Form {Name = "Emulation", Text = "Jammy : Alt-Tab or Middle Mouse Click to detach mouse", ControlBox = false, FormBorderStyle = FormBorderStyle.FixedSingle, MinimizeBox = true, MaximizeBox = true};
-				emulation.Width = screenWidth;
-				emulation.Height = screenHeight;
-				emulation.CreateControl();
-				emulation.Show();
-
 				if (emulation.Handle == IntPtr.Zero)
 					throw new ApplicationException();
-
-				DXGI.CreateDXGIFactory2<IDXGIFactory2>(true, out var factory);
-				if (factory == null)
-					throw new ApplicationException();
-
-				factory.EnumAdapters(0, out var adapter);
-				if (adapter == null)
-					throw new ApplicationException();
-
-				var featureLevels = new FeatureLevel[]
-								{
-							FeatureLevel.Level_11_1,
-							FeatureLevel.Level_11_0,
-								};
-
-				D3D11.D3D11CreateDevice(adapter, DriverType.Unknown, DeviceCreationFlags.BgraSupport | DeviceCreationFlags.Debug, featureLevels, out var device);
-				if (device == null)
-					throw new ApplicationException();
-
-				var swapchain = factory.CreateSwapChainForHwnd(
-					device,
-					emulation.Handle,
-					new SwapChainDescription1 {
-						Width = screenWidth,
-						Height = screenHeight,
-						AlphaMode = AlphaMode.Ignore,
-						BufferCount = 2,
-						BufferUsage = 0,
-						Flags = 0,//SwapChainFlags.AllowTearing|SwapChainFlags.GdiCompatible ,
-						Format = Format.B8G8R8A8_UNorm,
-						SampleDescription = new SampleDescription { Count = 1, Quality = 0},
-						Scaling = Scaling.Stretch,
-						Stereo = false,
-						SwapEffect = SwapEffect.Discard
-					},
-					null,
-					null);
 
 				ss.Release();
 
@@ -163,10 +119,14 @@ namespace Jammy.Core.EmulationWindow.DX
 			Release("Deactivate");
 		}
 
-		private Bitmap bitmap;
-		private PictureBox picture;
+		//private Bitmap bitmap;
+		//private PictureBox picture;
 		private int screenWidth;
 		private int screenHeight;
+		private IDXGISwapChain1 swapchain;
+		private ID3D11Texture2D surface;
+		private ID3D11Device device;
+		private int[] screen;
 
 		public void SetPicture(int width, int height)
 		{
@@ -178,8 +138,8 @@ namespace Jammy.Core.EmulationWindow.DX
 				screenHeight = height;
 
 				emulation.ClientSize = new Size(screenWidth, screenHeight);
-				bitmap = new Bitmap(screenWidth, screenHeight, PixelFormat.Format32bppRgb);
-				picture = new PictureBox {Image = bitmap, ClientSize = new Size(screenWidth, screenHeight), Enabled = false};
+				//bitmap = new Bitmap(screenWidth, screenHeight, PixelFormat.Format32bppRgb);
+				//picture = new PictureBox {Image = bitmap, ClientSize = new Size(screenWidth, screenHeight), Enabled = false};
 
 				//try to scale the box
 				//picture.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -187,7 +147,64 @@ namespace Jammy.Core.EmulationWindow.DX
 				//emulation.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
 				//picture.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
 
-				emulation.Controls.Add(picture);
+				//emulation.Controls.Add(picture);
+
+				DXGI.CreateDXGIFactory2<IDXGIFactory2>(true, out var factory);
+				if (factory == null)
+					throw new ApplicationException();
+
+				factory.EnumAdapters(0, out var adapter);
+				if (adapter == null)
+					throw new ApplicationException();
+
+				var featureLevels = new FeatureLevel[]
+								{
+							FeatureLevel.Level_11_1,
+							FeatureLevel.Level_11_0,
+								};
+
+				D3D11.D3D11CreateDevice(adapter, DriverType.Unknown, DeviceCreationFlags.BgraSupport | DeviceCreationFlags.Debug, featureLevels, out device);
+				if (device == null)
+					throw new ApplicationException();
+
+				screen = new int[screenWidth * screenHeight];
+
+				surface = device.CreateTexture2D(new Texture2DDescription
+				{
+					Format = Format.B8G8R8A8_UNorm,
+					Width = screenWidth ,
+					Height = screenHeight ,
+					CPUAccessFlags = CpuAccessFlags.Write | CpuAccessFlags.Read,
+					MipLevels = 1,
+					ArraySize = 1,
+					BindFlags = BindFlags.None,
+					MiscFlags = ResourceOptionFlags.None,
+					SampleDescription = new SampleDescription { Count = 1, Quality = 0 },
+					Usage = ResourceUsage.Default
+				});
+				if (surface == null)
+					throw new ApplicationException();
+
+				swapchain = factory.CreateSwapChainForHwnd(
+					device,
+					emulation.Handle,
+					new SwapChainDescription1
+					{
+						Width = screenWidth,
+						Height = screenHeight,
+						AlphaMode = AlphaMode.Ignore,
+						BufferCount = 2,
+						BufferUsage = Usage.RenderTargetOutput ,
+						Flags = 0,//SwapChainFlags.AllowTearing|SwapChainFlags.GdiCompatible ,
+						Format = Format.B8G8R8A8_UNorm,
+						SampleDescription = new SampleDescription { Count = 1, Quality = 0 },
+						Scaling = Scaling.Stretch,
+						Stereo = false,
+						SwapEffect = SwapEffect.Discard
+					},
+					null,
+					null);
+
 				emulation.Show();
 			});
 		}
@@ -198,10 +215,26 @@ namespace Jammy.Core.EmulationWindow.DX
 
 			emulation.Invoke((Action)delegate
 			{
-				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, screenWidth, screenHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
-				Marshal.Copy(screen, 0, bitmapData.Scan0, screen.Length);
-				bitmap.UnlockBits(bitmapData);
-				picture.Refresh();
+
+				var surface = swapchain.GetBuffer<IDXGISurface2>(0);
+				
+				var rt = device.CreateRenderTargetView(surface.QueryInterface<ID3D11Resource>(), null);
+				
+
+				var map = surface.Map(Vortice.DXGI.MapFlags.Write | Vortice.DXGI.MapFlags.Discard);
+				
+				var map2 = surface.MapDataStream(Vortice.DXGI.MapFlags.Write | Vortice.DXGI.MapFlags.Discard);
+
+				foreach (var c in screen)
+					map2.Write<int>(c);
+
+				surface.Unmap();
+
+				//Marshal.Copy(screen, 0, map2.BasePointer, screenWidth * screenHeight);
+
+				surface.Release();
+
+				swapchain.Present(1,0);
 			});
 		}
 
@@ -238,7 +271,7 @@ namespace Jammy.Core.EmulationWindow.DX
 
 		public int[] GetFramebuffer()
 		{
-			return null;
+			return screen;
 		}
 	}
 }
