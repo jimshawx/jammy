@@ -127,6 +127,8 @@ namespace Jammy.Core
 
 		public void Emulate()
 		{
+			Thread.CurrentThread.Priority = ThreadPriority.Highest;
+
 			uint stepOutSp = 0xffffffff;
 			bool emulationHasRun = false;
 
