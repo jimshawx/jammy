@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,6 +18,61 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.Custom
 {
+	public struct FastUInt128
+	{
+		private ulong hi, lo;
+
+		internal void Or(ulong bits, int shift)
+		{
+			hi |= bits >> (64-shift);
+			lo |= bits << shift;
+		}
+
+		internal void Zero()
+		{
+			hi = lo = 0;
+		}
+
+		//internal void Set(UInt128 bits)
+		//{
+		//	lo = (ulong)bits;
+		//	hi = (ulong)(bits >> 64);
+		//}
+
+		internal void SetBit(int bit)
+		{
+			if (bit >= 64)
+			{ 
+				hi = 1UL << (bit - 64);
+				lo = 0;
+			}
+			else
+			{
+				hi = 0;
+				lo = 1UL << bit;
+			}
+		}
+
+		internal void Shl1()
+		{
+			hi <<= 1;
+			if ((long)lo < 0) hi |= 1;
+			lo <<= 1;
+		}
+
+		internal bool AnyBitsSet(ref FastUInt128 other)
+		{
+			return ((hi & other.hi) | (lo & other.lo)) != 0;
+		}
+
+		internal bool IsBitSet(int bit)
+		{
+			if (bit >= 64)
+				return (hi & (1UL << (bit - 64))) != 0;
+			return (lo & (1UL << bit)) != 0;
+		}
+	}
+
 	public class Copper : ICopper
 	{
 		private readonly IMemoryMappedDevice memory;
@@ -156,6 +212,11 @@ namespace Jammy.Core.Custom
 					interrupt.AssertInterrupt(Interrupt.VERTB);
 
 					copperFrame++;
+
+					if (cop.status == CopperStatus.Waiting && cop.data != 0xfffe)
+					{
+						logger.LogTrace ($"Hit VBL while still waiting for {cop.data:X2}");
+					}
 
 					if (cdbg.dbug)
 					{
@@ -483,11 +544,13 @@ namespace Jammy.Core.Custom
 			LineTerminated
 		}
 
+
 		private class CopperLine
 		{
-			public UInt128 pixelMask;
+			public FastUInt128 pixelMask;
+			public int pixelMaskBit;
 			public uint pixelBits;
-			public UInt128[] bpldatpix = new UInt128[8];
+			public FastUInt128[] bpldatpix = new FastUInt128[8];
 
 			public int planes;
 			public int diwstrth = 0;
@@ -923,10 +986,21 @@ namespace Jammy.Core.Custom
 
 		private bool CopperCompare(uint coppos, uint waitPos)
 		{
-			return coppos >= waitPos;
-			//return ((coppos&0xff00)==(waitPos&0xff00))&&((coppos&0xff)>=(waitPos&0xff));
+			//return coppos >= waitPos;
+			//return ((coppos&0xff00)>=(waitPos&0xff00))&&((coppos&0xff)>=(waitPos&0xff));
+			return (((coppos & 0xff00) == (waitPos & 0xff00)) && ((coppos & 0xff) >= (waitPos & 0xff))) || ((coppos & 0xff00) > (waitPos & 0xff00));
 		}
 
+		private static readonly int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
+		private static readonly int[] fetchHi = { 4, 2, 3, 1, 4, 2, 3, 1 };
+		private static readonly int[] fetchF3 = {
+					 //10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
+					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10,
+				};
+		private static readonly int[] fetchF2 = {
+					//10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
+					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10,
+				};
 		private void CopperBitplaneFetch(int h)
 		{
 			int planeIdx;
@@ -934,9 +1008,6 @@ namespace Jammy.Core.Custom
 
 			if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
 			{
-				int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
-				int[] fetchHi = { 4, 2, 3, 1, 4, 2, 3, 1 };
-
 				planeIdx = (h - cln.ddfstrtfix) % cln.pixmod;
 
 				if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
@@ -946,23 +1017,13 @@ namespace Jammy.Core.Custom
 			}
 			else if ((fmode&3) == 3)
 			{
-				int[] fetchF = {
-					 //10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
-					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 
-				};
-
 				planeIdx = (h - cln.ddfstrtfix) % cln.pixmod;
-				plane = fetchF[planeIdx] - 1;
+				plane = fetchF3[planeIdx] - 1;
 			}
 			else
 			{
-				int[] fetchF = {
-					//10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
-					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 
-				};
-
 				planeIdx = (h-cln.ddfstrtfix) % cln.pixmod;
-				plane = fetchF[planeIdx] - 1;
+				plane = fetchF2[planeIdx] - 1;
 			}
 
 			if (plane < cln.planes)
@@ -993,9 +1054,9 @@ namespace Jammy.Core.Custom
 						int even = (bplcon1>>4)&0xf;
 
 						if ((i&1)!=0)
-							cln.bpldatpix[i] |= (UInt128)bpldat[i] << (16-odd);
+							cln.bpldatpix[i].Or(bpldat[i], (16-odd));
 						else
-							cln.bpldatpix[i] |= (UInt128)bpldat[i] << (16-even);
+							cln.bpldatpix[i].Or(bpldat[i], (16-even));
 					}
 
 					if (cop.currentLine == cdbg.dbugLine)
@@ -1031,18 +1092,19 @@ namespace Jammy.Core.Custom
 			else
 				cln.pixelBits = 31; 
 
-			cln.pixelMask = UInt128.One << (int)(cln.pixelBits+16);
+			cln.pixelMask.SetBit((int)(cln.pixelBits + 16));
+			cln.pixelMaskBit = (int)(cln.pixelBits + 16);
 
 			//pixelCounter = 0;
 
 			for (int i = 0; i < 8; i++)
-				cln.bpldatpix[i] = 0;
+				cln.bpldatpix[i].Zero();
 		}
 
 		private void NextPixel()
 		{
 			for (int i = 0; i < 8; i++)
-				cln.bpldatpix[i] <<= 1;
+				cln.bpldatpix[i].Shl1();
 		}
 
 		//(x&(1<<0))*1 + x&(1<<2)*2 + x&(1<<4)*4 + x&(1<<6) *8
@@ -1073,8 +1135,8 @@ namespace Jammy.Core.Custom
 		//[MethodImpl(MethodImplOptions.NoOptimization)]
 		private void CopperBitplaneConvert(int h)
 		{
-			if (cop.currentLine == 50)
-				cop.currentLine = 50;
+			//if (cop.currentLine == 50)
+			//	cop.currentLine = 50;
 
 			for (int p = 0; p < cln.pixelLoop; p++)
 			{
@@ -1084,7 +1146,8 @@ namespace Jammy.Core.Custom
 
 				byte pix = 0;
 				for (int i = 0, b = 1; i < cln.planes; i++, b <<= 1)
-					pix |= (byte)((cln.bpldatpix[i] & cln.pixelMask) != 0 ? b : 0);
+					//pix |= (byte)((cln.bpldatpix[i].AnyBitsSet(ref cln.pixelMask)) ? b : 0);
+					pix |= (byte)((cln.bpldatpix[i].IsBitSet(cln.pixelMaskBit)) ? b : 0);
 
 				NextPixel();
 
