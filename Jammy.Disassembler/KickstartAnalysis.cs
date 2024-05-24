@@ -205,7 +205,7 @@ namespace Jammy.Disassembler
 							 "*                                                                          *\n" +
 							 "*  Release date:  2021.                                                    *\n" +
 							 "*                                                                          *\n" +
-							 $"*  The following is a complete disassembly of the Amiga {settings.KickStart,4}               *\n" +
+							 $"*  The following is a complete disassembly of the Amiga {settings.KickStartDisassembly,4}               *\n" +
 							 $"*  \"{rt.Name}\"                                                    *\n" +
 							 "*                                                                          *\n" +
 							 "*  Absolutely no guarantee is made of the correctness of any of the        *\n" +

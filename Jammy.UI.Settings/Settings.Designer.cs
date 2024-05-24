@@ -33,670 +33,652 @@ namespace Jammy.UI.Settings
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.cbQuickStart = new System.Windows.Forms.ComboBox();
-			this.btnQuickStart = new System.Windows.Forms.Button();
-			this.cbSku = new System.Windows.Forms.ComboBox();
-			this.rbNative = new System.Windows.Forms.RadioButton();
-			this.rbMusashi = new System.Windows.Forms.RadioButton();
-			this.panel1 = new System.Windows.Forms.Panel();
-			this.groupBox1 = new System.Windows.Forms.GroupBox();
-			this.panel2 = new System.Windows.Forms.Panel();
-			this.groupBox2 = new System.Windows.Forms.GroupBox();
-			this.cbChipset = new System.Windows.Forms.ComboBox();
-			this.txtKickstart = new System.Windows.Forms.TextBox();
-			this.panel3 = new System.Windows.Forms.Panel();
-			this.groupBox3 = new System.Windows.Forms.GroupBox();
-			this.btnROMPick = new System.Windows.Forms.Button();
-			this.panel4 = new System.Windows.Forms.Panel();
-			this.groupBox5 = new System.Windows.Forms.GroupBox();
-			this.btnDF3Pick = new System.Windows.Forms.Button();
-			this.txtDF0 = new System.Windows.Forms.TextBox();
-			this.btnDF2Pick = new System.Windows.Forms.Button();
-			this.nudFloppyCount = new System.Windows.Forms.NumericUpDown();
-			this.btnDF1Pick = new System.Windows.Forms.Button();
-			this.txtDF1 = new System.Windows.Forms.TextBox();
-			this.btnDF0Pick = new System.Windows.Forms.Button();
-			this.txtDF2 = new System.Windows.Forms.TextBox();
-			this.txtDF3 = new System.Windows.Forms.TextBox();
-			this.dudZ2 = new System.Windows.Forms.DomainUpDown();
-			this.dudTrapdoor = new System.Windows.Forms.DomainUpDown();
-			this.dudZ3 = new System.Windows.Forms.DomainUpDown();
-			this.groupBox4 = new System.Windows.Forms.GroupBox();
-			this.label6 = new System.Windows.Forms.Label();
-			this.label5 = new System.Windows.Forms.Label();
-			this.label4 = new System.Windows.Forms.Label();
-			this.label3 = new System.Windows.Forms.Label();
-			this.label2 = new System.Windows.Forms.Label();
-			this.label1 = new System.Windows.Forms.Label();
-			this.dudChipRAM = new System.Windows.Forms.DomainUpDown();
-			this.dudCPUSlot = new System.Windows.Forms.DomainUpDown();
-			this.dudMotherboard = new System.Windows.Forms.DomainUpDown();
-			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-			this.btnGo = new System.Windows.Forms.Button();
-			this.btnExit = new System.Windows.Forms.Button();
-			this.panel5 = new System.Windows.Forms.Panel();
-			this.btnLoadConfig = new System.Windows.Forms.Button();
-			this.btnSaveAsConfig = new System.Windows.Forms.Button();
-			this.btnSaveConfig = new System.Windows.Forms.Button();
-			this.panel6 = new System.Windows.Forms.Panel();
-			this.groupBox6 = new System.Windows.Forms.GroupBox();
-			this.cbAudio = new System.Windows.Forms.CheckBox();
-			this.panel7 = new System.Windows.Forms.Panel();
-			this.groupBox7 = new System.Windows.Forms.GroupBox();
-			this.cbDiskController = new System.Windows.Forms.ComboBox();
-			this.panel1.SuspendLayout();
-			this.groupBox1.SuspendLayout();
-			this.groupBox2.SuspendLayout();
-			this.panel3.SuspendLayout();
-			this.groupBox3.SuspendLayout();
-			this.panel4.SuspendLayout();
-			this.groupBox5.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.nudFloppyCount)).BeginInit();
-			this.groupBox4.SuspendLayout();
-			this.panel5.SuspendLayout();
-			this.panel6.SuspendLayout();
-			this.groupBox6.SuspendLayout();
-			this.groupBox7.SuspendLayout();
-			this.SuspendLayout();
+			cbQuickStart = new System.Windows.Forms.ComboBox();
+			btnQuickStart = new System.Windows.Forms.Button();
+			cbSku = new System.Windows.Forms.ComboBox();
+			rbNative = new System.Windows.Forms.RadioButton();
+			rbMusashi = new System.Windows.Forms.RadioButton();
+			panel1 = new System.Windows.Forms.Panel();
+			groupBox1 = new System.Windows.Forms.GroupBox();
+			panel2 = new System.Windows.Forms.Panel();
+			groupBox2 = new System.Windows.Forms.GroupBox();
+			cbChipset = new System.Windows.Forms.ComboBox();
+			txtKickstart = new System.Windows.Forms.TextBox();
+			panel3 = new System.Windows.Forms.Panel();
+			groupBox3 = new System.Windows.Forms.GroupBox();
+			btnROMPick = new System.Windows.Forms.Button();
+			panel4 = new System.Windows.Forms.Panel();
+			groupBox5 = new System.Windows.Forms.GroupBox();
+			btnDF3Pick = new System.Windows.Forms.Button();
+			txtDF0 = new System.Windows.Forms.TextBox();
+			btnDF2Pick = new System.Windows.Forms.Button();
+			nudFloppyCount = new System.Windows.Forms.NumericUpDown();
+			btnDF1Pick = new System.Windows.Forms.Button();
+			txtDF1 = new System.Windows.Forms.TextBox();
+			btnDF0Pick = new System.Windows.Forms.Button();
+			txtDF2 = new System.Windows.Forms.TextBox();
+			txtDF3 = new System.Windows.Forms.TextBox();
+			dudZ2 = new System.Windows.Forms.DomainUpDown();
+			dudTrapdoor = new System.Windows.Forms.DomainUpDown();
+			dudZ3 = new System.Windows.Forms.DomainUpDown();
+			groupBox4 = new System.Windows.Forms.GroupBox();
+			label6 = new System.Windows.Forms.Label();
+			label5 = new System.Windows.Forms.Label();
+			label4 = new System.Windows.Forms.Label();
+			label3 = new System.Windows.Forms.Label();
+			label2 = new System.Windows.Forms.Label();
+			label1 = new System.Windows.Forms.Label();
+			dudChipRAM = new System.Windows.Forms.DomainUpDown();
+			dudCPUSlot = new System.Windows.Forms.DomainUpDown();
+			dudMotherboard = new System.Windows.Forms.DomainUpDown();
+			openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+			btnGo = new System.Windows.Forms.Button();
+			btnExit = new System.Windows.Forms.Button();
+			panel5 = new System.Windows.Forms.Panel();
+			btnLoadConfig = new System.Windows.Forms.Button();
+			btnSaveAsConfig = new System.Windows.Forms.Button();
+			btnSaveConfig = new System.Windows.Forms.Button();
+			panel6 = new System.Windows.Forms.Panel();
+			groupBox6 = new System.Windows.Forms.GroupBox();
+			cbDebugging = new System.Windows.Forms.CheckBox();
+			cbAudio = new System.Windows.Forms.CheckBox();
+			panel7 = new System.Windows.Forms.Panel();
+			groupBox7 = new System.Windows.Forms.GroupBox();
+			cbDiskController = new System.Windows.Forms.ComboBox();
+			panel1.SuspendLayout();
+			groupBox1.SuspendLayout();
+			groupBox2.SuspendLayout();
+			panel3.SuspendLayout();
+			groupBox3.SuspendLayout();
+			panel4.SuspendLayout();
+			groupBox5.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)nudFloppyCount).BeginInit();
+			groupBox4.SuspendLayout();
+			panel5.SuspendLayout();
+			panel6.SuspendLayout();
+			groupBox6.SuspendLayout();
+			groupBox7.SuspendLayout();
+			SuspendLayout();
 			// 
 			// cbQuickStart
 			// 
-			this.cbQuickStart.FormattingEnabled = true;
-			this.cbQuickStart.Items.AddRange(new object[] {
-            "current configuration",
-            "A500, 512KB+512KB, OCS, KS1.3",
-            "A500+, 1MB+1MB, ECS, KS2.04",
-            "A600, 1MB, ECS, KS2.05",
-            "A1200, 2MB, AGA, KS3.1",
-            "A3000, 1MB+16MB+256MB, ECS, KS3.1",
-            "A4000, 2MB+16MB+256MB, AGA, KS3.1"});
-			this.cbQuickStart.Location = new System.Drawing.Point(12, 12);
-			this.cbQuickStart.Name = "cbQuickStart";
-			this.cbQuickStart.Size = new System.Drawing.Size(350, 23);
-			this.cbQuickStart.TabIndex = 1;
-			this.cbQuickStart.SelectedValueChanged += new System.EventHandler(this.cbQuickStart_SelectedValueChanged);
+			cbQuickStart.FormattingEnabled = true;
+			cbQuickStart.Items.AddRange(new object[] { "current configuration", "A500, 512KB+512KB, OCS, KS1.3", "A500+, 1MB+1MB, ECS, KS2.04", "A600, 1MB, ECS, KS2.05", "A1200, 2MB, AGA, KS3.1", "A3000, 1MB+16MB+256MB, ECS, KS3.1", "A4000, 2MB+16MB+256MB, AGA, KS3.1" });
+			cbQuickStart.Location = new System.Drawing.Point(12, 12);
+			cbQuickStart.Name = "cbQuickStart";
+			cbQuickStart.Size = new System.Drawing.Size(350, 23);
+			cbQuickStart.TabIndex = 1;
+			cbQuickStart.SelectedValueChanged += cbQuickStart_SelectedValueChanged;
 			// 
 			// btnQuickStart
 			// 
-			this.btnQuickStart.Location = new System.Drawing.Point(369, 13);
-			this.btnQuickStart.Name = "btnQuickStart";
-			this.btnQuickStart.Size = new System.Drawing.Size(75, 23);
-			this.btnQuickStart.TabIndex = 2;
-			this.btnQuickStart.Text = "Quick Start";
-			this.btnQuickStart.UseVisualStyleBackColor = true;
-			this.btnQuickStart.Click += new System.EventHandler(this.btnQuickStart_Click);
+			btnQuickStart.Location = new System.Drawing.Point(369, 13);
+			btnQuickStart.Name = "btnQuickStart";
+			btnQuickStart.Size = new System.Drawing.Size(75, 23);
+			btnQuickStart.TabIndex = 2;
+			btnQuickStart.Text = "Quick Start";
+			btnQuickStart.UseVisualStyleBackColor = true;
+			btnQuickStart.Click += btnQuickStart_Click;
 			// 
 			// cbSku
 			// 
-			this.cbSku.FormattingEnabled = true;
-			this.cbSku.Items.AddRange(new object[] {
-            "MC68000",
-            "MC68EC020",
-            "MC68030"});
-			this.cbSku.Location = new System.Drawing.Point(6, 22);
-			this.cbSku.Name = "cbSku";
-			this.cbSku.Size = new System.Drawing.Size(121, 23);
-			this.cbSku.TabIndex = 3;
-			this.cbSku.SelectedValueChanged += new System.EventHandler(this.cbCPU_SelectedValueChanged);
+			cbSku.FormattingEnabled = true;
+			cbSku.Items.AddRange(new object[] { "MC68000", "MC68EC020", "MC68030" });
+			cbSku.Location = new System.Drawing.Point(6, 22);
+			cbSku.Name = "cbSku";
+			cbSku.Size = new System.Drawing.Size(121, 23);
+			cbSku.TabIndex = 3;
+			cbSku.SelectedValueChanged += cbCPU_SelectedValueChanged;
 			// 
 			// rbNative
 			// 
-			this.rbNative.AutoSize = true;
-			this.rbNative.Location = new System.Drawing.Point(142, 19);
-			this.rbNative.Name = "rbNative";
-			this.rbNative.Size = new System.Drawing.Size(59, 19);
-			this.rbNative.TabIndex = 4;
-			this.rbNative.TabStop = true;
-			this.rbNative.Text = "Native";
-			this.rbNative.UseVisualStyleBackColor = true;
-			this.rbNative.CheckedChanged += new System.EventHandler(this.rbNative_CheckedChanged);
+			rbNative.AutoSize = true;
+			rbNative.Location = new System.Drawing.Point(142, 19);
+			rbNative.Name = "rbNative";
+			rbNative.Size = new System.Drawing.Size(59, 19);
+			rbNative.TabIndex = 4;
+			rbNative.TabStop = true;
+			rbNative.Text = "Native";
+			rbNative.UseVisualStyleBackColor = true;
+			rbNative.CheckedChanged += rbNative_CheckedChanged;
 			// 
 			// rbMusashi
 			// 
-			this.rbMusashi.AutoSize = true;
-			this.rbMusashi.Location = new System.Drawing.Point(142, 37);
-			this.rbMusashi.Name = "rbMusashi";
-			this.rbMusashi.Size = new System.Drawing.Size(69, 19);
-			this.rbMusashi.TabIndex = 5;
-			this.rbMusashi.TabStop = true;
-			this.rbMusashi.Text = "Musashi";
-			this.rbMusashi.UseVisualStyleBackColor = true;
+			rbMusashi.AutoSize = true;
+			rbMusashi.Location = new System.Drawing.Point(142, 37);
+			rbMusashi.Name = "rbMusashi";
+			rbMusashi.Size = new System.Drawing.Size(69, 19);
+			rbMusashi.TabIndex = 5;
+			rbMusashi.TabStop = true;
+			rbMusashi.Text = "Musashi";
+			rbMusashi.UseVisualStyleBackColor = true;
 			// 
 			// panel1
 			// 
-			this.panel1.Controls.Add(this.groupBox1);
-			this.panel1.Location = new System.Drawing.Point(12, 42);
-			this.panel1.Name = "panel1";
-			this.panel1.Size = new System.Drawing.Size(238, 90);
-			this.panel1.TabIndex = 6;
+			panel1.Controls.Add(groupBox1);
+			panel1.Location = new System.Drawing.Point(12, 42);
+			panel1.Name = "panel1";
+			panel1.Size = new System.Drawing.Size(238, 90);
+			panel1.TabIndex = 6;
 			// 
 			// groupBox1
 			// 
-			this.groupBox1.Controls.Add(this.cbSku);
-			this.groupBox1.Controls.Add(this.rbNative);
-			this.groupBox1.Controls.Add(this.rbMusashi);
-			this.groupBox1.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox1.Location = new System.Drawing.Point(0, 0);
-			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(226, 72);
-			this.groupBox1.TabIndex = 6;
-			this.groupBox1.TabStop = false;
-			this.groupBox1.Text = "CPU";
+			groupBox1.Controls.Add(cbSku);
+			groupBox1.Controls.Add(rbNative);
+			groupBox1.Controls.Add(rbMusashi);
+			groupBox1.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox1.Location = new System.Drawing.Point(0, 0);
+			groupBox1.Name = "groupBox1";
+			groupBox1.Size = new System.Drawing.Size(226, 72);
+			groupBox1.TabIndex = 6;
+			groupBox1.TabStop = false;
+			groupBox1.Text = "CPU";
 			// 
 			// panel2
 			// 
-			this.panel2.Location = new System.Drawing.Point(12, 138);
-			this.panel2.Name = "panel2";
-			this.panel2.Size = new System.Drawing.Size(238, 54);
-			this.panel2.TabIndex = 8;
+			panel2.Location = new System.Drawing.Point(12, 138);
+			panel2.Name = "panel2";
+			panel2.Size = new System.Drawing.Size(238, 54);
+			panel2.TabIndex = 8;
 			// 
 			// groupBox2
 			// 
-			this.groupBox2.Controls.Add(this.cbChipset);
-			this.groupBox2.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox2.Location = new System.Drawing.Point(12, 138);
-			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Size = new System.Drawing.Size(226, 54);
-			this.groupBox2.TabIndex = 0;
-			this.groupBox2.TabStop = false;
-			this.groupBox2.Text = "Chipset";
+			groupBox2.Controls.Add(cbChipset);
+			groupBox2.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox2.Location = new System.Drawing.Point(12, 138);
+			groupBox2.Name = "groupBox2";
+			groupBox2.Size = new System.Drawing.Size(226, 54);
+			groupBox2.TabIndex = 0;
+			groupBox2.TabStop = false;
+			groupBox2.Text = "Chipset";
 			// 
 			// cbChipset
 			// 
-			this.cbChipset.FormattingEnabled = true;
-			this.cbChipset.Items.AddRange(new object[] {
-            "OCS",
-            "ECS",
-            "AGA"});
-			this.cbChipset.Location = new System.Drawing.Point(6, 22);
-			this.cbChipset.Name = "cbChipset";
-			this.cbChipset.Size = new System.Drawing.Size(121, 23);
-			this.cbChipset.TabIndex = 0;
-			this.cbChipset.SelectedValueChanged += new System.EventHandler(this.cbChipset_SelectedValueChanged);
+			cbChipset.FormattingEnabled = true;
+			cbChipset.Items.AddRange(new object[] { "OCS", "ECS", "AGA" });
+			cbChipset.Location = new System.Drawing.Point(6, 22);
+			cbChipset.Name = "cbChipset";
+			cbChipset.Size = new System.Drawing.Size(121, 23);
+			cbChipset.TabIndex = 0;
+			cbChipset.SelectedValueChanged += cbChipset_SelectedValueChanged;
 			// 
 			// txtKickstart
 			// 
-			this.txtKickstart.Location = new System.Drawing.Point(6, 22);
-			this.txtKickstart.Name = "txtKickstart";
-			this.txtKickstart.Size = new System.Drawing.Size(307, 23);
-			this.txtKickstart.TabIndex = 9;
+			txtKickstart.Location = new System.Drawing.Point(6, 22);
+			txtKickstart.Name = "txtKickstart";
+			txtKickstart.Size = new System.Drawing.Size(307, 23);
+			txtKickstart.TabIndex = 9;
 			// 
 			// panel3
 			// 
-			this.panel3.Controls.Add(this.groupBox3);
-			this.panel3.Location = new System.Drawing.Point(256, 249);
-			this.panel3.Name = "panel3";
-			this.panel3.Size = new System.Drawing.Size(425, 60);
-			this.panel3.TabIndex = 10;
+			panel3.Controls.Add(groupBox3);
+			panel3.Location = new System.Drawing.Point(256, 249);
+			panel3.Name = "panel3";
+			panel3.Size = new System.Drawing.Size(425, 60);
+			panel3.TabIndex = 10;
 			// 
 			// groupBox3
 			// 
-			this.groupBox3.Controls.Add(this.txtKickstart);
-			this.groupBox3.Controls.Add(this.btnROMPick);
-			this.groupBox3.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox3.Location = new System.Drawing.Point(7, 1);
-			this.groupBox3.Name = "groupBox3";
-			this.groupBox3.Size = new System.Drawing.Size(418, 55);
-			this.groupBox3.TabIndex = 11;
-			this.groupBox3.TabStop = false;
-			this.groupBox3.Text = "Kickstart";
+			groupBox3.Controls.Add(txtKickstart);
+			groupBox3.Controls.Add(btnROMPick);
+			groupBox3.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox3.Location = new System.Drawing.Point(7, 1);
+			groupBox3.Name = "groupBox3";
+			groupBox3.Size = new System.Drawing.Size(418, 55);
+			groupBox3.TabIndex = 11;
+			groupBox3.TabStop = false;
+			groupBox3.Text = "Kickstart";
 			// 
 			// btnROMPick
 			// 
-			this.btnROMPick.Location = new System.Drawing.Point(320, 21);
-			this.btnROMPick.Name = "btnROMPick";
-			this.btnROMPick.Size = new System.Drawing.Size(35, 23);
-			this.btnROMPick.TabIndex = 10;
-			this.btnROMPick.Text = "...";
-			this.btnROMPick.UseVisualStyleBackColor = true;
-			this.btnROMPick.Click += new System.EventHandler(this.btnROMPick_Click);
+			btnROMPick.Location = new System.Drawing.Point(320, 21);
+			btnROMPick.Name = "btnROMPick";
+			btnROMPick.Size = new System.Drawing.Size(35, 23);
+			btnROMPick.TabIndex = 10;
+			btnROMPick.Text = "...";
+			btnROMPick.UseVisualStyleBackColor = true;
+			btnROMPick.Click += btnROMPick_Click;
 			// 
 			// panel4
 			// 
-			this.panel4.Controls.Add(this.groupBox5);
-			this.panel4.Location = new System.Drawing.Point(256, 42);
-			this.panel4.Name = "panel4";
-			this.panel4.Size = new System.Drawing.Size(425, 141);
-			this.panel4.TabIndex = 11;
+			panel4.Controls.Add(groupBox5);
+			panel4.Location = new System.Drawing.Point(256, 42);
+			panel4.Name = "panel4";
+			panel4.Size = new System.Drawing.Size(425, 141);
+			panel4.TabIndex = 11;
 			// 
 			// groupBox5
 			// 
-			this.groupBox5.Controls.Add(this.btnDF3Pick);
-			this.groupBox5.Controls.Add(this.txtDF0);
-			this.groupBox5.Controls.Add(this.btnDF2Pick);
-			this.groupBox5.Controls.Add(this.nudFloppyCount);
-			this.groupBox5.Controls.Add(this.btnDF1Pick);
-			this.groupBox5.Controls.Add(this.txtDF1);
-			this.groupBox5.Controls.Add(this.btnDF0Pick);
-			this.groupBox5.Controls.Add(this.txtDF2);
-			this.groupBox5.Controls.Add(this.txtDF3);
-			this.groupBox5.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox5.Location = new System.Drawing.Point(0, 1);
-			this.groupBox5.Name = "groupBox5";
-			this.groupBox5.Size = new System.Drawing.Size(418, 141);
-			this.groupBox5.TabIndex = 16;
-			this.groupBox5.TabStop = false;
-			this.groupBox5.Text = "Floppy Disk";
+			groupBox5.Controls.Add(btnDF3Pick);
+			groupBox5.Controls.Add(txtDF0);
+			groupBox5.Controls.Add(btnDF2Pick);
+			groupBox5.Controls.Add(nudFloppyCount);
+			groupBox5.Controls.Add(btnDF1Pick);
+			groupBox5.Controls.Add(txtDF1);
+			groupBox5.Controls.Add(btnDF0Pick);
+			groupBox5.Controls.Add(txtDF2);
+			groupBox5.Controls.Add(txtDF3);
+			groupBox5.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox5.Location = new System.Drawing.Point(0, 1);
+			groupBox5.Name = "groupBox5";
+			groupBox5.Size = new System.Drawing.Size(418, 141);
+			groupBox5.TabIndex = 16;
+			groupBox5.TabStop = false;
+			groupBox5.Text = "Floppy Disk";
 			// 
 			// btnDF3Pick
 			// 
-			this.btnDF3Pick.Location = new System.Drawing.Point(320, 106);
-			this.btnDF3Pick.Name = "btnDF3Pick";
-			this.btnDF3Pick.Size = new System.Drawing.Size(35, 23);
-			this.btnDF3Pick.TabIndex = 8;
-			this.btnDF3Pick.Text = "...";
-			this.btnDF3Pick.UseVisualStyleBackColor = true;
-			this.btnDF3Pick.Click += new System.EventHandler(this.btnDF3Pick_Click);
+			btnDF3Pick.Location = new System.Drawing.Point(320, 106);
+			btnDF3Pick.Name = "btnDF3Pick";
+			btnDF3Pick.Size = new System.Drawing.Size(35, 23);
+			btnDF3Pick.TabIndex = 8;
+			btnDF3Pick.Text = "...";
+			btnDF3Pick.UseVisualStyleBackColor = true;
+			btnDF3Pick.Click += btnDF3Pick_Click;
 			// 
 			// txtDF0
 			// 
-			this.txtDF0.Location = new System.Drawing.Point(6, 21);
-			this.txtDF0.Name = "txtDF0";
-			this.txtDF0.Size = new System.Drawing.Size(307, 23);
-			this.txtDF0.TabIndex = 1;
+			txtDF0.Location = new System.Drawing.Point(6, 21);
+			txtDF0.Name = "txtDF0";
+			txtDF0.Size = new System.Drawing.Size(307, 23);
+			txtDF0.TabIndex = 1;
 			// 
 			// btnDF2Pick
 			// 
-			this.btnDF2Pick.Location = new System.Drawing.Point(320, 78);
-			this.btnDF2Pick.Name = "btnDF2Pick";
-			this.btnDF2Pick.Size = new System.Drawing.Size(35, 23);
-			this.btnDF2Pick.TabIndex = 7;
-			this.btnDF2Pick.Text = "...";
-			this.btnDF2Pick.UseVisualStyleBackColor = true;
-			this.btnDF2Pick.Click += new System.EventHandler(this.btnDF2Pick_Click);
+			btnDF2Pick.Location = new System.Drawing.Point(320, 78);
+			btnDF2Pick.Name = "btnDF2Pick";
+			btnDF2Pick.Size = new System.Drawing.Size(35, 23);
+			btnDF2Pick.TabIndex = 7;
+			btnDF2Pick.Text = "...";
+			btnDF2Pick.UseVisualStyleBackColor = true;
+			btnDF2Pick.Click += btnDF2Pick_Click;
 			// 
 			// nudFloppyCount
 			// 
-			this.nudFloppyCount.Location = new System.Drawing.Point(359, 20);
-			this.nudFloppyCount.Maximum = new decimal(new int[] {
-            4,
-            0,
-            0,
-            0});
-			this.nudFloppyCount.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-			this.nudFloppyCount.Name = "nudFloppyCount";
-			this.nudFloppyCount.ReadOnly = true;
-			this.nudFloppyCount.Size = new System.Drawing.Size(43, 23);
-			this.nudFloppyCount.TabIndex = 0;
-			this.nudFloppyCount.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-			this.nudFloppyCount.ValueChanged += new System.EventHandler(this.nudFloppyCount_ValueChanged);
+			nudFloppyCount.Location = new System.Drawing.Point(359, 20);
+			nudFloppyCount.Maximum = new decimal(new int[] { 4, 0, 0, 0 });
+			nudFloppyCount.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+			nudFloppyCount.Name = "nudFloppyCount";
+			nudFloppyCount.ReadOnly = true;
+			nudFloppyCount.Size = new System.Drawing.Size(43, 23);
+			nudFloppyCount.TabIndex = 0;
+			nudFloppyCount.Value = new decimal(new int[] { 1, 0, 0, 0 });
+			nudFloppyCount.ValueChanged += nudFloppyCount_ValueChanged;
 			// 
 			// btnDF1Pick
 			// 
-			this.btnDF1Pick.Location = new System.Drawing.Point(319, 49);
-			this.btnDF1Pick.Name = "btnDF1Pick";
-			this.btnDF1Pick.Size = new System.Drawing.Size(35, 23);
-			this.btnDF1Pick.TabIndex = 6;
-			this.btnDF1Pick.Text = "...";
-			this.btnDF1Pick.UseVisualStyleBackColor = true;
-			this.btnDF1Pick.Click += new System.EventHandler(this.btnDF1Pick_Click);
+			btnDF1Pick.Location = new System.Drawing.Point(319, 49);
+			btnDF1Pick.Name = "btnDF1Pick";
+			btnDF1Pick.Size = new System.Drawing.Size(35, 23);
+			btnDF1Pick.TabIndex = 6;
+			btnDF1Pick.Text = "...";
+			btnDF1Pick.UseVisualStyleBackColor = true;
+			btnDF1Pick.Click += btnDF1Pick_Click;
 			// 
 			// txtDF1
 			// 
-			this.txtDF1.Location = new System.Drawing.Point(6, 50);
-			this.txtDF1.Name = "txtDF1";
-			this.txtDF1.Size = new System.Drawing.Size(307, 23);
-			this.txtDF1.TabIndex = 2;
+			txtDF1.Location = new System.Drawing.Point(6, 50);
+			txtDF1.Name = "txtDF1";
+			txtDF1.Size = new System.Drawing.Size(307, 23);
+			txtDF1.TabIndex = 2;
 			// 
 			// btnDF0Pick
 			// 
-			this.btnDF0Pick.Location = new System.Drawing.Point(319, 20);
-			this.btnDF0Pick.Name = "btnDF0Pick";
-			this.btnDF0Pick.Size = new System.Drawing.Size(35, 23);
-			this.btnDF0Pick.TabIndex = 5;
-			this.btnDF0Pick.Text = "...";
-			this.btnDF0Pick.UseVisualStyleBackColor = true;
-			this.btnDF0Pick.Click += new System.EventHandler(this.btnDF0Pick_Click);
+			btnDF0Pick.Location = new System.Drawing.Point(319, 20);
+			btnDF0Pick.Name = "btnDF0Pick";
+			btnDF0Pick.Size = new System.Drawing.Size(35, 23);
+			btnDF0Pick.TabIndex = 5;
+			btnDF0Pick.Text = "...";
+			btnDF0Pick.UseVisualStyleBackColor = true;
+			btnDF0Pick.Click += btnDF0Pick_Click;
 			// 
 			// txtDF2
 			// 
-			this.txtDF2.Location = new System.Drawing.Point(6, 79);
-			this.txtDF2.Name = "txtDF2";
-			this.txtDF2.Size = new System.Drawing.Size(307, 23);
-			this.txtDF2.TabIndex = 3;
+			txtDF2.Location = new System.Drawing.Point(6, 79);
+			txtDF2.Name = "txtDF2";
+			txtDF2.Size = new System.Drawing.Size(307, 23);
+			txtDF2.TabIndex = 3;
 			// 
 			// txtDF3
 			// 
-			this.txtDF3.Location = new System.Drawing.Point(6, 108);
-			this.txtDF3.Name = "txtDF3";
-			this.txtDF3.Size = new System.Drawing.Size(307, 23);
-			this.txtDF3.TabIndex = 4;
+			txtDF3.Location = new System.Drawing.Point(6, 108);
+			txtDF3.Name = "txtDF3";
+			txtDF3.Size = new System.Drawing.Size(307, 23);
+			txtDF3.TabIndex = 4;
 			// 
 			// dudZ2
 			// 
-			this.dudZ2.Items.Add("8.0");
-			this.dudZ2.Items.Add("4.0");
-			this.dudZ2.Items.Add("2.0");
-			this.dudZ2.Items.Add("1.0");
-			this.dudZ2.Items.Add("0.5");
-			this.dudZ2.Items.Add("0");
-			this.dudZ2.Location = new System.Drawing.Point(90, 77);
-			this.dudZ2.Name = "dudZ2";
-			this.dudZ2.ReadOnly = true;
-			this.dudZ2.Size = new System.Drawing.Size(120, 23);
-			this.dudZ2.TabIndex = 12;
-			this.dudZ2.Text = "ZorroII RAM";
+			dudZ2.Items.Add("8.0");
+			dudZ2.Items.Add("4.0");
+			dudZ2.Items.Add("2.0");
+			dudZ2.Items.Add("1.0");
+			dudZ2.Items.Add("0.5");
+			dudZ2.Items.Add("0");
+			dudZ2.Location = new System.Drawing.Point(90, 77);
+			dudZ2.Name = "dudZ2";
+			dudZ2.ReadOnly = true;
+			dudZ2.Size = new System.Drawing.Size(120, 23);
+			dudZ2.TabIndex = 12;
+			dudZ2.Text = "ZorroII RAM";
 			// 
 			// dudTrapdoor
 			// 
-			this.dudTrapdoor.Items.Add("1.75");
-			this.dudTrapdoor.Items.Add("1.5");
-			this.dudTrapdoor.Items.Add("1.0");
-			this.dudTrapdoor.Items.Add("0.5");
-			this.dudTrapdoor.Items.Add("0");
-			this.dudTrapdoor.Location = new System.Drawing.Point(90, 48);
-			this.dudTrapdoor.Name = "dudTrapdoor";
-			this.dudTrapdoor.ReadOnly = true;
-			this.dudTrapdoor.Size = new System.Drawing.Size(120, 23);
-			this.dudTrapdoor.TabIndex = 13;
-			this.dudTrapdoor.Text = "Trapdoor RAM";
+			dudTrapdoor.Items.Add("1.75");
+			dudTrapdoor.Items.Add("1.5");
+			dudTrapdoor.Items.Add("1.0");
+			dudTrapdoor.Items.Add("0.5");
+			dudTrapdoor.Items.Add("0");
+			dudTrapdoor.Location = new System.Drawing.Point(90, 48);
+			dudTrapdoor.Name = "dudTrapdoor";
+			dudTrapdoor.ReadOnly = true;
+			dudTrapdoor.Size = new System.Drawing.Size(120, 23);
+			dudTrapdoor.TabIndex = 13;
+			dudTrapdoor.Text = "Trapdoor RAM";
 			// 
 			// dudZ3
 			// 
-			this.dudZ3.Items.Add("512+512+512");
-			this.dudZ3.Items.Add("512+512");
-			this.dudZ3.Items.Add("256+256");
-			this.dudZ3.Items.Add("1024");
-			this.dudZ3.Items.Add("512");
-			this.dudZ3.Items.Add("256");
-			this.dudZ3.Items.Add("128");
-			this.dudZ3.Items.Add("0");
-			this.dudZ3.Location = new System.Drawing.Point(90, 106);
-			this.dudZ3.Name = "dudZ3";
-			this.dudZ3.ReadOnly = true;
-			this.dudZ3.Size = new System.Drawing.Size(120, 23);
-			this.dudZ3.TabIndex = 14;
-			this.dudZ3.Text = "ZorroIII RAM";
+			dudZ3.Items.Add("512+512+512");
+			dudZ3.Items.Add("512+512");
+			dudZ3.Items.Add("256+256");
+			dudZ3.Items.Add("1024");
+			dudZ3.Items.Add("512");
+			dudZ3.Items.Add("256");
+			dudZ3.Items.Add("128");
+			dudZ3.Items.Add("0");
+			dudZ3.Location = new System.Drawing.Point(90, 106);
+			dudZ3.Name = "dudZ3";
+			dudZ3.ReadOnly = true;
+			dudZ3.Size = new System.Drawing.Size(120, 23);
+			dudZ3.TabIndex = 14;
+			dudZ3.Text = "ZorroIII RAM";
 			// 
 			// groupBox4
 			// 
-			this.groupBox4.Controls.Add(this.label6);
-			this.groupBox4.Controls.Add(this.label5);
-			this.groupBox4.Controls.Add(this.label4);
-			this.groupBox4.Controls.Add(this.label3);
-			this.groupBox4.Controls.Add(this.label2);
-			this.groupBox4.Controls.Add(this.label1);
-			this.groupBox4.Controls.Add(this.dudChipRAM);
-			this.groupBox4.Controls.Add(this.dudCPUSlot);
-			this.groupBox4.Controls.Add(this.dudMotherboard);
-			this.groupBox4.Controls.Add(this.dudZ2);
-			this.groupBox4.Controls.Add(this.dudZ3);
-			this.groupBox4.Controls.Add(this.dudTrapdoor);
-			this.groupBox4.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox4.Location = new System.Drawing.Point(0, 0);
-			this.groupBox4.Name = "groupBox4";
-			this.groupBox4.Size = new System.Drawing.Size(226, 197);
-			this.groupBox4.TabIndex = 16;
-			this.groupBox4.TabStop = false;
-			this.groupBox4.Text = "Memory";
+			groupBox4.Controls.Add(label6);
+			groupBox4.Controls.Add(label5);
+			groupBox4.Controls.Add(label4);
+			groupBox4.Controls.Add(label3);
+			groupBox4.Controls.Add(label2);
+			groupBox4.Controls.Add(label1);
+			groupBox4.Controls.Add(dudChipRAM);
+			groupBox4.Controls.Add(dudCPUSlot);
+			groupBox4.Controls.Add(dudMotherboard);
+			groupBox4.Controls.Add(dudZ2);
+			groupBox4.Controls.Add(dudZ3);
+			groupBox4.Controls.Add(dudTrapdoor);
+			groupBox4.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox4.Location = new System.Drawing.Point(0, 0);
+			groupBox4.Name = "groupBox4";
+			groupBox4.Size = new System.Drawing.Size(226, 197);
+			groupBox4.TabIndex = 16;
+			groupBox4.TabStop = false;
+			groupBox4.Text = "Memory";
 			// 
 			// label6
 			// 
-			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point(7, 164);
-			this.label6.Name = "label6";
-			this.label6.Size = new System.Drawing.Size(53, 15);
-			this.label6.TabIndex = 23;
-			this.label6.Text = "CPU Slot";
+			label6.AutoSize = true;
+			label6.Location = new System.Drawing.Point(7, 164);
+			label6.Name = "label6";
+			label6.Size = new System.Drawing.Size(53, 15);
+			label6.TabIndex = 23;
+			label6.Text = "CPU Slot";
 			// 
 			// label5
 			// 
-			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(7, 135);
-			this.label5.Name = "label5";
-			this.label5.Size = new System.Drawing.Size(77, 15);
-			this.label5.TabIndex = 22;
-			this.label5.Text = "Motherboard";
+			label5.AutoSize = true;
+			label5.Location = new System.Drawing.Point(7, 135);
+			label5.Name = "label5";
+			label5.Size = new System.Drawing.Size(77, 15);
+			label5.TabIndex = 22;
+			label5.Text = "Motherboard";
 			// 
 			// label4
 			// 
-			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(6, 106);
-			this.label4.Name = "label4";
-			this.label4.Size = new System.Drawing.Size(48, 15);
-			this.label4.TabIndex = 21;
-			this.label4.Text = "Zorro III";
+			label4.AutoSize = true;
+			label4.Location = new System.Drawing.Point(6, 106);
+			label4.Name = "label4";
+			label4.Size = new System.Drawing.Size(48, 15);
+			label4.TabIndex = 21;
+			label4.Text = "Zorro III";
 			// 
 			// label3
 			// 
-			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(7, 77);
-			this.label3.Name = "label3";
-			this.label3.Size = new System.Drawing.Size(45, 15);
-			this.label3.TabIndex = 20;
-			this.label3.Text = "Zorro II";
+			label3.AutoSize = true;
+			label3.Location = new System.Drawing.Point(7, 77);
+			label3.Name = "label3";
+			label3.Size = new System.Drawing.Size(45, 15);
+			label3.TabIndex = 20;
+			label3.Text = "Zorro II";
 			// 
 			// label2
 			// 
-			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(7, 48);
-			this.label2.Name = "label2";
-			this.label2.Size = new System.Drawing.Size(54, 15);
-			this.label2.TabIndex = 19;
-			this.label2.Text = "Trapdoor";
+			label2.AutoSize = true;
+			label2.Location = new System.Drawing.Point(7, 48);
+			label2.Name = "label2";
+			label2.Size = new System.Drawing.Size(54, 15);
+			label2.TabIndex = 19;
+			label2.Text = "Trapdoor";
 			// 
 			// label1
 			// 
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(7, 19);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(32, 15);
-			this.label1.TabIndex = 18;
-			this.label1.Text = "Chip";
+			label1.AutoSize = true;
+			label1.Location = new System.Drawing.Point(7, 19);
+			label1.Name = "label1";
+			label1.Size = new System.Drawing.Size(32, 15);
+			label1.TabIndex = 18;
+			label1.Text = "Chip";
 			// 
 			// dudChipRAM
 			// 
-			this.dudChipRAM.Items.Add("2.0");
-			this.dudChipRAM.Items.Add("1.0");
-			this.dudChipRAM.Items.Add("0.5");
-			this.dudChipRAM.Location = new System.Drawing.Point(90, 19);
-			this.dudChipRAM.Name = "dudChipRAM";
-			this.dudChipRAM.ReadOnly = true;
-			this.dudChipRAM.Size = new System.Drawing.Size(120, 23);
-			this.dudChipRAM.TabIndex = 17;
-			this.dudChipRAM.Text = "Chip RAM";
+			dudChipRAM.Items.Add("2.0");
+			dudChipRAM.Items.Add("1.0");
+			dudChipRAM.Items.Add("0.5");
+			dudChipRAM.Location = new System.Drawing.Point(90, 19);
+			dudChipRAM.Name = "dudChipRAM";
+			dudChipRAM.ReadOnly = true;
+			dudChipRAM.Size = new System.Drawing.Size(120, 23);
+			dudChipRAM.TabIndex = 17;
+			dudChipRAM.Text = "Chip RAM";
 			// 
 			// dudCPUSlot
 			// 
-			this.dudCPUSlot.Items.Add("128");
-			this.dudCPUSlot.Items.Add("64");
-			this.dudCPUSlot.Items.Add("32");
-			this.dudCPUSlot.Items.Add("16");
-			this.dudCPUSlot.Items.Add("8");
-			this.dudCPUSlot.Items.Add("0");
-			this.dudCPUSlot.Location = new System.Drawing.Point(90, 164);
-			this.dudCPUSlot.Name = "dudCPUSlot";
-			this.dudCPUSlot.ReadOnly = true;
-			this.dudCPUSlot.Size = new System.Drawing.Size(120, 23);
-			this.dudCPUSlot.TabIndex = 16;
-			this.dudCPUSlot.Text = "CPU Slot RAM";
+			dudCPUSlot.Items.Add("128");
+			dudCPUSlot.Items.Add("64");
+			dudCPUSlot.Items.Add("32");
+			dudCPUSlot.Items.Add("16");
+			dudCPUSlot.Items.Add("8");
+			dudCPUSlot.Items.Add("0");
+			dudCPUSlot.Location = new System.Drawing.Point(90, 164);
+			dudCPUSlot.Name = "dudCPUSlot";
+			dudCPUSlot.ReadOnly = true;
+			dudCPUSlot.Size = new System.Drawing.Size(120, 23);
+			dudCPUSlot.TabIndex = 16;
+			dudCPUSlot.Text = "CPU Slot RAM";
 			// 
 			// dudMotherboard
 			// 
-			this.dudMotherboard.Items.Add("64");
-			this.dudMotherboard.Items.Add("32");
-			this.dudMotherboard.Items.Add("16");
-			this.dudMotherboard.Items.Add("8");
-			this.dudMotherboard.Items.Add("0");
-			this.dudMotherboard.Location = new System.Drawing.Point(90, 135);
-			this.dudMotherboard.Name = "dudMotherboard";
-			this.dudMotherboard.ReadOnly = true;
-			this.dudMotherboard.Size = new System.Drawing.Size(120, 23);
-			this.dudMotherboard.TabIndex = 15;
-			this.dudMotherboard.Text = "Motherboard RAM";
+			dudMotherboard.Items.Add("64");
+			dudMotherboard.Items.Add("32");
+			dudMotherboard.Items.Add("16");
+			dudMotherboard.Items.Add("8");
+			dudMotherboard.Items.Add("0");
+			dudMotherboard.Location = new System.Drawing.Point(90, 135);
+			dudMotherboard.Name = "dudMotherboard";
+			dudMotherboard.ReadOnly = true;
+			dudMotherboard.Size = new System.Drawing.Size(120, 23);
+			dudMotherboard.TabIndex = 15;
+			dudMotherboard.Text = "Motherboard RAM";
 			// 
 			// btnGo
 			// 
-			this.btnGo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point);
-			this.btnGo.Location = new System.Drawing.Point(600, 373);
-			this.btnGo.Name = "btnGo";
-			this.btnGo.Size = new System.Drawing.Size(75, 23);
-			this.btnGo.TabIndex = 16;
-			this.btnGo.Text = "Go!";
-			this.btnGo.UseVisualStyleBackColor = true;
-			this.btnGo.Click += new System.EventHandler(this.btnGo_Click);
+			btnGo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
+			btnGo.Location = new System.Drawing.Point(600, 373);
+			btnGo.Name = "btnGo";
+			btnGo.Size = new System.Drawing.Size(75, 23);
+			btnGo.TabIndex = 16;
+			btnGo.Text = "Go!";
+			btnGo.UseVisualStyleBackColor = true;
+			btnGo.Click += btnGo_Click;
 			// 
 			// btnExit
 			// 
-			this.btnExit.Location = new System.Drawing.Point(266, 372);
-			this.btnExit.Name = "btnExit";
-			this.btnExit.Size = new System.Drawing.Size(75, 23);
-			this.btnExit.TabIndex = 17;
-			this.btnExit.Text = "Exit";
-			this.btnExit.UseVisualStyleBackColor = true;
-			this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
+			btnExit.Location = new System.Drawing.Point(266, 372);
+			btnExit.Name = "btnExit";
+			btnExit.Size = new System.Drawing.Size(75, 23);
+			btnExit.TabIndex = 17;
+			btnExit.Text = "Exit";
+			btnExit.UseVisualStyleBackColor = true;
+			btnExit.Click += btnExit_Click;
 			// 
 			// panel5
 			// 
-			this.panel5.Controls.Add(this.groupBox4);
-			this.panel5.Location = new System.Drawing.Point(12, 198);
-			this.panel5.Name = "panel5";
-			this.panel5.Size = new System.Drawing.Size(238, 197);
-			this.panel5.TabIndex = 18;
+			panel5.Controls.Add(groupBox4);
+			panel5.Location = new System.Drawing.Point(12, 198);
+			panel5.Name = "panel5";
+			panel5.Size = new System.Drawing.Size(238, 197);
+			panel5.TabIndex = 18;
 			// 
 			// btnLoadConfig
 			// 
-			this.btnLoadConfig.Location = new System.Drawing.Point(357, 372);
-			this.btnLoadConfig.Name = "btnLoadConfig";
-			this.btnLoadConfig.Size = new System.Drawing.Size(75, 23);
-			this.btnLoadConfig.TabIndex = 19;
-			this.btnLoadConfig.Text = "Load ...";
-			this.btnLoadConfig.UseVisualStyleBackColor = true;
-			this.btnLoadConfig.Click += new System.EventHandler(this.btnLoadConfig_Click);
+			btnLoadConfig.Location = new System.Drawing.Point(357, 372);
+			btnLoadConfig.Name = "btnLoadConfig";
+			btnLoadConfig.Size = new System.Drawing.Size(75, 23);
+			btnLoadConfig.TabIndex = 19;
+			btnLoadConfig.Text = "Load ...";
+			btnLoadConfig.UseVisualStyleBackColor = true;
+			btnLoadConfig.Click += btnLoadConfig_Click;
 			// 
 			// btnSaveAsConfig
 			// 
-			this.btnSaveAsConfig.Location = new System.Drawing.Point(519, 373);
-			this.btnSaveAsConfig.Name = "btnSaveAsConfig";
-			this.btnSaveAsConfig.Size = new System.Drawing.Size(75, 23);
-			this.btnSaveAsConfig.TabIndex = 20;
-			this.btnSaveAsConfig.Text = "Save As...";
-			this.btnSaveAsConfig.UseVisualStyleBackColor = true;
-			this.btnSaveAsConfig.Click += new System.EventHandler(this.btnSaveAsConfig_Click);
+			btnSaveAsConfig.Location = new System.Drawing.Point(519, 373);
+			btnSaveAsConfig.Name = "btnSaveAsConfig";
+			btnSaveAsConfig.Size = new System.Drawing.Size(75, 23);
+			btnSaveAsConfig.TabIndex = 20;
+			btnSaveAsConfig.Text = "Save As...";
+			btnSaveAsConfig.UseVisualStyleBackColor = true;
+			btnSaveAsConfig.Click += btnSaveAsConfig_Click;
 			// 
 			// btnSaveConfig
 			// 
-			this.btnSaveConfig.Enabled = false;
-			this.btnSaveConfig.Location = new System.Drawing.Point(438, 373);
-			this.btnSaveConfig.Name = "btnSaveConfig";
-			this.btnSaveConfig.Size = new System.Drawing.Size(75, 23);
-			this.btnSaveConfig.TabIndex = 21;
-			this.btnSaveConfig.Text = "Save";
-			this.btnSaveConfig.UseVisualStyleBackColor = true;
-			this.btnSaveConfig.Click += new System.EventHandler(this.btnSaveConfig_Click);
+			btnSaveConfig.Enabled = false;
+			btnSaveConfig.Location = new System.Drawing.Point(438, 373);
+			btnSaveConfig.Name = "btnSaveConfig";
+			btnSaveConfig.Size = new System.Drawing.Size(75, 23);
+			btnSaveConfig.TabIndex = 21;
+			btnSaveConfig.Text = "Save";
+			btnSaveConfig.UseVisualStyleBackColor = true;
+			btnSaveConfig.Click += btnSaveConfig_Click;
 			// 
 			// panel6
 			// 
-			this.panel6.Controls.Add(this.groupBox6);
-			this.panel6.Location = new System.Drawing.Point(256, 315);
-			this.panel6.Name = "panel6";
-			this.panel6.Size = new System.Drawing.Size(425, 52);
-			this.panel6.TabIndex = 22;
+			panel6.Controls.Add(groupBox6);
+			panel6.Location = new System.Drawing.Point(256, 315);
+			panel6.Name = "panel6";
+			panel6.Size = new System.Drawing.Size(425, 52);
+			panel6.TabIndex = 22;
 			// 
 			// groupBox6
 			// 
-			this.groupBox6.Controls.Add(this.cbAudio);
-			this.groupBox6.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox6.Location = new System.Drawing.Point(1, 0);
-			this.groupBox6.Name = "groupBox6";
-			this.groupBox6.Size = new System.Drawing.Size(418, 51);
-			this.groupBox6.TabIndex = 0;
-			this.groupBox6.TabStop = false;
-			this.groupBox6.Text = "Miscellaneous";
+			groupBox6.Controls.Add(cbDebugging);
+			groupBox6.Controls.Add(cbAudio);
+			groupBox6.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox6.Location = new System.Drawing.Point(1, 0);
+			groupBox6.Name = "groupBox6";
+			groupBox6.Size = new System.Drawing.Size(418, 51);
+			groupBox6.TabIndex = 0;
+			groupBox6.TabStop = false;
+			groupBox6.Text = "Miscellaneous";
+			// 
+			// cbDebugging
+			// 
+			cbDebugging.AutoSize = true;
+			cbDebugging.Location = new System.Drawing.Point(70, 22);
+			cbDebugging.Name = "cbDebugging";
+			cbDebugging.Size = new System.Drawing.Size(85, 19);
+			cbDebugging.TabIndex = 1;
+			cbDebugging.Text = "Debugging";
+			cbDebugging.UseVisualStyleBackColor = true;
 			// 
 			// cbAudio
 			// 
-			this.cbAudio.AutoSize = true;
-			this.cbAudio.Location = new System.Drawing.Point(6, 22);
-			this.cbAudio.Name = "cbAudio";
-			this.cbAudio.Size = new System.Drawing.Size(58, 19);
-			this.cbAudio.TabIndex = 0;
-			this.cbAudio.Text = "Audio";
-			this.cbAudio.UseVisualStyleBackColor = true;
+			cbAudio.AutoSize = true;
+			cbAudio.Location = new System.Drawing.Point(6, 22);
+			cbAudio.Name = "cbAudio";
+			cbAudio.Size = new System.Drawing.Size(58, 19);
+			cbAudio.TabIndex = 0;
+			cbAudio.Text = "Audio";
+			cbAudio.UseVisualStyleBackColor = true;
 			// 
 			// panel7
 			// 
-			this.panel7.Location = new System.Drawing.Point(256, 188);
-			this.panel7.Name = "panel7";
-			this.panel7.Size = new System.Drawing.Size(425, 56);
-			this.panel7.TabIndex = 23;
+			panel7.Location = new System.Drawing.Point(256, 188);
+			panel7.Name = "panel7";
+			panel7.Size = new System.Drawing.Size(425, 56);
+			panel7.TabIndex = 23;
 			// 
 			// groupBox7
 			// 
-			this.groupBox7.Controls.Add(this.cbDiskController);
-			this.groupBox7.ForeColor = System.Drawing.SystemColors.Highlight;
-			this.groupBox7.Location = new System.Drawing.Point(256, 188);
-			this.groupBox7.Name = "groupBox7";
-			this.groupBox7.Size = new System.Drawing.Size(418, 55);
-			this.groupBox7.TabIndex = 0;
-			this.groupBox7.TabStop = false;
-			this.groupBox7.Text = "Hard Disk";
+			groupBox7.Controls.Add(cbDiskController);
+			groupBox7.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox7.Location = new System.Drawing.Point(256, 188);
+			groupBox7.Name = "groupBox7";
+			groupBox7.Size = new System.Drawing.Size(418, 55);
+			groupBox7.TabIndex = 0;
+			groupBox7.TabStop = false;
+			groupBox7.Text = "Hard Disk";
 			// 
 			// cbDiskController
 			// 
-			this.cbDiskController.FormattingEnabled = true;
-			this.cbDiskController.Items.AddRange(new object[] {
-            "None",
-            "A600_A1200",
-            "A3000",
-            "A4000"});
-			this.cbDiskController.Location = new System.Drawing.Point(13, 23);
-			this.cbDiskController.Name = "cbDiskController";
-			this.cbDiskController.Size = new System.Drawing.Size(175, 23);
-			this.cbDiskController.TabIndex = 0;
+			cbDiskController.FormattingEnabled = true;
+			cbDiskController.Items.AddRange(new object[] { "None", "A600_A1200", "A3000", "A4000" });
+			cbDiskController.Location = new System.Drawing.Point(13, 23);
+			cbDiskController.Name = "cbDiskController";
+			cbDiskController.Size = new System.Drawing.Size(175, 23);
+			cbDiskController.TabIndex = 0;
 			// 
 			// Settings
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(688, 408);
-			this.Controls.Add(this.groupBox2);
-			this.Controls.Add(this.groupBox7);
-			this.Controls.Add(this.panel7);
-			this.Controls.Add(this.panel6);
-			this.Controls.Add(this.btnSaveConfig);
-			this.Controls.Add(this.btnSaveAsConfig);
-			this.Controls.Add(this.btnLoadConfig);
-			this.Controls.Add(this.panel5);
-			this.Controls.Add(this.btnExit);
-			this.Controls.Add(this.btnGo);
-			this.Controls.Add(this.panel4);
-			this.Controls.Add(this.panel3);
-			this.Controls.Add(this.panel2);
-			this.Controls.Add(this.panel1);
-			this.Controls.Add(this.btnQuickStart);
-			this.Controls.Add(this.cbQuickStart);
-			this.Name = "Settings";
-			this.ShowIcon = false;
-			this.Text = "Emulation Settings";
-			this.panel1.ResumeLayout(false);
-			this.groupBox1.ResumeLayout(false);
-			this.groupBox1.PerformLayout();
-			this.groupBox2.ResumeLayout(false);
-			this.panel3.ResumeLayout(false);
-			this.groupBox3.ResumeLayout(false);
-			this.groupBox3.PerformLayout();
-			this.panel4.ResumeLayout(false);
-			this.groupBox5.ResumeLayout(false);
-			this.groupBox5.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)(this.nudFloppyCount)).EndInit();
-			this.groupBox4.ResumeLayout(false);
-			this.groupBox4.PerformLayout();
-			this.panel5.ResumeLayout(false);
-			this.panel6.ResumeLayout(false);
-			this.groupBox6.ResumeLayout(false);
-			this.groupBox6.PerformLayout();
-			this.groupBox7.ResumeLayout(false);
-			this.ResumeLayout(false);
-
+			AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			ClientSize = new System.Drawing.Size(688, 408);
+			Controls.Add(groupBox2);
+			Controls.Add(groupBox7);
+			Controls.Add(panel7);
+			Controls.Add(panel6);
+			Controls.Add(btnSaveConfig);
+			Controls.Add(btnSaveAsConfig);
+			Controls.Add(btnLoadConfig);
+			Controls.Add(panel5);
+			Controls.Add(btnExit);
+			Controls.Add(btnGo);
+			Controls.Add(panel4);
+			Controls.Add(panel3);
+			Controls.Add(panel2);
+			Controls.Add(panel1);
+			Controls.Add(btnQuickStart);
+			Controls.Add(cbQuickStart);
+			Name = "Settings";
+			ShowIcon = false;
+			Text = "Emulation Settings";
+			panel1.ResumeLayout(false);
+			groupBox1.ResumeLayout(false);
+			groupBox1.PerformLayout();
+			groupBox2.ResumeLayout(false);
+			panel3.ResumeLayout(false);
+			groupBox3.ResumeLayout(false);
+			groupBox3.PerformLayout();
+			panel4.ResumeLayout(false);
+			groupBox5.ResumeLayout(false);
+			groupBox5.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)nudFloppyCount).EndInit();
+			groupBox4.ResumeLayout(false);
+			groupBox4.PerformLayout();
+			panel5.ResumeLayout(false);
+			panel6.ResumeLayout(false);
+			groupBox6.ResumeLayout(false);
+			groupBox6.PerformLayout();
+			groupBox7.ResumeLayout(false);
+			ResumeLayout(false);
 		}
 
 		#endregion
@@ -752,5 +734,6 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.Label label3;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.CheckBox cbDebugging;
 	}
 }

@@ -27,37 +27,43 @@ namespace Jammy.Core
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			if (breakpoints.TryGetValue(address, out Breakpoint bp))
+				if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
+					SignalBreakpoint(insaddr);
 		}
 
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
+			if (breakpoints.TryGetValue(address, out Breakpoint bp))
+				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
+					SignalBreakpoint(insaddr);
 		}
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
 		}
 
-		private bool IsMemoryBreakpoint(uint pc, BreakpointType type)
-		{
-			//for (uint i = 0; i < 4; i++)
-			uint i = 0;
-			{
-				if (breakpoints.TryGetValue(pc + i, out Breakpoint bp))
-				{
-					if (type == BreakpointType.Write)
-					{
-						if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
-							return bp.Active;
-					}
-					else if (type == BreakpointType.Read)
-					{
-						if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-							return bp.Active;
-					}
-				}
-			}
-			return false;
-		}
+		//private bool IsMemoryBreakpoint(uint pc, BreakpointType type)
+		//{
+		//	//for (uint i = 0; i < 4; i++)
+		//	uint i = 0;
+		//	{
+		//		if (breakpoints.TryGetValue(pc + i, out Breakpoint bp))
+		//		{
+		//			if (type == BreakpointType.Write)
+		//			{
+		//				if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
+		//					return bp.Active;
+		//			}
+		//			else if (type == BreakpointType.Read)
+		//			{
+		//				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
+		//					return bp.Active;
+		//			}
+		//		}
+		//	}
+		//	return false;
+		//}
 
 		public bool IsBreakpoint(uint pc)
 		{

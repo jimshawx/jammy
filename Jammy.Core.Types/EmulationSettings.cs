@@ -54,6 +54,8 @@ namespace Jammy.Core.Types
 	public class EmulationSettings
 	{
 		public string KickStart { get; set; }
+		public string KickStartDisassembly { get; set; }
+
 		public string DF0 { get; set; }
 		public string DF1 { get; set; }
 		public string DF2 { get; set; }
@@ -74,6 +76,7 @@ namespace Jammy.Core.Types
 		public float CPUSlotMemory { get; set; }
 
 		public Feature Disassemblies { get; set; }
+		public Feature Debugger { get; set; }
 
 		public CPUType CPU { get; set; }
 		public CPUSku Sku { get; set; }

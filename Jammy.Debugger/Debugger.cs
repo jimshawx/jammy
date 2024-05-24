@@ -59,144 +59,163 @@ namespace Jammy.Debugger
 			this.ciab = ciab;
 			this.logger = logger;
 
-			//memoryMapper.AddMemoryIntercept(this);
+			if (settings.Value.Debugger == Feature.Enabled)
+				(memory as IMemoryMapper).AddMemoryIntercept(this);
 
 			libraryBaseAddresses["exec.library"] = memory.UnsafeRead32(4);
 			//AddLVOIntercept("exec.library", "OpenLibrary", OpenLibraryLogger);
 			//AddLVOIntercept("exec.library", "OpenResource", OpenResourceLogger);
 			//AddLVOIntercept("exec.library", "MakeLibrary", MakeLibraryLogger);
 
-			if (settings.Value.KickStart == "2.05")
+			if (settings.Value.KickStartDisassembly == "2.04")
+			{
+				//AddBreakpoint(0xf85804);//KS2.04 battclock.resource init
+				return;
+			}
+
+			if (settings.Value.KickStartDisassembly == "2.05")
 			{
 				//AddBreakpoint(0xFC0BE2);//card.resource Gayle detection
 				//AddBreakpoint(0xFC120C);//poll Gayle INTREQ
 				return;
 			}
 
-			if (settings.Value.KickStart == "1.3")
+			if (settings.Value.KickStartDisassembly == "1.3")
 			{
 				//AddBreakpoint(0xFC509A);//expansion.library
+				//AddBreakpoint(0xFC7D84);//OpenFont()
+				//AddBreakpoint(0xFC84D8, BreakpointType.Read);//ROM topaz.font read
+				//AddBreakpoint(0xFC8D40, BreakpointType.Read);
+				//AddBreakpoint(0xFC8D41, BreakpointType.Read);
+				//AddBreakpoint(0xFC8D42, BreakpointType.Read);
+				//AddBreakpoint(0xFC8D43, BreakpointType.Read);
+
+				//AddBreakpoint(0xFC8500, BreakpointType.Read);
+				//AddBreakpoint(0xFC8501, BreakpointType.Read);
+				//AddBreakpoint(0xFC8502, BreakpointType.Read);
+				//AddBreakpoint(0xFC8503, BreakpointType.Read);
+
 				return;
 			}
 
-			if (settings.Value.KickStart != "1.2")
+			if (settings.Value.KickStartDisassembly == "1.2")
+			{
+				//AddBreakpoint(0xFC8498, BreakpointType.Read);//ROM topaz.font read
+
+				//AddBreakpoint(0xFC061A);//trapdoor RAM detection
+
+				//AddBreakpoint(0xfc0af0);//InitCode
+				//AddBreakpoint(0xfc0afe);
+				//AddBreakpoint(0xfc0af0);
+				//AddBreakpoint(0xfc14ec);//MakeLibrary
+				//AddBreakpoint(0xfc0900);
+				//AddBreakpoint(0xfc096c);
+				//AddBreakpoint(0xfc0bc8);//InitStruct
+				//AddBreakpoint(0xfc1c34);//OpenResource
+				//AddBreakpoint(0xfc1438);//OpenLibrary
+				//AddBreakpoint(0xfe9180);
+				//AddBreakpoint(0xfc30e4);//setup LastAlert
+				//AddBreakpoint(0xfc19ea);//AddMemList
+				//AddBreakpoint(0xfc165a);//FindName
+
+				//AddBreakpoint(0xfc02b0);//initialize exec lists
+				//AddBreakpoint(0xFC125C);//initialize exec interrupts
+
+				//AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
+				//AddBreakpoint(0xfc0222);
+				//AddBreakpoint(0xfc0240);
+				//AddBreakpoint(0xfc033e);
+				//AddBreakpoint(0xfcac92);
+
+				//AddBreakpoint(0xfc1798);
+
+				//AddBreakpoint(0xfcac92);
+
+				//AddBreakpoint(0x00fcac82);//copper list
+				//AddBreakpoint(0x00fc0e60);//ExitIntr
+				//AddBreakpoint(0x00fc0c4c);//Interrupt Bail Out
+				//AddBreakpoint(0x00fc0ca6);//L2 Autovector IO/Timer
+				//AddBreakpoint(0xFC465E);//Timer A
+				//AddBreakpoint(0xFC4668);//Timer B
+				//AddBreakpoint(0xFC4672);//TOD
+				//AddBreakpoint(0xFC467C);//Serial
+				//AddBreakpoint(0xFC4686);//Flag
+
+				//AddBreakpoint(0x00fc0cdc);//L3 Autovector
+				//AddBreakpoint(0xfc0e8a);//Schedule()+4
+
+				//AddBreakpoint(0xfc0b28);//InitResident
+				//AddBreakpoint(0xFC1C28);//AddResource
+				//AddBreakpoint(0xFC0ca2);//sw interrupt
+
+				//AddBreakpoint(0xfc13ec);
+
+				//AddBreakpoint(0xfcabe4);//Init Graphics Library
+
+				//AddBreakpoint(0xFE930E);//
+				//AddBreakpoint(0xFC0F2A);//
+				//AddBreakpoint(0xFC6d1a);
+				//AddBreakpoint(0xFc666a);
+				//AddBreakpoint(0xFC050C);
+				//AddBreakpoint(0xFC559C);
+				//AddBreakpoint(0xFC7C28);
+
+				//AddBreakpoint(0xfc0546);//CPU detection
+				//AddBreakpoint(0xfc04be);//start exec
+				//AddBreakpoint(0xfc1208);
+				//AddBreakpoint(0xfc0e86);//Schedule().
+				//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
+
+				AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
+				AddBreakpoint(0xfc2fb4);//Task Crash Routine
+				AddBreakpoint(0xfc2fd6);//Alert()
+				AddBreakpoint(0xfc305e);//Irrecoverable Crash
+
+				//diskDrives debugging
+				//AddBreakpoint(0xFe89cc);//diskDrives changes
+				////AddBreakpoint(0xFe89e4);//read boot block
+				//AddBreakpoint(0xFe8a84);//after logo, wait for diskDrives change
+				//AddBreakpoint(0xFe8a9c);//after logo, check for diskDrives inserted
+				//AddBreakpoint(0xFe8a0a);//track read, is it a DOS diskDrives?
+
+				//AddBreakpoint(0xFe800e);//dispatch trackdisk.device message
+				//AddBreakpoint(0xFea734);//CMD_READ
+				//AddBreakpoint(0xFea99e);//step to track and read
+				//AddBreakpoint(0xFea5b2);//just after diskDrives DMA
+				//AddBreakpoint(0xFea9ce);//after track-read message before fixing track gap
+				//AddBreakpoint(0xFeab76);//blitter decode start
+				//AddBreakpoint(0xFeb2a4);//blitter decode start
+
+				//for (uint i = 0; i < 12; i++)
+				//	AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);
+
+				//AddBreakpoint(0xb328, BreakpointType.Write);
+				//AddBreakpoint(0xb32a, BreakpointType.Write);
+				//AddBreakpoint(0xfd18dc);
+
+				//AddBreakpoint(0xFE571C);//Keyboard ISR
+
+				//AddBreakpoint(0xfe5efa);//Mouse
+				//AddBreakpoint(0xfe572a);//Keyboard
+				//AddBreakpoint(0xfe544e);//Install Keyboard ISR
+				//AddBreakpoint(0xfc6d00);//wrong copper address 0xc00276
+
+				//AddBreakpoint(0xfe9232);
+
+				//AddBreakpoint(0xfe9550);//TR_ADDREQUEST
+				//AddBreakpoint(0xFE958A);//something
+				//AddBreakpoint(0xFE9458);
+				//AddBreakpoint(0xFE9440);
+				//AddBreakpoint(0xFE91d6);
+				//AddBreakpoint(0xFE9622);
+
+				//AddBreakpoint(0xFE974C);//where do these jumps go?
+				//AddBreakpoint(0xFE9778);
+
+				//AddBreakpoint(0xfe9550);//TR_ADDREQUEST
+				//C037C8
 				return;
-
-			//AddBreakpoint(0xFC061A);//trapdoor RAM detection
-
-			//AddBreakpoint(0xfc0af0);//InitCode
-			//AddBreakpoint(0xfc0afe);
-			//AddBreakpoint(0xfc0af0);
-			//AddBreakpoint(0xfc14ec);//MakeLibrary
-			//AddBreakpoint(0xfc0900);
-			//AddBreakpoint(0xfc096c);
-			//AddBreakpoint(0xfc0bc8);//InitStruct
-			//AddBreakpoint(0xfc1c34);//OpenResource
-			//AddBreakpoint(0xfc1438);//OpenLibrary
-			//AddBreakpoint(0xfe9180);
-			//AddBreakpoint(0xfc30e4);//setup LastAlert
-			//AddBreakpoint(0xfc19ea);//AddMemList
-			//AddBreakpoint(0xfc165a);//FindName
-
-			//AddBreakpoint(0xfc02b0);//initialize exec lists
-			//AddBreakpoint(0xFC125C);//initialize exec interrupts
-
-			//AddBreakpoint(0xfc01ee);//relocate ExecBase to $C00276
-			//AddBreakpoint(0xfc0222);
-			//AddBreakpoint(0xfc0240);
-			//AddBreakpoint(0xfc033e);
-			//AddBreakpoint(0xfcac92);
-
-			//AddBreakpoint(0xfc1798);
-
-			//AddBreakpoint(0xfcac92);
-
-			//AddBreakpoint(0x00fcac82);//copper list
-			//AddBreakpoint(0x00fc0e60);//ExitIntr
-			//AddBreakpoint(0x00fc0c4c);//Interrupt Bail Out
-			//AddBreakpoint(0x00fc0ca6);//L2 Autovector IO/Timer
-			//AddBreakpoint(0xFC465E);//Timer A
-			//AddBreakpoint(0xFC4668);//Timer B
-			//AddBreakpoint(0xFC4672);//TOD
-			//AddBreakpoint(0xFC467C);//Serial
-			//AddBreakpoint(0xFC4686);//Flag
-
-			//AddBreakpoint(0x00fc0cdc);//L3 Autovector
-			//AddBreakpoint(0xfc0e8a);//Schedule()+4
-
-			//AddBreakpoint(0xfc0b28);//InitResident
-			//AddBreakpoint(0xFC1C28);//AddResource
-			//AddBreakpoint(0xFC0ca2);//sw interrupt
-
-			//AddBreakpoint(0xfc13ec);
-
-			//AddBreakpoint(0xfcabe4);//Init Graphics Library
-
-			//AddBreakpoint(0xFE930E);//
-			//AddBreakpoint(0xFC0F2A);//
-			//AddBreakpoint(0xFC6d1a);
-			//AddBreakpoint(0xFc666a);
-			//AddBreakpoint(0xFC050C);
-			//AddBreakpoint(0xFC559C);
-			//AddBreakpoint(0xFC7C28);
-
-			//AddBreakpoint(0xfc0546);//CPU detection
-			//AddBreakpoint(0xfc04be);//start exec
-			//AddBreakpoint(0xfc1208);
-			//AddBreakpoint(0xfc0e86);//Schedule().
-			//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
-
-			AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
-			AddBreakpoint(0xfc2fb4);//Task Crash Routine
-			AddBreakpoint(0xfc2fd6);//Alert()
-			AddBreakpoint(0xfc305e);//Irrecoverable Crash
-
-
-			//diskDrives debugging
-			//AddBreakpoint(0xFe89cc);//diskDrives changes
-			////AddBreakpoint(0xFe89e4);//read boot block
-			//AddBreakpoint(0xFe8a84);//after logo, wait for diskDrives change
-			//AddBreakpoint(0xFe8a9c);//after logo, check for diskDrives inserted
-			//AddBreakpoint(0xFe8a0a);//track read, is it a DOS diskDrives?
-
-			//AddBreakpoint(0xFe800e);//dispatch trackdisk.device message
-			//AddBreakpoint(0xFea734);//CMD_READ
-			//AddBreakpoint(0xFea99e);//step to track and read
-			//AddBreakpoint(0xFea5b2);//just after diskDrives DMA
-			//AddBreakpoint(0xFea9ce);//after track-read message before fixing track gap
-			//AddBreakpoint(0xFeab76);//blitter decode start
-			//AddBreakpoint(0xFeb2a4);//blitter decode start
-
-			//for (uint i = 0; i < 12; i++)
-			//	AddBreakpoint(0xc004d2 + 4 * i, BreakpointType.Write);
-
-			//AddBreakpoint(0xb328, BreakpointType.Write);
-			//AddBreakpoint(0xb32a, BreakpointType.Write);
-			//AddBreakpoint(0xfd18dc);
-
-			//AddBreakpoint(0xFE571C);//Keyboard ISR
-
-			//AddBreakpoint(0xfe5efa);//Mouse
-			//AddBreakpoint(0xfe572a);//Keyboard
-			//AddBreakpoint(0xfe544e);//Install Keyboard ISR
-			//AddBreakpoint(0xfc6d00);//wrong copper address 0xc00276
-
-			//AddBreakpoint(0xf85804);//KS2.04 battclock.resource init
-			//AddBreakpoint(0xfe9232);
-
-			//AddBreakpoint(0xfe9550);//TR_ADDREQUEST
-			//AddBreakpoint(0xFE958A);//something
-			//AddBreakpoint(0xFE9458);
-			//AddBreakpoint(0xFE9440);
-			//AddBreakpoint(0xFE91d6);
-			//AddBreakpoint(0xFE9622);
-
-			//AddBreakpoint(0xFE974C);//where do these jumps go?
-			//AddBreakpoint(0xFE9778);
-
-			//AddBreakpoint(0xfe9550);//TR_ADDREQUEST
-			//C037C8
-
+			}
 		}
 
 		private void OpenLibraryLogger(LVO lvo)

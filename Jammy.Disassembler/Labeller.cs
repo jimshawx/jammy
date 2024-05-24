@@ -16,7 +16,7 @@ namespace Jammy.Disassembler
 
 		public Labeller(IOptions<EmulationSettings> settings)
 		{
-			if (settings.Value.KickStart == "1.2")
+			if (settings.Value.KickStartDisassembly == "1.2")
 			{
 				ExecLabels();
 				MiscLabels();

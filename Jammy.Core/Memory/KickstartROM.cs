@@ -26,18 +26,20 @@ namespace Jammy.Core.Memory
 		{
 			this.memoryManager = memoryManager;
 			this.logger = logger;
-			switch (settings.Value.KickStart)
-			{
-				case "1.2": path = "kick12.rom"; name = "Kickstart 1.2"; break;
-				case "1.3": path = "kick13.rom"; name = "Kickstart 1.3"; break;
-				case "2.04": path = "kick204.rom"; name = "Kickstart 2.04"; break;
-				case "2.05": path = "kick205.rom"; name = "Kickstart 2.05"; break;
-				case "3.1": path = "kick31.rom"; name = "Kickstart 3.1"; break;
-				default:
-					path = settings.Value.KickStart;
-					name = Path.GetFileName(settings.Value.KickStart);
-					break;
-			}
+			//switch (settings.Value.KickStartDisassembly)
+			//{
+			//	case "1.2": path = "kick12.rom"; name = "Kickstart 1.2"; break;
+			//	case "1.3": path = "kick13.rom"; name = "Kickstart 1.3"; break;
+			//	case "2.04": path = "kick204.rom"; name = "Kickstart 2.04"; break;
+			//	case "2.05": path = "kick205.rom"; name = "Kickstart 2.05"; break;
+			//	case "3.1": path = "kick31.rom"; name = "Kickstart 3.1"; break;
+			//	default:
+			//		path = settings.Value.KickStart;
+			//		name = Path.GetFileName(settings.Value.KickStart);
+			//		break;
+			//}
+			path = settings.Value.KickStart;
+			name = Path.GetFileName(settings.Value.KickStart);
 
 			string fullName = Path.Combine("../../../../roms", path);
 

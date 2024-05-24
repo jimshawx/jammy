@@ -255,6 +255,9 @@ namespace Jammy.UI.Settings
 
 			//Misc.
 			cbAudio.Checked = currentSettings.Audio != AudioDriver.Null;
+
+			//Debugging
+			cbDebugging.Checked = currentSettings.Debugger == Feature.Enabled;
 		}
 
 		private void UnbindSettings()
@@ -290,8 +293,24 @@ namespace Jammy.UI.Settings
 			//Kickstart
 			currentSettings.KickStart = txtKickstart.Text;
 
+			//hacky disassembly setting
+			var ks = Path.GetFileName(currentSettings.KickStart);
+			if (ks == "kick12.rom")
+				currentSettings.KickStartDisassembly = "1.2";
+			if (ks == "kick13.rom")
+				currentSettings.KickStartDisassembly = "1.3";
+			if (ks == "kick204.rom")
+				currentSettings.KickStartDisassembly = "2.04";
+			if (ks == "kick205.rom")
+				currentSettings.KickStartDisassembly = "2.05";
+			if (ks == "kick31.rom")
+				currentSettings.KickStartDisassembly = "3.1";
+
 			//Misc.
 			currentSettings.Audio = cbAudio.Checked ? AudioDriver.XAudio2 : AudioDriver.Null;
+
+			//Debugging
+			currentSettings.Debugger = cbDebugging.Checked?Feature.Enabled:Feature.Disabled;
 		}
 
 		private static EmulationSettings DefaultSettings()
