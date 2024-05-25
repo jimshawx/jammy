@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -17,16 +19,20 @@ namespace Jammy.Core.Custom
 		private readonly IChips custom;
 		private readonly IMemoryMappedDevice memory;
 		private readonly IInterrupt interrupt;
+		private readonly IOptions<EmulationSettings> settings;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IChipRAM memory, IInterrupt interrupt, IEmulationWindow  emulationWindow, ILogger<Blitter> logger)
+		public Blitter(IChips custom, IChipRAM memory, IInterrupt interrupt, IEmulationWindow  emulationWindow,
+			IOptions<EmulationSettings> settings, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
 			this.memory = memory;
 			this.interrupt = interrupt;
+			this.settings = settings;
 			this.logger = logger;
 
 			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
+			//blitterDump = settings.Value.Debugger.IsEnabled();
 		}
 
 		private bool blitterDump = false;
@@ -245,6 +251,9 @@ namespace Jammy.Core.Custom
 			uint width = bltsize & 0x3f;
 			uint height = bltsize >> 6;
 
+			if (width == 0) width = 64;
+			if (height == 0) height = 1024;
+
 			Blit(width, height);
 		}
 
@@ -256,7 +265,13 @@ namespace Jammy.Core.Custom
 				return;
 			}
 
-			Blit(bltsizh, bltsizv);
+			uint width = bltsizh & 0x07ff;
+			uint height = bltsizv & 0x7fff;
+
+			if (width == 0) width = 2048;
+			if (height == 0) height = 32768;
+
+			Blit(width, height);
 		}
 
 		private void Blit(uint width, uint height)

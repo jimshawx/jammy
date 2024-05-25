@@ -29,6 +29,11 @@ namespace Jammy.Core.Types
 		Enabled
 	}
 
+	public static class FeatureExtensions
+	{
+		public static bool IsEnabled(this Feature feature) { return feature == Feature.Enabled; }
+	}
+
 	public enum ChipSet
 	{
 		OCS,

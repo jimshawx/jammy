@@ -59,7 +59,7 @@ namespace Jammy.Debugger
 			this.ciab = ciab;
 			this.logger = logger;
 
-			if (settings.Value.Debugger == Feature.Enabled)
+			if (settings.Value.Debugger.IsEnabled())
 				(memory as IMemoryMapper).AddMemoryIntercept(this);
 
 			libraryBaseAddresses["exec.library"] = memory.UnsafeRead32(4);
