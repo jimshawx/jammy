@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 using Jammy.Core;
 using Jammy.Core.Custom;
@@ -12,7 +10,6 @@ using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Interface;
 using Jammy.Types;
 using Jammy.Types.Debugger;
-using Jammy.Types.Kickstart;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -38,6 +35,7 @@ namespace Jammy.Debugger
 		private readonly ITracer tracer;
 		private readonly IAnalyser analyser;
 		private readonly IAnalysis analysis;
+		public readonly LVOInterceptors interceptors;
 
 		public Debugger(IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
@@ -62,10 +60,17 @@ namespace Jammy.Debugger
 			if (settings.Value.Debugger.IsEnabled())
 				(memory as IMemoryMapper).AddMemoryIntercept(this);
 
-			libraryBaseAddresses["exec.library"] = memory.UnsafeRead32(4);
-			//AddLVOIntercept("exec.library", "OpenLibrary", OpenLibraryLogger);
-			//AddLVOIntercept("exec.library", "OpenResource", OpenResourceLogger);
-			//AddLVOIntercept("exec.library", "MakeLibrary", MakeLibraryLogger);
+			interceptors = new LVOInterceptors(cpu, memory, analyser, analysis, logger);
+			interceptors.AddLVOIntercept("exec.library", "OpenLibrary", new OpenLibraryLogger());
+			//interceptors.AddLVOIntercept("exec.library", "OpenResource", new OpenResourceLogger());
+			//interceptors.AddLVOIntercept("exec.library", "MakeLibrary", new MakeLibraryLogger());
+			interceptors.AddLVOIntercept("exec.library", "AllocMem", new AllocMemLogger());
+
+			if (settings.Value.KickStartDisassembly == "3.1")
+			{
+				AddBreakpoint(0x12DE36);//open lowlevel.library ryder
+				return;
+			}
 
 			if (settings.Value.KickStartDisassembly == "2.04")
 			{
@@ -163,7 +168,7 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0xfc0546);//CPU detection
 				//AddBreakpoint(0xfc04be);//start exec
 				//AddBreakpoint(0xfc1208);
-				//AddBreakpoint(0xfc0e86);//Schedule().
+				//AddBreakpoint(0xfc0e86);//Schedule()
 				//AddBreakpoint(0xfc0ee0);//Correct version of Switch() routine.
 
 				AddBreakpoint(0xfc108A);//Incorrect version of Switch() routine. Shouldn't be here, this one handles 68881.
@@ -218,65 +223,10 @@ namespace Jammy.Debugger
 			}
 		}
 
-		private void OpenLibraryLogger(LVO lvo)
-		{
-			var regs = cpu.GetRegs();
-			logger.LogTrace($"{lvo.Name}() libname {regs.A[1]:X8} {GetString(regs.A[1])} version: {regs.D[0]:X8}");
-		}
-		private void OpenResourceLogger(LVO lvo)
-		{
-			var regs = cpu.GetRegs();
-			logger.LogTrace($"{lvo.Name}() resName: {regs.A[1]:X8} {GetString(regs.A[1])}");
-		}
-
-		private HashSet<uint> librariesMade = new HashSet<uint>();
-
-		private void MakeLibraryLogger(LVO lvo)
-		{
-			var regs = cpu.GetRegs();
-			logger.LogTrace($"{lvo.Name}() vectors: {regs.A[0]:X8} structure: {regs.A[1]:X8} init: {regs.A[2]:X8} dataSize: {regs.D[0]:X8} segList: {regs.D[1]:X8}");
-
-			if (!librariesMade.Contains(regs.A[0]))
-			{
-				librariesMade.Add(regs.A[0]);
-				analyser.ExtractFunctionTable(regs.A[0], NT_Type.NT_LIBRARY, $"unknown_{regs.A[0]}");
-				analyser.ExtractStructureInit(regs.A[1]);
-			}
-		}
-
-		private class LVOInterceptor
-		{
-			public string Library { get; set; }
-			public LVO LVO { get; set; }
-			public Action<LVO> Action { get; set; }
-		}
-
-		private Dictionary<string, uint> libraryBaseAddresses = new Dictionary<string, uint>();
-
-		private List<LVOInterceptor> lvoInterceptors { get; } = new List<LVOInterceptor>();
-
-		private void AddLVOIntercept(string library, string vectorName, Action<LVO> action)
-		{
-			libraryBaseAddresses["exec.library"] = memory.UnsafeRead32(4);
-
-			var lvos = analysis.GetLVOs();
-			if (lvos.TryGetValue(library, out var lib))
-			{
-				var vector = lib.LVOs.SingleOrDefault(x => x.Name == vectorName);
-				if (vector != null)
-				{
-					lvoInterceptors.Add(new LVOInterceptor{ 
-						Library = library,
-						LVO = vector,
-						Action = action});
-				}
-			}
-		}
-
 		//occurs after Read
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
-			CheckLVOAccess(address, size);
+			interceptors.CheckLVOAccess(address, size);
 
 			//analyser.MarkAsType(address, MemType.Byte, size);
 
@@ -288,45 +238,18 @@ namespace Jammy.Debugger
 		{
 			//update execbase
 			if (address == 4 && size == Size.Long)
-				libraryBaseAddresses["exec.library"] = value;
+				interceptors.SetLibraryBaseaddress("exec.library", value);
 			
 			breakpoints.Write(insaddr, address, value, size);
 		}
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
-			CheckLVOAccess(address, size);
+			interceptors.CheckLVOAccess(address, size);
 
 			//analyser.MarkAsType(address, MemType.Code, size);
 			
 			breakpoints.Read(insaddr, address, value, size);
-		}
-
-		private void CheckLVOAccess(uint address, Size size)
-		{
-			if (size == Size.Word)
-			{
-				var lvo = lvoInterceptors.SingleOrDefault(x => memory.UnsafeRead32((uint)(libraryBaseAddresses[x.Library] + x.LVO.Offset + 2)) == address);
-				if (lvo != null)
-				{
-					//breakpoints.SignalBreakpoint(address);
-					lvo.Action(lvo.LVO);
-				}
-			}
-		}
-
-		private string GetString(uint str)
-		{
-			var sb = new StringBuilder();
-			for (; ; )
-			{
-				byte c = memory.UnsafeRead8(str);
-				if (c == 0)
-					return sb.ToString();
-
-				sb.Append(Convert.ToChar(c));
-				str++;
-			}
 		}
 
 		public void ToggleBreakpoint(uint pc)

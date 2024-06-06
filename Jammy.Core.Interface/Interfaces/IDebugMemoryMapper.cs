@@ -23,5 +23,6 @@ namespace Jammy.Core.Interface.Interfaces
 		int Length { get; }
 		List<MemoryRange> MappedRange();
 		List<BulkMemoryRange> GetBulkRanges();
+		string GetString(uint address);
 	}
 }

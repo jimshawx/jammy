@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -187,6 +188,20 @@ namespace Jammy.Core.Memory
 			return memoryManager.MappedDevice.BulkReadableDevices()
 				.SelectMany(x => x.ReadBulk())
 				.ToList();
+		}
+
+		public string GetString(uint str)
+		{
+			var sb = new StringBuilder();
+			for (; ; )
+			{
+				byte c = UnsafeRead8(str);
+				if (c == 0)
+					return sb.ToString();
+
+				sb.Append(Convert.ToChar(c));
+				str++;
+			}
 		}
 	}
 }

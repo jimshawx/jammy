@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
 using Jammy.Core.Types;
@@ -118,6 +119,20 @@ namespace Jammy.Tests
 		public List<BulkMemoryRange> GetBulkRanges()
 		{
 			return new List<BulkMemoryRange> {new BulkMemoryRange {Memory = memory, StartAddress = 0}};
+		}
+
+		public string GetString(uint str)
+		{
+			var sb = new StringBuilder();
+			for (; ; )
+			{
+				byte c = UnsafeRead8(str);
+				if (c == 0)
+					return sb.ToString();
+
+				sb.Append(Convert.ToChar(c));
+				str++;
+			}
 		}
 	}
 }
