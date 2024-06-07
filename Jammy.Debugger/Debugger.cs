@@ -35,12 +35,15 @@ namespace Jammy.Debugger
 		private readonly ITracer tracer;
 		private readonly IAnalyser analyser;
 		private readonly IAnalysis analysis;
-		public readonly LVOInterceptors interceptors;
+		private readonly ILVOInterceptors interceptors;
+		private readonly IReturnValueSnagger returnValueSnagger;
+		private readonly ILibraryBases libraryBases;
 
 		public Debugger(IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
 			IBreakpointCollection breakpoints, IKickstartROM kickstart,
-			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser, IAnalysis analysis)
+			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser, IAnalysis analysis,
+			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases)
 		{
 			this.breakpoints = breakpoints;
 			this.kickstart = kickstart;
@@ -56,19 +59,16 @@ namespace Jammy.Debugger
 			this.ciaa = ciaa;
 			this.ciab = ciab;
 			this.logger = logger;
+			this.returnValueSnagger = returnValueSnagger;
+			this.libraryBases = libraryBases;
+			this.interceptors = interceptors;
 
 			if (settings.Value.Debugger.IsEnabled())
 				(memory as IMemoryMapper).AddMemoryIntercept(this);
 
-			interceptors = new LVOInterceptors(cpu, memory, analyser, analysis, logger);
-			interceptors.AddLVOIntercept("exec.library", "OpenLibrary", new OpenLibraryLogger());
-			//interceptors.AddLVOIntercept("exec.library", "OpenResource", new OpenResourceLogger());
-			//interceptors.AddLVOIntercept("exec.library", "MakeLibrary", new MakeLibraryLogger());
-			interceptors.AddLVOIntercept("exec.library", "AllocMem", new AllocMemLogger());
-
 			if (settings.Value.KickStartDisassembly == "3.1")
 			{
-				AddBreakpoint(0x12DE36);//open lowlevel.library ryder
+				//AddBreakpoint(0xFA710E);//allocate memory for hunk in loadseg
 				return;
 			}
 
@@ -227,6 +227,7 @@ namespace Jammy.Debugger
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
 			interceptors.CheckLVOAccess(address, size);
+			returnValueSnagger.CheckSnaggers();
 
 			//analyser.MarkAsType(address, MemType.Byte, size);
 
@@ -238,7 +239,7 @@ namespace Jammy.Debugger
 		{
 			//update execbase
 			if (address == 4 && size == Size.Long)
-				interceptors.SetLibraryBaseaddress("exec.library", value);
+				libraryBases.SetLibraryBaseaddress("exec.library", value);
 			
 			breakpoints.Write(insaddr, address, value, size);
 		}
@@ -246,6 +247,7 @@ namespace Jammy.Debugger
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
 			interceptors.CheckLVOAccess(address, size);
+			returnValueSnagger.CheckSnaggers();
 
 			//analyser.MarkAsType(address, MemType.Code, size);
 			
