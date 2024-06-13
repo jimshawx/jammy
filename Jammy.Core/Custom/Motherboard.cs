@@ -3,6 +3,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -13,12 +14,25 @@ namespace Jammy.Core.Custom
 	public class Motherboard : IMotherboard
 	{
 		private readonly ILogger logger;
+		private readonly EmulationSettings settings;
 
-		public Motherboard(ILogger<Motherboard> logger)
+		private readonly int GAYLE_BITS;
+		private int gayleBits;
+
+		public Motherboard(IOptions<EmulationSettings> settings,  ILogger<Motherboard> logger)
 		{
 			this.logger = logger;
-		}
+			this.settings = settings.Value;
 
+			//Gayle is D0, AA Gayle D1)
+			if (this.settings.ChipSet == ChipSet.AGA)
+				GAYLE_BITS = 0xD1D1;
+			else
+				GAYLE_BITS = 0xD0D0;
+		
+			gayleBits = GAYLE_BITS;
+		}
+	
 		public void Reset()
 		{
 			reg_COLDSTART = 0x80;//cold reboot
@@ -61,8 +75,8 @@ namespace Jammy.Core.Custom
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (size == Size.Word && address == 0xde109a && value == 0xbfff) { return;/*something writes 0xbfff here at boot time */ }
-			if (size == Size.Word && address == 0xde109a && value == 0x4000) { return;/*something writes 0x4000 here at boot time */ }
+			if (size == Size.Word && address == 0xde109a && value == 0xbfff) { logger.LogTrace($"W 0xDE109A at boot time? not mapped."); return;/*something writes 0xbfff here at boot time */ }
+			if (size == Size.Word && address == 0xde109a && value == 0x4000) { logger.LogTrace($"W 0xDE109A at boot time? not mapped."); return;/*something writes 0x4000 here at boot time */ }
 			if (size != Size.Byte) throw new InvalidCustomRegisterSizeException(insaddr, address, size);
 			logger.LogTrace($"[MOBO] W {address:X8} @ {insaddr:X8} {size} {value:X8}");
 			if (address == 0xde0000) reg_TIMEOUT = (byte)value;
@@ -72,14 +86,10 @@ namespace Jammy.Core.Custom
 			else if (address == 0xde0043) reg_RAMSEYID = (byte)value;
 			else if (address == 0xde1000) { gayleBits = GAYLE_BITS; logger.LogTrace("GAYLE Check"); }
 			else if (address == 0xde1002) { garyBits = GARY_BITS; logger.LogTrace("GARY Check"); }
-			else if (address == 0xde109a) { /*something writes 0xbfff here at boot time */ }
-			else	logger.LogTrace($"W {address:X6} not mapped");
+			//else if (address == 0xde109a) { /*something writes 0xbfff here at boot time */ }
+			else	logger.LogTrace($"W {address:X6} not mapped.");
 		}
 
-
-		//todo: A4000 says 0xD1
-		private const int GAYLE_BITS = 0xD0D0;
-		private int gayleBits = GAYLE_BITS;
 		private ushort GayleCheck()
 		{
 			ushort v = (ushort)(gayleBits & 0x8000);
