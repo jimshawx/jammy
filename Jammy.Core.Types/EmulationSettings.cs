@@ -39,6 +39,13 @@ namespace Jammy.Core.Types
 		OCS,
 		ECS,
 		AGA,
+		CD32
+	}
+
+	public enum VideoFormat
+	{
+		PAL,
+		NTSC
 	}
 
 	public enum SerialConsole
@@ -90,5 +97,6 @@ namespace Jammy.Core.Types
 		public ChipSet ChipSet { get; set; }
 		public SerialConsole Console { get; set; }
 		public DiskController DiskController { get; set; }
+		public VideoFormat VideoFormat { get; set; }
 	}
 }

@@ -32,7 +32,7 @@ namespace Jammy.UI.Settings
 			ActiveControl = btnQuickStart;
 			CancelButton = btnExit;
 			AcceptButton = btnGo;
-			
+
 			var cfgs = Directory.GetFiles(configPath, "*.cfg", SearchOption.TopDirectoryOnly);
 			cbQuickStart.Items.AddRange(cfgs.Select(Path.GetFileNameWithoutExtension).OrderBy(x => x).Cast<object>().ToArray());
 
@@ -143,9 +143,9 @@ namespace Jammy.UI.Settings
 		private void nudFloppyCount_ValueChanged(object sender, EventArgs e)
 		{
 			int f = (int)nudFloppyCount.Value;
-			txtDF3.Enabled = btnDF3Pick.Enabled = f>=4;
-			txtDF2.Enabled = btnDF2Pick.Enabled = f>=3;
-			txtDF1.Enabled = btnDF1Pick.Enabled = f>=2;
+			txtDF3.Enabled = btnDF3Pick.Enabled = f >= 4;
+			txtDF2.Enabled = btnDF2Pick.Enabled = f >= 3;
+			txtDF1.Enabled = btnDF1Pick.Enabled = f >= 2;
 		}
 
 		private void rbNative_CheckedChanged(object sender, EventArgs e)
@@ -173,7 +173,7 @@ namespace Jammy.UI.Settings
 			if (string.IsNullOrEmpty(fileName))
 				fileName = currentSettingsFile;
 			UnbindSettings();
-			string cfg = JsonConvert.SerializeObject(new Emulation{ Settings = currentSettings});
+			string cfg = JsonConvert.SerializeObject(new Emulation { Settings = currentSettings });
 			File.WriteAllText(fileName, cfg);
 			UpdateCurrentSettingFilename(fileName);
 		}
@@ -228,7 +228,9 @@ namespace Jammy.UI.Settings
 
 			//Chipset
 			cbChipset.SelectedItem = currentSettings.ChipSet.ToString();
-			
+			rbPAL.Checked = currentSettings.VideoFormat == VideoFormat.PAL;
+			rbNTSC.Checked = currentSettings.VideoFormat == VideoFormat.NTSC;
+
 			//Memory
 			dudChipRAM.SelectedItem = currentSettings.ChipMemory.ToString("0.0;0.0;0");
 			dudCPUSlot.SelectedItem = currentSettings.CPUSlotMemory.ToString();
@@ -236,7 +238,7 @@ namespace Jammy.UI.Settings
 			dudTrapdoor.SelectedItem = currentSettings.TrapdoorMemory.ToString("0.0;0.0;0");
 			dudZ2.SelectedItem = DecodeZorro2(currentSettings.ZorroIIMemory);
 			dudZ3.SelectedItem = DecodeZorro3(currentSettings.ZorroIIIMemory);
-			
+
 			//Floppies
 			txtDF0.Text = currentSettings.DF0;
 			txtDF1.Text = currentSettings.DF1;
@@ -266,11 +268,12 @@ namespace Jammy.UI.Settings
 
 			//CPU
 			currentSettings.Sku = Enum.Parse<CPUSku>((string)cbSku.SelectedItem);
-			currentSettings.CPU = rbMusashi.Checked? CPUType.Musashi : CPUType.Native;
+			currentSettings.CPU = rbMusashi.Checked ? CPUType.Musashi : CPUType.Native;
 			currentSettings.AddressBits = currentSettings.Sku == CPUSku.MC68030 ? 32 : 24;
 
 			//Chipset
 			currentSettings.ChipSet = Enum.Parse<ChipSet>((string)cbChipset.SelectedItem);
+			currentSettings.VideoFormat = rbNTSC.Checked ? VideoFormat.NTSC : VideoFormat.PAL;
 
 			//Memory
 			currentSettings.ChipMemory = Convert.ToSingle(dudChipRAM.SelectedItem);
@@ -303,19 +306,19 @@ namespace Jammy.UI.Settings
 				currentSettings.KickStartDisassembly = "2.04";
 			if (ks == "kick205.rom")
 				currentSettings.KickStartDisassembly = "2.05";
-			if (ks == "kick31.rom")
+			if (ks == "kick31.rom")// || ks == "kick31_a1200.rom")
 				currentSettings.KickStartDisassembly = "3.1";
 
 			//Misc.
 			currentSettings.Audio = cbAudio.Checked ? AudioDriver.XAudio2 : AudioDriver.Null;
 
 			//Debugging
-			currentSettings.Debugger = cbDebugging.Checked?Feature.Enabled:Feature.Disabled;
+			currentSettings.Debugger = cbDebugging.Checked ? Feature.Enabled : Feature.Disabled;
 		}
 
 		private static EmulationSettings DefaultSettings()
 		{
-			return new EmulationSettings{ ChipMemory = 0.5f};
+			return new EmulationSettings { ChipMemory = 0.5f };
 		}
 
 		public class Emulation
@@ -331,14 +334,14 @@ namespace Jammy.UI.Settings
 
 		private void SetQuickStart()
 		{
-/*
-A500, 512KB+512KB, OCS, KS1.3
-A500+, 1MB+1MB, ECS, KS2.04
-A600, 1MB, ECS, KS2.05
-A1200, 2MB, AGA, KS3.1
-A3000, 1MB+256MB, ECS, KS3.1
-A4000, 2MB+16MB+128MB, AGA, KS3.1
-*/
+			/*
+			A500, 512KB+512KB, OCS, KS1.3
+			A500+, 1MB+1MB, ECS, KS2.04
+			A600, 1MB, ECS, KS2.05
+			A1200, 2MB, AGA, KS3.1
+			A3000, 1MB+256MB, ECS, KS3.1
+			A4000, 2MB+16MB+128MB, AGA, KS3.1
+			*/
 			switch (cbQuickStart.SelectedIndex)
 			{
 				case 0:

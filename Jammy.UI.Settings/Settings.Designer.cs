@@ -85,6 +85,8 @@ namespace Jammy.UI.Settings
 			panel7 = new System.Windows.Forms.Panel();
 			groupBox7 = new System.Windows.Forms.GroupBox();
 			cbDiskController = new System.Windows.Forms.ComboBox();
+			rbNTSC = new System.Windows.Forms.RadioButton();
+			rbPAL = new System.Windows.Forms.RadioButton();
 			panel1.SuspendLayout();
 			groupBox1.SuspendLayout();
 			groupBox2.SuspendLayout();
@@ -183,6 +185,8 @@ namespace Jammy.UI.Settings
 			// 
 			// groupBox2
 			// 
+			groupBox2.Controls.Add(rbPAL);
+			groupBox2.Controls.Add(rbNTSC);
 			groupBox2.Controls.Add(cbChipset);
 			groupBox2.ForeColor = System.Drawing.SystemColors.Highlight;
 			groupBox2.Location = new System.Drawing.Point(12, 138);
@@ -195,7 +199,7 @@ namespace Jammy.UI.Settings
 			// cbChipset
 			// 
 			cbChipset.FormattingEnabled = true;
-			cbChipset.Items.AddRange(new object[] { "OCS", "ECS", "AGA" });
+			cbChipset.Items.AddRange(new object[] { "OCS", "ECS", "AGA", "CD32" });
 			cbChipset.Location = new System.Drawing.Point(6, 22);
 			cbChipset.Name = "cbChipset";
 			cbChipset.Size = new System.Drawing.Size(121, 23);
@@ -636,6 +640,28 @@ namespace Jammy.UI.Settings
 			cbDiskController.Size = new System.Drawing.Size(175, 23);
 			cbDiskController.TabIndex = 0;
 			// 
+			// rbNTSC
+			// 
+			rbNTSC.AutoSize = true;
+			rbNTSC.Location = new System.Drawing.Point(142, 31);
+			rbNTSC.Name = "rbNTSC";
+			rbNTSC.Size = new System.Drawing.Size(54, 19);
+			rbNTSC.TabIndex = 5;
+			rbNTSC.TabStop = true;
+			rbNTSC.Text = "NTSC";
+			rbNTSC.UseVisualStyleBackColor = true;
+			// 
+			// rbPAL
+			// 
+			rbPAL.AutoSize = true;
+			rbPAL.Location = new System.Drawing.Point(142, 13);
+			rbPAL.Name = "rbPAL";
+			rbPAL.Size = new System.Drawing.Size(45, 19);
+			rbPAL.TabIndex = 6;
+			rbPAL.TabStop = true;
+			rbPAL.Text = "PAL";
+			rbPAL.UseVisualStyleBackColor = true;
+			// 
 			// Settings
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -664,6 +690,7 @@ namespace Jammy.UI.Settings
 			groupBox1.ResumeLayout(false);
 			groupBox1.PerformLayout();
 			groupBox2.ResumeLayout(false);
+			groupBox2.PerformLayout();
 			panel3.ResumeLayout(false);
 			groupBox3.ResumeLayout(false);
 			groupBox3.PerformLayout();
@@ -735,5 +762,7 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.CheckBox cbDebugging;
+		private System.Windows.Forms.RadioButton rbPAL;
+		private System.Windows.Forms.RadioButton rbNTSC;
 	}
 }

@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Jammy.Core.Custom.IO;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
@@ -85,7 +83,7 @@ namespace Jammy.Core.Custom
 		//private const int SCREEN_WIDTH = 1280;
 		//private const int SCREEN_HEIGHT = 1024;
 
-		private const int SCREEN_WIDTH = DMA_WIDTH * 4;//227 * 4;
+		private const int SCREEN_WIDTH = DMA_WIDTH * 4;//227 (E3) * 4;
 		private const int SCREEN_HEIGHT = 313 * 2;//x2 for scan double
 
 		//hack: optimisation to avoid processing pixels too far left and right on the screen
@@ -1460,11 +1458,12 @@ namespace Jammy.Core.Custom
 						value |= 1<<15;//set LOF=1
 					}
 
-					if (settings.ChipSet != ChipSet.OCS)
+					value &= 0x80ff; 
+					switch (settings.ChipSet)
 					{
-						value &= 0x80ff;
-						if (settings.ChipSet == ChipSet.AGA) value |= 0x2300; //Alice
-						else if (settings.ChipSet == ChipSet.ECS) value |= 0x2100; //Fat Agnus
+						case ChipSet.AGA: value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC?0x3300:0x2300); break; //Alice
+						case ChipSet.ECS: value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC?0x3100:0x2100); break; //Fat Agnus
+						case ChipSet.OCS: value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC?0x0000:0x1000); break;//OCS
 					}
 					break;
 				case ChipRegs.VHPOSR:
