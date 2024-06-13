@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -147,12 +149,14 @@ namespace Jammy.Core.Custom
 {
 	public class Akiko : IAkiko
 	{
+		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 
 		public readonly byte[] registers = new byte[64];
 
-		public Akiko(ILogger<Akiko> logger)
+		public Akiko(IOptions<EmulationSettings> settings, ILogger<Akiko> logger)
 		{
+			this.settings = settings.Value;
 			this.logger = logger;
 
 			//Akiko is identified by 0xC0CACAFE at register 0
@@ -164,6 +168,7 @@ namespace Jammy.Core.Custom
 
 		public bool IsMapped(uint address)
 		{
+			if (settings.ChipSet != ChipSet.CD32) return false;
 			return mappedRange.Contains(address);
 		}
 
@@ -172,6 +177,7 @@ namespace Jammy.Core.Custom
 
 		public List<MemoryRange> MappedRange()
 		{
+			if (settings.ChipSet != ChipSet.CD32) return new List<MemoryRange>();
 			return new List<MemoryRange> {mappedRange};
 		}
 
