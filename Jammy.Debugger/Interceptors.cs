@@ -7,6 +7,8 @@ using System.Linq;
 using Jammy.Core.Types.Types;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Interface;
+using Jammy.Core.Memory;
+using Jammy.Core.Types;
 
 namespace Jammy.Debugger
 {
@@ -41,7 +43,7 @@ namespace Jammy.Debugger
 		public void Intercept(LVO lvo)
 		{
 			var regs = cpu.GetRegs();
-			logger.LogTrace($"@{memory.UnsafeRead32(regs.SP),-4:X8} {lvo.Name}() {regs.D[0]:X8} {regs.D[1]:X8} {regs.D[2]:X8} {regs.D[3]:X8}");
+			logger.LogTrace($"@{memory.UnsafeRead32(regs.SP):X8} {lvo.Name}() {regs.D[0]:X8} {regs.D[1]:X8} {regs.D[2]:X8} {regs.D[3]:X8}");
 		}
 	}
 
@@ -76,8 +78,9 @@ namespace Jammy.Debugger
 		public void Intercept(LVO lvo)
 		{
 			var regs = cpu.GetRegs();
-			logger.LogTrace($"@{memory.UnsafeRead32(regs.SP),-4:X8} {lvo.Name}() size: {regs.D[0]:X8} flags: {regs.D[1]:X8} {(MEMF)regs.D[1]}");
-			returnValueSnagger.AddSnagger(ReturnValue);
+			uint returnAddress = memory.UnsafeRead32(regs.SP);
+			logger.LogTrace($"@{returnAddress:X8} {lvo.Name}() size: {regs.D[0]:X8} flags: {regs.D[1]:X8} {(MEMF)regs.D[1]}");
+			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(ReturnValue,returnAddress));
 		}
 
 		private void ReturnValue()
@@ -99,14 +102,15 @@ namespace Jammy.Debugger
 		public void Intercept(LVO lvo)
 		{
 			var regs = cpu.GetRegs();
+			uint returnAddress = memory.UnsafeRead32(regs.SP);
 			string libraryName = memory.GetString(regs.A[1]);
-			logger.LogTrace($"@{memory.UnsafeRead32(regs.SP),-4:X8} {lvo.Name}() libname {regs.A[1]:X8} {libraryName} version: {regs.D[0]:X8}");
-			returnValueSnagger.AddSnagger(() =>
+			logger.LogTrace($"@{returnAddress:X8} {lvo.Name}() libname {regs.A[1]:X8} {libraryName} version: {regs.D[0]:X8}");
+			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
 			{
 				var regs = cpu.GetRegs();
 				logger.LogTrace($"{libraryName} {regs.D[0]:X8}");
 				libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
-			});
+			}, returnAddress));
 		}
 	}
 
@@ -122,8 +126,9 @@ namespace Jammy.Debugger
 		public void Intercept(LVO lvo)
 		{
 			var regs = cpu.GetRegs();
+			uint returnAddress = memory.UnsafeRead32(regs.SP);
 			logger.LogTrace($"{lvo.Name}() resName: {regs.A[1]:X8} {memory.GetString(regs.A[1])}");
-			returnValueSnagger.AddSnagger(ReturnValue);
+			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(ReturnValue, returnAddress));
 		}
 
 		private void ReturnValue()
@@ -147,6 +152,7 @@ namespace Jammy.Debugger
 		public void Intercept(LVO lvo)
 		{
 			var regs = cpu.GetRegs();
+			uint returnAddress = memory.UnsafeRead32(regs.SP);
 			logger.LogTrace($"{lvo.Name}() vectors: {regs.A[0]:X8} structure: {regs.A[1]:X8} init: {regs.A[2]:X8} dataSize: {regs.D[0]:X8} segList: {regs.D[1]:X8}");
 
 			if (!librariesMade.Contains(regs.A[0]))
@@ -155,9 +161,8 @@ namespace Jammy.Debugger
 				analyser.ExtractFunctionTable(regs.A[0], NT_Type.NT_LIBRARY, $"unknown_{regs.A[0]}");
 				analyser.ExtractStructureInit(regs.A[1]);
 			}
-			returnValueSnagger.AddSnagger(ReturnValue);
+			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(ReturnValue, returnAddress));
 		}
-
 
 		private void ReturnValue()
 		{
@@ -263,9 +268,60 @@ namespace Jammy.Debugger
 		}
 	}
 
+	public interface ISnagger
+	{
+		bool IsHit(IDebugMemoryMapper memoryMapper, Regs regs);
+		void Act();
+	}
+
+	public class RtsSnagger : ISnagger
+	{
+		private Action act;
+		private uint sp;
+		public RtsSnagger(Action action, uint sp)
+		{
+			this.act = action;
+			this.sp = sp;
+		}
+
+		public bool IsHit(IDebugMemoryMapper memoryMapper, Regs regs)
+		{
+			ushort ins = memoryMapper.UnsafeRead16(regs.PC);
+			if (ins != 0x4e75 && ins != 0x4e73) return false;//rts or rte
+			return regs.SP == sp;
+		}
+
+		public void Act()
+		{
+			act();
+		}
+	}
+
+	public class ReturnAddressSnagger :ISnagger
+	{
+		private Action act;
+		private uint address;
+
+		public ReturnAddressSnagger(Action action, uint address)
+		{
+			this.act = action;
+			this.address = address;
+		}
+
+		public bool IsHit(IDebugMemoryMapper memoryMapper, Regs regs)
+		{
+			return regs.PC == address;
+		}
+
+		public void Act()
+		{
+			act();
+		}
+	}
+
 	public interface IReturnValueSnagger
 	{
-		void AddSnagger(Action snagAction);
+		void AddSnagger(ISnagger snagger);
 		void CheckSnaggers();
 	}
 
@@ -273,7 +329,7 @@ namespace Jammy.Debugger
 	{
 		private readonly ICPU cpu;
 		private readonly IDebugMemoryMapper memoryMapper;
-		private readonly Dictionary<uint, List<Action>> snaggers = new Dictionary<uint, List<Action>>();
+		private readonly List<ISnagger> snaggers = new List<ISnagger>();
 
 		public ReturnValueSnagger(ICPU cpu, IDebugMemoryMapper memoryMapper)
 		{
@@ -281,13 +337,9 @@ namespace Jammy.Debugger
 			this.memoryMapper = memoryMapper;
 		}
 
-		public void AddSnagger(Action snagAction)
+		public void AddSnagger(ISnagger snagger)
 		{
-			var regs = cpu.GetRegs();
-			if (!snaggers.ContainsKey(regs.A[7]))
-				snaggers.Add(regs.A[7], new List<Action> { snagAction });
-			else
-				snaggers[regs.A[7]].Add(snagAction);
+			snaggers.Add(snagger);
 		}
 
 		public void CheckSnaggers()
@@ -295,19 +347,20 @@ namespace Jammy.Debugger
 			if (snaggers.Count == 0) return;
 
 			var regs = cpu.GetRegs();
-			ushort ins = memoryMapper.UnsafeRead16(regs.PC);
-			if (ins != 0x4e75 && ins != 0x4e73) return;//rts or rte
 
+			List<ISnagger> completed = null;
 			foreach (var snagger in snaggers)
 			{
-				if (regs.A[7] >= snagger.Key)
+				if (snagger.IsHit(memoryMapper, regs))
 				{
-					foreach (var act in snagger.Value)
-						act();
-					snaggers.Remove(snagger.Key);
-					return;
+					snagger.Act();
+					if (completed == null)
+						completed = new List<ISnagger>();
+					completed.Add(snagger);
 				}
 			}
+			if (completed != null)
+				snaggers.RemoveAll(x=>completed.Contains(x));
 		}
 	}
 }
