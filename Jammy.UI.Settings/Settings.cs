@@ -296,18 +296,11 @@ namespace Jammy.UI.Settings
 			//Kickstart
 			currentSettings.KickStart = txtKickstart.Text;
 
-			//hacky disassembly setting
-			var ks = Path.GetFileName(currentSettings.KickStart);
-			if (ks == "kick12.rom")
-				currentSettings.KickStartDisassembly = "1.2";
-			if (ks == "kick13.rom")
-				currentSettings.KickStartDisassembly = "1.3";
-			if (ks == "kick204.rom")
-				currentSettings.KickStartDisassembly = "2.04";
-			if (ks == "kick205.rom")
-				currentSettings.KickStartDisassembly = "2.05";
-			if (ks == "kick31.rom")// || ks == "kick31_a1200.rom")
-				currentSettings.KickStartDisassembly = "3.1";
+			//Get the Kickstart CRC for identification
+			var rom = File.ReadAllBytes(currentSettings.KickStart);
+			var c = rom.Skip(rom.Length - 24).Take(4).Select(x=>(uint)x).ToArray();
+			uint crc = c[3] | (c[2] << 8) | (c[1] << 16) | (c[0] << 24);
+			currentSettings.KickStartDisassembly = $"{crc:X8}";
 
 			//Misc.
 			currentSettings.Audio = cbAudio.Checked ? AudioDriver.XAudio2 : AudioDriver.Null;

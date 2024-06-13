@@ -584,7 +584,9 @@ namespace Jammy.Disassembler.Analysers
 
 		private void LoadComments()
 		{
-			string fullPath = Path.Combine($"c:/source/programming/amiga/KS{settings.KickStartDisassembly}");
+			var dirs = Directory.GetDirectories("c:/source/programming/amiga");
+
+			var fullPath = dirs.SingleOrDefault(x => x.Contains(settings.KickStartDisassembly));
 			if (Directory.Exists(fullPath))
 			{
 				var files = Directory.GetFiles(fullPath, "*_disassembly.txt");
