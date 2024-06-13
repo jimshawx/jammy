@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ using Jammy.Types.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Vortice.Direct3D11;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -140,6 +142,9 @@ namespace Jammy.Main
 			ranges.Add(new Tuple<uint, uint>(0x60000, 0x1000));
 			ranges.Add(new Tuple<uint, uint>(0x70000, 0x1000));
 			ranges.Add(new Tuple<uint, uint>(0xD000, 0x1000));
+			ranges.Add(new Tuple<uint, uint>(0x0012D000, 0x1000));
+			
+			//ranges.Add(new Tuple<uint, uint>(0x00FC53E4, 0x00FD3D8C-0x00FC53E4+1));//ks 1.3 graphics.library
 
 			disassembly.Clear();
 			var disasm = disassembly.DisassembleTxt(
@@ -280,15 +285,49 @@ namespace Jammy.Main
 
 			//disassemblyView = disassembly.DisassemblyView(pc, 10, 100, disassemblyOptions);
 			int line = disassemblyView.GetAddressLine(pc);
-			txtDisassembly.Text = disassemblyView.Text;
 
+			//only need to do this is disassembly is actually updated
+			//txtDisassembly.Text = disassemblyView.Text;
+
+			//scroll the view to the line 5 lines before the PC
 			txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
 			txtDisassembly.ScrollToCaret();
+
+			//find the line at the current pc, and the next line after that, and highlight it.
 			int start = txtDisassembly.GetFirstCharIndexFromLine(line);
+
+			/*
+			if (start >= 0)
+			{
+				string pcs = $"{pc:X6}";
+				string pct= txtDisassembly.Text.Substring(start, 6);
+				if (pcs != pct)
+				{
+					logger.LogTrace($"PC {pc:X6} LINE {txtDisassembly.Text.Substring(start, 6)}");
+					try { 
+					for (int l = 0; l < 1000000; l+=1000)
+					{
+						//get the address 'p' at start of line 'l'
+						int s = txtDisassembly.GetFirstCharIndexFromLine(l);
+						string p = txtDisassembly.Text.Substring(s, 6);
+
+						//get the line 'x' from address 'p' from the disassembly
+						int x = disassemblyView.GetAddressLine(uint.Parse(p, NumberStyles.AllowHexSpecifier));
+
+						//they don't match, let's look
+						if (l != x)
+							logger.LogTrace($"Line {l} != {x} @{p:X6} {p}");
+					}
+					}
+					catch { }
+				}
+			}
+			*/
 			if (start >=0)
 				txtDisassembly.Select(start, txtDisassembly.GetFirstCharIndexFromLine(line + 1) - start);
 			else
 				txtDisassembly.DeselectAll();
+
 			txtDisassembly.ReallyResumeLayout();
 			txtDisassembly.Refresh();
 		}

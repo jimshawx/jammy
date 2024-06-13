@@ -63,6 +63,12 @@ namespace Jammy.Disassembler
 			return string.Join('\n', lines);
 		}
 
+		private char SafeToChar(byte b)
+		{
+			if (b < 32 || b > 127) return '.';
+			return (char)b;
+		}
+
 		private IEnumerable<AddressEntry> DisassembleBlock(DisassemblyOptions options, uint address, uint size)
 		{
 			logger.LogTrace($"Disassembling Block {address:X8} {size}");
@@ -163,7 +169,7 @@ namespace Jammy.Disassembler
 								tmp.Append('"');
 								while (memory.UnsafeRead8(address) != 0 && memory.UnsafeRead8(address) != 0x0d && memory.UnsafeRead8(address) != 0xa)
 								{
-									tmp.Append(Convert.ToChar(memory.UnsafeRead8(address)));
+									tmp.Append(SafeToChar(memory.UnsafeRead8(address)));
 									address++;
 								}
 
