@@ -67,32 +67,7 @@ namespace Jammy.Core.Floppy
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
 			Disk[] disks = new Disk[4];
-			if (!string.IsNullOrEmpty(settings.Value.DF0))
-			{
-				disks[0] = new Disk(settings.Value.DF0);
-			}
-			else
-			{
-				switch (settings.Value.KickStart)
-				{
-					default:
-					case "1.2":
-						disks[0] = new Disk("workbench1.2.adf");
-						break;
-					case "1.3":
-						disks[0] = new Disk("workbench1.3.adf");
-						break;
-					case "2.04":
-					case "2.05":
-						disks[0] = new Disk("workbench2.04.adf");
-						break;
-					case "3.1":
-						disks[0] = new Disk("workbench3.1.adf");
-						break;
-
-				}
-			}
-
+			if (!string.IsNullOrEmpty(settings.Value.DF0)) disks[0] = new Disk(settings.Value.DF0);
 			if (!string.IsNullOrEmpty(settings.Value.DF1)) disks[1] = new Disk(settings.Value.DF1);
 			if (!string.IsNullOrEmpty(settings.Value.DF2)) disks[2] = new Disk(settings.Value.DF2);
 			if (!string.IsNullOrEmpty(settings.Value.DF3)) disks[3] = new Disk(settings.Value.DF3);
