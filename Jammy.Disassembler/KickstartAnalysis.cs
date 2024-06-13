@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Hashing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
@@ -67,8 +68,15 @@ namespace Jammy.Disassembler
 			//This is a CRC32 of the ROM data (it should match the one in the ROM)
 			var mappedRange = kickstartROM.MappedRange().First();
 			var crc = new Crc32();
-			crc.Append(memory.GetEnumerable(0).ToArray());
+			crc.Append(memory.GetEnumerable((int)mappedRange.Start, mappedRange.Length-24).ToArray());
 			return crc.GetCurrentHashAsUInt32();
+		}
+
+		public byte[] GetSHA1()
+		{
+			//This is a SHA1 of the ROM data
+			var mappedRange = kickstartROM.MappedRange().First();
+			return SHA1.HashData(memory.GetEnumerable((int)mappedRange.Start, mappedRange.Length).ToArray());
 		}
 
 		private static List<Resident> GetRomTags(IKickstartROM kickstartROM, IDebugMemoryMapper memory, uint rombase)

@@ -14,5 +14,6 @@ namespace Jammy.Interface
 		void ShowRomTags();
 		uint GetChecksum();
 		uint GetCRC();
+		byte[] GetSHA1();
 	}
 }

@@ -192,8 +192,9 @@ namespace Jammy.Disassembler.Analysers
 			var version = kickstartAnalysis.GetVersion();
 			uint checksum = kickstartAnalysis.GetChecksum();
 			uint crc32 = kickstartAnalysis.GetCRC();
+			byte[] sha1 = kickstartAnalysis.GetSHA1();
 
-			logger.LogTrace($"Kickstart {version.Major}.{version.Minor} Checksum {checksum:X8} CRC32 {checksum:X8}");
+			logger.LogTrace($"Kickstart {version.Major}.{version.Minor} Checksum {checksum:X8} CRC32 {crc32:X8} SHA1 {Convert.ToHexString(sha1)}");
 
 			var execLoc = execLocations.SingleOrDefault(x => x.Checksum == checksum);
 			if (execLoc != null)
