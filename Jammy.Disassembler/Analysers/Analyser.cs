@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Hashing;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Jammy.Core.Interface.Interfaces;
@@ -147,48 +148,52 @@ namespace Jammy.Disassembler.Analysers
 
 		private class ExecLocation
 		{
-			public string Version;
-			public string Kickstart;
-			public string System;
-			public uint Checksum;
-			public uint Address;
+			public string Version { get; }
+			public string Kickstart { get; }
+			public string System { get; }
+			public uint Checksum { get; }
+			public uint Address { get; }
+			public uint CRC { get; }
 
-			public ExecLocation(string version, string kickstart, string system, uint checksum, uint address)
+			public ExecLocation(string version, string kickstart, string system, uint checksum, uint crc, uint address)
 			{
 				Version = version;
 				Kickstart = kickstart;
 				System = system;
 				Checksum = checksum;
+				CRC = crc;
 				Address = address;
 			}
 		}
 
 		private ExecLocation[] execLocations = {
-			new ExecLocation("1.2", "1.0", "",0x00000001, 0x0),
-			new ExecLocation("31.34", "1.1", "", 0x00000002,0x0),
-			new ExecLocation("33.166", "1.2", "", 0x00000003,0x0),
-			new ExecLocation("33.180", "1.2", "", 0x00000004,0x0),
-			new ExecLocation("33.192", "1.2", "A500/A1000/A2000", 0x56F2E2A6,0xFC1A40),
-			new ExecLocation("34.2", "1.3", "A3000", 0x150B7DB3,0xFC1A7C),
-			new ExecLocation("34.2","1.3", "A500", 0x15267DB3,0xFC1A7C),
-			new ExecLocation("36.1000","2.0","A3000", 0x953958D2,0xF82034),
-			new ExecLocation("37.132","2.04","A500+", 0x000B927C,0xF81F84),
-			new ExecLocation("37.151","2.05","A600", 0xDB27680D,0xF81FB0),
-			new ExecLocation("37.132","2.04","A3000", 0x54876DAB,0xF82000),
-			new ExecLocation("40.10", "3.1", "A500/A600/A2000", 0x9FDEEEF6,0xF8236C),
-			new ExecLocation("40.10", "3.1", "A1200", 0x87BA7A3E,0xF8236C),
-			new ExecLocation("40.9", "3.1", "A3000", 0x97DC36A2,0xF823CC),
-			new ExecLocation("40.10", "3.1", "A3000", 0x0CC4ABE0,0xF8238C),
-			new ExecLocation("40.9", "3.1", "A4000", 0xF90A56C0,0xF823B4),
-			new ExecLocation("40.10", "3.1", "A4000", 0x45C3145E,0xF82374),
-			new ExecLocation("40.10", "3.1", "A4000", 0xE20F9194,0xF82374),
+			new ExecLocation("1.2", "1.0", "",0x00000001, 0x00000001, 0x0),
+			new ExecLocation("31.34", "1.1", "", 0x00000002, 0x00000002, 0x0),
+			new ExecLocation("33.166", "1.2", "", 0x00000003,0x00000003,0x0),
+			new ExecLocation("33.180", "1.2", "", 0x00000004,0x00000004,0x0),
+			new ExecLocation("33.192", "1.2", "A500/A1000/A2000", 0x56F2E2A6,0x56F2E2A6,0xFC1A40),
+			new ExecLocation("34.2", "1.3", "A3000", 0x150B7DB3,0x150B7DB3,0xFC1A7C),
+			new ExecLocation("34.2","1.3", "A500", 0x15267DB3,0x15267DB3,0xFC1A7C),
+			new ExecLocation("36.1000","2.0","A3000", 0x953958D2, 0x953958D2,0xF82034),
+			new ExecLocation("37.132","2.04","A500+", 0x000B927C,0x000B927C,0xF81F84),
+			new ExecLocation("37.151","2.05","A600", 0xDB27680D,0xDB27680D,0xF81FB0),
+			new ExecLocation("37.132","2.04","A3000", 0x54876DAB,0x54876DAB,0xF82000),
+			new ExecLocation("40.10", "3.1", "A500/A600/A2000", 0x9FDEEEF6,0x9FDEEEF6,0xF8236C),
+			new ExecLocation("40.10", "3.1", "A1200", 0x87BA7A3E,0x87BA7A3E,0xF8236C),
+			new ExecLocation("40.9", "3.1", "A3000", 0x97DC36A2,0x97DC36A2,0xF823CC),
+			new ExecLocation("40.10", "3.1", "A3000", 0x0CC4ABE0,0x0CC4ABE0,0xF8238C),
+			new ExecLocation("40.9", "3.1", "A4000", 0xF90A56C0,0xF90A56C0,0xF823B4),
+			new ExecLocation("40.10", "3.1", "A4000", 0x45C3145E,0x45C3145E,0xF82374),
+			new ExecLocation("40.10", "3.1", "A4000", 0xE20F9194,0xE20F9194,0xF82374),
 		};
 
 		private void ExtractExecBase()
 		{
 			var version = kickstartAnalysis.GetVersion();
 			uint checksum = kickstartAnalysis.GetChecksum();
-			logger.LogTrace($"Kickstart {version.Major}.{version.Minor} Checksum {checksum:X8}");
+			uint crc32 = kickstartAnalysis.GetCRC();
+
+			logger.LogTrace($"Kickstart {version.Major}.{version.Minor} Checksum {checksum:X8} CRC32 {checksum:X8}");
 
 			var execLoc = execLocations.SingleOrDefault(x => x.Checksum == checksum);
 			if (execLoc != null)

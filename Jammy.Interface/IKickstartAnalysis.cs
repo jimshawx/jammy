@@ -13,5 +13,6 @@ namespace Jammy.Interface
 		KickstartVersion GetVersion();
 		void ShowRomTags();
 		uint GetChecksum();
+		uint GetCRC();
 	}
 }

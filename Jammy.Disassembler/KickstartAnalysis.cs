@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Hashing;
 using System.Linq;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
@@ -56,8 +57,18 @@ namespace Jammy.Disassembler
 
 		public uint GetChecksum()
 		{
+			//This is the CRC32 embedded in the ROM
 			var mappedRange = kickstartROM.MappedRange().First();
 			return kickstartROM.Read(0, (uint)(mappedRange.Start + mappedRange.Length - 24), Size.Long);
+		}
+
+		public uint GetCRC()
+		{
+			//This is a CRC32 of the ROM data (it should match the one in the ROM)
+			var mappedRange = kickstartROM.MappedRange().First();
+			var crc = new Crc32();
+			crc.Append(memory.GetEnumerable(0).ToArray());
+			return crc.GetCurrentHashAsUInt32();
 		}
 
 		private static List<Resident> GetRomTags(IKickstartROM kickstartROM, IDebugMemoryMapper memory, uint rombase)
