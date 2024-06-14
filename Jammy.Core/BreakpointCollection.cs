@@ -41,6 +41,9 @@ namespace Jammy.Core
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
+			if (breakpoints.TryGetValue(address, out Breakpoint bp))
+				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
+					SignalBreakpoint(insaddr);
 		}
 
 		//private bool IsMemoryBreakpoint(uint pc, BreakpointType type)

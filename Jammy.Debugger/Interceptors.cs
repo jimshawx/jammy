@@ -114,6 +114,30 @@ namespace Jammy.Debugger
 		}
 	}
 
+	public class OldOpenLibraryLogger : LVOLoggerBase, ILVOInterceptorAction
+	{
+		public OldOpenLibraryLogger(ICPU cpu, IDebugMemoryMapper memory, IReturnValueSnagger returnValueSnagger, IAnalyser analyser, ILibraryBases libraryBases, ILogger<OpenLibraryLogger> logger) : base(cpu, memory, returnValueSnagger, analyser, libraryBases, logger)
+		{
+		}
+
+		public string Library => "exec.library";
+		public string VectorName => "OldOpenLibrary";
+
+		public void Intercept(LVO lvo)
+		{
+			var regs = cpu.GetRegs();
+			uint returnAddress = memory.UnsafeRead32(regs.SP);
+			string libraryName = memory.GetString(regs.A[1]);
+			logger.LogTrace($"@{returnAddress:X8} {lvo.Name}() libname {regs.A[1]:X8} {libraryName}");
+			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
+			{
+				var regs = cpu.GetRegs();
+				logger.LogTrace($"{libraryName} {regs.D[0]:X8}");
+				libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
+			}, returnAddress));
+		}
+	}
+
 	public class OpenResourceLogger : LVOLoggerBase, ILVOInterceptorAction
 	{
 		public OpenResourceLogger(ICPU cpu, IDebugMemoryMapper memory, IReturnValueSnagger returnValueSnagger, IAnalyser analyser, ILibraryBases libraryBases, ILogger<OpenResourceLogger> logger) : base(cpu, memory, returnValueSnagger, analyser, libraryBases, logger)
@@ -270,7 +294,7 @@ namespace Jammy.Debugger
 
 	public interface ISnagger
 	{
-		bool IsHit(IDebugMemoryMapper memoryMapper, Regs regs);
+		bool IsHit(IDebugMemoryMapper memoryMapper, uint pc, uint sp);
 		void Act();
 	}
 
@@ -284,11 +308,11 @@ namespace Jammy.Debugger
 			this.sp = sp;
 		}
 
-		public bool IsHit(IDebugMemoryMapper memoryMapper, Regs regs)
+		public bool IsHit(IDebugMemoryMapper memoryMapper, uint pc, uint sp)
 		{
-			ushort ins = memoryMapper.UnsafeRead16(regs.PC);
+			ushort ins = memoryMapper.UnsafeRead16(pc);
 			if (ins != 0x4e75 && ins != 0x4e73) return false;//rts or rte
-			return regs.SP == sp;
+			return sp == this.sp;
 		}
 
 		public void Act()
@@ -308,9 +332,9 @@ namespace Jammy.Debugger
 			this.address = address;
 		}
 
-		public bool IsHit(IDebugMemoryMapper memoryMapper, Regs regs)
+		public bool IsHit(IDebugMemoryMapper memoryMapper, uint pc, uint sp)
 		{
-			return regs.PC == address;
+			return pc == address;
 		}
 
 		public void Act()
@@ -322,7 +346,7 @@ namespace Jammy.Debugger
 	public interface IReturnValueSnagger
 	{
 		void AddSnagger(ISnagger snagger);
-		void CheckSnaggers();
+		void CheckSnaggers(uint pc, uint sp);
 	}
 
 	public class ReturnValueSnagger : IReturnValueSnagger
@@ -342,16 +366,14 @@ namespace Jammy.Debugger
 			snaggers.Add(snagger);
 		}
 
-		public void CheckSnaggers()
+		public void CheckSnaggers(uint pc, uint sp)
 		{
 			if (snaggers.Count == 0) return;
-
-			var regs = cpu.GetRegs();
 
 			List<ISnagger> completed = null;
 			foreach (var snagger in snaggers)
 			{
-				if (snagger.IsHit(memoryMapper, regs))
+				if (snagger.IsHit(memoryMapper, pc, sp))
 				{
 					snagger.Act();
 					if (completed == null)

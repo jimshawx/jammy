@@ -66,7 +66,7 @@ namespace Jammy.Debugger
 			if (settings.Value.Debugger.IsEnabled())
 				(memory as IMemoryMapper).AddMemoryIntercept(this);
 
-			AddBreakpoint(0x12D0DE);
+			AddBreakpoint(0x12D0DE);//OpenLibrary("lowlevel.library");//Ryder
 
 			if (settings.Value.KickStartDisassembly.StartsWith("9FDEEEF6"))// == "3.1")
 			{
@@ -228,8 +228,8 @@ namespace Jammy.Debugger
 		//occurs after Read
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
-			interceptors.CheckLVOAccess(address, size);
-			returnValueSnagger.CheckSnaggers();
+			//interceptors.CheckLVOAccess(address, size);
+			//returnValueSnagger.CheckSnaggers();
 
 			//analyser.MarkAsType(address, MemType.Byte, size);
 
@@ -249,7 +249,8 @@ namespace Jammy.Debugger
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
 			interceptors.CheckLVOAccess(address, size);
-			returnValueSnagger.CheckSnaggers();
+			//cpu PC might not be the actual instruction address at this point
+			returnValueSnagger.CheckSnaggers(address, cpu.GetRegs().SP);
 
 			//analyser.MarkAsType(address, MemType.Code, size);
 			
