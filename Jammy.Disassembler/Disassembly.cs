@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types.Types;
 using Jammy.Interface;
 using Jammy.Types;
 using Jammy.Types.Options;
@@ -51,13 +52,49 @@ namespace Jammy.Disassembler
 		private readonly Dictionary<uint, AddressEntry> globalAddressToLine = new Dictionary<uint, AddressEntry>();
 		private readonly Dictionary<int, uint> globalLineToAddress = new Dictionary<int, uint>();
 
-		public string DisassembleTxt(List<Tuple<uint, uint>> ranges, DisassemblyOptions options)
+		private List<AddressRange> NoOverlaps(List<AddressRange> ranges)
+		{
+			var merge = new List<AddressRange>();
+
+			foreach (var incoming in ranges)
+			{
+				//remove any existing ranges completely contained in the incoming
+				merge.RemoveAll(x=>incoming.Contains(x));
+
+				//incoming doesn't overlap anything, add it, and we're done
+				if (!merge.Any(x => x.Overlaps(incoming))) { merge.Add(incoming); continue; }
+
+				//incoming is contained entirely within another, ignore it
+				if (merge.Any(x=>x.Contains(incoming))) continue;
+
+				//it partly overlaps one or more existing ranges
+				foreach (var merged in merge)
+				{
+					if (incoming.Overlaps(merged))
+					{
+						//that means incoming contains the start or the end of merged
+
+						//it contains the start, so extend it to the end
+						if (merged.Contains(incoming.Start))
+							merged.End = incoming.End;
+						else
+							merged.Start= incoming.Start;
+					}
+				}
+			}
+			return merge;
+		}
+
+		public string DisassembleTxt(List<AddressRange > ranges, DisassemblyOptions options)
 		{
 			var lines = new List<string>();
-			foreach (var range in ranges.OrderBy(x=>x.Item1))
+
+			ranges = NoOverlaps(ranges);
+
+			foreach (var range in ranges.OrderBy(x=>x.Start))
 			{
-				uint address = range.Item1;
-				uint size = range.Item2;
+				uint address = range.Start;
+				uint size = (uint)range.Length;
 				lines.AddRange(DisassembleBlock(options, address, size).SelectMany(x=>x.Lines));
 			}
 			return string.Join('\n', lines);

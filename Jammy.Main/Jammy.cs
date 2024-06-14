@@ -127,24 +127,29 @@ namespace Jammy.Main
 			Amiga.LockEmulation();
 
 			//prime the disassembly with a decent starting point
-			var ranges = new List<Tuple<uint, uint>>
+			var ranges = new List<AddressRange>
 			{
-					new Tuple<uint, uint>(0x000000, 0x3000),
-					new Tuple<uint, uint>(0xfc0000, 0x40000),
+					new AddressRange(0x000000, 0x3000),
+					new AddressRange(0xfc0000, 0x40000),
 			};
 			if (settings.TrapdoorMemory != 0.0)
-				ranges.Add(new Tuple<uint, uint>(0xc00000, 0x1000));
+				ranges.Add(new AddressRange(0xc00000, 0x1000));
 			if (debugger.KickstartSize() == 512 * 1024)
-				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x40000));
+				ranges.Add(new AddressRange(0xf80000, 0x40000));
 			if (debugger.KickstartSize() == 0x2000)
-				ranges.Add(new Tuple<uint, uint>(0xf80000, 0x2000));
-			ranges.Add(new Tuple<uint, uint>(0x78000, 0x1000));
-			ranges.Add(new Tuple<uint, uint>(0x60000, 0x1000));
-			ranges.Add(new Tuple<uint, uint>(0x70000, 0x1000));
-			ranges.Add(new Tuple<uint, uint>(0xD000, 0x1000));
-			ranges.Add(new Tuple<uint, uint>(0x0012D000, 0x1000));
-			
-			//ranges.Add(new Tuple<uint, uint>(0x00FC53E4, 0x00FD3D8C-0x00FC53E4+1));//ks 1.3 graphics.library
+				ranges.Add(new AddressRange(0xf80000, 0x2000));
+			ranges.Add(new AddressRange(0x78000, 0x1000));
+			ranges.Add(new AddressRange(0x60000, 0x1000));
+			ranges.Add(new AddressRange(0x70000, 0x1000));
+			ranges.Add(new AddressRange(0xD000, 0x1000));
+			ranges.Add(new AddressRange(0x0012D000, 0x1000));
+			//ranges.Add(new AddressRange(0x001E000, 0x2000));
+
+			//add in an area of code disassembly around the current PC
+			var regs = debugger.GetRegs();
+			ranges.Add(new AddressRange(regs.PC-0x100, 0x1000));
+
+			//ranges.Add(new AddressRange(0x00FC53E4, 0x00FD3D8C-0x00FC53E4+1));//ks 1.3 graphics.library
 
 			disassembly.Clear();
 			var disasm = disassembly.DisassembleTxt(

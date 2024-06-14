@@ -209,9 +209,9 @@ namespace Jammy.Disassembler
 				if (i != resident.Count - 1)
 					endAddress = resident[i + 1].MatchTag;
 
-				string asm = disassembly.DisassembleTxt(new List<Tuple<uint, uint>>
+				string asm = disassembly.DisassembleTxt(new List<AddressRange>
 					{
-						new Tuple<uint, uint>(rt.MatchTag, endAddress - rt.MatchTag + 1)
+						new AddressRange(rt.MatchTag, endAddress - rt.MatchTag + 1)
 					},
 					new DisassemblyOptions { IncludeBytes = false, CommentPad = true, IncludeComments = true });
 
@@ -242,7 +242,7 @@ namespace Jammy.Disassembler
 				}
 
 				dmp.Append(asm);
-
+				dmp.AppendLine();
 				dmp.AppendLine("^Z");
 				dmp.AppendLine(memoryDump.ToString(rt.MatchTag & 0xffffffe0u, endAddress - rt.MatchTag + 1 + 31));
 
@@ -259,7 +259,7 @@ namespace Jammy.Disassembler
 			foreach (var rt in resident)
 				logger.LogTrace($"{rt.MatchTag:X8} {rt.Name} {rt.Flags} v:{rt.Version} {rt.Type} pri:{rt.Pri} init:{rt.Init:X8} {rt.IdString}");
 
-			if (settings.Disassemblies == Feature.Enabled)
+			if (settings.Disassemblies.IsEnabled())
 			{
 				//var memoryDump = new MemoryDump(memory.GetEnumerable(0));
 				var memoryDump = new MemoryDump(memory.GetBulkRanges());
