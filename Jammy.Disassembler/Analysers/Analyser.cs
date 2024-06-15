@@ -289,6 +289,15 @@ namespace Jammy.Disassembler.Analysers
 			}
 		}
 
+		public void ExtractFunction(uint address, string name)
+		{
+			analysis.AddHeader(address, "");
+			analysis.AddHeader(address, "---------------------------------------------------------------------------");
+			analysis.AddHeader(address, $"\t{name}");
+			analysis.AddHeader(address, "---------------------------------------------------------------------------");
+			analysis.AddHeader(address, "");
+		}
+
 		public void ExtractFunctionTable(uint fntable, int count, string name, Size size)
 		{
 			uint address = fntable;

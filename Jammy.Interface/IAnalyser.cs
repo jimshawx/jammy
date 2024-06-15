@@ -14,5 +14,6 @@ namespace Jammy.Interface
 		void ExtractFunctionTable(uint fntable, NT_Type type, string name, Size? size=null);
 		void ExtractStructureInit(uint address);
 		void ExtractFunctionTable(uint fntable, int count, string name, Size size);
+		void ExtractFunction(uint address, string name);
 	}
 }
