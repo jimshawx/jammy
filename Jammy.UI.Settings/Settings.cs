@@ -36,6 +36,9 @@ namespace Jammy.UI.Settings
 			var cfgs = Directory.GetFiles(configPath, "*.cfg", SearchOption.TopDirectoryOnly);
 			cbQuickStart.Items.AddRange(cfgs.Select(Path.GetFileNameWithoutExtension).OrderBy(x => x).Cast<object>().ToArray());
 
+			//bind in the default settings
+			BindSettings();
+
 			LoadConfig("emulationSettings.json");
 		}
 
