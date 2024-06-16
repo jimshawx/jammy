@@ -10,6 +10,13 @@ namespace Jammy.Types
 	{
 		public uint Address { get; set; }
 		public string Text { get; set; }
+
+		public Comment() { }
+		public Comment(uint address, string text)
+		{
+			Address = address;
+			Text = text;
+		}
 	}
 
 	public class Header
@@ -29,6 +36,21 @@ namespace Jammy.Types
 		public int Offset { get; set; }
 		public uint Address { get; set; }
 		public int Index { get { return Offset/-6-1;} }
+		
+		public LVO() { }
+
+		public LVO(string name, int offset)
+		{
+			Name = name;
+			Offset = offset;
+		}
+	}
+
+	public enum LVOType
+	{
+		Library,
+		Resource,
+		Empty
 	}
 
 	public class LVOCollection
@@ -36,5 +58,16 @@ namespace Jammy.Types
 		public string Name { get; set; }
 		public uint BaseAddress { get; set; }
 		public List<LVO> LVOs { get; } = new List<LVO>();
+
+		public LVOCollection(LVOType type)
+		{
+			if (type == LVOType.Library)
+			{
+				LVOs.Add(new LVO("_LVOLibOpen", -6));
+				LVOs.Add(new LVO("_LVOLibClose", -12));
+				LVOs.Add(new LVO("_LVOLibExpunge", -18));
+				LVOs.Add(new LVO("_LVOLibReserved", -24));
+			}
+		}
 	}
 }

@@ -13,6 +13,7 @@ namespace Jammy.Interface
 		Dictionary<uint, Header> GetHeaders();
 		Dictionary<uint, Comment> GetComments();
 		Dictionary<string, LVOCollection> GetLVOs();
+		LVOCollection GetLVOs(string library);
 		void AddComment(Comment comment);
 		void AddComment(uint address, string s);
 		void AddHeader(uint address, string hdr);

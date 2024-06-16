@@ -114,13 +114,11 @@ namespace Jammy.Disassembler.Analysers
 							continue;
 
 						currentLib = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)[3];
-						//lvos[currentLib] = new LVOCollection();
-						analysis.SetLVO(currentLib, new LVOCollection());
+						analysis.SetLVO(currentLib, new LVOCollection(currentLib.EndsWith(".library")? LVOType.Library : LVOType.Resource));
 					}
 					else
 					{
 						var bits = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-						//lvos[currentLib].LVOs.Add(new LVO
 						analysis.AddLVO(currentLib, new LVO
 						{
 							Name = bits[0].Substring(4),
@@ -842,6 +840,34 @@ namespace Jammy.Disassembler.Analysers
 					analysis.SetMemType(i, type);
 			}
 			return 0;
+		}
+
+		private readonly HashSet<string> analysed = new HashSet<string>();
+		public void AnalyseLibraryBase(string library, uint address)
+		{
+			//OpenLibrary just returned this address, so there should be a bunch of
+			//jmp instructions just before there pointing at the library functions
+
+			//avoid doing it twice
+			if (analysed.Contains(library)) return;
+
+			//0100 111011 111 001 (imm32)
+			//4EF9 #imm32
+
+			var lvos = analysis.GetLVOs(library);
+			address -= 6;
+			bool found = false;
+			foreach (var lvo in lvos.LVOs)
+			{ 
+				if (mem.UnsafeRead16(address) != 0x4ef9) break;
+				uint lvoaddress = mem.UnsafeRead32(address+2);
+				analysis.AddComment(address, lvo.Name);
+				ExtractFunction(lvoaddress, $"{lvo.Name}()");
+				address -= 6;
+				found = true;
+			}
+			if (found)
+				analysed.Add(library);
 		}
 	}
 }

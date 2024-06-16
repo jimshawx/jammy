@@ -15,5 +15,6 @@ namespace Jammy.Interface
 		void ExtractStructureInit(uint address);
 		void ExtractFunctionTable(uint fntable, int count, string name, Size size);
 		void ExtractFunction(uint address, string name);
+		void AnalyseLibraryBase(string library, uint address);
 	}
 }

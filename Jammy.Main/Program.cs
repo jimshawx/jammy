@@ -28,6 +28,7 @@ using Parky.Logging;
 using Jammy.Core.IO.Windows;
 using Jammy.Core.EmulationWindow.GDI;
 using Jammy.Core.EmulationWindow.DX;
+using Jammy.Debugger.Interceptors;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.

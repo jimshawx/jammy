@@ -49,6 +49,11 @@ namespace Jammy.Disassembler.Analysers
 			return lvos;
 		}
 
+		public LVOCollection GetLVOs(string library)
+		{
+			return lvos.GetValueOrDefault(library, new LVOCollection(LVOType.Empty));
+		}
+
 		private bool IgnoreComment(Comment comment)
 		{
 			return false;
