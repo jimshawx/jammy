@@ -153,7 +153,7 @@ namespace Jammy.Core
 							var regs = cpu.GetRegs();
 							if (stepOutSp == 0xffffffff) stepOutSp = regs.A[7];
 							ushort ins = memoryMapper.UnsafeRead16(regs.PC);
-							bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] >= stepOutSp; //rts or rte
+							bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] == stepOutSp; //rts or rte
 							RunEmulations(8);
 							emulationHasRun = true;
 							if (stopping)

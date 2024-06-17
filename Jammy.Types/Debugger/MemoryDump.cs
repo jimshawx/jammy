@@ -186,7 +186,7 @@ namespace Jammy.Types.Debugger
 		{
 			return AllBlocksToString(new List<MemRange>
 				{
-					new MemRange ( 0x000000, 0xc000),
+					new MemRange ( 0x000000, 0x10000),
 					new MemRange ( 0xc00000, 0xa000),
 					new MemRange ( 0xf80000, 0x40000),
 					new MemRange ( 0xfc0000, 0x40000)

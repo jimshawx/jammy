@@ -219,6 +219,8 @@ namespace Jammy.Core.Floppy
 					value = dsklen; break;
 				case ChipRegs.DSKDAT:
 					value = dskdat; break;
+				case ChipRegs.ADKCONR:
+					value = adkcon&0x7f00; break;
 			}
 
 			//logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
@@ -232,6 +234,7 @@ namespace Jammy.Core.Floppy
 		private uint dskpt;
 		private uint dsklen;
 		private uint dskdat;
+		private uint adkcon;
 
 		private int upcomingDiskDMA = -1;
 
@@ -322,6 +325,12 @@ namespace Jammy.Core.Floppy
 				case ChipRegs.DSKDAT:
 					dskdat = value;
 					break;
+				case ChipRegs.ADKCON:
+					if ((value & 0x8000) != 0)
+						adkcon  |= (ushort)value;
+					else
+						adkcon &= (ushort)~value;
+					break;
 			}
 		}
 		private uint pra;
@@ -372,10 +381,10 @@ namespace Jammy.Core.Floppy
 			//if ((prb & (uint)PRB.DSKSTEP) == 0) Logger.Write("DSKSTEP ");
 			//if ((prb & (uint)PRB.DSKDIREC) == 0) Logger.Write("DSKDIREC ");
 			//if ((prb & (uint)PRB.DSKSIDE) == 0) Logger.Write("DSKSIDE ");
-			//if ((prb & (uint)PRB.DSKSEL0) == 0) Logger.Write("DSKSEL0 ");
-			//if ((prb & (uint)PRB.DSKSEL1) == 0) Logger.Write("DSKSEL1 ");
-			//if ((prb & (uint)PRB.DSKSEL2) == 0) Logger.Write("DSKSEL2 ");
-			//if ((prb & (uint)PRB.DSKSEL3) == 0) Logger.Write("DSKSEL3 ");
+			//if ((prb & (uint)PRB.DSKSEL0) == 0) logger.LogTrace("DSKSEL0 ");
+			//if ((prb & (uint)PRB.DSKSEL1) == 0) logger.LogTrace("DSKSEL1 ");
+			//if ((prb & (uint)PRB.DSKSEL2) == 0) logger.LogTrace("DSKSEL2 ");
+			//if ((prb & (uint)PRB.DSKSEL3) == 0) logger.LogTrace("DSKSEL3 ");
 			//if ((prb & (uint)PRB.DSKMOTOR) == 0) Logger.Write("DSKMOTOR ");
 			//if (prb != 0xff) logger.LogTrace("");
 
@@ -387,7 +396,7 @@ namespace Jammy.Core.Floppy
 			//5 DSKSEL2
 			//6 DSKSEL3
 			//7 DSKMOTOR
-			
+
 			//logger.LogTrace($"W PRB {Convert.ToString((prb>>3)&0xf,2).PadLeft(4,'0')} {prb:X2}");
 
 			//which bits changed?

@@ -77,6 +77,28 @@ namespace Jammy.Debugger.Interceptors
 		}
 	}
 
+	public class OpenDeviceLogger : LVOLoggerBase, ILVOInterceptorAction
+	{
+		public OpenDeviceLogger(ICPU cpu, IDebugMemoryMapper memory, IReturnValueSnagger returnValueSnagger, IAnalyser analyser,
+			ILibraryBases libraryBases, ILogger<OpenDeviceLogger> logger) : base(cpu, memory, returnValueSnagger, analyser, libraryBases, logger)
+		{
+		}
+
+		public string Library => "exec.library";
+		public string VectorName => "OpenDevice";
+
+		public void Intercept(LVO lvo, uint pc)
+		{
+			var regs = cpu.GetRegs();
+			logger.LogTrace($"@{pc:X8} {lvo.Name}() deviceName: {regs.A[0]:X8} {memory.GetString(regs.A[0])} unitNumber: {regs.D[0]} ioRq:{regs.A[1]:X8} flags:{regs.D[1]:X8}");
+			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
+			{
+				var regs = cpu.GetRegs();
+				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X2} {((regs.D[0]&0xff)==0?"Success":"Failed")} @{regs.PC:X8}");
+			}, memory.UnsafeRead32(regs.SP)));
+		}
+	}
+
 	public class MakeLibraryLogger : LVOLoggerBase, ILVOInterceptorAction
 	{
 		private HashSet<uint> librariesMade = new HashSet<uint>();

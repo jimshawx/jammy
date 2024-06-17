@@ -68,7 +68,9 @@ namespace Jammy.Debugger
 
 			if (settings.Value.KickStartDisassembly.StartsWith("87BA7A3E"))//3.1 A1200
 			{
-				AddBreakpoint(0xFBF3EA);//RAMLIB dev/lib not found, call LoadSeg
+				//AddBreakpoint(0xFBF3EA);//RAMLIB dev/lib not found, call LoadSeg
+				AddBreakpoint(0xF84514);//strap init
+				AddBreakpoint(0xF847BC);//OpenDevice("trackdisk.device") in strap
 			}
 
 			if (settings.Value.KickStartDisassembly.StartsWith("9FDEEEF6"))//3.1

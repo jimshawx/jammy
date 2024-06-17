@@ -205,19 +205,22 @@ namespace Jammy.Core.Custom.Audio
 
 		private ushort adkcon = 0;
 
-		public void WriteADKCON(ushort v)
+		private void WriteADKCON(ushort v)
 		{
-			adkcon = v;
+			if ((v & 0x8000) != 0)
+				adkcon |= (ushort)v;
+			else
+				adkcon &= (ushort)~v;
 
-			if ((v & 1) != 0) logger.LogTrace("C0 modulates volume");
-			if ((v & 2) != 0) logger.LogTrace("C1 modulates volume");
-			if ((v & 4) != 0) logger.LogTrace("C2 modulates volume");
-			if ((v & 8) != 0) logger.LogTrace("C3 modulates volume");
+			if ((v & 1) != 0) logger.LogTrace("C0 modulates volume C1");
+			if ((v & 2) != 0) logger.LogTrace("C1 modulates volume C2");
+			if ((v & 4) != 0) logger.LogTrace("C2 modulates volume C3");
+			if ((v & 8) != 0) logger.LogTrace("C3 modulates volume nothing");
 			v >>= 4;
-			if ((v & 1) != 0) logger.LogTrace("C0 modulates frequency");
-			if ((v & 2) != 0) logger.LogTrace("C1 modulates frequency");
-			if ((v & 4) != 0) logger.LogTrace("C2 modulates frequency");
-			if ((v & 8) != 0) logger.LogTrace("C3 modulates frequency");
+			if ((v & 1) != 0) logger.LogTrace("C0 modulates frequency C1");
+			if ((v & 2) != 0) logger.LogTrace("C1 modulates frequency C2");
+			if ((v & 4) != 0) logger.LogTrace("C2 modulates frequency C3");
+			if ((v & 8) != 0) logger.LogTrace("C3 modulates frequency nothing");
 		}
 
 		private ushort intreq = 0;
@@ -286,6 +289,8 @@ namespace Jammy.Core.Custom.Audio
 				case ChipRegs.AUD3DAT: ch[3].auddat = value; ChannelIRQOn(3); break;
 				case ChipRegs.AUD3LCH: ch[3].audlc = (ch[3].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD3LCL: ch[3].audlc = ((ch[3].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
+
+				case ChipRegs.ADKCON: WriteADKCON(value); break;
 			}
 			//DumpDiff();
 		}
@@ -322,6 +327,8 @@ namespace Jammy.Core.Custom.Audio
 				case ChipRegs.AUD3DAT: value = ch[3].auddat; break;
 				case ChipRegs.AUD3LCH: value = (ushort)(ch[3].audlc >> 16); break;
 				case ChipRegs.AUD3LCL: value = (ushort)ch[3].audlc; break;
+
+				case ChipRegs.ADKCONR: value = (ushort)(adkcon & 0x00ff); break;
 			}
 			return value;
 		}

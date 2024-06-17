@@ -124,6 +124,7 @@ namespace Jammy.Main
 				//.AddSingleton<ILVOInterceptorAction, OldOpenLibraryLogger>()
 				//.AddSingleton<ILVOInterceptorAction, OpenResourceLogger>()
 				//.AddSingleton<ILVOInterceptorAction, MakeLibraryLogger>()
+				.AddSingleton<ILVOInterceptorAction, OpenDeviceLogger>()
 				.AddSingleton<IOpenFileTracker, OpenFileTracker>()
 				.AddSingleton<ILibraryBases, LibraryBases>()
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))

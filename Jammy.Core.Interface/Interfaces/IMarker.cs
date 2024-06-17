@@ -32,7 +32,6 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IAudio : IEmulate, ICustomReadWrite
 	{
 		void WriteDMACON(ushort v);
-		void WriteADKCON(ushort v);
 		void WriteINTREQ(ushort v);
 		void WriteINTENA(ushort v);
 	}

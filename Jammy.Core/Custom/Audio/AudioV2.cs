@@ -23,7 +23,7 @@ namespace Jammy.Core.Custom.Audio
 		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
-		public AudioV2(IChipRAM memory, IInterrupt interrupt, ILogger<Custom.Audio.Audio> logger)
+		public AudioV2(IChipRAM memory, IInterrupt interrupt, ILogger<AudioV2> logger)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;
@@ -205,10 +205,12 @@ namespace Jammy.Core.Custom.Audio
 		}
 
 		private ushort adkcon = 0;
-
-		public void WriteADKCON(ushort v)
+		private void WriteADKCON(ushort v)
 		{
-			adkcon = v;
+			if ((v & 0x8000) != 0)
+				adkcon |= (ushort)v;
+			else
+				adkcon &= (ushort)~v;
 
 			if ((v & 1) != 0) logger.LogTrace("C0 modulates volume");
 			if ((v & 2) != 0) logger.LogTrace("C1 modulates volume");
@@ -287,6 +289,8 @@ namespace Jammy.Core.Custom.Audio
 				case ChipRegs.AUD3DAT: ch[3].auddat = value; ChannelIRQOn(3); break;
 				case ChipRegs.AUD3LCH: ch[3].audlc = (ch[3].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD3LCL: ch[3].audlc = ((ch[3].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
+				
+				case ChipRegs.ADKCON: WriteADKCON(value); break;
 			}
 		}
 
@@ -322,6 +326,8 @@ namespace Jammy.Core.Custom.Audio
 				case ChipRegs.AUD3DAT: value = ch[3].auddat; break;
 				case ChipRegs.AUD3LCH: value = (ushort)(ch[3].audlc >> 16); break;
 				case ChipRegs.AUD3LCL: value = (ushort)ch[3].audlc; break;
+
+				case ChipRegs.ADKCONR: value = (ushort)(adkcon & 0x00ff); break;
 			}
 			return value;
 		}

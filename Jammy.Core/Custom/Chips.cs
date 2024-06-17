@@ -133,8 +133,13 @@ namespace Jammy.Core.Custom
 			{
 				regs[reg] = audio.Read(insaddr, address);
 			}
-			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
-			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
+			else if (address == ChipRegs.ADKCON) { /* can't read here */ }
+			else if (address == ChipRegs.ADKCONR)
+			{
+				regs[reg] = (ushort)(audio.Read(insaddr, address)|diskDrives.Read(insaddr, address));
+			}
+			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || 
+			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR 
 			         /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
 			{
 
@@ -301,18 +306,7 @@ namespace Jammy.Core.Custom
 				interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
 			}
 			else if (address == ChipRegs.INTREQR) { /* can't write here */}
-			else if (address == ChipRegs.ADKCON)
-			{
-				if ((value & 0x8000) != 0)
-					regs[reg] |= (ushort) value;
-				else
-					regs[reg] &= (ushort) ~value;
 
-				audio.WriteADKCON(regs[reg]);
-
-				regs[REG(ChipRegs.ADKCONR)] = regs[reg];
-			}
-			else if (address == ChipRegs.ADKCONR) { /* can't write here */ }
 			else if (address == ChipRegs.LISAID && settings.ChipSet == ChipSet.AGA) { /* can't write here on AGA */}
 			else
 			{
@@ -333,9 +327,14 @@ namespace Jammy.Core.Custom
 			{
 				blitter.Write(insaddr, address, (ushort)value);
 			}
+			else if (address == ChipRegs.ADKCON)
+			{
+				diskDrives.Write(insaddr, address, (ushort)value);
+				audio.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == ChipRegs.ADKCONR) { /* can't write here */ }
 			else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
-			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT 
-			         || address == ChipRegs.ADKCON || address == ChipRegs.ADKCONR)//these last two shared with audio
+			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT )
 			{
 				diskDrives.Write(insaddr, address, (ushort) value);
 			}
@@ -349,9 +348,9 @@ namespace Jammy.Core.Custom
 				audio.Write(insaddr, address, (ushort)value);
 			}
 
-			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || address == ChipRegs.ADKCON ||
-			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR || address == ChipRegs.ADKCONR
-			         || /*address == ChipRegs.LISAID  ||*/ address == ChipRegs.NO_OP)
+			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ ||
+			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR ||
+			         /*address == ChipRegs.LISAID  ||*/ address == ChipRegs.NO_OP)
 			{
 
 			}
