@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,6 +37,8 @@ namespace Jammy.Main
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
 
+		private readonly List<AddressRange> disassemblyRanges = new List<AddressRange>();
+
 		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
@@ -57,6 +58,16 @@ namespace Jammy.Main
 			settings = options.Value;
 
 			disassemblyOptions = new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true, Full32BitAddress = settings.AddressBits>24};
+
+			//prime the disassembly with a decent starting point
+			disassemblyRanges.Add(new AddressRange(0x000000, 0x3000));//exec
+			disassemblyRanges.Add(new AddressRange(0xfc0000, 0x40000));//roms
+			if (settings.TrapdoorMemory != 0.0)
+				disassemblyRanges.Add(new AddressRange(0xc00000, 0x1000));
+			if (debugger.KickstartSize() == 512 * 1024)
+				disassemblyRanges.Add(new AddressRange(0xf80000, 0x40000));
+			if (debugger.KickstartSize() == 0x2000)
+				disassemblyRanges.Add(new AddressRange(0xf80000, 0x2000));
 
 			emulation.Start();
 
@@ -126,34 +137,13 @@ namespace Jammy.Main
 		{
 			Amiga.LockEmulation();
 
-			//prime the disassembly with a decent starting point
-			var ranges = new List<AddressRange>
-			{
-					new AddressRange(0x000000, 0x3000),
-					new AddressRange(0xfc0000, 0x40000),
-			};
-			if (settings.TrapdoorMemory != 0.0)
-				ranges.Add(new AddressRange(0xc00000, 0x1000));
-			if (debugger.KickstartSize() == 512 * 1024)
-				ranges.Add(new AddressRange(0xf80000, 0x40000));
-			if (debugger.KickstartSize() == 0x2000)
-				ranges.Add(new AddressRange(0xf80000, 0x2000));
-			ranges.Add(new AddressRange(0x78000, 0x1000));
-			ranges.Add(new AddressRange(0x60000, 0x1000));
-			ranges.Add(new AddressRange(0x70000, 0x1000));
-			ranges.Add(new AddressRange(0xD000, 0x1000));
-			ranges.Add(new AddressRange(0x0012D000, 0x1000));
-			//ranges.Add(new AddressRange(0x001E000, 0x2000));
-
 			//add in an area of code disassembly around the current PC
 			var regs = debugger.GetRegs();
-			ranges.Add(new AddressRange(regs.PC-0x100, 0x1000));
-
-			//ranges.Add(new AddressRange(0x00FC53E4, 0x00FD3D8C-0x00FC53E4+1));//ks 1.3 graphics.library
+			disassemblyRanges.Add(new AddressRange(regs.PC-0x100, 0x1000));
 
 			disassembly.Clear();
 			var disasm = disassembly.DisassembleTxt(
-				ranges,
+				disassemblyRanges,
 				disassemblyOptions);
 
 			Amiga.UnlockEmulation();
@@ -162,6 +152,8 @@ namespace Jammy.Main
 			//disassemblyView = disassembly.DisassemblyView(0, 0, 100, disassemblyOptions);
 			disassemblyView = disassembly.FullDisassemblyView(disassemblyOptions);
 			txtDisassembly.Text = disassemblyView.Text;
+
+			UpdateMem();
 		}
 
 		private void UpdateDisplay()

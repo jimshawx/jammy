@@ -26,4 +26,29 @@ namespace Jammy.Debugger.Interceptors
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
+
+	public class InternalLoadSegLogger : LVOLoggerBase, ILVOInterceptorAction
+	{
+		private readonly IOpenFileTracker openFileTracker;
+
+		public InternalLoadSegLogger(ICPU cpu, IDebugMemoryMapper memory, IReturnValueSnagger returnValueSnagger, IAnalyser analyser,
+			ILibraryBases libraryBases, IOpenFileTracker openFileTracker, ILogger<InternalLoadSegLogger> logger) : base(cpu, memory, returnValueSnagger, analyser, libraryBases, logger)
+		{
+			this.openFileTracker = openFileTracker;
+		}
+
+		public string Library => "dos.library";
+		public string VectorName => "InternalLoadSeg";
+
+		public void Intercept(LVO lvo, uint pc)
+		{
+			var regs = cpu.GetRegs();
+			logger.LogTrace($"@{pc:X8} {lvo.Name}() name:{openFileTracker.GetFileName(regs.D[0])}:{regs.D[0]:X8}");
+			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
+			{
+				var regs = cpu.GetRegs();
+				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X8}");
+			}, memory.UnsafeRead32(regs.SP)));
+		}
+	}
 }

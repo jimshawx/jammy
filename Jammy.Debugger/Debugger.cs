@@ -66,28 +66,31 @@ namespace Jammy.Debugger
 			if (settings.Value.Debugger.IsEnabled())
 				(memory as IMemoryMapper).AddMemoryIntercept(this);
 
-			AddBreakpoint(0x12D0DE);//OpenLibrary("lowlevel.library");//Ryder
+			if (settings.Value.KickStartDisassembly.StartsWith("87BA7A3E"))//3.1 A1200
+			{
+				AddBreakpoint(0xFBF3EA);//RAMLIB dev/lib not found, call LoadSeg
+			}
 
-			if (settings.Value.KickStartDisassembly.StartsWith("9FDEEEF6"))// == "3.1")
+			if (settings.Value.KickStartDisassembly.StartsWith("9FDEEEF6"))//3.1
 			{
 				//AddBreakpoint(0xFA710E);//allocate memory for hunk in loadseg
 				return;
 			}
 
-			if (settings.Value.KickStartDisassembly.StartsWith("000B927C"))// == "2.04")
+			if (settings.Value.KickStartDisassembly.StartsWith("000B927C"))//2.04
 			{
 				//AddBreakpoint(0xf85804);//KS2.04 battclock.resource init
 				return;
 			}
 
-			if (settings.Value.KickStartDisassembly.StartsWith("DB27680D"))// == "2.05")
+			if (settings.Value.KickStartDisassembly.StartsWith("DB27680D"))//2.05
 			{
 				//AddBreakpoint(0xFC0BE2);//card.resource Gayle detection
 				//AddBreakpoint(0xFC120C);//poll Gayle INTREQ
 				return;
 			}
 
-			if (settings.Value.KickStartDisassembly.StartsWith("15267DB3"))// == "1.3")
+			if (settings.Value.KickStartDisassembly.StartsWith("15267DB3"))//1.3
 			{
 				//AddBreakpoint(0xFC509A);//expansion.library
 				//AddBreakpoint(0xFC7D84);//OpenFont()
@@ -105,7 +108,7 @@ namespace Jammy.Debugger
 				return;
 			}
 
-			if (settings.Value.KickStartDisassembly.StartsWith("56F2E2A6"))// == "1.2")
+			if (settings.Value.KickStartDisassembly.StartsWith("56F2E2A6"))//1.2
 			{
 				//AddBreakpoint(0xFC8498, BreakpointType.Read);//ROM topaz.font read
 

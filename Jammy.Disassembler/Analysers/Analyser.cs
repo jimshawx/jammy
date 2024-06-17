@@ -843,7 +843,7 @@ namespace Jammy.Disassembler.Analysers
 		}
 
 		private readonly HashSet<string> analysed = new HashSet<string>();
-		public void AnalyseLibraryBase(string library, uint address)
+		public void AnalyseLibraryBase(string library, uint baseAddress)
 		{
 			//OpenLibrary just returned this address, so there should be a bunch of
 			//jmp instructions just before there pointing at the library functions
@@ -855,15 +855,15 @@ namespace Jammy.Disassembler.Analysers
 			//4EF9 #imm32
 
 			var lvos = analysis.GetLVOs(library);
-			address -= 6;
 			bool found = false;
 			foreach (var lvo in lvos.LVOs)
 			{ 
+				uint address = (uint)(baseAddress + lvo.Offset);
 				if (mem.UnsafeRead16(address) != 0x4ef9) break;
 				uint lvoaddress = mem.UnsafeRead32(address+2);
 				analysis.AddComment(address, lvo.Name);
 				ExtractFunction(lvoaddress, $"{lvo.Name}()");
-				address -= 6;
+
 				found = true;
 			}
 			if (found)

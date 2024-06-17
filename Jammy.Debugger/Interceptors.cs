@@ -202,26 +202,24 @@ namespace Jammy.Debugger
 
 		public void AddSnagger(ISnagger snagger)
 		{
-			snaggers.Add(snagger);
+			snaggers.Insert(0, snagger);
 		}
 
 		public void CheckSnaggers(uint pc, uint sp)
 		{
 			if (snaggers.Count == 0) return;
 
-			List<ISnagger> completed = null;
+			int i = 0;
 			foreach (var snagger in snaggers)
 			{
 				if (snagger.IsHit(memoryMapper, pc, sp))
 				{
 					snagger.Act();
-					if (completed == null)
-						completed = new List<ISnagger>();
-					completed.Add(snagger);
+					snaggers.RemoveAt(i);
+					break;
 				}
+				i++;
 			}
-			if (completed != null)
-				snaggers.RemoveAll(x=>completed.Contains(x));
 		}
 	}
 }

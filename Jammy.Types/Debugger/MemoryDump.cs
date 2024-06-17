@@ -40,6 +40,8 @@ namespace Jammy.Types.Debugger
 		public MemoryDump(List<BulkMemoryRange> ranges)
 		{
 			this.memoryRanges = ranges.Where(x=>x.Memory.Length > 0).OrderBy(x=>x.StartAddress).ToList();
+			//complete hack to remove KS mirror range, if present
+			this.memoryRanges.RemoveAll(x=>x.StartAddress == 0 && (x.EndAddress == 0x80000 || x.EndAddress == 0x40000));
 		}
 
 		public void ClearMapping()
@@ -47,7 +49,7 @@ namespace Jammy.Types.Debugger
 			addressToLine.Clear();
 		}
 
-		int line;
+		private int line;
 		private string AllBlocksToString(List<MemRange> ranges)
 		{
 			line = 0;
@@ -59,7 +61,8 @@ namespace Jammy.Types.Debugger
 					//intersect the two ranges, and write that block
 					if (range.start >= memoryRange.StartAddress && range.start < memoryRange.EndAddress)
 					{
-						var m = new MemRange();                     //the requested start is within the range
+						//the requested start is within the range
+						var m = new MemRange();
 						m.start = range.start;
 
 						if (range.end < memoryRange.EndAddress)
@@ -104,7 +107,7 @@ namespace Jammy.Types.Debugger
 
 		private string BlockToString(MemRange range, uint baseAddress, byte[] memory)
 		{
-			var sb = new StringBuilder();
+			var sb = new StringBuilder(256000);
 
 			uint start = range.start;
 			ulong size = range.size;

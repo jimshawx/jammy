@@ -42,7 +42,7 @@ namespace Jammy.Debugger.Interceptors
 			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
 			{
 				var regs = cpu.GetRegs();
-				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X8}");
+				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X8} {(regs.D[0]==0?"*** OUT OF MEMORY ***":"")}");
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
