@@ -167,7 +167,7 @@ namespace Jammy.Main
 		private void UpdateDisplay()
 		{
 			UpdateRegs();
-			//UpdateMem();
+			UpdateMem();
 			UpdatePowerLight();
 			UpdateDiskLight();
 			//UpdateExecBase();

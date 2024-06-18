@@ -71,7 +71,7 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0xFBF3EA);//RAMLIB dev/lib not found, call LoadSeg
 				//AddBreakpoint(0xF84514);//strap init
 				//AddBreakpoint(0xF847BC);//OpenDevice("trackdisk.device") in strap
-				AddBreakpoint(0xFC03F0);//disk.resource drive detection
+				//AddBreakpoint(0xFC03F0);//disk.resource drive detection
 			}
 
 			if (settings.Value.KickStartDisassembly.StartsWith("9FDEEEF6"))//3.1
@@ -280,7 +280,7 @@ namespace Jammy.Debugger
 			AddBreakpoint(disassembly.GetLineAddress(line), BreakpointType.OneShot);
 		}
 
-		public MemoryDump GetMemory()
+		public IMemoryDump GetMemory()
 		{
 			return new MemoryDump(memory.GetBulkRanges());
 		}

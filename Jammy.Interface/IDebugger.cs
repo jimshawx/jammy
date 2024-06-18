@@ -13,7 +13,7 @@ namespace Jammy.Interface
 	public interface IDebugger : IMemoryInterceptor
 	{
 		void ToggleBreakpoint(uint pc);
-		MemoryDump GetMemory();
+		IMemoryDump GetMemory();
 		ChipState GetChipRegs();
 		ushort GetInterruptLevel();
 		Regs GetRegs();
