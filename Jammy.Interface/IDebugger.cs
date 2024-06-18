@@ -30,5 +30,6 @@ namespace Jammy.Interface
 		uint KickstartSize();
 		void IDEACK();
 		void ClearBBUSY();
+		uint Read32(uint address);
 	}
 }

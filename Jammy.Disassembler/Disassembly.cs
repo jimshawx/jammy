@@ -7,6 +7,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Jammy.Interface;
 using Jammy.Types;
+using Jammy.Types.Debugger;
 using Jammy.Types.Options;
 using Microsoft.Extensions.Logging;
 
@@ -495,4 +496,23 @@ namespace Jammy.Disassembler
 		public string Text => text;
 	}
 
+	public class MemoryDumpView : IMemoryDumpView
+	{
+		private readonly IMemoryDump memoryDump;
+		private readonly string mem;
+
+		public MemoryDumpView(IMemoryDump memoryDump, string mem)
+		{
+			this.memoryDump = memoryDump;
+			this.mem = mem;
+		}
+
+		//given an address, return the line in the view
+		public int AddressToLine(uint address)
+		{
+			return memoryDump.AddressToLine(address);
+		}
+
+		public string Text => mem;
+	}
 }

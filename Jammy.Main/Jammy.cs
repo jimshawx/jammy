@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,11 +11,11 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using Jammy.Disassembler;
 using Jammy.Disassembler.TypeMapper;
 using Jammy.Interface;
 using Jammy.Main.Dialogs;
 using Jammy.Types;
-using Jammy.Types.Debugger;
 using Jammy.Types.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -31,6 +32,7 @@ namespace Jammy.Main
 	{
 		private readonly IEmulation emulation;
 		private IDisassemblyView disassemblyView;
+		private IMemoryDumpView memoryDumpView;
 		private readonly IDisassembly disassembly;
 		private readonly IDebugger debugger;
 		private readonly ILogger logger;
@@ -57,7 +59,7 @@ namespace Jammy.Main
 
 			settings = options.Value;
 
-			disassemblyOptions = new DisassemblyOptions {IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true, Full32BitAddress = settings.AddressBits>24};
+			disassemblyOptions = new DisassemblyOptions { IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true, Full32BitAddress = settings.AddressBits > 24 };
 
 			//prime the disassembly with a decent starting point
 			disassemblyRanges.Add(new AddressRange(0x000000, 0x3000));//exec
@@ -93,7 +95,7 @@ namespace Jammy.Main
 
 					if (UI.UI.IsDirty)
 					{
-						this.Invoke((Action)delegate()
+						this.Invoke((Action)delegate ()
 						{
 							FetchUI(FetchUIFlags.All);
 							SetSelection();
@@ -108,17 +110,17 @@ namespace Jammy.Main
 		[Flags]
 		private enum FetchUIFlags
 		{
-			Regs=1,
-			Memory=2,
-			ChipRegs=4,
+			Regs = 1,
+			Memory = 2,
+			ChipRegs = 4,
 
-			All=Regs|Memory|ChipRegs,
+			All = Regs | Memory | ChipRegs,
 		}
 
 		private class FetchUIData
 		{
 			public Regs Regs { get; set; }
-			public MemoryDump Memory { get; set; }
+			//public MemoryDump Memory { get; set; }
 			public ChipState ChipRegs { get; set; }
 		}
 
@@ -128,7 +130,7 @@ namespace Jammy.Main
 		{
 			Amiga.LockEmulation();
 			if ((flags & FetchUIFlags.Regs) != 0) uiData.Regs = debugger.GetRegs();
-			if ((flags & FetchUIFlags.Memory) != 0) uiData.Memory = debugger.GetMemory();
+			//if ((flags & FetchUIFlags.Memory) != 0) uiData.Memory = debugger.GetMemory();
 			if ((flags & FetchUIFlags.ChipRegs) != 0) uiData.ChipRegs = debugger.GetChipRegs();
 			Amiga.UnlockEmulation();
 		}
@@ -139,19 +141,24 @@ namespace Jammy.Main
 
 			//add in an area of code disassembly around the current PC
 			var regs = debugger.GetRegs();
-			disassemblyRanges.Add(new AddressRange(regs.PC-0x100, 0x1000));
+			disassemblyRanges.Add(new AddressRange(regs.PC - 0x100, 0x1000));
 
 			disassembly.Clear();
 			var disasm = disassembly.DisassembleTxt(
 				disassemblyRanges,
 				disassemblyOptions);
 
+			var memory = debugger.GetMemory();
+	
 			Amiga.UnlockEmulation();
 
 			//this is the new view
 			//disassemblyView = disassembly.DisassemblyView(0, 0, 100, disassemblyOptions);
 			disassemblyView = disassembly.FullDisassemblyView(disassemblyOptions);
 			txtDisassembly.Text = disassemblyView.Text;
+
+			memoryDumpView = new MemoryDumpView(memory, memory.ToString());
+			txtMemory.Text = memoryDumpView.Text;
 
 			UpdateMem();
 		}
@@ -181,7 +188,7 @@ namespace Jammy.Main
 				lbCustom.Items.Add("INTENA W:DFF09A R:DFF01C");
 				lbCustom.Items.Add("INTREQ W:DFF09C R:DFF01E");
 				lbCustom.Items.Add("        ENA REQ");
-				string[] names = new String [16] {"NMI", "INTEN", "EXTEN", "DSKSYNC", "RBF", "AUD3", "AUD2", "AUD1", "AUD0", "BLIT", "VERTB", "COPPER", "PORTS", "SOFTINT", "DSKBLK", "TBE"};
+				string[] names = new String[16] { "NMI", "INTEN", "EXTEN", "DSKSYNC", "RBF", "AUD3", "AUD2", "AUD1", "AUD0", "BLIT", "VERTB", "COPPER", "PORTS", "SOFTINT", "DSKBLK", "TBE" };
 				for (int i = 0; i < 16; i++)
 				{
 					int bit = 1 << (i ^ 15);
@@ -192,7 +199,7 @@ namespace Jammy.Main
 			{
 				lbCustom.Items.Add("DMACON W:DFF096 R:DFF002");
 				lbCustom.Items.Add("        ENA");
-				string[] names = new string[16] {"SETCLR", "BBUSY", "BZERO", "x", "x", "BLTPRI", "DMAEN", "BPLEN", "COPEN", "BLTEN", "SPREN", "DSKEN", "AUD3EN", "AUD2EN", "AUD1EN", "AUD0EN"};
+				string[] names = new string[16] { "SETCLR", "BBUSY", "BZERO", "x", "x", "BLTPRI", "DMAEN", "BPLEN", "COPEN", "BLTEN", "SPREN", "DSKEN", "AUD3EN", "AUD2EN", "AUD1EN", "AUD0EN" };
 				for (int i = 0; i < 16; i++)
 				{
 					int bit = 1 << (i ^ 15);
@@ -216,7 +223,7 @@ namespace Jammy.Main
 				case "SP": address = regs.SP; break;
 				case "SSP": address = regs.SSP; break;
 				case "D0": address = regs.D[0]; break;
-				case "D1": address = regs.D[1]; break; 
+				case "D1": address = regs.D[1]; break;
 				case "D2": address = regs.D[2]; break;
 				case "D3": address = regs.D[3]; break;
 				case "D4": address = regs.D[4]; break;
@@ -231,7 +238,7 @@ namespace Jammy.Main
 
 		private void UpdateMem()
 		{
-			var memory = uiData.Memory;
+			//var memory = uiData.Memory;
 			var regs = uiData.Regs;
 
 			{
@@ -241,8 +248,8 @@ namespace Jammy.Main
 				int cnt = 32;
 				while (cnt-- > 0)
 				{
-					uint spv = memory.Read32((uint)sp);
-					uint sspv = memory.Read32((uint)ssp);
+					uint spv = debugger.Read32((uint)sp);
+					uint sspv = debugger.Read32((uint)ssp);
 					mem.Add(new Tuple<uint, uint>(spv, sspv));
 					sp += 4;
 					ssp += 4;
@@ -254,12 +261,12 @@ namespace Jammy.Main
 			}
 
 			{
-				txtMemory.Text = memory.ToString();
+				//txtMemory.Text = memory.ToString();
 
 				if (addressFollowBox.SelectedIndex != 0)
 				{
 					uint address = ValueFromRegName(regs, (string)addressFollowBox.SelectedItem);
-					var line = memory.AddressToLine(address);
+					var line = memoryDumpView.AddressToLine(address);
 					if (line != 0)
 					{
 						txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
@@ -320,7 +327,7 @@ namespace Jammy.Main
 				}
 			}
 			*/
-			if (start >=0)
+			if (start >= 0)
 				txtDisassembly.Select(start, txtDisassembly.GetFirstCharIndexFromLine(line + 1) - start);
 			else
 				txtDisassembly.DeselectAll();
@@ -693,6 +700,69 @@ namespace Jammy.Main
 			Amiga.LockEmulation();
 			debugger.ClearBBUSY();
 			Amiga.UnlockEmulation();
+		}
+
+		private void lbCallStack_MouseDoubleClick(object sender, MouseEventArgs e)
+		{
+			int index = this.lbCallStack.IndexFromPoint(e.Location);
+			if (index == ListBox.NoMatches) return;
+
+			uint sp = uint.Parse(((string)lbCallStack.Items[index]).Split([' ', '\t']).First(), NumberStyles.AllowHexSpecifier);
+			if (sp != 0)
+			{
+				logger.LogTrace($"scrolling to {sp:X8}");
+
+				{ 
+				txtDisassembly.ReallySuspendLayout();
+				txtDisassembly.DeselectAll();
+
+				int line = disassemblyView.GetAddressLine(sp);
+
+				//scroll the view to the line 5 lines before the PC
+				txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
+				txtDisassembly.ScrollToCaret();
+
+				txtDisassembly.ReallyResumeLayout();
+				txtDisassembly.Refresh();
+				}
+
+				{ 
+				int line = memoryDumpView.AddressToLine(sp);
+				txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
+				txtMemory.ScrollToCaret();
+				}
+			}
+		}
+
+		private void lbRegisters_MouseDoubleClick(object sender, MouseEventArgs e)
+		{
+			int index = this.lbRegisters.IndexFromPoint(e.Location);
+			if (index == ListBox.NoMatches) return;
+
+			uint sp = uint.Parse(((string)lbRegisters.Items[index]).Split([' ', '\t'])[1], NumberStyles.AllowHexSpecifier);
+			if (sp != 0)
+			{
+				logger.LogTrace($"scrolling to {sp:X8}");
+				{ 
+				txtDisassembly.ReallySuspendLayout();
+				txtDisassembly.DeselectAll();
+
+				int line = disassemblyView.GetAddressLine(sp);
+
+				//scroll the view to the line 5 lines before the PC
+				txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
+				txtDisassembly.ScrollToCaret();
+
+				txtDisassembly.ReallyResumeLayout();
+				txtDisassembly.Refresh();
+				}
+
+				{
+				int line = memoryDumpView.AddressToLine(sp);
+				txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
+				txtMemory.ScrollToCaret();
+				}
+			}
 		}
 	}
 

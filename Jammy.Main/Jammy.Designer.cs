@@ -107,6 +107,7 @@ namespace Jammy.Main
 			lbRegisters.SelectionMode = System.Windows.Forms.SelectionMode.None;
 			lbRegisters.Size = new System.Drawing.Size(175, 160);
 			lbRegisters.TabIndex = 0;
+			lbRegisters.MouseDoubleClick += lbRegisters_MouseDoubleClick;
 			// 
 			// txtDisassembly
 			// 
@@ -494,6 +495,7 @@ namespace Jammy.Main
 			lbCallStack.SelectionMode = System.Windows.Forms.SelectionMode.None;
 			lbCallStack.Size = new System.Drawing.Size(167, 238);
 			lbCallStack.TabIndex = 35;
+			lbCallStack.MouseDoubleClick += lbCallStack_MouseDoubleClick;
 			// 
 			// btnStepOut
 			// 
