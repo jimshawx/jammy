@@ -149,6 +149,7 @@ namespace Jammy.Main
 				disassemblyOptions);
 
 			var memory = debugger.GetMemory();
+			var memoryText = memory.ToString();
 	
 			Amiga.UnlockEmulation();
 
@@ -157,7 +158,7 @@ namespace Jammy.Main
 			disassemblyView = disassembly.FullDisassemblyView(disassemblyOptions);
 			txtDisassembly.Text = disassemblyView.Text;
 
-			memoryDumpView = new MemoryDumpView(memory, memory.ToString());
+			memoryDumpView = new MemoryDumpView(memory, memoryText);
 			txtMemory.Text = memoryDumpView.Text;
 
 			UpdateMem();
@@ -242,22 +243,34 @@ namespace Jammy.Main
 			var regs = uiData.Regs;
 
 			{
-				var mem = new List<Tuple<uint, uint>>();
-				long sp = (long)regs.SP;
-				long ssp = (long)regs.SSP;
-				int cnt = 32;
-				while (cnt-- > 0)
-				{
-					uint spv = debugger.Read32((uint)sp);
-					uint sspv = debugger.Read32((uint)ssp);
-					mem.Add(new Tuple<uint, uint>(spv, sspv));
-					sp += 4;
-					ssp += 4;
-				}
+				//var mem = new List<Tuple<uint, uint>>();
+				//long sp = (long)regs.SP;
+				//long ssp = (long)regs.SSP;
+				//int cnt = 32;
+				//while (cnt-- > 0)
+				//{
+				//	uint spv = debugger.Read32((uint)sp);
+				//	uint sspv = debugger.Read32((uint)ssp);
+				//	mem.Add(new Tuple<uint, uint>(spv, sspv));
+				//	sp += 4;
+				//	ssp += 4;
+				//}
+
+				//lbCallStack.Items.Clear();
+				//lbCallStack.Items.Add("   SP       SSP   ");
+				//lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
 
 				lbCallStack.Items.Clear();
-				lbCallStack.Items.Add("   SP       SSP   ");
-				lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
+				
+				uint sp = regs.SP;
+				lbCallStack.Items.Add("   SP");
+				for (uint i = 0; i < 15; i++)
+					lbCallStack.Items.Add($"{debugger.Read32(sp + i*4):X8}");
+
+				uint ssp = regs.SSP;
+				lbCallStack.Items.Add("   SSP");
+				for (uint i = 0; i < 15; i++)
+					lbCallStack.Items.Add($"{debugger.Read32(ssp + i*4):X8}");
 			}
 
 			{
@@ -706,8 +719,12 @@ namespace Jammy.Main
 		{
 			int index = this.lbCallStack.IndexFromPoint(e.Location);
 			if (index == ListBox.NoMatches) return;
+			string item = (string)lbCallStack.Items[index];
 
-			uint sp = uint.Parse(((string)lbCallStack.Items[index]).Split([' ', '\t']).First(), NumberStyles.AllowHexSpecifier);
+			//is it a hex number?
+			if (!char.IsAsciiHexDigit(item[0])) return;
+
+			uint sp = uint.Parse(item, NumberStyles.AllowHexSpecifier);
 			if (sp != 0)
 			{
 				logger.LogTrace($"scrolling to {sp:X8}");
@@ -739,7 +756,12 @@ namespace Jammy.Main
 			int index = this.lbRegisters.IndexFromPoint(e.Location);
 			if (index == ListBox.NoMatches) return;
 
-			uint sp = uint.Parse(((string)lbRegisters.Items[index]).Split([' ', '\t'])[1], NumberStyles.AllowHexSpecifier);
+			string item = (string)lbRegisters.Items[index];
+			//is it Dx Ax PC SP SSP? if so we can follow it
+			if (!item.StartsWith("D") && !item.StartsWith("A") && 
+				!item.StartsWith("PC") && !item.StartsWith("S")) return;
+			
+			uint sp = uint.Parse(item.Split([' ', '\t'])[1], NumberStyles.AllowHexSpecifier);
 			if (sp != 0)
 			{
 				logger.LogTrace($"scrolling to {sp:X8}");

@@ -51,6 +51,7 @@ namespace Jammy.Core.Types
 			//	items.Add($"A{i} {A[i]:X8}");
 			//items.Add($"SP {A[7]:X8}");
 
+			/*
 			for (int i = 0; i < 8; i++)
 			{
 				if (i == 7)
@@ -62,6 +63,21 @@ namespace Jammy.Core.Types
 			items.Add($"PC {PC:X8} SSP {SSP:X8}");
 			items.Add($"X N Z V C    SR {SR:X4}");
 			items.Add($"{(SR >> 4) & 1} {(SR >> 3) & 1} {(SR >> 2) & 1} {(SR >> 1) & 1} {SR & 1}");
+			*/
+
+			//column 1
+			for (int i = 0; i < 8; i++)
+				items.Add($"D{i} {D[i]:X8}");
+			items.Add($"PC {PC:X8}");
+			items.Add($"X N Z V C    SR {SR:X4}");
+			items.Add($"{(SR >> 4) & 1} {(SR >> 3) & 1} {(SR >> 2) & 1} {(SR >> 1) & 1} {SR & 1}");
+
+			//column 2
+			for (int i = 0; i < 7; i++)
+				items.Add($"A{i} {A[i]:X8}");
+			items.Add($"SP {A[7]:X8}");
+			items.Add($"SSP {SSP:X8}");
+
 			return items;
 		}
 

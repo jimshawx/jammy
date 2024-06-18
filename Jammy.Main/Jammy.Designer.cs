@@ -98,14 +98,16 @@ namespace Jammy.Main
 			// lbRegisters
 			// 
 			lbRegisters.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			lbRegisters.ColumnWidth = 85;
 			lbRegisters.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbRegisters.FormattingEnabled = true;
 			lbRegisters.IntegralHeight = false;
 			lbRegisters.ItemHeight = 13;
 			lbRegisters.Location = new System.Drawing.Point(1038, 12);
+			lbRegisters.MultiColumn = true;
 			lbRegisters.Name = "lbRegisters";
 			lbRegisters.SelectionMode = System.Windows.Forms.SelectionMode.None;
-			lbRegisters.Size = new System.Drawing.Size(175, 160);
+			lbRegisters.Size = new System.Drawing.Size(175, 150);
 			lbRegisters.TabIndex = 0;
 			lbRegisters.MouseDoubleClick += lbRegisters_MouseDoubleClick;
 			// 
@@ -487,10 +489,12 @@ namespace Jammy.Main
 			// lbCallStack
 			// 
 			lbCallStack.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			lbCallStack.ColumnWidth = 83;
 			lbCallStack.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbCallStack.FormattingEnabled = true;
 			lbCallStack.ItemHeight = 13;
 			lbCallStack.Location = new System.Drawing.Point(1219, 12);
+			lbCallStack.MultiColumn = true;
 			lbCallStack.Name = "lbCallStack";
 			lbCallStack.SelectionMode = System.Windows.Forms.SelectionMode.None;
 			lbCallStack.Size = new System.Drawing.Size(167, 238);
