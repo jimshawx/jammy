@@ -3,6 +3,10 @@ using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
 
+/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Debugger.Interceptors
 {
 	public class LoadSegLogger : LVOLoggerBase, ILVOInterceptorAction
