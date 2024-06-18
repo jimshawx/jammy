@@ -33,6 +33,8 @@ namespace Jammy.Core.Floppy
 			motor = false;
 			track = 0;
 			side = 0;
+			//start with the drive not ready
+			pra = (uint)PRA.DSKRDY;
 		}
 	}
 }
