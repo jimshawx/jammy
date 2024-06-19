@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Hashing;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Jammy.Core.Interface.Interfaces;
@@ -437,7 +436,7 @@ namespace Jammy.Disassembler.Analysers
 			
 			//if the structure doesn't start at 0, add a byte and the padding below will fill in any more gaps
 			if (r[0].Offset != 0)
-				r.Add(new Member(0, 0, Size.Byte));
+				r.Insert(0, new Member(0, 0, Size.Byte));
 
 			var pads = new List<Member>();
 
@@ -464,7 +463,7 @@ namespace Jammy.Disassembler.Analysers
 			{
 				int dest = (c>>6)&3;
 				int size = (c>>4)&3;
-				int count = c & 15;
+				int count = (c & 15)+1;
 
 				uint value=0;
 				Size s=Size.Byte;
@@ -502,20 +501,25 @@ namespace Jammy.Disassembler.Analysers
 					case 2: //destination offset is next byte
 						offset = mem.UnsafeRead8(address);
 						address += 1;
-
-						value = mem.UnsafeRead(address, s);
-						r.Add(new Member(offset, value, s));
-						address += inc;
-
+						for (int i = 0; i < count; i++)
+						{ 
+							value = mem.UnsafeRead(address, s);
+							r.Add(new Member(offset, value, s));
+							offset += inc;
+							address += inc;
+						}
 						break;
 
 					case 3: //destination offset is next 24bits
 						offset = mem.UnsafeRead32(address)>>8;
 						address += 3;
-
-						value = mem.UnsafeRead(address, s);
-						r.Add(new Member(offset, value, s));
-						address += inc;
+						for (int i = 0; i < count; i++)
+						{
+							value = mem.UnsafeRead(address, s);
+							r.Add(new Member(offset, value, s));
+							offset += inc;
+							address += inc;
+						}
 
 						break;
 				}
@@ -535,35 +539,86 @@ namespace Jammy.Disassembler.Analysers
 			}
 			analysis.AddHeader(header, "");
 		}
+		private readonly string[] sizes = { "L","W","B",""};
+		private readonly string[] codes = { "Copy","Repeat","Offset Copy","APTR Offset Copy" };
 
 		public void ExtractStructureInit(uint address)
 		{
 			CommentStructureInit(address);
 
-			ushort s;
-			while ((s = mem.UnsafeRead16(address)) != 0x0000)
+			uint header = address;
+			byte c;
+
+			while ((c = mem.UnsafeRead8(address)) != 0x00)
 			{
-				MakeMemType(address, MemType.Word, null);
-				address += 2;
-				if (s == 0xE000 || s == 0xD000)
+				MakeMemType(address, MemType.Byte, null);
+
+				int dest = (c >> 6) & 3;
+				int size = (c >> 4) & 3;
+				int count = (c & 15)+1;
+
+				analysis.AddComment(address, $"{dest:X2}:{size:X2}:{count-1:X4} {codes[dest]} {sizes[size]} x {count}");
+				address++;
+
+				MemType s = MemType.Byte;
+				uint inc = 0;
+
+				switch (size)
 				{
-					MakeMemType(address, MemType.Word, null);
-					address += 2;
-					MakeMemType(address, MemType.Word, null);
-					address += 2;
+					case 0: s = MemType.Long; inc = 4; break;
+					case 1: s = MemType.Word; inc = 2; break;
+					case 2: s = MemType.Byte; inc = 1; break;
+					case 3: analysis.AddHeader(header, "error!"); return;
 				}
-				else if (s == 0xC000)
+
+				switch (dest)
 				{
-					MakeMemType(address, MemType.Word, null);
-					address += 2;
-					MakeMemType(address, MemType.Long, null);
-					address += 4;
+					case 0: //count is how many 'value' to copy
+						for (int i = 0; i < count; i++)
+						{
+							MakeMemType(address, s, null);
+							address += inc;
+						}
+						break;
+
+					case 1: //count is how many times to copy 'value'
+						MakeMemType(address, s, null);
+						address += inc;
+						break;
+
+					case 2: //destination offset is next byte
+						MakeMemType(address, MemType.Byte, null);
+						address += 1;
+						for (int i = 0; i < count; i++)
+						{
+							MakeMemType(address, s, null);
+							address += inc;
+						}
+						break;
+
+					case 3: //destination offset is next 24bits
+						MakeMemType(address, MemType.Byte, null);
+						MakeMemType(address+1, MemType.Byte, null);
+						MakeMemType(address+2, MemType.Byte, null);
+						address += 3;
+						for (int i = 0; i < count; i++)
+						{
+							MakeMemType(address, s, null);
+							address += inc;
+						}
+						break;
+				}
+
+				//next command byte is always on an even boundary
+				if ((address & 1) != 0)
+				{
+					MakeMemType(address, MemType.Byte, null);
+					analysis.AddComment(address, "pad");
+					address++;
 				}
 			}
-
-			MakeMemType(address, MemType.Word, null);
-			address += 2;
-			analysis.AddHeader(address, "");
+			MakeMemType(address, MemType.Byte, null);
+			analysis.AddComment(address, "end");
 		}
 
 		private readonly string[] fixedLVOs = { "LibOpen", "LibClose", "LibExpunge", "LibReserved", "DevBeginIO", "DevAbortIO" };
