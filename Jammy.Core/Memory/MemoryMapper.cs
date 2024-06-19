@@ -115,6 +115,13 @@ namespace Jammy.Core.Memory
 			return memoryManager.DebugMappedDevice[address].Read(0, address, Size.Long);
 		}
 
+		public uint UnsafeRead(uint address, Size size)
+		{
+			if (size == Size.Byte) return UnsafeRead8(address);
+			if (size == Size.Word) return UnsafeRead16(address);
+			return UnsafeRead32(address);
+		}
+
 		public void UnsafeWrite32(uint address, uint value)
 		{
 			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Long);

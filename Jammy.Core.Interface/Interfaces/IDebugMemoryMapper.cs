@@ -13,6 +13,7 @@ namespace Jammy.Core.Interface.Interfaces
 		byte UnsafeRead8(uint address);
 		ushort UnsafeRead16(uint address);
 		uint UnsafeRead32(uint address);
+		uint UnsafeRead(uint address, Size size);
 		void UnsafeWrite32(uint address, uint value);
 		void UnsafeWrite16(uint address, ushort value);
 		void UnsafeWrite8(uint address, byte value);

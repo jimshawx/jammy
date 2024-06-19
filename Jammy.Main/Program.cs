@@ -123,7 +123,7 @@ namespace Jammy.Main
 				.AddSingleton<ILVOInterceptorAction, OpenLibraryLogger>()
 				//.AddSingleton<ILVOInterceptorAction, OldOpenLibraryLogger>()
 				//.AddSingleton<ILVOInterceptorAction, OpenResourceLogger>()
-				//.AddSingleton<ILVOInterceptorAction, MakeLibraryLogger>()
+				.AddSingleton<ILVOInterceptorAction, MakeLibraryLogger>()
 				.AddSingleton<ILVOInterceptorAction, OpenDeviceLogger>()
 				.AddSingleton<IOpenFileTracker, OpenFileTracker>()
 				.AddSingleton<ILibraryBases, LibraryBases>()

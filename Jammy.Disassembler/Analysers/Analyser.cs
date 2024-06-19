@@ -408,8 +408,138 @@ namespace Jammy.Disassembler.Analysers
 			}
 		}
 
+		private class Member
+		{
+			public uint Offset { get;set;}
+			public uint Value { get;set;}
+			public Size Size { get;set;}
+			public uint End { get
+								{
+									if (Size == Size.Byte) return Offset + 1;
+									if (Size == Size.Byte) return Offset + 2; 
+									return Offset+4;
+								}
+							}
+
+			public Member(uint offset, uint value, Size size)
+			{
+				Offset = offset;
+				Value = value;
+				Size = size;
+			}
+		}
+
+		private List<Member> Pad(List<Member> r, uint header)
+		{
+			if (!r.Any()) return r;
+
+			r = r.OrderBy(m => m.Offset).ToList();
+			
+			//if the structure doesn't start at 0, add a byte and the padding below will fill in any more gaps
+			if (r[0].Offset != 0)
+				r.Add(new Member(0, 0, Size.Byte));
+
+			var pads = new List<Member>();
+
+			var last = r.First();
+			foreach (var v in r.Skip(1))
+			{
+				for (uint i = last.End; i < v.Offset; i++)
+					pads.Add(new Member(i, 0, Size.Byte));
+
+				last = v;
+			}
+
+			return r.Concat(pads).ToList();
+		}
+
+		private void CommentStructureInit(uint address)
+		{
+			uint header = address;
+			byte c;
+			var r = new List<Member>();
+			uint offset = 0;
+
+			while ((c = mem.UnsafeRead8(address++)) != 0x00)
+			{
+				int dest = (c>>6)&3;
+				int size = (c>>4)&3;
+				int count = c & 15;
+
+				uint value=0;
+				Size s=Size.Byte;
+				uint inc=0;
+
+				switch (size)
+				{
+					case 0: s = Size.Long; inc = 4; break;
+					case 1: s = Size.Word; inc = 2; break;
+					case 2: s = Size.Byte; inc = 1; break;
+					case 3: analysis.AddHeader(header, "error!"); return;
+				}
+
+				switch (dest)
+				{
+					case 0: //count is how many 'value' to copy
+						for (int i = 0; i < count; i++)
+						{
+							r.Add(new Member(offset, mem.UnsafeRead(address, s), s));
+							offset += inc;
+							address += inc;
+						}
+						break;
+
+					case 1: //count is how many times to copy 'value'
+						value = mem.UnsafeRead(address, s);
+						address += inc;
+						for (int i = 0; i < count; i++)
+						{
+							r.Add(new Member(offset, value, s));
+							offset += inc;
+						}
+						break;
+
+					case 2: //destination offset is next byte
+						offset = mem.UnsafeRead8(address);
+						address += 1;
+
+						value = mem.UnsafeRead(address, s);
+						r.Add(new Member(offset, value, s));
+						address += inc;
+
+						break;
+
+					case 3: //destination offset is next 24bits
+						offset = mem.UnsafeRead32(address)>>8;
+						address += 3;
+
+						value = mem.UnsafeRead(address, s);
+						r.Add(new Member(offset, value, s));
+						address += inc;
+
+						break;
+				}
+
+				//next command byte is always on an even boundary
+				if ((address &1 )!=0) address++;
+			}
+
+			analysis.AddHeader(header, ""); 
+			analysis.AddHeader(header, $"        ;init struct *** @{header:X8}");
+			r = Pad(r, header);//pad the uninitialised areas with 0
+			foreach (var v in r.OrderBy(x => x.Offset))
+			{
+				if (v.Size == Size.Byte) analysis.AddHeader(header, $"        ;${v.Offset,-4:x} {v.Value:x2}");
+				if (v.Size == Size.Word) analysis.AddHeader(header, $"        ;${v.Offset,-4:x} {v.Value:x4}");
+				if (v.Size == Size.Long) analysis.AddHeader(header, $"        ;${v.Offset,-4:x} {v.Value:x8}");
+			}
+			analysis.AddHeader(header, "");
+		}
+
 		public void ExtractStructureInit(uint address)
 		{
+			CommentStructureInit(address);
+
 			ushort s;
 			while ((s = mem.UnsafeRead16(address)) != 0x0000)
 			{

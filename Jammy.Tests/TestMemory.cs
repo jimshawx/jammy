@@ -74,6 +74,12 @@ namespace Jammy.Tests
 		public byte UnsafeRead8(uint address) { return (byte)base.Read(0, address, Size.Byte); }
 		public ushort UnsafeRead16(uint address) { return (ushort)base.Read(0, address, Size.Word); }
 		public uint UnsafeRead32(uint address) { return base.Read(0, address, Size.Long); }
+		public uint UnsafeRead(uint address, Size size)
+		{
+			if (size == Size.Byte) return UnsafeRead8(address);
+			if (size == Size.Word) return UnsafeRead16(address);
+			return UnsafeRead32(address);
+		}
 
 		public void UnsafeWrite8(uint address, byte value) { base.Write(0, address, value, Size.Byte); }
 		public void UnsafeWrite16(uint address, ushort value) { base.Write(0, address, value, Size.Word); }

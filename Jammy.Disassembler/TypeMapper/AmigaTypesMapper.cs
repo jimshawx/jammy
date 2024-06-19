@@ -75,6 +75,13 @@ namespace Jammy.Disassembler.TypeMapper
 		{
 			return (uint)((memory[address]<<24)+(memory[address + 1] << 16) + (memory[address + 2] << 8) + memory[address + 3]);
 		}
+		
+		public uint UnsafeRead(uint address, Size size)
+		{
+			if (size == Size.Byte) return UnsafeRead8(address);
+			if (size == Size.Word) return UnsafeRead16(address);
+			return UnsafeRead32(address);
+		}
 
 		public void UnsafeWrite32(uint address, uint value)
 		{
