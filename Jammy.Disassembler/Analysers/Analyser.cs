@@ -245,7 +245,9 @@ namespace Jammy.Disassembler.Analysers
 					analysis.AddHeader(address, "");
 					analysis.AddHeader(address, $"\t; {tag.Name} init struct");
 					analysis.AddComment(address, "size");
-					MakeMemType(address, MemType.Long, null); address += 4;
+					MakeMemType(address, MemType.Long, null);
+					uint size = mem.UnsafeRead32(address);
+					address += 4;
 					uint fntable = mem.UnsafeRead32(address);
 					analysis.AddComment(address, "vectors");
 					MakeMemType(address, MemType.Long, null); address += 4;
@@ -258,7 +260,7 @@ namespace Jammy.Disassembler.Analysers
 					analysis.AddHeader(address, "");
 
 					if (structure != 0)
-						ExtractStructureInit(structure);
+						ExtractStructureInit(structure, size, tag.Name);
 
 					if (fntable != 0)
 						ExtractFunctionTable(fntable, tag.Type, tag.Name);
@@ -428,7 +430,7 @@ namespace Jammy.Disassembler.Analysers
 			}
 		}
 
-		private List<Member> Pad(List<Member> r, uint header)
+		private List<Member> Pad(List<Member> r, uint header, uint structSize)
 		{
 			if (!r.Any()) return r;
 
@@ -437,6 +439,10 @@ namespace Jammy.Disassembler.Analysers
 			//if the structure doesn't start at 0, add a byte and the padding below will fill in any more gaps
 			if (r[0].Offset != 0)
 				r.Insert(0, new Member(0, 0, Size.Byte));
+
+			//pad the structure to the end of the allocated size
+			if (r.Last().End != structSize-1)
+				r.Add(new Member(structSize-1,0,Size.Byte));
 
 			var pads = new List<Member>();
 
@@ -452,7 +458,7 @@ namespace Jammy.Disassembler.Analysers
 			return r.Concat(pads).ToList();
 		}
 
-		private void CommentStructureInit(uint address)
+		private void CommentStructureInit(uint address, uint structSize, string libName)
 		{
 			uint header = address;
 			byte c;
@@ -529,8 +535,8 @@ namespace Jammy.Disassembler.Analysers
 			}
 
 			analysis.AddHeader(header, ""); 
-			analysis.AddHeader(header, $"        ;init struct *** @{header:X8}");
-			r = Pad(r, header);//pad the uninitialised areas with 0
+			analysis.AddHeader(header, $"        ;init struct {libName} @{header:X8}");
+			r = Pad(r, header, structSize);//pad the uninitialised areas with 0
 			foreach (var v in r.OrderBy(x => x.Offset))
 			{
 				if (v.Size == Size.Byte) analysis.AddHeader(header, $"        ;${v.Offset,-4:x} {v.Value:x2}");
@@ -542,9 +548,9 @@ namespace Jammy.Disassembler.Analysers
 		private readonly string[] sizes = { "L","W","B",""};
 		private readonly string[] codes = { "Copy","Repeat","Offset Copy","APTR Offset Copy" };
 
-		public void ExtractStructureInit(uint address)
+		public void ExtractStructureInit(uint address, uint structSize, string libName)
 		{
-			CommentStructureInit(address);
+			CommentStructureInit(address, structSize, libName);
 
 			uint header = address;
 			byte c;

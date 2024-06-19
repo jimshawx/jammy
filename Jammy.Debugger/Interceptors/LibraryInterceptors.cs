@@ -125,7 +125,7 @@ namespace Jammy.Debugger.Interceptors
 			{
 				librariesMade.Add(regs.A[0]);
 				if (regs.A[0] != 0) analyser.ExtractFunctionTable(regs.A[0], NT_Type.NT_LIBRARY, $"unknown_{regs.A[0]:X8}");
-				if (regs.A[1] != 0) analyser.ExtractStructureInit(regs.A[1]);
+				if (regs.A[1] != 0) analyser.ExtractStructureInit(regs.A[1], regs.D[0], "unknown");
 				if (regs.A[2] != 0) analyser.ExtractFunction(regs.A[2], "init");
 			}
 			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
