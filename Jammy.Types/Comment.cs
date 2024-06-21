@@ -50,6 +50,7 @@ namespace Jammy.Types
 	{
 		Library,
 		Resource,
+		Device,
 		Empty
 	}
 
@@ -67,6 +68,15 @@ namespace Jammy.Types
 				LVOs.Add(new LVO("_LVOLibClose", -12));
 				LVOs.Add(new LVO("_LVOLibExpunge", -18));
 				LVOs.Add(new LVO("_LVOLibReserved", -24));
+			}
+			else if (type == LVOType.Device)
+			{
+				LVOs.Add(new LVO("_LVODevOpen", -6));
+				LVOs.Add(new LVO("_LVODevClose", -12));
+				LVOs.Add(new LVO("_LVODevExpunge", -18));
+				LVOs.Add(new LVO("_LVODevReserved", -24));
+				LVOs.Add(new LVO("_LVODevBeginIO", -30));
+				LVOs.Add(new LVO("_LVODevAbortIO", -36));
 			}
 		}
 	}

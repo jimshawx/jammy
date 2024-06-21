@@ -98,5 +98,7 @@ namespace Jammy.Core.Types
 		public SerialConsole Console { get; set; }
 		public DiskController DiskController { get; set; }
 		public VideoFormat VideoFormat { get; set; }
+
+		public string LVODirectory { get { return "c:/source/programming/amiga";} set { } }
 	}
 }

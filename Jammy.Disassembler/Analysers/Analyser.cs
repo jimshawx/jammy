@@ -87,10 +87,18 @@ namespace Jammy.Disassembler.Analysers
 				analysis.AddHeader(label.Address, $"{label.Name}:");
 		}
 
+		private LVOType GetLVOType(string currentLib)
+		{
+			if (currentLib.EndsWith(".library")) return LVOType.Library;
+			if (currentLib.EndsWith(".resource")) return LVOType.Resource;
+			if (currentLib.EndsWith(".device")) return LVOType.Device;
+			return LVOType.Empty;
+		}
+
 		private void LoadLVOs()
 		{
 			string filename = "LVOs.i.txt";
-			using (var f = File.OpenText(Path.Combine("c:/source/programming/amiga/", filename)))
+			using (var f = File.OpenText(Path.Combine(settings.LVODirectory, filename)))
 			{
 				if (f == null)
 				{
@@ -113,14 +121,15 @@ namespace Jammy.Disassembler.Analysers
 							continue;
 
 						currentLib = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)[3];
-						analysis.SetLVO(currentLib, new LVOCollection(currentLib.EndsWith(".library")? LVOType.Library : LVOType.Resource));
+						var lvoType = GetLVOType(currentLib);
+						analysis.SetLVO(currentLib, new LVOCollection(lvoType));
 					}
 					else
 					{
 						var bits = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
 						analysis.AddLVO(currentLib, new LVO
 						{
-							Name = bits[0].Substring(4),
+							Name = bits[0].Substring(4),//strip off _LVO
 							Offset = int.Parse(bits[2])
 						});
 					}
@@ -627,19 +636,8 @@ namespace Jammy.Disassembler.Analysers
 			analysis.AddComment(address, "end");
 		}
 
-		private readonly string[] fixedLVOs = { "LibOpen", "LibClose", "LibExpunge", "LibReserved", "DevBeginIO", "DevAbortIO" };
-
-		private string LVO(NT_Type type, string name, int idx)
+			private string LVO(NT_Type type, string name, int idx)
 		{
-			if (type == NT_Type.NT_LIBRARY)
-			{
-				if (idx < 4) return $"{fixedLVOs[idx]}() {name}";
-			}
-			else if (type == NT_Type.NT_DEVICE)
-			{
-				if (idx < 6) return $"{fixedLVOs[idx]}() {name}";
-			}
-
 			var lvos = analysis.GetLVOs();
 			if (lvos.TryGetValue(name, out var lvolist))
 			{
@@ -677,6 +675,7 @@ namespace Jammy.Disassembler.Analysers
 			i = kickstartROM.MappedRange().First().Start;
 			foreach (uint s in mem.AsULong((int)kickstartROM.MappedRange().First().Start))
 			{
+				//rts 0000
 				if (s == 0x4e750000)
 					MakeMemType(i + 2, MemType.Word, null);
 				i += 4;
@@ -734,6 +733,10 @@ namespace Jammy.Disassembler.Analysers
 				if (s == 0x4e73)
 					analysis.AddHeader(i + 2, "");
 
+				//rtd $xxxx
+				if (s == 0x4e74)
+					analysis.AddHeader(i + 4, "");
+
 				//movem.l r,-(a7)
 				if (s == 0b01001_0_001_1_100_111)
 					analysis.AddHeader(i, "");
@@ -780,10 +783,9 @@ namespace Jammy.Disassembler.Analysers
 			}
 		}
 
-
 		private void LoadComments()
 		{
-			var dirs = Directory.GetDirectories("c:/source/programming/amiga");
+			var dirs = Directory.GetDirectories(settings.LVODirectory);
 
 			var fullPath = dirs.SingleOrDefault(x => x.Contains(settings.KickStartDisassembly));
 			if (Directory.Exists(fullPath))

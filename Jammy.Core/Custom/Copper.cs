@@ -1445,8 +1445,9 @@ namespace Jammy.Core.Custom
 			switch (address)
 			{
 				case ChipRegs.VPOSR:
-					value = (ushort)((copperVert >> 8) & 1);
-					value |= (ushort)((copperVert & 1) << 7);//toggle LOL each alternate line (todo: should be NTSC only)
+					value = (ushort)((copperVert >> 8) & 1);//todo: different on hires chips
+					if (settings.VideoFormat  == VideoFormat.NTSC)
+						value |= (ushort)((copperVert & 1) << 7);//toggle LOL each alternate line (NTSC only)
 
 					//if we're in interlace mode
 					if ((bplcon0 & (1<<2))!=0)
