@@ -230,6 +230,9 @@ namespace Jammy.Core.CPU.Musashi
 		}
 		private uint Musashi_read16(uint address)
 		{
+			//word read at instruction address is instruction fetch
+			if (address == instructionStartPC)
+				return memoryMapper.Fetch(instructionStartPC, address, Size.Word);
 			return memoryMapper.Read(instructionStartPC, address, Size.Word);
 		}
 		private uint Musashi_read8(uint address)
