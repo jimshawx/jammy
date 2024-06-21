@@ -84,12 +84,12 @@ namespace Jammy.Core.Custom
 		{
 			uint originalAddress = address;
 			address |= 0xdf0000;
-			address &= 0xdfffff;
+			address &= 0xdffffe;
 
 			if (size == Size.Byte)
 			{
-				uint r0 = Read(insaddr, address&~1u, Size.Word);
-				if ((address & 1)!=0) return (byte) r0;
+				uint r0 = Read(insaddr, address, Size.Word);
+				if ((originalAddress & 1)!=0) return (byte) r0;
 				return r0 >> 8;
 			}
 
@@ -103,7 +103,11 @@ namespace Jammy.Core.Custom
 
 			int reg = REG(address);
 
-			if (address == 0xdf9000 || address == 0xdfa000) {return 0; }
+			if (address == 0xdf9000 || address == 0xdfa000)
+			{
+				logger.LogTrace($"R Out Of Range {address:X8} {originalAddress:X8}");
+				return 0;
+			}
 
 			if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.DDFSTOP) ||
 				(address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31)||
@@ -160,13 +164,13 @@ namespace Jammy.Core.Custom
 		{
 			uint originalAddress = address;
 			address |= 0xdf0000;
-			address &= 0xdfffff;
+			address &= 0xdffffe;
 
 			if (size == Size.Byte)
 			{
 				value &= 0xff;
 				value |= value<<8;
-				Write(insaddr, address & ~1u, value, Size.Word);
+				Write(insaddr, address, value, Size.Word);
 				return;
 
 				/*
@@ -179,16 +183,14 @@ namespace Jammy.Core.Custom
 	- if even address: xx00 is written.
 				*/
 
-				//logger.LogTrace($"Custom write to byte {address:X8}");
-				if ((address & 1) != 0)
-					Write(insaddr, address & ~1u, value, Size.Word);
+				//logger.LogTrace($"Custom write to byte {originalAddress:X8}");
+				if ((originalAddress & 1) != 0)
+					Write(insaddr, address, value, Size.Word);
 				else
 					Write(insaddr, address, value << 8, Size.Word);
 				return;
 			}
 
-			if ((address & 1) != 0)
-				throw new InstructionAlignmentException(insaddr, address, 0);
 
 			if (size == Size.Long)
 			{
