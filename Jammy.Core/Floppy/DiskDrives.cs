@@ -104,11 +104,6 @@ namespace Jammy.Core.Floppy
 			Track0NotReached = 8,
 			Track0Reached = 7,
 			DiskReady = 6,
-			//DiskChange = 5,
-			//DiskNotChanged = 4,
-			//DiskNotStep = 3,
-			//DiskStep = 2,
-			//DiskStepDone = 1,
 
 			Idle = 0
 		}
@@ -133,6 +128,12 @@ namespace Jammy.Core.Floppy
 					}
 				}
 
+				if ((prb & drive[i].DSKSEL)==0)
+				{
+					if (drive[i].diskinserted) pra |= (uint)PRA.DSKCHANGE;
+					else pra &= ~(uint)PRA.DSKCHANGE;
+				}
+
 				if (drive[i].state != DriveState.Idle)
 				{
 					drive[i].stateCounter--;
@@ -141,39 +142,17 @@ namespace Jammy.Core.Floppy
 						switch (drive[i].state)
 						{
 							case DriveState.Track0NotReached:
-								drive[i].pra |= (uint)PRA.DSKTRACK0;
-								//prb |= (uint)PRB.DSKSTEP;
+								pra |= (uint)PRA.DSKTRACK0;
 								drive[i].state = DriveState.Idle;
 								break;
 							case DriveState.Track0Reached:
-								drive[i].pra &= ~(uint) PRA.DSKTRACK0;
-								//prb |= (uint)PRB.DSKSTEP;
+								pra &= ~(uint)PRA.DSKTRACK0;
 								drive[i].state = DriveState.Idle;
 								break;
 							case DriveState.DiskReady:
-								drive[i].pra &= ~(uint) PRA.DSKRDY;
+								pra &= ~(uint)PRA.DSKRDY;
 								drive[i].state = DriveState.Idle;
 								break;
-							//case DriveState.DiskChange:
-							//	drive[i].pra &= ~(uint) PRA.DSKCHANGE;
-							//	drive[i].state = DriveState.Idle;
-							//	break;
-							//case DriveState.DiskNotChanged:
-							//	drive[i].pra |= (uint) PRA.DSKCHANGE;
-							//	drive[i].state = DriveState.DiskNotStep;
-							//	break;
-							//case DriveState.DiskNotStep:
-							//	drive[i].prb |= (uint) PRB.DSKSTEP;
-							//	drive[i].state = DriveState.DiskStep;
-							//	break;
-							//case DriveState.DiskStep:
-							//	drive[i].prb &= ~(uint) PRB.DSKSTEP;
-							//	drive[i].state = DriveState.DiskStepDone;
-							//	break;
-							//case DriveState.DiskStepDone:
-							//	drive[i].prb |= (uint)PRB.DSKSTEP;
-							//	drive[i].state = DriveState.Idle;
-							//	break;
 						}
 
 						drive[i].stateCounter = stateCycles;
@@ -296,6 +275,12 @@ namespace Jammy.Core.Floppy
 					}
 
 					int df = SelectedDrive();
+					if (drive[df].disk == null || !drive[df].attached)
+					{
+						logger.LogTrace($"Drive DF{df} Out of range! {(drive[df].disk == null?"no disk":"")} {(drive[df].attached?"":"not attached")}");
+						interrupt.AssertInterrupt(Interrupt.DSKBLK);
+						return;
+					}
 
 					//dsklen is number of MFM encoded words (usually a track, 7358 = 668 x 11words, 1336 x 11 bytes)
 					//if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814 && (dsklen & 0x3fff) != 6784)
@@ -347,78 +332,50 @@ namespace Jammy.Core.Floppy
 		
 		public void WritePRA(uint insaddr, byte value)
 		{
-			uint oldvalue = pra;
-
-			value &= (byte)PRA.MASK;
-
-			//logger.LogTrace($"W PRA {value:X2}");
-
-			drive[SelectedDrive()].pra = value;
-			pra = value;
-			
-			//logger.LogTrace($"W PRA {Convert.ToString(pra&0x3c,2).PadLeft(8,'0')} @{insaddr:X6}");
-			//if ((pra & (uint)PRA.DSKCHANGE) == 0) Logger.Write("DSKCHANGE ");
-			//if ((pra & (uint)PRA.DSKPROT) == 0) Logger.Write("DSKPROT ");
-			//if ((pra & (uint)PRA.DSKTRACK0) == 0) Logger.Write("DSKTRACK0 ");
-			//if ((pra & (uint)PRA.DSKRDY) == 0) Logger.Write("DSKRDY ");
-			//if ((pra&0x3c) != 0x3c) logger.LogTrace("");
-
-			//2 DSKCHANGE, low disk removed, high inserted and stepped
-			//3 DSKPROT, active low
-			//4 DSKTRACK0, low when track 0
-			//5 DSKRDY low when disk is ready
-
-			uint changes = pra ^ oldvalue;
+			//logger.LogTrace("PRA --R0PC--");
+			//logger.LogTrace($"    {(pra&(uint)PRA.MASK).ToBin(8)}");
+			pra = value&(uint)PRA.MASK;
 		}
 
 		public void WritePRB(uint insaddr, byte value)
 		{
 			uint oldvalue = prb;
-
 			prb = value;
 
-			//logger.LogTrace($"W PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
-			//if ((prb & (uint)PRB.DSKSTEP) == 0) Logger.Write("DSKSTEP ");
-			//if ((prb & (uint)PRB.DSKDIREC) == 0) Logger.Write("DSKDIREC ");
-			//if ((prb & (uint)PRB.DSKSIDE) == 0) Logger.Write("DSKSIDE ");
-			//if ((prb & (uint)PRB.DSKSEL0) == 0) logger.LogTrace("DSKSEL0 ");
-			//if ((prb & (uint)PRB.DSKSEL1) == 0) logger.LogTrace("DSKSEL1 ");
-			//if ((prb & (uint)PRB.DSKSEL2) == 0) logger.LogTrace("DSKSEL2 ");
-			//if ((prb & (uint)PRB.DSKSEL3) == 0) logger.LogTrace("DSKSEL3 ");
-			//if ((prb & (uint)PRB.DSKMOTOR) == 0) Logger.Write("DSKMOTOR ");
-			//if (prb != 0xff) logger.LogTrace("");
-
-			//0 DSKSTEP
-			//1 DSKDIREC
-			//2 DSKSIDE
-			//3 DSKSEL0
-			//4 DSKSEL1
-			//5 DSKSEL2
-			//6 DSKSEL3
-			//7 DSKMOTOR
-
-			//logger.LogTrace($"W PRB {Convert.ToString((prb>>3)&0xf,2).PadLeft(4,'0')} {prb:X2}");
+			//logger.LogTrace("PRB M3210SDS");
+			//logger.LogTrace($"    {prb.ToBin(8)}");
 
 			//which bits changed?
 			uint changes = prb ^ oldvalue;
 
 			for (int i = 0; i < drive.Length; i++)
 			{
-				if (!drive[i].attached) continue;
-				
+				if (!drive[i].attached)
+				{
+					if ((prb & drive[i].DSKSEL) == 0)
+						pra |= (uint)PRA.DSKRDY;
+					continue;
+				}
+
 				if ((prb & drive[i].DSKSEL) == 0)
 				{
-					drive[i].prb = value;
+					//disk is ready
+					pra &= ~(uint)PRA.DSKRDY;
 
 					drive[i].side = ((prb & (uint) PRB.DSKSIDE) == 0) ? 1u : 0;
 
-					//drive sel changed, and it's now selected, update motor bit, signal drive ready
-					if ((changes & drive[i].DSKSEL) != 0 && (prb & drive[i].DSKSEL) == 0)
+					//update the motor status
+					bool oldMotor = drive[i].motor;
+					drive[i].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
+					if (!oldMotor && drive[i].motor)
 					{
-						drive[i].motor = (prb & (uint) PRB.DSKMOTOR) == 0;
 						drive[i].state = DriveState.DiskReady;
-						if (drive[i].motor)
-							drive[i].indexCounter = INDEX_INTERRUPT_RATE;
+						drive[i].indexCounter = INDEX_INTERRUPT_RATE;
+						//logger.LogTrace($"Turn motor {(drive[i].motor ? "on" : "off")} DF{i}");
+					}
+					else
+					{
+						//logger.LogTrace($"Turn motor {(drive[i].motor ? "on" : "off")} DF{i}");
 					}
 
 					//step changed, and it's set
@@ -461,44 +418,29 @@ namespace Jammy.Core.Floppy
 
 		public byte ReadPRA(uint insaddr)
 		{
-			//logger.LogTrace($"R PRA {Convert.ToString(pra,2).PadLeft(8,'0')} {Convert.ToString(pra & 0x3c, 2).PadLeft(8, '0')} @{insaddr:X6}");
-			//logger.LogTrace($"R PRA {Convert.ToString((prb >> 3) & 0xf, 2).PadLeft(4, '0')} {drive[SelectedDrive()].pra:X2}");
-
-			return (byte)(drive[SelectedDrive()].pra & (uint)PRA.MASK);
-
-			//return (byte)(pra & (uint)PRA.MASK);
+			return (byte)(pra & (uint)PRA.MASK);
 		}
 
 		public byte ReadPRB(uint insaddr)
 		{
-			//logger.LogTrace($"R PRB {Convert.ToString(prb, 2).PadLeft(8, '0')} @{insaddr:X6}");
-
-			return (byte)drive[SelectedDrive()].prb;
-
-			//return (byte)prb;
+			return (byte)prb;
 		}
 
 		//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)
 		public void InsertDisk(int df)
 		{
-			//drive[df].state = DriveState.DiskNotChanged;
-			//drive[df].stateCounter = 0;
-			//drive[df].diskinserted = true;
-			drive[df].pra |= (uint)PRA.DSKCHANGE;
+			drive[df].diskinserted = true;
 		}
 
 		public void RemoveDisk(int df)
 		{
-			//drive[df].state = DriveState.DiskChange;
-			//drive[df].diskinserted = false;
-			drive[df].pra &= ~(uint)PRA.DSKCHANGE;
+			drive[df].diskinserted = false;
 		}
 
 		public void ChangeDisk(int df, string filename)
 		{
-			//drive[df].state = DriveState.DiskChange;
 			drive[df].disk = new Disk(filename);
-			//drive[df].diskinserted = true;
+			drive[df].diskinserted = true;
 		}
 	}
 }
