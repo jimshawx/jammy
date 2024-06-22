@@ -2,6 +2,7 @@
 using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Jammy.Interface;
@@ -57,13 +58,23 @@ namespace Jammy.Core.Floppy
 
 		private int diskInterruptPending = -1;
 
-		public DiskDrives(IChipRAM memory, IInterrupt interrupt, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
+		private bool verbose = false;
+		private void dbug_Keyup(int obj) { }
+		private void dbug_Keydown(int obj)
+		{
+			if (obj == (int)VK.VK_F3)
+				verbose ^= true;
+		}
+
+		public DiskDrives(IChipRAM memory, IInterrupt interrupt, IEmulationWindow emulationWindow, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
 
 			this.mfmEncoder = new MFM();
+
+			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
 			Disk[] disks = new Disk[4];
@@ -76,10 +87,10 @@ namespace Jammy.Core.Floppy
 			for (int i = 0; i < 4; i++)
 				drive[i] = new Drive();
 
-			drive[0].DSKSEL = (uint)PRB.DSKSEL0;
-			drive[1].DSKSEL = (uint)PRB.DSKSEL1;
-			drive[2].DSKSEL = (uint)PRB.DSKSEL2;
-			drive[3].DSKSEL = (uint)PRB.DSKSEL3;
+			drive[0].DSKSEL = PRB.DSKSEL0;
+			drive[1].DSKSEL = PRB.DSKSEL1;
+			drive[2].DSKSEL = PRB.DSKSEL2;
+			drive[3].DSKSEL = PRB.DSKSEL3;
 
 			for (int i = 0; i < 4; i++)
 			{
@@ -130,8 +141,8 @@ namespace Jammy.Core.Floppy
 
 				if ((prb & drive[i].DSKSEL)==0)
 				{
-					if (drive[i].diskinserted) pra |= (uint)PRA.DSKCHANGE;
-					else pra &= ~(uint)PRA.DSKCHANGE;
+					if (drive[i].diskinserted) pra |= PRA.DSKCHANGE;
+					else pra &= ~PRA.DSKCHANGE;
 				}
 
 				if (drive[i].state != DriveState.Idle)
@@ -142,15 +153,15 @@ namespace Jammy.Core.Floppy
 						switch (drive[i].state)
 						{
 							case DriveState.Track0NotReached:
-								pra |= (uint)PRA.DSKTRACK0;
+								pra |= PRA.DSKTRACK0;
 								drive[i].state = DriveState.Idle;
 								break;
 							case DriveState.Track0Reached:
-								pra &= ~(uint)PRA.DSKTRACK0;
+								pra &= ~PRA.DSKTRACK0;
 								drive[i].state = DriveState.Idle;
 								break;
 							case DriveState.DiskReady:
-								pra &= ~(uint)PRA.DSKRDY;
+								pra &= ~PRA.DSKRDY;
 								drive[i].state = DriveState.Idle;
 								break;
 						}
@@ -318,55 +329,61 @@ namespace Jammy.Core.Floppy
 					break;
 			}
 		}
-		private uint pra;
-		private uint prb;
+		private PRA pra;
+		private PRB prb;
 
 		private int SelectedDrive()
 		{
-			if ((prb & (uint)PRB.DSKSEL0) == 0) return 0;
-			if ((prb & (uint)PRB.DSKSEL1) == 0) return 1;
-			if ((prb & (uint)PRB.DSKSEL2) == 0) return 2;
-			if ((prb & (uint)PRB.DSKSEL3) == 0) return 3;
+			if ((prb & PRB.DSKSEL0) == 0) return 0;
+			if ((prb & PRB.DSKSEL1) == 0) return 1;
+			if ((prb & PRB.DSKSEL2) == 0) return 2;
+			if ((prb & PRB.DSKSEL3) == 0) return 3;
 			return 0;
 		}
 		
 		public void WritePRA(uint insaddr, byte value)
 		{
-			//logger.LogTrace("PRA --R0PC--");
-			//logger.LogTrace($"    {(pra&(uint)PRA.MASK).ToBin(8)}");
-			pra = value&(uint)PRA.MASK;
+			if (verbose)
+			{
+				logger.LogTrace("W PRA --R0PC--");
+				logger.LogTrace($"      {((byte)(pra&PRA.MASK)).ToBin()}");
+			}
+			pra = ((PRA)value)&PRA.MASK;
 		}
 
 		public void WritePRB(uint insaddr, byte value)
 		{
-			uint oldvalue = prb;
-			prb = value;
+			PRB oldvalue = prb;
+			prb = (PRB)value;
 
-			//logger.LogTrace("PRB M3210SDS");
-			//logger.LogTrace($"    {prb.ToBin(8)}");
-
+			if (verbose)
+			{
+				logger.LogTrace("W PRB M3210SDS");
+				logger.LogTrace($"      {((byte)prb).ToBin()}");
+			}
+			
 			//which bits changed?
-			uint changes = prb ^ oldvalue;
+			PRB changes = prb ^ oldvalue;
 
 			for (int i = 0; i < drive.Length; i++)
 			{
 				if (!drive[i].attached)
 				{
 					if ((prb & drive[i].DSKSEL) == 0)
-						pra |= (uint)PRA.DSKRDY;
+						pra |= PRA.DSKRDY;
 					continue;
 				}
 
 				if ((prb & drive[i].DSKSEL) == 0)
 				{
 					//disk is ready
-					pra &= ~(uint)PRA.DSKRDY;
+					pra &= ~PRA.DSKRDY;
 
-					drive[i].side = ((prb & (uint) PRB.DSKSIDE) == 0) ? 1u : 0;
+					drive[i].side = ((prb & PRB.DSKSIDE) == 0) ? 1u : 0;
 
 					//update the motor status
 					bool oldMotor = drive[i].motor;
-					drive[i].motor = (prb & (uint)PRB.DSKMOTOR) == 0;
+					drive[i].motor = (prb & PRB.DSKMOTOR) == 0;
 					if (!oldMotor && drive[i].motor)
 					{
 						drive[i].state = DriveState.DiskReady;
@@ -379,11 +396,11 @@ namespace Jammy.Core.Floppy
 					}
 
 					//step changed, and it's set
-					if ((changes & (uint) PRB.DSKSTEP) != 0 && ((prb & (uint)PRB.DSKSTEP) != 0)) //step bit changed (Lo->Hi == Step)
+					if ((changes & PRB.DSKSTEP) != 0 && ((prb & PRB.DSKSTEP) != 0)) //step bit changed (Lo->Hi == Step)
 					{
 						//logger.LogTrace($"step {i} {drive[i].track}");
 
-						if ((prb & (uint) PRB.DSKDIREC) != 0)
+						if ((prb & PRB.DSKDIREC) != 0)
 						{
 							//step in
 							if (drive[i].track == 0)
@@ -418,11 +435,21 @@ namespace Jammy.Core.Floppy
 
 		public byte ReadPRA(uint insaddr)
 		{
-			return (byte)(pra & (uint)PRA.MASK);
+			if (verbose)
+			{
+				logger.LogTrace("R PRA --R0PC--");
+				logger.LogTrace($"      {((byte)(pra & PRA.MASK)).ToBin()}");
+			}
+			return (byte)(pra & PRA.MASK);
 		}
 
 		public byte ReadPRB(uint insaddr)
 		{
+			if (verbose)
+			{
+				logger.LogTrace("R PRB M3210SDS");
+				logger.LogTrace($"      {((byte)prb).ToBin()}");
+			}
 			return (byte)prb;
 		}
 

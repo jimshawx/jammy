@@ -14,7 +14,7 @@ namespace Jammy.Core.Floppy
 		public int stateCounter;
 		public DiskDrives.DriveState state;
 
-		public uint DSKSEL;
+		public PRB DSKSEL;
 
 		public bool attached;
 		public bool diskinserted;
