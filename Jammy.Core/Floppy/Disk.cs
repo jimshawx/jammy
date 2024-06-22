@@ -2,7 +2,6 @@
 using System.IO.Compression;
 using System.Linq;
 using System.Xml.Serialization;
-using static Jammy.Core.Floppy.RP9Manifest;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
