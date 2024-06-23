@@ -1217,7 +1217,8 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		private ushort [] sprdatpix = new ushort[16];
+		private ushort [] sprdatapix = new ushort[8];
+		private ushort[] sprdatbpix = new ushort[8];
 
 		private void CopperBitplaneConvert(int h)
 		{
@@ -1234,13 +1235,14 @@ namespace Jammy.Core.Custom
 
 					if (h == hstart>>1)
 					{
-						sprdatpix[s * 2] = sprdata[s];
-						sprdatpix[s * 2 + 1] = sprdatb[s];
+						sprdatapix[s] = sprdata[s];
+						sprdatbpix[s] = sprdatb[s];
 						spriteMask[s] = 0x8000;
 					}
 				}
 			}
 
+			int m = (cln.pixelLoop/2) - 1;//2->0,4->1,8->3
 			for (int p = 0; p < cln.pixelLoop; p++)
 			{
 				//decode the colour
@@ -1353,15 +1355,20 @@ namespace Jammy.Core.Custom
 					{
 						uint x = spriteMask[s];
 						bool attached = (sprctl[s] & 0x80) != 0 && (s & 1) != 0;
-						int spix = ((sprdata[s] & x) != 0 ? 1 : 0) + ((sprdatb[s] & x) != 0 ? 2 : 0);
-						if ((p & 1) != 0)
+						int spix = ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
+
+						//in lowres, p=0,1, we want to shift every pixel (0,1) 01 &m==00
+						//in hires, p=0,1,2,3 we want to shift every 2 pixels (1 and 3) &m=0101
+						//in shires, p=0,1,2,3,4,5,6,7 we want to shift every 4 pixels (3 and 7) &m==01230123
+						//todo: in AGA, sprites can have different resolutions
+						if ((p&m) == m)
 							spriteMask[s] >>= 1;
 						if (attached)
 						{
 							s--;
 							spix <<= 2;
-							spix += ((sprdata[s] & x) != 0 ? 1 : 0) + ((sprdatb[s] & x) != 0 ? 2 : 0);
-							if ((p & 1) != 0)
+							spix += ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
+							if ((p & m) == m)
 								spriteMask[s] >>= 1;
 							if (spix != 0)
 								col = truecolour[16 + spix];
