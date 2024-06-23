@@ -108,6 +108,7 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0xFC8502, BreakpointType.Read);
 				//AddBreakpoint(0xFC8503, BreakpointType.Read);
 
+				//AddBreakpoint(0xFC4966);//disk.resource drive detection
 				return;
 			}
 
