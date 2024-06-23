@@ -237,6 +237,8 @@ namespace Jammy.Core.Custom
 		public void Reset()
 		{
 			copperTime = 0;
+			for (int i = 0; i < 8; i++)
+				spriteState[i] = SpriteState.Idle;
 		}
 
 		private const int MAX_COPPER_ENTRIES = 1024;
@@ -495,11 +497,12 @@ namespace Jammy.Core.Custom
 			screen = emulationWindow.GetFramebuffer();
 			cop.Reset(cop1lc);
 			cdbg.Reset();
+			for (int i = 0; i < 8; i++)
+				spriteState[i] = SpriteState.Idle;
 		}
 
 		private void RunCopperVerticalBlankEnd()
 		{
-			RunSprites();
 			DebugLocation();
 			emulationWindow.Blit(screen);
 		}
@@ -742,6 +745,82 @@ namespace Jammy.Core.Custom
 				DebugPalette();
 		}
 
+		private enum SpriteState
+		{
+			Idle=0,
+			Waiting,
+			Fetching,
+		}
+		private enum SpriteBits
+		{
+			Off = 0,
+			Active,
+		}
+
+		private SpriteState [] spriteState = new SpriteState[8];
+		private uint[] spriteMask = new uint[8];
+
+		private void RunSpriteDMA(int slot)
+		{
+			//is sprite DMA enabled
+			ushort dmaconr = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			if ((dmaconr & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.SPREN)) != (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.SPREN))
+				return;
+
+			int s = slot >> 1;
+
+			if (spriteState[s] == SpriteState.Waiting)
+			{
+				int vstart = sprpos[s] >> 8;
+				vstart += (sprctl[s] & 4) << 6; //bit 2 is high bit of vstart
+				if (cop.currentLine == vstart)
+				{
+					spriteState[s] = SpriteState.Fetching;
+				}
+			}
+			else if (spriteState[s] == SpriteState.Fetching)
+			{
+				int vstop = sprctl[s] >> 8;
+				vstop += (sprctl[s] & 2) << 7; //bit 1 is high bit of vstop
+				if (cop.currentLine == vstop)
+					spriteState[s] = SpriteState.Idle;
+			}
+
+			if ((slot & 1) == 0)
+			{
+				if (spriteState[s] == SpriteState.Idle)
+				{
+					sprpos[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
+				}
+				else if (spriteState[s] == SpriteState.Fetching)
+				{
+					sprdata[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
+				}
+			}
+			else
+			{
+				if (spriteState[s] == SpriteState.Idle)
+				{
+					sprctl[s] = (ushort)memory.Read(0, sprpt[s]+2, Size.Word);
+
+					if (sprpos[s]== 0 && sprctl[s] == 0)
+					{	
+						spriteState[s] = SpriteState.Idle;
+					}
+					else
+					{
+						spriteState[s] = SpriteState.Waiting;
+						sprpt[s] += 4;
+					}
+				}
+				else if (spriteState[s] == SpriteState.Fetching)
+				{
+					sprdatb[s] = (ushort)memory.Read(0, sprpt[s]+2, Size.Word);
+					sprpt[s] += 4;
+				}
+			}
+		}
+
 		private void RunCopperLine()
 		{
 			if (cop.currentLine == 50)
@@ -764,6 +843,14 @@ namespace Jammy.Core.Custom
 				//Copper DMA is ON
 				if ((dmacon & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.COPEN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.COPEN))
 					CopperInstruction(h);
+
+				switch (h)
+				{
+					//case int i when i >= 0  && i <=3: continue;//memory refresh
+					//case int i when i >= 4 && i <= 6: continue;//disk DMA
+					//case int i when i >= 7 && i <= 10: continue;//audio DMA
+					case int i when i >= 11 && i <= 26: RunSpriteDMA(i-11); break;//sprite DMA
+				}
 
 				//bitplane fetching (optimisation)
 				if (h < DMA_START || h >= DMA_END)
@@ -1130,11 +1217,29 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		//[MethodImpl(MethodImplOptions.NoOptimization)]
+		private ushort [] sprdatpix = new ushort[16];
+
 		private void CopperBitplaneConvert(int h)
 		{
 			//if (cop.currentLine == 50)
 			//	cop.currentLine = 50;
+
+			//if the sprite horiz position matches, clock the sprite data in
+			for (int s = 0; s < 8; s++)
+			{
+				if (spriteState[s] == SpriteState.Fetching)
+				{
+					int hstart = (sprpos[s] & 0xff) << 1;
+					hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
+
+					if (h == hstart>>1)
+					{
+						sprdatpix[s * 2] = sprdata[s];
+						sprdatpix[s * 2 + 1] = sprdatb[s];
+						spriteMask[s] = 0x8000;
+					}
+				}
+			}
 
 			for (int p = 0; p < cln.pixelLoop; p++)
 			{
@@ -1241,6 +1346,34 @@ namespace Jammy.Core.Custom
 					col = truecolour[pix];
 				}
 
+				//sprites
+				for (int s = 7; s >= 0; s--)
+				{
+					if (spriteMask[s] != 0)
+					{
+						uint x = spriteMask[s];
+						bool attached = (sprctl[s] & 0x80) != 0 && (s & 1) != 0;
+						int spix = ((sprdata[s] & x) != 0 ? 1 : 0) + ((sprdatb[s] & x) != 0 ? 2 : 0);
+						if ((p & 1) != 0)
+							spriteMask[s] >>= 1;
+						if (attached)
+						{
+							s--;
+							spix <<= 2;
+							spix += ((sprdata[s] & x) != 0 ? 1 : 0) + ((sprdatb[s] & x) != 0 ? 2 : 0);
+							if ((p & 1) != 0)
+								spriteMask[s] >>= 1;
+							if (spix != 0)
+								col = truecolour[16 + spix];
+						}
+						else
+						{
+							if (spix != 0)
+								col = truecolour[16 + 4 * (s >> 1) + spix];
+						}
+					}
+				}
+
 				//pixel double
 				//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
 				//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
@@ -1251,107 +1384,6 @@ namespace Jammy.Core.Custom
 				cln.lastcol = col;
 			}
 		}
-
-		private void RunSprites()
-		{
-			int dptr;
-			// sprites
-			ushort dmaconr = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
-			if ((dmaconr & (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.SPREN)) == (ushort)(ChipRegs.DMA.DMAEN | ChipRegs.DMA.SPREN))
-			{
-				for (int s = 7; s >= 0; s--)
-				{
-					int subspr = 0;
-					bool attached = false;
-					for (;;)
-					{
-						sprpos[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
-						sprpt[s] += 2;
-						sprctl[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
-						sprpt[s] += 2;
-
-						if (sprpos[s] == 0 && sprctl[s] == 0)
-							break;
-
-						int hstart = (sprpos[s] & 0xff) << 1;
-						int vstart = sprpos[s] >> 8;
-						int vstop = sprctl[s] >> 8;
-
-						vstart += (sprctl[s] & 4) << 6; //bit 2 is high bit of vstart
-						vstop += (sprctl[s] & 2) << 7; //bit 1 is high bit of vstop
-						hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
-
-						hstart -= DMA_START << 1;
-
-						if (hstart < 0)
-							break;
-
-						attached = (sprctl[s] & 0x80) != 0 && (s & 1) != 0;
-						if (attached)
-						{
-							s--;
-							sprpt[s] += 4;
-							s++;
-						}
-
-						//logger.LogTrace($"SPR{s}_{subspr} a:{(attached?1:0)}");
-						subspr++;
-
-						//x2 because they are low-res pixels on our high-res bitmap
-						//dptr = (hstart * 2) + vstart * SCREEN_WIDTH;
-						dptr = (hstart * 2) + vstart * 2 * SCREEN_WIDTH; //scan double
-						for (int r = vstart; r < vstop; r++)
-						{
-							sprdata[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
-							sprpt[s] += 2;
-							sprdatb[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
-							sprpt[s] += 2;
-
-							if (attached)
-							{
-								s--;
-								sprdata[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
-								sprpt[s] += 2;
-								sprdatb[s] = (ushort)memory.Read(0, sprpt[s], Size.Word);
-								sprpt[s] += 2;
-								s++;
-							}
-
-							for (int x = 0x8000; x > 0; x >>= 1)
-							{
-								if (dptr + SCREEN_WIDTH + 1 >= screen.Length) break;
-								int pix = ((sprdata[s] & x) != 0 ? 1 : 0) + ((sprdatb[s] & x) != 0 ? 2 : 0);
-								if (attached)
-								{
-									s--;
-									pix <<= 2;
-									pix += ((sprdata[s] & x) != 0 ? 1: 0) + ((sprdatb[s] & x) != 0 ? 2 : 0);
-									s++;
-								}
-
-								if (pix != 0)
-								{
-									if (attached)
-										screen[dptr] = screen[dptr + 1] = screen[dptr + SCREEN_WIDTH] = screen[dptr + SCREEN_WIDTH + 1] = (int)truecolour[16 + pix];
-									else
-										screen[dptr] = screen[dptr + 1] = screen[dptr + SCREEN_WIDTH] = screen[dptr + SCREEN_WIDTH + 1] = (int)truecolour[16 + 4 * (s >> 1) + pix];
-								}
-
-								dptr += 2;
-							}
-
-							dptr += (SCREEN_WIDTH - 16) * 2;
-
-							if (dptr >= screen.Length) break;
-						}
-
-						if (dptr >= screen.Length) break;
-					}
-					if (attached) s--;
-				}
-			}
-		}
-
 
 		/*
 					//227 (E3) hclocks @ 3.5MHz,
