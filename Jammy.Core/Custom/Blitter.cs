@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -274,6 +276,11 @@ namespace Jammy.Core.Custom
 			Blit(width, height);
 		}
 
+		StringBuilder fsb = new StringBuilder();
+		private ushort[] bin = new ushort[128];
+		private ushort[] bout = new ushort[128];
+		private int bcount;
+
 		private void Blit(uint width, uint height)
 		{
 			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
@@ -288,11 +295,11 @@ namespace Jammy.Core.Custom
 			{
 				logger.LogTrace($"BLIT! {width}x{height} = {width * 16}bits x {height} = {width * 16 * height} bits = {width * height * 2} bytes");
 
-				logger.LogTrace($"A->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on" : "off")}");
-				logger.LogTrace($"B->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on" : "off")}");
-				logger.LogTrace($"C->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on" : "off")}");
-				logger.LogTrace($"D->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on" : "off")}");
-				logger.LogTrace($"M {Convert.ToString(bltafwm, 2).PadLeft(16, '0')} {Convert.ToString(bltalwm, 2).PadLeft(16, '0')}");
+				logger.LogTrace($"A->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on " : "off")} A {bltadat:X4}");
+				logger.LogTrace($"B->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on " : "off")} B {bltbdat:X4}");
+				logger.LogTrace($"C->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on " : "off")} C {bltcdat:X4}");
+				logger.LogTrace($"D->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on " : "off")} D {bltddat:X4}");
+				logger.LogTrace($"M {bltafwm.ToBin(16)} {bltalwm.ToBin(16)}");
 				logger.LogTrace($"cookie: {bltcon0 & 0xff:X2} {((bltcon1 & 2) != 0 ? "descending" : "ascending")}");
 					//logger.LogTrace("ABC");
 					//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
@@ -333,6 +340,8 @@ namespace Jammy.Core.Custom
 			{
 				uint bltabits = 0;
 				uint bltbbits = 0;
+
+				if (blitterDump) bcount = 0;
 
 				for (uint w = 0; w < width; w++)
 				{
@@ -433,6 +442,20 @@ namespace Jammy.Core.Custom
 				
 				//hack: is this right? clear carry
 				bltcon1 &= ~(1u << 2);
+
+				if (blitterDump)
+				{
+					if (bcount > 0) { 
+					fsb.Clear();
+					for (int i = bcount-1; i >=0; i--)
+						fsb.Append(bin[i].ToBin());
+					logger.LogTrace(fsb.ToString());
+					fsb.Clear();
+					for (int i = bcount - 1; i >= 0; i--)
+						fsb.Append(bout[i].ToBin());
+					logger.LogTrace(fsb.ToString());
+					bcount = 0; }
+				}
 			}
 
 			//write the BZERO bit in DMACON
@@ -462,6 +485,7 @@ namespace Jammy.Core.Custom
 
 			//carry in
 			bool inside = (bltcon1&(1<<2))!=0;
+			uint oldbltcon1=bltcon1;
 			if (mode == 1)
 			{
 				//inclusive fill
@@ -479,6 +503,13 @@ namespace Jammy.Core.Custom
 				//update carry
 				bltcon1 &= ~(1u << 2);
 				if (inside) bltcon1 |= 1 << 2;
+
+				if (blitterDump)
+				{
+					//logger.LogTrace($"I {obltddat.ToBin(16)}:{(oldbltcon1 >> 2) & 1} -> {(bltcon1 >> 2) & 1}:{bltddat.ToBin(16)} ");
+					bin[bcount] = (ushort)obltddat;
+					bout[bcount++] = (ushort)bltddat;
+				}
 			}
 			else if (mode == 2)
 			{
@@ -504,7 +535,14 @@ namespace Jammy.Core.Custom
 				//update carry
 				bltcon1 &= ~(1u << 2);
 				if (inside) bltcon1 |= 1 << 2;
-			}
+
+				if (blitterDump)
+				{
+					//logger.LogTrace($"X {obltddat.ToBin(16)}:{(oldbltcon1 >> 2) & 1} -> {(bltcon1 >> 2) & 1}:{bltddat.ToBin(16)} ");
+					bin[bcount] = (ushort)obltddat;
+					bout[bcount++] = (ushort)bltddat;
+				}
+			} 
 		}
 
 		private void Line(uint insaddr)
@@ -541,7 +579,7 @@ namespace Jammy.Core.Custom
 
 			uint bltbdatror = (bltbdat << ror) | (bltbdat>>(16-ror));
 
-			int dm = (int)Math.Max(dx, dy);
+			int dm = Math.Max(dx, dy);
 			int x1 = dm / 2; 
 			int y1 = dm / 2;
 			
