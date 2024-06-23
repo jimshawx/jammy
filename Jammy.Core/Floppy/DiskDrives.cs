@@ -16,7 +16,7 @@ using Microsoft.Extensions.Options;
 namespace Jammy.Core.Floppy
 {
 	[Flags]
-	public enum PRB
+	public enum PRB : byte
 	{
 		DSKSTEP = 1,
 		DSKDIREC = 2,
@@ -29,7 +29,7 @@ namespace Jammy.Core.Floppy
 	}
 
 	[Flags]
-	public enum PRA
+	public enum PRA : byte
 	{
 		DSKCHANGE = 4,
 		DSKPROT = 8,
