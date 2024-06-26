@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -27,7 +28,8 @@ namespace Jammy.Core.Custom
 		private readonly ILogger logger;
 		private IAudio audio;
 
-		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, ISerial serial, IOptions<EmulationSettings> settings, ILogger<Chips> logger)
+		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, ISerial serial,
+			IOptions<EmulationSettings> settings, IEmulationWindow emulationWindow, ILogger<Chips> logger)
 		{
 			this.interrupt = interrupt;
 			this.diskDrives = diskDrives;
@@ -35,7 +37,23 @@ namespace Jammy.Core.Custom
 			this.serial = serial;
 			this.settings = settings.Value;
 			this.logger = logger;
+
+			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 		}
+
+		private bool blitterDebugging = false;
+		private void dbug_Keydown(int obj)
+		{
+			if (obj == (int)VK.VK_F2)
+			{
+				blitterDebugging ^= true;
+				logger.LogTrace($"Blitter Debugging {(blitterDebugging?"enabled":"disabled")}");
+				blitter.Logging(blitterDebugging);
+				copper.Dumping(blitterDebugging);
+			}
+		}
+
+		private void dbug_Keyup(int obj){}
 
 		public void Init(IBlitter blitter, ICopper copper, IAudio audio)
 		{

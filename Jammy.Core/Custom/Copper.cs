@@ -7,6 +7,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Windows;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -16,64 +17,9 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.Custom
 {
-	public struct FastUInt128
-	{
-		private ulong hi, lo;
-
-		internal void Or(ulong bits, int shift)
-		{
-			hi |= bits >> (64-shift);
-			lo |= bits << shift;
-		}
-
-		internal void Zero()
-		{
-			hi = lo = 0;
-		}
-
-		//internal void Set(UInt128 bits)
-		//{
-		//	lo = (ulong)bits;
-		//	hi = (ulong)(bits >> 64);
-		//}
-
-		internal void SetBit(int bit)
-		{
-			if (bit >= 64)
-			{ 
-				hi = 1UL << (bit - 64);
-				lo = 0;
-			}
-			else
-			{
-				hi = 0;
-				lo = 1UL << bit;
-			}
-		}
-
-		internal void Shl1()
-		{
-			hi <<= 1;
-			if ((long)lo < 0) hi |= 1;
-			lo <<= 1;
-		}
-
-		internal bool AnyBitsSet(ref FastUInt128 other)
-		{
-			return ((hi & other.hi) | (lo & other.lo)) != 0;
-		}
-
-		internal bool IsBitSet(int bit)
-		{
-			if (bit >= 64)
-				return (hi & (1UL << (bit - 64))) != 0;
-			return (lo & (1UL << bit)) != 0;
-		}
-	}
-
 	public class Copper : ICopper
 	{
-		private readonly IMemoryMappedDevice memory;
+		private readonly IChipRAM memory;
 		private readonly IChips custom;
 		private readonly IEmulationWindow emulationWindow;
 		private readonly IInterrupt interrupt;
@@ -174,6 +120,12 @@ namespace Jammy.Core.Custom
 
 				if (obj == (int)VK.VK_F10) cdbg.ws = true;
 			}
+		}
+
+		private bool copperDumping;
+		public void Dumping(bool enabled)
+		{
+			copperDumping = enabled;
 		}
 
 		private ulong copperTime;
@@ -493,7 +445,14 @@ namespace Jammy.Core.Custom
 
 		private void RunCopperVerticalBlankStart()
 		{
-			//logger.LogTrace("VB");
+			//logger.LogTrace("VBL");
+
+			if (copperDumping)
+			{
+				var c = memory.ToBmp(1280);
+				File.WriteAllBytes($"../../../../chip-{DateTime.Now:yyyy-MM-dd-HHmmss}.bmp", c.ToArray());
+			}
+
 			screen = emulationWindow.GetFramebuffer();
 			cop.Reset(cop1lc);
 			cdbg.Reset();

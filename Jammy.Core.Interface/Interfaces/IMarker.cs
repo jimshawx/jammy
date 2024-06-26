@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using System.IO;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -43,6 +44,8 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IBlitter : IReset, ICustomReadWrite
 	{
 		void SetLineMode(int mode);
+		void Logging(bool enabled);
+		void Dumping(bool enabled);
 	}
 	public interface ICIA : IEmulate, IMemoryMappedDevice
 	{
@@ -54,7 +57,10 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface ICIAAOdd : ICIA { }
 	public interface ICIABEven : ICIA { }
 	public interface ICIAMemory : IMemoryMappedDevice { }
-	public interface ICopper : IEmulate, ICustomReadWrite { }
+	public interface ICopper : IEmulate, ICustomReadWrite
+	{
+		void Dumping(bool enabled);
+	}
 	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB
 	{
 		void InsertDisk(int df);
@@ -133,7 +139,12 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IZorro2 : IMemoryMappedDevice { }
 	public interface IZorro3 : IMemoryMappedDevice { }
 
-	public interface IChipRAM : IMemoryMappedDevice, IDebuggableMemory { }
+	public interface IChipRAM : IMemoryMappedDevice, IDebuggableMemory
+	{
+		public MemoryStream ToBmp(int w);
+		public void FromBmp(Stream m);
+	}
+
 	public interface ITrapdoorRAM : IMemoryMappedDevice, IDebuggableMemory { }
 	public interface IUnmappedMemory : IMemoryMappedDevice, IDebuggableMemory { }
 	public interface IZorroRAM : IMemoryMappedDevice, IDebuggableMemory { }

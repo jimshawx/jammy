@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
-using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
@@ -24,7 +23,7 @@ namespace Jammy.Core.Custom
 		private readonly IOptions<EmulationSettings> settings;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IChipRAM memory, IInterrupt interrupt, IEmulationWindow  emulationWindow,
+		public Blitter(IChips custom, IChipRAM memory, IInterrupt interrupt,
 			IOptions<EmulationSettings> settings, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
@@ -32,20 +31,13 @@ namespace Jammy.Core.Custom
 			this.interrupt = interrupt;
 			this.settings = settings;
 			this.logger = logger;
-
-			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
-			//blitterDump = settings.Value.Debugger.IsEnabled();
 		}
 
 		private bool blitterDump = false;
+		private bool blitterLog = false;
 
-		private void dbug_Keyup(int obj) { }
-
-		private void dbug_Keydown(int obj)
-		{
-			if (obj == (int)VK.VK_F2)
-				blitterDump ^= true;
-		}
+		public void Logging(bool enabled) { blitterLog = enabled; }
+		public void Dumping(bool enabled) { blitterDump = enabled; }
 
 		public void Reset()
 		{
@@ -244,6 +236,9 @@ namespace Jammy.Core.Custom
 
 		private void BlitSmall(uint insaddr)
 		{
+			if (blitterLog)
+				WriteBlitterState();
+
 			if ((bltcon1 & 1) != 0)
 			{
 				Line(insaddr);
@@ -261,6 +256,9 @@ namespace Jammy.Core.Custom
 
 		private void BlitBig(uint insaddr)
 		{
+			if (blitterLog)
+				WriteBlitterState();
+
 			if ((bltcon1 & 1) != 0)
 			{
 				Line(insaddr);

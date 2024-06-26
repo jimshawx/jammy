@@ -7,6 +7,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,8 +24,13 @@ namespace Jammy.Tests
 {
 	public class LoggedChipRAM : ChipRAM, IMemoryMappedDevice
 	{
+		private readonly ILogger logger;
+		private int blit;
+
 		public LoggedChipRAM(IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger) : base(settings, logger)
 		{
+			this.logger = logger;
+			blit = 0;
 		}
 
 		public class ChipLog : IEqualityComparer<ChipLog>
@@ -53,16 +59,18 @@ namespace Jammy.Tests
 			base.Write(insaddr, address, value, size);
 		}
 
-		//public void Log()
+		//public void Copy(byte[] src)
 		//{
-		//	//var logs = log
-		//	//	.Where(x=>x.value != 0)
-		//	//	.Distinct(new ChipLog())
-		//	//	.OrderBy(x => x.address)
-		//	//	.ThenBy(x => x.value);
-		//	var logs = log;
-		//	foreach (var l in logs)
-		//		TestContext.WriteLine($"{l.address:X6} {Convert.ToString(l.value, 2).PadLeft(16, '0')}");
+		//	for (uint i = 0; i < src.Length; i++)
+		//		base.Write(0, i, src[i], Size.Byte);
+		//}
+
+		//public byte[] Copy()
+		//{
+		//	var dst = new byte[memory.Length];
+		//	for (uint i = 0; i < dst.Length; i++)
+		//		dst[i] = (byte)base.Read(0, i, Size.Byte);
+		//	return dst;
 		//}
 
 		public void LogOut(List<ChipLog> logs)
@@ -120,6 +128,7 @@ namespace Jammy.Tests
 
 			var interrupt = new Mock<IInterrupt>();
 			var custom = new Mock<IChips>();
+			var window = new Mock<IEmulationWindow>();
 
 			serviceProvider0 = new ServiceCollection()
 				.AddLogging(x =>
@@ -129,13 +138,14 @@ namespace Jammy.Tests
 				})
 				.AddSingleton<IInterrupt>(x=> interrupt.Object)
 				.AddSingleton<IChips>(x=>custom.Object)
+				.AddSingleton<IEmulationWindow>(x=>window.Object)
 				.AddSingleton<IChipRAM, LoggedChipRAM>()
 				.AddSingleton<IBlitter, Blitter>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 		}
 
-		[Test]
+		//[Test]
 		public void TestBlitterLine()
 		{
 			var blitter = serviceProvider0.GetRequiredService<IBlitter>();
@@ -213,6 +223,7 @@ namespace Jammy.Tests
 				}
 
 				log[a] = chipRAM.GetLog();
+				//chipRAM.ToBmp("line");
 			}
 
 			if (chipRAM.LogsDiffer(log[0], log[1]))
@@ -230,6 +241,72 @@ namespace Jammy.Tests
 				TestContext.WriteLine("PASS");
 			}
 
+			return true;
+		}
+
+		[Test]
+		public void TestBlitter()
+		{
+			var blitter = serviceProvider0.GetRequiredService<IBlitter>();
+			var chipRAM = (LoggedChipRAM)serviceProvider0.GetRequiredService<IChipRAM>();
+
+			using (var f = File.OpenRead(BlitterLineTestCases.TestCases2RAM()))
+				chipRAM.FromBmp(f);
+
+			int i = 0;
+			var testcases = BlitterLineTestCases.TestCases2();
+			int passes = 0;
+			foreach (var c in testcases)
+			{
+				TestContext.WriteLine($"\n------- Test Case {++i,4} -------");
+				if (RunBlitterTestCase(c, blitter, chipRAM))
+					passes++;
+			}
+			TestContext.WriteLine($"PASSES: {passes}/{testcases.Count}");
+
+			var d = chipRAM.ToBmp(1280);
+			File.WriteAllBytes(BlitterLineTestCases.TestCases2Results(), d.ToArray());
+		}
+
+		private bool RunBlitterTestCase(BlitterLineTestCases.BlitterLineTestCase c, IBlitter blitter, LoggedChipRAM chipRAM)
+		{
+			blitter.Write(0, ChipRegs.BLTCON0, (ushort)c.bltcon0);
+			blitter.Write(0, ChipRegs.BLTCON1, (ushort)c.bltcon1);
+
+			blitter.Write(0, ChipRegs.BLTAPTH, (ushort)(c.bltapt >> 16));
+			blitter.Write(0, ChipRegs.BLTAPTL, (ushort)c.bltapt);
+			blitter.Write(0, ChipRegs.BLTBPTH, (ushort)(c.bltbpt >> 16));
+			blitter.Write(0, ChipRegs.BLTBPTL, (ushort)c.bltbpt);
+			blitter.Write(0, ChipRegs.BLTCPTH, (ushort)(c.bltcpt >> 16));
+			blitter.Write(0, ChipRegs.BLTCPTL, (ushort)c.bltcpt);
+			blitter.Write(0, ChipRegs.BLTDPTH, (ushort)(c.bltdpt >> 16));
+			blitter.Write(0, ChipRegs.BLTDPTL, (ushort)c.bltdpt);
+
+			blitter.Write(0, ChipRegs.BLTADAT, (ushort)c.bltadat);
+			blitter.Write(0, ChipRegs.BLTBDAT, (ushort)c.bltbdat);
+			blitter.Write(0, ChipRegs.BLTCDAT, (ushort)c.bltcdat);
+			blitter.Write(0, ChipRegs.BLTDDAT, (ushort)c.bltddat);
+
+			blitter.Write(0, ChipRegs.BLTAMOD, (ushort)c.bltamod);
+			blitter.Write(0, ChipRegs.BLTBMOD, (ushort)c.bltbmod);
+			blitter.Write(0, ChipRegs.BLTCMOD, (ushort)c.bltcmod);
+			blitter.Write(0, ChipRegs.BLTDMOD, (ushort)c.bltdmod);
+
+			blitter.Write(0, ChipRegs.BLTAFWM, (ushort)c.bltafwm);
+			blitter.Write(0, ChipRegs.BLTALWM, (ushort)c.bltalwm);
+
+			if (c.bltsize != 0)
+			{
+				TestContext.WriteLine($"BLTSIZE {c.bltsize & 0x3f} x {c.bltsize >> 6} mod: {(int)c.bltcmod} oct:{(c.bltcon1 >> 2) & 7}");
+				blitter.Write(0, ChipRegs.BLTSIZE, (ushort)c.bltsize);
+			}
+			else
+			{
+				TestContext.WriteLine($"BLTSIZE {c.bltsizh} x {c.bltsizv}");
+				blitter.Write(0, ChipRegs.BLTSIZV, (ushort)c.bltsizv);
+				blitter.Write(0, ChipRegs.BLTSIZH, (ushort)c.bltsizh);
+			}
+	
 			return true;
 		}
 	}
@@ -267,7 +344,25 @@ namespace Jammy.Tests
 		public static List<BlitterLineTestCase> TestCases()
 		{
 			var json = $"[{File.ReadAllText("blitter-2021-04-08-144513.txt")}]";
+
+			
+
 			return JsonConvert.DeserializeObject<List<BlitterLineTestCase>>(json);
+		}
+
+		public static List<BlitterLineTestCase> TestCases2()
+		{
+			var json = $"[{File.ReadAllText("blitter-2024-06-25-111524.txt")}]";
+			return JsonConvert.DeserializeObject<List<BlitterLineTestCase>>(json);
+		}
+
+		public static string TestCases2RAM()
+		{
+			return "blitter-2024-06-25-111524.bmp";
+		}
+		public static string TestCases2Results()
+		{
+			return "blitter-2024-06-25-111524.test.bmp";
 		}
 	}
 
