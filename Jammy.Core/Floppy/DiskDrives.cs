@@ -286,9 +286,10 @@ namespace Jammy.Core.Floppy
 					}
 
 					int df = SelectedDrive();
-					if (drive[df].disk == null || !drive[df].attached)
+					if (df == -1 || drive[df].disk == null || !drive[df].attached)
 					{
-						logger.LogTrace($"Drive DF{df} Out of range! {(drive[df].disk == null?"no disk":"")} {(drive[df].attached?"":"not attached")}");
+						if (df != -1)
+							logger.LogTrace($"Drive DF{df} Out of range! {(drive[df].disk == null?"no disk":"")} {(drive[df].attached?"":"not attached")}");
 						interrupt.AssertInterrupt(Interrupt.DSKBLK);
 						return;
 					}
@@ -338,7 +339,7 @@ namespace Jammy.Core.Floppy
 			if ((prb & PRB.DSKSEL1) == 0) return 1;
 			if ((prb & PRB.DSKSEL2) == 0) return 2;
 			if ((prb & PRB.DSKSEL3) == 0) return 3;
-			return 0;
+			return -1;
 		}
 		
 		public void WritePRA(uint insaddr, byte value)
