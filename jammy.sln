@@ -48,7 +48,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.IO.Windows", "Ja
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.EmulationWindow.DXGI", "Jammy.Core.EmulationWindow.DXGI\Jammy.Core.EmulationWindow.DXGI.csproj", "{1423117B-CBB2-4D02-A7E9-9490F87F4E4E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Extensions.Windows", "Jammy.Extensions.Windows\Jammy.Extensions.Windows.csproj", "{E94C8D99-FAE4-4887-876F-C4993295BCDA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Extensions.Windows", "Jammy.Extensions.Windows\Jammy.Extensions.Windows.csproj", "{E94C8D99-FAE4-4887-876F-C4993295BCDA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parky.Logging.OutputDebugString", "Parky.Logging.OutputDebugString\Parky.Logging.OutputDebugString.csproj", "{62775AEA-81B5-40EC-AC89-434E3F116823}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -152,6 +154,10 @@ Global
 		{E94C8D99-FAE4-4887-876F-C4993295BCDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E94C8D99-FAE4-4887-876F-C4993295BCDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E94C8D99-FAE4-4887-876F-C4993295BCDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62775AEA-81B5-40EC-AC89-434E3F116823}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62775AEA-81B5-40EC-AC89-434E3F116823}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62775AEA-81B5-40EC-AC89-434E3F116823}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62775AEA-81B5-40EC-AC89-434E3F116823}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
