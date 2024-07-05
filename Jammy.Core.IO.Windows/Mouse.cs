@@ -58,7 +58,7 @@ namespace Jammy.Core.IO.Windows
 			{
 				joystickTime -= 10000;
 
-				if ((GetAsyncKeyState((int)VK.VK_SPACE)&0x8000)!=0)
+				if (((GetAsyncKeyState((int)VK.VK_SPACE)&0x8000)!=0) || ((GetAsyncKeyState((int)'Z') & 0x8000) != 0))
 					pra &= ~(1u << 7);
 				else
 					pra |= (1u << 7);
