@@ -86,6 +86,7 @@ namespace Jammy.Core.Types
 		public float ChipMemory { get; set; }
 		public float MotherboardMemory { get; set; }
 		public float CPUSlotMemory { get; set; }
+		public uint CPUFrequency { get; set; }
 
 		public Feature Disassemblies { get; set; }
 		public Feature Debugger { get; set; }

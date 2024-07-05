@@ -2,8 +2,10 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SharpDX;
 using SharpDX.Multimedia;
 using SharpDX.XAudio2;
@@ -23,11 +25,20 @@ namespace Jammy.Core.Custom.Audio
 		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
-		public AudioV2(IChipRAM memory, IInterrupt interrupt, ILogger<AudioV2> logger)
+		private ulong audioRate;
+		public AudioV2(IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioV2> logger)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
+
+
+			ulong beamRate = settings.Value.VideoFormat == VideoFormat.NTSC ? 60u : 50u;
+			beamRate = settings.Value.CPUFrequency / beamRate;
+
+			ulong scanlines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
+
+			ulong audioRate = beamRate / scanlines;
 
 			InitMixer();
 		}
@@ -51,9 +62,9 @@ namespace Jammy.Core.Custom.Audio
 		{
 			audioTime += cycles;
 
-			if (audioTime > 139_776 / 312)
+			if (audioTime > audioRate)
 			{
-				audioTime -= 139_776 / 312;
+				audioTime -= audioRate;
 
 				for (int i = 0; i < 4; i++)
 				{

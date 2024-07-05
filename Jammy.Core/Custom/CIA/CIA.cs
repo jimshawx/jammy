@@ -4,6 +4,7 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -62,6 +63,21 @@ namespace Jammy.Core.Custom.CIA
 
 		private bool todStopped;
 		private bool todLatched;
+
+		protected ulong beamRate;
+
+		public CIA(IOptions<EmulationSettings> settings)
+		{
+			//A500 PAL
+			// 50Hz = 1/50th cpu clock = 7.09 MHz/50 = 140k 
+
+			//A1200 NTSC
+			// 60Hz = 1/60th cpu clock = 14.32MHz / 60 = 
+			
+			//etc
+			beamRate = settings.Value.VideoFormat == VideoFormat.NTSC ? 60u : 50u;
+			beamRate = settings.Value.CPUFrequency / beamRate;
+		}
 
 		public virtual void Emulate(ulong cycles)
 		{

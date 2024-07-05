@@ -1,6 +1,8 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -17,11 +19,19 @@ namespace Jammy.Core.Custom.Audio
 		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
-		public Audio(IChipRAM memory, IInterrupt interrupt, ILogger<Audio> logger)
+		private ulong audioRate;
+		public Audio(IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<Audio> logger)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
+
+			ulong beamRate = settings.Value.VideoFormat == VideoFormat.NTSC ? 60u : 50u;
+			beamRate = settings.Value.CPUFrequency / beamRate;
+
+			ulong scanlines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u: 312u;
+
+			ulong audioRate = beamRate / scanlines;
 		}
 
 		private ulong audioTime;
@@ -43,9 +53,9 @@ namespace Jammy.Core.Custom.Audio
 		{
 			audioTime += cycles;
 
-			if (audioTime > 139_776 / 312)
+			if (audioTime > audioRate)
 			{
-				audioTime -= 139_776 / 312;
+				audioTime -= audioRate;
 
 				for (int i = 0; i < 4; i++)
 				{

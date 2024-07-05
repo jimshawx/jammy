@@ -1,7 +1,9 @@
 ﻿using System;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -35,11 +37,13 @@ namespace Jammy.Core.Custom.CIA
 
 		//BFD000 - BFDF00
 
-		public CIABEven(IDiskDrives diskDrives, IInterrupt interrupt, ILogger<CIABEven> logger)
+		private ulong beamLines;
+		public CIABEven(IDiskDrives diskDrives, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<CIABEven> logger) : base(settings)
 		{
 			this.diskDrives = diskDrives;
 			this.interrupt = interrupt;
 			this.logger = logger;
+			beamLines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u:312u;
 		}
 
 		protected override uint interruptLevel => Interrupt.EXTER;
@@ -50,9 +54,9 @@ namespace Jammy.Core.Custom.CIA
 		{
 			beamTime += cycles;
 
-			if (beamTime > 139_776 / 312)
+			if (beamTime > beamRate / beamLines)
 			{
-				beamTime -= 139_776 / 312;
+				beamTime -= beamRate / beamLines;
 
 				IncrementTODTimer();
 			}

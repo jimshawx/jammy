@@ -234,6 +234,27 @@ namespace Jammy.UI.Settings
 			rbPAL.Checked = currentSettings.VideoFormat == VideoFormat.PAL;
 			rbNTSC.Checked = currentSettings.VideoFormat == VideoFormat.NTSC;
 
+			if (currentSettings.Sku == CPUSku.MC68000)
+			{
+				//We're gonna say it's an A500
+				if (currentSettings.VideoFormat == VideoFormat.PAL) currentSettings.CPUFrequency = 7093790;
+				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency= 7159090;
+			}
+			if (currentSettings.Sku == CPUSku.MC68EC020)
+			{
+				//We're gonna say it's an A1200
+				if (currentSettings.VideoFormat == VideoFormat.PAL) currentSettings.CPUFrequency = 14180000;
+				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency= 14320000;
+			}
+			else if (currentSettings.Sku == CPUSku.MC68030)
+			{
+				//We're gonna say it's an A3000/4000 25MHz
+				if (currentSettings.VideoFormat == VideoFormat.PAL) currentSettings.CPUFrequency = 25000000;
+				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency= 25000000;
+			}
+			//todo: until all the code understands this (e.g. CIA timers think they run 1/10th CPU speed)
+			currentSettings.CPUFrequency = 7093790;
+
 			//Memory
 			dudChipRAM.SelectedItem = currentSettings.ChipMemory.ToString("0.0;0.0;0");
 			dudCPUSlot.SelectedItem = currentSettings.CPUSlotMemory.ToString();

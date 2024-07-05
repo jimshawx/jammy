@@ -7,7 +7,6 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
-using Jammy.Extensions.Windows;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -43,6 +42,7 @@ namespace Jammy.Core.Custom
 
 		private int[] screen;
 
+		public uint copperLines;
 		public Copper(IChipRAM memory, IChips custom, IEmulationWindow emulationWindow, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<Copper> logger)
 		{
 			this.memory = memory;
@@ -51,6 +51,8 @@ namespace Jammy.Core.Custom
 			this.interrupt = interrupt;
 			this.settings = settings.Value;
 			this.logger = logger;
+
+			copperLines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
 
 			emulationWindow.SetPicture(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -152,7 +154,7 @@ namespace Jammy.Core.Custom
 				copperVert++;
 
 				//last scanline?
-				if (copperVert >= 312)
+				if (copperVert >= copperLines)
 				{
 					copperVert = 0;
 
@@ -195,12 +197,12 @@ namespace Jammy.Core.Custom
 
 		private const int MAX_COPPER_ENTRIES = 1024;
 
-		public void DebugCopperList(uint copPC)
+		private string DisassembleCopperList(uint copPC)
 		{
-			if (copPC == 0) return;
+			if (copPC == 0) return "";
 
 			var csb = cdbg.GetStringBuilder();
-			csb.AppendLine($"Copper List @{copPC:X8}");
+			csb.AppendLine($"Copper List @{copPC:X6} PC:{cop.copPC:X6}");
 
 			var skipTaken = new HashSet<uint>();
 
@@ -220,7 +222,7 @@ namespace Jammy.Core.Custom
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					csb.AppendLine($"{copPC - 4:X8} MOVE {ins:X4} {data:X4} {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
+					csb.AppendLine($"{copPC - 4:X6} MOVE {ins:X4} {data:X4} {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
 
 					if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
 						copPC = custom.Read(copPC - 4, ChipRegs.COP1LCH, Size.Long);//COP1LC
@@ -241,12 +243,12 @@ namespace Jammy.Core.Custom
 					if ((data & 1) == 0)
 					{
 						//WAIT
-						csb.AppendLine($"{copPC - 4:X8} WAIT {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
+						csb.AppendLine($"{copPC - 4:X6} WAIT {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
 					}
 					else
 					{
 						//SKIP
-						csb.AppendLine($"{copPC - 4:X8} SKIP {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
+						csb.AppendLine($"{copPC - 4:X6} SKIP {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
 						if (skipTaken.Contains(copPC - 4))
 						{
 							copPC += 4;
@@ -263,8 +265,19 @@ namespace Jammy.Core.Custom
 						break;
 				}
 			}
-			logger.LogTrace(csb.ToString());
-			File.WriteAllText($"../../../../copper{DateTime.Now:yyyyMMdd-HHmmss}.txt", csb.ToString());
+			return csb.ToString();
+		}
+
+		public void DebugCopperList(uint copPC)
+		{
+			string csb = DisassembleCopperList(copPC);
+			logger.LogTrace(csb);
+			File.WriteAllText($"../../../../copper{DateTime.Now:yyyyMMdd-HHmmss}.txt", csb);
+		}
+
+		public string GetDisassembly()
+		{
+			return DisassembleCopperList(cop.activeCopperAddress);
 		}
 
 		////HRM 3rd Ed, PP24
@@ -297,6 +310,7 @@ namespace Jammy.Core.Custom
 			public int waitVMask;
 			public CopperStatus status;
 			public uint copPC;
+			public uint activeCopperAddress;
 			public int currentLine;
 			public uint waitMask;
 			public uint waitPos;
@@ -308,7 +322,7 @@ namespace Jammy.Core.Custom
 
 			public void Reset(uint copperPC)
 			{
-				copPC = copperPC;
+				copPC = activeCopperAddress = copperPC;
 
 				dptr = 0;
 				waitH = 0;
@@ -450,7 +464,7 @@ namespace Jammy.Core.Custom
 			if (copperDumping)
 			{
 				var c = memory.ToBmp(1280);
-				File.WriteAllBytes($"../../../../chip-{DateTime.Now:yyyy-MM-dd-HHmmss}.bmp", c.ToArray());
+				File.WriteAllBytes($"../../../../blits/chip-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.bmp", c.ToArray());
 			}
 
 			screen = emulationWindow.GetFramebuffer();
@@ -1032,7 +1046,8 @@ namespace Jammy.Core.Custom
 		{
 			//return coppos >= waitPos;
 			//return ((coppos&0xff00)>=(waitPos&0xff00))&&((coppos&0xff)>=(waitPos&0xff));
-			return (((coppos & 0xff00) == (waitPos & 0xff00)) && ((coppos & 0xff) >= (waitPos & 0xff))) || ((coppos & 0xff00) > (waitPos & 0xff00));
+			return ((coppos & 0xff00) == (waitPos & 0xff00)) && ((coppos & 0xff) >= (waitPos & 0xff));
+			//return (((coppos & 0xff00) == (waitPos & 0xff00)) && ((coppos & 0xff) >= (waitPos & 0xff))) || ((coppos & 0xff00) > (waitPos & 0xff00));
 		}
 
 		private static readonly int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };

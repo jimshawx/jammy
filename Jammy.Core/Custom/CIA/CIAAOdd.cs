@@ -1,7 +1,9 @@
 ﻿using System;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -38,7 +40,7 @@ namespace Jammy.Core.Custom.CIA
 
 		//BFE001 - BFEF01
 
-		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IKickstartROM kickstartROM, IInterrupt interrupt, ILogger<CIAAOdd> logger)
+		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IKickstartROM kickstartROM, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<CIAAOdd> logger) : base(settings)
 		{
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
@@ -56,9 +58,9 @@ namespace Jammy.Core.Custom.CIA
 		{
 			beamTime += cycles;
 
-			if (beamTime > 139_776) // 50Hz = 1/50th cpu clock = 7MHz/50 = 140k 
+			if (beamTime > beamRate) // 50Hz = 1/50th cpu clock = 7MHz/50 = 140k 
 			{
-				beamTime -= 139_776;
+				beamTime -= beamRate;
 
 				IncrementTODTimer();
 			}
