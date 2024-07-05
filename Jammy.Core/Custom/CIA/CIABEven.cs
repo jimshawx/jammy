@@ -17,22 +17,22 @@ namespace Jammy.Core.Custom.CIA
 
 		private readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
-			new Tuple<string,string>("pra", ""),
-			new Tuple<string,string>("prb", ""),
-			new Tuple<string,string>("ddra", "Direction for Port A (BFD000), bit set = output"),
-			new Tuple<string,string>("ddrb", "Direction for Port B (BFD100), bit set = output"),
-			new Tuple<string,string>("talo", "Timer A low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
-			new Tuple<string,string>("tahi", "Timer A high byte"),
-			new Tuple<string,string>("tblo", "Timer B low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
-			new Tuple<string,string>("tbhi", "Timer B high byte"),
-			new Tuple<string,string>("todlo", "Horizontal sync event counter bits 7-0"),
-			new Tuple<string,string>("todmid", "Horizontal sync event counter bits 15-8"),
-			new Tuple<string,string>("todhi", "Horizontal sync event counter bits 23-16"),
-			new Tuple<string,string>("", "Not used"),
-			new Tuple<string,string>("sdr", "Serial data register (not used)"),
-			new Tuple<string,string>("icr", "Interrupt control register"),
-			new Tuple<string,string>("cra", "Control register A"),
-			new Tuple<string,string>("crb", "Control register B")
+			new Tuple<string,string>("pra", "BFD000 /DTR  /RTS  /CD   /CTS  /DSR   SEL   POUT  BUSY"),
+			new Tuple<string,string>("prb", "BFD100 /MTR  /SEL3 /SEL2 /SEL1 /SEL0 /SIDE  DIR  /STEP"),
+			new Tuple<string,string>("ddra", "BFD200 Direction for Port A (BFD000), bit set = output"),
+			new Tuple<string,string>("ddrb", "BFD300 Direction for Port B (BFD100), bit set = output"),
+			new Tuple<string,string>("talo", "BFD400 Timer A low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
+			new Tuple<string,string>("tahi", "BFD500 Timer A high byte"),
+			new Tuple<string,string>("tblo", "BFD600 Timer B low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
+			new Tuple<string,string>("tbhi", "BFD700 Timer B high byte"),
+			new Tuple<string,string>("todlo", "BFD800 Horizontal sync event counter bits 7-0"),
+			new Tuple<string,string>("todmid", "BFD900 Horizontal sync event counter bits 15-8"),
+			new Tuple<string,string>("todhi", "BFDA00 Horizontal sync event counter bits 23-16"),
+			new Tuple<string,string>("", "BFDB00 Not used"),
+			new Tuple<string,string>("sdr", "BFDC00 Serial data register (not used)"),
+			new Tuple<string,string>("icr", "BFDD00 Interrupt control register FLAG SERIAL TODALARM TIMERB TIMERA"),
+			new Tuple<string,string>("cra", "BFDE00 Control register A"),
+			new Tuple<string,string>("crb", "BFDF00 Control register B")
 		};
 
 		//BFD000 - BFDF00

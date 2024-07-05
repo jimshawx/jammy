@@ -20,22 +20,22 @@ namespace Jammy.Core.Custom.CIA
 
 		private readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
-			new Tuple<string,string>("pra", ""),
-			new Tuple<string,string>("prb", "Parallel port data"),
-			new Tuple<string,string>("ddra", "Direction for Port A (BFE001), bit set = output"),
-			new Tuple<string,string>("ddrb", "Direction for Port B (BFE101), bit set = output"),
-			new Tuple<string,string>("talo", "Timer A low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
-			new Tuple<string,string>("tahi", "Timer A high byte"),
-			new Tuple<string,string>("tblo", "Timer B low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
-			new Tuple<string,string>("tbhi", "Timer B high byte"),
-			new Tuple<string,string>("todlo", "Vertical sync event counter bits 7-0 (50/60Hz)"),
-			new Tuple<string,string>("todmid", "Vertical sync event counter bits 15-8"),
-			new Tuple<string,string>("todhi", "Vertical sync event counter bits 23-16"),
-			new Tuple<string,string>("", "Not used"),
-			new Tuple<string,string>("sdr", "Serial data register (used for keyboard)"),
-			new Tuple<string,string>("icr", "Interrupt control register"),
-			new Tuple<string,string>("cra", "Control register A"),
-			new Tuple<string,string>("crb", "Control register B")
+			new Tuple<string,string>("pra", "BFE001 /FIR1 /FIR0  /RDY /TK0  /WPRO /CHNG /LED  OVL"),
+			new Tuple<string,string>("prb", "BFE101 Parallel port data"),
+			new Tuple<string,string>("ddra", "BFE201 Direction for Port A (BFE001), bit set = output"),
+			new Tuple<string,string>("ddrb", "BFE301 Direction for Port B (BFE101), bit set = output"),
+			new Tuple<string,string>("talo", "BFE401 Timer A low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
+			new Tuple<string,string>("tahi", "BFE501 Timer A high byte"),
+			new Tuple<string,string>("tblo", "BFE601 Timer B low byte (0.715909 Mhz NTSC; 0.709379 Mhz PAL)"),
+			new Tuple<string,string>("tbhi", "BFE701 Timer B high byte"),
+			new Tuple<string,string>("todlo", "BFE801 Vertical sync event counter bits 7-0 (50/60Hz)"),
+			new Tuple<string,string>("todmid", "BFE901 Vertical sync event counter bits 15-8"),
+			new Tuple<string,string>("todhi", "BFEA01 Vertical sync event counter bits 23-16"),
+			new Tuple<string,string>("", "BFEB01 Not used"),
+			new Tuple<string,string>("sdr", "BFEC01 Serial data register (used for keyboard)"),
+			new Tuple<string,string>("icr", "BFED01 Interrupt control register FLAG SERIAL TODALARM TIMERB TIMERA"),
+			new Tuple<string,string>("cra", "BFEE01 Control register A"),
+			new Tuple<string,string>("crb", "BFEF01 Control register B")
 		};
 
 		//BFE001 - BFEF01
