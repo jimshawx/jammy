@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -545,6 +546,11 @@ namespace Jammy.Core.Custom
 			if (customRegisterDetails.TryGetValue(address, out Tuple<string, string> item))
 				return item.Item2;
 			return $"Unknown_{address:X6}";
+		}
+
+		public static List<string> GetCribSheet()
+		{
+			return customRegisterDetails.Select(x =>$"{x.Key:X6} {x.Value.Item1,-7} {x.Value.Item2}").ToList();
 		}
 	}
 }

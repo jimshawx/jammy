@@ -85,6 +85,8 @@ namespace Jammy.Main
 			radioDF3 = new System.Windows.Forms.RadioButton();
 			btnGfxScan = new System.Windows.Forms.Button();
 			btnClearBBUSY = new System.Windows.Forms.Button();
+			btnCribSheet = new System.Windows.Forms.Button();
+			cribSheetMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -103,7 +105,7 @@ namespace Jammy.Main
 			lbRegisters.IntegralHeight = false;
 			lbRegisters.ItemHeight = 26;
 			lbRegisters.Location = new System.Drawing.Point(1928, 26);
-			lbRegisters.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			lbRegisters.Margin = new System.Windows.Forms.Padding(6);
 			lbRegisters.MultiColumn = true;
 			lbRegisters.Name = "lbRegisters";
 			lbRegisters.SelectionMode = System.Windows.Forms.SelectionMode.None;
@@ -119,7 +121,7 @@ namespace Jammy.Main
 			txtDisassembly.Font = new System.Drawing.Font("Consolas", 8.25F);
 			txtDisassembly.HideSelection = false;
 			txtDisassembly.Location = new System.Drawing.Point(6, 6);
-			txtDisassembly.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			txtDisassembly.Margin = new System.Windows.Forms.Padding(6);
 			txtDisassembly.Name = "txtDisassembly";
 			txtDisassembly.ReadOnly = true;
 			txtDisassembly.Size = new System.Drawing.Size(1328, 511);
@@ -157,7 +159,7 @@ namespace Jammy.Main
 			// 
 			btnStep.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnStep.Location = new System.Drawing.Point(1928, 382);
-			btnStep.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnStep.Margin = new System.Windows.Forms.Padding(6);
 			btnStep.Name = "btnStep";
 			btnStep.Size = new System.Drawing.Size(132, 49);
 			btnStep.TabIndex = 2;
@@ -169,7 +171,7 @@ namespace Jammy.Main
 			// 
 			btnStop.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnStop.Location = new System.Drawing.Point(1928, 444);
-			btnStop.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnStop.Margin = new System.Windows.Forms.Padding(6);
 			btnStop.Name = "btnStop";
 			btnStop.Size = new System.Drawing.Size(132, 49);
 			btnStop.TabIndex = 3;
@@ -181,7 +183,7 @@ namespace Jammy.Main
 			// 
 			btnGo.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnGo.Location = new System.Drawing.Point(1928, 508);
-			btnGo.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnGo.Margin = new System.Windows.Forms.Padding(6);
 			btnGo.Name = "btnGo";
 			btnGo.Size = new System.Drawing.Size(132, 49);
 			btnGo.TabIndex = 4;
@@ -193,7 +195,7 @@ namespace Jammy.Main
 			// 
 			btnReset.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnReset.Location = new System.Drawing.Point(1928, 572);
-			btnReset.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnReset.Margin = new System.Windows.Forms.Padding(6);
 			btnReset.Name = "btnReset";
 			btnReset.Size = new System.Drawing.Size(132, 49);
 			btnReset.TabIndex = 5;
@@ -208,10 +210,10 @@ namespace Jammy.Main
 			txtMemory.DetectUrls = false;
 			txtMemory.Font = new System.Drawing.Font("Consolas", 8.25F);
 			txtMemory.Location = new System.Drawing.Point(6, 6);
-			txtMemory.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1328, 685);
+			txtMemory.Size = new System.Drawing.Size(1328, 655);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -240,7 +242,7 @@ namespace Jammy.Main
 			// 
 			splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
 			splitContainer1.Location = new System.Drawing.Point(22, 26);
-			splitContainer1.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			splitContainer1.Margin = new System.Windows.Forms.Padding(6);
 			splitContainer1.Name = "splitContainer1";
 			splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
 			// 
@@ -260,7 +262,7 @@ namespace Jammy.Main
 			// 
 			btnRefresh.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnRefresh.Location = new System.Drawing.Point(1930, 708);
-			btnRefresh.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnRefresh.Margin = new System.Windows.Forms.Padding(6);
 			btnRefresh.Name = "btnRefresh";
 			btnRefresh.Size = new System.Drawing.Size(132, 49);
 			btnRefresh.TabIndex = 8;
@@ -272,7 +274,7 @@ namespace Jammy.Main
 			// 
 			btnStepOver.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnStepOver.Location = new System.Drawing.Point(2080, 382);
-			btnStepOver.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnStepOver.Margin = new System.Windows.Forms.Padding(6);
 			btnStepOver.Name = "btnStepOver";
 			btnStepOver.Size = new System.Drawing.Size(132, 49);
 			btnStepOver.TabIndex = 9;
@@ -284,7 +286,7 @@ namespace Jammy.Main
 			// 
 			picPower.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			picPower.Location = new System.Drawing.Point(2125, 533);
-			picPower.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			picPower.Margin = new System.Windows.Forms.Padding(6);
 			picPower.Name = "picPower";
 			picPower.Size = new System.Drawing.Size(87, 21);
 			picPower.TabIndex = 10;
@@ -294,7 +296,7 @@ namespace Jammy.Main
 			// 
 			picDisk.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			picDisk.Location = new System.Drawing.Point(2125, 572);
-			picDisk.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			picDisk.Margin = new System.Windows.Forms.Padding(6);
 			picDisk.Name = "picDisk";
 			picDisk.Size = new System.Drawing.Size(87, 21);
 			picDisk.TabIndex = 11;
@@ -304,7 +306,7 @@ namespace Jammy.Main
 			// 
 			btnDisassemble.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnDisassemble.Location = new System.Drawing.Point(2080, 708);
-			btnDisassemble.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnDisassemble.Margin = new System.Windows.Forms.Padding(6);
 			btnDisassemble.Name = "btnDisassemble";
 			btnDisassemble.Size = new System.Drawing.Size(173, 49);
 			btnDisassemble.TabIndex = 12;
@@ -406,7 +408,7 @@ namespace Jammy.Main
 			addressFollowBox.FormattingEnabled = true;
 			addressFollowBox.Items.AddRange(new object[] { "(None)", "A0", "A1", "A2", "A3", "A4", "A5", "A6", "SP", "SSP", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "PC" });
 			addressFollowBox.Location = new System.Drawing.Point(1930, 772);
-			addressFollowBox.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			addressFollowBox.Margin = new System.Windows.Forms.Padding(6);
 			addressFollowBox.Name = "addressFollowBox";
 			addressFollowBox.Size = new System.Drawing.Size(214, 40);
 			addressFollowBox.TabIndex = 25;
@@ -418,7 +420,7 @@ namespace Jammy.Main
 			txtCopper.DetectUrls = false;
 			txtCopper.Font = new System.Drawing.Font("Consolas", 8.25F);
 			txtCopper.Location = new System.Drawing.Point(1378, 83);
-			txtCopper.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
 			txtCopper.Size = new System.Drawing.Size(535, 1171);
@@ -430,7 +432,7 @@ namespace Jammy.Main
 			// 
 			btnInsertDisk.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnInsertDisk.Location = new System.Drawing.Point(1930, 836);
-			btnInsertDisk.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnInsertDisk.Margin = new System.Windows.Forms.Padding(6);
 			btnInsertDisk.Name = "btnInsertDisk";
 			btnInsertDisk.Size = new System.Drawing.Size(134, 49);
 			btnInsertDisk.TabIndex = 27;
@@ -442,7 +444,7 @@ namespace Jammy.Main
 			// 
 			btnRemoveDisk.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnRemoveDisk.Location = new System.Drawing.Point(2080, 836);
-			btnRemoveDisk.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnRemoveDisk.Margin = new System.Windows.Forms.Padding(6);
 			btnRemoveDisk.Name = "btnRemoveDisk";
 			btnRemoveDisk.Size = new System.Drawing.Size(132, 49);
 			btnRemoveDisk.TabIndex = 28;
@@ -454,7 +456,7 @@ namespace Jammy.Main
 			// 
 			btnCIAInt.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnCIAInt.Location = new System.Drawing.Point(1930, 962);
-			btnCIAInt.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnCIAInt.Margin = new System.Windows.Forms.Padding(6);
 			btnCIAInt.Name = "btnCIAInt";
 			btnCIAInt.Size = new System.Drawing.Size(134, 49);
 			btnCIAInt.TabIndex = 29;
@@ -466,7 +468,7 @@ namespace Jammy.Main
 			// 
 			btnIRQ.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnIRQ.Location = new System.Drawing.Point(1930, 1024);
-			btnIRQ.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnIRQ.Margin = new System.Windows.Forms.Padding(6);
 			btnIRQ.Name = "btnIRQ";
 			btnIRQ.Size = new System.Drawing.Size(134, 49);
 			btnIRQ.TabIndex = 31;
@@ -480,7 +482,7 @@ namespace Jammy.Main
 			cbIRQ.FormattingEnabled = true;
 			cbIRQ.Items.AddRange(new object[] { "EXTER", "DSKSYNC", "AUD0", "AUD1", "AUD2", "AUD3", "BLIT", "VERTB", "COPPER", "PORTS", "DSKBLK", "SOFTINT" });
 			cbIRQ.Location = new System.Drawing.Point(2080, 1024);
-			cbIRQ.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			cbIRQ.Margin = new System.Windows.Forms.Padding(6);
 			cbIRQ.Name = "cbIRQ";
 			cbIRQ.Size = new System.Drawing.Size(128, 40);
 			cbIRQ.TabIndex = 32;
@@ -492,7 +494,7 @@ namespace Jammy.Main
 			cbCIA.FormattingEnabled = true;
 			cbCIA.Items.AddRange(new object[] { "TIMERA", "TIMERB", "TODALARM", "SERIAL", "FLAG" });
 			cbCIA.Location = new System.Drawing.Point(2080, 962);
-			cbCIA.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			cbCIA.Margin = new System.Windows.Forms.Padding(6);
 			cbCIA.Name = "cbCIA";
 			cbCIA.Size = new System.Drawing.Size(128, 40);
 			cbCIA.TabIndex = 33;
@@ -504,7 +506,7 @@ namespace Jammy.Main
 			cbTypes.FormattingEnabled = true;
 			cbTypes.Items.AddRange(new object[] { "(None)", "ExecBase", "timerequest", "Library", "Task", "KeyMapResource", "MsgPort", "Unit", "Resident" });
 			cbTypes.Location = new System.Drawing.Point(1621, 32);
-			cbTypes.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			cbTypes.Margin = new System.Windows.Forms.Padding(6);
 			cbTypes.Name = "cbTypes";
 			cbTypes.Size = new System.Drawing.Size(292, 40);
 			cbTypes.TabIndex = 34;
@@ -518,7 +520,7 @@ namespace Jammy.Main
 			lbCallStack.IntegralHeight = false;
 			lbCallStack.ItemHeight = 26;
 			lbCallStack.Location = new System.Drawing.Point(2264, 26);
-			lbCallStack.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			lbCallStack.Margin = new System.Windows.Forms.Padding(6);
 			lbCallStack.MultiColumn = true;
 			lbCallStack.Name = "lbCallStack";
 			lbCallStack.SelectionMode = System.Windows.Forms.SelectionMode.None;
@@ -530,7 +532,7 @@ namespace Jammy.Main
 			// 
 			btnStepOut.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnStepOut.Location = new System.Drawing.Point(2080, 444);
-			btnStepOut.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnStepOut.Margin = new System.Windows.Forms.Padding(6);
 			btnStepOut.Name = "btnStepOut";
 			btnStepOut.Size = new System.Drawing.Size(132, 49);
 			btnStepOut.TabIndex = 36;
@@ -542,7 +544,7 @@ namespace Jammy.Main
 			// 
 			btnINTENA.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnINTENA.Location = new System.Drawing.Point(1930, 1082);
-			btnINTENA.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnINTENA.Margin = new System.Windows.Forms.Padding(6);
 			btnINTENA.Name = "btnINTENA";
 			btnINTENA.Size = new System.Drawing.Size(134, 49);
 			btnINTENA.TabIndex = 37;
@@ -557,7 +559,7 @@ namespace Jammy.Main
 			lbCustom.FormattingEnabled = true;
 			lbCustom.ItemHeight = 26;
 			lbCustom.Location = new System.Drawing.Point(2264, 546);
-			lbCustom.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			lbCustom.Margin = new System.Windows.Forms.Padding(6);
 			lbCustom.Name = "lbCustom";
 			lbCustom.Size = new System.Drawing.Size(307, 628);
 			lbCustom.TabIndex = 38;
@@ -566,7 +568,7 @@ namespace Jammy.Main
 			// 
 			btnDumpTrace.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnDumpTrace.Location = new System.Drawing.Point(2080, 646);
-			btnDumpTrace.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnDumpTrace.Margin = new System.Windows.Forms.Padding(6);
 			btnDumpTrace.Name = "btnDumpTrace";
 			btnDumpTrace.Size = new System.Drawing.Size(173, 49);
 			btnDumpTrace.TabIndex = 39;
@@ -578,7 +580,7 @@ namespace Jammy.Main
 			// 
 			btnIDEACK.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnIDEACK.Location = new System.Drawing.Point(1930, 1143);
-			btnIDEACK.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnIDEACK.Margin = new System.Windows.Forms.Padding(6);
 			btnIDEACK.Name = "btnIDEACK";
 			btnIDEACK.Size = new System.Drawing.Size(134, 49);
 			btnIDEACK.TabIndex = 40;
@@ -590,7 +592,7 @@ namespace Jammy.Main
 			// 
 			btnChange.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnChange.Location = new System.Drawing.Point(1930, 900);
-			btnChange.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnChange.Margin = new System.Windows.Forms.Padding(6);
 			btnChange.Name = "btnChange";
 			btnChange.Size = new System.Drawing.Size(134, 49);
 			btnChange.TabIndex = 41;
@@ -604,7 +606,7 @@ namespace Jammy.Main
 			radioDF0.AutoSize = true;
 			radioDF0.Checked = true;
 			radioDF0.Location = new System.Drawing.Point(2072, 905);
-			radioDF0.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			radioDF0.Margin = new System.Windows.Forms.Padding(6);
 			radioDF0.Name = "radioDF0";
 			radioDF0.Size = new System.Drawing.Size(27, 26);
 			radioDF0.TabIndex = 42;
@@ -617,7 +619,7 @@ namespace Jammy.Main
 			radioDF1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			radioDF1.AutoSize = true;
 			radioDF1.Location = new System.Drawing.Point(2109, 905);
-			radioDF1.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			radioDF1.Margin = new System.Windows.Forms.Padding(6);
 			radioDF1.Name = "radioDF1";
 			radioDF1.Size = new System.Drawing.Size(27, 26);
 			radioDF1.TabIndex = 43;
@@ -630,7 +632,7 @@ namespace Jammy.Main
 			radioDF2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			radioDF2.AutoSize = true;
 			radioDF2.Location = new System.Drawing.Point(2146, 905);
-			radioDF2.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			radioDF2.Margin = new System.Windows.Forms.Padding(6);
 			radioDF2.Name = "radioDF2";
 			radioDF2.Size = new System.Drawing.Size(27, 26);
 			radioDF2.TabIndex = 44;
@@ -643,7 +645,7 @@ namespace Jammy.Main
 			radioDF3.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			radioDF3.AutoSize = true;
 			radioDF3.Location = new System.Drawing.Point(2185, 905);
-			radioDF3.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			radioDF3.Margin = new System.Windows.Forms.Padding(6);
 			radioDF3.Name = "radioDF3";
 			radioDF3.Size = new System.Drawing.Size(27, 26);
 			radioDF3.TabIndex = 45;
@@ -655,7 +657,7 @@ namespace Jammy.Main
 			// 
 			btnGfxScan.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnGfxScan.Location = new System.Drawing.Point(2080, 1143);
-			btnGfxScan.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnGfxScan.Margin = new System.Windows.Forms.Padding(6);
 			btnGfxScan.Name = "btnGfxScan";
 			btnGfxScan.Size = new System.Drawing.Size(139, 49);
 			btnGfxScan.TabIndex = 46;
@@ -667,7 +669,7 @@ namespace Jammy.Main
 			// 
 			btnClearBBUSY.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnClearBBUSY.Location = new System.Drawing.Point(2080, 1082);
-			btnClearBBUSY.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			btnClearBBUSY.Margin = new System.Windows.Forms.Padding(6);
 			btnClearBBUSY.Name = "btnClearBBUSY";
 			btnClearBBUSY.Size = new System.Drawing.Size(139, 49);
 			btnClearBBUSY.TabIndex = 47;
@@ -675,11 +677,31 @@ namespace Jammy.Main
 			btnClearBBUSY.UseVisualStyleBackColor = true;
 			btnClearBBUSY.Click += btnClearBBUSY_Click;
 			// 
+			// btnCribSheet
+			// 
+			btnCribSheet.Location = new System.Drawing.Point(1383, 32);
+			btnCribSheet.Name = "btnCribSheet";
+			btnCribSheet.Size = new System.Drawing.Size(133, 46);
+			btnCribSheet.TabIndex = 48;
+			btnCribSheet.Text = "Crib Sheet";
+			btnCribSheet.UseVisualStyleBackColor = true;
+			btnCribSheet.MouseHover += btnCribSheet_MouseHover;
+			// 
+			// cribSheetMenuStrip
+			// 
+			cribSheetMenuStrip.Enabled = false;
+			cribSheetMenuStrip.Font = new System.Drawing.Font("Consolas", 6.0F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+			cribSheetMenuStrip.ImageScalingSize = new System.Drawing.Size(32, 32);
+			cribSheetMenuStrip.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
+			cribSheetMenuStrip.Name = "cribSheetMenuStrip";
+			cribSheetMenuStrip.Size = new System.Drawing.Size(301, 48);
+			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2626, 1291);
+			Controls.Add(btnCribSheet);
 			Controls.Add(btnClearBBUSY);
 			Controls.Add(btnGfxScan);
 			Controls.Add(radioDF3);
@@ -714,7 +736,7 @@ namespace Jammy.Main
 			Controls.Add(btnStep);
 			Controls.Add(lbRegisters);
 			Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
-			Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			Margin = new System.Windows.Forms.Padding(6);
 			Name = "Jammy";
 			Text = "Jammy";
 			FormClosing += Form1_FormClosing;
@@ -782,6 +804,8 @@ namespace Jammy.Main
 		private System.Windows.Forms.RadioButton radioDF3;
 		private System.Windows.Forms.Button btnGfxScan;
 		private System.Windows.Forms.Button btnClearBBUSY;
+		private System.Windows.Forms.Button btnCribSheet;
+		private System.Windows.Forms.ContextMenuStrip cribSheetMenuStrip;
 	}
 }
 

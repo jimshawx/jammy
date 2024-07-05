@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
@@ -15,7 +17,7 @@ namespace Jammy.Core.Custom.CIA
 	{
 		private readonly IDiskDrives diskDrives;
 
-		private readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
+		private static readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
 			new Tuple<string,string>("pra", "BFD000 /DTR  /RTS  /CD   /CTS  /DSR   SEL   POUT  BUSY"),
 			new Tuple<string,string>("prb", "BFD100 /MTR  /SEL3 /SEL2 /SEL1 /SEL0 /SIDE  DIR  /STEP"),
@@ -100,6 +102,11 @@ namespace Jammy.Core.Custom.CIA
 			
 			//logger.LogTrace($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 			base.Write(reg, value);
+		}
+
+		public static List<string> GetCribSheet()
+		{
+			return debug.Select(x => $"{x.Item1.ToUpper(),-6} {x.Item2}").ToList();
 		}
 	}
 }

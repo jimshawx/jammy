@@ -7,6 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Jammy.Core;
+using Jammy.Core.Custom.CIA;
+using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
@@ -151,7 +153,7 @@ namespace Jammy.Main
 
 			var memory = debugger.GetMemory();
 			var memoryText = memory.ToString();
-	
+
 			Amiga.UnlockEmulation();
 
 			//this is the new view
@@ -269,16 +271,16 @@ namespace Jammy.Main
 				//lbCallStack.Items.AddRange(mem.Select(x => $"{x.Item1:X8}  {x.Item2:X8}").Cast<object>().ToArray());
 
 				lbCallStack.Items.Clear();
-				
+
 				uint sp = regs.SP;
 				lbCallStack.Items.Add("   SP");
 				for (uint i = 0; i < 15; i++)
-					lbCallStack.Items.Add($"{debugger.Read32(sp + i*4):X8}");
+					lbCallStack.Items.Add($"{debugger.Read32(sp + i * 4):X8}");
 
 				uint ssp = regs.SSP;
 				lbCallStack.Items.Add("   SSP");
 				for (uint i = 0; i < 15; i++)
-					lbCallStack.Items.Add($"{debugger.Read32(ssp + i*4):X8}");
+					lbCallStack.Items.Add($"{debugger.Read32(ssp + i * 4):X8}");
 
 				lbCallStack.SizeListBox(2);
 			}
@@ -739,24 +741,24 @@ namespace Jammy.Main
 			{
 				logger.LogTrace($"scrolling to {sp:X8}");
 
-				{ 
-				txtDisassembly.ReallySuspendLayout();
-				txtDisassembly.DeselectAll();
+				{
+					txtDisassembly.ReallySuspendLayout();
+					txtDisassembly.DeselectAll();
 
-				int line = disassemblyView.GetAddressLine(sp);
+					int line = disassemblyView.GetAddressLine(sp);
 
-				//scroll the view to the line 5 lines before the PC
-				txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
-				txtDisassembly.ScrollToCaret();
+					//scroll the view to the line 5 lines before the PC
+					txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
+					txtDisassembly.ScrollToCaret();
 
-				txtDisassembly.ReallyResumeLayout();
-				txtDisassembly.Refresh();
+					txtDisassembly.ReallyResumeLayout();
+					txtDisassembly.Refresh();
 				}
 
-				{ 
-				int line = memoryDumpView.AddressToLine(sp);
-				txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
-				txtMemory.ScrollToCaret();
+				{
+					int line = memoryDumpView.AddressToLine(sp);
+					txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
+					txtMemory.ScrollToCaret();
 				}
 			}
 		}
@@ -768,33 +770,56 @@ namespace Jammy.Main
 
 			string item = (string)lbRegisters.Items[index];
 			//is it Dx Ax PC SP SSP? if so we can follow it
-			if (!item.StartsWith("D") && !item.StartsWith("A") && 
+			if (!item.StartsWith("D") && !item.StartsWith("A") &&
 				!item.StartsWith("PC") && !item.StartsWith("S")) return;
-			
+
 			uint sp = uint.Parse(item.Split([' ', '\t'])[1], NumberStyles.AllowHexSpecifier);
 			if (sp != 0)
 			{
 				logger.LogTrace($"scrolling to {sp:X8}");
-				{ 
-				txtDisassembly.ReallySuspendLayout();
-				txtDisassembly.DeselectAll();
+				{
+					txtDisassembly.ReallySuspendLayout();
+					txtDisassembly.DeselectAll();
 
-				int line = disassemblyView.GetAddressLine(sp);
+					int line = disassemblyView.GetAddressLine(sp);
 
-				//scroll the view to the line 5 lines before the PC
-				txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
-				txtDisassembly.ScrollToCaret();
+					//scroll the view to the line 5 lines before the PC
+					txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
+					txtDisassembly.ScrollToCaret();
 
-				txtDisassembly.ReallyResumeLayout();
-				txtDisassembly.Refresh();
+					txtDisassembly.ReallyResumeLayout();
+					txtDisassembly.Refresh();
 				}
 
 				{
-				int line = memoryDumpView.AddressToLine(sp);
-				txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
-				txtMemory.ScrollToCaret();
+					int line = memoryDumpView.AddressToLine(sp);
+					txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
+					txtMemory.ScrollToCaret();
 				}
 			}
+		}
+
+		private void btnCribSheet_MouseHover(object sender, EventArgs e)
+		{
+			var pos = this.PointToClient(Cursor.Position);
+			
+			var a = CIAAOdd.GetCribSheet();
+			var b = CIABEven.GetCribSheet();
+			var c = ChipRegs.GetCribSheet();
+			var d = a.Concat(b).Concat(c);
+
+			logger.LogTrace($"{pos.X},{pos.Y}");
+			cribSheetMenuStrip.Top = pos.Y;
+			cribSheetMenuStrip.Left = pos.X;
+			cribSheetMenuStrip.Items.Clear();
+			foreach (var x in d.Take(30))
+				cribSheetMenuStrip.Items.Add(x);
+			cribSheetMenuStrip.Show(Cursor.Position);
+		}
+
+		private void btnCribSheet_MouseLeave(object sender, EventArgs e)
+		{
+			cribSheetMenuStrip.Hide();
 		}
 	}
 

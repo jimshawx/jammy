@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
@@ -18,7 +20,7 @@ namespace Jammy.Core.Custom.CIA
 		private readonly IKeyboard keyboard;
 		private readonly IKickstartROM kickstartROM;
 
-		private readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
+		private static readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
 			new Tuple<string,string>("pra", "BFE001 /FIR1 /FIR0  /RDY /TK0  /WPRO /CHNG /LED  OVL"),
 			new Tuple<string,string>("prb", "BFE101 Parallel port data"),
@@ -131,6 +133,11 @@ namespace Jammy.Core.Custom.CIA
 
 			//if (reg != CIA.TBLO && reg != CIA.TBHI && reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
 			//	logger.LogTrace($"CIAA Write @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+		}
+
+		public static List<string> GetCribSheet()
+		{
+			return debug.Select (x => $"{x.Item1.ToUpper(),-6} {x.Item2}").ToList();
 		}
 	}
 }
