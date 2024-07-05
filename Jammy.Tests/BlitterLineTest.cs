@@ -295,6 +295,8 @@ namespace Jammy.Tests
 			blitter.Write(0, ChipRegs.BLTAFWM, (ushort)c.bltafwm);
 			blitter.Write(0, ChipRegs.BLTALWM, (ushort)c.bltalwm);
 
+			blitter.Write(0, ChipRegs.DMACON, 0x8240);
+
 			if (c.bltsize != 0)
 			{
 				TestContext.WriteLine($"BLTSIZE {c.bltsize & 0x3f} x {c.bltsize >> 6} mod: {(int)c.bltcmod} oct:{(c.bltcon1 >> 2) & 7}");
@@ -352,17 +354,17 @@ namespace Jammy.Tests
 
 		public static List<BlitterLineTestCase> TestCases2()
 		{
-			var json = $"[{File.ReadAllText("blitter-2024-06-25-111524.txt")}]";
+			var json = $"[{File.ReadAllText("blitter-2024-07-03-212327-902.txt")}]";
 			return JsonConvert.DeserializeObject<List<BlitterLineTestCase>>(json);
 		}
 
 		public static string TestCases2RAM()
 		{
-			return "blitter-2024-06-25-111524.bmp";
+			return "chip-2024-07-03-212327-924.bmp";
 		}
 		public static string TestCases2Results()
 		{
-			return "blitter-2024-06-25-111524.test.bmp";
+			return "test-2024-07-03-212327.bmp";
 		}
 	}
 
