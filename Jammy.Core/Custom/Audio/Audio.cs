@@ -222,15 +222,15 @@ namespace Jammy.Core.Custom.Audio
 			else
 				adkcon &= (ushort)~v;
 
-			if ((v & 1) != 0) logger.LogTrace("C0 modulates volume C1");
-			if ((v & 2) != 0) logger.LogTrace("C1 modulates volume C2");
-			if ((v & 4) != 0) logger.LogTrace("C2 modulates volume C3");
-			if ((v & 8) != 0) logger.LogTrace("C3 modulates volume nothing");
-			v >>= 4;
-			if ((v & 1) != 0) logger.LogTrace("C0 modulates frequency C1");
-			if ((v & 2) != 0) logger.LogTrace("C1 modulates frequency C2");
-			if ((v & 4) != 0) logger.LogTrace("C2 modulates frequency C3");
-			if ((v & 8) != 0) logger.LogTrace("C3 modulates frequency nothing");
+			//if ((v & 1) != 0) logger.LogTrace("C0 modulates volume C1");
+			//if ((v & 2) != 0) logger.LogTrace("C1 modulates volume C2");
+			//if ((v & 4) != 0) logger.LogTrace("C2 modulates volume C3");
+			//if ((v & 8) != 0) logger.LogTrace("C3 modulates volume nothing");
+			//v >>= 4;
+			//if ((v & 1) != 0) logger.LogTrace("C0 modulates frequency C1");
+			//if ((v & 2) != 0) logger.LogTrace("C1 modulates frequency C2");
+			//if ((v & 4) != 0) logger.LogTrace("C2 modulates frequency C3");
+			//if ((v & 8) != 0) logger.LogTrace("C3 modulates frequency nothing");
 		}
 
 		private ushort intreq = 0;
