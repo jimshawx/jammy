@@ -186,7 +186,7 @@ namespace Jammy.Core.Custom
 
 			if (size == Size.Byte)
 			{
-				if ((originalAddress & 1) != 0) logger.LogTrace($"Write to odd address {originalAddress:X8},{value:X2} {ChipRegs.Name(address)}");
+				//if ((originalAddress & 1) != 0) logger.LogTrace($"Write to odd address {originalAddress:X8},{value:X2} {ChipRegs.Name(address)}");
 				value &= 0xff;
 				value |= value<<8;
 				Write(insaddr, address, value, Size.Word);
