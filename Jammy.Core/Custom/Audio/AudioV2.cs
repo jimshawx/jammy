@@ -25,7 +25,7 @@ namespace Jammy.Core.Custom.Audio
 		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
-		private ulong audioRate;
+		private readonly ulong audioRate;
 		public AudioV2(IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioV2> logger)
 		{
 			this.memory = memory;
@@ -38,7 +38,7 @@ namespace Jammy.Core.Custom.Audio
 
 			ulong scanlines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
 
-			ulong audioRate = beamRate / scanlines;
+			audioRate = beamRate / scanlines;
 
 			InitMixer();
 		}
