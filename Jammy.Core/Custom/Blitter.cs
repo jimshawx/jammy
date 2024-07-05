@@ -220,7 +220,7 @@ namespace Jammy.Core.Custom
 			};
 
 			if (counter == 0)
-				filename = Path.Combine("../../../../", $"blitter-{DateTime.Now:yyyy-MM-dd-HHmmss}.txt");
+				filename = Path.Combine("../../../../blits/", $"blitter-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.txt");
 			
 			if (counter < 1000)
 				File.AppendAllLines(filename, b);
@@ -334,11 +334,11 @@ namespace Jammy.Core.Custom
 			//set blitter busy in DMACON
 			custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
 
+			uint bltabits = 0;
+			uint bltbbits = 0;
+
 			for (uint h = 0; h < height; h++)
 			{
-				uint bltabits = 0;
-				uint bltbbits = 0;
-
 				if (blitterDump) bcount = 0;
 
 				for (uint w = 0; w < width; w++)
