@@ -64,7 +64,7 @@ namespace Jammy.Main
 			radioButton16 = new System.Windows.Forms.RadioButton();
 			radioButton17 = new System.Windows.Forms.RadioButton();
 			addressFollowBox = new System.Windows.Forms.ComboBox();
-			txtExecBase = new System.Windows.Forms.RichTextBox();
+			txtCopper = new System.Windows.Forms.RichTextBox();
 			btnInsertDisk = new System.Windows.Forms.Button();
 			btnRemoveDisk = new System.Windows.Forms.Button();
 			btnCIAInt = new System.Windows.Forms.Button();
@@ -100,14 +100,14 @@ namespace Jammy.Main
 			lbRegisters.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			lbRegisters.ColumnWidth = 85;
 			lbRegisters.Font = new System.Drawing.Font("Consolas", 8.25F);
-			lbRegisters.FormattingEnabled = true;
 			lbRegisters.IntegralHeight = false;
-			lbRegisters.ItemHeight = 13;
-			lbRegisters.Location = new System.Drawing.Point(1038, 12);
+			lbRegisters.ItemHeight = 26;
+			lbRegisters.Location = new System.Drawing.Point(1928, 26);
+			lbRegisters.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			lbRegisters.MultiColumn = true;
 			lbRegisters.Name = "lbRegisters";
 			lbRegisters.SelectionMode = System.Windows.Forms.SelectionMode.None;
-			lbRegisters.Size = new System.Drawing.Size(175, 150);
+			lbRegisters.Size = new System.Drawing.Size(322, 315);
 			lbRegisters.TabIndex = 0;
 			lbRegisters.MouseDoubleClick += lbRegisters_MouseDoubleClick;
 			// 
@@ -118,45 +118,48 @@ namespace Jammy.Main
 			txtDisassembly.DetectUrls = false;
 			txtDisassembly.Font = new System.Drawing.Font("Consolas", 8.25F);
 			txtDisassembly.HideSelection = false;
-			txtDisassembly.Location = new System.Drawing.Point(3, 3);
+			txtDisassembly.Location = new System.Drawing.Point(6, 6);
+			txtDisassembly.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			txtDisassembly.Name = "txtDisassembly";
 			txtDisassembly.ReadOnly = true;
-			txtDisassembly.Size = new System.Drawing.Size(717, 242);
+			txtDisassembly.Size = new System.Drawing.Size(1328, 511);
 			txtDisassembly.TabIndex = 1;
 			txtDisassembly.Text = "";
 			txtDisassembly.WordWrap = false;
 			// 
 			// menuDisassembly
 			// 
+			menuDisassembly.ImageScalingSize = new System.Drawing.Size(32, 32);
 			menuDisassembly.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripBreakpoint, toolStripSkip, toolStripGoto });
 			menuDisassembly.Name = "menuDisassembly";
-			menuDisassembly.Size = new System.Drawing.Size(132, 70);
+			menuDisassembly.Size = new System.Drawing.Size(204, 118);
 			menuDisassembly.ItemClicked += menuDisassembly_ItemClicked;
 			// 
 			// toolStripBreakpoint
 			// 
 			toolStripBreakpoint.Name = "toolStripBreakpoint";
-			toolStripBreakpoint.Size = new System.Drawing.Size(131, 22);
+			toolStripBreakpoint.Size = new System.Drawing.Size(203, 38);
 			toolStripBreakpoint.Text = "Breakpoint";
 			// 
 			// toolStripSkip
 			// 
 			toolStripSkip.Name = "toolStripSkip";
-			toolStripSkip.Size = new System.Drawing.Size(131, 22);
+			toolStripSkip.Size = new System.Drawing.Size(203, 38);
 			toolStripSkip.Text = "Skip";
 			// 
 			// toolStripGoto
 			// 
 			toolStripGoto.Name = "toolStripGoto";
-			toolStripGoto.Size = new System.Drawing.Size(131, 22);
+			toolStripGoto.Size = new System.Drawing.Size(203, 38);
 			toolStripGoto.Text = "Go To...";
 			// 
 			// btnStep
 			// 
 			btnStep.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnStep.Location = new System.Drawing.Point(1038, 179);
+			btnStep.Location = new System.Drawing.Point(1928, 382);
+			btnStep.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnStep.Name = "btnStep";
-			btnStep.Size = new System.Drawing.Size(71, 23);
+			btnStep.Size = new System.Drawing.Size(132, 49);
 			btnStep.TabIndex = 2;
 			btnStep.Text = "Step";
 			btnStep.UseVisualStyleBackColor = true;
@@ -165,9 +168,10 @@ namespace Jammy.Main
 			// btnStop
 			// 
 			btnStop.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnStop.Location = new System.Drawing.Point(1038, 208);
+			btnStop.Location = new System.Drawing.Point(1928, 444);
+			btnStop.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnStop.Name = "btnStop";
-			btnStop.Size = new System.Drawing.Size(71, 23);
+			btnStop.Size = new System.Drawing.Size(132, 49);
 			btnStop.TabIndex = 3;
 			btnStop.Text = "Stop";
 			btnStop.UseVisualStyleBackColor = true;
@@ -176,9 +180,10 @@ namespace Jammy.Main
 			// btnGo
 			// 
 			btnGo.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnGo.Location = new System.Drawing.Point(1038, 238);
+			btnGo.Location = new System.Drawing.Point(1928, 508);
+			btnGo.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnGo.Name = "btnGo";
-			btnGo.Size = new System.Drawing.Size(71, 23);
+			btnGo.Size = new System.Drawing.Size(132, 49);
 			btnGo.TabIndex = 4;
 			btnGo.Text = "Go";
 			btnGo.UseVisualStyleBackColor = true;
@@ -187,9 +192,10 @@ namespace Jammy.Main
 			// btnReset
 			// 
 			btnReset.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnReset.Location = new System.Drawing.Point(1038, 268);
+			btnReset.Location = new System.Drawing.Point(1928, 572);
+			btnReset.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnReset.Name = "btnReset";
-			btnReset.Size = new System.Drawing.Size(71, 23);
+			btnReset.Size = new System.Drawing.Size(132, 49);
 			btnReset.TabIndex = 5;
 			btnReset.Text = "Reset";
 			btnReset.UseVisualStyleBackColor = true;
@@ -201,37 +207,40 @@ namespace Jammy.Main
 			txtMemory.ContextMenuStrip = menuMemory;
 			txtMemory.DetectUrls = false;
 			txtMemory.Font = new System.Drawing.Font("Consolas", 8.25F);
-			txtMemory.Location = new System.Drawing.Point(3, 3);
+			txtMemory.Location = new System.Drawing.Point(6, 6);
+			txtMemory.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(717, 323);
+			txtMemory.Size = new System.Drawing.Size(1328, 685);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
 			// 
 			// menuMemory
 			// 
+			menuMemory.ImageScalingSize = new System.Drawing.Size(32, 32);
 			menuMemory.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { menuMemoryGotoItem, menuMemoryFindItem });
 			menuMemory.Name = "menuMemory";
-			menuMemory.Size = new System.Drawing.Size(114, 48);
+			menuMemory.Size = new System.Drawing.Size(166, 80);
 			menuMemory.ItemClicked += menuMemory_ItemClicked;
 			// 
 			// menuMemoryGotoItem
 			// 
 			menuMemoryGotoItem.Name = "menuMemoryGotoItem";
-			menuMemoryGotoItem.Size = new System.Drawing.Size(113, 22);
+			menuMemoryGotoItem.Size = new System.Drawing.Size(165, 38);
 			menuMemoryGotoItem.Text = "Go To...";
 			// 
 			// menuMemoryFindItem
 			// 
 			menuMemoryFindItem.Name = "menuMemoryFindItem";
-			menuMemoryFindItem.Size = new System.Drawing.Size(113, 22);
+			menuMemoryFindItem.Size = new System.Drawing.Size(165, 38);
 			menuMemoryFindItem.Text = "Find...";
 			// 
 			// splitContainer1
 			// 
 			splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
-			splitContainer1.Location = new System.Drawing.Point(12, 12);
+			splitContainer1.Location = new System.Drawing.Point(22, 26);
+			splitContainer1.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			splitContainer1.Name = "splitContainer1";
 			splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
 			// 
@@ -242,16 +251,18 @@ namespace Jammy.Main
 			// splitContainer1.Panel2
 			// 
 			splitContainer1.Panel2.Controls.Add(txtMemory);
-			splitContainer1.Size = new System.Drawing.Size(723, 581);
-			splitContainer1.SplitterDistance = 248;
+			splitContainer1.Size = new System.Drawing.Size(1343, 1239);
+			splitContainer1.SplitterDistance = 528;
+			splitContainer1.SplitterWidth = 9;
 			splitContainer1.TabIndex = 7;
 			// 
 			// btnRefresh
 			// 
 			btnRefresh.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnRefresh.Location = new System.Drawing.Point(1039, 332);
+			btnRefresh.Location = new System.Drawing.Point(1930, 708);
+			btnRefresh.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnRefresh.Name = "btnRefresh";
-			btnRefresh.Size = new System.Drawing.Size(71, 23);
+			btnRefresh.Size = new System.Drawing.Size(132, 49);
 			btnRefresh.TabIndex = 8;
 			btnRefresh.Text = "Refresh";
 			btnRefresh.UseVisualStyleBackColor = true;
@@ -260,9 +271,10 @@ namespace Jammy.Main
 			// btnStepOver
 			// 
 			btnStepOver.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnStepOver.Location = new System.Drawing.Point(1120, 179);
+			btnStepOver.Location = new System.Drawing.Point(2080, 382);
+			btnStepOver.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnStepOver.Name = "btnStepOver";
-			btnStepOver.Size = new System.Drawing.Size(71, 23);
+			btnStepOver.Size = new System.Drawing.Size(132, 49);
 			btnStepOver.TabIndex = 9;
 			btnStepOver.Text = "Step Over";
 			btnStepOver.UseVisualStyleBackColor = true;
@@ -271,27 +283,30 @@ namespace Jammy.Main
 			// picPower
 			// 
 			picPower.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			picPower.Location = new System.Drawing.Point(1144, 250);
+			picPower.Location = new System.Drawing.Point(2125, 533);
+			picPower.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			picPower.Name = "picPower";
-			picPower.Size = new System.Drawing.Size(47, 10);
+			picPower.Size = new System.Drawing.Size(87, 21);
 			picPower.TabIndex = 10;
 			picPower.TabStop = false;
 			// 
 			// picDisk
 			// 
 			picDisk.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			picDisk.Location = new System.Drawing.Point(1144, 268);
+			picDisk.Location = new System.Drawing.Point(2125, 572);
+			picDisk.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			picDisk.Name = "picDisk";
-			picDisk.Size = new System.Drawing.Size(47, 10);
+			picDisk.Size = new System.Drawing.Size(87, 21);
 			picDisk.TabIndex = 11;
 			picDisk.TabStop = false;
 			// 
 			// btnDisassemble
 			// 
 			btnDisassemble.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnDisassemble.Location = new System.Drawing.Point(1120, 332);
+			btnDisassemble.Location = new System.Drawing.Point(2080, 708);
+			btnDisassemble.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnDisassemble.Name = "btnDisassemble";
-			btnDisassemble.Size = new System.Drawing.Size(93, 23);
+			btnDisassemble.Size = new System.Drawing.Size(173, 49);
 			btnDisassemble.TabIndex = 12;
 			btnDisassemble.Text = "Disassemble";
 			btnDisassemble.UseVisualStyleBackColor = true;
@@ -390,31 +405,34 @@ namespace Jammy.Main
 			addressFollowBox.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			addressFollowBox.FormattingEnabled = true;
 			addressFollowBox.Items.AddRange(new object[] { "(None)", "A0", "A1", "A2", "A3", "A4", "A5", "A6", "SP", "SSP", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "PC" });
-			addressFollowBox.Location = new System.Drawing.Point(1039, 362);
+			addressFollowBox.Location = new System.Drawing.Point(1930, 772);
+			addressFollowBox.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			addressFollowBox.Name = "addressFollowBox";
-			addressFollowBox.Size = new System.Drawing.Size(117, 23);
+			addressFollowBox.Size = new System.Drawing.Size(214, 40);
 			addressFollowBox.TabIndex = 25;
 			addressFollowBox.SelectionChangeCommitted += addressFollowBox_SelectionChangeCommitted;
 			// 
-			// txtExecBase
+			// txtCopper
 			// 
-			txtExecBase.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-			txtExecBase.DetectUrls = false;
-			txtExecBase.Font = new System.Drawing.Font("Consolas", 8.25F);
-			txtExecBase.Location = new System.Drawing.Point(742, 39);
-			txtExecBase.Name = "txtExecBase";
-			txtExecBase.ReadOnly = true;
-			txtExecBase.Size = new System.Drawing.Size(290, 551);
-			txtExecBase.TabIndex = 26;
-			txtExecBase.Text = "";
-			txtExecBase.WordWrap = false;
+			txtCopper.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+			txtCopper.DetectUrls = false;
+			txtCopper.Font = new System.Drawing.Font("Consolas", 8.25F);
+			txtCopper.Location = new System.Drawing.Point(1378, 83);
+			txtCopper.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+			txtCopper.Name = "txtCopper";
+			txtCopper.ReadOnly = true;
+			txtCopper.Size = new System.Drawing.Size(535, 1171);
+			txtCopper.TabIndex = 26;
+			txtCopper.Text = "";
+			txtCopper.WordWrap = false;
 			// 
 			// btnInsertDisk
 			// 
 			btnInsertDisk.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnInsertDisk.Location = new System.Drawing.Point(1039, 392);
+			btnInsertDisk.Location = new System.Drawing.Point(1930, 836);
+			btnInsertDisk.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnInsertDisk.Name = "btnInsertDisk";
-			btnInsertDisk.Size = new System.Drawing.Size(72, 23);
+			btnInsertDisk.Size = new System.Drawing.Size(134, 49);
 			btnInsertDisk.TabIndex = 27;
 			btnInsertDisk.Text = "Insert Disk";
 			btnInsertDisk.UseVisualStyleBackColor = true;
@@ -423,9 +441,10 @@ namespace Jammy.Main
 			// btnRemoveDisk
 			// 
 			btnRemoveDisk.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnRemoveDisk.Location = new System.Drawing.Point(1120, 392);
+			btnRemoveDisk.Location = new System.Drawing.Point(2080, 836);
+			btnRemoveDisk.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnRemoveDisk.Name = "btnRemoveDisk";
-			btnRemoveDisk.Size = new System.Drawing.Size(71, 23);
+			btnRemoveDisk.Size = new System.Drawing.Size(132, 49);
 			btnRemoveDisk.TabIndex = 28;
 			btnRemoveDisk.Text = "Remove Disk";
 			btnRemoveDisk.UseVisualStyleBackColor = true;
@@ -434,9 +453,10 @@ namespace Jammy.Main
 			// btnCIAInt
 			// 
 			btnCIAInt.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnCIAInt.Location = new System.Drawing.Point(1039, 451);
+			btnCIAInt.Location = new System.Drawing.Point(1930, 962);
+			btnCIAInt.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnCIAInt.Name = "btnCIAInt";
-			btnCIAInt.Size = new System.Drawing.Size(72, 23);
+			btnCIAInt.Size = new System.Drawing.Size(134, 49);
 			btnCIAInt.TabIndex = 29;
 			btnCIAInt.Text = "CIA Int";
 			btnCIAInt.UseVisualStyleBackColor = true;
@@ -445,9 +465,10 @@ namespace Jammy.Main
 			// btnIRQ
 			// 
 			btnIRQ.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnIRQ.Location = new System.Drawing.Point(1039, 480);
+			btnIRQ.Location = new System.Drawing.Point(1930, 1024);
+			btnIRQ.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnIRQ.Name = "btnIRQ";
-			btnIRQ.Size = new System.Drawing.Size(72, 23);
+			btnIRQ.Size = new System.Drawing.Size(134, 49);
 			btnIRQ.TabIndex = 31;
 			btnIRQ.Text = "IRQ";
 			btnIRQ.UseVisualStyleBackColor = true;
@@ -458,9 +479,10 @@ namespace Jammy.Main
 			cbIRQ.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			cbIRQ.FormattingEnabled = true;
 			cbIRQ.Items.AddRange(new object[] { "EXTER", "DSKSYNC", "AUD0", "AUD1", "AUD2", "AUD3", "BLIT", "VERTB", "COPPER", "PORTS", "DSKBLK", "SOFTINT" });
-			cbIRQ.Location = new System.Drawing.Point(1120, 480);
+			cbIRQ.Location = new System.Drawing.Point(2080, 1024);
+			cbIRQ.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			cbIRQ.Name = "cbIRQ";
-			cbIRQ.Size = new System.Drawing.Size(71, 23);
+			cbIRQ.Size = new System.Drawing.Size(128, 40);
 			cbIRQ.TabIndex = 32;
 			cbIRQ.Text = "BLIT";
 			// 
@@ -469,9 +491,10 @@ namespace Jammy.Main
 			cbCIA.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			cbCIA.FormattingEnabled = true;
 			cbCIA.Items.AddRange(new object[] { "TIMERA", "TIMERB", "TODALARM", "SERIAL", "FLAG" });
-			cbCIA.Location = new System.Drawing.Point(1120, 451);
+			cbCIA.Location = new System.Drawing.Point(2080, 962);
+			cbCIA.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			cbCIA.Name = "cbCIA";
-			cbCIA.Size = new System.Drawing.Size(71, 23);
+			cbCIA.Size = new System.Drawing.Size(128, 40);
 			cbCIA.TabIndex = 33;
 			cbCIA.Text = "TIMERA";
 			// 
@@ -480,9 +503,10 @@ namespace Jammy.Main
 			cbTypes.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			cbTypes.FormattingEnabled = true;
 			cbTypes.Items.AddRange(new object[] { "(None)", "ExecBase", "timerequest", "Library", "Task", "KeyMapResource", "MsgPort", "Unit", "Resident" });
-			cbTypes.Location = new System.Drawing.Point(873, 15);
+			cbTypes.Location = new System.Drawing.Point(1621, 32);
+			cbTypes.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			cbTypes.Name = "cbTypes";
-			cbTypes.Size = new System.Drawing.Size(159, 23);
+			cbTypes.Size = new System.Drawing.Size(292, 40);
 			cbTypes.TabIndex = 34;
 			cbTypes.SelectionChangeCommitted += cbTypes_SelectionChangeCommitted;
 			// 
@@ -491,22 +515,24 @@ namespace Jammy.Main
 			lbCallStack.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			lbCallStack.ColumnWidth = 83;
 			lbCallStack.Font = new System.Drawing.Font("Consolas", 8.25F);
-			lbCallStack.FormattingEnabled = true;
-			lbCallStack.ItemHeight = 13;
-			lbCallStack.Location = new System.Drawing.Point(1219, 12);
+			lbCallStack.IntegralHeight = false;
+			lbCallStack.ItemHeight = 26;
+			lbCallStack.Location = new System.Drawing.Point(2264, 26);
+			lbCallStack.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			lbCallStack.MultiColumn = true;
 			lbCallStack.Name = "lbCallStack";
 			lbCallStack.SelectionMode = System.Windows.Forms.SelectionMode.None;
-			lbCallStack.Size = new System.Drawing.Size(167, 238);
+			lbCallStack.Size = new System.Drawing.Size(307, 503);
 			lbCallStack.TabIndex = 35;
 			lbCallStack.MouseDoubleClick += lbCallStack_MouseDoubleClick;
 			// 
 			// btnStepOut
 			// 
 			btnStepOut.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnStepOut.Location = new System.Drawing.Point(1120, 208);
+			btnStepOut.Location = new System.Drawing.Point(2080, 444);
+			btnStepOut.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnStepOut.Name = "btnStepOut";
-			btnStepOut.Size = new System.Drawing.Size(71, 23);
+			btnStepOut.Size = new System.Drawing.Size(132, 49);
 			btnStepOut.TabIndex = 36;
 			btnStepOut.Text = "Step Out";
 			btnStepOut.UseVisualStyleBackColor = true;
@@ -515,9 +541,10 @@ namespace Jammy.Main
 			// btnINTENA
 			// 
 			btnINTENA.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnINTENA.Location = new System.Drawing.Point(1039, 507);
+			btnINTENA.Location = new System.Drawing.Point(1930, 1082);
+			btnINTENA.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnINTENA.Name = "btnINTENA";
-			btnINTENA.Size = new System.Drawing.Size(72, 23);
+			btnINTENA.Size = new System.Drawing.Size(134, 49);
 			btnINTENA.TabIndex = 37;
 			btnINTENA.Text = "INTENA";
 			btnINTENA.UseVisualStyleBackColor = true;
@@ -528,18 +555,20 @@ namespace Jammy.Main
 			lbCustom.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			lbCustom.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbCustom.FormattingEnabled = true;
-			lbCustom.ItemHeight = 13;
-			lbCustom.Location = new System.Drawing.Point(1219, 256);
+			lbCustom.ItemHeight = 26;
+			lbCustom.Location = new System.Drawing.Point(2264, 546);
+			lbCustom.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			lbCustom.Name = "lbCustom";
-			lbCustom.Size = new System.Drawing.Size(167, 303);
+			lbCustom.Size = new System.Drawing.Size(307, 628);
 			lbCustom.TabIndex = 38;
 			// 
 			// btnDumpTrace
 			// 
 			btnDumpTrace.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnDumpTrace.Location = new System.Drawing.Point(1120, 303);
+			btnDumpTrace.Location = new System.Drawing.Point(2080, 646);
+			btnDumpTrace.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnDumpTrace.Name = "btnDumpTrace";
-			btnDumpTrace.Size = new System.Drawing.Size(93, 23);
+			btnDumpTrace.Size = new System.Drawing.Size(173, 49);
 			btnDumpTrace.TabIndex = 39;
 			btnDumpTrace.Text = "Dump Trace";
 			btnDumpTrace.UseVisualStyleBackColor = true;
@@ -548,9 +577,10 @@ namespace Jammy.Main
 			// btnIDEACK
 			// 
 			btnIDEACK.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnIDEACK.Location = new System.Drawing.Point(1039, 536);
+			btnIDEACK.Location = new System.Drawing.Point(1930, 1143);
+			btnIDEACK.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnIDEACK.Name = "btnIDEACK";
-			btnIDEACK.Size = new System.Drawing.Size(72, 23);
+			btnIDEACK.Size = new System.Drawing.Size(134, 49);
 			btnIDEACK.TabIndex = 40;
 			btnIDEACK.Text = "IDEACK";
 			btnIDEACK.UseVisualStyleBackColor = true;
@@ -559,9 +589,10 @@ namespace Jammy.Main
 			// btnChange
 			// 
 			btnChange.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnChange.Location = new System.Drawing.Point(1039, 422);
+			btnChange.Location = new System.Drawing.Point(1930, 900);
+			btnChange.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnChange.Name = "btnChange";
-			btnChange.Size = new System.Drawing.Size(72, 23);
+			btnChange.Size = new System.Drawing.Size(134, 49);
 			btnChange.TabIndex = 41;
 			btnChange.Text = "Change";
 			btnChange.UseVisualStyleBackColor = true;
@@ -572,9 +603,10 @@ namespace Jammy.Main
 			radioDF0.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			radioDF0.AutoSize = true;
 			radioDF0.Checked = true;
-			radioDF0.Location = new System.Drawing.Point(1116, 424);
+			radioDF0.Location = new System.Drawing.Point(2072, 905);
+			radioDF0.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			radioDF0.Name = "radioDF0";
-			radioDF0.Size = new System.Drawing.Size(14, 13);
+			radioDF0.Size = new System.Drawing.Size(27, 26);
 			radioDF0.TabIndex = 42;
 			radioDF0.TabStop = true;
 			radioDF0.UseVisualStyleBackColor = true;
@@ -584,9 +616,10 @@ namespace Jammy.Main
 			// 
 			radioDF1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			radioDF1.AutoSize = true;
-			radioDF1.Location = new System.Drawing.Point(1136, 424);
+			radioDF1.Location = new System.Drawing.Point(2109, 905);
+			radioDF1.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			radioDF1.Name = "radioDF1";
-			radioDF1.Size = new System.Drawing.Size(14, 13);
+			radioDF1.Size = new System.Drawing.Size(27, 26);
 			radioDF1.TabIndex = 43;
 			radioDF1.TabStop = true;
 			radioDF1.UseVisualStyleBackColor = true;
@@ -596,9 +629,10 @@ namespace Jammy.Main
 			// 
 			radioDF2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			radioDF2.AutoSize = true;
-			radioDF2.Location = new System.Drawing.Point(1156, 424);
+			radioDF2.Location = new System.Drawing.Point(2146, 905);
+			radioDF2.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			radioDF2.Name = "radioDF2";
-			radioDF2.Size = new System.Drawing.Size(14, 13);
+			radioDF2.Size = new System.Drawing.Size(27, 26);
 			radioDF2.TabIndex = 44;
 			radioDF2.TabStop = true;
 			radioDF2.UseVisualStyleBackColor = true;
@@ -608,9 +642,10 @@ namespace Jammy.Main
 			// 
 			radioDF3.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			radioDF3.AutoSize = true;
-			radioDF3.Location = new System.Drawing.Point(1177, 424);
+			radioDF3.Location = new System.Drawing.Point(2185, 905);
+			radioDF3.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			radioDF3.Name = "radioDF3";
-			radioDF3.Size = new System.Drawing.Size(14, 13);
+			radioDF3.Size = new System.Drawing.Size(27, 26);
 			radioDF3.TabIndex = 45;
 			radioDF3.TabStop = true;
 			radioDF3.UseVisualStyleBackColor = true;
@@ -619,9 +654,10 @@ namespace Jammy.Main
 			// btnGfxScan
 			// 
 			btnGfxScan.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnGfxScan.Location = new System.Drawing.Point(1120, 536);
+			btnGfxScan.Location = new System.Drawing.Point(2080, 1143);
+			btnGfxScan.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnGfxScan.Name = "btnGfxScan";
-			btnGfxScan.Size = new System.Drawing.Size(75, 23);
+			btnGfxScan.Size = new System.Drawing.Size(139, 49);
 			btnGfxScan.TabIndex = 46;
 			btnGfxScan.Text = "Gfx Scan";
 			btnGfxScan.UseVisualStyleBackColor = true;
@@ -630,9 +666,10 @@ namespace Jammy.Main
 			// btnClearBBUSY
 			// 
 			btnClearBBUSY.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnClearBBUSY.Location = new System.Drawing.Point(1120, 507);
+			btnClearBBUSY.Location = new System.Drawing.Point(2080, 1082);
+			btnClearBBUSY.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			btnClearBBUSY.Name = "btnClearBBUSY";
-			btnClearBBUSY.Size = new System.Drawing.Size(75, 23);
+			btnClearBBUSY.Size = new System.Drawing.Size(139, 49);
 			btnClearBBUSY.TabIndex = 47;
 			btnClearBBUSY.Text = "~BBUSY";
 			btnClearBBUSY.UseVisualStyleBackColor = true;
@@ -640,9 +677,9 @@ namespace Jammy.Main
 			// 
 			// Jammy
 			// 
-			AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			ClientSize = new System.Drawing.Size(1414, 605);
+			ClientSize = new System.Drawing.Size(2626, 1291);
 			Controls.Add(btnClearBBUSY);
 			Controls.Add(btnGfxScan);
 			Controls.Add(radioDF3);
@@ -663,7 +700,7 @@ namespace Jammy.Main
 			Controls.Add(btnCIAInt);
 			Controls.Add(btnRemoveDisk);
 			Controls.Add(btnInsertDisk);
-			Controls.Add(txtExecBase);
+			Controls.Add(txtCopper);
 			Controls.Add(addressFollowBox);
 			Controls.Add(btnDisassemble);
 			Controls.Add(picDisk);
@@ -677,6 +714,7 @@ namespace Jammy.Main
 			Controls.Add(btnStep);
 			Controls.Add(lbRegisters);
 			Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+			Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
 			Name = "Jammy";
 			Text = "Jammy";
 			FormClosing += Form1_FormClosing;
@@ -716,7 +754,7 @@ namespace Jammy.Main
 		private System.Windows.Forms.RadioButton radioButton16;
 		private System.Windows.Forms.RadioButton radioButton17;
 		private System.Windows.Forms.ComboBox addressFollowBox;
-		private System.Windows.Forms.RichTextBox txtExecBase;
+		private System.Windows.Forms.RichTextBox txtCopper;
 		private System.Windows.Forms.ContextMenuStrip menuDisassembly;
 		private System.Windows.Forms.ToolStripMenuItem toolStripBreakpoint;
 		private System.Windows.Forms.ToolStripMenuItem toolStripSkip;

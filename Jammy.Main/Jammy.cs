@@ -13,6 +13,7 @@ using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Disassembler;
 using Jammy.Disassembler.TypeMapper;
+using Jammy.Extensions.Windows;
 using Jammy.Interface;
 using Jammy.Main.Dialogs;
 using Jammy.Types;
@@ -171,7 +172,13 @@ namespace Jammy.Main
 			UpdatePowerLight();
 			UpdateDiskLight();
 			//UpdateExecBase();
+			UpdateCopper();
 			UI.UI.IsDirty = false;
+		}
+
+		private void UpdateCopper()
+		{
+			txtCopper.Text = debugger.GetCopperDisassembly();
 		}
 
 		private void UpdateRegs()
@@ -181,6 +188,7 @@ namespace Jammy.Main
 
 			lbRegisters.Items.Clear();
 			lbRegisters.Items.AddRange(regs.Items().Cast<object>().ToArray());
+			lbRegisters.SizeListBox(2);
 
 			lbCustom.Items.Clear();
 
@@ -271,6 +279,8 @@ namespace Jammy.Main
 				lbCallStack.Items.Add("   SSP");
 				for (uint i = 0; i < 15; i++)
 					lbCallStack.Items.Add($"{debugger.Read32(ssp + i*4):X8}");
+
+				lbCallStack.SizeListBox(2);
 			}
 
 			{
@@ -615,7 +625,7 @@ namespace Jammy.Main
 						if (tp != null)
 						{
 							Amiga.LockEmulation();
-							txtExecBase.Text = ObjectMapper.MapObject(tp, address);
+							txtCopper.Text = ObjectMapper.MapObject(tp, address);
 
 						}
 					}

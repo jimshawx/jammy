@@ -23,6 +23,7 @@ namespace Jammy.Debugger
 	{
 		private readonly IBreakpointCollection breakpoints;
 		private readonly IKickstartROM kickstart;
+		private readonly ICopper copper;
 		private readonly IDebugMemoryMapper memory;
 		private readonly ICPU cpu;
 		private readonly IChips custom;
@@ -41,12 +42,13 @@ namespace Jammy.Debugger
 
 		public Debugger(IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
-			IBreakpointCollection breakpoints, IKickstartROM kickstart,
+			IBreakpointCollection breakpoints, IKickstartROM kickstart, ICopper copper,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser, IAnalysis analysis,
 			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases)
 		{
 			this.breakpoints = breakpoints;
 			this.kickstart = kickstart;
+			this.copper = copper;
 			this.disassembly = disassembly;
 			this.tracer = tracer;
 			this.analyser = analyser;
@@ -109,6 +111,8 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0xFC8503, BreakpointType.Read);
 
 				//AddBreakpoint(0xFC4966);//disk.resource drive detection
+				//AddBreakpoint(0xeb4);
+				//AddBreakpoint(0xacc8);
 				return;
 			}
 
@@ -279,6 +283,11 @@ namespace Jammy.Debugger
 			uint pc = cpu.GetRegs().PC;
 			int line = disassembly.GetAddressLine(pc) + 1;
 			AddBreakpoint(disassembly.GetLineAddress(line), BreakpointType.OneShot);
+		}
+
+		public string GetCopperDisassembly()
+		{
+			return copper.GetDisassembly();
 		}
 
 		public IMemoryDump GetMemory()

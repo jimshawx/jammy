@@ -15,6 +15,7 @@ namespace Jammy.Interface
 		void ToggleBreakpoint(uint pc);
 		IMemoryDump GetMemory();
 		ChipState GetChipRegs();
+		string GetCopperDisassembly();
 		ushort GetInterruptLevel();
 		Regs GetRegs();
 		void BreakAtNextPC();

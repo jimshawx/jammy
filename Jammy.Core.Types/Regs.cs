@@ -69,7 +69,7 @@ namespace Jammy.Core.Types
 			for (int i = 0; i < 8; i++)
 				items.Add($"D{i} {D[i]:X8}");
 			items.Add($"PC {PC:X8}");
-			items.Add($"X N Z V C    SR {SR:X4}");
+			items.Add($"X N Z V C");
 			items.Add($"{(SR >> 4) & 1} {(SR >> 3) & 1} {(SR >> 2) & 1} {(SR >> 1) & 1} {SR & 1}");
 
 			//column 2
@@ -77,7 +77,8 @@ namespace Jammy.Core.Types
 				items.Add($"A{i} {A[i]:X8}");
 			items.Add($"SP {A[7]:X8}");
 			items.Add($"SSP {SSP:X8}");
-
+			items.Add($"SR {SR:X4}");
+			items.Add(" ");
 			return items;
 		}
 

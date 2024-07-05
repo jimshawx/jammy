@@ -60,6 +60,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface ICopper : IEmulate, ICustomReadWrite
 	{
 		void Dumping(bool enabled);
+		string GetDisassembly();
 	}
 	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB
 	{
