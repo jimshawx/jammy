@@ -31,18 +31,21 @@ namespace Jammy.Core.IO.Windows
 
 		private readonly ConcurrentQueue<byte> keyQueue = new ConcurrentQueue<byte>();
 
-		bool r_alt=false;
-		bool l_alt=false;
-		bool l_shift = false;
-		bool r_shift = false;
-		
+		private bool r_alt =false;
+		private bool l_alt =false;
+		private bool l_shift = false;
+		private bool r_shift = false;
+
+		private int lastKey = -1;
+		private bool canRepeat = false;
+
 		private void AddKeyDown(int key)
 		{
 			//escape from broken keyboard state
 			if (keyQueue.Count > 100)
 			{
 				Reset();
-				logger.LogDebug("Keyboard State Machine Reset");
+				logger.LogDebug("Keyboard State Machine Reset (overflow)");
 			}
 
 			if (key == (int)VK.VK_MENU)
@@ -71,8 +74,16 @@ namespace Jammy.Core.IO.Windows
 				//	keyQueue.Enqueue(0x67);
 				//	break;
 				default:
-					if (scanConvert.ContainsKey(key))
-						keyQueue.Enqueue(scanConvert[key]);
+					if (key != lastKey || canRepeat)
+					{
+						if (scanConvert.ContainsKey(key))
+						{
+							keyQueue.Enqueue(scanConvert[key]);
+							lastKey = key;
+							canRepeat = false;
+							keyboardState = KeyboardState.Ready;
+						}
+					}
 					break;
 			}
 		}
@@ -114,6 +125,8 @@ namespace Jammy.Core.IO.Windows
 						keyQueue.Enqueue((byte)(scanConvert[key] | 0x80));
 					break;
 			}
+			keyboardState = KeyboardState.Ready;
+			lastKey = -1;
 		}
 
 		private enum KeyboardState
@@ -140,7 +153,10 @@ namespace Jammy.Core.IO.Windows
 				keyTimer -= 10;
 
 				if (keyboardState == KeyboardState.Ready && !keyQueue.IsEmpty)
+				{
 					KeyInterrupt();
+					canRepeat = true;
+				}
 			}
 		}
 
@@ -150,6 +166,8 @@ namespace Jammy.Core.IO.Windows
 			keyboardState = KeyboardState.Ready;
 			l_alt = r_alt = false;
 			l_shift = r_shift = false;
+			canRepeat = false;
+			lastKey = -1;
 		}
 
 		private byte sdr;
