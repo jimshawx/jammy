@@ -129,7 +129,7 @@ namespace Jammy.Main
 			txtDisassembly.Margin = new System.Windows.Forms.Padding(6);
 			txtDisassembly.Name = "txtDisassembly";
 			txtDisassembly.ReadOnly = true;
-			txtDisassembly.Size = new System.Drawing.Size(1331, 531);
+			txtDisassembly.Size = new System.Drawing.Size(1331, 533);
 			txtDisassembly.TabIndex = 1;
 			txtDisassembly.Text = "";
 			txtDisassembly.WordWrap = false;
@@ -219,7 +219,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1331, 713);
+			txtMemory.Size = new System.Drawing.Size(1331, 712);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -248,7 +248,7 @@ namespace Jammy.Main
 			// 
 			splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
 			splitContainer1.Location = new System.Drawing.Point(0, 6);
-			splitContainer1.Margin = new System.Windows.Forms.Padding(6);
+			splitContainer1.Margin = new System.Windows.Forms.Padding(0);
 			splitContainer1.Name = "splitContainer1";
 			splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
 			// 
@@ -259,8 +259,8 @@ namespace Jammy.Main
 			// splitContainer1.Panel2
 			// 
 			splitContainer1.Panel2.Controls.Add(txtMemory);
-			splitContainer1.Size = new System.Drawing.Size(1344, 1276);
-			splitContainer1.SplitterDistance = 543;
+			splitContainer1.Size = new System.Drawing.Size(1344, 1282);
+			splitContainer1.SplitterDistance = 545;
 			splitContainer1.SplitterWidth = 9;
 			splitContainer1.TabIndex = 7;
 			// 
@@ -430,7 +430,7 @@ namespace Jammy.Main
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(552, 1261);
+			txtCopper.Size = new System.Drawing.Size(547, 1261);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -710,6 +710,7 @@ namespace Jammy.Main
 			splitContainer2.Panel2.Controls.Add(txtCopper);
 			splitContainer2.Size = new System.Drawing.Size(1914, 1288);
 			splitContainer2.SplitterDistance = 1350;
+			splitContainer2.SplitterWidth = 9;
 			splitContainer2.TabIndex = 49;
 			// 
 			// Jammy
