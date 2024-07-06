@@ -278,6 +278,29 @@ namespace Jammy.Core.Custom
 		private ushort[] bin = new ushort[128];
 		private ushort[] bout = new ushort[128];
 		private int bcount;
+		private struct Writecache
+		{
+			public uint Address;
+			public ushort Value;
+		}
+		private Writecache writecache;
+		private const uint NO_WRITECACHE = 0xffffffff;
+
+		private void DelayedWrite()
+		{
+			if (writecache.Address != NO_WRITECACHE)
+				memory.Write(0, writecache.Address, writecache.Value, Size.Word);
+		}
+		private void DelayedWrite(uint address, ushort value)
+		{
+			DelayedWrite();
+			writecache.Address = address;
+			writecache.Value = value;
+		}
+		private void ClearDelayedWrite()
+		{
+			writecache.Address = NO_WRITECACHE;
+		}
 
 		private void Blit(uint width, uint height)
 		{
@@ -312,19 +335,7 @@ namespace Jammy.Core.Custom
 						logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 			}
 
-			bool dont_blit = false;
 			uint mode = (bltcon1 >> 3) & 3;
-			//if (mode != 0) dont_blit = true;
-			//these ones are weird
-			//if ((bltcon0 & 0xff) == 0x1a && (bltcon1 & 2) != 0) //00,1a,2a,3a,ca,ea
-			//if (width == 20 && height == 200 && (bltcon1 & 2) != 0)
-			//if ((bltcon0 >> 12) != 0 || (bltcon1 >> 12) != 0)
-			//if (width == 1 && height>1)
-			//{
-			//	dont_blit = true;
-			//	logger.LogTrace("********* NOT DRAWN!");
-			//}
-
 			int ashift = (int)(bltcon0 >> 12);
 			int bshift = (int)(bltcon1 >> 12);
 
@@ -336,6 +347,8 @@ namespace Jammy.Core.Custom
 
 			uint bltabits = 0;
 			uint bltbbits = 0;
+			uint fci = bltcon1&(1u<<2);
+			ClearDelayedWrite();
 
 			for (uint h = 0; h < height; h++)
 			{
@@ -403,10 +416,8 @@ namespace Jammy.Core.Custom
 
 					bltzero |= bltddat;
 
-					bltdpt &= 0xfffffffe;
-
-					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0) && !dont_blit)
-						memory.Write(0, bltdpt, (ushort)bltddat, Size.Word);
+					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
+						DelayedWrite(bltdpt, (ushort)bltddat);
 
 					if ((bltcon1 & (1u << 1)) != 0)
 					{
@@ -437,9 +448,10 @@ namespace Jammy.Core.Custom
 					if ((bltcon0 & (1u <<  9)) != 0) bltcpt += bltcmod;
 					if ((bltcon0 & (1u <<  8)) != 0) bltdpt += bltdmod;
 				}
-				
-				//hack: is this right? clear carry
+
+				//reset carry
 				bltcon1 &= ~(1u << 2);
+				bltcon1 |= fci;
 
 				if (blitterDump)
 				{
@@ -455,6 +467,7 @@ namespace Jammy.Core.Custom
 					bcount = 0; }
 				}
 			}
+			DelayedWrite();
 
 			//write the BZERO bit in DMACON
 			if (bltzero == 0)
