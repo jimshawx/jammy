@@ -86,7 +86,6 @@ namespace Jammy.Main
 			btnGfxScan = new System.Windows.Forms.Button();
 			btnClearBBUSY = new System.Windows.Forms.Button();
 			btnCribSheet = new System.Windows.Forms.Button();
-			cribSheetMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -116,6 +115,7 @@ namespace Jammy.Main
 			// txtDisassembly
 			// 
 			txtDisassembly.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+			txtDisassembly.BackColor = System.Drawing.SystemColors.Window;
 			txtDisassembly.ContextMenuStrip = menuDisassembly;
 			txtDisassembly.DetectUrls = false;
 			txtDisassembly.Font = new System.Drawing.Font("Consolas", 8.25F);
@@ -206,6 +206,7 @@ namespace Jammy.Main
 			// txtMemory
 			// 
 			txtMemory.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+			txtMemory.BackColor = System.Drawing.SystemColors.Window;
 			txtMemory.ContextMenuStrip = menuMemory;
 			txtMemory.DetectUrls = false;
 			txtMemory.Font = new System.Drawing.Font("Consolas", 8.25F);
@@ -213,7 +214,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1328, 655);
+			txtMemory.Size = new System.Drawing.Size(1328, 630);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -417,6 +418,7 @@ namespace Jammy.Main
 			// txtCopper
 			// 
 			txtCopper.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+			txtCopper.BackColor = System.Drawing.SystemColors.Window;
 			txtCopper.DetectUrls = false;
 			txtCopper.Font = new System.Drawing.Font("Consolas", 8.25F);
 			txtCopper.Location = new System.Drawing.Point(1378, 83);
@@ -685,16 +687,7 @@ namespace Jammy.Main
 			btnCribSheet.TabIndex = 48;
 			btnCribSheet.Text = "Crib Sheet";
 			btnCribSheet.UseVisualStyleBackColor = true;
-			btnCribSheet.MouseHover += btnCribSheet_MouseHover;
-			// 
-			// cribSheetMenuStrip
-			// 
-			cribSheetMenuStrip.Enabled = false;
-			cribSheetMenuStrip.Font = new System.Drawing.Font("Consolas", 6.0F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-			cribSheetMenuStrip.ImageScalingSize = new System.Drawing.Size(32, 32);
-			cribSheetMenuStrip.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
-			cribSheetMenuStrip.Name = "cribSheetMenuStrip";
-			cribSheetMenuStrip.Size = new System.Drawing.Size(301, 48);
+			btnCribSheet.Click += btnCribSheet_Click;
 			// 
 			// Jammy
 			// 
@@ -805,7 +798,6 @@ namespace Jammy.Main
 		private System.Windows.Forms.Button btnGfxScan;
 		private System.Windows.Forms.Button btnClearBBUSY;
 		private System.Windows.Forms.Button btnCribSheet;
-		private System.Windows.Forms.ContextMenuStrip cribSheetMenuStrip;
 	}
 }
 

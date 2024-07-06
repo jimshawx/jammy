@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -24,6 +25,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Vortice.Direct3D11;
+using Message = System.Windows.Forms.Message;
+using Task = System.Threading.Tasks.Task;
+using System.Runtime.InteropServices;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -799,27 +803,142 @@ namespace Jammy.Main
 			}
 		}
 
-		private void btnCribSheet_MouseHover(object sender, EventArgs e)
+		public class MiniForm : Form
 		{
-			var pos = this.PointToClient(Cursor.Position);
-			
+			private const int SC_CLOSE = 0xF060;
+			private const int SC_MAXIMIZE = 0xF030;
+			private const int SC_MINIMIZE = 0xF020;
+			private const int SC_RESTORE = 0xF120;
+
+			private const int WM_SYSCOMMAND = 0x0112;
+
+			protected override void WndProc(ref Message m)
+			{
+				if (m.Msg == WM_SYSCOMMAND)
+				{
+					if (m.WParam == new IntPtr(SC_MAXIMIZE)) OnMaximize(new EventArgs());
+					if (m.WParam == new IntPtr(SC_MINIMIZE)) OnMinimize(new EventArgs());
+					if (m.WParam == new IntPtr(SC_RESTORE)) OnRestore(new EventArgs());
+					//if (m.WParam == new IntPtr(SC_CLOSE)) { OnClose(new EventArgs()); return; /* override close behaviour */ }
+				}
+				base.WndProc(ref m);
+			}
+
+			private static readonly object s_minimizeEvent = new();
+			private static readonly object s_maximizeEvent = new();
+			private static readonly object s_restoreEvent = new();
+			private static readonly object s_closeEvent = new();
+
+			public event EventHandler? MinimizeEvent
+			{
+				add => Events.AddHandler(s_minimizeEvent, value);
+				remove => Events.RemoveHandler(s_minimizeEvent, value);
+			}
+			public event EventHandler? MaximizeEvent
+			{
+				add => Events.AddHandler(s_maximizeEvent, value);
+				remove => Events.RemoveHandler(s_maximizeEvent, value);
+			}
+			public event EventHandler? RestoreEvent
+			{
+				add => Events.AddHandler(s_restoreEvent, value);
+				remove => Events.RemoveHandler(s_restoreEvent, value);
+			}
+			public event EventHandler? CloseEvent
+			{
+				add => Events.AddHandler(s_closeEvent, value);
+				remove => Events.RemoveHandler(s_closeEvent, value);
+			}
+			protected void OnMinimize(EventArgs e) { if (Events[s_minimizeEvent] is EventHandler eh) eh(this, e); }
+			protected void OnMaximize(EventArgs e) { if (Events[s_maximizeEvent] is EventHandler eh) eh(this, e); }
+			protected void OnClose(EventArgs e) { if (Events[s_closeEvent] is EventHandler eh) eh(this, e); }
+			protected void OnRestore(EventArgs e) { if (Events[s_restoreEvent] is EventHandler eh) eh(this, e); }
+
+			private const int CP_NOCLOSE_BUTTON = 0x200;
+			protected override CreateParams CreateParams
+			{
+				get
+				{
+					var cp = base.CreateParams;
+					cp.ClassStyle |= CP_NOCLOSE_BUTTON;
+					return cp;
+				}
+			}
+		}
+
+		private MiniForm cribSheet;
+		private void CreateCribSheet()
+		{
+			if (cribSheet != null)
+			{
+				//cribSheet.Activate();
+				if (cribSheet.WindowState == FormWindowState.Minimized)
+					cribSheet.WindowState = FormWindowState.Normal;
+				return;
+			}
+
 			var a = CIAAOdd.GetCribSheet();
 			var b = CIABEven.GetCribSheet();
 			var c = ChipRegs.GetCribSheet();
-			var d = a.Concat(b).Concat(c);
+			//var d = a.Concat(b).Concat(c);
 
-			logger.LogTrace($"{pos.X},{pos.Y}");
-			cribSheetMenuStrip.Top = pos.Y;
-			cribSheetMenuStrip.Left = pos.X;
-			cribSheetMenuStrip.Items.Clear();
-			foreach (var x in d.Take(30))
-				cribSheetMenuStrip.Items.Add(x);
-			cribSheetMenuStrip.Show(Cursor.Position);
+			const int width = 848 * 2;
+			const int height = 480 * 2;
+
+			cribSheet = new MiniForm { Name = "CribSheet", Text = "CribSheet", ShowInTaskbar = true, ControlBox = true, FormBorderStyle = FormBorderStyle.Sizable, MinimizeBox = true, MaximizeBox = false };
+			if (cribSheet.Handle == IntPtr.Zero)
+				throw new ApplicationException();
+			var pos = Cursor.Position;
+			cribSheet.Top = pos.Y + 1;
+			cribSheet.Left = pos.X - (width / 2);
+			cribSheet.Width = width;
+			cribSheet.Height = height;
+
+			var tb = new TextBox();
+			tb.Multiline = true;
+			tb.WordWrap = false;
+			tb.ReadOnly = true;
+			tb.Font = new Font(FontFamily.GenericMonospace, 7.5f);
+			tb.ScrollBars = ScrollBars.Both;
+			tb.BackColor = SystemColors.Window;
+			//tb.Text = string.Join("\r\n", d);
+			int col = (c.Count + 3) / 3;
+			var cols = new List<List<string>>
+			{
+				c.Take(col).ToList(),
+				c.Skip(col).Take(col).ToList(),
+				c.Skip(col*2).Take(col).ToList(),
+				a.Concat(new List<string>{""}).Concat(b).ToList()
+			};
+			int pad = a.Concat(b).Concat(c).Max(x => x.Length);
+			var items = new string[cols.Count];
+			var sb = new StringBuilder();
+			for (int j = 0; j < cols.Max(x => x.Count); j++)
+			{
+				for (int i = 0; i < cols.Count; i++)
+				{
+					items[i] = cols[i].Count > j ? cols[i][j] : string.Empty;
+				}
+				sb.AppendLine(string.Join(" | ", items.Select(x => x.PadRight(pad))));
+			}
+			tb.Text = sb.ToString();
+
+			tb.Width = cribSheet.ClientSize.Width;
+			tb.Height = cribSheet.ClientSize.Height;
+			tb.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom | AnchorStyles.Right;
+
+			cribSheet.Controls.Add(tb);
+
+			//cribSheet.CloseEvent += (s, ev) => { cribSheet.Hide(); };
+			//tb.KeyDown += (s, ev) => { if (ev.KeyValue == (int)Keys.Escape) cribSheet.Hide(); };
+
+			cribSheet.Show();
+			tb.DeselectAll();
 		}
 
-		private void btnCribSheet_MouseLeave(object sender, EventArgs e)
+		private void btnCribSheet_Click(object sender, EventArgs e)
 		{
-			cribSheetMenuStrip.Hide();
+			CreateCribSheet();
 		}
 	}
 
@@ -837,6 +956,19 @@ namespace Jammy.Main
 		{
 			var msg = Message.Create(c.Handle, WM_SETREDRAW, new IntPtr(1), IntPtr.Zero);
 			NativeWindow.FromHandle(c.Handle).DefWndProc(ref msg);
+		}
+
+		[DllImport("user32.dll")]
+		private static extern int ShowWindow(IntPtr hWnd, uint Msg);
+
+		private const uint SW_RESTORE = 0x09;
+
+		public static void Restore(this Form form)
+		{
+			if (form.WindowState == FormWindowState.Minimized)
+			{
+				ShowWindow(form.Handle, SW_RESTORE);
+			}
 		}
 	}
 }

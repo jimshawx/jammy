@@ -550,7 +550,7 @@ namespace Jammy.Core.Custom
 
 		public static List<string> GetCribSheet()
 		{
-			return customRegisterDetails.Select(x =>$"{x.Key:X6} {x.Value.Item1,-7} {x.Value.Item2}").ToList();
+			return customRegisterDetails.Select(x =>$"{x.Key:X6} {x.Value.Item1,-8} {x.Value.Item2}").ToList();
 		}
 	}
 }

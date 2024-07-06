@@ -106,7 +106,7 @@ namespace Jammy.Core.Custom.CIA
 
 		public static List<string> GetCribSheet()
 		{
-			return debug.Select(x => $"{x.Item1.ToUpper(),-6} {x.Item2}").ToList();
+			return new List<string> { "CIAB Even" }.Concat(debug.Select(x => $"{x.Item1.ToUpper(),-6} {x.Item2}")).ToList();
 		}
 	}
 }
