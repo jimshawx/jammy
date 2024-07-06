@@ -86,6 +86,7 @@ namespace Jammy.Main
 			btnGfxScan = new System.Windows.Forms.Button();
 			btnClearBBUSY = new System.Windows.Forms.Button();
 			btnCribSheet = new System.Windows.Forms.Button();
+			splitContainer2 = new System.Windows.Forms.SplitContainer();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -94,6 +95,10 @@ namespace Jammy.Main
 			splitContainer1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)picPower).BeginInit();
 			((System.ComponentModel.ISupportInitialize)picDisk).BeginInit();
+			((System.ComponentModel.ISupportInitialize)splitContainer2).BeginInit();
+			splitContainer2.Panel1.SuspendLayout();
+			splitContainer2.Panel2.SuspendLayout();
+			splitContainer2.SuspendLayout();
 			SuspendLayout();
 			// 
 			// lbRegisters
@@ -124,7 +129,7 @@ namespace Jammy.Main
 			txtDisassembly.Margin = new System.Windows.Forms.Padding(6);
 			txtDisassembly.Name = "txtDisassembly";
 			txtDisassembly.ReadOnly = true;
-			txtDisassembly.Size = new System.Drawing.Size(1328, 511);
+			txtDisassembly.Size = new System.Drawing.Size(1331, 531);
 			txtDisassembly.TabIndex = 1;
 			txtDisassembly.Text = "";
 			txtDisassembly.WordWrap = false;
@@ -205,7 +210,7 @@ namespace Jammy.Main
 			// 
 			// txtMemory
 			// 
-			txtMemory.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+			txtMemory.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
 			txtMemory.BackColor = System.Drawing.SystemColors.Window;
 			txtMemory.ContextMenuStrip = menuMemory;
 			txtMemory.DetectUrls = false;
@@ -214,7 +219,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1328, 630);
+			txtMemory.Size = new System.Drawing.Size(1331, 713);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -241,8 +246,8 @@ namespace Jammy.Main
 			// 
 			// splitContainer1
 			// 
-			splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
-			splitContainer1.Location = new System.Drawing.Point(22, 26);
+			splitContainer1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+			splitContainer1.Location = new System.Drawing.Point(0, 6);
 			splitContainer1.Margin = new System.Windows.Forms.Padding(6);
 			splitContainer1.Name = "splitContainer1";
 			splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
@@ -254,8 +259,8 @@ namespace Jammy.Main
 			// splitContainer1.Panel2
 			// 
 			splitContainer1.Panel2.Controls.Add(txtMemory);
-			splitContainer1.Size = new System.Drawing.Size(1343, 1239);
-			splitContainer1.SplitterDistance = 528;
+			splitContainer1.Size = new System.Drawing.Size(1344, 1276);
+			splitContainer1.SplitterDistance = 543;
 			splitContainer1.SplitterWidth = 9;
 			splitContainer1.TabIndex = 7;
 			// 
@@ -421,11 +426,11 @@ namespace Jammy.Main
 			txtCopper.BackColor = System.Drawing.SystemColors.Window;
 			txtCopper.DetectUrls = false;
 			txtCopper.Font = new System.Drawing.Font("Consolas", 8.25F);
-			txtCopper.Location = new System.Drawing.Point(1378, 83);
+			txtCopper.Location = new System.Drawing.Point(5, 16);
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(535, 1171);
+			txtCopper.Size = new System.Drawing.Size(552, 1261);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -507,7 +512,7 @@ namespace Jammy.Main
 			cbTypes.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			cbTypes.FormattingEnabled = true;
 			cbTypes.Items.AddRange(new object[] { "(None)", "ExecBase", "timerequest", "Library", "Task", "KeyMapResource", "MsgPort", "Unit", "Resident" });
-			cbTypes.Location = new System.Drawing.Point(1621, 32);
+			cbTypes.Location = new System.Drawing.Point(2264, 1206);
 			cbTypes.Margin = new System.Windows.Forms.Padding(6);
 			cbTypes.Name = "cbTypes";
 			cbTypes.Size = new System.Drawing.Size(292, 40);
@@ -681,19 +686,38 @@ namespace Jammy.Main
 			// 
 			// btnCribSheet
 			// 
-			btnCribSheet.Location = new System.Drawing.Point(1383, 32);
+			btnCribSheet.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			btnCribSheet.Location = new System.Drawing.Point(2080, 1201);
 			btnCribSheet.Name = "btnCribSheet";
-			btnCribSheet.Size = new System.Drawing.Size(133, 46);
+			btnCribSheet.Size = new System.Drawing.Size(139, 49);
 			btnCribSheet.TabIndex = 48;
 			btnCribSheet.Text = "Crib Sheet";
 			btnCribSheet.UseVisualStyleBackColor = true;
 			btnCribSheet.Click += btnCribSheet_Click;
+			// 
+			// splitContainer2
+			// 
+			splitContainer2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+			splitContainer2.Location = new System.Drawing.Point(4, -1);
+			splitContainer2.Name = "splitContainer2";
+			// 
+			// splitContainer2.Panel1
+			// 
+			splitContainer2.Panel1.Controls.Add(splitContainer1);
+			// 
+			// splitContainer2.Panel2
+			// 
+			splitContainer2.Panel2.Controls.Add(txtCopper);
+			splitContainer2.Size = new System.Drawing.Size(1914, 1288);
+			splitContainer2.SplitterDistance = 1350;
+			splitContainer2.TabIndex = 49;
 			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2626, 1291);
+			Controls.Add(splitContainer2);
 			Controls.Add(btnCribSheet);
 			Controls.Add(btnClearBBUSY);
 			Controls.Add(btnGfxScan);
@@ -715,14 +739,12 @@ namespace Jammy.Main
 			Controls.Add(btnCIAInt);
 			Controls.Add(btnRemoveDisk);
 			Controls.Add(btnInsertDisk);
-			Controls.Add(txtCopper);
 			Controls.Add(addressFollowBox);
 			Controls.Add(btnDisassemble);
 			Controls.Add(picDisk);
 			Controls.Add(picPower);
 			Controls.Add(btnStepOver);
 			Controls.Add(btnRefresh);
-			Controls.Add(splitContainer1);
 			Controls.Add(btnReset);
 			Controls.Add(btnGo);
 			Controls.Add(btnStop);
@@ -741,6 +763,10 @@ namespace Jammy.Main
 			splitContainer1.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)picPower).EndInit();
 			((System.ComponentModel.ISupportInitialize)picDisk).EndInit();
+			splitContainer2.Panel1.ResumeLayout(false);
+			splitContainer2.Panel2.ResumeLayout(false);
+			((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
+			splitContainer2.ResumeLayout(false);
 			ResumeLayout(false);
 			PerformLayout();
 		}
@@ -798,6 +824,7 @@ namespace Jammy.Main
 		private System.Windows.Forms.Button btnGfxScan;
 		private System.Windows.Forms.Button btnClearBBUSY;
 		private System.Windows.Forms.Button btnCribSheet;
+		private System.Windows.Forms.SplitContainer splitContainer2;
 	}
 }
 
