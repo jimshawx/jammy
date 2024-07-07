@@ -48,6 +48,12 @@ namespace Jammy.Core.Types
 		NTSC
 	}
 
+	public enum BlitterMode
+	{
+		Immediate,
+		Synchronous
+	}
+
 	public enum SerialConsole
 	{
 		Null,
@@ -99,6 +105,7 @@ namespace Jammy.Core.Types
 		public SerialConsole Console { get; set; }
 		public DiskController DiskController { get; set; }
 		public VideoFormat VideoFormat { get; set; }
+		public BlitterMode BlitterMode { get; set; }
 
 		public string LVODirectory { get { return "c:/source/programming/amiga";} set { } }
 	}

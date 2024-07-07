@@ -49,6 +49,7 @@ namespace Jammy.Core
 			emulations.Add(mouse);
 			emulations.Add(keyboard);
 			emulations.Add(copper);
+			emulations.Add(blitter);
 			emulations.Add(audio);
 			emulations.Add(ciaa);
 			emulations.Add(ciab);
@@ -60,7 +61,6 @@ namespace Jammy.Core
 			resetters.Add(memory);
 			resetters.Add(battClock);
 			resetters.Add(motherboard);
-			resetters.Add(blitter);
 			resetters.Add(custom);
 
 			if (resetters.Any(x => x is IEmulate))

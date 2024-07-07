@@ -42,6 +42,8 @@ namespace Jammy.UI.Settings
 			groupBox1 = new System.Windows.Forms.GroupBox();
 			panel2 = new System.Windows.Forms.Panel();
 			groupBox2 = new System.Windows.Forms.GroupBox();
+			rbPAL = new System.Windows.Forms.RadioButton();
+			rbNTSC = new System.Windows.Forms.RadioButton();
 			cbChipset = new System.Windows.Forms.ComboBox();
 			txtKickstart = new System.Windows.Forms.TextBox();
 			panel3 = new System.Windows.Forms.Panel();
@@ -85,8 +87,9 @@ namespace Jammy.UI.Settings
 			panel7 = new System.Windows.Forms.Panel();
 			groupBox7 = new System.Windows.Forms.GroupBox();
 			cbDiskController = new System.Windows.Forms.ComboBox();
-			rbNTSC = new System.Windows.Forms.RadioButton();
-			rbPAL = new System.Windows.Forms.RadioButton();
+			groupBox8 = new System.Windows.Forms.GroupBox();
+			rbImmediate = new System.Windows.Forms.RadioButton();
+			rbSynchronous = new System.Windows.Forms.RadioButton();
 			panel1.SuspendLayout();
 			groupBox1.SuspendLayout();
 			groupBox2.SuspendLayout();
@@ -100,23 +103,26 @@ namespace Jammy.UI.Settings
 			panel6.SuspendLayout();
 			groupBox6.SuspendLayout();
 			groupBox7.SuspendLayout();
+			groupBox8.SuspendLayout();
 			SuspendLayout();
 			// 
 			// cbQuickStart
 			// 
 			cbQuickStart.FormattingEnabled = true;
 			cbQuickStart.Items.AddRange(new object[] { "current configuration", "A500, 512KB+512KB, OCS, KS1.3", "A500+, 1MB+1MB, ECS, KS2.04", "A600, 1MB, ECS, KS2.05", "A1200, 2MB, AGA, KS3.1", "A3000, 1MB+16MB+256MB, ECS, KS3.1", "A4000, 2MB+16MB+256MB, AGA, KS3.1" });
-			cbQuickStart.Location = new System.Drawing.Point(12, 12);
+			cbQuickStart.Location = new System.Drawing.Point(22, 26);
+			cbQuickStart.Margin = new System.Windows.Forms.Padding(6);
 			cbQuickStart.Name = "cbQuickStart";
-			cbQuickStart.Size = new System.Drawing.Size(350, 23);
+			cbQuickStart.Size = new System.Drawing.Size(647, 40);
 			cbQuickStart.TabIndex = 1;
 			cbQuickStart.SelectedValueChanged += cbQuickStart_SelectedValueChanged;
 			// 
 			// btnQuickStart
 			// 
-			btnQuickStart.Location = new System.Drawing.Point(369, 13);
+			btnQuickStart.Location = new System.Drawing.Point(685, 28);
+			btnQuickStart.Margin = new System.Windows.Forms.Padding(6);
 			btnQuickStart.Name = "btnQuickStart";
-			btnQuickStart.Size = new System.Drawing.Size(75, 23);
+			btnQuickStart.Size = new System.Drawing.Size(139, 49);
 			btnQuickStart.TabIndex = 2;
 			btnQuickStart.Text = "Quick Start";
 			btnQuickStart.UseVisualStyleBackColor = true;
@@ -126,18 +132,20 @@ namespace Jammy.UI.Settings
 			// 
 			cbSku.FormattingEnabled = true;
 			cbSku.Items.AddRange(new object[] { "MC68000", "MC68EC020", "MC68030" });
-			cbSku.Location = new System.Drawing.Point(6, 22);
+			cbSku.Location = new System.Drawing.Point(11, 47);
+			cbSku.Margin = new System.Windows.Forms.Padding(6);
 			cbSku.Name = "cbSku";
-			cbSku.Size = new System.Drawing.Size(121, 23);
+			cbSku.Size = new System.Drawing.Size(221, 40);
 			cbSku.TabIndex = 3;
 			cbSku.SelectedValueChanged += cbCPU_SelectedValueChanged;
 			// 
 			// rbNative
 			// 
 			rbNative.AutoSize = true;
-			rbNative.Location = new System.Drawing.Point(142, 19);
+			rbNative.Location = new System.Drawing.Point(264, 41);
+			rbNative.Margin = new System.Windows.Forms.Padding(6);
 			rbNative.Name = "rbNative";
-			rbNative.Size = new System.Drawing.Size(59, 19);
+			rbNative.Size = new System.Drawing.Size(114, 36);
 			rbNative.TabIndex = 4;
 			rbNative.TabStop = true;
 			rbNative.Text = "Native";
@@ -147,9 +155,10 @@ namespace Jammy.UI.Settings
 			// rbMusashi
 			// 
 			rbMusashi.AutoSize = true;
-			rbMusashi.Location = new System.Drawing.Point(142, 37);
+			rbMusashi.Location = new System.Drawing.Point(264, 79);
+			rbMusashi.Margin = new System.Windows.Forms.Padding(6);
 			rbMusashi.Name = "rbMusashi";
-			rbMusashi.Size = new System.Drawing.Size(69, 19);
+			rbMusashi.Size = new System.Drawing.Size(133, 36);
 			rbMusashi.TabIndex = 5;
 			rbMusashi.TabStop = true;
 			rbMusashi.Text = "Musashi";
@@ -158,9 +167,10 @@ namespace Jammy.UI.Settings
 			// panel1
 			// 
 			panel1.Controls.Add(groupBox1);
-			panel1.Location = new System.Drawing.Point(12, 42);
+			panel1.Location = new System.Drawing.Point(22, 90);
+			panel1.Margin = new System.Windows.Forms.Padding(6);
 			panel1.Name = "panel1";
-			panel1.Size = new System.Drawing.Size(238, 90);
+			panel1.Size = new System.Drawing.Size(442, 192);
 			panel1.TabIndex = 6;
 			// 
 			// groupBox1
@@ -170,17 +180,20 @@ namespace Jammy.UI.Settings
 			groupBox1.Controls.Add(rbMusashi);
 			groupBox1.ForeColor = System.Drawing.SystemColors.Highlight;
 			groupBox1.Location = new System.Drawing.Point(0, 0);
+			groupBox1.Margin = new System.Windows.Forms.Padding(6);
 			groupBox1.Name = "groupBox1";
-			groupBox1.Size = new System.Drawing.Size(226, 72);
+			groupBox1.Padding = new System.Windows.Forms.Padding(6);
+			groupBox1.Size = new System.Drawing.Size(420, 154);
 			groupBox1.TabIndex = 6;
 			groupBox1.TabStop = false;
 			groupBox1.Text = "CPU";
 			// 
 			// panel2
 			// 
-			panel2.Location = new System.Drawing.Point(12, 138);
+			panel2.Location = new System.Drawing.Point(22, 294);
+			panel2.Margin = new System.Windows.Forms.Padding(6);
 			panel2.Name = "panel2";
-			panel2.Size = new System.Drawing.Size(238, 54);
+			panel2.Size = new System.Drawing.Size(442, 115);
 			panel2.TabIndex = 8;
 			// 
 			// groupBox2
@@ -189,36 +202,65 @@ namespace Jammy.UI.Settings
 			groupBox2.Controls.Add(rbNTSC);
 			groupBox2.Controls.Add(cbChipset);
 			groupBox2.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox2.Location = new System.Drawing.Point(12, 138);
+			groupBox2.Location = new System.Drawing.Point(22, 294);
+			groupBox2.Margin = new System.Windows.Forms.Padding(6);
 			groupBox2.Name = "groupBox2";
-			groupBox2.Size = new System.Drawing.Size(226, 54);
+			groupBox2.Padding = new System.Windows.Forms.Padding(6);
+			groupBox2.Size = new System.Drawing.Size(420, 115);
 			groupBox2.TabIndex = 0;
 			groupBox2.TabStop = false;
 			groupBox2.Text = "Chipset";
+			// 
+			// rbPAL
+			// 
+			rbPAL.AutoSize = true;
+			rbPAL.Location = new System.Drawing.Point(264, 28);
+			rbPAL.Margin = new System.Windows.Forms.Padding(6);
+			rbPAL.Name = "rbPAL";
+			rbPAL.Size = new System.Drawing.Size(82, 36);
+			rbPAL.TabIndex = 6;
+			rbPAL.TabStop = true;
+			rbPAL.Text = "PAL";
+			rbPAL.UseVisualStyleBackColor = true;
+			// 
+			// rbNTSC
+			// 
+			rbNTSC.AutoSize = true;
+			rbNTSC.Location = new System.Drawing.Point(264, 66);
+			rbNTSC.Margin = new System.Windows.Forms.Padding(6);
+			rbNTSC.Name = "rbNTSC";
+			rbNTSC.Size = new System.Drawing.Size(104, 36);
+			rbNTSC.TabIndex = 5;
+			rbNTSC.TabStop = true;
+			rbNTSC.Text = "NTSC";
+			rbNTSC.UseVisualStyleBackColor = true;
 			// 
 			// cbChipset
 			// 
 			cbChipset.FormattingEnabled = true;
 			cbChipset.Items.AddRange(new object[] { "OCS", "ECS", "AGA", "CD32" });
-			cbChipset.Location = new System.Drawing.Point(6, 22);
+			cbChipset.Location = new System.Drawing.Point(11, 47);
+			cbChipset.Margin = new System.Windows.Forms.Padding(6);
 			cbChipset.Name = "cbChipset";
-			cbChipset.Size = new System.Drawing.Size(121, 23);
+			cbChipset.Size = new System.Drawing.Size(221, 40);
 			cbChipset.TabIndex = 0;
 			cbChipset.SelectedValueChanged += cbChipset_SelectedValueChanged;
 			// 
 			// txtKickstart
 			// 
-			txtKickstart.Location = new System.Drawing.Point(6, 22);
+			txtKickstart.Location = new System.Drawing.Point(11, 47);
+			txtKickstart.Margin = new System.Windows.Forms.Padding(6);
 			txtKickstart.Name = "txtKickstart";
-			txtKickstart.Size = new System.Drawing.Size(307, 23);
+			txtKickstart.Size = new System.Drawing.Size(567, 39);
 			txtKickstart.TabIndex = 9;
 			// 
 			// panel3
 			// 
 			panel3.Controls.Add(groupBox3);
-			panel3.Location = new System.Drawing.Point(256, 249);
+			panel3.Location = new System.Drawing.Point(475, 531);
+			panel3.Margin = new System.Windows.Forms.Padding(6);
 			panel3.Name = "panel3";
-			panel3.Size = new System.Drawing.Size(425, 60);
+			panel3.Size = new System.Drawing.Size(789, 128);
 			panel3.TabIndex = 10;
 			// 
 			// groupBox3
@@ -226,18 +268,21 @@ namespace Jammy.UI.Settings
 			groupBox3.Controls.Add(txtKickstart);
 			groupBox3.Controls.Add(btnROMPick);
 			groupBox3.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox3.Location = new System.Drawing.Point(7, 1);
+			groupBox3.Location = new System.Drawing.Point(13, 2);
+			groupBox3.Margin = new System.Windows.Forms.Padding(6);
 			groupBox3.Name = "groupBox3";
-			groupBox3.Size = new System.Drawing.Size(418, 55);
+			groupBox3.Padding = new System.Windows.Forms.Padding(6);
+			groupBox3.Size = new System.Drawing.Size(776, 117);
 			groupBox3.TabIndex = 11;
 			groupBox3.TabStop = false;
 			groupBox3.Text = "Kickstart";
 			// 
 			// btnROMPick
 			// 
-			btnROMPick.Location = new System.Drawing.Point(320, 21);
+			btnROMPick.Location = new System.Drawing.Point(594, 45);
+			btnROMPick.Margin = new System.Windows.Forms.Padding(6);
 			btnROMPick.Name = "btnROMPick";
-			btnROMPick.Size = new System.Drawing.Size(35, 23);
+			btnROMPick.Size = new System.Drawing.Size(65, 49);
 			btnROMPick.TabIndex = 10;
 			btnROMPick.Text = "...";
 			btnROMPick.UseVisualStyleBackColor = true;
@@ -246,9 +291,10 @@ namespace Jammy.UI.Settings
 			// panel4
 			// 
 			panel4.Controls.Add(groupBox5);
-			panel4.Location = new System.Drawing.Point(256, 42);
+			panel4.Location = new System.Drawing.Point(475, 90);
+			panel4.Margin = new System.Windows.Forms.Padding(6);
 			panel4.Name = "panel4";
-			panel4.Size = new System.Drawing.Size(425, 141);
+			panel4.Size = new System.Drawing.Size(789, 301);
 			panel4.TabIndex = 11;
 			// 
 			// groupBox5
@@ -263,18 +309,21 @@ namespace Jammy.UI.Settings
 			groupBox5.Controls.Add(txtDF2);
 			groupBox5.Controls.Add(txtDF3);
 			groupBox5.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox5.Location = new System.Drawing.Point(0, 1);
+			groupBox5.Location = new System.Drawing.Point(0, 2);
+			groupBox5.Margin = new System.Windows.Forms.Padding(6);
 			groupBox5.Name = "groupBox5";
-			groupBox5.Size = new System.Drawing.Size(418, 141);
+			groupBox5.Padding = new System.Windows.Forms.Padding(6);
+			groupBox5.Size = new System.Drawing.Size(776, 301);
 			groupBox5.TabIndex = 16;
 			groupBox5.TabStop = false;
 			groupBox5.Text = "Floppy Disk";
 			// 
 			// btnDF3Pick
 			// 
-			btnDF3Pick.Location = new System.Drawing.Point(320, 106);
+			btnDF3Pick.Location = new System.Drawing.Point(594, 226);
+			btnDF3Pick.Margin = new System.Windows.Forms.Padding(6);
 			btnDF3Pick.Name = "btnDF3Pick";
-			btnDF3Pick.Size = new System.Drawing.Size(35, 23);
+			btnDF3Pick.Size = new System.Drawing.Size(65, 49);
 			btnDF3Pick.TabIndex = 8;
 			btnDF3Pick.Text = "...";
 			btnDF3Pick.UseVisualStyleBackColor = true;
@@ -282,16 +331,18 @@ namespace Jammy.UI.Settings
 			// 
 			// txtDF0
 			// 
-			txtDF0.Location = new System.Drawing.Point(6, 21);
+			txtDF0.Location = new System.Drawing.Point(11, 45);
+			txtDF0.Margin = new System.Windows.Forms.Padding(6);
 			txtDF0.Name = "txtDF0";
-			txtDF0.Size = new System.Drawing.Size(307, 23);
+			txtDF0.Size = new System.Drawing.Size(567, 39);
 			txtDF0.TabIndex = 1;
 			// 
 			// btnDF2Pick
 			// 
-			btnDF2Pick.Location = new System.Drawing.Point(320, 78);
+			btnDF2Pick.Location = new System.Drawing.Point(594, 166);
+			btnDF2Pick.Margin = new System.Windows.Forms.Padding(6);
 			btnDF2Pick.Name = "btnDF2Pick";
-			btnDF2Pick.Size = new System.Drawing.Size(35, 23);
+			btnDF2Pick.Size = new System.Drawing.Size(65, 49);
 			btnDF2Pick.TabIndex = 7;
 			btnDF2Pick.Text = "...";
 			btnDF2Pick.UseVisualStyleBackColor = true;
@@ -299,21 +350,23 @@ namespace Jammy.UI.Settings
 			// 
 			// nudFloppyCount
 			// 
-			nudFloppyCount.Location = new System.Drawing.Point(359, 20);
+			nudFloppyCount.Location = new System.Drawing.Point(667, 43);
+			nudFloppyCount.Margin = new System.Windows.Forms.Padding(6);
 			nudFloppyCount.Maximum = new decimal(new int[] { 4, 0, 0, 0 });
 			nudFloppyCount.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
 			nudFloppyCount.Name = "nudFloppyCount";
 			nudFloppyCount.ReadOnly = true;
-			nudFloppyCount.Size = new System.Drawing.Size(43, 23);
+			nudFloppyCount.Size = new System.Drawing.Size(80, 39);
 			nudFloppyCount.TabIndex = 0;
 			nudFloppyCount.Value = new decimal(new int[] { 1, 0, 0, 0 });
 			nudFloppyCount.ValueChanged += nudFloppyCount_ValueChanged;
 			// 
 			// btnDF1Pick
 			// 
-			btnDF1Pick.Location = new System.Drawing.Point(319, 49);
+			btnDF1Pick.Location = new System.Drawing.Point(592, 105);
+			btnDF1Pick.Margin = new System.Windows.Forms.Padding(6);
 			btnDF1Pick.Name = "btnDF1Pick";
-			btnDF1Pick.Size = new System.Drawing.Size(35, 23);
+			btnDF1Pick.Size = new System.Drawing.Size(65, 49);
 			btnDF1Pick.TabIndex = 6;
 			btnDF1Pick.Text = "...";
 			btnDF1Pick.UseVisualStyleBackColor = true;
@@ -321,16 +374,18 @@ namespace Jammy.UI.Settings
 			// 
 			// txtDF1
 			// 
-			txtDF1.Location = new System.Drawing.Point(6, 50);
+			txtDF1.Location = new System.Drawing.Point(11, 107);
+			txtDF1.Margin = new System.Windows.Forms.Padding(6);
 			txtDF1.Name = "txtDF1";
-			txtDF1.Size = new System.Drawing.Size(307, 23);
+			txtDF1.Size = new System.Drawing.Size(567, 39);
 			txtDF1.TabIndex = 2;
 			// 
 			// btnDF0Pick
 			// 
-			btnDF0Pick.Location = new System.Drawing.Point(319, 20);
+			btnDF0Pick.Location = new System.Drawing.Point(592, 43);
+			btnDF0Pick.Margin = new System.Windows.Forms.Padding(6);
 			btnDF0Pick.Name = "btnDF0Pick";
-			btnDF0Pick.Size = new System.Drawing.Size(35, 23);
+			btnDF0Pick.Size = new System.Drawing.Size(65, 49);
 			btnDF0Pick.TabIndex = 5;
 			btnDF0Pick.Text = "...";
 			btnDF0Pick.UseVisualStyleBackColor = true;
@@ -338,16 +393,18 @@ namespace Jammy.UI.Settings
 			// 
 			// txtDF2
 			// 
-			txtDF2.Location = new System.Drawing.Point(6, 79);
+			txtDF2.Location = new System.Drawing.Point(11, 169);
+			txtDF2.Margin = new System.Windows.Forms.Padding(6);
 			txtDF2.Name = "txtDF2";
-			txtDF2.Size = new System.Drawing.Size(307, 23);
+			txtDF2.Size = new System.Drawing.Size(567, 39);
 			txtDF2.TabIndex = 3;
 			// 
 			// txtDF3
 			// 
-			txtDF3.Location = new System.Drawing.Point(6, 108);
+			txtDF3.Location = new System.Drawing.Point(11, 230);
+			txtDF3.Margin = new System.Windows.Forms.Padding(6);
 			txtDF3.Name = "txtDF3";
-			txtDF3.Size = new System.Drawing.Size(307, 23);
+			txtDF3.Size = new System.Drawing.Size(567, 39);
 			txtDF3.TabIndex = 4;
 			// 
 			// dudZ2
@@ -358,10 +415,11 @@ namespace Jammy.UI.Settings
 			dudZ2.Items.Add("1.0");
 			dudZ2.Items.Add("0.5");
 			dudZ2.Items.Add("0");
-			dudZ2.Location = new System.Drawing.Point(90, 77);
+			dudZ2.Location = new System.Drawing.Point(167, 164);
+			dudZ2.Margin = new System.Windows.Forms.Padding(6);
 			dudZ2.Name = "dudZ2";
 			dudZ2.ReadOnly = true;
-			dudZ2.Size = new System.Drawing.Size(120, 23);
+			dudZ2.Size = new System.Drawing.Size(223, 39);
 			dudZ2.TabIndex = 12;
 			dudZ2.Text = "ZorroII RAM";
 			// 
@@ -372,10 +430,11 @@ namespace Jammy.UI.Settings
 			dudTrapdoor.Items.Add("1.0");
 			dudTrapdoor.Items.Add("0.5");
 			dudTrapdoor.Items.Add("0");
-			dudTrapdoor.Location = new System.Drawing.Point(90, 48);
+			dudTrapdoor.Location = new System.Drawing.Point(167, 102);
+			dudTrapdoor.Margin = new System.Windows.Forms.Padding(6);
 			dudTrapdoor.Name = "dudTrapdoor";
 			dudTrapdoor.ReadOnly = true;
-			dudTrapdoor.Size = new System.Drawing.Size(120, 23);
+			dudTrapdoor.Size = new System.Drawing.Size(223, 39);
 			dudTrapdoor.TabIndex = 13;
 			dudTrapdoor.Text = "Trapdoor RAM";
 			// 
@@ -389,10 +448,11 @@ namespace Jammy.UI.Settings
 			dudZ3.Items.Add("256");
 			dudZ3.Items.Add("128");
 			dudZ3.Items.Add("0");
-			dudZ3.Location = new System.Drawing.Point(90, 106);
+			dudZ3.Location = new System.Drawing.Point(167, 226);
+			dudZ3.Margin = new System.Windows.Forms.Padding(6);
 			dudZ3.Name = "dudZ3";
 			dudZ3.ReadOnly = true;
-			dudZ3.Size = new System.Drawing.Size(120, 23);
+			dudZ3.Size = new System.Drawing.Size(223, 39);
 			dudZ3.TabIndex = 14;
 			dudZ3.Text = "ZorroIII RAM";
 			// 
@@ -412,8 +472,10 @@ namespace Jammy.UI.Settings
 			groupBox4.Controls.Add(dudTrapdoor);
 			groupBox4.ForeColor = System.Drawing.SystemColors.Highlight;
 			groupBox4.Location = new System.Drawing.Point(0, 0);
+			groupBox4.Margin = new System.Windows.Forms.Padding(6);
 			groupBox4.Name = "groupBox4";
-			groupBox4.Size = new System.Drawing.Size(226, 197);
+			groupBox4.Padding = new System.Windows.Forms.Padding(6);
+			groupBox4.Size = new System.Drawing.Size(420, 420);
 			groupBox4.TabIndex = 16;
 			groupBox4.TabStop = false;
 			groupBox4.Text = "Memory";
@@ -421,54 +483,60 @@ namespace Jammy.UI.Settings
 			// label6
 			// 
 			label6.AutoSize = true;
-			label6.Location = new System.Drawing.Point(7, 164);
+			label6.Location = new System.Drawing.Point(13, 350);
+			label6.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
 			label6.Name = "label6";
-			label6.Size = new System.Drawing.Size(53, 15);
+			label6.Size = new System.Drawing.Size(106, 32);
 			label6.TabIndex = 23;
 			label6.Text = "CPU Slot";
 			// 
 			// label5
 			// 
 			label5.AutoSize = true;
-			label5.Location = new System.Drawing.Point(7, 135);
+			label5.Location = new System.Drawing.Point(13, 288);
+			label5.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
 			label5.Name = "label5";
-			label5.Size = new System.Drawing.Size(77, 15);
+			label5.Size = new System.Drawing.Size(155, 32);
 			label5.TabIndex = 22;
 			label5.Text = "Motherboard";
 			// 
 			// label4
 			// 
 			label4.AutoSize = true;
-			label4.Location = new System.Drawing.Point(6, 106);
+			label4.Location = new System.Drawing.Point(11, 226);
+			label4.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
 			label4.Name = "label4";
-			label4.Size = new System.Drawing.Size(48, 15);
+			label4.Size = new System.Drawing.Size(97, 32);
 			label4.TabIndex = 21;
 			label4.Text = "Zorro III";
 			// 
 			// label3
 			// 
 			label3.AutoSize = true;
-			label3.Location = new System.Drawing.Point(7, 77);
+			label3.Location = new System.Drawing.Point(13, 164);
+			label3.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
 			label3.Name = "label3";
-			label3.Size = new System.Drawing.Size(45, 15);
+			label3.Size = new System.Drawing.Size(91, 32);
 			label3.TabIndex = 20;
 			label3.Text = "Zorro II";
 			// 
 			// label2
 			// 
 			label2.AutoSize = true;
-			label2.Location = new System.Drawing.Point(7, 48);
+			label2.Location = new System.Drawing.Point(13, 102);
+			label2.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
 			label2.Name = "label2";
-			label2.Size = new System.Drawing.Size(54, 15);
+			label2.Size = new System.Drawing.Size(109, 32);
 			label2.TabIndex = 19;
 			label2.Text = "Trapdoor";
 			// 
 			// label1
 			// 
 			label1.AutoSize = true;
-			label1.Location = new System.Drawing.Point(7, 19);
+			label1.Location = new System.Drawing.Point(13, 41);
+			label1.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
 			label1.Name = "label1";
-			label1.Size = new System.Drawing.Size(32, 15);
+			label1.Size = new System.Drawing.Size(63, 32);
 			label1.TabIndex = 18;
 			label1.Text = "Chip";
 			// 
@@ -477,10 +545,11 @@ namespace Jammy.UI.Settings
 			dudChipRAM.Items.Add("2.0");
 			dudChipRAM.Items.Add("1.0");
 			dudChipRAM.Items.Add("0.5");
-			dudChipRAM.Location = new System.Drawing.Point(90, 19);
+			dudChipRAM.Location = new System.Drawing.Point(167, 41);
+			dudChipRAM.Margin = new System.Windows.Forms.Padding(6);
 			dudChipRAM.Name = "dudChipRAM";
 			dudChipRAM.ReadOnly = true;
-			dudChipRAM.Size = new System.Drawing.Size(120, 23);
+			dudChipRAM.Size = new System.Drawing.Size(223, 39);
 			dudChipRAM.TabIndex = 17;
 			dudChipRAM.Text = "Chip RAM";
 			// 
@@ -492,10 +561,11 @@ namespace Jammy.UI.Settings
 			dudCPUSlot.Items.Add("16");
 			dudCPUSlot.Items.Add("8");
 			dudCPUSlot.Items.Add("0");
-			dudCPUSlot.Location = new System.Drawing.Point(90, 164);
+			dudCPUSlot.Location = new System.Drawing.Point(167, 350);
+			dudCPUSlot.Margin = new System.Windows.Forms.Padding(6);
 			dudCPUSlot.Name = "dudCPUSlot";
 			dudCPUSlot.ReadOnly = true;
-			dudCPUSlot.Size = new System.Drawing.Size(120, 23);
+			dudCPUSlot.Size = new System.Drawing.Size(223, 39);
 			dudCPUSlot.TabIndex = 16;
 			dudCPUSlot.Text = "CPU Slot RAM";
 			// 
@@ -506,19 +576,21 @@ namespace Jammy.UI.Settings
 			dudMotherboard.Items.Add("16");
 			dudMotherboard.Items.Add("8");
 			dudMotherboard.Items.Add("0");
-			dudMotherboard.Location = new System.Drawing.Point(90, 135);
+			dudMotherboard.Location = new System.Drawing.Point(167, 288);
+			dudMotherboard.Margin = new System.Windows.Forms.Padding(6);
 			dudMotherboard.Name = "dudMotherboard";
 			dudMotherboard.ReadOnly = true;
-			dudMotherboard.Size = new System.Drawing.Size(120, 23);
+			dudMotherboard.Size = new System.Drawing.Size(223, 39);
 			dudMotherboard.TabIndex = 15;
 			dudMotherboard.Text = "Motherboard RAM";
 			// 
 			// btnGo
 			// 
 			btnGo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
-			btnGo.Location = new System.Drawing.Point(600, 373);
+			btnGo.Location = new System.Drawing.Point(1114, 796);
+			btnGo.Margin = new System.Windows.Forms.Padding(6);
 			btnGo.Name = "btnGo";
-			btnGo.Size = new System.Drawing.Size(75, 23);
+			btnGo.Size = new System.Drawing.Size(139, 49);
 			btnGo.TabIndex = 16;
 			btnGo.Text = "Go!";
 			btnGo.UseVisualStyleBackColor = true;
@@ -526,9 +598,10 @@ namespace Jammy.UI.Settings
 			// 
 			// btnExit
 			// 
-			btnExit.Location = new System.Drawing.Point(266, 372);
+			btnExit.Location = new System.Drawing.Point(494, 794);
+			btnExit.Margin = new System.Windows.Forms.Padding(6);
 			btnExit.Name = "btnExit";
-			btnExit.Size = new System.Drawing.Size(75, 23);
+			btnExit.Size = new System.Drawing.Size(139, 49);
 			btnExit.TabIndex = 17;
 			btnExit.Text = "Exit";
 			btnExit.UseVisualStyleBackColor = true;
@@ -537,16 +610,18 @@ namespace Jammy.UI.Settings
 			// panel5
 			// 
 			panel5.Controls.Add(groupBox4);
-			panel5.Location = new System.Drawing.Point(12, 198);
+			panel5.Location = new System.Drawing.Point(22, 422);
+			panel5.Margin = new System.Windows.Forms.Padding(6);
 			panel5.Name = "panel5";
-			panel5.Size = new System.Drawing.Size(238, 197);
+			panel5.Size = new System.Drawing.Size(442, 420);
 			panel5.TabIndex = 18;
 			// 
 			// btnLoadConfig
 			// 
-			btnLoadConfig.Location = new System.Drawing.Point(357, 372);
+			btnLoadConfig.Location = new System.Drawing.Point(663, 794);
+			btnLoadConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnLoadConfig.Name = "btnLoadConfig";
-			btnLoadConfig.Size = new System.Drawing.Size(75, 23);
+			btnLoadConfig.Size = new System.Drawing.Size(139, 49);
 			btnLoadConfig.TabIndex = 19;
 			btnLoadConfig.Text = "Load ...";
 			btnLoadConfig.UseVisualStyleBackColor = true;
@@ -554,9 +629,10 @@ namespace Jammy.UI.Settings
 			// 
 			// btnSaveAsConfig
 			// 
-			btnSaveAsConfig.Location = new System.Drawing.Point(519, 373);
+			btnSaveAsConfig.Location = new System.Drawing.Point(964, 796);
+			btnSaveAsConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnSaveAsConfig.Name = "btnSaveAsConfig";
-			btnSaveAsConfig.Size = new System.Drawing.Size(75, 23);
+			btnSaveAsConfig.Size = new System.Drawing.Size(139, 49);
 			btnSaveAsConfig.TabIndex = 20;
 			btnSaveAsConfig.Text = "Save As...";
 			btnSaveAsConfig.UseVisualStyleBackColor = true;
@@ -565,9 +641,10 @@ namespace Jammy.UI.Settings
 			// btnSaveConfig
 			// 
 			btnSaveConfig.Enabled = false;
-			btnSaveConfig.Location = new System.Drawing.Point(438, 373);
+			btnSaveConfig.Location = new System.Drawing.Point(813, 796);
+			btnSaveConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnSaveConfig.Name = "btnSaveConfig";
-			btnSaveConfig.Size = new System.Drawing.Size(75, 23);
+			btnSaveConfig.Size = new System.Drawing.Size(139, 49);
 			btnSaveConfig.TabIndex = 21;
 			btnSaveConfig.Text = "Save";
 			btnSaveConfig.UseVisualStyleBackColor = true;
@@ -575,10 +652,12 @@ namespace Jammy.UI.Settings
 			// 
 			// panel6
 			// 
+			panel6.Controls.Add(groupBox8);
 			panel6.Controls.Add(groupBox6);
-			panel6.Location = new System.Drawing.Point(256, 315);
+			panel6.Location = new System.Drawing.Point(475, 672);
+			panel6.Margin = new System.Windows.Forms.Padding(6);
 			panel6.Name = "panel6";
-			panel6.Size = new System.Drawing.Size(425, 52);
+			panel6.Size = new System.Drawing.Size(789, 111);
 			panel6.TabIndex = 22;
 			// 
 			// groupBox6
@@ -586,9 +665,11 @@ namespace Jammy.UI.Settings
 			groupBox6.Controls.Add(cbDebugging);
 			groupBox6.Controls.Add(cbAudio);
 			groupBox6.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox6.Location = new System.Drawing.Point(1, 0);
+			groupBox6.Location = new System.Drawing.Point(2, 0);
+			groupBox6.Margin = new System.Windows.Forms.Padding(6);
 			groupBox6.Name = "groupBox6";
-			groupBox6.Size = new System.Drawing.Size(418, 51);
+			groupBox6.Padding = new System.Windows.Forms.Padding(6);
+			groupBox6.Size = new System.Drawing.Size(347, 109);
 			groupBox6.TabIndex = 0;
 			groupBox6.TabStop = false;
 			groupBox6.Text = "Miscellaneous";
@@ -596,9 +677,10 @@ namespace Jammy.UI.Settings
 			// cbDebugging
 			// 
 			cbDebugging.AutoSize = true;
-			cbDebugging.Location = new System.Drawing.Point(70, 22);
+			cbDebugging.Location = new System.Drawing.Point(130, 47);
+			cbDebugging.Margin = new System.Windows.Forms.Padding(6);
 			cbDebugging.Name = "cbDebugging";
-			cbDebugging.Size = new System.Drawing.Size(85, 19);
+			cbDebugging.Size = new System.Drawing.Size(166, 36);
 			cbDebugging.TabIndex = 1;
 			cbDebugging.Text = "Debugging";
 			cbDebugging.UseVisualStyleBackColor = true;
@@ -606,27 +688,31 @@ namespace Jammy.UI.Settings
 			// cbAudio
 			// 
 			cbAudio.AutoSize = true;
-			cbAudio.Location = new System.Drawing.Point(6, 22);
+			cbAudio.Location = new System.Drawing.Point(11, 47);
+			cbAudio.Margin = new System.Windows.Forms.Padding(6);
 			cbAudio.Name = "cbAudio";
-			cbAudio.Size = new System.Drawing.Size(58, 19);
+			cbAudio.Size = new System.Drawing.Size(109, 36);
 			cbAudio.TabIndex = 0;
 			cbAudio.Text = "Audio";
 			cbAudio.UseVisualStyleBackColor = true;
 			// 
 			// panel7
 			// 
-			panel7.Location = new System.Drawing.Point(256, 188);
+			panel7.Location = new System.Drawing.Point(475, 401);
+			panel7.Margin = new System.Windows.Forms.Padding(6);
 			panel7.Name = "panel7";
-			panel7.Size = new System.Drawing.Size(425, 56);
+			panel7.Size = new System.Drawing.Size(789, 119);
 			panel7.TabIndex = 23;
 			// 
 			// groupBox7
 			// 
 			groupBox7.Controls.Add(cbDiskController);
 			groupBox7.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox7.Location = new System.Drawing.Point(256, 188);
+			groupBox7.Location = new System.Drawing.Point(475, 401);
+			groupBox7.Margin = new System.Windows.Forms.Padding(6);
 			groupBox7.Name = "groupBox7";
-			groupBox7.Size = new System.Drawing.Size(418, 55);
+			groupBox7.Padding = new System.Windows.Forms.Padding(6);
+			groupBox7.Size = new System.Drawing.Size(776, 117);
 			groupBox7.TabIndex = 0;
 			groupBox7.TabStop = false;
 			groupBox7.Text = "Hard Disk";
@@ -635,38 +721,53 @@ namespace Jammy.UI.Settings
 			// 
 			cbDiskController.FormattingEnabled = true;
 			cbDiskController.Items.AddRange(new object[] { "None", "A600_A1200", "A3000", "A4000" });
-			cbDiskController.Location = new System.Drawing.Point(13, 23);
+			cbDiskController.Location = new System.Drawing.Point(24, 49);
+			cbDiskController.Margin = new System.Windows.Forms.Padding(6);
 			cbDiskController.Name = "cbDiskController";
-			cbDiskController.Size = new System.Drawing.Size(175, 23);
+			cbDiskController.Size = new System.Drawing.Size(322, 40);
 			cbDiskController.TabIndex = 0;
 			// 
-			// rbNTSC
+			// groupBox8
 			// 
-			rbNTSC.AutoSize = true;
-			rbNTSC.Location = new System.Drawing.Point(142, 31);
-			rbNTSC.Name = "rbNTSC";
-			rbNTSC.Size = new System.Drawing.Size(54, 19);
-			rbNTSC.TabIndex = 5;
-			rbNTSC.TabStop = true;
-			rbNTSC.Text = "NTSC";
-			rbNTSC.UseVisualStyleBackColor = true;
+			groupBox8.Controls.Add(rbSynchronous);
+			groupBox8.Controls.Add(rbImmediate);
+			groupBox8.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox8.Location = new System.Drawing.Point(358, 3);
+			groupBox8.Name = "groupBox8";
+			groupBox8.Size = new System.Drawing.Size(418, 105);
+			groupBox8.TabIndex = 1;
+			groupBox8.TabStop = false;
+			groupBox8.Text = "Blitter";
 			// 
-			// rbPAL
+			// rbImmediate
 			// 
-			rbPAL.AutoSize = true;
-			rbPAL.Location = new System.Drawing.Point(142, 13);
-			rbPAL.Name = "rbPAL";
-			rbPAL.Size = new System.Drawing.Size(45, 19);
-			rbPAL.TabIndex = 6;
-			rbPAL.TabStop = true;
-			rbPAL.Text = "PAL";
-			rbPAL.UseVisualStyleBackColor = true;
+			rbImmediate.AutoSize = true;
+			rbImmediate.Checked = true;
+			rbImmediate.Location = new System.Drawing.Point(21, 44);
+			rbImmediate.Name = "rbImmediate";
+			rbImmediate.Size = new System.Drawing.Size(159, 36);
+			rbImmediate.TabIndex = 0;
+			rbImmediate.TabStop = true;
+			rbImmediate.Text = "Immediate";
+			rbImmediate.UseVisualStyleBackColor = true;
+			// 
+			// rbSynchronous
+			// 
+			rbSynchronous.AutoSize = true;
+			rbSynchronous.Enabled = false;
+			rbSynchronous.Location = new System.Drawing.Point(186, 44);
+			rbSynchronous.Name = "rbSynchronous";
+			rbSynchronous.Size = new System.Drawing.Size(182, 36);
+			rbSynchronous.TabIndex = 1;
+			rbSynchronous.TabStop = true;
+			rbSynchronous.Text = "Synchronous";
+			rbSynchronous.UseVisualStyleBackColor = true;
 			// 
 			// Settings
 			// 
-			AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			ClientSize = new System.Drawing.Size(688, 408);
+			ClientSize = new System.Drawing.Size(1278, 870);
 			Controls.Add(groupBox2);
 			Controls.Add(groupBox7);
 			Controls.Add(panel7);
@@ -683,6 +784,7 @@ namespace Jammy.UI.Settings
 			Controls.Add(panel1);
 			Controls.Add(btnQuickStart);
 			Controls.Add(cbQuickStart);
+			Margin = new System.Windows.Forms.Padding(6);
 			Name = "Settings";
 			ShowIcon = false;
 			Text = "Emulation Settings";
@@ -705,6 +807,8 @@ namespace Jammy.UI.Settings
 			groupBox6.ResumeLayout(false);
 			groupBox6.PerformLayout();
 			groupBox7.ResumeLayout(false);
+			groupBox8.ResumeLayout(false);
+			groupBox8.PerformLayout();
 			ResumeLayout(false);
 		}
 
@@ -764,5 +868,8 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.CheckBox cbDebugging;
 		private System.Windows.Forms.RadioButton rbPAL;
 		private System.Windows.Forms.RadioButton rbNTSC;
+		private System.Windows.Forms.GroupBox groupBox8;
+		private System.Windows.Forms.RadioButton rbSynchronous;
+		private System.Windows.Forms.RadioButton rbImmediate;
 	}
 }

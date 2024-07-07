@@ -68,15 +68,15 @@ namespace Jammy.Main
 				.AddLogging(x =>
 				{
 					x.AddConfiguration(appConfig.GetSection("Logging"));
-					x.AddDebug();
+					//x.AddDebug();
 					//x.AddSQLite();
 					x.AddDebugAsync();
 					//x.AddDebugAsyncRTF();
+					//x.AddOutputDebugString();
 				})
 				.AddSingleton<IAmiga, Amiga>()
 				.AddSingleton<IBattClock, BattClock>()
 				.AddSingleton<IMotherboard, Motherboard>()
-				.AddSingleton<IBlitter, Blitter>()
 				.AddSingleton<ICIAAOdd, CIAAOdd>()
 				.AddSingleton<ICIABEven, CIABEven>()
 				.AddSingleton<ICIAMemory, CIAMemory>()
@@ -130,6 +130,12 @@ namespace Jammy.Main
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 				.AddSingleton<Jammy>()
 				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
+
+			//configure Blitter
+			if (settings.BlitterMode == BlitterMode.Immediate)
+				services.AddSingleton<IBlitter, Blitter>();
+			else
+				services.AddSingleton<IBlitter, SyncBlitter>();
 
 			//configure Audio
 			if (settings.Audio == AudioDriver.XAudio2)
@@ -196,9 +202,6 @@ namespace Jammy.Main
 
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");
-
-			var blitter = serviceProvider.GetRequiredService<IBlitter>();
-			blitter.SetLineMode(2);
 
 			var form = serviceProvider.GetRequiredService<Jammy>();
 			Application.Run(form);

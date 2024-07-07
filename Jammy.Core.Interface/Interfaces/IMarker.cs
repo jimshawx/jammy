@@ -41,9 +41,8 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IMotherboard : IReset, IMemoryMappedDevice { }
 
-	public interface IBlitter : IReset, ICustomReadWrite
+	public interface IBlitter : IReset, ICustomReadWrite, IEmulate
 	{
-		void SetLineMode(int mode);
 		void Logging(bool enabled);
 		void Dumping(bool enabled);
 	}

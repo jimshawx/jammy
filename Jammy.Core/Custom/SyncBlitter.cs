@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
-using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -15,7 +12,7 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.Custom
 {
-	public class Blitter : IBlitter
+	public class SyncBlitter : IBlitter
 	{
 		private readonly IChips custom;
 		private readonly IMemoryMappedDevice memory;
@@ -23,7 +20,7 @@ namespace Jammy.Core.Custom
 		private readonly IOptions<EmulationSettings> settings;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IChipRAM memory, IInterrupt interrupt,
+		public SyncBlitter(IChips custom, IChipRAM memory, IInterrupt interrupt,
 			IOptions<EmulationSettings> settings, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
@@ -32,14 +29,27 @@ namespace Jammy.Core.Custom
 			this.settings = settings;
 			this.logger = logger;
 		}
+		public void Logging(bool enabled){}
+		public void Dumping(bool enabled){}
 
-		private bool blitterDump = false;
-		private bool blitterLog = false;
+		private IEnumerator<int> currentBlit = null;
 
-		public void Logging(bool enabled) { blitterLog = enabled; }
-		public void Dumping(bool enabled) { blitterDump = enabled; }
+		private void SetNewBlit(IEnumerable<int> blit)
+		{
+			if (currentBlit != null)
+			{
+				//while (currentBlit.MoveNext()) /* finish the blit */ ;
+				currentBlit.Dispose();
+			}
+			currentBlit = blit.GetEnumerator();
+		}
 
-		public void Emulate(ulong cycles){}
+		public void Emulate(ulong cycles)
+		{
+			//while (currentBlit.MoveNext()) /* finish the blit */ ;
+			for (ulong i = 0; i < 1000; i++) 
+				if (!currentBlit.MoveNext()) break;
+		}
 
 		public void Reset()
 		{
@@ -67,13 +77,13 @@ namespace Jammy.Core.Custom
 
 			bltcon0 = 0;
 			bltcon1 = 0;
+
+			SetNewBlit(new List<int>());
 		}
 
 		public ushort Read(uint insaddr, uint address)
 		{
-			ushort value = 0;
-			//logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
-			return value;
+			return 0;
 		}
 
 		private uint bltapt;
@@ -103,8 +113,6 @@ namespace Jammy.Core.Custom
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			//logger.LogTrace($"W {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
-
 			switch (address)
 			{
 				case ChipRegs.BLTCON0:
@@ -148,7 +156,7 @@ namespace Jammy.Core.Custom
 
 				case ChipRegs.BLTSIZE:
 					bltsize = value;
-					BlitSmall(insaddr);
+					SetNewBlit(BlitSmall(insaddr));
 					break;
 
 				case ChipRegs.BLTCON0L:
@@ -160,7 +168,7 @@ namespace Jammy.Core.Custom
 					break;
 				case ChipRegs.BLTSIZH:
 					bltsizh = value;
-					BlitBig(insaddr);
+					SetNewBlit(BlitBig(insaddr));
 					break;
 
 				case ChipRegs.BLTCMOD:
@@ -191,61 +199,10 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		private int counter = 0;
-		private string filename;
-		
-		private void WriteBlitterState()
+		private IEnumerable<int> BlitSmall(uint insaddr)
 		{
-			var b = new List<string>
-			{
-				"{",
-				$"bltcon0 : {bltcon0},",
-				$"bltcon1 : {bltcon1},",
-				$"bltapt : {bltapt},",
-				$"bltbpt : {bltbpt},",
-				$"bltcpt : {bltcpt},",
-				$"bltdpt : {bltdpt},",
-				$"bltamod : {bltamod},",
-				$"bltbmod : {bltbmod},",
-				$"bltcmod : {bltcmod},",
-				$"bltdmod : {bltdmod},",
-				$"bltadat : {bltadat},",
-				$"bltbdat : {bltbdat},",
-				$"bltcdat : {bltcdat},",
-				$"bltddat : {bltddat},",
-				$"bltafwm : {bltafwm},",
-				$"bltalwm : {bltalwm},",
-				$"bltsize : {bltsize},",
-				$"bltsizh : {bltsizh},",
-				$"bltsizv : {bltsizv},",
-				"},"
-			};
-
-			if (counter == 0)
-				filename = Path.Combine("../../../../blits/", $"blitter-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.txt");
-			
-			if (counter < 1000)
-				File.AppendAllLines(filename, b);
-	
-			counter++;
-		}
-
-		private int mode = 0;
-		public void SetLineMode(int mode)
-		{
-			this.mode = mode;
-		}
-
-		private void BlitSmall(uint insaddr)
-		{
-			if (blitterLog)
-				WriteBlitterState();
-
 			if ((bltcon1 & 1) != 0)
-			{
-				Line(insaddr);
-				return;
-			}
+				return Line(insaddr);
 
 			uint width = bltsize & 0x3f;
 			uint height = bltsize >> 6;
@@ -253,19 +210,13 @@ namespace Jammy.Core.Custom
 			if (width == 0) width = 64;
 			if (height == 0) height = 1024;
 
-			Blit(width, height);
+			return Blit(width, height);
 		}
 
-		private void BlitBig(uint insaddr)
+		private IEnumerable<int> BlitBig(uint insaddr)
 		{
-			if (blitterLog)
-				WriteBlitterState();
-
 			if ((bltcon1 & 1) != 0)
-			{
-				Line(insaddr);
-				return;
-			}
+				return Line(insaddr);
 
 			uint width = bltsizh & 0x07ff;
 			uint height = bltsizv & 0x7fff;
@@ -273,13 +224,9 @@ namespace Jammy.Core.Custom
 			if (width == 0) width = 2048;
 			if (height == 0) height = 32768;
 
-			Blit(width, height);
+			return Blit(width, height);
 		}
 
-		StringBuilder fsb = new StringBuilder();
-		private ushort[] bin = new ushort[128];
-		private ushort[] bout = new ushort[128];
-		private int bcount;
 		private struct Writecache
 		{
 			public uint Address;
@@ -304,7 +251,7 @@ namespace Jammy.Core.Custom
 			writecache.Address = NO_WRITECACHE;
 		}
 
-		private void Blit(uint width, uint height)
+		private IEnumerable<int> Blit(uint width, uint height)
 		{
 			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 			if ((dmacon & (1 << 6)) == 0)
@@ -314,30 +261,6 @@ namespace Jammy.Core.Custom
 
 			//todo: assumes blitter DMA is enabled
 
-			if (blitterDump)
-			{
-				logger.LogTrace($"BLIT! {width}x{height} = {width * 16}bits x {height} = {width * 16 * height} bits = {width * height * 2} bytes");
-
-				logger.LogTrace($"A->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on " : "off")} A {bltadat:X4}");
-				logger.LogTrace($"B->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on " : "off")} B {bltbdat:X4}");
-				logger.LogTrace($"C->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on " : "off")} C {bltcdat:X4}");
-				logger.LogTrace($"D->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on " : "off")} D {bltddat:X4}");
-				logger.LogTrace($"M {bltafwm.ToBin(16)} {bltalwm.ToBin(16)}");
-				logger.LogTrace($"cookie: {bltcon0 & 0xff:X2} {((bltcon1 & 2) != 0 ? "descending" : "ascending")}");
-					//logger.LogTrace("ABC");
-					//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
-					//if ((bltcon0 & 0x02) != 0) logger.LogTrace("001");
-					//if ((bltcon0 & 0x04) != 0) logger.LogTrace("010");
-					//if ((bltcon0 & 0x08) != 0) logger.LogTrace("011");
-					//if ((bltcon0 & 0x10) != 0) logger.LogTrace("100");
-					//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
-					//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
-					//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
-					if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
-						logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
-			}
-
-			uint mode = (bltcon1 >> 3) & 3;
 			int ashift = (int)(bltcon0 >> 12);
 			int bshift = (int)(bltcon1 >> 12);
 
@@ -352,14 +275,17 @@ namespace Jammy.Core.Custom
 			uint fci = bltcon1&(1u<<2);
 			ClearDelayedWrite();
 
+			yield return 1;
+
 			for (uint h = 0; h < height; h++)
 			{
-				if (blitterDump) bcount = 0;
-
 				for (uint w = 0; w < width; w++)
 				{
 					if ((bltcon0 & (1u << 11)) != 0)
+					{
 						bltadat = memory.Read(0, bltapt, Size.Word);
+						yield return 1;
+					}
 
 					s_bltadat = bltadat;
 
@@ -382,7 +308,10 @@ namespace Jammy.Core.Custom
 					}
 
 					if ((bltcon0 & (1u << 10)) != 0)
+					{
 						bltbdat = memory.Read(0, bltbpt, Size.Word);
+						yield return 1;
+					}
 
 					s_bltbdat = bltbdat;
 
@@ -402,7 +331,10 @@ namespace Jammy.Core.Custom
 					}
 
 					if ((bltcon0 & (1u << 9)) != 0)
+					{
 						bltcdat = memory.Read(0, bltcpt, Size.Word);
+						yield return 1;
+					}
 
 					bltddat = 0;
 					if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat;
@@ -419,7 +351,10 @@ namespace Jammy.Core.Custom
 					bltzero |= bltddat;
 
 					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
+					{
 						DelayedWrite(bltdpt, (ushort)bltddat);
+						yield return 1;
+					}
 
 					if ((bltcon1 & (1u << 1)) != 0)
 					{
@@ -454,22 +389,10 @@ namespace Jammy.Core.Custom
 				//reset carry
 				bltcon1 &= ~(1u << 2);
 				bltcon1 |= fci;
-
-				if (blitterDump)
-				{
-					if (bcount > 0) { 
-					fsb.Clear();
-					for (int i = bcount-1; i >=0; i--)
-						fsb.Append(bin[i].ToBin());
-					logger.LogTrace(fsb.ToString());
-					fsb.Clear();
-					for (int i = bcount - 1; i >= 0; i--)
-						fsb.Append(bout[i].ToBin());
-					logger.LogTrace(fsb.ToString());
-					bcount = 0; }
-				}
 			}
+
 			DelayedWrite();
+			yield return 1;
 
 			//write the BZERO bit in DMACON
 			if (bltzero == 0)
@@ -482,6 +405,8 @@ namespace Jammy.Core.Custom
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
+
+			yield return 1;
 		}
 
 		private void Fill()
@@ -516,13 +441,6 @@ namespace Jammy.Core.Custom
 				//update carry
 				bltcon1 &= ~(1u << 2);
 				if (inside) bltcon1 |= 1 << 2;
-
-				if (blitterDump)
-				{
-					//logger.LogTrace($"I {obltddat.ToBin(16)}:{(oldbltcon1 >> 2) & 1} -> {(bltcon1 >> 2) & 1}:{bltddat.ToBin(16)} ");
-					bin[bcount] = (ushort)obltddat;
-					bout[bcount++] = (ushort)bltddat;
-				}
 			}
 			else if (mode == 2)
 			{
@@ -548,17 +466,10 @@ namespace Jammy.Core.Custom
 				//update carry
 				bltcon1 &= ~(1u << 2);
 				if (inside) bltcon1 |= 1 << 2;
-
-				if (blitterDump)
-				{
-					//logger.LogTrace($"X {obltddat.ToBin(16)}:{(oldbltcon1 >> 2) & 1} -> {(bltcon1 >> 2) & 1}:{bltddat.ToBin(16)} ");
-					bin[bcount] = (ushort)obltddat;
-					bout[bcount++] = (ushort)bltddat;
-				}
 			} 
 		}
 
-		private void Line(uint insaddr)
+		private IEnumerable<int> Line(uint insaddr)
 		{
 			uint octant = (bltcon1 >> 2) & 7;
 			bool sing = (bltcon1 & (1 << 1)) != 0;
@@ -567,7 +478,7 @@ namespace Jammy.Core.Custom
 			if (length == 0)
 			{
 				interrupt.AssertInterrupt(Interrupt.BLIT);
-				return;
+				yield break;
 			}
 
 			int dy = (int)(bltbmod / 2);
@@ -584,6 +495,7 @@ namespace Jammy.Core.Custom
 
 			//set blitter busy in DMACON
 			custom.Write(insaddr, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
+			yield return 1;
 
 			bool writeBit = true;
 
@@ -599,7 +511,10 @@ namespace Jammy.Core.Custom
 			while (length-- > 0)
 			{
 				if ((bltcon0 & (1u << 9)) != 0)
+				{
 					bltcdat = memory.Read(insaddr, bltcpt, Size.Word);
+					yield return 1;
+				}
 
 				bltadat = 0x8000u >> x0;
 
@@ -620,6 +535,7 @@ namespace Jammy.Core.Custom
 					{
 						memory.Write(insaddr, bltdpt, bltddat, Size.Word);
 						if (sing) writeBit = false;
+						yield return 1;
 					}
 				}
 
@@ -656,8 +572,12 @@ namespace Jammy.Core.Custom
 			//disable blitter busy in DMACON
 			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
 
+			yield return 1;
+
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
+
+			yield return 1;
 		}
 	}
 }

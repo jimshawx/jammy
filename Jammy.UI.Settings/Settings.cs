@@ -284,6 +284,10 @@ namespace Jammy.UI.Settings
 
 			//Debugging
 			cbDebugging.Checked = currentSettings.Debugger == Feature.Enabled;
+
+			//Blitter
+			rbImmediate.Checked = currentSettings.BlitterMode == BlitterMode.Immediate;
+			rbSynchronous.Checked = currentSettings.BlitterMode == BlitterMode.Synchronous;
 		}
 
 		private void UnbindSettings()
@@ -331,6 +335,9 @@ namespace Jammy.UI.Settings
 
 			//Debugging
 			currentSettings.Debugger = cbDebugging.Checked ? Feature.Enabled : Feature.Disabled;
+
+			//Blitter
+			currentSettings.BlitterMode = rbImmediate.Checked ? BlitterMode.Immediate : BlitterMode.Synchronous;
 		}
 
 		private static EmulationSettings DefaultSettings()
