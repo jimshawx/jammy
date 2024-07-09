@@ -119,7 +119,7 @@ namespace Jammy.Core.Floppy
 			Idle = 0
 		}
 
-		private const int stateCycles = 1;//10;
+		private const int stateCycles = 10;
 
 		public void Emulate(ulong cycles)
 		{
@@ -134,16 +134,21 @@ namespace Jammy.Core.Floppy
 					drive[i].indexCounter -= (int)cycles;
 					if (drive[i].indexCounter < 0)
 					{
-						drive[i].indexCounter += INDEX_INTERRUPT_RATE;
-						ciab.FlagInterrupt();
+						if (drive[i].diskinserted)
+						{
+							if (verbose)
+								logger.LogTrace("FLG");
+							drive[i].indexCounter += INDEX_INTERRUPT_RATE;
+							ciab.FlagInterrupt();
+						}
 					}
 				}
 
-				if ((prb & drive[i].DSKSEL)==0)
-				{
-					if (drive[i].diskinserted) pra |= PRA.DSKCHANGE;
-					else pra &= ~PRA.DSKCHANGE;
-				}
+				//if ((prb & drive[i].DSKSEL)==0)
+				//{
+				//	if (drive[i].diskinserted) pra |= PRA.DSKCHANGE;
+				//	else pra &= ~PRA.DSKCHANGE;
+				//}
 
 				if (drive[i].state != DriveState.Idle)
 				{
@@ -154,11 +159,11 @@ namespace Jammy.Core.Floppy
 						{
 							case DriveState.Track0NotReached:
 								pra |= PRA.DSKTRACK0;
-								drive[i].state = DriveState.Idle;
+								drive[i].state = DriveState.DiskReady;
 								break;
 							case DriveState.Track0Reached:
 								pra &= ~PRA.DSKTRACK0;
-								drive[i].state = DriveState.Idle;
+								drive[i].state = DriveState.DiskReady;
 								break;
 							case DriveState.DiskReady:
 								pra &= ~PRA.DSKRDY;
@@ -298,7 +303,7 @@ namespace Jammy.Core.Floppy
 					//if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814 && (dsklen & 0x3fff) != 6784)
 					//	logger.LogTrace($"DSKLEN looks funny {dsklen&0x3fff:X4} {dsklen:X4}");
 
-					logger.LogTrace($"Reading DF{df} T: {drive[df].track} S: {drive[df].side} L: {dsklen&0x3fff:X4} ({dsklen & 0x3fff}) L/11: {(dsklen&0x3fff)/11}");
+					logger.LogTrace($"Reading DF{df} T: {drive[df].track} S: {drive[df].side} @ {dskpt:X6} L: {dsklen&0x3fff:X4} ({dsklen & 0x3fff}) L/11: {(dsklen&0x3fff)/11}");
 
 					if (drive[df].track > 161)
 					{
@@ -309,9 +314,21 @@ namespace Jammy.Core.Floppy
 
 					byte[] mfm = mfmEncoder.EncodeTrack((drive[df].track << 1)+ drive[df].side, drive[df].disk.data, 0x4489);
 
+					dsklen &= 0x3fff;
+
+					bool synced = (adkcon & (1u << 10)) == 0;
 					foreach (var w in mfm.AsUWord())
 					{
+						if (!synced)
+						{
+							if (w != dsksync) continue;
+							interrupt.AssertInterrupt(Interrupt.DSKSYNC);
+							synced = true;
+						}
+
 						memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
+						if (dsklen == 0) 
+							break;
 					}
 
 					//this is far too fast, try triggering an interrupt later (should actually be one scanline per 3 words read)
@@ -370,6 +387,7 @@ namespace Jammy.Core.Floppy
 			{
 				if (!drive[i].attached)
 				{
+					//needed for drive check in disk.resource
 					if ((prb & drive[i].DSKSEL) == 0)
 						pra |= PRA.DSKRDY;
 					continue;
@@ -377,6 +395,7 @@ namespace Jammy.Core.Floppy
 
 				if ((prb & drive[i].DSKSEL) == 0)
 				{
+					//needed for drive check in disk.resource
 					//disk is ready
 					pra &= ~PRA.DSKRDY;
 
@@ -387,19 +406,32 @@ namespace Jammy.Core.Floppy
 					drive[i].motor = (prb & PRB.DSKMOTOR) == 0;
 					if (!oldMotor && drive[i].motor)
 					{
+						//not ready yet
+						//pra |= PRA.DSKRDY;
 						drive[i].state = DriveState.DiskReady;
 						drive[i].indexCounter = INDEX_INTERRUPT_RATE;
-						//logger.LogTrace($"Turn motor {(drive[i].motor ? "on" : "off")} DF{i}");
+
+						if (drive[i].diskinserted) pra |= PRA.DSKCHANGE;
+						else pra &= ~PRA.DSKCHANGE;
+						if (verbose)
+							logger.LogTrace($"Turn motor {(drive[i].motor ? "on" : "off")} DF{i}");
 					}
 					else
 					{
-						//logger.LogTrace($"Turn motor {(drive[i].motor ? "on" : "off")} DF{i}");
+						if (verbose)
+							logger.LogTrace($"Turn motor {(drive[i].motor ? "on" : "off")} DF{i}");
 					}
+
+					if (!drive[i].diskinserted)
+						continue;
 
 					//step changed, and it's set
 					if ((changes & PRB.DSKSTEP) != 0 && ((prb & PRB.DSKSTEP) != 0)) //step bit changed (Lo->Hi == Step)
 					{
-						//logger.LogTrace($"step {i} {drive[i].track}");
+						pra |= PRA.DSKCHANGE;
+
+						if (verbose)
+							logger.LogTrace($"step DF{i} {drive[i].track} {(((prb & PRB.DSKDIREC) != 0)?"in":"out")}");
 
 						if ((prb & PRB.DSKDIREC) != 0)
 						{
@@ -452,6 +484,16 @@ namespace Jammy.Core.Floppy
 				logger.LogTrace($"      {((byte)prb).ToBin()}");
 			}
 			return (byte)prb;
+		}
+
+		public void ReadICR(byte icr)
+		{
+			//FLAG SERIAL TODALARM TIMERB TIMERA
+			if (verbose)
+			{
+				logger.LogTrace("      ---FSRBA");
+				logger.LogTrace($"R ICR {icr.ToBin()}");
+			}
 		}
 
 		//disk change - set DSKCHANGE high, then momentarily pulse DSKSTEP (high, momentarily low, high)

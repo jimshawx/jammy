@@ -86,6 +86,9 @@ namespace Jammy.Core.Custom.CIA
 				return diskDrives.ReadPRB(insaddr);
 			}
 
+			if (reg == ICR)
+				diskDrives.ReadICR(SnoopICRR());
+
 			//logger.LogTrace($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return base.Read(reg);
 		}

@@ -28,6 +28,11 @@ namespace Jammy.Core.Interface.Interfaces
 		byte ReadPRB(uint insaddr);
 	}
 
+	public interface IReadICR
+	{
+		void ReadICR(byte icr);
+	}
+
 	public interface ICustomReadWrite : ICustomRead, ICustomWrite { }
 
 	public interface IAudio : IEmulate, ICustomReadWrite
@@ -61,7 +66,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Dumping(bool enabled);
 		string GetDisassembly();
 	}
-	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB
+	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB, IReadICR
 	{
 		void InsertDisk(int df);
 		void RemoveDisk(int df);
