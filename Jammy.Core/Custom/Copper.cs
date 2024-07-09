@@ -855,7 +855,7 @@ namespace Jammy.Core.Custom
 					//is it the visible area horizontally?
 					//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
 					//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
-					if (h >= ((cln.diwstrth + cdbg.diwSHack) >> 1)-2 && h < ((cln.diwstoph + cdbg.diwEHack) >> 1)-2)
+					if (h >= ((cln.diwstrth + cdbg.diwSHack) >> 1)-1 && h < ((cln.diwstoph + cdbg.diwEHack) >> 1)-1)
 					{
 						CopperBitplaneConvert(h);
 					}
@@ -867,8 +867,6 @@ namespace Jammy.Core.Custom
 
 						//output colour 0 pixels
 						uint col = truecolour[0];
-						//col = 0xff0000;
-
 						for (int k = 0; k < 4; k++)
 							screen[cop.dptr++] = (int)col;
 					}
@@ -879,8 +877,6 @@ namespace Jammy.Core.Custom
 
 					//output colour 0 pixels
 					uint col = truecolour[0];
-					//col = 0xff0000;
-
 					for (int k = 0; k < 4; k++)
 						screen[cop.dptr++] = (int)col;
 				}
@@ -995,7 +991,8 @@ namespace Jammy.Core.Custom
 						if ((data & 1) == 0)
 						{
 							//WAIT
-							//logger.LogTrace($"WAIT until ({cop.waitH},{cop.waitV}) @({h},{cop.currentLine}) hm:{cop.waitHMask:X3} vm:{cop.waitVMask:X3} m:{cop.waitMask:X4} p:{cop.waitPos:X4}");
+							//if (!(cop.waitH == 254 && cop.waitV == 255))
+							//	logger.LogTrace($"WAIT until ({cop.waitH},{cop.waitV}) @({h},{cop.currentLine}) hm:{cop.waitHMask:X3} vm:{cop.waitVMask:X3} m:{cop.waitMask:X4} p:{cop.waitPos:X4}");
 							cop.status = CopperStatus.Waiting;
 						}
 						else
@@ -1029,7 +1026,7 @@ namespace Jammy.Core.Custom
 					if (CopperCompare(coppos, (cop.waitPos & cop.waitMask)))
 					{
 						//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
-						cop.waitTimer = 2;
+						cop.waitTimer = 1;
 						cop.status = CopperStatus.WakingUp;
 
 						if (cop.ins == 0xffff && cop.data == 0xfffe)
@@ -1045,8 +1042,8 @@ namespace Jammy.Core.Custom
 		private bool CopperCompare(uint coppos, uint waitPos)
 		{
 			//return coppos >= waitPos;
-			//return ((coppos&0xff00)>=(waitPos&0xff00))&&((coppos&0xff)>=(waitPos&0xff));
-			return ((coppos & 0xff00) == (waitPos & 0xff00)) && ((coppos & 0xff) >= (waitPos & 0xff));
+			return ((coppos&0xff00)>=(waitPos&0xff00))&&((coppos&0xff)>=(waitPos&0xff));
+			//return ((coppos & 0xff00) == (waitPos & 0xff00)) && ((coppos & 0xff) >= (waitPos & 0xff));
 			//return (((coppos & 0xff00) == (waitPos & 0xff00)) && ((coppos & 0xff) >= (waitPos & 0xff))) || ((coppos & 0xff00) > (waitPos & 0xff00));
 		}
 
@@ -1106,12 +1103,12 @@ namespace Jammy.Core.Custom
 				//we just filled BPL0DAT
 				if (plane == 0)
 				{
+					//scrolling
+					int even = bplcon1 & 0xf;
+					int odd = (bplcon1 >> 4) & 0xf;
+
 					for (int i = 0; i < 8; i++)
 					{
-						//scrolling
-						int odd = bplcon1&0xf;
-						int even = (bplcon1>>4)&0xf;
-
 						if ((i&1)!=0)
 							cln.bpldatpix[i].Or(bpldat[i], (16-odd));
 						else
@@ -1191,8 +1188,8 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		private ushort [] sprdatapix = new ushort[8];
-		private ushort[] sprdatbpix = new ushort[8];
+		private readonly ushort[] sprdatapix = new ushort[8];
+		private readonly ushort[] sprdatbpix = new ushort[8];
 
 		private void CopperBitplaneConvert(int h)
 		{

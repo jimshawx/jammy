@@ -275,6 +275,7 @@ namespace Jammy.UI.Settings
 
 			//Hard Disk
 			cbDiskController.SelectedItem = currentSettings.DiskController.ToString();
+			nudHardDiskCount.Value = currentSettings.HardDiskCount;
 
 			//Kickstart
 			txtKickstart.Text = currentSettings.KickStart;
@@ -320,6 +321,7 @@ namespace Jammy.UI.Settings
 
 			//Hard Disk
 			currentSettings.DiskController = Enum.Parse<DiskController>((string)cbDiskController.SelectedItem);
+			currentSettings.HardDiskCount = (int)nudHardDiskCount.Value;
 
 			//Kickstart
 			currentSettings.KickStart = txtKickstart.Text;

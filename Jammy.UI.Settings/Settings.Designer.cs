@@ -81,15 +81,16 @@ namespace Jammy.UI.Settings
 			btnSaveAsConfig = new System.Windows.Forms.Button();
 			btnSaveConfig = new System.Windows.Forms.Button();
 			panel6 = new System.Windows.Forms.Panel();
+			groupBox8 = new System.Windows.Forms.GroupBox();
+			rbSynchronous = new System.Windows.Forms.RadioButton();
+			rbImmediate = new System.Windows.Forms.RadioButton();
 			groupBox6 = new System.Windows.Forms.GroupBox();
 			cbDebugging = new System.Windows.Forms.CheckBox();
 			cbAudio = new System.Windows.Forms.CheckBox();
 			panel7 = new System.Windows.Forms.Panel();
 			groupBox7 = new System.Windows.Forms.GroupBox();
 			cbDiskController = new System.Windows.Forms.ComboBox();
-			groupBox8 = new System.Windows.Forms.GroupBox();
-			rbImmediate = new System.Windows.Forms.RadioButton();
-			rbSynchronous = new System.Windows.Forms.RadioButton();
+			nudHardDiskCount = new System.Windows.Forms.NumericUpDown();
 			panel1.SuspendLayout();
 			groupBox1.SuspendLayout();
 			groupBox2.SuspendLayout();
@@ -101,9 +102,10 @@ namespace Jammy.UI.Settings
 			groupBox4.SuspendLayout();
 			panel5.SuspendLayout();
 			panel6.SuspendLayout();
+			groupBox8.SuspendLayout();
 			groupBox6.SuspendLayout();
 			groupBox7.SuspendLayout();
-			groupBox8.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)nudHardDiskCount).BeginInit();
 			SuspendLayout();
 			// 
 			// cbQuickStart
@@ -660,6 +662,42 @@ namespace Jammy.UI.Settings
 			panel6.Size = new System.Drawing.Size(789, 111);
 			panel6.TabIndex = 22;
 			// 
+			// groupBox8
+			// 
+			groupBox8.Controls.Add(rbSynchronous);
+			groupBox8.Controls.Add(rbImmediate);
+			groupBox8.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox8.Location = new System.Drawing.Point(358, 3);
+			groupBox8.Name = "groupBox8";
+			groupBox8.Size = new System.Drawing.Size(418, 105);
+			groupBox8.TabIndex = 1;
+			groupBox8.TabStop = false;
+			groupBox8.Text = "Blitter";
+			// 
+			// rbSynchronous
+			// 
+			rbSynchronous.AutoSize = true;
+			rbSynchronous.Enabled = false;
+			rbSynchronous.Location = new System.Drawing.Point(186, 44);
+			rbSynchronous.Name = "rbSynchronous";
+			rbSynchronous.Size = new System.Drawing.Size(182, 36);
+			rbSynchronous.TabIndex = 1;
+			rbSynchronous.TabStop = true;
+			rbSynchronous.Text = "Synchronous";
+			rbSynchronous.UseVisualStyleBackColor = true;
+			// 
+			// rbImmediate
+			// 
+			rbImmediate.AutoSize = true;
+			rbImmediate.Checked = true;
+			rbImmediate.Location = new System.Drawing.Point(21, 44);
+			rbImmediate.Name = "rbImmediate";
+			rbImmediate.Size = new System.Drawing.Size(159, 36);
+			rbImmediate.TabIndex = 0;
+			rbImmediate.TabStop = true;
+			rbImmediate.Text = "Immediate";
+			rbImmediate.UseVisualStyleBackColor = true;
+			// 
 			// groupBox6
 			// 
 			groupBox6.Controls.Add(cbDebugging);
@@ -706,6 +744,7 @@ namespace Jammy.UI.Settings
 			// 
 			// groupBox7
 			// 
+			groupBox7.Controls.Add(nudHardDiskCount);
 			groupBox7.Controls.Add(cbDiskController);
 			groupBox7.ForeColor = System.Drawing.SystemColors.Highlight;
 			groupBox7.Location = new System.Drawing.Point(475, 401);
@@ -727,41 +766,15 @@ namespace Jammy.UI.Settings
 			cbDiskController.Size = new System.Drawing.Size(322, 40);
 			cbDiskController.TabIndex = 0;
 			// 
-			// groupBox8
+			// nudHardDiskCount
 			// 
-			groupBox8.Controls.Add(rbSynchronous);
-			groupBox8.Controls.Add(rbImmediate);
-			groupBox8.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox8.Location = new System.Drawing.Point(358, 3);
-			groupBox8.Name = "groupBox8";
-			groupBox8.Size = new System.Drawing.Size(418, 105);
-			groupBox8.TabIndex = 1;
-			groupBox8.TabStop = false;
-			groupBox8.Text = "Blitter";
-			// 
-			// rbImmediate
-			// 
-			rbImmediate.AutoSize = true;
-			rbImmediate.Checked = true;
-			rbImmediate.Location = new System.Drawing.Point(21, 44);
-			rbImmediate.Name = "rbImmediate";
-			rbImmediate.Size = new System.Drawing.Size(159, 36);
-			rbImmediate.TabIndex = 0;
-			rbImmediate.TabStop = true;
-			rbImmediate.Text = "Immediate";
-			rbImmediate.UseVisualStyleBackColor = true;
-			// 
-			// rbSynchronous
-			// 
-			rbSynchronous.AutoSize = true;
-			rbSynchronous.Enabled = false;
-			rbSynchronous.Location = new System.Drawing.Point(186, 44);
-			rbSynchronous.Name = "rbSynchronous";
-			rbSynchronous.Size = new System.Drawing.Size(182, 36);
-			rbSynchronous.TabIndex = 1;
-			rbSynchronous.TabStop = true;
-			rbSynchronous.Text = "Synchronous";
-			rbSynchronous.UseVisualStyleBackColor = true;
+			nudHardDiskCount.Location = new System.Drawing.Point(358, 49);
+			nudHardDiskCount.Margin = new System.Windows.Forms.Padding(6);
+			nudHardDiskCount.Maximum = new decimal(new int[] { 4, 0, 0, 0 });
+			nudHardDiskCount.Name = "nudHardDiskCount";
+			nudHardDiskCount.ReadOnly = true;
+			nudHardDiskCount.Size = new System.Drawing.Size(80, 39);
+			nudHardDiskCount.TabIndex = 1;
 			// 
 			// Settings
 			// 
@@ -804,11 +817,12 @@ namespace Jammy.UI.Settings
 			groupBox4.PerformLayout();
 			panel5.ResumeLayout(false);
 			panel6.ResumeLayout(false);
+			groupBox8.ResumeLayout(false);
+			groupBox8.PerformLayout();
 			groupBox6.ResumeLayout(false);
 			groupBox6.PerformLayout();
 			groupBox7.ResumeLayout(false);
-			groupBox8.ResumeLayout(false);
-			groupBox8.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)nudHardDiskCount).EndInit();
 			ResumeLayout(false);
 		}
 
@@ -871,5 +885,6 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.GroupBox groupBox8;
 		private System.Windows.Forms.RadioButton rbSynchronous;
 		private System.Windows.Forms.RadioButton rbImmediate;
+		private System.Windows.Forms.NumericUpDown nudHardDiskCount;
 	}
 }
