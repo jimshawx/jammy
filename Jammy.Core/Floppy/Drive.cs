@@ -14,10 +14,13 @@ namespace Jammy.Core.Floppy
 		public int stateCounter;
 		public DiskDrives.DriveState state;
 
-		public PRB DSKSEL;
+		public uint DSKSEL;
 
 		public bool attached;
 		public bool diskinserted;
+
+		public uint pra;
+		public uint prb;
 
 		public Disk disk;
 
@@ -30,6 +33,8 @@ namespace Jammy.Core.Floppy
 			motor = false;
 			track = 0;
 			side = 0;
+			//start with the drive not ready
+			pra = (uint)PRA.DSKRDY;
 		}
 	}
 }

@@ -36,7 +36,6 @@ namespace Jammy.Core.Floppy
 				{
 					using (var m = new MemoryStream(data))
 					{
-						data = null;
 						using (var zip = new ZipArchive(m))
 						{
 							var manifest = zip.Entries.SingleOrDefault(x => x.Name == "rp9-manifest.xml");
@@ -66,15 +65,12 @@ namespace Jammy.Core.Floppy
 							{
 								//it's just a zip with an adf file in it
 								var zippedFloppy = zip.Entries.SingleOrDefault(x=>x.Name.ToLower().EndsWith(".adf"));
-								if (zippedFloppy != null)
+								using (var floppy = zippedFloppy.Open())
 								{
-									using (var floppy = zippedFloppy.Open())
+									using (var ms = new MemoryStream())
 									{
-										using (var ms = new MemoryStream())
-										{
-											floppy.CopyTo(ms);
-											data = ms.ToArray();
-										}
+										floppy.CopyTo(ms);
+										data = ms.ToArray();
 									}
 								}
 							}
@@ -94,7 +90,6 @@ namespace Jammy.Core.Floppy
 				{
 					using (var m = new MemoryStream(data))
 					{
-						data = null;
 						using (var zip = new GZipStream(m, CompressionMode.Decompress))
 						{
 							using (var ms = new MemoryStream())
