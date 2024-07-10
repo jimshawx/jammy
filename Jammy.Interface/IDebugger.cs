@@ -24,6 +24,7 @@ namespace Jammy.Interface
 		void InsertDisk(int df);
 		void RemoveDisk(int df);
 		void ChangeDisk(int df, string fileName);
+		void ReadyDisk();
 		void CIAInt(ICRB icr);
 		void IRQ(uint irq);
 		void INTENA(uint irq);

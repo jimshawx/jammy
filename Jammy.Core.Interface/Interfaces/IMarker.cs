@@ -71,6 +71,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void InsertDisk(int df);
 		void RemoveDisk(int df);
 		void ChangeDisk(int df, string fileName);
+		void ReadyDisk();
 	}
 	public interface IKeyboard : IEmulate
 	{

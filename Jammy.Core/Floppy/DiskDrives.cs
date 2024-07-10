@@ -130,12 +130,12 @@ namespace Jammy.Core.Floppy
 
 				if (drive[i].motor)
 				{
-					//while the motor is running, the disk generates an INDEX signal each revolution.
-					//this signal is attached to the FLG interrupt pin on CIAB
-					drive[i].indexCounter -= (int)cycles;
-					if (drive[i].indexCounter < 0)
+					if (drive[i].diskinserted)
 					{
-						if (drive[i].diskinserted)
+						//while the motor is running, the disk generates an INDEX signal each revolution.
+						//this signal is attached to the FLG interrupt pin on CIAB
+						drive[i].indexCounter -= (int)cycles;
+						if (drive[i].indexCounter < 0)
 						{
 							if (verbose)
 								logger.LogTrace("FLG");
@@ -144,12 +144,6 @@ namespace Jammy.Core.Floppy
 						}
 					}
 				}
-
-				//if ((prb & drive[i].DSKSEL)==0)
-				//{
-				//	if (drive[i].diskinserted) pra |= PRA.DSKCHANGE;
-				//	else pra &= ~PRA.DSKCHANGE;
-				//}
 
 				if (drive[i].state != DriveState.Idle)
 				{
@@ -405,13 +399,8 @@ namespace Jammy.Core.Floppy
 					drive[i].motor = (prb & PRB.DSKMOTOR) == 0;
 					if (!oldMotor && drive[i].motor)
 					{
-						//not ready yet
-						//pra |= PRA.DSKRDY;
-						drive[i].state = DriveState.DiskReady;
-						drive[i].indexCounter = INDEX_INTERRUPT_RATE;
+						drive[i].state = DriveState.Idle;
 
-						if (drive[i].diskinserted) pra |= PRA.DSKCHANGE;
-						else pra &= ~PRA.DSKCHANGE;
 						if (verbose)
 							logger.LogTrace($"Turn motor {(drive[i].motor ? "on" : "off")} DF{i}");
 					}
@@ -422,8 +411,12 @@ namespace Jammy.Core.Floppy
 					}
 
 					if (!drive[i].diskinserted)
+					{
+						pra &= ~PRA.DSKCHANGE;
 						continue;
+					}
 
+					pra |= PRA.DSKCHANGE;
 					//step changed, and it's set
 					if ((changes & PRB.DSKSTEP) != 0 && ((prb & PRB.DSKSTEP) != 0)) //step bit changed (Lo->Hi == Step)
 					{
@@ -437,19 +430,22 @@ namespace Jammy.Core.Floppy
 							//step in
 							if (drive[i].track == 0)
 							{
-								drive[i].state = DriveState.Track0Reached; //hit track 0, signal DSKTRACK0
+								//drive[i].state = DriveState.Track0Reached; //hit track 0, signal DSKTRACK0
+								pra &= ~PRA.DSKTRACK0;
 							}
 							else
 							{
 								drive[i].track--;
-								drive[i].state = DriveState.Track0NotReached;
+								//drive[i].state = DriveState.Track0NotReached;
+								pra |= PRA.DSKTRACK0;
 							}
 						}
 						else
 						{
 							//step out
 							drive[i].track++;
-							drive[i].state = DriveState.Track0NotReached;
+							//drive[i].state = DriveState.Track0NotReached;
+							pra |= PRA.DSKTRACK0;
 						}
 					}
 				}
@@ -510,6 +506,11 @@ namespace Jammy.Core.Floppy
 		{
 			drive[df].disk = new Disk(filename);
 			drive[df].diskinserted = true;
+		}
+
+		public void ReadyDisk()
+		{
+			pra &= ~PRA.DSKRDY;
 		}
 	}
 }

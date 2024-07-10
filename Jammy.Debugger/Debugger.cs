@@ -330,6 +330,11 @@ namespace Jammy.Debugger
 			diskDrives.ChangeDisk(df, fileName);
 		}
 
+		public void ReadyDisk()
+		{
+			diskDrives.ReadyDisk();
+		}
+
 		public void CIAInt(ICRB icr)
 		{
 			ciaa.DebugSetICR(icr);

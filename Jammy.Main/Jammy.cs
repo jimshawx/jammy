@@ -940,6 +940,11 @@ namespace Jammy.Main
 		{
 			CreateCribSheet();
 		}
+
+		private void btnReadyDisk_Click(object sender, EventArgs e)
+		{
+			debugger.ReadyDisk();
+		}
 	}
 
 	public static class LayoutExtensions

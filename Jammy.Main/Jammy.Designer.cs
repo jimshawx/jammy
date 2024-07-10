@@ -87,6 +87,7 @@ namespace Jammy.Main
 			btnClearBBUSY = new System.Windows.Forms.Button();
 			btnCribSheet = new System.Windows.Forms.Button();
 			splitContainer2 = new System.Windows.Forms.SplitContainer();
+			btnReadyDisk = new System.Windows.Forms.Button();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -219,7 +220,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1331, 707);
+			txtMemory.Size = new System.Drawing.Size(1331, 702);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -430,7 +431,7 @@ namespace Jammy.Main
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(542, 1261);
+			txtCopper.Size = new System.Drawing.Size(537, 1261);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -568,7 +569,7 @@ namespace Jammy.Main
 			lbCustom.Location = new System.Drawing.Point(2264, 546);
 			lbCustom.Margin = new System.Windows.Forms.Padding(6);
 			lbCustom.Name = "lbCustom";
-			lbCustom.Size = new System.Drawing.Size(307, 628);
+			lbCustom.Size = new System.Drawing.Size(328, 628);
 			lbCustom.TabIndex = 38;
 			// 
 			// btnDumpTrace
@@ -713,11 +714,24 @@ namespace Jammy.Main
 			splitContainer2.SplitterWidth = 9;
 			splitContainer2.TabIndex = 49;
 			// 
+			// btnReadyDisk
+			// 
+			btnReadyDisk.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			btnReadyDisk.Location = new System.Drawing.Point(2156, 787);
+			btnReadyDisk.Margin = new System.Windows.Forms.Padding(6);
+			btnReadyDisk.Name = "btnReadyDisk";
+			btnReadyDisk.Size = new System.Drawing.Size(97, 49);
+			btnReadyDisk.TabIndex = 50;
+			btnReadyDisk.Text = "Ready";
+			btnReadyDisk.UseVisualStyleBackColor = true;
+			btnReadyDisk.Click += btnReadyDisk_Click;
+			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2626, 1291);
+			Controls.Add(btnReadyDisk);
 			Controls.Add(splitContainer2);
 			Controls.Add(btnCribSheet);
 			Controls.Add(btnClearBBUSY);
@@ -826,6 +840,7 @@ namespace Jammy.Main
 		private System.Windows.Forms.Button btnClearBBUSY;
 		private System.Windows.Forms.Button btnCribSheet;
 		private System.Windows.Forms.SplitContainer splitContainer2;
+		private System.Windows.Forms.Button btnReadyDisk;
 	}
 }
 
