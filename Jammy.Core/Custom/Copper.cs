@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Custom
@@ -1198,6 +1198,7 @@ namespace Jammy.Core.Custom
 
 		private readonly ushort[] sprdatapix = new ushort[8];
 		private readonly ushort[] sprdatbpix = new ushort[8];
+		private readonly int[] clx = new int[8];
 
 		private void CopperBitplaneConvert(int h)
 		{
@@ -1328,8 +1329,10 @@ namespace Jammy.Core.Custom
 				}
 
 				//sprites
+				int clxm = 0;
 				for (int s = 7; s >= 0; s--)
 				{
+					clx[s] = 0;
 					if (spriteMask[s] != 0)
 					{
 						uint x = spriteMask[s];
@@ -1342,11 +1345,19 @@ namespace Jammy.Core.Custom
 						//todo: in AGA, sprites can have different resolutions
 						if ((p&m) == m)
 							spriteMask[s] >>= 1;
+
+						clx[s] = spix;
+						clxm |= clx[s];
+
 						if (attached)
 						{
 							s--;
 							spix <<= 2;
-							spix += ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
+							int apix = ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
+							clx[s] = apix;
+							clxm |= clx[s];
+							spix += apix;
+
 							if ((p & m) == m)
 								spriteMask[s] >>= 1;
 							if (spix != 0)
@@ -1356,6 +1367,41 @@ namespace Jammy.Core.Custom
 						{
 							if (spix != 0)
 								col = truecolour[16 + 4 * (s >> 1) + spix];
+						}
+					}
+				}
+
+				//sprite collision
+
+				if (clxm != 0)
+				{
+					//combine in the enabled odd-numbered sprites
+					for (int s = 0; s < 4; s++)
+					{
+						if ((clxcon & (0x1000 << s)) != 0)
+							clx[s] = (clx[s * 2] | clx[s * 2 + 1]) != 0 ? 0xff : 0;
+						else
+							clx[s] = clx[s * 2] != 0 ? 0xff : 0;
+					}
+
+					for (int s = 0; s < 4; s++)
+					{
+						//planes enabled for collision
+						int clp = (pix ^ ~clxcon) & (clxcon >> 6) & 0x3f;
+						//some are triggered on, some are triggered off
+						//clp ^= clxcon & 0x3f;
+
+						int mask = clx[s] & clp;
+						if (mask != 0)
+						{
+							//sprite 's'->bit-plane collision
+
+							//even plane collision
+							if ((mask & 0b010101)!=0)
+								clxdat |= (ushort)(2 << s);
+							//odd plane collision
+							if ((mask & 0b101010) != 0) 
+								clxdat |= (ushort)(32 << s);
 						}
 					}
 				}
@@ -1626,8 +1672,8 @@ namespace Jammy.Core.Custom
 				case ChipRegs.SPR7DATB: value = sprdatb[7]; break;
 
 				case ChipRegs.CLXDAT:
-					logger.LogTrace("CLXDAT accessed - no sprite collisions yet");
-					value = (ushort)(clxdat|0x8000);
+					//logger.LogTrace("CLXDAT accessed - no sprite collisions yet");
+					value = clxdat;
 					clxdat = 0;
 					break;
 
@@ -1784,11 +1830,11 @@ namespace Jammy.Core.Custom
 				case ChipRegs.CLXCON:
 					clxcon = value;
 					clxcon2 = 0;
-					logger.LogTrace("CLXCON accessed - no sprite collisions yet");
+					//logger.LogTrace("CLXCON accessed - no sprite collisions yet");
 					break;
 				case ChipRegs.CLXCON2:
 					clxcon2 = value;
-					logger.LogTrace("CLXCON2 accessed - no sprite collisions yet");
+					//logger.LogTrace("CLXCON2 accessed - no sprite collisions yet");
 					break;
 
 				//ECS/AGA
