@@ -20,6 +20,8 @@ namespace Jammy.Core.Floppy
 		public bool diskinserted;
 
 		public Disk disk;
+		public bool writeProtected;
+		public bool ready;
 
 		public void Reset()
 		{
@@ -30,6 +32,7 @@ namespace Jammy.Core.Floppy
 			motor = false;
 			track = 0;
 			side = 0;
+			writeProtected = true;
 		}
 	}
 }

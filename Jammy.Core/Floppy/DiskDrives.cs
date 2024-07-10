@@ -413,14 +413,27 @@ namespace Jammy.Core.Floppy
 					if (!drive[i].diskinserted)
 					{
 						pra &= ~PRA.DSKCHANGE;
+						drive[i].ready = false;
 						continue;
 					}
 
-					pra |= PRA.DSKCHANGE;
+					if (drive[i].track == 0)
+						pra &= ~PRA.DSKTRACK0;
+					else
+						pra |= PRA.DSKTRACK0;
+					if (drive[i].writeProtected)
+						pra &= ~PRA.DSKPROT;
+					if (drive[i].ready)
+					{
+						pra &= ~PRA.DSKRDY;
+						pra |= PRA.DSKCHANGE;
+					}
+
 					//step changed, and it's set
 					if ((changes & PRB.DSKSTEP) != 0 && ((prb & PRB.DSKSTEP) != 0)) //step bit changed (Lo->Hi == Step)
 					{
 						pra |= PRA.DSKCHANGE;
+						drive[i].ready = true;
 
 						if (verbose)
 							logger.LogTrace($"step DF{i} {drive[i].track} {(((prb & PRB.DSKDIREC) != 0)?"in":"out")}");
@@ -495,17 +508,22 @@ namespace Jammy.Core.Floppy
 		public void InsertDisk(int df)
 		{
 			drive[df].diskinserted = true;
+			drive[df].ready = false;
+			drive[df].track = 0;
 		}
 
 		public void RemoveDisk(int df)
 		{
 			drive[df].diskinserted = false;
+			drive[df].ready = false;
 		}
 
 		public void ChangeDisk(int df, string filename)
 		{
 			drive[df].disk = new Disk(filename);
 			drive[df].diskinserted = true;
+			drive[df].ready = false;
+			drive[df].track = 0;
 		}
 
 		public void ReadyDisk()
