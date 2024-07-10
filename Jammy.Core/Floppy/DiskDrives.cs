@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
@@ -312,8 +313,18 @@ namespace Jammy.Core.Floppy
 
 					byte[] mfm = mfmEncoder.EncodeTrack((drive[df].track << 1)+ drive[df].side, drive[df].disk.data, 0x4489);
 
-					foreach (var w in mfm.AsUWord())
+					dsklen &= 0x3fff;
+
+					bool synced = (adkcon & (1u << 10)) == 0;
+					foreach (var w in mfm.AsUWord().Take((int)dsklen))
 					{
+						if (!synced)
+						{
+							if (w != dsksync) continue;
+							interrupt.AssertInterrupt(Interrupt.DSKSYNC);
+							synced = true;
+						}
+
 						memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
 					}
 
