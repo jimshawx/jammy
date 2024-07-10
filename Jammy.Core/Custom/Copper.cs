@@ -665,18 +665,18 @@ namespace Jammy.Core.Custom
 					if (settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 					{
 						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						//ddfstopfix = (ushort)(ddfstrt+(FetchWidth(ddfstrt, ddfstop, ECS, SHRES, 0)>>3));
+						//FetchWidth(ddfstrt, ddfstop, ECS, SHRES, 0)>>3;
 					}
 					else if ((fmode & 3) == 3)
 					{
 						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						//ddfstopfix = (ushort)(ddfstrt+(FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 3)>>3));
+						//FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 3)>>3;
 						pixmod = 8;
 					}
 					else
 					{
 						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						//ddfstopfix = (ushort)(ddfstrt+(FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 2)>>3));
+						//FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 2)>>3;
 						pixmod = 4;
 					}
 				}
@@ -1362,9 +1362,10 @@ namespace Jammy.Core.Custom
 
 				//pixel double
 				//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-				//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
+				//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
 				if (cln.pixelLoop == 8)
 				{
+					//hack for the 0.5x above - skip every other horizontal pixel
 					if ((p & 1) == 0)
 						screen[cop.dptr++] = (int)col;
 				}
