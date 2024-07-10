@@ -546,7 +546,8 @@ namespace Jammy.Core.Custom
 
 			//https://eab.abime.net/showthread.php?t=111329
 			private const int OCS=0;
-			private const int AGA=1;
+			private const int ECS=1;
+			private const int AGA=2;
 
 			private const int LORES = 0;
 			private const int HIRES = 1;
@@ -663,22 +664,19 @@ namespace Jammy.Core.Custom
 
 					if (settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 					{
-						//ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						ddfstopfix = (ushort)FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 0);
-						//ddfstopfix >>= 1;
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						//ddfstopfix = (ushort)(ddfstrt+(FetchWidth(ddfstrt, ddfstop, ECS, SHRES, 0)>>3));
 					}
 					else if ((fmode & 3) == 3)
 					{
-						//ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 0xf) >> 4) + 1) << 4));
-						ddfstopfix = (ushort)FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 3);
-						//ddfstopfix >>= 1;
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						//ddfstopfix = (ushort)(ddfstrt+(FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 3)>>3));
 						pixmod = 8;
 					}
 					else
 					{
-						//ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						ddfstopfix = (ushort)FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 2);
-						//ddfstopfix >>= 1;
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						//ddfstopfix = (ushort)(ddfstrt+(FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 2)>>3));
 						pixmod = 4;
 					}
 				}
