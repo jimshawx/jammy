@@ -14,6 +14,7 @@ So here is my humble attempt at an Amiga emulation.
   * 68000 in C#, verified against the Musashi 68000 CPU
   * 68000/68EC020/68030 using the Musashi CPU emulation
   * Copper, Blitter, CIA emulations
+  * Sprite and bitplane collision
   * Good quality Audio
   * OCS, ECS, AGA emulation
   * Floppy Disks (read) and ATA Hard Disks (read/write)
@@ -25,9 +26,8 @@ So here is my humble attempt at an Amiga emulation.
 * It's free! (MIT License)
 
 ### The not so good stuff
-* The Copper emulation is patchy still and there are lots of problems with DMA timing.
+* The Copper emulation is patchy still and there are problems with DMA timing.
 * No attempt is made to be cycle exact
-* Sprite collision doesn't work yet
 * All blits are immediate
 
 The C# 68000 is slightly faster than the Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
