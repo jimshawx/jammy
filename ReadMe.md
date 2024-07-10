@@ -10,7 +10,7 @@ So here is my humble attempt at an Amiga emulation.
 * It's written in C#
 * It runs faster than real Amigas (on my i5-8250 laptop)
 * It can emulate most Amigas to at least some level
-  * A500, A500+, A600, A1200, A2000, A3000, A4000
+  * A1000, A500, A500+, A600, A1200, A2000, A3000, A4000
   * 68000 in C#, verified against the Musashi 68000 CPU
   * 68000/68EC020/68030 using the Musashi CPU emulation
   * Copper, Blitter, CIA emulations
@@ -25,22 +25,18 @@ So here is my humble attempt at an Amiga emulation.
 * It's free! (MIT License)
 
 ### The not so good stuff
-* The Copper emulation is pretty terrible still and there are lots of problems with DMA timing.
+* The Copper emulation is patchy still and there are lots of problems with DMA timing.
 * No attempt is made to be cycle exact
-* Sprite multiplexing doesn't work yet
+* Sprite collision doesn't work yet
 * All blits are immediate
 
-The C# 68000 is slightly faster than the Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C
-and back again isn't particularly fast.
+The C# 68000 is slightly faster than the Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
 
 The Musashi 68030 option supports the 68881 and MMU instructions. There didn't seem any real need to add a 68040 or 68060 option because of this.
 
-The audio is pretty good, if you run with it switched on it will lock the emulation performance down so the sample rate is exact. With it switched off, everything is
-still emulated but there's no sound output. If the emulation is too slow, the audio will be choppy. There's some high-frequency hiss I'd like to get rid of.
+The audio is pretty good, if you run with it switched on it will lock the emulation performance down so the sample rate is exact. With it switched off, everything is still emulated but there's no sound output. If the emulation is too slow, the audio will be choppy. There's some high-frequency hiss I'd like to get rid of.
 
-It's been a lot of fun writing this. In almost all cases I have worked from publicly available documents - the Hardware Reference Manual,
-online bits and pieces about future Amigas, the ATA mode 0 spec, the datasheets for the 68K series and the CIAs and clock chips. I don't have a real Amiga to hand,
-the trusty A500 my gran bought me in 1989 is trapped in storage somewhere in Australia. I booted it up a couple of years ago and it was still working then.
+It's been a lot of fun writing this. In almost all cases I have worked from publicly available documents - the Hardware Reference Manual, online bits and pieces about future Amigas, the ATA mode 0 spec, the datasheets for the 68K series and the CIAs and clock chips. I don't have a real Amiga to hand, the trusty A500 my gran bought me in 1989 is trapped in storage somewhere in Australia. I booted it up a couple of years ago and it was still working then.
 
 Anyway, Workbench is totally usable right now, and it plays a pretty mean Buggyboy and Pinball Fantasies. With a gigabyte of RAM.
 
