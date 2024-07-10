@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
@@ -317,7 +318,7 @@ namespace Jammy.Core.Floppy
 					dsklen &= 0x3fff;
 
 					bool synced = (adkcon & (1u << 10)) == 0;
-					foreach (var w in mfm.AsUWord())
+					foreach (var w in mfm.AsUWord().Take((int)dsklen))
 					{
 						if (!synced)
 						{
@@ -327,8 +328,6 @@ namespace Jammy.Core.Floppy
 						}
 
 						memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
-						if (dsklen == 0) 
-							break;
 					}
 
 					//this is far too fast, try triggering an interrupt later (should actually be one scanline per 3 words read)
