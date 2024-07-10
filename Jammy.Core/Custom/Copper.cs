@@ -547,6 +547,11 @@ namespace Jammy.Core.Custom
 			//https://eab.abime.net/showthread.php?t=111329
 			private const int OCS=0;
 			private const int AGA=1;
+
+			private const int LORES = 0;
+			private const int HIRES = 1;
+			private const int SHRES = 2;
+
 			private int FetchWidth(int DDFSTRT, int DDFSTOP, int chipset, int res, int FMODE)
 			{
 				// validate bits
@@ -628,45 +633,54 @@ namespace Jammy.Core.Custom
 					pixmod = 4;
 
 					//ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
+					ddfstrtfix = ddfstrt;
 
-					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
+					if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode&3) == 0)
 					{
-						ddfstrtfix = ddfstrt;
-						ddfstopfix=(ushort)(ddfstrt+((((ddfstop-ddfstrt+7)>>3)+1)<<3));
-						//FetchWidth(ddfstrt, ddfstop, OCS, 1, 0);
+						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						FetchWidth(ddfstrt, ddfstop, OCS, HIRES, 0);
 					}
 					else if ((fmode&3) == 3)
 					{
-						//round to multiple of 4 words
-						//int round = 15;
-						//ddfstrtfix = (ushort)(ddfstrt & ~round);
-						//ddfstopfix = (ushort)((ddfstop + round) & ~round);
-						ddfstrtfix = ddfstrt;
 						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 0xf) >> 4) + 1) << 4));
-						//FetchWidth(ddfstrt, ddfstop, AGA, 1, 3);
+						//FetchWidth(ddfstrt, ddfstop, AGA, HIRES, 3);
 						pixmod = 16;
 					}
 					else
 					{
-						//round up to multiple of 2 words
-						//int round = 7;
-						//ddfstrtfix = (ushort)(ddfstrt & ~round);
-						//ddfstopfix = (ushort)((ddfstop + round) & ~round);
-						ddfstrtfix = ddfstrt;
 						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						//FetchWidth(ddfstrt, ddfstop, AGA, 1, 2);
+						//FetchWidth(ddfstrt, ddfstop, AGA, HIRES, 2);
 						pixmod = 8;
 					}
-
-					//diwstrth &= 0xf8;
-					//diwstoph &= 0x1f8;
 				}
 				else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0)
 				{
 					//2 colour clocks, fetch 16 pixels
 					//1 colour clock, draw 8 pixel
+					ddfstrtfix = ddfstrt;
 					pixelLoop = 8;
 					pixmod = 2;
+
+					if (settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
+					{
+						//ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						ddfstopfix = (ushort)FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 0);
+						//ddfstopfix >>= 1;
+					}
+					else if ((fmode & 3) == 3)
+					{
+						//ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 0xf) >> 4) + 1) << 4));
+						ddfstopfix = (ushort)FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 3);
+						//ddfstopfix >>= 1;
+						pixmod = 8;
+					}
+					else
+					{
+						//ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
+						ddfstopfix = (ushort)FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 2);
+						//ddfstopfix >>= 1;
+						pixmod = 4;
+					}
 				}
 				else
 				{
@@ -678,31 +692,24 @@ namespace Jammy.Core.Custom
 					//low-res ddfstrt ignores bit 2
 					ddfstrtfix = ddfstrt;//(ushort)(ddfstrt & 0xfff8);
 
-					if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
+					if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode&3) == 0)
 					{
 						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						//FetchWidth(ddfstrt, ddfstop, OCS, 0, 0);
+						//FetchWidth(ddfstrt, ddfstop, OCS, LORES, 0);
 					}
 					else if ((fmode&3)==3)
 					{
-						//wordCount = (ddfstop - ddfstrt) / 32 + 1;
-						//ddfstopfix = (ushort)(ddfstrtfix + wordCount * 32);
 						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						//FetchWidth(ddfstrt, ddfstop, AGA, 0, 3);
+						//FetchWidth(ddfstrt, ddfstop, AGA, LORES, 3);
 						pixmod =32;
 					}
 					else
 					{
 						ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-						//FetchWidth(ddfstrt, ddfstop, AGA, 0, 2);
+						//FetchWidth(ddfstrt, ddfstop, AGA, LORES, 2);
 						pixmod = 16;
 					}
-
-					//diwstrth &= 0xf0;
-					//diwstoph &= 0x1f0;
 				}
-
-				//pixelMask = 0x8000;
 			}
 		}
 
@@ -946,7 +953,7 @@ namespace Jammy.Core.Custom
 
 						//in OCS mode CDANG in COPCON means can access >= 0x40->0x7E as well as the usual >= 0x80
 						//in ECS/AGA mode CDANG in COPCON means can access ALL chip regs, otherwise only >= 080
-						if (settings.ChipSet == ChipSet.OCS)
+						if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
 						{
 							if (((copcon & 2) != 0 && reg >= 0x40) || reg >= 0x80)
 							{
@@ -1049,6 +1056,7 @@ namespace Jammy.Core.Custom
 
 		private static readonly int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
 		private static readonly int[] fetchHi = { 4, 2, 3, 1, 4, 2, 3, 1 };
+		private static readonly int[] fetchSh = { 2, 1, 2, 1, 2, 1, 2, 1 };
 		private static readonly int[] fetchF3 = {
 					 //10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 8, 4, 6, 2, 7, 3, 5, 1,
 					 8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10,
@@ -1062,12 +1070,14 @@ namespace Jammy.Core.Custom
 			int planeIdx;
 			int plane;
 
-			if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
+			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode&3) == 0)
 			{
 				planeIdx = (h - cln.ddfstrtfix) % cln.pixmod;
 
 				if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 					plane = fetchHi[planeIdx] - 1;
+				else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0)
+					plane = fetchSh[planeIdx] - 1;
 				else
 					plane = fetchLo[planeIdx] - 1;
 			}
@@ -1084,7 +1094,7 @@ namespace Jammy.Core.Custom
 
 			if (plane < cln.planes)
 			{
-				if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
+				if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode&3) == 0)
 				{
 					bpldat[plane] = (ushort)memory.Read(0, bplpt[plane], Size.Word);
 					bplpt[plane] += 2;
@@ -1141,7 +1151,7 @@ namespace Jammy.Core.Custom
 
 		private void FirstPixel()
 		{
-			if (settings.ChipSet == ChipSet.OCS || (fmode&3) == 0)
+			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode&3) == 0)
 				cln.pixelBits = 15; 
 			else if ((fmode&3) == 3)
 				cln.pixelBits = 63; 
@@ -1355,8 +1365,16 @@ namespace Jammy.Core.Custom
 				//pixel double
 				//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
 				//since we've set up a hi-res screen, it' s 2x, 1x and 0.5x and shres isn't supported yet
-				for (int k = 0; k < 4 / cln.pixelLoop; k++)
-					screen[cop.dptr++] = (int)col;
+				if (cln.pixelLoop == 8)
+				{
+					if ((p & 1) == 0)
+						screen[cop.dptr++] = (int)col;
+				}
+				else
+				{
+					for (int k = 0; k < 4 / cln.pixelLoop; k++)
+						screen[cop.dptr++] = (int)col;
+				}
 
 				//remember the last colour for HAM modes
 				cln.lastcol = col;
