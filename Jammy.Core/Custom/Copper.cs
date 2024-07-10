@@ -1375,6 +1375,9 @@ namespace Jammy.Core.Custom
 
 				if (clxm != 0)
 				{
+					int clxconMatch = (clxcon & 0x3f) | ((clxcon2 & 0x3) << 6);
+					int clxconEnable = ((clxcon >> 6) & 0x3f) | (clxcon2 & 0xc0);
+
 					//combine in the enabled odd-numbered sprites
 					for (int s = 0; s < 4; s++)
 					{
@@ -1384,26 +1387,37 @@ namespace Jammy.Core.Custom
 							clx[s] = clx[s * 2] != 0 ? 0xff : 0;
 					}
 
+					ushort sscol = 1 << 9;
 					for (int s = 0; s < 4; s++)
 					{
 						//planes enabled for collision
-						int clp = (pix ^ ~clxcon) & (clxcon >> 6) & 0x3f;
-						//some are triggered on, some are triggered off
-						//clp ^= clxcon & 0x3f;
+						int clp = (pix ^ ~clxconMatch) & clxconEnable;
 
 						int mask = clx[s] & clp;
 						if (mask != 0)
 						{
-							//sprite 's'->bit-plane collision
+							//sprite 's'->bitplane collision
 
 							//even plane collision
-							if ((mask & 0b010101)!=0)
+							if ((mask & 0b01010101)!=0)
 								clxdat |= (ushort)(2 << s);
 							//odd plane collision
-							if ((mask & 0b101010) != 0) 
+							if ((mask & 0b10101010) != 0) 
 								clxdat |= (ushort)(32 << s);
 						}
+
+						//sprite -> sprite collision
+						for (int t = s + 1; t < 4; t++)
+						{
+							if ((clx[s] & clx[t]) != 0)
+								clxdat |= sscol;
+							sscol <<= 1;
+						}
 					}
+
+					//odd->even bitplane collision
+					if ((((pix&0xb10101010) >> 1) & pix) != 0)
+						clxdat |= 1;
 				}
 
 				//pixel double
