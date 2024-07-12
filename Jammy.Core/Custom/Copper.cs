@@ -1528,6 +1528,7 @@ namespace Jammy.Core.Custom
 		public ushort[] lowcolour = new ushort[256];
 		public uint[] truecolour = new uint[256];
 
+		private ushort horzBits = 0;
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
@@ -1559,7 +1560,10 @@ namespace Jammy.Core.Custom
 					}
 					break;
 				case ChipRegs.VHPOSR:
-					value = (ushort)((copperVert << 8) | (copperHorz & 0x00ff));
+					value = (ushort)((copperVert << 8) | ((copperHorz | horzBits) & 0x00ff));
+					//todo: copperHorz only goes up in setps of 8 (for now)
+					horzBits++;
+					horzBits &= 7;
 					break;
 
 				case ChipRegs.COPCON:
