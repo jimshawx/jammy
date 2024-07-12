@@ -163,6 +163,8 @@ namespace Jammy.Core.Custom.Audio
 			dmacon = 0;
 			intreq = 0;
 			intena = 0;
+
+			lastMod = 0;
 		}
 
 		public enum AudioMode
@@ -216,6 +218,8 @@ namespace Jammy.Core.Custom.Audio
 		}
 
 		private ushort adkcon = 0;
+
+		private ushort lastMod = 0;
 		private void WriteADKCON(ushort v)
 		{
 			if ((v & 0x8000) != 0)
@@ -223,15 +227,22 @@ namespace Jammy.Core.Custom.Audio
 			else
 				adkcon &= (ushort)~v;
 
-			if ((v & 1) != 0) logger.LogTrace("C0 modulates volume");
-			if ((v & 2) != 0) logger.LogTrace("C1 modulates volume");
-			if ((v & 4) != 0) logger.LogTrace("C2 modulates volume");
-			if ((v & 8) != 0) logger.LogTrace("C3 modulates volume");
-			v >>= 4;
-			if ((v & 1) != 0) logger.LogTrace("C0 modulates frequency");
-			if ((v & 2) != 0) logger.LogTrace("C1 modulates frequency");
-			if ((v & 4) != 0) logger.LogTrace("C2 modulates frequency");
-			if ((v & 8) != 0) logger.LogTrace("C3 modulates frequency");
+			v = (ushort)(adkcon & 0xff);
+			if (v != lastMod)
+			{
+				if ((v & 1) != 0) logger.LogTrace("C0 modulates volume");
+				if ((v & 2) != 0) logger.LogTrace("C1 modulates volume");
+				if ((v & 4) != 0) logger.LogTrace("C2 modulates volume");
+				if ((v & 8) != 0) logger.LogTrace("C3 modulates volume");
+				v >>= 4;
+				if ((v & 1) != 0) logger.LogTrace("C0 modulates frequency");
+				if ((v & 2) != 0) logger.LogTrace("C1 modulates frequency");
+				if ((v & 4) != 0) logger.LogTrace("C2 modulates frequency");
+				if ((v & 8) != 0) logger.LogTrace("C3 modulates frequency");
+
+				if (v == 0) logger.LogTrace("No modulation");
+				lastMod = v;
+			}
 		}
 
 		private ushort intreq = 0;
