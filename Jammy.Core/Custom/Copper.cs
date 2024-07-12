@@ -721,6 +721,10 @@ namespace Jammy.Core.Custom
 
 			if (cop.currentLine == cdbg.dbugLine)
 				DebugPalette();
+
+			//clear sprites from wrapping from the right
+			for (int s = 0; s < 8; s++)
+				spriteMask[s] = 0;
 		}
 
 		private enum SpriteState
@@ -736,7 +740,7 @@ namespace Jammy.Core.Custom
 		}
 
 		private SpriteState [] spriteState = new SpriteState[8];
-		private uint[] spriteMask = new uint[8];
+		private readonly uint[] spriteMask = new uint[8];
 
 		private void RunSpriteDMA(int slot)
 		{
