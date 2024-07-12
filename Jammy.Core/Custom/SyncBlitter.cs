@@ -38,7 +38,14 @@ namespace Jammy.Core.Custom
 		{
 			if (currentBlit != null)
 			{
-				//while (currentBlit.MoveNext()) /* finish the blit */ ;
+				if (currentBlit.MoveNext())
+				{
+					logger.LogTrace("Blitter not finished before new blit started!");
+					//while (currentBlit.MoveNext()) /* finish the blit */ ;
+					//it's too late to do this, all the blitter registers will already have been set for the next blit
+					//when they should have been based on the values after this blit finished
+				}
+
 				currentBlit.Dispose();
 			}
 			currentBlit = blit.GetEnumerator();
@@ -46,9 +53,7 @@ namespace Jammy.Core.Custom
 
 		public void Emulate(ulong cycles)
 		{
-			//while (currentBlit.MoveNext()) /* finish the blit */ ;
-			for (ulong i = 0; i < 1000; i++) 
-				if (!currentBlit.MoveNext()) break;
+			currentBlit.MoveNext();
 		}
 
 		public void Reset()
@@ -259,6 +264,14 @@ namespace Jammy.Core.Custom
 			if ((dmacon & (1 << 9)) == 0)
 				logger.LogTrace("DMAEN is off!");
 
+			//set BBUSY
+			custom.WriteDMACON(0x8000 + (1 << 14));
+			//for (;;)
+			//{
+			//	yield return 0;
+			//	if ((custom.Read(0, ChipRegs.DMACONR, Size.Word) & ((1<<6)|(1<<9))) == 0) break;
+			//}
+
 			//todo: assumes blitter DMA is enabled
 
 			int ashift = (int)(bltcon0 >> 12);
@@ -268,14 +281,19 @@ namespace Jammy.Core.Custom
 			uint s_bltadat, s_bltbdat;
 
 			//set blitter busy in DMACON
-			custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
+			//custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
+
+			//set BZERO
+			custom.WriteDMACON(0x8000 + (1 << 13));
+
+			//yield return 1;
 
 			uint bltabits = 0;
 			uint bltbbits = 0;
 			uint fci = bltcon1&(1u<<2);
 			ClearDelayedWrite();
 
-			yield return 1;
+			//yield return 1;
 
 			for (uint h = 0; h < height; h++)
 			{
@@ -284,7 +302,7 @@ namespace Jammy.Core.Custom
 					if ((bltcon0 & (1u << 11)) != 0)
 					{
 						bltadat = memory.Read(0, bltapt, Size.Word);
-						yield return 1;
+						//yield return 1;
 					}
 
 					s_bltadat = bltadat;
@@ -310,7 +328,7 @@ namespace Jammy.Core.Custom
 					if ((bltcon0 & (1u << 10)) != 0)
 					{
 						bltbdat = memory.Read(0, bltbpt, Size.Word);
-						yield return 1;
+						//yield return 1;
 					}
 
 					s_bltbdat = bltbdat;
@@ -333,7 +351,7 @@ namespace Jammy.Core.Custom
 					if ((bltcon0 & (1u << 9)) != 0)
 					{
 						bltcdat = memory.Read(0, bltcpt, Size.Word);
-						yield return 1;
+						//yield return 1;
 					}
 
 					bltddat = 0;
@@ -353,7 +371,7 @@ namespace Jammy.Core.Custom
 					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
 					{
 						DelayedWrite(bltdpt, (ushort)bltddat);
-						yield return 1;
+						//yield return 1;
 					}
 
 					if ((bltcon1 & (1u << 1)) != 0)
@@ -389,24 +407,30 @@ namespace Jammy.Core.Custom
 				//reset carry
 				bltcon1 &= ~(1u << 2);
 				bltcon1 |= fci;
+				//yield return 1;
 			}
 
 			DelayedWrite();
-			yield return 1;
+			//yield return 1;
 
 			//write the BZERO bit in DMACON
-			if (bltzero == 0)
-				custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
-			else
-				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+			//if (bltzero == 0)
+			//	custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
+			//else
+			//	custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+			//blit wasn't all zeros, clear BZERO
+			if (bltzero != 0)
+				custom.WriteDMACON(1 << 13);
 
 			//disable blitter busy in DMACON
-			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+			//custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+			//clear BBUSY
+			custom.WriteDMACON(1 << 14);
+
+			yield return 1;
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
-
-			yield return 1;
 		}
 
 		private void Fill()
@@ -415,15 +439,11 @@ namespace Jammy.Core.Custom
 			//descending mode and one of the fill modes must be set
 			if (mode ==0 || (bltcon1&(1<<1))==0) return;
 
-			ushort dbg_bltddat = (ushort)bltddat;
-			ushort dbg_bltcon1 = (ushort)bltcon1;
-
 			//hack: what to do if both EFE and IFE set? Let's choose EFE
 			if (mode == 3) mode = 2;
 
 			//carry in
 			bool inside = (bltcon1&(1<<2))!=0;
-			uint oldbltcon1=bltcon1;
 			if (mode == 1)
 			{
 				//inclusive fill
@@ -477,6 +497,7 @@ namespace Jammy.Core.Custom
 			uint length = bltsize >> 6;
 			if (length == 0)
 			{
+				logger.LogTrace("Zero length line");
 				interrupt.AssertInterrupt(Interrupt.BLIT);
 				yield break;
 			}
@@ -493,9 +514,24 @@ namespace Jammy.Core.Custom
 
 			uint bltzero = 0;
 
-			//set blitter busy in DMACON
-			custom.Write(insaddr, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
-			yield return 1;
+			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			if ((dmacon & (1 << 6)) == 0)
+				logger.LogTrace("BLTEN is off!");
+			if ((dmacon & (1 << 9)) == 0)
+				logger.LogTrace("DMAEN is off!");
+
+			//set BBUSY
+			custom.WriteDMACON(0x8000 + (1 << 14));
+			//for (;;)
+			//{
+			//	yield return 0;
+			//	if ((custom.Read(0, ChipRegs.DMACONR, Size.Word) & ((1 << 6) | (1 << 9))) == 0) break;
+			//}
+
+			//set BZERO
+			custom.WriteDMACON(0x8000 | (1 << 13));
+
+			//yield return 1;
 
 			bool writeBit = true;
 
@@ -513,7 +549,7 @@ namespace Jammy.Core.Custom
 				if ((bltcon0 & (1u << 9)) != 0)
 				{
 					bltcdat = memory.Read(insaddr, bltcpt, Size.Word);
-					yield return 1;
+					//yield return 1;
 				}
 
 				bltadat = 0x8000u >> x0;
@@ -535,7 +571,7 @@ namespace Jammy.Core.Custom
 					{
 						memory.Write(insaddr, bltdpt, bltddat, Size.Word);
 						if (sing) writeBit = false;
-						yield return 1;
+						//yield return 1;
 					}
 				}
 
@@ -563,21 +599,26 @@ namespace Jammy.Core.Custom
 				bltdpt = bltcpt;
 			}
 
+			//yield return 1;
+
 			//write the BZERO bit in DMACON
-			if (bltzero == 0)
-				custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
-			else
-				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+			//if (bltzero == 0)
+			//	custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
+			//else
+			//	custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+			//blit wasn't all zeros, clear BZERO
+			if (bltzero != 0)
+				custom.WriteDMACON(1 << 13);
 
 			//disable blitter busy in DMACON
-			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+			//custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+			//clear BBUSY
+			custom.WriteDMACON(1 << 14);
 
 			yield return 1;
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
-
-			yield return 1;
 		}
 	}
 }

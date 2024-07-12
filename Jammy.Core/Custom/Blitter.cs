@@ -345,7 +345,9 @@ namespace Jammy.Core.Custom
 			uint s_bltadat, s_bltbdat;
 
 			//set blitter busy in DMACON
-			custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
+			//custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
+			//set BBUSY and BZERO
+			custom.WriteDMACON(0x8000  + (1 << 14) + (1 << 13));
 
 			uint bltabits = 0;
 			uint bltbbits = 0;
@@ -472,13 +474,17 @@ namespace Jammy.Core.Custom
 			DelayedWrite();
 
 			//write the BZERO bit in DMACON
-			if (bltzero == 0)
-				custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
-			else
-				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+			//if (bltzero == 0)
+			//	custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
+			//else
+			//	custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+			//clear BZERO
+			if (bltzero != 0)
+				custom.WriteDMACON(1 << 13);
 
 			//disable blitter busy in DMACON
-			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+			//custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+			custom.WriteDMACON(1 << 14);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
@@ -583,7 +589,9 @@ namespace Jammy.Core.Custom
 			uint bltzero = 0;
 
 			//set blitter busy in DMACON
-			custom.Write(insaddr, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
+			//custom.Write(insaddr, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
+			//set BBUSY and BZERO
+			custom.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
 
 			bool writeBit = true;
 
@@ -648,13 +656,17 @@ namespace Jammy.Core.Custom
 			}
 
 			//write the BZERO bit in DMACON
-			if (bltzero == 0)
-				custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
-			else
-				custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+			//if (bltzero == 0)
+			//	custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
+			//else
+			//	custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+			//clear BZERO
+			if (bltzero != 0)
+				custom.WriteDMACON(1 << 13);
 
 			//disable blitter busy in DMACON
-			custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+			//custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+			custom.WriteDMACON(1 << 14);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);

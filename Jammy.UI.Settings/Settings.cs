@@ -19,6 +19,7 @@ namespace Jammy.UI.Settings
 		public Settings()
 		{
 			InitializeComponent();
+			rbSynchronous.Enabled = true;
 
 			JsonConvert.DefaultSettings = () =>
 			{

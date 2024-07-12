@@ -223,37 +223,16 @@ namespace Jammy.Core.Custom
 
 			if (address == ChipRegs.DMACON)
 			{
+
 				if ((value & 0x8000) != 0)
-					regs[reg] |= (ushort)value;
+					regs[reg] |= (ushort)(value&0x9fff);//can't set BBUSY or BZERO
 				else
-					regs[reg] &= (ushort)~value;
-				//logger.LogTrace($"DMACON {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
-
-				//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("BBUSY ");
-				//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("BZERO ");
-				//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("unused ");
-				//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("unused ");
-				//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("BLTPRI ");
-				//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("DMAEN "); else logger.LogTrace("~DMAEN ");
-				//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("BPLEN ");
-				//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("COPEN "); else logger.LogTrace("~COPEN ");
-				//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLTEN ");
-				//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("SPREN ");
-				//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("DSKEN ");
-				//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("AUD3EN ");
-				//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("AUD2EN ");
-				//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("AUD1EN ");
-				//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("AUD0EN ");
-				//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
-
-				//if ((value & (int)(ChipRegs.DMA.SETCLR | ChipRegs.DMA.AUD3EN))== (int)(ChipRegs.DMA.SETCLR | ChipRegs.DMA.AUD3EN))
-				//	logger.LogTrace("AUD3EN ON!");
-				//else if ((value & (int)(ChipRegs.DMA.SETCLR | ChipRegs.DMA.AUD3EN)) == (int)ChipRegs.DMA.AUD3EN)
-				//	logger.LogTrace("AUD3EN OFF!");
+					regs[reg] &= (ushort)(~value|0x6000);//can't clear BBUSY or BZERO
 
 				audio.WriteDMACON((ushort)(regs[reg]&0x7fff));
 
-				regs[REG(ChipRegs.DMACONR)] = regs[reg];
+				//add the new bits from DMACON, but leave BBUSY and BZERO alone
+				regs[REG(ChipRegs.DMACONR)] = (ushort)((regs[REG(ChipRegs.DMACONR)] & 0x6000) | (regs[reg] & 0x9fff));
 			}
 			else if (address == ChipRegs.DMACONR) { /* can't write here */ }
 			else if (address == ChipRegs.INTENA)
@@ -382,6 +361,20 @@ namespace Jammy.Core.Custom
 			else 
 			{
 				logger.LogTrace($"W {ChipRegs.Name(address)} {originalAddress:X8} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+			}
+		}
+
+		public void WriteDMACON(ushort bits)
+		{
+			if ((bits & 0x8000) != 0)
+			{
+				regs[REG(ChipRegs.DMACONR)] |= bits;
+				regs[REG(ChipRegs.DMACON)] |= bits;
+			}
+			else
+			{
+				regs[REG(ChipRegs.DMACONR)] &= (ushort)~bits;
+				regs[REG(ChipRegs.DMACON)] &= (ushort)~bits;
 			}
 		}
 
