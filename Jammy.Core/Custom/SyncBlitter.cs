@@ -49,6 +49,8 @@ namespace Jammy.Core.Custom
 				currentBlit.Dispose();
 			}
 			currentBlit = blit.GetEnumerator();
+			//run the first iteration immediately, which will set BBUSY
+			currentBlit.MoveNext();
 		}
 
 		public void Emulate(ulong cycles)
@@ -286,7 +288,7 @@ namespace Jammy.Core.Custom
 			//set BZERO
 			custom.WriteDMACON(0x8000 + (1 << 13));
 
-			//yield return 1;
+			yield return 1;
 
 			uint bltabits = 0;
 			uint bltbbits = 0;
@@ -491,6 +493,12 @@ namespace Jammy.Core.Custom
 
 		private IEnumerable<int> Line(uint insaddr)
 		{
+			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			if ((dmacon & (1 << 6)) == 0)
+				logger.LogTrace("BLTEN is off!");
+			if ((dmacon & (1 << 9)) == 0)
+				logger.LogTrace("DMAEN is off!");
+
 			uint octant = (bltcon1 >> 2) & 7;
 			bool sing = (bltcon1 & (1 << 1)) != 0;
 
@@ -498,6 +506,8 @@ namespace Jammy.Core.Custom
 			if (length == 0)
 			{
 				logger.LogTrace("Zero length line");
+				//set BZERO
+				custom.WriteDMACON(0x8000 | (1 << 13));
 				interrupt.AssertInterrupt(Interrupt.BLIT);
 				yield break;
 			}
@@ -514,12 +524,6 @@ namespace Jammy.Core.Custom
 
 			uint bltzero = 0;
 
-			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
-			if ((dmacon & (1 << 6)) == 0)
-				logger.LogTrace("BLTEN is off!");
-			if ((dmacon & (1 << 9)) == 0)
-				logger.LogTrace("DMAEN is off!");
-
 			//set BBUSY
 			custom.WriteDMACON(0x8000 + (1 << 14));
 			//for (;;)
@@ -531,7 +535,7 @@ namespace Jammy.Core.Custom
 			//set BZERO
 			custom.WriteDMACON(0x8000 | (1 << 13));
 
-			//yield return 1;
+			yield return 1;
 
 			bool writeBit = true;
 
