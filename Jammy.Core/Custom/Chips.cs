@@ -223,7 +223,6 @@ namespace Jammy.Core.Custom
 
 			if (address == ChipRegs.DMACON)
 			{
-
 				if ((value & 0x8000) != 0)
 					regs[reg] |= (ushort)(value&0x9fff);//can't set BBUSY or BZERO
 				else
@@ -232,7 +231,7 @@ namespace Jammy.Core.Custom
 				audio.WriteDMACON((ushort)(regs[reg]&0x7fff));
 
 				//add the new bits from DMACON, but leave BBUSY and BZERO alone
-				regs[REG(ChipRegs.DMACONR)] = (ushort)((regs[REG(ChipRegs.DMACONR)] & 0x6000) | (regs[reg] & 0x9fff));
+				regs[REG(ChipRegs.DMACONR)] = (ushort)((regs[REG(ChipRegs.DMACONR)] & 0x6000) | (regs[reg] & 0x1fff));
 			}
 			else if (address == ChipRegs.DMACONR) { /* can't write here */ }
 			else if (address == ChipRegs.INTENA)
