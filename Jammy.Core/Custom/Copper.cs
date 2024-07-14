@@ -919,8 +919,6 @@ namespace Jammy.Core.Custom
 
 		private void CopperInstruction(int h)
 		{
-			if (h > 0xd2) return;
-
 			//copper instruction every odd clock (and copper DMA is on)
 			if ((h & 1) == 1 && h < 227/*E3*/)
 			{
@@ -1029,8 +1027,11 @@ namespace Jammy.Core.Custom
 					//}
 
 					//If blitter-busy bit is set the comparisons will fail.
-					if (cop.waitBlit != 0 && (custom.Read(0, ChipRegs.DMACONR, Size.Word) & (1 << 14)) != 0)
+					if (cop.waitBlit == 0 && (custom.Read(0, ChipRegs.DMACONR, Size.Word) & (1 << 14)) != 0)
+					{
+						logger.LogTrace("WAIT delayed due to blitter running");
 						return;
+					}
 
 					uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
 					coppos &= cop.waitMask;
