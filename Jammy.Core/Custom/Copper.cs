@@ -195,7 +195,7 @@ namespace Jammy.Core.Custom
 				spriteState[i] = SpriteState.Idle;
 		}
 
-		private const int MAX_COPPER_ENTRIES = 1024;
+		private const int MAX_COPPER_ENTRIES = 2048;
 
 		private string DisassembleCopperList(uint copPC)
 		{
@@ -222,7 +222,7 @@ namespace Jammy.Core.Custom
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 
-					csb.AppendLine($"{copPC - 4:X6} MOVE {ins:X4} {data:X4} {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X4}),{data:X4}");
+					csb.AppendLine($"{copPC - 4:X6} MOVE {ins:X4} {data:X4} {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X3}),{data:X4}");
 
 					if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
 						copPC = custom.Read(copPC - 4, ChipRegs.COP1LCH, Size.Long);//COP1LC
@@ -243,20 +243,19 @@ namespace Jammy.Core.Custom
 					if ((data & 1) == 0)
 					{
 						//WAIT
-						csb.AppendLine($"{copPC - 4:X6} WAIT {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
+						if (ins == 0xffff && data == 0xfffe)
+							csb.AppendLine($"{copPC - 4:X6} WAIT {ins:X4} {data:X4} End of Copper list");
+						else
+							csb.AppendLine($"{copPC - 4:X6} WAIT {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
 					}
 					else
 					{
 						//SKIP
 						csb.AppendLine($"{copPC - 4:X6} SKIP {ins:X4} {data:X4} vp:{vp:X2} hp:{hp:X2} ve:{ve:X2} he:{he:X2} b:{blit}");
-						if (skipTaken.Contains(copPC - 4))
+						if (!skipTaken.Add(copPC - 4))
 						{
 							copPC += 4;
 							csb.AppendLine("SKIPPED");
-						}
-						else
-						{
-							skipTaken.Add(copPC - 4);
 						}
 					}
 
@@ -315,6 +314,7 @@ namespace Jammy.Core.Custom
 			public uint waitMask;
 			public uint waitPos;
 			public int waitTimer;
+			public uint waitBlit;
 
 			public int lineStart;
 			public ushort ins;
@@ -329,6 +329,7 @@ namespace Jammy.Core.Custom
 				waitV = 0;
 				waitHMask = 0xff;
 				waitVMask = 0xff;
+				waitBlit = 0;
 				status = CopperStatus.RunningWord1;
 			}
 		}
@@ -918,6 +919,8 @@ namespace Jammy.Core.Custom
 
 		private void CopperInstruction(int h)
 		{
+			if (h > 0xd2) return;
+
 			//copper instruction every odd clock (and copper DMA is on)
 			if ((h & 1) == 1 && h < 227/*E3*/)
 			{
@@ -954,8 +957,8 @@ namespace Jammy.Core.Custom
 						uint regAddress = ChipRegs.ChipBase + reg;
 
 						//in OCS mode CDANG in COPCON means can access >= 0x40->0x7E as well as the usual >= 0x80
-						//in ECS/AGA mode CDANG in COPCON means can access ALL chip regs, otherwise only >= 080
-						if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
+						//in ECS/AGA mode CDANG in COPCON means can access ALL chip regs, otherwise only >= 040
+						if (settings.ChipSet == ChipSet.OCS)
 						{
 							if (((copcon & 2) != 0 && reg >= 0x40) || reg >= 0x80)
 							{
@@ -969,7 +972,7 @@ namespace Jammy.Core.Custom
 						}
 						else
 						{
-							if ((copcon & 2) !=0 || reg >= 0x80)
+							if ((copcon & 2) !=0 || reg >= 0x40)
 							{
 								custom.Write(0, regAddress, data, Size.Word);
 							}
@@ -992,16 +995,11 @@ namespace Jammy.Core.Custom
 						cop.waitMask = (uint)(cop.waitHMask | (cop.waitVMask << 8));
 						cop.waitPos = (uint)((cop.waitV << 8) | cop.waitH);
 
-						uint blit = (uint)(data >> 15);
-
-						//todo: blitter is immediate, so currently ignored.
-						//todo: in reality if blitter-busy bit is set the comparisons will fail.
+						cop.waitBlit = (uint)(data >> 15);
 
 						if ((data & 1) == 0)
 						{
 							//WAIT
-							//if (!(cop.waitH == 254 && cop.waitV == 255))
-							//	logger.LogTrace($"WAIT until ({cop.waitH},{cop.waitV}) @({h},{cop.currentLine}) hm:{cop.waitHMask:X3} vm:{cop.waitVMask:X3} m:{cop.waitMask:X4} p:{cop.waitPos:X4}");
 							cop.status = CopperStatus.Waiting;
 						}
 						else
@@ -1030,11 +1028,14 @@ namespace Jammy.Core.Custom
 					//	}
 					//}
 
+					//If blitter-busy bit is set the comparisons will fail.
+					if (cop.waitBlit != 0 && (custom.Read(0, ChipRegs.DMACONR, Size.Word) & (1 << 14)) != 0)
+						return;
+
 					uint coppos = (uint)(((cop.currentLine & 0xff) << 8) | (h & 0xff));
 					coppos &= cop.waitMask;
 					if (CopperCompare(coppos, (cop.waitPos & cop.waitMask)))
 					{
-						//logger.LogTrace($"RUN  {h},{cop.currentLine} {coppos:X4} {cop.waitPos:X4}");
 						cop.waitTimer = 1;
 						cop.status = CopperStatus.WakingUp;
 
@@ -1050,10 +1051,7 @@ namespace Jammy.Core.Custom
 
 		private bool CopperCompare(uint coppos, uint waitPos)
 		{
-			//return coppos >= waitPos;
-			return ((coppos&0xff00)>=(waitPos&0xff00))&&((coppos&0xff)>=(waitPos&0xff));
-			//return ((coppos & 0xff00) == (waitPos & 0xff00)) && ((coppos & 0xff) >= (waitPos & 0xff));
-			//return (((coppos & 0xff00) == (waitPos & 0xff00)) && ((coppos & 0xff) >= (waitPos & 0xff))) || ((coppos & 0xff00) > (waitPos & 0xff00));
+			return coppos >= waitPos;
 		}
 
 		private static readonly int[] fetchLo = { 8, 4, 6, 2, 7, 3, 5, 1 };
