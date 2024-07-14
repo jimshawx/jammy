@@ -17,5 +17,7 @@ namespace Jammy.Extensions.Extensions
 		public static string ToBin(this ushort v) { return v.ToString("b16"); }
 		public static string ToBin(this uint v) { return v.ToString("b32"); }
 		public static string ToBin(this uint v, int cnt) { return v.ToString($"b{cnt}"); }
+		public static string ToBin(this ulong v) { return v.ToString("b64"); }
+		public static string ToBin(this ulong v, int cnt) { return v.ToString($"b{cnt}"); }
 	}
 }
