@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
@@ -9,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Custom
@@ -106,127 +104,45 @@ namespace Jammy.Core.Custom
 
 			switch (address)
 			{
-				case ChipRegs.BLTCON0:
-					bltcon0 = value;
-					break;
-				case ChipRegs.BLTCON1:
-					bltcon1 = value;
-					break;
+				case ChipRegs.BLTCON0: bltcon0 = value; break;
+				case ChipRegs.BLTCON1: bltcon1 = value; break;
 
-				case ChipRegs.BLTAFWM:
-					bltafwm = value;
-					break;
-				case ChipRegs.BLTALWM:
-					bltalwm = value;
-					break;
+				case ChipRegs.BLTAFWM: bltafwm = value; break;
+				case ChipRegs.BLTALWM: bltalwm = value; break;
 
-				case ChipRegs.BLTCPTH:
-					bltcpt = ((bltcpt & 0x0000ffff) | ((uint)value << 16));
-					break;
-				case ChipRegs.BLTCPTL:
-					bltcpt = ((bltcpt & 0xffff0000) | (uint)(value & 0xfffe));
-					break;
-				case ChipRegs.BLTBPTH:
-					bltbpt = ((bltbpt & 0x0000ffff) | ((uint)value << 16));
-					break;
-				case ChipRegs.BLTBPTL:
-					bltbpt = ((bltbpt & 0xffff0000) | (uint)(value & 0xfffe));
-					break;
-				case ChipRegs.BLTAPTH:
-					bltapt = ((bltapt & 0x0000ffff) | ((uint)value << 16));
-					break;
-				case ChipRegs.BLTAPTL:
-					bltapt = ((bltapt & 0xffff0000) | (uint)(value & 0xfffe));
-					break;
-				case ChipRegs.BLTDPTH:
-					bltdpt = ((bltdpt & 0x0000ffff) | ((uint)value << 16));
-					break;
-				case ChipRegs.BLTDPTL:
-					bltdpt = ((bltdpt & 0xffff0000) | (uint)(value & 0xfffe));
-					break;
+				case ChipRegs.BLTCPTH: bltcpt = ((bltcpt & 0x0000ffff) | ((uint)value << 16)); break;
+				case ChipRegs.BLTCPTL: bltcpt = ((bltcpt & 0xffff0000) | (uint)(value & 0xfffe)); break;
+				case ChipRegs.BLTBPTH: bltbpt = ((bltbpt & 0x0000ffff) | ((uint)value << 16)); break;
+				case ChipRegs.BLTBPTL: bltbpt = ((bltbpt & 0xffff0000) | (uint)(value & 0xfffe)); break;
+				case ChipRegs.BLTAPTH: bltapt = ((bltapt & 0x0000ffff) | ((uint)value << 16)); break;
+				case ChipRegs.BLTAPTL: bltapt = ((bltapt & 0xffff0000) | (uint)(value & 0xfffe)); break;
+				case ChipRegs.BLTDPTH: bltdpt = ((bltdpt & 0x0000ffff) | ((uint)value << 16)); break;
+				case ChipRegs.BLTDPTL: bltdpt = ((bltdpt & 0xffff0000) | (uint)(value & 0xfffe)); break;
 
 				case ChipRegs.BLTSIZE:
 					bltsize = value;
 					BlitSmall(insaddr);
 					break;
 
-				case ChipRegs.BLTCON0L:
-					bltcon0 = (bltcon0 & 0x0000ff00) | ((uint)value & 0x000000ff);
-					break;
+				case ChipRegs.BLTCON0L: bltcon0 = (bltcon0 & 0x0000ff00) | ((uint)value & 0x000000ff); break;
 
-				case ChipRegs.BLTSIZV:
-					bltsizv = value;
-					break;
+				case ChipRegs.BLTSIZV: bltsizv = value; break;
+
 				case ChipRegs.BLTSIZH:
 					bltsizh = value;
 					BlitBig(insaddr);
 					break;
 
-				case ChipRegs.BLTCMOD:
-					bltcmod = (uint)(short)value & 0xfffffffe;
-					break;
-				case ChipRegs.BLTBMOD:
-					bltbmod = (uint)(short)value & 0xfffffffe;
-					break;
-				case ChipRegs.BLTAMOD:
-					bltamod = (uint)(short)value & 0xfffffffe;
-					break;
-				case ChipRegs.BLTDMOD:
-					bltdmod = (uint)(short)value & 0xfffffffe;
-					break;
+				case ChipRegs.BLTCMOD: bltcmod = (uint)(short)value & 0xfffffffe; break;
+				case ChipRegs.BLTBMOD: bltbmod = (uint)(short)value & 0xfffffffe; break;
+				case ChipRegs.BLTAMOD: bltamod = (uint)(short)value & 0xfffffffe; break;
+				case ChipRegs.BLTDMOD: bltdmod = (uint)(short)value & 0xfffffffe; break;
 
-				case ChipRegs.BLTCDAT:
-					bltcdat = value;
-					break;
-				case ChipRegs.BLTBDAT:
-					bltbdat = value;
-					break;
-				case ChipRegs.BLTADAT:
-					bltadat = value;
-					break;
-				case ChipRegs.BLTDDAT:
-					bltddat = value;
-					break;
+				case ChipRegs.BLTCDAT: bltcdat = value; break;
+				case ChipRegs.BLTBDAT: bltbdat = value; break;
+				case ChipRegs.BLTADAT: bltadat = value; break;
+				case ChipRegs.BLTDDAT: bltddat = value; break;
 			}
-		}
-
-		private int counter = 0;
-		private string filename;
-		
-		private void WriteBlitterState()
-		{
-			var b = new List<string>
-			{
-				"{",
-				$"bltcon0 : {bltcon0},",
-				$"bltcon1 : {bltcon1},",
-				$"bltapt : {bltapt},",
-				$"bltbpt : {bltbpt},",
-				$"bltcpt : {bltcpt},",
-				$"bltdpt : {bltdpt},",
-				$"bltamod : {bltamod},",
-				$"bltbmod : {bltbmod},",
-				$"bltcmod : {bltcmod},",
-				$"bltdmod : {bltdmod},",
-				$"bltadat : {bltadat},",
-				$"bltbdat : {bltbdat},",
-				$"bltcdat : {bltcdat},",
-				$"bltddat : {bltddat},",
-				$"bltafwm : {bltafwm},",
-				$"bltalwm : {bltalwm},",
-				$"bltsize : {bltsize},",
-				$"bltsizh : {bltsizh},",
-				$"bltsizv : {bltsizv},",
-				"},"
-			};
-
-			if (counter == 0)
-				filename = Path.Combine("../../../../blits/", $"blitter-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.txt");
-			
-			if (counter < 1000)
-				File.AppendAllLines(filename, b);
-	
-			counter++;
 		}
 
 		private void BlitSmall(uint insaddr)
@@ -263,10 +179,6 @@ namespace Jammy.Core.Custom
 			Blit(width, height);
 		}
 
-		StringBuilder fsb = new StringBuilder();
-		private ushort[] bin = new ushort[128];
-		private ushort[] bout = new ushort[128];
-		private int bcount;
 		private struct Writecache
 		{
 			public uint Address;
@@ -299,8 +211,7 @@ namespace Jammy.Core.Custom
 			Blit1();
 
 			while (Blit2())
-				/* spin */
-				;
+				/* spin */;
 
 			Blit3();
 		}
@@ -330,10 +241,12 @@ namespace Jammy.Core.Custom
 
 			bltzero = 0;
 			w = h = 0;
+
+			bltabits = bltbbits = 0;
 		}
 
-		private uint bltabits = 0;
-		private uint bltbbits = 0;
+		private uint bltabits;
+		private uint bltbbits;
 		private uint fci;
 		private int ashift;
 		private int bshift;
@@ -346,12 +259,8 @@ namespace Jammy.Core.Custom
 		{
 			uint s_bltadat, s_bltbdat;
 
-			//for (uint h = 0; h < height; h++)
-
-			//for (uint w = 0; w < width; w++)
-
 			if ((bltcon0 & (1u << 11)) != 0)
-				bltadat = memory.Read(0, bltapt, Size.Word);
+				bltadat = (uint)memory.Read(bltapt, DMAPriority.Blitter, Size.Word);
 
 			s_bltadat = bltadat;
 
@@ -374,7 +283,7 @@ namespace Jammy.Core.Custom
 			}
 
 			if ((bltcon0 & (1u << 10)) != 0)
-				bltbdat = memory.Read(0, bltbpt, Size.Word);
+				bltbdat = (uint)memory.Read(bltbpt, DMAPriority.Blitter, Size.Word);
 
 			s_bltbdat = bltbdat;
 
@@ -394,7 +303,7 @@ namespace Jammy.Core.Custom
 			}
 
 			if ((bltcon0 & (1u << 9)) != 0)
-				bltcdat = memory.Read(0, bltcpt, Size.Word);
+				bltcdat = (uint)memory.Read(bltcpt, DMAPriority.Blitter, Size.Word);
 
 			bltddat = 0;
 			if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat;
@@ -461,17 +370,11 @@ namespace Jammy.Core.Custom
 		{
 			DelayedWrite();
 
-			//write the BZERO bit in DMACON
-			//if (bltzero == 0)
-			//	custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
-			//else
-			//	custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
 			//clear BZERO
 			if (bltzero != 0)
 				custom.WriteDMACON(1 << 13);
 
 			//disable blitter busy in DMACON
-			//custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
 			custom.WriteDMACON(1 << 14);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
@@ -554,6 +457,7 @@ namespace Jammy.Core.Custom
 		private bool sing;
 		private int sx, sy;
 		private int dx, dy;
+
 		private void Line1()
 		{
 			uint octant = (bltcon1 >> 2) & 7;
@@ -578,8 +482,6 @@ namespace Jammy.Core.Custom
 
 			bltzero = 0;
 
-			//set blitter busy in DMACON
-			//custom.Write(insaddr, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
 			//set BBUSY and BZERO
 			custom.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
 
@@ -597,65 +499,64 @@ namespace Jammy.Core.Custom
 
 		private bool Line2()
 		{
+			if ((bltcon0 & (1u << 9)) != 0)
+				bltcdat = (uint)memory.Read(bltcpt, DMAPriority.Blitter, Size.Word);
+
+			bltadat = 0x8000u >> x0;
+
+			bltddat = 0;
+			if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat;
+			if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdatror & bltcdat;
+			if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat & bltbdatror & ~bltcdat;
+			if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat & bltbdatror & bltcdat;
+			if ((bltcon0 & 0x10) != 0) bltddat |= bltadat & ~bltbdatror & ~bltcdat;
+			if ((bltcon0 & 0x20) != 0) bltddat |= bltadat & ~bltbdatror & bltcdat;
+			if ((bltcon0 & 0x40) != 0) bltddat |= bltadat & bltbdatror & ~bltcdat;
+			if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdatror & bltcdat;
+
+			//oddly, USEC must be checked, not USED
+			if ((bltcon0 & (1u << 9)) != 0 && (bltcon1 & (1u << 7)) == 0)
 			{
-				if ((bltcon0 & (1u << 9)) != 0)
-					bltcdat = memory.Read(0, bltcpt, Size.Word);
-
-				bltadat = 0x8000u >> x0;
-
-				bltddat = 0;
-				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat;
-				if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdatror & bltcdat;
-				if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat & bltbdatror & ~bltcdat;
-				if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat & bltbdatror & bltcdat;
-				if ((bltcon0 & 0x10) != 0) bltddat |= bltadat & ~bltbdatror & ~bltcdat;
-				if ((bltcon0 & 0x20) != 0) bltddat |= bltadat & ~bltbdatror & bltcdat;
-				if ((bltcon0 & 0x40) != 0) bltddat |= bltadat & bltbdatror & ~bltcdat;
-				if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdatror & bltcdat;
-
-				//oddly, USEC must be checked, not USED
-				if ((bltcon0 & (1u << 9)) != 0 && (bltcon1 & (1u << 7)) == 0)
+				if (writeBit)
 				{
-					if (writeBit)
-					{
-						memory.Write(0, bltdpt, bltddat, Size.Word);
-						if (sing) writeBit = false;
-					}
+					memory.Write(bltdpt, DMAPriority.Blitter, (ushort)bltddat, Size.Word);
+					if (sing) writeBit = false;
 				}
-
-				bltzero |= bltddat;
-
-				x1 -= dx;
-				if (x1 < 0)
-				{
-					x1 += dm;
-					x0 += sx;
-					if (x0 >= 16)
-					{
-						x0 = 0;
-						bltcpt += 2;
-					}
-
-					if (x0 < 0)
-					{
-						x0 = 15;
-						bltcpt -= 2;
-					}
-				}
-
-				y1 -= dy;
-				if (y1 < 0)
-				{
-					bltcpt += (uint)(bltcmod * sy);
-					y1 += dm;
-					writeBit = true;
-				}
-
-				bltcpt &= 0xfffffffe;
-
-				//first write goes to bltdpt, thereafter bltdpt = bltcpt
-				bltdpt = bltcpt;
 			}
+
+			bltzero |= bltddat;
+
+			x1 -= dx;
+			if (x1 < 0)
+			{
+				x1 += dm;
+				x0 += sx;
+				if (x0 >= 16)
+				{
+					x0 = 0;
+					bltcpt += 2;
+				}
+
+				if (x0 < 0)
+				{
+					x0 = 15;
+					bltcpt -= 2;
+				}
+			}
+
+			y1 -= dy;
+			if (y1 < 0)
+			{
+				bltcpt += (uint)(bltcmod * sy);
+				y1 += dm;
+				writeBit = true;
+			}
+
+			bltcpt &= 0xfffffffe;
+
+			//first write goes to bltdpt, thereafter bltdpt = bltcpt
+			bltdpt = bltcpt;
+			
 			length--;
 			return length != 0;
 		}
@@ -667,7 +568,6 @@ namespace Jammy.Core.Custom
 				custom.WriteDMACON(1 << 13);
 
 			//disable blitter busy in DMACON
-			//custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
 			custom.WriteDMACON(1 << 14);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
