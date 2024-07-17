@@ -99,6 +99,10 @@ namespace Jammy.Main
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
 				.AddSingleton<IAkiko, Akiko>()
+				.AddSingleton<IDenise, Denise>()
+				.AddSingleton<IAgnus, Agnus>()
+				.AddSingleton<IDMA, DMA>()
+				.AddSingleton<IChipsetClock, ChipsetClock>()
 				.AddSingleton<MemoryMapper>()
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
 				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
@@ -132,10 +136,7 @@ namespace Jammy.Main
 				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 			//configure Blitter
-			if (settings.BlitterMode == BlitterMode.Immediate)
-				services.AddSingleton<IBlitter, Blitter>();
-			else
-				services.AddSingleton<IBlitter, SyncBlitter>();
+			services.AddSingleton<IBlitter, Blitter>();
 
 			//configure Audio
 			if (settings.Audio == AudioDriver.XAudio2)

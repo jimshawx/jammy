@@ -18,12 +18,12 @@ namespace Jammy.Core.Custom
 	public class Blitter : IBlitter
 	{
 		private readonly IChips custom;
-		private readonly IMemoryMappedDevice memory;
+		private readonly IDMA memory;
 		private readonly IInterrupt interrupt;
 		private readonly IOptions<EmulationSettings> settings;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IChipRAM memory, IInterrupt interrupt,
+		public Blitter(IChips custom, IDMA memory, IInterrupt interrupt,
 			IOptions<EmulationSettings> settings, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
@@ -39,7 +39,10 @@ namespace Jammy.Core.Custom
 		public void Logging(bool enabled) { blitterLog = enabled; }
 		public void Dumping(bool enabled) { blitterDump = enabled; }
 
-		public void Emulate(ulong cycles){}
+		public void Emulate(ulong cycles)
+		{
+
+		}
 
 		public void Reset()
 		{
@@ -230,12 +233,6 @@ namespace Jammy.Core.Custom
 			counter++;
 		}
 
-		private int mode = 0;
-		public void SetLineMode(int mode)
-		{
-			this.mode = mode;
-		}
-
 		private void BlitSmall(uint insaddr)
 		{
 			if (blitterLog)
@@ -291,7 +288,7 @@ namespace Jammy.Core.Custom
 		private void DelayedWrite()
 		{
 			if (writecache.Address != NO_WRITECACHE)
-				memory.Write(0, writecache.Address, writecache.Value, Size.Word);
+				memory.Write(writecache.Address, DMAPriority.Blitter, writecache.Value, Size.Word);
 		}
 		private void DelayedWrite(uint address, ushort value)
 		{
@@ -361,7 +358,7 @@ namespace Jammy.Core.Custom
 				for (uint w = 0; w < width; w++)
 				{
 					if ((bltcon0 & (1u << 11)) != 0)
-						bltadat = memory.Read(0, bltapt, Size.Word);
+						bltadat = (uint)memory.Read(bltapt, DMAPriority.Blitter, Size.Word);
 
 					s_bltadat = bltadat;
 
@@ -384,7 +381,7 @@ namespace Jammy.Core.Custom
 					}
 
 					if ((bltcon0 & (1u << 10)) != 0)
-						bltbdat = memory.Read(0, bltbpt, Size.Word);
+						bltbdat = (uint)memory.Read(bltbpt, DMAPriority.Blitter, Size.Word);
 
 					s_bltbdat = bltbdat;
 
@@ -404,7 +401,7 @@ namespace Jammy.Core.Custom
 					}
 
 					if ((bltcon0 & (1u << 9)) != 0)
-						bltcdat = memory.Read(0, bltcpt, Size.Word);
+						bltcdat = (uint)memory.Read(bltcpt, DMAPriority.Blitter, Size.Word);
 
 					bltddat = 0;
 					if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat;
@@ -607,7 +604,7 @@ namespace Jammy.Core.Custom
 			while (length-- > 0)
 			{
 				if ((bltcon0 & (1u << 9)) != 0)
-					bltcdat = memory.Read(insaddr, bltcpt, Size.Word);
+					bltcdat = (uint)memory.Read(bltcpt, DMAPriority.Blitter, Size.Word);
 
 				bltadat = 0x8000u >> x0;
 
@@ -626,7 +623,7 @@ namespace Jammy.Core.Custom
 				{
 					if (writeBit)
 					{
-						memory.Write(insaddr, bltdpt, bltddat, Size.Word);
+						memory.Write(bltdpt, DMAPriority.Blitter, (ushort)bltddat, Size.Word);
 						if (sing) writeBit = false;
 					}
 				}

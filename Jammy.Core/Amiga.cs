@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
+using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -16,6 +18,12 @@ namespace Jammy.Core
 	public class Amiga : IAmiga
 	{
 		private readonly ICPU cpu;
+		private readonly IBlitter blitter;
+		private readonly ICopper copper;
+		private readonly IAgnus agnus;
+		private readonly IDenise denise;
+		private readonly IChipsetClock clock;
+		private readonly IDMA dma;
 		private readonly IBreakpointCollection breakpointCollection;
 
 		private readonly IDebugMemoryMapper memoryMapper;
@@ -32,11 +40,17 @@ namespace Jammy.Core
 			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IMemoryMapper memory,
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IDiskDrives diskDrives, IMouse mouse, IDiskController diskController,
-			ISerial serial, IMotherboard motherboard,
+			ISerial serial, IMotherboard motherboard, IAgnus agnus, IDenise denise, IChipsetClock clock, IDMA dma,
 			IBreakpointCollection breakpointCollection, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
 			this.cpu = cpu;
+			this.blitter = blitter;
+			this.copper = copper;
+			this.agnus = agnus;
+			this.denise = denise;
+			this.clock = clock;
+			this.dma = dma;
 			this.breakpointCollection = breakpointCollection;
 
 			//fulfil the circular dependencies
@@ -123,6 +137,44 @@ namespace Jammy.Core
 		{
 			requestExitEmulationMode = true;
 			emulationSemaphore.Wait();
+		}
+
+/*
+
+run all threads.
+
+for (;;)
+{
+	when DMA is necessary, wait for it using the semaphore at the correct prioriy
+		n.b.	sometimes sprite DMA cannot happen because bitplane DMA happened
+				sometimes blitter DMA cannot happen because it has hogged the bus too much and not BLITPRI
+
+	when DMA is not necessary, wait at completion
+
+	when all threads are waiting, tick the DMA bus, release the highest priority semaphore, an additional thread will continue to completion
+
+	signal all the threads waiting at completion
+
+}
+
+*/
+		private void EmulateWrapper(Action<ulong> emulate)
+		{
+			while (emulationMode != EmulationMode.Exit)
+			{
+				emulate(0);
+			}
+		}
+
+		public void Emulate2()
+		{
+			var t1 = new Thread(() => EmulateWrapper(copper.Emulate));
+			var t2 = new Thread(() => EmulateWrapper(denise.Emulate));
+			var t3 = new Thread(() => EmulateWrapper(agnus.Emulate));
+			var t4 = new Thread(() => EmulateWrapper(blitter.Emulate));
+			var t5 = new Thread(() => EmulateWrapper(cpu.Emulate));
+			var t6 = new Thread(() => EmulateWrapper(clock.Emulate));
+			var t7 = new Thread(() => EmulateWrapper(dma.Emulate));
 		}
 
 		public void Emulate()

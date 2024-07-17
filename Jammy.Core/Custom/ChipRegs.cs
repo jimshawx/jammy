@@ -515,7 +515,7 @@ namespace Jammy.Core.Custom
 		public const uint ChipBase = 0xdff000;
 
 		[Flags]
-		public enum DMA
+		public enum DMA : ushort
 		{
 			SETCLR = 0x8000,
 			BBUSY = 0x4000,

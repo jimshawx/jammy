@@ -9,7 +9,8 @@ namespace Jammy.Core.Types.Types
 		Byte,
 		Word,
 		Long,
-		Extension
+		Extension,
+		QWord
 	}
 
 	public struct Point

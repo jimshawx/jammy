@@ -65,6 +65,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		void Dumping(bool enabled);
 		string GetDisassembly();
+		void CopperNextFrame();
 	}
 	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB, IReadICR
 	{
@@ -178,4 +179,26 @@ namespace Jammy.Core.Interface.Interfaces
 	}
 	public interface IAkiko : IMemoryMappedDevice { }
 	public interface IZorroConfigurator { }
+
+	public interface IDenise : IEmulate, ICustomReadWrite
+	{
+		void RunVerticalBlankStart();
+		void RunVerticalBlankEnd();
+		void EnterVisibleArea();
+		void ExitVisibleArea();
+		void WriteBitplanes(ulong[] planes);
+	}
+	public interface IAgnus : IEmulate { }
+
+	public interface IChipsetClock : IEmulate
+	{
+		uint HorizontalPos { get; }
+		uint VerticalPos { get; }
+		int FrameCount { get; }
+		bool EndOfLine();
+		bool EndOfFrame();
+		bool StartOfLine();
+		void WaitForTick();
+	}
+
 }
