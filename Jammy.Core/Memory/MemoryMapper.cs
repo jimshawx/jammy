@@ -21,7 +21,7 @@ namespace Jammy.Core.Memory
 			IMemoryManager memoryManager, IZorroConfigurator zorroConfigurator,
 
 			ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
-			IZorro2 zorro2, IZorro3 zorro3, IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IUnmappedMemory unmappedMemory,
+			IZorro2 zorro2, IZorro3 zorro3, IAgnus agnus, IUnmappedMemory unmappedMemory,
 			IKickstartROM kickstartROM, IDiskController diskController,
 			IAkiko akiko, IMotherboard motherboard, IMotherboardRAM motherboardRAM, ICPUSlotRAM cpuSlotRAM,
 			ILogger<MemoryMapper> logger)
@@ -34,8 +34,7 @@ namespace Jammy.Core.Memory
 				unmappedMemory,
 				ciaMemory,
 				custom,
-				chipRAM,
-				trapdoorRAM,
+				agnus,
 				kickstartROM,
 				battClock,
 				motherboard,

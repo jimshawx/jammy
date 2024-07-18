@@ -60,6 +60,8 @@ public class Denise : IDenise
 
 	public void Emulate(ulong cycles)
 	{
+		clock.WaitForTick();
+
 		if (clock.StartOfLine())
 			StartDeniseLine();
 

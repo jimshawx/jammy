@@ -21,7 +21,7 @@ namespace Jammy.Core.Custom.Audio
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 		private readonly uint[] intr = { Interrupt.AUD0, Interrupt.AUD1, Interrupt.AUD2, Interrupt.AUD3 };
-		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
+		private readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
 		private readonly ulong audioRate;
@@ -80,7 +80,7 @@ namespace Jammy.Core.Custom.Audio
 		private void PlayingDMA(int channel)
 		{
 			//All DMA is off
-			if ((dmacon & (int)ChipRegs.DMA.DMAEN) == 0)
+			if ((dmacon & (int)DMA.DMAEN) == 0)
 				return;
 
 			ch[channel].working_audper -= rate;

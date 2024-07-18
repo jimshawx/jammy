@@ -1,4 +1,6 @@
-﻿using Jammy.Core.Interface.Interfaces;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Jammy.Core.Types;
 using Microsoft.Extensions.Logging;
@@ -59,6 +61,8 @@ public class Agnus : IAgnus
 	private readonly IDenise denise;
 	private readonly IBlitter blitter;
 	private readonly IInterrupt interrupt;
+	private readonly IChipRAM chipRam;
+	private readonly ITrapdoorRAM trapdoorRam;
 	private readonly EmulationSettings settings;
 	private readonly ILogger<Agnus> logger;
 
@@ -70,6 +74,7 @@ public class Agnus : IAgnus
 	public const int DMA_END = 0xF0;
 
 	public Agnus(IChipsetClock clock, IDMA memory, ICopper copper, IDenise denise, IBlitter blitter, IInterrupt interrupt,
+		IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM,
 		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
 	{
 		this.clock = clock;
@@ -78,6 +83,8 @@ public class Agnus : IAgnus
 		this.denise = denise;
 		this.blitter = blitter;
 		this.interrupt = interrupt;
+		chipRam = chipRAM;
+		trapdoorRam = trapdoorRAM;
 		this.settings = settings.Value;
 		this.logger = logger;
 	}
@@ -98,6 +105,7 @@ public class Agnus : IAgnus
 			return;
 		}
 
+		//todo: this isn't thread safe
 		if (clock.EndOfFrame())
 		{
 			denise.RunVerticalBlankEnd();
@@ -142,24 +150,24 @@ public class Agnus : IAgnus
 		{
 			if ((clock.HorizontalPos & 1) == 0)
 			{
-				memory.ReliquishDMASlot();
+				memory.NoDMA(DMASource.Agnus);
 				return;
 			}
 
 			switch (clock.HorizontalPos)
 			{
-				case 1: memory.Refresh(); break;
-				case 3: memory.Refresh(); break;
-				case 5: memory.Refresh(); break;
-				case 7: if (memory.IsDMAEnabled(ChipRegs.DMA.DSKEN)) memory.Refresh(); break;//actually Disk DMA
-				case 9: if (memory.IsDMAEnabled(ChipRegs.DMA.DSKEN)) memory.Refresh(); break;//actually Disk DMA
-				case 0xB: if (memory.IsDMAEnabled(ChipRegs.DMA.DSKEN)) memory.Refresh(); break;//actually Disk DMA
-				case 0xD: if (memory.IsDMAEnabled(ChipRegs.DMA.AUD0EN)) memory.Refresh(); break;//actually Audio 0 DMA
-				case 0xF: if (memory.IsDMAEnabled(ChipRegs.DMA.AUD1EN)) memory.Refresh(); break;//actually Audio 1 DMA
-				case 0x11: if (memory.IsDMAEnabled(ChipRegs.DMA.AUD2EN)) memory.Refresh(); break;//actually Audio 2 DMA
-				case 0x13: if (memory.IsDMAEnabled(ChipRegs.DMA.AUD3EN)) memory.Refresh(); break;//actually Audio 3 DMA
-				case 0x15: if (memory.IsDMAEnabled(ChipRegs.DMA.SPREN)) RunSpriteDMA(0); break;
-				case 0x17: if (memory.IsDMAEnabled(ChipRegs.DMA.SPREN)) RunSpriteDMA(1); break;
+				case 1: memory.NeedsDMA(DMASource.Agnus); break;
+				case 3: memory.NeedsDMA(DMASource.Agnus); break;
+				case 5: memory.NeedsDMA(DMASource.Agnus); break;
+				case 7: if (memory.IsDMAEnabled(DMA.DSKEN)) memory.NeedsDMA(DMASource.Agnus); break;//actually Disk DMA
+				case 9: if (memory.IsDMAEnabled(DMA.DSKEN)) memory.NeedsDMA(DMASource.Agnus); break;//actually Disk DMA
+				case 0xB: if (memory.IsDMAEnabled(DMA.DSKEN)) memory.NeedsDMA(DMASource.Agnus); break;//actually Disk DMA
+				case 0xD: if (memory.IsDMAEnabled(DMA.AUD0EN)) memory.NeedsDMA(DMASource.Agnus); break;//actually Audio 0 DMA
+				case 0xF: if (memory.IsDMAEnabled(DMA.AUD1EN)) memory.NeedsDMA(DMASource.Agnus); break;//actually Audio 1 DMA
+				case 0x11: if (memory.IsDMAEnabled(DMA.AUD2EN)) memory.NeedsDMA(DMASource.Agnus); break;//actually Audio 2 DMA
+				case 0x13: if (memory.IsDMAEnabled(DMA.AUD3EN)) memory.NeedsDMA(DMASource.Agnus); break;//actually Audio 3 DMA
+				case 0x15: if (memory.IsDMAEnabled(DMA.SPREN)) RunSpriteDMA(0); break;
+				case 0x17: if (memory.IsDMAEnabled(DMA.SPREN)) RunSpriteDMA(1); break;
 			}
 			return;
 		}
@@ -186,7 +194,7 @@ public class Agnus : IAgnus
 		if (clock.HorizontalPos >= ddfstrtfix /*+ cdbg.ddfSHack*/ && clock.HorizontalPos < ddfstopfix /*+ cdbg.ddfEHack*/ &&
 			(lineState == CopperLineState.Fetching || lineState == CopperLineState.LineStart))
 		{
-			if (memory.IsDMAEnabled(ChipRegs.DMA.BPLEN))
+			if (memory.IsDMAEnabled(DMA.BPLEN))
 				fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
 			lineState = CopperLineState.Fetching;
 		}
@@ -205,7 +213,7 @@ noBitplaneDMA:
 
 		if ((clock.HorizontalPos < 0x34) && (clock.HorizontalPos & 1) != 0)
 		{
-			if (memory.IsDMAEnabled(ChipRegs.DMA.SPREN))
+			if (memory.IsDMAEnabled(DMA.SPREN))
 			{
 				switch (clock.HorizontalPos)
 				{
@@ -227,19 +235,19 @@ noBitplaneDMA:
 			}
 			return;
 		}
-		memory.ReliquishDMASlot();
+		memory.NoDMA(DMASource.Agnus);
 	}
 
-	private static readonly int[] fetchLo = [8, 4, 6, 2, 7, 3, 5, 1];
-	private static readonly int[] fetchHi = [4, 2, 3, 1, 4, 2, 3, 1];
-	private static readonly int[] fetchSh = [2, 1, 2, 1, 2, 1, 2, 1];
-	private static readonly int[] fetchF3 = [8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10];
-	private static readonly int[] fetchF2 = [8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10];
+	private static readonly uint[] fetchLo = [8, 4, 6, 2, 7, 3, 5, 1];
+	private static readonly uint[] fetchHi = [4, 2, 3, 1, 4, 2, 3, 1];
+	private static readonly uint[] fetchSh = [2, 1, 2, 1, 2, 1, 2, 1];
+	private static readonly uint[] fetchF3 = [8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10];
+	private static readonly uint[] fetchF2 = [8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10];
 
 	private bool CopperBitplaneFetch(int h)
 	{
 		int planeIdx;
-		int plane;
+		uint plane;
 
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 		{
@@ -267,17 +275,17 @@ noBitplaneDMA:
 		{
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 			{
-				bpldat[plane] = memory.Read( bplpt[plane], DMAPriority.Bitplane, Size.Word);
+				memory.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Word, ChipRegs.BPL1DAT+plane*2);
 				bplpt[plane] += 2;
 			}
 			else if ((fmode & 3) == 3)
 			{
-				bpldat[plane] = memory.Read(bplpt[plane], DMAPriority.Bitplane, Size.QWord);
+				memory.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.QWord, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 8;
 			}
 			else
 			{
-				bpldat[plane] = memory.Read(bplpt[plane], DMAPriority.Bitplane, Size.Long);
+				memory.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Long, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 4;
 			}
 
@@ -319,9 +327,9 @@ noBitplaneDMA:
 
 	private SpriteState[] spriteState = new SpriteState[8];
 
-	private void RunSpriteDMA(int slot)
+	private void RunSpriteDMA(uint slot)
 	{
-		int s = slot >> 1;
+		uint s = slot >> 1;
 
 		if (spriteState[s] == SpriteState.Waiting)
 		{
@@ -344,18 +352,18 @@ noBitplaneDMA:
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				sprpos[s] = (ushort)memory.Read(sprpt[s], DMAPriority.Sprite, Size.Word);
+				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS+s*8);
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				sprdata[s] = (ushort)memory.Read(sprpt[s], DMAPriority.Sprite, Size.Word);
+				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATA+s*8);
 			}
 		}
 		else
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				sprctl[s] = (ushort)memory.Read(sprpt[s] + 2, DMAPriority.Sprite, Size.Word);
+				memory.Read(DMASource.Agnus, sprpt[s] + 2, DMA.SPREN, Size.Word, ChipRegs.SPR0CTL+s*8);
 
 				if (sprpos[s] == 0 && sprctl[s] == 0)
 				{
@@ -369,7 +377,7 @@ noBitplaneDMA:
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				sprdatb[s] = (ushort)memory.Read(sprpt[s] + 2, DMAPriority.Sprite, Size.Word);
+				memory.Read(DMASource.Agnus, sprpt[s] + 2, DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
 				sprpt[s] += 4;
 			}
 		}
@@ -807,6 +815,21 @@ noBitplaneDMA:
 		}
 	}
 
+	public void WriteWide(uint address, ulong value)
+	{
+		switch (address)
+		{
+			case ChipRegs.BPL1DAT: bpldat[0] = value; break;
+			case ChipRegs.BPL2DAT: bpldat[1] = value; break;
+			case ChipRegs.BPL3DAT: bpldat[2] = value; break;
+			case ChipRegs.BPL4DAT: bpldat[3] = value; break;
+			case ChipRegs.BPL5DAT: bpldat[4] = value; break;
+			case ChipRegs.BPL6DAT: bpldat[5] = value; break;
+			case ChipRegs.BPL7DAT: bpldat[6] = value; break;
+			case ChipRegs.BPL8DAT: bpldat[7] = value; break;
+		}
+	}
+
 	private void EndAgnusLine()
 	{
 		//next horizontal line, and we did some fetching this line, add on the modulos
@@ -857,4 +880,38 @@ noBitplaneDMA:
 		return blocks << (4 + fetch + sub);
 	}
 
+	public bool IsMapped(uint address)
+	{
+		return chipRam.IsMapped(address)
+		       || trapdoorRam.IsMapped(address);
+	}
+
+	public List<MemoryRange> MappedRange()
+	{
+		return chipRam.MappedRange().Concat(trapdoorRam.MappedRange()).ToList();
+	}
+
+	public uint Read(uint insaddr, uint address, Size size)
+	{
+		memory.WaitForChipRamDMASlot();
+		
+		if (chipRam.IsMapped(address))
+			return chipRam.Read(insaddr, address, size);
+
+		return trapdoorRam.Read(insaddr, address, size);
+	}
+
+	public void Write(uint insaddr, uint address, uint value, Size size)
+	{
+		memory.WaitForChipRamDMASlot();
+
+		if (chipRam.IsMapped(address))
+		{
+			chipRam.Write(insaddr, address, value, size);
+			return;
+		}
+
+		trapdoorRam.Write(insaddr, address, value, size);
+
+	}
 }

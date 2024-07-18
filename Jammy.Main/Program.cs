@@ -101,7 +101,7 @@ namespace Jammy.Main
 				.AddSingleton<IAkiko, Akiko>()
 				.AddSingleton<IDenise, Denise>()
 				.AddSingleton<IAgnus, Agnus>()
-				.AddSingleton<IDMA, DMA>()
+				.AddSingleton<IDMA, DMAController>()
 				.AddSingleton<IChipsetClock, ChipsetClock>()
 				.AddSingleton<MemoryMapper>()
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())

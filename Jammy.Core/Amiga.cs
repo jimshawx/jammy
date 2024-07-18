@@ -54,7 +54,7 @@ namespace Jammy.Core
 			this.breakpointCollection = breakpointCollection;
 
 			//fulfil the circular dependencies
-			custom.Init(blitter, copper, audio);
+			custom.Init(blitter, copper, audio, agnus);
 			keyboard.SetCIA(ciaa);
 			interrupt.Init(custom);
 
@@ -62,13 +62,16 @@ namespace Jammy.Core
 			emulations.Add(diskDrives);
 			emulations.Add(mouse);
 			emulations.Add(keyboard);
-			emulations.Add(copper);
-			emulations.Add(blitter);
+			//emulations.Add(copper);
+			//emulations.Add(blitter);
 			emulations.Add(audio);
 			emulations.Add(ciaa);
 			emulations.Add(ciab);
 			emulations.Add(serial);
 			emulations.Add(cpu);
+			emulations.Add(clock);
+			emulations.Add(dma);
+			emulations.Add(denise);
 
 			resetters.Add(diskController);
 			resetters.Add(interrupt);
@@ -137,44 +140,6 @@ namespace Jammy.Core
 		{
 			requestExitEmulationMode = true;
 			emulationSemaphore.Wait();
-		}
-
-/*
-
-run all threads.
-
-for (;;)
-{
-	when DMA is necessary, wait for it using the semaphore at the correct prioriy
-		n.b.	sometimes sprite DMA cannot happen because bitplane DMA happened
-				sometimes blitter DMA cannot happen because it has hogged the bus too much and not BLITPRI
-
-	when DMA is not necessary, wait at completion
-
-	when all threads are waiting, tick the DMA bus, release the highest priority semaphore, an additional thread will continue to completion
-
-	signal all the threads waiting at completion
-
-}
-
-*/
-		private void EmulateWrapper(Action<ulong> emulate)
-		{
-			while (emulationMode != EmulationMode.Exit)
-			{
-				emulate(0);
-			}
-		}
-
-		public void Emulate2()
-		{
-			var t1 = new Thread(() => EmulateWrapper(copper.Emulate));
-			var t2 = new Thread(() => EmulateWrapper(denise.Emulate));
-			var t3 = new Thread(() => EmulateWrapper(agnus.Emulate));
-			var t4 = new Thread(() => EmulateWrapper(blitter.Emulate));
-			var t5 = new Thread(() => EmulateWrapper(cpu.Emulate));
-			var t6 = new Thread(() => EmulateWrapper(clock.Emulate));
-			var t7 = new Thread(() => EmulateWrapper(dma.Emulate));
 		}
 
 		public void Emulate()

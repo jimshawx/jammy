@@ -101,8 +101,9 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IChips : IReset, IMemoryMappedDevice
 	{
-		void Init(IBlitter blitter, ICopper copper, IAudio audio);
+		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus);
 		void WriteDMACON(ushort bits);
+		void WriteWide(uint address, ulong value);
 	}
 
 	public interface IMemoryInterceptor
@@ -149,8 +150,9 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IChipRAM : IMemoryMappedDevice, IDebuggableMemory
 	{
-		public MemoryStream ToBmp(int w);
-		public void FromBmp(Stream m);
+		ulong Read64(uint address);
+		MemoryStream ToBmp(int w);
+		void FromBmp(Stream m);
 	}
 
 	public interface ITrapdoorRAM : IMemoryMappedDevice, IDebuggableMemory { }
@@ -188,7 +190,11 @@ namespace Jammy.Core.Interface.Interfaces
 		void ExitVisibleArea();
 		void WriteBitplanes(ulong[] planes);
 	}
-	public interface IAgnus : IEmulate { }
+
+	public interface IAgnus : IEmulate, IMemoryMappedDevice
+	{
+		void WriteWide(uint address, ulong value);
+	}
 
 	public interface IChipsetClock : IEmulate
 	{

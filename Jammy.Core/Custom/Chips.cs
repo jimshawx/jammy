@@ -22,6 +22,7 @@ namespace Jammy.Core.Custom
 
 		private ICopper copper;
 		private IBlitter blitter;
+		private IAgnus agnus;
 		private readonly IMouse mouse;
 		private readonly ISerial serial;
 		private readonly EmulationSettings settings;
@@ -55,11 +56,12 @@ namespace Jammy.Core.Custom
 
 		private void dbug_Keyup(int obj){}
 
-		public void Init(IBlitter blitter, ICopper copper, IAudio audio)
+		public void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus)
 		{
 			this.blitter = blitter;
 			this.copper = copper;
 			this.audio = audio;
+			this.agnus = agnus;
 		}
 
 		public void Reset()
@@ -361,6 +363,16 @@ namespace Jammy.Core.Custom
 			{
 				logger.LogTrace($"W {ChipRegs.Name(address)} {originalAddress:X8} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 			}
+		}
+
+		public void WriteWide(uint address, ulong value)
+		{
+			uint originalAddress = address;
+			address |= 0xdf0000;
+			address &= 0xdffffe;
+
+			if (address >= ChipRegs.BPL1DAT && address <= ChipRegs.BPL8DAT)
+				agnus.WriteWide(address, value);
 		}
 
 		public void WriteDMACON(ushort bits)

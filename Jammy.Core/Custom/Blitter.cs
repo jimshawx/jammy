@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
@@ -190,7 +189,7 @@ namespace Jammy.Core.Custom
 		private void DelayedWrite()
 		{
 			if (writecache.Address != NO_WRITECACHE)
-				memory.Write(writecache.Address, DMAPriority.Blitter, writecache.Value, Size.Word);
+				memory.Write(DMASource.Blitter, writecache.Address, DMA.BLTEN, writecache.Value, Size.Word);
 		}
 		private void DelayedWrite(uint address, ushort value)
 		{
@@ -260,7 +259,7 @@ namespace Jammy.Core.Custom
 			uint s_bltadat, s_bltbdat;
 
 			if ((bltcon0 & (1u << 11)) != 0)
-				bltadat = (uint)memory.Read(bltapt, DMAPriority.Blitter, Size.Word);
+				memory.Read(DMASource.Blitter, bltapt, DMA.BLTEN, Size.Word, ChipRegs.BLTADAT);
 
 			s_bltadat = bltadat;
 
@@ -283,7 +282,7 @@ namespace Jammy.Core.Custom
 			}
 
 			if ((bltcon0 & (1u << 10)) != 0)
-				bltbdat = (uint)memory.Read(bltbpt, DMAPriority.Blitter, Size.Word);
+				memory.Read(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
 
 			s_bltbdat = bltbdat;
 
@@ -303,7 +302,7 @@ namespace Jammy.Core.Custom
 			}
 
 			if ((bltcon0 & (1u << 9)) != 0)
-				bltcdat = (uint)memory.Read(bltcpt, DMAPriority.Blitter, Size.Word);
+				memory.Read(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
 
 			bltddat = 0;
 			if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat;
@@ -336,7 +335,6 @@ namespace Jammy.Core.Custom
 				if ((bltcon0 & (1u << 9)) != 0) bltcpt += 2;
 				if ((bltcon0 & (1u << 8)) != 0) bltdpt += 2;
 			}
-
 
 			w++;
 			if (w != width)
@@ -500,7 +498,7 @@ namespace Jammy.Core.Custom
 		private bool Line2()
 		{
 			if ((bltcon0 & (1u << 9)) != 0)
-				bltcdat = (uint)memory.Read(bltcpt, DMAPriority.Blitter, Size.Word);
+				memory.Read(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
 
 			bltadat = 0x8000u >> x0;
 
@@ -519,7 +517,7 @@ namespace Jammy.Core.Custom
 			{
 				if (writeBit)
 				{
-					memory.Write(bltdpt, DMAPriority.Blitter, (ushort)bltddat, Size.Word);
+					memory.Write(DMASource.Blitter, bltdpt, DMA.BLTEN, (ushort)bltddat, Size.Word);
 					if (sing) writeBit = false;
 				}
 			}

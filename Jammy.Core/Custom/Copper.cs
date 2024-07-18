@@ -20,7 +20,6 @@ namespace Jammy.Core.Custom
 		private readonly IDMA memory;
 		private readonly IChips custom;
 
-		private readonly IInterrupt interrupt;
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 
@@ -30,7 +29,6 @@ namespace Jammy.Core.Custom
 			this.clock = clock;
 			this.memory = memory;
 			this.custom = custom;
-			this.interrupt = interrupt;
 			this.settings = settings.Value;
 			this.logger = logger;
 
@@ -127,13 +125,15 @@ namespace Jammy.Core.Custom
 			}
 			else if (status == CopperStatus.RunningWord1)
 			{
-				ins = copins = (ushort)memory.Read(copPC, DMAPriority.Copper, Size.Word);
+				memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+				ins = copins;
 				copPC += 2;
 				status = CopperStatus.RunningWord2;
 			}
 			else if (status == CopperStatus.RunningWord2)
 			{
-				data = (ushort)memory.Read(copPC, DMAPriority.Copper, Size.Word);
+				memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+				data = copins;
 				copPC += 2;
 				status = CopperStatus.RunningWord1;
 

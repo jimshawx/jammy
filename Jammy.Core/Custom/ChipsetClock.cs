@@ -2,6 +2,7 @@
 using Jammy.Core.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Threading;
 
 namespace Jammy.Core.Custom;
 
@@ -13,6 +14,7 @@ public class ChipsetClock : IChipsetClock
 {
 	private readonly ILogger<ChipsetClock> logger;
 	private readonly uint displayScanlines;
+	private readonly AutoResetEvent clockEvent = new AutoResetEvent(false);
 
 	public ChipsetClock(IOptions<EmulationSettings> settings, ILogger<ChipsetClock> logger)
 	{
@@ -86,9 +88,11 @@ public class ChipsetClock : IChipsetClock
 
 	private void Tick()
 	{
+		clockEvent.Set();
 	}
 
 	public void WaitForTick()
 	{
+		clockEvent.WaitOne();
 	}
 }
