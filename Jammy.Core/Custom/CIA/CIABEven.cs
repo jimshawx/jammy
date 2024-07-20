@@ -16,6 +16,7 @@ namespace Jammy.Core.Custom.CIA
 	public class CIABEven : CIA, ICIABEven
 	{
 		private readonly IDiskDrives diskDrives;
+		private readonly IChipsetClock clock;
 
 		private static readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -39,28 +40,28 @@ namespace Jammy.Core.Custom.CIA
 
 		//BFD000 - BFDF00
 
-		private ulong beamLines;
-		public CIABEven(IDiskDrives diskDrives, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<CIABEven> logger) : base(settings)
+		public CIABEven(IDiskDrives diskDrives, IInterrupt interrupt, IChipsetClock clock,
+			IOptions<EmulationSettings> settings, ILogger<CIABEven> logger)
 		{
 			this.diskDrives = diskDrives;
+			this.clock = clock;
 			this.interrupt = interrupt;
 			this.logger = logger;
-			beamLines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u:312u;
 		}
 
 		protected override uint interruptLevel => Interrupt.EXTER;
 		protected override char cia => 'B';
 
-		private ulong beamTime;
+		private uint lastVerticalPos = 0;
 		public override void Emulate(ulong cycles)
 		{
-			beamTime += cycles;
+			for (int i = 0; i < 10; i++)
+				clock.WaitForTick();
 
-			if (beamTime > beamRate / beamLines)
-			{
-				beamTime -= beamRate / beamLines;
-
+			if (clock.VerticalPos != lastVerticalPos)
+			{ 
 				IncrementTODTimer();
+				lastVerticalPos = clock.VerticalPos;
 			}
 
 			base.Emulate(cycles);
@@ -70,6 +71,7 @@ namespace Jammy.Core.Custom.CIA
 		{
 			base.Reset();
 			regs[PRA] = 0x8c;
+			lastVerticalPos = 0;
 		}
 
 		public override bool IsMapped(uint address)

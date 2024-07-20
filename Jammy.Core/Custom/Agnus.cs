@@ -105,16 +105,10 @@ public class Agnus : IAgnus
 			return;
 		}
 
-		//todo: this isn't thread safe
 		if (clock.EndOfFrame())
 		{
-			denise.RunVerticalBlankEnd();
-
 			interrupt.AssertInterrupt(Interrupt.VERTB);
 
-			copper.CopperNextFrame();
-			
-			denise.RunVerticalBlankStart();
 			for (int i = 0; i < 8; i++)
 				spriteState[i] = SpriteState.Idle;
 		}
@@ -128,12 +122,12 @@ public class Agnus : IAgnus
 		LineTerminated
 	}
 
-	public int planes;
-	public int diwstrtv = 0;
-	public int diwstopv = 0;
-	public ushort ddfstrtfix = 0;
-	public ushort ddfstopfix = 0;
-	public int pixmod;
+	private int planes;
+	private int diwstrtv = 0;
+	private int diwstopv = 0;
+	private ushort ddfstrtfix = 0;
+	private ushort ddfstopfix = 0;
+	private int pixmod;
 	private CopperLineState lineState;
 	
 	private void RunAgnusTick()

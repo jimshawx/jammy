@@ -29,16 +29,20 @@ public class ChipsetClock : IChipsetClock
 	public uint VerticalPos { get; private set; }
 	public int FrameCount { get; private set; }
 
+	private bool startOfFrame;
 	private bool endOfFrame;
-	private bool endOfLine;
 	private bool startOfLine;
+	private bool endOfLine;
 
 	public void Emulate(ulong cycles)
 	{
-		endOfFrame = endOfLine = startOfLine = false;
+		startOfFrame = endOfFrame = endOfLine = startOfLine = false;
 
 		if (HorizontalPos == 0)
 			startOfLine = true;
+
+		if (HorizontalPos == 0 && VerticalPos == 0)
+			startOfFrame = true;
 
 		Tick();
 
@@ -79,6 +83,11 @@ public class ChipsetClock : IChipsetClock
 	public bool EndOfLine()
 	{
 		return endOfLine;
+	}
+	
+	public bool StartOfFrame()
+	{
+		return startOfFrame;
 	}
 
 	public bool EndOfFrame()

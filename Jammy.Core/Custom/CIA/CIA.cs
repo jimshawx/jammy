@@ -64,54 +64,33 @@ namespace Jammy.Core.Custom.CIA
 		private bool todStopped;
 		private bool todLatched;
 
-		protected ulong beamRate;
-
-		public CIA(IOptions<EmulationSettings> settings)
-		{
-			//A500 PAL
-			// 50Hz = 1/50th cpu clock = 7.09 MHz/50 = 140k 
-
-			//A1200 NTSC
-			// 60Hz = 1/60th cpu clock = 14.32MHz / 60 = 
-			
-			//etc
-			beamRate = settings.Value.VideoFormat == VideoFormat.NTSC ? 60u : 50u;
-			beamRate = settings.Value.CPUFrequency / beamRate;
-		}
-
 		public virtual void Emulate(ulong cycles)
 		{
-			timerTime += cycles;
-			if (timerTime >= 10)// timers tick at 1/10th cpu clock
+			//timer A running
+			if ((regs[CIA.CRA] & (uint)CR.START) != 0)
 			{
-				timerTime -= 10;
+				//timer A
+				timerA--;
 
-				//timer A running
-				if ((regs[CIA.CRA] & (uint)CR.START) != 0)
+				if (timerA == 0xffff)
 				{
-					//timer A
-					timerA--;
+					AssertICR(ICRB.TIMERA);
 
-					if (timerA == 0xffff)
-					{
-						AssertICR(ICRB.TIMERA);
+					//one shot mode?
+					if ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0)
+						regs[CIA.CRA] &= ~(uint)CR.START;
+					else
+						timerA = timerAreset;
 
-						//one shot mode?
-						if ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0)
-							regs[CIA.CRA] &= ~(uint)CR.START;
-						else
-							timerA = timerAreset;
-
-						//INMODE == 2, Timer B ticks when Timer A underflows
-						if (((regs[CIA.CRB] >> 5) & 3) == 2)
-							RunTimerB();
-					}
+					//INMODE == 2, Timer B ticks when Timer A underflows
+					if (((regs[CIA.CRB] >> 5) & 3) == 2)
+						RunTimerB();
 				}
-
-				//INMODE == 0, Timer B ticks on the CIA clock
-				if (((regs[CIA.CRB] >>5)&3) == 0)
-					RunTimerB();
 			}
+
+			//INMODE == 0, Timer B ticks on the CIA clock
+			if (((regs[CIA.CRB] >>5)&3) == 0)
+				RunTimerB();
 		}
 
 		private void RunTimerB()

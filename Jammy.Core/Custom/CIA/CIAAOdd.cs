@@ -19,6 +19,8 @@ namespace Jammy.Core.Custom.CIA
 		private readonly IMouse mouse;
 		private readonly IKeyboard keyboard;
 		private readonly IKickstartROM kickstartROM;
+		private readonly IPSUClock psuClock;
+		private readonly IChipsetClock clock;
 
 		private static readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -42,12 +44,15 @@ namespace Jammy.Core.Custom.CIA
 
 		//BFE001 - BFEF01
 
-		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IKickstartROM kickstartROM, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<CIAAOdd> logger) : base(settings)
+		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IKickstartROM kickstartROM, IPSUClock psuClock,
+			IInterrupt interrupt, IChipsetClock clock, IOptions<EmulationSettings> settings, ILogger<CIAAOdd> logger)
 		{
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
 			this.keyboard = keyboard;
 			this.kickstartROM = kickstartROM;
+			this.psuClock = psuClock;
+			this.clock = clock;
 			this.interrupt = interrupt;
 			this.logger = logger;
 		}
@@ -55,16 +60,16 @@ namespace Jammy.Core.Custom.CIA
 		protected override uint interruptLevel => Interrupt.PORTS;
 		protected override char cia => 'A';
 
-		private ulong beamTime;
+		private ulong lastTick = 0;
 		public override void Emulate(ulong cycles)
 		{
-			beamTime += cycles;
+			for (int i = 0; i < 10; i++)
+				clock.WaitForTick();
 
-			if (beamTime > beamRate) // 50Hz = 1/50th cpu clock = 7MHz/50 = 140k 
+			if (psuClock.CurrentTick != lastTick)
 			{
-				beamTime -= beamRate;
-
 				IncrementTODTimer();
+				lastTick = psuClock.CurrentTick;
 			}
 
 			base.Emulate(cycles);
@@ -80,6 +85,7 @@ namespace Jammy.Core.Custom.CIA
 			base.Reset();
 			regs[PRA] = 1;//OVL is set at boot time
 			kickstartROM.SetMirror(true);
+			lastTick = 0;
 		}
 
 		public override uint ReadByte(uint insaddr, uint address)

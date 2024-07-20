@@ -34,6 +34,7 @@ namespace Jammy.Core
 		private static AutoResetEvent nonEmulationCompleteEvent;
 
 		private readonly List<IEmulate> emulations = new List<IEmulate>();
+		private readonly List<IEmulate> threadedEmulations = new List<IEmulate>();
 		private readonly List<IReset> resetters = new List<IReset>();
 
 		public Amiga(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock, 
@@ -41,6 +42,7 @@ namespace Jammy.Core
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IDiskDrives diskDrives, IMouse mouse, IDiskController diskController,
 			ISerial serial, IMotherboard motherboard, IAgnus agnus, IDenise denise, IChipsetClock clock, IDMA dma,
+			IPSUClock psuClock,
 			IBreakpointCollection breakpointCollection, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
@@ -64,14 +66,28 @@ namespace Jammy.Core
 			emulations.Add(keyboard);
 			//emulations.Add(copper);
 			//emulations.Add(blitter);
+			//emulations.Add(agnus);
 			emulations.Add(audio);
-			emulations.Add(ciaa);
-			emulations.Add(ciab);
+			//emulations.Add(ciaa);
+			//emulations.Add(ciab);
 			emulations.Add(serial);
-			emulations.Add(cpu);
+			//emulations.Add(cpu);
 			emulations.Add(clock);
-			emulations.Add(dma);
-			emulations.Add(denise);
+			//emulations.Add(psuClock);
+			//emulations.Add(dma);
+			//emulations.Add(denise);
+
+			//managed by the DMA controller
+			//threadedEmulations.Add(copper);
+			//threadedEmulations.Add(blitter);
+			//threadedEmulations.Add(agnus);
+
+			threadedEmulations.Add(ciaa);
+			threadedEmulations.Add(ciab);
+			threadedEmulations.Add(psuClock);
+			threadedEmulations.Add(denise);
+			threadedEmulations.Add(dma);
+			threadedEmulations.Add(cpu);
 
 			resetters.Add(diskController);
 			resetters.Add(interrupt);
@@ -92,6 +108,10 @@ namespace Jammy.Core
 
 			emulationSemaphore = new SemaphoreSlim(0,1);
 			nonEmulationCompleteEvent = new AutoResetEvent(false);
+
+			threadedEmulations.ForEach(
+				x=>new Thread(()=>x.Emulate(0))
+					);
 		}
 
 		public void Reset()

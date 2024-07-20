@@ -67,6 +67,9 @@ namespace Jammy.Core.Custom
 
 		public void Emulate(ulong cycles)
 		{
+			if (clock.EndOfFrame())
+				status = CopperStatus.Retrace;
+		
 			//copper instruction every odd clock (and copper DMA is on)
 			if ((clock.HorizontalPos&1)!=0)
 				CopperInstruction();
@@ -86,8 +89,10 @@ namespace Jammy.Core.Custom
 			//cdbg.Reset();
 		}
 
-		public void CopperNextFrame()
+		private void CopperNextFrame()
 		{
+			memory.NeedsDMA(DMASource.Copper);
+
 			copPC = activeCopperAddress = cop1lc;
 
 			waitH = 0;
@@ -103,6 +108,7 @@ namespace Jammy.Core.Custom
 		//private uint beamVert;//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 		private enum CopperStatus
 		{
+			Retrace,
 			RunningWord1,
 			RunningWord2,
 			Waiting,
@@ -112,7 +118,11 @@ namespace Jammy.Core.Custom
 		
 		private void CopperInstruction()
 		{
-			if (status == CopperStatus.Stopped)
+			if (status == CopperStatus.Retrace)
+			{
+				CopperNextFrame();
+			}
+			else if (status == CopperStatus.Stopped)
 			{
 				return;
 			}
@@ -192,9 +202,7 @@ namespace Jammy.Core.Custom
 					else
 					{
 						//SKIP
-						//logger.LogTrace("SKIP");
-
-						uint coppos = (uint)((clock.VerticalPos & 0xff) << 8) | (clock.HorizontalPos & 0xff);
+						uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.HorizontalPos & 0xff);
 						coppos &= waitMask;
 						if (CopperCompare(coppos, (waitPos & waitMask)))
 						{
@@ -206,15 +214,6 @@ namespace Jammy.Core.Custom
 			}
 			else if (status == CopperStatus.Waiting)
 			{
-				//if ((currentLine & waitVMask) == waitV)
-				//{
-				//	if ((h & waitHMask) >= waitH)
-				//	{
-				//		//logger.LogTrace($"RUN ({h},{currentLine})");
-				//		status = CopperStatus.RunningWord1;
-				//	}
-				//}
-
 				//If blitter-busy bit is set the comparisons will fail.
 				if (waitBlit == 0 && (custom.Read(0, ChipRegs.DMACONR, Size.Word) & (1 << 14)) != 0)
 				{
@@ -222,7 +221,7 @@ namespace Jammy.Core.Custom
 					return;
 				}
 
-				uint coppos = (uint)((clock.VerticalPos & 0xff) << 8) | (clock.HorizontalPos & 0xff);
+				uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.HorizontalPos & 0xff);
 				coppos &= waitMask;
 				if (CopperCompare(coppos, (waitPos & waitMask)))
 				{

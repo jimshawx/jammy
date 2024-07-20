@@ -103,6 +103,7 @@ namespace Jammy.Main
 				.AddSingleton<IAgnus, Agnus>()
 				.AddSingleton<IDMA, DMAController>()
 				.AddSingleton<IChipsetClock, ChipsetClock>()
+				.AddSingleton<IPSUClock, PSUClock>()
 				.AddSingleton<MemoryMapper>()
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
 				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())

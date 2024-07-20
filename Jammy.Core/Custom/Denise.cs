@@ -62,6 +62,9 @@ public class Denise : IDenise
 	{
 		clock.WaitForTick();
 
+		if (clock.StartOfFrame())
+			RunVerticalBlankStart();
+
 		if (clock.StartOfLine())
 			StartDeniseLine();
 
@@ -69,16 +72,19 @@ public class Denise : IDenise
 
 		if (clock.EndOfLine())
 			EndDeniseLine();
+
+		if (clock.EndOfFrame())
+			RunVerticalBlankEnd();
 	}
 
 	public void Reset() { }
 
-	public void RunVerticalBlankStart()
+	private void RunVerticalBlankStart()
 	{
 		screen = emulationWindow.GetFramebuffer();
 	}
 
-	public void RunVerticalBlankEnd()
+	private void RunVerticalBlankEnd()
 	{
 		emulationWindow.Blit(screen);
 		//DebugLocation();
