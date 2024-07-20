@@ -109,8 +109,9 @@ namespace Jammy.Core
 			emulationSemaphore = new SemaphoreSlim(0,1);
 			nonEmulationCompleteEvent = new AutoResetEvent(false);
 
+			emulationThreads = new List<Thread>();
 			threadedEmulations.ForEach(
-				x=>new Thread(()=>x.Emulate(0))
+				x=>emulationThreads.Add(new Thread(()=>x.Emulate(0)))
 					);
 		}
 
@@ -130,6 +131,9 @@ namespace Jammy.Core
 		{
 			emuThread = new Task(Emulate, TaskCreationOptions.LongRunning);
 			emuThread.Start();
+
+			foreach (var t in emulationThreads)
+				t.Start();
 		}
 
 		public static void SetEmulationMode(EmulationMode mode, bool changeWhileLocked = false)
@@ -148,6 +152,7 @@ namespace Jammy.Core
 
 		private static volatile bool requestExitEmulationMode;
 		private static volatile EmulationMode desiredEmulationMode;
+		private readonly List<Thread> emulationThreads;
 
 		public static void UnlockEmulation()
 		{
