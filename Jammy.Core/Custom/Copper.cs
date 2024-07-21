@@ -17,17 +17,16 @@ namespace Jammy.Core.Custom
 	public class Copper : ICopper
 	{
 		private readonly IChipsetClock clock;
-		private readonly IDMA memory;
+		private IDMA memory;
 		private readonly IChips custom;
 
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 
-		public Copper(IChipsetClock clock, IDMA memory, IChips custom, IEmulationWindow emulationWindow,
+		public Copper(IChipsetClock clock, IChips custom, IEmulationWindow emulationWindow,
 			IOptions<EmulationSettings> settings, ILogger<Copper> logger)
 		{
 			this.clock = clock;
-			this.memory = memory;
 			this.custom = custom;
 			this.settings = settings.Value;
 			this.logger = logger;
@@ -60,6 +59,10 @@ namespace Jammy.Core.Custom
 
 		//HRM 3rd Ed, PP24
 		//private uint copperFrame = 0;
+		public void Init(IDMA dma)
+		{
+			memory = dma;
+		}
 
 		public void Reset()
 		{

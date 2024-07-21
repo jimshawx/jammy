@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
@@ -9,35 +11,12 @@ using Jammy.Core.Types.Types;
 
 namespace Jammy.Core.Custom;
 
-public interface IDMA : IEmulate
-{
-	void Read(DMASource source, uint address, DMA priority, Size size, uint chipReg);
-	uint DebugRead(uint address, Size size);
-	void Write(DMASource source, uint address, DMA priority, ushort value, Size size);
-	void NoDMA(DMASource source);
-	void NeedsDMA(DMASource source);
-	bool IsDMAEnabled(DMA source);
-	void WaitForChipRamDMASlot();
-}
-
 public enum DMAActivityType
 {
 	None,
 	Read,
 	Write,
 	Consume
-}
-
-public enum DMASource
-{
-	Agnus,
-	Copper,
-	Blitter,
-
-	//needs to be last
-	CPU,
-
-	NumDMASources
 }
 
 public class DMAActivity
@@ -75,9 +54,20 @@ public class DMAController : IDMA
 		activities[0].Thread = new Thread(() => EmulateWrapper(agnus.Emulate, activities[0]));
 		activities[1].Thread = new Thread(() => EmulateWrapper(copper.Emulate, activities[1]));
 		activities[2].Thread = new Thread(() => EmulateWrapper(blitter.Emulate, activities[2]));
+
+		foreach (var activity in activities.Take(3))
+			activity.Thread.Start();
 	}
 
-	public void Reset() { }
+	public void Reset()
+	{
+		//unlock all the DMA channels
+		foreach (var activity in activities)
+		{
+			activity.Channel.Set();
+			activity.Type = DMAActivityType.None;
+		}
+	}
 
 	private void EmulateWrapper(Action<ulong> emulate, DMAActivity activity)
 	{
@@ -116,6 +106,7 @@ public class DMAController : IDMA
 					//check this DMA channel is enabled and the DMA slot hasn't been taken
 					//DMA required, execute the transaction
 					ExecuteDMATransfer(activities[i]);
+					activities[i].Type = DMAActivityType.None;
 					//continue
 					activities[i].Channel.Set();
 					slotTaken = true;
@@ -127,7 +118,10 @@ public class DMAController : IDMA
 
 		//reads to Agnus memory will be waiting for Chipset tick
 		if (activities[(int)DMASource.CPU].Type != DMAActivityType.None)
+		{
 			ExecuteDMATransfer(activities[(int)DMASource.CPU]);
+			activities[(int)DMASource.CPU].Type = DMAActivityType.None;
+		}
 	}
 
 	public void WaitForChipRamDMASlot()

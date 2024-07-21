@@ -200,6 +200,11 @@ namespace Jammy.Main
 
 			var serviceProvider = services.BuildServiceProvider();
 
+			var dma = serviceProvider.GetRequiredService<IDMA>();
+			serviceProvider.GetRequiredService<IAgnus>().Init(dma);
+			serviceProvider.GetRequiredService<ICopper>().Init(dma);
+			serviceProvider.GetRequiredService<IBlitter>().Init(dma);
+
 			ServiceProviderFactory.ServiceProvider = serviceProvider;
 
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();

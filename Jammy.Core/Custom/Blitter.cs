@@ -14,21 +14,25 @@ namespace Jammy.Core.Custom
 	public class Blitter : IBlitter
 	{
 		private readonly IChips custom;
-		private readonly IDMA memory;
+		private IDMA memory;
 		private readonly IInterrupt interrupt;
 		private readonly IChipsetClock clock;
 		private readonly IOptions<EmulationSettings> settings;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IDMA memory, IInterrupt interrupt, IChipsetClock clock,
+		public Blitter(IChips custom, IInterrupt interrupt, IChipsetClock clock,
 			IOptions<EmulationSettings> settings, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
-			this.memory = memory;
 			this.interrupt = interrupt;
 			this.clock = clock;
 			this.settings = settings;
 			this.logger = logger;
+		}
+
+		public void Init(IDMA dma)
+		{
+			memory = dma;
 		}
 
 		public void Logging(bool enabled) { }
@@ -117,6 +121,8 @@ namespace Jammy.Core.Custom
 
 			bltcon0 = 0;
 			bltcon1 = 0;
+
+			status = BlitterState.Idle;
 		}
 
 		public ushort Read(uint insaddr, uint address)

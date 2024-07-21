@@ -56,7 +56,7 @@ namespace Jammy.Core.Custom;
 public class Agnus : IAgnus
 {
 	private readonly IChipsetClock clock;
-	private readonly IDMA memory;
+	private IDMA memory;
 	private readonly ICopper copper;
 	private readonly IDenise denise;
 	private readonly IBlitter blitter;
@@ -73,12 +73,11 @@ public class Agnus : IAgnus
 	//bitmap DMA ends at 0xD8, with 8 slots after that
 	public const int DMA_END = 0xF0;
 
-	public Agnus(IChipsetClock clock, IDMA memory, ICopper copper, IDenise denise, IBlitter blitter, IInterrupt interrupt,
+	public Agnus(IChipsetClock clock, ICopper copper, IDenise denise, IBlitter blitter, IInterrupt interrupt,
 		IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM,
 		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
 	{
 		this.clock = clock;
-		this.memory = memory;
 		this.copper = copper;
 		this.denise = denise;
 		this.blitter = blitter;
@@ -93,6 +92,8 @@ public class Agnus : IAgnus
 	{
 		for (int i = 0; i < 8; i++)
 			spriteState[i] = SpriteState.Idle;
+
+		lineState = DMALineState.LineStart;
 	}
 
 	public void Emulate(ulong cycles)
@@ -114,7 +115,12 @@ public class Agnus : IAgnus
 		}
 	}
 
-	private enum CopperLineState
+	public void Init(IDMA dma)
+	{
+		memory = dma;
+	}
+
+	private enum DMALineState
 	{
 		LineStart,
 		Fetching,
@@ -128,7 +134,7 @@ public class Agnus : IAgnus
 	private ushort ddfstrtfix = 0;
 	private ushort ddfstopfix = 0;
 	private int pixmod;
-	private CopperLineState lineState;
+	private DMALineState lineState;
 	
 	private void RunAgnusTick()
 	{
@@ -186,16 +192,16 @@ public class Agnus : IAgnus
 		//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
 		//bitplane DMA is ON
 		if (clock.HorizontalPos >= ddfstrtfix /*+ cdbg.ddfSHack*/ && clock.HorizontalPos < ddfstopfix /*+ cdbg.ddfEHack*/ &&
-			(lineState == CopperLineState.Fetching || lineState == CopperLineState.LineStart))
+			(lineState == DMALineState.Fetching || lineState == DMALineState.LineStart))
 		{
 			if (memory.IsDMAEnabled(DMA.BPLEN))
 				fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
-			lineState = CopperLineState.Fetching;
+			lineState = DMALineState.Fetching;
 		}
 
-		if (clock.HorizontalPos >= ddfstopfix /*+ cdbg.ddfEHack*/ && lineState == CopperLineState.Fetching)
+		if (clock.HorizontalPos >= ddfstopfix /*+ cdbg.ddfEHack*/ && lineState == DMALineState.Fetching)
 		{
-			lineState = CopperLineState.LineComplete;
+			lineState = DMALineState.LineComplete;
 		}
 
 		if (fetched)
@@ -733,12 +739,12 @@ noBitplaneDMA:
 
 			case ChipRegs.DDFSTRT:
 				ddfstrt = (ushort)(value & (settings.ChipSet == ChipSet.OCS ? 0xfc : 0xfe));
-				lineState = CopperLineState.LineTerminated;
+				lineState = DMALineState.LineTerminated;
 				UpdateDDF();
 				break;
 			case ChipRegs.DDFSTOP:
 				ddfstop = (ushort)(value & (settings.ChipSet == ChipSet.OCS ? 0xfc : 0xfe));
-				lineState = CopperLineState.LineTerminated;
+				lineState = DMALineState.LineTerminated;
 				UpdateDDF();
 				break;
 
@@ -827,14 +833,14 @@ noBitplaneDMA:
 	private void EndAgnusLine()
 	{
 		//next horizontal line, and we did some fetching this line, add on the modulos
-		if (clock.VerticalPos >= diwstrtv && clock.VerticalPos < diwstopv && lineState == CopperLineState.LineComplete)
+		if (clock.VerticalPos >= diwstrtv && clock.VerticalPos < diwstopv && lineState == DMALineState.LineComplete)
 		{
 			for (int i = 0; i < planes; i++)
 			{
 				bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
 				bplpt[i] &= 0xfffffffe;
 			}
-			lineState = CopperLineState.LineTerminated;
+			lineState = DMALineState.LineTerminated;
 		}
 	}
 

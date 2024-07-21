@@ -46,7 +46,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IMotherboard : IReset, IMemoryMappedDevice { }
 
-	public interface IBlitter : IReset, ICustomReadWrite, IEmulate
+	public interface IBlitter : IReset, ICustomReadWrite, IEmulate, IRequiresDMA
 	{
 		void Logging(bool enabled);
 		void Dumping(bool enabled);
@@ -61,7 +61,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface ICIAAOdd : ICIA { }
 	public interface ICIABEven : ICIA { }
 	public interface ICIAMemory : IMemoryMappedDevice { }
-	public interface ICopper : IEmulate, ICustomReadWrite
+	public interface ICopper : IEmulate, ICustomReadWrite, IRequiresDMA
 	{
 		void Dumping(bool enabled);
 		string GetDisassembly();
@@ -188,7 +188,12 @@ namespace Jammy.Core.Interface.Interfaces
 		void WriteBitplanes(ulong[] planes);
 	}
 
-	public interface IAgnus : IEmulate, IMemoryMappedDevice
+	public interface IRequiresDMA
+	{
+		void Init(IDMA dma);
+	}
+
+	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA
 	{
 		void WriteWide(uint address, ulong value);
 	}
