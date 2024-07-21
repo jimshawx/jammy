@@ -87,7 +87,6 @@ namespace Jammy.Core
 			threadedEmulations.Add(psuClock);
 			threadedEmulations.Add(denise);
 			threadedEmulations.Add(dma);
-			threadedEmulations.Add(cpu);
 
 			resetters.Add(diskController);
 			resetters.Add(interrupt);
@@ -113,6 +112,8 @@ namespace Jammy.Core
 			threadedEmulations.ForEach(
 				x=>emulationThreads.Add(new Thread(()=>x.Emulate(0)))
 					);
+			//cpu needs special treatment
+			emulationThreads.Add(new Thread(()=>{ clock.WaitForTick(); cpu.Emulate(0); }));
 		}
 
 		public void Reset()

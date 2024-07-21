@@ -4,7 +4,6 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -53,8 +52,6 @@ namespace Jammy.Core.Custom.CIA
 		private ushort timerBreset;
 
 		protected IInterrupt interrupt;
-
-		private ulong timerTime;
 
 		private uint todAlarm;
 		private uint todLatch;

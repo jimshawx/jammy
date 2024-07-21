@@ -179,7 +179,8 @@ public class Denise : IDenise
 		//if the sprite horiz position matches, clock the sprite data in
 		for (int s = 0; s < 8; s++)
 		{
-			if (spriteState[s] == SpriteState.Fetching)
+			//todo: share this with Agnus somehow
+			//if (spriteState[s] == SpriteState.Fetching)
 			{
 				int hstart = (sprpos[s] & 0xff) << 1;
 				hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
