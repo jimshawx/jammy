@@ -55,6 +55,10 @@ public class DMAController : IDMA
 		activities[1].Thread = new Thread(() => EmulateWrapper(copper.Emulate, activities[1]));
 		activities[2].Thread = new Thread(() => EmulateWrapper(blitter.Emulate, activities[2]));
 
+		activities[0].Thread.Name = "Agnus";
+		activities[1].Thread.Name = "Copper";
+		activities[2].Thread.Name = "Blitter";
+
 		foreach (var activity in activities.Take(3))
 			activity.Thread.Start();
 	}

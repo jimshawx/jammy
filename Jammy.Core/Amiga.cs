@@ -110,10 +110,16 @@ namespace Jammy.Core
 
 			emulationThreads = new List<Thread>();
 			threadedEmulations.ForEach(
-				x=>emulationThreads.Add(new Thread(()=>x.Emulate(0)))
-					);
+				x=>
+				{
+					var t = new Thread(() => x.Emulate(0));
+					t.Name = x.GetType().Name;
+					emulationThreads.Add(t);
+				});
 			//cpu needs special treatment
-			emulationThreads.Add(new Thread(()=>{ clock.WaitForTick(); cpu.Emulate(0); }));
+			var t = new Thread(() => { clock.WaitForTick(); cpu.Emulate(0); });
+			t.Name = "CPU";
+			emulationThreads.Add(t);
 		}
 
 		public void Reset()
@@ -126,11 +132,12 @@ namespace Jammy.Core
 			emulations.ForEach(x => x.Emulate(ns));
 		}
 
-		private Task emuThread;
+		private Thread emuThread;
 
 		public void Start()
 		{
-			emuThread = new Task(Emulate, TaskCreationOptions.LongRunning);
+			emuThread = new Thread(Emulate);
+			emuThread.Name = "Amiga";
 			emuThread.Start();
 
 			foreach (var t in emulationThreads)

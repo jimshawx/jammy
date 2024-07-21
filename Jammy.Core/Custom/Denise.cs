@@ -41,6 +41,8 @@ public class Denise : IDenise
 		ComputeDPFLookup();
 
 		emulationWindow.SetPicture(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+		RunVerticalBlankStart();
 	}
 
 	public FastUInt128 pixelMask;
