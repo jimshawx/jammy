@@ -59,9 +59,11 @@ public class ChipsetClock : IChipsetClock
 
 		Tick();
 
-		WaitHandle.WaitAll(tSync.Values.ToArray());
+		WaitHandle.WaitAll(tSync.Values.Select(x=>x.ackHandle).ToArray());
 
-		clockEvent.Reset();
+		logger.LogTrace("All ACK");
+
+		//clockEvent.Reset();
 
 		dma.TriggerHighestPriorityDMA();
 
@@ -109,24 +111,35 @@ public class ChipsetClock : IChipsetClock
 
 	private void Tick()
 	{
-		clockEvent.Set();
+		//clockEvent.Set();
+		foreach (var w in tSync.Values.Select(x => x.clockHandle))
+			w.Set();
 	}
 
 	public void WaitForTick()
 	{
-		clockEvent.WaitOne();
+		//clockEvent.WaitOne();
+		tSync[Environment.CurrentManagedThreadId].clockHandle.WaitOne();
+
 		logger.LogTrace($"{Thread.CurrentThread.Name} Tick");
 	}
 
 	public void Ack()
 	{
-		tSync[Environment.CurrentManagedThreadId].Set();
+		logger.LogTrace($"{Thread.CurrentThread.Name} ACK");
+		tSync[Environment.CurrentManagedThreadId].ackHandle.Set();
 	}
 
-	private readonly ConcurrentDictionary<int, EventWaitHandle> tSync = new ConcurrentDictionary<int, EventWaitHandle>();
+	private class PerThread
+	{
+		public AutoResetEvent ackHandle = new AutoResetEvent(false);
+		public AutoResetEvent clockHandle = new AutoResetEvent(false);
+	}
+
+	private readonly ConcurrentDictionary<int, PerThread> tSync = new ConcurrentDictionary<int, PerThread>();
 
 	public void RegisterThread()
 	{
-		tSync.TryAdd(Environment.CurrentManagedThreadId, new EventWaitHandle(false, EventResetMode.AutoReset));
+		tSync.TryAdd(Environment.CurrentManagedThreadId, new PerThread());
 	}
 }

@@ -219,4 +219,9 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		ulong CurrentTick { get; }
 	}
+
+	public interface ICPUClock : IEmulate
+	{
+		void WaitForTick();
+	}
 }

@@ -24,6 +24,7 @@ namespace Jammy.Core
 		private readonly IDenise denise;
 		private readonly IChipsetClock clock;
 		private readonly IDMA dma;
+		private readonly ICPUClock cpuClock;
 		private readonly IBreakpointCollection breakpointCollection;
 
 		private readonly IDebugMemoryMapper memoryMapper;
@@ -42,7 +43,7 @@ namespace Jammy.Core
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IDiskDrives diskDrives, IMouse mouse, IDiskController diskController,
 			ISerial serial, IMotherboard motherboard, IAgnus agnus, IDenise denise, IChipsetClock clock, IDMA dma,
-			IPSUClock psuClock,
+			IPSUClock psuClock, ICPUClock cpuClock,
 			IBreakpointCollection breakpointCollection, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
@@ -53,6 +54,7 @@ namespace Jammy.Core
 			this.denise = denise;
 			this.clock = clock;
 			this.dma = dma;
+			this.cpuClock = cpuClock;
 			this.breakpointCollection = breakpointCollection;
 
 			//fulfil the circular dependencies
@@ -85,6 +87,7 @@ namespace Jammy.Core
 			threadedEmulations.Add(ciaa);
 			threadedEmulations.Add(ciab);
 			threadedEmulations.Add(psuClock);
+			threadedEmulations.Add(cpuClock);
 			threadedEmulations.Add(denise);
 
 			resetters.Add(diskController);
@@ -128,7 +131,7 @@ namespace Jammy.Core
 			{
 				for (;;)
 				{
-					clock.WaitForTick();
+					cpuClock.WaitForTick();
 					cpu.Emulate(0);
 				}
 			});
