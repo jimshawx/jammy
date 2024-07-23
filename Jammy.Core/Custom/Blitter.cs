@@ -65,14 +65,17 @@ namespace Jammy.Core.Custom
 
 		public void Emulate(ulong cycles)
 		{
-			clock.WaitForTick();
+			//clock.WaitForTick();
 			while (RunStateMachine()) ;
+			//clock.Ack();
 		}
 
 		private bool RunStateMachine()
 		{
 			switch (status)
 			{
+				case BlitterState.Idle: return false;
+
 				case BlitterState.BlitA: return BlitA();
 				case BlitterState.BlitAShift: return BlitAShift();
 				case BlitterState.BlitB: return BlitB();

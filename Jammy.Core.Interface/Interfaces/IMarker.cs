@@ -209,6 +209,10 @@ namespace Jammy.Core.Interface.Interfaces
 		bool EndOfFrame();
 
 		void WaitForTick();
+		void Ack();
+		void RegisterThread();
+
+		void Init(IDMA dma);
 	}
 
 	public interface IPSUClock : IEmulate

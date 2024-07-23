@@ -53,6 +53,8 @@ public class PSUClock : IPSUClock
 			CurrentTick++;
 			psuTime = 0;
 		}
+
+		clock.Ack();
 	}
 
 	public void Reset()

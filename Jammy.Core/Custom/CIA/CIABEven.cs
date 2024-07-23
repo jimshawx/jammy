@@ -53,18 +53,25 @@ namespace Jammy.Core.Custom.CIA
 		protected override char cia => 'B';
 
 		private uint lastVerticalPos = 0;
+		private int divisor = 0;
 		public override void Emulate(ulong cycles)
 		{
-			for (int i = 0; i < 10; i++)
-				clock.WaitForTick();
+			clock.WaitForTick();
 
 			if (clock.VerticalPos != lastVerticalPos)
-			{ 
+			{
 				IncrementTODTimer();
 				lastVerticalPos = clock.VerticalPos;
 			}
 
-			base.Emulate(cycles);
+			divisor++;
+			if (divisor == 10)
+			{
+				divisor = 0;
+				base.Emulate(cycles);
+			}
+
+			clock.Ack();
 		}
 
 		public override void Reset()
@@ -72,6 +79,7 @@ namespace Jammy.Core.Custom.CIA
 			base.Reset();
 			regs[PRA] = 0x8c;
 			lastVerticalPos = 0;
+			divisor = 0;
 		}
 
 		public override bool IsMapped(uint address)

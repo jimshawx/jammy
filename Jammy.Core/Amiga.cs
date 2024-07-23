@@ -86,7 +86,6 @@ namespace Jammy.Core
 			threadedEmulations.Add(ciab);
 			threadedEmulations.Add(psuClock);
 			threadedEmulations.Add(denise);
-			threadedEmulations.Add(dma);
 
 			resetters.Add(diskController);
 			resetters.Add(interrupt);
@@ -110,14 +109,29 @@ namespace Jammy.Core
 
 			emulationThreads = new List<Thread>();
 			threadedEmulations.ForEach(
-				x=>
+				x =>
 				{
-					var t = new Thread(() => x.Emulate(0));
+					var t = new Thread(() =>
+					{
+						clock.RegisterThread();
+						for (;;)
+						{
+							clock.WaitForTick();
+							x.Emulate(0);
+						}
+					});
 					t.Name = x.GetType().Name;
 					emulationThreads.Add(t);
 				});
 			//cpu needs special treatment
-			var t = new Thread(() => { clock.WaitForTick(); cpu.Emulate(0); });
+			var t = new Thread(() =>
+			{
+				for (;;)
+				{
+					clock.WaitForTick();
+					cpu.Emulate(0);
+				}
+			});
 			t.Name = "CPU";
 			emulationThreads.Add(t);
 		}
@@ -136,12 +150,14 @@ namespace Jammy.Core
 
 		public void Start()
 		{
+			foreach (var t in emulationThreads)
+				t.Start();
+
+			Thread.Sleep(1000);
+
 			emuThread = new Thread(Emulate);
 			emuThread.Name = "Amiga";
 			emuThread.Start();
-
-			foreach (var t in emulationThreads)
-				t.Start();
 		}
 
 		public static void SetEmulationMode(EmulationMode mode, bool changeWhileLocked = false)

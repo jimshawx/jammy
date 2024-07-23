@@ -1,4 +1,8 @@
-﻿using Jammy.Core.Interface.Interfaces;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,9 +16,10 @@ namespace Jammy.Core.Custom;
 
 public class ChipsetClock : IChipsetClock
 {
+	private IDMA dma;
 	private readonly ILogger<ChipsetClock> logger;
 	private readonly uint displayScanlines;
-	private readonly AutoResetEvent clockEvent = new AutoResetEvent(false);
+	private readonly ManualResetEvent clockEvent = new ManualResetEvent(false);
 
 	public ChipsetClock(IOptions<EmulationSettings> settings, ILogger<ChipsetClock> logger)
 	{
@@ -44,29 +49,36 @@ public class ChipsetClock : IChipsetClock
 		if (HorizontalPos == 0 && VerticalPos == 0)
 			startOfFrame = true;
 
+		if (HorizontalPos == 227)
+			endOfLine = true;
+
+		if (HorizontalPos == 227 && VerticalPos == displayScanlines)
+			endOfFrame = true;
+
+		logger.LogTrace("Tick");
+
 		Tick();
 
-		HorizontalPos++;
+		WaitHandle.WaitAll(tSync.Values.ToArray());
 
-		if (HorizontalPos < 227)
-			return;
+		clockEvent.Reset();
 
-		endOfLine = true;
+		dma.TriggerHighestPriorityDMA();
 
-		HorizontalPos = 0;
+		if (endOfLine)
+			HorizontalPos = 0;
+		else
+			HorizontalPos++;
 
-		//next scanline
-		VerticalPos++; //todo - this happens later
+		if (endOfFrame)
+			VerticalPos = 0;
+		else if (endOfLine)
+			VerticalPos++;
+	}
 
-		if (VerticalPos < displayScanlines)
-			return;
-
-		//next frame
-		endOfFrame = true;
-
-		FrameCount++;
-
-		VerticalPos = 0;
+	public void Init(IDMA dma)
+	{
+		this.dma = dma;
 	}
 
 	public void Reset()
@@ -103,5 +115,18 @@ public class ChipsetClock : IChipsetClock
 	public void WaitForTick()
 	{
 		clockEvent.WaitOne();
+		logger.LogTrace($"{Thread.CurrentThread.Name} Tick");
+	}
+
+	public void Ack()
+	{
+		tSync[Environment.CurrentManagedThreadId].Set();
+	}
+
+	private readonly ConcurrentDictionary<int, EventWaitHandle> tSync = new ConcurrentDictionary<int, EventWaitHandle>();
+
+	public void RegisterThread()
+	{
+		tSync.TryAdd(Environment.CurrentManagedThreadId, new EventWaitHandle(false, EventResetMode.AutoReset));
 	}
 }

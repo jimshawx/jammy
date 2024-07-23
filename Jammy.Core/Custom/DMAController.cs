@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
+using Microsoft.Extensions.Logging;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -21,7 +22,7 @@ public enum DMAActivityType
 
 public class DMAActivity
 {
-	public AutoResetEvent Channel { get; set; } = new AutoResetEvent(false);
+	//public AutoResetEvent Channel { get; set; } = new AutoResetEvent(false);
 	public Thread Thread { get; set; }
 	public DMAActivityType Type { get; set; }
 	public uint Address { get; set; }
@@ -36,15 +37,19 @@ public class DMAController : IDMA
 	private readonly IChipsetClock clock;
 	private readonly IChipRAM memory;
 	private readonly IChips custom;
+	private readonly ILogger<DMAController> logger;
 
 	private readonly DMAActivity[] activities;
 
-	public DMAController(IChipsetClock clock, IChipRAM memory, IChips custom,
-		IAgnus agnus, ICopper copper, IBlitter blitter)
+	private readonly AutoResetEvent cpuMemLock = new AutoResetEvent(false);
+
+	public DMAController(IChipRAM memory, IChips custom, IChipsetClock clock,
+		IAgnus agnus, ICopper copper, IBlitter blitter, ILogger<DMAController> logger)
 	{
-		this.clock = clock;
 		this.memory = memory;
 		this.custom = custom;
+		this.logger = logger;
+		this.clock = clock;
 
 		activities = new DMAActivity[(int)DMASource.NumDMASources];
 		for (int i = 0; i < (int)DMASource.NumDMASources; i++)
@@ -68,28 +73,30 @@ public class DMAController : IDMA
 		//unlock all the DMA channels
 		foreach (var activity in activities)
 		{
-			activity.Channel.Set();
 			activity.Type = DMAActivityType.None;
 		}
 	}
 
 	private void EmulateWrapper(Action<ulong> emulate, DMAActivity activity)
 	{
+		clock.RegisterThread();
 		for(;;)
 		{
-			//wait for the Emulate() code below to release one (or more) of the DMA activities
-			activity.Channel.WaitOne();
-			emulate(0);
+			clock.WaitForTick();
+			if (activity.Type == DMAActivityType.None)
+				emulate(0);
+			clock.Ack();
 		}
 	}
 
-	public void Emulate(ulong cycles)
-	{
-		clock.WaitForTick();
-		TriggerHighestPriorityDMA();
-	}
+	//public void Emulate(ulong cycles)
+	//{
+	//	clock.WaitForTick();
+	//	TriggerHighestPriorityDMA();
+	//	clock.Ack();
+	//}
 
-	private void TriggerHighestPriorityDMA()
+	public void TriggerHighestPriorityDMA()
 	{
 		var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
@@ -103,7 +110,6 @@ public class DMAController : IDMA
 				if (activities[i].Type == DMAActivityType.None)
 				{
 					//if no DMA required, continue
-					activities[i].Channel.Set();
 				}
 				else if (!slotTaken && (activities[i].Priority & dmacon) != 0)
 				{
@@ -112,13 +118,15 @@ public class DMAController : IDMA
 					ExecuteDMATransfer(activities[i]);
 					activities[i].Type = DMAActivityType.None;
 					//continue
-					activities[i].Channel.Set();
 					slotTaken = true;
 				}
 			}
 		}
 		if (slotTaken)
 			return;
+
+		//can do CPU chip mem now
+		cpuMemLock.Set();
 
 		//reads to Agnus memory will be waiting for Chipset tick
 		if (activities[(int)DMASource.CPU].Type != DMAActivityType.None)
@@ -130,7 +138,7 @@ public class DMAController : IDMA
 
 	public void WaitForChipRamDMASlot()
 	{
-		activities[(int)DMASource.CPU].Channel.WaitOne();
+		cpuMemLock.WaitOne();
 	}
 
 	private void ExecuteDMATransfer(DMAActivity activity)
@@ -185,8 +193,6 @@ public class DMAController : IDMA
 		activity.Size = size;
 		activity.ChipReg = chipReg;
 	}
-
-
 
 	public void Write(DMASource source, uint address, DMA priority, ushort value, Size size)
 	{

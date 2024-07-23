@@ -60,6 +60,7 @@ public class Denise : IDenise
 	private int lineStart;
 	public int dptr = 0;
 
+	private int ii = 0;
 	public void Emulate(ulong cycles)
 	{
 		clock.WaitForTick();
@@ -70,13 +71,24 @@ public class Denise : IDenise
 		if (clock.StartOfLine())
 			StartDeniseLine();
 
-		RunDeniseTick();
+		try
+		{
+			ii++;
+			if ((ii &1)==0)
+				RunDeniseTick();
+		}
+		catch (IndexOutOfRangeException ex)
+		{
+
+		}
 
 		if (clock.EndOfLine())
 			EndDeniseLine();
 
 		if (clock.EndOfFrame())
 			RunVerticalBlankEnd();
+
+		clock.Ack();
 	}
 
 	public void Reset() { }
@@ -84,6 +96,8 @@ public class Denise : IDenise
 	private void RunVerticalBlankStart()
 	{
 		screen = emulationWindow.GetFramebuffer();
+		dptr = 0;
+		lastcol = 0;
 	}
 
 	private void RunVerticalBlankEnd()

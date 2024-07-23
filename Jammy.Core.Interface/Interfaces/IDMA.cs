@@ -35,7 +35,7 @@ public enum DMASource
 	NumDMASources
 }
 
-public interface IDMA : IEmulate
+public interface IDMA 
 {
 	void Read(DMASource source, uint address, DMA priority, Size size, uint chipReg);
 	uint DebugRead(uint address, Size size);
@@ -44,4 +44,5 @@ public interface IDMA : IEmulate
 	void NeedsDMA(DMASource source);
 	bool IsDMAEnabled(DMA source);
 	void WaitForChipRamDMASlot();
+	void TriggerHighestPriorityDMA();
 }

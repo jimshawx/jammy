@@ -61,10 +61,10 @@ namespace Jammy.Core.Custom.CIA
 		protected override char cia => 'A';
 
 		private ulong lastTick = 0;
+		private int divisor=0;
 		public override void Emulate(ulong cycles)
 		{
-			for (int i = 0; i < 10; i++)
-				clock.WaitForTick();
+			clock.WaitForTick();
 
 			if (psuClock.CurrentTick != lastTick)
 			{
@@ -72,7 +72,14 @@ namespace Jammy.Core.Custom.CIA
 				lastTick = psuClock.CurrentTick;
 			}
 
-			base.Emulate(cycles);
+			divisor++;
+			if (divisor == 10)
+			{
+				divisor = 0;
+				base.Emulate(cycles);
+			}
+
+			clock.Ack();
 		}
 
 		public override bool IsMapped(uint address)
@@ -86,6 +93,7 @@ namespace Jammy.Core.Custom.CIA
 			regs[PRA] = 1;//OVL is set at boot time
 			kickstartROM.SetMirror(true);
 			lastTick = 0;
+			divisor = 0;
 		}
 
 		public override uint ReadByte(uint insaddr, uint address)

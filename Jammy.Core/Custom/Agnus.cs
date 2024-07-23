@@ -98,6 +98,8 @@ public class Agnus : IAgnus
 
 	public void Emulate(ulong cycles)
 	{
+		//clock.WaitForTick();
+
 		RunAgnusTick();
 
 		if (clock.EndOfLine())
@@ -113,6 +115,7 @@ public class Agnus : IAgnus
 			for (int i = 0; i < 8; i++)
 				spriteState[i] = SpriteState.Idle;
 		}
+		//clock.Ack();
 	}
 
 	public void Init(IDMA dma)
