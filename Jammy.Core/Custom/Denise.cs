@@ -25,7 +25,7 @@ public class Denise : IDenise
 		SuperHiRes = 1 << 6,
 	}
 
-	public const int DMA_WIDTH = Agnus.DMA_END - Agnus.DMA_START;
+	public const int DMA_WIDTH = 228;// Agnus.DMA_END - Agnus.DMA_START;
 	private const int SCREEN_WIDTH = DMA_WIDTH * 4; //227 (E3) * 4;
 	private const int SCREEN_HEIGHT = 313 * 2; //x2 for scan double
 
@@ -65,6 +65,8 @@ public class Denise : IDenise
 	{
 		clock.WaitForTick();
 
+		//logger.LogTrace($"{clock.VerticalPos} {clock.HorizontalPos}");
+
 		if (clock.StartOfFrame())
 			RunVerticalBlankStart();
 
@@ -73,7 +75,7 @@ public class Denise : IDenise
 
 		try
 		{
-			ii++;
+			//ii++;
 			if ((ii &1)==0)
 				RunDeniseTick();
 		}

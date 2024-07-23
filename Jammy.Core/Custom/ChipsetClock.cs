@@ -56,17 +56,25 @@ public class ChipsetClock : IChipsetClock
 		if (HorizontalPos == 227 && VerticalPos == displayScanlines)
 			endOfFrame = true;
 
-		logger.LogTrace("Tick");
+		//logger.LogTrace("Tick");
 
 		Tick();
 
-		logger.LogTrace("Tock");
+		//logger.LogTrace("Tock");
 
 		Tock();
 
-		logger.LogTrace("All ACK");
-
+		
 		//clockEvent.Reset();
+
+
+	}
+
+	private void AllThreadsFinished()
+	{
+		//logger.LogTrace("All ACK");
+
+		clockEvent.Reset();
 
 		dma.TriggerHighestPriorityDMA();
 
@@ -79,6 +87,11 @@ public class ChipsetClock : IChipsetClock
 			VerticalPos = 0;
 		else if (endOfLine)
 			VerticalPos++;
+
+		//ackEvent.Set();
+		foreach (var w in tSync.Values.Select(x => x.ackHandle))
+			w.Set();
+
 	}
 
 	public void Init(IDMA dma)
@@ -122,13 +135,12 @@ public class ChipsetClock : IChipsetClock
 	private void Tock()
 	{
 		for (;;)
-		if (Interlocked.CompareExchange(ref acks, 0, tSync.Count) == tSync.Count)
 		{
-			clockEvent.Reset();
-			//ackEvent.Set();
-			foreach (var w in tSync.Values.Select(x => x.ackHandle))
-				w.Set();
-			return;
+			if (Interlocked.CompareExchange(ref acks, 0, tSync.Count) == tSync.Count)
+			{
+				AllThreadsFinished();
+				return;
+			}
 		}
 		//WaitHandle.WaitAll(tSync.Values.Select(x => x.ackHandle).ToArray());
 	}
@@ -139,13 +151,13 @@ public class ChipsetClock : IChipsetClock
 		//tSync[Environment.CurrentManagedThreadId].clockHandle.WaitOne();
 		//WaitHandle.WaitAll(tSync.Values.Select(x => x.clockHandle).ToArray());
 
-		logger.LogTrace($"{Thread.CurrentThread.Name} Tick");
+		//logger.LogTrace($"{Thread.CurrentThread.Name} {Environment.CurrentManagedThreadId} Tick");
 	}
 
 	private int acks = 0;
 	public void Ack()
 	{
-		logger.LogTrace($"{Thread.CurrentThread.Name} ACK");
+		//logger.LogTrace($"{Thread.CurrentThread.Name} {Environment.CurrentManagedThreadId} ACK");
 		Interlocked.Increment(ref acks);
 		//ackEvent.WaitOne();
 		tSync[Environment.CurrentManagedThreadId].ackHandle.WaitOne();

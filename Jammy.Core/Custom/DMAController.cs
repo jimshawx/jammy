@@ -111,6 +111,11 @@ public class DMAController : IDMA
 				{
 					//if no DMA required, continue
 				}
+				else if (!slotTaken && activities[i].Type == DMAActivityType.Consume)
+				{
+					activities[i].Type = DMAActivityType.None;
+					slotTaken = true;
+				}
 				else if (!slotTaken && (activities[i].Priority & dmacon) != 0)
 				{
 					//check this DMA channel is enabled and the DMA slot hasn't been taken
@@ -125,19 +130,20 @@ public class DMAController : IDMA
 		if (slotTaken)
 			return;
 
-		//can do CPU chip mem now
-		cpuMemLock.Set();
-
 		//reads to Agnus memory will be waiting for Chipset tick
 		if (activities[(int)DMASource.CPU].Type != DMAActivityType.None)
 		{
-			ExecuteDMATransfer(activities[(int)DMASource.CPU]);
+			//can do CPU chip mem now
+			//ExecuteDMATransfer(activities[(int)DMASource.CPU]);
 			activities[(int)DMASource.CPU].Type = DMAActivityType.None;
+
+			cpuMemLock.Set();
 		}
 	}
 
 	public void WaitForChipRamDMASlot()
 	{
+		activities[(int)DMASource.CPU].Type = DMAActivityType.Consume;
 		cpuMemLock.WaitOne();
 	}
 
@@ -165,6 +171,8 @@ public class DMAController : IDMA
 			}
 			
 		}
+
+		throw new ArgumentOutOfRangeException();
 	}
 
 	public void NeedsDMA(DMASource source)
