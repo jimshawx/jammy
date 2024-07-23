@@ -20,6 +20,7 @@ public class ChipsetClock : IChipsetClock
 	private readonly ILogger<ChipsetClock> logger;
 	private readonly uint displayScanlines;
 	private readonly ManualResetEvent clockEvent = new ManualResetEvent(false);
+	//private readonly ManualResetEvent ackEvent = new ManualResetEvent(false);
 
 	public ChipsetClock(IOptions<EmulationSettings> settings, ILogger<ChipsetClock> logger)
 	{
@@ -59,7 +60,9 @@ public class ChipsetClock : IChipsetClock
 
 		Tick();
 
-		WaitHandle.WaitAll(tSync.Values.Select(x=>x.ackHandle).ToArray());
+		logger.LogTrace("Tock");
+
+		Tock();
 
 		logger.LogTrace("All ACK");
 
@@ -111,35 +114,66 @@ public class ChipsetClock : IChipsetClock
 
 	private void Tick()
 	{
-		//clockEvent.Set();
-		foreach (var w in tSync.Values.Select(x => x.clockHandle))
-			w.Set();
+		clockEvent.Set();
+		//foreach (var w in tSync.Values.Select(x => x.clockHandle))
+		//	w.Set();
+	}
+
+	private void Tock()
+	{
+		for (;;)
+		if (Interlocked.CompareExchange(ref acks, 0, tSync.Count) == tSync.Count)
+		{
+			clockEvent.Reset();
+			//ackEvent.Set();
+			foreach (var w in tSync.Values.Select(x => x.ackHandle))
+				w.Set();
+			return;
+		}
+		//WaitHandle.WaitAll(tSync.Values.Select(x => x.ackHandle).ToArray());
 	}
 
 	public void WaitForTick()
 	{
-		//clockEvent.WaitOne();
-		tSync[Environment.CurrentManagedThreadId].clockHandle.WaitOne();
+		clockEvent.WaitOne();
+		//tSync[Environment.CurrentManagedThreadId].clockHandle.WaitOne();
+		//WaitHandle.WaitAll(tSync.Values.Select(x => x.clockHandle).ToArray());
 
 		logger.LogTrace($"{Thread.CurrentThread.Name} Tick");
 	}
 
+	private int acks = 0;
 	public void Ack()
 	{
 		logger.LogTrace($"{Thread.CurrentThread.Name} ACK");
-		tSync[Environment.CurrentManagedThreadId].ackHandle.Set();
+		Interlocked.Increment(ref acks);
+		//ackEvent.WaitOne();
+		tSync[Environment.CurrentManagedThreadId].ackHandle.WaitOne();
+
+		//tSync[Environment.CurrentManagedThreadId].ackHandle.Set();
+		//Tock();
 	}
 
 	private class PerThread
 	{
-		public AutoResetEvent ackHandle = new AutoResetEvent(false);
-		public AutoResetEvent clockHandle = new AutoResetEvent(false);
+		public PerThread()
+		{
+			ackHandle = new AutoResetEvent(false);
+			//clockHandle = new AutoResetEvent(false);
+			name = Thread.CurrentThread.Name;
+		}
+
+		public string name;
+		public AutoResetEvent ackHandle;
+		//public AutoResetEvent clockHandle;
 	}
 
 	private readonly ConcurrentDictionary<int, PerThread> tSync = new ConcurrentDictionary<int, PerThread>();
 
 	public void RegisterThread()
 	{
-		tSync.TryAdd(Environment.CurrentManagedThreadId, new PerThread());
+		var pt = new PerThread();
+		tSync.TryAdd(Environment.CurrentManagedThreadId, pt);
+		logger.LogTrace($"{pt.name} Registered");
 	}
 }

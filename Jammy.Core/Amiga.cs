@@ -87,7 +87,7 @@ namespace Jammy.Core
 			threadedEmulations.Add(ciaa);
 			threadedEmulations.Add(ciab);
 			threadedEmulations.Add(psuClock);
-			threadedEmulations.Add(cpuClock);
+			//threadedEmulations.Add(cpuClock);
 			threadedEmulations.Add(denise);
 
 			resetters.Add(diskController);
