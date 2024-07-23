@@ -72,10 +72,12 @@ namespace Jammy.Core.Custom
 
 		private bool RunStateMachine()
 		{
+			if (status == BlitterState.Idle) return false;
+
+			if (memory.IsWaitingForDMA(DMASource.Blitter)) return false;
+
 			switch (status)
 			{
-				case BlitterState.Idle: return false;
-
 				case BlitterState.BlitA: return BlitA();
 				case BlitterState.BlitAShift: return BlitAShift();
 				case BlitterState.BlitB: return BlitB();
@@ -281,6 +283,8 @@ namespace Jammy.Core.Custom
 
 		private bool BeginBlit()
 		{
+			memory.ClearWaitingForDMA(DMASource.Blitter);
+
 			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 			if ((dmacon & (1 << 6)) == 0)
 				logger.LogTrace("BLTEN is off!");
@@ -583,6 +587,8 @@ namespace Jammy.Core.Custom
 
 		private bool LineBegin()
 		{
+			memory.ClearWaitingForDMA(DMASource.Blitter);
+
 			uint octant = (bltcon1 >> 2) & 7;
 			sing = (bltcon1 & (1 << 1)) != 0;
 

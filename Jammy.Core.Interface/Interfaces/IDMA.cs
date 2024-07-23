@@ -45,4 +45,6 @@ public interface IDMA
 	bool IsDMAEnabled(DMA source);
 	void WaitForChipRamDMASlot();
 	void TriggerHighestPriorityDMA();
+	bool IsWaitingForDMA(DMASource source);
+	void ClearWaitingForDMA(DMASource source);
 }

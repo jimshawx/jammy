@@ -83,7 +83,7 @@ public class DMAController : IDMA
 		for(;;)
 		{
 			clock.WaitForTick();
-			if (activity.Type == DMAActivityType.None)
+			//if (activity.Type == DMAActivityType.None)
 				emulate(0);
 			clock.Ack();
 		}
@@ -141,6 +141,16 @@ public class DMAController : IDMA
 		}
 	}
 
+	public bool IsWaitingForDMA(DMASource source)
+	{
+		return activities[(int)source].Type != DMAActivityType.None;
+	}
+
+	public void ClearWaitingForDMA(DMASource source)
+	{
+		activities[(int)source].Type = DMAActivityType.None;
+	}
+
 	public void WaitForChipRamDMASlot()
 	{
 		activities[(int)DMASource.CPU].Type = DMAActivityType.Consume;
@@ -169,7 +179,7 @@ public class DMAController : IDMA
 				uint value = memory.Read(0, activity.Address, activity.Size);
 				custom.Write(0, activity.ChipReg, value, activity.Size);
 			}
-			
+			return;
 		}
 
 		throw new ArgumentOutOfRangeException();
@@ -196,6 +206,7 @@ public class DMAController : IDMA
 	public void Read(DMASource source, uint address, DMA priority, Size size, uint chipReg)
 	{
 		var activity = activities[(int)source];
+		activity.Type = DMAActivityType.Read;
 		activity.Address = address;
 		activity.Priority = priority;
 		activity.Size = size;
@@ -205,6 +216,7 @@ public class DMAController : IDMA
 	public void Write(DMASource source, uint address, DMA priority, ushort value, Size size)
 	{
 		var activity = activities[(int)source];
+		activity.Type = DMAActivityType.Write;
 		activity.Address = address;
 		activity.Priority = priority;
 		activity.Value = value;
