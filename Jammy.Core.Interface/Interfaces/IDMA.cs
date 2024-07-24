@@ -32,7 +32,8 @@ public enum DMASource
 	//needs to be last
 	CPU,
 
-	NumDMASources
+	NumDMASources,
+	None,
 }
 
 public interface IDMA 
