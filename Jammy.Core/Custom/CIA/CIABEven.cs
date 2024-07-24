@@ -54,21 +54,25 @@ namespace Jammy.Core.Custom.CIA
 
 		private uint lastVerticalPos = 0;
 		private int divisor = 0;
+		private readonly object locker = new object();
 		public override void Emulate(ulong cycles)
 		{
 			clock.WaitForTick();
 
-			if (clock.VerticalPos != lastVerticalPos)
+			lock (locker)
 			{
-				IncrementTODTimer();
-				lastVerticalPos = clock.VerticalPos;
-			}
+				if (clock.VerticalPos != lastVerticalPos)
+				{
+					IncrementTODTimer();
+					lastVerticalPos = clock.VerticalPos;
+				}
 
-			divisor++;
-			if (divisor == 10)
-			{
-				divisor = 0;
-				base.Emulate(cycles);
+				divisor++;
+				if (divisor == 10)
+				{
+					divisor = 0;
+					base.Emulate(cycles);
+				}
 			}
 
 			clock.Ack();
@@ -89,32 +93,38 @@ namespace Jammy.Core.Custom.CIA
 
 		public override uint ReadByte(uint insaddr, uint address)
 		{
-			byte reg = GetReg(address, Size.Byte);
-
-			if (reg == PRB)
+			lock (locker)
 			{
-				return diskDrives.ReadPRB(insaddr);
+				byte reg = GetReg(address, Size.Byte);
+
+				if (reg == PRB)
+				{
+					return diskDrives.ReadPRB(insaddr);
+				}
+
+				if (reg == ICR)
+					diskDrives.ReadICR(SnoopICRR());
+
+				//logger.LogTrace($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
+				return base.Read(reg);
 			}
-
-			if (reg == ICR)
-				diskDrives.ReadICR(SnoopICRR());
-
-			//logger.LogTrace($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
-			return base.Read(reg);
 		}
 
 		public override void WriteByte(uint insaddr, uint address, uint value)
 		{
-			byte reg = GetReg(address, Size.Byte);
-
-			if (reg == PRB)
+			lock (locker)
 			{
-				diskDrives.WritePRB(insaddr, (byte)value);
-				return;
+				byte reg = GetReg(address, Size.Byte);
+
+				if (reg == PRB)
+				{
+					diskDrives.WritePRB(insaddr, (byte)value);
+					return;
+				}
+
+				//logger.LogTrace($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+				base.Write(reg, value);
 			}
-			
-			//logger.LogTrace($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
-			base.Write(reg, value);
 		}
 
 		public static List<string> GetCribSheet()
