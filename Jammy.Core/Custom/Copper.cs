@@ -1583,10 +1583,12 @@ namespace Jammy.Core.Custom
 				case ChipRegs.COPJMP1:
 					value = (ushort)copjmp1;
 					cop.copPC = cop1lc;
+					cop.status = CopperStatus.RunningWord1; 
 					break;
 				case ChipRegs.COPJMP2:
 					value = (ushort)copjmp2;
 					cop.copPC = cop2lc;
+					cop.status = CopperStatus.RunningWord1; 
 					break;
 				case ChipRegs.COPINS:
 					value = copins;
@@ -1738,8 +1740,8 @@ namespace Jammy.Core.Custom
 				case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16); /*logger.LogTrace($"{cop2lc:X8}"); */break;
 				case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); /*logger.LogTrace($"{cop2lc:X8}"); */break;
-				case ChipRegs.COPJMP1: copjmp1 = value; cop.copPC = cop1lc; break;
-				case ChipRegs.COPJMP2: copjmp2 = value; cop.copPC = cop2lc; break;
+				case ChipRegs.COPJMP1: copjmp1 = value; cop.copPC = cop1lc; cop.status = CopperStatus.RunningWord1; break;
+				case ChipRegs.COPJMP2: copjmp2 = value; cop.copPC = cop2lc; cop.status = CopperStatus.RunningWord1; break;
 				case ChipRegs.COPINS: copins = value; break;
 
 				//bitplane specific
