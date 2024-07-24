@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Jammy.Core.Interface.Interfaces;
@@ -17,7 +16,8 @@ public enum DMAActivityType
 	None,
 	Read,
 	Write,
-	Consume
+	Consume,
+	CPU
 }
 
 public class DMAActivity
@@ -100,45 +100,47 @@ public class DMAController : IDMA
 	{
 		var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
-		bool slotTaken = false;
+		var slotTaken = DMASource.None;
 
 		//check if ANY DMA is enabled
 		if ((dmacon & DMA.DMAEN) == DMA.DMAEN)
 		{
-			for (int i = 0; i < (int)DMASource.NumDMASources - 1; i++)
+			for (int i = 0; i < (int)DMASource.NumDMASources-1; i++)
 			{
 				if (activities[i].Type == DMAActivityType.None)
 				{
 					//if no DMA required, continue
 				}
-				else if (!slotTaken && activities[i].Type == DMAActivityType.Consume)
+				else if (slotTaken == DMASource.None && activities[i].Type == DMAActivityType.Consume)
 				{
-					activities[i].Type = DMAActivityType.None;
-					slotTaken = true;
+					//DMA engine is required
+					slotTaken = (DMASource)i;
 				}
-				else if (!slotTaken && (activities[i].Priority & dmacon) != 0)
+				else if (slotTaken == DMASource.None && (activities[i].Priority & dmacon) != 0)
 				{
 					//check this DMA channel is enabled and the DMA slot hasn't been taken
-					//DMA required, execute the transaction
-					ExecuteDMATransfer(activities[i]);
-					activities[i].Type = DMAActivityType.None;
-					//continue
-					slotTaken = true;
+					slotTaken = (DMASource)i;
 				}
 			}
 		}
-		if (slotTaken)
-			return;
 
-		//reads to Agnus memory will be waiting for Chipset tick
-		if (activities[(int)DMASource.CPU].Type != DMAActivityType.None)
+		if (slotTaken == DMASource.None && activities[(int)DMASource.CPU].Type == DMAActivityType.CPU)
 		{
-			//can do CPU chip mem now
-			//ExecuteDMATransfer(activities[(int)DMASource.CPU]);
-			activities[(int)DMASource.CPU].Type = DMAActivityType.None;
-
-			cpuMemLock.Set();
+			//CPU memory access required
+			slotTaken = DMASource.CPU;
 		}
+
+		if (slotTaken == DMASource.None)
+		{
+			//logger.LogTrace($"x ({dmacon})");
+			return;
+		}
+
+		//if (slotTaken != DMASource.CPU)
+		//	logger.LogTrace($"{slotTaken} ({dmacon})");
+
+		//DMA required, execute the transaction
+		ExecuteDMATransfer(activities[(int)slotTaken]);
 	}
 
 	public bool IsWaitingForDMA(DMASource source)
@@ -153,21 +155,35 @@ public class DMAController : IDMA
 
 	public void WaitForChipRamDMASlot()
 	{
-		activities[(int)DMASource.CPU].Type = DMAActivityType.Consume;
+		activities[(int)DMASource.CPU].Type = DMAActivityType.CPU;
 		cpuMemLock.WaitOne();
 	}
 
 	private void ExecuteDMATransfer(DMAActivity activity)
 	{
 		if (activity.Type == DMAActivityType.Consume)
+		{
+			activity.Type = DMAActivityType.None;
 			return;
+		}
+
+		if (activity.Type == DMAActivityType.CPU)
+		{
+			activity.Type = DMAActivityType.None;
+			cpuMemLock.Set();
+			return;
+		}
+
 		if (activity.Type == DMAActivityType.Write)
 		{
+			activity.Type = DMAActivityType.None;
 			memory.Write(0, activity.Address, (uint)activity.Value, activity.Size);
 			return;
 		}
+
 		if (activity.Type == DMAActivityType.Read)
 		{
+			activity.Type = DMAActivityType.None;
 			if (activity.Size == Size.QWord)
 			{	
 				ulong value = memory.Read(0, activity.Address, Size.Long);
