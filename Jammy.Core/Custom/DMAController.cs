@@ -170,8 +170,8 @@ public class DMAController : IDMA
 		{
 			if (activity.Size == Size.QWord)
 			{	
-				ulong value = memory.Read(0, activity.Address, Size.QWord);
-				value = (value << 32) | memory.Read(0, activity.Address+4, Size.QWord);
+				ulong value = memory.Read(0, activity.Address, Size.Long);
+				value = (value << 32) | memory.Read(0, activity.Address+4, Size.Long);
 				custom.WriteWide(activity.ChipReg, value);
 			}
 			else
