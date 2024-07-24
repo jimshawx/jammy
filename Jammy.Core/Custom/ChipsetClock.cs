@@ -40,8 +40,12 @@ public class ChipsetClock : IChipsetClock
 	private bool startOfLine;
 	private bool endOfLine;
 
+	private ManualResetEventSlim suspend = new ManualResetEventSlim(true);
+	
 	public void Emulate(ulong cycles)
 	{
+		suspend.Wait();
+
 		startOfFrame = endOfFrame = endOfLine = startOfLine = false;
 
 		if (HorizontalPos == 0)
@@ -56,6 +60,9 @@ public class ChipsetClock : IChipsetClock
 		if (HorizontalPos == 227 && VerticalPos == displayScanlines)
 			endOfFrame = true;
 
+		if (startOfLine) dma.StartOfLine();
+		if (endOfLine) dma.EndOfLine();
+
 		//logger.LogTrace("Tick");
 
 		Tick();
@@ -68,6 +75,16 @@ public class ChipsetClock : IChipsetClock
 		//clockEvent.Reset();
 
 
+	}
+
+	public void Suspend()
+	{
+		suspend.Reset();
+	}
+
+	public void Resume()
+	{
+		suspend.Set();
 	}
 
 	private void AllThreadsFinished()

@@ -213,6 +213,8 @@ namespace Jammy.Core.Interface.Interfaces
 		void RegisterThread();
 
 		void Init(IDMA dma);
+		void Suspend();
+		void Resume();
 	}
 
 	public interface IPSUClock : IEmulate

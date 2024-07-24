@@ -48,4 +48,6 @@ public interface IDMA
 	void TriggerHighestPriorityDMA();
 	bool IsWaitingForDMA(DMASource source);
 	void ClearWaitingForDMA(DMASource source);
+	void StartOfLine();
+	void EndOfLine();
 }

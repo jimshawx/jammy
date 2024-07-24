@@ -36,6 +36,6 @@ public class CPUClock : ICPUClock
 
 	public void WaitForTick()
 	{
-		cpuTick.WaitOne();
+		//cpuTick.WaitOne();
 	}
 }

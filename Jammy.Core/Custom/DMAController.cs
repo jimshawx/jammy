@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
@@ -132,15 +133,28 @@ public class DMAController : IDMA
 
 		if (slotTaken == DMASource.None)
 		{
-			//logger.LogTrace($"x ({dmacon})");
+			sb.Append('x');
 			return;
 		}
 
-		//if (slotTaken != DMASource.CPU)
-		//	logger.LogTrace($"{slotTaken} ({dmacon})");
+		if (slotTaken != DMASource.CPU)
+			sb.Append(slotTaken.ToString()[0]);
+		else
+			sb.Append('c');
 
 		//DMA required, execute the transaction
 		ExecuteDMATransfer(activities[(int)slotTaken]);
+	}
+
+	private StringBuilder sb = new StringBuilder();
+	public void StartOfLine()
+	{
+		sb.Clear();
+	}
+
+	public void EndOfLine()
+	{
+		//logger.LogTrace(sb.ToString());
 	}
 
 	public bool IsWaitingForDMA(DMASource source)

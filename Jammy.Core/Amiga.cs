@@ -74,7 +74,7 @@ namespace Jammy.Core
 			//emulations.Add(ciab);
 			emulations.Add(serial);
 			//emulations.Add(cpu);
-			emulations.Add(clock);
+			//emulations.Add(clock);
 			//emulations.Add(psuClock);
 			//emulations.Add(dma);
 			//emulations.Add(denise);
@@ -83,7 +83,7 @@ namespace Jammy.Core
 			//threadedEmulations.Add(copper);
 			//threadedEmulations.Add(blitter);
 			//threadedEmulations.Add(agnus);
-
+			//threadedEmulations.Add(clock);
 			threadedEmulations.Add(ciaa);
 			threadedEmulations.Add(ciab);
 			threadedEmulations.Add(psuClock);
@@ -126,8 +126,9 @@ namespace Jammy.Core
 					t.Name = x.GetType().Name;
 					emulationThreads.Add(t);
 				});
+			Thread t;
 			//cpu needs special treatment
-			var t = new Thread(() =>
+			t = new Thread(() =>
 			{
 				for (;;)
 				{
@@ -136,6 +137,16 @@ namespace Jammy.Core
 				}
 			});
 			t.Name = "CPU";
+			emulationThreads.Add(t);
+			//clock needs special treatment
+			t = new Thread(() =>
+			{
+				for (; ; )
+				{
+					clock.Emulate(0);
+				}
+			});
+			t.Name = "Clock";
 			emulationThreads.Add(t);
 		}
 
@@ -256,6 +267,11 @@ namespace Jammy.Core
 				emulationSemaphore.Wait();
 
 				emulationMode = desiredEmulationMode;
+
+				if (emulationMode != EmulationMode.Stopped)
+					clock.Resume();
+				else
+					clock.Suspend();
 			}
 		}
 	}
