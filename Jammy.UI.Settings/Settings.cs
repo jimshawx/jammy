@@ -34,7 +34,11 @@ namespace Jammy.UI.Settings
 			CancelButton = btnExit;
 			AcceptButton = btnGo;
 
-			var cfgs = Directory.GetFiles(configPath, "*.cfg", SearchOption.TopDirectoryOnly);
+			var cfgs = Array.Empty<string>();
+			try
+			{
+				cfgs = Directory.GetFiles(configPath, "*.cfg", SearchOption.TopDirectoryOnly);
+			} catch {}
 			cbQuickStart.Items.AddRange(cfgs.Select(Path.GetFileNameWithoutExtension).OrderBy(x => x).Cast<object>().ToArray());
 
 			//bind in the default settings
