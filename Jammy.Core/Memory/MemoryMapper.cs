@@ -98,20 +98,19 @@ namespace Jammy.Core.Memory
 
 		// IDebuggableMemoryMapper
 
-		//todo: these should NOT be using the emulation's Read/Write methods
 		public byte UnsafeRead8(uint address)
 		{
-			return (byte)memoryManager.DebugMappedDevice[address].Read(0, address, Size.Byte);
+			return (byte)((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugRead(address, Size.Byte);
 		}
 
 		public ushort UnsafeRead16(uint address)
 		{
-			return (ushort)memoryManager.DebugMappedDevice[address].Read(0, address, Size.Word);
+			return (ushort)((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugRead(address, Size.Word);
 		}
 
 		public uint UnsafeRead32(uint address)
 		{
-			return memoryManager.DebugMappedDevice[address].Read(0, address, Size.Long);
+			return ((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugRead(address, Size.Long);
 		}
 
 		public uint UnsafeRead(uint address, Size size)
@@ -123,17 +122,17 @@ namespace Jammy.Core.Memory
 
 		public void UnsafeWrite32(uint address, uint value)
 		{
-			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Long);
+			((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugWrite(address, value, Size.Long);
 		}
 
 		public void UnsafeWrite16(uint address, ushort value)
 		{
-			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Word);
+			((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugWrite(address, value, Size.Word);
 		}
 
 		public void UnsafeWrite8(uint address, byte value)
 		{
-			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Byte);
+			((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugWrite(address, value, Size.Byte);
 		}
 
 		public uint FindSequence(byte[] bytes)

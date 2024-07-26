@@ -96,7 +96,11 @@ namespace Jammy.Core.Interface.Interfaces
 		void WriteINTREQ(ushort v);
 	}
 
-	public interface IDebuggableMemory { }
+	public interface IDebuggableMemory
+	{
+		uint DebugRead(uint address, Size size);
+		void DebugWrite(uint address, uint value, Size size);
+	}
 
 	public interface IChips : IReset, IMemoryMappedDevice
 	{
@@ -193,7 +197,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Init(IDMA dma);
 	}
 
-	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA
+	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory
 	{
 		void WriteWide(uint address, ulong value);
 	}

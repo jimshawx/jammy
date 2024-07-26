@@ -101,6 +101,9 @@ namespace Jammy.Core
 				throw new AmbiguousImplementationException();
 
 			resetters.AddRange(emulations);
+			resetters.AddRange(threadedEmulations);
+			resetters.Add(cpu);
+			resetters.Add(clock);
 
 			Reset();
 
@@ -119,7 +122,7 @@ namespace Jammy.Core
 						clock.RegisterThread();
 						for (;;)
 						{
-							clock.WaitForTick();
+							//clock.WaitForTick();
 							x.Emulate(0);
 						}
 					});

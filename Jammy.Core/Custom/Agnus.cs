@@ -915,6 +915,24 @@ noBitplaneDMA:
 		}
 
 		trapdoorRam.Write(insaddr, address, value, size);
+	}
 
+	public uint DebugRead(uint address, Size size)
+	{
+		if (chipRam.IsMapped(address))
+			return chipRam.DebugRead(address, size);
+
+		return trapdoorRam.DebugRead(address, size);
+	}
+
+	public void DebugWrite(uint address, uint value, Size size)
+	{
+		if (chipRam.IsMapped(address))
+		{
+			chipRam.DebugWrite(address, value, size);
+			return;
+		}
+
+		trapdoorRam.DebugWrite(address, value, size);
 	}
 }

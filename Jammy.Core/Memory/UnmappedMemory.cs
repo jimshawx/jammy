@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Core.Memory
 {
-	public class UnmappedMemory : IUnmappedMemory, IMemoryMappedDevice
+	public class UnmappedMemory : IUnmappedMemory, IMemoryMappedDevice, IDebuggableMemory
 	{
 		private readonly ILogger logger;
 
@@ -33,7 +33,7 @@ namespace Jammy.Core.Memory
 		public uint Read(uint insaddr, uint address, Size size)
 		{
 			if (address>0x1000000 || address < 0xf00000)
-			logger.LogTrace($"Unmapped Memory Read {address:X8} @{insaddr:X8} {size}");
+				logger.LogTrace($"Unmapped Memory Read {address:X8} @{insaddr:X8} {size}");
 
 			uint empty = 0;
 			if (size == Size.Long) return empty;
@@ -44,6 +44,16 @@ namespace Jammy.Core.Memory
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			logger.LogTrace($"Unmapped Memory Write {address:X8} @{insaddr:X8} {value:X8} {size}");
+		}
+
+		public uint DebugRead(uint address, Size size)
+		{
+			return Read(0, address, size);
+		}
+
+		public void DebugWrite(uint address, uint value, Size size)
+		{
+			Write(0, address, value, size);
 		}
 	}
 }
