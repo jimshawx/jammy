@@ -232,17 +232,23 @@ namespace Jammy.Core.Custom
 
 				if (address == ChipRegs.DMACON)
 				{
-				if ((value & 0x8000) != 0)
-					regs[reg] |= (ushort)(value&0x9fff);//can't set BBUSY or BZERO
-				else
-					regs[reg] &= (ushort)(~value|0x6000);//can't clear BBUSY or BZERO
+					var p = regs[reg];
+					if ((value & 0x8000) != 0)
+						regs[reg] |= (ushort)(value&0x9fff);//can't set BBUSY or BZERO
+					else
+						regs[reg] &= (ushort)(~value|0x6000);//can't clear BBUSY or BZERO
 
-				audio.WriteDMACON((ushort)(regs[reg]&0x7fff));
+					if ((regs[reg] & (int)DMA.COPEN) != (p & (int)DMA.COPEN))
+						logger.LogTrace($"COPEN {((regs[reg] & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8}");
+					if ((regs[reg] & (int)DMA.BLTEN) != (p & (int)DMA.BLTEN))
+						logger.LogTrace($"BLTEN {((regs[reg] & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8}");
 
-				//add the new bits from DMACON, but leave BBUSY and BZERO alone
-				regs[REG(ChipRegs.DMACONR)] = (ushort)((regs[REG(ChipRegs.DMACONR)] & 0x6000) | (regs[reg] & 0x1fff));
-			}
-			else if (address == ChipRegs.DMACONR) { /* can't write here */ }
+					audio.WriteDMACON((ushort)(regs[reg]&0x7fff));
+
+					//add the new bits from DMACON, but leave BBUSY and BZERO alone
+					regs[REG(ChipRegs.DMACONR)] = (ushort)((regs[REG(ChipRegs.DMACONR)] & 0x6000) | (regs[reg] & 0x1fff));
+				}
+				else if (address == ChipRegs.DMACONR) { /* can't write here */ }
 				else if (address == ChipRegs.INTENA)
 				{
 					//logger.LogTrace($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");

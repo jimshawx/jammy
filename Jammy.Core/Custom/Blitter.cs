@@ -76,6 +76,8 @@ namespace Jammy.Core.Custom
 
 			if (memory.IsWaitingForDMA(DMASource.Blitter)) return false;
 
+			if (!memory.IsDMAEnabled(DMA.BLTEN)) return false;
+
 			switch (status)
 			{
 				case BlitterState.BlitA: return BlitA();
@@ -223,7 +225,7 @@ namespace Jammy.Core.Custom
 			if (h == 0) h = 64;
 			if (v == 0) v = 1024;
 
-			Blit(h, v);
+			Blit(insaddr, h, v);
 		}
 
 		private void BlitBig(uint insaddr)
@@ -240,7 +242,7 @@ namespace Jammy.Core.Custom
 			if (h == 0) h = 2048;
 			if (v == 0) v = 32768;
 
-			Blit(h, v);
+			Blit(insaddr, h, v);
 		}
 
 		private struct Writecache
@@ -273,10 +275,16 @@ namespace Jammy.Core.Custom
 			writecache.Address = NO_WRITECACHE;
 		}
 
-		private void Blit(uint h, uint v)
+		private void Blit(uint insaddr, uint h, uint v)
 		{
 			blitWidth = h;
 			blitHeight = v;
+
+			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			if ((dmacon & (1 << 6)) == 0)
+				logger.LogTrace($"BLTEN is off! @{insaddr:X8}");
+			if ((dmacon & (1 << 9)) == 0)
+				logger.LogTrace($"DMAEN is off! @{insaddr:X8}");
 
 			BeginBlit();
 		}
@@ -284,14 +292,6 @@ namespace Jammy.Core.Custom
 		private bool BeginBlit()
 		{
 			memory.ClearWaitingForDMA(DMASource.Blitter);
-
-			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
-			if ((dmacon & (1 << 6)) == 0)
-				logger.LogTrace("BLTEN is off!");
-			if ((dmacon & (1 << 9)) == 0)
-				logger.LogTrace("DMAEN is off!");
-
-			//todo: assumes blitter DMA is enabled
 
 			//set blitter busy in DMACON
 			//custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);

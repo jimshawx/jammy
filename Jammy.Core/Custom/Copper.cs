@@ -150,6 +150,8 @@ namespace Jammy.Core.Custom
 			}
 			else if (status == CopperStatus.RunningWord1)
 			{
+				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
+
 				status = CopperStatus.RunningWord1DMA;
 				memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 			}
@@ -161,6 +163,8 @@ namespace Jammy.Core.Custom
 			}
 			else if (status == CopperStatus.RunningWord2)
 			{
+				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
+
 				status = CopperStatus.RunningWord2DMA;
 				memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 			}
