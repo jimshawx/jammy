@@ -131,13 +131,17 @@ namespace Jammy.Core.Custom
 					return 0;
 				}
 
-			if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.DDFSTOP) ||
-				(address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31)||
-				address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
-				|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
+				if ((address >= ChipRegs.DIWSTRT && address <= ChipRegs.DDFSTOP) ||
+					(address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31)||
+					address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
+					|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
 				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-				    || address == ChipRegs.FMODE || address == ChipRegs.COPCON
+				    || address == ChipRegs.FMODE 
 				    || address == ChipRegs.CLXDAT)
+				{
+					regs[reg] = agnus.Read(insaddr, address);
+				}
+				else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
 				{
 					regs[reg] = copper.Read(insaddr, address);
 				}
@@ -150,7 +154,7 @@ namespace Jammy.Core.Custom
 				{
 					regs[reg] = diskDrives.Read(insaddr, address);
 				}
-			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
+				else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
 				         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
 				{
 					regs[reg] = mouse.Read(insaddr, address);
@@ -159,12 +163,12 @@ namespace Jammy.Core.Custom
 				{
 					regs[reg] = audio.Read(insaddr, address);
 				}
-			else if (address == ChipRegs.ADKCON) { /* can't read here */ }
+				else if (address == ChipRegs.ADKCON) { /* can't read here */ }
 				else if (address == ChipRegs.ADKCONR)
 				{
-				regs[reg] = (ushort)(audio.Read(insaddr, address)|diskDrives.Read(insaddr, address));
-			}
-			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || 
+					regs[reg] = (ushort)(audio.Read(insaddr, address)|diskDrives.Read(insaddr, address));
+				}
+				else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || 
 			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR 
 			         /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
 				{
@@ -176,7 +180,7 @@ namespace Jammy.Core.Custom
 				}
 				else
 				{
-				logger.LogTrace($"R {ChipRegs.Name(address)} {originalAddress:X8} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
+					logger.LogTrace($"R {ChipRegs.Name(address)} {originalAddress:X8} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
 				}
 
 				return (uint)regs[reg];
@@ -274,13 +278,13 @@ namespace Jammy.Core.Custom
 					//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("DSKBLK ");
 					//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
 					//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
-				audio.WriteINTENA((ushort)(regs[reg]&0x7fff));
+					audio.WriteINTENA((ushort)(regs[reg]&0x7fff));
 
-				regs[REG(ChipRegs.INTENAR)] = (ushort)(regs[reg]&0x7fff);
+					regs[REG(ChipRegs.INTENAR)] = (ushort)(regs[reg]&0x7fff);
 
-				interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
-			}
-			else if (address == ChipRegs.INTENAR) { /* can't write here */}
+					interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
+				}
+				else if (address == ChipRegs.INTENAR) { /* can't write here */}
 				else if (address == ChipRegs.INTREQ)
 				{
 					if ((value & 0x8000) != 0)
@@ -312,28 +316,31 @@ namespace Jammy.Core.Custom
 					//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
 					//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
 
-				audio.WriteINTREQ((ushort)(regs[reg]&0x7fff));
-				serial.WriteINTREQ((ushort)(regs[reg] & 0x7fff));
+					audio.WriteINTREQ((ushort)(regs[reg]&0x7fff));
+					serial.WriteINTREQ((ushort)(regs[reg] & 0x7fff));
 
-				regs[REG(ChipRegs.INTREQR)] = (ushort)(regs[reg]&0x7fff);
+					regs[REG(ChipRegs.INTREQR)] = (ushort)(regs[reg]&0x7fff);
 
-				interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
-			}
-			else if (address == ChipRegs.INTREQR) { /* can't write here */}
-
-			else if (address == ChipRegs.LISAID && settings.ChipSet == ChipSet.AGA) { /* can't write here on AGA */}
+					interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
+				}
+				else if (address == ChipRegs.INTREQR) { /* can't write here */}
+				else if (address == ChipRegs.LISAID && settings.ChipSet == ChipSet.AGA) { /* can't write here on AGA */}
 				else
 				{
 					regs[reg] = (ushort)value;
 				}
 
-				if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.DDFSTOP) ||
+				if ((address >= ChipRegs.DIWSTRT && address <= ChipRegs.DDFSTOP) ||
 				    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31) ||
-			    address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
-			    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
+					 address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
+				    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
 				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-				    || address == ChipRegs.FMODE || address == ChipRegs.BEAMCON0 || address == ChipRegs.COPCON
+				    || address == ChipRegs.FMODE || address == ChipRegs.BEAMCON0
 				    || address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2)
+				{
+					agnus.Write(insaddr, address, (ushort)value);
+				}
+				else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
 				{
 					copper.Write(insaddr, address, (ushort)value);
 				}
@@ -346,13 +353,13 @@ namespace Jammy.Core.Custom
 					diskDrives.Write(insaddr, address, (ushort)value);
 					audio.Write(insaddr, address, (ushort)value);
 				}
-			else if (address == ChipRegs.ADKCONR) { /* can't write here */ }
-			else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
-			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT )
-			{
-				diskDrives.Write(insaddr, address, (ushort) value);
-			}
-			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
+				else if (address == ChipRegs.ADKCONR) { /* can't write here */ }
+				else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
+				         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT )
+				{
+					diskDrives.Write(insaddr, address, (ushort) value);
+				}
+				else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
 				         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
 				{
 					mouse.Write(insaddr, address, (ushort)value);
@@ -372,9 +379,9 @@ namespace Jammy.Core.Custom
 				{
 					serial.Write(insaddr, address, (ushort)value);
 				}
-			else 
-			{
-				logger.LogTrace($"W {ChipRegs.Name(address)} {originalAddress:X8} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+				else 
+				{
+					logger.LogTrace($"W {ChipRegs.Name(address)} {originalAddress:X8} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
 				}
 			}
 		}

@@ -197,7 +197,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Init(IDMA dma);
 	}
 
-	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory
+	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite
 	{
 		void WriteWide(uint address, ulong value);
 	}
