@@ -133,8 +133,8 @@ namespace Jammy.Core.Custom
 					return 0;
 				}
 
-				if ((address >= ChipRegs.DIWSTRT && address <= ChipRegs.DDFSTOP) ||
-					(address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31)||
+				if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
+					(address >= ChipRegs.BPL1PTH && address <= ChipRegs.SPR7DATB) ||
 					address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
 					|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
 				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
@@ -142,7 +142,8 @@ namespace Jammy.Core.Custom
 				{
 					regs[reg] = agnus.Read(insaddr, address);
 				}
-				else if (address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2 || address == ChipRegs.CLXDAT)
+				else if (address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2 || address == ChipRegs.CLXDAT
+				         || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31))
 				{
 					regs[reg] = denise.Read(insaddr, address);
 				}
@@ -336,7 +337,7 @@ namespace Jammy.Core.Custom
 				}
 
 				if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
-				    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31) ||
+				    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.SPR7DATB) ||
 					 address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
 				    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL 
 				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
@@ -351,7 +352,8 @@ namespace Jammy.Core.Custom
 					denise.Write(insaddr, address, (ushort)value);
 				}
 				else if (address == ChipRegs.BPLCON1 || address == ChipRegs.BPLCON2 ||
-				         address == ChipRegs.BPLCON3 || address == ChipRegs.BPLCON4 || address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2)
+				         address == ChipRegs.BPLCON3 || address == ChipRegs.BPLCON4 || address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2
+				         || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31))
 				{
 					denise.Write(insaddr, address, (ushort)value);
 				}
