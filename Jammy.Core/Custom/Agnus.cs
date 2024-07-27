@@ -105,7 +105,6 @@ public class Agnus : IAgnus
 		if (clock.EndOfLine())
 		{
 			EndAgnusLine();
-			return;
 		}
 
 		if (clock.EndOfFrame())
