@@ -323,6 +323,7 @@ namespace Jammy.Core.Custom
 			if (copPC == 0) return "";
 
 			var csb = GetStringBuilder();
+			csb.Clear();
 			csb.AppendLine($"Copper List @{copPC:X6} PC:{copPC:X6}");
 
 			var skipTaken = new HashSet<uint>();

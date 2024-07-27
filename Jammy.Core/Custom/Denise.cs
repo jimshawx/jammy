@@ -195,6 +195,7 @@ public class Denise : IDenise
 		//	currentLine = 50;
 
 		//if the sprite horiz position matches, clock the sprite data in
+		/*
 		for (int s = 0; s < 8; s++)
 		{
 			//todo: share this with Agnus somehow
@@ -211,6 +212,7 @@ public class Denise : IDenise
 				}
 			}
 		}
+		*/
 
 		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
 		for (int p = 0; p < pixelLoop; p++)

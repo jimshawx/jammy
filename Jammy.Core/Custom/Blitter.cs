@@ -733,7 +733,7 @@ namespace Jammy.Core.Custom
 
 			//clear BZERO
 			if (bltzero != 0)
-				dmacon |= 1 << 1;
+				dmacon |= 1 << 13;
 
 			//disable blitter busy in DMACON
 			custom.WriteDMACON(dmacon);

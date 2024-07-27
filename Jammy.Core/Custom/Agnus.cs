@@ -100,6 +100,9 @@ public class Agnus : IAgnus
 	{
 		//clock.WaitForTick();
 
+		if (clock.StartOfLine())
+			lineState = DMALineState.LineStart;
+
 		RunAgnusTick();
 
 		if (clock.EndOfLine())
