@@ -23,6 +23,7 @@ namespace Jammy.Core.Custom
 		private ICopper copper;
 		private IBlitter blitter;
 		private IAgnus agnus;
+		private IDenise denise;
 		private readonly IMouse mouse;
 		private readonly ISerial serial;
 		private readonly EmulationSettings settings;
@@ -56,12 +57,13 @@ namespace Jammy.Core.Custom
 
 		private void dbug_Keyup(int obj){}
 
-		public void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus)
+		public void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise)
 		{
 			this.blitter = blitter;
 			this.copper = copper;
 			this.audio = audio;
 			this.agnus = agnus;
+			this.denise = denise;
 		}
 
 		public void Reset()
@@ -136,10 +138,13 @@ namespace Jammy.Core.Custom
 					address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
 					|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
 				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-				    || address == ChipRegs.FMODE 
-				    || address == ChipRegs.CLXDAT)
+				    || address == ChipRegs.FMODE)
 				{
 					regs[reg] = agnus.Read(insaddr, address);
+				}
+				else if (address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2 || address == ChipRegs.CLXDAT)
+				{
+					regs[reg] = denise.Read(insaddr, address);
 				}
 				else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
 				{
@@ -330,15 +335,25 @@ namespace Jammy.Core.Custom
 					regs[reg] = (ushort)value;
 				}
 
-				if ((address >= ChipRegs.DIWSTRT && address <= ChipRegs.DDFSTOP) ||
+				if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
 				    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.COLOR31) ||
 					 address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
-				    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
+				    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL 
 				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-				    || address == ChipRegs.FMODE || address == ChipRegs.BEAMCON0
-				    || address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2)
+				    || address == ChipRegs.BEAMCON0)
 				{
 					agnus.Write(insaddr, address, (ushort)value);
+				}
+				else if (address == ChipRegs.DIWSTRT || address == ChipRegs.DIWSTOP || 
+				         address == ChipRegs.DIWHIGH || address == ChipRegs.BPLCON0 || address == ChipRegs.FMODE)
+				{
+					agnus.Write(insaddr, address, (ushort)value);
+					denise.Write(insaddr, address, (ushort)value);
+				}
+				else if (address == ChipRegs.BPLCON1 || address == ChipRegs.BPLCON2 ||
+				         address == ChipRegs.BPLCON3 || address == ChipRegs.BPLCON4 || address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2)
+				{
+					denise.Write(insaddr, address, (ushort)value);
 				}
 				else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
 				{

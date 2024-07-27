@@ -104,7 +104,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IChips : IReset, IMemoryMappedDevice
 	{
-		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus);
+		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise);
 		void WriteDMACON(ushort bits);
 		void WriteWide(uint address, ulong value);
 	}
