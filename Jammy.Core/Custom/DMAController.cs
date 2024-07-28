@@ -147,12 +147,12 @@ public class DMAController : IDMA
 	}
 
 	private StringBuilder sb = new StringBuilder();
-	public void StartOfLine()
+	public void DebugStartOfLine()
 	{
 		sb.Clear();
 	}
 
-	public void EndOfLine()
+	public void DebugEndOfLine()
 	{
 		//logger.LogTrace(sb.ToString());
 	}

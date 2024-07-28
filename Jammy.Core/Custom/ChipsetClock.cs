@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
@@ -19,7 +18,7 @@ public class ChipsetClock : IChipsetClock
 	private IDMA dma;
 	private readonly ILogger<ChipsetClock> logger;
 	private readonly uint displayScanlines;
-	private readonly ManualResetEvent clockEvent = new ManualResetEvent(false);
+	private readonly ManualResetEventSlim clockEvent = new ManualResetEventSlim(false);
 	//private readonly ManualResetEvent ackEvent = new ManualResetEvent(false);
 
 	public ChipsetClock(IOptions<EmulationSettings> settings, ILogger<ChipsetClock> logger)
@@ -54,27 +53,21 @@ public class ChipsetClock : IChipsetClock
 		if (HorizontalPos == 0 && VerticalPos == 0)
 			startOfFrame = true;
 
-		if (HorizontalPos == 227)
+		if (HorizontalPos == 226)
 			endOfLine = true;
 
-		if (HorizontalPos == 227 && VerticalPos == displayScanlines)
+		if (HorizontalPos == 226 && VerticalPos == displayScanlines-1)
 			endOfFrame = true;
 
-		if (startOfLine) dma.StartOfLine();
-		if (endOfLine) dma.EndOfLine();
-
-		//logger.LogTrace("Tick");
+		if (startOfLine) dma.DebugStartOfLine();
+		if (endOfLine) dma.DebugEndOfLine();
 
 		Tick();
 
-		//logger.LogTrace("Tock");
+		//now all the threads are busy
 
+		//wait for all the threads to be done
 		Tock();
-
-		
-		//clockEvent.Reset();
-
-
 	}
 
 	public void Suspend()
@@ -89,9 +82,12 @@ public class ChipsetClock : IChipsetClock
 
 	private void AllThreadsFinished()
 	{
-		//logger.LogTrace("All ACK");
-
+		//block ready for the next Tick()
 		clockEvent.Reset();
+
+		//do all the end of tick things
+		// - execute DMA
+		// - tick the line clocks
 
 		dma.TriggerHighestPriorityDMA();
 
@@ -105,10 +101,10 @@ public class ChipsetClock : IChipsetClock
 		else if (endOfLine)
 			VerticalPos++;
 
-		//ackEvent.Set();
+		//now the end of Tock() is finished, release all the threads
+		//which will all block until the next Tick()
 		foreach (var w in tSync.Values.Select(x => x.ackHandle))
 			w.Set();
-
 	}
 
 	public void Init(IDMA dma)
@@ -145,8 +141,6 @@ public class ChipsetClock : IChipsetClock
 	private void Tick()
 	{
 		clockEvent.Set();
-		//foreach (var w in tSync.Values.Select(x => x.clockHandle))
-		//	w.Set();
 	}
 
 	private void Tock()
@@ -159,28 +153,20 @@ public class ChipsetClock : IChipsetClock
 				return;
 			}
 		}
-		//WaitHandle.WaitAll(tSync.Values.Select(x => x.ackHandle).ToArray());
 	}
 
 	public void WaitForTick()
 	{
-		clockEvent.WaitOne();
-		//tSync[Environment.CurrentManagedThreadId].clockHandle.WaitOne();
-		//WaitHandle.WaitAll(tSync.Values.Select(x => x.clockHandle).ToArray());
-
-		//logger.LogTrace($"{Thread.CurrentThread.Name} {Environment.CurrentManagedThreadId} Tick");
+		clockEvent.Wait();
 	}
 
 	private int acks = 0;
 	public void Ack()
 	{
-		//logger.LogTrace($"{Thread.CurrentThread.Name} {Environment.CurrentManagedThreadId} ACK");
+		//signal a chipset thread is done
 		Interlocked.Increment(ref acks);
-		//ackEvent.WaitOne();
+		//block until all the chipset threads are done and end of Tock() is reached
 		tSync[Environment.CurrentManagedThreadId].ackHandle.WaitOne();
-
-		//tSync[Environment.CurrentManagedThreadId].ackHandle.Set();
-		//Tock();
 	}
 
 	private class PerThread
@@ -188,13 +174,11 @@ public class ChipsetClock : IChipsetClock
 		public PerThread()
 		{
 			ackHandle = new AutoResetEvent(false);
-			//clockHandle = new AutoResetEvent(false);
 			name = Thread.CurrentThread.Name;
 		}
 
 		public string name;
 		public AutoResetEvent ackHandle;
-		//public AutoResetEvent clockHandle;
 	}
 
 	private readonly ConcurrentDictionary<int, PerThread> tSync = new ConcurrentDictionary<int, PerThread>();
