@@ -361,7 +361,7 @@ namespace Jammy.Core.Custom
 				{
 					copper.Write(insaddr, address, (ushort)value);
 				}
-				else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
+				else if (address >= ChipRegs.BLTCON0 && address <= ChipRegs.BLTADAT || address == ChipRegs.BLTDDAT)
 				{
 					blitter.Write(insaddr, address, (ushort)value);
 				}

@@ -190,6 +190,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void EnterVisibleArea();
 		void ExitVisibleArea();
 		void WriteBitplanes(ulong[] planes);
+		void WriteSprite(int s, ushort[] sprdata, ushort[] sprdatb, ushort[] sprctl);
 	}
 
 	public interface IRequiresDMA

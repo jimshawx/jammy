@@ -328,6 +328,22 @@ noBitplaneDMA:
 	{
 		if (plane == 0)
 			denise.WriteBitplanes(bpldat);
+
+		//if the sprite horiz position matches, clock the sprite data in
+		for (int s = 0; s < 8; s++)
+		{
+			//todo: share this with Agnus somehow
+			if (spriteState[s] == SpriteState.Fetching)
+			{
+				int hstart = (sprpos[s] & 0xff) << 1;
+				hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
+
+				if (clock.HorizontalPos == hstart >> 1)
+				{
+					denise.WriteSprite(s, sprdata, sprdatb, sprctl);
+				}
+			}
+		}
 	}
 
 	private enum SpriteState
@@ -910,7 +926,10 @@ noBitplaneDMA:
 		if (chipRam.IsMapped(address))
 			return chipRam.Read(insaddr, address, size);
 
-		return trapdoorRam.Read(insaddr, address, size);
+		if (trapdoorRam.IsMapped(address))
+			return trapdoorRam.Read(insaddr, address, size);
+
+		return 0;
 	}
 
 	public void Write(uint insaddr, uint address, uint value, Size size)
@@ -923,7 +942,8 @@ noBitplaneDMA:
 			return;
 		}
 
-		trapdoorRam.Write(insaddr, address, value, size);
+		if (trapdoorRam.IsMapped(address))
+			trapdoorRam.Write(insaddr, address, value, size);
 	}
 
 	public uint DebugRead(uint address, Size size)
@@ -931,7 +951,10 @@ noBitplaneDMA:
 		if (chipRam.IsMapped(address))
 			return chipRam.DebugRead(address, size);
 
-		return trapdoorRam.DebugRead(address, size);
+		if (trapdoorRam.IsMapped(address))
+			return trapdoorRam.DebugRead(address, size);
+
+		return 0;
 	}
 
 	public void DebugWrite(uint address, uint value, Size size)
@@ -942,6 +965,7 @@ noBitplaneDMA:
 			return;
 		}
 
-		trapdoorRam.DebugWrite(address, value, size);
+		if (trapdoorRam.IsMapped(address))
+			trapdoorRam.DebugWrite(address, value, size);
 	}
 }

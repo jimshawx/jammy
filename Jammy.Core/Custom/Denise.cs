@@ -25,10 +25,10 @@ public class Denise : IDenise
 		SuperHiRes = 1 << 6,
 	}
 
+	private const int FIRST_DMA = 18;
 	public const int DMA_WIDTH = 227;// Agnus.DMA_END - Agnus.DMA_START;
-	private const int SCREEN_WIDTH = DMA_WIDTH * 4; //227 (E3) * 4;
+	private const int SCREEN_WIDTH = (DMA_WIDTH-FIRST_DMA) * 4; //227 (E3) * 4;
 	private const int SCREEN_HEIGHT = 313 * 2; //x2 for scan double
-
 	private int[] screen;
 
 	public Denise(IChipsetClock clock, IEmulationWindow emulationWindow, IOptions<EmulationSettings> settings, ILogger<Denise> logger)
@@ -135,6 +135,14 @@ public class Denise : IDenise
 		}
 	}
 
+	public void WriteSprite(int s, ushort[] sprdata, ushort[] sprdatb, ushort[] sprctl)
+	{
+		sprdatapix[s] = sprdata[s];
+		sprdatbpix[s] = sprdatb[s];
+		this.sprctl[s] = sprctl[s];
+		spriteMask[s] = 0x8000;
+	}
+
 	private void FirstPixel()
 	{
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
@@ -195,24 +203,22 @@ public class Denise : IDenise
 		//	currentLine = 50;
 
 		//if the sprite horiz position matches, clock the sprite data in
-		/*
-		for (int s = 0; s < 8; s++)
-		{
-			//todo: share this with Agnus somehow
-			//if (spriteState[s] == SpriteState.Fetching)
-			{
-				int hstart = (sprpos[s] & 0xff) << 1;
-				hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
+		//for (int s = 0; s < 8; s++)
+		//{
+		//	//todo: share this with Agnus somehow
+		//	if (spriteState[s] == SpriteState.Fetching)
+		//	{
+		//		int hstart = (sprpos[s] & 0xff) << 1;
+		//		hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
 
-				if (h == hstart >> 1)
-				{
-					sprdatapix[s] = sprdata[s];
-					sprdatbpix[s] = sprdatb[s];
-					spriteMask[s] = 0x8000;
-				}
-			}
-		}
-		*/
+		//		if (h == hstart >> 1)
+		//		{
+		//			sprdatapix[s] = sprdata[s];
+		//			sprdatbpix[s] = sprdatb[s];
+		//			spriteMask[s] = 0x8000;
+		//		}
+		//	}
+		//}
 
 		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
 		for (int p = 0; p < pixelLoop; p++)
@@ -507,6 +513,9 @@ public class Denise : IDenise
 
 	private void RunDeniseTick()
 	{
+		if (clock.HorizontalPos < FIRST_DMA)
+			return;
+
 		if (!blanking)
 		{
 			//is it the visible area horizontally?
@@ -547,10 +556,10 @@ public class Denise : IDenise
 	private ushort bplcon2;
 	private ushort bplcon3;
 	private ushort bplcon4;
-	private readonly ushort[] sprpos = new ushort[8];
+	//private readonly ushort[] sprpos = new ushort[8];
 	private readonly ushort[] sprctl = new ushort[8];
-	private readonly ushort[] sprdata = new ushort[8];
-	private readonly ushort[] sprdatb = new ushort[8];
+	//private readonly ushort[] sprdata = new ushort[8];
+	//private readonly ushort[] sprdatb = new ushort[8];
 	private ushort clxdat;
 	private ushort clxcon;
 	private ushort clxcon2;
