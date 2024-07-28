@@ -39,11 +39,16 @@ public class ChipsetClock : IChipsetClock
 	private bool startOfLine;
 	private bool endOfLine;
 
-	private ManualResetEventSlim suspend = new ManualResetEventSlim(true);
-	
+	private volatile bool suspended = false;
+	private SpinWait suspendedSpinner = new SpinWait();
+
 	public void Emulate(ulong cycles)
 	{
-		suspend.Wait();
+		if (suspended)
+		{
+			suspendedSpinner.SpinOnce();
+			return;
+		}
 
 		startOfFrame = endOfFrame = endOfLine = startOfLine = false;
 
@@ -72,12 +77,12 @@ public class ChipsetClock : IChipsetClock
 
 	public void Suspend()
 	{
-		suspend.Reset();
+		suspended = true;
 	}
 
 	public void Resume()
 	{
-		suspend.Set();
+		suspended = false;
 	}
 
 	private void AllThreadsFinished()
