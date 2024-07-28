@@ -42,7 +42,8 @@ public class DMAController : IDMA
 
 	private readonly DMAActivity[] activities;
 
-	private readonly AutoResetEvent cpuMemLock = new AutoResetEvent(false);
+	//private readonly AutoResetEvent cpuMemLock = new AutoResetEvent(false);
+	private volatile int cpuMemTick;
 
 	public DMAController(IChipRAM memory, IChips custom, IChipsetClock clock,
 		IAgnus agnus, ICopper copper, IBlitter blitter, ILogger<DMAController> logger)
@@ -170,7 +171,9 @@ public class DMAController : IDMA
 	public void WaitForChipRamDMASlot()
 	{
 		activities[(int)DMASource.CPU].Type = DMAActivityType.CPU;
-		cpuMemLock.WaitOne();
+		//cpuMemLock.WaitOne();
+		while (cpuMemTick==0) Thread.Yield();
+		cpuMemTick = 0;
 	}
 
 	private void ExecuteDMATransfer(DMAActivity activity)
@@ -184,7 +187,8 @@ public class DMAController : IDMA
 		if (activity.Type == DMAActivityType.CPU)
 		{
 			activity.Type = DMAActivityType.None;
-			cpuMemLock.Set();
+			//cpuMemLock.Set();
+			cpuMemTick = 1;
 			return;
 		}
 

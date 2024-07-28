@@ -120,6 +120,7 @@ namespace Jammy.Core
 					var t = new Thread(() =>
 					{
 						clock.RegisterThread();
+						Thread.CurrentThread.Priority = ThreadPriority.Highest;
 						for (;;)
 						{
 							//clock.WaitForTick();
@@ -133,6 +134,7 @@ namespace Jammy.Core
 			//cpu needs special treatment
 			t = new Thread(() =>
 			{
+				Thread.CurrentThread.Priority = ThreadPriority.Highest;
 				for (;;)
 				{
 					cpuClock.WaitForTick();
@@ -144,6 +146,7 @@ namespace Jammy.Core
 			//clock needs special treatment
 			t = new Thread(() =>
 			{
+				Thread.CurrentThread.Priority = ThreadPriority.Highest;
 				for (; ; )
 				{
 					clock.Emulate(0);
