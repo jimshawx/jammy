@@ -123,7 +123,7 @@ namespace Jammy.Core.Custom
 				return (r0 << 16) | r1;
 			}
 
-			lock (locker)
+			//lock (locker)
 			{
 				int reg = REG(address);
 
@@ -193,7 +193,7 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		private object locker = new object();
+		//private object locker = new object();
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
@@ -236,7 +236,7 @@ namespace Jammy.Core.Custom
 				return;
 			}
 
-			lock (locker)
+			//lock (locker)
 			{
 				int reg = REG(address);
 

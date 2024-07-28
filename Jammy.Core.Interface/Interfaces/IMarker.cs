@@ -200,6 +200,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite
 	{
 		void WriteWide(uint address, ulong value);
+		void FlushBitplanes();
 	}
 
 	public interface IChipsetClock : IEmulate
@@ -219,6 +220,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Init(IDMA dma);
 		void Suspend();
 		void Resume();
+		void AllThreadsFinished();
 	}
 
 	public interface IPSUClock : IEmulate

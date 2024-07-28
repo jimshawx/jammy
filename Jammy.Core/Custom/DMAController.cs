@@ -57,17 +57,17 @@ public class DMAController : IDMA
 		for (int i = 0; i < (int)DMASource.NumDMASources; i++)
 			activities[i] = new DMAActivity();
 
-		//all threads begin blocked
-		activities[0].Thread = new Thread(() => EmulateWrapper(agnus.Emulate, activities[0]));
-		activities[1].Thread = new Thread(() => EmulateWrapper(copper.Emulate, activities[1]));
-		activities[2].Thread = new Thread(() => EmulateWrapper(blitter.Emulate, activities[2]));
+		////all threads begin blocked
+		//activities[0].Thread = new Thread(() => EmulateWrapper(agnus.Emulate, activities[0]));
+		//activities[1].Thread = new Thread(() => EmulateWrapper(copper.Emulate, activities[1]));
+		//activities[2].Thread = new Thread(() => EmulateWrapper(blitter.Emulate, activities[2]));
 
-		activities[0].Thread.Name = "Agnus";
-		activities[1].Thread.Name = "Copper";
-		activities[2].Thread.Name = "Blitter";
+		//activities[0].Thread.Name = "Agnus";
+		//activities[1].Thread.Name = "Copper";
+		//activities[2].Thread.Name = "Blitter";
 
-		foreach (var activity in activities.Take(3))
-			activity.Thread.Start();
+		//foreach (var activity in activities.Take(3))
+		//	activity.Thread.Start();
 	}
 
 	public void Reset()
@@ -79,17 +79,17 @@ public class DMAController : IDMA
 		}
 	}
 
-	private void EmulateWrapper(Action<ulong> emulate, DMAActivity activity)
-	{
-		clock.RegisterThread();
-		for(;;)
-		{
-			clock.WaitForTick();
-			//if (activity.Type == DMAActivityType.None)
-				emulate(0);
-			clock.Ack();
-		}
-	}
+	//private void EmulateWrapper(Action<ulong> emulate, DMAActivity activity)
+	//{
+	//	clock.RegisterThread();
+	//	for(;;)
+	//	{
+	//		clock.WaitForTick();
+	//		//if (activity.Type == DMAActivityType.None)
+	//			emulate(0);
+	//		clock.Ack();
+	//	}
+	//}
 
 	//public void Emulate(ulong cycles)
 	//{

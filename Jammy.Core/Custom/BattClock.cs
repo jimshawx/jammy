@@ -85,11 +85,11 @@ namespace Jammy.Core.Custom
 			return $"UNKNOWN REGISTER {r}";
 		}
 
-		private readonly object locker = new object();
+		//private readonly object locker = new object();
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			lock (locker) 
+			//lock (locker) 
 			{
 				if (size == Size.Long)
 				{
@@ -174,7 +174,7 @@ namespace Jammy.Core.Custom
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			lock (locker)
+			//lock (locker)
 			{
 				if (size == Size.Long)
 				{

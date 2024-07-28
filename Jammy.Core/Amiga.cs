@@ -66,9 +66,9 @@ namespace Jammy.Core
 			emulations.Add(diskDrives);
 			emulations.Add(mouse);
 			emulations.Add(keyboard);
-			//emulations.Add(copper);
-			//emulations.Add(blitter);
-			//emulations.Add(agnus);
+			emulations.Add(agnus);
+			emulations.Add(copper);
+			emulations.Add(blitter);
 			emulations.Add(audio);
 			//emulations.Add(ciaa);
 			//emulations.Add(ciab);
@@ -89,6 +89,9 @@ namespace Jammy.Core
 			threadedEmulations.Add(psuClock);
 			threadedEmulations.Add(cpuClock);
 			threadedEmulations.Add(denise);
+
+			emulations.Insert(0, clock);
+			emulations.AddRange(threadedEmulations);
 
 			resetters.Add(diskController);
 			resetters.Add(interrupt);
@@ -114,22 +117,22 @@ namespace Jammy.Core
 			nonEmulationCompleteEvent = new AutoResetEvent(false);
 
 			emulationThreads = new List<Thread>();
-			threadedEmulations.ForEach(
-				x =>
-				{
-					var t = new Thread(() =>
-					{
-						clock.RegisterThread();
-						Thread.CurrentThread.Priority = ThreadPriority.Highest;
-						for (;;)
-						{
-							//clock.WaitForTick();
-							x.Emulate(0);
-						}
-					});
-					t.Name = x.GetType().Name;
-					emulationThreads.Add(t);
-				});
+			//threadedEmulations.ForEach(
+			//	x =>
+			//	{
+			//		var t = new Thread(() =>
+			//		{
+			//			clock.RegisterThread();
+			//			Thread.CurrentThread.Priority = ThreadPriority.Highest;
+			//			for (;;)
+			//			{
+			//				//clock.WaitForTick();
+			//				x.Emulate(0);
+			//			}
+			//		});
+			//		t.Name = x.GetType().Name;
+			//		emulationThreads.Add(t);
+			//	});
 			Thread t;
 			//cpu needs special treatment
 			t = new Thread(() =>
@@ -144,16 +147,16 @@ namespace Jammy.Core
 			t.Name = "CPU";
 			emulationThreads.Add(t);
 			//clock needs special treatment
-			t = new Thread(() =>
-			{
-				Thread.CurrentThread.Priority = ThreadPriority.Highest;
-				for (; ; )
-				{
-					clock.Emulate(0);
-				}
-			});
-			t.Name = "Clock";
-			emulationThreads.Add(t);
+			//t = new Thread(() =>
+			//{
+			//	Thread.CurrentThread.Priority = ThreadPriority.Highest;
+			//	for (; ; )
+			//	{
+			//		clock.Emulate(0);
+			//	}
+			//});
+			//t.Name = "Clock";
+			//emulationThreads.Add(t);
 		}
 
 		public void Reset()
@@ -164,6 +167,8 @@ namespace Jammy.Core
 		public void RunEmulations(ulong ns)
 		{
 			emulations.ForEach(x => x.Emulate(ns));
+			clock.AllThreadsFinished();
+			agnus.FlushBitplanes();
 		}
 
 		private Thread emuThread;

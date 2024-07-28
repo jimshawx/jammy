@@ -249,10 +249,11 @@ noBitplaneDMA:
 	private static readonly uint[] fetchF3 = [8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10, 10,10,10,10,10,10,10,10];
 	private static readonly uint[] fetchF2 = [8, 4, 6, 2, 7, 3, 5, 1, 10,10,10,10,10,10,10,10];
 
+	private uint plane;
 	private bool CopperBitplaneFetch(int h)
 	{
 		int planeIdx;
-		uint plane;
+
 
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 		{
@@ -294,22 +295,22 @@ noBitplaneDMA:
 				bplpt[plane] += 4;
 			}
 
-			//we just filled BPL0DAT
-			if (plane == 0)
-			{
-				denise.WriteBitplanes(bpldat);
+			////we just filled BPL0DAT
+			//if (plane == 0)
+			//{
+			//	denise.WriteBitplanes(bpldat);
 
-				//if (currentLine == cdbg.dbugLine)
-				//{
-				//	cdbg.write[h] = 'x';
-				//	cdbg.dma++;
-				//}
-			}
-			else
-			{
-				//if (currentLine == cdbg.dbugLine)
-				//	cdbg.write[h] = '.';
-			}
+			//	//if (currentLine == cdbg.dbugLine)
+			//	//{
+			//	//	cdbg.write[h] = 'x';
+			//	//	cdbg.dma++;
+			//	//}
+			//}
+			//else
+			//{
+			//	//if (currentLine == cdbg.dbugLine)
+			//	//	cdbg.write[h] = '.';
+			//}
 
 			//if (currentLine == cdbg.dbugLine)
 			//	cdbg.fetch[h] = Convert.ToChar(plane + 48 + 1);
@@ -321,6 +322,12 @@ noBitplaneDMA:
 			//	cdbg.fetch[h] = '+';
 		}
 		return false;
+	}
+
+	public void FlushBitplanes()
+	{
+		if (plane == 0)
+			denise.WriteBitplanes(bpldat);
 	}
 
 	private enum SpriteState

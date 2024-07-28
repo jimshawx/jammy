@@ -25,7 +25,7 @@ public class CPUClock : ICPUClock
 	public void Emulate(ulong cycles)
 	{
 		clock.WaitForTick();
-		cpuTick.Set();
+		//cpuTick.Set();
 		clock.Ack();
 	}
 

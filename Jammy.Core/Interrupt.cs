@@ -53,11 +53,11 @@ namespace Jammy.Core
 		private uint paulaInterruptLevel;
 		private uint gayleInterruptLevel;
 
-		private readonly object locker = new object();
+		//private readonly object locker = new object();
 
 		public ushort GetInterruptLevel()
 		{
-			lock (locker)
+			//lock (locker)
 			{
 				return (ushort)Math.Max(paulaInterruptLevel, gayleInterruptLevel);
 			}
@@ -65,7 +65,7 @@ namespace Jammy.Core
 
 		public void AssertInterrupt(uint intreq, bool asserted = true)
 		{
-			lock (locker)
+			//lock (locker)
 			{
 				uint mask = (1u << (int)intreq);
 				if (asserted) mask |= 0x8000;
@@ -75,7 +75,7 @@ namespace Jammy.Core
 
 		public void SetPaulaInterruptLevel(uint intreq, uint intena)
 		{
-			lock (locker)
+			//lock (locker)
 			{
 				paulaInterruptLevel = 0;
 
