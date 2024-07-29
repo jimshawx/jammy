@@ -328,7 +328,7 @@ noBitplaneDMA:
 
 	public void FlushBitplanes()
 	{
-		if (plane == 0)
+		if (plane == 0 && lineState == DMALineState.Fetching)
 			denise.WriteBitplanes(bpldat);
 
 		//if the sprite horiz position matches, clock the sprite data in
