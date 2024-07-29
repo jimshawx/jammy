@@ -4,11 +4,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <Optimize>False</Optimize>
+    <Optimize>True</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <Optimize>False</Optimize>
+    <Optimize>True</Optimize>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
