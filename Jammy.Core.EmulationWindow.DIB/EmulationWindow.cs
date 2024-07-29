@@ -135,9 +135,16 @@ namespace Jammy.Core.EmulationWindow.DIB
 		private Graphics gfx;
 		private BITMAPINFO lpbmi;
 
+		private int displayHz;
+
 		public void SetPicture(int width, int height)
 		{
 			if (emulation.IsDisposed) return;
+
+			var dm = new DEVMODE();
+			EnumDisplaySettings(null!, 0, ref dm);
+			logger.LogTrace($"Monitor refresh rate is {dm.dmDisplayFrequency}Hz.  Set this as high as possible!");
+			displayHz = dm.dmDisplayFrequency;
 
 			screen = new int[width * height];
 
@@ -171,6 +178,9 @@ namespace Jammy.Core.EmulationWindow.DIB
 			int ySrc, uint startScan, uint cLines, [In] int[] lpvBits,
 			[In] ref BITMAPINFO lpbmi, BITMAPINFO.DIBColorTable colorUse);
 
+		[DllImport("user32.dll")]
+		private static extern bool EnumDisplaySettings(string deviceName, int modeNum, ref DEVMODE devMode);
+
 		[StructLayout(LayoutKind.Sequential)]
 		private struct BITMAPINFO
 		{
@@ -192,6 +202,39 @@ namespace Jammy.Core.EmulationWindow.DIB
 
 		private const uint BI_RGB = 0;
 
+		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+		private struct DEVMODE
+		{
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+			public string dmDeviceName;
+			public short dmSpecVersion;
+			public short dmDriverVersion;
+			public short dmSize;
+			public short dmDriverExtra;
+			public int dmFields;
+			public short dmOrientation;
+			public short dmPaperSize;
+			public short dmPaperLength;
+			public short dmPaperWidth;
+			public short dmScale;
+			public short dmCopies;
+			public short dmDefaultSource;
+			public short dmPrintQuality;
+			public short dmColor;
+			public short dmDuplex;
+			public short dmYResolution;
+			public short dmTTOption;
+			public short dmCollate;
+			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+			public string dmFormName;
+			public short dmUnusedPadding;
+			public short dmBitsPerPel;
+			public int dmPelsWidth;
+			public int dmPelsHeight;
+			public int dmDisplayFlags;
+			public int dmDisplayFrequency;
+		}
+
 		public void Blit(int[] screen)
 		{
 			if (emulation.IsDisposed) return;
@@ -206,6 +249,8 @@ namespace Jammy.Core.EmulationWindow.DIB
 		}
 
 		private DateTime lastTick = DateTime.Now;
+		private float[] fpsarr = new float[128];
+		private int fpsarrpos=0;
 		private void RenderTicks()
 		{
 			var now = DateTime.Now;
@@ -217,7 +262,11 @@ namespace Jammy.Core.EmulationWindow.DIB
 				int so = 20 + 10 * screenWidth;
 				int ss = 2;
 				var fps = 1000.0f / dt.Milliseconds;
-				for (int i = 0; i <= 100*ss; i += 10*ss)
+				fpsarr[fpsarrpos++] = fps;
+				fpsarrpos &= fpsarr.Length-1;
+				var avefps = fpsarr.Sum()/fpsarr.Length;
+
+				for (int i = 0; i <= displayHz*ss; i += 10*ss)
 				{
 					for (int y = 0; y < 8*ss; y++)
 						screen[so + i + y * screenWidth] = 0xffffff;
@@ -225,9 +274,14 @@ namespace Jammy.Core.EmulationWindow.DIB
 
 				for (int i = 0; i < fps*ss; i ++)
 				{
-					for (int y = 0; y < 4*ss; y++)
+					for (int y = 0; y < 3*ss; y++)
 						screen[so + i + y * screenWidth] = 0xff0000;
+				}
 
+				for (int i = 0; i < avefps * ss; i++)
+				{
+					for (int y = 0; y < 3 * ss; y++)
+						screen[so + i + (4*ss+y) * screenWidth] = 0x0000ff;
 				}
 			}
 		}
