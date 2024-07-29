@@ -1,9 +1,5 @@
-﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Windows.Forms;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Enums;
 using Microsoft.Extensions.Logging;
@@ -12,7 +8,7 @@ using Microsoft.Extensions.Logging;
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Core.EmulationWindow.GDI
+namespace Jammy.Core.EmulationWindow.DIB
 {
 	public class EmulationWindow : IEmulationWindow, IDisposable
 	{
@@ -119,10 +115,10 @@ namespace Jammy.Core.EmulationWindow.GDI
 			Release("Deactivate");
 		}
 
-		private Bitmap bitmap;
-		private PictureBox picture;
 		private int screenWidth;
 		private int screenHeight;
+		private Graphics gfx;
+		private BITMAPINFO lpbmi;
 
 		public void SetPicture(int width, int height)
 		{
@@ -130,25 +126,56 @@ namespace Jammy.Core.EmulationWindow.GDI
 
 			screen = new int[width * height];
 
+			lpbmi.biSize = 40;
+			lpbmi.biWidth = width;
+			lpbmi.biHeight = -height;
+			lpbmi.biPlanes = 1;
+			lpbmi.biBitCount = 32;
+			lpbmi.biCompression = (uint)BI_RGB;
+			lpbmi.biSizeImage = (uint)(height * (width * lpbmi.biBitCount / 8));
+			lpbmi.biXPelsPerMeter = 0;
+			lpbmi.biYPelsPerMeter = 0;
+			lpbmi.biClrUsed = 0;
+			lpbmi.biClrImportant = 0;
+			lpbmi.cols = null;
+
 			emulation.Invoke((Action)delegate
 			{
 				screenWidth = width;
 				screenHeight = height;
 
 				emulation.ClientSize = new Size(screenWidth, screenHeight);
-				bitmap = new Bitmap(screenWidth, screenHeight, PixelFormat.Format32bppRgb);
-				picture = new PictureBox {Image = bitmap, ClientSize = new Size(screenWidth, screenHeight), Enabled = false};
-
-				//try to scale the box
-				//picture.SizeMode = PictureBoxSizeMode.StretchImage;
-				//int scaledHeight = (SCREEN_HEIGHT * 6) / 5;
-				//emulation.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
-				//picture.ClientSize = new System.Drawing.Size(SCREEN_WIDTH, scaledHeight);
-
-				emulation.Controls.Add(picture);
 				emulation.Show();
+
+				gfx = Graphics.FromHwnd(emulation.Handle);
 			});
 		}
+
+		[DllImport("gdi32.dll", EntryPoint = "SetDIBitsToDevice", SetLastError = true)]
+		private static extern int SetDIBitsToDevice([In] IntPtr hdc, int xDest, int yDest, uint w, uint h, int xSrc,
+			int ySrc, uint startScan, uint cLines, [In] IntPtr lpvBits,
+			[In] ref BITMAPINFO lpbmi, BITMAPINFO.DIBColorTable colorUse);
+
+		[StructLayout(LayoutKind.Sequential)]
+		private struct BITMAPINFO
+		{
+			public uint biSize;
+			public int biWidth, biHeight;
+			public short biPlanes, biBitCount;
+			public uint biCompression, biSizeImage;
+			public int biXPelsPerMeter, biYPelsPerMeter;
+			public uint biClrUsed, biClrImportant;
+			[MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
+			public uint[] cols;
+
+			public enum DIBColorTable
+			{
+				DIB_RGB_COLORS = 0,    /* color table in RGBs */
+				DIB_PAL_COLORS
+			};    /* color table in palette indices */
+		}
+
+		private const uint BI_RGB = 0;
 
 		public void Blit(int[] screen)
 		{
@@ -158,10 +185,15 @@ namespace Jammy.Core.EmulationWindow.GDI
 
 			emulation.Invoke((Action)delegate
 			{
-				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, screenWidth, screenHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb);
-				Marshal.Copy(screen, 0, bitmapData.Scan0, screen.Length);
-				bitmap.UnlockBits(bitmapData);
-				picture.Refresh();
+				var handle = GCHandle.Alloc(screen, GCHandleType.Pinned);
+				var screenPtr = handle.AddrOfPinnedObject();
+
+				var hdc = gfx.GetHdc();
+				SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight, 0, 0, 0, (uint)screenHeight,
+					screenPtr, ref lpbmi, BITMAPINFO.DIBColorTable.DIB_RGB_COLORS);
+				gfx.ReleaseHdc(hdc);
+		
+				handle.Free();
 			});
 		}
 
