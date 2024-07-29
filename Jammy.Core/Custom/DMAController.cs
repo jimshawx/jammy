@@ -172,7 +172,7 @@ public class DMAController : IDMA
 	{
 		activities[(int)DMASource.CPU].Type = DMAActivityType.CPU;
 		//cpuMemLock.WaitOne();
-		while (cpuMemTick==0) Thread.Yield();
+		while (cpuMemTick == 0) ;
 		cpuMemTick = 0;
 	}
 
