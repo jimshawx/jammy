@@ -499,9 +499,15 @@ public class Denise : IDenise
 			}
 			else
 			{
+				int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
 				//outside horizontal area
 				for (int p = 0; p < pixelLoop; p++)
+				{
 					NextPixel();
+					if ((p & m) == m)
+						for (int s = 0; s < 8; s++)
+							spriteMask[s] >>= 1;
+				}
 
 				//output colour 0 pixels
 				uint col = truecolour[0];
