@@ -17,17 +17,20 @@ namespace Jammy.Core.Custom
 		private IDMA memory;
 		private readonly IInterrupt interrupt;
 		private readonly IChipsetClock clock;
+		private readonly IMemoryMappedDevice ram;
 		private readonly IOptions<EmulationSettings> settings;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IInterrupt interrupt, IChipsetClock clock,
+		public Blitter(IChips custom, IInterrupt interrupt, IChipsetClock clock, IChipRAM ram,
 			IOptions<EmulationSettings> settings, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
 			this.interrupt = interrupt;
 			this.clock = clock;
+			this.ram = ram;
 			this.settings = settings;
 			this.logger = logger;
+			PreComputeFill();
 		}
 
 		public void Init(IDMA dma)
@@ -513,7 +516,60 @@ namespace Jammy.Core.Custom
 			return false;
 		}
 
+		//todo: is this faster? it's a bit of a cache smasher
+		private readonly uint[][] fills = [new uint[65536], new uint[65536], new uint[65536], new uint[65536]];
+		private void PreComputeFill()
+		{
+			for (uint i = 0; i <= 0xffff; i++)
+			{
+				
+				bltddat = i;
+				bltcon1 = (1 << 3) | (1 << 1);
+				FillInline();
+				fills[0][i] = bltddat | ((bltcon1 & (1 << 2)) << 16);
+			}
+			for (uint i = 0; i <= 0xffff; i++)
+			{
+				bltddat = i;
+				bltcon1 = (1 << 3) | (1 << 2) | (1 << 1);
+				FillInline();
+				fills[2][i] = bltddat | ((bltcon1 & (1 << 2)) << 16);
+			}
+			for (uint i = 0; i <= 0xffff; i++)
+			{
+				bltddat = i;
+				bltcon1 = (2 << 3) | (1 << 1);
+				FillInline();
+				fills[1][i] = bltddat | ((bltcon1 & (1 << 2)) << 16);
+			}
+			for (uint i = 0; i <= 0xffff; i++)
+			{
+				bltddat = i;
+				bltcon1 = (2 << 3) | (1 << 2) | (1 << 1);
+				FillInline();
+				fills[3][i] = bltddat | ((bltcon1 & (1 << 2)) << 16);
+			}
+		}
+
 		private void Fill()
+		{
+			uint mode = (bltcon1 >> 3) & 3;
+			//descending mode and one of the fill modes must be set
+			if (mode == 0 || (bltcon1 & (1 << 1)) == 0) return;
+
+			//hack: what to do if both EFE and IFE set? Let's choose EFE
+			if (mode == 3) mode = 2;
+
+			mode--;
+			mode |= (bltcon1 & (1 << 2))>>1;
+
+			bltddat = fills[mode][bltddat];
+			bltcon1 &= ~(1u << 2);
+			bltcon1 |= bltddat >> 16;
+			bltddat = (ushort)bltddat;
+		}
+
+		private void FillInline()
 		{
 			uint mode = (bltcon1 >> 3) & 3;
 			//descending mode and one of the fill modes must be set
@@ -566,7 +622,6 @@ namespace Jammy.Core.Custom
 				//update carry
 				bltcon1 &= ~(1u << 2);
 				if (inside) bltcon1 |= 1 << 2;
-
 			} 
 		}
 
@@ -744,5 +799,116 @@ namespace Jammy.Core.Custom
 			status = BlitterState.Idle;
 			return false;
 		}
+
+		/*
+		private void LineImmediate(uint insaddr)
+		{
+			uint octant = (bltcon1 >> 2) & 7;
+			bool sing = (bltcon1 & (1 << 1)) != 0;
+
+			uint length = bltsize >> 6;
+			if (length == 0)
+			{
+				interrupt.AssertInterrupt(Interrupt.BLIT);
+				return;
+			}
+
+			int dy = (int)(bltbmod / 2);
+			int dx = -(int)bltamod / 2 + dy;
+
+			if (octant < 4) (dx, dy) = (dy, dx);
+
+			int sx = 1;
+			if (octant == 2 || octant == 3 || octant == 5 || octant == 7) sx = -1;
+			int sy = 1;
+			if (octant == 1 || octant == 3 || octant == 6 || octant == 7) sy = -1;
+
+			uint bltzero = 0;
+
+			//set blitter busy in DMACON
+			//custom.Write(insaddr, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
+			//set BBUSY and BZERO
+			custom.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
+
+			bool writeBit = true;
+
+			int x0 = (int)(bltcon0 >> 12);
+			int ror = (int)(bltcon1 >> 12);
+
+			uint bltbdatror = (bltbdat << ror) | (bltbdat >> (16 - ror));
+
+			int dm = Math.Max(dx, dy);
+			int x1 = dm / 2;
+			int y1 = dm / 2;
+
+			while (length-- > 0)
+			{
+				if ((bltcon0 & (1u << 9)) != 0)
+					bltcdat = ram.Read(insaddr, bltcpt, Size.Word);
+
+				bltadat = 0x8000u >> x0;
+
+				bltddat = 0;
+				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat;
+				if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdatror & bltcdat;
+				if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat & bltbdatror & ~bltcdat;
+				if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat & bltbdatror & bltcdat;
+				if ((bltcon0 & 0x10) != 0) bltddat |= bltadat & ~bltbdatror & ~bltcdat;
+				if ((bltcon0 & 0x20) != 0) bltddat |= bltadat & ~bltbdatror & bltcdat;
+				if ((bltcon0 & 0x40) != 0) bltddat |= bltadat & bltbdatror & ~bltcdat;
+				if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdatror & bltcdat;
+
+				//oddly, USEC must be checked, not USED
+				if ((bltcon0 & (1u << 9)) != 0 && (bltcon1 & (1u << 7)) == 0)
+				{
+					if (writeBit)
+					{
+						ram.Write(insaddr, bltdpt, bltddat, Size.Word);
+						if (sing) writeBit = false;
+					}
+				}
+
+				bltzero |= bltddat;
+
+				x1 -= dx;
+				if (x1 < 0)
+				{
+					x1 += dm;
+					x0 += sx;
+					if (x0 >= 16) { x0 = 0; bltcpt += 2; }
+					if (x0 < 0) { x0 = 15; bltcpt -= 2; }
+				}
+				y1 -= dy;
+				if (y1 < 0)
+				{
+					bltcpt += (uint)(bltcmod * sy);
+					y1 += dm;
+					writeBit = true;
+				}
+
+				bltcpt &= 0xfffffffe;
+
+				//first write goes to bltdpt, thereafter bltdpt = bltcpt
+				bltdpt = bltcpt;
+			}
+
+			//write the BZERO bit in DMACON
+			//if (bltzero == 0)
+			//	custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
+			//else
+			//	custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
+			//clear BZERO
+			ushort dmacon = 1 << 14;
+			if (bltzero != 0)
+				dmacon|=1 << 13;
+
+			//disable blitter busy in DMACON
+			//custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
+			custom.WriteDMACON(dmacon);
+
+			//write blitter interrupt bit to INTREQ, trigger blitter done
+			interrupt.AssertInterrupt(Interrupt.BLIT);
+		}
+		*/
 	}
 }
