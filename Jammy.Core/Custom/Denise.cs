@@ -25,9 +25,10 @@ public class Denise : IDenise
 		SuperHiRes = 1 << 6,
 	}
 
-	private const int FIRST_DMA = 18;
+	private const int FIRST_DMA = 0x18;
+	private const int RIGHT_BORDER = 0x18;//cosmetic
 	public const int DMA_WIDTH = 227;// Agnus.DMA_END - Agnus.DMA_START;
-	private const int SCREEN_WIDTH = (DMA_WIDTH-FIRST_DMA) * 4; //227 (E3) * 4;
+	private const int SCREEN_WIDTH = (DMA_WIDTH-FIRST_DMA+RIGHT_BORDER) * 4; //227 (E3) * 4;
 	private const int SCREEN_HEIGHT = 313 * 2; //x2 for scan double
 	private int[] screen;
 
@@ -73,16 +74,7 @@ public class Denise : IDenise
 		if (clock.StartOfLine())
 			StartDeniseLine();
 
-		try
-		{
-			//ii++;
-			if ((ii &1)==0)
-				RunDeniseTick();
-		}
-		catch (IndexOutOfRangeException ex)
-		{
-
-		}
+		RunDeniseTick();
 
 		if (clock.EndOfLine())
 			EndDeniseLine();
@@ -155,7 +147,9 @@ public class Denise : IDenise
 		pixelMask.SetBit((int)(pixelBits + 16));
 		pixelMaskBit = (int)(pixelBits + 16);
 
-		//pixelCounter = 0;
+		//clear sprites from wrapping from the right
+		for (int s = 0; s < 8; s++)
+			spriteMask[s] = 0;
 
 		for (int i = 0; i < 8; i++)
 			bpldatpix[i].Zero();
@@ -197,28 +191,10 @@ public class Denise : IDenise
 	private readonly uint[] spriteMask = new uint[8];
 	private readonly int[] clx = new int[8];
 
-	private void CopperBitplaneConvert(int h)
+	private void CopperBitplaneConvert()
 	{
 		//if (currentLine == 50)
 		//	currentLine = 50;
-
-		//if the sprite horiz position matches, clock the sprite data in
-		//for (int s = 0; s < 8; s++)
-		//{
-		//	//todo: share this with Agnus somehow
-		//	if (spriteState[s] == SpriteState.Fetching)
-		//	{
-		//		int hstart = (sprpos[s] & 0xff) << 1;
-		//		hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
-
-		//		if (h == hstart >> 1)
-		//		{
-		//			sprdatapix[s] = sprdata[s];
-		//			sprdatbpix[s] = sprdatb[s];
-		//			spriteMask[s] = 0x8000;
-		//		}
-		//	}
-		//}
 
 		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
 		for (int p = 0; p < pixelLoop; p++)
@@ -449,10 +425,6 @@ public class Denise : IDenise
 
 		//if (currentLine == cdbg.dbugLine)
 		//	DebugPalette();
-
-		//clear sprites from wrapping from the right
-		for (int s = 0; s < 8; s++)
-			spriteMask[s] = 0;
 	}
 
 	private void UpdateBPLCON0()
@@ -521,9 +493,9 @@ public class Denise : IDenise
 			//is it the visible area horizontally?
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
 			//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
-			if (clock.HorizontalPos >= ((diwstrth /*+ cdbg.diwSHack*/) >> 1) - 1 && clock.HorizontalPos < ((diwstoph /*+ cdbg.diwEHack*/) >> 1) - 1)
+			if (clock.HorizontalPos >= ((diwstrth /*+ cdbg.diwSHack*/) >> 1)  && clock.HorizontalPos < ((diwstoph /*+ cdbg.diwEHack*/) >> 1) )
 			{
-				CopperBitplaneConvert((int)clock.HorizontalPos);
+				CopperBitplaneConvert();
 			}
 			else
 			{
@@ -670,6 +642,10 @@ public class Denise : IDenise
 
 	private void EndDeniseLine()
 	{
+		//cosmetics, draw some right border
+		for (int i = 0; i < RIGHT_BORDER; i++)
+			CopperBitplaneConvert();
+
 		//this should be a no-op
 		System.Diagnostics.Debug.Assert(SCREEN_WIDTH - (dptr - lineStart) == 0);
 		dptr += SCREEN_WIDTH - (dptr - lineStart);

@@ -68,10 +68,10 @@ public class Agnus : IAgnus
 
 	//sprite DMA starts at 0x18, but can be eaten into by bitmap DMA
 	//normal bitmap DMA start at 0x38, overscan at 0x30, Menace starts at 0x28
-	public const int DMA_START = 0x18;
+	//public const int DMA_START = 0x18;
 
 	//bitmap DMA ends at 0xD8, with 8 slots after that
-	public const int DMA_END = 0xF0;
+	//public const int DMA_END = 0xF0;
 
 	public Agnus(IChipsetClock clock, ICopper copper, IDenise denise, IBlitter blitter, IInterrupt interrupt,
 		IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM,
