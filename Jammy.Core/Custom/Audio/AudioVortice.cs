@@ -17,6 +17,7 @@ namespace Jammy.Core.Custom.Audio
 {
 	public class AudioVortice : IAudio
 	{
+		private readonly IChipsetClock clock;
 		private readonly IMemoryMappedDevice memory;
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
@@ -24,25 +25,15 @@ namespace Jammy.Core.Custom.Audio
 		private readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
-		private readonly ulong audioRate;
-		public AudioVortice(IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioVortice> logger)
+		public AudioVortice(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioVortice> logger)
 		{
+			this.clock = clock;
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
 
-
-			ulong beamRate = settings.Value.VideoFormat == VideoFormat.NTSC ? 60u : 50u;
-			beamRate = settings.Value.CPUFrequency / beamRate;
-
-			ulong scanlines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
-
-			audioRate = beamRate / scanlines;
-
 			InitMixer();
 		}
-
-		private ulong audioTime;
 
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
 
@@ -59,12 +50,8 @@ namespace Jammy.Core.Custom.Audio
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
 		public void Emulate(ulong cycles)
 		{
-			audioTime += cycles;
-
-			if (audioTime > audioRate)
+			if (clock.EndOfLine())
 			{
-				audioTime -= audioRate;
-
 				for (int i = 0; i < 4; i++)
 				{
 					if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
