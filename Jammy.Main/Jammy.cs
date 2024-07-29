@@ -889,7 +889,7 @@ namespace Jammy.Main
 			if (cribSheet.Handle == IntPtr.Zero)
 				throw new ApplicationException();
 			var pos = Cursor.Position;
-			cribSheet.Top = pos.Y + 1;
+			//cribSheet.Top = pos.Y + 1;
 			cribSheet.Left = pos.X - (width / 2);
 			cribSheet.Width = width;
 			cribSheet.Height = height;
