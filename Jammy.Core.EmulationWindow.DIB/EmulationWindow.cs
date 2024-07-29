@@ -12,6 +12,21 @@ namespace Jammy.Core.EmulationWindow.DIB
 {
 	public class EmulationWindow : IEmulationWindow, IDisposable
 	{
+		private class OwnDCForm : Form
+		{
+			private const Int32 CS_OWNDC = 0x20;
+
+			protected override CreateParams CreateParams
+			{
+				get
+				{
+					var cp = base.CreateParams;
+					cp.ClassStyle |= CS_OWNDC;
+					return cp;
+				}
+			}
+		}
+
 		[DllImport("user32.dll")]
 		private static extern short GetAsyncKeyState(int key);
 
@@ -27,7 +42,7 @@ namespace Jammy.Core.EmulationWindow.DIB
 			ss.Wait();
 			var t = new Thread(() =>
 			{
-				emulation = new Form {Name = "Emulation", Text = "Jammy : Alt-Tab or Middle Mouse Click to detach mouse", ControlBox = false, FormBorderStyle = FormBorderStyle.FixedSingle, MinimizeBox = true, MaximizeBox = true};
+				emulation = new OwnDCForm {Name = "Emulation", Text = "Jammy : Alt-Tab or Middle Mouse Click to detach mouse", ControlBox = false, FormBorderStyle = FormBorderStyle.FixedSingle, MinimizeBox = true, MaximizeBox = true};
 
 				if (emulation.Handle == IntPtr.Zero)
 					throw new ApplicationException();
@@ -137,7 +152,7 @@ namespace Jammy.Core.EmulationWindow.DIB
 			lpbmi.biYPelsPerMeter = 0;
 			lpbmi.biClrUsed = 0;
 			lpbmi.biClrImportant = 0;
-			lpbmi.cols = null;
+			lpbmi.cols = null!;
 
 			emulation.Invoke((Action)delegate
 			{
@@ -153,7 +168,7 @@ namespace Jammy.Core.EmulationWindow.DIB
 
 		[DllImport("gdi32.dll", EntryPoint = "SetDIBitsToDevice", SetLastError = true)]
 		private static extern int SetDIBitsToDevice([In] IntPtr hdc, int xDest, int yDest, uint w, uint h, int xSrc,
-			int ySrc, uint startScan, uint cLines, [In] IntPtr lpvBits,
+			int ySrc, uint startScan, uint cLines, [In] int[] lpvBits,
 			[In] ref BITMAPINFO lpbmi, BITMAPINFO.DIBColorTable colorUse);
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -183,18 +198,11 @@ namespace Jammy.Core.EmulationWindow.DIB
 
 			RenderTicks();
 
-			emulation.Invoke((Action)delegate
-			{
-				var handle = GCHandle.Alloc(screen, GCHandleType.Pinned);
-				var screenPtr = handle.AddrOfPinnedObject();
-
-				var hdc = gfx.GetHdc();
-				SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight, 0, 0, 0, (uint)screenHeight,
-					screenPtr, ref lpbmi, BITMAPINFO.DIBColorTable.DIB_RGB_COLORS);
-				gfx.ReleaseHdc(hdc);
-		
-				handle.Free();
-			});
+			var hdc = gfx.GetHdc();
+			SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight,
+				0, 0, 0, (uint)screenHeight,
+				screen, ref lpbmi, BITMAPINFO.DIBColorTable.DIB_RGB_COLORS);
+			gfx.ReleaseHdc(hdc);
 		}
 
 		private DateTime lastTick = DateTime.Now;
