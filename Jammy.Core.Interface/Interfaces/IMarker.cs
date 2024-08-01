@@ -96,13 +96,24 @@ namespace Jammy.Core.Interface.Interfaces
 		void WriteINTREQ(ushort v);
 	}
 
-	public interface IDebuggableMemory
+	public interface IDebugChipsetRead
+	{
+		uint DebugChipsetRead(uint address, Size size);
+	}
+
+	public interface IDebugRead
 	{
 		uint DebugRead(uint address, Size size);
+	}
+
+	public interface IDebugWrite
+	{
 		void DebugWrite(uint address, uint value, Size size);
 	}
 
-	public interface IChips : IReset, IMemoryMappedDevice
+	public interface IDebuggableMemory : IDebugRead, IDebugWrite { }
+
+	public interface IChips : IReset, IMemoryMappedDevice, IDebugChipsetRead
 	{
 		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise);
 		void WriteDMACON(ushort bits);
@@ -185,12 +196,13 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IAkiko : IMemoryMappedDevice { }
 	public interface IZorroConfigurator { }
 
-	public interface IDenise : IEmulate, ICustomReadWrite
+	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead
 	{
 		void EnterVisibleArea();
 		void ExitVisibleArea();
 		void WriteBitplanes(ulong[] planes);
 		void WriteSprite(int s, ushort[] sprdata, ushort[] sprdatb, ushort[] sprctl);
+		public uint[] DebugGetPalette();
 	}
 
 	public interface IRequiresDMA
@@ -198,7 +210,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Init(IDMA dma);
 	}
 
-	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite
+	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite, IDebugChipsetRead
 	{
 		void WriteWide(uint address, ulong value);
 		void FlushBitplanes();

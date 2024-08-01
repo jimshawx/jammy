@@ -39,8 +39,8 @@ public class ChipsetClock : IChipsetClock
 	private bool startOfLine;
 	private bool endOfLine;
 
-	private volatile bool suspended = false;
-	private SpinWait suspendedSpinner = new SpinWait();
+	//private volatile bool suspended = false;
+	//private SpinWait suspendedSpinner = new SpinWait();
 
 	public void Emulate(ulong cycles)
 	{
@@ -67,9 +67,6 @@ public class ChipsetClock : IChipsetClock
 			//logger.LogTrace($"{DateTime.Now:fff}");
 		}
 
-		if (startOfLine) dma.DebugStartOfLine();
-		if (endOfLine) dma.DebugEndOfLine();
-
 		//Tick();
 
 		//now all the threads are busy
@@ -80,12 +77,12 @@ public class ChipsetClock : IChipsetClock
 
 	public void Suspend()
 	{
-		suspended = true;
+		//suspended = true;
 	}
 
 	public void Resume()
 	{
-		suspended = false;
+		//suspended = false;
 	}
 
 	public void AllThreadsFinished()

@@ -2,6 +2,7 @@
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -32,7 +33,8 @@ public class Denise : IDenise
 	private const int SCREEN_HEIGHT = 313 * 2; //x2 for scan double
 	private int[] screen;
 
-	public Denise(IChipsetClock clock, IEmulationWindow emulationWindow, IOptions<EmulationSettings> settings, ILogger<Denise> logger)
+	public Denise(IChipsetClock clock, IEmulationWindow emulationWindow, INativeOverlay nativeOverlay,
+		IOptions<EmulationSettings> settings, ILogger<Denise> logger)
 	{
 		this.settings = settings.Value;
 		this.clock = clock;
@@ -42,6 +44,8 @@ public class Denise : IDenise
 		ComputeDPFLookup();
 
 		emulationWindow.SetPicture(SCREEN_WIDTH, SCREEN_HEIGHT);
+		screen = emulationWindow.GetFramebuffer();
+		nativeOverlay.Init(screen, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 		RunVerticalBlankStart();
 	}
@@ -74,7 +78,8 @@ public class Denise : IDenise
 		if (clock.StartOfLine())
 			StartDeniseLine();
 
-		RunDeniseTick();
+		//if ((clock.VerticalPos&7)==0)
+			RunDeniseTick();
 
 		if (clock.EndOfLine())
 			EndDeniseLine();
@@ -193,9 +198,6 @@ public class Denise : IDenise
 
 	private void CopperBitplaneConvert()
 	{
-		//if (currentLine == 50)
-		//	currentLine = 50;
-
 		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
 		for (int p = 0; p < pixelLoop; p++)
 		{
@@ -213,8 +215,8 @@ public class Denise : IDenise
 			//BPLAM
 			pix ^= (byte)(bplcon4 >> 8);
 
-			//pix &= cdbg.bitplaneMask;
-			//pix |= cdbg.bitplaneMod;
+			//pix &= debugger.bitplaneMask;
+			//pix |= debugger.bitplaneMod;
 
 			if ((bplcon0 & (1 << 10)) != 0)
 			{
@@ -423,8 +425,7 @@ public class Denise : IDenise
 		lastcol = truecolour[0]; //todo: should be colour 0 at time of diwstrt
 		//lineState = CopperLineState.LineStart;
 
-		//if (currentLine == cdbg.dbugLine)
-		//	DebugPalette();
+
 	}
 
 	private void UpdateBPLCON0()
@@ -493,7 +494,7 @@ public class Denise : IDenise
 			//is it the visible area horizontally?
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
 			//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
-			if (clock.HorizontalPos >= ((diwstrth /*+ cdbg.diwSHack*/) >> 1)  && clock.HorizontalPos < ((diwstoph /*+ cdbg.diwEHack*/) >> 1) )
+			if (clock.HorizontalPos >= ((diwstrth /*+ debugger.diwSHack*/) >> 1)  && clock.HorizontalPos < ((diwstoph /*+ debugger.diwEHack*/) >> 1) )
 			{
 				CopperBitplaneConvert();
 			}
@@ -661,40 +662,50 @@ public class Denise : IDenise
 			screen[dptr++] = screen[i];
 	}
 
-	//private void DebugPalette()
-	//{
-	//	int sx = 5;
-	//	int sy = 5;
-
-	//	int box = 5;
-	//	for (int y = 0; y < 4; y++)
-	//	{
-	//		for (int x = 0; x < 64; x++)
-	//		{
-	//			for (int p = 0; p < box; p++)
-	//			{
-	//				for (int q = 0; q < box; q++)
-	//				{
-	//					screen[sx + x * box + q + (sy + (y * box) + p) * SCREEN_WIDTH] = (int)truecolour[x + y * 64];
-	//				}
-	//			}
-	//		}
-	//	}
-
-	//}
-
-
-	//private void DebugLocation()
-	//{
-	//	//if (cdbg.dbugLine < 0) return;
-	//	//if (cdbg.dbugLine >= SCREEN_HEIGHT / 2) return;
-	//	//for (int x = 0; x < SCREEN_WIDTH; x += 4)
-	//	//	screen[x + cdbg.dbugLine * SCREEN_WIDTH * 2] ^= 0xffffff;
-	//}
-
-
 	public void Reset(uint copperPC)
 	{
 		dptr = 0;
+	}
+
+	public uint[] DebugGetPalette()
+	{
+		return truecolour;
+	}
+
+	public uint DebugChipsetRead(uint address, Size size)
+	{
+		uint value = 0;
+		switch (address)
+		{
+			case ChipRegs.BPLCON0: value = bplcon0; break;
+			case ChipRegs.BPLCON1: value = bplcon1; break;
+			case ChipRegs.BPLCON2: value = bplcon2; break;
+			case ChipRegs.BPLCON3: value = bplcon3; break;
+			case ChipRegs.BPLCON4: value = bplcon4; break;
+
+			case ChipRegs.DIWSTRT: value = diwstrt; break;
+			case ChipRegs.DIWSTOP: value = diwstop; break;
+			case ChipRegs.DIWHIGH: value = diwhigh; break;
+
+			case ChipRegs.CLXDAT: value = clxdat; clxdat = 0; break;
+		}
+
+		if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
+		{
+			//uint bank = (custom.Read(0, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
+			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+
+			int loct = bplcon3 & (1 << 9);
+
+			//Amiga colour
+			int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
+
+			if (loct != 0)
+				value = lowcolour[index];
+			else
+				value = colour[index];
+		}
+
+		return value;
 	}
 }

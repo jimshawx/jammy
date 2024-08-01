@@ -5,6 +5,7 @@ using System.Runtime;
 using System.Threading;
 using System.Threading.Tasks;
 using Jammy.Core.Custom;
+using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,7 @@ namespace Jammy.Core
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IDiskDrives diskDrives, IMouse mouse, IDiskController diskController,
 			ISerial serial, IMotherboard motherboard, IAgnus agnus, IDenise denise, IChipsetClock clock, IDMA dma,
-			IPSUClock psuClock, ICPUClock cpuClock,
+			IPSUClock psuClock, ICPUClock cpuClock, IChipsetDebugger debugger,
 			IBreakpointCollection breakpointCollection, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
@@ -78,6 +79,7 @@ namespace Jammy.Core
 			//emulations.Add(psuClock);
 			//emulations.Add(dma);
 			//emulations.Add(denise);
+			emulations.Add(debugger);
 
 			//managed by the DMA controller
 			//threadedEmulations.Add(copper);

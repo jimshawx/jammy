@@ -42,12 +42,10 @@ public interface IDMA
 	uint DebugRead(uint address, Size size);
 	void Write(DMASource source, uint address, DMA priority, ushort value, Size size);
 	void NoDMA(DMASource source);
-	void NeedsDMA(DMASource source);
+	void NeedsDMA(DMASource source, DMA priority);
 	bool IsDMAEnabled(DMA source);
 	void WaitForChipRamDMASlot();
 	void TriggerHighestPriorityDMA();
 	bool IsWaitingForDMA(DMASource source);
 	void ClearWaitingForDMA(DMASource source);
-	void DebugStartOfLine();
-	void DebugEndOfLine();
 }

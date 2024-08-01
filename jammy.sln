@@ -52,7 +52,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Extensions.Windows", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parky.Logging.OutputDebugString", "Parky.Logging.OutputDebugString\Parky.Logging.OutputDebugString.csproj", "{62775AEA-81B5-40EC-AC89-434E3F116823}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.EmulationWindow.DIB", "Jammy.Core.EmulationWindow.DIB\Jammy.Core.EmulationWindow.DIB.csproj", "{8A91CE5C-CA95-4D75-A801-769CC6D2111B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.EmulationWindow.DIB", "Jammy.Core.EmulationWindow.DIB\Jammy.Core.EmulationWindow.DIB.csproj", "{8A91CE5C-CA95-4D75-A801-769CC6D2111B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.NativeOverlay", "Jammy.NativeOverlay\Jammy.NativeOverlay.csproj", "{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -164,6 +166,10 @@ Global
 		{8A91CE5C-CA95-4D75-A801-769CC6D2111B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A91CE5C-CA95-4D75-A801-769CC6D2111B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A91CE5C-CA95-4D75-A801-769CC6D2111B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

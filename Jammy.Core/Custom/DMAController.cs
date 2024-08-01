@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Linq;
-using System.Text;
 using System.Threading;
+using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -31,43 +30,50 @@ public class DMAActivity
 	public Size Size { get; set; }
 	public DMA Priority { get; set; }
 	public uint ChipReg { get; set; }
+
+	public override string ToString()
+	{
+		switch (Priority)
+		{
+			case 0: return "c"; //CPU
+			case DMA.BPLEN: return "B";
+			case DMA.COPEN: return "C";
+			case DMA.BLTEN: return "b";
+			case DMA.SPREN: return "S";
+			case DMA.DSKEN: return "D";
+			case DMA.AUD0EN: return "A";
+			case DMA.AUD1EN: return "A";
+			case DMA.AUD2EN: return "A";
+			case DMA.AUD3EN: return "A";
+		}
+		return "x";
+	}
 }
 
 public class DMAController : IDMA
 {
 	private readonly IChipsetClock clock;
+	private readonly IChipsetDebugger debugger;
 	private readonly IChipRAM memory;
 	private readonly IChips custom;
 	private readonly ILogger<DMAController> logger;
 
 	private readonly DMAActivity[] activities;
 
-	//private readonly AutoResetEvent cpuMemLock = new AutoResetEvent(false);
 	private volatile int cpuMemTick;
 
 	public DMAController(IChipRAM memory, IChips custom, IChipsetClock clock,
-		IAgnus agnus, ICopper copper, IBlitter blitter, ILogger<DMAController> logger)
+		IChipsetDebugger debugger, ILogger<DMAController> logger)
 	{
 		this.memory = memory;
 		this.custom = custom;
 		this.logger = logger;
 		this.clock = clock;
+		this.debugger = debugger;
 
 		activities = new DMAActivity[(int)DMASource.NumDMASources];
 		for (int i = 0; i < (int)DMASource.NumDMASources; i++)
 			activities[i] = new DMAActivity();
-
-		////all threads begin blocked
-		//activities[0].Thread = new Thread(() => EmulateWrapper(agnus.Emulate, activities[0]));
-		//activities[1].Thread = new Thread(() => EmulateWrapper(copper.Emulate, activities[1]));
-		//activities[2].Thread = new Thread(() => EmulateWrapper(blitter.Emulate, activities[2]));
-
-		//activities[0].Thread.Name = "Agnus";
-		//activities[1].Thread.Name = "Copper";
-		//activities[2].Thread.Name = "Blitter";
-
-		//foreach (var activity in activities.Take(3))
-		//	activity.Thread.Start();
 	}
 
 	public void Reset()
@@ -79,30 +85,11 @@ public class DMAController : IDMA
 		}
 	}
 
-	//private void EmulateWrapper(Action<ulong> emulate, DMAActivity activity)
-	//{
-	//	clock.RegisterThread();
-	//	for(;;)
-	//	{
-	//		clock.WaitForTick();
-	//		//if (activity.Type == DMAActivityType.None)
-	//			emulate(0);
-	//		clock.Ack();
-	//	}
-	//}
-
-	//public void Emulate(ulong cycles)
-	//{
-	//	clock.WaitForTick();
-	//	TriggerHighestPriorityDMA();
-	//	clock.Ack();
-	//}
-
 	public void TriggerHighestPriorityDMA()
 	{
 		var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
-		var slotTaken = DMASource.None;
+		DMAActivity slotTaken = null;
 
 		//check if ANY DMA is enabled
 		if ((dmacon & DMA.DMAEN) == DMA.DMAEN)
@@ -113,49 +100,30 @@ public class DMAController : IDMA
 				{
 					//if no DMA required, continue
 				}
-				else if (slotTaken == DMASource.None && activities[i].Type == DMAActivityType.Consume)
-				{
-					//DMA engine is required
-					slotTaken = (DMASource)i;
-				}
-				else if (slotTaken == DMASource.None && (activities[i].Priority & dmacon) != 0)
+				else if (slotTaken == null && (activities[i].Priority & dmacon) != 0)
 				{
 					//check this DMA channel is enabled and the DMA slot hasn't been taken
-					slotTaken = (DMASource)i;
+					slotTaken = activities[i];
 				}
 			}
 		}
 
-		if (slotTaken == DMASource.None && activities[(int)DMASource.CPU].Type == DMAActivityType.CPU)
+		if (slotTaken == null && activities[(int)DMASource.CPU].Type == DMAActivityType.CPU)
 		{
 			//CPU memory access required
-			slotTaken = DMASource.CPU;
+			slotTaken = activities[(int)DMASource.CPU];
 		}
 
-		if (slotTaken == DMASource.None)
+		if (slotTaken == null)
 		{
-			sb.Append('x');
+			debugger.SetDMAActivity('-');
 			return;
 		}
 
-		if (slotTaken != DMASource.CPU)
-			sb.Append(slotTaken.ToString()[0]);
-		else
-			sb.Append('c');
+		debugger.SetDMAActivity(slotTaken.ToString()[0]);
 
 		//DMA required, execute the transaction
-		ExecuteDMATransfer(activities[(int)slotTaken]);
-	}
-
-	private StringBuilder sb = new StringBuilder();
-	public void DebugStartOfLine()
-	{
-		sb.Clear();
-	}
-
-	public void DebugEndOfLine()
-	{
-		//logger.LogTrace(sb.ToString());
+		ExecuteDMATransfer(slotTaken);
 	}
 
 	public bool IsWaitingForDMA(DMASource source)
@@ -171,8 +139,9 @@ public class DMAController : IDMA
 	public void WaitForChipRamDMASlot()
 	{
 		activities[(int)DMASource.CPU].Type = DMAActivityType.CPU;
-		//cpuMemLock.WaitOne();
-		while (cpuMemTick == 0) ;
+		activities[(int)DMASource.CPU].Priority = 0;
+
+		while (cpuMemTick == 0) /*extreme busy wait*/ ;
 		cpuMemTick = 0;
 	}
 
@@ -187,7 +156,6 @@ public class DMAController : IDMA
 		if (activity.Type == DMAActivityType.CPU)
 		{
 			activity.Type = DMAActivityType.None;
-			//cpuMemLock.Set();
 			cpuMemTick = 1;
 			return;
 		}
@@ -219,9 +187,11 @@ public class DMAController : IDMA
 		throw new ArgumentOutOfRangeException();
 	}
 
-	public void NeedsDMA(DMASource source)
+	public void NeedsDMA(DMASource source, DMA priority)
 	{
-		activities[(int)source].Type = DMAActivityType.Consume;
+		var activity = activities[(int)source];
+		activity.Type = DMAActivityType.Consume;
+		activity.Priority = priority;
 	}
 
 	public void NoDMA(DMASource source)

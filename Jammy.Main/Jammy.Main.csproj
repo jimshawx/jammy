@@ -33,6 +33,7 @@
     <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
     <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
+    <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />
     <ProjectReference Include="..\Parky.Logging.DebugAsyncRTF\Parky.Logging.DebugAsyncRTF.csproj" />
     <ProjectReference Include="..\Parky.Logging.DebugAsync\Parky.Logging.DebugAsync.csproj" />
     <ProjectReference Include="..\Parky.Logging.OutputDebugString\Parky.Logging.OutputDebugString.csproj" />

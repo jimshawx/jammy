@@ -45,10 +45,10 @@ namespace Jammy.Core.Custom
 		{
 			Idle,
 
+			BlitStartUp1,
+			BlitStartUp2,
 			BlitA,
-			BlitAShift,
 			BlitB,
-			BlitBShift,
 			BlitC,
 			BlitMinterm,
 			BlitD,
@@ -56,8 +56,10 @@ namespace Jammy.Core.Custom
 			BlitDLast,
 			BlitEnd,
 
+			LineA,
 			LineB,
 			LineC,
+			LineB2,
 			LineMinterm,
 			LineD,
 			LineEndOfWord,
@@ -83,20 +85,23 @@ namespace Jammy.Core.Custom
 
 			switch (status)
 			{
+				case BlitterState.BlitStartUp1: return BlitStartUp1();
+				case BlitterState.BlitStartUp2: return BlitStartUp2();
 				case BlitterState.BlitA: return BlitA();
-				case BlitterState.BlitAShift: return BlitAShift();
 				case BlitterState.BlitB: return BlitB();
-				case BlitterState.BlitBShift: return BlitBShift();
 				case BlitterState.BlitC: return BlitC();
 				case BlitterState.BlitMinterm: return BlitMinterm();
 				case BlitterState.BlitD: return BlitD();
 				case BlitterState.BlitEndOfWord: return BlitEndOfWord();
+
 				case BlitterState.BlitDLast: return BlitDLast();
 				case BlitterState.BlitEnd: return BlitEnd();
 
+				case BlitterState.LineA: return LineA();
 				case BlitterState.LineB: return LineB();
 				case BlitterState.LineC: return LineC();
 				case BlitterState.LineMinterm: return LineMinterm();
+				case BlitterState.LineB2: return LineB2();
 				case BlitterState.LineD: return LineD();
 				case BlitterState.LineEndOfWord: return LineEndOfWord();
 				case BlitterState.LineEnd: return LineEnd();
@@ -313,8 +318,8 @@ namespace Jammy.Core.Custom
 
 			bltabits = bltbbits = 0;
 
-			status = BlitterState.BlitA;
-			return true;
+			status = BlitterState.BlitStartUp1;
+			return false;
 		}
 
 		private uint bltabits;
@@ -328,19 +333,46 @@ namespace Jammy.Core.Custom
 		private uint blitWidth, blitHeight;
 		uint s_bltadat, s_bltbdat;
 
+		//eat a DMA slot
+		private bool BlitStartUp1()
+		{
+			status = BlitterState.BlitStartUp2;
+			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			return false;
+		}
+
+		//eat a DMA slot
+		private bool BlitStartUp2()
+		{
+			status = BlitterState.BlitA;
+			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			return false;
+		}
+
+		//Read A if needed
 		private bool BlitA()
 		{
-			status = BlitterState.BlitAShift;
+			status = BlitterState.BlitB;
 
-			if ((bltcon0 & (1u << 11)) == 0) return true;
+			if ((bltcon0 & (1u << 11)) == 0)
+			{
+				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				return false;
+			}
 
 			memory.Read(DMASource.Blitter, bltapt, DMA.BLTEN, Size.Word, ChipRegs.BLTADAT);
 			return false;
 		}
 
-		private bool BlitAShift()
+		//Read B if needed, Shift / Mask A
+		private bool BlitB()
 		{
-			status = BlitterState.BlitB;
+			status = BlitterState.BlitC;
+
+			if ((bltcon0 & (1u << 10)) != 0)
+				memory.Read(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
+			else
+				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 
 			s_bltadat = bltadat;
 
@@ -361,22 +393,19 @@ namespace Jammy.Core.Custom
 				bltabits = s_bltadat << 16; // 1110000000000000:0000000000000000
 				s_bltadat >>= 16; // 0000000000000000:aaa1111111111111
 			}
-			return true;
-		}
 
-		private bool BlitB()
-		{
-			status = BlitterState.BlitBShift;
-
-			if ((bltcon0 & (1u << 10)) == 0) return true;
-
-			memory.Read(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
 			return false;
 		}
 
-		private bool BlitBShift()
+		//Read C if needed, Shift B
+		private bool BlitC()
 		{
-			status = BlitterState.BlitC;
+			if ((bltcon0 & (1u << 9)) != 0)
+				memory.Read(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
+			else
+				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+
+			status = BlitterState.BlitMinterm;
 
 			s_bltbdat = bltbdat;
 
@@ -394,21 +423,13 @@ namespace Jammy.Core.Custom
 				bltbbits = s_bltbdat << 16;
 				s_bltbdat >>= 16;
 			}
-			return true;
-		}
-
-		private bool BlitC()
-		{
-			status = BlitterState.BlitMinterm;
-
-			if ((bltcon0 & (1u << 9)) == 0) return true;
-
-			memory.Read(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
 			return false;
 		}
 
 		private bool BlitMinterm()
 		{
+			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+
 			status = BlitterState.BlitD;
 
 			bltddat = 0;
@@ -421,9 +442,10 @@ namespace Jammy.Core.Custom
 			if ((bltcon0 & 0x40) != 0) bltddat |= s_bltadat & s_bltbdat & ~bltcdat;
 			if ((bltcon0 & 0x80) != 0) bltddat |= s_bltadat & s_bltbdat & bltcdat;
 
+			//todo: does this need an extra cycle?
 			Fill();
 
-			return true;
+			return false;
 		}
 
 		private bool BlitD()
@@ -434,6 +456,7 @@ namespace Jammy.Core.Custom
 
 			if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
 				return DelayedWrite(bltdpt, (ushort)bltddat);
+
 			return true;
 		}
 
@@ -627,7 +650,8 @@ namespace Jammy.Core.Custom
 
 		private void Line(uint _)
 		{
-			LineBegin();
+			LineImmediate(_);
+			//LineBegin();
 		}
 
 		private uint length;
@@ -682,30 +706,51 @@ namespace Jammy.Core.Custom
 			x1 = dm / 2;
 			y1 = dm / 2;
 
-			status = BlitterState.LineB;
-			return true;
+			status = BlitterState.LineA;
+			return false;
+		}
+
+		//-C-D
+		//or
+		//-BC-BD (B is read twice)
+		private bool LineA()
+		{
+			status = BlitterState.LineC;
+
+			bltadat = 0x8000u >> x0;
+			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			return false;
 		}
 
 		private bool LineB()
 		{
 			status = BlitterState.LineC;
-			return true;
+
+			//if USEB is off, then it's -C-D, else if -BC-BD
+			if ((bltcon0 & (1u << 10)) == 0) return true;//B is off, keep going
+
+			memory.Read(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
+			return false;
 		}
 
 		private bool LineC()
 		{
 			status = BlitterState.LineMinterm;
 
-			if ((bltcon0 & (1u << 9)) == 0) return true;
+			if ((bltcon0 & (1u << 9)) == 0)
+			{
+				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				return false;
+			}
 
 			memory.Read(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
 			return false;
-
 		}
 
 		private bool LineMinterm()
 		{
-			bltadat = 0x8000u >> x0;
+			//todo: shift B?
+
 			bltddat = 0;
 			if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat;
 			if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdatror & bltcdat;
@@ -717,7 +762,21 @@ namespace Jammy.Core.Custom
 			if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdatror & bltcdat;
 
 			status = BlitterState.LineD;
-			return true;
+
+			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+
+			return false;
+		}
+
+		private bool LineB2()
+		{
+			status = BlitterState.LineD;
+
+			//if USEB is off, then it's -C-D, else if -BC-BD
+			if ((bltcon0 & (1u << 10)) == 0) return true;//B is off, keep going
+
+			memory.Read(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
+			return false;
 		}
 
 		private bool LineD()
@@ -735,7 +794,8 @@ namespace Jammy.Core.Custom
 				}
 			}
 
-			return true;
+			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			return false;
 		}
 
 		private bool LineEndOfWord()
@@ -800,7 +860,6 @@ namespace Jammy.Core.Custom
 			return false;
 		}
 
-		/*
 		private void LineImmediate(uint insaddr)
 		{
 			uint octant = (bltcon1 >> 2) & 7;
@@ -909,6 +968,5 @@ namespace Jammy.Core.Custom
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
 		}
-		*/
 	}
 }

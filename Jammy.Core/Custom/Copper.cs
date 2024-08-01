@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Jammy.Core.Debug;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -19,24 +20,19 @@ namespace Jammy.Core.Custom
 		private readonly IChipsetClock clock;
 		private IDMA memory;
 		private readonly IChips custom;
+		private readonly IChipsetDebugger debugger;
 
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 
-		public Copper(IChipsetClock clock, IChips custom, IEmulationWindow emulationWindow,
+		public Copper(IChipsetClock clock, IChips custom, IChipsetDebugger debugger,
 			IOptions<EmulationSettings> settings, ILogger<Copper> logger)
 		{
 			this.clock = clock;
 			this.custom = custom;
+			this.debugger = debugger;
 			this.settings = settings.Value;
 			this.logger = logger;
-
-			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
-
-			//start the first frame
-			//RunCopperVerticalBlankStart();
-
-			logger.LogTrace("Press F9 to enable Copper debug");
 		}
 
 
@@ -58,7 +54,6 @@ namespace Jammy.Core.Custom
 		private ushort data;
 
 		//HRM 3rd Ed, PP24
-		//private uint copperFrame = 0;
 		public void Init(IDMA dma)
 		{
 			memory = dma;
@@ -87,24 +82,19 @@ namespace Jammy.Core.Custom
 
 			//if (status == CopperStatus.Waiting && data != 0xfffe)
 			//	logger.LogTrace($"Hit VBL while still waiting for {data:X2}");
-			
-			//if (cdbg.dbug)
-			//{
-			//	DebugCopperList(cop1lc);
-			//	cdbg.dbug = false;
-			//}
 
-			//start the next frame
-			//CopperNextFrame();
-
-			//cdbg.Reset();
+			if (debugger.dbug)
+			{
+				DebugCopperList(cop1lc);
+				debugger.dbug = false;
+			}
 		}
 
 		private void CopperNextFrame()
 		{
 			memory.ClearWaitingForDMA(DMASource.Copper);
 
-			memory.NeedsDMA(DMASource.Copper);
+			memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 
 			copPC = activeCopperAddress = cop1lc;
 
@@ -410,187 +400,6 @@ namespace Jammy.Core.Custom
 		public string GetDisassembly()
 		{
 			return DisassembleCopperList(activeCopperAddress);
-		}
-
-		//private class CopperDebug
-		//{
-		//	public char[] fetch = new char[256];
-		//	public char[] write = new char[256];
-		//	public int dma;
-		//	public int dbugLine = -1;
-		//	public bool dbug = false;
-		//	public int ddfSHack;
-		//	public int ddfEHack;
-		//	public int diwSHack;
-		//	public int diwEHack;
-		//	public byte bitplaneMask = 0xff;
-		//	public byte bitplaneMod = 0;
-		//	public bool ws;
-		//	private StringBuilder sb = new StringBuilder();
-
-		//	public void Reset()
-		//	{
-		//		dma = 0;
-		//		//ddfSHack = ddfEHack = diwEHack = diwSHack = 0;
-		//	}
-
-		//	public StringBuilder GetStringBuilder()
-		//	{
-		//		sb.Length = 0;
-		//		return sb;
-		//	}
-		//}
-
-		//private void Debug(CopperFrame cf, CopperDebug cd, ushort dmacon)
-		//{
-		//	if (cdbg.dbugLine == -1)
-		//		return;
-		//	if (cdbg.dbugLine != cf.currentLine)
-		//		return;
-
-		//	logger.LogTrace($"LINE {cdbg.dbugLine}");
-		//	//logger.LogTrace($"DDF {ddfstrt:X4} {ddfstop:X4} ({cl.wordCount}) {cl.ddfstrtfix:X4}{cdbg.ddfSHack:+#0;-#0} {cl.ddfstopfix:X4}{cdbg.ddfEHack:+#0;-#0} FMODE {fmode:X4}");
-		//	//logger.LogTrace($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{cl.diwstrtv}->{cl.diwstopv}({cl.diwstopv - cl.diwstrtv}) H:{cl.diwstrth}{cdbg.diwSHack:+#0;-#0}->{cl.diwstoph}{cdbg.diwEHack:+#0;-#0}({cl.diwstoph - cl.diwstrth}/16={(cl.diwstoph - cl.diwstrth) / 16})");
-		//	//logger.LogTrace($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
-		//	//logger.LogTrace($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()} 3:{bplcon3:X4} {Bplcon3()} 4:{bplcon4:X4} {Bplcon4()}");
-		//	//logger.LogTrace($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} {new string(Convert.ToString(cd.bitplaneMask, 2).PadLeft(8, '0').Reverse().ToArray())} {new string(Convert.ToString(cd.bitplaneMod, 2).PadLeft(8, '0').Reverse().ToArray())}");
-		//	var sb = cdbg.GetStringBuilder();
-		//	sb.AppendLine();
-		//	for (int i = 0; i < 256; i++)
-		//		sb.Append(cd.fetch[i]);
-
-		//	logger.LogTrace(sb.ToString());
-		//	sb.Clear();
-		//	sb.AppendLine();
-		//	for (int i = 0; i < 256; i++)
-		//		sb.Append(cd.write[i]);
-		//	sb.Append($"({cd.dma})");
-		//	logger.LogTrace(sb.ToString());
-		//}
-
-		//private string Dmacon(ushort dmacon)
-		//{
-		//	var sb = cdbg.GetStringBuilder();
-		//	if ((dmacon & 0x200) != 0) sb.Append("DMA ");
-		//	if ((dmacon & 0x100) != 0) sb.Append("BPL ");
-		//	if ((dmacon & 0x80) != 0) sb.Append("COP ");
-		//	if ((dmacon & 0x40) != 0) sb.Append("BLT ");
-		//	if ((dmacon & 0x20) != 0) sb.Append("SPR ");
-		//	return sb.ToString();
-		//}
-
-		//private string Bplcon0()
-		//{
-		//	var sb = cdbg.GetStringBuilder();
-		//	if ((bplcon0 & 0x8000) != 0) sb.Append("H ");
-		//	else if ((bplcon0 & 0x40) != 0) sb.Append("SH ");
-		//	else if ((bplcon0 & 0x80) != 0) sb.Append("UH ");
-		//	else sb.Append("N ");
-		//	if ((bplcon0 & 0x400) != 0) sb.Append("DPF ");
-		//	if ((bplcon0 & 0x800) != 0) sb.Append("HAM ");
-		//	if ((bplcon0 & 0x10) != 0) sb.Append("8");
-		//	else sb.Append($"{(bplcon0 >> 12) & 7} ");
-		//	if ((bplcon0 & 0x4) != 0) sb.Append("LACE");
-
-		//	if (((bplcon0 >> 12) & 7) == 6 && ((bplcon0 & (1 << 11)) == 0 && (bplcon0 & (1 << 10)) == 0 && (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0))) sb.Append("EHB ");
-
-		//	return sb.ToString();
-		//}
-
-		//private string Bplcon1()
-		//{
-		//	int pf0 = bplcon1 & 0xf;
-		//	int pf1 = (bplcon1 >> 4) & 0xf;
-		//	return $"SCR{pf0}:{pf1} ";
-		//}
-
-		//private string Bplcon2()
-		//{
-		//	var sb = cdbg.GetStringBuilder();
-		//	if ((bplcon2 & (1 << 9)) != 0) sb.Append("KILLEHB ");
-		//	if ((bplcon2 & (1 << 6)) != 0) sb.Append("PF2PRI ");
-		//	return sb.ToString();
-		//}
-
-		//private string Bplcon3()
-		//{
-		//	var sb = cdbg.GetStringBuilder();
-		//	sb.Append($"BNK{bplcon3 >> 13} ");
-		//	sb.Append($"PF2O{(bplcon3 >> 10) & 7} ");
-		//	sb.Append($"SPRRES{(bplcon3 >> 6) & 3} ");
-		//	if ((bplcon3 & (1 << 9)) != 0) sb.Append("LOCT ");
-		//	return sb.ToString();
-		//}
-
-		//private string Bplcon4()
-		//{
-		//	var sb = cdbg.GetStringBuilder();
-		//	sb.Append($"BPLAM{bplcon4 >> 8:X2} ");
-		//	sb.Append($"ESPRM{(bplcon4 >> 4) & 15:X2} ");
-		//	sb.Append($"OSPRM{bplcon4 & 15:X2} ");
-		//	if ((bplcon3 & (1 << 9)) != 0) sb.Append("LOCT ");
-		//	return sb.ToString();
-		//}
-
-		//private CopperFrame cop = new CopperFrame();
-		//private CopperDebug cdbg = new CopperDebug();
-
-
-		private void dbug_Keyup(int obj)
-		{
-		}
-
-		//private bool keys = false;
-		private void dbug_Keydown(int obj)
-		{
-			//if (obj == (int)VK.VK_F9) { keys ^= true; logger.LogTrace($"KEYS {keys}"); }
-
-			//if (keys)
-			//{
-			//	if (obj == (int)VK.VK_F11) cdbg.dbug = true;
-			//	if (obj == (int)VK.VK_F7) cdbg.dbugLine--;
-			//	if (obj == (int)VK.VK_F6) cdbg.dbugLine++;
-			//	if (obj == (int)VK.VK_F8) cdbg.dbugLine = -1;
-			//	//if (obj == (int)VK.VK_F5) cdbg.dbugLine = diwstrt >> 8;
-
-			//	if (obj == (int)'Q') cdbg.ddfSHack++;
-			//	if (obj == (int)'W') cdbg.ddfSHack--;
-			//	if (obj == (int)'E') cdbg.ddfSHack = 0;
-			//	if (obj == (int)'R') cdbg.ddfEHack++;
-			//	if (obj == (int)'T') cdbg.ddfEHack--;
-			//	if (obj == (int)'Y') cdbg.ddfEHack = 0;
-
-			//	if (obj == (int)'1') cdbg.diwSHack++;
-			//	if (obj == (int)'2') cdbg.diwSHack--;
-			//	if (obj == (int)'3') cdbg.diwSHack = 0;
-			//	if (obj == (int)'4') cdbg.diwEHack++;
-			//	if (obj == (int)'5') cdbg.diwEHack--;
-			//	if (obj == (int)'6') cdbg.diwEHack = 0;
-
-			//	if (obj == (int)'A') cdbg.bitplaneMask ^= 1;
-			//	if (obj == (int)'S') cdbg.bitplaneMask ^= 2;
-			//	if (obj == (int)'D') cdbg.bitplaneMask ^= 4;
-			//	if (obj == (int)'F') cdbg.bitplaneMask ^= 8;
-			//	if (obj == (int)'G') cdbg.bitplaneMask ^= 16;
-			//	if (obj == (int)'H') cdbg.bitplaneMask ^= 32;
-			//	if (obj == (int)'J') cdbg.bitplaneMask ^= 64;
-			//	if (obj == (int)'K') cdbg.bitplaneMask ^= 128;
-			//	if (obj == (int)'L')
-			//	{
-			//		cdbg.bitplaneMask = 0xff;
-			//		cdbg.bitplaneMod = 0;
-			//	}
-
-			//	if (obj == (int)'Z') cdbg.bitplaneMod ^= 1;
-			//	if (obj == (int)'X') cdbg.bitplaneMod ^= 2;
-			//	if (obj == (int)'C') cdbg.bitplaneMod ^= 4;
-			//	if (obj == (int)'V') cdbg.bitplaneMod ^= 8;
-			//	if (obj == (int)'B') cdbg.bitplaneMod ^= 16;
-			//	if (obj == (int)'N') cdbg.bitplaneMod ^= 32;
-			//	if (obj == (int)'M') cdbg.bitplaneMod ^= 64;
-			//	if (obj == (int)VK.VK_OEM_COMMA) cdbg.bitplaneMod ^= 128;
-
-			//	if (obj == (int)VK.VK_F10) cdbg.ws = true;
 		}
 	}
 }

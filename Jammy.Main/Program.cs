@@ -11,6 +11,7 @@ using Jammy.Core.Custom;
 using Jammy.Core.Custom.Audio;
 using Jammy.Core.Custom.CIA;
 using Jammy.Core.Custom.IO;
+using Jammy.Core.Debug;
 using Jammy.Core.Floppy;
 using Jammy.Core.IDE;
 using Jammy.Core.Interface.Interfaces;
@@ -29,6 +30,7 @@ using Jammy.Core.IO.Windows;
 using Jammy.Core.EmulationWindow.GDI;
 using Jammy.Core.EmulationWindow.DX;
 using Jammy.Debugger.Interceptors;
+using Jammy.NativeOverlay;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -134,6 +136,8 @@ namespace Jammy.Main
 				.AddSingleton<ILVOInterceptorAction, OpenDeviceLogger>()
 				.AddSingleton<IOpenFileTracker, OpenFileTracker>()
 				.AddSingleton<ILibraryBases, LibraryBases>()
+				.AddSingleton<INativeOverlay, NativeOverlay.NativeOverlay>()
+				.AddSingleton<IChipsetDebugger, ChipsetDebugger>()
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 				.AddSingleton<Jammy>()
 				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));

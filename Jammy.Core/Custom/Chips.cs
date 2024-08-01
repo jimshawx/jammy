@@ -453,5 +453,80 @@ namespace Jammy.Core.Custom
 				logger.LogTrace($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.28194)} PAL");
 			}
 		}
+
+		public uint DebugChipsetRead(uint address, Size size)
+		{
+			if (size == Size.Long)
+				return (DebugChipsetRead(address, Size.Word) << 16) | DebugChipsetRead(address + 2, Size.Word);
+
+			if (size == Size.Byte)
+				throw new ArgumentOutOfRangeException();
+
+			if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
+					(address >= ChipRegs.BPL1PTH && address <= ChipRegs.SPR7DATB) ||
+					address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
+					|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
+					|| address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
+					|| address == ChipRegs.FMODE)
+			{
+				return agnus.DebugChipsetRead(address, size);
+			}
+			else if (address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2 || address == ChipRegs.CLXDAT
+					 || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
+					 || address == ChipRegs.DIWSTRT || address == ChipRegs.DIWSTOP)
+			{
+				return denise.DebugChipsetRead(address, size);
+			}
+			else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
+			{
+				//return copper.DebugChipsetRead(address, size);
+				return 0;
+			}
+			else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
+			{
+				//return blitter.DebugChipsetRead(address, size);
+				return 0;
+			}
+			else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
+				 || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT)
+			{
+				//return diskDrives.DebugRead(address, size);
+				return 0;
+			}
+			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
+					 || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
+			{
+				//return mouse.DebugChipsetRead(address, size);
+				return 0;
+			}
+			else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
+			{
+				//return audio.DebugChipsetRead(address, size);
+				return 0;
+			}
+			else if (address == ChipRegs.ADKCON) { /* can't read here */ }
+			else if (address == ChipRegs.ADKCONR)
+			{
+				//return (ushort)(audio.DebugChipsetRead(address, size) | diskDrives.DebugChipsetRead(address, size));
+				return 0;
+			}
+			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ ||
+				 address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR
+				 || address == ChipRegs.NO_OP)
+			{
+				return 0;
+			}
+			else if (address == ChipRegs.SERDATR || address == ChipRegs.SERDAT || address == ChipRegs.SERPER)
+			{
+				//return serial.DebugRead(address, size);
+				return 0;
+			}
+			else
+			{
+				logger.LogTrace($"DR {ChipRegs.Name(address)}");
+			}
+
+			return 0;
+		}
 	}
 }
