@@ -155,7 +155,7 @@ public class ChipsetDebugger : IChipsetDebugger
 		ushort dmacon = (ushort)chipRegs.DebugChipsetRead(ChipRegs.DMACONR, Size.Word);
 		uint[] bplpt = new uint[8];
 		for (int i = 0; i < 8; i++)
-			bplpt[i] = chipRegs.DebugChipsetRead((uint)(ChipRegs.BPL1PTL + i*2), Size.Long);
+			bplpt[i] = chipRegs.DebugChipsetRead((uint)(ChipRegs.BPL1PTH + i*4), Size.Long);
 
 		//vertical window
 		uint diwstrtv = diwstrt >> 8;

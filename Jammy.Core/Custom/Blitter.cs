@@ -184,13 +184,13 @@ namespace Jammy.Core.Custom
 				case ChipRegs.BLTAFWM: bltafwm = value; break;
 				case ChipRegs.BLTALWM: bltalwm = value; break;
 
-				case ChipRegs.BLTCPTH: bltcpt = ((bltcpt & 0x0000ffff) | ((uint)value << 16)); break;
+				case ChipRegs.BLTCPTH: bltcpt = ((bltcpt & 0x0000ffff) | ((uint)(value & 0x1f) << 16)); break;
 				case ChipRegs.BLTCPTL: bltcpt = ((bltcpt & 0xffff0000) | (uint)(value & 0xfffe)); break;
-				case ChipRegs.BLTBPTH: bltbpt = ((bltbpt & 0x0000ffff) | ((uint)value << 16)); break;
+				case ChipRegs.BLTBPTH: bltbpt = ((bltbpt & 0x0000ffff) | ((uint)(value & 0X1f) << 16)); break;
 				case ChipRegs.BLTBPTL: bltbpt = ((bltbpt & 0xffff0000) | (uint)(value & 0xfffe)); break;
-				case ChipRegs.BLTAPTH: bltapt = ((bltapt & 0x0000ffff) | ((uint)value << 16)); break;
+				case ChipRegs.BLTAPTH: bltapt = ((bltapt & 0x0000ffff) | ((uint)(value & 0x1f) << 16)); break;
 				case ChipRegs.BLTAPTL: bltapt = ((bltapt & 0xffff0000) | (uint)(value & 0xfffe)); break;
-				case ChipRegs.BLTDPTH: bltdpt = ((bltdpt & 0x0000ffff) | ((uint)value << 16)); break;
+				case ChipRegs.BLTDPTH: bltdpt = ((bltdpt & 0x0000ffff) | ((uint)(value & 0x1f) << 16)); break;
 				case ChipRegs.BLTDPTL: bltdpt = ((bltdpt & 0xffff0000) | (uint)(value & 0xfffe)); break;
 
 				case ChipRegs.BLTSIZE:

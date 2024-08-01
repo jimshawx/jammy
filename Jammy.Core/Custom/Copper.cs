@@ -294,9 +294,9 @@ namespace Jammy.Core.Custom
 			switch (address)
 			{
 				case ChipRegs.COPCON: copcon = value; break;
-				case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
 				case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); break;
-				case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)value << 16); break;
+				case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
 				case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); break;
 				case ChipRegs.COPJMP1: copjmp1 = value; copPC = cop1lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
 					break;

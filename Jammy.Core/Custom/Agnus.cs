@@ -59,9 +59,7 @@ public class Agnus : IAgnus
 {
 	private readonly IChipsetClock clock;
 	private IDMA memory;
-	private readonly ICopper copper;
 	private readonly IDenise denise;
-	private readonly IBlitter blitter;
 	private readonly IInterrupt interrupt;
 	private readonly IChipRAM chipRam;
 	private readonly ITrapdoorRAM trapdoorRam;
@@ -76,14 +74,12 @@ public class Agnus : IAgnus
 	//bitmap DMA ends at 0xD8, with 8 slots after that
 	//public const int DMA_END = 0xF0;
 
-	public Agnus(IChipsetClock clock, ICopper copper, IDenise denise, IBlitter blitter, IInterrupt interrupt,
+	public Agnus(IChipsetClock clock, IDenise denise, IInterrupt interrupt,
 		IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IChipsetDebugger debugger,
 		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
 	{
 		this.clock = clock;
-		this.copper = copper;
 		this.denise = denise;
-		this.blitter = blitter;
 		this.interrupt = interrupt;
 		chipRam = chipRAM;
 		trapdoorRam = trapdoorRAM;
@@ -579,11 +575,6 @@ noBitplaneDMA:
 		ushort value = 0;
 		//logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
-		//copper.Read(insaddr, address);//all copper registers are only writable
-		//if (address == ChipRegs.CLXDAT)
-		//	return denise.Read(insaddr, address);
-		//blitter.Read(insaddr, address);//all blitter registers are only writable
-
 		switch (address)
 		{
 			case ChipRegs.VPOSR:
@@ -736,9 +727,8 @@ noBitplaneDMA:
 
 	public void Write(uint insaddr, uint address, ushort value)
 	{
-		copper.Write(insaddr, address, value);
+		//DIWSTRT, DIWSTOP, DIWHIGH are split between Agnus and Denise
 		denise.Write(insaddr, address, value);
-		blitter.Write(insaddr, address, value);
 
 		switch (address)
 		{
