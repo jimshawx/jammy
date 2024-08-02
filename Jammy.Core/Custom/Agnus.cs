@@ -727,13 +727,8 @@ noBitplaneDMA:
 
 	public void Write(uint insaddr, uint address, ushort value)
 	{
-		//DIWSTRT, DIWSTOP, DIWHIGH are split between Agnus and Denise
-		denise.Write(insaddr, address, value);
-
 		switch (address)
 		{
-			//bitplane specific
-
 			case ChipRegs.BPL1MOD: bpl1mod = (uint)(short)value & 0xfffffffe; break;
 			case ChipRegs.BPL2MOD: bpl2mod = (uint)(short)value & 0xfffffffe; break;
 
