@@ -89,6 +89,7 @@ namespace Jammy.Main
 			splitContainer2 = new System.Windows.Forms.SplitContainer();
 			lbIntvec = new System.Windows.Forms.ListBox();
 			btnReadyDisk = new System.Windows.Forms.Button();
+			tbCommand = new System.Windows.Forms.TextBox();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -221,7 +222,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 687);
+			txtMemory.Size = new System.Drawing.Size(1390, 672);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -432,7 +433,7 @@ namespace Jammy.Main
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(547, 987);
+			txtCopper.Size = new System.Drawing.Size(532, 987);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -718,11 +719,13 @@ namespace Jammy.Main
 			// 
 			// lbIntvec
 			// 
-			lbIntvec.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			lbIntvec.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+			lbIntvec.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbIntvec.FormattingEnabled = true;
-			lbIntvec.Location = new System.Drawing.Point(6, 1007);
+			lbIntvec.ItemHeight = 26;
+			lbIntvec.Location = new System.Drawing.Point(3, 1007);
 			lbIntvec.Name = "lbIntvec";
-			lbIntvec.Size = new System.Drawing.Size(546, 260);
+			lbIntvec.Size = new System.Drawing.Size(534, 238);
 			lbIntvec.TabIndex = 27;
 			lbIntvec.MouseDoubleClick += lbIntvec_MouseDoubleClick;
 			// 
@@ -738,11 +741,26 @@ namespace Jammy.Main
 			btnReadyDisk.UseVisualStyleBackColor = true;
 			btnReadyDisk.Click += btnReadyDisk_Click;
 			// 
+			// tbCommand
+			// 
+			tbCommand.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			tbCommand.BackColor = System.Drawing.SystemColors.WindowText;
+			tbCommand.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			tbCommand.CausesValidation = false;
+			tbCommand.ForeColor = System.Drawing.SystemColors.Window;
+			tbCommand.Location = new System.Drawing.Point(2014, 1207);
+			tbCommand.Name = "tbCommand";
+			tbCommand.PlaceholderText = ">";
+			tbCommand.Size = new System.Drawing.Size(145, 39);
+			tbCommand.TabIndex = 51;
+			tbCommand.KeyDown += tbCommand_KeyDown;
+			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2710, 1291);
+			Controls.Add(tbCommand);
 			Controls.Add(btnReadyDisk);
 			Controls.Add(splitContainer2);
 			Controls.Add(btnCribSheet);
@@ -854,6 +872,7 @@ namespace Jammy.Main
 		private System.Windows.Forms.SplitContainer splitContainer2;
 		private System.Windows.Forms.Button btnReadyDisk;
 		private System.Windows.Forms.ListBox lbIntvec;
+		private System.Windows.Forms.TextBox tbCommand;
 	}
 }
 

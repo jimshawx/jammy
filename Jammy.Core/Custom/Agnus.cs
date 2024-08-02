@@ -945,6 +945,13 @@ noBitplaneDMA:
 			trapdoorRam.Write(insaddr, address, value, size);
 	}
 
+	public List<BulkMemoryRange> ReadBulk()
+	{
+		return ((IBulkMemoryRead)chipRam).ReadBulk()
+			.Concat(((IBulkMemoryRead)trapdoorRam).ReadBulk())
+			.ToList();
+	}
+
 	public uint DebugRead(uint address, Size size)
 	{
 		if (chipRam.IsMapped(address))

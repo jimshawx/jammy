@@ -278,6 +278,11 @@ namespace Jammy.Debugger
 			breakpoints.AddBreakpoint(address,type,counter,size);
 		}
 
+		public void RemoveBreakpoint(uint address)
+		{
+			breakpoints.RemoveBreakpoint(address);
+		}
+
 		public void BreakAtNextPC()
 		{
 			uint pc = cpu.GetRegs().PC;

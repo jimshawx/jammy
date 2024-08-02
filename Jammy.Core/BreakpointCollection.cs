@@ -25,6 +25,11 @@ namespace Jammy.Core
 			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size };
 		}
 
+		public void RemoveBreakpoint(uint address)
+		{
+			breakpoints.Remove(address);
+		}
+
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp))

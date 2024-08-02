@@ -46,7 +46,7 @@ namespace Jammy.Types.Debugger
 		{
 			this.memoryRanges = ranges.Where(x=>x.Memory.Length > 0).OrderBy(x=>x.StartAddress).ToList();
 			//complete hack to remove KS mirror range, if present
-			this.memoryRanges.RemoveAll(x=>x.StartAddress == 0 && (x.EndAddress == 0x80000 || x.EndAddress == 0x40000));
+			//this.memoryRanges.RemoveAll(x=>x.StartAddress == 0 && (x.EndAddress == 0x80000 || x.EndAddress == 0x40000));
 		}
 
 		public void ClearMapping()

@@ -28,6 +28,7 @@ using Vortice.Direct3D11;
 using Message = System.Windows.Forms.Message;
 using Task = System.Threading.Tasks.Task;
 using System.Runtime.InteropServices;
+using Jammy.Core.Types.Types.Breakpoints;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -251,7 +252,7 @@ namespace Jammy.Main
 			return address;
 		}
 
-		private readonly string[] intsrc = ["-","TBE/DSKBLK/SOFTINT","PORTS (CIAA)","COPER/VERTB/BLIT","AUDIO","RBF/DSKSYNC", "EXTER (CIAB)/INTEN", "NMI"];
+		private readonly string[] intsrc = ["-", "TBE/DSKBLK/SOFTINT", "PORTS (CIAA)", "COPER/VERTB/BLIT", "AUDIO", "RBF/DSKSYNC", "EXTER (CIAB)/INTEN", "NMI"];
 		private void UpdateMem()
 		{
 			//var memory = uiData.Memory;
@@ -309,7 +310,7 @@ namespace Jammy.Main
 				lbIntvec.Items.Clear();
 				for (uint i = 1; i <= 7; i++)
 				{
-					lbIntvec.Items.Add($"{i} {debugger.Read32((i+0x18) * 4):X8} {intsrc[i]}");
+					lbIntvec.Items.Add($"{i} {debugger.Read32((i + 0x18) * 4):X8} {intsrc[i]}");
 				}
 			}
 		}
@@ -986,6 +987,50 @@ namespace Jammy.Main
 					txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
 					txtMemory.ScrollToCaret();
 				}
+			}
+		}
+
+		private void tbCommand_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.KeyCode == Keys.Enter)
+			{
+				ProcessCommand(tbCommand.Text);
+				tbCommand.Clear();
+				tbCommand.PlaceholderText = ">";
+				e.SuppressKeyPress = true;
+			}
+		}
+
+		private void ProcessCommand(string cmd)
+		{
+			string[] bits = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+			if (bits.Length == 0)
+				return;
+
+			try
+			{
+				if (bits[0] == "b")
+					debugger.AddBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber));
+				if (bits[0] == "bw")
+					debugger.AddBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber), BreakpointType.Write, 0,
+						global::Jammy.Core.Types.Types.Size.Word);
+				if (bits[0] == "br")
+					debugger.AddBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber), BreakpointType.Read, 0,
+						global::Jammy.Core.Types.Types.Size.Word);
+				if (bits[0] == "brw")
+					debugger.AddBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber), BreakpointType.ReadOrWrite, 0,
+						global::Jammy.Core.Types.Types.Size.Word);
+				if (bits[0] == "bc")
+					debugger.RemoveBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber));
+				if (bits[0] == "d")
+				{
+					disassemblyRanges.Add(new AddressRange(uint.Parse(bits[1], NumberStyles.HexNumber), 0x1000));
+					UpdateDisassembly();
+				}
+			}
+			catch
+			{
+				logger.LogTrace($"Can't execute \"{cmd}\"");
 			}
 		}
 	}
