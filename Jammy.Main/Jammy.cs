@@ -251,6 +251,7 @@ namespace Jammy.Main
 			return address;
 		}
 
+		private readonly string[] intsrc = ["-","TBE/DSKBLK/SOFTINT","PORTS (CIAA)","COPER/VERTB/BLIT","AUDIO","RBF/DSKSYNC", "EXTER (CIAB)/INTEN", "NMI"];
 		private void UpdateMem()
 		{
 			//var memory = uiData.Memory;
@@ -302,6 +303,13 @@ namespace Jammy.Main
 						txtMemory.ScrollToCaret();
 					}
 					UpdateExecBase();
+				}
+			}
+			{
+				lbIntvec.Items.Clear();
+				for (uint i = 1; i <= 7; i++)
+				{
+					lbIntvec.Items.Add($"{i} {debugger.Read32((i+0x18) * 4):X8} {intsrc[i]}");
 				}
 			}
 		}
@@ -944,6 +952,41 @@ namespace Jammy.Main
 		private void btnReadyDisk_Click(object sender, EventArgs e)
 		{
 			debugger.ReadyDisk();
+		}
+
+		private void lbIntvec_MouseDoubleClick(object sender, MouseEventArgs e)
+		{
+			int index = this.lbIntvec.IndexFromPoint(e.Location);
+			if (index == ListBox.NoMatches) return;
+
+			string item = (string)lbIntvec.Items[index];
+
+			item = item.Split(" ")[1];
+			uint sp = uint.Parse(item, NumberStyles.AllowHexSpecifier);
+			if (sp != 0)
+			{
+				logger.LogTrace($"scrolling to {sp:X8}");
+
+				{
+					txtDisassembly.ReallySuspendLayout();
+					txtDisassembly.DeselectAll();
+
+					int line = disassemblyView.GetAddressLine(sp);
+
+					//scroll the view to the line 5 lines before the PC
+					txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
+					txtDisassembly.ScrollToCaret();
+
+					txtDisassembly.ReallyResumeLayout();
+					txtDisassembly.Refresh();
+				}
+
+				{
+					int line = memoryDumpView.AddressToLine(sp);
+					txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
+					txtMemory.ScrollToCaret();
+				}
+			}
 		}
 	}
 
