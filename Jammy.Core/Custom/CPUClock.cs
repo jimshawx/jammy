@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,6 @@ public class CPUClock : ICPUClock
 	public void Emulate(ulong cycles)
 	{
 		clock.WaitForTick();
-		//cpuTick.Set();
 		clock.Ack();
 	}
 
@@ -36,6 +36,7 @@ public class CPUClock : ICPUClock
 
 	public void WaitForTick()
 	{
-		//cpuTick.WaitOne();
+		//uint c = clock.HorizontalPos;
+		//SpinWait.SpinUntil(()=>clock.HorizontalPos != c);
 	}
 }

@@ -22,8 +22,11 @@ public enum DMAActivityType
 
 public class DMAActivity
 {
-	//public AutoResetEvent Channel { get; set; } = new AutoResetEvent(false);
-	public Thread Thread { get; set; }
+	public DMAActivity()
+	{
+		Type = DMAActivityType.None;
+	}
+
 	public DMAActivityType Type { get; set; }
 	public uint Address { get; set; }
 	public ulong Value { get; set; }
@@ -138,10 +141,10 @@ public class DMAController : IDMA
 
 	public void WaitForChipRamDMASlot()
 	{
-		activities[(int)DMASource.CPU].Type = DMAActivityType.CPU;
 		activities[(int)DMASource.CPU].Priority = 0;
+		activities[(int)DMASource.CPU].Type = DMAActivityType.CPU;
 
-		while (cpuMemTick == 0) /*extreme busy wait*/ ;
+		while (cpuMemTick == 0) /*extreme busy wait, anything else is far too slow*/ ;
 		cpuMemTick = 0;
 	}
 
