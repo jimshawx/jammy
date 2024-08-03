@@ -20,7 +20,7 @@ namespace Jammy.Core.Memory
 		public MemoryMapper(
 			IMemoryManager memoryManager, IZorroConfigurator zorroConfigurator,
 
-			ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
+			ICIAMemory ciaMemory, IBattClock battClock,
 			IZorro2 zorro2, IZorro3 zorro3, IAgnus agnus, IUnmappedMemory unmappedMemory,
 			IKickstartROM kickstartROM, IDiskController diskController,
 			IAkiko akiko, IMotherboard motherboard, IMotherboardRAM motherboardRAM, ICPUSlotRAM cpuSlotRAM,
@@ -33,7 +33,6 @@ namespace Jammy.Core.Memory
 			{
 				unmappedMemory,
 				ciaMemory,
-				custom,
 				agnus,
 				kickstartROM,
 				battClock,

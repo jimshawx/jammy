@@ -64,7 +64,7 @@ namespace Jammy.Core.Custom
 			status = CopperStatus.Stopped;
 		}
 
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			if (clock.EndOfFrame())
 			{

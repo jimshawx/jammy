@@ -143,7 +143,7 @@ namespace Jammy.Core
 				for (;;)
 				{
 					cpuClock.WaitForTick();
-					cpu.Emulate(0);
+					cpu.Emulate();
 				}
 			});
 			t.Name = "CPU";
@@ -168,7 +168,7 @@ namespace Jammy.Core
 
 		public void RunEmulations(ulong ns)
 		{
-			emulations.ForEach(x => x.Emulate(ns));
+			emulations.ForEach(x => x.Emulate());
 			clock.AllThreadsFinished();
 			agnus.FlushBitplanes();
 		}

@@ -41,22 +41,22 @@ namespace Jammy.Core.IO.Windows
 		private ulong mouseTime = 0;
 		private ulong joystickTime = 0;
 
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			if (!emulationWindow.IsActive())
 				return;
 
-			EmulateMouse(cycles);
-			EmulateJoystick(cycles);
+			EmulateMouse();
+			EmulateJoystick();
 		}
 
-		public void EmulateJoystick(ulong cycles)
+		public void EmulateJoystick()
 		{
-			joystickTime += cycles;
+			joystickTime++;
 
-			if (joystickTime > 10000)
+			if (joystickTime > 1000)
 			{
-				joystickTime -= 10000;
+				joystickTime -= 1000;
 
 				if (((GetAsyncKeyState((int)VK.VK_SPACE)&0x8000)!=0) || ((GetAsyncKeyState((int)'Z') & 0x8000) != 0))
 					pra &= ~(1u << 7);
@@ -76,13 +76,13 @@ namespace Jammy.Core.IO.Windows
 			}
 		}
 
-		public void EmulateMouse(ulong cycles)
+		public void EmulateMouse()
 		{
-			mouseTime += cycles;
+			mouseTime ++;
 
-			if (mouseTime > 40000)
+			if (mouseTime > 5000)
 			{
-				mouseTime -= 40000;
+				mouseTime -= 5000;
 
 				//CIAA pra, bit 6 port 0 left mouse/joystick fire, inverted logic, 0 closed, 1 open
 				//CIAA pra, bit 7 port 1 left mouse/joystick fire

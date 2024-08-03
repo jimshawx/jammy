@@ -11,6 +11,6 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IEmulate : IReset
 	{
-		public void Emulate(ulong cycles);
+		public void Emulate();
 	}
 }

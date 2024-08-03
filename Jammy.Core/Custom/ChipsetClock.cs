@@ -33,24 +33,17 @@ public class ChipsetClock : IChipsetClock
 	public uint HorizontalPos { get; private set; }
 	public uint VerticalPos { get; private set; }
 	public int FrameCount { get; private set; }
-
+	public uint Tick { get; private set; }
 	private bool startOfFrame;
 	private bool endOfFrame;
 	private bool startOfLine;
 	private bool endOfLine;
 
-	//private volatile bool suspended = false;
-	//private SpinWait suspendedSpinner = new SpinWait();
-
-	public void Emulate(ulong cycles)
+	public void Emulate()
 	{
-		//if (suspended)
-		//{
-		//	suspendedSpinner.SpinOnce();
-		//	return;
-		//}
-
 		startOfFrame = endOfFrame = endOfLine = startOfLine = false;
+
+		Tick++;
 
 		if (HorizontalPos == 0)
 			startOfLine = true;

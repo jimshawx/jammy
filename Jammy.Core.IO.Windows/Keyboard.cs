@@ -145,7 +145,7 @@ namespace Jammy.Core.IO.Windows
 		}
 
 		private uint keyTimer = 0;
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			keyTimer++;
 			if (keyTimer >= 10)

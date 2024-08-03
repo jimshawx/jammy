@@ -53,7 +53,7 @@ public class ChipsetDebugger : IChipsetDebugger
 	}
 
 	private string regmsg = string.Empty;
-	public void Emulate(ulong cycles)
+	public void Emulate()
 	{
 		if (clock.StartOfLine())
 			StartOfLine();

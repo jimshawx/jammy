@@ -23,7 +23,7 @@ public class CPUClock : ICPUClock
 		this.logger = logger;
 	}
 
-	public void Emulate(ulong cycles)
+	public void Emulate()
 	{
 		clock.WaitForTick();
 		clock.Ack();
@@ -37,6 +37,7 @@ public class CPUClock : ICPUClock
 	public void WaitForTick()
 	{
 		//uint c = clock.HorizontalPos;
+		//while (c == clock.HorizontalPos) ;
 		//SpinWait.SpinUntil(()=>clock.HorizontalPos != c);
 	}
 }

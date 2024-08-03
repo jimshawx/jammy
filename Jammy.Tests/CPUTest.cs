@@ -165,7 +165,7 @@ namespace Jammy.Tests
 
 			public void Emulate()
 			{
-				cpu.Emulate(1);
+				cpu.Emulate();
 			}
 
 			public string Disassemble(uint address)

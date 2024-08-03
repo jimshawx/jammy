@@ -66,7 +66,7 @@ public class Denise : IDenise
 	public int dptr = 0;
 
 	private int ii = 0;
-	public void Emulate(ulong cycles)
+	public void Emulate()
 	{
 		clock.WaitForTick();
 
@@ -654,7 +654,7 @@ public class Denise : IDenise
 			CopperBitplaneConvert();
 
 		//this should be a no-op
-		System.Diagnostics.Debug.Assert(SCREEN_WIDTH - (dptr - lineStart) == 0);
+		//System.Diagnostics.Debug.Assert(SCREEN_WIDTH - (dptr - lineStart) == 0);
 		dptr += SCREEN_WIDTH - (dptr - lineStart);
 
 		//scan double

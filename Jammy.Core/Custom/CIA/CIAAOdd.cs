@@ -62,12 +62,12 @@ namespace Jammy.Core.Custom.CIA
 
 		private ulong lastTick = 0;
 		private int divisor=0;
-		//private readonly object locker = new object();
-		public override void Emulate(ulong cycles)
+		private readonly object locker = new object();
+		public override void Emulate()
 		{
 			clock.WaitForTick();
 
-			//lock (locker)
+			lock (locker)
 			{
 				if (psuClock.CurrentTick != lastTick)
 				{
@@ -76,10 +76,10 @@ namespace Jammy.Core.Custom.CIA
 				}
 
 				divisor++;
-				if (divisor == 10)
+				if (divisor == 4)
 				{
 					divisor = 0;
-					base.Emulate(cycles);
+					base.Emulate();
 				}
 			}
 
@@ -102,7 +102,7 @@ namespace Jammy.Core.Custom.CIA
 
 		public override uint ReadByte(uint insaddr, uint address)
 		{
-			//lock (locker)
+			lock (locker)
 			{
 				byte value;
 				byte reg = GetReg(address, Size.Byte);
@@ -132,7 +132,7 @@ namespace Jammy.Core.Custom.CIA
 
 		public override void WriteByte(uint insaddr, uint address, uint value)
 		{
-			//lock (locker)
+			lock (locker)
 			{
 				byte reg = GetReg(address, Size.Byte);
 

@@ -221,6 +221,7 @@ namespace Jammy.Core.Interface.Interfaces
 		uint HorizontalPos { get; }
 		uint VerticalPos { get; }
 		int FrameCount { get; }
+		uint Tick { get; }
 		bool StartOfLine(); 
 		bool EndOfLine();
 		bool StartOfFrame();

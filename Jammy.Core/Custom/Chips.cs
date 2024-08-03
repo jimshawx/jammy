@@ -122,7 +122,24 @@ namespace Jammy.Core.Custom
 				uint r1 = Read(insaddr, address + 2, Size.Word);
 				return (r0 << 16) | r1;
 			}
-
+			/*
+			 these are the only chip registers that can be read from outside
+			BLTDDAT
+			VHPOSR
+			POT0DAT
+			SERDATR
+			INTREQR
+			DMACONR
+			DSKDATR
+			POT1DAT
+			DSKBYTR
+			DENISEID
+			VPOSR
+			JOY0DAT
+			POTINP
+			INTENAR
+			HHPOSR
+			 */
 			//lock (locker)
 			{
 				int reg = REG(address);

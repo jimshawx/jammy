@@ -122,7 +122,7 @@ namespace Jammy.Core.Floppy
 
 		private const int stateCycles = 10;
 
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			for (int i = 0; i < drive.Length; i++)
 			{
@@ -134,7 +134,7 @@ namespace Jammy.Core.Floppy
 					{
 						//while the motor is running, the disk generates an INDEX signal each revolution.
 						//this signal is attached to the FLG interrupt pin on CIAB
-						drive[i].indexCounter -= (int)cycles;
+						drive[i].indexCounter--;
 						if (drive[i].indexCounter < 0)
 						{
 							if (verbose)
@@ -173,7 +173,7 @@ namespace Jammy.Core.Floppy
 
 			if (diskInterruptPending != -1)
 			{
-				diskInterruptPending -= (int)cycles;
+				diskInterruptPending--;
 				if (diskInterruptPending < 0)
 				{
 					interrupt.AssertInterrupt(Interrupt.DSKBLK);

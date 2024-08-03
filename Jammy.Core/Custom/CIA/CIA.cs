@@ -61,7 +61,7 @@ namespace Jammy.Core.Custom.CIA
 		private bool todStopped;
 		private bool todLatched;
 
-		public virtual void Emulate(ulong cycles)
+		public virtual void Emulate()
 		{
 			//timer A running
 			if ((regs[CIA.CRA] & (uint)CR.START) != 0)

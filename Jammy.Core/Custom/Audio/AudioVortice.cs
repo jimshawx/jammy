@@ -48,7 +48,7 @@ namespace Jammy.Core.Custom.Audio
 		//On NTSC there are 262 scanlines @ 60Hz, so the rate is 2*60*262Hz = 31.440KHz max
 
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			if (clock.EndOfLine())
 			{

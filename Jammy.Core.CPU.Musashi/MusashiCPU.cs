@@ -75,7 +75,7 @@ namespace Jammy.Core.CPU.Musashi
 		}
 
 		private uint instructionStartPC = 0;
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			CheckInterrupt();
 

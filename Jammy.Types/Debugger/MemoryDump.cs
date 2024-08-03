@@ -117,6 +117,9 @@ namespace Jammy.Types.Debugger
 			uint start = range.start;
 			ulong size = range.size;
 
+			if (addressToLine.ContainsKey(baseAddress + start))
+				return string.Empty;
+
 			for (ulong i = start; i < start + size-32; i += 32)
 			{
 				addressToLine.Add((uint)(i+baseAddress), line++);

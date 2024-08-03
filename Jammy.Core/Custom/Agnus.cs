@@ -63,6 +63,7 @@ public class Agnus : IAgnus
 	private readonly IInterrupt interrupt;
 	private readonly IChipRAM chipRam;
 	private readonly ITrapdoorRAM trapdoorRam;
+	private readonly IChips custom;
 	private readonly IChipsetDebugger debugger;
 	private readonly EmulationSettings settings;
 	private readonly ILogger<Agnus> logger;
@@ -75,7 +76,7 @@ public class Agnus : IAgnus
 	//public const int DMA_END = 0xF0;
 
 	public Agnus(IChipsetClock clock, IDenise denise, IInterrupt interrupt,
-		IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IChipsetDebugger debugger,
+		IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IChips custom, IChipsetDebugger debugger,
 		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
 	{
 		this.clock = clock;
@@ -83,6 +84,7 @@ public class Agnus : IAgnus
 		this.interrupt = interrupt;
 		chipRam = chipRAM;
 		trapdoorRam = trapdoorRAM;
+		this.custom = custom;
 		this.debugger = debugger;
 		this.settings = settings.Value;
 		this.logger = logger;
@@ -96,7 +98,7 @@ public class Agnus : IAgnus
 		lineState = DMALineState.LineStart;
 	}
 
-	public void Emulate(ulong cycles)
+	public void Emulate()
 	{
 		//clock.WaitForTick();
 
@@ -601,7 +603,10 @@ noBitplaneDMA:
 				}
 				break;
 
-			case ChipRegs.VHPOSR: value = (ushort)((clock.VerticalPos << 8) | (clock.HorizontalPos & 0x00ff)); break;
+			case ChipRegs.VHPOSR: value = (ushort)((clock.VerticalPos << 8) | (clock.HorizontalPos & 0x00ff)); 
+				if ((value&0xff00) == 0xf000) logger.LogTrace($"0 {value:X4} {clock.Tick}");
+				//if ((value & 0xff00) == 0xf100) logger.LogTrace($"1 {value:X4} {clock.Tick}");
+				break;
 
 			//bitplane specific
 
@@ -910,12 +915,16 @@ noBitplaneDMA:
 	public bool IsMapped(uint address)
 	{
 		return chipRam.IsMapped(address)
-		       || trapdoorRam.IsMapped(address);
+		       || trapdoorRam.IsMapped(address)
+		       || custom.IsMapped(address);
 	}
 
 	public List<MemoryRange> MappedRange()
 	{
-		return chipRam.MappedRange().Concat(trapdoorRam.MappedRange()).ToList();
+		return chipRam.MappedRange()
+			.Concat(trapdoorRam.MappedRange())
+			.Concat(custom.MappedRange())
+			.ToList();
 	}
 
 	public uint Read(uint insaddr, uint address, Size size)
@@ -927,6 +936,9 @@ noBitplaneDMA:
 
 		if (trapdoorRam.IsMapped(address))
 			return trapdoorRam.Read(insaddr, address, size);
+
+		if (custom.IsMapped(address))
+			return custom.Read(insaddr, address, size);
 
 		return 0;
 	}
@@ -942,7 +954,13 @@ noBitplaneDMA:
 		}
 
 		if (trapdoorRam.IsMapped(address))
+		{
 			trapdoorRam.Write(insaddr, address, value, size);
+			return;
+		}
+
+		if (custom.IsMapped(address))
+			custom.Write(insaddr, address, value, size);
 	}
 
 	public List<BulkMemoryRange> ReadBulk()
@@ -959,7 +977,7 @@ noBitplaneDMA:
 
 		if (trapdoorRam.IsMapped(address))
 			return trapdoorRam.DebugRead(address, size);
-
+		
 		return 0;
 	}
 

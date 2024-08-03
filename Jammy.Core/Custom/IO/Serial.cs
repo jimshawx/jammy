@@ -39,7 +39,7 @@ namespace Jammy.Core.Custom.IO
 			tbeCounter = 2;
 		}
 
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			if (tbeCounter > 0)
 			{

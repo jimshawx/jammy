@@ -33,22 +33,21 @@ public class PSUClock : IPSUClock
 
 
 		//beamLines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
-		psuDivisor = settings.Value.VideoFormat == VideoFormat.NTSC ? 60u : 50u;
-		psuDivisor = settings.Value.CPUFrequency / psuDivisor;
+		psuDivisor = settings.Value.CPUFrequency / (settings.Value.VideoFormat == VideoFormat.NTSC ? 60u : 50u);
 	}
 
 	//private ulong beamLines;
-	private ulong psuDivisor;
+	private readonly ulong psuDivisor;
 	private ulong psuTime;
 
 	public ulong CurrentTick { get; private set; }
 
-	public void Emulate(ulong cycles)
+	public void Emulate()
 	{
 		clock.WaitForTick();
 
 		psuTime++;
-		if (psuTime == psuDivisor)
+		if (psuTime == psuDivisor/12)
 		{
 			CurrentTick++;
 			psuTime = 0;

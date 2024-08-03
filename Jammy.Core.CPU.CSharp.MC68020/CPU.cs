@@ -116,7 +116,7 @@ namespace Jammy.Core.CPU.CSharp.MC68020
 			return false;
 		}
 
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			instructionStartPC = pc;
 

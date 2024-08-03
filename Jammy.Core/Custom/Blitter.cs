@@ -68,7 +68,7 @@ namespace Jammy.Core.Custom
 
 		private BlitterState status = BlitterState.Idle;
 
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			//clock.WaitForTick();
 			while (RunStateMachine()) ;
