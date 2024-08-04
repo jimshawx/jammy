@@ -201,7 +201,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void EnterVisibleArea();
 		void ExitVisibleArea();
 		void WriteBitplanes(ulong[] planes);
-		void WriteSprite(int s, ushort[] sprdata, ushort[] sprdatb, ushort[] sprctl);
+		void WriteSprite(int s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl);
 		public uint[] DebugGetPalette();
 	}
 

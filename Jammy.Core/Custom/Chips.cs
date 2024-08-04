@@ -102,111 +102,126 @@ namespace Jammy.Core.Custom
 			return (int)(address & 0x0000fffe) >> 1;
 		}
 
+		private object locker = new object();
+
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			uint originalAddress = address;
-			address |= 0xdf0000;
-			address &= 0xdffffe;
-
-			if (size == Size.Byte)
+			lock (locker)
 			{
-				uint r0 = Read(insaddr, address, Size.Word);
-				byte r =(byte)(((originalAddress & 1)!=0)?r0:(r0>>8));
-				//if ((originalAddress & 1) != 0) logger.LogTrace($"Read from odd address {originalAddress:X8} {r0:X4} {r:X2} {ChipRegs.Name(address)}");
-				return r;
-			}
+				uint originalAddress = address;
+				address |= 0xdf0000;
+				address &= 0xdffffe;
 
-			if (size == Size.Long)
-			{
-				uint r0 = Read(insaddr, address, Size.Word);
-				uint r1 = Read(insaddr, address + 2, Size.Word);
-				return (r0 << 16) | r1;
-			}
-			/*
-			 these are the only chip registers that can be read from outside
-			BLTDDAT
-			VHPOSR
-			POT0DAT
-			SERDATR
-			INTREQR
-			DMACONR
-			DSKDATR
-			POT1DAT
-			DSKBYTR
-			DENISEID
-			VPOSR
-			JOY0DAT
-			POTINP
-			INTENAR
-			HHPOSR
-			 */
-			//lock (locker)
-			{
-				int reg = REG(address);
-
-				if (address == 0xdf9000 || address == 0xdfa000)
+				if (size == Size.Byte)
 				{
-					logger.LogTrace($"R Out Of Range {address:X8} {originalAddress:X8}");
-					return 0;
+					uint r0 = Read(insaddr, address, Size.Word);
+					byte r = (byte)(((originalAddress & 1) != 0) ? r0 : (r0 >> 8));
+					//if ((originalAddress & 1) != 0) logger.LogTrace($"Read from odd address {originalAddress:X8} {r0:X4} {r:X2} {ChipRegs.Name(address)}");
+					return r;
 				}
 
-				if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
-					(address >= ChipRegs.BPL1PTH && address <= ChipRegs.SPR7DATB) ||
-					address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
-					|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
-				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-				    || address == ChipRegs.FMODE)
+				if (size == Size.Long)
 				{
-					regs[reg] = agnus.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2 || address == ChipRegs.CLXDAT
-				         || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31))
-				{
-					regs[reg] = denise.Read(insaddr, address);
-				}
-				else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
-				{
-					regs[reg] = copper.Read(insaddr, address);
-				}
-				else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
-				{
-					regs[reg] = blitter.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
-			         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT)
-				{
-					regs[reg] = diskDrives.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
-				         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
-				{
-					regs[reg] = mouse.Read(insaddr, address);
-				}
-				else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
-				{
-					regs[reg] = audio.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.ADKCON) { /* can't read here */ }
-				else if (address == ChipRegs.ADKCONR)
-				{
-					regs[reg] = (ushort)(audio.Read(insaddr, address)|diskDrives.Read(insaddr, address));
-				}
-				else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ || 
-			         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR 
-			         /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
-				{
-
-				}
-				else if (address == ChipRegs.SERDATR || address == ChipRegs.SERDAT || address == ChipRegs.SERPER)
-				{
-					regs[reg] = serial.Read(insaddr, address);
-				}
-				else
-				{
-					logger.LogTrace($"R {ChipRegs.Name(address)} {originalAddress:X8} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
+					uint r0 = Read(insaddr, address, Size.Word);
+					uint r1 = Read(insaddr, address + 2, Size.Word);
+					return (r0 << 16) | r1;
 				}
 
-				return (uint)regs[reg];
+				/*
+				 these are the only chip registers that can be read from outside
+				BLTDDAT
+				VHPOSR
+				POT0DAT
+				SERDATR
+				INTREQR
+				DMACONR
+				DSKDATR
+				POT1DAT
+				DSKBYTR
+				DENISEID
+				VPOSR
+				JOY0DAT
+				POTINP
+				INTENAR
+				HHPOSR
+				 */
+				//lock (locker)
+				{
+					int reg = REG(address);
+
+					if (address == 0xdf9000 || address == 0xdfa000)
+					{
+						logger.LogTrace($"R Out Of Range {address:X8} {originalAddress:X8}");
+						return 0;
+					}
+
+					if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
+					    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.SPR7DATB) ||
+					    address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW ||
+					    address == ChipRegs.VHPOSW
+					    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL ||
+					    address == ChipRegs.DIWHIGH
+					    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
+					    || address == ChipRegs.FMODE)
+					{
+						regs[reg] = agnus.Read(insaddr, address);
+					}
+					else if (address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2 || address == ChipRegs.CLXDAT
+					         || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31))
+					{
+						regs[reg] = denise.Read(insaddr, address);
+					}
+					else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
+					{
+						regs[reg] = copper.Read(insaddr, address);
+					}
+					else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
+					{
+						regs[reg] = blitter.Read(insaddr, address);
+					}
+					else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
+					         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL ||
+					         address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT)
+					{
+						regs[reg] = diskDrives.Read(insaddr, address);
+					}
+					else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO ||
+					         address == ChipRegs.POTGOR
+					         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT ||
+					         address == ChipRegs.JOYTEST)
+					{
+						regs[reg] = mouse.Read(insaddr, address);
+					}
+					else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
+					{
+						regs[reg] = audio.Read(insaddr, address);
+					}
+					else if (address == ChipRegs.ADKCON)
+					{
+						/* can't read here */
+					}
+					else if (address == ChipRegs.ADKCONR)
+					{
+						regs[reg] = (ushort)(audio.Read(insaddr, address) | diskDrives.Read(insaddr, address));
+					}
+					else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ ||
+					         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR
+					         /*|| address == ChipRegs.LISAID*/ || address == ChipRegs.NO_OP)
+					{
+
+					}
+					else if (address == ChipRegs.SERDATR || address == ChipRegs.SERDAT || address == ChipRegs.SERPER)
+					{
+						regs[reg] = serial.Read(insaddr, address);
+					}
+					else
+					{
+						logger.LogTrace(
+							$"R {ChipRegs.Name(address)} {originalAddress:X8} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
+					}
+
+					return (uint)regs[reg];
+				}
 			}
 		}
 
@@ -214,210 +229,235 @@ namespace Jammy.Core.Custom
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			uint originalAddress = address;
-			address |= 0xdf0000;
-			address &= 0xdffffe;
-
-			if (size == Size.Byte)
+			lock (locker)
 			{
-				//if ((originalAddress & 1) != 0) logger.LogTrace($"Write to odd address {originalAddress:X8},{value:X2} {ChipRegs.Name(address)}");
-				value &= 0xff;
-				value |= value<<8;
-				Write(insaddr, address, value, Size.Word);
-				return;
+				uint originalAddress = address;
+				address |= 0xdf0000;
+				address &= 0xdffffe;
 
-				/*
-	If AGA (or maybe any 68020+ hardware?)
-	- if odd address: 00xx is written to even address
-	- if even address: xxxx is written. (duplicated)
-
-	If "custom byte write bug":
-	- if odd address: 00xx is written to even address.
-	- if even address: xx00 is written.
-				*/
-
-				//logger.LogTrace($"Custom write to byte {originalAddress:X8}");
-				if ((originalAddress & 1) != 0)
+				if (size == Size.Byte)
+				{
+					//if ((originalAddress & 1) != 0) logger.LogTrace($"Write to odd address {originalAddress:X8},{value:X2} {ChipRegs.Name(address)}");
+					value &= 0xff;
+					value |= value << 8;
 					Write(insaddr, address, value, Size.Word);
-				else
-					Write(insaddr, address, value << 8, Size.Word);
-				return;
-			}
+					return;
 
+					/*
+		If AGA (or maybe any 68020+ hardware?)
+		- if odd address: 00xx is written to even address
+		- if even address: xxxx is written. (duplicated)
 
-			if (size == Size.Long)
-			{
-				//logger.LogTrace($"Custom write to long {address:X8}");
-				Write(insaddr, address, value >> 16, Size.Word);
-				Write(insaddr, address + 2, value, Size.Word);
-				return;
-			}
+		If "custom byte write bug":
+		- if odd address: 00xx is written to even address.
+		- if even address: xx00 is written.
+					*/
 
-			//lock (locker)
-			{
-				int reg = REG(address);
-
-				if (address == ChipRegs.DMACON)
-				{
-					var p = regs[reg];
-					if ((value & 0x8000) != 0)
-						regs[reg] |= (ushort)(value&0x9fff);//can't set BBUSY or BZERO
+					//logger.LogTrace($"Custom write to byte {originalAddress:X8}");
+					if ((originalAddress & 1) != 0)
+						Write(insaddr, address, value, Size.Word);
 					else
-						regs[reg] &= (ushort)(~value|0x6000);//can't clear BBUSY or BZERO
-
-					if ((regs[reg] & (int)DMA.COPEN) != (p & (int)DMA.COPEN))
-						logger.LogTrace($"COPEN {((regs[reg] & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8}");
-					if ((regs[reg] & (int)DMA.BLTEN) != (p & (int)DMA.BLTEN))
-						logger.LogTrace($"BLTEN {((regs[reg] & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8}");
-
-					audio.WriteDMACON((ushort)(regs[reg]&0x7fff));
-
-					//add the new bits from DMACON, but leave BBUSY and BZERO alone
-					regs[REG(ChipRegs.DMACONR)] = (ushort)((regs[REG(ChipRegs.DMACONR)] & 0x6000) | (regs[reg] & 0x1fff));
+						Write(insaddr, address, value << 8, Size.Word);
+					return;
 				}
-				else if (address == ChipRegs.DMACONR) { /* can't write here */ }
-				else if (address == ChipRegs.INTENA)
+
+
+				if (size == Size.Long)
 				{
-					//logger.LogTrace($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");
-					if ((value & 0x8000) != 0)
-						regs[reg] |= (ushort)value;
-					else
-						regs[reg] &= (ushort)~value;
-					//logger.LogTrace($"    -> {Convert.ToString(regs[reg],2).PadLeft(16,'0')} {regs[reg]:X4}");
-
-					//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("INTEN ");
-					//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("EXTER ");
-					//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("DSKSYN ");
-					//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("RBF ");
-					//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("AUD3 ");
-					//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("AUD2 ");
-					//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("AUD1 ");
-					//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("AUD0 ");
-					//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLIT ");
-					//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("VERTB ");
-					//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("COPER ");
-					//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("PORTS ");
-					//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("SOFT ");
-					//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("DSKBLK ");
-					//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
-					//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
-					audio.WriteINTENA((ushort)(regs[reg]&0x7fff));
-
-					regs[REG(ChipRegs.INTENAR)] = (ushort)(regs[reg]&0x7fff);
-
-					interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
+					//logger.LogTrace($"Custom write to long {address:X8}");
+					Write(insaddr, address, value >> 16, Size.Word);
+					Write(insaddr, address + 2, value, Size.Word);
+					return;
 				}
-				else if (address == ChipRegs.INTENAR) { /* can't write here */}
-				else if (address == ChipRegs.INTREQ)
+
+				//lock (locker)
 				{
-					if ((value & 0x8000) != 0)
+					int reg = REG(address);
+
+					if (address == ChipRegs.DMACON)
 					{
-						regs[reg] |= (ushort)value;
+						var p = regs[reg];
+						if ((value & 0x8000) != 0)
+							regs[reg] |= (ushort)(value & 0x9fff); //can't set BBUSY or BZERO
+						else
+							regs[reg] &= (ushort)(~value | 0x6000); //can't clear BBUSY or BZERO
+
+						if ((regs[reg] & (int)DMA.COPEN) != (p & (int)DMA.COPEN))
+							logger.LogTrace($"COPEN {((regs[reg] & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8}");
+						if ((regs[reg] & (int)DMA.BLTEN) != (p & (int)DMA.BLTEN))
+							logger.LogTrace($"BLTEN {((regs[reg] & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8}");
+
+						audio.WriteDMACON((ushort)(regs[reg] & 0x7fff));
+
+						//add the new bits from DMACON, but leave BBUSY and BZERO alone
+						regs[REG(ChipRegs.DMACONR)] =
+							(ushort)((regs[REG(ChipRegs.DMACONR)] & 0x6000) | (regs[reg] & 0x1fff));
+					}
+					else if (address == ChipRegs.DMACONR)
+					{
+						/* can't write here */
+					}
+					else if (address == ChipRegs.INTENA)
+					{
+						//logger.LogTrace($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");
+						if ((value & 0x8000) != 0)
+							regs[reg] |= (ushort)value;
+						else
+							regs[reg] &= (ushort)~value;
+						//logger.LogTrace($"    -> {Convert.ToString(regs[reg],2).PadLeft(16,'0')} {regs[reg]:X4}");
+
+						//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("INTEN ");
+						//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("EXTER ");
+						//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("DSKSYN ");
+						//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("RBF ");
+						//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("AUD3 ");
+						//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("AUD2 ");
+						//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("AUD1 ");
+						//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("AUD0 ");
+						//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLIT ");
+						//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("VERTB ");
+						//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("COPER ");
+						//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("PORTS ");
+						//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("SOFT ");
+						//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("DSKBLK ");
+						//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
+						//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
+						audio.WriteINTENA((ushort)(regs[reg] & 0x7fff));
+
+						regs[REG(ChipRegs.INTENAR)] = (ushort)(regs[reg] & 0x7fff);
+
+						interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
+					}
+					else if (address == ChipRegs.INTENAR)
+					{
+						/* can't write here */
+					}
+					else if (address == ChipRegs.INTREQ)
+					{
+						if ((value & 0x8000) != 0)
+						{
+							regs[reg] |= (ushort)value;
+							//logger.LogTrace($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
+						}
+						else
+						{
+							regs[reg] &= (ushort)~value;
+						}
+
 						//logger.LogTrace($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
+
+						//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("INTEN ");
+						//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("EXTER ");
+						//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("DSKSYN ");
+						//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("RBF ");
+						//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("AUD3 ");
+						//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("AUD2 ");
+						//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("AUD1 ");
+						//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("AUD0 ");
+						//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLIT ");
+						//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("VERTB ");
+						//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("COPER ");
+						//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("PORTS ");
+						//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("SOFT ");
+						//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("DSKBLK ");
+						//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
+						//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
+
+						audio.WriteINTREQ((ushort)(regs[reg] & 0x7fff));
+						serial.WriteINTREQ((ushort)(regs[reg] & 0x7fff));
+
+						regs[REG(ChipRegs.INTREQR)] = (ushort)(regs[reg] & 0x7fff);
+
+						interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
+					}
+					else if (address == ChipRegs.INTREQR)
+					{
+						/* can't write here */
+					}
+					else if (address == ChipRegs.LISAID && settings.ChipSet == ChipSet.AGA)
+					{
+						/* can't write here on AGA */
 					}
 					else
 					{
-						regs[reg] &= (ushort)~value;
+						regs[reg] = (ushort)value;
 					}
-				
-					//logger.LogTrace($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
 
-					//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("INTEN ");
-					//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("EXTER ");
-					//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("DSKSYN ");
-					//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("RBF ");
-					//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("AUD3 ");
-					//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("AUD2 ");
-					//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("AUD1 ");
-					//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("AUD0 ");
-					//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLIT ");
-					//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("VERTB ");
-					//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("COPER ");
-					//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("PORTS ");
-					//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("SOFT ");
-					//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("DSKBLK ");
-					//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
-					//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
+					if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
+					    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.BPL8PTL) ||
+					    address == ChipRegs.BPL1MOD || address == ChipRegs.BPL2MOD ||
+					    (address >= ChipRegs.BPL1DAT && address <= ChipRegs.SPR7DATB) ||
+					    address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW ||
+					    address == ChipRegs.VHPOSW
+					    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL
+					    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
+					    || address == ChipRegs.BEAMCON0)
+					{
+						agnus.Write(insaddr, address, (ushort)value);
+					}
+					else if (address == ChipRegs.DIWSTRT || address == ChipRegs.DIWSTOP ||
+					         address == ChipRegs.DIWHIGH || address == ChipRegs.BPLCON0 || address == ChipRegs.FMODE)
+					{
+						agnus.Write(insaddr, address, (ushort)value);
+						denise.Write(insaddr, address, (ushort)value);
+					}
+					else if (address == ChipRegs.BPLCON1 || address == ChipRegs.BPLCON2 ||
+					         address == ChipRegs.BPLCON3 || address == ChipRegs.BPLCON4 || address == ChipRegs.CLXCON ||
+					         address == ChipRegs.CLXCON2
+					         || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31))
+					{
+						denise.Write(insaddr, address, (ushort)value);
+					}
+					else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
+					{
+						copper.Write(insaddr, address, (ushort)value);
+					}
+					else if (address >= ChipRegs.BLTCON0 && address <= ChipRegs.BLTADAT || address == ChipRegs.BLTDDAT)
+					{
+						blitter.Write(insaddr, address, (ushort)value);
+					}
+					else if (address == ChipRegs.ADKCON)
+					{
+						diskDrives.Write(insaddr, address, (ushort)value);
+						audio.Write(insaddr, address, (ushort)value);
+					}
+					else if (address == ChipRegs.ADKCONR)
+					{
+						/* can't write here */
+					}
+					else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
+					         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL ||
+					         address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT)
+					{
+						diskDrives.Write(insaddr, address, (ushort)value);
+					}
+					else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO ||
+					         address == ChipRegs.POTGOR
+					         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT ||
+					         address == ChipRegs.JOYTEST)
+					{
+						mouse.Write(insaddr, address, (ushort)value);
+					}
+					else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
+					{
+						audio.Write(insaddr, address, (ushort)value);
+					}
 
-					audio.WriteINTREQ((ushort)(regs[reg]&0x7fff));
-					serial.WriteINTREQ((ushort)(regs[reg] & 0x7fff));
+					else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ ||
+					         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR ||
+					         address == ChipRegs.INTREQR ||
+					         /*address == ChipRegs.LISAID  ||*/ address == ChipRegs.NO_OP)
+					{
 
-					regs[REG(ChipRegs.INTREQR)] = (ushort)(regs[reg]&0x7fff);
-
-					interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
-				}
-				else if (address == ChipRegs.INTREQR) { /* can't write here */}
-				else if (address == ChipRegs.LISAID && settings.ChipSet == ChipSet.AGA) { /* can't write here on AGA */}
-				else
-				{
-					regs[reg] = (ushort)value;
-				}
-
-				if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
-				    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.BPL8PTL) ||
-					 address == ChipRegs.BPL1MOD || address == ChipRegs.BPL2MOD ||
-				     (address >= ChipRegs.BPL1DAT && address <= ChipRegs.SPR7DATB) ||
-					   address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
-				    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL 
-				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-				    || address == ChipRegs.BEAMCON0)
-				{
-					agnus.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.DIWSTRT || address == ChipRegs.DIWSTOP || 
-				         address == ChipRegs.DIWHIGH || address == ChipRegs.BPLCON0 || address == ChipRegs.FMODE)
-				{
-					agnus.Write(insaddr, address, (ushort)value);
-					denise.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.BPLCON1 || address == ChipRegs.BPLCON2 ||
-				         address == ChipRegs.BPLCON3 || address == ChipRegs.BPLCON4 || address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2
-				         || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31))
-				{
-					denise.Write(insaddr, address, (ushort)value);
-				}
-				else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
-				{
-					copper.Write(insaddr, address, (ushort)value);
-				}
-				else if (address >= ChipRegs.BLTCON0 && address <= ChipRegs.BLTADAT || address == ChipRegs.BLTDDAT)
-				{
-					blitter.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.ADKCON)
-				{
-					diskDrives.Write(insaddr, address, (ushort)value);
-					audio.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.ADKCONR) { /* can't write here */ }
-				else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
-				         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT )
-				{
-					diskDrives.Write(insaddr, address, (ushort) value);
-				}
-				else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
-				         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
-				{
-					mouse.Write(insaddr, address, (ushort)value);
-				}
-				else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
-				{
-					audio.Write(insaddr, address, (ushort)value);
-				}
-
-				else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ ||
-				         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR ||
-				         /*address == ChipRegs.LISAID  ||*/ address == ChipRegs.NO_OP)
-				{
-
-				}
-				else if (address == ChipRegs.SERDAT || address == ChipRegs.SERDATR || address == ChipRegs.SERPER)
-				{
-					serial.Write(insaddr, address, (ushort)value);
-				}
-				else 
-				{
-					logger.LogTrace($"W {ChipRegs.Name(address)} {originalAddress:X8} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+					}
+					else if (address == ChipRegs.SERDAT || address == ChipRegs.SERDATR || address == ChipRegs.SERPER)
+					{
+						serial.Write(insaddr, address, (ushort)value);
+					}
+					else
+					{
+						logger.LogTrace($"W {ChipRegs.Name(address)} {originalAddress:X8} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+					}
 				}
 			}
 		}

@@ -132,7 +132,7 @@ public class Denise : IDenise
 		}
 	}
 
-	public void WriteSprite(int s, ushort[] sprdata, ushort[] sprdatb, ushort[] sprctl)
+	public void WriteSprite(int s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl)
 	{
 		sprdatapix[s] = sprdata[s];
 		sprdatbpix[s] = sprdatb[s];
@@ -191,8 +191,8 @@ public class Denise : IDenise
 		}
 	}
 
-	private readonly ushort[] sprdatapix = new ushort[8];
-	private readonly ushort[] sprdatbpix = new ushort[8];
+	private readonly ulong[] sprdatapix = new ulong[8];
+	private readonly ulong[] sprdatbpix = new ulong[8];
 	private readonly uint[] spriteMask = new uint[8];
 	private readonly int[] clx = new int[8];
 
