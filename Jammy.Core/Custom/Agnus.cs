@@ -630,136 +630,39 @@ noBitplaneDMA:
 		switch (address)
 		{
 			case ChipRegs.VPOSR:
-				value = (ushort)((clock.VerticalPos >> 8) & 1);//todo: different on hires chips
+				value = (ushort)((clock.VerticalPos >> 8) & 1); //todo: different on hires chips
 				if (settings.VideoFormat == VideoFormat.NTSC)
-					value |= (ushort)((clock.VerticalPos & 1) << 7);//toggle LOL each alternate line (NTSC only)
+					value |= (ushort)((clock.VerticalPos & 1) << 7); //toggle LOL each alternate line (NTSC only)
 
 				//if we're in interlace mode
 				if ((bplcon0 & (1 << 2)) != 0)
 				{
-					value |= (ushort)((clock.VerticalPos & 1) << 15);//set LOF=1/0 on alternate frames
+					value |= (ushort)((clock.VerticalPos & 1) << 15); //set LOF=1/0 on alternate frames
 				}
 				else
 				{
-					value |= 1 << 15;//set LOF=1
+					value |= 1 << 15; //set LOF=1
 				}
 
 				value &= 0x80ff;
 				switch (settings.ChipSet)
 				{
-					case ChipSet.AGA: value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC ? 0x3300 : 0x2300); break; //Alice
-					case ChipSet.ECS: value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC ? 0x3100 : 0x2100); break; //Fat Agnus
-					case ChipSet.OCS: value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC ? 0x0000 : 0x1000); break;//OCS
+					case ChipSet.AGA:
+						value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC ? 0x3300 : 0x2300);
+						break; //Alice
+					case ChipSet.ECS:
+						value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC ? 0x3100 : 0x2100);
+						break; //Fat Agnus
+					case ChipSet.OCS:
+						value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC ? 0x0000 : 0x1000);
+						break; //OCS
 				}
+
 				break;
 
-			case ChipRegs.VHPOSR: value = (ushort)((clock.VerticalPos << 8) | (clock.HorizontalPos & 0x00ff)); 
+			case ChipRegs.VHPOSR:
+				value = (ushort)((clock.VerticalPos << 8) | (clock.HorizontalPos & 0x00ff));
 				break;
-
-			//bitplane specific
-
-			case ChipRegs.BPL1MOD: value = (ushort)bpl1mod; break;
-			case ChipRegs.BPL2MOD: value = (ushort)bpl2mod; break;
-
-			case ChipRegs.BPLCON0: value = bplcon0; break;
-
-			case ChipRegs.BPL1DAT: value = (ushort)bpldat[0]; break;
-			case ChipRegs.BPL2DAT: value = (ushort)bpldat[1]; break;
-			case ChipRegs.BPL3DAT: value = (ushort)bpldat[2]; break;
-			case ChipRegs.BPL4DAT: value = (ushort)bpldat[3]; break;
-			case ChipRegs.BPL5DAT: value = (ushort)bpldat[4]; break;
-			case ChipRegs.BPL6DAT: value = (ushort)bpldat[5]; break;
-			case ChipRegs.BPL7DAT: value = (ushort)bpldat[6]; break;
-			case ChipRegs.BPL8DAT: value = (ushort)bpldat[7]; break;
-
-			case ChipRegs.BPL1PTL: value = (ushort)bplpt[0]; break;
-			case ChipRegs.BPL1PTH: value = (ushort)(bplpt[0] >> 16); break;
-			case ChipRegs.BPL2PTL: value = (ushort)bplpt[1]; break;
-			case ChipRegs.BPL2PTH: value = (ushort)(bplpt[1] >> 16); break;
-			case ChipRegs.BPL3PTL: value = (ushort)bplpt[2]; break;
-			case ChipRegs.BPL3PTH: value = (ushort)(bplpt[2] >> 16); break;
-			case ChipRegs.BPL4PTL: value = (ushort)bplpt[3]; break;
-			case ChipRegs.BPL4PTH: value = (ushort)(bplpt[3] >> 16); break;
-			case ChipRegs.BPL5PTL: value = (ushort)bplpt[4]; break;
-			case ChipRegs.BPL5PTH: value = (ushort)(bplpt[4] >> 16); break;
-			case ChipRegs.BPL6PTL: value = (ushort)bplpt[5]; break;
-			case ChipRegs.BPL6PTH: value = (ushort)(bplpt[5] >> 16); break;
-			case ChipRegs.BPL7PTL: value = (ushort)bplpt[6]; break;
-			case ChipRegs.BPL7PTH: value = (ushort)(bplpt[6] >> 16); break;
-			case ChipRegs.BPL8PTL: value = (ushort)bplpt[7]; break;
-			case ChipRegs.BPL8PTH: value = (ushort)(bplpt[7] >> 16); break;
-
-			case ChipRegs.DIWSTRT: value = diwstrt; break;
-			case ChipRegs.DIWSTOP: value = diwstop; break;
-			case ChipRegs.DIWHIGH: value = diwhigh; break;
-
-			case ChipRegs.DDFSTRT: value = ddfstrt; break;
-			case ChipRegs.DDFSTOP: value = ddfstop; break;
-
-			case ChipRegs.SPR0PTL: value = (ushort)sprpt[0]; break;
-			case ChipRegs.SPR0PTH: value = (ushort)(sprpt[0] >> 16); break;
-			case ChipRegs.SPR0POS: value = sprpos[0]; break;
-			case ChipRegs.SPR0CTL: value = sprctl[0]; break;
-			case ChipRegs.SPR0DATA: value = (ushort)sprdata[0]; break;
-			case ChipRegs.SPR0DATB: value = (ushort)sprdatb[0]; break;
-
-			case ChipRegs.SPR1PTL: value = (ushort)sprpt[1]; break;
-			case ChipRegs.SPR1PTH: value = (ushort)(sprpt[1] >> 16); break;
-			case ChipRegs.SPR1POS: value = sprpos[1]; break;
-			case ChipRegs.SPR1CTL: value = sprctl[1]; break;
-			case ChipRegs.SPR1DATA: value = (ushort)sprdata[1]; break;
-			case ChipRegs.SPR1DATB: value = (ushort)sprdatb[1]; break;
-
-			case ChipRegs.SPR2PTL: value = (ushort)sprpt[2]; break;
-			case ChipRegs.SPR2PTH: value = (ushort)(sprpt[2] >> 16); break;
-			case ChipRegs.SPR2POS: value = sprpos[2]; break;
-			case ChipRegs.SPR2CTL: value = sprctl[2]; break;
-			case ChipRegs.SPR2DATA: value = (ushort)sprdata[2]; break;
-			case ChipRegs.SPR2DATB: value = (ushort)sprdatb[2]; break;
-
-			case ChipRegs.SPR3PTL: value = (ushort)sprpt[3]; break;
-			case ChipRegs.SPR3PTH: value = (ushort)(sprpt[3] >> 16); break;
-			case ChipRegs.SPR3POS: value = sprpos[3]; break;
-			case ChipRegs.SPR3CTL: value = sprctl[3]; break;
-			case ChipRegs.SPR3DATA: value = (ushort)sprdata[3]; break;
-			case ChipRegs.SPR3DATB: value = (ushort)sprdatb[3]; break;
-
-			case ChipRegs.SPR4PTL: value = (ushort)sprpt[4]; break;
-			case ChipRegs.SPR4PTH: value = (ushort)(sprpt[4] >> 16); break;
-			case ChipRegs.SPR4POS: value = sprpos[4]; break;
-			case ChipRegs.SPR4CTL: value = sprctl[4]; break;
-			case ChipRegs.SPR4DATA: value = (ushort)sprdata[4]; break;
-			case ChipRegs.SPR4DATB: value = (ushort)sprdatb[4]; break;
-
-			case ChipRegs.SPR5PTL: value = (ushort)sprpt[5]; break;
-			case ChipRegs.SPR5PTH: value = (ushort)(sprpt[5] >> 16); break;
-			case ChipRegs.SPR5POS: value = sprpos[5]; break;
-			case ChipRegs.SPR5CTL: value = sprctl[5]; break;
-			case ChipRegs.SPR5DATA: value = (ushort)sprdata[5]; break;
-			case ChipRegs.SPR5DATB: value = (ushort)sprdatb[5]; break;
-
-			case ChipRegs.SPR6PTL: value = (ushort)sprpt[6]; break;
-			case ChipRegs.SPR6PTH: value = (ushort)(sprpt[6] >> 16); break;
-			case ChipRegs.SPR6POS: value = sprpos[6]; break;
-			case ChipRegs.SPR6CTL: value = sprctl[6]; break;
-			case ChipRegs.SPR6DATA: value = (ushort)sprdata[6]; break;
-			case ChipRegs.SPR6DATB: value = (ushort)sprdatb[6]; break;
-
-			case ChipRegs.SPR7PTL: value = (ushort)sprpt[7]; break;
-			case ChipRegs.SPR7PTH: value = (ushort)(sprpt[7] >> 16); break;
-			case ChipRegs.SPR7POS: value = sprpos[7]; break;
-			case ChipRegs.SPR7CTL: value = sprctl[7]; break;
-			case ChipRegs.SPR7DATA: value = (ushort)sprdata[7]; break;
-			case ChipRegs.SPR7DATB: value = (ushort)sprdatb[7]; break;
-
-			//ECS/AGA
-			case ChipRegs.VBSTRT: value = vbstrt; break;
-			case ChipRegs.VBSTOP: value = vbstop; break;
-			case ChipRegs.VSSTOP: value = vsstop; break;
-			case ChipRegs.VSSTRT: value = vsstrt; break;
-			case ChipRegs.VTOTAL: value = vtotal; break;
-			case ChipRegs.FMODE: value = fmode; break;
-			case ChipRegs.BEAMCON0: value = beamcon0; break;
 		}
 
 		return value;

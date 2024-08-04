@@ -307,6 +307,16 @@ namespace Jammy.Core.Custom.Audio
 			ushort value = 0;
 			switch (address)
 			{
+				case ChipRegs.ADKCONR: value = (ushort)(adkcon & 0x00ff); break;
+			}
+			return value;
+		}
+
+		public uint DebugChipsetRead(uint address, Size size)
+		{
+			ushort value = 0;
+			switch (address)
+			{
 				case ChipRegs.AUD0PER: value = ch[0].audper; break;
 				case ChipRegs.AUD0VOL: value = ch[0].audvol; break;
 				case ChipRegs.AUD0LEN: value = ch[0].audlen; break;
@@ -339,7 +349,6 @@ namespace Jammy.Core.Custom.Audio
 			}
 			return value;
 		}
-
 		private IXAudio2 xaudio;
 		private IXAudio2MasteringVoice masteringVoice;
 

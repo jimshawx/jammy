@@ -1027,6 +1027,16 @@ namespace Jammy.Main
 					disassemblyRanges.Add(new AddressRange(uint.Parse(bits[1], NumberStyles.HexNumber), 0x1000));
 					UpdateDisassembly();
 				}
+
+				if (bits[0] == "w")
+				{
+					if (bits[0][1] == 'b')
+						debugger.Write(0, uint.Parse(bits[1], NumberStyles.HexNumber), uint.Parse(bits[2], NumberStyles.HexNumber), Core.Types.Types.Size.Byte);
+					if (bits[0][1] == 'w')
+						debugger.Write(0, uint.Parse(bits[1], NumberStyles.HexNumber), uint.Parse(bits[2], NumberStyles.HexNumber), Core.Types.Types.Size.Word);
+					if (bits[0][1] == 'l')
+						debugger.Write(0, uint.Parse(bits[1], NumberStyles.HexNumber), uint.Parse(bits[2], NumberStyles.HexNumber), Core.Types.Types.Size.Long);
+				}
 			}
 			catch
 			{

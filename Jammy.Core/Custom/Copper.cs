@@ -269,20 +269,22 @@ namespace Jammy.Core.Custom
 
 		public ushort Read(uint insaddr, uint address)
 		{
+			return 0;
+		}
+
+		public uint DebugChipsetRead(uint address, Size size)
+		{
 			ushort value = 0;
-			//logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			switch (address)
 			{
-				case ChipRegs.COPCON:  value = (ushort)copcon; break;
+				case ChipRegs.COPCON: value = (ushort)copcon; break;
 				case ChipRegs.COP1LCH: value = (ushort)(cop1lc >> 16); break;
 				case ChipRegs.COP1LCL: value = (ushort)cop1lc; break;
 				case ChipRegs.COP2LCH: value = (ushort)(cop2lc >> 16); break;
 				case ChipRegs.COP2LCL: value = (ushort)cop2lc; break;
-				case ChipRegs.COPJMP1: value = (ushort)copjmp1; copPC = cop1lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
-					break;
-				case ChipRegs.COPJMP2: value = (ushort)copjmp2; copPC = cop2lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
-					break; 
+				case ChipRegs.COPJMP1: value = (ushort)copjmp1; break;
+				case ChipRegs.COPJMP2: value = (ushort)copjmp2; break;
 				case ChipRegs.COPINS: value = copins; break;
 			}
 

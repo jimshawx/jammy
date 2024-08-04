@@ -35,7 +35,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface ICustomReadWrite : ICustomRead, ICustomWrite { }
 
-	public interface IAudio : IEmulate, ICustomReadWrite
+	public interface IAudio : IEmulate, ICustomReadWrite, IDebugChipsetRead
 	{
 		void WriteDMACON(ushort v);
 		void WriteINTREQ(ushort v);
@@ -46,7 +46,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IMotherboard : IReset, IMemoryMappedDevice { }
 
-	public interface IBlitter : IReset, ICustomReadWrite, IEmulate, IRequiresDMA
+	public interface IBlitter : IReset, ICustomReadWrite, IEmulate, IRequiresDMA, IDebugChipsetRead
 	{
 		void Logging(bool enabled);
 		void Dumping(bool enabled);
@@ -61,12 +61,12 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface ICIAAOdd : ICIA { }
 	public interface ICIABEven : ICIA { }
 	public interface ICIAMemory : IMemoryMappedDevice { }
-	public interface ICopper : IEmulate, ICustomReadWrite, IRequiresDMA
+	public interface ICopper : IEmulate, ICustomReadWrite, IRequiresDMA, IDebugChipsetRead
 	{
 		void Dumping(bool enabled);
 		string GetDisassembly();
 	}
-	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB, IReadICR
+	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB, IReadICR, IDebugChipsetRead
 	{
 		void InsertDisk(int df);
 		void RemoveDisk(int df);
@@ -80,7 +80,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void WriteCRA(uint insaddr, byte value);
 	}
 
-	public interface IMouse : IEmulate, ICustomReadWrite, IReadWritePRA { }
+	public interface IMouse : IEmulate, ICustomReadWrite, IReadWritePRA, IDebugChipsetRead { }
 
 	public interface IInterrupt : IReset
 	{
@@ -91,7 +91,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void SetGayleInterruptLevel(uint level);
 	}
 
-	public interface ISerial : IEmulate, ICustomReadWrite
+	public interface ISerial : IEmulate, ICustomReadWrite, IDebugChipsetRead
 	{
 		void WriteINTREQ(ushort v);
 	}

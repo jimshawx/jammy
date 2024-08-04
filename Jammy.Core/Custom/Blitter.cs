@@ -143,7 +143,7 @@ namespace Jammy.Core.Custom
 		public ushort Read(uint insaddr, uint address)
 		{
 			ushort value = 0;
-			//logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			if (address == ChipRegs.BLTDDAT) value = (ushort)bltddat;
 			return value;
 		}
 
@@ -967,6 +967,47 @@ namespace Jammy.Core.Custom
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
+		}
+
+		public uint DebugChipsetRead(uint address, Size size)
+		{
+			uint value = 0;
+			switch (address)
+			{
+				case ChipRegs.BLTCON0: value = bltcon0; break;
+				case ChipRegs.BLTCON1: value = bltcon1; break;
+
+				case ChipRegs.BLTAFWM: value = bltafwm; break;
+				case ChipRegs.BLTALWM: value = bltalwm; break;
+
+				case ChipRegs.BLTCPTH: value = bltcpt >> 16; break;
+				case ChipRegs.BLTCPTL: value = bltcpt & 0xffff; break;
+				case ChipRegs.BLTBPTH: value = bltbpt >> 16; break;
+				case ChipRegs.BLTBPTL: value = bltbpt & 0xffff; break;
+				case ChipRegs.BLTAPTH: value = bltapt >> 16; break;
+				case ChipRegs.BLTAPTL: value = bltapt & 0xffff; break;
+				case ChipRegs.BLTDPTH: value = bltdpt >> 16; break;
+				case ChipRegs.BLTDPTL: value = bltdpt & 0xffff; break;
+
+				case ChipRegs.BLTSIZE: value = bltsize; break;
+
+				case ChipRegs.BLTCON0L: value = bltcon0; break;
+
+				case ChipRegs.BLTSIZV: value = bltsizv; break;
+
+				case ChipRegs.BLTSIZH: value = bltsizh; break;
+
+				case ChipRegs.BLTCMOD: value = bltcmod; break;
+				case ChipRegs.BLTBMOD: value = bltbmod; break;
+				case ChipRegs.BLTAMOD: value = bltamod; break;
+				case ChipRegs.BLTDMOD: value = bltdmod; break;
+
+				case ChipRegs.BLTCDAT: value = bltcdat; break;
+				case ChipRegs.BLTBDAT: value = bltbdat; break;
+				case ChipRegs.BLTADAT: value = bltadat; break;
+				case ChipRegs.BLTDDAT: value = bltddat; break;
+			}
+			return value;
 		}
 	}
 }

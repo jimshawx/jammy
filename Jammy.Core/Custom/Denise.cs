@@ -564,33 +564,7 @@ public class Denise : IDenise
 
 		switch (address)
 		{
-			case ChipRegs.BPLCON0: value = bplcon0; break;
-			case ChipRegs.BPLCON1: value = bplcon1; break;
-			case ChipRegs.BPLCON2: value = bplcon2; break;
-			case ChipRegs.BPLCON3: value = bplcon3; break;
-			case ChipRegs.BPLCON4: value = bplcon4; break;
-
-			case ChipRegs.DIWSTRT: value = diwstrt; break;
-			case ChipRegs.DIWSTOP: value = diwstop; break;
-			case ChipRegs.DIWHIGH: value = diwhigh; break;
-
 			case ChipRegs.CLXDAT: value = clxdat; clxdat = 0; break;
-		}
-
-		if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
-		{
-			//uint bank = (custom.Read(0, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
-			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
-
-			int loct = bplcon3 & (1 << 9);
-
-			//Amiga colour
-			int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
-
-			if (loct != 0)
-				value = lowcolour[index];
-			else
-				value = colour[index];
 		}
 
 		return value;
