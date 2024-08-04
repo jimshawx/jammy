@@ -135,7 +135,7 @@ namespace Jammy.Core.Custom
 			JOY0DAT->mouse
 			JOY1DAT->mouse
 			CLXDAT->Denise
-			ADKCONR->Audio
+			ADKCONR->Audio,disk drives
 			POT0DAT->mouse
 			POT1DAT->mouse
 			POTINP/POTGOR->mouse

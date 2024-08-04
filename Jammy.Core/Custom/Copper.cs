@@ -339,9 +339,9 @@ namespace Jammy.Core.Custom
 					csb.AppendLine($"{copPC - 4:X6} MOVE {ins:X4} {data:X4} {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X3}),{data:X4}");
 
 					if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
-						copPC = custom.Read(copPC - 4, ChipRegs.COP1LCH, Size.Long);//COP1LC
+						copPC = custom.DebugChipsetRead(ChipRegs.COP1LCH, Size.Long);//COP1LC
 					else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2)
-						copPC = custom.Read(copPC - 4, ChipRegs.COP2LCH, Size.Long);//COP2LC
+						copPC = custom.DebugChipsetRead(ChipRegs.COP2LCH, Size.Long);//COP2LC
 				}
 				else if ((ins & 0x0001) == 1)
 				{
