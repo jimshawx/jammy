@@ -52,7 +52,6 @@ namespace Jammy.Core.Custom.CIA
 		protected override uint interruptLevel => Interrupt.EXTER;
 		protected override char cia => 'B';
 
-		private uint lastVerticalPos = 0;
 		private int divisor = 0;
 		private readonly object locker = new object();
 		public override void Emulate()
@@ -61,11 +60,12 @@ namespace Jammy.Core.Custom.CIA
 
 			lock (locker)
 			{
+
 				if (clock.EndOfLine())
 					IncrementTODTimer();
 
 				divisor++;
-				if (divisor == 4)
+				if (divisor == 5)
 				{
 					divisor = 0;
 					base.Emulate();
@@ -79,7 +79,6 @@ namespace Jammy.Core.Custom.CIA
 		{
 			base.Reset();
 			regs[PRA] = 0x8c;
-			lastVerticalPos = 0;
 			divisor = 0;
 		}
 

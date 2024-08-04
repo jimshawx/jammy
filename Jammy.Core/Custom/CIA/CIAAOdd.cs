@@ -76,7 +76,7 @@ namespace Jammy.Core.Custom.CIA
 				}
 
 				divisor++;
-				if (divisor == 4)
+				if (divisor == 5)
 				{
 					divisor = 0;
 					base.Emulate();

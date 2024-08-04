@@ -345,6 +345,56 @@ noBitplaneDMA:
 		}
 	}
 
+	private void EndAgnusLine()
+	{
+		//next horizontal line, and we did some fetching this line, add on the modulos
+		if (clock.VerticalPos >= diwstrtv && clock.VerticalPos < diwstopv && lineState == DMALineState.LineComplete)
+		{
+			for (int i = 0; i < planes; i++)
+			{
+				bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
+				bplpt[i] &= 0xfffffffe;
+			}
+			lineState = DMALineState.LineTerminated;
+		}
+	}
+
+	//https://eab.abime.net/showthread.php?t=111329
+	private const int OCS = 0;
+	private const int ECS = 1;
+	private const int AGA = 2;
+
+	private const int LORES = 0;
+	private const int HIRES = 1;
+	private const int SHRES = 2;
+
+	private int FetchWidth(int DDFSTRT, int DDFSTOP, int chipset, int res, int FMODE)
+	{
+		// validate bits
+		FMODE &= 3;
+		DDFSTRT &= (chipset != OCS) ? 0xfe : 0xfc;
+		DDFSTOP &= (chipset != OCS) ? 0xfe : 0xfc;
+		res = (chipset == OCS) ? res & 1 : res;
+
+		// fetch=log2(fetch_width)-4; fetch_width=16,32,64
+		int fetch = (chipset == AGA) ? ((FMODE <= 1) ? FMODE : FMODE - 1) : 0;
+
+		// sub-block (OCS/ECS) and large-block (AGA) stop pad
+		int pad = (fetch > res) ? (8 << (fetch - res)) - 1 : 8 - 1;
+
+		// OCS/ECS/(AGA) sub-block
+		int sub = (res > fetch) ? res - fetch : 0;
+
+		// AGA large-block
+		int large = (fetch > res) ? fetch - res : 0;
+
+		// DMA fetched blocks
+		int blocks = ((DDFSTOP - DDFSTRT + pad) >> (3 + large)) + 1;
+
+		// 16 pixels per fetch_width per sub-block per block
+		return blocks << (4 + fetch + sub);
+	}
+
 	private enum SpriteState
 	{
 		Idle = 0,
@@ -604,8 +654,6 @@ noBitplaneDMA:
 				break;
 
 			case ChipRegs.VHPOSR: value = (ushort)((clock.VerticalPos << 8) | (clock.HorizontalPos & 0x00ff)); 
-				if ((value&0xff00) == 0xf000) logger.LogTrace($"0 {value:X4} {clock.Tick}");
-				//if ((value & 0xff00) == 0xf100) logger.LogTrace($"1 {value:X4} {clock.Tick}");
 				break;
 
 			//bitplane specific
@@ -860,56 +908,6 @@ noBitplaneDMA:
 			case ChipRegs.BPL7DAT: bpldat[6] = value; break;
 			case ChipRegs.BPL8DAT: bpldat[7] = value; break;
 		}
-	}
-
-	private void EndAgnusLine()
-	{
-		//next horizontal line, and we did some fetching this line, add on the modulos
-		if (clock.VerticalPos >= diwstrtv && clock.VerticalPos < diwstopv && lineState == DMALineState.LineComplete)
-		{
-			for (int i = 0; i < planes; i++)
-			{
-				bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
-				bplpt[i] &= 0xfffffffe;
-			}
-			lineState = DMALineState.LineTerminated;
-		}
-	}
-
-	//https://eab.abime.net/showthread.php?t=111329
-	private const int OCS = 0;
-	private const int ECS = 1;
-	private const int AGA = 2;
-
-	private const int LORES = 0;
-	private const int HIRES = 1;
-	private const int SHRES = 2;
-
-	private int FetchWidth(int DDFSTRT, int DDFSTOP, int chipset, int res, int FMODE)
-	{
-		// validate bits
-		FMODE &= 3;
-		DDFSTRT &= (chipset != OCS) ? 0xfe : 0xfc;
-		DDFSTOP &= (chipset != OCS) ? 0xfe : 0xfc;
-		res = (chipset == OCS) ? res & 1 : res;
-
-		// fetch=log2(fetch_width)-4; fetch_width=16,32,64
-		int fetch = (chipset == AGA) ? ((FMODE <= 1) ? FMODE : FMODE - 1) : 0;
-
-		// sub-block (OCS/ECS) and large-block (AGA) stop pad
-		int pad = (fetch > res) ? (8 << (fetch - res)) - 1 : 8 - 1;
-
-		// OCS/ECS/(AGA) sub-block
-		int sub = (res > fetch) ? res - fetch : 0;
-
-		// AGA large-block
-		int large = (fetch > res) ? fetch - res : 0;
-
-		// DMA fetched blocks
-		int blocks = ((DDFSTOP - DDFSTRT + pad) >> (3 + large)) + 1;
-
-		// 16 pixels per fetch_width per sub-block per block
-		return blocks << (4 + fetch + sub);
 	}
 
 	public bool IsMapped(uint address)

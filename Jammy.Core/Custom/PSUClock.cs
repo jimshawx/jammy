@@ -34,6 +34,14 @@ public class PSUClock : IPSUClock
 
 		//beamLines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
 		psuDivisor = settings.Value.CPUFrequency / (settings.Value.VideoFormat == VideoFormat.NTSC ? 60u : 50u);
+		
+		//70824 ticks of the custom chip clock is 1 frame in PAL (141648 highres ticks)
+
+		//CPU frequency is 7093790Hz, so 50 Hz needs a divisor of 141875.8
+
+		//so to run this off the ChipSetClock, the divisor should be half
+		psuDivisor /= 2;
+
 	}
 
 	//private ulong beamLines;
@@ -47,7 +55,7 @@ public class PSUClock : IPSUClock
 		clock.WaitForTick();
 
 		psuTime++;
-		if (psuTime == psuDivisor/12)
+		if (psuTime == psuDivisor)
 		{
 			CurrentTick++;
 			psuTime = 0;
