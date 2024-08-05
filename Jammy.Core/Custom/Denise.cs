@@ -1,4 +1,5 @@
 ﻿using System;
+using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
@@ -16,6 +17,7 @@ public class Denise : IDenise
 {
 	private readonly EmulationSettings settings;
 	private readonly IChipsetClock clock;
+	private readonly IChipsetDebugger debugger;
 	private readonly ILogger logger;
 	private readonly IEmulationWindow emulationWindow;
 	
@@ -33,11 +35,12 @@ public class Denise : IDenise
 	private const int SCREEN_HEIGHT = 313 * 2; //x2 for scan double
 	private int[] screen;
 
-	public Denise(IChipsetClock clock, IEmulationWindow emulationWindow, INativeOverlay nativeOverlay,
+	public Denise(IChipsetClock clock, IChipsetDebugger debugger, IEmulationWindow emulationWindow, INativeOverlay nativeOverlay,
 		IOptions<EmulationSettings> settings, ILogger<Denise> logger)
 	{
 		this.settings = settings.Value;
 		this.clock = clock;
+		this.debugger = debugger;
 		this.logger = logger;
 		this.emulationWindow = emulationWindow;
 
@@ -52,8 +55,11 @@ public class Denise : IDenise
 
 	public FastUInt128 pixelMask;
 	public int pixelMaskBit;
+	public uint pixelMaskValue;
 	public uint pixelBits;
+
 	public FastUInt128[] bpldatpix = new FastUInt128[8];
+	public ulong[] bpldatpixul = new ulong[8];
 
 	public int planes;
 	public int diwstrth = 0;
@@ -65,12 +71,11 @@ public class Denise : IDenise
 	private int lineStart;
 	public int dptr = 0;
 
-	private int ii = 0;
+	private Action pixelAction = () => { };
+
 	public void Emulate()
 	{
 		clock.WaitForTick();
-
-		//logger.LogTrace($"{clock.VerticalPos} {clock.HorizontalPos}");
 
 		if (clock.StartOfFrame())
 			RunVerticalBlankStart();
@@ -78,8 +83,7 @@ public class Denise : IDenise
 		if (clock.StartOfLine())
 			StartDeniseLine();
 
-		//if ((clock.VerticalPos&7)==0)
-			RunDeniseTick();
+		RunDeniseTick();
 
 		if (clock.EndOfLine())
 			EndDeniseLine();
@@ -129,6 +133,11 @@ public class Denise : IDenise
 				bpldatpix[i].Or(bpldat[i], (16 - odd));
 			else
 				bpldatpix[i].Or(bpldat[i], (16 - even));
+
+			if ((i & 1) != 0)
+				bpldatpixul[i] |= bpldat[i] << (16 - odd);
+			else
+				bpldatpixul[i] |= bpldat[i] << (16 - even);
 		}
 	}
 
@@ -151,19 +160,26 @@ public class Denise : IDenise
 
 		pixelMask.SetBit((int)(pixelBits + 16));
 		pixelMaskBit = (int)(pixelBits + 16);
+		pixelMaskValue = 1u << pixelMaskBit;
 
 		//clear sprites from wrapping from the right
 		for (int s = 0; s < 8; s++)
 			spriteMask[s] = 0;
 
 		for (int i = 0; i < 8; i++)
+		{
 			bpldatpix[i].Zero();
+			bpldatpixul[i] = 0;
+		}
 	}
 
 	private void NextPixel()
 	{
 		for (int i = 0; i < 8; i++)
+		{
 			bpldatpix[i].Shl1();
+			bpldatpixul[i] <<= 1;
+		}
 	}
 
 	//(x&(1<<0))*1 + x&(1<<2)*2 + x&(1<<4)*4 + x&(1<<6) *8
@@ -196,6 +212,175 @@ public class Denise : IDenise
 	private readonly uint[] spriteMask = new uint[8];
 	private readonly int[] clx = new int[8];
 
+	private Action GetModeConversion()
+	{
+		return CopperBitplaneConvert;
+		
+		bool f = (fmode&3)==3;
+		int bp = (bplcon0 >> 12) & 7;
+
+		//DBF
+		if ((bplcon0 & (1 << 10)) != 0) return f ? CopperBitplaneConvert : CopperBitplaneConvertDPF;
+
+		//HAM6
+		if (bp == 6 && ((bplcon0 & (1 << 11)) != 0)) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
+		
+		//EHB
+		if (bp == 6 && ((bplcon0 & (1 << 11)) == 0 &&
+		                    (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0))) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
+		//HAM8
+		if (bp == 8 && ((bplcon0 & (1 << 11)) != 0)) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
+
+		//Normal
+		return f ? CopperBitplaneConvert : CopperBitplaneConvertNormal;
+	}
+
+	private void CopperBitplaneConvertDPF()
+	{
+		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
+		for (int p = 0; p < pixelLoop; p++)
+		{
+			//decode the colour
+
+			uint col;
+
+			byte pix = 0;
+			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
+				pix |= (byte)(((bpldatpixul[i] & pixelMaskValue) != 0) ? b : 0);
+
+			for (int i = 0; i < planes; i++)
+				bpldatpixul[i] <<= 1;
+
+			//BPLAM
+			pix ^= (byte)(bplcon4 >> 8);
+
+			//pix &= debugger.bitplaneMask;
+			//pix |= debugger.bitplaneMod;
+
+			//DPF
+			byte pix0 = dpfLookup[pix];
+			byte pix1 = dpfLookup[pix >> 1];
+
+			uint col0 = truecolour[pix0];
+			uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
+
+			//which playfield is in front?
+			if ((bplcon2 & (1 << 6)) != 0)
+				col = pix1 != 0 ? col1 : col0;
+			else
+				col = pix0 != 0 ? col0 : col1;
+
+			DoSprites(ref col, pix, (p & m) == m);
+
+			//pixel double
+			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
+			if (pixelLoop == 8)
+			{
+				//hack for the 0.5x above - skip every other horizontal pixel
+				if ((p & 1) == 0)
+					screen[dptr++] = (int)col;
+			}
+			else
+			{
+				for (int k = 0; k < 4 / pixelLoop; k++)
+					screen[dptr++] = (int)col;
+			}
+
+			//remember the last colour for HAM modes
+			lastcol = col;
+		}
+	}
+
+	private void CopperBitplaneConvertNormal()
+	{
+		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
+		for (int p = 0; p < pixelLoop; p++)
+		{
+			//decode the colour
+
+			byte pix = 0;
+			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
+				pix |= (byte)(((bpldatpixul[i] & pixelMaskValue) != 0) ? b : 0);
+
+			for (int i = 0; i < planes; i++)
+				bpldatpixul[i] <<= 1;
+
+			//BPLAM
+			pix ^= (byte)(bplcon4 >> 8);
+
+			//pix &= debugger.bitplaneMask;
+			//pix |= debugger.bitplaneMod;
+			var col = truecolour[pix];
+			
+			DoSprites(ref col, pix, (p & m) == m);
+
+			//pixel double
+			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
+			if (pixelLoop == 8)
+			{
+				//hack for the 0.5x above - skip every other horizontal pixel
+				if ((p & 1) == 0)
+					screen[dptr++] = (int)col;
+			}
+			else
+			{
+				for (int k = 0; k < 4 / pixelLoop; k++)
+					screen[dptr++] = (int)col;
+			}
+
+			//remember the last colour for HAM modes
+			lastcol = col;
+		}
+	}
+
+	private void CopperBitplaneConvertEHB()
+	{
+		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
+		for (int p = 0; p < pixelLoop; p++)
+		{
+			//decode the colour
+
+			byte pix = 0;
+			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
+				pix |= (byte)(((bpldatpixul[i] & pixelMaskValue) != 0) ? b : 0);
+
+			for (int i = 0; i < planes; i++)
+				bpldatpixul[i] <<= 1;
+
+			//BPLAM
+			pix ^= (byte)(bplcon4 >> 8);
+			//pix &= debugger.bitplaneMask;
+			//pix |= debugger.bitplaneMod;
+			
+			//EHB
+			uint col = truecolour[pix & 0x1f];
+			if ((pix & 0b100000) != 0)
+				col = (col & 0x00fefefe) >> 1;
+
+			DoSprites(ref col, pix, (p & m) == m);
+
+			//pixel double
+			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
+			if (pixelLoop == 8)
+			{
+				//hack for the 0.5x above - skip every other horizontal pixel
+				if ((p & 1) == 0)
+					screen[dptr++] = (int)col;
+			}
+			else
+			{
+				for (int k = 0; k < 4 / pixelLoop; k++)
+					screen[dptr++] = (int)col;
+			}
+
+			//remember the last colour for HAM modes
+			lastcol = col;
+		}
+	}
+
 	private void CopperBitplaneConvert()
 	{
 		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
@@ -207,7 +392,6 @@ public class Denise : IDenise
 
 			byte pix = 0;
 			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
-				//pix |= (byte)((bpldatpix[i].AnyBitsSet(ref pixelMask)) ? b : 0);
 				pix |= (byte)((bpldatpix[i].IsBitSet(pixelMaskBit)) ? b : 0);
 
 			NextPixel();
@@ -215,8 +399,8 @@ public class Denise : IDenise
 			//BPLAM
 			pix ^= (byte)(bplcon4 >> 8);
 
-			//pix &= debugger.bitplaneMask;
-			//pix |= debugger.bitplaneMod;
+			pix &= debugger.bitplaneMask;
+			pix |= debugger.bitplaneMod;
 
 			if ((bplcon0 & (1 << 10)) != 0)
 			{
@@ -305,97 +489,7 @@ public class Denise : IDenise
 				col = truecolour[pix];
 			}
 
-			//sprites
-			int clxm = 0;
-			for (int s = 7; s >= 0; s--)
-			{
-				clx[s] = 0;
-				if (spriteMask[s] != 0)
-				{
-					uint x = spriteMask[s];
-					bool attached = (sprctl[s] & 0x80) != 0 && (s & 1) != 0;
-					int spix = ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
-
-					//in lowres, p=0,1, we want to shift every pixel (0,1) 01 &m==00
-					//in hires, p=0,1,2,3 we want to shift every 2 pixels (1 and 3) &m=0101
-					//in shires, p=0,1,2,3,4,5,6,7 we want to shift every 4 pixels (3 and 7) &m==01230123
-					//todo: in AGA, sprites can have different resolutions
-					if ((p & m) == m)
-						spriteMask[s] >>= 1;
-
-					clx[s] = spix;
-					clxm |= clx[s];
-
-					if (attached)
-					{
-						s--;
-						spix <<= 2;
-						int apix = ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
-						clx[s] = apix;
-						clxm |= clx[s];
-						spix += apix;
-
-						if ((p & m) == m)
-							spriteMask[s] >>= 1;
-						if (spix != 0)
-							col = truecolour[16 + spix];
-					}
-					else
-					{
-						if (spix != 0)
-							col = truecolour[16 + 4 * (s >> 1) + spix];
-					}
-				}
-			}
-
-			//sprite collision
-
-			if (clxm != 0)
-			{
-				int clxconMatch = (clxcon & 0x3f) | ((clxcon2 & 0x3) << 6);
-				int clxconEnable = ((clxcon >> 6) & 0x3f) | (clxcon2 & 0xc0);
-
-				//combine in the enabled odd-numbered sprites
-				for (int s = 0; s < 4; s++)
-				{
-					if ((clxcon & (0x1000 << s)) != 0)
-						clx[s] = (clx[s * 2] | clx[s * 2 + 1]) != 0 ? 0xff : 0;
-					else
-						clx[s] = clx[s * 2] != 0 ? 0xff : 0;
-				}
-
-				ushort sscol = 1 << 9;
-				for (int s = 0; s < 4; s++)
-				{
-					//planes enabled for collision
-					int clp = (pix ^ ~clxconMatch) & clxconEnable;
-
-					int mask = clx[s] & clp;
-					if (mask != 0)
-					{
-						//sprite 's'->bitplane collision
-
-						//even plane collision
-						if ((mask & 0b01010101) != 0)
-							clxdat |= (ushort)(2 << s);
-						//odd plane collision
-						if ((mask & 0b10101010) != 0)
-							clxdat |= (ushort)(32 << s);
-					}
-
-					//sprite -> sprite collision
-					for (int t = s + 1; t < 4; t++)
-					{
-						if ((clx[s] & clx[t]) != 0)
-							clxdat |= sscol;
-						sscol <<= 1;
-					}
-				}
-
-				//odd->even bitplane collision
-				if ((((pix & 0xb10101010) >> 1) & pix) != 0)
-					clxdat |= 1;
-			}
+			DoSprites(ref col, pix, (p&m)==m);
 
 			//pixel double
 			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
@@ -417,6 +511,101 @@ public class Denise : IDenise
 		}
 	}
 
+	private void DoSprites(ref uint col, byte pix, bool shift)
+	{
+		//sprites
+		int clxm = 0;
+		for (int s = 7; s >= 0; s--)
+		{
+			clx[s] = 0;
+			if (spriteMask[s] != 0)
+			{
+				uint x = spriteMask[s];
+				bool attached = (sprctl[s] & 0x80) != 0 && (s & 1) != 0;
+				int spix = ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
+
+				//in lowres, p=0,1, we want to shift every pixel (0,1) 01 &m==00
+				//in hires, p=0,1,2,3 we want to shift every 2 pixels (1 and 3) &m=0101
+				//in shires, p=0,1,2,3,4,5,6,7 we want to shift every 4 pixels (3 and 7) &m==01230123
+				//todo: in AGA, sprites can have different resolutions
+				if (shift)
+					spriteMask[s] >>= 1;
+
+				clx[s] = spix;
+				clxm |= clx[s];
+
+				if (attached)
+				{
+					s--;
+					spix <<= 2;
+					int apix = ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
+					clx[s] = apix;
+					clxm |= clx[s];
+					spix += apix;
+
+					if (shift)
+						spriteMask[s] >>= 1;
+					if (spix != 0)
+						col = truecolour[16 + spix];
+				}
+				else
+				{
+					if (spix != 0)
+						col = truecolour[16 + 4 * (s >> 1) + spix];
+				}
+			}
+		}
+
+		//sprite collision
+
+		if (clxm != 0)
+		{
+			int clxconMatch = (clxcon & 0x3f) | ((clxcon2 & 0x3) << 6);
+			int clxconEnable = ((clxcon >> 6) & 0x3f) | (clxcon2 & 0xc0);
+
+			//combine in the enabled odd-numbered sprites
+			for (int s = 0; s < 4; s++)
+			{
+				if ((clxcon & (0x1000 << s)) != 0)
+					clx[s] = (clx[s * 2] | clx[s * 2 + 1]) != 0 ? 0xff : 0;
+				else
+					clx[s] = clx[s * 2] != 0 ? 0xff : 0;
+			}
+
+			ushort sscol = 1 << 9;
+			for (int s = 0; s < 4; s++)
+			{
+				//planes enabled for collision
+				int clp = (pix ^ ~clxconMatch) & clxconEnable;
+
+				int mask = clx[s] & clp;
+				if (mask != 0)
+				{
+					//sprite 's'->bitplane collision
+
+					//even plane collision
+					if ((mask & 0b01010101) != 0)
+						clxdat |= (ushort)(2 << s);
+					//odd plane collision
+					if ((mask & 0b10101010) != 0)
+						clxdat |= (ushort)(32 << s);
+				}
+
+				//sprite -> sprite collision
+				for (int t = s + 1; t < 4; t++)
+				{
+					if ((clx[s] & clx[t]) != 0)
+						clxdat |= sscol;
+					sscol <<= 1;
+				}
+			}
+
+			//odd->even bitplane collision
+			if ((((pix & 0xb10101010) >> 1) & pix) != 0)
+				clxdat |= 1;
+		}
+	}
+
 	private void StartDeniseLine()
 	{
 		lineStart = dptr;
@@ -424,8 +613,6 @@ public class Denise : IDenise
 		FirstPixel();
 		lastcol = truecolour[0]; //todo: should be colour 0 at time of diwstrt
 		//lineState = CopperLineState.LineStart;
-
-
 	}
 
 	private void UpdateBPLCON0()
@@ -458,6 +645,18 @@ public class Denise : IDenise
 			//1 colour clock, draw 2 pixel
 			pixelLoop = 2;
 		}
+
+		pixelAction = GetModeConversion();
+	}
+
+	private void UpdateBPLCON2()
+	{
+		pixelAction = GetModeConversion();
+	}
+
+	private void UpdateFMODE()
+	{
+		pixelAction = GetModeConversion();
 	}
 
 	private void UpdateDIWSTRT()
@@ -496,7 +695,8 @@ public class Denise : IDenise
 			//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
 			if (clock.HorizontalPos >= ((diwstrth /*+ debugger.diwSHack*/) >> 1)  && clock.HorizontalPos < ((diwstoph /*+ debugger.diwEHack*/) >> 1) )
 			{
-				CopperBitplaneConvert();
+				//CopperBitplaneConvert();
+				pixelAction();
 			}
 			else
 			{
@@ -576,7 +776,7 @@ public class Denise : IDenise
 		{
 			case ChipRegs.BPLCON0: bplcon0 = value; UpdateBPLCON0(); break;
 			case ChipRegs.BPLCON1: bplcon1 = value; break;
-			case ChipRegs.BPLCON2: bplcon2 = value; break;
+			case ChipRegs.BPLCON2: bplcon2 = value; UpdateBPLCON2(); break;
 			case ChipRegs.BPLCON3: bplcon3 = value; break;
 			case ChipRegs.BPLCON4: bplcon4 = value; break;
 
@@ -584,7 +784,7 @@ public class Denise : IDenise
 			case ChipRegs.DIWSTOP: diwstop = value; diwhigh = 0; UpdateDIWSTOP(); break;
 			case ChipRegs.DIWHIGH: diwhigh = value; UpdateDIWHIGH(); break;
 
-			case ChipRegs.FMODE: fmode = value; break;
+			case ChipRegs.FMODE: fmode = value; UpdateFMODE(); break;
 
 			case ChipRegs.CLXCON: clxcon = value; clxcon2 = 0; break;
 			case ChipRegs.CLXCON2: clxcon2 = value; break;

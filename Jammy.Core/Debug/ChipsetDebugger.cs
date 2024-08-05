@@ -6,6 +6,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,6 +18,8 @@ public interface IChipsetDebugger : IEmulate
 	char[] fetch { get; }
 	char[] write { get; }
 	int dbugLine { get; }
+	byte bitplaneMask { get; }
+	byte bitplaneMod { get; }
 	bool dbug { get; set; }
 	int dma { get; set; }
 	void SetDMAActivity(char p0);
@@ -25,18 +28,17 @@ public interface IChipsetDebugger : IEmulate
 public class ChipsetDebugger : IChipsetDebugger
 {
 	private readonly IChipsetClock clock;
-	private readonly IDenise denise;
+	//private readonly IDenise denise;
 	private readonly IDebugChipsetRead chipRegs;
 	private readonly INativeOverlay overlay;
 	private readonly EmulationSettings settings;
 	private readonly ILogger<ChipsetDebugger> logger;
 	private readonly int[] screen;
 
-	public ChipsetDebugger(IChipsetClock clock, IDenise denise, IChips chipRegs, INativeOverlay overlay,
+	public ChipsetDebugger(IChipsetClock clock, IChips chipRegs, INativeOverlay overlay,
 		IEmulationWindow emulationWindow, IOptions<EmulationSettings> settings, ILogger<ChipsetDebugger> logger)
 	{
 		this.clock = clock;
-		this.denise = denise;
 		this.chipRegs = chipRegs;
 		this.overlay = overlay;
 		this.settings = settings.Value;
@@ -100,8 +102,8 @@ public class ChipsetDebugger : IChipsetDebugger
 	public int dma { get; set; }
 	public int dbugLine { get; set; } = -1;
 	public bool dbug { get; set; } = false;
-	public byte bitplaneMask = 0xff;
-	public byte bitplaneMod = 0;
+	public byte bitplaneMask { get; set; } = 0xff;
+	public byte bitplaneMod { get; set; } = 0;
 
 	//	public int ddfSHack;
 	//	public int ddfEHack;
@@ -195,7 +197,7 @@ public class ChipsetDebugger : IChipsetDebugger
 		sb.AppendLine(($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({diwstopv - diwstrtv}) H:{diwstrth}{diwSHack:+#0;-#0}->{diwstoph}{diwEHack:+#0;-#0}({diwstoph - diwstrth}/16={(diwstoph - diwstrth) / 16})"));
 		sb.AppendLine($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
 		sb.AppendLine($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()} 3:{bplcon3:X4} {Bplcon3()} 4:{bplcon4:X4} {Bplcon4()}");
-		sb.AppendLine($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} {new string(Convert.ToString(bitplaneMask, 2).PadLeft(8, '0').Reverse().ToArray())} {new string(Convert.ToString(bitplaneMod, 2).PadLeft(8, '0').Reverse().ToArray())}");
+		sb.AppendLine($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} {new string(bitplaneMask.ToBin().Reverse().ToArray())} {new string(bitplaneMod.ToBin().Reverse().ToArray())}");
 
 		sb.AppendLine();
 
@@ -322,16 +324,12 @@ public class ChipsetDebugger : IChipsetDebugger
 		return sb.ToString();
 	}
 
-	//private CopperFrame cop = new CopperFrame();
-	//private CopperDebug cdbg = new CopperDebug();
-
-
 	private void DebugPalette()
 	{
 		int sx = 5;
 		int sy = 5;
 
-		uint[] truecolour = denise.DebugGetPalette();
+		uint[] truecolour = new uint[256]; //denise.DebugGetPalette();
 
 		int box = 5;
 		for (int y = 0; y < 4; y++)

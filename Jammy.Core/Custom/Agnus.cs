@@ -210,7 +210,8 @@ public class Agnus : IAgnus
 		{
 			if (memory.IsDMAEnabled(DMA.BPLEN))
 				fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
-			lineState = DMALineState.Fetching;
+			if (fetched)
+				lineState = DMALineState.Fetching;
 		}
 
 		if (clock.HorizontalPos >= ddfstopfix /*+ debugger.ddfEHack*/ && lineState == DMALineState.Fetching)
