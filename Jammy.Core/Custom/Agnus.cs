@@ -88,6 +88,8 @@ public class Agnus : IAgnus
 		this.debugger = debugger;
 		this.settings = settings.Value;
 		this.logger = logger;
+
+		SPRITE_DMA_START_LINE = settings.Value.VideoFormat == VideoFormat.NTSC ? 20u : 25;
 	}
 
 	public void Reset()
@@ -156,13 +158,13 @@ public class Agnus : IAgnus
 		}
 		//debugging
 
+		//start by saying there's no DMA required, later code will overwrite it
+		memory.NoDMA(DMASource.Agnus);
+
 		if (clock.HorizontalPos < 0x18)
 		{
 			if ((clock.HorizontalPos & 1) == 0)
-			{
-				memory.NoDMA(DMASource.Agnus);
 				return;
-			}
 
 			switch (clock.HorizontalPos)
 			{
@@ -176,8 +178,8 @@ public class Agnus : IAgnus
 				case 0xF: if (memory.IsDMAEnabled(DMA.AUD1EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
 				case 0x11: if (memory.IsDMAEnabled(DMA.AUD2EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
 				case 0x13: if (memory.IsDMAEnabled(DMA.AUD3EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
-				case 0x15: if (memory.IsDMAEnabled(DMA.SPREN)) RunSpriteDMA(0); break;
-				case 0x17: if (memory.IsDMAEnabled(DMA.SPREN)) RunSpriteDMA(1); break;
+				case 0x15: if (memory.IsDMAEnabled(DMA.SPREN) && clock.VerticalPos >= SPRITE_DMA_START_LINE) RunSpriteDMA(0); break;
+				case 0x17: if (memory.IsDMAEnabled(DMA.SPREN) && clock.VerticalPos >= SPRITE_DMA_START_LINE) RunSpriteDMA(1); break;
 			}
 			return;
 		}
@@ -195,8 +197,8 @@ public class Agnus : IAgnus
 		//tell Denise to stop blanking and start processing pixel data
 		denise.EnterVisibleArea();
 
-		//if (clock.VerticalPos == debugger.dbugLine)
-		//	debugger.write[clock.HorizontalPos] = debugger.fetch[clock.HorizontalPos] = ':';
+		if (clock.VerticalPos == debugger.dbugLine)
+			debugger.write[clock.HorizontalPos] = debugger.fetch[clock.HorizontalPos] = ':';
 
 		//is it time to do bitplane DMA?
 		//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
@@ -221,9 +223,12 @@ noBitplaneDMA:
 
 		//can we use the non-bitplane DMA for something else?
 
-		if ((clock.HorizontalPos < 0x34) && (clock.HorizontalPos & 1) != 0)
+		if (clock.HorizontalPos < 0x34)
 		{
-			if (memory.IsDMAEnabled(DMA.SPREN))
+			if ((clock.HorizontalPos & 1) == 0)
+				return;
+
+			if (memory.IsDMAEnabled(DMA.SPREN) && clock.VerticalPos >= SPRITE_DMA_START_LINE)
 			{
 				switch (clock.HorizontalPos)
 				{
@@ -242,11 +247,11 @@ noBitplaneDMA:
 					case 0x31: RunSpriteDMA(14); break;
 					case 0x33: RunSpriteDMA(15); break;
 				}
-				return;
 			}
 		}
-		memory.NoDMA(DMASource.Agnus);
 	}
+
+	private readonly uint SPRITE_DMA_START_LINE;
 
 	private static readonly uint[] fetchLo = [8, 4, 6, 2, 7, 3, 5, 1];
 	private static readonly uint[] fetchHi = [4, 2, 3, 1, 4, 2, 3, 1];
@@ -441,16 +446,6 @@ noBitplaneDMA:
 			if (spriteState[s] == SpriteState.Idle)
 			{
 				memory.Read(DMASource.Agnus, sprpt[s] + 2, DMA.SPREN, Size.Word, ChipRegs.SPR0CTL+s*8);
-
-				//if (sprpos[s] == 0 && sprctl[s] == 0)
-				//{
-				//	spriteState[s] = SpriteState.Idle;
-				//}
-				//else
-				//{
-				//	spriteState[s] = SpriteState.Waiting;
-				//	sprpt[s] += 4;
-				//}
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
@@ -596,7 +591,6 @@ noBitplaneDMA:
 		}
 	}
 
-
 	private ulong[] bpldat = new ulong[8];
 	private uint[] bplpt = new uint[8];
 	private ushort diwstrt;
@@ -670,15 +664,8 @@ noBitplaneDMA:
 
 	private void UpdateSpriteState(int s)
 	{
-		if (sprpos[s] == 0 && sprctl[s] == 0)
-		{
-			spriteState[s] = SpriteState.Idle;
-		}
-		else
-		{
-			spriteState[s] = SpriteState.Waiting;
-			sprpt[s] += 4;
-		}
+		spriteState[s] = SpriteState.Waiting;
+		sprpt[s] += 4;
 	}
 
 	public void Write(uint insaddr, uint address, ushort value)
