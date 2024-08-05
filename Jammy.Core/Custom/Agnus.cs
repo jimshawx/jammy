@@ -178,8 +178,8 @@ public class Agnus : IAgnus
 				case 0xF: if (memory.IsDMAEnabled(DMA.AUD1EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
 				case 0x11: if (memory.IsDMAEnabled(DMA.AUD2EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
 				case 0x13: if (memory.IsDMAEnabled(DMA.AUD3EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
-				case 0x15: if (memory.IsDMAEnabled(DMA.SPREN) && clock.VerticalPos >= SPRITE_DMA_START_LINE) RunSpriteDMA(0); break;
-				case 0x17: if (memory.IsDMAEnabled(DMA.SPREN) && clock.VerticalPos >= SPRITE_DMA_START_LINE) RunSpriteDMA(1); break;
+				case 0x15: RunSpriteDMA(0); break;
+				case 0x17: RunSpriteDMA(1); break;
 			}
 			return;
 		}
@@ -197,8 +197,10 @@ public class Agnus : IAgnus
 		//tell Denise to stop blanking and start processing pixel data
 		denise.EnterVisibleArea();
 
+		//debugging
 		if (clock.VerticalPos == debugger.dbugLine)
 			debugger.write[clock.HorizontalPos] = debugger.fetch[clock.HorizontalPos] = ':';
+		//debugging
 
 		//is it time to do bitplane DMA?
 		//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
@@ -228,25 +230,22 @@ noBitplaneDMA:
 			if ((clock.HorizontalPos & 1) == 0)
 				return;
 
-			if (memory.IsDMAEnabled(DMA.SPREN) && clock.VerticalPos >= SPRITE_DMA_START_LINE)
+			switch (clock.HorizontalPos)
 			{
-				switch (clock.HorizontalPos)
-				{
-					case 0x19: RunSpriteDMA(2); break;
-					case 0x1B: RunSpriteDMA(3); break;
-					case 0x1D: RunSpriteDMA(4); break;
-					case 0x1F: RunSpriteDMA(5); break;
-					case 0x21: RunSpriteDMA(6); break;
-					case 0x23: RunSpriteDMA(7); break;
-					case 0x25: RunSpriteDMA(8); break;
-					case 0x27: RunSpriteDMA(9); break;
-					case 0x29: RunSpriteDMA(10); break;
-					case 0x2B: RunSpriteDMA(11); break;
-					case 0x2D: RunSpriteDMA(12); break;
-					case 0x2F: RunSpriteDMA(13); break;
-					case 0x31: RunSpriteDMA(14); break;
-					case 0x33: RunSpriteDMA(15); break;
-				}
+				case 0x19: RunSpriteDMA(2); break;
+				case 0x1B: RunSpriteDMA(3); break;
+				case 0x1D: RunSpriteDMA(4); break;
+				case 0x1F: RunSpriteDMA(5); break;
+				case 0x21: RunSpriteDMA(6); break;
+				case 0x23: RunSpriteDMA(7); break;
+				case 0x25: RunSpriteDMA(8); break;
+				case 0x27: RunSpriteDMA(9); break;
+				case 0x29: RunSpriteDMA(10); break;
+				case 0x2B: RunSpriteDMA(11); break;
+				case 0x2D: RunSpriteDMA(12); break;
+				case 0x2F: RunSpriteDMA(13); break;
+				case 0x31: RunSpriteDMA(14); break;
+				case 0x33: RunSpriteDMA(15); break;
 			}
 		}
 	}
@@ -261,12 +260,10 @@ noBitplaneDMA:
 
 	private bool CopperBitplaneFetch(int h)
 	{
-		int planeIdx;
+		int planeIdx = (h - ddfstrtfix) % pixmod;
 
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 		{
-			planeIdx = (h - ddfstrtfix) % pixmod;
-
 			if ((bplcon0 & (uint)Denise.BPLCON0.HiRes) != 0)
 				plane = fetchHi[planeIdx] - 1;
 			else if ((bplcon0 & (uint)Denise.BPLCON0.SuperHiRes) != 0)
@@ -276,12 +273,10 @@ noBitplaneDMA:
 		}
 		else if ((fmode & 3) == 3)
 		{
-			planeIdx = (h - ddfstrtfix) % pixmod;
 			plane = fetchF3[planeIdx] - 1;
 		}
 		else
 		{
-			planeIdx = (h - ddfstrtfix) % pixmod;
 			plane = fetchF2[planeIdx] - 1;
 		}
 
@@ -303,6 +298,8 @@ noBitplaneDMA:
 				bplpt[plane] += 4;
 			}
 
+			//debugging
+
 			//we just filled BPL0DAT
 			if (plane == 0)
 			{
@@ -321,12 +318,16 @@ noBitplaneDMA:
 			if (clock.VerticalPos == debugger.dbugLine)
 				debugger.fetch[h] = Convert.ToChar(plane + 48 + 1);
 
+			//debugging
+
 			return true;
 		}
 		else
 		{
+			//debugging
 			if (clock.VerticalPos == debugger.dbugLine)
 				debugger.fetch[h] = '+';
+			//debugging
 		}
 		return false;
 	}
@@ -409,6 +410,14 @@ noBitplaneDMA:
 
 	private readonly SpriteState[] spriteState = new SpriteState[8];
 
+	private bool SpritesEnabledForThisFrame()
+	{
+		//todo: this might not categorically be the full answer
+		//some notes say that perhaps if bitplane DMA is enabled earlier, or BPLCON0 is written earlier
+		//then sprites are enabled then.
+		return clock.VerticalPos >= SPRITE_DMA_START_LINE;
+	}
+
 	private void RunSpriteDMA(uint slot)
 	{
 		uint s = slot >> 1;
@@ -429,6 +438,10 @@ noBitplaneDMA:
 			if (clock.VerticalPos == vstop)
 				spriteState[s] = SpriteState.Idle;
 		}
+
+		//if DMA is off, or not possible, then don't do any
+		if (!memory.IsDMAEnabled(DMA.SPREN) || !SpritesEnabledForThisFrame())
+			return;
 
 		if ((slot & 1) == 0)
 		{
