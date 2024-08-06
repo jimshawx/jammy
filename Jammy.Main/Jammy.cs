@@ -549,6 +549,8 @@ namespace Jammy.Main
 			if (cbIRQ.Text == "AUD1") debugger.IRQ(Interrupt.AUD1);
 			if (cbIRQ.Text == "AUD2") debugger.IRQ(Interrupt.AUD2);
 			if (cbIRQ.Text == "AUD3") debugger.IRQ(Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.IRQ(Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.IRQ(Interrupt.SOFTINT);
 			Amiga.UnlockEmulation();
 		}
 
@@ -565,6 +567,8 @@ namespace Jammy.Main
 			if (cbIRQ.Text == "AUD1") debugger.INTENA(Interrupt.AUD1);
 			if (cbIRQ.Text == "AUD2") debugger.INTENA(Interrupt.AUD2);
 			if (cbIRQ.Text == "AUD3") debugger.INTENA(Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.INTENA(Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.INTENA(Interrupt.SOFTINT);
 			Amiga.UnlockEmulation();
 		}
 
