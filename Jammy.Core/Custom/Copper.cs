@@ -113,9 +113,8 @@ namespace Jammy.Core.Custom
 		{
 			Retrace,
 			RunningWord1,
-			RunningWord1DMA,
 			RunningWord2,
-			RunningWord2DMA,
+			Execute,
 			Waiting,
 			WakingUp,
 			Stopped
@@ -142,26 +141,24 @@ namespace Jammy.Core.Custom
 			{
 				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
 
-				status = CopperStatus.RunningWord1DMA;
-				memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
-			}
-			else if (status == CopperStatus.RunningWord1DMA)
-			{
-				ins = copins;
-				copPC += 2;
 				status = CopperStatus.RunningWord2;
+				memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+				copPC += 2;
 			}
 			else if (status == CopperStatus.RunningWord2)
 			{
 				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
 
-				status = CopperStatus.RunningWord2DMA;
+				ins = copins;
+
+				status = CopperStatus.Execute;
 				memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+				copPC += 2;
 			}
-			else if (status == CopperStatus.RunningWord2DMA)
+			else if (status == CopperStatus.Execute)
 			{
 				data = copins;
-				copPC += 2;
+				
 				status = CopperStatus.RunningWord1;
 
 				if ((ins & 0x0001) == 0)
@@ -177,6 +174,7 @@ namespace Jammy.Core.Custom
 						if (((copcon & 2) != 0 && reg >= 0x40) || reg >= 0x80)
 						{
 							custom.Write(0, regAddress, data, Size.Word);
+							memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 						}
 						else
 						{
@@ -189,6 +187,7 @@ namespace Jammy.Core.Custom
 						if ((copcon & 2) != 0 || reg >= 0x40)
 						{
 							custom.Write(0, regAddress, data, Size.Word);
+							memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 						}
 						else
 						{
@@ -224,6 +223,9 @@ namespace Jammy.Core.Custom
 						if (CopperCompare(coppos, (waitPos & waitMask)))
 						{
 							//logger.LogTrace($"RUN  {h},{currentLine} {coppos:X4} {waitPos:X4}");
+							//todo: this isn't what happens, the next instruction is fetched, but ignored
+							//https://eab.abime.net/showpost.php?p=206242&postcount=1
+
 							copPC += 4;
 						}
 					}
