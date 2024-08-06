@@ -53,7 +53,7 @@ namespace Jammy.Disassembler.TypeMapper
 		public ByteArrayDebugMemoryMapper(byte[] memory)
 		{
 			this.memory = memory;
-			memoryRange = new MemoryRange(0, (uint)memory.Length);
+			memoryRange = new MemoryRange(0, (ulong)memory.Length);
 		}
 
 		public uint FindSequence(byte[] bytes)
@@ -102,27 +102,27 @@ namespace Jammy.Disassembler.TypeMapper
 			memory[address] = value;
 		}
 
-		public IEnumerable<byte> GetEnumerable(int start, long length)
+		public IEnumerable<byte> GetEnumerable(uint start, ulong length)
 		{
-			return memory[start..(int)(start+length)];
+			return memory[(int)start..(int)(start+length)];
 		}
 
-		public IEnumerable<byte> GetEnumerable(int start)
+		public IEnumerable<byte> GetEnumerable(uint start)
 		{
-			return memory[start..];
+			return memory[(int)start..];
 		}
 
-		public IEnumerable<uint> AsULong(int start)
+		public IEnumerable<uint> AsULong(uint start)
 		{
 			return memory.AsULong();
 		}
 
-		public IEnumerable<ushort> AsUWord(int start)
+		public IEnumerable<ushort> AsUWord(uint start)
 		{
 			return memory.AsUWord();
 		}
 
-		public int Length => memory.Length;
+		public ulong Length => (ulong)memory.Length;
 
 		public List<MemoryRange> MappedRange()
 		{
@@ -133,7 +133,7 @@ namespace Jammy.Disassembler.TypeMapper
 		{
 			return new List<BulkMemoryRange>
 			{
-				new BulkMemoryRange {Memory = memory, StartAddress = memoryRange.Start}
+				new BulkMemoryRange {Memory = memory, Start = memoryRange.Start}
 			};
 		}
 

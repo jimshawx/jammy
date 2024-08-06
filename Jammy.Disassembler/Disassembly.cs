@@ -53,44 +53,11 @@ namespace Jammy.Disassembler
 		private readonly Dictionary<uint, AddressEntry> globalAddressToLine = new Dictionary<uint, AddressEntry>();
 		private readonly Dictionary<int, uint> globalLineToAddress = new Dictionary<int, uint>();
 
-		private List<AddressRange> NoOverlaps(List<AddressRange> ranges)
-		{
-			var merge = new List<AddressRange>();
-
-			foreach (var incoming in ranges)
-			{
-				//remove any existing ranges completely contained in the incoming
-				merge.RemoveAll(x=>incoming.Contains(x));
-
-				//incoming doesn't overlap anything, add it, and we're done
-				if (!merge.Any(x => x.Overlaps(incoming))) { merge.Add(incoming); continue; }
-
-				//incoming is contained entirely within another, ignore it
-				if (merge.Any(x=>x.Contains(incoming))) continue;
-
-				//it partly overlaps one or more existing ranges
-				foreach (var merged in merge)
-				{
-					if (incoming.Overlaps(merged))
-					{
-						//that means incoming contains the start or the end of merged
-
-						//it contains the start, so extend it to the end
-						if (merged.Contains(incoming.Start))
-							merged.End = incoming.End;
-						else
-							merged.Start= incoming.Start;
-					}
-				}
-			}
-			return merge;
-		}
-
 		public string DisassembleTxt(List<AddressRange > ranges, DisassemblyOptions options)
 		{
 			var lines = new List<string>();
 
-			ranges = NoOverlaps(ranges);
+			ranges = AddressRange.NoOverlaps(ranges);
 
 			foreach (var range in ranges.OrderBy(x=>x.Start))
 			{
@@ -238,7 +205,7 @@ namespace Jammy.Disassembler
 					}
 					else
 					{
-						var dasm = disassembler.Disassemble(address, memory.GetEnumerable((int)address, 20));
+						var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, 20));
 						asm = dasm.ToString(options);
 
 						uint start = address, end = (uint)(address + dasm.Bytes.Length);

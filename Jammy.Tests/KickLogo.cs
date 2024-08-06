@@ -54,7 +54,7 @@ namespace Jammy.Tests
 		public static void KSLogo(KickstartROM kickstart)
 		{
 			var range = kickstart.MappedRange().First();
-			for (uint i = 0; i < range.Length- kslogo.Length; i++)
+			for (ulong i = 0; i < range.Length- (ulong)kslogo.Length; i++)
 			{
 				//if (kslogo.SequenceEqual(kickstart.Skip((int)i).Take(kslogo.Length)))
 				{

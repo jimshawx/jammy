@@ -109,7 +109,7 @@ namespace Jammy.Debugger
 		private string DisassembleAddress(uint pc)
 		{
 			if (pc >= mem.Length) return "";
-			var dasm = disassembler.Disassemble(pc, mem.GetEnumerable((int)pc, 20));
+			var dasm = disassembler.Disassemble(pc, mem.GetEnumerable(pc, 20));
 			return dasm.ToString();
 		}
 	}

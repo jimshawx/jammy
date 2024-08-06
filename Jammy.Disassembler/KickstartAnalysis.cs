@@ -68,7 +68,7 @@ namespace Jammy.Disassembler
 			//This is a CRC32 of the ROM data (it should match the one in the ROM)
 			var mappedRange = kickstartROM.MappedRange().First();
 			var crc = new Crc32();
-			crc.Append(memory.GetEnumerable((int)mappedRange.Start, mappedRange.Length-24).ToArray());
+			crc.Append(memory.GetEnumerable(mappedRange.Start, mappedRange.Length-24).ToArray());
 			return crc.GetCurrentHashAsUInt32();
 		}
 
@@ -76,7 +76,7 @@ namespace Jammy.Disassembler
 		{
 			//This is a SHA1 of the ROM data
 			var mappedRange = kickstartROM.MappedRange().First();
-			return SHA1.HashData(memory.GetEnumerable((int)mappedRange.Start, mappedRange.Length).ToArray());
+			return SHA1.HashData(memory.GetEnumerable(mappedRange.Start, mappedRange.Length).ToArray());
 		}
 
 		private static List<Resident> GetRomTags(IKickstartROM kickstartROM, IDebugMemoryMapper memory, uint rombase)
@@ -197,7 +197,7 @@ namespace Jammy.Disassembler
 			return lines;
 		}
 
-		private void Disassemble(List<Resident> resident, MemoryDump memoryDump)
+		private void Disassemble(List<Resident> resident, IMemoryDump memoryDump)
 		{
 			for (int i = 0; i < resident.Count; i++)
 			{
@@ -244,7 +244,7 @@ namespace Jammy.Disassembler
 				dmp.Append(asm);
 				dmp.AppendLine();
 				dmp.AppendLine("^Z");
-				dmp.AppendLine(memoryDump.ToString(rt.MatchTag & 0xffffffe0u, endAddress - rt.MatchTag + 1 + 31));
+				dmp.AppendLine(memoryDump.GetString(rt.MatchTag & 0xffffffe0u, endAddress - rt.MatchTag + 1 + 31));
 
 				File.WriteAllText($"{rt.Name}_disassembly.txt", dmp.ToString());
 			}

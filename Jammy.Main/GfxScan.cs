@@ -129,7 +129,7 @@ namespace Jammy.Main
 			var bulk = ((IBulkMemoryRead)chipRAM).ReadBulk().First();
 
 			int d=0;
-			for (int i = startAddress; i < Math.Min(bulk.EndAddress, startAddress+ (screenWidth*screenHeight)/16); i += 2)
+			for (int i = startAddress; i < Math.Min((int)bulk.End, startAddress+ (screenWidth*screenHeight)/16); i += 2)
 			{
 				ushort b = (ushort)((bulk.Memory[i]<<8)+bulk.Memory[i + 1]);
 				for (int bit = 0x8000; bit > 0; bit >>= 1)

@@ -80,7 +80,7 @@ namespace Jammy.Core.Memory
 				{
 					new BulkMemoryRange
 					{
-						StartAddress = memoryRange.Start,
+						Start = memoryRange.Start,
 						Memory = (byte[])memory.Clone()
 					}
 				};

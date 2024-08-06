@@ -173,7 +173,7 @@ namespace Jammy.Tests
 				if (address + 20 > memory.Length)
 					address -= address + 20 - (uint)memory.Length; 
 				
-				var dasm = disassembler.Disassemble(address, memory.GetEnumerable((int)address, 20));
+				var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, 20));
 				return dasm.ToString(new DisassemblyOptions{IncludeBytes = true});
 			}
 

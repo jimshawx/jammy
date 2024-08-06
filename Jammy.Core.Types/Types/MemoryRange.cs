@@ -2,29 +2,29 @@
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
+using System;
+
 namespace Jammy.Core.Types.Types
 {
-	public class MemoryRange
+	public class MemoryRange : AddressRange
 	{
-		public MemoryRange(uint start, long length)
-		{
-			Start = start;
-			Length = length;
-		}
+		public MemoryRange() : base(){ }
 
-		public uint Start { get; set; }
-		public long Length { get; set; }
-
-		public bool Contains(uint address)
-		{
-			return address >= Start && address < Start+Length;
-		}
+		public MemoryRange(uint start, ulong length) : base(start, length) { }
 	}
 
-	public class BulkMemoryRange
+	public class BulkMemoryRange : AddressRange
 	{
-		public uint StartAddress { get; set; }
-		public byte[] Memory { get; set; } = new byte[0];
-		public uint EndAddress => (uint)(StartAddress + Memory.Length);
+		public byte[] Memory { get; set; } = [];
+
+		public new ulong End {
+			get => Start + Length;
+			set => throw new NotSupportedException();
+		}
+
+		public new ulong Length {
+			get => (ulong)Memory.Length;
+			set => throw new NotSupportedException();
+		}
 	}
 }

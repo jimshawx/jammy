@@ -49,6 +49,14 @@ namespace Jammy.Main
 
 		private readonly List<AddressRange> disassemblyRanges = new List<AddressRange>();
 
+		private readonly List<AddressRange> memoryDumpRanges = new List<AddressRange>
+		{
+			new AddressRange(0x000000, 0x10000),
+			new AddressRange(0xc00000, 0x10000),
+			new AddressRange(0xf80000, 0x40000),
+			new AddressRange(0xfc0000, 0x40000)
+		};
+
 		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
@@ -157,7 +165,7 @@ namespace Jammy.Main
 				disassemblyOptions);
 
 			var memory = debugger.GetMemory();
-			var memoryText = memory.ToString();
+			var memoryText = memory.GetString(memoryDumpRanges);
 
 			Amiga.UnlockEmulation();
 
@@ -1025,6 +1033,12 @@ namespace Jammy.Main
 				if (bits[0] == "d")
 				{
 					disassemblyRanges.Add(new AddressRange(uint.Parse(bits[1], NumberStyles.HexNumber), 0x1000));
+					UpdateDisassembly();
+				}
+				if (bits[0] == "m")
+				{
+					memoryDumpRanges.Add(new AddressRange(uint.Parse(bits[1], NumberStyles.HexNumber), ulong.Parse(bits[2], NumberStyles.HexNumber)));
+
 					UpdateDisassembly();
 				}
 
