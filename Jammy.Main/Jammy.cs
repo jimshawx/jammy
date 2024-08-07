@@ -41,6 +41,7 @@ namespace Jammy.Main
 		private IMemoryDumpView memoryDumpView;
 		private readonly IDisassembly disassembly;
 		private readonly IDebugger debugger;
+		private readonly IAnalysis analysis;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
@@ -55,7 +56,7 @@ namespace Jammy.Main
 			new AddressRange(0xfc0000, 0x40000)
 		};
 
-		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger,
+		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger, IAnalysis analysis,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -64,6 +65,7 @@ namespace Jammy.Main
 			this.emulation = emulation;
 			this.disassembly = disassembly;
 			this.debugger = debugger;
+			this.analysis = analysis;
 			this.logger = logger;
 
 			InitializeComponent();
@@ -1064,6 +1066,19 @@ namespace Jammy.Main
 				return null;
 			}
 			string P(int i){ return (i<parm.Length) ? parm[i]: string.Empty; }
+			string R(int i) { return (i < parm.Length) ? string.Join(' ', parm[i..]) : string.Empty; }
+			MemType? M(int i)
+			{
+				string s = P(i);
+				if (s.Length != 1) return null;
+				if (char.ToLower(s[0]) == 'c') return MemType.Code;
+				if (char.ToLower(s[0]) == 'b') return MemType.Byte;
+				if (char.ToLower(s[0]) == 'w') return MemType.Word;
+				if (char.ToLower(s[0]) == 'l') return MemType.Long;
+				if (char.ToLower(s[0]) == 's') return MemType.Str;
+				if (char.ToLower(s[0]) == 'u') return MemType.Unknown;
+				return null;
+			}
 
 			Amiga.LockEmulation();
 			bool refresh = false;
@@ -1116,8 +1131,23 @@ namespace Jammy.Main
 						logger.LogTrace($"{v:X8} ({v})");
 						break;
 
-					case "?":
+					case "a":
+						for (uint i = 0; i < (N(3)??1); i++)
+							analysis.SetMemType(A(1)+i, M(2)??MemType.Code);
+						refresh = true;
+						break;
+
+					case "c":
+						analysis.AddComment(A(1), R(2));
+						refresh = true;
+						break;
+
 					case "h":
+						analysis.AddHeader(A(1), $"\t{R(2)}");
+						refresh = true;
+						break;
+
+					case "?":
 						logger.LogTrace("b address - breakpoint on execute at address");
 						logger.LogTrace("bw address [size(W)] [value] - breakpoint on read at address");
 						logger.LogTrace("br address [size(W)] [value] - breakpoint on write at address");
@@ -1129,6 +1159,9 @@ namespace Jammy.Main
 						logger.LogTrace("m address [length(1000h)] - add an address range to the memory dump");
 						logger.LogTrace("w address [value(0)] [size(W)] - write a value to memory");
 						logger.LogTrace("r address [size(W)] - read a value from memory");
+						logger.LogTrace("a address [type(C)] [length(1)] - set memory type C,B,W,L,S,U");
+						logger.LogTrace("c address text - add a comment");
+						logger.LogTrace("h address text - add a header");
 						break;
 				}
 				AddHistory(cmd);
