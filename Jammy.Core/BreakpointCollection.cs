@@ -33,21 +33,21 @@ namespace Jammy.Core
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size))
+			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
 					SignalBreakpoint(insaddr);
 		}
 
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size))
+			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
 					SignalBreakpoint(insaddr);
 		}
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp))
+			if (breakpoints.TryGetValue(address, out Breakpoint bp) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
 					SignalBreakpoint(insaddr);
 		}
@@ -95,8 +95,8 @@ namespace Jammy.Core
 
 		public void ToggleBreakpoint(uint pc)
 		{
-			if (IsBreakpoint(pc))
-				breakpoints[pc].Active ^= true;
+			if (breakpoints.TryGetValue(pc, out var breakpoint))
+				breakpoint.Active ^= true;
 			else
 				AddBreakpoint(pc);
 		}

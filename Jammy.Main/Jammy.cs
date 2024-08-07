@@ -1025,6 +1025,7 @@ namespace Jammy.Main
 				{
 					currentHistory--;
 					tbCommand.Text = history[currentHistory];
+					tbCommand.SelectionStart = tbCommand.Text.Length;
 				}
 				e.SuppressKeyPress = true;
 			}
@@ -1034,6 +1035,7 @@ namespace Jammy.Main
 				{
 					currentHistory++;
 					tbCommand.Text = history[currentHistory];
+					tbCommand.SelectionStart = tbCommand.Text.Length;
 				}
 				else
 				{
@@ -1091,6 +1093,10 @@ namespace Jammy.Main
 						debugger.RemoveBreakpoint(A(1));
 						break;
 
+					case "t":
+						debugger.ToggleBreakpoint(A(1));
+						break;
+
 					case "d":
 						disassemblyRanges.Add(new AddressRange(A(1), N(2)??0x1000));
 						refresh = true;
@@ -1107,7 +1113,7 @@ namespace Jammy.Main
 
 					case "r":
 						uint v = debugger.DebugRead(A(1), S(2) ?? Core.Types.Types.Size.Word);
-						logger.LogTrace($"{v:X8} {v}");
+						logger.LogTrace($"{v:X8} ({v})");
 						break;
 
 					case "?":
@@ -1116,7 +1122,8 @@ namespace Jammy.Main
 						logger.LogTrace("bw address [size(W)] [value] - breakpoint on read at address");
 						logger.LogTrace("br address [size(W)] [value] - breakpoint on write at address");
 						logger.LogTrace("brw address [size(W)] [value] - breakpoint on read/write at address");
-						logger.LogTrace("bc address - remove all breakpoints at address");
+						logger.LogTrace("bc address - remove breakpoint at address");
+						logger.LogTrace("t address - toggle breakpoint at address");
 						logger.LogTrace("bl - list all breakpoints");
 						logger.LogTrace("d address [length(1000h)] - add an address range to the debugger");
 						logger.LogTrace("m address [length(1000h)] - add an address range to the memory dump");

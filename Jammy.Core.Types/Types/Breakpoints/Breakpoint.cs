@@ -26,10 +26,5 @@ namespace Jammy.Core.Types.Types.Breakpoints
 		public Size Size { get; set; }
 
 		public ulong? Value { get; set; }
-
-		public Breakpoint()
-		{
-			Type = BreakpointType.Execute;
-		}
 	}
 }
