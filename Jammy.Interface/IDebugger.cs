@@ -12,7 +12,7 @@ using Jammy.Types.Debugger;
 
 namespace Jammy.Interface
 {
-	public interface IDebugger : IMemoryInterceptor
+	public interface IDebugger : IMemoryInterceptor, IDebuggableMemory
 	{
 		void ToggleBreakpoint(uint pc);
 		IMemoryDump GetMemory();
@@ -37,5 +37,6 @@ namespace Jammy.Interface
 		uint Read32(uint address);
 		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long);
 		void RemoveBreakpoint(uint address);
+		void DumpBreakpoints();
 	}
 }

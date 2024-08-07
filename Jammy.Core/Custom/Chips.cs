@@ -45,6 +45,7 @@ namespace Jammy.Core.Custom
 		}
 
 		private bool blitterDebugging = false;
+		private bool blitterDumping = false;
 		private void dbug_Keydown(int obj)
 		{
 			if (obj == (int)VK.VK_F2)
@@ -53,6 +54,12 @@ namespace Jammy.Core.Custom
 				logger.LogTrace($"Blitter Debugging {(blitterDebugging?"enabled":"disabled")}");
 				blitter.Logging(blitterDebugging);
 				copper.Dumping(blitterDebugging);
+			}
+
+			if (obj == (int)VK.VK_F4)
+			{
+				blitterDumping ^= true;
+				blitter.Dumping(blitterDumping);
 			}
 		}
 

@@ -25,8 +25,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Vortice.Direct3D11;
-using Message = System.Windows.Forms.Message;
-using Task = System.Threading.Tasks.Task;
 using System.Runtime.InteropServices;
 using Jammy.Core.Types.Types.Breakpoints;
 
@@ -1002,6 +1000,15 @@ namespace Jammy.Main
 			}
 		}
 
+		private List<string> history = new List<string>();
+		private int currentHistory = 0;
+
+		private void AddHistory(string h)
+		{
+			history.Add(h);
+			currentHistory = history.Count;
+		}
+
 		private void tbCommand_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Enter)
@@ -1011,55 +1018,122 @@ namespace Jammy.Main
 				tbCommand.PlaceholderText = ">";
 				e.SuppressKeyPress = true;
 			}
+
+			if (e.KeyCode == Keys.Up)
+			{
+				if (currentHistory > 0)
+				{
+					currentHistory--;
+					tbCommand.Text = history[currentHistory];
+				}
+				e.SuppressKeyPress = true;
+			}
+			if (e.KeyCode == Keys.Down)
+			{
+				if (currentHistory < history.Count - 1)
+				{
+					currentHistory++;
+					tbCommand.Text = history[currentHistory];
+				}
+				else
+				{
+					tbCommand.Clear();
+					tbCommand.PlaceholderText = ">";
+				}
+				e.SuppressKeyPress = true;
+			}
 		}
 
 		private void ProcessCommand(string cmd)
 		{
-			string[] bits = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-			if (bits.Length == 0)
+			string[] parm = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+			if (parm.Length == 0)
 				return;
+
+			uint A(int i) { string s = P(i); return uint.Parse(s, NumberStyles.HexNumber); }
+			uint? N(int i) { string s = P(i); return string.IsNullOrWhiteSpace(s)?null:A(i); }
+			Core.Types.Types.Size? S(int i)
+			{
+				string s = P(i);
+				if (s.Length != 1) return null;
+				if (char.ToLower(s[0]) == 'b') return Core.Types.Types.Size.Byte;
+				if (char.ToLower(s[0]) == 'w') return Core.Types.Types.Size.Word;
+				if (char.ToLower(s[0]) == 'l') return Core.Types.Types.Size.Long;
+				return null;
+			}
+			string P(int i){ return (i<parm.Length) ? parm[i]: string.Empty; }
+
+			Amiga.LockEmulation();
+			bool refresh = false;
 
 			try
 			{
-				if (bits[0] == "b")
-					debugger.AddBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber));
-				if (bits[0] == "bw")
-					debugger.AddBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber), BreakpointType.Write, 0,
-						global::Jammy.Core.Types.Types.Size.Word);
-				if (bits[0] == "br")
-					debugger.AddBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber), BreakpointType.Read, 0,
-						global::Jammy.Core.Types.Types.Size.Word);
-				if (bits[0] == "brw")
-					debugger.AddBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber), BreakpointType.ReadOrWrite, 0,
-						global::Jammy.Core.Types.Types.Size.Word);
-				if (bits[0] == "bc")
-					debugger.RemoveBreakpoint(uint.Parse(bits[1], NumberStyles.HexNumber));
-				if (bits[0] == "d")
+				switch (P(0))
 				{
-					disassemblyRanges.Add(new AddressRange(uint.Parse(bits[1], NumberStyles.HexNumber), 0x1000));
-					UpdateDisassembly();
-				}
-				if (bits[0] == "m")
-				{
-					memoryDumpRanges.Add(new AddressRange(uint.Parse(bits[1], NumberStyles.HexNumber), ulong.Parse(bits[2], NumberStyles.HexNumber)));
+					case "b":
+						debugger.AddBreakpoint(A(1));
+						break;
 
-					UpdateDisassembly();
-				}
+					case "bw":
+						debugger.AddBreakpoint(A(1), BreakpointType.Write, 0, S(2) ?? Core.Types.Types.Size.Word);
+						break;
+					case "br":
+						debugger.AddBreakpoint(A(1), BreakpointType.Read, 0, S(2) ?? Core.Types.Types.Size.Word);
+						break;
+					case "brw":
+						debugger.AddBreakpoint(A(1), BreakpointType.ReadOrWrite, 0, S(2) ?? Core.Types.Types.Size.Word);
+						break;
+					case "bl":
+						debugger.DumpBreakpoints();
+						break;
 
-				if (bits[0] == "w")
-				{
-					if (bits[0][1] == 'b')
-						debugger.Write(0, uint.Parse(bits[1], NumberStyles.HexNumber), uint.Parse(bits[2], NumberStyles.HexNumber), Core.Types.Types.Size.Byte);
-					if (bits[0][1] == 'w')
-						debugger.Write(0, uint.Parse(bits[1], NumberStyles.HexNumber), uint.Parse(bits[2], NumberStyles.HexNumber), Core.Types.Types.Size.Word);
-					if (bits[0][1] == 'l')
-						debugger.Write(0, uint.Parse(bits[1], NumberStyles.HexNumber), uint.Parse(bits[2], NumberStyles.HexNumber), Core.Types.Types.Size.Long);
+					case "bc":
+						debugger.RemoveBreakpoint(A(1));
+						break;
+
+					case "d":
+						disassemblyRanges.Add(new AddressRange(A(1), N(2)??0x1000));
+						refresh = true;
+						break;
+					
+					case "m":
+						memoryDumpRanges.Add(new AddressRange(A(1), N(2)??0x1000));
+						refresh = true;
+						break;
+					
+					case "w":
+						debugger.DebugWrite(A(1), N(2)??0, S(3)??Core.Types.Types.Size.Word);
+						break;
+
+					case "r":
+						uint v = debugger.DebugRead(A(1), S(2) ?? Core.Types.Types.Size.Word);
+						logger.LogTrace($"{v:X8} {v}");
+						break;
+
+					case "?":
+					case "h":
+						logger.LogTrace("b address - breakpoint on execute at address");
+						logger.LogTrace("bw address [size(W)] [value] - breakpoint on read at address");
+						logger.LogTrace("br address [size(W)] [value] - breakpoint on write at address");
+						logger.LogTrace("brw address [size(W)] [value] - breakpoint on read/write at address");
+						logger.LogTrace("bc address - remove all breakpoints at address");
+						logger.LogTrace("bl - list all breakpoints");
+						logger.LogTrace("d address [length(1000h)] - add an address range to the debugger");
+						logger.LogTrace("m address [length(1000h)] - add an address range to the memory dump");
+						logger.LogTrace("w address [value(0)] [size(W)] - write a value to memory");
+						logger.LogTrace("r address [size(W)] - read a value from memory");
+						break;
 				}
+				AddHistory(cmd);
 			}
 			catch
 			{
 				logger.LogTrace($"Can't execute \"{cmd}\"");
 			}
+
+			Amiga.UnlockEmulation();
+			if (refresh)
+				UpdateDisassembly();
 		}
 	}
 

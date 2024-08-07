@@ -390,5 +390,22 @@ namespace Jammy.Debugger
 		{
 			return (uint)kickstart.MappedRange().First().Length;
 		}
+
+		public uint DebugRead(uint address, Size size)
+		{
+			return memory.UnsafeRead(address, size);
+		}
+
+		public void DebugWrite(uint address, uint value, Size size)
+		{
+			if (size == Size.Byte) memory.UnsafeWrite8(address, (byte)value);
+			if (size == Size.Word) memory.UnsafeWrite16(address, (ushort)value);
+			if (size == Size.Long) memory.UnsafeWrite32(address, value);
+		}
+
+		public void DumpBreakpoints()
+		{
+			breakpoints.DumpBreakpoints();
+		}
 	}
 }

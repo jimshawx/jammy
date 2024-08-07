@@ -117,6 +117,9 @@ namespace Jammy.Core.Custom
 			waitVMask = 0xff;
 			waitBlit = 0;
 			status = CopperStatus.RunningWord1;
+
+			if (copperDumping)
+				CopperDump();
 		}
 
 		////HRM 3rd Ed, PP24
@@ -418,9 +421,16 @@ namespace Jammy.Core.Custom
 			File.WriteAllText($"../../../../copper{DateTime.Now:yyyyMMdd-HHmmss}.txt", csb);
 		}
 
+		private bool copperDumping;
 		public void Dumping(bool enabled)
 		{
-			throw new NotImplementedException();
+			copperDumping = enabled;
+		}
+
+		private void CopperDump()
+		{
+			//var c = memory.ToBmp(1280);
+			//File.WriteAllBytes($"../../../../blits/chip-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.bmp", c.ToArray());
 		}
 
 		public string GetDisassembly()

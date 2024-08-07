@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -40,8 +43,11 @@ namespace Jammy.Core.Custom
 			memory = dma;
 		}
 
-		public void Logging(bool enabled) { }
-		public void Dumping(bool enabled) { }
+		private bool blitterLog = false;
+		private bool blitterDump = false;
+
+		public void Logging(bool enabled) { blitterLog = enabled; }
+		public void Dumping(bool enabled) { blitterDump = enabled; }
 
 		private enum BlitterState
 		{
@@ -223,6 +229,9 @@ namespace Jammy.Core.Custom
 
 		private void BlitSmall(uint insaddr)
 		{
+			if (blitterLog)
+				WriteBlitterState();
+
 			if ((bltcon1 & 1) != 0)
 			{
 				Line(insaddr);
@@ -235,11 +244,17 @@ namespace Jammy.Core.Custom
 			if (h == 0) h = 64;
 			if (v == 0) v = 1024;
 
+			if (blitterDump)
+				DumpBlitterState(h,v);
+
 			Blit(insaddr, h, v);
 		}
 
 		private void BlitBig(uint insaddr)
 		{
+			if (blitterLog)
+				WriteBlitterState();
+
 			if ((bltcon1 & 1) != 0)
 			{
 				Line(insaddr);
@@ -251,6 +266,9 @@ namespace Jammy.Core.Custom
 
 			if (h == 0) h = 2048;
 			if (v == 0) v = 32768;
+
+			if (blitterDump)
+				DumpBlitterState(h, v);
 
 			Blit(insaddr, h, v);
 		}
@@ -457,9 +475,9 @@ namespace Jammy.Core.Custom
 			bltzero |= bltddat;
 
 			if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
-				return DelayedWrite(bltdpt, (ushort)bltddat);
+				DelayedWrite(bltdpt, (ushort)bltddat);
 
-			return true;
+			return false;
 		}
 
 		private bool BlitEndOfWord()
@@ -520,7 +538,8 @@ namespace Jammy.Core.Custom
 		private bool BlitDLast()
 		{
 			status = BlitterState.BlitEnd;
-			return DelayedWrite();
+			DelayedWrite();
+			return false;
 		}
 
 		private bool BlitEnd()
@@ -652,6 +671,9 @@ namespace Jammy.Core.Custom
 
 		private void Line(uint _)
 		{
+			if (blitterDump)
+				DumpBlitterState(bltsize>>6);
+
 			LineImmediate(_);
 			//LineBegin();
 		}
@@ -1010,6 +1032,91 @@ namespace Jammy.Core.Custom
 				case ChipRegs.BLTDDAT: value = bltddat; break;
 			}
 			return value;
+		}
+
+		private int counter = 0;
+		private string filename;
+
+		private void WriteBlitterState()
+		{
+			var b = new List<string>
+			{
+				"{",
+				$"bltcon0 : {bltcon0},",
+				$"bltcon1 : {bltcon1},",
+				$"bltapt : {bltapt},",
+				$"bltbpt : {bltbpt},",
+				$"bltcpt : {bltcpt},",
+				$"bltdpt : {bltdpt},",
+				$"bltamod : {bltamod},",
+				$"bltbmod : {bltbmod},",
+				$"bltcmod : {bltcmod},",
+				$"bltdmod : {bltdmod},",
+				$"bltadat : {bltadat},",
+				$"bltbdat : {bltbdat},",
+				$"bltcdat : {bltcdat},",
+				$"bltddat : {bltddat},",
+				$"bltafwm : {bltafwm},",
+				$"bltalwm : {bltalwm},",
+				$"bltsize : {bltsize},",
+				$"bltsizh : {bltsizh},",
+				$"bltsizv : {bltsizv},",
+				"},"
+			};
+
+			if (counter == 0)
+				filename = Path.Combine("../../../../blits/", $"blitter-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.txt");
+
+			if (counter < 1000)
+				File.AppendAllLines(filename, b);
+
+			counter++;
+		}
+
+		private void DumpBlitterState(uint width, uint height)
+		{
+			logger.LogTrace($"BLIT! {width}x{height} = {width * 16}bits x {height} = {width * 16 * height} bits = {width * height * 2} bytes");
+
+			logger.LogTrace($"A->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on " : "off")} A {bltadat:X4}");
+			logger.LogTrace($"B->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on " : "off")} B {bltbdat:X4}");
+			logger.LogTrace($"C->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on " : "off")} C {bltcdat:X4}");
+			logger.LogTrace($"D->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on " : "off")} D {bltddat:X4}");
+			logger.LogTrace($"M {bltafwm.ToBin(16)} {bltalwm.ToBin(16)}");
+			logger.LogTrace($"cookie: {bltcon0 & 0xff:X2} {((bltcon1 & 2) != 0 ? "descending" : "ascending")}");
+			//logger.LogTrace("ABC");
+			//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
+			//if ((bltcon0 & 0x02) != 0) logger.LogTrace("001");
+			//if ((bltcon0 & 0x04) != 0) logger.LogTrace("010");
+			//if ((bltcon0 & 0x08) != 0) logger.LogTrace("011");
+			//if ((bltcon0 & 0x10) != 0) logger.LogTrace("100");
+			//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
+			//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
+			//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
+			if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
+				logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+		}
+
+		private void DumpBlitterState(uint length)
+		{
+			logger.LogTrace($"LINE! {length}");
+
+			logger.LogTrace($"A->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on " : "off")} A {bltadat:X4}");
+			logger.LogTrace($"B->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on " : "off")} B {bltbdat:X4}");
+			logger.LogTrace($"C->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on " : "off")} C {bltcdat:X4}");
+			logger.LogTrace($"D->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on " : "off")} D {bltddat:X4}");
+			logger.LogTrace($"M {bltafwm.ToBin(16)} {bltalwm.ToBin(16)}");
+			logger.LogTrace($"cookie: {bltcon0 & 0xff:X2} {((bltcon1 & 2) != 0 ? "descending" : "ascending")}");
+			//logger.LogTrace("ABC");
+			//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
+			//if ((bltcon0 & 0x02) != 0) logger.LogTrace("001");
+			//if ((bltcon0 & 0x04) != 0) logger.LogTrace("010");
+			//if ((bltcon0 & 0x08) != 0) logger.LogTrace("011");
+			//if ((bltcon0 & 0x10) != 0) logger.LogTrace("100");
+			//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
+			//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
+			//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
+			if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
+				logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 		}
 	}
 }
