@@ -3,6 +3,7 @@ using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using Jammy.Core.Types;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -51,10 +52,11 @@ namespace Jammy.Debugger.Interceptors
 
 		public string Library => "dos.library";
 		public string VectorName => "Read";
+		private Regs gregs = new Regs();
 
 		public void Intercept(LVO lvo, uint pc)
 		{
-			var regs = cpu.GetRegs();
+			var regs = cpu.GetRegs(gregs);
 			logger.LogTrace($"@{pc:X8} {lvo.Name}() file: {fileTracker.GetFileName(regs.D[1])}:{regs.D[1]:X8} buffer: {regs.D[2]:X8} length: {regs.D[3]:X8}");
 		}
 	}
@@ -71,15 +73,16 @@ namespace Jammy.Debugger.Interceptors
 
 		public string Library => "dos.library";
 		public string VectorName => "Open";
+		private Regs gregs = new Regs();
 
 		public void Intercept(LVO lvo, uint pc)
 		{
-			var regs = cpu.GetRegs();
+			var regs = cpu.GetRegs(gregs);
 			string filename = memory.GetString(regs.D[1]);
 			logger.LogTrace($"@{pc:X8} {lvo.Name}() name:{filename}:{regs.D[1]:X8} flags: {regs.D[2]:X8}");
 			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
 			{
-				var regs = cpu.GetRegs();
+				var regs = cpu.GetRegs(gregs);
 				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X8}");
 				fileTracker.Open(regs.D[0], filename);
 			}, memory.UnsafeRead32(regs.SP)));
@@ -98,10 +101,11 @@ namespace Jammy.Debugger.Interceptors
 
 		public string Library => "dos.library";
 		public string VectorName => "Close";
+		private Regs gregs = new Regs();
 
 		public void Intercept(LVO lvo, uint pc)
 		{
-			var regs = cpu.GetRegs();
+			var regs = cpu.GetRegs(gregs);
 			logger.LogTrace($"@{pc:X8} {lvo.Name}() file: file: {fileTracker.GetFileName(regs.D[1])}:{regs.D[1]:X8}");
 			fileTracker.Close(regs.D[1]);
 		}

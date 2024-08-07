@@ -154,9 +154,14 @@ namespace Jammy.Core.CPU.Musashi.MC68020
 
 		public Regs GetRegs()
 		{
+			var regs = new Regs();
+			return GetRegs(regs);
+		}
+
+		public Regs GetRegs(Regs regs)
+		{
 			var musashiRegs = new Musashi_regs();
 			Musashi_get_regs(musashiRegs);
-			var regs = new Regs();
 
 			regs.D[0] = musashiRegs.d0;
 			regs.D[1] = musashiRegs.d1;

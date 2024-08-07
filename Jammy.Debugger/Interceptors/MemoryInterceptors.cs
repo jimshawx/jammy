@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
@@ -38,14 +39,15 @@ namespace Jammy.Debugger.Interceptors
 
 		public string Library => "exec.library";
 		public string VectorName => "AllocMem";
+		private Regs gregs = new Regs();
 
 		public void Intercept(LVO lvo, uint pc)
 		{
-			var regs = cpu.GetRegs();
+			var regs = cpu.GetRegs(gregs);
 			logger.LogTrace($"@{pc:X8} {lvo.Name}() size: {regs.D[0]:X8} flags: {regs.D[1]:X8} {(MEMF)regs.D[1]}");
 			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
 			{
-				var regs = cpu.GetRegs();
+				var regs = cpu.GetRegs(gregs);
 				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X8} {(regs.D[0]==0?"*** OUT OF MEMORY ***":"")}");
 			}, memory.UnsafeRead32(regs.SP)));
 		}

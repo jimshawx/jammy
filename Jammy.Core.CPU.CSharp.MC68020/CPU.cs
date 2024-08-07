@@ -90,9 +90,10 @@ namespace Jammy.Core.CPU.CSharp.MC68020
 			pc = read32(4);
 		}
 
+		private Regs gregs = new Regs();
 		private ushort Fetch(uint pc)
 		{
-			tracer.TraceAsm(pc, GetRegs());
+			tracer.TraceAsm(pc, GetRegs(gregs));
 			return fetch16(pc);
 		}
 
@@ -210,6 +211,20 @@ namespace Jammy.Core.CPU.CSharp.MC68020
 		public Regs GetRegs()
 		{
 			var regs = new Regs();
+			for (int i = 0; i < 8; i++)
+			{
+				regs.A[i] = a[i];
+				regs.D[i] = d[i];
+			}
+			regs.PC = pc;
+			regs.SP = a.usp;
+			regs.SSP = a.ssp;
+			regs.SR = sr;
+			return regs;
+		}
+
+		public Regs GetRegs(Regs regs)
+		{
 			for (int i = 0; i < 8; i++)
 			{
 				regs.A[i] = a[i];
@@ -2112,7 +2127,7 @@ namespace Jammy.Core.CPU.CSharp.MC68020
 
 		private void bsr(int type, uint target)
 		{
-			tracer.Trace("bsr", instructionStartPC, GetRegs());
+			tracer.Trace("bsr", instructionStartPC, GetRegs(gregs));
 
 			push32(pc);
 			pc = target;
@@ -2122,7 +2137,7 @@ namespace Jammy.Core.CPU.CSharp.MC68020
 
 		private void bra(int type, uint target)
 		{
-			tracer.Trace("bra", instructionStartPC, GetRegs());
+			tracer.Trace("bra", instructionStartPC, GetRegs(gregs));
 
 			pc = target;
 
@@ -3401,7 +3416,7 @@ namespace Jammy.Core.CPU.CSharp.MC68020
 
 		private void jmp(int type)
 		{
-			tracer.Trace("jmp", instructionStartPC, GetRegs());
+			tracer.Trace("jmp", instructionStartPC, GetRegs(gregs));
 
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
@@ -3417,7 +3432,7 @@ namespace Jammy.Core.CPU.CSharp.MC68020
 
 		private void jsr(int type)
 		{
-			tracer.Trace("jsr", instructionStartPC, GetRegs());
+			tracer.Trace("jsr", instructionStartPC, GetRegs(gregs));
 
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
@@ -3448,7 +3463,7 @@ namespace Jammy.Core.CPU.CSharp.MC68020
 
 		private void rts(int type)
 		{
-			tracer.Trace("rts", instructionStartPC, GetRegs());
+			tracer.Trace("rts", instructionStartPC, GetRegs(gregs));
 			pc = pop32();
 			tracer.Trace(pc);
 		}
@@ -3457,7 +3472,7 @@ namespace Jammy.Core.CPU.CSharp.MC68020
 		{
 			if (Supervisor())
 			{
-				tracer.Trace("rte", instructionStartPC, GetRegs());
+				tracer.Trace("rte", instructionStartPC, GetRegs(gregs));
 				ushort tmpsr = pop16();//may clear the supervisor bit, causing following pop to come off the wrong stack
 				pc = pop32();
 				sr = tmpsr;
