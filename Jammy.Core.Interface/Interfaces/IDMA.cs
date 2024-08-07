@@ -36,7 +36,7 @@ public enum DMASource
 	None,
 }
 
-public interface IDMA 
+public interface IDMA : ICustomReadWrite, IDebugChipsetRead
 {
 	void Read(DMASource source, uint address, DMA priority, Size size, uint chipReg);
 	uint DebugRead(uint address, Size size);
@@ -48,4 +48,5 @@ public interface IDMA
 	void TriggerHighestPriorityDMA();
 	bool IsWaitingForDMA(DMASource source);
 	void ClearWaitingForDMA(DMASource source);
+	void WriteDMACON(ushort bits);
 }

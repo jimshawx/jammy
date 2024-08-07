@@ -59,7 +59,7 @@ namespace Jammy.Core
 			this.breakpointCollection = breakpointCollection;
 
 			//fulfil the circular dependencies
-			custom.Init(blitter, copper, audio, agnus, denise);
+			custom.Init(blitter, copper, audio, agnus, denise, dma);
 			keyboard.SetCIA(ciaa);
 			interrupt.Init(custom);
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
@@ -55,23 +54,22 @@ public class DMAActivity
 
 public class DMAController : IDMA
 {
-	private readonly IChipsetClock clock;
 	private readonly IChipsetDebugger debugger;
 	private readonly IChipRAM memory;
+	private readonly IAudio audio;
 	private readonly IChips custom;
 	private readonly ILogger<DMAController> logger;
-
 	private readonly DMAActivity[] activities;
 
 	private volatile int cpuMemTick;
 
-	public DMAController(IChipRAM memory, IChips custom, IChipsetClock clock,
+	public DMAController(IChipRAM memory, IAudio audio, IChips custom,
 		IChipsetDebugger debugger, ILogger<DMAController> logger)
 	{
 		this.memory = memory;
+		this.audio = audio;
 		this.custom = custom;
 		this.logger = logger;
-		this.clock = clock;
 		this.debugger = debugger;
 
 		activities = new DMAActivity[(int)DMASource.NumDMASources];
@@ -90,12 +88,12 @@ public class DMAController : IDMA
 
 	public void TriggerHighestPriorityDMA()
 	{
-		var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+		//var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
 		DMAActivity slotTaken = null;
 
 		//check if ANY DMA is enabled
-		if ((dmacon & DMA.DMAEN) == DMA.DMAEN)
+		if (((DMA)dmacon & DMA.DMAEN) == DMA.DMAEN)
 		{
 			for (int i = 0; i < (int)DMASource.NumDMASources-1; i++)
 			{
@@ -103,7 +101,7 @@ public class DMAController : IDMA
 				{
 					//if no DMA required, continue
 				}
-				else if (slotTaken == null && (activities[i].Priority & dmacon) != 0)
+				else if (slotTaken == null && (activities[i].Priority & (DMA)dmacon) != 0)
 				{
 					//check this DMA channel is enabled and the DMA slot hasn't been taken
 					slotTaken = activities[i];
@@ -205,9 +203,9 @@ public class DMAController : IDMA
 	public bool IsDMAEnabled(DMA source)
 	{
 		//todo stash away this dmacon value at the beginning of the chipset tick
-		var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+		//var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 		var mask = DMA.DMAEN | source;
-		return (dmacon & mask) == mask;
+		return ((DMA)dmacon & mask) == mask;
 	}
 
 	public void Read(DMASource source, uint address, DMA priority, Size size, uint chipReg)
@@ -228,6 +226,52 @@ public class DMAController : IDMA
 		activity.Priority = priority;
 		activity.Value = value;
 		activity.Size = size;
+	}
+
+	public ushort Read(uint insaddr, uint address)
+	{
+		if (address == ChipRegs.DMACONR)
+			return (ushort)(dmacon&0x7fff);
+
+		return 0;
+	}
+
+	private ushort dmacon;
+
+	public void Write(uint insaddr, uint address, ushort value)
+	{
+		if (address == ChipRegs.DMACON)
+		{
+			var p = dmacon;
+
+			if ((value & 0x8000) != 0)
+				dmacon |= (ushort)(value & 0x9fff); //can't set BBUSY or BZERO
+			else
+				dmacon &= (ushort)(~value | 0x6000); //can't clear BBUSY or BZERO
+
+			if ((dmacon & (int)DMA.COPEN) != (p & (int)DMA.COPEN))
+				logger.LogTrace($"COPEN {((dmacon & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8}");
+			if ((dmacon & (int)DMA.BLTEN) != (p & (int)DMA.BLTEN))
+				logger.LogTrace($"BLTEN {((dmacon & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8}");
+
+			audio.WriteDMACON((ushort)(dmacon & 0x7fff));
+		}
+	}
+
+	//this is how to set/clear BBUSY/BZERO
+	public void WriteDMACON(ushort bits)
+	{
+		if ((bits & 0x8000) != 0)
+			dmacon |= bits;
+		else
+			dmacon &= (ushort)~bits;
+	}
+
+	public uint DebugChipsetRead(uint address, Size size)
+	{
+		if (address == ChipRegs.DMACON) return dmacon;
+		if (address == ChipRegs.DMACONR) return (uint)(dmacon&0x7fff);
+		return 0;
 	}
 
 	public uint DebugRead(uint address, Size size)

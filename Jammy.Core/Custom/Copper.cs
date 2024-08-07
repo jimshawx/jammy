@@ -64,29 +64,37 @@ namespace Jammy.Core.Custom
 			status = CopperStatus.Stopped;
 		}
 
+		//private object locker = new object();
+
 		public void Emulate()
 		{
-			if (clock.EndOfFrame())
+			//lock (locker)
 			{
-				status = CopperStatus.Retrace;
-				CopperInstruction();
-				return;
-			}
+				if (clock.EndOfFrame())
+					copjmp1 = 1;
 
-			if (memory.IsWaitingForDMA(DMASource.Copper))
-				return;
+				if (copjmp1 != 0 || copjmp2 != 0)
+				{
+					status = CopperStatus.Retrace;
+					CopperInstruction();
+					return;
+				}
 
-			//copper instruction every odd clock (and copper DMA is on)
-			if ((clock.HorizontalPos&1)!=0)
-				CopperInstruction();
+				if (memory.IsWaitingForDMA(DMASource.Copper))
+					return;
 
-			//if (status == CopperStatus.Waiting && data != 0xfffe)
-			//	logger.LogTrace($"Hit VBL while still waiting for {data:X2}");
+				//copper instruction every odd clock (and copper DMA is on)
+				if ((clock.HorizontalPos & 1) != 0)
+					CopperInstruction();
 
-			if (debugger.dbug)
-			{
-				DebugCopperList(cop1lc);
-				debugger.dbug = false;
+				//if (status == CopperStatus.Waiting && data != 0xfffe)
+				//	logger.LogTrace($"Hit VBL while still waiting for {data:X2}");
+
+				if (debugger.dbug)
+				{
+					DebugCopperList(cop1lc);
+					debugger.dbug = false;
+				}
 			}
 		}
 
@@ -96,7 +104,12 @@ namespace Jammy.Core.Custom
 
 			memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 
-			copPC = activeCopperAddress = cop1lc;
+			//todo: there's some weirdness when both are set, the registers get ORd together, can't see how that could be useful
+			if (copjmp1 != 0)
+				copPC = activeCopperAddress = cop1lc;
+			if (copjmp2 != 0)
+				copPC = activeCopperAddress = cop2lc;
+			copjmp1 = copjmp2 = 0;
 
 			waitH = 0;
 			waitV = 0;
@@ -157,6 +170,8 @@ namespace Jammy.Core.Custom
 			}
 			else if (status == CopperStatus.Execute)
 			{
+				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
+
 				data = copins;
 				
 				status = CopperStatus.RunningWord1;
@@ -174,7 +189,8 @@ namespace Jammy.Core.Custom
 						if (((copcon & 2) != 0 && reg >= 0x40) || reg >= 0x80)
 						{
 							custom.Write(0, regAddress, data, Size.Word);
-							memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+							//memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+							//memory.Write(DMASource.Copper, regAddress, DMA.COPEN, data, Size.Word);
 						}
 						else
 						{
@@ -187,7 +203,8 @@ namespace Jammy.Core.Custom
 						if ((copcon & 2) != 0 || reg >= 0x40)
 						{
 							custom.Write(0, regAddress, data, Size.Word);
-							memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+							//memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+							//memory.Write(DMASource.Copper, regAddress, DMA.COPEN, data, Size.Word);
 						}
 						else
 						{
@@ -295,18 +312,23 @@ namespace Jammy.Core.Custom
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			switch (address)
+			//lock(locker)
 			{
-				case ChipRegs.COPCON: copcon = value; break;
-				case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-				case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); break;
-				case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-				case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); break;
-				case ChipRegs.COPJMP1: copjmp1 = value; copPC = cop1lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
-					break;
-				case ChipRegs.COPJMP2: copjmp2 = value; copPC = cop2lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
-					break;
-				case ChipRegs.COPINS: copins = value; break;
+				switch (address)
+				{
+					case ChipRegs.COPCON: copcon = value; break;
+					case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
+					case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); break;
+					case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
+					case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); break;
+					//case ChipRegs.COPJMP1: copjmp1 = value; copPC = cop1lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
+					//	break;
+					//case ChipRegs.COPJMP2: copjmp2 = value; copPC = cop2lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
+					//	break;
+					case ChipRegs.COPJMP1: copjmp1 = 1; break;
+					case ChipRegs.COPJMP2: copjmp2 = 1; break;
+					case ChipRegs.COPINS: copins = value; break;
+				}
 			}
 		}
 

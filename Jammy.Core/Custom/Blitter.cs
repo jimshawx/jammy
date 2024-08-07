@@ -18,16 +18,18 @@ namespace Jammy.Core.Custom
 		private readonly IInterrupt interrupt;
 		private readonly IChipsetClock clock;
 		private readonly IMemoryMappedDevice ram;
+		private readonly IDMA dma;
 		private readonly IOptions<EmulationSettings> settings;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IInterrupt interrupt, IChipsetClock clock, IChipRAM ram,
-			IOptions<EmulationSettings> settings, ILogger<Blitter> logger)
+		public Blitter(IChips custom, IInterrupt interrupt, IChipsetClock clock, IChipRAM ram, 
+			IDMA dma, IOptions<EmulationSettings> settings, ILogger<Blitter> logger)
 		{
 			this.custom = custom;
 			this.interrupt = interrupt;
 			this.clock = clock;
 			this.ram = ram;
+			this.dma = dma;
 			this.settings = settings;
 			this.logger = logger;
 			PreComputeFill();
@@ -304,7 +306,7 @@ namespace Jammy.Core.Custom
 			//set blitter busy in DMACON
 			//custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
 			//set BBUSY and BZERO
-			custom.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
+			dma.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
 
 			ClearDelayedWrite();
 
@@ -530,7 +532,7 @@ namespace Jammy.Core.Custom
 				dmacon |= 1 << 13;
 
 			//disable blitter busy in DMACON
-			custom.WriteDMACON(dmacon);
+			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
@@ -693,7 +695,7 @@ namespace Jammy.Core.Custom
 			bltzero = 0;
 
 			//set BBUSY and BZERO
-			custom.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
+			dma.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
 
 			writeBit = true;
 
@@ -851,7 +853,7 @@ namespace Jammy.Core.Custom
 				dmacon |= 1 << 13;
 
 			//disable blitter busy in DMACON
-			custom.WriteDMACON(dmacon);
+			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);
@@ -887,7 +889,7 @@ namespace Jammy.Core.Custom
 			//set blitter busy in DMACON
 			//custom.Write(insaddr, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
 			//set BBUSY and BZERO
-			custom.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
+			dma.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
 
 			bool writeBit = true;
 
@@ -963,7 +965,7 @@ namespace Jammy.Core.Custom
 
 			//disable blitter busy in DMACON
 			//custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
-			custom.WriteDMACON(dmacon);
+			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
 			interrupt.AssertInterrupt(Interrupt.BLIT);

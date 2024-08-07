@@ -449,22 +449,25 @@ noBitplaneDMA:
 			if (spriteState[s] == SpriteState.Idle)
 			{
 				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS+s*8);
+				sprpt[s] += 2;
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
 				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATA+s*8);
+				sprpt[s] += 2;
 			}
 		}
 		else
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				memory.Read(DMASource.Agnus, sprpt[s] + 2, DMA.SPREN, Size.Word, ChipRegs.SPR0CTL+s*8);
+				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0CTL+s*8);
+				sprpt[s] += 2;
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				memory.Read(DMASource.Agnus, sprpt[s] + 2, DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
-				sprpt[s] += 4;
+				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
+				sprpt[s] += 2;
 			}
 		}
 	}
@@ -679,7 +682,7 @@ noBitplaneDMA:
 	private void UpdateSpriteState(int s)
 	{
 		spriteState[s] = SpriteState.Waiting;
-		sprpt[s] += 4;
+		//sprpt[s] += 4;
 	}
 
 	public void Write(uint insaddr, uint address, ushort value)

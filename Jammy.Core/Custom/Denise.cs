@@ -56,7 +56,7 @@ public class Denise : IDenise
 	public FastUInt128 pixelMask;
 	public int pixelMaskBit;
 	public uint pixelMaskValue;
-	public uint pixelBits;
+	
 
 	public FastUInt128[] bpldatpix = new FastUInt128[8];
 	public ulong[] bpldatpixul = new ulong[8];
@@ -151,6 +151,7 @@ public class Denise : IDenise
 
 	private void FirstPixel()
 	{
+		uint pixelBits;
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 			pixelBits = 15;
 		else if ((fmode & 3) == 3)
@@ -794,7 +795,6 @@ public class Denise : IDenise
 		{
 			value &= 0x0fff;
 
-			//uint bank = (custom.Read(0, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
 			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
 
 			//Amiga colour
@@ -866,7 +866,6 @@ public class Denise : IDenise
 
 		if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
 		{
-			//uint bank = (custom.Read(0, ChipRegs.BPLCON3, Size.Word) & 0b111_00000_00000000) >> (13 - 5);
 			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
 
 			int loct = bplcon3 & (1 << 9);

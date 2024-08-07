@@ -26,6 +26,7 @@ namespace Jammy.Core.Custom
 		private IDenise denise;
 		private readonly IMouse mouse;
 		private readonly ISerial serial;
+		private IDMA dma;
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 		private IAudio audio;
@@ -57,13 +58,14 @@ namespace Jammy.Core.Custom
 
 		private void dbug_Keyup(int obj){}
 
-		public void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise)
+		public void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise, IDMA dma)
 		{
 			this.blitter = blitter;
 			this.copper = copper;
 			this.audio = audio;
 			this.agnus = agnus;
 			this.denise = denise;
+			this.dma = dma;
 		}
 
 		public void Reset()
@@ -175,7 +177,11 @@ namespace Jammy.Core.Custom
 				{
 					regs[reg] = (ushort)(audio.Read(insaddr, address) | diskDrives.Read(insaddr, address));
 				}
-				else if (address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR
+				else if (address == ChipRegs.DMACONR)
+				{
+					regs[reg] = dma.Read(insaddr, address);
+				}
+				else if (address == ChipRegs.INTENAR || address == ChipRegs.INTREQR
 				         || address == ChipRegs.LISAID)
 				{
 					//here
@@ -245,22 +251,7 @@ namespace Jammy.Core.Custom
 
 				if (address == ChipRegs.DMACON)
 				{
-					var p = regs[reg];
-					if ((value & 0x8000) != 0)
-						regs[reg] |= (ushort)(value & 0x9fff); //can't set BBUSY or BZERO
-					else
-						regs[reg] &= (ushort)(~value | 0x6000); //can't clear BBUSY or BZERO
-
-					if ((regs[reg] & (int)DMA.COPEN) != (p & (int)DMA.COPEN))
-						logger.LogTrace($"COPEN {((regs[reg] & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8}");
-					if ((regs[reg] & (int)DMA.BLTEN) != (p & (int)DMA.BLTEN))
-						logger.LogTrace($"BLTEN {((regs[reg] & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8}");
-
-					audio.WriteDMACON((ushort)(regs[reg] & 0x7fff));
-
-					//add the new bits from DMACON, but leave BBUSY and BZERO alone
-					regs[REG(ChipRegs.DMACONR)] =
-						(ushort)((regs[REG(ChipRegs.DMACONR)] & 0x6000) | (regs[reg] & 0x1fff));
+					dma.Write(insaddr, address, (ushort)value);
 				}
 				else if (address == ChipRegs.DMACONR)
 				{
@@ -268,12 +259,17 @@ namespace Jammy.Core.Custom
 				}
 				else if (address == ChipRegs.INTENA)
 				{
-					//logger.LogTrace($"INTENA {Convert.ToString(value, 2).PadLeft(16, '0')} @{insaddr:X8}");
+					ushort prevIntena = regs[reg];
+
+					//logger.LogTrace($"INTENA {value.ToBin(2) @{insaddr:X8}");
 					if ((value & 0x8000) != 0)
 						regs[reg] |= (ushort)value;
 					else
 						regs[reg] &= (ushort)~value;
-					//logger.LogTrace($"    -> {Convert.ToString(regs[reg],2).PadLeft(16,'0')} {regs[reg]:X4}");
+					//logger.LogTrace($"    -> {regs[reg].ToBin()} {regs[reg]:X4}");
+
+					if (((prevIntena ^ regs[reg])&0x0020)!=0)
+						logger.LogTrace($"VERTB {((regs[reg]&0x0020)!=0?"on":"off")} @ {insaddr:X8}");
 
 					//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("INTEN ");
 					//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("EXTER ");
@@ -440,20 +436,6 @@ namespace Jammy.Core.Custom
 				agnus.WriteWide(address, value);
 		}
 
-		public void WriteDMACON(ushort bits)
-		{
-			if ((bits & 0x8000) != 0)
-			{
-				regs[REG(ChipRegs.DMACONR)] |= bits;
-				regs[REG(ChipRegs.DMACON)] |= bits;
-			}
-			else
-			{
-				regs[REG(ChipRegs.DMACONR)] &= (ushort)~bits;
-				regs[REG(ChipRegs.DMACON)] &= (ushort)~bits;
-			}
-		}
-
 		private void DebugInfo(uint insaddr, uint address, uint value, Size size)
 		{
 			logger.LogTrace($"Custom Write {insaddr:X8} {address:X8} {value:X8} {size} {ChipRegs.Name(address)} {ChipRegs.Description(address)}");
@@ -530,12 +512,16 @@ namespace Jammy.Core.Custom
 			{
 				return (ushort)(audio.DebugChipsetRead(address, size) | diskDrives.DebugChipsetRead(address, size));
 			}
-			else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ ||
-				 address == ChipRegs.DMACONR || address == ChipRegs.INTENAR || address == ChipRegs.INTREQR
+			else if (address == ChipRegs.INTENA || address == ChipRegs.INTREQ ||
+				 address == ChipRegs.INTENAR || address == ChipRegs.INTREQR
 				 || address == ChipRegs.NO_OP)
 			{
 				int reg = REG(address);
 				return regs[reg];
+			}
+			else if (address == ChipRegs.DMACONR || address == ChipRegs.DMACON)
+			{
+				return dma.DebugChipsetRead(address, size);
 			}
 			else if (address == ChipRegs.SERDATR || address == ChipRegs.SERDAT || address == ChipRegs.SERPER)
 			{
