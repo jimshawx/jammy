@@ -35,7 +35,7 @@ namespace Jammy.Interface
 		void IDEACK();
 		void ClearBBUSY();
 		uint Read32(uint address);
-		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long);
+		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, Size size = Size.Long);
 		void RemoveBreakpoint(uint address);
 		void DumpBreakpoints();
 	}

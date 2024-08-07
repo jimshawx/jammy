@@ -21,7 +21,7 @@ namespace Jammy.Core
 			this.logger = logger;
 		}
 
-		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Word, ulong? value = null)
+		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, Size size = Size.Word, ulong? value = null)
 		{
 			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size, Value = value };
 		}
@@ -62,7 +62,7 @@ namespace Jammy.Core
 		{
 			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
 			{
-				if (bp.Type == BreakpointType.Permanent)
+				if (bp.Type == BreakpointType.Execute)
 					return bp.Active;
 
 				if (bp.Type == BreakpointType.Counter)
@@ -80,7 +80,14 @@ namespace Jammy.Core
 
 				if (bp.Type == BreakpointType.OneShot)
 					breakpoints.Remove(pc);
-				
+
+				if (bp.Type == BreakpointType.Write)
+					return false;
+				if (bp.Type == BreakpointType.Read)
+					return false;
+				if (bp.Type == BreakpointType.ReadOrWrite)
+					return false;
+
 				return bp.Active;
 			}
 			return false;

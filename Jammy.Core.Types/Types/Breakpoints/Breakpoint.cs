@@ -6,7 +6,7 @@ namespace Jammy.Core.Types.Types.Breakpoints
 {
 	public enum BreakpointType
 	{
-		Permanent,
+		Execute,
 		Counter,
 		OneShot,
 		Read,
@@ -29,7 +29,7 @@ namespace Jammy.Core.Types.Types.Breakpoints
 
 		public Breakpoint()
 		{
-			Type = BreakpointType.Permanent;
+			Type = BreakpointType.Execute;
 		}
 	}
 }
