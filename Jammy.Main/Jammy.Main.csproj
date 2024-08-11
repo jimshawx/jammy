@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.CPU.CSharp.MC68020\Jammy.Core.CPU.CSharp.MC68020.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />
+    <ProjectReference Include="..\Jammy.Core.CPU.Microcode\Jammy.Core.CPU.Microcode.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.MC68020\Jammy.Core.CPU.Musashi.MC68020.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.MC68030\Jammy.Core.CPU.Musashi.MC68030.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi\Jammy.Core.CPU.Musashi.csproj" />

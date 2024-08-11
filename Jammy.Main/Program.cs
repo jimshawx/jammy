@@ -31,6 +31,7 @@ using Jammy.Core.EmulationWindow.GDI;
 using Jammy.Core.EmulationWindow.DX;
 using Jammy.Debugger.Interceptors;
 using Jammy.NativeOverlay;
+using Jammy.Core.CPU.Microcode;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -166,7 +167,8 @@ namespace Jammy.Main
 				if (settings.Sku == CPUSku.MC68EC020)
 					services.AddSingleton<ICPU, CPU68EC020>();
 				else
-					services.AddSingleton<ICPU, CPU>();
+					//services.AddSingleton<ICPU, CPU>();
+					services.AddSingleton<ICPU, CPUWrapper>();
 			}
 
 			//configure Tracing
