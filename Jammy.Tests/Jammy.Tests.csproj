@@ -9,10 +9,16 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="m68k_in.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="appSettings.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="appSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="m68k_in.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -27,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />
+    <ProjectReference Include="..\Jammy.Core.CPU.Gen\Jammy.Core.CPU.Gen.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi\Jammy.Core.CPU.Musashi.csproj" />
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
     <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />

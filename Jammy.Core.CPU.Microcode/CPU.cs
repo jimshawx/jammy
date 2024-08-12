@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
@@ -117,95 +118,135 @@ namespace Jammy.Core.CPU.Microcode
 			return false;
 		}
 
+		//private static readonly Action<int> [] jumptable = [
+		//	t_zero,
+		//	t_zero,
+		//	t_zero,
+		//	t_zero,
+		//	t_four,
+		//	t_five,
+		//	t_six,
+		//	t_seven,
+		//	t_eight,
+		//	t_nine,
+		//	t_trap10,
+		//	t_eleven,
+		//	t_twelve,
+		//	t_thirteen,
+		//	t_fourteen,
+		//	t_trap11,
+		//	];
+
+		private static void t_trap10(int _)
+		{
+			internalTrap(10);
+		}
+		private static void t_trap11(int _)
+		{
+			internalTrap(11);
+		}
+
+		private static int step = 0;
+		private static Action[] currentop;
+		private static List<Action>[] opstable = []; 
+
 		public static void Emulate()
 		{
-			instructionStartPC = pc;
-
-			if (CheckInterrupt())
+			if (step == 0)
 			{
-				if (breakpoints.CheckBreakpoints(pc))
+				instructionStartPC = pc;
+
+				if (CheckInterrupt())
+				{
+					if (breakpoints.CheckBreakpoints(pc))
+						return;
+				}
+
+				if (fetchMode == FetchMode.Stopped)
 					return;
-			}
 
-			if (fetchMode == FetchMode.Stopped)
-				return;
-
-			try
-			{
 				undisturbedSR = sr;
 
-				int ins = Fetch(pc);
+				ushort ins = Fetch(pc);
 				pc += 2;
 
-				int type = (int)(ins >> 12);
+				//currentop = opstable[ins];
 
-				switch (type)
-				{
-					case 0:
-					case 1:
-					case 2:
-					case 3:
-						t_zero(ins);
-						break;
-					case 4:
-						t_four(ins);
-						break;
-					case 5:
-						t_five(ins);
-						break;
-					case 6:
-						t_six(ins);
-						break;
-					case 7:
-						t_seven(ins);
-						break;
-					case 8:
-						t_eight(ins);
-						break;
-					case 9:
-						t_nine(ins);
-						break;
-					case 11:
-						t_eleven(ins);
-						break;
-					case 12:
-						t_twelve(ins);
-						break;
-					case 13:
-						t_thirteen(ins);
-						break;
-					case 14:
-						t_fourteen(ins);
-						break;
-					case 10:
-						internalTrap(10);
-						break;
-					case 15:
-						internalTrap(11);
-						break;
-				}
+				ExecuteOp(currentop[0]);
+				
 			}
-			catch (AbandonInstructionException)
-			{ 
+			else
+			{
+				ExecuteOp(currentop[step]);
+				NextOp();
 			}
+		}
+		//		int type = (int)(ins >> 12);
 
-			//catch (MC68000Exception ex)
-			//{
-			//	logger.LogTrace($"Caught an exception {ex}");
-			//	if (ex is UnknownInstructionException)
-			//		internalTrap(4);
-			//	else if (ex is UnknownInstructionSizeException)
-			//		internalTrap(4);
-			//	else if (ex is UnknownEffectiveAddressException)
-			//		internalTrap(4);
-			//	else if (ex is InstructionAlignmentException)
-			//		internalTrap(3);
+		//			//switch (type)
+		//			//{
+		//			//	case 0:
+		//			//	case 1:
+		//			//	case 2:
+		//			//	case 3:
+		//			//		t_zero(ins);
+		//			//		break;
+		//			//	case 4:
+		//			//		t_four(ins);
+		//			//		break;
+		//			//	case 5:
+		//			//		t_five(ins);
+		//			//		break;
+		//			//	case 6:
+		//			//		t_six(ins);
+		//			//		break;
+		//			//	case 7:
+		//			//		t_seven(ins);
+		//			//		break;
+		//			//	case 8:
+		//			//		t_eight(ins);
+		//			//		break;
+		//			//	case 9:
+		//			//		t_nine(ins);
+		//			//		break;
+		//			//	case 11:
+		//			//		t_eleven(ins);
+		//			//		break;
+		//			//	case 12:
+		//			//		t_twelve(ins);
+		//			//		break;
+		//			//	case 13:
+		//			//		t_thirteen(ins);
+		//			//		break;
+		//			//	case 14:
+		//			//		t_fourteen(ins);
+		//			//		break;
+		//			//	case 10:
+		//			//		internalTrap(10);
+		//			//		break;
+		//			//	case 15:
+		//			//		internalTrap(11);
+		//			//		break;
+		//			//}
+		//			jumptable[type](ins);
 
-			//	tracer.DumpTrace();
-			//	breakpoints.SignalBreakpoint(instructionStartPC);
-			//}
+		//		breakpoints.CheckBreakpoints(pc);
+		//	}
+		//}
 
-			breakpoints.CheckBreakpoints(pc);
+		private static void NextOp()
+		{
+			step++;
+			if (step >= currentop.Length)
+			{
+				step = 0;
+				currentop = null;
+			}
+		}
+
+		private static void ExecuteOp(Action op)
+		{
+			op();
 		}
 
 		public static Regs GetRegs()
