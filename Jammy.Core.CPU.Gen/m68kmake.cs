@@ -61,6 +61,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace m68kmake;
 
@@ -237,12 +238,14 @@ public class M68K
 
 		public cstring(string s)
 		{
-			content = s.ToArray();
+			content = new char[s.Length+1];
+			Array.Copy(s.ToArray(), content, s.Length);
 		}
 
 		public cstring(cstring src, int ptr)
 		{
-			content = src.content.Skip(ptr).ToArray();
+			content = new char[src.content.Length];
+			Array.Copy(src.content, ptr, content, 0, content.Length - ptr);
 		}
 
 		public cstring(cstring s)
@@ -266,6 +269,11 @@ public class M68K
 		{
 			get => content[key];
 			set { content[key] = value; }
+		}
+
+		public override string ToString()
+		{
+			return cs_str;
 		}
 	}
 
@@ -613,7 +621,7 @@ public class M68K
 	}
 
 	/* copy until 0 or specified character and exit with error if we read too far */
-	int check_strcncpy(cstring dst, cstring src, char delim, int maxlength)
+	private int check_strcncpy(cstring dst, cstring src, char delim, int maxlength)
 	{
 		//char* p = dst;
 		//while (*src && *src != delim)
@@ -626,7 +634,7 @@ public class M68K
 		//return p - dst;
 		int p = 0;
 		int i = 0;
-		while (src[i] != 0 && src[i] != delim)
+		while (src[i] != '\0' && src[i] != delim)
 		{
 			dst[p++] = src[i++];
 			if (p > maxlength)
@@ -883,7 +891,13 @@ public class M68K
 
 	private int atoi(cstring s)
 	{
-		return int.Parse(s.cs_str);
+		string n = s.cs_str.Trim();
+		int i = 0;
+		if (n[0] == '+' || n[0] == '-')
+			i++;
+		while (i < n.Length && char.IsDigit(n[i++]));
+
+		return int.Parse(n.Substring(0,i-1));
 	}
 
 	/* Parse an opcode handler name */
@@ -902,8 +916,9 @@ public class M68K
 		ptr += skip_spaces(new cstring(src, ptr));
 
 		size = atoi(new cstring(src, ptr));
-		ptr = strstr(new cstring(src, ptr), ",");
-		if (ptr == -1) return 0;
+		int q = strstr(new cstring(src, ptr), ",");
+		if (q == -1) return 0;
+		ptr += q;
 		ptr++;
 		ptr += skip_spaces(new cstring(src, ptr));
 
@@ -931,7 +946,7 @@ public class M68K
 		do
 		{
 			d[i++] = s[j];
-		} while (s[j++] != 0);
+		} while (s[j++] != '\0');
 	}
 
 	private void strcpy(cstring d, string s)
@@ -952,7 +967,7 @@ public class M68K
 		do
 		{
 			d[j + i++] = s[k];
-		} while (s[k++] != 0);
+		} while (s[k++] != '\0');
 	}
 	private void strcpy(cstring d, int j, string s)
 	{
@@ -1076,7 +1091,7 @@ public class M68K
 
 		//*ptr = *op;
 		op.CopyTo(ptr);
-		//strcpy(ptr.name, name);
+		strcpy(ptr.name, name);
 		ptr.bits = (byte)num_bits(ptr.op_mask);
 	}
 
@@ -1125,10 +1140,10 @@ public class M68K
 
 		//fprintf(filep, "}},\n");
 
-		filep.Write($"\t{{{op.name.cs_str:-28}, {op.op_mask:x4}, {op.op_match:x4}, {{");
+		filep.Write($"\t{{{op.name:0,-28}, 0x{op.op_mask:x4}, 0x{op.op_match:x4}, {{");
 		for (int i = 0; i < (int)CPU_TYPE.NUM_CPUS; i++)
 		{
-			filep.Write($"{op.cycles:3}");
+			filep.Write($"{(int)op.cycles[i]:3}");
 			if (i < (int)CPU_TYPE.NUM_CPUS - 1)
 				filep.Write(", ");
 		}
@@ -1303,7 +1318,7 @@ public class M68K
 		{
 			/* Find the first line of the function */
 			func_name[0] = '\0';
-			while (strstr(func_name, ID_OPHANDLER_NAME) == null)
+			while (strstr(func_name, ID_OPHANDLER_NAME) == -1)
 			{
 				if (strcmp(func_name, ID_INPUT_SEPARATOR) == 0)
 				{
@@ -1472,12 +1487,13 @@ public class M68K
 		/* Skip any leading blank lines */
 		for (length = 0; length == 0; length = fgetline(tmp, MAX_LINE_LENGTH, g_input_file))
 		{
-			strcpy(insert, ptr, tmp);
 			if (ptr >= overflow)
 				error_exit("Buffer overflow reading inserts");
 		}
 		if (length < 0)
 			error_exit("Premature EOF while reading inserts");
+
+		strcpy(insert, ptr, tmp);
 
 		/* Advance and append newline */
 		ptr += length;
@@ -1574,11 +1590,11 @@ public class M68K
 
 		/* Open the files we need */
 		filename = new cstring($"{output_path}{FILENAME_PROTOTYPE}");
-		if ((g_prototype_file = new StreamWriter(File.OpenWrite(filename.cs_str))) == null)
+		if ((g_prototype_file = new StreamWriter(File.Open(filename.cs_str, FileMode.Create, FileAccess.Write))) == null)
 			perror_exit($"Unable to create prototype file ({filename.cs_str})\n");
 
 		filename = new cstring($"{output_path}{FILENAME_TABLE}");
-		if ((g_table_file = new StreamWriter(File.OpenWrite(filename.cs_str))) == null)
+		if ((g_table_file = new StreamWriter(File.Open(filename.cs_str, FileMode.Create, FileAccess.Write))) == null)
 			perror_exit($"Unable to create table file ({filename.cs_str})\n");
 
 		if ((g_input_file = new StreamReader(File.OpenRead(g_input_filename))) == null)
