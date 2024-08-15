@@ -61,7 +61,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace m68kmake;
 
@@ -95,7 +94,7 @@ public class M68K
 	/* Default filenames */
 	private const string FILENAME_INPUT = "m68k_in.cs";
 	private const string FILENAME_PROTOTYPE = "m68kops.h";
-	private const string FILENAME_TABLE = "m68kops.c";
+	private const string FILENAME_TABLE = "m68kops.cs";
 
 
 	/* Identifier sequences recognized by this program */
@@ -154,7 +153,7 @@ public class M68K
 	private bool HAS_EA_PCIX(cstring A) { return ((A)[8] == 'x'); }
 	private bool HAS_EA_I(cstring A) { return ((A)[9] == 'I'); }
 
-	enum EA_MODE
+	private enum EA_MODE
 	{
 		EA_MODE_NONE,   /* No special addressing mode */
 		EA_MODE_AI,     /* Address register indirect */
@@ -185,7 +184,7 @@ public class M68K
 		public cstring ea_allowed = new cstring(EA_ALLOWED_LENGTH);   /* Effective addressing modes allowed */
 		public char[] cpu_mode = new char[(int)CPU_TYPE.NUM_CPUS];              /* User or supervisor mode */
 		public char[] cpus = new char[(int)CPU_TYPE.NUM_CPUS + 1];                /* Allowed CPUs */
-		public char[] cycles = new char[(int)CPU_TYPE.NUM_CPUS];       /* cycles for 000, 010, 020, 030, 040 */
+		public byte[] cycles = new byte[(int)CPU_TYPE.NUM_CPUS];       /* cycles for 000, 010, 020, 030, 040 */
 
 		public void CopyTo(opcode_struct to)
 		{
@@ -197,16 +196,18 @@ public class M68K
 			to.op_mask = this.op_mask;
 			to.op_match = this.op_match;
 			to.ea_allowed = new cstring(this.ea_allowed);
-			to.cpu_mode = this.cpu_mode;
-			to.cpus = this.cpus;
-			to.cycles = this.cycles;
+			//to.cpu_mode = this.cpu_mode;
+			//to.cpus = this.cpus;;
+			//to.cycles = this.cycles;
+			this.cpu_mode.CopyTo(to.cpu_mode, 0);
+			this.cpus.CopyTo(to.cpus, 0);
+			this.cycles.CopyTo(to.cycles, 0);
 		}
 	}
 
 	/* All modifications necessary for a specific EA mode of an instruction */
 	public class ea_info_struct
 	{
-
 		public string fname_add;
 		public string ea_add;
 		public uint mask_add;
@@ -348,16 +349,16 @@ public class M68K
 	/* ======================================================================== */
 
 	/* Name of the input file */
-	string g_input_filename = FILENAME_INPUT;
+	private string g_input_filename = FILENAME_INPUT;
 
 	/* File handles */
-	StreamReader g_input_file = null;
-	StreamWriter g_prototype_file = null;
-	StreamWriter g_table_file = null;
+	private StreamReader g_input_file = null;
+	private StreamWriter g_prototype_file = null;
+	private StreamWriter g_table_file = null;
 
-	int g_num_functions = 0;  /* Number of functions processed */
-	int g_num_primitives = 0; /* Number of function primitives read */
-	int g_line_number = 1;    /* Current line number */
+	private int g_num_functions = 0;  /* Number of functions processed */
+	private int g_num_primitives = 0; /* Number of function primitives read */
+	private int g_line_number = 1;    /* Current line number */
 
 	public M68K()
 	{
@@ -368,10 +369,10 @@ public class M68K
 	}
 
 	/* Opcode handler table */
-	opcode_struct[] g_opcode_input_table = new opcode_struct[MAX_OPCODE_INPUT_TABLE_LENGTH];
+	private opcode_struct[] g_opcode_input_table = new opcode_struct[MAX_OPCODE_INPUT_TABLE_LENGTH];
 
-	opcode_struct[] g_opcode_output_table = new opcode_struct[MAX_OPCODE_OUTPUT_TABLE_LENGTH];
-	int g_opcode_output_table_length = 0;
+	private opcode_struct[] g_opcode_output_table = new opcode_struct[MAX_OPCODE_OUTPUT_TABLE_LENGTH];
+	private int g_opcode_output_table_length = 0;
 
 	private readonly ea_info_struct[] g_ea_info_table =
 	{/* fname    ea        mask  match */
@@ -412,7 +413,7 @@ public class M68K
 	];
 
 	/* size to index translator (0 . 0, 8 and 16 . 1, 32 . 2) */
-	readonly int[] g_size_select_table =
+	private readonly int[] g_size_select_table =
 	[
 		0,												/* unsized */
 		0, 0, 0, 0, 0, 0, 0, 1,							/*    8    */
@@ -422,7 +423,7 @@ public class M68K
 
 	/* Extra cycles required for certain EA modes */
 	/* TODO: correct timings for 030, 040 */
-	readonly int[][][] g_ea_cycle_table/*[13][NUM_CPUS][3] */=
+	private readonly int[][][] g_ea_cycle_table/*[13][NUM_CPUS][3] */=
 	[/*       000           010           020           030           040  */
 		[[ 0,  0,  0], [ 0,  0,  0], [ 0,  0,  0], [ 0,  0,  0], [ 0,  0,  0]], /* EA_MODE_NONE */
 		[[ 0,  4,  8], [ 0,  4,  8], [ 0,  4,  4], [ 0,  4,  4], [ 0,  4,  4]], /* EA_MODE_AI   */
@@ -440,7 +441,7 @@ public class M68K
 	];
 
 	/* Extra cycles for JMP instruction (000, 010) */
-	readonly int[] g_jmp_cycle_table =
+	private readonly int[] g_jmp_cycle_table =
 	[
 		 0, /* EA_MODE_NONE */
 		 4, /* EA_MODE_AI   */
@@ -458,7 +459,7 @@ public class M68K
 	];
 
 	/* Extra cycles for JSR instruction (000, 010) */
-	readonly int[] g_jsr_cycle_table =
+	private readonly int[] g_jsr_cycle_table =
 	[
 		 0, /* EA_MODE_NONE */
 		 4, /* EA_MODE_AI   */
@@ -476,7 +477,7 @@ public class M68K
 	];
 
 	/* Extra cycles for LEA instruction (000, 010) */
-	readonly int[] g_lea_cycle_table =
+	private readonly int[] g_lea_cycle_table =
 	[
 		 0, /* EA_MODE_NONE */
 		 4, /* EA_MODE_AI   */
@@ -494,7 +495,7 @@ public class M68K
 	];
 
 	/* Extra cycles for PEA instruction (000, 010) */
-	readonly int[] g_pea_cycle_table =
+	private readonly int[] g_pea_cycle_table =
 	[
 		 0, /* EA_MODE_NONE */
 		 6, /* EA_MODE_AI   */
@@ -512,7 +513,7 @@ public class M68K
 	];
 
 	/* Extra cycles for MOVEM instruction (000, 010) */
-	readonly int[] g_movem_cycle_table =
+	private readonly int[] g_movem_cycle_table =
 	[
 		 0, /* EA_MODE_NONE */
 		 0, /* EA_MODE_AI   */
@@ -530,7 +531,7 @@ public class M68K
 	];
 
 	/* Extra cycles for MOVES instruction (010) */
-	readonly int[][] g_moves_cycle_table/*[13][3]*/ =
+	private readonly int[][] g_moves_cycle_table/*[13][3]*/ =
 	[
 		[ 0,  0,  0], /* EA_MODE_NONE */
 		[ 0,  4,  6], /* EA_MODE_AI   */
@@ -548,7 +549,7 @@ public class M68K
 	];
 
 	/* Extra cycles for CLR instruction (010) */
-	readonly int[][] g_clr_cycle_table/*[13][3]*/ =
+	private readonly int[][] g_clr_cycle_table/*[13][3]*/ =
 	[
 		[ 0,  0,  0], /* EA_MODE_NONE */
 		[ 0,  4,  6], /* EA_MODE_AI   */
@@ -572,7 +573,7 @@ public class M68K
 	/* ======================================================================== */
 
 	/* Print an error message and exit with status error */
-	void error_exit(string fmt)
+	private void error_exit(string fmt)
 	{
 		Debug.WriteLine($"In {g_input_filename}, near or on line {g_line_number}:\n\t");
 		Debug.WriteLine(fmt);
@@ -935,7 +936,7 @@ public class M68K
 		return 1;
 	}
 
-	private void strcpy(string d, string s)
+	private void strcpy(out string d, string s)
 	{
 		d = new string(s);
 	}
@@ -983,7 +984,7 @@ public class M68K
 	{
 		int i = j;
 		int k = 0;
-		while (d[i++] != '\0') ;
+		while (d[i++] != '\0') ; i--;
 		do
 		{
 			d[i++] = s[k];
@@ -994,7 +995,7 @@ public class M68K
 	{
 		int i = 0;
 		int k = 0;
-		while (d[i++] != '\0') ;
+		while (d[i++] != '\0') ;i--;
 		do
 		{
 			d[i++] = s[k++];
@@ -1065,20 +1066,20 @@ public class M68K
 		//if (strcmp(op.spec_ea, UNSPECIFIED) != 0)
 		//	sprintf(base_name + strlen(base_name), "_%s", op.spec_ea);
 
-		strcpy(base_name, $"mk68k_op_{op.name.cs_str}");
+		strcpy(base_name, $"mk68k_op_{op.name}");
 		if (op.size > 0)
 			strcat(base_name, $"_{op.size}");
 		if (strcmp(op.spec_proc, UNSPECIFIED) != 0)
-			strcat(base_name, $"_{op.spec_proc.cs_str}");
+			strcat(base_name, $"_{op.spec_proc}");
 		if (strcmp(op.spec_ea, UNSPECIFIED) != 0)
-			strcat(base_name, $"_{op.spec_ea.cs_str}");
+			strcat(base_name, $"_{op.spec_ea}");
 	}
 
 	/* Write the name of an opcode handler function */
 	private void write_function_name(StreamWriter filep, string base_name)
 	{
 		//fprintf(filep, "static void %s(void)\n", base_name);
-		filep.WriteLine($"static void {base_name}()");
+		filep.WriteLine($"public static void {base_name}()");
 	}
 
 	private void add_opcode_output_table_entry(opcode_struct op, string name)
@@ -1140,14 +1141,14 @@ public class M68K
 
 		//fprintf(filep, "}},\n");
 
-		filep.Write($"\t{{{op.name:0,-28}, 0x{op.op_mask:x4}, 0x{op.op_match:x4}, {{");
+		filep.Write($"\t[{op.name,-28}, 0x{op.op_mask:x4}, 0x{op.op_match:x4}, [");
 		for (int i = 0; i < (int)CPU_TYPE.NUM_CPUS; i++)
 		{
-			filep.Write($"{(int)op.cycles[i]:3}");
+			filep.Write($"{op.cycles[i],3}");
 			if (i < (int)CPU_TYPE.NUM_CPUS - 1)
 				filep.Write(", ");
 		}
-		filep.WriteLine($"}}}},");
+		filep.WriteLine($"]],");
 	}
 
 	/* Fill out an opcode struct with a specific addressing mode of the source opcode struct */
@@ -1159,7 +1160,7 @@ public class M68K
 		src.CopyTo(dst);
 
 		for (i = 0; i < (int)CPU_TYPE.NUM_CPUS; i++)
-			dst.cycles[i] = (char)get_oper_cycles(dst, ea_mode, i);
+			dst.cycles[i] = (byte)get_oper_cycles(dst, ea_mode, i);
 
 		if (strcmp(dst.spec_ea, UNSPECIFIED) == 0 && ea_mode != (int)EA_MODE.EA_MODE_NONE)
 			//sprintf(dst.spec_ea, "%s", g_ea_info_table[ea_mode].fname_add);
@@ -1211,7 +1212,7 @@ public class M68K
 	}
 
 	/* Generate opcode variants based on available addressing modes */
-	void generate_opcode_ea_variants(StreamWriter filep, body_struct body, replace_struct replace, opcode_struct op)
+	private void generate_opcode_ea_variants(StreamWriter filep, body_struct body, replace_struct replace, opcode_struct op)
 	{
 		int old_length = replace.length;
 
@@ -1266,7 +1267,7 @@ public class M68K
 	}
 
 	/* Generate variants of condition code opcodes */
-	void generate_opcode_cc_variants(StreamWriter filep, body_struct body, replace_struct replace, opcode_struct op_in, int offset)
+	private void generate_opcode_cc_variants(StreamWriter filep, body_struct body, replace_struct replace, opcode_struct op_in, int offset)
 	{
 		cstring repl;
 		cstring replnot;
@@ -1302,7 +1303,7 @@ public class M68K
 	}
 
 	/* Process the opcode handlers section of the input file */
-	void process_opcode_handlers(StreamWriter filep)
+	private void process_opcode_handlers(StreamWriter filep)
 	{
 		StreamReader input_file = g_input_file;
 		cstring func_name = new cstring(MAX_LINE_LENGTH + 1);
@@ -1448,14 +1449,14 @@ public class M68K
 				if (buff[ptr] == UNSPECIFIED_CH)
 				{
 					op.cpus[i] = UNSPECIFIED_CH;
-					op.cycles[i] = '\0';
+					op.cycles[i] = 0;
 					ptr++;
 				}
 				else
 				{
 					op.cpus[i] = (char)('0' + i);
 					ptr += check_atoi(new cstring(buff, ptr), ref temp);
-					op.cycles[i] = (char)temp;
+					op.cycles[i] = (byte)temp;
 				}
 			}
 
@@ -1584,7 +1585,7 @@ public class M68K
 			if (output_path[strlen(output_path) - 1] != '/')
 				strcat(output_path, "/");
 			if (argc > 2)
-				strcpy(g_input_filename, argv[2]);
+				strcpy(out g_input_filename, argv[2]);
 		}
 
 

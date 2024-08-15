@@ -14,7 +14,9 @@
     <Compile Remove="m68k_in.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="m68k_in.cs" />
+    <Content Include="m68k_in.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />

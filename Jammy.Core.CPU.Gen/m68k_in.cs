@@ -131,27 +131,27 @@ M68KMAKE_TABLE_HEADER
 /* ========================= OPCODE TABLE BUILDER ========================= */
 /* ======================================================================== */
 
-#include <stdio.h>
-#include "m68kops.h"
+//#include <stdio.h>
+//#include "m68kops.h"
 
 #define NUM_CPU_TYPES 5
 
-void  (*m68ki_instruction_jump_table[0x10000])(void); /* opcode handler jump table */
-unsigned char m68ki_cycles[NUM_CPU_TYPES][0x10000]; /* Cycles used by CPU type */
+//void (*m68ki_instruction_jump_table[0x10000])(void); /* opcode handler jump table */
+byte m68ki_cycles[NUM_CPU_TYPES][0x10000]; /* Cycles used by CPU type */
 
 /* This is used to generate the opcode handler jump table */
-typedef struct
+public class opcode_handler_struct
 {
-	void (*opcode_handler)(void);        /* handler function */
-	unsigned int  mask;                  /* mask on opcode */
-	unsigned int  match;                 /* what to match after masking */
-	unsigned char cycles[NUM_CPU_TYPES]; /* cycles each cpu type takes */
-} opcode_handler_struct;
+	public Action opcode_handler;        /* handler function */
+	public uint mask;                  /* mask on opcode */
+	public uint match;                 /* what to match after masking */
+	public byte [] cycles/*[NUM_CPU_TYPES]*/; /* cycles each cpu type takes */
+}
 
 
 /* Opcode handler table */
-static const opcode_handler_struct m68k_opcode_handler_table[] =
-{
+static readonly opcode_handler_struct[] m68k_opcode_handler_table =
+[
 /*   function                      mask    match    000  010  020  040 */
 
 
@@ -159,8 +159,8 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 M68KMAKE_TABLE_FOOTER
 
-	{0, 0, 0, {0, 0, 0, 0, 0}}
-};
+	[0, 0, 0, [0, 0, 0, 0, 0]]
+];
 
 
 /* Build the opcode handler jump table */
@@ -281,12 +281,16 @@ void m68ki_build_opcode_table(void)
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 M68KMAKE_OPCODE_HANDLER_HEADER
 
-#include <stdio.h>
-#include "m68kcpu.h"
-extern void m68040_fpu_op0(void);
-extern void m68040_fpu_op1(void);
-extern void m68881_mmu_ops(void);
+//#include <stdio.h>
+//#include "m68kcpu.h"
+//extern void m68040_fpu_op0(void);
+//extern void m68040_fpu_op1(void);
+//extern void m68881_mmu_ops(void);
 
+namespace m68kcpu;
+
+public class M68KCPU
+{
 /* ======================================================================== */
 /* ========================= INSTRUCTION HANDLERS ========================= */
 /* ======================================================================== */
@@ -295,6 +299,7 @@ extern void m68881_mmu_ops(void);
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 M68KMAKE_OPCODE_HANDLER_FOOTER
+}
 
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */
