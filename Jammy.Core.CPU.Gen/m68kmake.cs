@@ -1079,7 +1079,7 @@ public class M68K
 	private void write_function_name(StreamWriter filep, string base_name)
 	{
 		//fprintf(filep, "static void %s(void)\n", base_name);
-		filep.WriteLine($"public static void {base_name}()");
+		filep.WriteLine($"static void {base_name}()");
 	}
 
 	private void add_opcode_output_table_entry(opcode_struct op, string name)
@@ -1141,14 +1141,14 @@ public class M68K
 
 		//fprintf(filep, "}},\n");
 
-		filep.Write($"\t[{op.name,-28}, 0x{op.op_mask:x4}, 0x{op.op_match:x4}, [");
+		filep.Write($"\tnew ({op.name,-28}, 0x{op.op_mask:x4}, 0x{op.op_match:x4}, [");
 		for (int i = 0; i < (int)CPU_TYPE.NUM_CPUS; i++)
 		{
 			filep.Write($"{op.cycles[i],3}");
 			if (i < (int)CPU_TYPE.NUM_CPUS - 1)
 				filep.Write(", ");
 		}
-		filep.WriteLine($"]],");
+		filep.WriteLine($"]),");
 	}
 
 	/* Fill out an opcode struct with a specific addressing mode of the source opcode struct */
