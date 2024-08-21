@@ -1593,10 +1593,12 @@ public class M68K
 		filename = new cstring($"{output_path}{FILENAME_PROTOTYPE}");
 		if ((g_prototype_file = new StreamWriter(File.Open(filename.cs_str, FileMode.Create, FileAccess.Write))) == null)
 			perror_exit($"Unable to create prototype file ({filename.cs_str})\n");
+		g_prototype_file.NewLine = "\n";
 
 		filename = new cstring($"{output_path}{FILENAME_TABLE}");
 		if ((g_table_file = new StreamWriter(File.Open(filename.cs_str, FileMode.Create, FileAccess.Write))) == null)
 			perror_exit($"Unable to create table file ({filename.cs_str})\n");
+		g_table_file.NewLine = "\n";
 
 		if ((g_input_file = new StreamReader(File.OpenRead(g_input_filename))) == null)
 			perror_exit($"can't open {g_input_filename} for input");
