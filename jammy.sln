@@ -60,6 +60,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.CPU.Microcode", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.CPU.Gen", "Jammy.Core.CPU.Gen\Jammy.Core.CPU.Gen.csproj", "{2827A34E-CFB1-4ACE-AF2E-0C020ABDF451}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.CPU.Musashi.CSharp", "Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj", "{38EA3F21-5981-4497-9899-D112CE2EDB07}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -182,6 +184,10 @@ Global
 		{2827A34E-CFB1-4ACE-AF2E-0C020ABDF451}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2827A34E-CFB1-4ACE-AF2E-0C020ABDF451}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2827A34E-CFB1-4ACE-AF2E-0C020ABDF451}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38EA3F21-5981-4497-9899-D112CE2EDB07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38EA3F21-5981-4497-9899-D112CE2EDB07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38EA3F21-5981-4497-9899-D112CE2EDB07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38EA3F21-5981-4497-9899-D112CE2EDB07}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

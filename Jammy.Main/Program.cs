@@ -32,6 +32,7 @@ using Jammy.Core.EmulationWindow.DX;
 using Jammy.Debugger.Interceptors;
 using Jammy.NativeOverlay;
 using Jammy.Core.CPU.Microcode;
+using Jammy.Core.CPU.Musashi.CSharp;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -152,6 +153,8 @@ namespace Jammy.Main
 			else
 				services.AddSingleton<IAudio, Audio>();
 
+			settings.CPU = CPUType.MusashiCSharp;
+
 			//configure CPU
 			if (settings.CPU == CPUType.Musashi)
 			{
@@ -161,6 +164,10 @@ namespace Jammy.Main
 					services.AddSingleton<ICPU, Musashi68030CPU>();
 				else
 					services.AddSingleton<ICPU, MusashiCPU>();
+			}
+			else if (settings.CPU == CPUType.MusashiCSharp)
+			{
+				services.AddSingleton<ICPU, CPUWrapperMusashi>();
 			}
 			else
 			{

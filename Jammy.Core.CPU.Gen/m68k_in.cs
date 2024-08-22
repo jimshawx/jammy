@@ -321,7 +321,7 @@ using int16 = short;
 using int32 = int;
 using int64 = long;
 
-public partial class M68KCPU
+public static partial class M68KCPU
 {
 /* ======================================================================== */
 /* ========================= INSTRUCTION HANDLERS ========================= */
