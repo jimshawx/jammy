@@ -237,38 +237,38 @@ public static partial class M68KCPU
 	/* ---------------------------- General Macros ---------------------------- */
 
 	/* Bit Isolation Macros */
-	static bool BIT_0(uint A) { return ((A) & 0x00000001) != 0; }
-	static bool BIT_1(uint A) { return ((A) & 0x00000002) != 0; }
-	static bool BIT_2(uint A) { return ((A) & 0x00000004) != 0; }
-	static bool BIT_3(uint A) { return ((A) & 0x00000008) != 0; }
-	static bool BIT_4(uint A) { return ((A) & 0x00000010) != 0; }
-	static bool BIT_5(uint A) { return ((A) & 0x00000020) != 0; }
-	static bool BIT_6(uint A) { return ((A) & 0x00000040) != 0; }
-	static bool BIT_7(uint A) { return ((A) & 0x00000080) != 0; }
-	static bool BIT_8(uint A) { return ((A) & 0x00000100) != 0; }
-	static bool BIT_9(uint A) { return ((A) & 0x00000200) != 0; }
-	static bool BIT_A(uint A) { return ((A) & 0x00000400) != 0; }
-	static bool BIT_B(uint A) { return ((A) & 0x00000800) != 0; }
-	static bool BIT_C(uint A) { return ((A) & 0x00001000) != 0; }
-	static bool BIT_D(uint A) { return ((A) & 0x00002000) != 0; }
-	static bool BIT_E(uint A) { return ((A) & 0x00004000) != 0; }
-	static bool BIT_F(uint A) { return ((A) & 0x00008000) != 0; }
-	static bool BIT_10(uint A) { return ((A) & 0x00010000) != 0; }
-	static bool BIT_11(uint A) { return ((A) & 0x00020000) != 0; }
-	static bool BIT_12(uint A) { return ((A) & 0x00040000) != 0; }
-	static bool BIT_13(uint A) { return ((A) & 0x00080000) != 0; }
-	static bool BIT_14(uint A) { return ((A) & 0x00100000) != 0; }
-	static bool BIT_15(uint A) { return ((A) & 0x00200000) != 0; }
-	static bool BIT_16(uint A) { return ((A) & 0x00400000) != 0; }
-	static bool BIT_17(uint A) { return ((A) & 0x00800000) != 0; }
-	static bool BIT_18(uint A) { return ((A) & 0x01000000) != 0; }
-	static bool BIT_19(uint A) { return ((A) & 0x02000000) != 0; }
-	static bool BIT_1A(uint A) { return ((A) & 0x04000000) != 0; }
-	static bool BIT_1B(uint A) { return ((A) & 0x08000000) != 0; }
-	static bool BIT_1C(uint A) { return ((A) & 0x10000000) != 0; }
-	static bool BIT_1D(uint A) { return ((A) & 0x20000000) != 0; }
-	static bool BIT_1E(uint A) { return ((A) & 0x40000000) != 0; }
-	static bool BIT_1F(uint A) { return ((A) & 0x80000000) != 0; }
+	static uint BIT_0(uint A) { return ((A) & 0x00000001); }
+	static uint BIT_1(uint A) { return ((A) & 0x00000002); }
+	static uint BIT_2(uint A) { return ((A) & 0x00000004); }
+	static uint BIT_3(uint A) { return ((A) & 0x00000008); }
+	static uint BIT_4(uint A) { return ((A) & 0x00000010); }
+	static uint BIT_5(uint A) { return ((A) & 0x00000020); }
+	static uint BIT_6(uint A) { return ((A) & 0x00000040); }
+	static uint BIT_7(uint A) { return ((A) & 0x00000080); }
+	static uint BIT_8(uint A) { return ((A) & 0x00000100); }
+	static uint BIT_9(uint A) { return ((A) & 0x00000200); }
+	static uint BIT_A(uint A) { return ((A) & 0x00000400); }
+	static uint BIT_B(uint A) { return ((A) & 0x00000800); }
+	static uint BIT_C(uint A) { return ((A) & 0x00001000); }
+	static uint BIT_D(uint A) { return ((A) & 0x00002000); }
+	static uint BIT_E(uint A) { return ((A) & 0x00004000); }
+	static uint BIT_F(uint A) { return ((A) & 0x00008000); }
+	static uint BIT_10(uint A) { return ((A) & 0x00010000); }
+	static uint BIT_11(uint A) { return ((A) & 0x00020000); }
+	static uint BIT_12(uint A) { return ((A) & 0x00040000); }
+	static uint BIT_13(uint A) { return ((A) & 0x00080000); }
+	static uint BIT_14(uint A) { return ((A) & 0x00100000); }
+	static uint BIT_15(uint A) { return ((A) & 0x00200000); }
+	static uint BIT_16(uint A) { return ((A) & 0x00400000); }
+	static uint BIT_17(uint A) { return ((A) & 0x00800000); }
+	static uint BIT_18(uint A) { return ((A) & 0x01000000); }
+	static uint BIT_19(uint A) { return ((A) & 0x02000000); }
+	static uint BIT_1A(uint A) { return ((A) & 0x04000000); }
+	static uint BIT_1B(uint A) { return ((A) & 0x08000000); }
+	static uint BIT_1C(uint A) { return ((A) & 0x10000000); }
+	static uint BIT_1D(uint A) { return ((A) & 0x20000000); }
+	static uint BIT_1E(uint A) { return ((A) & 0x40000000); }
+	static uint BIT_1F(uint A) { return ((A) & 0x80000000); }
 
 	/* Get the most significant bit for specific sizes */
 	static uint GET_MSB_8(uint A) { return ((A) & 0x80); }
@@ -365,7 +365,7 @@ public static partial class M68KCPU
 	static uint32[] REG_DA => m68ki_cpu.dar;
 	static uint32[] REG_DA_SAVE => m68ki_cpu.dar_save; 
 	static uint32[] REG_D => m68ki_cpu.dar;
-	static Span<uint32> REG_A => m68ki_cpu.dar[8..];
+	static Span<uint32> REG_A => m68ki_cpu.dar.AsSpan(8);
 	static ref uint32 REG_PPC => ref m68ki_cpu.ppc;
 	static ref uint32 REG_PC => ref m68ki_cpu.pc;
 	static uint32[] REG_SP_BASE => m68ki_cpu.sp;
@@ -900,11 +900,16 @@ public static partial class M68KCPU
 	/* Get the condition code register */
 	static uint m68ki_get_ccr()
 	{
-		return ((UInt(COND_XS()) >> 4) |
-						 (UInt(COND_MI()) >> 4) |
-						 (UInt(COND_EQ()) << 2) |
-						 (UInt(COND_VS()) >> 6) |
-						 (UInt(COND_CS()) >> 8));
+		//return ((UInt(COND_XS()) >> 4) |
+		//				 (UInt(COND_MI()) >> 4) |
+		//				 (UInt(COND_EQ()) << 2) |
+		//				 (UInt(COND_VS()) >> 6) |
+		//				 (UInt(COND_CS()) >> 8));
+		return (((FLAG_X & 0x100) >> 4) |
+						 ((FLAG_N & 0x80) >> 4) |
+						 ((FLAG_Z == 0?1u:0) << 2) |
+						 ((FLAG_V & 0x80) >> 6) |
+						 ((FLAG_C & 0x100) >> 8));
 	}
 
 	/* Get the status register */
@@ -1359,7 +1364,7 @@ static void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
 		{
 			/* Calculate index */
 			Xn = REG_DA[extension >> 12];     /* Xn */
-			if (!BIT_B(extension))           /* W/L */
+			if (!Bool(BIT_B(extension)))           /* W/L */
 				Xn = (uint)MAKE_INT_16(Xn);
 
 			/* Add base register and displacement and return */
@@ -1367,11 +1372,11 @@ static void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
 		}
 
 		/* Brief extension format */
-		if (!BIT_8(extension))
+		if (!Bool(BIT_8(extension)))
 		{
 			/* Calculate index */
 			Xn = REG_DA[extension >> 12];     /* Xn */
-			if (!BIT_B(extension))           /* W/L */
+			if (!Bool(BIT_B(extension)))          /* W/L */
 				Xn = (uint)MAKE_INT_16(Xn);
 			/* Add scale if proper CPU type */
 			if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -1386,32 +1391,32 @@ static void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
 		USE_CYCLES(m68ki_ea_idx_cycle_table[extension & 0x3f]);
 
 		/* Check if base register is present */
-		if (BIT_7(extension))                /* BS */
+		if (Bool(BIT_7(extension)))                /* BS */
 			An = 0;                         /* An */
 
 		/* Check if index is present */
-		if (!BIT_6(extension))               /* IS */
+		if (!Bool(BIT_6(extension)))               /* IS */
 		{
 			Xn = REG_DA[extension >> 12];     /* Xn */
-			if (!BIT_B(extension))           /* W/L */
+			if (!Bool(BIT_B(extension)))           /* W/L */
 				Xn = (uint)MAKE_INT_16(Xn);
 			Xn <<= (int)((extension >> 9) & 3);      /* SCALE */
 		}
 
 		/* Check if base displacement is present */
-		if (BIT_5(extension))                /* BD SIZE */
-			bd = BIT_4(extension) ? m68ki_read_imm_32() : (uint32)MAKE_INT_16(m68ki_read_imm_16());
+		if (Bool(BIT_5(extension)))                /* BD SIZE */
+			bd = Bool(BIT_4(extension)) ? m68ki_read_imm_32() : (uint32)MAKE_INT_16(m68ki_read_imm_16());
 
 		/* If no indirect action, we are done */
 		if (!Bool(extension & 7))                  /* No Memory Indirect */
 			return An + bd + Xn;
 
 		/* Check if outer displacement is present */
-		if (BIT_1(extension))                /* I/IS:  od */
-			od = BIT_0(extension) ? m68ki_read_imm_32() : (uint32)MAKE_INT_16(m68ki_read_imm_16());
+		if (Bool(BIT_1(extension)))                /* I/IS:  od */
+			od = Bool(BIT_0(extension)) ? m68ki_read_imm_32() : (uint32)MAKE_INT_16(m68ki_read_imm_16());
 
 		/* Postindex */
-		if (BIT_2(extension))                /* I/IS:  0 = preindex, 1 = postindex */
+		if (Bool(BIT_2(extension)))                /* I/IS:  0 = preindex, 1 = postindex */
 			return m68ki_read_32(An + bd) + Xn + od;
 
 		/* Preindex */
@@ -1604,11 +1609,11 @@ static void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
 	/* Set the condition code register */
 	static void m68ki_set_ccr(uint value)
 	{
-		FLAG_X = UInt(BIT_4(value)) << 4;
-		FLAG_N = UInt(BIT_3(value)) << 4;
-		FLAG_Z = UInt(!BIT_2(value));
-		FLAG_V = UInt(BIT_1(value)) << 6;
-		FLAG_C = UInt(BIT_0(value)) << 8;
+		FLAG_X = BIT_4(value) << 4;
+		FLAG_N = BIT_3(value) << 4;
+		FLAG_Z = UInt(!Bool(BIT_2(value)));
+		FLAG_V = BIT_1(value) << 6;
+		FLAG_C = BIT_0(value) << 8;
 	}
 
 	/* Set the status register but don't check for interrupts */
@@ -1618,8 +1623,8 @@ static void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
 		value &= CPU_SR_MASK;
 
 		/* Now set the status register */
-		FLAG_T1 = UInt(BIT_F(value));
-		FLAG_T0 = UInt(BIT_E(value));
+		FLAG_T1 = BIT_F(value);
+		FLAG_T0 = BIT_E(value);
 		FLAG_INT_MASK = value & 0x0700;
 		m68ki_set_ccr(value);
 		m68ki_set_sm_flag((value >> 11) & 6);
@@ -1634,8 +1639,8 @@ static void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
 		value &= CPU_SR_MASK;
 
 		/* Now set the status register */
-		FLAG_T1 = UInt(BIT_F(value));
-		FLAG_T0 = UInt(BIT_E(value));
+		FLAG_T1 = BIT_F(value);
+		FLAG_T0 = BIT_E(value);
 		FLAG_INT_MASK = value & 0x0700;
 		m68ki_set_ccr(value);
 		m68ki_set_sm_flag_nosp((value >> 11) & 6);

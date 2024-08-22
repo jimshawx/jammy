@@ -1173,7 +1173,7 @@ static void mk68k_op_adda_16_ai()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_AI_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -1182,7 +1182,7 @@ static void mk68k_op_adda_16_pi()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_PI_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -1191,7 +1191,7 @@ static void mk68k_op_adda_16_pd()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_PD_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -1200,7 +1200,7 @@ static void mk68k_op_adda_16_di()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_DI_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -1209,7 +1209,7 @@ static void mk68k_op_adda_16_ix()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_IX_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -1218,7 +1218,7 @@ static void mk68k_op_adda_16_aw()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AW_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -1227,7 +1227,7 @@ static void mk68k_op_adda_16_al()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AL_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -1236,7 +1236,7 @@ static void mk68k_op_adda_16_pcdi()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_PCDI_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -1245,7 +1245,7 @@ static void mk68k_op_adda_16_pcix()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_PCIX_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -1254,7 +1254,7 @@ static void mk68k_op_adda_16_i()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_I_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst + src);
+	AX = MASK_OUT_ABOVE_32(AX + src);
 }
 
 
@@ -5301,9 +5301,9 @@ static void mk68k_op_bfchg_32_d()
 		uint64 mask;
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = REG_D[offset&7];
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		offset &= 31;
@@ -5340,9 +5340,9 @@ static void mk68k_op_bfchg_32_ai()
 		uint ea = EA_AY_AI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5394,9 +5394,9 @@ static void mk68k_op_bfchg_32_di()
 		uint ea = EA_AY_DI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5448,9 +5448,9 @@ static void mk68k_op_bfchg_32_ix()
 		uint ea = EA_AY_IX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5502,9 +5502,9 @@ static void mk68k_op_bfchg_32_aw()
 		uint ea = EA_AW_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5556,9 +5556,9 @@ static void mk68k_op_bfchg_32_al()
 		uint ea = EA_AL_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5606,9 +5606,9 @@ static void mk68k_op_bfclr_32_d()
 		uint64 mask;
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = REG_D[offset&7];
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 
@@ -5647,9 +5647,9 @@ static void mk68k_op_bfclr_32_ai()
 		uint ea = EA_AY_AI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5701,9 +5701,9 @@ static void mk68k_op_bfclr_32_di()
 		uint ea = EA_AY_DI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5755,9 +5755,9 @@ static void mk68k_op_bfclr_32_ix()
 		uint ea = EA_AY_IX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5809,9 +5809,9 @@ static void mk68k_op_bfclr_32_aw()
 		uint ea = EA_AW_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5863,9 +5863,9 @@ static void mk68k_op_bfclr_32_al()
 		uint ea = EA_AL_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5912,9 +5912,9 @@ static void mk68k_op_bfexts_32_d()
 		uint64 data = DY;
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = REG_D[offset&7];
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		offset &= 31;
@@ -5947,9 +5947,9 @@ static void mk68k_op_bfexts_32_ai()
 		uint ea = EA_AY_AI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -5995,9 +5995,9 @@ static void mk68k_op_bfexts_32_di()
 		uint ea = EA_AY_DI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6043,9 +6043,9 @@ static void mk68k_op_bfexts_32_ix()
 		uint ea = EA_AY_IX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6091,9 +6091,9 @@ static void mk68k_op_bfexts_32_aw()
 		uint ea = EA_AW_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6139,9 +6139,9 @@ static void mk68k_op_bfexts_32_al()
 		uint ea = EA_AL_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6187,9 +6187,9 @@ static void mk68k_op_bfexts_32_pcdi()
 		uint ea = EA_PCDI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6235,9 +6235,9 @@ static void mk68k_op_bfexts_32_pcix()
 		uint ea = EA_PCIX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6282,9 +6282,9 @@ static void mk68k_op_bfextu_32_d()
 		uint64 data = DY;
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = REG_D[offset&7];
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		offset &= 31;
@@ -6317,9 +6317,9 @@ static void mk68k_op_bfextu_32_ai()
 		uint ea = EA_AY_AI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6364,9 +6364,9 @@ static void mk68k_op_bfextu_32_di()
 		uint ea = EA_AY_DI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6411,9 +6411,9 @@ static void mk68k_op_bfextu_32_ix()
 		uint ea = EA_AY_IX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6458,9 +6458,9 @@ static void mk68k_op_bfextu_32_aw()
 		uint ea = EA_AW_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6505,9 +6505,9 @@ static void mk68k_op_bfextu_32_al()
 		uint ea = EA_AL_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6552,9 +6552,9 @@ static void mk68k_op_bfextu_32_pcdi()
 		uint ea = EA_PCDI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6599,9 +6599,9 @@ static void mk68k_op_bfextu_32_pcix()
 		uint ea = EA_PCIX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6646,9 +6646,9 @@ static void mk68k_op_bfffo_32_d()
 		uint bit;
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = REG_D[offset&7];
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		offset &= 31;
@@ -6686,9 +6686,9 @@ static void mk68k_op_bfffo_32_ai()
 		uint ea = EA_AY_AI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6738,9 +6738,9 @@ static void mk68k_op_bfffo_32_di()
 		uint ea = EA_AY_DI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6790,9 +6790,9 @@ static void mk68k_op_bfffo_32_ix()
 		uint ea = EA_AY_IX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6842,9 +6842,9 @@ static void mk68k_op_bfffo_32_aw()
 		uint ea = EA_AW_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6894,9 +6894,9 @@ static void mk68k_op_bfffo_32_al()
 		uint ea = EA_AL_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6946,9 +6946,9 @@ static void mk68k_op_bfffo_32_pcdi()
 		uint ea = EA_PCDI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -6998,9 +6998,9 @@ static void mk68k_op_bfffo_32_pcix()
 		uint ea = EA_PCIX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7049,9 +7049,9 @@ static void mk68k_op_bfins_32_d()
 		uint64 insert = REG_D[(word2>>12)&7];
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = REG_D[offset&7];
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 
@@ -7097,9 +7097,9 @@ static void mk68k_op_bfins_32_ai()
 		uint ea = EA_AY_AI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7158,9 +7158,9 @@ static void mk68k_op_bfins_32_di()
 		uint ea = EA_AY_DI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7219,9 +7219,9 @@ static void mk68k_op_bfins_32_ix()
 		uint ea = EA_AY_IX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7280,9 +7280,9 @@ static void mk68k_op_bfins_32_aw()
 		uint ea = EA_AW_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7341,9 +7341,9 @@ static void mk68k_op_bfins_32_al()
 		uint ea = EA_AL_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7395,9 +7395,9 @@ static void mk68k_op_bfset_32_d()
 		uint64 mask;
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = REG_D[offset&7];
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 
@@ -7436,9 +7436,9 @@ static void mk68k_op_bfset_32_ai()
 		uint ea = EA_AY_AI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7491,9 +7491,9 @@ static void mk68k_op_bfset_32_di()
 		uint ea = EA_AY_DI_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7546,9 +7546,9 @@ static void mk68k_op_bfset_32_ix()
 		uint ea = EA_AY_IX_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7601,9 +7601,9 @@ static void mk68k_op_bfset_32_aw()
 		uint ea = EA_AW_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7656,9 +7656,9 @@ static void mk68k_op_bfset_32_al()
 		uint ea = EA_AL_8();
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7707,9 +7707,9 @@ static void mk68k_op_bftst_32_d()
 		uint64 mask;
 
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = REG_D[offset&7];
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 
@@ -7745,9 +7745,9 @@ static void mk68k_op_bftst_32_ai()
 		uint mask_byte = 0;
 		uint ea = EA_AY_AI_8();
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7796,9 +7796,9 @@ static void mk68k_op_bftst_32_di()
 		uint mask_byte = 0;
 		uint ea = EA_AY_DI_8();
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7847,9 +7847,9 @@ static void mk68k_op_bftst_32_ix()
 		uint mask_byte = 0;
 		uint ea = EA_AY_IX_8();
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7898,9 +7898,9 @@ static void mk68k_op_bftst_32_aw()
 		uint mask_byte = 0;
 		uint ea = EA_AW_8();
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -7949,9 +7949,9 @@ static void mk68k_op_bftst_32_al()
 		uint mask_byte = 0;
 		uint ea = EA_AL_8();
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -8000,9 +8000,9 @@ static void mk68k_op_bftst_32_pcdi()
 		uint mask_byte = 0;
 		uint ea = EA_PCDI_8();
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -8051,9 +8051,9 @@ static void mk68k_op_bftst_32_pcix()
 		uint mask_byte = 0;
 		uint ea = EA_PCIX_8();
 
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			offset = MAKE_INT_32(REG_D[offset&7]);
-		if(BIT_5(word2))
+		if(Bool(BIT_5(word2)))
 			width = REG_D[width&7];
 
 		/* Offset is signed so we have to use ugly math =( */
@@ -9405,8 +9405,8 @@ static void mk68k_op_cas2_16()
 				return;
 			}
 		}
-		REG_D[(word2 >> 16) & 7] = BIT_1F(word2) ? (uint)MAKE_INT_16(dest1) : MASK_OUT_BELOW_16(compare1) | dest1;
-		REG_D[word2 & 7] = BIT_F(word2) ? (uint)MAKE_INT_16(dest2) : MASK_OUT_BELOW_16(compare2) | dest2;
+		REG_D[(word2 >> 16) & 7] = Bool(BIT_1F(word2)) ? (uint)MAKE_INT_16(dest1) : MASK_OUT_BELOW_16(compare1) | dest1;
+		REG_D[word2 & 7] = Bool(BIT_F(word2)) ? (uint)MAKE_INT_16(dest2) : MASK_OUT_BELOW_16(compare2) | dest2;
 		return;
 	}
 	m68ki_exception_illegal();
@@ -9919,14 +9919,14 @@ static void mk68k_op_chk2cmp2_8_pcdi()
 		sint lower_bound = (sint)m68ki_read_pcrel_8(ea);
 		sint upper_bound = (sint)m68ki_read_pcrel_8(ea + 1);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int8)compare;
       
 		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
 	    FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -9946,13 +9946,13 @@ static void mk68k_op_chk2cmp2_8_pcix()
 		sint lower_bound = (sint)m68ki_read_pcrel_8(ea);
 		sint upper_bound = (sint)m68ki_read_pcrel_8(ea + 1);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int8)compare;
 		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||, faster operation short circuits
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 
@@ -9971,14 +9971,14 @@ static void mk68k_op_chk2cmp2_8_ai()
 		sint lower_bound = (int8)m68ki_read_8(ea);
 		sint upper_bound = (int8)m68ki_read_8(ea + 1);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int8)compare;
       
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -9996,14 +9996,14 @@ static void mk68k_op_chk2cmp2_8_di()
 		sint lower_bound = (int8)m68ki_read_8(ea);
 		sint upper_bound = (int8)m68ki_read_8(ea + 1);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int8)compare;
       
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10021,14 +10021,14 @@ static void mk68k_op_chk2cmp2_8_ix()
 		sint lower_bound = (int8)m68ki_read_8(ea);
 		sint upper_bound = (int8)m68ki_read_8(ea + 1);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int8)compare;
       
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10046,14 +10046,14 @@ static void mk68k_op_chk2cmp2_8_aw()
 		sint lower_bound = (int8)m68ki_read_8(ea);
 		sint upper_bound = (int8)m68ki_read_8(ea + 1);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int8)compare;
       
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10071,14 +10071,14 @@ static void mk68k_op_chk2cmp2_8_al()
 		sint lower_bound = (int8)m68ki_read_8(ea);
 		sint upper_bound = (int8)m68ki_read_8(ea + 1);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int8)compare;
       
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10096,13 +10096,13 @@ static void mk68k_op_chk2cmp2_16_pcdi()
 		sint lower_bound = (int16)m68ki_read_pcrel_16(ea);
 		sint upper_bound = (int16)m68ki_read_pcrel_16(ea + 2);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int16)compare;
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10120,13 +10120,13 @@ static void mk68k_op_chk2cmp2_16_pcix()
 		sint lower_bound = (int16)m68ki_read_pcrel_16(ea);
 		sint upper_bound = (int16)m68ki_read_pcrel_16(ea + 2);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int16)compare;
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10144,13 +10144,13 @@ static void mk68k_op_chk2cmp2_16_ai()
 		sint lower_bound = (int16)m68ki_read_16(ea);
 		sint upper_bound = (int16)m68ki_read_16(ea + 2);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int16)compare;
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10168,13 +10168,13 @@ static void mk68k_op_chk2cmp2_16_di()
 		sint lower_bound = (int16)m68ki_read_16(ea);
 		sint upper_bound = (int16)m68ki_read_16(ea + 2);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int16)compare;
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10192,13 +10192,13 @@ static void mk68k_op_chk2cmp2_16_ix()
 		sint lower_bound = (int16)m68ki_read_16(ea);
 		sint upper_bound = (int16)m68ki_read_16(ea + 2);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int16)compare;
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10216,13 +10216,13 @@ static void mk68k_op_chk2cmp2_16_aw()
 		sint lower_bound = (int16)m68ki_read_16(ea);
 		sint upper_bound = (int16)m68ki_read_16(ea + 2);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int16)compare;
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10240,13 +10240,13 @@ static void mk68k_op_chk2cmp2_16_al()
 		sint lower_bound = (int16)m68ki_read_16(ea);
 		sint upper_bound = (int16)m68ki_read_16(ea + 2);
 
-		if(!BIT_F(word2))
+		if(!Bool(BIT_F(word2)))
 			compare = (int32)(int16)compare;
  		FLAG_Z = UInt(!((upper_bound==compare) || (lower_bound==compare)));  // JFF: | => ||
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
 
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10268,7 +10268,7 @@ static void mk68k_op_chk2cmp2_32_pcdi()
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
     
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10290,7 +10290,7 @@ static void mk68k_op_chk2cmp2_32_pcix()
 
 		FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
     
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10313,7 +10313,7 @@ static void mk68k_op_chk2cmp2_32_ai()
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
     
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10336,7 +10336,7 @@ static void mk68k_op_chk2cmp2_32_di()
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
     
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10359,7 +10359,7 @@ static void mk68k_op_chk2cmp2_32_ix()
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
     
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10382,7 +10382,7 @@ static void mk68k_op_chk2cmp2_32_aw()
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
     
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -10405,7 +10405,7 @@ static void mk68k_op_chk2cmp2_32_al()
 
         FLAG_C = (lower_bound <= upper_bound ? UInt(compare < lower_bound || compare > upper_bound) : UInt(compare > upper_bound || compare < lower_bound)) << 8;
     
-		if(COND_CS() && BIT_B(word2))
+		if(COND_CS() && Bool(BIT_B(word2)))
 				m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
@@ -13178,13 +13178,13 @@ static void mk68k_op_divl_32_d()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -13208,7 +13208,7 @@ static void mk68k_op_divl_32_d()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -13236,7 +13236,7 @@ static void mk68k_op_divl_32_d()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = DY;
@@ -13252,9 +13252,9 @@ static void mk68k_op_divl_32_d()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -13311,7 +13311,7 @@ static void mk68k_op_divl_32_d()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -13338,7 +13338,7 @@ static void mk68k_op_divl_32_d()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -13389,13 +13389,13 @@ static void mk68k_op_divl_32_ai()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -13419,7 +13419,7 @@ static void mk68k_op_divl_32_ai()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -13447,7 +13447,7 @@ static void mk68k_op_divl_32_ai()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_AI_32();
@@ -13463,9 +13463,9 @@ static void mk68k_op_divl_32_ai()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -13522,7 +13522,7 @@ static void mk68k_op_divl_32_ai()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -13549,7 +13549,7 @@ static void mk68k_op_divl_32_ai()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -13600,13 +13600,13 @@ static void mk68k_op_divl_32_pi()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -13630,7 +13630,7 @@ static void mk68k_op_divl_32_pi()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -13658,7 +13658,7 @@ static void mk68k_op_divl_32_pi()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_PI_32();
@@ -13674,9 +13674,9 @@ static void mk68k_op_divl_32_pi()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -13733,7 +13733,7 @@ static void mk68k_op_divl_32_pi()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -13760,7 +13760,7 @@ static void mk68k_op_divl_32_pi()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -13811,13 +13811,13 @@ static void mk68k_op_divl_32_pd()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -13841,7 +13841,7 @@ static void mk68k_op_divl_32_pd()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -13869,7 +13869,7 @@ static void mk68k_op_divl_32_pd()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_PD_32();
@@ -13885,9 +13885,9 @@ static void mk68k_op_divl_32_pd()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -13944,7 +13944,7 @@ static void mk68k_op_divl_32_pd()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -13971,7 +13971,7 @@ static void mk68k_op_divl_32_pd()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14022,13 +14022,13 @@ static void mk68k_op_divl_32_di()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -14052,7 +14052,7 @@ static void mk68k_op_divl_32_di()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -14080,7 +14080,7 @@ static void mk68k_op_divl_32_di()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_DI_32();
@@ -14096,9 +14096,9 @@ static void mk68k_op_divl_32_di()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14155,7 +14155,7 @@ static void mk68k_op_divl_32_di()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -14182,7 +14182,7 @@ static void mk68k_op_divl_32_di()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14233,13 +14233,13 @@ static void mk68k_op_divl_32_ix()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -14263,7 +14263,7 @@ static void mk68k_op_divl_32_ix()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -14291,7 +14291,7 @@ static void mk68k_op_divl_32_ix()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_IX_32();
@@ -14307,9 +14307,9 @@ static void mk68k_op_divl_32_ix()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14366,7 +14366,7 @@ static void mk68k_op_divl_32_ix()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -14393,7 +14393,7 @@ static void mk68k_op_divl_32_ix()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14444,13 +14444,13 @@ static void mk68k_op_divl_32_aw()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -14474,7 +14474,7 @@ static void mk68k_op_divl_32_aw()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -14502,7 +14502,7 @@ static void mk68k_op_divl_32_aw()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AW_32();
@@ -14518,9 +14518,9 @@ static void mk68k_op_divl_32_aw()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14577,7 +14577,7 @@ static void mk68k_op_divl_32_aw()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -14604,7 +14604,7 @@ static void mk68k_op_divl_32_aw()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14655,13 +14655,13 @@ static void mk68k_op_divl_32_al()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -14685,7 +14685,7 @@ static void mk68k_op_divl_32_al()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -14713,7 +14713,7 @@ static void mk68k_op_divl_32_al()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AL_32();
@@ -14729,9 +14729,9 @@ static void mk68k_op_divl_32_al()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14788,7 +14788,7 @@ static void mk68k_op_divl_32_al()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -14815,7 +14815,7 @@ static void mk68k_op_divl_32_al()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14866,13 +14866,13 @@ static void mk68k_op_divl_32_pcdi()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -14896,7 +14896,7 @@ static void mk68k_op_divl_32_pcdi()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -14924,7 +14924,7 @@ static void mk68k_op_divl_32_pcdi()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_PCDI_32();
@@ -14940,9 +14940,9 @@ static void mk68k_op_divl_32_pcdi()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -14999,7 +14999,7 @@ static void mk68k_op_divl_32_pcdi()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -15026,7 +15026,7 @@ static void mk68k_op_divl_32_pcdi()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -15077,13 +15077,13 @@ static void mk68k_op_divl_32_pcix()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -15107,7 +15107,7 @@ static void mk68k_op_divl_32_pcix()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -15135,7 +15135,7 @@ static void mk68k_op_divl_32_pcix()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_PCIX_32();
@@ -15151,9 +15151,9 @@ static void mk68k_op_divl_32_pcix()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -15210,7 +15210,7 @@ static void mk68k_op_divl_32_pcix()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -15237,7 +15237,7 @@ static void mk68k_op_divl_32_pcix()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -15288,13 +15288,13 @@ static void mk68k_op_divl_32_i()
 
 		if(divisor != 0)
 		{
-			if(BIT_A(word2))	/* 64 bit */
+			if(Bool(BIT_A(word2)))	/* 64 bit */
 			{
 				dividend = REG_D[word2 & 7];
 				dividend <<= 32;
 				dividend |= REG_D[(word2 >> 12) & 7];
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)dividend / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)dividend % (sint64)((sint32)divisor));
@@ -15318,7 +15318,7 @@ static void mk68k_op_divl_32_i()
 			else	/* 32 bit */
 			{
 				dividend = REG_D[(word2 >> 12) & 7];
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					quotient  = (uint64)((sint64)((sint32)dividend) / (sint64)((sint32)divisor));
 					remainder = (uint64)((sint64)((sint32)dividend) % (sint64)((sint32)divisor));
@@ -15346,7 +15346,7 @@ static void mk68k_op_divl_32_i()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_I_32();
@@ -15362,9 +15362,9 @@ static void mk68k_op_divl_32_i()
 		if(divisor != 0)
 		{
 			/* quad / long : long quotient, long remainder */
-			if(BIT_A(word2))
+			if(Bool(BIT_A(word2)))
 			{
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					/* special case in signed divide */
 					if(dividend_hi == 0 && dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -15421,7 +15421,7 @@ static void mk68k_op_divl_32_i()
 					}
 				}
 
-				if(BIT_B(word2))	   /* signed */
+				if(Bool(BIT_B(word2)))	   /* signed */
 				{
 					if(quotient > 0x7fffffff)
 					{
@@ -15448,7 +15448,7 @@ static void mk68k_op_divl_32_i()
 			}
 
 			/* long / long: long quotient, maybe long remainder */
-			if(BIT_B(word2))	   /* signed */
+			if(Bool(BIT_B(word2)))	   /* signed */
 			{
 				/* Special case in divide */
 				if(dividend_lo == 0x80000000 && divisor == 0xffffffff)
@@ -16242,8 +16242,8 @@ static void mk68k_op_exg_32_dd()
 	uint reg_a = DX;
 	uint reg_b = DY;
 	uint tmp = reg_a;
-	reg_a = reg_b;
-	reg_b = tmp;
+	DX = reg_b;
+	DY = tmp;
 }
 
 
@@ -16252,8 +16252,8 @@ static void mk68k_op_exg_32_aa()
 	uint reg_a = AX;
 	uint reg_b = AY;
 	uint tmp = reg_a;
-	reg_a = reg_b;
-	reg_b = tmp;
+	AX = reg_b;
+	AY = tmp;
 }
 
 
@@ -16262,8 +16262,8 @@ static void mk68k_op_exg_32_da()
 	uint reg_a = DX;
 	uint reg_b = AY;
 	uint tmp = reg_a;
-	reg_a = reg_b;
-	reg_b = tmp;
+	DX = reg_b;
+	AY = tmp;
 }
 
 
@@ -16271,7 +16271,7 @@ static void mk68k_op_ext_16()
 {
 	uint r_dst = DY;
 
-	DY = MASK_OUT_BELOW_16(r_dst) | MASK_OUT_ABOVE_8(r_dst) | (GET_MSB_8(r_dst)!=0 ? 0xff00u : 0);
+	DY = r_dst = MASK_OUT_BELOW_16(r_dst) | MASK_OUT_ABOVE_8(r_dst) | (GET_MSB_8(r_dst)!=0 ? 0xff00u : 0);
 
 	FLAG_N = NFLAG_16(r_dst);
 	FLAG_Z = MASK_OUT_ABOVE_16(r_dst);
@@ -23030,12 +23030,12 @@ static void mk68k_op_moves_8_ai()
 			uint ea = EA_AY_AI_8();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_8_fc(ea, REG_DFC, MASK_OUT_ABOVE_8(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_8(m68ki_read_8_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23065,12 +23065,12 @@ static void mk68k_op_moves_8_pi()
 			uint ea = EA_AY_PI_8();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_8_fc(ea, REG_DFC, MASK_OUT_ABOVE_8(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_8(m68ki_read_8_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23100,12 +23100,12 @@ static void mk68k_op_moves_8_pi7()
 			uint ea = EA_A7_PI_8();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_8_fc(ea, REG_DFC, MASK_OUT_ABOVE_8(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_8(m68ki_read_8_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23135,12 +23135,12 @@ static void mk68k_op_moves_8_pd()
 			uint ea = EA_AY_PD_8();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_8_fc(ea, REG_DFC, MASK_OUT_ABOVE_8(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_8(m68ki_read_8_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23170,12 +23170,12 @@ static void mk68k_op_moves_8_pd7()
 			uint ea = EA_A7_PD_8();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_8_fc(ea, REG_DFC, MASK_OUT_ABOVE_8(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_8(m68ki_read_8_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23205,12 +23205,12 @@ static void mk68k_op_moves_8_di()
 			uint ea = EA_AY_DI_8();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_8_fc(ea, REG_DFC, MASK_OUT_ABOVE_8(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_8(m68ki_read_8_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23240,12 +23240,12 @@ static void mk68k_op_moves_8_ix()
 			uint ea = EA_AY_IX_8();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_8_fc(ea, REG_DFC, MASK_OUT_ABOVE_8(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_8(m68ki_read_8_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23275,12 +23275,12 @@ static void mk68k_op_moves_8_aw()
 			uint ea = EA_AW_8();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_8_fc(ea, REG_DFC, MASK_OUT_ABOVE_8(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_8(m68ki_read_8_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23310,12 +23310,12 @@ static void mk68k_op_moves_8_al()
 			uint ea = EA_AL_8();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_8_fc(ea, REG_DFC, MASK_OUT_ABOVE_8(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_8(m68ki_read_8_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23345,12 +23345,12 @@ static void mk68k_op_moves_16_ai()
 			uint ea = EA_AY_AI_16();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_16_fc(ea, REG_DFC, MASK_OUT_ABOVE_16(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_16(m68ki_read_16_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23380,12 +23380,12 @@ static void mk68k_op_moves_16_pi()
 			uint ea = EA_AY_PI_16();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_16_fc(ea, REG_DFC, MASK_OUT_ABOVE_16(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_16(m68ki_read_16_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23415,12 +23415,12 @@ static void mk68k_op_moves_16_pd()
 			uint ea = EA_AY_PD_16();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_16_fc(ea, REG_DFC, MASK_OUT_ABOVE_16(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_16(m68ki_read_16_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23450,12 +23450,12 @@ static void mk68k_op_moves_16_di()
 			uint ea = EA_AY_DI_16();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_16_fc(ea, REG_DFC, MASK_OUT_ABOVE_16(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_16(m68ki_read_16_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23485,12 +23485,12 @@ static void mk68k_op_moves_16_ix()
 			uint ea = EA_AY_IX_16();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_16_fc(ea, REG_DFC, MASK_OUT_ABOVE_16(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_16(m68ki_read_16_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23520,12 +23520,12 @@ static void mk68k_op_moves_16_aw()
 			uint ea = EA_AW_16();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_16_fc(ea, REG_DFC, MASK_OUT_ABOVE_16(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_16(m68ki_read_16_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23555,12 +23555,12 @@ static void mk68k_op_moves_16_al()
 			uint ea = EA_AL_16();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_16_fc(ea, REG_DFC, MASK_OUT_ABOVE_16(REG_DA[(word2 >> 12) & 15]));
 				return;
 			}
-			if(BIT_F(word2))		   /* Memory to address register */
+			if(Bool(BIT_F(word2)))		   /* Memory to address register */
 			{
 				REG_A[(int)((word2 >> 12) & 7)] = (uint)MAKE_INT_16(m68ki_read_16_fc(ea, REG_SFC));
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23590,7 +23590,7 @@ static void mk68k_op_moves_32_ai()
 			uint ea = EA_AY_AI_32();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_32_fc(ea, REG_DFC, REG_DA[(word2 >> 12) & 15]);
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23620,7 +23620,7 @@ static void mk68k_op_moves_32_pi()
 			uint ea = EA_AY_PI_32();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_32_fc(ea, REG_DFC, REG_DA[(word2 >> 12) & 15]);
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23650,7 +23650,7 @@ static void mk68k_op_moves_32_pd()
 			uint ea = EA_AY_PD_32();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_32_fc(ea, REG_DFC, REG_DA[(word2 >> 12) & 15]);
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23680,7 +23680,7 @@ static void mk68k_op_moves_32_di()
 			uint ea = EA_AY_DI_32();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_32_fc(ea, REG_DFC, REG_DA[(word2 >> 12) & 15]);
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23710,7 +23710,7 @@ static void mk68k_op_moves_32_ix()
 			uint ea = EA_AY_IX_32();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_32_fc(ea, REG_DFC, REG_DA[(word2 >> 12) & 15]);
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23740,7 +23740,7 @@ static void mk68k_op_moves_32_aw()
 			uint ea = EA_AW_32();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_32_fc(ea, REG_DFC, REG_DA[(word2 >> 12) & 15]);
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -23770,7 +23770,7 @@ static void mk68k_op_moves_32_al()
 			uint ea = EA_AL_32();
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
-			if(BIT_B(word2))		   /* Register to memory */
+			if(Bool(BIT_B(word2)))		   /* Register to memory */
 			{
 				m68ki_write_32_fc(ea, REG_DFC, REG_DA[(word2 >> 12) & 15]);
 				if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -24391,10 +24391,10 @@ static void mk68k_op_mull_32_d()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -24411,7 +24411,7 @@ static void mk68k_op_mull_32_d()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -24430,7 +24430,7 @@ static void mk68k_op_mull_32_d()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = DY;
@@ -24449,7 +24449,7 @@ static void mk68k_op_mull_32_d()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -24471,13 +24471,13 @@ static void mk68k_op_mull_32_d()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && neg!=0)
+		if(Bool(BIT_B(word2)) && neg!=0)
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -24490,7 +24490,7 @@ static void mk68k_op_mull_32_d()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -24515,10 +24515,10 @@ static void mk68k_op_mull_32_ai()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -24535,7 +24535,7 @@ static void mk68k_op_mull_32_ai()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -24554,7 +24554,7 @@ static void mk68k_op_mull_32_ai()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_AI_32();
@@ -24573,7 +24573,7 @@ static void mk68k_op_mull_32_ai()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -24595,13 +24595,13 @@ static void mk68k_op_mull_32_ai()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -24614,7 +24614,7 @@ static void mk68k_op_mull_32_ai()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -24639,10 +24639,10 @@ static void mk68k_op_mull_32_pi()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -24659,7 +24659,7 @@ static void mk68k_op_mull_32_pi()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -24678,7 +24678,7 @@ static void mk68k_op_mull_32_pi()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_PI_32();
@@ -24697,7 +24697,7 @@ static void mk68k_op_mull_32_pi()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -24719,13 +24719,13 @@ static void mk68k_op_mull_32_pi()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -24738,7 +24738,7 @@ static void mk68k_op_mull_32_pi()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -24763,10 +24763,10 @@ static void mk68k_op_mull_32_pd()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -24783,7 +24783,7 @@ static void mk68k_op_mull_32_pd()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -24802,7 +24802,7 @@ static void mk68k_op_mull_32_pd()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_PD_32();
@@ -24821,7 +24821,7 @@ static void mk68k_op_mull_32_pd()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -24843,13 +24843,13 @@ static void mk68k_op_mull_32_pd()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -24862,7 +24862,7 @@ static void mk68k_op_mull_32_pd()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -24887,10 +24887,10 @@ static void mk68k_op_mull_32_di()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -24907,7 +24907,7 @@ static void mk68k_op_mull_32_di()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -24926,7 +24926,7 @@ static void mk68k_op_mull_32_di()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_DI_32();
@@ -24945,7 +24945,7 @@ static void mk68k_op_mull_32_di()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -24967,13 +24967,13 @@ static void mk68k_op_mull_32_di()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -24986,7 +24986,7 @@ static void mk68k_op_mull_32_di()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -25011,10 +25011,10 @@ static void mk68k_op_mull_32_ix()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -25031,7 +25031,7 @@ static void mk68k_op_mull_32_ix()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -25050,7 +25050,7 @@ static void mk68k_op_mull_32_ix()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_IX_32();
@@ -25069,7 +25069,7 @@ static void mk68k_op_mull_32_ix()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -25091,13 +25091,13 @@ static void mk68k_op_mull_32_ix()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -25110,7 +25110,7 @@ static void mk68k_op_mull_32_ix()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -25135,10 +25135,10 @@ static void mk68k_op_mull_32_aw()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -25155,7 +25155,7 @@ static void mk68k_op_mull_32_aw()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -25174,7 +25174,7 @@ static void mk68k_op_mull_32_aw()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AW_32();
@@ -25193,7 +25193,7 @@ static void mk68k_op_mull_32_aw()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -25215,13 +25215,13 @@ static void mk68k_op_mull_32_aw()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -25234,7 +25234,7 @@ static void mk68k_op_mull_32_aw()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -25259,10 +25259,10 @@ static void mk68k_op_mull_32_al()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -25279,7 +25279,7 @@ static void mk68k_op_mull_32_al()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -25298,7 +25298,7 @@ static void mk68k_op_mull_32_al()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AL_32();
@@ -25317,7 +25317,7 @@ static void mk68k_op_mull_32_al()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -25339,13 +25339,13 @@ static void mk68k_op_mull_32_al()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -25358,7 +25358,7 @@ static void mk68k_op_mull_32_al()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -25383,10 +25383,10 @@ static void mk68k_op_mull_32_pcdi()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -25403,7 +25403,7 @@ static void mk68k_op_mull_32_pcdi()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -25422,7 +25422,7 @@ static void mk68k_op_mull_32_pcdi()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_PCDI_32();
@@ -25441,7 +25441,7 @@ static void mk68k_op_mull_32_pcdi()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -25463,13 +25463,13 @@ static void mk68k_op_mull_32_pcdi()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -25482,7 +25482,7 @@ static void mk68k_op_mull_32_pcdi()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -25507,10 +25507,10 @@ static void mk68k_op_mull_32_pcix()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -25527,7 +25527,7 @@ static void mk68k_op_mull_32_pcix()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -25546,7 +25546,7 @@ static void mk68k_op_mull_32_pcix()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_PCIX_32();
@@ -25565,7 +25565,7 @@ static void mk68k_op_mull_32_pcix()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -25587,13 +25587,13 @@ static void mk68k_op_mull_32_pcix()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -25606,7 +25606,7 @@ static void mk68k_op_mull_32_pcix()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -25631,10 +25631,10 @@ static void mk68k_op_mull_32_i()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			res = (sint64)((sint32)src) * (sint64)((sint32)dst);
-			if(!BIT_A(word2))
+			if(!Bool(BIT_A(word2)))
 			{
 				FLAG_Z = MASK_OUT_ABOVE_32(res);
 				FLAG_N = NFLAG_32(res);
@@ -25651,7 +25651,7 @@ static void mk68k_op_mull_32_i()
 		}
 
 		res = src * dst;
-		if(!BIT_A(word2))
+		if(!Bool(BIT_A(word2)))
 		{
 			FLAG_Z = MASK_OUT_ABOVE_32(res);
 			FLAG_N = NFLAG_32(res);
@@ -25670,7 +25670,7 @@ static void mk68k_op_mull_32_i()
 
 #else
 
-	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_I_32();
@@ -25689,7 +25689,7 @@ static void mk68k_op_mull_32_i()
 
 		FLAG_C = CFLAG_CLEAR;
 
-		if(BIT_B(word2))			   /* signed */
+		if(Bool(BIT_B(word2)))			   /* signed */
 		{
 			if(Bool(GET_MSB_32(src)))
 				src = (uint)MASK_OUT_ABOVE_32(-(sint)src);
@@ -25711,13 +25711,13 @@ static void mk68k_op_mull_32_i()
 		lo = r1 + (MASK_OUT_ABOVE_16(r2)<<16) + (MASK_OUT_ABOVE_16(r3)<<16);
 		hi = r4 + (r2>>16) + (r3>>16) + (((r1>>16) + MASK_OUT_ABOVE_16(r2) + MASK_OUT_ABOVE_16(r3)) >> 16);
 
-		if(BIT_B(word2) && Bool(neg))
+		if(Bool(BIT_B(word2)) && Bool(neg))
 		{
 			hi = (uint)MASK_OUT_ABOVE_32((-(sint)hi) - SInt(lo != 0));
 			lo = (uint)MASK_OUT_ABOVE_32(-(sint)lo);
 		}
 
-		if(BIT_A(word2))
+		if(Bool(BIT_A(word2)))
 		{
 			REG_D[word2 & 7] = hi;
 			REG_D[(word2 >> 12) & 7] = lo;
@@ -25730,7 +25730,7 @@ static void mk68k_op_mull_32_i()
 		REG_D[(word2 >> 12) & 7] = lo;
 		FLAG_N = NFLAG_32(lo);
 		FLAG_Z = lo;
-		if(BIT_B(word2))
+		if(Bool(BIT_B(word2)))
 			FLAG_V = UInt(!((Bool(GET_MSB_32(lo)) && hi == 0xffffffff) || (!Bool(GET_MSB_32(lo)) && !Bool(hi))))<<7;
 		else
 			FLAG_V = UInt(hi != 0) << 7;
@@ -32031,7 +32031,7 @@ static void mk68k_op_suba_16_ai()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_AI_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -32040,7 +32040,7 @@ static void mk68k_op_suba_16_pi()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_PI_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -32049,7 +32049,7 @@ static void mk68k_op_suba_16_pd()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_PD_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -32058,7 +32058,7 @@ static void mk68k_op_suba_16_di()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_DI_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -32067,7 +32067,7 @@ static void mk68k_op_suba_16_ix()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AY_IX_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -32076,7 +32076,7 @@ static void mk68k_op_suba_16_aw()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AW_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -32085,7 +32085,7 @@ static void mk68k_op_suba_16_al()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_AL_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -32094,7 +32094,7 @@ static void mk68k_op_suba_16_pcdi()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_PCDI_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -32103,7 +32103,7 @@ static void mk68k_op_suba_16_pcix()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_PCIX_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -32112,7 +32112,7 @@ static void mk68k_op_suba_16_i()
 	uint r_dst = AX;
 	uint src = (uint)MAKE_INT_16(OPER_I_16());
 
-	AX = MASK_OUT_ABOVE_32(r_dst - src);
+	AX = MASK_OUT_ABOVE_32(AX - src);
 }
 
 
@@ -33237,7 +33237,7 @@ static void mk68k_op_swap_32()
 	uint r_dst = DY;
 
 	FLAG_Z = MASK_OUT_ABOVE_32(r_dst<<16);
-	DY = (r_dst>>16) | FLAG_Z;
+	DY = r_dst = (r_dst>>16) | FLAG_Z;
 
 	FLAG_Z = r_dst;
 	FLAG_N = NFLAG_32(r_dst);
@@ -36754,7 +36754,7 @@ static void m68ki_build_opcode_table()
 	for(i = 0; i < 0x10000; i++)
 	{
 		/* default to illegal */
-		m68ki_instruction_jump_table[i] = m68k_op_illegal;
+		m68ki_instruction_jump_table[i] = mk68k_op_illegal;
 		for(k=0;k<NUM_CPU_TYPES;k++)
 			m68ki_cycles[k][i] = 0;
 	}

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.CPU.Musashi.CSharp
 {
-	public class CPUWrapperMusashi : ICPU, ICSharpCPU
+	public class CPUWrapperMusashi : ICPU, IMusashiCSharpCPU
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IBreakpointCollection breakpoints;
@@ -112,9 +112,9 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 		}
 	}
 }
+
 namespace m68kcpu
 {
-
 	public static partial class M68KCPU
 	{
 		private static IMemoryMapper memoryMapper;
@@ -133,7 +133,6 @@ namespace m68kcpu
 		static void m68040_fpu_op0() { }
 		static void m68040_fpu_op1() { }
 		static void m68881_mmu_ops() { }
-		static void m68k_op_illegal() { throw new Exception(); }
 		static uint m68k_read_memory_8(uint A) { return memoryMapper.Read(0, A, Size.Byte); }
 		static uint m68k_read_memory_16(uint A) {
 			if (A == instructionStartPC)

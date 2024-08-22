@@ -17,6 +17,7 @@ using Jammy.Interface;
 using Jammy.Types.Options;
 using Parky.Logging;
 using NUnit.Framework.Legacy;
+using Jammy.Core.CPU.Musashi.CSharp;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -29,12 +30,17 @@ namespace Jammy.Tests
 	{
 		private ServiceProvider serviceProvider0;
 		private ServiceProvider serviceProvider1;
-		private CPUTestRig cpu1;
+		private ServiceProvider serviceProvider2;
 		private CPUTestRig cpu0;
+		private CPUTestRig cpu1;
 
 		[OneTimeSetUp]
 		public void CPUTestInit()
 		{
+			CPUTestRig csharp;
+			CPUTestRig musashi;
+			CPUTestRig musashicsharp;
+
 			var configuration = new ConfigurationBuilder()
 				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
 				.AddJsonFile("appsettings.json", false)
@@ -82,21 +88,52 @@ namespace Jammy.Tests
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 
-				ServiceProviderFactory.ServiceProvider = serviceProvider0;
-				cpu0 = new CPUTestRig((ICPU)serviceProvider0.GetRequiredService<IMusashiCPU>(),
-					serviceProvider0.GetRequiredService<IDebugMemoryMapper>(),
-					(ITestMemory)serviceProvider0.GetRequiredService<IMemoryMappedDevice>());
+			serviceProvider2 = new ServiceCollection()
+				.AddLogging(x =>
+				{
+					x.AddConfiguration(configuration.GetSection("Logging"));
+					//x.AddDebug();
+					x.AddDebugAsync();
+				})
+				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("MusashiCSharp"))
+				.AddSingleton<IInterrupt, Interrupt>()
+				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
+				.AddSingleton<ILabeller, Labeller>()
+				.AddSingleton<ITracer, NullTracer>()
+				.AddSingleton<IMusashiCSharpCPU, CPUWrapperMusashi>()
+				.AddSingleton<TestMemory>()
+				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
+				.BuildServiceProvider();
 
-				ServiceProviderFactory.ServiceProvider = serviceProvider1;
-				cpu1 = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<ICSharpCPU>(),
-					serviceProvider1.GetRequiredService<IDebugMemoryMapper>(),
-					(ITestMemory)serviceProvider0.GetRequiredService<IMemoryMappedDevice>());
+			ServiceProviderFactory.ServiceProvider = serviceProvider0;
+			musashi = new CPUTestRig((ICPU)serviceProvider0.GetRequiredService<IMusashiCPU>(),
+				serviceProvider0.GetRequiredService<IDebugMemoryMapper>(),
+				(ITestMemory)serviceProvider0.GetRequiredService<IMemoryMappedDevice>());
 
-				cpu0.Reset();
-				cpu1.Reset();
+			ServiceProviderFactory.ServiceProvider = serviceProvider1;
+			csharp = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<ICSharpCPU>(),
+				serviceProvider1.GetRequiredService<IDebugMemoryMapper>(),
+				(ITestMemory)serviceProvider1.GetRequiredService<IMemoryMappedDevice>());
 
-				cpu0.Emulate();
-				cpu1.Emulate();
+			ServiceProviderFactory.ServiceProvider = serviceProvider2;
+			musashicsharp = new CPUTestRig((ICPU)serviceProvider2.GetRequiredService<IMusashiCSharpCPU>(),
+				serviceProvider2.GetRequiredService<IDebugMemoryMapper>(),
+				(ITestMemory)serviceProvider2.GetRequiredService<IMemoryMappedDevice>());
+
+
+			//which CPUs are we going to test?
+			cpu0 = musashi;
+			cpu1 = musashicsharp;
+
+			cpu0.Reset();
+			cpu1.Reset();
+
+			cpu0.Emulate();
+			cpu1.Emulate();
 		}
 
 		private class CPUTestRig
