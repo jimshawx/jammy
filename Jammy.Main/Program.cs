@@ -174,8 +174,8 @@ namespace Jammy.Main
 				if (settings.Sku == CPUSku.MC68EC020)
 					services.AddSingleton<ICPU, CPU68EC020>();
 				else
-					//services.AddSingleton<ICPU, CPU>();
-					services.AddSingleton<ICPU, CPUWrapper>();
+					services.AddSingleton<ICPU, global::Jammy.Core.CPU.CSharp.CPU>();
+					//services.AddSingleton<ICPU, CPUWrapper>();
 			}
 
 			//configure Tracing

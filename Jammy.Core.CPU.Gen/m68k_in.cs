@@ -7494,7 +7494,7 @@ M68KMAKE_OP(muls, 16, ., d)
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -7521,7 +7521,7 @@ M68KMAKE_OP(muls, 16, ., .)
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;

@@ -13236,7 +13236,7 @@ static void mk68k_op_divl_32_d()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = DY;
@@ -13447,7 +13447,7 @@ static void mk68k_op_divl_32_ai()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_AI_32();
@@ -13658,7 +13658,7 @@ static void mk68k_op_divl_32_pi()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_PI_32();
@@ -13869,7 +13869,7 @@ static void mk68k_op_divl_32_pd()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_PD_32();
@@ -14080,7 +14080,7 @@ static void mk68k_op_divl_32_di()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_DI_32();
@@ -14291,7 +14291,7 @@ static void mk68k_op_divl_32_ix()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AY_IX_32();
@@ -14502,7 +14502,7 @@ static void mk68k_op_divl_32_aw()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AW_32();
@@ -14713,7 +14713,7 @@ static void mk68k_op_divl_32_al()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_AL_32();
@@ -14924,7 +14924,7 @@ static void mk68k_op_divl_32_pcdi()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_PCDI_32();
@@ -15135,7 +15135,7 @@ static void mk68k_op_divl_32_pcix()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_PCIX_32();
@@ -15346,7 +15346,7 @@ static void mk68k_op_divl_32_i()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint divisor = OPER_I_32();
@@ -23824,7 +23824,7 @@ static void mk68k_op_muls_16_d()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -23851,7 +23851,7 @@ static void mk68k_op_muls_16_ai()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -23877,7 +23877,7 @@ static void mk68k_op_muls_16_pi()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -23903,7 +23903,7 @@ static void mk68k_op_muls_16_pd()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -23929,7 +23929,7 @@ static void mk68k_op_muls_16_di()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -23955,7 +23955,7 @@ static void mk68k_op_muls_16_ix()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -23981,7 +23981,7 @@ static void mk68k_op_muls_16_aw()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -24007,7 +24007,7 @@ static void mk68k_op_muls_16_al()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -24033,7 +24033,7 @@ static void mk68k_op_muls_16_pcdi()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -24059,7 +24059,7 @@ static void mk68k_op_muls_16_pcix()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -24085,7 +24085,7 @@ static void mk68k_op_muls_16_i()
 	if(CPU_TYPE_IS_010_LESS(CPU_TYPE)) {
 		uint c = 0;
 		uint f = 0;
-		for (sint y = x; Bool(y); y>>=1) {
+		for (uint y = (uint)x; Bool(y); y>>=1) {
 			if ((y&1) != f) {
 				c += 2;
 				f = 1 - f;
@@ -24430,7 +24430,7 @@ static void mk68k_op_mull_32_d()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = DY;
@@ -24554,7 +24554,7 @@ static void mk68k_op_mull_32_ai()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_AI_32();
@@ -24678,7 +24678,7 @@ static void mk68k_op_mull_32_pi()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_PI_32();
@@ -24802,7 +24802,7 @@ static void mk68k_op_mull_32_pd()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_PD_32();
@@ -24926,7 +24926,7 @@ static void mk68k_op_mull_32_di()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_DI_32();
@@ -25050,7 +25050,7 @@ static void mk68k_op_mull_32_ix()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AY_IX_32();
@@ -25174,7 +25174,7 @@ static void mk68k_op_mull_32_aw()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AW_32();
@@ -25298,7 +25298,7 @@ static void mk68k_op_mull_32_al()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_AL_32();
@@ -25422,7 +25422,7 @@ static void mk68k_op_mull_32_pcdi()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_PCDI_32();
@@ -25546,7 +25546,7 @@ static void mk68k_op_mull_32_pcix()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_PCIX_32();
@@ -25670,7 +25670,7 @@ static void mk68k_op_mull_32_i()
 
 #else
 
-		if (CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
+	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		uint word2 = OPER_I_16();
 		uint src = OPER_I_32();
