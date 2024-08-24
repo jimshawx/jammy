@@ -537,7 +537,7 @@ noBitplaneDMA:
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 			{
 				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				FetchWidth(ddfstrt, ddfstop, OCS, HIRES, 0);
+				//FetchWidth(ddfstrt, ddfstop, OCS, HIRES, 0);
 			}
 			else if ((fmode & 3) == 3)
 			{

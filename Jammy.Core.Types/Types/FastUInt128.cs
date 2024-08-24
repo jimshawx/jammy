@@ -4,6 +4,16 @@
 
 namespace Jammy.Core.Types.Types
 {
+	public struct FastUInt128_
+	{
+		private ulong lo;
+		public void Or(ulong bits, int shift) { lo |= bits << shift; }
+		public void Zero() { lo = 0; }
+		public void SetBit(int bit) { lo = 1UL << bit; }
+		public void Shl1() { lo <<= 1; }
+		public bool IsBitSet(int bit) { return (lo & (1UL << bit)) != 0; }
+	}
+
 	public struct FastUInt128
 	{
 		private ulong hi, lo;
@@ -46,10 +56,10 @@ namespace Jammy.Core.Types.Types
 			lo <<= 1;
 		}
 
-		public bool AnyBitsSet(ref FastUInt128 other)
-		{
-			return ((hi & other.hi) | (lo & other.lo)) != 0;
-		}
+		//public bool AnyBitsSet(ref FastUInt128 other)
+		//{
+		//	return ((hi & other.hi) | (lo & other.lo)) != 0;
+		//}
 
 		public bool IsBitSet(int bit)
 		{
