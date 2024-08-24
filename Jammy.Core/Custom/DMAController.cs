@@ -201,6 +201,12 @@ public class DMAController : IDMA
 		activity.Priority = priority;
 	}
 
+	public void DebugExecuteDMAActivity(DMASource source)
+	{
+		var activity = activities[(int)source];
+		ExecuteDMATransfer(activity);
+	}
+
 	public void NoDMA(DMASource source)
 	{
 		activities[(int)source].Type = DMAActivityType.None;

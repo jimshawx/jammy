@@ -50,4 +50,5 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead
 	void ClearWaitingForDMA(DMASource source);
 	void SetCPUWaitingForDMA();
 	void WriteDMACON(ushort bits);
+	void DebugExecuteDMAActivity(DMASource source);
 }

@@ -85,8 +85,15 @@ namespace Jammy.Core.Custom
 
 				//copper instruction every odd clock (and copper DMA is on)
 				if ((clock.HorizontalPos & 1) != 0)
+				{ 
 					CopperInstruction();
-
+					//todo: hack: is this not supposed to happen later?
+					if (status == CopperStatus.Execute)
+					{
+						memory.DebugExecuteDMAActivity(DMASource.Copper);
+						CopperInstruction();
+					}
+				}
 				//if (status == CopperStatus.Waiting && data != 0xfffe)
 				//	logger.LogTrace($"Hit VBL while still waiting for {data:X2}");
 
