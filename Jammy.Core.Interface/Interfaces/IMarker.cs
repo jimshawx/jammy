@@ -213,6 +213,9 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		void WriteWide(uint address, ulong value);
 		void FlushBitplanes();
+		void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
+				out ulong trapReads, out ulong trapWrites,
+				out ulong customReads, out ulong customWrites);
 	}
 
 	public interface IChipsetClock : IEmulate

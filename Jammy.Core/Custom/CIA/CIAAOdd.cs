@@ -67,7 +67,7 @@ namespace Jammy.Core.Custom.CIA
 		{
 			clock.WaitForTick();
 
-			lock (locker)
+			//lock (locker)
 			{
 				if (psuClock.CurrentTick != lastTick)
 				{
@@ -102,7 +102,7 @@ namespace Jammy.Core.Custom.CIA
 
 		public override uint ReadByte(uint insaddr, uint address)
 		{
-			lock (locker)
+			//lock (locker)
 			{
 				byte value;
 				byte reg = GetReg(address, Size.Byte);
@@ -132,7 +132,7 @@ namespace Jammy.Core.Custom.CIA
 
 		public override void WriteByte(uint insaddr, uint address, uint value)
 		{
-			lock (locker)
+			//lock (locker)
 			{
 				byte reg = GetReg(address, Size.Byte);
 

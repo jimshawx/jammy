@@ -193,9 +193,9 @@ namespace Jammy.Tests
 					else if (mode == 3)
 					{
 						logger.LogTrace($"fill {ox + b0},{oy + b1}");
-
-						int pix = GetPixel(hdc, ox + b0, oy + b1);
-						ExtFloodFill(hdc, ox + b0, oy + b1, pix, FLOODFILLSURFACE);
+						int fx = ox + b0, fy = oy + b1;
+						int pix = GetPixel(hdc, fx, fy);
+						ExtFloodFill(hdc, fx, fy, pix, FLOODFILLSURFACE);
 
 						mode = 0;
 					}

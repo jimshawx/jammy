@@ -44,9 +44,10 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead
 	void NoDMA(DMASource source);
 	void NeedsDMA(DMASource source, DMA priority);
 	bool IsDMAEnabled(DMA source);
-	void WaitForChipRamDMASlot();
+	//void WaitForChipRamDMASlot();
 	void TriggerHighestPriorityDMA();
 	bool IsWaitingForDMA(DMASource source);
 	void ClearWaitingForDMA(DMASource source);
+	void SetCPUWaitingForDMA();
 	void WriteDMACON(ushort bits);
 }

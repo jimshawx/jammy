@@ -155,7 +155,7 @@ namespace Jammy.Core.Custom
 			DENISEID/LISAID->Chips		
 			 */
 
-			lock (locker)
+			//lock (locker)
 			{
 				int reg = REG(address);
 
@@ -252,7 +252,7 @@ namespace Jammy.Core.Custom
 				return;
 			}
 
-			lock (locker)
+			//lock (locker)
 			{
 				int reg = REG(address);
 

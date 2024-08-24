@@ -146,6 +146,12 @@ public class DMAController : IDMA
 		cpuMemTick = 0;
 	}
 
+	public void SetCPUWaitingForDMA()
+	{
+		activities[(int)DMASource.CPU].Priority = 0;
+		activities[(int)DMASource.CPU].Type = DMAActivityType.CPU;
+	}
+
 	private void ExecuteDMATransfer(DMAActivity activity)
 	{
 		if (activity.Type == DMAActivityType.Consume)

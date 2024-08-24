@@ -849,39 +849,74 @@ noBitplaneDMA:
 			.ToList();
 	}
 
+	private ulong chipRAMReads = 0;
+	private ulong chipRAMWrites = 0;
+	private ulong trapdoorReads = 0;
+	private ulong trapdoorWrites = 0;
+	private ulong chipsetReads = 0;
+	private ulong chipsetWrites = 0;
+
+
+	public void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
+				out ulong trapReads, out ulong trapWrites,
+				out ulong customReads, out ulong customWrites)
+	{
+		chipReads = chipRAMReads;
+		chipWrites = chipRAMWrites;
+		trapReads = trapdoorReads;
+		trapWrites = trapdoorWrites;
+		customReads = chipsetReads;
+		customWrites = chipsetWrites;
+	}
+
 	public uint Read(uint insaddr, uint address, Size size)
 	{
-		memory.WaitForChipRamDMASlot();
+		//memory.WaitForChipRamDMASlot();
 
 		if (chipRam.IsMapped(address))
+		{ 
+			chipRAMReads++;
+			if (size == Size.Long) chipRAMReads++;
 			return chipRam.Read(insaddr, address, size);
-
+		}
 		if (trapdoorRam.IsMapped(address))
+		{
+			trapdoorReads++;
+			if (size == Size.Long) trapdoorReads++;
 			return trapdoorRam.Read(insaddr, address, size);
-
+		}
 		if (custom.IsMapped(address))
+		{	
+			chipsetReads++;
+			if (size == Size.Long) chipsetReads++;
 			return custom.Read(insaddr, address, size);
-
+		}
 		return 0;
 	}
 
 	public void Write(uint insaddr, uint address, uint value, Size size)
 	{
-		memory.WaitForChipRamDMASlot();
+		//memory.WaitForChipRamDMASlot();
 
 		if (chipRam.IsMapped(address))
 		{
+			chipRAMWrites++;
+			if (size == Size.Long) chipRAMWrites++;
 			chipRam.Write(insaddr, address, value, size);
 			return;
 		}
 
 		if (trapdoorRam.IsMapped(address))
 		{
+			trapdoorWrites++;
+			if (size == Size.Long) trapdoorWrites++;
 			trapdoorRam.Write(insaddr, address, value, size);
 			return;
 		}
 		if (custom.IsMapped(address))
 		{
+			chipsetWrites++;
+			if (size == Size.Long) chipsetWrites++;
 			custom.Write(insaddr, address, value, size);
 			return;
 		}

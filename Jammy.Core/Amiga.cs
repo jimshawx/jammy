@@ -137,17 +137,17 @@ namespace Jammy.Core
 			//	});
 			Thread t;
 			//cpu needs special treatment
-			t = new Thread(() =>
-			{
-				Thread.CurrentThread.Priority = ThreadPriority.Highest;
-				for (;;)
-				{
-					cpuClock.WaitForTick();
-					cpu.Emulate();
-				}
-			});
-			t.Name = "CPU";
-			emulationThreads.Add(t);
+			//t = new Thread(() =>
+			//{
+			//	Thread.CurrentThread.Priority = ThreadPriority.Highest;
+			//	for (;;)
+			//	{
+			//		cpuClock.WaitForTick();
+			//		cpu.Emulate();
+			//	}
+			//});
+			//t.Name = "CPU";
+			//emulationThreads.Add(t);
 			//clock needs special treatment
 			//t = new Thread(() =>
 			//{
@@ -166,10 +166,64 @@ namespace Jammy.Core
 			resetters.ForEach(x => x.Reset());
 		}
 
+		private ulong chipRAMReads = 0;
+		private ulong chipRAMWrites = 0;
+		private ulong trapdoorReads = 0;
+		private ulong trapdoorWrites = 0;
+		private ulong chipsetReads = 0; 
+		private ulong chipsetWrites = 0;
+
+		private ulong totalWaits = 0;
+
 		public void RunEmulations(ulong ns)
 		{
 			emulations.ForEach(x => x.Emulate());
+
+			if (totalWaits == 0)
+			{
+				ulong nchipRAMReads;
+				ulong nchipRAMWrites;
+				ulong ntrapdoorReads;
+				ulong ntrapdoorWrites;
+				ulong nchipsetReads;
+				ulong nchipsetWrites;
+
+				ulong dchipRAMReads;
+				ulong dchipRAMWrites;
+				ulong dtrapdoorReads;
+				ulong dtrapdoorWrites;
+				ulong dchipsetReads;
+				ulong dchipsetWrites;
+
+				cpu.Emulate();
+
+				agnus.GetRGAReadWriteStats(out nchipRAMReads, out nchipRAMWrites, out ntrapdoorReads, out ntrapdoorWrites, out nchipsetReads, out nchipsetWrites);
+
+				dchipRAMReads = nchipRAMReads - chipRAMReads; chipRAMReads = nchipRAMReads;
+				dchipRAMWrites = nchipRAMWrites - chipRAMWrites; chipRAMWrites = nchipRAMWrites;
+				dtrapdoorReads = ntrapdoorReads - trapdoorReads; trapdoorReads = ntrapdoorReads;
+				dtrapdoorWrites = ntrapdoorWrites - trapdoorWrites; trapdoorWrites = ntrapdoorWrites;
+				dchipsetReads = nchipsetReads - chipsetReads; chipsetReads = nchipsetReads;
+				dchipsetWrites = nchipsetWrites - chipsetWrites; chipsetWrites = nchipsetWrites;
+
+				//how many chip bus slots did that use?
+				totalWaits = dchipRAMReads + dchipRAMWrites + dtrapdoorReads + dtrapdoorWrites + dchipsetReads + dtrapdoorWrites;
+			}
+			else
+			{
+				//set waiting for a DMA slot
+				dma.SetCPUWaitingForDMA();
+			}
+
+			//this will allocate the DMA slot
 			clock.AllThreadsFinished();
+
+			if (totalWaits > 0 && !dma.IsWaitingForDMA(DMASource.CPU))
+			{
+				//CPU DMA Slot was allocated
+				totalWaits--;
+			}
+
 			agnus.FlushBitplanes();
 		}
 
