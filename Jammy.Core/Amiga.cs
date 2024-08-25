@@ -305,7 +305,10 @@ namespace Jammy.Core
 							break;
 
 						case EmulationMode.Step:
-							RunEmulations(8);
+							do
+							{
+								RunEmulations(8);
+							} while (totalCycles != 0 || totalWaits != 0);
 							emulationHasRun = true;
 							emulationMode = EmulationMode.Stopped;
 							break;
