@@ -130,8 +130,9 @@ namespace m68kcpu
 			instructionStartPC = pc;
 		}
 
-		//static void m68040_fpu_op0() { }
-		//static void m68040_fpu_op1() { }
+		static void m68040_fpu_op0() { }
+		static void m68040_fpu_op1() { }
+		static void m68881_mmu_ops() { }
 		static uint m68k_read_memory_8(uint A) { return memoryMapper.Read(0, A, Size.Byte); }
 		static uint m68k_read_memory_16(uint A) {
 			if (A == instructionStartPC)
