@@ -106,8 +106,8 @@ public static partial class M68KCPU
 	//const int U64(val) val##ULL
 	//const int S64(val) val##LL
 	//#else
-	//const int U64(val) val
-	//const int S64(val) val
+	static ulong U64(ulong val) { return val; }
+	static long S64(long val) { return val; }
 	//#endif
 
 	//#include "softfloat/milieu.h"
@@ -380,9 +380,9 @@ public static partial class M68KCPU
 	static ref uint32 REG_CAAR => ref m68ki_cpu.caar; 
 	static ref uint32 REG_IR => ref m68ki_cpu.ir;
 	static floatx80[] REG_FP => m68ki_cpu.fpr;
-	static uint32 REG_FPCR => m68ki_cpu.fpcr; 
-	static uint32 REG_FPSR => m68ki_cpu.fpsr;
-	static uint32 REG_FPIAR => m68ki_cpu.fpiar;
+	static ref uint32 REG_FPCR => ref m68ki_cpu.fpcr; 
+	static ref uint32 REG_FPSR => ref m68ki_cpu.fpsr;
+	static ref uint32 REG_FPIAR => ref m68ki_cpu.fpiar;
 	static ref uint32 FLAG_T1 => ref m68ki_cpu.t1_flag; 
 	static ref uint32 FLAG_T0 => ref m68ki_cpu.t0_flag; 
 	static ref uint32 FLAG_S => ref m68ki_cpu.s_flag;
@@ -986,11 +986,16 @@ public static partial class M68KCPU
 	//typedef bits32 float32;
 	//typedef bits64 float64;
 
-	public class floatx80
+	public struct floatx80
 	{
-		ushort high;
-		double low;
+		public ushort high;
+		public ulong low;
 	}
+
+	public struct float128
+	{
+		public ulong high, low;
+	} 
 
 	public class m68ki_cpu_core
 	{
@@ -1031,7 +1036,7 @@ public static partial class M68KCPU
 		public uint run_mode;     /* Stores whether we are processing a reset, bus error, address error, or something else */
 		public bool has_pmmu;     /* Indicates if a PMMU available (yes on 030, 040, no on EC030) */
 		public int pmmu_enabled; /* Indicates if the PMMU is enabled */
-		public int fpu_just_reset; /* Indicates the FPU was just reset */
+		public bool fpu_just_reset; /* Indicates the FPU was just reset */
 		public uint reset_cycles;
 
 		/* Clocks required for instructions / exceptions */
@@ -1985,7 +1990,7 @@ static void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
 
 	//extern jmp_buf m68ki_bus_error_jmp_buf;
 
-	static void m68ki_check_bus_error_tra() { /*setjmp(m68ki_bus_error_jmp_buf);*/ }
+	static void m68ki_check_bus_error_trap() { /*setjmp(m68ki_bus_error_jmp_buf);*/ }
 
 	/* Exception for bus error */
 	static void m68ki_exception_bus_error()

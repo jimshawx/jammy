@@ -130,9 +130,8 @@ namespace m68kcpu
 			instructionStartPC = pc;
 		}
 
-		static void m68040_fpu_op0() { }
-		static void m68040_fpu_op1() { }
-		static void m68881_mmu_ops() { }
+		//static void m68040_fpu_op0() { }
+		//static void m68040_fpu_op1() { }
 		static uint m68k_read_memory_8(uint A) { return memoryMapper.Read(0, A, Size.Byte); }
 		static uint m68k_read_memory_16(uint A) {
 			if (A == instructionStartPC)
@@ -142,7 +141,6 @@ namespace m68kcpu
 		static void m68k_write_memory_8(uint A, uint v) { memoryMapper.Write(0, A, v, Size.Byte); }
 		static void m68k_write_memory_16(uint A, uint v) { memoryMapper.Write(0, A, v, Size.Word); }
 		static void m68k_write_memory_32(uint A, uint v) { memoryMapper.Write(0, A, v, Size.Long); }
-		static void m68ki_check_bus_error_trap() { }
 	}
 }
 
