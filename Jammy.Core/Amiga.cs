@@ -174,12 +174,13 @@ namespace Jammy.Core
 		private ulong chipsetWrites = 0;
 
 		private ulong totalWaits = 0;
+		private uint totalCycles = 0;
 
 		public void RunEmulations(ulong ns)
 		{
 			emulations.ForEach(x => x.Emulate());
 
-			if (totalWaits == 0)
+			if (totalWaits == 0 && totalCycles == 0)
 			{
 				ulong nchipRAMReads;
 				ulong nchipRAMWrites;
@@ -195,7 +196,17 @@ namespace Jammy.Core
 				ulong dchipsetReads;
 				ulong dchipsetWrites;
 
+				//in PAL, there are 312 x 227 ticks of the ChipsetClock per frame = 321 x 227 x 50 = 3,541,200 ticks per second
+				//and every time round this RunEmulations loop is on of these ticks.
+				//the CPU is running at twice that rate ~7.08MHz
+
 				cpu.Emulate();
+				totalCycles = cpu.GetCycles();
+				//the last instruction took this many CPU cycles, we need to make sure we don't try to execute any more
+				//CPU instructions until that many cycles have gone past.
+				//since chipset cycles are two CPU cycles, then
+				totalCycles /= 2;
+				//we need to eat this many cycles before we try to execute any more CPU
 
 				agnus.GetRGAReadWriteStats(out nchipRAMReads, out nchipRAMWrites, out ntrapdoorReads, out ntrapdoorWrites, out nchipsetReads, out nchipsetWrites);
 
@@ -209,11 +220,14 @@ namespace Jammy.Core
 				//how many chip bus slots did that use?
 				totalWaits = dchipRAMReads + dchipRAMWrites + dtrapdoorReads + dtrapdoorWrites + dchipsetReads + dtrapdoorWrites;
 			}
-			else
+			else if (totalWaits > 0)
 			{
 				//set waiting for a DMA slot
 				dma.SetCPUWaitingForDMA();
 			}
+
+			//use up a CPU cycle
+			if (totalCycles > 0) totalCycles--;
 
 			//this will allocate the DMA slot
 			clock.AllThreadsFinished();

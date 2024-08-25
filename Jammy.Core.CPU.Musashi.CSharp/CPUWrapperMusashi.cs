@@ -32,15 +32,21 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 			M68KCPU.m68k_set_irq(interruptLevel);
 		}
 
+		private int cycles=0;
 		public void Emulate()
 		{
 			CheckInterrupt();
-			int cycles = M68KCPU.m68k_execute(1);
+			cycles = M68KCPU.m68k_execute(1);
 			
 			uint pc = M68KCPU.m68k_get_reg(null, M68KCPU.m68k_register_t.M68K_REG_PC);
 			M68KCPU.SetInstructionStartPC(pc);
 
 			breakpoints.CheckBreakpoints(pc);
+		}
+
+		public uint GetCycles()
+		{
+			return (uint)cycles;
 		}
 
 		public Regs GetRegs()

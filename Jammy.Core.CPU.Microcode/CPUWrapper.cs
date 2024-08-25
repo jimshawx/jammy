@@ -15,6 +15,11 @@ namespace Jammy.Core.CPU.Microcode
 			CPU.CPUInit(interrupt, memoryMapper, breakpoints, tracer, settings, logger);
 		}
 
+		public uint GetCycles()
+		{
+			return 8;
+		}
+
 		public void Emulate()
 		{
 			CPU.Emulate();

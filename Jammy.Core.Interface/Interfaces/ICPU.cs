@@ -12,6 +12,7 @@ namespace Jammy.Core.Interface.Interfaces
 		public Regs GetRegs(Regs regs);
 		public void SetRegs(Regs regs);
 		public void SetPC(uint pc);
+		public uint GetCycles();
 	}
 
 	public interface IMusashiCPU { }

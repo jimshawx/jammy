@@ -75,6 +75,13 @@ namespace Jammy.Core.CPU.Musashi.MC68020
 		}
 
 		private uint instructionStartPC = 0;
+		private int cycles = 0;
+
+		public uint GetCycles()
+		{
+			return (uint)cycles;
+		}
+
 		public void Emulate()
 		{
 			CheckInterrupt();
@@ -91,8 +98,8 @@ namespace Jammy.Core.CPU.Musashi.MC68020
 
 			*/
 
-			int ticks = 0;
-			uint pc = Musashi_execute(ref ticks);
+
+			uint pc = Musashi_execute(ref cycles);
 
 			/*
 

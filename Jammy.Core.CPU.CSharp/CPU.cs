@@ -117,6 +117,11 @@ namespace Jammy.Core.CPU.CSharp
 			return false;
 		}
 
+		public uint GetCycles()
+		{
+			return 8;
+		}
+
 		public void Emulate()
 		{
 			instructionStartPC = pc;
