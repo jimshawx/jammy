@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Jammy.Core.Custom;
+using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
-using Jammy.Extensions.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -129,6 +129,10 @@ namespace Jammy.Tests
 			var interrupt = new Mock<IInterrupt>();
 			var custom = new Mock<IChips>();
 			var window = new Mock<IEmulationWindow>();
+			var audio = new Mock<IAudio>();
+			var debugger = new Mock<IChipsetDebugger>();
+
+			custom.Setup(x=>x.Read(0,ChipRegs.DMACONR,Size.Word)).Returns(0x8240);
 
 			serviceProvider0 = new ServiceCollection()
 				.AddLogging(x =>
@@ -139,7 +143,11 @@ namespace Jammy.Tests
 				.AddSingleton<IInterrupt>(x=> interrupt.Object)
 				.AddSingleton<IChips>(x=>custom.Object)
 				.AddSingleton<IEmulationWindow>(x=>window.Object)
+				.AddSingleton<IAudio>(x => audio.Object)
+				.AddSingleton<IChipsetDebugger>(x => debugger.Object)
 				.AddSingleton<IChipRAM, LoggedChipRAM>()
+				.AddSingleton<IChipsetClock, ChipsetClock>()
+				.AddSingleton<IDMA, DMAController>()
 				.AddSingleton<IBlitter, Blitter>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
@@ -150,6 +158,8 @@ namespace Jammy.Tests
 		{
 			var blitter = serviceProvider0.GetRequiredService<IBlitter>();
 			var chipRAM = (LoggedChipRAM)serviceProvider0.GetRequiredService<IChipRAM>();
+			var dma = serviceProvider0.GetRequiredService<IDMA>();
+			blitter.Init(dma);
 
 			using (var f = File.OpenRead(BlitterLineTestCases.TestCases2RAM()))
 				chipRAM.FromBmp(f);
@@ -160,7 +170,7 @@ namespace Jammy.Tests
 			foreach (var c in testcases)
 			{
 				TestContext.WriteLine($"\n------- Test Case {++i,4} -------");
-				if (RunBlitterTestCase(c, blitter, chipRAM))
+				if (RunBlitterTestCase(c, blitter, chipRAM, dma))
 					passes++;
 			}
 			TestContext.WriteLine($"PASSES: {passes}/{testcases.Count}");
@@ -169,7 +179,7 @@ namespace Jammy.Tests
 			File.WriteAllBytes(BlitterLineTestCases.TestCases2Results(), d.ToArray());
 		}
 
-		private bool RunBlitterTestCase(BlitterLineTestCases.BlitterLineTestCase c, IBlitter blitter, LoggedChipRAM chipRAM)
+		private bool RunBlitterTestCase(BlitterLineTestCases.BlitterLineTestCase c, IBlitter blitter, LoggedChipRAM chipRAM, IDMA dma)
 		{
 			blitter.Write(0, ChipRegs.BLTCON0, (ushort)c.bltcon0);
 			blitter.Write(0, ChipRegs.BLTCON1, (ushort)c.bltcon1);
@@ -196,7 +206,8 @@ namespace Jammy.Tests
 			blitter.Write(0, ChipRegs.BLTAFWM, (ushort)c.bltafwm);
 			blitter.Write(0, ChipRegs.BLTALWM, (ushort)c.bltalwm);
 
-			blitter.Write(0, ChipRegs.DMACON, 0x8240);
+			//blitter.Write(0, ChipRegs.DMACON, 0x8240);
+			dma.WriteDMACON(0x8240);
 
 			if (c.bltsize != 0)
 			{
@@ -209,7 +220,12 @@ namespace Jammy.Tests
 				blitter.Write(0, ChipRegs.BLTSIZV, (ushort)c.bltsizv);
 				blitter.Write(0, ChipRegs.BLTSIZH, (ushort)c.bltsizh);
 			}
-	
+			do
+			{ 
+				blitter.Emulate();
+				dma.TriggerHighestPriorityDMA();
+			} while (!blitter.IsIdle());
+
 			return true;
 		}
 	}

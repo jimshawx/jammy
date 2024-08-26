@@ -311,8 +311,8 @@ namespace Jammy.UI.Settings
 			cbDebugging.Checked = currentSettings.Debugger == Feature.Enabled;
 
 			//Blitter
-			rbImmediate.Checked = currentSettings.BlitterMode == BlitterMode.Immediate;
-			rbSynchronous.Checked = currentSettings.BlitterMode == BlitterMode.Synchronous;
+			rbImmediate.Checked = false;//currentSettings.BlitterMode == BlitterMode.Immediate;
+			rbSynchronous.Checked = true;//currentSettings.BlitterMode == BlitterMode.Synchronous;
 		}
 
 		private void UnbindSettings()

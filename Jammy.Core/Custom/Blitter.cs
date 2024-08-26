@@ -118,6 +118,11 @@ namespace Jammy.Core.Custom
 			throw new ArgumentOutOfRangeException();
 		}
 
+		public bool IsIdle()
+		{
+			return status == BlitterState.Idle;
+		}
+
 		public void Reset()
 		{
 			bltapt = 0;

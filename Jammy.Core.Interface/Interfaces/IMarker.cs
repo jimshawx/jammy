@@ -50,6 +50,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		void Logging(bool enabled);
 		void Dumping(bool enabled);
+		bool IsIdle();
 	}
 	public interface ICIA : IEmulate, IMemoryMappedDevice
 	{
