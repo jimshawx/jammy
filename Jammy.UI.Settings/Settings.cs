@@ -58,16 +58,30 @@ namespace Jammy.UI.Settings
 
 		private void cbCPU_SelectedValueChanged(object sender, EventArgs e)
 		{
-			if ((string)cbSku.SelectedItem != "MC68000")
-			{
-				rbNative.Checked = false;
-				rbNative.Enabled = false;
-				rbMusashi.Checked = true;
-			}
-			else
+			if ((string)cbSku.SelectedItem == "MC68000")
 			{
 				rbNative.Enabled = true;
 			}
+			else
+			{
+				rbNative.Checked = false;
+				rbNative.Enabled = false;
+			}
+
+			if ((string)cbSku.SelectedItem == "MC68000" ||
+				(string)cbSku.SelectedItem == "MC68EC020" ||
+				(string)cbSku.SelectedItem == "MC68030")
+			{
+				rbMusashi.Enabled = true;
+			}
+			else
+			{
+				rbMusashi.Checked = false;
+				rbMusashi.Enabled = false;
+			}
+
+			if (!rbMusashi.Checked && !rbNative.Checked)
+				rbMusashiCS.Checked = true;
 		}
 
 		private void cbChipset_SelectedValueChanged(object sender, EventArgs e)
@@ -232,7 +246,12 @@ namespace Jammy.UI.Settings
 			cbSku.SelectedItem = currentSettings.Sku.ToString();
 			rbMusashi.Checked = currentSettings.CPU == CPUType.Musashi;
 			rbNative.Checked = currentSettings.CPU == CPUType.Native;
+			rbMusashiCS.Checked = currentSettings.CPU == CPUType.MusashiCSharp;
+
 			rbNative.Enabled = currentSettings.Sku == CPUSku.MC68000;
+			rbMusashi.Enabled = currentSettings.Sku == CPUSku.MC68000 || 
+								currentSettings.Sku == CPUSku.MC68EC020 || 
+								currentSettings.Sku == CPUSku.MC68030;
 
 			//Chipset
 			cbChipset.SelectedItem = currentSettings.ChipSet.ToString();
@@ -251,7 +270,7 @@ namespace Jammy.UI.Settings
 				if (currentSettings.VideoFormat == VideoFormat.PAL) currentSettings.CPUFrequency = 14180000;
 				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency= 14320000;
 			}
-			else if (currentSettings.Sku == CPUSku.MC68030)
+			else if (currentSettings.Sku == CPUSku.MC68030 || currentSettings.Sku == CPUSku.MC68040)
 			{
 				//We're gonna say it's an A3000/4000 25MHz
 				if (currentSettings.VideoFormat == VideoFormat.PAL) currentSettings.CPUFrequency = 25000000;
@@ -302,8 +321,9 @@ namespace Jammy.UI.Settings
 
 			//CPU
 			currentSettings.Sku = Enum.Parse<CPUSku>((string)cbSku.SelectedItem);
-			currentSettings.CPU = rbMusashi.Checked ? CPUType.Musashi : CPUType.Native;
-			currentSettings.AddressBits = currentSettings.Sku == CPUSku.MC68030 ? 32 : 24;
+			currentSettings.CPU = rbMusashi.Checked ? CPUType.Musashi : (rbMusashiCS.Checked ? CPUType.MusashiCSharp : CPUType.Native);
+			currentSettings.AddressBits = (currentSettings.Sku == CPUSku.MC68030
+										|| currentSettings.Sku == CPUSku.MC68040) ? 32 : 24;
 
 			//Chipset
 			currentSettings.ChipSet = Enum.Parse<ChipSet>((string)cbChipset.SelectedItem);

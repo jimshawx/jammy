@@ -80,6 +80,8 @@ namespace Jammy.Core.CPU.CSharp
 			this.settings = settings.Value;
 			this.logger = logger;
 
+			logger.LogTrace("Starting C# 68000 CPU");
+
 			//Reset();
 		}
 

@@ -4,6 +4,7 @@ using Jammy.Core.Types.Types;
 using m68kcpu;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
 
 namespace Jammy.Core.CPU.Musashi.CSharp
 {
@@ -22,7 +23,16 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 			this.breakpoints = breakpoints;
 
 			M68KCPU.m68k_init();
-			M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68000);
+			switch(settings.Value.Sku)
+			{ 
+				case CPUSku.MC68000: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68000); break;
+				case CPUSku.MC68EC020: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68EC020); break;
+				case CPUSku.MC68030: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68030); break;
+				case CPUSku.MC68040: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68040); break;
+				default: throw new ArgumentOutOfRangeException(nameof(settings.Value.Sku));
+			}
+			logger.LogTrace($"Starting Musashi C# {settings.Value.Sku.ToString().Split('.').Last().Substring(2)} CPU");
+
 			M68KCPU.m68k_pulse_reset();
 		}
 

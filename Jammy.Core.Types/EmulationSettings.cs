@@ -15,7 +15,8 @@ namespace Jammy.Core.Types
 	{
 		MC68000,
 		MC68EC020,
-		MC68030
+		MC68030,
+		MC68040
 	}
 
 	public enum AudioDriver

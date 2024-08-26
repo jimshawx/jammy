@@ -40,6 +40,7 @@ namespace Jammy.UI.Settings
 			rbMusashi = new System.Windows.Forms.RadioButton();
 			panel1 = new System.Windows.Forms.Panel();
 			groupBox1 = new System.Windows.Forms.GroupBox();
+			rbMusashiCS = new System.Windows.Forms.RadioButton();
 			panel2 = new System.Windows.Forms.Panel();
 			groupBox2 = new System.Windows.Forms.GroupBox();
 			rbPAL = new System.Windows.Forms.RadioButton();
@@ -89,8 +90,8 @@ namespace Jammy.UI.Settings
 			cbAudio = new System.Windows.Forms.CheckBox();
 			panel7 = new System.Windows.Forms.Panel();
 			groupBox7 = new System.Windows.Forms.GroupBox();
-			cbDiskController = new System.Windows.Forms.ComboBox();
 			nudHardDiskCount = new System.Windows.Forms.NumericUpDown();
+			cbDiskController = new System.Windows.Forms.ComboBox();
 			panel1.SuspendLayout();
 			groupBox1.SuspendLayout();
 			groupBox2.SuspendLayout();
@@ -133,7 +134,7 @@ namespace Jammy.UI.Settings
 			// cbSku
 			// 
 			cbSku.FormattingEnabled = true;
-			cbSku.Items.AddRange(new object[] { "MC68000", "MC68EC020", "MC68030" });
+			cbSku.Items.AddRange(new object[] { "MC68000", "MC68EC020", "MC68030", "MC68040" });
 			cbSku.Location = new System.Drawing.Point(11, 47);
 			cbSku.Margin = new System.Windows.Forms.Padding(6);
 			cbSku.Name = "cbSku";
@@ -144,7 +145,7 @@ namespace Jammy.UI.Settings
 			// rbNative
 			// 
 			rbNative.AutoSize = true;
-			rbNative.Location = new System.Drawing.Point(264, 41);
+			rbNative.Location = new System.Drawing.Point(247, 41);
 			rbNative.Margin = new System.Windows.Forms.Padding(6);
 			rbNative.Name = "rbNative";
 			rbNative.Size = new System.Drawing.Size(114, 36);
@@ -157,7 +158,7 @@ namespace Jammy.UI.Settings
 			// rbMusashi
 			// 
 			rbMusashi.AutoSize = true;
-			rbMusashi.Location = new System.Drawing.Point(264, 79);
+			rbMusashi.Location = new System.Drawing.Point(247, 81);
 			rbMusashi.Margin = new System.Windows.Forms.Padding(6);
 			rbMusashi.Name = "rbMusashi";
 			rbMusashi.Size = new System.Drawing.Size(133, 36);
@@ -177,6 +178,7 @@ namespace Jammy.UI.Settings
 			// 
 			// groupBox1
 			// 
+			groupBox1.Controls.Add(rbMusashiCS);
 			groupBox1.Controls.Add(cbSku);
 			groupBox1.Controls.Add(rbNative);
 			groupBox1.Controls.Add(rbMusashi);
@@ -185,10 +187,22 @@ namespace Jammy.UI.Settings
 			groupBox1.Margin = new System.Windows.Forms.Padding(6);
 			groupBox1.Name = "groupBox1";
 			groupBox1.Padding = new System.Windows.Forms.Padding(6);
-			groupBox1.Size = new System.Drawing.Size(420, 154);
+			groupBox1.Size = new System.Drawing.Size(420, 169);
 			groupBox1.TabIndex = 6;
 			groupBox1.TabStop = false;
 			groupBox1.Text = "CPU";
+			// 
+			// rbMusashiCS
+			// 
+			rbMusashiCS.AutoSize = true;
+			rbMusashiCS.Location = new System.Drawing.Point(247, 121);
+			rbMusashiCS.Margin = new System.Windows.Forms.Padding(6);
+			rbMusashiCS.Name = "rbMusashiCS";
+			rbMusashiCS.Size = new System.Drawing.Size(169, 36);
+			rbMusashiCS.TabIndex = 6;
+			rbMusashiCS.TabStop = true;
+			rbMusashiCS.Text = "Musashi C#";
+			rbMusashiCS.UseVisualStyleBackColor = true;
 			// 
 			// panel2
 			// 
@@ -677,6 +691,7 @@ namespace Jammy.UI.Settings
 			// rbSynchronous
 			// 
 			rbSynchronous.AutoSize = true;
+			rbSynchronous.Checked = true;
 			rbSynchronous.Enabled = false;
 			rbSynchronous.Location = new System.Drawing.Point(186, 44);
 			rbSynchronous.Name = "rbSynchronous";
@@ -689,12 +704,11 @@ namespace Jammy.UI.Settings
 			// rbImmediate
 			// 
 			rbImmediate.AutoSize = true;
-			rbImmediate.Checked = true;
+			rbImmediate.Enabled = false;
 			rbImmediate.Location = new System.Drawing.Point(21, 44);
 			rbImmediate.Name = "rbImmediate";
 			rbImmediate.Size = new System.Drawing.Size(159, 36);
 			rbImmediate.TabIndex = 0;
-			rbImmediate.TabStop = true;
 			rbImmediate.Text = "Immediate";
 			rbImmediate.UseVisualStyleBackColor = true;
 			// 
@@ -756,16 +770,6 @@ namespace Jammy.UI.Settings
 			groupBox7.TabStop = false;
 			groupBox7.Text = "Hard Disk";
 			// 
-			// cbDiskController
-			// 
-			cbDiskController.FormattingEnabled = true;
-			cbDiskController.Items.AddRange(new object[] { "None", "A600_A1200", "A3000", "A4000" });
-			cbDiskController.Location = new System.Drawing.Point(24, 49);
-			cbDiskController.Margin = new System.Windows.Forms.Padding(6);
-			cbDiskController.Name = "cbDiskController";
-			cbDiskController.Size = new System.Drawing.Size(322, 40);
-			cbDiskController.TabIndex = 0;
-			// 
 			// nudHardDiskCount
 			// 
 			nudHardDiskCount.Location = new System.Drawing.Point(358, 49);
@@ -775,6 +779,16 @@ namespace Jammy.UI.Settings
 			nudHardDiskCount.ReadOnly = true;
 			nudHardDiskCount.Size = new System.Drawing.Size(80, 39);
 			nudHardDiskCount.TabIndex = 1;
+			// 
+			// cbDiskController
+			// 
+			cbDiskController.FormattingEnabled = true;
+			cbDiskController.Items.AddRange(new object[] { "None", "A600_A1200", "A3000", "A4000" });
+			cbDiskController.Location = new System.Drawing.Point(24, 49);
+			cbDiskController.Margin = new System.Windows.Forms.Padding(6);
+			cbDiskController.Name = "cbDiskController";
+			cbDiskController.Size = new System.Drawing.Size(322, 40);
+			cbDiskController.TabIndex = 0;
 			// 
 			// Settings
 			// 
@@ -886,5 +900,6 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.RadioButton rbSynchronous;
 		private System.Windows.Forms.RadioButton rbImmediate;
 		private System.Windows.Forms.NumericUpDown nudHardDiskCount;
+		private System.Windows.Forms.RadioButton rbMusashiCS;
 	}
 }

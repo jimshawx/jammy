@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Microsoft.Extensions.Logging;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -44,12 +45,14 @@ namespace Jammy.Core.CPU.Musashi
 		private Musashi_Writer w8;
 
 		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
-			IBreakpointCollection breakpoints, ITracer tracer)
+			IBreakpointCollection breakpoints, ITracer tracer, ILogger<MusashiCPU> logger)
 		{
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
 			this.tracer = tracer;
+
+			logger.LogTrace("Starting Musashi C 68000 CPU");
 
 			r32 = new Musashi_Reader(Musashi_read32);
 			r16 = new Musashi_Reader(Musashi_read16);

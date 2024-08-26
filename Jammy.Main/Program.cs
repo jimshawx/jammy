@@ -3,7 +3,6 @@ using System.IO;
 using System.Windows.Forms;
 using Jammy.Core;
 using Jammy.Core.CPU.CSharp;
-using Jammy.Core.CPU.CSharp.MC68020;
 using Jammy.Core.CPU.Musashi;
 using Jammy.Core.CPU.Musashi.MC68020;
 using Jammy.Core.CPU.Musashi.MC68030;
@@ -31,7 +30,6 @@ using Jammy.Core.EmulationWindow.GDI;
 using Jammy.Core.EmulationWindow.DX;
 using Jammy.Debugger.Interceptors;
 using Jammy.NativeOverlay;
-using Jammy.Core.CPU.Microcode;
 using Jammy.Core.CPU.Musashi.CSharp;
 
 /*
@@ -153,8 +151,6 @@ namespace Jammy.Main
 			else
 				services.AddSingleton<IAudio, Audio>();
 
-			settings.CPU = CPUType.MusashiCSharp;
-
 			//configure CPU
 			if (settings.CPU == CPUType.Musashi)
 			{
@@ -171,11 +167,7 @@ namespace Jammy.Main
 			}
 			else
 			{
-				if (settings.Sku == CPUSku.MC68EC020)
-					services.AddSingleton<ICPU, CPU68EC020>();
-				else
-					services.AddSingleton<ICPU, global::Jammy.Core.CPU.CSharp.CPU>();
-					//services.AddSingleton<ICPU, CPUWrapper>();
+				services.AddSingleton<ICPU, CPU>();
 			}
 
 			//configure Tracing
