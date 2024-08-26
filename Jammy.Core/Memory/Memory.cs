@@ -9,7 +9,7 @@ using Jammy.Core.Types.Types;
 
 namespace Jammy.Core.Memory
 {
-	public abstract class Memory : IMemoryMappedDevice, IBulkMemoryRead
+	public abstract class Memory : IMemoryMappedDevice, IBulkMemoryRead, IDebuggableMemory
 	{
 		protected uint addressMask = 0;
 		protected byte[] memory;
@@ -80,10 +80,20 @@ namespace Jammy.Core.Memory
 				{
 					new BulkMemoryRange
 					{
-						StartAddress = memoryRange.Start,
+						Start = memoryRange.Start,
 						Memory = (byte[])memory.Clone()
 					}
 				};
+		}
+
+		public uint DebugRead(uint address, Size size)
+		{
+			return Read(0, address, size);
+		}
+
+		public void DebugWrite(uint address, uint value, Size size)
+		{
+			Write(0, address, value, size);
 		}
 	}
 }

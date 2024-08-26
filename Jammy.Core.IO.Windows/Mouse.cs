@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Enums;
+using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 
 /*
@@ -41,22 +42,22 @@ namespace Jammy.Core.IO.Windows
 		private ulong mouseTime = 0;
 		private ulong joystickTime = 0;
 
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			if (!emulationWindow.IsActive())
 				return;
 
-			EmulateMouse(cycles);
-			EmulateJoystick(cycles);
+			EmulateMouse();
+			EmulateJoystick();
 		}
 
-		public void EmulateJoystick(ulong cycles)
+		public void EmulateJoystick()
 		{
-			joystickTime += cycles;
+			joystickTime++;
 
-			if (joystickTime > 10000)
+			if (joystickTime > 1000)
 			{
-				joystickTime -= 10000;
+				joystickTime -= 1000;
 
 				if (((GetAsyncKeyState((int)VK.VK_SPACE)&0x8000)!=0) || ((GetAsyncKeyState((int)'Z') & 0x8000) != 0))
 					pra &= ~(1u << 7);
@@ -76,13 +77,13 @@ namespace Jammy.Core.IO.Windows
 			}
 		}
 
-		public void EmulateMouse(ulong cycles)
+		public void EmulateMouse()
 		{
-			mouseTime += cycles;
+			mouseTime ++;
 
-			if (mouseTime > 40000)
+			if (mouseTime > 5000)
 			{
-				mouseTime -= 40000;
+				mouseTime -= 5000;
 
 				//CIAA pra, bit 6 port 0 left mouse/joystick fire, inverted logic, 0 closed, 1 open
 				//CIAA pra, bit 7 port 1 left mouse/joystick fire
@@ -180,13 +181,11 @@ namespace Jammy.Core.IO.Windows
 				case ChipRegs.JOY1DAT: value = joy1dat;
 					//logger.LogTrace($"JOY1DAT R {value:X4}"); 
 					break;
-				case ChipRegs.POTGO: value = potgo; break;
 				case ChipRegs.POTGOR: value = potgo;
 					//logger.LogTrace($"POTGO R {value:X4}");
 					break;
 				case ChipRegs.POT0DAT: value = pot0dat; break;
 				case ChipRegs.POT1DAT: value = pot1dat; break;
-				case ChipRegs.JOYTEST: value = joytest; break;
 			}
 
 			return (ushort)value;
@@ -221,6 +220,24 @@ namespace Jammy.Core.IO.Windows
 		public void WritePRA(uint insaddr, byte value)
 		{
 			pra = value;
+		}
+
+		public uint DebugChipsetRead(uint address, Size size)
+		{
+			uint value = 0;
+
+			switch (address)
+			{
+				case ChipRegs.JOY0DAT: value = joy0dat; break;
+				case ChipRegs.JOY1DAT: value = joy1dat; break;
+				case ChipRegs.POTGO: value = potgo; break;
+				case ChipRegs.POTGOR: value = potgo; break;
+				case ChipRegs.POT0DAT: value = pot0dat; break;
+				case ChipRegs.POT1DAT: value = pot1dat; break;
+				case ChipRegs.JOYTEST: value = joytest; break;
+			}
+
+			return (ushort)value;
 		}
 	}
 }

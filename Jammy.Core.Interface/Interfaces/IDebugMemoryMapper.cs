@@ -17,11 +17,11 @@ namespace Jammy.Core.Interface.Interfaces
 		void UnsafeWrite32(uint address, uint value);
 		void UnsafeWrite16(uint address, ushort value);
 		void UnsafeWrite8(uint address, byte value);
-		IEnumerable<byte> GetEnumerable(int start, long length);
-		IEnumerable<byte> GetEnumerable(int start);
-		IEnumerable<uint> AsULong(int start);
-		IEnumerable<ushort> AsUWord(int start);
-		int Length { get; }
+		IEnumerable<byte> GetEnumerable(uint start, ulong length);
+		IEnumerable<byte> GetEnumerable(uint start);
+		IEnumerable<uint> AsULong(uint start);
+		IEnumerable<ushort> AsUWord(uint start);
+		ulong Length { get; }
 		List<MemoryRange> MappedRange();
 		List<BulkMemoryRange> GetBulkRanges();
 		string GetString(uint address);

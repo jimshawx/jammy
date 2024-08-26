@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
@@ -20,59 +21,48 @@ namespace Jammy.Core
 			this.logger = logger;
 		}
 
-		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long)
+		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, Size size = Size.Word, ulong? value = null)
 		{
-			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size };
+			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size, Value = value };
+		}
+
+		public void RemoveBreakpoint(uint address)
+		{
+			breakpoints.Remove(address);
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp))
+			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
 					SignalBreakpoint(insaddr);
 		}
 
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp))
+			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
 					SignalBreakpoint(insaddr);
 		}
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
-			if (breakpoints.TryGetValue(address, out Breakpoint bp))
+			if (breakpoints.TryGetValue(address, out Breakpoint bp) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
 					SignalBreakpoint(insaddr);
 		}
 
-		//private bool IsMemoryBreakpoint(uint pc, BreakpointType type)
-		//{
-		//	//for (uint i = 0; i < 4; i++)
-		//	uint i = 0;
-		//	{
-		//		if (breakpoints.TryGetValue(pc + i, out Breakpoint bp))
-		//		{
-		//			if (type == BreakpointType.Write)
-		//			{
-		//				if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
-		//					return bp.Active;
-		//			}
-		//			else if (type == BreakpointType.Read)
-		//			{
-		//				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-		//					return bp.Active;
-		//			}
-		//		}
-		//	}
-		//	return false;
-		//}
+		private bool Matches(Breakpoint bp, ulong value, Size size)
+		{
+			return (bp.Value == null || bp.Value == value) 
+			       && bp.Size == size;
+		}
 
 		public bool IsBreakpoint(uint pc)
 		{
 			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
 			{
-				if (bp.Type == BreakpointType.Permanent)
+				if (bp.Type == BreakpointType.Execute)
 					return bp.Active;
 
 				if (bp.Type == BreakpointType.Counter)
@@ -90,7 +80,14 @@ namespace Jammy.Core
 
 				if (bp.Type == BreakpointType.OneShot)
 					breakpoints.Remove(pc);
-				
+
+				if (bp.Type == BreakpointType.Write)
+					return false;
+				if (bp.Type == BreakpointType.Read)
+					return false;
+				if (bp.Type == BreakpointType.ReadOrWrite)
+					return false;
+
 				return bp.Active;
 			}
 			return false;
@@ -98,8 +95,8 @@ namespace Jammy.Core
 
 		public void ToggleBreakpoint(uint pc)
 		{
-			if (IsBreakpoint(pc))
-				breakpoints[pc].Active ^= true;
+			if (breakpoints.TryGetValue(pc, out var breakpoint))
+				breakpoint.Active ^= true;
 			else
 				AddBreakpoint(pc);
 		}
@@ -133,6 +130,12 @@ namespace Jammy.Core
 		{
 			logger.LogTrace($"Breakpoint @{pc:X8}");
 			breakpointHit = true;
+		}
+
+		public void DumpBreakpoints()
+		{
+			foreach (var bp in breakpoints.OrderBy(x => x.Key))
+				logger.LogTrace($"{bp.Key:X8} {(bp.Value.Active?"X":"-")} {bp.Value.Type} {bp.Value.Size} {bp.Value.Value:X8}");
 		}
 	}
 }

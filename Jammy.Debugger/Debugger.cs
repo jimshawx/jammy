@@ -273,9 +273,14 @@ namespace Jammy.Debugger
 			breakpoints.ToggleBreakpoint(pc);
 		}
 
-		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long)
+		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, Size size = Size.Long)
 		{
 			breakpoints.AddBreakpoint(address,type,counter,size);
+		}
+
+		public void RemoveBreakpoint(uint address)
+		{
+			breakpoints.RemoveBreakpoint(address);
 		}
 
 		public void BreakAtNextPC()
@@ -384,6 +389,23 @@ namespace Jammy.Debugger
 		public uint KickstartSize()
 		{
 			return (uint)kickstart.MappedRange().First().Length;
+		}
+
+		public uint DebugRead(uint address, Size size)
+		{
+			return memory.UnsafeRead(address, size);
+		}
+
+		public void DebugWrite(uint address, uint value, Size size)
+		{
+			if (size == Size.Byte) memory.UnsafeWrite8(address, (byte)value);
+			if (size == Size.Word) memory.UnsafeWrite16(address, (ushort)value);
+			if (size == Size.Long) memory.UnsafeWrite32(address, value);
+		}
+
+		public void DumpBreakpoints()
+		{
+			breakpoints.DumpBreakpoints();
 		}
 	}
 }

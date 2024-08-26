@@ -18,32 +18,23 @@ namespace Jammy.Core.Custom.Audio
 {
 	public class AudioV2 : IAudio
 	{
+		private readonly IChipsetClock clock;
 		private readonly IMemoryMappedDevice memory;
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 		private readonly uint[] intr = { Interrupt.AUD0, Interrupt.AUD1, Interrupt.AUD2, Interrupt.AUD3 };
-		private readonly ushort[] chanbit = { (ushort)ChipRegs.DMA.AUD0EN, (ushort)ChipRegs.DMA.AUD1EN, (ushort)ChipRegs.DMA.AUD2EN, (ushort)ChipRegs.DMA.AUD3EN };
+		private readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
-		private readonly ulong audioRate;
-		public AudioV2(IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioV2> logger)
+		public AudioV2(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioV2> logger)
 		{
+			this.clock = clock;
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
-
-
-			ulong beamRate = settings.Value.VideoFormat == VideoFormat.NTSC ? 60u : 50u;
-			beamRate = settings.Value.CPUFrequency / beamRate;
-
-			ulong scanlines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
-
-			audioRate = beamRate / scanlines;
-
+			
 			InitMixer();
 		}
-
-		private ulong audioTime;
 
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
 
@@ -58,14 +49,10 @@ namespace Jammy.Core.Custom.Audio
 		//On NTSC there are 262 scanlines @ 60Hz, so the rate is 2*60*262Hz = 31.440KHz max
 
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
-			audioTime += cycles;
-
-			if (audioTime > audioRate)
+			if (clock.EndOfLine())
 			{
-				audioTime -= audioRate;
-
 				for (int i = 0; i < 4; i++)
 				{
 					if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
@@ -81,7 +68,7 @@ namespace Jammy.Core.Custom.Audio
 		private void PlayingDMA(int channel)
 		{
 			//All DMA is off
-			if ((dmacon & (int)ChipRegs.DMA.DMAEN) == 0)
+			if ((dmacon & (int)DMA.DMAEN) == 0)
 				return;
 
 			ch[channel].working_audper -= rate;
@@ -321,6 +308,16 @@ namespace Jammy.Core.Custom.Audio
 			ushort value = 0;
 			switch (address)
 			{
+				case ChipRegs.ADKCONR: value = (ushort)(adkcon & 0x00ff); break;
+			}
+			return value;
+		}
+
+		public uint DebugChipsetRead(uint address, Size size)
+		{
+			ushort value = 0;
+			switch (address)
+			{
 				case ChipRegs.AUD0PER: value = ch[0].audper; break;
 				case ChipRegs.AUD0VOL: value = ch[0].audvol; break;
 				case ChipRegs.AUD0LEN: value = ch[0].audlen; break;
@@ -353,7 +350,6 @@ namespace Jammy.Core.Custom.Audio
 			}
 			return value;
 		}
-
 		[Flags]
 		public enum XAUDIO2_LOG
 		{

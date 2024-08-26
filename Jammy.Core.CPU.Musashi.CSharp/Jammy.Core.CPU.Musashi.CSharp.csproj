@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="m68kfpu.cs" />
+    <Compile Remove="m68kmmu.h.cs" />
+    <Compile Remove="softfloat-macros.cs" />
+    <Compile Remove="softfloat-specialize.cs" />
+    <Compile Remove="softfloat.cs" />
+    <Compile Remove="softfloat.h.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
+  </ItemGroup>
+
+</Project>

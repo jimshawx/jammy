@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 
 /*
@@ -39,7 +40,7 @@ namespace Jammy.Core.Custom.IO
 			tbeCounter = 2;
 		}
 
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			if (tbeCounter > 0)
 			{
@@ -71,8 +72,6 @@ namespace Jammy.Core.Custom.IO
 			ushort value = 0;
 			switch (address)
 			{
-				case ChipRegs.SERPER: value = serper; break;
-				case ChipRegs.SERDAT: break;
 				case ChipRegs.SERDATR: value = serdat; break;
 			}
 			return value;
@@ -133,6 +132,18 @@ namespace Jammy.Core.Custom.IO
 				serdat |= (ushort)SERDAT.RBF;
 			else
 				serdat &= (ushort)~(SERDAT.RBF | SERDAT.OVRUN);
+		}
+
+		public uint DebugChipsetRead(uint address, Size size)
+		{
+			ushort value = 0;
+			switch (address)
+			{
+				case ChipRegs.SERPER: value = serper; break;
+				case ChipRegs.SERDAT: break;
+				case ChipRegs.SERDATR: value = serdat; break;
+			}
+			return value;
 		}
 
 		[Flags]

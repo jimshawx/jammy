@@ -112,7 +112,7 @@ namespace Jammy.Core.Memory
 			{
 				ranges.Add(new BulkMemoryRange
 				{
-					StartAddress = mirrorRange.Start,
+					Start = mirrorRange.Start,
 					Memory = (byte[])memory.Clone()
 				});
 			}

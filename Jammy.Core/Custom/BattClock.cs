@@ -64,7 +64,7 @@ namespace Jammy.Core.Custom
 			return -1;
 		}
 
-		private string RegName(int r)
+		private static string RegName(int r)
 		{
 			if (r == 0) return "S1";
 			if (r == 1) return "S10";
@@ -85,107 +85,116 @@ namespace Jammy.Core.Custom
 			return $"UNKNOWN REGISTER {r}";
 		}
 
+		//private readonly object locker = new object();
+
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			if (size == Size.Long)
+			//lock (locker) 
 			{
-				if ((address & 3) != 0) throw new MemoryAlignmentException(address);
-				uint v = Read(insaddr, address + 3, Size.Byte);
-				return v * 0x00010001;
-			}
-			if (size == Size.Word)
-			{
-				if ((address & 1) != 0) throw new MemoryAlignmentException(address);
-				uint v = Read(insaddr, address + 1, Size.Byte);
-				return v;
-			}
-
-			int reg = REG(address); 
-			byte value = 0;
-			if (reg >= 0 && reg < 16)
-			{
-				//if it's a clock register and the clock isn't held, map in the latest time
-				if (reg <= 12 && (regs[0xd] & 1) == 0)
+				if (size == Size.Long)
 				{
-					var t = DateTime.Now;
-
-					regs[0] = (byte)(t.Second % 10);
-					regs[1] = (byte)(t.Second / 10);
-					regs[2] = (byte)(t.Minute % 10);
-					regs[3] = (byte)(t.Minute / 10);
-
-					int hour = t.Hour;
-					if (false)
-					{
-						byte h24 = (byte)(regs[0xf] & 2); //12H, 24H
-						if (h24 == 0) hour %= 12; //AM/PM clock
-						regs[4] = (byte)(hour % 10);
-						regs[5] = (byte)((hour / 10) | (t.Hour >= 12 ? ((h24 ^ 2) << 1) : 0));
-					}
-					else
-					{
-						regs[4] = (byte)(hour % 10);
-						regs[5] = (byte)(hour / 10);
-					}
-
-					int day = t.Day;// - 1;
-					regs[6] = (byte)(day % 10);
-					regs[7] = (byte)(day / 10);
-
-					int month = t.Month;//1-based
-					regs[8] = (byte)(month % 10);
-					regs[9] = (byte)(month / 10);
-
-					//kickstart 2/3 battclock is clever enough to say:
-					// year = 1900 + clock value
-					// if (year < 1978) year += 100
-					// which means it'll work 'til 2078.
-					//kickstart 1.2/1.3 unfortunately...
-					// year = 1900 + clock value
-					// if (year < 1978) year = 1978
-					int year = t.Year % 100;
-					regs[10] = (byte)(year % 10);
-					regs[11] = (byte)(year / 10);
-
-					switch (t.DayOfWeek)
-					{
-						case DayOfWeek.Sunday: regs[12] = 0; break;
-						case DayOfWeek.Monday: regs[12] = 1; break;
-						case DayOfWeek.Tuesday: regs[12] = 2; break;
-						case DayOfWeek.Wednesday: regs[12] = 3; break;
-						case DayOfWeek.Thursday: regs[12] = 4; break;
-						case DayOfWeek.Friday: regs[12] = 5; break;
-						case DayOfWeek.Saturday: regs[12] = 6; break;
-					}
+					if ((address & 3) != 0) throw new MemoryAlignmentException(address);
+					uint v = Read(insaddr, address + 3, Size.Byte);
+					return v * 0x00010001;
 				}
-				value = regs[reg];
+				if (size == Size.Word)
+				{
+					if ((address & 1) != 0) throw new MemoryAlignmentException(address);
+					uint v = Read(insaddr, address + 1, Size.Byte);
+					return v;
+				}
+
+				int reg = REG(address); 
+				byte value = 0;
+				if (reg >= 0 && reg < 16)
+				{
+					//if it's a clock register and the clock isn't held, map in the latest time
+					if (reg <= 12 && (regs[0xd] & 1) == 0)
+					{
+						var t = DateTime.Now;
+
+						regs[0] = (byte)(t.Second % 10);
+						regs[1] = (byte)(t.Second / 10);
+						regs[2] = (byte)(t.Minute % 10);
+						regs[3] = (byte)(t.Minute / 10);
+
+						int hour = t.Hour;
+						if (false)
+						{
+							byte h24 = (byte)(regs[0xf] & 2); //12H, 24H
+							if (h24 == 0) hour %= 12; //AM/PM clock
+							regs[4] = (byte)(hour % 10);
+							regs[5] = (byte)((hour / 10) | (t.Hour >= 12 ? ((h24 ^ 2) << 1) : 0));
+						}
+						else
+						{
+							regs[4] = (byte)(hour % 10);
+							regs[5] = (byte)(hour / 10);
+						}
+
+						int day = t.Day;// - 1;
+						regs[6] = (byte)(day % 10);
+						regs[7] = (byte)(day / 10);
+
+						int month = t.Month;//1-based
+						regs[8] = (byte)(month % 10);
+						regs[9] = (byte)(month / 10);
+
+						//kickstart 2/3 battclock is clever enough to say:
+						// year = 1900 + clock value
+						// if (year < 1978) year += 100
+						// which means it'll work 'til 2078.
+						//kickstart 1.2/1.3 unfortunately...
+						// year = 1900 + clock value
+						// if (year < 1978) year = 1978
+						int year = t.Year % 100;
+						regs[10] = (byte)(year % 10);
+						regs[11] = (byte)(year / 10);
+
+						switch (t.DayOfWeek)
+						{
+							case DayOfWeek.Sunday: regs[12] = 0; break;
+							case DayOfWeek.Monday: regs[12] = 1; break;
+							case DayOfWeek.Tuesday: regs[12] = 2; break;
+							case DayOfWeek.Wednesday: regs[12] = 3; break;
+							case DayOfWeek.Thursday: regs[12] = 4; break;
+							case DayOfWeek.Friday: regs[12] = 5; break;
+							case DayOfWeek.Saturday: regs[12] = 6; break;
+						}
+					}
+					value = regs[reg];
+				}
+
+				logger.LogTrace($"[BATTCLOCK] R {address:X8} @ {insaddr:X8} {size} {value:X2} {value.ToBin()} R{reg} {RegName(reg)}");
+				
+				return value;
 			}
 
-			logger.LogTrace($"[BATTCLOCK] R {address:X8} @ {insaddr:X8} {size} {value:X2} {value.ToBin()} R{reg} {RegName(reg)}");
-			
-			return value;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (size == Size.Long)
+			//lock (locker)
 			{
-				if ((address & 3) != 0) throw new MemoryAlignmentException(address);
-				Write(insaddr, address+3, value & 0xf, Size.Byte);
-				return;
-			}
-			if (size == Size.Word)
-			{
-				if ((address & 1) != 0) throw new MemoryAlignmentException(address);
-				Write(insaddr, address + 1, value & 0xf, Size.Byte);
-				return;
-			}
+				if (size == Size.Long)
+				{
+					if ((address & 3) != 0) throw new MemoryAlignmentException(address);
+					Write(insaddr, address+3, value & 0xf, Size.Byte);
+					return;
+				}
+				if (size == Size.Word)
+				{
+					if ((address & 1) != 0) throw new MemoryAlignmentException(address);
+					Write(insaddr, address + 1, value & 0xf, Size.Byte);
+					return;
+				}
 
-			int reg = REG(address);
-			logger.LogTrace($"[BATTCLOCK] W {address:X8} @ {insaddr:X8} {size} {value:X2} {value.ToBin(8)} R{reg} {RegName(reg)}");
-			if (reg >= 0 && reg < 16)
-			{
-				regs[reg] = (byte)value;
+				int reg = REG(address);
+				logger.LogTrace($"[BATTCLOCK] W {address:X8} @ {insaddr:X8} {size} {value:X2} {value.ToBin(8)} R{reg} {RegName(reg)}");
+				if (reg >= 0 && reg < 16)
+				{
+					regs[reg] = (byte)value;
+				}
 			}
 		}
 	}

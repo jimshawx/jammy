@@ -673,7 +673,7 @@ namespace Jammy.Disassembler.Analysers
 			uint i;
 
 			i = kickstartROM.MappedRange().First().Start;
-			foreach (uint s in mem.AsULong((int)kickstartROM.MappedRange().First().Start))
+			foreach (uint s in mem.AsULong(kickstartROM.MappedRange().First().Start))
 			{
 				//rts 0000
 				if (s == 0x4e750000)
@@ -682,7 +682,7 @@ namespace Jammy.Disassembler.Analysers
 			}
 
 			i = kickstartROM.MappedRange().First().Start;
-			foreach (ushort s in mem.AsUWord((int)kickstartROM.MappedRange().First().Start))
+			foreach (ushort s in mem.AsUWord(kickstartROM.MappedRange().First().Start))
 			{
 				//bra
 				if ((s & 0xff00) == 0x6000)
@@ -1028,7 +1028,7 @@ namespace Jammy.Disassembler.Analysers
 			}
 			else if (type == MemType.Code)
 			{
-				var asm = disassembler.Disassemble(address, mem.GetEnumerable((int)address, 20));
+				var asm = disassembler.Disassemble(address, mem.GetEnumerable(address, 20));
 				for (uint i = address; i < address + asm.Bytes.Length; i++)
 					analysis.SetMemType(i, type);
 			}

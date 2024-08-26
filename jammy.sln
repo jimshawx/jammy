@@ -52,6 +52,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Extensions.Windows", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parky.Logging.OutputDebugString", "Parky.Logging.OutputDebugString\Parky.Logging.OutputDebugString.csproj", "{62775AEA-81B5-40EC-AC89-434E3F116823}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.EmulationWindow.DIB", "Jammy.Core.EmulationWindow.DIB\Jammy.Core.EmulationWindow.DIB.csproj", "{8A91CE5C-CA95-4D75-A801-769CC6D2111B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.NativeOverlay", "Jammy.NativeOverlay\Jammy.NativeOverlay.csproj", "{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.CPU.Microcode", "Jammy.Core.CPU.Microcode\Jammy.Core.CPU.Microcode.csproj", "{65BF7F49-1E83-4F7E-A185-37F2AD34ACD4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.CPU.Gen", "Jammy.Core.CPU.Gen\Jammy.Core.CPU.Gen.csproj", "{2827A34E-CFB1-4ACE-AF2E-0C020ABDF451}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.CPU.Musashi.CSharp", "Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj", "{38EA3F21-5981-4497-9899-D112CE2EDB07}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -158,6 +168,26 @@ Global
 		{62775AEA-81B5-40EC-AC89-434E3F116823}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62775AEA-81B5-40EC-AC89-434E3F116823}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62775AEA-81B5-40EC-AC89-434E3F116823}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A91CE5C-CA95-4D75-A801-769CC6D2111B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A91CE5C-CA95-4D75-A801-769CC6D2111B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A91CE5C-CA95-4D75-A801-769CC6D2111B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A91CE5C-CA95-4D75-A801-769CC6D2111B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AAEC713-9AA2-43D7-83B6-621E2C86AFC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65BF7F49-1E83-4F7E-A185-37F2AD34ACD4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65BF7F49-1E83-4F7E-A185-37F2AD34ACD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65BF7F49-1E83-4F7E-A185-37F2AD34ACD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65BF7F49-1E83-4F7E-A185-37F2AD34ACD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2827A34E-CFB1-4ACE-AF2E-0C020ABDF451}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2827A34E-CFB1-4ACE-AF2E-0C020ABDF451}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2827A34E-CFB1-4ACE-AF2E-0C020ABDF451}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2827A34E-CFB1-4ACE-AF2E-0C020ABDF451}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38EA3F21-5981-4497-9899-D112CE2EDB07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38EA3F21-5981-4497-9899-D112CE2EDB07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38EA3F21-5981-4497-9899-D112CE2EDB07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38EA3F21-5981-4497-9899-D112CE2EDB07}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

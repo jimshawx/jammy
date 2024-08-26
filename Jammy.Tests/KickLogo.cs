@@ -1,14 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows.Forms;
+using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
-using Jammy.Interface;
+using Jammy.Core.Types;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -16,7 +20,45 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Tests
 {
-	public static class KickLogo
+	public class TestKickLogo
+	{
+		[Test(Description = "Kickstart Logo")]
+		public void TestLogo()
+		{
+			var configuration = new ConfigurationBuilder()
+				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.AddJsonFile("appsettings.json", false)
+				.Build();
+
+			ServiceProvider serviceProvider0 = new ServiceCollection()
+				.AddLogging(x =>
+				{
+					x.AddConfiguration(configuration.GetSection("Logging"));
+					x.AddDebug();
+				})
+				.AddSingleton<IKickstartROM, KickstartROM>()
+				.AddSingleton<TestMemory>()
+				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IMemoryManager, MemoryManager>()
+				.AddSingleton<IKickLogo, KickLogo>()
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
+				.BuildServiceProvider();
+
+			var kicklogo = serviceProvider0.GetRequiredService<IKickLogo>();
+			kicklogo.KSLogo();
+			Thread.Sleep(3000);
+			kicklogo.Close();
+		}
+	}
+
+	public interface IKickLogo
+	{
+		void KSLogo(); 
+		void Close();
+	}
+
+	public class KickLogo : IKickLogo
 	{
 		[DllImport("gdi32.dll")]
 		static extern uint FloodFill(IntPtr hdc, int x, int y, int color);
@@ -31,7 +73,7 @@ namespace Jammy.Tests
 		static extern uint SetDCPenColor(IntPtr hdc, int color);
 
 		[DllImport("gdi32.dll")]
-		static extern int GetStockObject(IntPtr hdc, int color);
+		static extern int GetStockObject(int obj);
 
 		[DllImport("gdi32.dll")]
 		static extern uint SelectObject(IntPtr hdc, int obj);
@@ -42,21 +84,37 @@ namespace Jammy.Tests
 		[DllImport("gdi32.dll")]
 		static extern uint MoveToEx(IntPtr hdc, int x, int y, IntPtr lppt);
 
-		private static ILogger logger;
+		[DllImport("gdi32.dll")]
+		static extern int GetPixel(IntPtr hdc, int nXPos, int nYPos);
 
-		static KickLogo()
+		[DllImport("gdi32.dll")]
+		static extern int SetPixel(IntPtr hdc, int nXPos, int nYPos, int color);
+
+		private ILogger logger;
+
+		private readonly IKickstartROM kickstart;
+
+		public KickLogo(IKickstartROM kickstart, ILogger<KickLogo> logger)
 		{
-			logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("KickLogo");
+			this.kickstart = kickstart;
+			this.logger = logger;
 		}
 
-		private static readonly List<Form> forms = new List<Form>();
+		private Form form;
 
-		public static void KSLogo(KickstartROM kickstart)
+		const int DC_BRUSH          = 18;
+		const int DC_PEN            = 19;
+
+		const int FLOODFILLBORDER   = 0;
+		const int FLOODFILLSURFACE  = 1;
+
+		public void KSLogo()
 		{
 			var range = kickstart.MappedRange().First();
-			for (uint i = 0; i < range.Length- kslogo.Length; i++)
+			var ram = ((IBulkMemoryRead)kickstart).ReadBulk().First();
+			for (ulong i = 0; i < range.Length- (ulong)kslogo.Length; i++)
 			{
-				//if (kslogo.SequenceEqual(kickstart.Skip((int)i).Take(kslogo.Length)))
+				if (kslogo.SequenceEqual(ram.Memory.Skip((int)i).Take(kslogo.Length)))
 				{
 					logger.LogTrace($"Found the kickstart logo at {i+range.Start:X8}");
 					break;
@@ -67,16 +125,14 @@ namespace Jammy.Tests
 			byte b0, b1;
 			int mode = 0; //0 unknown, 1 polyline start, 2 polyline, 3 fill
 			const int ox = 70, oy = 40;
-			var form = new Form { ClientSize = new System.Drawing.Size(320, 200) };
-			var picture = new PictureBox { Size = new System.Drawing.Size(320, 200) };
+			form = new Form { ClientSize = new Size(320, 200) };
 			var bitmap = new Bitmap(320, 200, PixelFormat.Format32bppRgb);
-			//picture.Image = bitmap;
+			var picture = new PictureBox { Size = new Size(320, 200), Image = bitmap };
 
 			form.Controls.Add(picture);
 			form.Show();
-			forms.Add(form);
 
-			int[] colours = new int[] { 0xffffff, 0x000000, 0x7777cc, 0xbbbbbb };
+			int[] colours = [0xffffff, 0x000000, 0xcc7777, 0xbbbbbb];
 
 			var g = picture.CreateGraphics();
 			int dx = 0, dy = 0;
@@ -84,11 +140,14 @@ namespace Jammy.Tests
 			var hdc = g.GetHdc();
 			SelectObject(hdc, (int)bitmap.GetHbitmap());
 
-			int dcbrush = GetStockObject(hdc, 18);
-			int dcpen = GetStockObject(hdc, 19);
+			int dcbrush = GetStockObject(DC_BRUSH);
+			int dcpen = GetStockObject(DC_PEN);
 
-			//SetDCBrushColor(hdc, colours[0]);
-			SetDCPenColor(hdc, colours[2]);
+			SetDCBrushColor(hdc, colours[0]);
+			SetDCPenColor(hdc, colours[1]);
+
+			SelectObject(hdc, dcbrush);
+			SelectObject(hdc, dcpen);
 
 			for (; ; )
 			{
@@ -97,16 +156,16 @@ namespace Jammy.Tests
 				if (b0 == 0xff && b1 == 0xff) break;
 				if (b0 == 0xfe)
 				{
-					logger.LogTrace($"fill colour {b1}");
+					logger.LogTrace($"fill colour {b1} {colours[b1]:X6}");
 					SelectObject(hdc, dcbrush);
 					SetDCBrushColor(hdc, colours[b1]);
 					mode = 3;
 				}
 				else if (b0 == 0xff)
 				{
-					logger.LogTrace($"colour {b1}");
+					logger.LogTrace($"colour {b1} {colours[b1]:X6}");
 					SelectObject(hdc, dcpen);
-					SetDCPenColor(hdc, colours[2]);
+					SetDCPenColor(hdc, colours[b1]);
 					mode = 1;
 				}
 				else
@@ -134,20 +193,26 @@ namespace Jammy.Tests
 					else if (mode == 3)
 					{
 						logger.LogTrace($"fill {ox + b0},{oy + b1}");
-						//FloodFill(hdc, ox + b0, oy + b1, 0xffffff);
-						ExtFloodFill(hdc, ox + b0, oy + b1, 0x000000, 0);
+						int fx = ox + b0, fy = oy + b1;
+						int pix = GetPixel(hdc, fx, fy);
+						ExtFloodFill(hdc, fx, fy, pix, FLOODFILLSURFACE);
+
 						mode = 0;
 					}
 				}
 			}
 			g.ReleaseHdc();
+		}
 
-			Application.DoEvents();
+		public void Close()
+		{
+			form.Close();
+			form.Dispose();
 		}
 
 		//ks logo
-		private static byte[] kslogo =
-		{
+		private static readonly byte[] kslogo =
+		[
 			0xFF, 0x01, 0x23, 0x0B, 0x3A, 0x0B, 0x3A, 0x21, 0x71, 0x21, 0x71, 0x0B, 0x7D, 0x0B, 0x88, 0x16, 0x88, 0x5E, 0x7F, 0x5E, 0x7F, 0x38, 0x40, 0x38,
 			0x3E, 0x36, 0x35, 0x36, 0x34, 0x38, 0x2D, 0x38, 0x2D, 0x41, 0x23, 0x48, 0x23, 0x0B, 0xFE, 0x02, 0x25, 0x45, 0xFF, 0x01, 0x21, 0x48, 0x21, 0x0A,
 			0x7E, 0x0A, 0x8A, 0x16, 0x8A, 0x5F, 0x56, 0x5F, 0x56, 0x64, 0x52, 0x6C, 0x4E, 0x71, 0x4A, 0x74, 0x44, 0x7D, 0x3C, 0x81, 0x3C, 0x8C, 0x0A, 0x8C,
@@ -166,7 +231,7 @@ namespace Jammy.Tests
 			0x40, 0x67, 0x3C, 0x63, 0x39, 0x63, 0x36, 0x65, 0x36, 0x68, 0xFF, 0x01, 0x7E, 0x0B, 0x89, 0x16, 0x89, 0x5E, 0xFE, 0x01, 0x22, 0x0B, 0xFE, 0x01,
 			0x3B, 0x0B, 0xFE, 0x01, 0x61, 0x0F, 0xFE, 0x01, 0x6A, 0x1B, 0xFE, 0x01, 0x70, 0x0F, 0xFE, 0x01, 0x7E, 0x5E, 0xFE, 0x01, 0x4B, 0x60, 0xFE, 0x01,
 			0x2E, 0x39, 0xFF, 0xFF
-		};
+		];
 		//https://retrocomputing.stackexchange.com/questions/13897/why-was-the-kickstart-1-x-insert-floppy-graphic-so-bad
 
 		// The code uses the SetAPen, Move, Draw, Flood, and BltTemplate calls (and some others) from graphics.library to do all this. The screen resolution is set to 320x200 (2 bitplanes; 4 colors) and the code centers the vector image by drawing it at an offset.

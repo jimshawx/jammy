@@ -20,7 +20,7 @@ namespace Jammy.Core.Memory
 		//Detected by writing 0 to location 0x00000000 and then writing signature long every 4KB
 		//until address 0 is overwritten caused by incomplete address decoding causing a wrap
 
-		private uint chipSize;
+		private readonly uint chipSize;
 		public ChipRAM(IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger)
 		{
 			chipSize = (uint)(Math.Max(settings.Value.ChipMemory, 0.5) * 1024 * 1024);
@@ -29,6 +29,19 @@ namespace Jammy.Core.Memory
 			memory = new byte[chipSize];
 			addressMask = chipSize - 1;
 			memoryRange = new MemoryRange(0, 0x200000);
+		}
+
+		public ulong Read64(uint address)
+		{
+			return 
+				  ((ulong)memory[ address      & addressMask] << 56)
+				+ ((ulong)memory[(address + 1) & addressMask] << 48)
+				+ ((ulong)memory[(address + 2) & addressMask] << 40)
+				+ ((ulong)memory[(address + 3) & addressMask] << 32)
+				+ ((ulong)memory[(address + 4) & addressMask] << 24)
+			    + ((ulong)memory[(address + 5) & addressMask] << 16)
+			    + ((ulong)memory[(address + 6) & addressMask] << 8)
+				+         memory[(address + 7) & addressMask];
 		}
 
 		public MemoryStream ToBmp(int w)

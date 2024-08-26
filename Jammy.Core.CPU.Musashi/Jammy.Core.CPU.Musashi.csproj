@@ -8,6 +8,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <PlatformTarget>x64</PlatformTarget>
+    <Optimize>True</Optimize>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Musashi.dll" />

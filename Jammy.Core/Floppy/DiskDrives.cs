@@ -122,7 +122,7 @@ namespace Jammy.Core.Floppy
 
 		private const int stateCycles = 10;
 
-		public void Emulate(ulong cycles)
+		public void Emulate()
 		{
 			for (int i = 0; i < drive.Length; i++)
 			{
@@ -134,7 +134,7 @@ namespace Jammy.Core.Floppy
 					{
 						//while the motor is running, the disk generates an INDEX signal each revolution.
 						//this signal is attached to the FLG interrupt pin on CIAB
-						drive[i].indexCounter -= (int)cycles;
+						drive[i].indexCounter--;
 						if (drive[i].indexCounter < 0)
 						{
 							if (verbose)
@@ -173,7 +173,7 @@ namespace Jammy.Core.Floppy
 
 			if (diskInterruptPending != -1)
 			{
-				diskInterruptPending -= (int)cycles;
+				diskInterruptPending--;
 				if (diskInterruptPending < 0)
 				{
 					interrupt.AssertInterrupt(Interrupt.DSKBLK);
@@ -195,25 +195,32 @@ namespace Jammy.Core.Floppy
 
 			switch (address)
 			{
-				case ChipRegs.DSKSYNC:
-					value = dsksync; break;
-				case ChipRegs.DSKDATR:
-					value = dskdatr; break;
-				case ChipRegs.DSKBYTR:
-					value = dskbytr; dskbytr = 0; break;
-				case ChipRegs.DSKPTH:
-					value = dskpt >> 16; break;
-				case ChipRegs.DSKPTL:
-					value = dskpt; break;
-				case ChipRegs.DSKLEN:
-					value = dsklen; break;
-				case ChipRegs.DSKDAT:
-					value = dskdat; break;
-				case ChipRegs.ADKCONR:
-					value = adkcon&0x7f00; break;
+
+				case ChipRegs.DSKDATR: value = dskdatr; break;
+				case ChipRegs.DSKBYTR: value = dskbytr; dskbytr = 0; break;
+				case ChipRegs.ADKCONR: value = adkcon&0x7f00; break;
 			}
 
 			//logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+
+			return (ushort)value;
+		}
+
+		public uint DebugChipsetRead(uint address, Size size)
+		{
+			uint value = 0;
+
+			switch (address)
+			{
+				case ChipRegs.DSKSYNC: value = dsksync; break;
+				case ChipRegs.DSKDATR: value = dskdatr; break;
+				case ChipRegs.DSKBYTR: value = dskbytr; break;
+				case ChipRegs.DSKPTH: value = dskpt >> 16; break;
+				case ChipRegs.DSKPTL: value = dskpt & 0xffff; break;
+				case ChipRegs.DSKLEN: value = dsklen; break;
+				case ChipRegs.DSKDAT: value = dskdat; break;
+				case ChipRegs.ADKCONR: value = adkcon & 0x7f00; break;
+			}
 
 			return (ushort)value;
 		}
@@ -326,7 +333,7 @@ namespace Jammy.Core.Floppy
 
 					//this is far too fast, try triggering an interrupt later (should actually be one scanline per 3 words read)
 					//interrupt.AssertInterrupt(Interrupt.DSKBLK);
-					diskInterruptPending = 1000;
+					diskInterruptPending = 10000;
 					break;
 
 				case ChipRegs.DSKDAT:

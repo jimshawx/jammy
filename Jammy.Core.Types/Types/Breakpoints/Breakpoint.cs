@@ -6,7 +6,7 @@ namespace Jammy.Core.Types.Types.Breakpoints
 {
 	public enum BreakpointType
 	{
-		Permanent,
+		Execute,
 		Counter,
 		OneShot,
 		Read,
@@ -25,9 +25,6 @@ namespace Jammy.Core.Types.Types.Breakpoints
 
 		public Size Size { get; set; }
 
-		public Breakpoint()
-		{
-			Type = BreakpointType.Permanent;
-		}
+		public ulong? Value { get; set; }
 	}
 }

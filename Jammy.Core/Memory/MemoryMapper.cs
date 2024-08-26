@@ -20,8 +20,8 @@ namespace Jammy.Core.Memory
 		public MemoryMapper(
 			IMemoryManager memoryManager, IZorroConfigurator zorroConfigurator,
 
-			ICIAMemory ciaMemory, IChips custom, IBattClock battClock,
-			IZorro2 zorro2, IZorro3 zorro3, IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IUnmappedMemory unmappedMemory,
+			ICIAMemory ciaMemory, IBattClock battClock,
+			IZorro2 zorro2, IZorro3 zorro3, IAgnus agnus, IUnmappedMemory unmappedMemory,
 			IKickstartROM kickstartROM, IDiskController diskController,
 			IAkiko akiko, IMotherboard motherboard, IMotherboardRAM motherboardRAM, ICPUSlotRAM cpuSlotRAM,
 			ILogger<MemoryMapper> logger)
@@ -33,9 +33,7 @@ namespace Jammy.Core.Memory
 			{
 				unmappedMemory,
 				ciaMemory,
-				custom,
-				chipRAM,
-				trapdoorRAM,
+				agnus,
 				kickstartROM,
 				battClock,
 				motherboard,
@@ -99,20 +97,19 @@ namespace Jammy.Core.Memory
 
 		// IDebuggableMemoryMapper
 
-		//todo: these should NOT be using the emulation's Read/Write methods
 		public byte UnsafeRead8(uint address)
 		{
-			return (byte)memoryManager.DebugMappedDevice[address].Read(0, address, Size.Byte);
+			return (byte)((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugRead(address, Size.Byte);
 		}
 
 		public ushort UnsafeRead16(uint address)
 		{
-			return (ushort)memoryManager.DebugMappedDevice[address].Read(0, address, Size.Word);
+			return (ushort)((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugRead(address, Size.Word);
 		}
 
 		public uint UnsafeRead32(uint address)
 		{
-			return memoryManager.DebugMappedDevice[address].Read(0, address, Size.Long);
+			return ((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugRead(address, Size.Long);
 		}
 
 		public uint UnsafeRead(uint address, Size size)
@@ -124,24 +121,24 @@ namespace Jammy.Core.Memory
 
 		public void UnsafeWrite32(uint address, uint value)
 		{
-			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Long);
+			((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugWrite(address, value, Size.Long);
 		}
 
 		public void UnsafeWrite16(uint address, ushort value)
 		{
-			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Word);
+			((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugWrite(address, value, Size.Word);
 		}
 
 		public void UnsafeWrite8(uint address, byte value)
 		{
-			memoryManager.DebugMappedDevice[address].Write(0, address, value, Size.Byte);
+			((IDebuggableMemory)memoryManager.DebugMappedDevice[address]).DebugWrite(address, value, Size.Byte);
 		}
 
 		public uint FindSequence(byte[] bytes)
 		{
 			//todo: expensive!
 			byte[] find = GetEnumerable(0).ToArray();
-			for (int i = 0; i < Length - bytes.Length; i++)
+			for (int i = 0; i < (int)Length - bytes.Length; i++)
 			{
 				if (bytes.SequenceEqual(find.Skip(i).Take(bytes.Length)))
 					return (uint)i;
@@ -150,18 +147,18 @@ namespace Jammy.Core.Memory
 			return 0;
 		}
 
-		public IEnumerable<byte> GetEnumerable(int start, long length)
+		public IEnumerable<byte> GetEnumerable(uint start, ulong length)
 		{
-			for (long i = start; i < Math.Min(start + length, memoryRange.Length); i++)
+			for (ulong i = start; i < Math.Min(start + length, memoryRange.Length); i++)
 				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
 					yield return 0;
 				else
 					yield return UnsafeRead8((uint)i);
 		}
 
-		public IEnumerable<byte> GetEnumerable(int start)
+		public IEnumerable<byte> GetEnumerable(uint start)
 		{
-			for (long i = start; i < memoryRange.Length; i++)
+			for (ulong i = start; i < memoryRange.Length; i++)
 			{
 				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
 					yield return 0;
@@ -170,25 +167,25 @@ namespace Jammy.Core.Memory
 			}
 		}
 
-		public IEnumerable<uint> AsULong(int start)
+		public IEnumerable<uint> AsULong(uint start)
 		{
-			for (long i = start; i < memoryRange.Length; i += 4)
+			for (ulong i = start; i < memoryRange.Length; i += 4)
 				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
 					yield return 0;
 				else
 					yield return UnsafeRead32((uint)i);
 		}
 
-		public IEnumerable<ushort> AsUWord(int start)
+		public IEnumerable<ushort> AsUWord(uint start)
 		{
-			for (long i = start; i < memoryRange.Length; i += 2)
+			for (ulong i = start; i < memoryRange.Length; i += 2)
 				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
 					yield return 0;
 				else
 					yield return UnsafeRead16((uint)i);
 		}
 
-		public int Length => (int)memoryRange.Length;
+		public ulong Length => memoryRange.Length;
 
 		public List<BulkMemoryRange> GetBulkRanges()
 		{

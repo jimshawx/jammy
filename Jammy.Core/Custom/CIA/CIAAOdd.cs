@@ -19,6 +19,8 @@ namespace Jammy.Core.Custom.CIA
 		private readonly IMouse mouse;
 		private readonly IKeyboard keyboard;
 		private readonly IKickstartROM kickstartROM;
+		private readonly IPSUClock psuClock;
+		private readonly IChipsetClock clock;
 
 		private static readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -42,12 +44,15 @@ namespace Jammy.Core.Custom.CIA
 
 		//BFE001 - BFEF01
 
-		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IKickstartROM kickstartROM, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<CIAAOdd> logger) : base(settings)
+		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IKickstartROM kickstartROM, IPSUClock psuClock,
+			IInterrupt interrupt, IChipsetClock clock, IOptions<EmulationSettings> settings, ILogger<CIAAOdd> logger)
 		{
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
 			this.keyboard = keyboard;
 			this.kickstartROM = kickstartROM;
+			this.psuClock = psuClock;
+			this.clock = clock;
 			this.interrupt = interrupt;
 			this.logger = logger;
 		}
@@ -55,19 +60,30 @@ namespace Jammy.Core.Custom.CIA
 		protected override uint interruptLevel => Interrupt.PORTS;
 		protected override char cia => 'A';
 
-		private ulong beamTime;
-		public override void Emulate(ulong cycles)
+		private ulong lastTick = 0;
+		private int divisor=0;
+		private readonly object locker = new object();
+		public override void Emulate()
 		{
-			beamTime += cycles;
+			clock.WaitForTick();
 
-			if (beamTime > beamRate) // 50Hz = 1/50th cpu clock = 7MHz/50 = 140k 
+			//lock (locker)
 			{
-				beamTime -= beamRate;
+				if (psuClock.CurrentTick != lastTick)
+				{
+					IncrementTODTimer();
+					lastTick = psuClock.CurrentTick;
+				}
 
-				IncrementTODTimer();
+				divisor++;
+				if (divisor == 5)
+				{
+					divisor = 0;
+					base.Emulate();
+				}
 			}
 
-			base.Emulate(cycles);
+			clock.Ack();
 		}
 
 		public override bool IsMapped(uint address)
@@ -80,59 +96,67 @@ namespace Jammy.Core.Custom.CIA
 			base.Reset();
 			regs[PRA] = 1;//OVL is set at boot time
 			kickstartROM.SetMirror(true);
+			lastTick = 0;
+			divisor = 0;
 		}
 
 		public override uint ReadByte(uint insaddr, uint address)
 		{
-			byte value;
-			byte reg = GetReg(address, Size.Byte);
-
-			if (reg == PRA)
+			//lock (locker)
 			{
-				byte p = 0;
-				p |= diskDrives.ReadPRA(insaddr);
-				p |= mouse.ReadPRA(insaddr);
-				value = p;
-			}
-			else if (reg == SDR)
-			{
-				value = keyboard.ReadKey();
-			}
-			else
-			{
-				value = (byte)base.Read(reg);
-			}
+				byte value;
+				byte reg = GetReg(address, Size.Byte);
 
-			//if (reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
-			//	logger.LogTrace($"CIAA Read @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+				if (reg == PRA)
+				{
+					byte p = 0;
+					p |= diskDrives.ReadPRA(insaddr);
+					p |= mouse.ReadPRA(insaddr);
+					value = p;
+				}
+				else if (reg == SDR)
+				{
+					value = keyboard.ReadKey();
+				}
+				else
+				{
+					value = (byte)base.Read(reg);
+				}
 
-			return value;
+				//if (reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
+				//	logger.LogTrace($"CIAA Read @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+
+				return value;
+			}
 		}
 
 		public override void WriteByte(uint insaddr, uint address, uint value)
 		{
-			byte reg = GetReg(address, Size.Byte);
-
-			if (reg == PRA)
+			//lock (locker)
 			{
-				UI.UI.PowerLight = (value&2) == 0;
+				byte reg = GetReg(address, Size.Byte);
 
-				diskDrives.WritePRA(insaddr, (byte)value);
-				mouse.WritePRA(insaddr, (byte)value);
-				kickstartROM.SetMirror((value&1)!=0);
-			}
-			else if (reg == CRA)
-			{
-				keyboard.WriteCRA(insaddr, (byte)value);
-				base.Write(reg, value);
-			}
-			else
-			{
-				base.Write(reg, value);
-			}
+				if (reg == PRA)
+				{
+					UI.UI.PowerLight = (value & 2) == 0;
 
-			//if (reg != CIA.TBLO && reg != CIA.TBHI && reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
-			//	logger.LogTrace($"CIAA Write @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+					diskDrives.WritePRA(insaddr, (byte)value);
+					mouse.WritePRA(insaddr, (byte)value);
+					kickstartROM.SetMirror((value & 1) != 0);
+				}
+				else if (reg == CRA)
+				{
+					keyboard.WriteCRA(insaddr, (byte)value);
+					base.Write(reg, value);
+				}
+				else
+				{
+					base.Write(reg, value);
+				}
+
+				//if (reg != CIA.TBLO && reg != CIA.TBHI && reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
+				//	logger.LogTrace($"CIAA Write @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+			}
 		}
 
 		public static List<string> GetCribSheet()

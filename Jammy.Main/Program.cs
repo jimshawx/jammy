@@ -11,6 +11,7 @@ using Jammy.Core.Custom;
 using Jammy.Core.Custom.Audio;
 using Jammy.Core.Custom.CIA;
 using Jammy.Core.Custom.IO;
+using Jammy.Core.Debug;
 using Jammy.Core.Floppy;
 using Jammy.Core.IDE;
 using Jammy.Core.Interface.Interfaces;
@@ -29,6 +30,9 @@ using Jammy.Core.IO.Windows;
 using Jammy.Core.EmulationWindow.GDI;
 using Jammy.Core.EmulationWindow.DX;
 using Jammy.Debugger.Interceptors;
+using Jammy.NativeOverlay;
+using Jammy.Core.CPU.Microcode;
+using Jammy.Core.CPU.Musashi.CSharp;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -99,12 +103,19 @@ namespace Jammy.Main
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()
 				.AddSingleton<IAkiko, Akiko>()
+				.AddSingleton<IDenise, Denise>()
+				.AddSingleton<IAgnus, Agnus>()
+				.AddSingleton<IDMA, DMAController>()
+				.AddSingleton<IChipsetClock, ChipsetClock>()
+				.AddSingleton<IPSUClock, PSUClock>()
+				.AddSingleton<ICPUClock, CPUClock>()
 				.AddSingleton<MemoryMapper>()
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
 				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<MemoryMapper>())
 				.AddSingleton<IMemoryManager, MemoryManager>()
-				.AddSingleton<IEmulationWindow, Core.EmulationWindow.GDI.EmulationWindow>()
+				//.AddSingleton<IEmulationWindow, Core.EmulationWindow.GDI.EmulationWindow>()
 				//.AddSingleton<IEmulationWindow, Core.EmulationWindow.DX.EmulationWindow>()
+				.AddSingleton<IEmulationWindow, Core.EmulationWindow.DIB.EmulationWindow>()
 				.AddSingleton<IEmulation, Emulation>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<IDiskAnalysis, DiskAnalysis>()
@@ -127,21 +138,22 @@ namespace Jammy.Main
 				.AddSingleton<ILVOInterceptorAction, OpenDeviceLogger>()
 				.AddSingleton<IOpenFileTracker, OpenFileTracker>()
 				.AddSingleton<ILibraryBases, LibraryBases>()
+				.AddSingleton<INativeOverlay, NativeOverlay.NativeOverlay>()
+				.AddSingleton<IChipsetDebugger, ChipsetDebugger>()
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 				.AddSingleton<Jammy>()
 				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 			//configure Blitter
-			if (settings.BlitterMode == BlitterMode.Immediate)
-				services.AddSingleton<IBlitter, Blitter>();
-			else
-				services.AddSingleton<IBlitter, SyncBlitter>();
+			services.AddSingleton<IBlitter, Blitter>();
 
 			//configure Audio
 			if (settings.Audio == AudioDriver.XAudio2)
 				services.AddSingleton<IAudio, AudioVortice>();
 			else
 				services.AddSingleton<IAudio, Audio>();
+
+			settings.CPU = CPUType.MusashiCSharp;
 
 			//configure CPU
 			if (settings.CPU == CPUType.Musashi)
@@ -153,12 +165,17 @@ namespace Jammy.Main
 				else
 					services.AddSingleton<ICPU, MusashiCPU>();
 			}
+			else if (settings.CPU == CPUType.MusashiCSharp)
+			{
+				services.AddSingleton<ICPU, CPUWrapperMusashi>();
+			}
 			else
 			{
 				if (settings.Sku == CPUSku.MC68EC020)
 					services.AddSingleton<ICPU, CPU68EC020>();
 				else
-					services.AddSingleton<ICPU, CPU>();
+					services.AddSingleton<ICPU, global::Jammy.Core.CPU.CSharp.CPU>();
+					//services.AddSingleton<ICPU, CPUWrapper>();
 			}
 
 			//configure Tracing
@@ -197,6 +214,13 @@ namespace Jammy.Main
 			}
 
 			var serviceProvider = services.BuildServiceProvider();
+
+			var dma = serviceProvider.GetRequiredService<IDMA>();
+			serviceProvider.GetRequiredService<IAgnus>().Init(dma);
+			serviceProvider.GetRequiredService<ICopper>().Init(dma);
+			serviceProvider.GetRequiredService<IBlitter>().Init(dma);
+			
+			serviceProvider.GetRequiredService<IChipsetClock>().Init(dma);
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider;
 

@@ -75,7 +75,14 @@ namespace Jammy.Core.CPU.Musashi.MC68030
 		}
 
 		private uint instructionStartPC = 0;
-		public void Emulate(ulong cycles)
+		private int cycles = 0;
+
+		public uint GetCycles()
+		{
+			return (uint)cycles;
+		}
+		
+		public void Emulate()
 		{
 			CheckInterrupt();
 
@@ -91,8 +98,7 @@ namespace Jammy.Core.CPU.Musashi.MC68030
 
 			*/
 
-			int ticks = 0;
-			uint pc = Musashi_execute(ref ticks);
+			uint pc = Musashi_execute(ref cycles);
 
 			/*
 
@@ -154,9 +160,14 @@ namespace Jammy.Core.CPU.Musashi.MC68030
 
 		public Regs GetRegs()
 		{
+			var regs = new Regs();
+			return GetRegs(regs);
+		}
+
+		public Regs GetRegs(Regs regs)
+		{
 			var musashiRegs = new Musashi_regs();
 			Musashi_get_regs(musashiRegs);
-			var regs = new Regs();
 
 			regs.D[0] = musashiRegs.d0;
 			regs.D[1] = musashiRegs.d1;
@@ -184,6 +195,7 @@ namespace Jammy.Core.CPU.Musashi.MC68030
 
 			return regs;
 		}
+
 
 		public void SetRegs(Regs regs)
 		{

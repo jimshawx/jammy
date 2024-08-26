@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	  <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
+    <ProjectReference Include="..\Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj" />
+  </ItemGroup>
+
+</Project>

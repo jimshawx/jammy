@@ -25,9 +25,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Vortice.Direct3D11;
-using Message = System.Windows.Forms.Message;
-using Task = System.Threading.Tasks.Task;
 using System.Runtime.InteropServices;
+using Jammy.Core.Types.Types.Breakpoints;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -42,13 +41,22 @@ namespace Jammy.Main
 		private IMemoryDumpView memoryDumpView;
 		private readonly IDisassembly disassembly;
 		private readonly IDebugger debugger;
+		private readonly IAnalysis analysis;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
 
 		private readonly List<AddressRange> disassemblyRanges = new List<AddressRange>();
 
-		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger,
+		private readonly List<AddressRange> memoryDumpRanges = new List<AddressRange>
+		{
+			new AddressRange(0x000000, 0x10000),
+			new AddressRange(0xc00000, 0x10000),
+			new AddressRange(0xf80000, 0x40000),
+			new AddressRange(0xfc0000, 0x40000)
+		};
+
+		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger, IAnalysis analysis,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -57,6 +65,7 @@ namespace Jammy.Main
 			this.emulation = emulation;
 			this.disassembly = disassembly;
 			this.debugger = debugger;
+			this.analysis = analysis;
 			this.logger = logger;
 
 			InitializeComponent();
@@ -156,7 +165,7 @@ namespace Jammy.Main
 				disassemblyOptions);
 
 			var memory = debugger.GetMemory();
-			var memoryText = memory.ToString();
+			var memoryText = memory.GetString(memoryDumpRanges);
 
 			Amiga.UnlockEmulation();
 
@@ -251,6 +260,7 @@ namespace Jammy.Main
 			return address;
 		}
 
+		private readonly string[] intsrc = ["-", "TBE/DSKBLK/SOFTINT", "PORTS (CIAA)", "COPER/VERTB/BLIT", "AUDIO", "RBF/DSKSYNC", "EXTER (CIAB)/INTEN", "NMI"];
 		private void UpdateMem()
 		{
 			//var memory = uiData.Memory;
@@ -302,6 +312,13 @@ namespace Jammy.Main
 						txtMemory.ScrollToCaret();
 					}
 					UpdateExecBase();
+				}
+			}
+			{
+				lbIntvec.Items.Clear();
+				for (uint i = 1; i <= 7; i++)
+				{
+					lbIntvec.Items.Add($"{i} {debugger.Read32((i + 0x18) * 4):X8} {intsrc[i]}");
 				}
 			}
 		}
@@ -532,6 +549,8 @@ namespace Jammy.Main
 			if (cbIRQ.Text == "AUD1") debugger.IRQ(Interrupt.AUD1);
 			if (cbIRQ.Text == "AUD2") debugger.IRQ(Interrupt.AUD2);
 			if (cbIRQ.Text == "AUD3") debugger.IRQ(Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.IRQ(Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.IRQ(Interrupt.SOFTINT);
 			Amiga.UnlockEmulation();
 		}
 
@@ -548,6 +567,8 @@ namespace Jammy.Main
 			if (cbIRQ.Text == "AUD1") debugger.INTENA(Interrupt.AUD1);
 			if (cbIRQ.Text == "AUD2") debugger.INTENA(Interrupt.AUD2);
 			if (cbIRQ.Text == "AUD3") debugger.INTENA(Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.INTENA(Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.INTENA(Interrupt.SOFTINT);
 			Amiga.UnlockEmulation();
 		}
 
@@ -889,7 +910,7 @@ namespace Jammy.Main
 			if (cribSheet.Handle == IntPtr.Zero)
 				throw new ApplicationException();
 			var pos = Cursor.Position;
-			cribSheet.Top = pos.Y + 1;
+			//cribSheet.Top = pos.Y + 1;
 			cribSheet.Left = pos.X - (width / 2);
 			cribSheet.Width = width;
 			cribSheet.Height = height;
@@ -944,6 +965,215 @@ namespace Jammy.Main
 		private void btnReadyDisk_Click(object sender, EventArgs e)
 		{
 			debugger.ReadyDisk();
+		}
+
+		private void lbIntvec_MouseDoubleClick(object sender, MouseEventArgs e)
+		{
+			int index = this.lbIntvec.IndexFromPoint(e.Location);
+			if (index == ListBox.NoMatches) return;
+
+			string item = (string)lbIntvec.Items[index];
+
+			item = item.Split(" ")[1];
+			uint sp = uint.Parse(item, NumberStyles.AllowHexSpecifier);
+			if (sp != 0)
+			{
+				logger.LogTrace($"scrolling to {sp:X8}");
+
+				{
+					txtDisassembly.ReallySuspendLayout();
+					txtDisassembly.DeselectAll();
+
+					int line = disassemblyView.GetAddressLine(sp);
+
+					//scroll the view to the line 5 lines before the PC
+					txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
+					txtDisassembly.ScrollToCaret();
+
+					txtDisassembly.ReallyResumeLayout();
+					txtDisassembly.Refresh();
+				}
+
+				{
+					int line = memoryDumpView.AddressToLine(sp);
+					txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(line);
+					txtMemory.ScrollToCaret();
+				}
+			}
+		}
+
+		private List<string> history = new List<string>();
+		private int currentHistory = 0;
+
+		private void AddHistory(string h)
+		{
+			history.Add(h);
+			currentHistory = history.Count;
+		}
+
+		private void tbCommand_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.KeyCode == Keys.Enter)
+			{
+				ProcessCommand(tbCommand.Text);
+				tbCommand.Clear();
+				tbCommand.PlaceholderText = ">";
+				e.SuppressKeyPress = true;
+			}
+
+			if (e.KeyCode == Keys.Up)
+			{
+				if (currentHistory > 0)
+				{
+					currentHistory--;
+					tbCommand.Text = history[currentHistory];
+					tbCommand.SelectionStart = tbCommand.Text.Length;
+				}
+				e.SuppressKeyPress = true;
+			}
+			if (e.KeyCode == Keys.Down)
+			{
+				if (currentHistory < history.Count - 1)
+				{
+					currentHistory++;
+					tbCommand.Text = history[currentHistory];
+					tbCommand.SelectionStart = tbCommand.Text.Length;
+				}
+				else
+				{
+					tbCommand.Clear();
+					tbCommand.PlaceholderText = ">";
+				}
+				e.SuppressKeyPress = true;
+			}
+		}
+
+		private void ProcessCommand(string cmd)
+		{
+			string[] parm = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+			if (parm.Length == 0)
+				return;
+
+			uint A(int i) { string s = P(i); return uint.Parse(s, NumberStyles.HexNumber); }
+			uint? N(int i) { string s = P(i); return string.IsNullOrWhiteSpace(s)?null:A(i); }
+			Core.Types.Types.Size? S(int i)
+			{
+				string s = P(i);
+				if (s.Length != 1) return null;
+				if (char.ToLower(s[0]) == 'b') return Core.Types.Types.Size.Byte;
+				if (char.ToLower(s[0]) == 'w') return Core.Types.Types.Size.Word;
+				if (char.ToLower(s[0]) == 'l') return Core.Types.Types.Size.Long;
+				return null;
+			}
+			string P(int i){ return (i<parm.Length) ? parm[i]: string.Empty; }
+			string R(int i) { return (i < parm.Length) ? string.Join(' ', parm[i..]) : string.Empty; }
+			MemType? M(int i)
+			{
+				string s = P(i);
+				if (s.Length != 1) return null;
+				if (char.ToLower(s[0]) == 'c') return MemType.Code;
+				if (char.ToLower(s[0]) == 'b') return MemType.Byte;
+				if (char.ToLower(s[0]) == 'w') return MemType.Word;
+				if (char.ToLower(s[0]) == 'l') return MemType.Long;
+				if (char.ToLower(s[0]) == 's') return MemType.Str;
+				if (char.ToLower(s[0]) == 'u') return MemType.Unknown;
+				return null;
+			}
+
+			Amiga.LockEmulation();
+			bool refresh = false;
+
+			try
+			{
+				switch (P(0))
+				{
+					case "b":
+						debugger.AddBreakpoint(A(1));
+						break;
+
+					case "bw":
+						debugger.AddBreakpoint(A(1), BreakpointType.Write, 0, S(2) ?? Core.Types.Types.Size.Word);
+						break;
+					case "br":
+						debugger.AddBreakpoint(A(1), BreakpointType.Read, 0, S(2) ?? Core.Types.Types.Size.Word);
+						break;
+					case "brw":
+						debugger.AddBreakpoint(A(1), BreakpointType.ReadOrWrite, 0, S(2) ?? Core.Types.Types.Size.Word);
+						break;
+					case "bl":
+						debugger.DumpBreakpoints();
+						break;
+
+					case "bc":
+						debugger.RemoveBreakpoint(A(1));
+						break;
+
+					case "t":
+						debugger.ToggleBreakpoint(A(1));
+						break;
+
+					case "d":
+						disassemblyRanges.Add(new AddressRange(A(1), N(2)??0x1000));
+						refresh = true;
+						break;
+					
+					case "m":
+						memoryDumpRanges.Add(new AddressRange(A(1), N(2)??0x1000));
+						refresh = true;
+						break;
+					
+					case "w":
+						debugger.DebugWrite(A(1), N(2)??0, S(3)??Core.Types.Types.Size.Word);
+						break;
+
+					case "r":
+						uint v = debugger.DebugRead(A(1), S(2) ?? Core.Types.Types.Size.Word);
+						logger.LogTrace($"{v:X8} ({v})");
+						break;
+
+					case "a":
+						for (uint i = 0; i < (N(3)??1); i++)
+							analysis.SetMemType(A(1)+i, M(2)??MemType.Code);
+						refresh = true;
+						break;
+
+					case "c":
+						analysis.AddComment(A(1), R(2));
+						refresh = true;
+						break;
+
+					case "h":
+						analysis.AddHeader(A(1), $"\t{R(2)}");
+						refresh = true;
+						break;
+
+					case "?":
+						logger.LogTrace("b address - breakpoint on execute at address");
+						logger.LogTrace("bw address [size(W)] [value] - breakpoint on read at address");
+						logger.LogTrace("br address [size(W)] [value] - breakpoint on write at address");
+						logger.LogTrace("brw address [size(W)] [value] - breakpoint on read/write at address");
+						logger.LogTrace("bc address - remove breakpoint at address");
+						logger.LogTrace("t address - toggle breakpoint at address");
+						logger.LogTrace("bl - list all breakpoints");
+						logger.LogTrace("d address [length(1000h)] - add an address range to the debugger");
+						logger.LogTrace("m address [length(1000h)] - add an address range to the memory dump");
+						logger.LogTrace("w address [value(0)] [size(W)] - write a value to memory");
+						logger.LogTrace("r address [size(W)] - read a value from memory");
+						logger.LogTrace("a address [type(C)] [length(1)] - set memory type C,B,W,L,S,U");
+						logger.LogTrace("c address text - add a comment");
+						logger.LogTrace("h address text - add a header");
+						break;
+				}
+				AddHistory(cmd);
+			}
+			catch
+			{
+				logger.LogTrace($"Can't execute \"{cmd}\"");
+			}
+
+			Amiga.UnlockEmulation();
+			if (refresh)
+				UpdateDisassembly();
 		}
 	}
 

@@ -15,8 +15,10 @@ namespace Jammy.Core.Interface.Interfaces
 		bool CheckBreakpoints(uint address);
 
 		//machine interface
-		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Permanent, int counter = 0, Size size = Size.Long);
+		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, Size size = Size.Long, ulong? value = null);
+		void RemoveBreakpoint(uint address);
 		void ToggleBreakpoint(uint pc);
 		bool BreakpointHit();
+		void DumpBreakpoints();
 	}
 }

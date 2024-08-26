@@ -35,7 +35,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface ICustomReadWrite : ICustomRead, ICustomWrite { }
 
-	public interface IAudio : IEmulate, ICustomReadWrite
+	public interface IAudio : IEmulate, ICustomReadWrite, IDebugChipsetRead
 	{
 		void WriteDMACON(ushort v);
 		void WriteINTREQ(ushort v);
@@ -46,7 +46,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IMotherboard : IReset, IMemoryMappedDevice { }
 
-	public interface IBlitter : IReset, ICustomReadWrite, IEmulate
+	public interface IBlitter : IReset, ICustomReadWrite, IEmulate, IRequiresDMA, IDebugChipsetRead
 	{
 		void Logging(bool enabled);
 		void Dumping(bool enabled);
@@ -61,12 +61,12 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface ICIAAOdd : ICIA { }
 	public interface ICIABEven : ICIA { }
 	public interface ICIAMemory : IMemoryMappedDevice { }
-	public interface ICopper : IEmulate, ICustomReadWrite
+	public interface ICopper : IEmulate, ICustomReadWrite, IRequiresDMA, IDebugChipsetRead
 	{
 		void Dumping(bool enabled);
 		string GetDisassembly();
 	}
-	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB, IReadICR
+	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB, IReadICR, IDebugChipsetRead
 	{
 		void InsertDisk(int df);
 		void RemoveDisk(int df);
@@ -80,7 +80,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void WriteCRA(uint insaddr, byte value);
 	}
 
-	public interface IMouse : IEmulate, ICustomReadWrite, IReadWritePRA { }
+	public interface IMouse : IEmulate, ICustomReadWrite, IReadWritePRA, IDebugChipsetRead { }
 
 	public interface IInterrupt : IReset
 	{
@@ -91,17 +91,32 @@ namespace Jammy.Core.Interface.Interfaces
 		void SetGayleInterruptLevel(uint level);
 	}
 
-	public interface ISerial : IEmulate, ICustomReadWrite
+	public interface ISerial : IEmulate, ICustomReadWrite, IDebugChipsetRead
 	{
 		void WriteINTREQ(ushort v);
 	}
 
-	public interface IDebuggableMemory { }
-
-	public interface IChips : IReset, IMemoryMappedDevice
+	public interface IDebugChipsetRead
 	{
-		void Init(IBlitter blitter, ICopper copper, IAudio audio);
-		void WriteDMACON(ushort bits);
+		uint DebugChipsetRead(uint address, Size size);
+	}
+
+	public interface IDebugRead
+	{
+		uint DebugRead(uint address, Size size);
+	}
+
+	public interface IDebugWrite
+	{
+		void DebugWrite(uint address, uint value, Size size);
+	}
+
+	public interface IDebuggableMemory : IDebugRead, IDebugWrite { }
+
+	public interface IChips : IReset, IMemoryMappedDevice, IDebugChipsetRead
+	{
+		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise, IDMA dma);
+		void WriteWide(uint address, ulong value);
 	}
 
 	public interface IMemoryInterceptor
@@ -148,8 +163,9 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IChipRAM : IMemoryMappedDevice, IDebuggableMemory
 	{
-		public MemoryStream ToBmp(int w);
-		public void FromBmp(Stream m);
+		ulong Read64(uint address);
+		MemoryStream ToBmp(int w);
+		void FromBmp(Stream m);
 	}
 
 	public interface ITrapdoorRAM : IMemoryMappedDevice, IDebuggableMemory { }
@@ -178,4 +194,58 @@ namespace Jammy.Core.Interface.Interfaces
 	}
 	public interface IAkiko : IMemoryMappedDevice { }
 	public interface IZorroConfigurator { }
+
+	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead
+	{
+		void EnterVisibleArea();
+		void ExitVisibleArea();
+		void WriteBitplanes(ulong[] planes);
+		void WriteSprite(int s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl);
+		public uint[] DebugGetPalette();
+	}
+
+	public interface IRequiresDMA
+	{
+		void Init(IDMA dma);
+	}
+
+	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead
+	{
+		void WriteWide(uint address, ulong value);
+		void FlushBitplanes();
+		void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
+				out ulong trapReads, out ulong trapWrites,
+				out ulong customReads, out ulong customWrites);
+	}
+
+	public interface IChipsetClock : IEmulate
+	{
+		uint HorizontalPos { get; }
+		uint VerticalPos { get; }
+		int FrameCount { get; }
+		uint Tick { get; }
+		bool StartOfLine(); 
+		bool EndOfLine();
+		bool StartOfFrame();
+		bool EndOfFrame();
+
+		void WaitForTick();
+		void Ack();
+		void RegisterThread();
+
+		void Init(IDMA dma);
+		void Suspend();
+		void Resume();
+		void AllThreadsFinished();
+	}
+
+	public interface IPSUClock : IEmulate
+	{
+		ulong CurrentTick { get; }
+	}
+
+	public interface ICPUClock : IEmulate
+	{
+		void WaitForTick();
+	}
 }

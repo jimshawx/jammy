@@ -96,27 +96,27 @@ namespace Jammy.Tests
 			return 0;
 		}
 
-		public IEnumerable<byte> GetEnumerable(int start, long length)
+		public IEnumerable<byte> GetEnumerable(uint start, ulong length)
 		{
-			return memory[start..(int)Math.Min(memory.Length, start+length)];
+			return memory[(int)start..(int)Math.Min((ulong)memory.Length, start+length)];
 		}
 
-		public IEnumerable<byte> GetEnumerable(int start)
+		public IEnumerable<byte> GetEnumerable(uint start)
 		{
-			return memory[start..];
+			return memory[(int)start..];
 		}
 
-		public IEnumerable<uint> AsULong(int start)
+		public IEnumerable<uint> AsULong(uint start)
 		{
-			return memory[start..].AsULong();
+			return memory[(int)start..].AsULong();
 		}
 
-		public IEnumerable<ushort> AsUWord(int start)
+		public IEnumerable<ushort> AsUWord(uint start)
 		{
-			return memory[start..].AsUWord();
+			return memory[(int)start..].AsUWord();
 		}
 
-		public int Length => memory.Length;
+		public ulong Length => (ulong)memory.Length;
 
 		public void AddMemoryIntercept(IMemoryInterceptor interceptor)
 		{
@@ -124,7 +124,7 @@ namespace Jammy.Tests
 
 		public List<BulkMemoryRange> GetBulkRanges()
 		{
-			return new List<BulkMemoryRange> {new BulkMemoryRange {Memory = memory, StartAddress = 0}};
+			return new List<BulkMemoryRange> {new BulkMemoryRange {Memory = memory, Start = 0}};
 		}
 
 		public string GetString(uint str)

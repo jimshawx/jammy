@@ -16,6 +16,7 @@ namespace Jammy.Core.Custom.CIA
 	public class CIABEven : CIA, ICIABEven
 	{
 		private readonly IDiskDrives diskDrives;
+		private readonly IChipsetClock clock;
 
 		private static readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -39,37 +40,46 @@ namespace Jammy.Core.Custom.CIA
 
 		//BFD000 - BFDF00
 
-		private ulong beamLines;
-		public CIABEven(IDiskDrives diskDrives, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<CIABEven> logger) : base(settings)
+		public CIABEven(IDiskDrives diskDrives, IInterrupt interrupt, IChipsetClock clock,
+			IOptions<EmulationSettings> settings, ILogger<CIABEven> logger)
 		{
 			this.diskDrives = diskDrives;
+			this.clock = clock;
 			this.interrupt = interrupt;
 			this.logger = logger;
-			beamLines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u:312u;
 		}
 
 		protected override uint interruptLevel => Interrupt.EXTER;
 		protected override char cia => 'B';
 
-		private ulong beamTime;
-		public override void Emulate(ulong cycles)
+		private int divisor = 0;
+		private readonly object locker = new object();
+		public override void Emulate()
 		{
-			beamTime += cycles;
+			clock.WaitForTick();
 
-			if (beamTime > beamRate / beamLines)
+			//lock (locker)
 			{
-				beamTime -= beamRate / beamLines;
 
-				IncrementTODTimer();
+				if (clock.EndOfLine())
+					IncrementTODTimer();
+
+				divisor++;
+				if (divisor == 5)
+				{
+					divisor = 0;
+					base.Emulate();
+				}
 			}
 
-			base.Emulate(cycles);
+			clock.Ack();
 		}
 
 		public override void Reset()
 		{
 			base.Reset();
 			regs[PRA] = 0x8c;
+			divisor = 0;
 		}
 
 		public override bool IsMapped(uint address)
@@ -79,32 +89,38 @@ namespace Jammy.Core.Custom.CIA
 
 		public override uint ReadByte(uint insaddr, uint address)
 		{
-			byte reg = GetReg(address, Size.Byte);
-
-			if (reg == PRB)
+			//lock (locker)
 			{
-				return diskDrives.ReadPRB(insaddr);
+				byte reg = GetReg(address, Size.Byte);
+
+				if (reg == PRB)
+				{
+					return diskDrives.ReadPRB(insaddr);
+				}
+
+				if (reg == ICR)
+					diskDrives.ReadICR(SnoopICRR());
+
+				//logger.LogTrace($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
+				return base.Read(reg);
 			}
-
-			if (reg == ICR)
-				diskDrives.ReadICR(SnoopICRR());
-
-			//logger.LogTrace($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
-			return base.Read(reg);
 		}
 
 		public override void WriteByte(uint insaddr, uint address, uint value)
 		{
-			byte reg = GetReg(address, Size.Byte);
-
-			if (reg == PRB)
+			//lock (locker)
 			{
-				diskDrives.WritePRB(insaddr, (byte)value);
-				return;
+				byte reg = GetReg(address, Size.Byte);
+
+				if (reg == PRB)
+				{
+					diskDrives.WritePRB(insaddr, (byte)value);
+					return;
+				}
+
+				//logger.LogTrace($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+				base.Write(reg, value);
 			}
-			
-			//logger.LogTrace($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
-			base.Write(reg, value);
 		}
 
 		public static List<string> GetCribSheet()

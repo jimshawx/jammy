@@ -1,6 +1,8 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
+using Jammy.Core.Types.Types;
+using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Types;
 using Jammy.Types.Debugger;
 
@@ -10,7 +12,7 @@ using Jammy.Types.Debugger;
 
 namespace Jammy.Interface
 {
-	public interface IDebugger : IMemoryInterceptor
+	public interface IDebugger : IMemoryInterceptor, IDebuggableMemory
 	{
 		void ToggleBreakpoint(uint pc);
 		IMemoryDump GetMemory();
@@ -33,5 +35,8 @@ namespace Jammy.Interface
 		void IDEACK();
 		void ClearBBUSY();
 		uint Read32(uint address);
+		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, Size size = Size.Long);
+		void RemoveBreakpoint(uint address);
+		void DumpBreakpoints();
 	}
 }

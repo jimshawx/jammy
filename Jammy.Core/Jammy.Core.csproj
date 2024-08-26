@@ -25,6 +25,7 @@
     <ProjectReference Include="..\Jammy.Extensions.Windows\Jammy.Extensions.Windows.csproj" />
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
     <ProjectReference Include="..\Jammy.Interface\Jammy.Interface.csproj" />
+    <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />
     <ProjectReference Include="..\Jammy.UI\Jammy.UI.csproj" />
   </ItemGroup>
 </Project>
