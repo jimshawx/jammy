@@ -122,8 +122,8 @@ public static partial class M68KCPU
 			}
 		}
 		roundBits = (sbyte)(absZ & 0x7F);
-		absZ = (absZ + roundIncrement) >> 7;
-		absZ &= ~(((roundBits ^ 0x40) == 0) & roundNearestEven);
+		absZ = (absZ + (uint64)roundIncrement) >> 7;
+		absZ &= ~ULong(((roundBits ^ 0x40) == 0) & roundNearestEven);
 		z = (int)absZ;
 		if (zSign) z = -z;
 		if (Bool(absZ >> 32) || (Bool(z) && ((z < 0) ^ zSign)))
@@ -161,7 +161,7 @@ public static partial class M68KCPU
 		{
 			if (roundingMode == float_round.float_round_to_zero)
 			{
-				increment = 0;
+				increment = false;
 			}
 			else
 			{
@@ -178,14 +178,21 @@ public static partial class M68KCPU
 		if (increment)
 		{
 			++absZ0;
-			if (absZ0 == 0) goto overflow;
-			absZ0 &= ~(((bits64)(absZ1 << 1) == 0) & roundNearestEven);
+			if (absZ0 == 0) 
+			{
+				//goto overflow;
+				float_raise(float_flag.float_flag_invalid);
+				return
+						zSign ? (sbits64)LIT64(0x8000000000000000)
+					: (sbits64)LIT64(0x7FFFFFFFFFFFFFFF);
+			}
+			absZ0 &= ~ULong(((bits64)(absZ1 << 1) == 0) & roundNearestEven);
 		}
 		z = (long)absZ0;
 		if (zSign) z = -z;
 		if (Bool(z) && ((z < 0) ^ zSign))
 		{
-		overflow:
+		//overflow:
 			float_raise(float_flag.float_flag_invalid);
 			return
 					zSign ? (sbits64)LIT64(0x8000000000000000)
@@ -351,7 +358,7 @@ public static partial class M68KCPU
 		}
 		if (Bool(roundBits)) float_exception_flags |= float_flag.float_flag_inexact;
 		zSig = (uint)((zSig + roundIncrement) >> 7);
-		zSig &= ~(((roundBits ^ 0x40) == 0) & roundNearestEven);
+		zSig &= ~UInt(((roundBits ^ 0x40) == 0) & roundNearestEven);
 		if (zSig == 0) zExp = 0;
 		return packFloat32(zSign, zExp, zSig);
 
@@ -500,7 +507,7 @@ public static partial class M68KCPU
 		{
 			if ((0x7FD < zExp)
 					|| ((zExp == 0x7FD)
-						&& ((sbits64)(zSig + roundIncrement) < 0))
+						&& ((sbits64)(zSig + (uint64)roundIncrement) < 0))
 				)
 			{
 				float_raise(float_flag.float_flag_overflow | float_flag.float_flag_inexact);
@@ -511,7 +518,7 @@ public static partial class M68KCPU
 				isTiny =
 						(float_detect_tininess == float_tininess.float_tininess_before_rounding)
 					|| (zExp < -1)
-					|| (zSig + roundIncrement < LIT64(0x8000000000000000));
+					|| (zSig + (uint64)roundIncrement < LIT64(0x8000000000000000));
 				shift64RightJamming(zSig, (short)-zExp, out zSig);
 				zExp = 0;
 				roundBits = (short)(zSig & 0x3FF);
@@ -519,8 +526,8 @@ public static partial class M68KCPU
 			}
 		}
 		if (Bool(roundBits)) float_exception_flags |= float_flag.float_flag_inexact;
-		zSig = (zSig + roundIncrement) >> 10;
-		zSig &= ~(((roundBits ^ 0x200) == 0) & roundNearestEven);
+		zSig = (zSig + (uint64)roundIncrement) >> 10;
+		zSig &= ~ULong(((roundBits ^ 0x200) == 0) & roundNearestEven);
 		if (zSig == 0) zExp = 0;
 		return packFloat64(zSign, zExp, zSig);
 
@@ -645,7 +652,16 @@ public static partial class M68KCPU
 					|| ((zExp == 0x7FFE) && (zSig0 + roundIncrement < zSig0))
 				)
 			{
-				goto overflow;
+				//goto overflow;
+				float_raise(float_flag.float_flag_overflow | float_flag.float_flag_inexact);
+				if ((roundingMode == float_round.float_round_to_zero)
+						|| (zSign && (roundingMode == float_round.float_round_up))
+						|| (!zSign && (roundingMode == float_round.float_round_down))
+					)
+				{
+					return packFloatx80(zSign, 0x7FFE, ~roundMask);
+				}
+				return packFloatx80(zSign, 0x7FFF, LIT64(0x8000000000000000));
 			}
 			if (zExp <= 0)
 			{
@@ -661,7 +677,7 @@ public static partial class M68KCPU
 				zSig0 += roundIncrement;
 				if ((sbits64)zSig0 < 0) zExp = 1;
 				roundIncrement = (roundMask + 1);
-				if (roundNearestEven && (roundBits << 1 == roundIncrement))
+				if (roundNearestEven && ((uint64)(roundBits << 1) == roundIncrement))
 				{
 					roundMask |= roundIncrement;
 				}
@@ -677,7 +693,7 @@ public static partial class M68KCPU
 			zSig0 = LIT64(0x8000000000000000);
 		}
 		roundIncrement = roundMask + 1;
-		if (roundNearestEven && (roundBits << 1 == roundIncrement))
+		if (roundNearestEven && ((uint64)(roundBits << 1) == roundIncrement))
 		{
 			roundMask |= roundIncrement;
 		}
@@ -714,7 +730,7 @@ public static partial class M68KCPU
 				)
 			{
 				roundMask = 0;
-			overflow:
+			//overflow:
 				float_raise(float_flag.float_flag_overflow | float_flag.float_flag_inexact);
 				if ((roundingMode == float_round.float_round_to_zero)
 						|| (zSign && (roundingMode == float_round.float_round_up))
@@ -755,7 +771,7 @@ public static partial class M68KCPU
 				{
 					++zSig0;
 					zSig0 &=
-						~(((bits64)(zSig1 << 1) == 0) & roundNearestEven);
+						~ULong(((bits64)(zSig1 << 1) == 0) & roundNearestEven);
 					if ((sbits64)zSig0 < 0) zExp = 1;
 				}
 				return packFloatx80(zSign, zExp, zSig0);
@@ -772,7 +788,7 @@ public static partial class M68KCPU
 			}
 			else
 			{
-				zSig0 &= ~(((bits64)(zSig1 << 1) == 0) & roundNearestEven);
+				zSig0 &= ~ULong(((bits64)(zSig1 << 1) == 0) & roundNearestEven);
 			}
 		}
 		else
@@ -1187,7 +1203,7 @@ public static partial class M68KCPU
 		}
 		aSig = (aSig | 0x00800000) << 8;
 		z = (int)(aSig >> (-shiftCount));
-		if ((bits32)(aSig << (shiftCount & 31)))
+		if (Bool((bits32)(aSig << (shiftCount & 31))))
 		{
 			float_exception_flags |= float_flag.float_flag_inexact;
 		}
@@ -1276,7 +1292,7 @@ public static partial class M68KCPU
 		aSig64 = aSig | 0x00800000;
 		aSig64 <<= 40;
 		z = (long)(aSig64 >> (-shiftCount));
-		if ((bits64)(aSig64 << (shiftCount & 63)))
+		if (Bool((bits64)(aSig64 << (shiftCount & 63))))
 		{
 			float_exception_flags |= float_flag.float_flag_inexact;
 		}
@@ -1312,7 +1328,7 @@ public static partial class M68KCPU
 			normalizeFloat32Subnormal(aSig, out aExp, out aSig);
 			--aExp;
 		}
-		return packFloat64(aSign, aExp + 0x380, ((bits64)aSig) << 29);
+		return packFloat64(aSign, (short)(aExp + 0x380), ((bits64)aSig) << 29);
 
 	}
 
@@ -1336,7 +1352,7 @@ public static partial class M68KCPU
 		aSign = extractFloat32Sign(a);
 		if (aExp == 0xFF)
 		{
-			if (aSig) return commonNaNToFloatx80(float32ToCommonNaN(a));
+			if (Bool(aSig)) return commonNaNToFloatx80(float32ToCommonNaN(a));
 			return packFloatx80(aSign, 0x7FFF, LIT64(0x8000000000000000));
 		}
 		if (aExp == 0)
@@ -1576,7 +1592,7 @@ public static partial class M68KCPU
 		if (bExp == 0xFF)
 		{
 			if (Bool(bSig)) return propagateFloat32NaN(a, b);
-			return packFloat32(zSign ^ 1, 0xFF, 0);
+			return packFloat32(!zSign, 0xFF, 0);
 		}
 		if (aExp == 0)
 		{
@@ -1591,7 +1607,7 @@ public static partial class M68KCPU
 	bBigger:
 		zSig = bSig - aSig;
 		zExp = bExp;
-		zSign ^= 1;
+		zSign = !zSign;
 		goto normalizeRoundAndPack;
 	aExpBigger:
 		if (aExp == 0xFF)
@@ -1794,10 +1810,10 @@ public static partial class M68KCPU
 			aSig >>= 1;
 			++zExp;
 		}
-		zSig = (((bits64)aSig) << 32) / bSig;
+		zSig = (uint)((((bits64)aSig) << 32) / bSig);
 		if ((zSig & 0x3F) == 0)
 		{
-			zSig |= ((bits64)bSig * zSig != ((bits64)aSig) << 32);
+			zSig |= (uint)(((bits64)bSig * ULong(zSig != (((bits64)aSig) << 32))));
 		}
 		return roundAndPackFloat32(zSign, zExp, zSig);
 
@@ -1866,10 +1882,10 @@ public static partial class M68KCPU
 				aSig >>= 1;
 			}
 			q = UInt(bSig <= aSig);
-			if (q) aSig -= bSig;
+			if (Bool(q)) aSig -= bSig;
 			if (0 < expDiff)
 			{
-				q = (((bits64)aSig) << 32) / bSig;
+				q = (uint)((((bits64)aSig) << 32) / bSig);
 				q >>= 32 - expDiff;
 				bSig >>= 2;
 				aSig = ((aSig >> 1) << (expDiff - 1)) - bSig * q;
@@ -1890,7 +1906,7 @@ public static partial class M68KCPU
 			{
 				q64 = estimateDiv128To64(aSig64, 0, bSig64);
 				q64 = (2 < q64) ? q64 - 2 : 0;
-				aSig64 = -((bSig * q64) << 38);
+				aSig64 = Neg((bSig * q64) << 38);
 				expDiff -= 62;
 			}
 			expDiff += 64;
@@ -1912,7 +1928,7 @@ public static partial class M68KCPU
 			aSig = alternateASig;
 		}
 		zSign = ((sbits32)aSig < 0);
-		if (zSign) aSig = -aSig;
+		if (zSign) aSig = (uint)-aSig;
 		return normalizeRoundAndPackFloat32(aSign ^ zSign, bExp, aSig);
 
 	}
@@ -1935,7 +1951,7 @@ public static partial class M68KCPU
 		aSign = extractFloat32Sign(a);
 		if (aExp == 0xFF)
 		{
-			if (aSig) return propagateFloat32NaN(a, 0);
+			if (Bool(aSig)) return propagateFloat32NaN(a, 0);
 			if (!aSign) return a;
 			float_raise(float_flag.float_flag_invalid);
 			return float32_default_nan;
@@ -2174,8 +2190,10 @@ public static partial class M68KCPU
 		aSign = extractFloat64Sign(a);
 		if (0x41E < aExp)
 		{
-			if ((aExp == 0x7FF) && Bool(aSig)) aSign = 0;
-			goto invalid;
+			if ((aExp == 0x7FF) && Bool(aSig)) aSign = false;
+			//goto invalid;
+			float_raise(float_flag.float_flag_invalid);
+			return aSign ? (sbits32)S(0x80000000) : 0x7FFFFFFF;
 		}
 		else if (aExp < 0x3FF)
 		{
@@ -2190,7 +2208,7 @@ public static partial class M68KCPU
 		if (aSign) z = -z;
 		if ((z < 0) ^ aSign)
 		{
-		invalid:
+		//invalid:
 			float_raise(float_flag.float_flag_invalid);
 			return aSign ? (sbits32)S(0x80000000) : 0x7FFFFFFF;
 		}
@@ -2293,7 +2311,7 @@ public static partial class M68KCPU
 		{
 			if (aExp < 0x3FE)
 			{
-				if (Bool(aExp | aSig)) float_exception_flags |= float_flag.float_flag_inexact;
+				if (Bool((uint64)aExp | aSig)) float_exception_flags |= float_flag.float_flag_inexact;
 				return 0;
 			}
 			z = (long)(aSig >> (-shiftCount));
@@ -2623,7 +2641,7 @@ public static partial class M68KCPU
 	aExpBigger:
 		if (aExp == 0x7FF)
 		{
-			if (aSig) return propagateFloat64NaN(a, b);
+			if (Bool(aSig)) return propagateFloat64NaN(a, b);
 			return a;
 		}
 		if (bExp == 0)
@@ -2716,7 +2734,7 @@ public static partial class M68KCPU
 			{
 				return propagateFloat64NaN(a, b);
 			}
-			if ((bExp | bSig) == 0)
+			if (((uint64)bExp | bSig) == 0)
 			{
 				float_raise(float_flag.float_flag_invalid);
 				return float64_default_nan;
@@ -2726,7 +2744,7 @@ public static partial class M68KCPU
 		if (bExp == 0x7FF)
 		{
 			if (Bool(bSig)) return propagateFloat64NaN(a, b);
-			if ((aExp | aSig) == 0)
+			if (((uint64)aExp | aSig) == 0)
 			{
 				float_raise(float_flag.float_flag_invalid);
 				return float64_default_nan;
@@ -2798,7 +2816,7 @@ public static partial class M68KCPU
 		{
 			if (bSig == 0)
 			{
-				if ((aExp | aSig) == 0)
+				if (((uint64)aExp | aSig) == 0)
 				{
 					float_raise(float_flag.float_flag_invalid);
 					return float64_default_nan;
@@ -2900,7 +2918,7 @@ public static partial class M68KCPU
 		{
 			q = estimateDiv128To64(aSig, 0, bSig);
 			q = (2 < q) ? q - 2 : 0;
-			aSig = -((bSig >> 2) * q);
+			aSig = Neg((bSig >> 2) * q);
 			expDiff -= 62;
 		}
 		expDiff += 64;
@@ -2923,13 +2941,13 @@ public static partial class M68KCPU
 			++q;
 			aSig -= bSig;
 		} while (0 <= (sbits64)aSig);
-		sigMean = aSig + alternateASig;
+		sigMean = (long)(aSig + alternateASig);
 		if ((sigMean < 0) || ((sigMean == 0) && Bool(q & 1)))
 		{
 			aSig = alternateASig;
 		}
 		zSign = ((sbits64)aSig < 0);
-		if (zSign) aSig = -aSig;
+		if (zSign) aSig = Neg(aSig);
 		return normalizeRoundAndPackFloat64(aSign ^ zSign, bExp, aSig);
 
 	}
@@ -2960,7 +2978,7 @@ public static partial class M68KCPU
 		}
 		if (aSign)
 		{
-			if ((aExp | aSig) == 0) return a;
+			if (((uint64)aExp | aSig) == 0) return a;
 			float_raise(float_flag.float_flag_invalid);
 			return float64_default_nan;
 		}
@@ -2987,7 +3005,7 @@ public static partial class M68KCPU
 			}
 			zSig |= UInt((rem0 | rem1) != 0);
 		}
-		return roundAndPackFloat64(0, zExp, zSig);
+		return roundAndPackFloat64(false, zExp, zSig);
 
 	}
 
@@ -3007,7 +3025,7 @@ public static partial class M68KCPU
 			{
 				float_raise(float_flag.float_flag_invalid);
 			}
-			return 0;
+			return false;
 		}
 		return (a == b) || ((bits64)((a | b) << 1) == 0);
 
@@ -3191,7 +3209,9 @@ public static partial class M68KCPU
 		if (0x401E < aExp)
 		{
 			if ((aExp == 0x7FFF) && Bool((bits64)(aSig << 1))) aSign = false;
-			goto invalid;
+			//goto invalid;
+			float_raise(float_flag.float_flag_invalid);
+			return aSign ? (sbits32)S(0x80000000) : 0x7FFFFFFF;
 		}
 		else if (aExp < 0x3FFF)
 		{
@@ -3205,7 +3225,7 @@ public static partial class M68KCPU
 		if (aSign) z = -z;
 		if ((z < 0) ^ aSign)
 		{
-		invalid:
+		//invalid:
 			float_raise(float_flag.float_flag_invalid);
 			return aSign ? (sbits32)S(0x80000000) : 0x7FFFFFFF;
 		}
@@ -3297,7 +3317,7 @@ public static partial class M68KCPU
 		}
 		else if (aExp < 0x3FFF)
 		{
-			if (aExp | aSig) float_exception_flags |= float_flag.float_flag_inexact;
+			if (Bool((uint64)aExp | aSig)) float_exception_flags |= float_flag.float_flag_inexact;
 			return 0;
 		}
 		z = (long)(aSig >> (-shiftCount));
@@ -3702,15 +3722,22 @@ public static partial class M68KCPU
 			{
 				return propagateFloatx80NaN(a, b);
 			}
-			if ((bExp | bSig) == 0) goto invalid;
+			if (((uint64)bExp | bSig) == 0)
+			{
+				//goto invalid;
+				float_raise(float_flag.float_flag_invalid);
+				z.low = floatx80_default_nan_low;
+				z.high = floatx80_default_nan_high;
+				return z;
+			}
 			return packFloatx80(zSign, 0x7FFF, LIT64(0x8000000000000000));
 		}
 		if (bExp == 0x7FFF)
 		{
 			if (Bool((bits64)(bSig << 1))) return propagateFloatx80NaN(a, b);
-			if ((aExp | aSig) == 0)
+			if (((uint64)aExp | aSig) == 0)
 			{
-			invalid:
+			//invalid:
 				float_raise(float_flag.float_flag_invalid);
 				z.low = floatx80_default_nan_low;
 				z.high = floatx80_default_nan_high;
@@ -3768,7 +3795,11 @@ public static partial class M68KCPU
 			if (bExp == 0x7FFF)
 			{
 				if (Bool((bits64)(bSig << 1))) return propagateFloatx80NaN(a, b);
-				goto invalid;
+				//goto invalid;
+				float_raise(float_flag.float_flag_invalid);
+				z.low = floatx80_default_nan_low;
+				z.high = floatx80_default_nan_high;
+				return z;
 			}
 			return packFloatx80(zSign, 0x7FFF, LIT64(0x8000000000000000));
 		}
@@ -3781,9 +3812,9 @@ public static partial class M68KCPU
 		{
 			if (bSig == 0)
 			{
-				if ((aExp | aSig) == 0)
+				if (((uint64)aExp | aSig) == 0)
 				{
-				invalid:
+				//invalid:
 					float_raise(float_flag.float_flag_invalid);
 					z.low = floatx80_default_nan_low;
 					z.high = floatx80_default_nan_high;
@@ -3859,7 +3890,11 @@ public static partial class M68KCPU
 			{
 				return propagateFloatx80NaN(a, b);
 			}
-			goto invalid;
+			//goto invalid;
+			float_raise(float_flag.float_flag_invalid);
+			z.low = floatx80_default_nan_low;
+			z.high = floatx80_default_nan_high;
+			return z;
 		}
 		if (bExp == 0x7FFF)
 		{
@@ -3870,7 +3905,7 @@ public static partial class M68KCPU
 		{
 			if (bSig == 0)
 			{
-			invalid:
+			//invalid:
 				float_raise(float_flag.float_flag_invalid);
 				z.low = floatx80_default_nan_low;
 				z.high = floatx80_default_nan_high;
@@ -3894,7 +3929,7 @@ public static partial class M68KCPU
 			expDiff = 0;
 		}
 		q = ULong(bSig <= aSig0);
-		if (q) aSig0 -= bSig;
+		if (Bool(q)) aSig0 -= bSig;
 		expDiff -= 64;
 		while (0 < expDiff)
 		{
@@ -3962,12 +3997,16 @@ public static partial class M68KCPU
 		{
 			if (Bool((bits64)(aSig0 << 1))) return propagateFloatx80NaN(a, a);
 			if (!aSign) return a;
-			goto invalid;
+			//goto invalid;
+			float_raise(float_flag.float_flag_invalid);
+			z.low = floatx80_default_nan_low;
+			z.high = floatx80_default_nan_high;
+			return z;
 		}
 		if (aSign)
 		{
-			if ((aExp | aSig0) == 0) return a;
-			invalid:
+			if (((uint64)aExp | aSig0) == 0) return a;
+			//invalid:
 			float_raise(float_flag.float_flag_invalid);
 			z.low = floatx80_default_nan_low;
 			z.high = floatx80_default_nan_high;
@@ -4013,7 +4052,7 @@ public static partial class M68KCPU
 		zSig0 |= doubleZSig0;
 		return
 			roundAndPackFloatx80(
-				floatx80_rounding_precision, 0, zExp, zSig0, zSig1);
+				floatx80_rounding_precision, false, zExp, zSig0, zSig1);
 
 	}
 
@@ -4037,7 +4076,7 @@ public static partial class M68KCPU
 			{
 				float_raise(float_flag.float_flag_invalid);
 			}
-			return 0;
+			return false;
 		}
 		return
 				(a.low == b.low)
@@ -4167,7 +4206,7 @@ public static partial class M68KCPU
 			{
 				float_raise(float_flag.float_flag_invalid);
 			}
-			return 0;
+			return false;
 		}
 		aSign = extractFloatx80Sign(a);
 		bSign = extractFloatx80Sign(b);
@@ -4281,7 +4320,9 @@ public static partial class M68KCPU
 		if (0x401E < aExp)
 		{
 			if ((aExp == 0x7FFF) && Bool(aSig0)) aSign = false;
-			goto invalid;
+			//goto invalid;
+			float_raise(float_flag.float_flag_invalid);
+			return aSign ? (sbits32)S(0x80000000) : 0x7FFFFFFF;
 		}
 		else if (aExp < 0x3FFF)
 		{
@@ -4296,7 +4337,7 @@ public static partial class M68KCPU
 		if (aSign) z = -z;
 		if ((z < 0) ^ aSign)
 		{
-		invalid:
+		//invalid:
 			float_raise(float_flag.float_flag_invalid);
 			return aSign ? (sbits32)S(0x80000000) : 0x7FFFFFFF;
 		}
@@ -4408,7 +4449,7 @@ public static partial class M68KCPU
 		{
 			if (aExp < 0x3FFF)
 			{
-				if (Bool(aExp | aSig0 | aSig1))
+				if (Bool((uint64)aExp | aSig0 | aSig1))
 				{
 					float_exception_flags |= float_flag.float_flag_inexact;
 				}
@@ -4446,7 +4487,7 @@ public static partial class M68KCPU
 		aSign = extractFloat128Sign(a);
 		if (aExp == 0x7FFF)
 		{
-			if (Bool((aSig0 | aSig1))
+			if (Bool(aSig0 | aSig1))
 			{
 				return commonNaNToFloat32(float128ToCommonNaN(a));
 			}
@@ -4921,15 +4962,22 @@ public static partial class M68KCPU
 			{
 				return propagateFloat128NaN(a, b);
 			}
-			if ((bExp | bSig0 | bSig1) == 0) goto invalid;
+			if (((uint64)bExp | bSig0 | bSig1) == 0)
+			{
+				//goto invalid;
+				float_raise(float_flag.float_flag_invalid);
+				z.low = float128_default_nan_low;
+				z.high = float128_default_nan_high;
+				return z;
+			}
 			return packFloat128(zSign, 0x7FFF, 0, 0);
 		}
 		if (bExp == 0x7FFF)
 		{
 			if (Bool(bSig0 | bSig1)) return propagateFloat128NaN(a, b);
-			if ((aExp | aSig0 | aSig1) == 0)
+			if (((uint64)aExp | aSig0 | aSig1) == 0)
 			{
-			invalid:
+			//invalid:
 				float_raise(float_flag.float_flag_invalid);
 				z.low = float128_default_nan_low;
 				z.high = float128_default_nan_high;
@@ -4992,7 +5040,11 @@ public static partial class M68KCPU
 			if (bExp == 0x7FFF)
 			{
 				if (Bool(bSig0 | bSig1)) return propagateFloat128NaN(a, b);
-				goto invalid;
+				//goto invalid;
+				float_raise(float_flag.float_flag_invalid);
+				z.low = float128_default_nan_low;
+				z.high = float128_default_nan_high;
+				return z;
 			}
 			return packFloat128(zSign, 0x7FFF, 0, 0);
 		}
@@ -5005,9 +5057,9 @@ public static partial class M68KCPU
 		{
 			if ((bSig0 | bSig1) == 0)
 			{
-				if ((aExp | aSig0 | aSig1) == 0)
+				if (((uint64)aExp | aSig0 | aSig1) == 0)
 				{
-				invalid:
+				//invalid:
 					float_raise(float_flag.float_flag_invalid);
 					z.low = float128_default_nan_low;
 					z.high = float128_default_nan_high;
@@ -5088,7 +5140,11 @@ public static partial class M68KCPU
 			{
 				return propagateFloat128NaN(a, b);
 			}
-			goto invalid;
+			//goto invalid;
+			float_raise(float_flag.float_flag_invalid);
+			z.low = float128_default_nan_low;
+			z.high = float128_default_nan_high;
+			return z;
 		}
 		if (bExp == 0x7FFF)
 		{
@@ -5099,7 +5155,7 @@ public static partial class M68KCPU
 		{
 			if ((bSig0 | bSig1) == 0)
 			{
-			invalid:
+			//invalid:
 				float_raise(float_flag.float_flag_invalid);
 				z.low = float128_default_nan_low;
 				z.high = float128_default_nan_high;
@@ -5166,10 +5222,12 @@ public static partial class M68KCPU
 			++q;
 			sub128(aSig0, aSig1, bSig0, bSig1, out aSig0, out aSig1);
 		} while (0 <= (sbits64)aSig0);
+		uint64 sigMean0_;
 		add128(
-			aSig0, aSig1, alternateASig0, alternateASig1, out sigMean0, out sigMean1);
+			aSig0, aSig1, alternateASig0, alternateASig1, out sigMean0_, out sigMean1);
+		sigMean0 = (long)sigMean0_;
 		if ((sigMean0 < 0)
-				|| (((sigMean0 | sigMean1) == 0) && (q & 1)))
+				|| ((((uint64)sigMean0 | sigMean1) == 0) && Bool(q & 1)))
 		{
 			aSig0 = alternateASig0;
 			aSig1 = alternateASig1;
@@ -5203,12 +5261,16 @@ public static partial class M68KCPU
 		{
 			if (Bool(aSig0 | aSig1)) return propagateFloat128NaN(a, a);
 			if (!aSign) return a;
-			goto invalid;
+			//goto invalid;
+			float_raise(float_flag.float_flag_invalid);
+			z.low = float128_default_nan_low;
+			z.high = float128_default_nan_high;
+			return z;
 		}
 		if (aSign)
 		{
-			if ((aExp | aSig0 | aSig1) == 0) return a;
-			invalid:
+			if (((uint64)aExp | aSig0 | aSig1) == 0) return a;
+			//invalid:
 			float_raise(float_flag.float_flag_invalid);
 			z.low = float128_default_nan_low;
 			z.high = float128_default_nan_high;
@@ -5252,7 +5314,7 @@ public static partial class M68KCPU
 			zSig1 |= ULong((rem1 | rem2 | rem3) != 0);
 		}
 		shift128ExtraRightJamming(zSig0, zSig1, 0, 14, out zSig0, out zSig1, out zSig2);
-		return roundAndPackFloat128(0, zExp, zSig0, zSig1, zSig2);
+		return roundAndPackFloat128(false, zExp, zSig0, zSig1, zSig2);
 
 	}
 
@@ -5443,7 +5505,7 @@ public static partial class M68KCPU
 			{
 				float_raise(float_flag.float_flag_invalid);
 			}
-			return 0;
+			return false;
 		}
 		aSign = extractFloat128Sign(a);
 		bSign = extractFloat128Sign(b);
