@@ -59,27 +59,12 @@ public static partial class M68KCPU
 
 	static double fx80_to_double(floatx80 fx)
 	{
-		//uint64 d;
-		//double* foo;
-
-		//foo = (double*)&d;
-
-		//d = floatx80_to_float64(fx);
-
-		//return *foo;
-
 		uint64 d = floatx80_to_float64(fx);
 		return BitConverter.UInt64BitsToDouble(d);
 	}
 
 	static floatx80 double_to_fx80(double @in)
 	{
-		//uint64* d;
-
-		//d = (uint64*)&@in;
-
-		//return float64_to_floatx80(*d);
-
 		uint64 d = BitConverter.DoubleToUInt64Bits(@in);
 		return float64_to_floatx80(d);
 	}
@@ -601,6 +586,10 @@ public static partial class M68KCPU
 		return 0;
 	}
 
+	static uint64 READ_EA_64(uint eaa)
+	{
+		return READ_EA_64((int)eaa);
+	}
 	static uint64 READ_EA_64(int eaa)
 	{
 		int mode = (eaa >> 3) & 0x7;

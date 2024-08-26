@@ -117,6 +117,7 @@ public static partial class M68KCPU
 	static int SInt(bool s) { return s ? 1 : 0; }
 	static uint UInt(bool s) { return s ? 1u : 0; }
 	static ulong ULong(bool s) { return s ? 1ul : 0; }
+	static int S(uint s) { return (int)s;}
 
 	/* Allow for architectures that don't have 8-bit sizes */
 	//#if UCHAR_MAX == 0xff

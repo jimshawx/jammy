@@ -231,6 +231,10 @@ public static partial class M68KCPU
 	| Packs the sign `zSign', exponent `zExp', and significand `zSig' into an
 	| extended double-precision floating-point value, returning the result.
 	*----------------------------------------------------------------------------*/
+	static floatx80 packFloatx80(flag zSign, int32 zExp, sbits64 zSig)
+	{
+		return packFloatx80(zSign, zExp, (bits64)zSig);
+	}
 	static floatx80 packFloatx80(int zSign, int32 zExp, bits64 zSig)
 	{
 		return packFloatx80(zSign!=0, zExp, zSig);
