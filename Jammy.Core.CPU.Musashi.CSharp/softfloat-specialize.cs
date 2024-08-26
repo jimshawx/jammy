@@ -126,7 +126,7 @@ public static partial class M68KCPU
 		commonNaNT z;
 
 		if (float32_is_signaling_nan(a)) float_raise(float_flag.float_flag_invalid);
-		z.sign = a >> 31;
+		z.sign = Bool(a >> 31);
 		z.low = 0;
 		z.high = ((bits64)a) << 41;
 		return z;
@@ -141,7 +141,7 @@ public static partial class M68KCPU
 	static float32 commonNaNToFloat32(commonNaNT a)
 	{
 
-		return (((bits32)a.sign) << 31) | 0x7FC00000 | (a.high >> 41);
+		return (uint)((((bits32)UInt(a.sign)) << 31) | 0x7FC00000 | (a.high >> 41));
 
 	}
 
@@ -231,7 +231,7 @@ public static partial class M68KCPU
 	{
 
 		return
-			  (((bits64)a.sign) << 63)
+			  (((bits64)ULong(a.sign)) << 63)
 			| LIT64(0x7FF8000000000000)
 			| (a.high >> 12);
 
@@ -283,7 +283,7 @@ public static partial class M68KCPU
 	static flag floatx80_is_nan(floatx80 a)
 	{
 
-		return ((a.high & 0x7FFF) == 0x7FFF) && (bits64)(a.low << 1);
+		return ((a.high & 0x7FFF) == 0x7FFF) && Bool((bits64)(a.low << 1));
 
 	}
 
@@ -299,7 +299,7 @@ public static partial class M68KCPU
 		aLow = a.low & ~LIT64(0x4000000000000000);
 		return
 			   ((a.high & 0x7FFF) == 0x7FFF)
-			&& (bits64)(aLow << 1)
+			&& Bool((bits64)(aLow << 1))
 			&& (a.low == aLow);
 
 	}
@@ -332,7 +332,7 @@ public static partial class M68KCPU
 		floatx80 z;
 
 		z.low = LIT64(0xC000000000000000) | (a.high >> 1);
-		z.high = (((bits16)a.sign) << 15) | 0x7FFF;
+		z.high = (ushort)((((bits16)UInt(a.sign)) << 15) | 0x7FFF);
 		return z;
 
 	}
@@ -424,7 +424,7 @@ public static partial class M68KCPU
 
 		return
 			   (LIT64(0xFFFE000000000000) <= (bits64)(a.high << 1))
-			&& (a.low || (a.high & LIT64(0x0000FFFFFFFFFFFF)));
+			&& (Bool(a.low) || Bool(a.high & LIT64(0x0000FFFFFFFFFFFF)));
 
 	}
 
@@ -438,7 +438,7 @@ public static partial class M68KCPU
 
 		return
 			   (((a.high >> 47) & 0xFFFF) == 0xFFFE)
-			&& (a.low || (a.high & LIT64(0x00007FFFFFFFFFFF)));
+			&& (Bool(a.low) || Bool(a.high & LIT64(0x00007FFFFFFFFFFF)));
 
 	}
 
@@ -471,7 +471,7 @@ public static partial class M68KCPU
 		float128 z;
 
 		shift128Right(a.high, a.low, 16, out z.high, out z.low);
-		z.high |= (((bits64)a.sign) << 63) | LIT64(0x7FFF800000000000);
+		z.high |= (((bits64)ULong(a.sign)) << 63) | LIT64(0x7FFF800000000000);
 		return z;
 
 	}

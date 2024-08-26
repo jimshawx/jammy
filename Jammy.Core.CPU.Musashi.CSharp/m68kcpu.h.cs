@@ -116,6 +116,7 @@ public static partial class M68KCPU
 	static bool Bool<T>(T s) where T : IBinaryInteger<T> { return s != T.AdditiveIdentity; }
 	static int SInt(bool s) { return s ? 1 : 0; }
 	static uint UInt(bool s) { return s ? 1u : 0; }
+	static ulong ULong(bool s) { return s ? 1ul : 0; }
 
 	/* Allow for architectures that don't have 8-bit sizes */
 	//#if UCHAR_MAX == 0xff
