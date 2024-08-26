@@ -41,8 +41,8 @@ public static partial class M68KCPU
 	 * or macro you specify, rather than using callback functions whose pointer
 	 * must be passed in using m68k_set_xxx_callback().
 	 */
-	const int OPT_OFF = 0;
-	const int OPT_ON = 1;
+	public const int OPT_OFF = 0;
+	public const int OPT_ON = 1;
 	const int OPT_SPECIFY_HANDLER = 2;
 
 
@@ -66,7 +66,7 @@ public static partial class M68KCPU
 	/* ======================================================================== */
 
 	/* Turn ON if you want to use the following M68K variants */
-	const int M68K_EMULATE_010 = OPT_ON;
+	const int M68K_EMULATE_010 = OPT_OFF;
 	const int M68K_EMULATE_EC020 = OPT_ON;
 	const int M68K_EMULATE_020 = OPT_ON;
 	const int M68K_EMULATE_030 = OPT_ON;
@@ -124,13 +124,13 @@ public static partial class M68KCPU
 	 * instruction.
 	 */
 	const int M68K_RTE_HAS_CALLBACK = OPT_OFF;
-	//const int M68K_RTE_CALLBACK=();         your_rte_handler_function()
+	//const int M68K_RTE_CALLBACK();         your_rte_handler_function()
 
 	/* If ON, CPU will call the callback when it encounters a tas
 	 * instruction.
 	 */
 	const int M68K_TAS_HAS_CALLBACK = OPT_OFF;
-	//const int M68K_TAS_CALLBACK=();         your_tas_handler_function()
+	//const int M68K_TAS_CALLBACK();         your_tas_handler_function()
 
 	/* If ON, CPU will call the callback when it encounters an illegal instruction
 	 * passing the opcode as argument. If the callback returns 1, then it's considered
@@ -168,7 +168,7 @@ public static partial class M68KCPU
 
 
 	/* If ON, the CPU will emulate the 4-byte prefetch queue of a real 68000 */
-	const int M68K_EMULATE_PREFETCH = OPT_ON;
+	public static int M68K_EMULATE_PREFETCH = OPT_ON;
 
 
 	/* If ON, the CPU will generate address error exceptions if it tries to

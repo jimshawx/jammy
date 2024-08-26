@@ -1141,10 +1141,11 @@ public static partial class M68KCPU
 		m68ki_set_sm_flag(SFLAG_SET | MFLAG_CLEAR);
 
 		/* Invalidate the prefetch queue */
-#if M68K_EMULATE_PREFETCH
-	/* Set to arbitrary number since our first fetch is from 0 */
-	CPU_PREF_ADDR = 0x1000;
-#endif 
+		if (M68K_EMULATE_PREFETCH == OPT_ON)
+		{
+			/* Set to arbitrary number since our first fetch is from 0 */
+			CPU_PREF_ADDR = 0x1000;
+		}
 		/* M68K_EMULATE_PREFETCH */
 
 		/* Read the initial stack pointer and program counter */

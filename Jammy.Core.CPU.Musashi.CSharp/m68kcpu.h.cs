@@ -396,8 +396,8 @@ public static partial class M68KCPU
 	
 	static ref uint32 CPU_INT_LEVEL => ref m68ki_cpu.int_level;
 	static ref uint32 CPU_STOPPED => ref m68ki_cpu.stopped;
-	static uint32 CPU_PREF_ADDR => m68ki_cpu.pref_addr; 
-	static uint32 CPU_PREF_DATA => m68ki_cpu.pref_data;
+	static ref uint32 CPU_PREF_ADDR => ref m68ki_cpu.pref_addr; 
+	static ref uint32 CPU_PREF_DATA => ref m68ki_cpu.pref_data;
 	static ref uint32 CPU_ADDRESS_MASK => ref m68ki_cpu.address_mask; 
 	static ref uint32 CPU_SR_MASK => ref m68ki_cpu.sr_mask;
 	static ref uint32 CPU_INSTR_MODE => ref m68ki_cpu.instr_mode; 
@@ -434,37 +434,37 @@ public static partial class M68KCPU
 	/* These defines are dependant on the configuration defines in m68kconf.h */
 
 	/* Disable certain comparisons if we're not using all CPU types */
-#if M68K_EMULATE_040
-	static bool CPU_TYPE_IS_040_PLUS(uint32 A)   {return ((A) & (CPU_TYPE_040 | CPU_TYPE_EC040)) ;}
-	static bool CPU_TYPE_IS_040_LESS(uint32 A) {return    true;}
-#else
-	static bool CPU_TYPE_IS_040_PLUS(uint32 A) { return false; }
-	static bool CPU_TYPE_IS_040_LESS(uint32 A) { return true; }
-#endif
+//#if M68K_EMULATE_040
+	static bool CPU_TYPE_IS_040_PLUS(uint32 A) { return ((A) & (CPU_TYPE_040 | CPU_TYPE_EC040))!=0;}
+	static bool CPU_TYPE_IS_040_LESS(uint32 A) { return true;}
+//#else
+//	static bool CPU_TYPE_IS_040_PLUS(uint32 A) { return false; }
+//	static bool CPU_TYPE_IS_040_LESS(uint32 A) { return true; }
+//#endif
 
-#if M68K_EMULATE_030
-	static bool CPU_TYPE_IS_030_PLUS(uint32 A)  { return   ((A) & (CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040));}
-	static bool CPU_TYPE_IS_030_LESS(uint32 A)   { return  1;}
-#else
-	static bool CPU_TYPE_IS_030_PLUS(uint32 A) { return false; }
-	static bool CPU_TYPE_IS_030_LESS(uint32 A) { return true; }
-#endif
+//#if M68K_EMULATE_030
+	static bool CPU_TYPE_IS_030_PLUS(uint32 A)  { return  ((A) & (CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040))!=0;}
+	static bool CPU_TYPE_IS_030_LESS(uint32 A)  { return  true;}
+//#else
+//	static bool CPU_TYPE_IS_030_PLUS(uint32 A) { return false; }
+//	static bool CPU_TYPE_IS_030_LESS(uint32 A) { return true; }
+//#endif
 
-#if M68K_EMULATE_020
-	static bool CPU_TYPE_IS_020_PLUS(uint32 A)   { return  ((A) & (CPU_TYPE_020 | CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040));}
+//#if M68K_EMULATE_020
+	static bool CPU_TYPE_IS_020_PLUS(uint32 A)  { return  ((A) & (CPU_TYPE_020 | CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040))!=0;}
 	static bool CPU_TYPE_IS_020_LESS(uint32 A)  { return   true;}
-#else
-	static bool CPU_TYPE_IS_020_PLUS(uint32 A) { return false; }
-	static bool CPU_TYPE_IS_020_LESS(uint32 A) { return true; }
-#endif
+//#else
+//	static bool CPU_TYPE_IS_020_PLUS(uint32 A) { return false; }
+//	static bool CPU_TYPE_IS_020_LESS(uint32 A) { return true; }
+//#endif
 
-#if M68K_EMULATE_EC020
-	static bool CPU_TYPE_IS_EC020_PLUS(uint32 A)  { return ((A) & (CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040));}
-	static bool CPU_TYPE_IS_EC020_LESS(uint32 A)  { return ((A) & (CPU_TYPE_000 | CPU_TYPE_010 | CPU_TYPE_EC020));}
-#else
-	static bool CPU_TYPE_IS_EC020_PLUS(uint32 A) { return CPU_TYPE_IS_020_PLUS(A); }
-	static bool CPU_TYPE_IS_EC020_LESS(uint32 A) { return CPU_TYPE_IS_020_LESS(A); }
-#endif
+//#if M68K_EMULATE_EC020
+	static bool CPU_TYPE_IS_EC020_PLUS(uint32 A)  { return ((A) & (CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_030 | CPU_TYPE_EC030 | CPU_TYPE_040 | CPU_TYPE_EC040))!=0;}
+	static bool CPU_TYPE_IS_EC020_LESS(uint32 A)  { return ((A) & (CPU_TYPE_000 | CPU_TYPE_010 | CPU_TYPE_EC020))!=0;}
+//#else
+//	static bool CPU_TYPE_IS_EC020_PLUS(uint32 A) { return CPU_TYPE_IS_020_PLUS(A); }
+//	static bool CPU_TYPE_IS_EC020_LESS(uint32 A) { return CPU_TYPE_IS_020_LESS(A); }
+//#endif
 
 #if M68K_EMULATE_010
 	static bool CPU_TYPE_IS_010(uint32 A)        { return  ((A) == CPU_TYPE_010)
@@ -476,17 +476,17 @@ public static partial class M68KCPU
 	static bool CPU_TYPE_IS_010_LESS(uint32 A) { return CPU_TYPE_IS_EC020_LESS(A); }
 #endif
 
-#if M68K_EMULATE_020 || M68K_EMULATE_EC020
-	static bool CPU_TYPE_IS_020_VARIANT(uint32 A) { return ((A) & (CPU_TYPE_EC020 | CPU_TYPE_020));}
-#else
-	static bool CPU_TYPE_IS_020_VARIANT(uint32 A) { return false; }
-#endif
+//#if M68K_EMULATE_020 || M68K_EMULATE_EC020
+	static bool CPU_TYPE_IS_020_VARIANT(uint32 A) { return ((A) & (CPU_TYPE_EC020 | CPU_TYPE_020))!=0;}
+//#else
+//	static bool CPU_TYPE_IS_020_VARIANT(uint32 A) { return false; }
+//#endif
 
-#if M68K_EMULATE_040 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_010
+//#if M68K_EMULATE_040 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_010
 	static bool CPU_TYPE_IS_000(uint32 A)        { return  ((A) == CPU_TYPE_000);}
-#else
-	static bool CPU_TYPE_IS_000(uint32 A) { return true; }
-#endif
+//#else
+//	static bool CPU_TYPE_IS_000(uint32 A) { return true; }
+//#endif
 
 
 #if !M68K_SEPARATE_READS
@@ -1127,24 +1127,25 @@ public static partial class M68KCPU
 		//#endif
 		//#endif
 
-#if M68K_EMULATE_PREFETCH
-{
-	uint result;
-	if(REG_PC() != CPU_PREF_ADDR())
-	{
-		CPU_PREF_ADDR() = REG_PC();
-		CPU_PREF_DATA() = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR()));
-	}
-	result = MASK_OUT_ABOVE_16(CPU_PREF_DATA);
-	REG_PC() += 2;
-	CPU_PREF_ADDR() = REG_PC();
-	CPU_PREF_DATA() = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR()));
-	return result;
-}
-#else
-		REG_PC += 2;
-		return m68k_read_immediate_16(ADDRESS_68K(REG_PC - 2));
-#endif
+		if (M68K_EMULATE_PREFETCH == OPT_ON)
+		{
+			uint result;
+			if(REG_PC != CPU_PREF_ADDR)
+			{
+				CPU_PREF_ADDR = REG_PC;
+				CPU_PREF_DATA = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR));
+			}
+			result = MASK_OUT_ABOVE_16(CPU_PREF_DATA);
+			REG_PC += 2;
+			CPU_PREF_ADDR = REG_PC;
+			CPU_PREF_DATA = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR));
+			return result;
+		}
+		else
+		{
+			REG_PC += 2;
+			return m68k_read_immediate_16(ADDRESS_68K(REG_PC - 2));
+		}
 		/* M68K_EMULATE_PREFETCH */
 	}
 
@@ -1163,34 +1164,37 @@ public static partial class M68KCPU
 #endif
 #endif
 
-#if M68K_EMULATE_PREFETCH
-	uint temp_val;
+		if (M68K_EMULATE_PREFETCH == OPT_ON)
+		{	
+			uint temp_val;
 
-	m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
-	m68ki_check_address_error(REG_PC, MODE_READ, FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
+			m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
+			m68ki_check_address_error(REG_PC, MODE_READ, FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
 
-	if(REG_PC != CPU_PREF_ADDR)
-	{
-		CPU_PREF_ADDR = REG_PC;
-		CPU_PREF_DATA = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR));
-	}
-	temp_val = MASK_OUT_ABOVE_16(CPU_PREF_DATA);
-	REG_PC += 2;
-	CPU_PREF_ADDR = REG_PC;
-	CPU_PREF_DATA = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR));
+			if(REG_PC != CPU_PREF_ADDR)
+			{
+				CPU_PREF_ADDR = REG_PC;
+				CPU_PREF_DATA = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR));
+			}
+			temp_val = MASK_OUT_ABOVE_16(CPU_PREF_DATA);
+			REG_PC += 2;
+			CPU_PREF_ADDR = REG_PC;
+			CPU_PREF_DATA = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR));
 
-	temp_val = MASK_OUT_ABOVE_32((temp_val << 16) | MASK_OUT_ABOVE_16(CPU_PREF_DATA));
-	REG_PC() += 2;
-	CPU_PREF_ADDR() = REG_PC();
-	CPU_PREF_DATA() = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR));
+			temp_val = MASK_OUT_ABOVE_32((temp_val << 16) | MASK_OUT_ABOVE_16(CPU_PREF_DATA));
+			REG_PC += 2;
+			CPU_PREF_ADDR = REG_PC;
+			CPU_PREF_DATA = m68k_read_immediate_16(ADDRESS_68K(CPU_PREF_ADDR));
 
-	return temp_val;
-#else
-		m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
-		m68ki_check_address_error(REG_PC, MODE_READ, FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
-		REG_PC += 4;
-		return m68k_read_immediate_32(ADDRESS_68K(REG_PC - 4));
-#endif
+			return temp_val;
+		}
+		else
+		{ 
+			m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
+			m68ki_check_address_error(REG_PC, MODE_READ, FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
+			REG_PC += 4;
+			return m68k_read_immediate_32(ADDRESS_68K(REG_PC - 4));
+		}
 		/* M68K_EMULATE_PREFETCH */
 	}
 
@@ -2027,6 +2031,7 @@ static void m68ki_write_32_pd_fc(uint address, uint fc, uint value)
 		CPU_RUN_MODE = RUN_MODE_BERR_AERR_RESET;
 
 		//longjmp(m68ki_bus_error_jmp_buf, 1);
+		throw new NotImplementedException("m68ki_bus_error not implemented, requires longjmp()");
 	}
 
 	//extern int cpu_log_enabled;
