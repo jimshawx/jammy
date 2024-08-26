@@ -298,14 +298,14 @@ public static void m68881_mmu_ops()
 
 									case 2:	// supervisor root pointer
 										temp64 = READ_EA_64(ea);
-										m68ki_cpu.mmu_srp_limit = (temp64>>32) & 0xffffffff;
-										m68ki_cpu.mmu_srp_aptr = temp64 & 0xffffffff;
+										m68ki_cpu.mmu_srp_limit = (uint)((temp64>>32) & 0xffffffff);
+										m68ki_cpu.mmu_srp_aptr = (uint)(temp64 & 0xffffffff);
 										break;
 
 									case 3:	// CPU root pointer
 										temp64 = READ_EA_64(ea);
-										m68ki_cpu.mmu_crp_limit = (temp64>>32) & 0xffffffff;
-										m68ki_cpu.mmu_crp_aptr = temp64 & 0xffffffff;
+										m68ki_cpu.mmu_crp_limit = (uint)((temp64>>32) & 0xffffffff);
+										m68ki_cpu.mmu_crp_aptr = (uint)(temp64 & 0xffffffff);
 										break;
 
 									default:
@@ -322,7 +322,7 @@ public static void m68881_mmu_ops()
 							}
 							else
 							{
-								m68ki_cpu.mmu_sr = READ_EA_32(ea);
+								m68ki_cpu.mmu_sr = (ushort)READ_EA_32(ea);
 							}
 							break;
 

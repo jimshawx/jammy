@@ -44,40 +44,44 @@ public static partial class M68KCPU
 	//extern flag floatx80_is_nan( floatx80 a );
 
 	// masks for packed dwords, positive k-factor
-	static readonly uint32[] pkmask2 =
-	[
+	static readonly uint32[] pkmask2 = [
 		0xffffffff, 0, 0xf0000000, 0xff000000, 0xfff00000, 0xffff0000,
-	0xfffff000, 0xffffff00, 0xfffffff0, 0xffffffff,
-	0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
-	0xffffffff, 0xffffffff, 0xffffffff
+		0xfffff000, 0xffffff00, 0xfffffff0, 0xffffffff,
+		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
+		0xffffffff, 0xffffffff, 0xffffffff
 	];
 
-	static readonly uint32[] pkmask3 =
-	[
+	static readonly uint32[] pkmask3 = [
 		0xffffffff, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0xf0000000, 0xff000000, 0xfff00000, 0xffff0000,
-	0xfffff000, 0xffffff00, 0xfffffff0, 0xffffffff,
-];
+		0xf0000000, 0xff000000, 0xfff00000, 0xffff0000,
+		0xfffff000, 0xffffff00, 0xfffffff0, 0xffffffff,
+	];
 
 	static double fx80_to_double(floatx80 fx)
 	{
-		uint64 d;
-		double* foo;
+		//uint64 d;
+		//double* foo;
 
-		foo = (double*)&d;
+		//foo = (double*)&d;
 
-		d = floatx80_to_float64(fx);
+		//d = floatx80_to_float64(fx);
 
-		return *foo;
+		//return *foo;
+
+		uint64 d = floatx80_to_float64(fx);
+		return BitConverter.UInt64BitsToDouble(d);
 	}
 
 	static floatx80 double_to_fx80(double @in)
 	{
-		uint64* d;
+		//uint64* d;
 
-		d = (uint64*)&@in;
+		//d = (uint64*)&@in;
 
-		return float64_to_floatx80(*d);
+		//return float64_to_floatx80(*d);
+
+		uint64 d = BitConverter.DoubleToUInt64Bits(@in);
+		return float64_to_floatx80(d);
 	}
 
 	static floatx80 load_extended_float80(uint32 ea)
@@ -166,7 +170,7 @@ public static partial class M68KCPU
 	static void store_pack_float80(uint32 ea, int k, floatx80 fpr)
 	{
 		uint32 dw1, dw2, dw3;
-		string str; int ch;
+		char []str; int ch;
 		int i, j, exp;
 
 		dw1 = dw2 = dw3 = 0;
@@ -174,7 +178,7 @@ public static partial class M68KCPU
 		ch = 0;
 
 		//sprintf(str, "%.16e", fx80_to_double(fpr));
-		str = $"{fx80_to_double(fpr):e16}";
+		str = $"{fx80_to_double(fpr):e16}\0".ToArray();
 
 		if (str[ch] == '-')
 		{
@@ -218,13 +222,15 @@ public static partial class M68KCPU
 			// round up the last significant mantissa digit
 			if (str[ch + k + 1] >= '5')
 			{
-				ch[k]++;
+				//ch[k]++;
+				str[ch+k]++;
 			}
 
 			// zero out the rest of the mantissa digits
 			for (j = (k + 1); j < 16; j++)
 			{
-				ch[j] = '0';
+				//ch[j] = '0';
+				str[ch+j] = '0';
 			}
 
 			// now zero out K to avoid tripping the positive K detection below
@@ -335,7 +341,7 @@ public static partial class M68KCPU
 		switch (condition)
 		{
 			case 0x10:
-			case 0x00: return 0;                    // False
+			case 0x00: return false;                    // False
 
 			case 0x11:
 			case 0x01: return (z);                  // Equal
@@ -521,6 +527,10 @@ public static partial class M68KCPU
 		return 0;
 	}
 
+	static uint32 READ_EA_32(uint eaa)
+	{
+		return READ_EA_32((int)eaa);
+	}
 	static uint32 READ_EA_32(int eaa)
 	{
 		int mode = (eaa >> 3) & 0x7;
@@ -941,6 +951,10 @@ public static partial class M68KCPU
 		}
 	}
 
+	static void WRITE_EA_32(uint eaa, uint32 data)
+	{
+		WRITE_EA_32((int)eaa, data);
+	}
 	static void WRITE_EA_32(int eaa, uint32 data)
 	{
 		int mode = (eaa >> 3) & 0x7;
@@ -1014,6 +1028,10 @@ public static partial class M68KCPU
 		}
 	}
 
+	static void WRITE_EA_64(uint eaa, uint64 data)
+	{
+		WRITE_EA_64((int)eaa, data);
+	}
 	static void WRITE_EA_64(int eaa, uint64 data)
 	{
 		int mode = (eaa >> 3) & 0x7;
@@ -1209,7 +1227,7 @@ public static partial class M68KCPU
 		int src = (w2 >> 10) & 0x7;
 		int dst = (w2 >> 7) & 0x7;
 		int opmode = w2 & 0x7f;
-		floatx80 source;
+		floatx80 source = new floatx80();
 		int round;
 
 		// fmovecr #$f, fp0	f200 5c0f
@@ -1234,7 +1252,7 @@ public static partial class M68KCPU
 					{
 						int imode = (ea >> 3) & 0x7;
 						int reg = (ea & 0x7);
-						uint32 di_mode_ea = imode == 5 ? (REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
+						uint32 di_mode_ea = imode == 5 ? (uint)(REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
 						source = READ_EA_FPE(imode, reg, di_mode_ea);
 						break;
 					}
@@ -1549,7 +1567,7 @@ public static partial class M68KCPU
 					// handle inf in comparison if there is no nan.
 					int d = is_inf(REG_FP[dst]);
 					int s = is_inf(source);
-					if (!floatx80_is_nan(REG_FP[dst]) && !floatx80_is_nan(source) && (d || s))
+					if (!floatx80_is_nan(REG_FP[dst]) && !floatx80_is_nan(source) && (Bool(d) || Bool(s)))
 					{
 						REG_FPSR &= ~(FPCC_N | FPCC_Z | FPCC_I | FPCC_NAN);
 
@@ -1615,7 +1633,7 @@ public static partial class M68KCPU
 			case 0:     // Long-Word Integer
 				{
 					sint32 d = (sint32)floatx80_to_int32(REG_FP[src]);
-					WRITE_EA_32(ea, d);
+					WRITE_EA_32(ea, (uint)d);
 					break;
 				}
 			case 1:     // Single-precision Real
@@ -1628,20 +1646,20 @@ public static partial class M68KCPU
 				{
 					int mode = (ea >> 3) & 0x7;
 					int reg = (ea & 0x7);
-					uint32 di_mode_ea = mode == 5 ? (REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
+					uint32 di_mode_ea = mode == 5 ? (uint)(REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
 					WRITE_EA_FPE(mode, reg, REG_FP[src], di_mode_ea);
 					break;
 				}
 			case 3:     // Packed-decimal Real with Static K-factor
 				{
 					// sign-extend k
-					k = Bool(k & 0x40) ? (k | 0xffffff80) : (k & 0x7f);
+					k = Bool(k & 0x40) ? (int)(k | 0xffffff80) : (k & 0x7f);
 					WRITE_EA_PACK(ea, k, REG_FP[src]);
 					break;
 				}
 			case 4:     // Word Integer
 				{
-					WRITE_EA_16(ea, (sint16)floatx80_to_int32(REG_FP[src]));
+					WRITE_EA_16(ea, (uint16)(sint16)floatx80_to_int32(REG_FP[src]));
 					break;
 				}
 			case 5:     // Double-precision Real
@@ -1655,7 +1673,7 @@ public static partial class M68KCPU
 				}
 			case 6:     // Byte Integer
 				{
-					WRITE_EA_8(ea, (sint8)floatx80_to_int32(REG_FP[src]));
+					WRITE_EA_8(ea, (byte)(sint8)floatx80_to_int32(REG_FP[src]));
 					break;
 				}
 			case 7:     // Packed-decimal Real with Dynamic K-factor
@@ -1686,7 +1704,7 @@ public static partial class M68KCPU
 			{
 				REG_FPCR = READ_EA_32(ea);
 				// JFF: need to update rounding mode from softfloat module
-				float_rounding_mode = (REG_FPCR >> 4) & 0x3;
+				float_rounding_mode = (float_round)((REG_FPCR >> 4) & 0x3);
 			}
 			if (Bool(reg & 2)) REG_FPSR = READ_EA_32(ea);
 			if (Bool(reg & 1)) REG_FPIAR = READ_EA_32(ea);
@@ -1712,7 +1730,7 @@ public static partial class M68KCPU
 						int imode = (ea >> 3) & 0x7;
 						int reg = (ea & 0x7);
 						int di_mode = SInt(imode == 5);
-						uint32 di_mode_ea = Bool(di_mode) ? (REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
+						uint32 di_mode_ea = Bool(di_mode) ? (uint)(REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
 						for (i = 0; i < 8; i++)
 						{
 							if (Bool(reglist & (1 << i)))
@@ -1736,7 +1754,7 @@ public static partial class M68KCPU
 						// when the proper behaviour is 1) read once, 2) increment ea for each matching register
 						// this forces to pre-read the mode (named "imode") so we can decide to read displacement, only once
 						int di_mode = SInt(imode == 5);
-						uint32 di_mode_ea = Bool(di_mode) ? (REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
+						uint32 di_mode_ea = Bool(di_mode) ? (uint)(REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
 						for (i = 0; i < 8; i++)
 						{
 							if (Bool(reglist & (1 << i)))
@@ -1764,7 +1782,7 @@ public static partial class M68KCPU
 						int imode = (ea >> 3) & 0x7;
 						int reg = (ea & 0x7);
 						int di_mode = SInt(imode == 5);
-						uint32 di_mode_ea = Bool(di_mode) ? (REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
+						uint32 di_mode_ea = Bool(di_mode) ? (uint)(REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16())) : 0;
 						for (i = 0; i < 8; i++)
 						{
 							if (Bool(reglist & (1 << i)))
@@ -1807,7 +1825,7 @@ public static partial class M68KCPU
 			case 5: // (disp,Ax)
 				{
 					int reg = (int)(REG_IR & 7);
-					uint32 ea = REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16());
+					uint32 ea = (uint)(REG_A[reg] + MAKE_INT_16(m68ki_read_imm_16()));
 					m68ki_write_8(ea, (uint32)v);
 					break;
 				}
@@ -1855,9 +1873,9 @@ public static partial class M68KCPU
 	}
 
 
-	static void m68040_fpu_op0()
+	public static void m68040_fpu_op0()
 	{
-		m68ki_cpu.fpu_just_reset = 0;
+		m68ki_cpu.fpu_just_reset = false;
 
 		switch ((REG_IR >> 6) & 0x3)
 		{
@@ -1959,7 +1977,7 @@ public static partial class M68KCPU
 
 		// Mac IIci at 408458e6 wants an FSAVE of a just-restored NULL frame to also be NULL
 		// The PRM says it's possible to generate a NULL frame, but not how/when/why.  (need the 68881/68882 manual!)
-		m68ki_cpu.fpu_just_reset = 1;
+		m68ki_cpu.fpu_just_reset = true;
 	}
 
 	static void m68040_fpu_op1()

@@ -240,7 +240,7 @@ public static partial class M68KCPU
 		floatx80 z;
 
 		z.low = zSig;
-		z.high = (((bits16)zSign) << 15) + zExp;
+		z.high = (ushort)((((bits16)UInt(zSign)) << 15) + zExp);
 		return z;
 
 	}
@@ -339,7 +339,7 @@ public static partial class M68KCPU
 		float128 z;
 
 		z.low = zSig1;
-		z.high = (((bits64)zSign) << 63) + (((bits64)zExp) << 48) + zSig0;
+		z.high = (((bits64)UInt(zSign)) << 63) + (((bits64)zExp) << 48) + zSig0;
 		return z;
 
 	}
@@ -379,17 +379,17 @@ public static partial class M68KCPU
 		{
 			if (roundingMode == float_round.float_round_to_zero)
 			{
-				increment = 0;
+				increment = false;
 			}
 			else
 			{
 				if (zSign)
 				{
-					increment = (roundingMode == float_round.float_round_down) && zSig2;
+					increment = (roundingMode == float_round.float_round_down) && Bool(zSig2);
 				}
 				else
 				{
-					increment = (roundingMode == float_round.float_round_up) && zSig2;
+					increment = (roundingMode == float_round.float_round_up) && Bool(zSig2);
 				}
 			}
 		}
@@ -436,9 +436,9 @@ public static partial class M68KCPU
 							LIT64(0xFFFFFFFFFFFFFFFF)
 						);
 				shift128ExtraRightJamming(
-					zSig0, zSig1, zSig2, -zExp, out zSig0, out zSig1, out zSig2);
+					zSig0, zSig1, zSig2, (short)-zExp, out zSig0, out zSig1, out zSig2);
 				zExp = 0;
-				if (isTiny && zSig2) float_raise(float_flag.float_flag_underflow);
+				if (isTiny && Bool(zSig2)) float_raise(float_flag.float_flag_underflow);
 				if (roundNearestEven)
 				{
 					increment = ((sbits64)zSig2 < 0);
@@ -447,20 +447,20 @@ public static partial class M68KCPU
 				{
 					if (zSign)
 					{
-						increment = (roundingMode == float_round.float_round_down) && zSig2;
+						increment = (roundingMode == float_round.float_round_down) && Bool(zSig2);
 					}
 					else
 					{
-						increment = (roundingMode == float_round.float_round_up) && zSig2;
+						increment = (roundingMode == float_round.float_round_up) && Bool(zSig2);
 					}
 				}
 			}
 		}
-		if (zSig2) float_exception_flags |= float_flag.float_flag_inexact;
+		if (Bool(zSig2)) float_exception_flags |= float_flag.float_flag_inexact;
 		if (increment)
 		{
 			add128(zSig0, zSig1, 0, 1, out zSig0, out zSig1);
-			zSig1 &= ~((zSig2 + zSig2 == 0) & roundNearestEven);
+			zSig1 &= ~UInt((zSig2 + zSig2 == 0) & roundNearestEven);
 		}
 		else
 		{
@@ -493,7 +493,7 @@ public static partial class M68KCPU
 			zSig1 = 0;
 			zExp -= 64;
 		}
-		shiftCount = countLeadingZeros64(zSig0) - 15;
+		shiftCount = (sbyte)(countLeadingZeros64(zSig0) - 15);
 		if (0 <= shiftCount)
 		{
 			zSig2 = 0;
@@ -502,7 +502,7 @@ public static partial class M68KCPU
 		else
 		{
 			shift128ExtraRightJamming(
-				zSig0, zSig1, 0, -shiftCount, out zSig0, out zSig1, out zSig2);
+				zSig0, zSig1, 0, (short)-shiftCount, out zSig0, out zSig1, out zSig2);
 		}
 		zExp -= shiftCount;
 		return roundAndPackFloat128(zSign, zExp, zSig0, zSig1, zSig2);

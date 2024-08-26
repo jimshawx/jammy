@@ -74,11 +74,11 @@ public static partial class M68KCPU
 		}
 		else if (count < 32)
 		{
-			z = (a >> count) | ((a << ((-count) & 31)) != 0);
+			z = (a >> count) | UInt((a << ((-count) & 31)) != 0);
 		}
 		else
 		{
-			z = (a != 0);
+			z = UInt(a != 0);
 		}
 		zPtr = z;
 
@@ -103,11 +103,11 @@ public static partial class M68KCPU
 		}
 		else if (count < 64)
 		{
-			z = (a >> count) | ((a << ((-count) & 63)) != 0);
+			z = (a >> count) | UInt((a << ((-count) & 63)) != 0);
 		}
 		else
 		{
-			z = (a != 0);
+			z = UInt(a != 0);
 		}
 		zPtr = z;
 
@@ -135,7 +135,7 @@ public static partial class M68KCPU
 		 bits64 a0, bits64 a1, int16 count, out bits64 z0Ptr, out bits64 z1Ptr)
 	{
 		bits64 z0, z1;
-		int8 negCount = (-count) & 63;
+		int8 negCount = (sbyte)((-count) & 63);
 
 		if (count == 0)
 		{
@@ -144,18 +144,18 @@ public static partial class M68KCPU
 		}
 		else if (count < 64)
 		{
-			z1 = (a0 << negCount) | (a1 != 0);
+			z1 = (a0 << negCount) | UInt(a1 != 0);
 			z0 = a0 >> count;
 		}
 		else
 		{
 			if (count == 64)
 			{
-				z1 = a0 | (a1 != 0);
+				z1 = a0 | UInt(a1 != 0);
 			}
 			else
 			{
-				z1 = ((a0 | a1) != 0);
+				z1 = UInt((a0 | a1) != 0);
 			}
 			z0 = 0;
 		}
@@ -177,7 +177,7 @@ public static partial class M68KCPU
 		 bits64 a0, bits64 a1, int16 count, out bits64 z0Ptr, out bits64 z1Ptr)
 	{
 		bits64 z0, z1;
-		int8 negCount = (-count) & 63;
+		int8 negCount = (sbyte)((-count) & 63);
 
 		if (count == 0)
 		{
@@ -215,7 +215,7 @@ public static partial class M68KCPU
 		 bits64 a0, bits64 a1, int16 count, out bits64 z0Ptr, out bits64 z1Ptr)
 	{
 		bits64 z0, z1;
-		int8 negCount = (-count) & 63;
+		int8 negCount = (sbyte)((-count) & 63);
 
 		if (count == 0)
 		{
@@ -224,22 +224,22 @@ public static partial class M68KCPU
 		}
 		else if (count < 64)
 		{
-			z1 = (a0 << negCount) | (a1 >> count) | ((a1 << negCount) != 0);
+			z1 = (a0 << negCount) | (a1 >> count) | UInt((a1 << negCount) != 0);
 			z0 = a0 >> count;
 		}
 		else
 		{
 			if (count == 64)
 			{
-				z1 = a0 | (a1 != 0);
+				z1 = a0 | UInt(a1 != 0);
 			}
 			else if (count < 128)
 			{
-				z1 = (a0 >> (count & 63)) | (((a0 << negCount) | a1) != 0);
+				z1 = (a0 >> (count & 63)) | UInt(((a0 << negCount) | a1) != 0);
 			}
 			else
 			{
-				z1 = ((a0 | a1) != 0);
+				z1 = UInt((a0 | a1) != 0);
 			}
 			z0 = 0;
 		}
@@ -279,7 +279,7 @@ public static partial class M68KCPU
 	 )
 	{
 		bits64 z0, z1, z2;
-		int8 negCount = (-count) & 63;
+		int8 negCount = (sbyte)((-count) & 63);
 
 		if (count == 0)
 		{
@@ -312,13 +312,13 @@ public static partial class M68KCPU
 					}
 					else
 					{
-						z2 = (count == 128) ? a0 : (a0 != 0);
+						z2 = (count == 128) ? a0 : UInt(a0 != 0);
 						z1 = 0;
 					}
 				}
 				z0 = 0;
 			}
-			z2 |= (a2 != 0);
+			z2 |= UInt(a2 != 0);
 		}
 		z2Ptr = z2;
 		z1Ptr = z1;
@@ -371,7 +371,7 @@ public static partial class M68KCPU
 		z0 = a0 << count;
 		if (0 < count)
 		{
-			negCount = ((-count) & 63);
+			negCount = ((sbyte)((-count) & 63));
 			z1 |= a2 >> negCount;
 			z0 |= a1 >> negCount;
 		}
@@ -396,7 +396,7 @@ public static partial class M68KCPU
 
 		z1 = a1 + b1;
 		z1Ptr = z1;
-		z0Ptr = a0 + b0 + (z1 < a1);
+		z0Ptr = a0 + b0 + UInt(z1 < a1);
 
 	}
 
@@ -425,12 +425,12 @@ public static partial class M68KCPU
 		uint8 carry0, carry1;
 
 		z2 = a2 + b2;
-		carry1 = (z2 < a2);
+		carry1 = (byte)UInt(z2 < a2);
 		z1 = a1 + b1;
-		carry0 = (z1 < a1);
+		carry0 = (byte)UInt(z1 < a1);
 		z0 = a0 + b0;
 		z1 += carry1;
-		z0 += (z1 < carry1);
+		z0 += UInt(z1 < carry1);
 		z0 += carry0;
 		z2Ptr = z2;
 		z1Ptr = z1;
@@ -452,7 +452,7 @@ public static partial class M68KCPU
 	{
 
 		z1Ptr = a1 - b1;
-		z0Ptr = a0 - b0 - (a1 < b1);
+		z0Ptr = a0 - b0 - UInt(a1 < b1);
 
 	}
 
@@ -481,11 +481,11 @@ public static partial class M68KCPU
 		uint8 borrow0, borrow1;
 
 		z2 = a2 - b2;
-		borrow1 = (a2 < b2);
+		borrow1 = (byte)UInt(a2 < b2);
 		z1 = a1 - b1;
-		borrow0 = (a1 < b1);
+		borrow0 = (byte)UInt(a1 < b1);
 		z0 = a0 - b0;
-		z0 -= (z1 < borrow1);
+		z0 -= UInt(z1 < borrow1);
 		z1 -= borrow1;
 		z0 -= borrow0;
 		z2Ptr = z2;
@@ -505,19 +505,19 @@ public static partial class M68KCPU
 		bits32 aHigh, aLow, bHigh, bLow;
 		bits64 z0, zMiddleA, zMiddleB, z1;
 
-		aLow = a;
-		aHigh = a >> 32;
-		bLow = b;
-		bHigh = b >> 32;
+		aLow = (uint)a;
+		aHigh = (uint)(a >> 32);
+		bLow = (uint)b;
+		bHigh = (uint)(b >> 32);
 		z1 = ((bits64)aLow) * bLow;
 		zMiddleA = ((bits64)aLow) * bHigh;
 		zMiddleB = ((bits64)aHigh) * bLow;
 		z0 = ((bits64)aHigh) * bHigh;
 		zMiddleA += zMiddleB;
-		z0 += (((bits64)(zMiddleA < zMiddleB)) << 32) + (zMiddleA >> 32);
+		z0 += (((bits64)UInt(zMiddleA < zMiddleB)) << 32) + (zMiddleA >> 32);
 		zMiddleA <<= 32;
 		z1 += zMiddleA;
-		z0 += (z1 < zMiddleA);
+		z0 += UInt(z1 < zMiddleA);
 		z1Ptr = z1;
 		z0Ptr = z0;
 
@@ -630,21 +630,22 @@ public static partial class M68KCPU
 	| value.
 	*----------------------------------------------------------------------------*/
 
-	static bits32 estimateSqrt32(int16 aExp, bits32 a)
-	{
-		static const bits16 sqrtOddAdjustments[] = {
+	static readonly bits16[] sqrtOddAdjustments = [
 		0x0004, 0x0022, 0x005D, 0x00B1, 0x011D, 0x019F, 0x0236, 0x02E0,
 		0x039C, 0x0468, 0x0545, 0x0631, 0x072B, 0x0832, 0x0946, 0x0A67
-	};
-		static const bits16 sqrtEvenAdjustments[] = {
+	];
+	static readonly bits16[] sqrtEvenAdjustments = [
 		0x0A2D, 0x08AF, 0x075A, 0x0629, 0x051A, 0x0429, 0x0356, 0x029E,
 		0x0200, 0x0179, 0x0109, 0x00AF, 0x0068, 0x0034, 0x0012, 0x0002
-	};
+	];
+
+	static bits32 estimateSqrt32(int16 aExp, bits32 a)
+	{
 		int8 index;
 		bits32 z;
 
-		index = (a >> 27) & 15;
-		if (aExp & 1)
+		index = (sbyte)((a >> 27) & 15);
+		if (Bool(aExp & 1))
 		{
 			z = 0x4000 + (a >> 17) - sqrtOddAdjustments[index];
 			z = ((a / z) << 14) + (z << 15);
@@ -684,6 +685,7 @@ public static partial class M68KCPU
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	];
 
+	static int8 countLeadingZeros32(bits64 a) { return countLeadingZeros32((bits32)a); }
 	static int8 countLeadingZeros32(bits32 a)
 	{
 		int8 shiftCount;
