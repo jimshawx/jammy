@@ -10,9 +10,9 @@ So here is my humble attempt at an Amiga emulation.
 * It's written in C#
 * It runs faster than real Amigas (on my i5-8250 laptop)
 * It can emulate most Amigas to at least some level
-  * A1000, A500, A500+, A600, A1200, A2000, A3000, A4000
+  * A1000, A500, A500+, A600, A1200, A2000, A3000, A4000, CD32
   * 68000 in C#, verified against the Musashi 68000 CPU
-  * 68000/68EC020/68030 using the Musashi CPU emulation
+  * Other 680x0 using the Musashi CPU emulation, in C or C#
   * Copper, Blitter, CIA emulations
   * Sprite and bitplane collision
   * Good quality Audio
@@ -26,13 +26,15 @@ So here is my humble attempt at an Amiga emulation.
 * It's free! (MIT License)
 
 ### The not so good stuff
-* The Copper emulation is patchy still and there are problems with DMA timing.
-* No attempt is made to be cycle exact
-* All blits are immediate
+* There are lot of problems with DMA timing
+* More efforts need to be made to get closer to cycle exact
+* Akiko not implemented
+* Emulation of CPUs running faster than the standard 7MHz is poor
 
-The C# 68000 is slightly faster than the Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
+The C# 68000 is slightly faster than the C Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
+In an effort to fix this, I have ported most of Musashi to C#, and it is significantly faster now.
 
-The Musashi 68030 option supports the 68881 and MMU instructions. There didn't seem any real need to add a 68040 or 68060 option because of this.
+The C Musashi 68030 option supports the 68881 and MMU instructions. There didn't seem any real need to add a 68040 or 68060 option because of this.
 
 The audio is pretty good, if you run with it switched on it will lock the emulation performance down so the sample rate is exact. With it switched off, everything is still emulated but there's no sound output. If the emulation is too slow, the audio will be choppy. There's some high-frequency hiss I'd like to get rid of.
 
