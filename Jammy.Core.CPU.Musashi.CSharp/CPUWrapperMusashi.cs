@@ -151,15 +151,15 @@ namespace m68kcpu
 		//static void m68040_fpu_op0() { throw new NotImplementedException("m68040_fpu_op0()"); }
 		//static void m68040_fpu_op1() { throw new NotImplementedException("m68040_fpu_op1()"); }
 		//static void m68881_mmu_ops() { throw new NotImplementedException("m68881_mmu_ops()"); }
-		static uint m68k_read_memory_8(uint A) { return memoryMapper.Read(0, A, Size.Byte); }
+		static uint m68k_read_memory_8(uint A) { return memoryMapper.Read(instructionStartPC, A, Size.Byte); }
 		static uint m68k_read_memory_16(uint A) {
 			if (A == instructionStartPC)
 				return memoryMapper.Fetch(instructionStartPC, A, Size.Word);
-			return memoryMapper.Read(0, A, Size.Word); }
-		static uint m68k_read_memory_32(uint A) { return memoryMapper.Read(0, A, Size.Long); }
-		static void m68k_write_memory_8(uint A, uint v) { memoryMapper.Write(0, A, v, Size.Byte); }
-		static void m68k_write_memory_16(uint A, uint v) { memoryMapper.Write(0, A, v, Size.Word); }
-		static void m68k_write_memory_32(uint A, uint v) { memoryMapper.Write(0, A, v, Size.Long); }
+			return memoryMapper.Read(instructionStartPC, A, Size.Word); }
+		static uint m68k_read_memory_32(uint A) { return memoryMapper.Read(instructionStartPC, A, Size.Long); }
+		static void m68k_write_memory_8(uint A, uint v) { memoryMapper.Write(instructionStartPC, A, v, Size.Byte); }
+		static void m68k_write_memory_16(uint A, uint v) { memoryMapper.Write(instructionStartPC, A, v, Size.Word); }
+		static void m68k_write_memory_32(uint A, uint v) { memoryMapper.Write(instructionStartPC, A, v, Size.Long); }
 	}
 }
 

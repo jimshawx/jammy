@@ -209,6 +209,9 @@ namespace Jammy.Core.EmulationWindow.DX
 			});
 		}
 
+		public bool PowerLight { private get; set; }
+		public bool DiskLight { private get; set; }
+
 		public void Blit(int[] screen)
 		{
 			if (emulation.IsDisposed) return;

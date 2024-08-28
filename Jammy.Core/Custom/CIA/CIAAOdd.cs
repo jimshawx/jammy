@@ -21,6 +21,7 @@ namespace Jammy.Core.Custom.CIA
 		private readonly IKickstartROM kickstartROM;
 		private readonly IPSUClock psuClock;
 		private readonly IChipsetClock clock;
+		private readonly IEmulationWindow window;
 
 		private static readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -45,7 +46,7 @@ namespace Jammy.Core.Custom.CIA
 		//BFE001 - BFEF01
 
 		public CIAAOdd(IDiskDrives diskDrives, IMouse mouse, IKeyboard keyboard, IKickstartROM kickstartROM, IPSUClock psuClock,
-			IInterrupt interrupt, IChipsetClock clock, IOptions<EmulationSettings> settings, ILogger<CIAAOdd> logger)
+			IInterrupt interrupt, IChipsetClock clock, IEmulationWindow window, IOptions<EmulationSettings> settings, ILogger<CIAAOdd> logger)
 		{
 			this.diskDrives = diskDrives;
 			this.mouse = mouse;
@@ -53,6 +54,7 @@ namespace Jammy.Core.Custom.CIA
 			this.kickstartROM = kickstartROM;
 			this.psuClock = psuClock;
 			this.clock = clock;
+			this.window = window;
 			this.interrupt = interrupt;
 			this.logger = logger;
 		}
@@ -139,6 +141,7 @@ namespace Jammy.Core.Custom.CIA
 				if (reg == PRA)
 				{
 					UI.UI.PowerLight = (value & 2) == 0;
+					window.PowerLight = UI.UI.PowerLight;
 
 					diskDrives.WritePRA(insaddr, (byte)value);
 					mouse.WritePRA(insaddr, (byte)value);

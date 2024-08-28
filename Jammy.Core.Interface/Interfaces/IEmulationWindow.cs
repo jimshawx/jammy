@@ -12,5 +12,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp);
 		bool IsActive();
 		int[] GetFramebuffer();
+		bool DiskLight { set; }
+		bool PowerLight { set; }
 	}
 }

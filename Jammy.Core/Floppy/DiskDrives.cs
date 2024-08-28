@@ -49,6 +49,7 @@ namespace Jammy.Core.Floppy
 		private ICIABEven ciab { get { return (ICIABEven)ServiceProviderFactory.ServiceProvider.GetService(typeof(ICIABEven)); } }
 
 		private readonly IInterrupt interrupt;
+		private readonly IEmulationWindow window;
 		private readonly ILogger logger;
 
 		private readonly MFM mfmEncoder;
@@ -71,6 +72,7 @@ namespace Jammy.Core.Floppy
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;
+			this.window = emulationWindow;
 			this.logger = logger;
 
 			this.mfmEncoder = new MFM();
@@ -472,6 +474,7 @@ namespace Jammy.Core.Floppy
 			}
 
 			UI.UI.DiskLight = drive[0].motor | drive[1].motor | drive[2].motor | drive[3].motor;
+			window.DiskLight = UI.UI.DiskLight;
 		}
 
 		//there is also bit 4, DSKINDEX in CIAB icr register BFDD00

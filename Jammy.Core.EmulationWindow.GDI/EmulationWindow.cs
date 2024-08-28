@@ -150,11 +150,15 @@ namespace Jammy.Core.EmulationWindow.GDI
 			});
 		}
 
+		public bool PowerLight { private get; set; }
+		public bool DiskLight { private get; set; }
+
 		public void Blit(int[] screen)
 		{
 			if (emulation.IsDisposed) return;
 
 			RenderTicks();
+			RenderLights();
 
 			emulation.Invoke((Action)delegate
 			{
@@ -188,6 +192,20 @@ namespace Jammy.Core.EmulationWindow.GDI
 					for (int y = 0; y < 4*ss; y++)
 						screen[so + i + y * screenWidth] = 0xff0000;
 
+				}
+			}
+		}
+
+		private void RenderLights()
+		{
+			int sx = screenWidth - 100;
+			int sy = 20;
+			for (int y = 0; y < 8; y++)
+			{
+				for (int x = 0; x < 24; x++)
+				{
+					screen[x + sx + (sy + y) * screenWidth] = PowerLight ? 0xff0000 : 0x7f0000;
+					screen[x + sx + 32 + (sy + y) * screenWidth] = DiskLight ? 0x00ff00 : 0x007f00;
 				}
 			}
 		}
