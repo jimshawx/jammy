@@ -80,6 +80,7 @@ namespace Jammy.Core
 			//emulations.Add(dma);
 			//emulations.Add(denise);
 			emulations.Add(debugger);
+			emulations.Add(interrupt);
 
 			//managed by the DMA controller
 			//threadedEmulations.Add(copper);
@@ -96,7 +97,7 @@ namespace Jammy.Core
 			emulations.AddRange(threadedEmulations);
 
 			resetters.Add(diskController);
-			resetters.Add(interrupt);
+			//resetters.Add(interrupt);
 			resetters.Add(memory);
 			resetters.Add(battClock);
 			resetters.Add(motherboard);

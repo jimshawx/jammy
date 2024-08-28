@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
@@ -12,6 +13,8 @@ namespace Jammy.Core
 	public class Interrupt : IInterrupt
 	{
 		private IChips custom;
+
+		private readonly Queue q = new Queue();
 
 		public const uint NMI = 15;
 		public const uint INTEN = 14;
@@ -48,6 +51,25 @@ namespace Jammy.Core
 			gayleInterruptLevel = 0;
 		}
 
+		private int intreqPending = 0;
+		public void Emulate()
+		{
+			q.Enqueue(paulaInterruptLevel);
+			if (q.Count == 20)
+				paulaInterruptLevelLagged = (uint)q.Dequeue();
+
+			//if (intreqPending > 0)
+			//{
+			//	intreqPending--;
+			//	if (intreqPending == 0)
+			//	{
+			//		SetPaulaInterruptLevelReal(intenaStash, intreqStash);
+			//	}
+			//}
+
+		}
+		private uint paulaInterruptLevelLagged;
+
 		//level is the IPLx interrupt bits in SR
 
 		private uint paulaInterruptLevel;
@@ -59,7 +81,7 @@ namespace Jammy.Core
 		{
 			//lock (locker)
 			{
-				return (ushort)Math.Max(paulaInterruptLevel, gayleInterruptLevel);
+				return (ushort)Math.Max(paulaInterruptLevelLagged, gayleInterruptLevel);
 			}
 		}
 

@@ -83,7 +83,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IMouse : IEmulate, ICustomReadWrite, IReadWritePRA, IDebugChipsetRead { }
 
-	public interface IInterrupt : IReset
+	public interface IInterrupt : IEmulate
 	{
 		void AssertInterrupt(uint intreq, bool asserted = true);
 		void SetPaulaInterruptLevel(uint intreq, uint intena);
