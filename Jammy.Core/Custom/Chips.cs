@@ -108,7 +108,7 @@ namespace Jammy.Core.Custom
 
 		private int REG(uint address)
 		{
-			return (int)(address & 0x0000fffe) >> 1;
+			return (int)(address & 0x00000ffe) >> 1;
 		}
 
 		private object locker = new object();
@@ -350,12 +350,7 @@ namespace Jammy.Core.Custom
 				{
 					/* can't write here on AGA */
 				}
-				else
-				{
-					regs[reg] = (ushort)value;
-				}
-
-				if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
+				else if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
 				    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.BPL8PTL) ||
 				    address == ChipRegs.BPL1MOD || address == ChipRegs.BPL2MOD ||
 				    (address >= ChipRegs.BPL1DAT && address <= ChipRegs.SPR7DATB) ||
@@ -414,11 +409,7 @@ namespace Jammy.Core.Custom
 				{
 					audio.Write(insaddr, address, (ushort)value);
 				}
-
-				else if (address == ChipRegs.DMACON || address == ChipRegs.INTENA || address == ChipRegs.INTREQ ||
-				         address == ChipRegs.DMACONR || address == ChipRegs.INTENAR ||
-				         address == ChipRegs.INTREQR ||
-				         /*address == ChipRegs.LISAID  ||*/ address == ChipRegs.NO_OP)
+				else if (address == ChipRegs.NO_OP)
 				{
 
 				}
@@ -429,6 +420,7 @@ namespace Jammy.Core.Custom
 				else
 				{
 					logger.LogTrace($"W {ChipRegs.Name(address)} {originalAddress:X8} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
+					regs[reg] = (ushort)value;
 				}
 			}
 		}
