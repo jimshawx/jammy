@@ -1000,10 +1000,11 @@ public static partial class M68KCPU
 				REG_PPC = REG_PC;
 
 				/* Record previous D/A register state (in case of bus error) */
-				for (i = 15; i >= 0; i--)
-				{
-					REG_DA_SAVE[i] = REG_DA[i];
-				}
+				//hack: this is a major cause of slowdown, and doesn't work anyway
+				//for (i = 15; i >= 0; i--)
+				//{
+				//	REG_DA_SAVE[i] = REG_DA[i];
+				//}
 
 				/* Read an instruction and call its handler */
 				REG_IR = m68ki_read_imm_16();
