@@ -237,6 +237,10 @@ namespace Jammy.Core.Custom
 			if (blitterLog)
 				WriteBlitterState();
 
+			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			if ((dmacon & (1<<14)) != 0 || status != BlitterState.Idle)
+				logger.LogTrace($"Previous blit not finished {((dmacon & (1<<14))!=0?"BBUSY":"~BBUSY")} {status}");
+
 			if ((bltcon1 & 1) != 0)
 			{
 				Line(insaddr);
