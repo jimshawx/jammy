@@ -86,6 +86,8 @@ public class DMAController : IDMA
 		}
 	}
 
+	private int blitHogCount = 0;
+
 	public void TriggerHighestPriorityDMA()
 	{
 		//var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
@@ -95,17 +97,40 @@ public class DMAController : IDMA
 		//check if ANY DMA is enabled
 		if (((DMA)dmacon & DMA.DMAEN) == DMA.DMAEN)
 		{
+			bool blitHog = ((DMA)dmacon & DMA.BLTPRI) == DMA.BLTPRI;
+
 			for (int i = 0; i < (int)DMASource.NumDMASources-1; i++)
 			{
 				if (activities[i].Type == DMAActivityType.None)
 				{
 					//if no DMA required, continue
 				}
-				else if (slotTaken == null && (activities[i].Priority & (DMA)dmacon) != 0)
+				else if ((activities[i].Priority & (DMA)dmacon) != 0)
 				{
 					//check this DMA channel is enabled and the DMA slot hasn't been taken
 					slotTaken = activities[i];
+
+					if ((DMASource)i == DMASource.Blitter)
+					{
+						if (blitHog)
+						{
+							blitHogCount = 0;
+						}
+						else
+						{
+
+							blitHogCount++;
+							if (blitHogCount > 3)
+							{
+								slotTaken = null;
+								blitHogCount = 0;
+							}
+						}
+
+					}
 				}
+				if (slotTaken != null)
+					break;
 			}
 		}
 
