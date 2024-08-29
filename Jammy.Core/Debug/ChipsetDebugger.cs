@@ -32,8 +32,9 @@ public class ChipsetDebugger : IChipsetDebugger
 	private readonly IDebugChipsetRead chipRegs;
 	private readonly INativeOverlay overlay;
 	private readonly EmulationSettings settings;
+	private readonly IEmulationWindow window;
 	private readonly ILogger<ChipsetDebugger> logger;
-	private readonly int[] screen;
+	private int[] screen;
 
 	public ChipsetDebugger(IChipsetClock clock, IChips chipRegs, INativeOverlay overlay,
 		IEmulationWindow emulationWindow, IOptions<EmulationSettings> settings, ILogger<ChipsetDebugger> logger)
@@ -43,7 +44,8 @@ public class ChipsetDebugger : IChipsetDebugger
 		this.overlay = overlay;
 		this.settings = settings.Value;
 		this.logger = logger;
-		logger.LogTrace("Press F9 to enable Chipset Dbugger");
+		logger.LogTrace("Press F9 to enable Chipset Debugger");
+		this.window = emulationWindow;
 
 		emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 		screen = emulationWindow.GetFramebuffer();
@@ -330,6 +332,7 @@ public class ChipsetDebugger : IChipsetDebugger
 		int sy = 5;
 
 		uint[] truecolour = new uint[256]; //denise.DebugGetPalette();
+		screen = screen??window.GetFramebuffer();
 
 		int box = 5;
 		for (int y = 0; y < 4; y++)
