@@ -69,8 +69,12 @@ namespace Jammy.Debugger
 			this.disassembler = new Jammy.Disassembler.Disassembler();
 		}
 
+		private readonly HashSet<uint> seen = new HashSet<uint>();
+
 		public void Trace(uint pc)
 		{
+			if (pc >= 0xf00000) return;
+			if (seen.Contains(pc)) return;
 			if (traces.Any())
 			{
 				traces.Last().ToPC = pc;
@@ -80,6 +84,9 @@ namespace Jammy.Debugger
 
 		public void Trace(string v, uint pc, Regs regs)
 		{
+			if (pc >= 0xf00000) return;
+			if (seen.Contains(pc)) return;
+			seen.Add(pc);
 			traces.Add(new TraceEntry { Type = v, FromPC = pc, FromLabel = labeller.LabelName(pc), Regs = regs.Clone() });
 		}
 
