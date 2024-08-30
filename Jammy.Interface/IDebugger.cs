@@ -30,6 +30,7 @@ namespace Jammy.Interface
 		void CIAInt(ICRB icr);
 		void IRQ(uint irq);
 		void INTENA(uint irq);
+		void INTDIS(uint irq);
 		void WriteTrace();
 		uint KickstartSize();
 		void IDEACK();

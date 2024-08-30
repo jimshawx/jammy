@@ -27,6 +27,7 @@ using Microsoft.Extensions.Options;
 using Vortice.Direct3D11;
 using System.Runtime.InteropServices;
 using Jammy.Core.Types.Types.Breakpoints;
+using Jammy.Core.Memory;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -572,6 +573,24 @@ namespace Jammy.Main
 			Amiga.UnlockEmulation();
 		}
 
+		private void btnINTDIS_Click(object sender, EventArgs e)
+		{
+			Amiga.LockEmulation();
+			if (cbIRQ.Text == "EXTER") debugger.INTDIS(Interrupt.EXTER);
+			if (cbIRQ.Text == "DSKBLK") debugger.INTDIS(Interrupt.DSKBLK);
+			if (cbIRQ.Text == "PORTS") debugger.INTDIS(Interrupt.PORTS);
+			if (cbIRQ.Text == "BLIT") debugger.INTDIS(Interrupt.BLIT);
+			if (cbIRQ.Text == "COPPER") debugger.INTDIS(Interrupt.COPPER);
+			if (cbIRQ.Text == "DSKSYNC") debugger.INTDIS(Interrupt.DSKSYNC);
+			if (cbIRQ.Text == "AUD0") debugger.INTDIS(Interrupt.AUD0);
+			if (cbIRQ.Text == "AUD1") debugger.INTDIS(Interrupt.AUD1);
+			if (cbIRQ.Text == "AUD2") debugger.INTDIS(Interrupt.AUD2);
+			if (cbIRQ.Text == "AUD3") debugger.INTDIS(Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.INTDIS(Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.INTDIS(Interrupt.SOFTINT);
+			Amiga.UnlockEmulation();
+		}
+
 		private void menuDisassembly_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
 		{
 			if (!(sender is ContextMenuStrip))
@@ -741,6 +760,16 @@ namespace Jammy.Main
 			var gfxScan = new GfxScan(
 					ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<GfxScan>>(),
 					ServiceProviderFactory.ServiceProvider.GetRequiredService<IChipRAM>()
+				);
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnStringScan_Click(object sender, EventArgs e)
+		{
+			Amiga.LockEmulation();
+			var stringScan = new StringScan(
+					ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<StringScan>>(),
+					ServiceProviderFactory.ServiceProvider.GetRequiredService<IMemoryMapper>()
 				);
 			Amiga.UnlockEmulation();
 		}
@@ -1055,7 +1084,7 @@ namespace Jammy.Main
 				return;
 
 			uint A(int i) { string s = P(i); return uint.Parse(s, NumberStyles.HexNumber); }
-			uint? N(int i) { string s = P(i); return string.IsNullOrWhiteSpace(s)?null:A(i); }
+			uint? N(int i) { string s = P(i); return string.IsNullOrWhiteSpace(s) ? null : A(i); }
 			Core.Types.Types.Size? S(int i)
 			{
 				string s = P(i);
@@ -1065,7 +1094,7 @@ namespace Jammy.Main
 				if (char.ToLower(s[0]) == 'l') return Core.Types.Types.Size.Long;
 				return null;
 			}
-			string P(int i){ return (i<parm.Length) ? parm[i]: string.Empty; }
+			string P(int i) { return (i < parm.Length) ? parm[i] : string.Empty; }
 			string R(int i) { return (i < parm.Length) ? string.Join(' ', parm[i..]) : string.Empty; }
 			MemType? M(int i)
 			{
@@ -1113,17 +1142,17 @@ namespace Jammy.Main
 						break;
 
 					case "d":
-						disassemblyRanges.Add(new AddressRange(A(1), N(2)??0x1000));
+						disassemblyRanges.Add(new AddressRange(A(1), N(2) ?? 0x1000));
 						refresh = true;
 						break;
-					
+
 					case "m":
-						memoryDumpRanges.Add(new AddressRange(A(1), N(2)??0x1000));
+						memoryDumpRanges.Add(new AddressRange(A(1), N(2) ?? 0x1000));
 						refresh = true;
 						break;
-					
+
 					case "w":
-						debugger.DebugWrite(A(1), N(2)??0, S(3)??Core.Types.Types.Size.Word);
+						debugger.DebugWrite(A(1), N(2) ?? 0, S(3) ?? Core.Types.Types.Size.Word);
 						break;
 
 					case "r":
@@ -1132,8 +1161,8 @@ namespace Jammy.Main
 						break;
 
 					case "a":
-						for (uint i = 0; i < (N(3)??1); i++)
-							analysis.SetMemType(A(1)+i, M(2)??MemType.Code);
+						for (uint i = 0; i < (N(3) ?? 1); i++)
+							analysis.SetMemType(A(1) + i, M(2) ?? MemType.Code);
 						refresh = true;
 						break;
 
@@ -1145,6 +1174,19 @@ namespace Jammy.Main
 					case "h":
 						analysis.AddHeader(A(1), $"\t{R(2)}");
 						refresh = true;
+						break;
+
+					case "g":
+						Amiga.SetEmulationMode(EmulationMode.Running);
+						break;
+					case "so":
+						Amiga.SetEmulationMode(EmulationMode.StepOut);
+						break;
+					case "s":
+						Amiga.SetEmulationMode(EmulationMode.Step);
+						break;
+					case "x":
+						Amiga.SetEmulationMode(EmulationMode.Stopped);
 						break;
 
 					case "?":
@@ -1162,6 +1204,10 @@ namespace Jammy.Main
 						logger.LogTrace("a address [type(C)] [length(1)] - set memory type C,B,W,L,S,U");
 						logger.LogTrace("c address text - add a comment");
 						logger.LogTrace("h address text - add a header");
+						logger.LogTrace("g - emulation Go");
+						logger.LogTrace("s - emulation Step");
+						logger.LogTrace("so - emulation Step Out");
+						logger.LogTrace("x - emulation Stop");
 						break;
 				}
 				AddHistory(cmd);

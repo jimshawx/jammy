@@ -90,6 +90,8 @@ namespace Jammy.Main
 			lbIntvec = new System.Windows.Forms.ListBox();
 			btnReadyDisk = new System.Windows.Forms.Button();
 			tbCommand = new System.Windows.Forms.TextBox();
+			btnINTDIS = new System.Windows.Forms.Button();
+			btnStringScan = new System.Windows.Forms.Button();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -222,7 +224,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 672);
+			txtMemory.Size = new System.Drawing.Size(1390, 657);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -433,7 +435,7 @@ namespace Jammy.Main
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(532, 987);
+			txtCopper.Size = new System.Drawing.Size(517, 987);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -556,9 +558,9 @@ namespace Jammy.Main
 			btnINTENA.Location = new System.Drawing.Point(2014, 1082);
 			btnINTENA.Margin = new System.Windows.Forms.Padding(6);
 			btnINTENA.Name = "btnINTENA";
-			btnINTENA.Size = new System.Drawing.Size(134, 49);
+			btnINTENA.Size = new System.Drawing.Size(69, 49);
 			btnINTENA.TabIndex = 37;
-			btnINTENA.Text = "INTENA";
+			btnINTENA.Text = "EN";
 			btnINTENA.UseVisualStyleBackColor = true;
 			btnINTENA.Click += btnINTENA_Click;
 			// 
@@ -571,7 +573,7 @@ namespace Jammy.Main
 			lbCustom.Location = new System.Drawing.Point(2348, 546);
 			lbCustom.Margin = new System.Windows.Forms.Padding(6);
 			lbCustom.Name = "lbCustom";
-			lbCustom.Size = new System.Drawing.Size(328, 628);
+			lbCustom.Size = new System.Drawing.Size(328, 576);
 			lbCustom.TabIndex = 38;
 			// 
 			// btnDumpTrace
@@ -725,7 +727,7 @@ namespace Jammy.Main
 			lbIntvec.ItemHeight = 26;
 			lbIntvec.Location = new System.Drawing.Point(3, 1007);
 			lbIntvec.Name = "lbIntvec";
-			lbIntvec.Size = new System.Drawing.Size(534, 238);
+			lbIntvec.Size = new System.Drawing.Size(519, 238);
 			lbIntvec.TabIndex = 27;
 			lbIntvec.MouseDoubleClick += lbIntvec_MouseDoubleClick;
 			// 
@@ -755,11 +757,37 @@ namespace Jammy.Main
 			tbCommand.TabIndex = 51;
 			tbCommand.KeyDown += tbCommand_KeyDown;
 			// 
+			// btnINTDIS
+			// 
+			btnINTDIS.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			btnINTDIS.Location = new System.Drawing.Point(2083, 1082);
+			btnINTDIS.Margin = new System.Windows.Forms.Padding(6);
+			btnINTDIS.Name = "btnINTDIS";
+			btnINTDIS.Size = new System.Drawing.Size(76, 49);
+			btnINTDIS.TabIndex = 52;
+			btnINTDIS.Text = "~EN";
+			btnINTDIS.UseVisualStyleBackColor = true;
+			btnINTDIS.Click += btnINTDIS_Click;
+			// 
+			// btnStringScan
+			// 
+			btnStringScan.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			btnStringScan.Location = new System.Drawing.Point(2304, 1143);
+			btnStringScan.Margin = new System.Windows.Forms.Padding(6);
+			btnStringScan.Name = "btnStringScan";
+			btnStringScan.Size = new System.Drawing.Size(154, 49);
+			btnStringScan.TabIndex = 53;
+			btnStringScan.Text = "String Scan";
+			btnStringScan.UseVisualStyleBackColor = true;
+			btnStringScan.Click += btnStringScan_Click;
+			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2710, 1291);
+			Controls.Add(btnStringScan);
+			Controls.Add(btnINTDIS);
 			Controls.Add(tbCommand);
 			Controls.Add(btnReadyDisk);
 			Controls.Add(splitContainer2);
@@ -873,6 +901,8 @@ namespace Jammy.Main
 		private System.Windows.Forms.Button btnReadyDisk;
 		private System.Windows.Forms.ListBox lbIntvec;
 		private System.Windows.Forms.TextBox tbCommand;
+		private System.Windows.Forms.Button btnINTDIS;
+		private System.Windows.Forms.Button btnStringScan;
 	}
 }
 

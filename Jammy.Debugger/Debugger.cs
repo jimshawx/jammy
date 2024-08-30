@@ -357,6 +357,11 @@ namespace Jammy.Debugger
 			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1 << (int)irq), Size.Word);
 		}
 
+		public void INTDIS(uint irq)
+		{
+			custom.Write(0, ChipRegs.INTENA, (uint)(1 << (int)irq), Size.Word);
+		}
+
 		public void IDEACK()
 		{
 			logger.LogTrace("IDEACK is not implemented");
