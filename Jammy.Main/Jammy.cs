@@ -1177,16 +1177,16 @@ namespace Jammy.Main
 						break;
 
 					case "g":
-						Amiga.SetEmulationMode(EmulationMode.Running);
+						Amiga.SetEmulationMode(EmulationMode.Running, true);
 						break;
 					case "so":
-						Amiga.SetEmulationMode(EmulationMode.StepOut);
+						Amiga.SetEmulationMode(EmulationMode.StepOut, true);
 						break;
 					case "s":
-						Amiga.SetEmulationMode(EmulationMode.Step);
+						Amiga.SetEmulationMode(EmulationMode.Step, true);
 						break;
 					case "x":
-						Amiga.SetEmulationMode(EmulationMode.Stopped);
+						Amiga.SetEmulationMode(EmulationMode.Stopped, true);
 						break;
 
 					case "?":
