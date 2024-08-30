@@ -30,7 +30,7 @@ namespace Jammy.Main
 			ss.Wait();
 			var t = new Thread(() =>
 			{
-				emulation = new Form {Name = "GfxScan", Text = "Gfx Scan", ControlBox = false, FormBorderStyle = FormBorderStyle.FixedSingle, MinimizeBox = true, MaximizeBox = true};
+				emulation = new Form {Name = "GfxScan", Text = "Gfx Scan", ControlBox = true, FormBorderStyle = FormBorderStyle.FixedSingle, MinimizeBox = true, MaximizeBox = true};
 
 				if (emulation.Handle == IntPtr.Zero)
 					throw new ApplicationException();

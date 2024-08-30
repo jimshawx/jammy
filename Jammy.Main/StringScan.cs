@@ -32,7 +32,7 @@ namespace Jammy.Main
 			ss.Wait();
 			var t = new Thread(() =>
 			{
-				emulation = new Form {Name = "Strings", Text = "Strings", ControlBox = false, FormBorderStyle = FormBorderStyle.FixedSingle, MinimizeBox = true, MaximizeBox = true};
+				emulation = new Form {Name = "Strings", Text = "Strings", ControlBox = true, FormBorderStyle = FormBorderStyle.SizableToolWindow, MinimizeBox = true, MaximizeBox = true};
 
 				if (emulation.Handle == IntPtr.Zero)
 					throw new ApplicationException();
@@ -53,7 +53,6 @@ namespace Jammy.Main
 		private bool IsString(byte b)
 		{
 			char c = (char)b;
-			//return char.IsLetterOrDigit(c) || c == ' ';
 			return c>= ' ' && c < 128;
 		}
 
@@ -86,7 +85,6 @@ namespace Jammy.Main
 		}
 
 		private RichTextBox textBox;
-		private VScrollBar slider;
 
 		public void SetStrings(string s)
 		{
@@ -97,6 +95,7 @@ namespace Jammy.Main
 				textBox = new RichTextBox();
 				textBox.Multiline = true;
 				textBox.Text = s;
+				textBox.Dock = DockStyle.Fill;
 				emulation.Controls.Add(textBox);
 
 				emulation.ClientSize = new Size(800, 600);
