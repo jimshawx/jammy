@@ -23,6 +23,7 @@ namespace Jammy.Interface
 		void BreakAtNextPC();
 		void SetPC(uint pc);
 		uint FindMemoryText(string txt);
+		uint FindMemory(byte[] seq);
 		void InsertDisk(int df);
 		void RemoveDisk(int df);
 		void ChangeDisk(int df, string fileName);

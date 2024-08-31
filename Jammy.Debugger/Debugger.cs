@@ -320,6 +320,11 @@ namespace Jammy.Debugger
 			return memory.FindSequence(Encoding.ASCII.GetBytes(txt));
 		}
 
+		public uint FindMemory(byte[] seq)
+		{
+			return memory.FindSequence(seq);
+		}
+
 		public void InsertDisk(int df)
 		{
 			diskDrives.InsertDisk(df);

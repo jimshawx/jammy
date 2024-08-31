@@ -33,134 +33,135 @@ namespace Jammy.Main.Dialogs
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.txtFindText = new System.Windows.Forms.TextBox();
-			this.btnFindPrev = new System.Windows.Forms.Button();
-			this.btnFindNext = new System.Windows.Forms.Button();
-			this.btnFindCancel = new System.Windows.Forms.Button();
-			this.txtFindNumber = new System.Windows.Forms.TextBox();
-			this.radioFindByte = new System.Windows.Forms.RadioButton();
-			this.radioFindWord = new System.Windows.Forms.RadioButton();
-			this.radioFindLong = new System.Windows.Forms.RadioButton();
-			this.radioFindText = new System.Windows.Forms.RadioButton();
-			this.SuspendLayout();
+			txtFindText = new System.Windows.Forms.TextBox();
+			btnFindPrev = new System.Windows.Forms.Button();
+			btnFindNext = new System.Windows.Forms.Button();
+			btnFindCancel = new System.Windows.Forms.Button();
+			radioFindByte = new System.Windows.Forms.RadioButton();
+			radioFindWord = new System.Windows.Forms.RadioButton();
+			radioFindLong = new System.Windows.Forms.RadioButton();
+			radioFindText = new System.Windows.Forms.RadioButton();
+			SuspendLayout();
 			// 
 			// txtFindText
 			// 
-			this.txtFindText.Location = new System.Drawing.Point(32, 13);
-			this.txtFindText.Name = "txtFindText";
-			this.txtFindText.Size = new System.Drawing.Size(197, 23);
-			this.txtFindText.TabIndex = 0;
+			txtFindText.Location = new System.Drawing.Point(59, 28);
+			txtFindText.Margin = new System.Windows.Forms.Padding(6);
+			txtFindText.Name = "txtFindText";
+			txtFindText.Size = new System.Drawing.Size(362, 39);
+			txtFindText.TabIndex = 0;
+			txtFindText.KeyDown += txtFindText_KeyDown;
 			// 
 			// btnFindPrev
 			// 
-			this.btnFindPrev.Location = new System.Drawing.Point(34, 106);
-			this.btnFindPrev.Name = "btnFindPrev";
-			this.btnFindPrev.Size = new System.Drawing.Size(75, 23);
-			this.btnFindPrev.TabIndex = 1;
-			this.btnFindPrev.Text = "Find Prev";
-			this.btnFindPrev.UseVisualStyleBackColor = true;
-			this.btnFindPrev.Click += new System.EventHandler(this.btnFindPrev_Click);
+			btnFindPrev.Enabled = false;
+			btnFindPrev.Location = new System.Drawing.Point(59, 89);
+			btnFindPrev.Margin = new System.Windows.Forms.Padding(6);
+			btnFindPrev.Name = "btnFindPrev";
+			btnFindPrev.Size = new System.Drawing.Size(139, 49);
+			btnFindPrev.TabIndex = 1;
+			btnFindPrev.Text = "Find &Prev";
+			btnFindPrev.UseVisualStyleBackColor = true;
+			btnFindPrev.Click += btnFindPrev_Click;
 			// 
 			// btnFindNext
 			// 
-			this.btnFindNext.Location = new System.Drawing.Point(112, 106);
-			this.btnFindNext.Name = "btnFindNext";
-			this.btnFindNext.Size = new System.Drawing.Size(75, 23);
-			this.btnFindNext.TabIndex = 2;
-			this.btnFindNext.Text = "Find Next";
-			this.btnFindNext.UseVisualStyleBackColor = true;
-			this.btnFindNext.Click += new System.EventHandler(this.btnFindNext_Click);
+			btnFindNext.Location = new System.Drawing.Point(210, 89);
+			btnFindNext.Margin = new System.Windows.Forms.Padding(6);
+			btnFindNext.Name = "btnFindNext";
+			btnFindNext.Size = new System.Drawing.Size(139, 49);
+			btnFindNext.TabIndex = 2;
+			btnFindNext.Text = "&Find Next";
+			btnFindNext.UseVisualStyleBackColor = true;
+			btnFindNext.Click += btnFindNext_Click;
 			// 
 			// btnFindCancel
 			// 
-			this.btnFindCancel.Location = new System.Drawing.Point(193, 106);
-			this.btnFindCancel.Name = "btnFindCancel";
-			this.btnFindCancel.Size = new System.Drawing.Size(72, 23);
-			this.btnFindCancel.TabIndex = 3;
-			this.btnFindCancel.Text = "Cancel";
-			this.btnFindCancel.UseVisualStyleBackColor = true;
-			this.btnFindCancel.Click += new System.EventHandler(this.btnFindCancel_Click);
-			// 
-			// txtFindNumber
-			// 
-			this.txtFindNumber.Location = new System.Drawing.Point(32, 43);
-			this.txtFindNumber.Name = "txtFindNumber";
-			this.txtFindNumber.Size = new System.Drawing.Size(100, 23);
-			this.txtFindNumber.TabIndex = 4;
+			btnFindCancel.Location = new System.Drawing.Point(59, 147);
+			btnFindCancel.Margin = new System.Windows.Forms.Padding(6);
+			btnFindCancel.Name = "btnFindCancel";
+			btnFindCancel.Size = new System.Drawing.Size(134, 49);
+			btnFindCancel.TabIndex = 3;
+			btnFindCancel.Text = "&Cancel";
+			btnFindCancel.UseVisualStyleBackColor = true;
+			btnFindCancel.Click += btnFindCancel_Click;
 			// 
 			// radioFindByte
 			// 
-			this.radioFindByte.AutoSize = true;
-			this.radioFindByte.Location = new System.Drawing.Point(175, 43);
-			this.radioFindByte.Name = "radioFindByte";
-			this.radioFindByte.Size = new System.Drawing.Size(48, 19);
-			this.radioFindByte.TabIndex = 5;
-			this.radioFindByte.TabStop = true;
-			this.radioFindByte.Text = "Byte";
-			this.radioFindByte.UseVisualStyleBackColor = true;
-			this.radioFindByte.CheckedChanged += new System.EventHandler(this.radioFindByte_CheckedChanged);
+			radioFindByte.AutoSize = true;
+			radioFindByte.Location = new System.Drawing.Point(440, 72);
+			radioFindByte.Margin = new System.Windows.Forms.Padding(6);
+			radioFindByte.Name = "radioFindByte";
+			radioFindByte.Size = new System.Drawing.Size(92, 36);
+			radioFindByte.TabIndex = 5;
+			radioFindByte.TabStop = true;
+			radioFindByte.Text = "Byte";
+			radioFindByte.UseVisualStyleBackColor = true;
+			radioFindByte.CheckedChanged += radioFindByte_CheckedChanged;
 			// 
 			// radioFindWord
 			// 
-			this.radioFindWord.AutoSize = true;
-			this.radioFindWord.Location = new System.Drawing.Point(175, 62);
-			this.radioFindWord.Name = "radioFindWord";
-			this.radioFindWord.Size = new System.Drawing.Size(54, 19);
-			this.radioFindWord.TabIndex = 6;
-			this.radioFindWord.TabStop = true;
-			this.radioFindWord.Text = "Word";
-			this.radioFindWord.UseVisualStyleBackColor = true;
-			this.radioFindWord.CheckedChanged += new System.EventHandler(this.radioFindWord_CheckedChanged);
+			radioFindWord.AutoSize = true;
+			radioFindWord.Location = new System.Drawing.Point(440, 112);
+			radioFindWord.Margin = new System.Windows.Forms.Padding(6);
+			radioFindWord.Name = "radioFindWord";
+			radioFindWord.Size = new System.Drawing.Size(102, 36);
+			radioFindWord.TabIndex = 6;
+			radioFindWord.TabStop = true;
+			radioFindWord.Text = "Word";
+			radioFindWord.UseVisualStyleBackColor = true;
+			radioFindWord.CheckedChanged += radioFindWord_CheckedChanged;
 			// 
 			// radioFindLong
 			// 
-			this.radioFindLong.AutoSize = true;
-			this.radioFindLong.Location = new System.Drawing.Point(175, 81);
-			this.radioFindLong.Name = "radioFindLong";
-			this.radioFindLong.Size = new System.Drawing.Size(52, 19);
-			this.radioFindLong.TabIndex = 7;
-			this.radioFindLong.TabStop = true;
-			this.radioFindLong.Text = "Long";
-			this.radioFindLong.UseVisualStyleBackColor = true;
-			this.radioFindLong.CheckedChanged += new System.EventHandler(this.radioFindLong_CheckedChanged);
+			radioFindLong.AutoSize = true;
+			radioFindLong.Location = new System.Drawing.Point(440, 153);
+			radioFindLong.Margin = new System.Windows.Forms.Padding(6);
+			radioFindLong.Name = "radioFindLong";
+			radioFindLong.Size = new System.Drawing.Size(98, 36);
+			radioFindLong.TabIndex = 7;
+			radioFindLong.TabStop = true;
+			radioFindLong.Text = "Long";
+			radioFindLong.UseVisualStyleBackColor = true;
+			radioFindLong.CheckedChanged += radioFindLong_CheckedChanged;
 			// 
 			// radioFindText
 			// 
-			this.radioFindText.AutoSize = true;
-			this.radioFindText.Checked = true;
-			this.radioFindText.Location = new System.Drawing.Point(237, 16);
-			this.radioFindText.Name = "radioFindText";
-			this.radioFindText.Size = new System.Drawing.Size(46, 19);
-			this.radioFindText.TabIndex = 8;
-			this.radioFindText.TabStop = true;
-			this.radioFindText.Text = "Text";
-			this.radioFindText.UseVisualStyleBackColor = true;
-			this.radioFindText.CheckedChanged += new System.EventHandler(this.radioFindText_CheckedChanged);
-			this.radioFindText.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.radioFindText_KeyPress);
+			radioFindText.AutoSize = true;
+			radioFindText.Checked = true;
+			radioFindText.Location = new System.Drawing.Point(440, 34);
+			radioFindText.Margin = new System.Windows.Forms.Padding(6);
+			radioFindText.Name = "radioFindText";
+			radioFindText.Size = new System.Drawing.Size(88, 36);
+			radioFindText.TabIndex = 4;
+			radioFindText.TabStop = true;
+			radioFindText.Text = "Text";
+			radioFindText.UseVisualStyleBackColor = true;
+			radioFindText.CheckedChanged += radioFindText_CheckedChanged;
+			radioFindText.KeyPress += radioFindText_KeyPress;
 			// 
 			// Find
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(303, 141);
-			this.Controls.Add(this.radioFindText);
-			this.Controls.Add(this.radioFindLong);
-			this.Controls.Add(this.radioFindWord);
-			this.Controls.Add(this.radioFindByte);
-			this.Controls.Add(this.txtFindNumber);
-			this.Controls.Add(this.btnFindCancel);
-			this.Controls.Add(this.btnFindNext);
-			this.Controls.Add(this.btnFindPrev);
-			this.Controls.Add(this.txtFindText);
-			this.MaximizeBox = false;
-			this.MinimizeBox = false;
-			this.Name = "Find";
-			this.ShowIcon = false;
-			this.ShowInTaskbar = false;
-			this.Text = "Find";
-			this.ResumeLayout(false);
-			this.PerformLayout();
-
+			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
+			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			ClientSize = new System.Drawing.Size(565, 208);
+			Controls.Add(radioFindText);
+			Controls.Add(radioFindLong);
+			Controls.Add(radioFindWord);
+			Controls.Add(radioFindByte);
+			Controls.Add(btnFindCancel);
+			Controls.Add(btnFindNext);
+			Controls.Add(btnFindPrev);
+			Controls.Add(txtFindText);
+			Margin = new System.Windows.Forms.Padding(6);
+			MaximizeBox = false;
+			MinimizeBox = false;
+			Name = "Find";
+			ShowIcon = false;
+			ShowInTaskbar = false;
+			Text = "Find";
+			ResumeLayout(false);
+			PerformLayout();
 		}
 
 		#endregion
@@ -169,7 +170,6 @@ namespace Jammy.Main.Dialogs
 		private System.Windows.Forms.Button btnFindPrev;
 		private System.Windows.Forms.Button btnFindNext;
 		private System.Windows.Forms.Button btnFindCancel;
-		private System.Windows.Forms.TextBox txtFindNumber;
 		private System.Windows.Forms.RadioButton radioFindByte;
 		private System.Windows.Forms.RadioButton radioFindWord;
 		private System.Windows.Forms.RadioButton radioFindLong;

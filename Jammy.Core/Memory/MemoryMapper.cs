@@ -136,14 +136,16 @@ namespace Jammy.Core.Memory
 
 		public uint FindSequence(byte[] bytes)
 		{
-			//todo: expensive!
-			byte[] find = GetEnumerable(0).ToArray();
-			for (int i = 0; i < (int)Length - bytes.Length; i++)
+			var ranges = GetBulkRanges();
+			foreach (var range in GetBulkRanges())
 			{
-				if (bytes.SequenceEqual(find.Skip(i).Take(bytes.Length)))
-					return (uint)i;
+				if (range.Length == 0) continue;
+				for (uint i = 0; i < range.Length - (uint)bytes.Length; i++)
+				{
+					if (MemoryExtensions.SequenceEqual(range.Memory.AsSpan((int)i, bytes.Length), bytes))
+						return i + range.Start;
+				}
 			}
-
 			return 0;
 		}
 

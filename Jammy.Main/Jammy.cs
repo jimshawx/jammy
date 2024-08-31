@@ -502,28 +502,43 @@ namespace Jammy.Main
 					if (findForm.SearchText != null)
 					{
 						uint address = debugger.FindMemoryText(findForm.SearchText);
-
-						Amiga.LockEmulation();
-						var memory = debugger.GetMemory();
-						int gotoLine = memory.AddressToLine(address);
-						Amiga.UnlockEmulation();
-
-						txtMemory.SuspendLayout();
-						txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(Math.Max(0, gotoLine - 5));
-						txtMemory.ScrollToCaret();
-						txtMemory.Select(txtMemory.GetFirstCharIndexFromLine(gotoLine),
-							txtMemory.GetFirstCharIndexFromLine(gotoLine + 1) - txtMemory.GetFirstCharIndexFromLine(gotoLine));
-						txtMemory.Invalidate();
-						txtMemory.ResumeLayout();
-						txtMemory.Update();
+						if (address != 0)
+							JumpToMemoryAddress(address);
+					}
+					if (findForm.SearchSeq != null)
+					{
+						uint address = debugger.FindMemory(findForm.SearchSeq);
+						if (address != 0)
+							JumpToMemoryAddress(address);
 					}
 				}
 			}
+		}
 
-			FetchUI(FetchUIFlags.All);
-			UpdateDisassembly();
-			SetSelection();
-			UpdateDisplay();
+		private void JumpToMemoryAddress(uint address)
+		{
+			//make sure the text is available in the memory dump
+			memoryDumpRanges.Add(new AddressRange(address, 256));
+
+			Amiga.LockEmulation();
+			var memory = debugger.GetMemory();
+
+			//make sure the text is available in the memory dump
+			var memoryText = memory.GetString(memoryDumpRanges);
+			memoryDumpView = new MemoryDumpView(memory, memoryText);
+
+			int gotoLine = memory.AddressToLine(address);
+			Amiga.UnlockEmulation();
+
+			txtMemory.SuspendLayout();
+			txtMemory.Text = memoryDumpView.Text;
+			txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(gotoLine);
+			txtMemory.ScrollToCaret();
+			txtMemory.Select(txtMemory.GetFirstCharIndexFromLine(gotoLine),
+				txtMemory.GetFirstCharIndexFromLine(gotoLine + 1) - txtMemory.GetFirstCharIndexFromLine(gotoLine));
+			txtMemory.Invalidate();
+			txtMemory.ResumeLayout();
+			txtMemory.Update();
 		}
 
 		private void btnCIAInt_Click(object sender, EventArgs e)
