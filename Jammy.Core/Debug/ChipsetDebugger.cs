@@ -22,6 +22,8 @@ public interface IChipsetDebugger : IEmulate
 	byte bitplaneMod { get; }
 	bool dbug { get; set; }
 	int dma { get; set; }
+	int diwSHack { get; }
+	int diwEHack { get; }
 	void SetDMAActivity(char p0);
 }
 
@@ -102,15 +104,15 @@ public class ChipsetDebugger : IChipsetDebugger
 	public char[] fetch { get; }= new char[256];
 	public char[] write { get; }= new char[256];
 	public int dma { get; set; }
-	public int dbugLine { get; set; } = -1;
+	public int dbugLine { get; private set; } = -1;
 	public bool dbug { get; set; } = false;
-	public byte bitplaneMask { get; set; } = 0xff;
-	public byte bitplaneMod { get; set; } = 0;
+	public byte bitplaneMask { get; private set; } = 0xff;
+	public byte bitplaneMod { get; private set; } = 0;
 
 	//	public int ddfSHack;
 	//	public int ddfEHack;
-	//	public int diwSHack;
-	//	public int diwEHack;
+	public int diwSHack { get; private set; } = 0;
+	public int diwEHack { get; private set; } = 0;
 
 	//	public bool ws;
 	private StringBuilder tsb = new StringBuilder();
@@ -388,12 +390,12 @@ public class ChipsetDebugger : IChipsetDebugger
 			//if (obj == (int)'T') ddfEHack--;
 			//if (obj == (int)'Y') ddfEHack = 0;
 
-			//if (obj == (int)'1') diwSHack++;
-			//if (obj == (int)'2') diwSHack--;
-			//if (obj == (int)'3') diwSHack = 0;
-			//if (obj == (int)'4') diwEHack++;
-			//if (obj == (int)'5') diwEHack--;
-			//if (obj == (int)'6') diwEHack = 0;
+			if (obj == (int)'1') diwSHack++;
+			if (obj == (int)'2') diwSHack--;
+			if (obj == (int)'3') diwSHack = 0;
+			if (obj == (int)'4') diwEHack++;
+			if (obj == (int)'5') diwEHack--;
+			if (obj == (int)'6') diwEHack = 0;
 
 			if (obj == (int)'A') bitplaneMask ^= 1;
 			if (obj == (int)'S') bitplaneMask ^= 2;
