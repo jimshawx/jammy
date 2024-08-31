@@ -694,7 +694,7 @@ public class Denise : IDenise
 			//is it the visible area horizontally?
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
 			//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
-			if (clock.HorizontalPos >= ((diwstrth /*+ debugger.diwSHack*/) >> 1)  && clock.HorizontalPos < ((diwstoph /*+ debugger.diwEHack*/) >> 1) )
+			if (clock.HorizontalPos >= ((diwstrth + debugger.diwSHack -0) >> 1)  && clock.HorizontalPos < ((diwstoph + debugger.diwEHack -0) >> 1) )
 			{
 				//CopperBitplaneConvert();
 				pixelAction();
@@ -824,8 +824,9 @@ public class Denise : IDenise
 	private void EndDeniseLine()
 	{
 		//cosmetics, draw some right border
+		blanking = true;
 		for (int i = 0; i < RIGHT_BORDER; i++)
-			CopperBitplaneConvert();
+			RunDeniseTick();
 
 		//this should be a no-op
 		//System.Diagnostics.Debug.Assert(SCREEN_WIDTH - (dptr - lineStart) == 0);

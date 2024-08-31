@@ -80,6 +80,15 @@ namespace Jammy.Core.Custom
 		{
 			//clock.WaitForTick();
 			while (RunStateMachine()) ;
+
+			//test the blitter state machine by running it to completion immediately
+			//while (status != BlitterState.Idle)
+			//{
+			//	RunStateMachine();
+			//	if (memory.IsWaitingForDMA(DMASource.Blitter))
+			//		memory.DebugExecuteDMAActivity(DMASource.Blitter);
+			//}
+
 			//clock.Ack();
 		}
 
@@ -88,8 +97,6 @@ namespace Jammy.Core.Custom
 			if (status == BlitterState.Idle) return false;
 
 			if (memory.IsWaitingForDMA(DMASource.Blitter)) return false;
-
-			if (!memory.IsDMAEnabled(DMA.BLTEN)) return false;
 
 			switch (status)
 			{
@@ -337,8 +344,8 @@ namespace Jammy.Core.Custom
 			if ((dmacon & (1 << 9)) == 0)
 				logger.LogTrace($"DMAEN is off! @{insaddr:X8}");
 
-			BlitImmediate(blitWidth, blitHeight);
-			//BeginBlit();
+			//BlitImmediate(blitWidth, blitHeight);
+			BeginBlit();
 		}
 
 		private bool BeginBlit()
@@ -999,18 +1006,11 @@ namespace Jammy.Core.Custom
 				bltdpt = bltcpt;
 			}
 
-			//write the BZERO bit in DMACON
-			//if (bltzero == 0)
-			//	custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 13), Size.Word);
-			//else
-			//	custom.Write(0, ChipRegs.DMACON, (1u << 13), Size.Word);
-			//clear BZERO
+			//clear BZERO if necessary and disable BBUSY in DMACON
 			ushort dmacon = 1 << 14;
 			if (bltzero != 0)
-				dmacon|=1 << 13;
+				dmacon |= 1 << 13;
 
-			//disable blitter busy in DMACON
-			//custom.Write(0, ChipRegs.DMACON, (1u << 14), Size.Word);
 			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
