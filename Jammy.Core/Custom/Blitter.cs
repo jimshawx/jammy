@@ -81,6 +81,11 @@ namespace Jammy.Core.Custom
 			//clock.WaitForTick();
 			while (RunStateMachine()) ;
 
+			var currentState = status;
+			while (RunStateMachine()) ;
+			if (currentState != status)
+				logger.LogTrace($"{currentState}->{status}");
+
 			//test the blitter state machine by running it to completion immediately
 			//while (status != BlitterState.Idle)
 			//{
@@ -270,6 +275,10 @@ namespace Jammy.Core.Custom
 		{
 			if (blitterLog)
 				WriteBlitterState();
+
+			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			if ((dmacon & (1 << 14)) != 0 || status != BlitterState.Idle)
+				logger.LogTrace($"Previous blit not finished {((dmacon & (1 << 14)) != 0 ? "BBUSY" : "~BBUSY")} {status}");
 
 			if ((bltcon1 & 1) != 0)
 			{
@@ -505,10 +514,11 @@ namespace Jammy.Core.Custom
 
 			bltzero |= bltddat;
 
+			bool x = false;
 			if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
-				DelayedWrite(bltdpt, (ushort)bltddat);
+				x = DelayedWrite(bltdpt, (ushort)bltddat);
 
-			return false;
+			return x;
 		}
 
 		private bool BlitEndOfWord()
@@ -705,8 +715,8 @@ namespace Jammy.Core.Custom
 			if (blitterDump)
 				DumpBlitterState(bltsize>>6);
 
-			LineImmediate(_);
-			//LineBegin();
+			//LineImmediate(_);
+			LineBegin();
 		}
 
 		private uint length;
@@ -770,7 +780,7 @@ namespace Jammy.Core.Custom
 		//-BC-BD (B is read twice)
 		private bool LineA()
 		{
-			status = BlitterState.LineC;
+			status = BlitterState.LineB;
 
 			bltadat = 0x8000u >> x0;
 			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
@@ -816,7 +826,7 @@ namespace Jammy.Core.Custom
 			if ((bltcon0 & 0x40) != 0) bltddat |= bltadat & bltbdatror & ~bltcdat;
 			if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdatror & bltcdat;
 
-			status = BlitterState.LineD;
+			status = BlitterState.LineB2;
 
 			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 
@@ -862,19 +872,9 @@ namespace Jammy.Core.Custom
 			{
 				x1 += dm;
 				x0 += sx;
-				if (x0 >= 16)
-				{
-					x0 = 0;
-					bltcpt += 2;
-				}
-
-				if (x0 < 0)
-				{
-					x0 = 15;
-					bltcpt -= 2;
-				}
+				if (x0 >= 16) {	x0 = 0;	bltcpt += 2; }
+				if (x0 < 0)	{ x0 = 15; bltcpt -= 2; }
 			}
-
 			y1 -= dy;
 			if (y1 < 0)
 			{
@@ -890,7 +890,7 @@ namespace Jammy.Core.Custom
 			
 			length--;
 			if (length != 0)
-				status = BlitterState.LineB;
+				status = BlitterState.LineA;
 			else
 				status = BlitterState.LineEnd;
 
@@ -939,8 +939,6 @@ namespace Jammy.Core.Custom
 
 			uint bltzero = 0;
 
-			//set blitter busy in DMACON
-			//custom.Write(insaddr, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
 			//set BBUSY and BZERO
 			dma.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
 
