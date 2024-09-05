@@ -139,7 +139,7 @@ namespace Jammy.Core.Memory
 			var ranges = GetBulkRanges();
 			foreach (var range in GetBulkRanges())
 			{
-				if (range.Length == 0) continue;
+				if (range.Length < (uint)bytes.Length) continue;
 				for (uint i = 0; i < range.Length - (uint)bytes.Length; i++)
 				{
 					if (MemoryExtensions.SequenceEqual(range.Memory.AsSpan((int)i, bytes.Length), bytes))
