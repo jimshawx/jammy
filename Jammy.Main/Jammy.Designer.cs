@@ -92,6 +92,7 @@ namespace Jammy.Main
 			tbCommand = new System.Windows.Forms.TextBox();
 			btnINTDIS = new System.Windows.Forms.Button();
 			btnStringScan = new System.Windows.Forms.Button();
+			btnAnalyseFlow = new System.Windows.Forms.Button();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -224,7 +225,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 657);
+			txtMemory.Size = new System.Drawing.Size(1390, 652);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -435,7 +436,7 @@ namespace Jammy.Main
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(517, 987);
+			txtCopper.Size = new System.Drawing.Size(512, 987);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -725,7 +726,7 @@ namespace Jammy.Main
 			lbIntvec.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbIntvec.FormattingEnabled = true;
 			lbIntvec.ItemHeight = 26;
-			lbIntvec.Location = new System.Drawing.Point(3, 1007);
+			lbIntvec.Location = new System.Drawing.Point(-2, 1007);
 			lbIntvec.Name = "lbIntvec";
 			lbIntvec.Size = new System.Drawing.Size(519, 238);
 			lbIntvec.TabIndex = 27;
@@ -781,11 +782,24 @@ namespace Jammy.Main
 			btnStringScan.UseVisualStyleBackColor = true;
 			btnStringScan.Click += btnStringScan_Click;
 			// 
+			// btnAnalyseFlow
+			// 
+			btnAnalyseFlow.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			btnAnalyseFlow.Location = new System.Drawing.Point(2014, 647);
+			btnAnalyseFlow.Margin = new System.Windows.Forms.Padding(6);
+			btnAnalyseFlow.Name = "btnAnalyseFlow";
+			btnAnalyseFlow.Size = new System.Drawing.Size(132, 49);
+			btnAnalyseFlow.TabIndex = 54;
+			btnAnalyseFlow.Text = "Analyse";
+			btnAnalyseFlow.UseVisualStyleBackColor = true;
+			btnAnalyseFlow.Click += btnAnalyseFlow_Click;
+			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2710, 1291);
+			Controls.Add(btnAnalyseFlow);
 			Controls.Add(btnStringScan);
 			Controls.Add(btnINTDIS);
 			Controls.Add(tbCommand);
@@ -903,6 +917,7 @@ namespace Jammy.Main
 		private System.Windows.Forms.TextBox tbCommand;
 		private System.Windows.Forms.Button btnINTDIS;
 		private System.Windows.Forms.Button btnStringScan;
+		private System.Windows.Forms.Button btnAnalyseFlow;
 	}
 }
 

@@ -18,14 +18,14 @@ namespace Jammy.Disassembler
 		private StringBuilder asm;
 		private uint pc;
 		private byte[] memory;
-		//private IEnumerable<byte> memoryE;
 		private uint address;
+		private DAsm dasm;
 
 		public DAsm Disassemble(uint add, IEnumerable<byte> m)
 		{
 			try
 			{
-				var dasm = new DAsm();
+				dasm = new DAsm();
 				memory = m.ToArray();
 				//memoryE = m;
 				pc = 0;
@@ -280,6 +280,7 @@ namespace Jammy.Disassembler
 							{
 								ushort d16 = read16(pc);
 								uint d32 = (uint)(address + pc + (short)d16);
+								dasm.ea = d32;
 								pc += 2;
 								Append($"{fmtX8(d32)}(pc)");
 								return 0;
@@ -303,6 +304,7 @@ namespace Jammy.Disassembler
 						case 0b000://(xxx).w
 							{
 								uint ea = (uint)(short)read16(pc);
+								dasm.ea = ea;
 								pc += 2;
 								Append($"{fmtX4(ea)}");
 								return ea;
@@ -310,6 +312,7 @@ namespace Jammy.Disassembler
 						case 0b001://(xxx).l
 							{
 								uint ea = read32(pc);
+								dasm.ea = ea;
 								pc += 4;
 								Append($"{fmtX8(ea)}");
 								return ea;
@@ -1002,6 +1005,7 @@ namespace Jammy.Disassembler
 			else
 			{
 				Append("b");
+				dasm.type = M_TYPE.M_Bcc;
 				switch (cond)
 				{
 					case 2:
@@ -1140,12 +1144,14 @@ namespace Jammy.Disassembler
 		private void bsr(int type)
 		{
 			Append("bsr");
+			dasm.type = M_TYPE.M_BSR;
 			bra2(type);
 		}
 
 		private void bra(int type)
 		{
 			Append("bra");
+			dasm.type = M_TYPE.M_BRA;
 			bra2(type);
 		}
 
@@ -1157,6 +1163,7 @@ namespace Jammy.Disassembler
 			if (disp == 0) {disp = (uint)(short)read16(pc); pc+=2; size = Size.Word; }
 			else if (disp == 0xffffffff) {disp = read32(pc); pc += 4; size = Size.Long; }
 			disp += address+2;
+			dasm.ea = disp;
 			Append(size);
 			Append($"#{fmtX8(disp)}");
 		}
@@ -1240,6 +1247,9 @@ namespace Jammy.Disassembler
 			pc += 2;
 
 			Append($"db");
+			dasm.type = M_TYPE.M_DBcc;
+			dasm.ea = target;
+
 			int cond = (type >> 8) & 0xf;
 			switch (cond)
 			{
@@ -2067,12 +2077,14 @@ namespace Jammy.Disassembler
 		private void jmp(int type)
 		{
 			Append($"jmp ");
+			dasm.type = M_TYPE.M_JMP;
 			fetchEA(type);
 		}
 
 		private void jsr(int type)
 		{
 			Append($"jsr ");
+			dasm.type = M_TYPE.M_JSR;
 			fetchEA(type);
 		}
 

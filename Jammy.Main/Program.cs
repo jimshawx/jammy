@@ -31,6 +31,7 @@ using Jammy.Core.EmulationWindow.DX;
 using Jammy.Debugger.Interceptors;
 using Jammy.NativeOverlay;
 using Jammy.Core.CPU.Musashi.CSharp;
+using Jammy.Graph;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -140,6 +141,8 @@ namespace Jammy.Main
 				.AddSingleton<IChipsetDebugger, ChipsetDebugger>()
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 				.AddSingleton<Jammy>()
+				.AddSingleton<IGraph, Graph.Graph>()
+				.AddSingleton<IFlowAnalyser, FlowAnalyser>()
 				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 			//configure Blitter

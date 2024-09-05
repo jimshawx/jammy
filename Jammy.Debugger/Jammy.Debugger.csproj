@@ -14,6 +14,7 @@
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
     <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
+    <ProjectReference Include="..\Jammy.Types\Jammy.Types.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />

@@ -28,6 +28,8 @@ using Vortice.Direct3D11;
 using System.Runtime.InteropServices;
 using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Core.Memory;
+using Jammy.Debugger;
+using Jammy.Graph;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -43,6 +45,8 @@ namespace Jammy.Main
 		private readonly IDisassembly disassembly;
 		private readonly IDebugger debugger;
 		private readonly IAnalysis analysis;
+		private readonly IFlowAnalyser flowAnalyser;
+		private readonly IGraph graph;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
@@ -58,6 +62,7 @@ namespace Jammy.Main
 		};
 
 		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger, IAnalysis analysis,
+			IFlowAnalyser flowAnalyser, IGraph graph,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -67,6 +72,8 @@ namespace Jammy.Main
 			this.disassembly = disassembly;
 			this.debugger = debugger;
 			this.analysis = analysis;
+			this.flowAnalyser = flowAnalyser;
+			this.graph = graph;
 			this.logger = logger;
 
 			InitializeComponent();
@@ -1235,6 +1242,15 @@ namespace Jammy.Main
 			Amiga.UnlockEmulation();
 			if (refresh)
 				UpdateDisassembly();
+		}
+
+		private void btnAnalyseFlow_Click(object sender, EventArgs e)
+		{
+			Amiga.LockEmulation();
+			var regs = debugger.GetRegs();
+			var trace = flowAnalyser.start_pc_trace(regs.PC);
+			graph.graph_nodes(trace.nodes);
+			Amiga.UnlockEmulation();
 		}
 	}
 

@@ -8,12 +8,26 @@ using Jammy.Types.Options;
 
 namespace Jammy.Types
 {
+	public enum M_TYPE
+	{
+		M_NONE,
+		M_Bcc, //0110xxxx_xxxxxxxx
+		M_DBcc,//0101_xxxx_11001_xxx 
+		M_BRA, //01100000_xxxxxxxx
+		M_BSR, //01100001_xxxxxxxx
+		M_JMP, //0100111011_xxxxxx
+		M_JSR, //0100111010_xxxxxx
+	}
+
 	public class DAsm
 	{
 		public string Asm { get; set; }
 		public uint Address { get; set; }
 
 		public byte[] Bytes { get;set;}
+
+		public uint ea { get; set;}
+		public M_TYPE type {  get; set; }
 
 		public override string ToString()
 		{
@@ -27,6 +41,9 @@ namespace Jammy.Types
 
 			string[] sp = Asm.Split(' ');
 			s.Append($"{sp[0], -9} {string.Join(" ", sp.Skip(1))}");
+
+			//if (type != M_TYPE.M_NONE)
+			//	s.Append($"{type} {ea:X8}");
 
 			return s.ToString();
 		}
@@ -64,7 +81,8 @@ namespace Jammy.Types
 				else
 					s.Append(" ");
 			}
-
+			//if (type != M_TYPE.M_NONE)
+			//	s.Append($"\t\t\t\t{type} {ea:X8}");
 			return s.ToString();
 		}
 	}
