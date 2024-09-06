@@ -2,6 +2,7 @@
 using Jammy.Debugger.Types;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Jammy.Debugger
@@ -27,6 +28,7 @@ namespace Jammy.Debugger
 		public PC_TRACE start_pc_trace(uint pc)
 		{
 			var pctrace = new PC_TRACE();
+			pctrace.Start = pc;
 			trace(new_node(pc, BRANCH_TYPE.BT_FALLTHROUGH, pctrace, null), 0, pctrace);
 			return pctrace;
 		}
@@ -97,6 +99,8 @@ namespace Jammy.Debugger
 						curr.to = target;
 						curr.end = pc;
 
+						Debug.Assert(target != 0);
+
 						curr.taken = new_node(target, BRANCH_TYPE.BT_JP, pctrace, curr);
 						trace(curr.taken, depth + 1, pctrace);
 						return;
@@ -109,6 +113,8 @@ namespace Jammy.Debugger
 						curr.to = target;
 						curr.end = pc;
 
+						Debug.Assert(target != 0);
+
 						curr.taken = new_node(target, BRANCH_TYPE.BT_JP, pctrace, curr);
 						trace(curr.taken, depth + 1, pctrace);
 
@@ -118,12 +124,15 @@ namespace Jammy.Debugger
 
 					case M_TYPE.M_BSR:
 					case M_TYPE.M_JSR:
-
 						//bsr/jsr abs
+
+						//don't know where the branch is going, eg jsr -12(A6) , so treat it as just another instruction
+						if (target == 0)
+							break;
+						
 						curr.from = pc - size;
 						curr.to = target;
 						curr.end = pc;
-
 						curr.taken = new_node(target, BRANCH_TYPE.BT_CALL, pctrace, curr);
 						trace(curr.taken, depth + 1, pctrace);
 
@@ -154,10 +163,12 @@ namespace Jammy.Debugger
 				return node;
 			}
 
-			var c = new BRANCH_NODE();
-			c.start = start;
-			c.branchtype = branchtype;
-			c.parent = from;
+			var c = new BRANCH_NODE
+			{
+				start = start,
+				branchtype = branchtype,
+				parent = from
+			};
 			pctrace.nodes.Add(c);
 			return c;
 		}

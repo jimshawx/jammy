@@ -26,14 +26,14 @@ namespace Jammy.Debugger.Types
 		public BRANCH_TYPE branchtype; //type af branch taken to get here
 		public bool visited;
 
-		public IntPtr node;
-		public IntPtr edit;
+		public IntPtr agnode;
 
 		public BRANCH_NODE parent;
 	}
 
 	public class PC_TRACE
 	{
+		public uint Start;
 		public List<BRANCH_NODE> nodes { get; } = new List<BRANCH_NODE>();
 	}
 }

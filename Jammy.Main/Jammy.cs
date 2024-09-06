@@ -1249,7 +1249,7 @@ namespace Jammy.Main
 			Amiga.LockEmulation();
 			var regs = debugger.GetRegs();
 			var trace = flowAnalyser.start_pc_trace(regs.PC);
-			graph.graph_nodes(trace.nodes);
+			graph.GraphBranches(trace);
 			Amiga.UnlockEmulation();
 		}
 	}

@@ -25,7 +25,7 @@ namespace Jammy.Graph
 
 	public interface IGraph
 	{
-		void graph_nodes(List<BRANCH_NODE> branches);
+		void GraphBranches(PC_TRACE trace);
 	}
 
 	//public struct Agdesc_s
@@ -97,12 +97,6 @@ namespace Jammy.Graph
 		[DllImport("graphviz/x64/cgraph.dll")]
 		private extern static int agclose(Agraph_t g);
 
-		[DllImport("user32.dll")]
-		private static extern int GetSystemMetrics(int metric);
-
-		private const int SM_CXVSCROLL = 2;
-		private const int SM_CYHSCROLL = 3;
-
 		private const int AGRAPH = 0;
 		private const int AGNODE = 1;
 		private const int AGOUTEDGE = 2;
@@ -138,10 +132,10 @@ namespace Jammy.Graph
 
 			gvFreeContext(gvc);
 
-			//test();
+			//Test();
 		}
 
-		private void test()
+		private void Test()
 		{
 			//Agdesc_t strictdirected = { 1, 1, 0, 1 };
 			uint strictdirected = 0b1011;
@@ -213,9 +207,10 @@ namespace Jammy.Graph
 			return d / window_dpi;
 		}
 
-		private Form setup_window()
+		private Form CreateGraphWindow(uint pc, Font font)
 		{
-			var f = new Form { Width = 100, Height = 100, Name = "Graph", Text = "Graph", ControlBox = true, FormBorderStyle = FormBorderStyle.SizableToolWindow, MinimizeBox = true, MaximizeBox = true };
+			var f = new Form { Width = 100, Height = 100, Font = font, Name = "Graph", Text = $"Graph @{pc:X8}", 
+				ControlBox = true, FormBorderStyle = FormBorderStyle.SizableToolWindow, MinimizeBox = true, MaximizeBox = true };
 			f.Controls.Add(new PictureBox { Dock = DockStyle.Fill });
 			return f;
 		}
@@ -248,7 +243,7 @@ namespace Jammy.Graph
 			return sb.ToString();
 		}
 
-		private Control create_edit_for_node(BRANCH_NODE node, Font font, Form window, out int n_lines)
+		private Control CreateNodeTextBox(BRANCH_NODE node, Font font, Form window, out int n_lines)
 		{
 			n_lines = 1;
 			uint pc = node.start;
@@ -260,6 +255,7 @@ namespace Jammy.Graph
 			edit.Text = pc_to_label(pc, 0, 0, 0) + "\r\n" + disassemble(pc, node.end, out n_lines, 4);
 			edit.Width = 100;
 			edit.Height = 30;
+			edit.Font = font;
 
 			string tipText = pc_to_label(pc, 0, 0, 0) + "\r\n" + disassemble(pc, node.end, out var _, -1);
 
@@ -302,26 +298,30 @@ namespace Jammy.Graph
 			return $"L{pc:X8}:";
 		}
 
-		private double window_dpi = 96.0;
-		private double input_scale = 1.0;
-		private double output_scale = 1.0;
+		private const float window_dpi = 96.0f;
+		private float input_scale = 1.0f;
+		private float output_scale = 1.0f;
 
 		private const int MARGIN_X = 10;
 		private const int MARGIN_Y = 10;
 
-		private class SIZE
-		{
-			public int cx;
-			public int cy;
-		}
-
-		public void graph_nodes(List<BRANCH_NODE> branches)
+		public void GraphBranches(PC_TRACE trace)
 		{
 			var ss = new SemaphoreSlim(1);
 			ss.Wait();
 			var t = new Thread(() =>
 			{
-				var window = cgraph_nodes(branches);
+				var window = CreateBranchNodes(trace);
+				window.FormClosing += (object? sender, FormClosingEventArgs e) =>
+					{
+						var controls = new List<Control>(window.Controls.Cast<Control>());
+						window.Controls.Clear();
+						var p = controls.OfType<PictureBox>().Single();
+						p.Image.Dispose();
+						p.Dispose();
+						foreach (var v in controls)
+							v.Dispose();
+					};
 				ss.Release();
 				window.Show();
 				Application.Run(window);
@@ -331,14 +331,14 @@ namespace Jammy.Graph
 			ss.Wait();
 		}
 
-		private Form cgraph_nodes(List<BRANCH_NODE> branches)//, int node_idx)
+		private Form CreateBranchNodes(PC_TRACE trace)
 		{
 			logger.LogTrace("graphing...");
 
-			output_scale = 1.0;
-			input_scale = 0.8;
+			output_scale = 1.0f;
+			input_scale = 0.8f;
 
-			var sorter = branches.OrderBy(x => x.start).ToList();
+			var branchNodes = trace.nodes.OrderBy(x => x.start).ToList();
 
 			//struct Agdesc_s strictdirected = { 1, 1, 0, 1 };
 			uint strictdirected = 0b1011;
@@ -361,33 +361,26 @@ namespace Jammy.Graph
 
 			var nodes = new List<Agnode_t>();
 
-			int k = 0;
-			foreach (var s in sorter)
+			int nodeId = 0;
+			foreach (var branchNode in branchNodes)
 			{
-				var n = agnode(g, $"{pc_to_label(s.start, 0, 0, 0)}", TRUE);
-				nodes.Add(n);
-
-				agxset(n, id, $"{k++}");
-
-				s.node = n;
+				branchNode.agnode = agnode(g, $"{pc_to_label(branchNode.start, 0, 0, 0)}", TRUE);
+				agxset(branchNode.agnode, id, $"{nodeId++}");
+				nodes.Add(branchNode.agnode);
 			}
-
-			var edges = new List<Agedge_t>();
 
 			var font = new Font("Consolas", 6.0f, FontStyle.Regular, GraphicsUnit.Point);
 
-			SIZE size = new SIZE();
-			//IntPtr font = IntPtr.Zero;
-			var window = setup_window();
-			window.Font = font;
+			var size = new Size();
+			var window = CreateGraphWindow(trace.Start, font);
 			window.Show();
 			window.Invoke(() =>
 			{
 				var gf = Graphics.FromHwnd(window.Handle);
 				string test = "01234567801234567801234678012345678901234\r\n0\r\n";
 				var dim = gf.MeasureString(test, window.Font);
-				size.cx = (int)dim.Width;
-				size.cy = (int)(dim.Height / 2.0f);
+				size.Width = (int)dim.Width;
+				size.Height = (int)(dim.Height / 2.0f);
 				gf.Dispose();
 			});
 
@@ -397,37 +390,34 @@ namespace Jammy.Graph
 			//node position is the middle of the box
 			//need to convert points to device pixels (72 points is usually 96dp)
 
-			List<Control> eb = new List<Control>();
-			foreach (var s in sorter)
+			var edges = new List<Agedge_t>();
+			var textBoxes = new List<Control>();
+			foreach (var branchNode in branchNodes)
 			{
 				int n_lines;
-				//s.edit = create_edit_for_node(s, window, out n_lines).Handle;
-				var ebb = create_edit_for_node(s, font, window, out n_lines);
-				ebb.Font = font;
-				eb.Add(ebb);
-				window.Controls.Add(ebb);
-				s.edit = ebb.Handle;
+				var textBox = CreateNodeTextBox(branchNode, font, window, out n_lines);
+				textBoxes.Add(textBox);
+				window.Controls.Add(textBox);
 
-				double sx = devToIns(size.cx);
-				double sy = devToIns(size.cy * n_lines);
+				double sx = devToIns(size.Width);
+				double sy = devToIns(size.Height * n_lines);
 
-				agxset(s.node, w, $"{sx:F4}");
-				agxset(s.node, h, $"{sy:F4}");
+				agxset(branchNode.agnode, w, $"{sx:F4}");
+				agxset(branchNode.agnode, h, $"{sy:F4}");
 
-				if (s.nottaken != null)
-					edges.Add(agedge(g, s.node, s.nottaken.node, "", TRUE));
-				if (s.taken != null)
-					edges.Add(agedge(g, s.node, s.taken.node, "", TRUE));
+				if (branchNode.nottaken != null)
+					edges.Add(agedge(g, branchNode.agnode, branchNode.nottaken.agnode, "", TRUE));
+				if (branchNode.taken != null)
+					edges.Add(agedge(g, branchNode.agnode, branchNode.taken.agnode, "", TRUE));
 			}
 
 			logger.LogTrace("layout...");
 
 			GVC_t gvc = gvContext();
 
-			int err;
 			string[] algs = ["dot", "neato", "fdp", "sfdp", "twopi", "circo", "patchwork", "osage"];
-			int alg_no = 0;
-			err = gvLayout(gvc, g, algs[alg_no]);
+			const int alg_no = 0;
+			int err = gvLayout(gvc, g, algs[alg_no]);
 			Debug.Assert(err == 0);
 
 			//debug
@@ -453,38 +443,36 @@ namespace Jammy.Graph
 
 			logger.LogTrace("rendering...\n");
 
-			int boxw, boxh, fboxh;
 			string[] bbox = tok(Marshal.PtrToStringAnsi(agxget(g, bb)));
-			boxw = ptsToDev(bbox[2]);
-			boxh = ptsToDev(bbox[3]);
+			int boxw = ptsToDev(bbox[2]);
+			int boxh = ptsToDev(bbox[3]);
 
 			//scale to 1024x1024 max
-			{
-				output_scale = Math.Min(1.0, 800.0 / Math.Max(boxw, boxh));
-				logger.LogTrace($"output scale {output_scale}\n");
-				boxw = (int)((float)boxw * output_scale);
-				boxh = (int)((float)boxh * output_scale);
-			}
+			output_scale = MathF.Min(1.0f, 1024.0f / MathF.Max(boxw, boxh));
+			logger.LogTrace($"output scale {output_scale}\n");
+			boxw = (int)((float)boxw * output_scale);
+			boxh = (int)((float)boxh * output_scale);
 
-			fboxh = boxh;
+			int fboxh = boxh;
 
 			boxw += 2 * MARGIN_X;
 			boxh += 2 * MARGIN_Y;
 
-			window.Width = boxw;
-			window.Height = boxh;
-			window.MaximumSize = new Size(window.Width + GetSystemMetrics(SM_CXVSCROLL), window.Height + GetSystemMetrics(SM_CYHSCROLL));
+			window.ClientSize = new Size(boxw, boxh);
+			window.MaximumSize = window.Size;
 
 			var bitmap = new Bitmap(boxw, boxh, PixelFormat.Format32bppRgb);
 			var gfx = Graphics.FromImage(bitmap);
 			
-			Pen pen = new Pen(Color.Black);
-			Brush brush = new SolidBrush(Color.DarkRed);
+			var pen = new Pen(Color.Black);
+			var brush = new SolidBrush(Color.DarkRed);
 			gfx.FillRectangle(new SolidBrush(Color.White), 0, 0, bitmap.Width, bitmap.Height);
 
-			foreach ((var s, var t) in sorter.Zip(eb))
+			gfx.TranslateTransform(MARGIN_X, MARGIN_Y);
+
+			foreach ((var branchNode, var textBox) in branchNodes.Zip(textBoxes))
 			{
-				Agnode_t n = s.node;
+				Agnode_t n = branchNode.agnode;
 				int width = insToDev(Marshal.PtrToStringAnsi(agxget(n, w)));
 				int height = insToDev(Marshal.PtrToStringAnsi(agxget(n, h)));
 
@@ -497,12 +485,8 @@ namespace Jammy.Graph
 
 				gfx.FillRectangle(brush, x, y, width, height);
 
-				var tb = t;
-				tb.Left = x;
-				tb.Top = y;
-				tb.Width = width;
-				tb.Height = height;
-				tb.BringToFront();
+				textBox.ClientSize = new Size(width, height);
+				textBox.Location = new Point(x+MARGIN_X, y+MARGIN_Y);
 			}
 
 			foreach (var edge in edges)
@@ -511,53 +495,44 @@ namespace Jammy.Graph
 				int x, y;
 				if (pp[3] == null) continue;
 
-				x = ptsToDev(pp[3]); y = ptsToDev(pp[4]);
-				//MoveToEx(hdc, x, y, IntPtr.Zero);
-				PointF p = new PointF(x, y);
+				x = ptsToDev(pp[3]);
+				y = ptsToDev(pp[4]);
+				var currPos = new Point(x, y);
 				int j = 5;
 				while (pp[j] != null)
 				{
-					x = ptsToDev(pp[j]); y = ptsToDev(pp[j + 1]);
-					//LineTo(hdc, x, y);
-					var xc = new PointF(x, y);
-					gfx.DrawLine(pen, p, xc);
-					logger.LogTrace($"L ({p.X},{p.Y})->({xc.X},{xc.Y})");
-					p = xc;
-					j += 2;
+					x = ptsToDev(pp[j++]);
+					y = ptsToDev(pp[j++]);
+					var nextPos = new Point(x, y);
+					gfx.DrawLine(pen, currPos, nextPos);
+					currPos = nextPos;
 				}
-				int ex, ey;
-				ex = ptsToDev(pp[1]); ey = ptsToDev(pp[2]);
-				//LineTo(hdc, ex, ey);
-				var q = new PointF(ex, ey);
-				gfx.DrawLine(pen, p, q);
-				logger.LogTrace($"L ({p.X},{p.Y})->({q.X},{q.Y})");
+				int ex = ptsToDev(pp[1]);
+				int ey = ptsToDev(pp[2]);
+
+				var endPos = new PointF(ex, ey);
+				gfx.DrawLine(pen, currPos, endPos);
 
 				//arrowhead
-				double dx = (double)(ex - x);
-				double dy = (double)(ey - y);
-				double a = Math.Atan2(dy, dx);
-				double arrowlen = Math.Max(2.0, 7.0 * output_scale);
-				double ax = ex + arrowlen * Math.Cos(a + Math.PI * 1.1);
-				double ay = ey + arrowlen * Math.Sin(a + Math.PI * 1.1);
-				//LineTo(hdc, (int)ax, (int)ay);
-				gfx.DrawLine(pen, q.X, q.Y, (float)ax, (float)ay);
-				//logger.LogTrace($"L ({q.X},{q.Y})->({ax},{ay})");
+				float dx = (float)(ex - x);
+				float dy = (float)(ey - y);
+				float a = MathF.Atan2(dy, dx);
+				float arrowlen = MathF.Max(2.0f, 7.0f * output_scale);
+				float ax, ay;
 
-				//MoveToEx(hdc, ex, ey, IntPtr.Zero);
-				ax = ex + arrowlen * Math.Cos(a - Math.PI * 1.1);
-				ay = ey + arrowlen * Math.Sin(a - Math.PI * 1.1);
-				//LineTo(hdc, (int)ax, (int)ay);
-				gfx.DrawLine(pen, q.X, q.Y, (float)ax, (float)ay);
-				//logger.LogTrace($"L ({q.X},{q.Y})->({ax},{ay})");
+				ax = ex + arrowlen * MathF.Cos(a + MathF.PI * 1.1f);
+				ay = ey + arrowlen * MathF.Sin(a + MathF.PI * 1.1f);
+				gfx.DrawLine(pen, endPos.X, endPos.Y, ax, ay);
+
+				ax = ex + arrowlen * MathF.Cos(a - MathF.PI * 1.1f);
+				ay = ey + arrowlen * MathF.Sin(a - MathF.PI * 1.1f);
+				gfx.DrawLine(pen, endPos.X, endPos.Y, ax, ay);
 			}
 
-			var picture = window.Controls.OfType<PictureBox>().First();
+			var picture = window.Controls.OfType<PictureBox>().Single();
 			picture.Image = bitmap;
 			picture.Refresh();
 			picture.SendToBack();
-			picture.Show();
-			foreach (var c in window.Controls.OfType<TextBox>())
-				c.Show();
 
 			gfx.Dispose();
 
