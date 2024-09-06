@@ -212,6 +212,9 @@ namespace Jammy.Graph
 			var f = new Form { Width = 100, Height = 100, Font = font, Name = "Graph", Text = $"Graph @{pc:X8}", 
 				ControlBox = true, FormBorderStyle = FormBorderStyle.SizableToolWindow, MinimizeBox = true, MaximizeBox = true };
 			f.Controls.Add(new PictureBox { Dock = DockStyle.Fill });
+			f.HorizontalScroll.Enabled = true;
+			f.VerticalScroll.Enabled = true;
+			f.AutoScroll = true;
 			return f;
 		}
 
@@ -240,19 +243,22 @@ namespace Jammy.Graph
 				sb.AppendLine("...");
 				n_lines++;
 			}
-			return sb.ToString();
+			return sb.ToString().TrimEnd();
 		}
 
-		private Control CreateNodeTextBox(BRANCH_NODE node, Font font, Form window, out int n_lines)
+		private TextBox CreateNodeTextBox(BRANCH_NODE node, Font font, Form window, out int n_lines)
 		{
-			n_lines = 1;
 			uint pc = node.start;
 
 			var edit = new TextBox();
 			edit.Multiline = true;
 			edit.ReadOnly = true;
+			edit.WordWrap = false;
+			edit.BorderStyle = BorderStyle.None;
+			edit.Margin = new Padding(0);
 
-			edit.Text = pc_to_label(pc, 0, 0, 0) + "\r\n" + disassemble(pc, node.end, out n_lines, 4);
+			edit.Text = pc_to_label(pc, 0, 0, 0) + "\r\n" + disassemble(pc, node.end, out n_lines, -1);
+			n_lines++;
 			edit.Width = 100;
 			edit.Height = 30;
 			edit.Font = font;
@@ -304,9 +310,13 @@ namespace Jammy.Graph
 
 		private const int MARGIN_X = 10;
 		private const int MARGIN_Y = 10;
+		private const int MAX_BITMAP_DIM = 4096;
+		private const int MAX_WINDOW_DIM_X = 1920;
+		private const int MAX_WINDOW_DIM_Y = 1080;
 
 		public void GraphBranches(PC_TRACE trace)
 		{
+			logger.LogTrace($"#nodes {trace.nodes.Count}");
 			var ss = new SemaphoreSlim(1);
 			ss.Wait();
 			var t = new Thread(() =>
@@ -331,12 +341,28 @@ namespace Jammy.Graph
 			ss.Wait();
 		}
 
+		//private double MeasureText(TextBox tb)
+		//{
+		//	double y=0;
+		//	tb.Invoke(() =>
+		//	{
+		//		var gf = Graphics.FromHwnd(tb.Handle);
+		//		//eg.
+		//		string test = tb.Text;
+		//		var dim = gf.MeasureString(test, tb.Font);
+		//		y = dim.Height;
+
+		//		gf.Dispose();
+		//	});
+		//	return y;
+		//}
+
 		private Form CreateBranchNodes(PC_TRACE trace)
 		{
 			logger.LogTrace("graphing...");
 
 			output_scale = 1.0f;
-			input_scale = 0.8f;
+			input_scale = 1.0f;
 
 			var branchNodes = trace.nodes.OrderBy(x => x.start).ToList();
 
@@ -377,10 +403,14 @@ namespace Jammy.Graph
 			window.Invoke(() =>
 			{
 				var gf = Graphics.FromHwnd(window.Handle);
-				string test = "01234567801234567801234678012345678901234\r\n0\r\n";
+				//eg.
+				string test = "FC31BA  4C DF 4C 84             movem.l   (a7)+,d2/d7/a2/a3/a6\r\n0\r\n";
 				var dim = gf.MeasureString(test, window.Font);
+				var dim0 = gf.MeasureString(" ", window.Font);
 				size.Width = (int)dim.Width;
-				size.Height = (int)(dim.Height / 2.0f);
+				//size.Height = (int)(dim.Height / 2.0f);
+				size.Height = (int)MathF.Ceiling(dim.Height - dim0.Height);
+				
 				gf.Dispose();
 			});
 
@@ -391,13 +421,15 @@ namespace Jammy.Graph
 			//need to convert points to device pixels (72 points is usually 96dp)
 
 			var edges = new List<Agedge_t>();
-			var textBoxes = new List<Control>();
+			var textBoxes = new List<TextBox>();
 			foreach (var branchNode in branchNodes)
 			{
 				int n_lines;
 				var textBox = CreateNodeTextBox(branchNode, font, window, out n_lines);
 				textBoxes.Add(textBox);
 				window.Controls.Add(textBox);
+
+				//double yyy = MeasureText(textBox);
 
 				double sx = devToIns(size.Width);
 				double sy = devToIns(size.Height * n_lines);
@@ -447,8 +479,11 @@ namespace Jammy.Graph
 			int boxw = ptsToDev(bbox[2]);
 			int boxh = ptsToDev(bbox[3]);
 
+			if (boxw > MAX_BITMAP_DIM) boxw = MAX_BITMAP_DIM;
+			if (boxh > MAX_BITMAP_DIM) boxh = MAX_BITMAP_DIM;
+
 			//scale to 1024x1024 max
-			output_scale = MathF.Min(1.0f, 1024.0f / MathF.Max(boxw, boxh));
+			//output_scale = MathF.Min(1.0f, 1024.0f / MathF.Max(boxw, boxh));
 			logger.LogTrace($"output scale {output_scale}\n");
 			boxw = (int)((float)boxw * output_scale);
 			boxh = (int)((float)boxh * output_scale);
@@ -460,8 +495,13 @@ namespace Jammy.Graph
 
 			window.ClientSize = new Size(boxw, boxh);
 			window.MaximumSize = window.Size;
+			window.ClientSize = new Size(Math.Min(MAX_WINDOW_DIM_X, boxw), Math.Min(MAX_WINDOW_DIM_Y, boxh));
 
 			var bitmap = new Bitmap(boxw, boxh, PixelFormat.Format32bppRgb);
+			var pic = window.Controls.OfType<PictureBox>().Single();
+			pic.Dock = DockStyle.Top | DockStyle.Left;
+			pic.Width = boxw;
+			pic.Height = boxh;
 			var gfx = Graphics.FromImage(bitmap);
 			
 			var pen = new Pen(Color.Black);
@@ -517,7 +557,7 @@ namespace Jammy.Graph
 				float dx = (float)(ex - x);
 				float dy = (float)(ey - y);
 				float a = MathF.Atan2(dy, dx);
-				float arrowlen = MathF.Max(2.0f, 7.0f * output_scale);
+				float arrowlen = MathF.Max(2.0f, 15.0f * output_scale);
 				float ax, ay;
 
 				ax = ex + arrowlen * MathF.Cos(a + MathF.PI * 1.1f);
