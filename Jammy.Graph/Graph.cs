@@ -215,6 +215,7 @@ namespace Jammy.Graph
 			f.HorizontalScroll.Enabled = true;
 			f.VerticalScroll.Enabled = true;
 			f.AutoScroll = true;
+			f.BackColor = Color.White;
 			return f;
 		}
 
@@ -262,6 +263,7 @@ namespace Jammy.Graph
 			edit.Width = 100;
 			edit.Height = 30;
 			edit.Font = font;
+			edit.BackColor = Color.FromArgb(0xfb,0xfb,0xfb);
 
 			string tipText = pc_to_label(pc, 0, 0, 0) + "\r\n" + disassemble(pc, node.end, out var _, -1);
 
@@ -310,7 +312,7 @@ namespace Jammy.Graph
 
 		private const int MARGIN_X = 10;
 		private const int MARGIN_Y = 10;
-		private const int MAX_BITMAP_DIM = 4096;
+		private const int MAX_BITMAP_DIM = 8192;
 		private const int MAX_WINDOW_DIM_X = 1920;
 		private const int MAX_WINDOW_DIM_Y = 1080;
 
@@ -404,13 +406,11 @@ namespace Jammy.Graph
 			{
 				var gf = Graphics.FromHwnd(window.Handle);
 				//eg.
-				string test = "FC31BA  4C DF 4C 84             movem.l   (a7)+,d2/d7/a2/a3/a6\r\n0\r\n";
+				string test = "FC31BA  4CDF 4C84           movem.l   (a7)+,d2/d7/a2/a3/a6\r\n0\r\n";
 				var dim = gf.MeasureString(test, window.Font);
 				var dim0 = gf.MeasureString(" ", window.Font);
 				size.Width = (int)dim.Width;
-				//size.Height = (int)(dim.Height / 2.0f);
 				size.Height = (int)MathF.Ceiling(dim.Height - dim0.Height);
-				
 				gf.Dispose();
 			});
 
@@ -497,7 +497,7 @@ namespace Jammy.Graph
 			window.MaximumSize = window.Size;
 			window.ClientSize = new Size(Math.Min(MAX_WINDOW_DIM_X, boxw), Math.Min(MAX_WINDOW_DIM_Y, boxh));
 
-			var bitmap = new Bitmap(boxw, boxh, PixelFormat.Format32bppRgb);
+			var bitmap = new Bitmap(boxw, boxh, PixelFormat.Format16bppRgb565);
 			var pic = window.Controls.OfType<PictureBox>().Single();
 			pic.Dock = DockStyle.Top | DockStyle.Left;
 			pic.Width = boxw;

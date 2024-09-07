@@ -648,7 +648,7 @@ noBitplaneDMA:
 				//if we're in interlace mode
 				if ((bplcon0 & (1 << 2)) != 0)
 				{
-					value |= (ushort)((clock.VerticalPos & 1) << 15); //set LOF=1/0 on alternate frames
+					value |= (ushort)(clock.LongFrame() << 15); //set LOF=1/0 on alternate frames
 				}
 				else
 				{

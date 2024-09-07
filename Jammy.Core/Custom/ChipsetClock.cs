@@ -54,9 +54,10 @@ public class ChipsetClock : IChipsetClock
 		if (HorizontalPos == 226)
 			endOfLine = true;
 
-		if (HorizontalPos == 226 && VerticalPos == displayScanlines - 1)
+		if (HorizontalPos == 226 && VerticalPos == displayScanlines + LongFrame() - 1)
 		{
 			endOfFrame = true;
+			FrameCount++;
 			//logger.LogTrace($"{DateTime.Now:fff}");
 		}
 
@@ -120,6 +121,11 @@ public class ChipsetClock : IChipsetClock
 	{
 		HorizontalPos = 0;
 		VerticalPos = 0;
+	}
+
+	public int LongFrame()
+	{
+		return FrameCount&1;
 	}
 
 	public bool StartOfLine()

@@ -223,7 +223,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		uint HorizontalPos { get; }
 		uint VerticalPos { get; }
-		int FrameCount { get; }
+		//int FrameCount { get; }
 		uint Tick { get; }
 		bool StartOfLine(); 
 		bool EndOfLine();
@@ -238,6 +238,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Suspend();
 		void Resume();
 		void AllThreadsFinished();
+		int LongFrame();
 	}
 
 	public interface IPSUClock : IEmulate
