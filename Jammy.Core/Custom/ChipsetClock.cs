@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Threading;
 
 namespace Jammy.Core.Custom;
 
@@ -18,7 +14,7 @@ public class ChipsetClock : IChipsetClock
 	private IDMA dma;
 	private readonly ILogger<ChipsetClock> logger;
 	private readonly uint displayScanlines;
-	private readonly ManualResetEventSlim clockEvent = new ManualResetEventSlim(false);
+	//private readonly ManualResetEventSlim clockEvent = new ManualResetEventSlim(false);
 	//private readonly ManualResetEvent ackEvent = new ManualResetEvent(false);
 
 	public ChipsetClock(IOptions<EmulationSettings> settings, ILogger<ChipsetClock> logger)
@@ -32,7 +28,7 @@ public class ChipsetClock : IChipsetClock
 
 	public uint HorizontalPos { get; private set; }
 	public uint VerticalPos { get; private set; }
-	public int FrameCount { get; private set; }
+	public uint FrameCount { get; private set; }
 	public uint Tick { get; private set; }
 	private bool startOfFrame;
 	private bool endOfFrame;
@@ -57,7 +53,6 @@ public class ChipsetClock : IChipsetClock
 		if (HorizontalPos == 226 && VerticalPos == displayScanlines + LongFrame() - 1)
 		{
 			endOfFrame = true;
-			FrameCount++;
 			//logger.LogTrace($"{DateTime.Now:fff}");
 		}
 
@@ -97,9 +92,14 @@ public class ChipsetClock : IChipsetClock
 			HorizontalPos++;
 
 		if (endOfFrame)
+		{
 			VerticalPos = 0;
+			FrameCount++;
+		}
 		else if (endOfLine)
+		{
 			VerticalPos++;
+		}
 
 		//now the end of Tock() is finished, release all the threads
 		//which will all block until the next Tick()
@@ -123,7 +123,7 @@ public class ChipsetClock : IChipsetClock
 		VerticalPos = 0;
 	}
 
-	public int LongFrame()
+	public uint LongFrame()
 	{
 		return FrameCount&1;
 	}
