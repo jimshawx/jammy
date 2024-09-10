@@ -79,7 +79,7 @@ namespace Jammy.Core.IO.Windows
 
 		public void EmulateMouse()
 		{
-			mouseTime ++;
+			mouseTime++;
 
 			if (mouseTime > 5000)
 			{
@@ -152,15 +152,6 @@ namespace Jammy.Core.IO.Windows
 					oldMouseX = mousex;
 					oldMouseY = mousey;
 				}
-
-				//clock++;
-				//clock &= 3;
-
-				//joy0dat &= 0b11111100_11111100;
-				//joy0dat |= (uint)(clock * 0x101);
-
-				//joy1dat &= 0b11111100_11111100;
-				//joy1dat |= (uint)(clock * 0x101);
 			}
 		}
 
@@ -178,16 +169,11 @@ namespace Jammy.Core.IO.Windows
 			switch (address)
 			{
 				case ChipRegs.JOY0DAT: value = joy0dat; break;
-				case ChipRegs.JOY1DAT: value = joy1dat;
-					//logger.LogTrace($"JOY1DAT R {value:X4}"); 
-					break;
-				case ChipRegs.POTGOR: value = potgo;
-					//logger.LogTrace($"POTGO R {value:X4}");
-					break;
+				case ChipRegs.JOY1DAT: value = joy1dat;	break;
+				case ChipRegs.POTGOR: value = potgo; break;
 				case ChipRegs.POT0DAT: value = pot0dat; break;
 				case ChipRegs.POT1DAT: value = pot1dat; break;
 			}
-
 			return (ushort)value;
 		}
 
@@ -195,17 +181,9 @@ namespace Jammy.Core.IO.Windows
 		{
 			switch (address)
 			{
-				case ChipRegs.JOY0DAT: joy0dat = value; break;
-				case ChipRegs.JOY1DAT: joy1dat = value;
-					//logger.LogTrace($"JOY1DAT W {value:X4}");
-					break;
-				case ChipRegs.POTGO: potgo = value; 
-					//logger.LogTrace($"POTGO W {value:X4}");
-					break;
-				case ChipRegs.POTGOR: potgo = value; break;
-				case ChipRegs.POT0DAT: pot0dat = value; break;
-				case ChipRegs.POT1DAT: pot1dat = value; break;
-				case ChipRegs.JOYTEST: joytest = value;
+				case ChipRegs.POTGO: potgo = value; break;
+				case ChipRegs.JOYTEST:
+					joytest = value;
 					joy0dat = joytest;
 					joy1dat = joytest;
 					break;
@@ -236,7 +214,6 @@ namespace Jammy.Core.IO.Windows
 				case ChipRegs.POT1DAT: value = pot1dat; break;
 				case ChipRegs.JOYTEST: value = joytest; break;
 			}
-
 			return (ushort)value;
 		}
 	}
