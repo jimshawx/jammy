@@ -266,7 +266,7 @@ namespace Jammy.Core.Custom
 			if (v == 0) v = 1024;
 
 			if (blitterDump)
-				DumpBlitterState(h,v);
+				DumpBlitterState(insaddr,h,v);
 
 			Blit(insaddr, h, v);
 		}
@@ -293,7 +293,7 @@ namespace Jammy.Core.Custom
 			if (v == 0) v = 32768;
 
 			if (blitterDump)
-				DumpBlitterState(h, v);
+				DumpBlitterState(insaddr,h, v);
 
 			Blit(insaddr, h, v);
 		}
@@ -353,8 +353,8 @@ namespace Jammy.Core.Custom
 			if ((dmacon & (1 << 9)) == 0)
 				logger.LogTrace($"DMAEN is off! @{insaddr:X8}");
 
-			//BlitImmediate(blitWidth, blitHeight);
-			BeginBlit();
+			BlitImmediate(blitWidth, blitHeight);
+			//BeginBlit();
 		}
 
 		private bool BeginBlit()
@@ -710,18 +710,19 @@ namespace Jammy.Core.Custom
 			} 
 		}
 
-		private void Line(uint _)
+		private void Line(uint insaddr)
 		{
 			if (blitterDump)
-				DumpBlitterState(bltsize>>6);
+				DumpBlitterState(insaddr, bltsize>>6);
 
-			//LineImmediate(_);
+			//Line2(insaddr, logger);
+			//LineImmediate(insaddr);
 			LineBegin();
 		}
 
 		private uint length;
 		private bool writeBit;
-		private uint bltbdatror;
+		private ushort mask;
 		private int x0, x1;
 		private int y1;
 		private int dm;
@@ -765,7 +766,7 @@ namespace Jammy.Core.Custom
 			x0 = (int)(bltcon0 >> 12);
 			int ror = (int)(bltcon1 >> 12);
 
-			bltbdatror = (bltbdat << ror) | (bltbdat >> (16 - ror));
+			mask = (ushort)((bltbdat >> ror) | (bltbdat << (16 - ror)));
 
 			dm = Math.Max(dx, dy);
 			x1 = dm / 2;
@@ -800,6 +801,12 @@ namespace Jammy.Core.Custom
 
 		private bool LineC()
 		{
+			if ((bltcon0 & (1u << 10)) != 0)
+			{
+				int ror = (int)(bltcon1 >> 12);
+				mask = (ushort)((bltbdat >> ror) | (bltbdat << (16 - ror)));
+			}
+
 			status = BlitterState.LineMinterm;
 
 			if ((bltcon0 & (1u << 9)) == 0)
@@ -814,7 +821,7 @@ namespace Jammy.Core.Custom
 
 		private bool LineMinterm()
 		{
-			//todo: shift B?
+			uint bltbdatror = ((mask & 1) != 0) ? 0xffffu : 0;
 
 			bltddat = 0;
 			if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat;
@@ -825,6 +832,7 @@ namespace Jammy.Core.Custom
 			if ((bltcon0 & 0x20) != 0) bltddat |= bltadat & ~bltbdatror & bltcdat;
 			if ((bltcon0 & 0x40) != 0) bltddat |= bltadat & bltbdatror & ~bltcdat;
 			if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdatror & bltcdat;
+			mask = (ushort)((mask << 1) | (mask >> 15));
 
 			status = BlitterState.LineB2;
 
@@ -846,6 +854,12 @@ namespace Jammy.Core.Custom
 
 		private bool LineD()
 		{
+			if ((bltcon0 & (1u << 10)) != 0)
+			{
+				int ror = (int)(bltcon1 >> 12);
+				mask = (ushort)((bltbdat >> ror) | (bltbdat << (16 - ror)));
+			}
+
 			status = BlitterState.LineEndOfWord;
 
 			//oddly, USEC must be checked, not USED
@@ -947,7 +961,7 @@ namespace Jammy.Core.Custom
 			int x0 = (int)(bltcon0 >> 12);
 			int ror = (int)(bltcon1 >> 12);
 
-			uint bltbdatror = (bltbdat << ror) | (bltbdat >> (16 - ror));
+			ushort mask = (ushort)((bltbdat >> ror) | (bltbdat << (16 - ror)));
 
 			int dm = Math.Max(dx, dy);
 			int x1 = dm / 2;
@@ -955,10 +969,18 @@ namespace Jammy.Core.Custom
 
 			while (length-- > 0)
 			{
+				if ((bltcon0 & (1u << 10)) != 0)
+				{
+					bltbdat = ram.Read(insaddr, bltbpt, Size.Word);
+					mask = (ushort)((bltbdat >> ror) | (bltbdat << (16 - ror)));
+				}
+
 				if ((bltcon0 & (1u << 9)) != 0)
 					bltcdat = ram.Read(insaddr, bltcpt, Size.Word);
 
 				bltadat = 0x8000u >> x0;
+
+				uint bltbdatror = ((mask&1)!=0)?0xffffu:0;
 
 				bltddat = 0;
 				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat;
@@ -969,6 +991,8 @@ namespace Jammy.Core.Custom
 				if ((bltcon0 & 0x20) != 0) bltddat |= bltadat & ~bltbdatror & bltcdat;
 				if ((bltcon0 & 0x40) != 0) bltddat |= bltadat & bltbdatror & ~bltcdat;
 				if ((bltcon0 & 0x80) != 0) bltddat |= bltadat & bltbdatror & bltcdat;
+
+				mask = (ushort)((mask << 1) | (mask >> 15));
 
 				//oddly, USEC must be checked, not USED
 				if ((bltcon0 & (1u << 9)) != 0 && (bltcon1 & (1u << 7)) == 0)
@@ -1227,9 +1251,9 @@ namespace Jammy.Core.Custom
 			counter++;
 		}
 
-		private void DumpBlitterState(uint width, uint height)
+		private void DumpBlitterState(uint insaddr, uint width, uint height)
 		{
-			logger.LogTrace($"BLIT! {width}x{height} = {width * 16}bits x {height} = {width * 16 * height} bits = {width * height * 2} bytes");
+			logger.LogTrace($"BLIT! @{insaddr:X6} {width}x{height} = {width * 16}bits x {height} = {width * 16 * height} bits = {width * height * 2} bytes");
 
 			logger.LogTrace($"A->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on " : "off")} A {bltadat:X4}");
 			logger.LogTrace($"B->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on " : "off")} B {bltbdat:X4}");
@@ -1250,16 +1274,23 @@ namespace Jammy.Core.Custom
 				logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 		}
 
-		private void DumpBlitterState(uint length)
+		private void DumpBlitterState(uint insaddr, uint length)
 		{
-			logger.LogTrace($"LINE! {length}");
+			logger.LogTrace($"LINE! @{insaddr:X6} Len:{length}");
 
 			logger.LogTrace($"A->{bltapt:X6} %{(int)bltamod,9} >> {bltcon0 >> 12,2} {(((bltcon0 >> 11) & 1) != 0 ? "on " : "off")} A {bltadat:X4}");
 			logger.LogTrace($"B->{bltbpt:X6} %{(int)bltbmod,9} >> {bltcon1 >> 12,2} {(((bltcon0 >> 10) & 1) != 0 ? "on " : "off")} B {bltbdat:X4}");
 			logger.LogTrace($"C->{bltcpt:X6} %{(int)bltcmod,9} >> -- {(((bltcon0 >> 9) & 1) != 0 ? "on " : "off")} C {bltcdat:X4}");
 			logger.LogTrace($"D->{bltdpt:X6} %{(int)bltdmod,9} >> -- {(((bltcon0 >> 8) & 1) != 0 ? "on " : "off")} D {bltddat:X4}");
 			logger.LogTrace($"M {bltafwm.ToBin(16)} {bltalwm.ToBin(16)}");
-			logger.LogTrace($"cookie: {bltcon0 & 0xff:X2} {((bltcon1 & 2) != 0 ? "descending" : "ascending")}");
+			logger.LogTrace($"X {bltcon0.ToBin(16)} {bltcon1.ToBin(16)}");
+			logger.LogTrace($"SIGN {((bltcon1 & 64) != 0 ? "1" : "0")}");
+			logger.LogTrace($"OVF  {((bltcon1 & 32) != 0 ? "1" : "0")}");
+			logger.LogTrace($"SUD  {((bltcon1 & 16) != 0 ? "1" : "0")}");
+			logger.LogTrace($"SUL  {((bltcon1 & 8) != 0 ? "1" : "0")}");
+			logger.LogTrace($"AUL  {((bltcon1 & 4) != 0 ? "1" : "0")}");
+			logger.LogTrace($"SING {((bltcon1 & 2) != 0 ? "1" : "0")}");
+			logger.LogTrace($"cookie: {bltcon0 & 0xff:X2}");
 			//logger.LogTrace("ABC");
 			//if ((bltcon0 & 0x01) != 0) logger.LogTrace("000");
 			//if ((bltcon0 & 0x02) != 0) logger.LogTrace("001");
@@ -1269,8 +1300,8 @@ namespace Jammy.Core.Custom
 			//if ((bltcon0 & 0x20) != 0) logger.LogTrace("101");
 			//if ((bltcon0 & 0x40) != 0) logger.LogTrace("110");
 			//if ((bltcon0 & 0x80) != 0) logger.LogTrace("111");
-			if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
-				logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
+			//if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
+			//	logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 		}
 	}
 }
