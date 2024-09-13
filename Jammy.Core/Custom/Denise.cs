@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
@@ -53,13 +54,15 @@ public class Denise : IDenise
 		RunVerticalBlankStart();
 	}
 
-	public FastUInt128 pixelMask;
+	//public FastUInt128 pixelMask;
 	public int pixelMaskBit;
-	public uint pixelMaskValue;
+	//public uint pixelMaskValue;
 	
 
-	public FastUInt128[] bpldatpix = new FastUInt128[8];
-	public ulong[] bpldatpixul = new ulong[8];
+	//public FastUInt128[] bpldatpix = new FastUInt128[8];
+	//public ulong[] bpldatpixul = new ulong[8];
+
+	public ValueTuple<ulong,ulong>[] bpldatpix = new ValueTuple<ulong, ulong>[8];
 
 	public int planes;
 	public int diwstrth = 0;
@@ -130,14 +133,14 @@ public class Denise : IDenise
 		for (int i = 0; i < 8; i++)
 		{
 			if ((i & 1) != 0)
-				bpldatpix[i].Or(bpldat[i], (16 - odd));
+				Or(ref bpldatpix[i], bpldat[i], (16 - odd));
 			else
-				bpldatpix[i].Or(bpldat[i], (16 - even));
+				Or(ref bpldatpix[i], bpldat[i], (16 - even));
 
-			if ((i & 1) != 0)
-				bpldatpixul[i] |= bpldat[i] << (16 - odd);
-			else
-				bpldatpixul[i] |= bpldat[i] << (16 - even);
+			//if ((i & 1) != 0)
+			//	bpldatpixul[i] |= bpldat[i] << (16 - odd);
+			//else
+			//	bpldatpixul[i] |= bpldat[i] << (16 - even);
 		}
 	}
 
@@ -159,9 +162,9 @@ public class Denise : IDenise
 		else
 			pixelBits = 31;
 
-		pixelMask.SetBit((int)(pixelBits + 16));
+		//pixelMask.SetBit((int)(pixelBits + 16));
 		pixelMaskBit = (int)(pixelBits + 16);
-		pixelMaskValue = 1u << pixelMaskBit;
+		//pixelMaskValue = 1u << pixelMaskBit;
 
 		//clear sprites from wrapping from the right
 		for (int s = 0; s < 8; s++)
@@ -169,17 +172,22 @@ public class Denise : IDenise
 
 		for (int i = 0; i < 8; i++)
 		{
-			bpldatpix[i].Zero();
-			bpldatpixul[i] = 0;
+			//bpldatpix[i].Zero();
+			//bpldatpixul[i] = 0;
+			bpldatpix[i].Item1 = bpldatpix[i].Item2 = 0;
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void NextPixel()
 	{
 		for (int i = 0; i < 8; i++)
 		{
-			bpldatpix[i].Shl1();
-			bpldatpixul[i] <<= 1;
+			//bpldatpix[i].Shl1();
+			//bpldatpixul[i] <<= 1;
+			bpldatpix[i].Item1 <<= 1;
+			bpldatpix[i].Item1 |= bpldatpix[i].Item2 >> 63;
+			bpldatpix[i].Item2 <<= 1;
 		}
 	}
 
@@ -247,10 +255,11 @@ public class Denise : IDenise
 
 			byte pix = 0;
 			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
-				pix |= (byte)(((bpldatpixul[i] & pixelMaskValue) != 0) ? b : 0);
+				pix |= (byte)(IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
 
-			for (int i = 0; i < planes; i++)
-				bpldatpixul[i] <<= 1;
+			//for (int i = 0; i < planes; i++)
+			//	bpldatpixul[i] <<= 1;
+			NextPixel();
 
 			//BPLAM
 			pix ^= (byte)(bplcon4 >> 8);
@@ -302,10 +311,11 @@ public class Denise : IDenise
 
 			byte pix = 0;
 			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
-				pix |= (byte)(((bpldatpixul[i] & pixelMaskValue) != 0) ? b : 0);
+				pix |= (byte)(IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
 
-			for (int i = 0; i < planes; i++)
-				bpldatpixul[i] <<= 1;
+			//for (int i = 0; i < planes; i++)
+			//	bpldatpixul[i] <<= 1;
+			NextPixel();
 
 			//BPLAM
 			pix ^= (byte)(bplcon4 >> 8);
@@ -345,10 +355,11 @@ public class Denise : IDenise
 
 			byte pix = 0;
 			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
-				pix |= (byte)(((bpldatpixul[i] & pixelMaskValue) != 0) ? b : 0);
+				pix |= (byte)(IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
 
-			for (int i = 0; i < planes; i++)
-				bpldatpixul[i] <<= 1;
+			//for (int i = 0; i < planes; i++)
+			//	bpldatpixul[i] <<= 1;
+			NextPixel();
 
 			//BPLAM
 			pix ^= (byte)(bplcon4 >> 8);
@@ -382,6 +393,26 @@ public class Denise : IDenise
 		}
 	}
 
+	//[MethodImpl(MethodImplOptions.AggressiveInlining|MethodImplOptions.AggressiveOptimization)]
+	//[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool IsBitSet(ref ValueTuple<ulong, ulong> bp, int bit)
+	{
+		//ulong mask = 1UL << (bit & 63);
+		//if (bit >= 64) return (bp.Item1 & mask) != 0;
+		//return (bp.Item2 & mask) != 0;
+		if (bit >= 64) return (bp.Item1 & (1UL << (bit - 64))) != 0;
+		return (bp.Item2 & (1UL << bit)) != 0;
+	}
+
+	//[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private static void Or(ref ValueTuple<ulong, ulong> bp, ulong bits, int shift)
+	{
+		bp.Item1 |= bits >> (64 - shift);
+		bp.Item2 |= bits << shift;
+	}
+
+	//[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	private void CopperBitplaneConvert()
 	{
 		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
@@ -392,9 +423,20 @@ public class Denise : IDenise
 			uint col;
 
 			byte pix = 0;
-			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
-				pix |= (byte)((bpldatpix[i].IsBitSet(pixelMaskBit)) ? b : 0);
+			byte b=1;
+			for (int i = 0; i < planes; i++, b <<= 1)
+				pix |= (IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : (byte)0);
 
+			//byte pix = 0;
+			//if (planes > 0) { pix  = IsBitSet(bpldatpix[0], pixelMaskBit) ? (byte)1   : (byte)0;
+			//if (planes > 1) { pix |= IsBitSet(bpldatpix[1], pixelMaskBit) ? (byte)2   : (byte)0;
+			//if (planes > 2) { pix |= IsBitSet(bpldatpix[2], pixelMaskBit) ? (byte)4   : (byte)0;
+			//if (planes > 3) { pix |= IsBitSet(bpldatpix[3], pixelMaskBit) ? (byte)8   : (byte)0;
+			//if (planes > 4) { pix |= IsBitSet(bpldatpix[4], pixelMaskBit) ? (byte)16  : (byte)0;
+			//if (planes > 5) { pix |= IsBitSet(bpldatpix[5], pixelMaskBit) ? (byte)32  : (byte)0;
+			//if (planes > 6) { pix |= IsBitSet(bpldatpix[6], pixelMaskBit) ? (byte)64  : (byte)0;
+			//if (planes > 7) { pix |= IsBitSet(bpldatpix[7], pixelMaskBit) ? (byte)128 : (byte)0;
+			//							} } } } } } } }
 			NextPixel();
 
 			//BPLAM
