@@ -224,10 +224,11 @@ namespace Jammy.Core.Interface.Interfaces
 		uint HorizontalPos { get; }
 		uint VerticalPos { get; }
 		uint Tick { get; }
-		bool StartOfLine(); 
-		bool EndOfLine();
-		bool StartOfFrame();
-		bool EndOfFrame();
+		//bool StartOfLine(); 
+		//bool EndOfLine();
+		//bool StartOfFrame();
+		//bool EndOfFrame();
+		ChipsetClockState ClockState { get; }
 
 		void WaitForTick();
 		void Ack();

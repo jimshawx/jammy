@@ -78,23 +78,24 @@ public class Denise : IDenise
 
 	public void Emulate()
 	{
-		clock.WaitForTick();
+		//clock.WaitForTick();
+		var clockState = clock.ClockState;
 
-		if (clock.StartOfFrame())
+		if ((clockState&ChipsetClockState.StartOfFrame)!=0)
 			RunVerticalBlankStart();
 
-		if (clock.StartOfLine())
+		if ((clockState & ChipsetClockState.StartOfLine)!=0)
 			StartDeniseLine();
 
 		RunDeniseTick();
 
-		if (clock.EndOfLine())
+		if ((clockState & ChipsetClockState.EndOfLine)!=0)
 			EndDeniseLine();
 
-		if (clock.EndOfFrame())
+		if ((clockState & ChipsetClockState.EndOfFrame)!=0)
 			RunVerticalBlankEnd();
 
-		clock.Ack();
+		//clock.Ack();
 	}
 
 	public void Reset() { }

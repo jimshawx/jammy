@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -14,8 +15,6 @@ public class ChipsetClock : IChipsetClock
 	private IDMA dma;
 	private readonly ILogger<ChipsetClock> logger;
 	private readonly uint displayScanlines;
-	//private readonly ManualResetEventSlim clockEvent = new ManualResetEventSlim(false);
-	//private readonly ManualResetEvent ackEvent = new ManualResetEvent(false);
 
 	public ChipsetClock(IOptions<EmulationSettings> settings, ILogger<ChipsetClock> logger)
 	{
@@ -30,29 +29,31 @@ public class ChipsetClock : IChipsetClock
 	public uint VerticalPos { get; private set; }
 	public uint FrameCount { get; private set; }
 	public uint Tick { get; private set; }
-	private bool startOfFrame;
-	private bool endOfFrame;
-	private bool startOfLine;
-	private bool endOfLine;
+	//private bool startOfFrame;
+	//private bool endOfFrame;
+	//private bool startOfLine;
+	//private bool endOfLine;
+	public ChipsetClockState ClockState { get; private set; }
 
 	public void Emulate()
 	{
-		startOfFrame = endOfFrame = endOfLine = startOfLine = false;
+		//startOfFrame = endOfFrame = endOfLine = startOfLine = false;
+		ClockState = 0;
 
 		Tick++;
 
 		if (HorizontalPos == 0)
-			startOfLine = true;
+			ClockState|= ChipsetClockState.StartOfLine;
 
 		if (HorizontalPos == 0 && VerticalPos == 0)
-			startOfFrame = true;
+			ClockState |= ChipsetClockState.StartOfFrame;
 
 		if (HorizontalPos == 226)
-			endOfLine = true;
+			ClockState |= ChipsetClockState.EndOfLine;
 
 		if (HorizontalPos == 226 && VerticalPos == displayScanlines + LongFrame() - 1)
 		{
-			endOfFrame = true;
+			ClockState |= ChipsetClockState.EndOfFrame;
 			//logger.LogTrace($"{DateTime.Now:fff}");
 		}
 
@@ -86,17 +87,17 @@ public class ChipsetClock : IChipsetClock
 
 		dma.TriggerHighestPriorityDMA();
 
-		if (endOfLine)
+		if ((ClockState&ChipsetClockState.EndOfLine)!=0)
 			HorizontalPos = 0;
 		else
 			HorizontalPos++;
 
-		if (endOfFrame)
+		if ((ClockState & ChipsetClockState.EndOfFrame)!=0)
 		{
 			VerticalPos = 0;
 			FrameCount++;
 		}
-		else if (endOfLine)
+		else if ((ClockState & ChipsetClockState.EndOfLine)!=0)
 		{
 			VerticalPos++;
 		}
@@ -128,25 +129,25 @@ public class ChipsetClock : IChipsetClock
 		return FrameCount&1;
 	}
 
-	public bool StartOfLine()
-	{
-		return startOfLine;
-	}
+	//public bool StartOfLine()
+	//{
+	//	return startOfLine;
+	//}
 
-	public bool EndOfLine()
-	{
-		return endOfLine;
-	}
+	//public bool EndOfLine()
+	//{
+	//	return endOfLine;
+	//}
 	
-	public bool StartOfFrame()
-	{
-		return startOfFrame;
-	}
+	//public bool StartOfFrame()
+	//{
+	//	return startOfFrame;
+	//}
 
-	public bool EndOfFrame()
-	{
-		return endOfFrame;
-	}
+	//public bool EndOfFrame()
+	//{
+	//	return endOfFrame;
+	//}
 
 	//private volatile int tick;
 	//private volatile int tock;

@@ -61,11 +61,13 @@ public class ChipsetDebugger : IChipsetDebugger
 	private string regmsg = string.Empty;
 	public void Emulate()
 	{
-		if (clock.StartOfLine())
+		var clockState = clock.ClockState;
+
+		if ((clockState & ChipsetClockState.StartOfLine) != 0)
 			StartOfLine();
-		if (clock.EndOfLine())
+		if ((clockState & ChipsetClockState.EndOfLine)!=0)
 			EndOfLine();
-		if (clock.EndOfFrame())
+		if ((clockState & ChipsetClockState.EndOfFrame)!= 0)
 			EndOfFrame();
 	}
 

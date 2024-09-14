@@ -43,7 +43,7 @@ namespace Jammy.Core.Custom.Audio
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
 		public void Emulate()
 		{
-			if (clock.EndOfLine())
+			if ((clock.ClockState & ChipsetClockState.EndOfLine) != 0)
 			{
 				for (int i = 0; i < 4; i++)
 				{

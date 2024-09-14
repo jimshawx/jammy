@@ -103,24 +103,25 @@ public class Agnus : IAgnus
 	public void Emulate()
 	{
 		//clock.WaitForTick();
+		var clockState = clock.ClockState;
 
-		if (clock.StartOfFrame())
+		if ((clockState & ChipsetClockState.StartOfFrame)!=0)
 		{
 			for (int i = 0; i < 8; i++)
 				spriteState[i] = SpriteState.Idle;
 		}
 
-		if (clock.StartOfLine())
+		if ((clockState & ChipsetClockState.StartOfLine)!=0)
 			lineState = DMALineState.LineStart;
 
 		RunAgnusTick();
 
-		if (clock.EndOfLine())
+		if ((clockState & ChipsetClockState.EndOfLine)!=0)
 		{
 			EndAgnusLine();
 		}
 
-		if (clock.EndOfFrame())
+		if ((clockState & ChipsetClockState.EndOfFrame)!=0)
 			interrupt.AssertInterrupt(Interrupt.VERTB);
 
 		//clock.Ack();

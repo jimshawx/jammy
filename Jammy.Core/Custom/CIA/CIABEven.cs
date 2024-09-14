@@ -61,7 +61,7 @@ namespace Jammy.Core.Custom.CIA
 			//lock (locker)
 			{
 
-				if (clock.EndOfLine())
+				if ((clock.ClockState & ChipsetClockState.EndOfLine) != 0)
 					IncrementTODTimer();
 
 				divisor++;

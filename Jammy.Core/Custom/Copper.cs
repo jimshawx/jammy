@@ -70,7 +70,7 @@ namespace Jammy.Core.Custom
 		{
 			//lock (locker)
 			{
-				if (clock.EndOfFrame())
+				if ((clock.ClockState & ChipsetClockState.EndOfFrame)!=0)
 					copjmp1 = 1;
 
 				if (copjmp1 != 0 || copjmp2 != 0)

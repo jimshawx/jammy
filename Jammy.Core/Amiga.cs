@@ -201,8 +201,12 @@ namespace Jammy.Core
 				//and every time round this RunEmulations loop is on of these ticks.
 				//the CPU is running at twice that rate ~7.08MHz
 
-				cpu.Emulate();
-				totalCycles = cpu.GetCycles();
+				totalCycles = 0;
+				for (int i = 0; i < 2; i++)
+				{ 
+					cpu.Emulate();
+					totalCycles += cpu.GetCycles();
+				}
 				//the last instruction took this many CPU cycles, we need to make sure we don't try to execute any more
 				//CPU instructions until that many cycles have gone past.
 				//since chipset cycles are two CPU cycles, then
