@@ -613,6 +613,9 @@ namespace Jammy.Main
 			Amiga.UnlockEmulation();
 		}
 
+		private int lastFound = -1;
+		private string lastText = string.Empty;
+
 		private void menuDisassembly_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
 		{
 			if (!(sender is ContextMenuStrip))
@@ -662,6 +665,53 @@ namespace Jammy.Main
 					txtDisassembly.Invalidate();
 					txtDisassembly.ResumeLayout();
 					txtDisassembly.Update();
+				}
+			}
+			else if (e.ClickedItem == toolStripFind)
+			{
+				var findForm = new Find();
+				findForm.radioFindByte.Enabled 
+					= findForm.radioFindWord.Enabled 
+					= findForm.radioFindLong.Enabled = false;
+				findForm.radioFindText.Checked = true;
+				var res = findForm.ShowDialog();
+				if (res == DialogResult.OK)
+				{
+					if (findForm.SearchText != null)
+					{ 
+						lastText = findForm.SearchText;
+						lastFound = txtDisassembly.Find(findForm.SearchText, 0, RichTextBoxFinds.NoHighlight);
+						if (lastFound != -1)
+						{
+							txtDisassembly.ReallySuspendLayout();
+							txtDisassembly.DeselectAll();
+							txtDisassembly.SelectionStart = lastFound;
+							txtDisassembly.ScrollToCaret();
+							txtDisassembly.ReallyResumeLayout();
+							txtDisassembly.Refresh();
+						}
+					}
+					return;
+				}
+			}
+			else if (e.ClickedItem == toolStripFindNext)
+			{
+				if (lastFound == -1)
+					return;
+				lastFound = txtDisassembly.Find(lastText, lastFound+1, RichTextBoxFinds.NoHighlight);
+				for (int i = 0; i < 2; i++)
+				{ 
+					if (lastFound != -1)
+					{
+						txtDisassembly.ReallySuspendLayout();
+						txtDisassembly.DeselectAll();
+						txtDisassembly.SelectionStart = lastFound;
+						txtDisassembly.ScrollToCaret();
+						txtDisassembly.ReallyResumeLayout();
+						txtDisassembly.Refresh();
+						return;
+					}
+					lastFound = txtDisassembly.Find(lastText, 0, RichTextBoxFinds.NoHighlight);
 				}
 			}
 

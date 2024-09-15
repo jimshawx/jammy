@@ -170,9 +170,9 @@ namespace Jammy.Main.Dialogs
 		private System.Windows.Forms.Button btnFindPrev;
 		private System.Windows.Forms.Button btnFindNext;
 		private System.Windows.Forms.Button btnFindCancel;
-		private System.Windows.Forms.RadioButton radioFindByte;
-		private System.Windows.Forms.RadioButton radioFindWord;
-		private System.Windows.Forms.RadioButton radioFindLong;
-		private System.Windows.Forms.RadioButton radioFindText;
+		public System.Windows.Forms.RadioButton radioFindByte;
+		public System.Windows.Forms.RadioButton radioFindWord;
+		public System.Windows.Forms.RadioButton radioFindLong;
+		public System.Windows.Forms.RadioButton radioFindText;
 	}
 }
