@@ -202,7 +202,7 @@ namespace Jammy.Core
 				//the CPU is running at twice that rate ~7.08MHz
 
 				totalCycles = 0;
-				for (int i = 0; i < 2; i++)
+				//for (int i = 0; i < 2; i++)
 				{ 
 					cpu.Emulate();
 					totalCycles += cpu.GetCycles();
