@@ -25,6 +25,11 @@ namespace Jammy.UI.Settings
 			{
 				var s = new JsonSerializerSettings { Formatting = Formatting.Indented };
 				s.Converters.Add(new StringEnumConverter());
+				s.Error = (object sender, Newtonsoft.Json.Serialization.ErrorEventArgs e) =>
+				{
+					//ignore all the errors
+					e.ErrorContext.Handled = true;
+				};
 				return s;
 			};
 
