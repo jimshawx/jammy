@@ -532,6 +532,9 @@ public class Denise : IDenise
 			{
 				col = truecolour[pix];
 			}
+			
+			//remember the last colour for HAM modes
+			lastcol = col;
 
 			DoSprites(ref col, pix, (p&m)==m);
 
@@ -549,9 +552,6 @@ public class Denise : IDenise
 				for (int k = 0; k < 4 / pixelLoop; k++)
 					screen[dptr++] = (int)col;
 			}
-
-			//remember the last colour for HAM modes
-			lastcol = col;
 		}
 	}
 
@@ -765,7 +765,7 @@ public class Denise : IDenise
 			//outside vertical area
 
 			//output colour 0 pixels
-			uint col = truecolour[0];
+			uint col = lastcol = truecolour[0];
 			for (int k = 0; k < 4; k++)
 				screen[dptr++] = (int)col;
 		}
