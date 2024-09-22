@@ -1,12 +1,12 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using Jammy.Core.Debug;
+﻿using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -54,13 +54,7 @@ public class Denise : IDenise
 		RunVerticalBlankStart();
 	}
 
-	//public FastUInt128 pixelMask;
 	public int pixelMaskBit;
-	//public uint pixelMaskValue;
-	
-
-	//public FastUInt128[] bpldatpix = new FastUInt128[8];
-	//public ulong[] bpldatpixul = new ulong[8];
 
 	public ValueTuple<ulong,ulong>[] bpldatpix = new ValueTuple<ulong, ulong>[8];
 
@@ -137,11 +131,6 @@ public class Denise : IDenise
 				Or(ref bpldatpix[i], bpldat[i], (16 - odd));
 			else
 				Or(ref bpldatpix[i], bpldat[i], (16 - even));
-
-			//if ((i & 1) != 0)
-			//	bpldatpixul[i] |= bpldat[i] << (16 - odd);
-			//else
-			//	bpldatpixul[i] |= bpldat[i] << (16 - even);
 		}
 	}
 
@@ -163,9 +152,7 @@ public class Denise : IDenise
 		else
 			pixelBits = 31;
 
-		//pixelMask.SetBit((int)(pixelBits + 16));
 		pixelMaskBit = (int)(pixelBits + 16);
-		//pixelMaskValue = 1u << pixelMaskBit;
 
 		//clear sprites from wrapping from the right
 		for (int s = 0; s < 8; s++)
@@ -173,13 +160,10 @@ public class Denise : IDenise
 
 		for (int i = 0; i < 8; i++)
 		{
-			//bpldatpix[i].Zero();
-			//bpldatpixul[i] = 0;
 			bpldatpix[i].Item1 = bpldatpix[i].Item2 = 0;
 		}
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void NextPixel()
 	{
 		for (int i = 0; i < 8; i++)
@@ -226,177 +210,25 @@ public class Denise : IDenise
 	{
 		return CopperBitplaneConvert;
 		
-		bool f = (fmode&3)==3;
-		int bp = (bplcon0 >> 12) & 7;
+		//bool f = (fmode&3)==3;
+		//int bp = (bplcon0 >> 12) & 7;
 
-		//DBF
-		if ((bplcon0 & (1 << 10)) != 0) return f ? CopperBitplaneConvert : CopperBitplaneConvertDPF;
+		////DBF
+		//if ((bplcon0 & (1 << 10)) != 0) return f ? CopperBitplaneConvert : CopperBitplaneConvertDPF;
 
-		//HAM6
-		if (bp == 6 && ((bplcon0 & (1 << 11)) != 0)) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
+		////HAM6
+		//if (bp == 6 && ((bplcon0 & (1 << 11)) != 0)) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
 		
-		//EHB
-		if (bp == 6 && ((bplcon0 & (1 << 11)) == 0 &&
-		                    (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0))) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
-		//HAM8
-		if (bp == 8 && ((bplcon0 & (1 << 11)) != 0)) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
+		////EHB
+		//if (bp == 6 && ((bplcon0 & (1 << 11)) == 0 &&
+		//                    (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0))) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
+		////HAM8
+		//if (bp == 8 && ((bplcon0 & (1 << 11)) != 0)) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
 
-		//Normal
-		return f ? CopperBitplaneConvert : CopperBitplaneConvertNormal;
+		////Normal
+		//return f ? CopperBitplaneConvert : CopperBitplaneConvertNormal;
 	}
 
-	private void CopperBitplaneConvertDPF()
-	{
-		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
-		for (int p = 0; p < pixelLoop; p++)
-		{
-			//decode the colour
-
-			uint col;
-
-			byte pix = 0;
-			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
-				pix |= (byte)(IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
-
-			//for (int i = 0; i < planes; i++)
-			//	bpldatpixul[i] <<= 1;
-			NextPixel();
-
-			//BPLAM
-			pix ^= (byte)(bplcon4 >> 8);
-
-			//pix &= debugger.bitplaneMask;
-			//pix |= debugger.bitplaneMod;
-
-			//DPF
-			byte pix0 = dpfLookup[pix];
-			byte pix1 = dpfLookup[pix >> 1];
-
-			uint col0 = truecolour[pix0];
-			uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
-
-			//which playfield is in front?
-			if ((bplcon2 & (1 << 6)) != 0)
-				col = pix1 != 0 ? col1 : col0;
-			else
-				col = pix0 != 0 ? col0 : col1;
-
-			DoSprites(ref col, pix, (p & m) == m);
-
-			//pixel double
-			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
-			if (pixelLoop == 8)
-			{
-				//hack for the 0.5x above - skip every other horizontal pixel
-				if ((p & 1) == 0)
-					screen[dptr++] = (int)col;
-			}
-			else
-			{
-				for (int k = 0; k < 4 / pixelLoop; k++)
-					screen[dptr++] = (int)col;
-			}
-
-			//remember the last colour for HAM modes
-			lastcol = col;
-		}
-	}
-
-	private void CopperBitplaneConvertNormal()
-	{
-		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
-		for (int p = 0; p < pixelLoop; p++)
-		{
-			//decode the colour
-
-			byte pix = 0;
-			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
-				pix |= (byte)(IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
-
-			//for (int i = 0; i < planes; i++)
-			//	bpldatpixul[i] <<= 1;
-			NextPixel();
-
-			//BPLAM
-			pix ^= (byte)(bplcon4 >> 8);
-
-			//pix &= debugger.bitplaneMask;
-			//pix |= debugger.bitplaneMod;
-			var col = truecolour[pix];
-			
-			DoSprites(ref col, pix, (p & m) == m);
-
-			//pixel double
-			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
-			if (pixelLoop == 8)
-			{
-				//hack for the 0.5x above - skip every other horizontal pixel
-				if ((p & 1) == 0)
-					screen[dptr++] = (int)col;
-			}
-			else
-			{
-				for (int k = 0; k < 4 / pixelLoop; k++)
-					screen[dptr++] = (int)col;
-			}
-
-			//remember the last colour for HAM modes
-			lastcol = col;
-		}
-	}
-
-	private void CopperBitplaneConvertEHB()
-	{
-		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
-		for (int p = 0; p < pixelLoop; p++)
-		{
-			//decode the colour
-
-			byte pix = 0;
-			for (int i = 0, b = 1; i < planes; i++, b <<= 1)
-				pix |= (byte)(IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
-
-			//for (int i = 0; i < planes; i++)
-			//	bpldatpixul[i] <<= 1;
-			NextPixel();
-
-			//BPLAM
-			pix ^= (byte)(bplcon4 >> 8);
-			//pix &= debugger.bitplaneMask;
-			//pix |= debugger.bitplaneMod;
-			
-			//EHB
-			uint col = truecolour[pix & 0x1f];
-			if ((pix & 0b100000) != 0)
-				col = (col & 0x00fefefe) >> 1;
-
-			DoSprites(ref col, pix, (p & m) == m);
-
-			//pixel double
-			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
-			if (pixelLoop == 8)
-			{
-				//hack for the 0.5x above - skip every other horizontal pixel
-				if ((p & 1) == 0)
-					screen[dptr++] = (int)col;
-			}
-			else
-			{
-				for (int k = 0; k < 4 / pixelLoop; k++)
-					screen[dptr++] = (int)col;
-			}
-
-			//remember the last colour for HAM modes
-			lastcol = col;
-		}
-	}
-
-	//[MethodImpl(MethodImplOptions.AggressiveInlining|MethodImplOptions.AggressiveOptimization)]
-	//[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	//[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static bool IsBitSet(ref ValueTuple<ulong, ulong> bp, int bit)
 	{
 		//ulong mask = 1UL << (bit & 63);
@@ -406,14 +238,12 @@ public class Denise : IDenise
 		return (bp.Item2 & (1UL << bit)) != 0;
 	}
 
-	//[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	private static void Or(ref ValueTuple<ulong, ulong> bp, ulong bits, int shift)
 	{
 		bp.Item1 |= bits >> (64 - shift);
 		bp.Item2 |= bits << shift;
 	}
 
-	//[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	private void CopperBitplaneConvert()
 	{
 		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
@@ -428,16 +258,6 @@ public class Denise : IDenise
 			for (int i = 0; i < planes; i++, b <<= 1)
 				pix |= (IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : (byte)0);
 
-			//byte pix = 0;
-			//if (planes > 0) { pix  = IsBitSet(bpldatpix[0], pixelMaskBit) ? (byte)1   : (byte)0;
-			//if (planes > 1) { pix |= IsBitSet(bpldatpix[1], pixelMaskBit) ? (byte)2   : (byte)0;
-			//if (planes > 2) { pix |= IsBitSet(bpldatpix[2], pixelMaskBit) ? (byte)4   : (byte)0;
-			//if (planes > 3) { pix |= IsBitSet(bpldatpix[3], pixelMaskBit) ? (byte)8   : (byte)0;
-			//if (planes > 4) { pix |= IsBitSet(bpldatpix[4], pixelMaskBit) ? (byte)16  : (byte)0;
-			//if (planes > 5) { pix |= IsBitSet(bpldatpix[5], pixelMaskBit) ? (byte)32  : (byte)0;
-			//if (planes > 6) { pix |= IsBitSet(bpldatpix[6], pixelMaskBit) ? (byte)64  : (byte)0;
-			//if (planes > 7) { pix |= IsBitSet(bpldatpix[7], pixelMaskBit) ? (byte)128 : (byte)0;
-			//							} } } } } } } }
 			NextPixel();
 
 			//BPLAM
@@ -492,7 +312,7 @@ public class Denise : IDenise
 				}
 			}
 			else if (planes == 6 && ((bplcon0 & (1 << 11)) == 0 &&
-			                         (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0)))
+			         (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0)))
 			{
 				//EHB
 				col = truecolour[pix & 0x1f];
@@ -655,7 +475,6 @@ public class Denise : IDenise
 		lineStart = dptr;
 
 		FirstPixel();
-		lastcol = truecolour[0]; //todo: should be colour 0 at time of diwstrt
 		//lineState = CopperLineState.LineStart;
 	}
 
@@ -693,8 +512,20 @@ public class Denise : IDenise
 		pixelAction = GetModeConversion();
 	}
 
+	private uint oldbplcon2;
 	private void UpdateBPLCON2()
 	{
+		if (bplcon2 != oldbplcon2)
+		{
+			int pf1 = bplcon2 & 7;
+			int pf2 = (bplcon2 >> 3)&7;
+			List<string> s = ["SP01", "SP23", "SP45", "SP67"];
+			s.Insert(pf1, "PF1");
+			if (pf2 >= pf1) pf2++;
+			s.Insert(pf2, "PF2");
+			logger.LogTrace($"PF{((bplcon2>>6)&1)+1} {string.Join(' ',s)}");
+			oldbplcon2 = bplcon2;
+		}
 		pixelAction = GetModeConversion();
 	}
 
@@ -755,7 +586,7 @@ public class Denise : IDenise
 				}
 
 				//output colour 0 pixels
-				uint col = truecolour[0];
+				uint col = lastcol = truecolour[0];
 				for (int k = 0; k < 4; k++)
 					screen[dptr++] = (int)col;
 			}
