@@ -1,8 +1,8 @@
-﻿using System.Runtime.InteropServices;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Enums;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
+using System.Runtime.InteropServices;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -15,6 +15,9 @@ namespace Jammy.Core.EmulationWindow.DIB
 		private class OwnDCForm : Form
 		{
 			private const Int32 CS_OWNDC = 0x20;
+			private const int WM_MOVE = 3;
+
+			public Rectangle ScreenRect { get; private set; } = new Rectangle();
 
 			protected override CreateParams CreateParams
 			{
@@ -25,11 +28,19 @@ namespace Jammy.Core.EmulationWindow.DIB
 					return cp;
 				}
 			}
+			
+			protected override void WndProc(ref Message m)
+			{
+				if (m.Msg == WM_MOVE)
+					ScreenRect = RectangleToScreen(ClientRectangle);
+
+				base.WndProc(ref m);
+			}
 		}
 
 		[DllImport("user32.dll")]
 		private static extern short GetAsyncKeyState(int key);
-
+	
 		private readonly INativeOverlay nativeOverlay;
 		private readonly ILogger logger;
 		private Form emulation;
@@ -49,12 +60,16 @@ namespace Jammy.Core.EmulationWindow.DIB
 				if (emulation.Handle == IntPtr.Zero)
 					throw new ApplicationException();
 
+				//todo: switch to RAW Input
+				//https://ph3at.github.io/posts/Windows-Input/
+
 				ss.Release();
 
 				emulation.MouseClick += Emulation_MouseClick;
 				emulation.KeyPress += Emulation_KeyPress;
 				emulation.KeyDown += Emulation_KeyDown;
 				emulation.Deactivate += Emulation_Deactivate;
+				//emulation.TopMost = true;
 				emulation.Show();
 
 				Application.Run(emulation);
@@ -314,13 +329,10 @@ namespace Jammy.Core.EmulationWindow.DIB
 
 			if (!emulation.IsDisposed)
 			{
-				emulation.Invoke((Action)delegate()
-				{
-					//put the cursor back in the middle of the emulation window
-					var emuRect = emulation.RectangleToScreen(emulation.ClientRectangle);
-					centre = new Point(emuRect.X + emuRect.Width / 2, emuRect.Y + emuRect.Height / 2);
-					Cursor.Position = centre;
-				});
+				//put the cursor back in the middle of the emulation window
+				var emuRect = ((OwnDCForm)emulation).ScreenRect;
+				centre = new Point(emuRect.X + emuRect.Width / 2, emuRect.Y + emuRect.Height / 2);
+				Cursor.Position = centre;
 			}
 
 			return new Types.Types.Point { X = centre.X, Y = centre.Y };
