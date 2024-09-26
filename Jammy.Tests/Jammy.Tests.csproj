@@ -26,6 +26,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Jammy.Assembler\Jammy.Assembler.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Gen\Jammy.Core.CPU.Gen.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj" />

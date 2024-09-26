@@ -87,12 +87,12 @@ FTWOTOX 0010001
 		}
 	}
 
-
 	public class Assembly
 	{
 		public ushort[] Program;
 		public List<AssemblyMessage> Errors = new List<AssemblyMessage>();
 		public List<AssemblyMessage> Warnings = new List<AssemblyMessage>();
+		public bool HasErrors() { return Errors.Count > 0; }
 	}
 
 	public static class MemoryStreamExtensions
@@ -106,7 +106,6 @@ FTWOTOX 0010001
 
 	public class Assembler : IAssembler
 	{
-		
 		public class State
 		{ 
 			public string Line;
@@ -175,7 +174,6 @@ FTWOTOX 0010001
 				case "FCMP": 			AssembleFCMP(state); break;
 				case "FCOSH":			AssembleFCOSH(state); break;
 				case "FCOS": 			AssembleFCOS(state); break;
-				case "FDBcc": 			AssembleFDBcc(state); break;
 				case "FDIV": 			AssembleFDIV(state); break;
 				case "FETOXM1":			AssembleFETOXM1(state); break;
 				case "FETOX": 			AssembleFETOX(state); break;
@@ -213,8 +211,9 @@ FTWOTOX 0010001
 
 				default:
 					if (state.Ins[0].StartsWith("FB")) AssembleFBcc(state);
-					else if (state.Ins[0].StartsWith("FScc")) AssembleFScc(state);
-					else if (state.Ins[0].StartsWith("FTRAPcc")) AssembleFTRAPcc(state);
+					else if (state.Ins[0].StartsWith("FDB")) AssembleFDBcc(state);
+					else if (state.Ins[0].StartsWith("FS")) AssembleFScc(state);
+					else if (state.Ins[0].StartsWith("FTRAP")) AssembleFTRAPcc(state);
 					else state.Errors.Add(new AssemblyMessage($"Unrecognised instruction {state.Ins[0]}"));
 					break;
 			}
@@ -302,6 +301,12 @@ FTWOTOX 0010001
 			return false;
 		}
 
+		private void Validate8(State state, string n)
+		{
+			if (!IsNumber8(n))
+				state.Errors.Add(new AssemblyMessage("Should be an 8 bit constant"));
+		}
+
 		private long GetNumber32(string n)
 		{
 			if (string.IsNullOrEmpty(n)) return 0;
@@ -330,15 +335,15 @@ FTWOTOX 0010001
 			string origea;
 			string ea = origea = state.Ins[i].ToUpper();
 
-			if (Regex.IsMatch(ea, "D[0-7]"))
+			if (Regex.IsMatch(ea, "^D[0-7]$"))
 				return;
-			if (Regex.IsMatch(ea, "A[0-7]"))
+			if (Regex.IsMatch(ea, "^A[0-7]$"))
 				return;
-			if (Regex.IsMatch(ea, "(A[0-7])"))
+			if (Regex.IsMatch(ea, "^\\(A[0-7]\\)$"))
 				return;
-			if (Regex.IsMatch(ea, "(A[0-7])+"))
+			if (Regex.IsMatch(ea, "^\\(A[0-7]\\)+$"))
 				return;
-			if (Regex.IsMatch(ea, "-(A[0-7])"))
+			if (Regex.IsMatch(ea, "^-\\(A[0-7]\\)$"))
 				return;
 			if (ea.StartsWith('#') && IsNumber32(ea.Substring(1)))
 				return;
@@ -353,13 +358,13 @@ FTWOTOX 0010001
 				displacement = ea.Substring(0, b);
 				ea = ea.Substring(b);
 			}
-			if (IsNumber16(displacement) && Regex.IsMatch(ea, "(A[0-7])"))
+			if (IsNumber16(displacement) && Regex.IsMatch(ea, "^\\(A[0-7]\\)$"))
 				return;
-			if (IsNumber8(displacement) && Regex.IsMatch(ea, "(A[0-7],[A|D][0-7][.W|.L]{0,1})"))
+			if (IsNumber8(displacement) && Regex.IsMatch(ea, "^\\(A[0-7],[A|D][0-7][.W|.L]{0,1}\\)$"))
 				return;
 			if (IsNumber16(displacement) && string.Compare(ea, "(PC)")==0)
 				return;
-			if (IsNumber8(displacement) && Regex.IsMatch(ea, "(PC,[A|D][0-7][.W|.L]{0,1})"))
+			if (IsNumber8(displacement) && Regex.IsMatch(ea, "^\\(PC,[A|D][0-7][.W|.L]{0,1}\\)$"))
 				return;
 
 			state.Errors.Add(new AssemblyMessage($"Invalid effective address {origea}"));
@@ -373,11 +378,11 @@ FTWOTOX 0010001
 			int M=0, Xn=0, MY=0, Yn=0, YS=0;
 			long disp = 0;
 
-			if (Regex.IsMatch(ea, "D[0-7]")) { M = 0b000; Xn = ea[1] - '0'; }
-			else if (Regex.IsMatch(ea, "A[0-7]")) { M = 0b001; Xn = ea[1] - '0'; }
-			else if (Regex.IsMatch(ea, "(A[0-7])")) { M = 0b010; Xn = ea[2] - '0'; }
-			else if (Regex.IsMatch(ea, "(A[0-7])+")) { M = 0b011; Xn = ea[2] - '0'; }
-			else if (Regex.IsMatch(ea, "-(A[0-7])")) { M = 0b100; Xn = ea[3] - '0'; }
+			if (Regex.IsMatch(ea, "^D[0-7]$")) { M = 0b000; Xn = ea[1] - '0'; }
+			else if (Regex.IsMatch(ea, "^A[0-7]$")) { M = 0b001; Xn = ea[1] - '0'; }
+			else if (Regex.IsMatch(ea, "^\\(A[0-7]\\)$")) { M = 0b010; Xn = ea[2] - '0'; }
+			else if (Regex.IsMatch(ea, "^\\(A[0-7]\\)+$")) { M = 0b011; Xn = ea[2] - '0'; }
+			else if (Regex.IsMatch(ea, "^-\\(A[0-7]\\)$")) { M = 0b100; Xn = ea[3] - '0'; }
 			else if (ea.StartsWith('#')) { M = 0b111; Xn = 0b100; disp = GetNumber32(ea.Substring(1)); }
 			else if (ea.Length > 4 && ea.StartsWith('(') && ea.EndsWith(").W")) { M = 0b111; Xn = 0b000; disp = GetNumber16(ea.Substring(1, ea.Length - 4)); }
 			else if (ea.Length > 4 && ea.StartsWith('(') && ea.EndsWith(").L")) { M = 0b111; Xn = 0b001; disp = GetNumber32(ea.Substring(1, ea.Length - 4)); }
@@ -390,10 +395,10 @@ FTWOTOX 0010001
 					displacement = ea.Substring(0, b);
 					ea = ea.Substring(b);
 				}
-				if (Regex.IsMatch(ea, "(A[0-7])")) { M = 0b101; Xn = ea[2]-'0'; disp = GetNumber16(displacement); }
-				else if (Regex.IsMatch(ea, "(A[0-7],[A|D][0-7][.W|.L]{0,1})")) { M = 0b101; Xn = ea[2] - '0'; Yn = ea[5]-'0'; MY = ea[4]=='A'?0:1; YS=ea.Contains(".W")?1:0; disp = GetNumber8(displacement); }
+				if (Regex.IsMatch(ea, "^\\(A[0-7]\\)$")) { M = 0b101; Xn = ea[2]-'0'; disp = GetNumber16(displacement); }
+				else if (Regex.IsMatch(ea, "^\\(A[0-7],[A|D][0-7][.W|.L]{0,1}\\)$")) { M = 0b101; Xn = ea[2] - '0'; Yn = ea[5]-'0'; MY = ea[4]=='A'?0:1; YS=ea.Contains(".W")?1:0; disp = GetNumber8(displacement); }
 				else if (string.Compare(ea, "(PC)") == 0) { M = 0b111; Xn = 0b010; disp = GetNumber16(ea.Substring(1, ea.Length - 4)); }
-				else if (Regex.IsMatch(ea, "(PC,[A|D][0-7][.W|.L]{0,1})")) { M = 0b101; Xn = 0b011; Yn = ea[6] - '0'; MY = ea[5] == 'A' ? 0 : 1; YS = ea.Contains(".W") ? 1 : 0; disp = GetNumber8(displacement); }
+				else if (Regex.IsMatch(ea, "^\\(PC,[A|D][0-7][.W|.L]{0,1}\\)$")) { M = 0b101; Xn = 0b011; Yn = ea[6] - '0'; MY = ea[5] == 'A' ? 0 : 1; YS = ea.Contains(".W") ? 1 : 0; disp = GetNumber8(displacement); }
 			}
 
 			earet[0] = (ushort)((M << 3) | Xn);
@@ -453,12 +458,16 @@ FTWOTOX 0010001
 			return (ushort)valid.IndexOf(state.Ins[1][0]);
 		}
 
+		private readonly string[] validFPCC = ["GE", "GL", "GLE", "GT", "OGE", "OGL", "OR", "OGT",
+			"LE", "LT", "NGE", "NGL", "NGLE", "NGT", "NLE", "NLT", "SEO", "SNE", "SF", "ST", "OLE",
+			"OLT", "UGE", "UEQ", "UN", "UGT", "ULE", "ULT", "EQ", "NE", "F", "T"];
+
 		private void AssembleMonad(State state, ushort op)
 		{
 			ushort op0;
 			op0 = 0xf000;
 			op0 |= state.CoPro;
-			//everything else is 0
+			
 			state.Out.WriteWord(op0);
 			
 			int fp = ExtractFP(state, 2);
@@ -472,7 +481,7 @@ FTWOTOX 0010001
 			ushort op0;
 			op0 = 0xf000;
 			op0 |= state.CoPro;
-			//everything else is 0
+			
 			state.Out.WriteWord(op0);
 
 			int fp0 = ExtractFP(state, 2);
@@ -488,7 +497,7 @@ FTWOTOX 0010001
 			op0 = 0xf000;
 			op0 |= state.CoPro;
 			op0 |= ExtractEA(state, 2, out int xtra);
-			//everything else is 0
+			
 			state.Out.WriteWord(op0);
 
 			if (xtra == 2) state.Out.WriteWord(earet[1]);
@@ -649,12 +658,50 @@ FTWOTOX 0010001
 
 		private void AssembleFMOVE(State state)
 		{
+			if (IsFP(state.Ins[2]))
+			{
+				ValidateFP(state, 2);
+				ValidateEA(state, 3);
+			}
+			else
+			{
+				ValidateEA(state, 2);
+				ValidateFP(state, 3);
+			}
 			throw new NotImplementedException();
 		}
 
+		private readonly List<byte> validConstant = [0x00, 0x0B, 0x0C, 0x0D , 0x0E, 0x0F, 
+			0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F];
+
 		private void AssembleFMOVECR(State state)
 		{
-			throw new NotImplementedException();
+			ValidateX(state);
+			if (state.Ins[2][0] != '#')
+				state.Errors.Add(new AssemblyMessage("Constant must start with #"));
+			Validate8(state, state.Ins[2].Substring(1));
+			ValidateFP(state,3);
+			if (state.HasErrors()) return;
+
+			long constant = (long)GetNumber8(state.Ins[4].Substring(1));
+			if (constant < 0 || constant > 127)
+				state.Errors.Add(new AssemblyMessage("Constant must be >= 0 and <= 127"));
+			if (state.HasErrors()) return;
+
+			if (!validConstant.Contains((byte)constant))
+				state.Warnings.Add(new AssemblyMessage($"0x{constant:X2} is not a documented constant"));
+
+			ushort op0;
+			op0 = 0xf000;
+			op0 |= state.CoPro;
+			state.Out.WriteWord(op0);
+
+			ushort op1;
+			op1 = 0b010111 << 10;
+			op1 |= state.CoPro;
+			op1 |= (ushort)((state.Ins[3][2]-'0')<<7);
+			op1 |= (ushort)constant;
+			state.Out.WriteWord(op1);
 		}
 
 		private void AssembleFMOVEM(State state)
@@ -674,7 +721,13 @@ FTWOTOX 0010001
 
 		private void AssembleFNOP(State state)
 		{
-			throw new NotImplementedException();
+			ushort op0;
+			op0 = 0xf000;
+			op0 |= state.CoPro;
+			op0 |= 0b10000000;
+
+			state.Out.WriteWord(op0);
+			state.Out.WriteWord(0);
 		}
 
 		private void AssembleFREM(State state)
@@ -684,12 +737,36 @@ FTWOTOX 0010001
 
 		private void AssembleFRESTORE(State state)
 		{
-			throw new NotImplementedException();
+			ValidateEA(state, 1);
+			if (state.HasErrors())
+				return;
+
+			ushort op0;
+			op0 = 0xf000;
+			op0 |= state.CoPro;
+			op0 |= 0b101 << 6;
+			op0 |= ExtractEA(state, 1, out int xtra);
+			state.Out.WriteWord(op0);
+
+			if (xtra == 2) state.Out.WriteWord(earet[1]);
+			if (xtra == 3) state.Out.WriteWord(earet[2]);
 		}
 
 		private void AssembleFSAVE(State state)
 		{
-			throw new NotImplementedException();
+			ValidateEA(state, 1);
+			if (state.HasErrors())
+				return;
+
+			ushort op0;
+			op0 = 0xf000;
+			op0 |= state.CoPro;
+			op0 |= 0b100 << 6;
+			op0 |= ExtractEA(state, 1, out int xtra);
+			state.Out.WriteWord(op0);
+
+			if (xtra == 2) state.Out.WriteWord(earet[1]);
+			if (xtra == 3) state.Out.WriteWord(earet[2]);
 		}
 
 		private void AssembleFSCALE(State state)
@@ -754,7 +831,7 @@ FTWOTOX 0010001
 
 		private void AssembleFTRAPcc(State state)
 		{
-
+			throw new NotImplementedException();
 		}
 
 		private void AssembleFTST(State state)
