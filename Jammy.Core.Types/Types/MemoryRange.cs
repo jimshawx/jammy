@@ -66,6 +66,11 @@ namespace Jammy.Core.Types.Types
 			return location >= Start && location <= End;
 		}
 
+		public bool IsEmpty()
+		{
+			return Start == End;
+		}
+
 		public static List<AddressRange> NoOverlaps(List<AddressRange> ranges)
 		{
 			var merge = new List<AddressRange>();

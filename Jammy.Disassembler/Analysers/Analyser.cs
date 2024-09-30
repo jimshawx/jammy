@@ -636,7 +636,7 @@ namespace Jammy.Disassembler.Analysers
 			analysis.AddComment(address, "end");
 		}
 
-			private string LVO(NT_Type type, string name, int idx)
+		private string LVO(NT_Type type, string name, int idx)
 		{
 			var lvos = analysis.GetLVOs();
 			if (lvos.TryGetValue(name, out var lvolist))

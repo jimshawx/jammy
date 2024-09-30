@@ -7,7 +7,7 @@
 namespace Jammy.Types.Kickstart
 {
 	[Flags]
-	public enum RTF
+	public enum RTF : byte
 	{
 		RTF_AUTOINIT = (1 << 7),    /* rt_Init points to data structure */
 		RTF_AFTERDOS = (1 << 2),
@@ -15,7 +15,7 @@ namespace Jammy.Types.Kickstart
 		RTF_COLDSTART = (1 << 0)
 	}
 
-	public enum NT_Type
+	public enum NT_Type : byte
 	{
 		NT_UNKNOWN = 0,
 		NT_TASK = 1, /* Exec task */

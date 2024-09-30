@@ -1,10 +1,7 @@
-﻿using NUnit.Framework;
-using System.Reflection;
-using Jammy.Assembler;
-using System.Xml.Schema;
-using Jammy.Types.AmigaTypes;
-using System.Collections.Generic;
+﻿using Jammy.Assembler;
+using NUnit.Framework;
 using NUnit.Framework.Legacy;
+using System.Collections.Generic;
 
 namespace Jammy.Tests
 {

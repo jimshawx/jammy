@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Jammy.Core.Types.Types;
+using Jammy.Types;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
-using Jammy.Core.Types.Types;
-using Jammy.Types;
 
 // ReSharper disable InconsistentNaming
 
@@ -74,8 +75,11 @@ namespace Jammy.Disassembler
 					case 14:
 						t_fourteen(ins);
 						break;
+					case 15:
+						t_fifteen(ins);
+						break;
 					default:
-						Append($"unknown_instruction_{type:X4}");
+						Append($"unknown_instruction_{ins:X4}");
 						break;
 				}
 
@@ -449,6 +453,90 @@ namespace Jammy.Disassembler
 			if (s == 2) { Append(".l "); return Size.Long; }
 			Append($".unknown ");
 			return (Size)3;
+		}
+
+		private void t_fifteen(int type)
+		{
+			int misc = (type>>7)&7;
+			if (misc != 0)
+			{
+				switch (misc)
+				{
+					case 0b010://FBcc or fnop (and ea is 0)
+					case 0b011://FBcc
+						break;
+					case 0b101:
+						Append("frestore");
+						break;
+					case 0b100:
+						Append("fsave");
+						break;
+					case 0b001://FDBcc or FScc or FTRAPcc
+						break;
+				}
+			}
+			else
+			{ 
+				type = read16(pc); pc += 2;
+				bool rm = ((type>>14)&1)!=0;
+				int ss = (type>>9)&7;
+				int dr = (type>>6)&7;
+			
+				int ins = type&0x7f;
+				switch (ins)
+				{
+					case 0b0011000:	Append("fabs"); break;
+					case 0b0011100: Append("facos"); break;
+					case 0b0100010: Append("fadd"); break;
+					case 0b0001100: Append("fasin"); break;
+					case 0b0001010: Append("fatan"); break;
+					case 0b0001101: Append("fatanh"); break;
+					case 0b0111000: Append("fcmp"); break;
+					case 0b0011101: Append("fcos"); break;
+					case 0b0011001: Append("fcosh"); break;
+					case 0b0100000: Append("fdiv"); break;
+					case 0b0010000: Append("fetox"); break;
+					case 0b0001000: Append("fetoxm1"); break;
+					case 0b0011110: Append("fgetexp"); break;
+					case 0b0011111: Append("fgetman"); break;
+					case 0b0000001: Append("fint"); break;
+					case 0b0000011: Append("fintrz"); break;
+					case 0b0010101: Append("flog10"); break;
+					case 0b0010110: Append("flog2"); break;
+					case 0b0010100: Append("flogn"); break;
+					case 0b0000110: Append("flognp1"); break;
+					case 0b0100001: Append("fmod"); break;
+					case 0b0100011: Append("fmul"); break;
+					case 0b0011010: Append("fneg"); break;
+					case 0b0100101: Append("frem"); break;
+					case 0b0100110: Append("fscale"); break;
+					case 0b0100100: Append("fsgldiv"); break;
+					case 0b0100111: Append("fsglmul"); break;
+					case 0b0001110: Append("fsin"); break;
+					case 0b0000010: Append("fsinh"); break;
+					case 0b0000100: Append("fsqrt"); break;
+					case 0b0101000: Append("fsub"); break;
+					case 0b0001111: Append("ftan"); break;
+					case 0b0001001: Append("ftanh"); break;
+					case 0b0010010: Append("ftentox"); break;
+					case 0b0111010: Append("ftst"); break;
+					case 0b0010001: Append("ftwotox"); break;
+				}
+				if (rm)
+				{
+					string sizes = "lsxpwdb";
+					Append($".{sizes[ss]}");
+					uint ea = fetchEA(type);
+					fetchOp(type, ea, (Size)ss);
+					Append($"fp{dr}");
+				}
+				else
+				{
+					if (ss != dr)
+						Append($"fp{ss},");
+					Append($"fp{dr}");
+				}
+			}
 		}
 
 		private void t_fourteen(int type)
