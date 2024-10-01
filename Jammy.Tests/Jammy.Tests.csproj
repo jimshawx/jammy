@@ -56,6 +56,9 @@
     <None Update="mathieeedoubtrans.library">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="mathieeesingbas.library">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="mathieeesingtrans.library">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

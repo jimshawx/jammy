@@ -143,19 +143,19 @@ namespace Jammy.Disassembler
 
 			sptr = init-pc;
 
-			x.LibInit.Start = sptr - RomTagSize;
+			x.LibInit.Start = sptr;
 			uint dataSize = ReadLong();
 			uint vectors = ReadLong();
 			uint initStruct = ReadLong();
 			uint initFn = ReadLong();
-			x.LibInit.End = sptr - RomTagSize;
+			x.LibInit.End = sptr;;
 
 			if (vectors != 0)
 			{ 
 				sptr = vectors-pc;
 
-				x.Vectors.Start = sptr-RomTagSize;
-				
+				x.Vectors.Start = sptr;
+
 				uint vecStart = ReadLong();
 				if (vecStart == 0xffffffff)
 				{
@@ -167,13 +167,13 @@ namespace Jammy.Disassembler
 					x.VectorSize = Size.Word;
 					while (ReadWord() != 0xffff) ;				
 				}
-				x.Vectors.End = sptr - RomTagSize;
+				x.Vectors.End = sptr;
 			}
 
 			if (initStruct != 0)
 			{
 				sptr = initStruct-pc;
-				x.Struct.Start = sptr - RomTagSize;
+				x.Struct.Start = sptr;
 
 				byte c;
 				while ((c = ReadByte()) != 0x00)
@@ -216,7 +216,7 @@ namespace Jammy.Disassembler
 					if ((sptr & 1) != 0)
 						sptr++;
 				}
-				x.Struct.End = sptr - RomTagSize;
+				x.Struct.End = sptr;
 			}
 			return x;
 		}

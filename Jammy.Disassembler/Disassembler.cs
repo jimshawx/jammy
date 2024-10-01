@@ -455,21 +455,92 @@ namespace Jammy.Disassembler
 			return (Size)3;
 		}
 
+		private readonly Tuple<string, uint>[] fpcc = [
+			new Tuple<string,uint>("EQ"    ,0b000001),
+			new Tuple<string,uint>("NE"    ,0b001110),
+			new Tuple<string,uint>("GT"    ,0b010010),
+			new Tuple<string,uint>("NGT"   ,0b011101),
+			new Tuple<string,uint>("GE"    ,0b010011),
+			new Tuple<string,uint>("NGE"   ,0b011100),
+			new Tuple<string,uint>("LT"    ,0b010100),
+			new Tuple<string,uint>("NLT"   ,0b011011),
+			new Tuple<string,uint>("LE"    ,0b010101),
+			new Tuple<string,uint>("NLE"   ,0b011010),
+			new Tuple<string,uint>("GL"    ,0b010110),
+			new Tuple<string,uint>("NGL"   ,0b011001),
+			new Tuple<string,uint>("GLE"   ,0b010111),
+			new Tuple<string,uint>("NGLE"  ,0b011000),
+
+			new Tuple<string,uint>("OGT"   ,0b000010),
+			new Tuple<string,uint>("ULE"   ,0b001101),
+			new Tuple<string,uint>("OGE"   ,0b000011),
+			new Tuple<string,uint>("ULT"   ,0b001101),
+			new Tuple<string,uint>("OLT"   ,0b000100),
+			new Tuple<string,uint>("UGE"   ,0b001011),
+			new Tuple<string,uint>("OLE"   ,0b000101),
+			new Tuple<string,uint>("UGT"   ,0b001010),
+			new Tuple<string,uint>("OGL"   ,0b000110),
+			new Tuple<string,uint>("UEQ"   ,0b001001),
+
+			new Tuple<string,uint>("F"     ,0b000000),
+			new Tuple<string,uint>("T"     ,0b001111),
+			new Tuple<string,uint>("SF"    ,0b010000),
+			new Tuple<string,uint>("ST"    ,0b011111),
+			new Tuple<string,uint>("SEQ"   ,0b010001),
+			new Tuple<string,uint>("SNE"   ,0b011110)
+		];
+
+		private string GetFPCC(int cc)
+		{
+			return fpcc.First(x => x.Item2 == (uint)cc).Item1.ToLower();
+		}
+
 		private void t_fifteen(int type)
 		{
-			int misc = (type>>7)&7;
+			int misc = (type>>6)&7;
 			if (misc != 0)
 			{
 				switch (misc)
 				{
-					case 0b010://FBcc or fnop (and ea is 0)
+					case 0b010://FBcc or fnop (and ea is $+2.w)
 					case 0b011://FBcc
+						var size = (type>>6)&1;
+						var cc = type&0x3f;
+						if (size == 0 && cc == 0 && read16(pc)==pc+2)
+						{ 
+							Append("fnop");
+							break;
+						}
+						Append("fb");
+						Append($"{GetFPCC(cc)}");
+						if (size == 1)
+						{
+							Append(".l ");
+							uint ea = (uint)(int)read32(pc); pc += 4;
+							Append($"#{fmtX8(ea+address+2)}");
+						}
+						else
+						{
+							Append(".w ");
+							uint ea = (uint)(short)read16(pc); pc += 2;
+							Append($"#{fmtX4(ea+address+2)}");
+						}
 						break;
 					case 0b101:
-						Append("frestore");
+						{ 
+							Append("frestore");
+							Append(" ");
+							uint ea = fetchEA(type);
+							fetchOp(type, ea, Size.Byte);
+						}
 						break;
 					case 0b100:
-						Append("fsave");
+						{ 
+							Append("fsave");
+							Append(" ");
+							uint ea = fetchEA(type);
+							fetchOp(type, ea, Size.Byte);
+						}
 						break;
 					case 0b001://FDBcc or FScc or FTRAPcc
 						break;
@@ -477,12 +548,14 @@ namespace Jammy.Disassembler
 			}
 			else
 			{ 
-				type = read16(pc); pc += 2;
-				bool rm = ((type>>14)&1)!=0;
-				int ss = (type>>9)&7;
-				int dr = (type>>6)&7;
+				int ext = read16(pc); pc += 2;
+				bool rm = ((ext>>14)&1)!=0;
+				int ss = (ext>>10)&7;
+				int dr = (ext>>7)&7;
 			
-				int ins = type&0x7f;
+				int ins = ext&0x7f;
+				if ((ins & 0b1111_000) == 0b0110_000)
+					Append("fsincos");
 				switch (ins)
 				{
 					case 0b0011000:	Append("fabs"); break;
@@ -506,6 +579,7 @@ namespace Jammy.Disassembler
 					case 0b0010100: Append("flogn"); break;
 					case 0b0000110: Append("flognp1"); break;
 					case 0b0100001: Append("fmod"); break;
+					case 0b0000000: Append("fmove"); break;
 					case 0b0100011: Append("fmul"); break;
 					case 0b0011010: Append("fneg"); break;
 					case 0b0100101: Append("frem"); break;
@@ -524,16 +598,22 @@ namespace Jammy.Disassembler
 				}
 				if (rm)
 				{
-					string sizes = "lsxpwdb";
-					Append($".{sizes[ss]}");
+					string sizes = "lsxpwdb?";
+					Append($".{sizes[ss]} ");
 					uint ea = fetchEA(type);
 					fetchOp(type, ea, (Size)ss);
+					Append(",");
+					if ((ins & 0b1111_000) == 0b0110_000)
+						Append($"fp{ins & 7}:");
 					Append($"fp{dr}");
 				}
 				else
 				{
+					Append(".x ");
 					if (ss != dr)
 						Append($"fp{ss},");
+					if ((ins & 0b1111_000) == 0b0110_000)
+						Append($"fp{ins & 7}:");
 					Append($"fp{dr}");
 				}
 			}
