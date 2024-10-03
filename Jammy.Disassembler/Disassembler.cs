@@ -347,6 +347,76 @@ namespace Jammy.Disassembler
 			return 0;
 		}
 
+		private decimal fetchImmFP(FPSize size)
+		{
+			decimal v = 0;
+
+			if (size == FPSize.Single)
+			{	
+				uint b0 = read32(pc);
+				pc += 4;
+				try
+				{ 
+					v = (decimal)BitConverter.UInt32BitsToSingle(b0);
+				}
+				catch
+				{
+					Append($"#${b0:X8}");
+					return 0;
+				}
+			}
+			else if (size == FPSize.Double)
+			{
+				ulong b0 = read32(pc);
+				ulong b1 = read32(pc + 4);
+				pc += 8;
+				try
+				{ 
+					v = (decimal)BitConverter.UInt64BitsToDouble((b0<<32)|b1);
+				}
+				catch
+				{
+					Append($"#${b0:X8}{b1:X8}");
+					return 0;
+				}
+			}
+			else if (size == FPSize.Extended)
+			{
+				ulong b0 = read32(pc);
+				ulong b1 = read32(pc+4);
+				ulong b2 = read16(pc+8);
+				pc += 10;
+				//todo: enough bits?
+				try
+				{
+					v = (decimal)BitConverter.UInt64BitsToDouble((b0<< 32) | b1);
+					v += (decimal)b2/(decimal)Math.Pow(2.0,53-16);
+				}
+				catch
+				{
+					Append($"#${b0:X8}{b1:X8}{b2:X4}");
+					return 0;
+				}
+			}
+			else if (size == FPSize.Packed)
+			{
+				ulong b0 = read32(pc);
+				ulong b1 = read32(pc + 4);
+				ulong b2 = read32(pc + 8);
+				pc += 12;
+				//1 bit sign exponent
+				//1 bit size mantissa
+				//2 bits for Nan
+				//11 bits exponent
+				//13 bits zero
+				//68 bits mantissa
+				//todo: how is this really decoded?
+				Append($"#${b0:X8}{b1:X8}{b2:X8}");
+			}
+			Append($"#{v}");
+			return v;
+		}
+
 		private uint fetchImm(Size size)
 		{
 			uint v = 0;
@@ -375,6 +445,20 @@ namespace Jammy.Disassembler
 				Append("unknown_immediate_size");
 			}
 			return v;
+		}
+
+		private decimal fetchOpFP(int type, uint ea, FPSize size)
+		{
+			if (size == FPSize.Long) return fetchOp(type, ea, Size.Long);
+			if (size == FPSize.Word) return fetchOp(type, ea, Size.Word);
+			if (size == FPSize.Byte) return fetchOp(type, ea, Size.Byte);
+			int m = (type >> 3) & 7;
+			int x = type & 7;
+			if (m != 7 || x != 4)
+			{ 
+				return 0;
+			}
+			return fetchImmFP(size);
 		}
 
 		private uint fetchOp(int type, uint ea, Size size)
@@ -521,7 +605,13 @@ namespace Jammy.Disassembler
 
 		private string GetFPCC(int cc)
 		{
-			return fpcc.Single(x => x.Item2 == (uint)cc).Item1.ToLower();
+			var ccex = fpcc.SingleOrDefault(x => x.Item2 == (uint)cc);
+			if (ccex == null)
+			{
+				Append($"unknown_FPCC_{cc}_{cc:X2}");
+				return string.Empty;
+			}
+			return ccex.Item1.ToLower();
 		}
 
 		private void t_fifteen(int type)
@@ -561,16 +651,18 @@ namespace Jammy.Disassembler
 						{ 
 							Append("frestore");
 							Append(" ");
+							Size size = getSize(type);
 							uint ea = fetchEA(type);
-							fetchOp(type, ea, Size.Byte);
+							fetchOp(type, ea, size);
 						}
 						break;
 					case 0b100:
 						{ 
 							Append("fsave");
 							Append(" ");
+							Size size = getSize(type);
 							uint ea = fetchEA(type);
-							fetchOp(type, ea, Size.Byte);
+							fetchOp(type, ea, size);
 						}
 						break;
 					case 0b001://FDBcc or FScc or FTRAPcc
@@ -600,7 +692,7 @@ namespace Jammy.Disassembler
 								}
 								else if (mode != 0b100)
 								{
-									Append("unknown mode");
+									Append("unknown_mode");
 								}
 							}
 							else
@@ -629,10 +721,11 @@ namespace Jammy.Disassembler
 
 					int mode = (ext >> 10) & 3;
 
-					if (((ext>>13)&1)==1)//M->R
+					if (((ext>>13)&1)==0)//M->R
 					{
+						Size size = (Size)((type >> 6) & 3);
 						uint ea = fetchEA(type);
-						fetchOp(type, ea, Size.Byte);
+						fetchOp(type, ea, size);
 						Append(",");
 					}
 
@@ -643,10 +736,10 @@ namespace Jammy.Disassembler
 						for (int i = 0; i < 4; i++)
 						{
 							int b0 = list&(1<<i);
-							int b7 = list&(1<<(7-i));
-							list &= 0b01111110;
-							list |= b7>>7;
-							list |= b0<<7;
+							int b7 = list&(0x80>>i);
+							list &= 0xff-(1<<i)-(0x80>>i);
+							list |= b7>>(7-i);
+							list |= b0<<(7-i);
 						}
 					}
 					if (mode == 1 || mode == 3)
@@ -670,11 +763,12 @@ namespace Jammy.Disassembler
 						}
 					}
 
-					if (((ext >> 13) & 1) == 0)//R->M
+					if (((ext >> 13) & 1) == 1)//R->M
 					{
 						Append(",");
+						Size size = (Size)((type >> 6) & 3);
 						uint ea = fetchEA(type);
-						fetchOp(type, ea, Size.Byte);
+						fetchOp(type, ea, size);
 					}
 
 					return;
@@ -732,7 +826,7 @@ namespace Jammy.Disassembler
 					string sizes = "lsxpwdb?";
 					Append($".{sizes[ss]} ");
 					uint ea = fetchEA(type);
-					fetchOp(type, ea, (Size)ss);
+					fetchOpFP(type, ea, (FPSize)ss);
 					Append(",");
 					if ((ins & 0b1111_000) == 0b0110_000)
 						Append($"fp{ins & 7}:");

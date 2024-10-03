@@ -46,10 +46,11 @@ namespace Jammy.Tests
 			disassembler = new Disassembler.Disassembler();
 		}
 
-		//[Test]
+		[Test]
 		public void TestDis()
 		{
-			var file = File.ReadAllBytes("mathieeedoubtrans.library");
+			//var file = File.ReadAllBytes("mathieeedoubtrans.library");
+			var file = File.ReadAllBytes("mpega060FPU.library");
 
 			var hunks = hunkProcessor.RetrieveHunks(file);
 
@@ -99,108 +100,111 @@ namespace Jammy.Tests
 
 			for (; ; )
 			{
-				if (!romTag.InitStruc.Vectors.IsEmpty() && pc == romTag.InitStruc.Vectors.Start)
+				if (romTag != null)
 				{ 
-					sb.AppendLine("; vectors");
-					if (romTag.InitStruc.VectorSize == Size.Long)
-					{
-						do
-						{  
-							uint b0 = codeBytes[0];
-							uint b1 = codeBytes[1];
-							uint b2 = codeBytes[2];
-							uint b3 = codeBytes[3];
-							uint vec = (b0<<24)|(b1<<16)|(b2<<8)|b3;
-							sb.AppendLine($"{pc:X6}  dd   {vec:X8}");
-							codeBytes = codeBytes[4..];
-							pc+=4;
-						} while (pc < romTag.InitStruc.Vectors.End);
+					if (!romTag.InitStruc.Vectors.IsEmpty() && pc == romTag.InitStruc.Vectors.Start)
+					{ 
+						sb.AppendLine("; vectors");
+						if (romTag.InitStruc.VectorSize == Size.Long)
+						{
+							do
+							{  
+								uint b0 = codeBytes[0];
+								uint b1 = codeBytes[1];
+								uint b2 = codeBytes[2];
+								uint b3 = codeBytes[3];
+								uint vec = (b0<<24)|(b1<<16)|(b2<<8)|b3;
+								sb.AppendLine($"{pc:X6}  dd   {vec:X8}");
+								codeBytes = codeBytes[4..];
+								pc+=4;
+							} while (pc < romTag.InitStruc.Vectors.End);
+						}
+						else
+						{
+							do
+							{
+								uint b0 = codeBytes[0];
+								uint b1 = codeBytes[1];
+								uint vec = (b0 << 8) | b1;
+								sb.AppendLine($"{pc:X6}  dw   {vec:X4}");
+								codeBytes = codeBytes[2..];
+								pc += 2;
+							} while (pc < romTag.InitStruc.Vectors.End);
+						}
+						sb.AppendLine();
+						lastWasEOB = true;
+
+						continue;
 					}
-					else
+
+					if (!romTag.InitStruc.Struct.IsEmpty() && pc == romTag.InitStruc.Struct.Start)
 					{
+						sb.AppendLine("; init struct");
+						do
+						{
+							sb.AppendLine($"{pc:X6}  db   {codeBytes[0]:X2}");
+							codeBytes = codeBytes[1..];
+							pc++;
+						} while (pc < romTag.InitStruc.Struct.End);
+						sb.AppendLine();
+
+						//todo: why is this necessary?
+						if ((pc&1)!=0)
+						{
+							pc++;
+							codeBytes = codeBytes[1..];
+						}
+						lastWasEOB = true;
+
+						continue;
+					}
+
+					if (!romTag.InitStruc.LibInit.IsEmpty() && pc == romTag.InitStruc.LibInit.Start)
+					{
+						string[] comment = ["data size", "functions", "init struct", "init" ];
+						sb.AppendLine("; lib init");
+						int i = 0;
 						do
 						{
 							uint b0 = codeBytes[0];
 							uint b1 = codeBytes[1];
-							uint vec = (b0 << 8) | b1;
-							sb.AppendLine($"{pc:X6}  dw   {vec:X4}");
-							codeBytes = codeBytes[2..];
-							pc += 2;
-						} while (pc < romTag.InitStruc.Vectors.End);
+							uint b2 = codeBytes[2];
+							uint b3 = codeBytes[3];
+							uint vec = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
+							sb.AppendLine($"{pc:X6}  dd   {vec:X8}\t;{comment[i++]}");
+							codeBytes = codeBytes[4..];
+							pc += 4;
+						} while (pc < romTag.InitStruc.LibInit.End);
+						sb.AppendLine();
+						lastWasEOB = true;
+
+						continue;
 					}
-					sb.AppendLine();
-					lastWasEOB = true;
-
-					continue;
-				}
-
-				if (!romTag.InitStruc.Struct.IsEmpty() && pc == romTag.InitStruc.Struct.Start)
-				{
-					sb.AppendLine("; init struct");
-					do
-					{
-						sb.AppendLine($"{pc:X6}  db   {codeBytes[0]:X2}");
-						codeBytes = codeBytes[1..];
-						pc++;
-					} while (pc < romTag.InitStruc.Struct.End);
-					sb.AppendLine();
-
-					//todo: why is this necessary?
-					if ((pc&1)!=0)
-					{
-						pc++;
-						codeBytes = codeBytes[1..];
-					}
-					lastWasEOB = true;
-
-					continue;
-				}
-
-				if (!romTag.InitStruc.LibInit.IsEmpty() && pc == romTag.InitStruc.LibInit.Start)
-				{
-					string[] comment = ["data size", "functions", "init struct", "init" ];
-					sb.AppendLine("; lib init");
-					int i = 0;
-					do
-					{
-						uint b0 = codeBytes[0];
-						uint b1 = codeBytes[1];
-						uint b2 = codeBytes[2];
-						uint b3 = codeBytes[3];
-						uint vec = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
-						sb.AppendLine($"{pc:X6}  dd   {vec:X8}\t;{comment[i++]}");
-						codeBytes = codeBytes[4..];
-						pc += 4;
-					} while (pc < romTag.InitStruc.LibInit.End);
-					sb.AppendLine();
-					lastWasEOB = true;
-
-					continue;
-				}
 				
-				if (pc == romTag.Id || pc == romTag.Name)
-				{
-					sb.Append($"{pc:X6}  dc.b \"");
-					for (;;)
+					if (pc == romTag.Id || pc == romTag.Name)
 					{
-						byte b0 = codeBytes[0];
-						if (b0 == 0) {sb.Append(",00"); break; }
-						if (b0 == 13) sb.Append(",CR");
-						else if (b0 == 10) sb.Append(",LF");
-						else if (b0 < 32 || b0 > 127) sb.Append($",{b0:X2}");
-						else sb.Append((char)b0);
-						codeBytes = codeBytes[1..];
-						pc++;
+						sb.Append($"{pc:X6}  dc.b \"");
+						for (;;)
+						{
+							byte b0 = codeBytes[0];
+							if (b0 == 0) {sb.Append(",00"); break; }
+							if (b0 == 13) sb.Append(",CR");
+							else if (b0 == 10) sb.Append(",LF");
+							else if (b0 < 32 || b0 > 127) sb.Append($",{b0:X2}");
+							else sb.Append((char)b0);
+							codeBytes = codeBytes[1..];
+							pc++;
+						}
+						if ((pc&1)!=0 && codeBytes[0] == 0)
+						{
+							sb.Append(",00");
+							codeBytes = codeBytes[1..];
+							pc++;
+						}
+						sb.AppendLine("\"");
+						lastWasEOB = true;
+						continue;
 					}
-					if ((pc&1)!=0 && codeBytes[0] == 0)
-					{
-						sb.Append(",00");
-						codeBytes = codeBytes[1..];
-						pc++;
-					}
-					sb.AppendLine("\"");
-					lastWasEOB = true;
-					continue;
 				}
 
 				if (codeBytes.Length >= 2 && codeBytes[0] == 0 && codeBytes[1] == 0 && lastWasEOB)
@@ -229,7 +233,7 @@ namespace Jammy.Tests
 			logger.LogTrace("\r\n"+sb.ToString());
 		}
 
-		[Test]
+		//[Test]
 		public void TestFMOVEM()
 		{
 			var sb = new StringBuilder();

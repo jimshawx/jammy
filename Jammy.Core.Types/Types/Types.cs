@@ -13,6 +13,18 @@ namespace Jammy.Core.Types.Types
 		QWord
 	}
 
+	public enum FPSize
+	{
+		Long,
+		Single,
+		Extended,
+		Packed,
+		Word,
+		Double,
+		Byte,
+		Unknown
+	}
+
 	public struct Point
 	{
 		public int X { get; set; }
