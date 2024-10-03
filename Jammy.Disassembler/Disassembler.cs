@@ -109,12 +109,12 @@ namespace Jammy.Disassembler
 			}
 		}
 
-		void Append(string s)
+		private void Append(string s)
 		{
 			asm.Append(s);
 		}
 
-		void Append(Size s)
+		private void Append(Size s)
 		{
 			if (s == Size.Byte)
 				asm.Append(".b ");
@@ -198,7 +198,7 @@ namespace Jammy.Disassembler
 			asm.Length-=count;
 		}
 
-		public uint read32(uint addr)
+		private uint read32(uint addr)
 		{
 			if (addr + 3 >= memory.Length) return 0;
 			return ((uint)memory[addr] << 24) +
@@ -209,7 +209,7 @@ namespace Jammy.Disassembler
 			//return mm.Aggregate<byte, uint>(0, ( curr, next) => (curr<<8)|next);
 		}
 
-		public ushort read16(uint addr)
+		private ushort read16(uint addr)
 		{
 			if (addr + 1 >= memory.Length) return 0;
 			return (ushort)(
@@ -219,7 +219,7 @@ namespace Jammy.Disassembler
 			//return mm.Aggregate<byte, ushort>(0, (curr, next) => (ushort)((curr << 8) | next));
 		}
 
-		public byte read8(uint addr)
+		private byte read8(uint addr)
 		{
 			if (addr >= memory.Length) return 0;
 			return memory[addr];
@@ -227,7 +227,7 @@ namespace Jammy.Disassembler
 			//return mm.FirstOrDefault();
 		}
 
-		uint fetchEA(int type)
+		private uint fetchEA(int type)
 		{
 			int m = (type >> 3) & 7;
 			int x = type & 7;
@@ -328,14 +328,13 @@ namespace Jammy.Disassembler
 							Append($"unknown_effective_address_mode_{type:X4}");
 							return 0;
 					}
-					break;
 			}
 
 			Append($"unknown_effective_address_mode_{type:X4}");
 			return 0;
 		}
 
-		uint fetchOpSize(uint ea, Size size)
+		private uint fetchOpSize(uint ea, Size size)
 		{
 			//todo: trap on odd aligned access
 			if (size == Size.Long)
@@ -348,7 +347,7 @@ namespace Jammy.Disassembler
 			return 0;
 		}
 
-		uint fetchImm(Size size)
+		private uint fetchImm(Size size)
 		{
 			uint v = 0;
 			if (size == Size.Long)
@@ -378,7 +377,7 @@ namespace Jammy.Disassembler
 			return v;
 		}
 
-		uint fetchOp(int type, uint ea, Size size)
+		private uint fetchOp(int type, uint ea, Size size)
 		{
 			int m = (type >> 3) & 7;
 			int x = type & 7;
@@ -455,6 +454,36 @@ namespace Jammy.Disassembler
 			return (Size)3;
 		}
 
+		private readonly Tuple<uint, string>[] fpconst = [
+			new Tuple<uint, string>(0x00 ,"pi"),
+			new Tuple<uint, string>(0x0B ,"Log10(2),"),
+			new Tuple<uint, string>(0x0C ,"e"),
+			new Tuple<uint, string>(0x0D ,"Log2(e),"),
+			new Tuple<uint, string>(0x0E ,"Logl0(e),"),
+			new Tuple<uint, string>(0x0F ,"0.0"),
+			new Tuple<uint, string>(0x30 ,"ln(2)"),
+			new Tuple<uint, string>(0x31 ,"ln(10)"),
+			new Tuple<uint, string>(0x32 ,"10^0"),
+			new Tuple<uint, string>(0x33 ,"10^1"),
+			new Tuple<uint, string>(0x34 ,"10^2"),
+			new Tuple<uint, string>(0x35 ,"10^4"),
+			new Tuple<uint, string>(0x36 ,"10^8"),
+			new Tuple<uint, string>(0x37 ,"10^16"),
+			new Tuple<uint, string>(0x38 ,"10^32"),
+			new Tuple<uint, string>(0x39 ,"10^64"),
+			new Tuple<uint, string>(0x3A ,"10^128"),
+			new Tuple<uint, string>(0x3B ,"10^256"),
+			new Tuple<uint, string>(0x3C ,"10^512"),
+			new Tuple<uint, string>(0x3D ,"10^1024"),
+			new Tuple<uint, string>(0x3E ,"10^2048"),
+			new Tuple<uint, string>(0x3F ,"10^4096")
+		];
+
+		private string GetFPConst(int cc)
+		{
+			return fpconst.Single(x => x.Item1 == (uint)cc).Item2;
+		}
+
 		private readonly Tuple<string, uint>[] fpcc = [
 			new Tuple<string,uint>("EQ"    ,0b000001),
 			new Tuple<string,uint>("NE"    ,0b001110),
@@ -492,7 +521,7 @@ namespace Jammy.Disassembler
 
 		private string GetFPCC(int cc)
 		{
-			return fpcc.First(x => x.Item2 == (uint)cc).Item1.ToLower();
+			return fpcc.Single(x => x.Item2 == (uint)cc).Item1.ToLower();
 		}
 
 		private void t_fifteen(int type)
@@ -504,6 +533,7 @@ namespace Jammy.Disassembler
 				{
 					case 0b010://FBcc or fnop (and ea is $+2.w)
 					case 0b011://FBcc
+						{ 
 						var size = (type>>6)&1;
 						var cc = type&0x3f;
 						if (size == 0 && cc == 0 && read16(pc)==pc+2)
@@ -525,6 +555,7 @@ namespace Jammy.Disassembler
 							uint ea = (uint)(short)read16(pc); pc += 2;
 							Append($"#{fmtX4(ea+address+2)}");
 						}
+						}
 						break;
 					case 0b101:
 						{ 
@@ -543,12 +574,112 @@ namespace Jammy.Disassembler
 						}
 						break;
 					case 0b001://FDBcc or FScc or FTRAPcc
+						{
+							var w2 = read16(pc); pc += 2;
+							var cc = w2&0x3f;
+							var ins = (type >> 3) & 7;
+							if (ins == 0b001)
+							{
+								var dr = type & 7;
+								Append($"fdb{GetFPCC(cc)} ");
+								Append($"d{dr},");
+								uint ea = (uint)(short)read16(pc); pc += 2;
+								Append($"#{fmtX4(ea + address + 2)}");
+							}
+							else if (ins == 0xb111)
+							{
+								Append($"ftrap{GetFPCC(cc)}");
+								var mode = type & 7;
+								if (mode == 0b010)
+								{
+									Append($".w #{fmtX4(read16(pc))}"); pc += 2;
+								}
+								else if (mode == 0b011)
+								{
+									Append($".l #{fmtX8(read32(pc))}"); pc += 4;
+								}
+								else if (mode != 0b100)
+								{
+									Append("unknown mode");
+								}
+							}
+							else
+							{ 
+								Append($"fs{GetFPCC(cc)}.b ");
+								uint ea = fetchEA(type);
+								fetchOp(type, ea, Size.Byte);
+							}
+						}
 						break;
 				}
 			}
 			else
 			{ 
 				int ext = read16(pc); pc += 2;
+
+				if ((type & 0b11_1111_1111) == 0 && (ext >> 12) == 0b010111)
+				{
+					int cc = ext&0x7f;
+					Append($"fmovecr.x #${cc:X2},fp{(ext>>7)&7}  ; {GetFPConst(cc)}");
+					return;
+				}
+				else if ((ext & 0b11_000_111_00000000) == 0b11_000_000_00000000)
+				{
+					Append("fmovem.x ");
+
+					int mode = (ext >> 10) & 3;
+
+					if (((ext>>13)&1)==1)//M->R
+					{
+						uint ea = fetchEA(type);
+						fetchOp(type, ea, Size.Byte);
+						Append(",");
+					}
+
+					var list = ext & 0xff;
+					if (mode == 0 || mode == 1)
+					{
+						//pre-decrement is backwards
+						for (int i = 0; i < 4; i++)
+						{
+							int b0 = list&(1<<i);
+							int b7 = list&(1<<(7-i));
+							list &= 0b01111110;
+							list |= b7>>7;
+							list |= b0<<7;
+						}
+					}
+					if (mode == 1 || mode == 3)
+					{
+						if (mode == 0 || mode == 1) Append("-");
+						Append($"(a{(ext>>4)&7})");
+						if (mode == 2 || mode == 3) Append("+");
+					}
+					else
+					{ 
+						var ls = list << 1;
+						bool dash = false;
+						bool slash = false;
+						for (int i = 0; i < 8; i++)
+						{
+							if ((ls & 3) == 0b010) { if (slash) Append("/"); Append($"fp{i}"); slash = true; }
+							if ((ls & 7) == 0b111) { if (!dash) { Append("-"); dash = true; } }
+							if ((ls & 6) == 0b010) { if (dash) Append($"fp{i}"); dash = false; }
+							if ((ls & 15) == 0b0110) { Append($"/fp{i + 1}"); }
+							ls >>= 1;
+						}
+					}
+
+					if (((ext >> 13) & 1) == 0)//R->M
+					{
+						Append(",");
+						uint ea = fetchEA(type);
+						fetchOp(type, ea, Size.Byte);
+					}
+
+					return;
+				}
+
 				bool rm = ((ext>>14)&1)!=0;
 				int ss = (ext>>10)&7;
 				int dr = (ext>>7)&7;

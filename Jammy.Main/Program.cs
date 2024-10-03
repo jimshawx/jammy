@@ -71,7 +71,7 @@ namespace Jammy.Main
 				.AddLogging(x =>
 				{
 					x.AddConfiguration(appConfig.GetSection("Logging"));
-					//x.AddDebug();
+					x.AddDebug();
 					//x.AddSQLite();
 					x.AddDebugAsync();
 					//x.AddDebugAsyncRTF();

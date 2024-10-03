@@ -46,7 +46,7 @@ namespace Jammy.Tests
 			disassembler = new Disassembler.Disassembler();
 		}
 
-		[Test]
+		//[Test]
 		public void TestDis()
 		{
 			var file = File.ReadAllBytes("mathieeedoubtrans.library");
@@ -227,6 +227,34 @@ namespace Jammy.Tests
 				pc += (uint)dis.Bytes.Length;
 			}
 			logger.LogTrace("\r\n"+sb.ToString());
+		}
+
+		[Test]
+		public void TestFMOVEM()
+		{
+			var sb = new StringBuilder();
+			void Append(string s) { sb.Append(s); }
+			for (int list = 0; list < 256; list++)
+			{
+				sb.Clear();
+
+				for (int i = 0; i < 8; i++)
+					if ((list & (1 << i)) != 0) Append($"fp{i}/");
+				Append("\t\t\t\t");
+
+				var ls = list << 1;
+				bool dash = false;
+				bool slash = false;
+				for (int i = 0; i < 8; i++)
+				{
+					if ((ls & 3) == 0b010) { if (slash) Append("/"); Append($"fp{i}"); slash = true; }
+					if ((ls & 7) == 0b111) { if (!dash) { Append("-"); dash = true; } }
+					if ((ls & 6) == 0b010) { if (dash) Append($"fp{i}"); dash = false; }
+					if ((ls &15) ==0b0110) { Append($"/fp{i+1}"); }
+					ls >>= 1;
+				}
+				logger.LogTrace(sb.ToString());
+			}
 		}
 	}
 }
