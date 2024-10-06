@@ -1599,97 +1599,84 @@ public static partial class M68KCPU
 
 			case 0x02: //FSINH
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Sinh(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Sinh(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x09: //FTANH
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Tanh(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Tanh(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x0a: //FATAN
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Atan(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Atan(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x0c: //FASIN
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Asin(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Asin(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x0f: //FTAN
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Tan(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Tan(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x10: //FEXP
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Exp(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Exp(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x11: //FTWOTOX
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Pow(2.0, BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80((Math.Pow(2.0, fx80_to_double(source))));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x14: //FLOG
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Log(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Log(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x15: //FLOG10
 				{
-					//hack: this was missing
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Log10(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Log10(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x16: //FLOG2
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Log2(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Log2(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x19: //FCOSH
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Cosh(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Cosh(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;
 				}
 			case 0x1c: //FACOS
 				{
-					ulong d = floatx80_to_float64(source);
-					REG_FP[dst] = float64_to_floatx80(BitConverter.DoubleToUInt64Bits((Math.Acos(BitConverter.UInt64BitsToDouble(d)))));
+					REG_FP[dst] = double_to_fx80(Math.Acos(fx80_to_double(source)));
 					SET_CONDITION_CODES(REG_FP[dst]);
 					USE_CYCLES(100);
 					break;

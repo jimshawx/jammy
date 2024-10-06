@@ -562,12 +562,12 @@ namespace Jammy.Tests
 			logger.LogTrace($"Fieee({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Asin
-			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			d0 = BitConverter.SingleToUInt32Bits(0.1833428f);
 			rv = CallLVO(libraryBase, -114, stackPtr, d0);
 			logger.LogTrace($"Asin({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Acos
-			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			d0 = BitConverter.SingleToUInt32Bits(0.1833428f);
 			rv = CallLVO(libraryBase, -120, stackPtr, d0);
 			logger.LogTrace($"Acos({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
