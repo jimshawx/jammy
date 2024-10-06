@@ -17,6 +17,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void UnsafeWrite32(uint address, uint value);
 		void UnsafeWrite16(uint address, ushort value);
 		void UnsafeWrite8(uint address, byte value);
+		void UnsafeWrite(uint address, uint value, Size size);
 		IEnumerable<byte> GetEnumerable(uint start, ulong length);
 		IEnumerable<byte> GetEnumerable(uint start);
 		IEnumerable<uint> AsULong(uint start);

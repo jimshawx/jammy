@@ -1,9 +1,11 @@
 ﻿using Jammy.Core.Types.Types;
 using Jammy.Disassembler.Analysers;
 using Jammy.Types;
+using Jammy.Types.AmigaTypes;
 using Jammy.Types.Kickstart;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Xml.Serialization;
 
@@ -29,6 +31,10 @@ namespace Jammy.Disassembler
 	{
 		public class InitStruct
 		{
+			public uint DataSize { get; set;}
+			public uint InitFn { get; set;}
+			public List<uint> Vector { get; } = new List<uint>();
+
 			public AddressRange LibInit { get; } = new AddressRange();
 			public AddressRange Vectors { get; } = new AddressRange();
 			public Size VectorSize { get;set; }
@@ -150,6 +156,10 @@ namespace Jammy.Disassembler
 			uint initFn = ReadLong();
 			x.LibInit.End = sptr;;
 
+			x.DataSize = dataSize;
+			x.InitFn = initFn;
+
+			uint vec;
 			if (vectors != 0)
 			{ 
 				sptr = vectors-pc;
@@ -160,12 +170,13 @@ namespace Jammy.Disassembler
 				if (vecStart == 0xffffffff)
 				{
 					x.VectorSize = Size.Long;
-					while (ReadLong() != 0xffffffff);
+					while ((vec = ReadLong()) != 0xffffffff) x.Vector.Add(vec);
 				}
 				else
 				{
+					x.Vector.Add(vecStart&0xffff);
 					x.VectorSize = Size.Word;
-					while (ReadWord() != 0xffff) ;				
+					while ((vec = ReadWord()) != 0xffff) x.Vector.Add(vec);				
 				}
 				x.Vectors.End = sptr;
 			}
