@@ -212,13 +212,14 @@ namespace Jammy.Tests
 			return r.OrderBy(x => x.Offset).ToList();
 		}
 
-		private uint CallLVO(uint libBase, int vec, uint sp, uint d0=0, uint d1=0)
+		private uint CallLVO(uint libBase, int vec, uint sp, uint d0=0, uint d1=0, uint a0=0)
 		{
 			var regs = new Regs();
 			regs.PC = (uint)(libBase+vec);
 			regs.A[7] = regs.SP = regs.SSP = sp;
 			regs.D[0] = d0;
 			regs.D[1] = d1;
+			regs.A[0] = a0;
 			cpu0.SetRegs(regs);
 			for (; ; )
 			{
@@ -493,88 +494,88 @@ namespace Jammy.Tests
 			//Atan
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -30, stackPtr, d0);
-			logger.LogTrace($"Atan({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Atan({d0:X8}) 1.516 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Sin
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -36, stackPtr, d0);
-			logger.LogTrace($"Sin({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Sin({d0:X8}) -0.493 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Cos
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -42, stackPtr, d0);
-			logger.LogTrace($"Cos({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Cos({d0:X8}) 0.870 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Tan
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -48, stackPtr, d0);
-			logger.LogTrace($"Tan({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Tan({d0:X8}) -0.566 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//SinCos
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
-			rv = CallLVO(libraryBase, -54, stackPtr, d0, stackPtr-4);
-			logger.LogTrace($"SinCos({d0:X8}) {rv:X8},{memory.UnsafeRead32(stackPtr-4):X8} {BitConverter.UInt32BitsToSingle(rv)},{BitConverter.UInt32BitsToSingle(memory.UnsafeRead32(stackPtr - 4))}");
+			rv = CallLVO(libraryBase, -54, stackPtr, d0, 0, stackPtr-4);
+			logger.LogTrace($"SinCos({d0:X8}) -0.493,0.870 {rv:X8},{memory.UnsafeRead32(stackPtr-4):X8} {BitConverter.UInt32BitsToSingle(rv)},{BitConverter.UInt32BitsToSingle(memory.UnsafeRead32(stackPtr - 4))}");
 
 			//Sinh
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -60, stackPtr, d0);
-			logger.LogTrace($"Sinh({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Sinh({d0:X8}) 45861329 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Cosh
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -66, stackPtr, d0);
-			logger.LogTrace($"Cosh({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Cosh({d0:X8}) 45861329 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Tanh
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -72, stackPtr, d0);
-			logger.LogTrace($"Tanh({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Tanh({d0:X8}) 0.999 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Exp
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -78, stackPtr, d0);
-			logger.LogTrace($"Exp({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Exp({d0:X8}) 91722658 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Log
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -84, stackPtr, d0);
-			logger.LogTrace($"Log({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Log({d0:X8}) 2.908 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Pow
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			d1 = BitConverter.SingleToUInt32Bits(2.0f);
 			rv = CallLVO(libraryBase, -90, stackPtr, d0, d1);
-			logger.LogTrace($"Pow({d0:X8},{d1:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Pow({d0:X8},{d1:X8}) 336.14 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Sqrt
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -96, stackPtr, d0);
-			logger.LogTrace($"Sqrt({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Sqrt({d0:X8}) 4.282 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Tieee
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -102, stackPtr, d0);
-			logger.LogTrace($"Tieee({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Tieee({d0:X8}) 18.334 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Fieee
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -108, stackPtr, d0);
-			logger.LogTrace($"Fieee({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Fieee({d0:X8}) 18.334 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Asin
 			d0 = BitConverter.SingleToUInt32Bits(0.1833428f);
 			rv = CallLVO(libraryBase, -114, stackPtr, d0);
-			logger.LogTrace($"Asin({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Asin({d0:X8}) 0.184 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Acos
 			d0 = BitConverter.SingleToUInt32Bits(0.1833428f);
 			rv = CallLVO(libraryBase, -120, stackPtr, d0);
-			logger.LogTrace($"Acos({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Acos({d0:X8}) 1.386 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 
 			//Log10
 			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
 			rv = CallLVO(libraryBase, -126, stackPtr, d0);
-			logger.LogTrace($"Log10({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+			logger.LogTrace($"Log10({d0:X8}) 1.263 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 		}
 	}
 }
