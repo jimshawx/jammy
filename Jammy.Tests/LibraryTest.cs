@@ -55,7 +55,7 @@ namespace Jammy.Tests
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
-				.AddSingleton<ICPU, Musashi68030CPU>()
+				//.AddSingleton<ICPU, Musashi68030CPU>()
 				.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.AddSingleton<TestMemory>()
 				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
@@ -255,26 +255,23 @@ namespace Jammy.Tests
 			return regs.D[0];
 		}
 
-		[Test]
-		public void TestLibrary()
+		private uint LoadLibrary(string libName, out uint stackPtr)
 		{
-			const string libName = "mathieeesingbas.library";
-
 			var lib = File.ReadAllBytes(libName);
 
-			var code = hunkProcessor.RetrieveHunks(lib).First(x=>x.HunkType == HUNK.HUNK_CODE);
-			int codeBase=0;
+			var code = hunkProcessor.RetrieveHunks(lib).First(x => x.HunkType == HUNK.HUNK_CODE);
+			int codeBase = 0;
 			if (code.Content.Length >= 2 && code.Content[0] == 0x4e && code.Content[1] == 0x75)
 				codeBase += 2;
 
 			var libw = code.Content.AsUWord().ToArray();
 			for (uint i = 0; i < libw.Length; i++)
-				memory.UnsafeWrite16(i*2, libw[i]);
+				memory.UnsafeWrite16(i * 2, libw[i]);
 
 			var romTag = romTagProcessor.ExtractRomTag(code.Content[codeBase..]);
 
 			uint libraryBase;
-			uint stackPtr;
+			//uint stackPtr;
 			if ((romTag.Flags & RTF.RTF_AUTOINIT) != 0)
 			{
 				//auto init
@@ -287,9 +284,9 @@ namespace Jammy.Tests
 				{
 					memory.UnsafeWrite16(libMem, 0x4ef9);//jmp #
 					if (romTag.InitStruc.VectorSize == Size.Long)
-						memory.UnsafeWrite32(libMem+2, vec);
+						memory.UnsafeWrite32(libMem + 2, vec);
 					else
-						memory.UnsafeWrite32(libMem+2, vec+romTag.InitStruc.Vectors.Start+2);
+						memory.UnsafeWrite32(libMem + 2, vec + romTag.InitStruc.Vectors.Start + 2);
 					libMem += 6;
 				}
 
@@ -301,8 +298,8 @@ namespace Jammy.Tests
 					memory.UnsafeWrite(libMem, m.Value, m.Size);
 
 					if (m.Size == Size.Byte) libMem++;
-					if (m.Size == Size.Word) libMem+=2;
-					if (m.Size == Size.Long) libMem+=4;
+					if (m.Size == Size.Word) libMem += 2;
+					if (m.Size == Size.Long) libMem += 4;
 				}
 
 				stackPtr = libMem + 0x1000;
@@ -311,7 +308,7 @@ namespace Jammy.Tests
 				uint init = 0;//romTag.InitStruc.InitFn;
 				uint p = init;
 				var codeBytes = memory.GetBulkRanges().First().Memory[(int)init..(int)libMem];
-				while (codeBytes.Length>0)
+				while (codeBytes.Length > 0)
 				{
 					if (codeBytes.Length >= 2 && codeBytes[0] == 0 && codeBytes[1] == 0 && lastWasEOB)
 					{
@@ -336,7 +333,7 @@ namespace Jammy.Tests
 
 				//need to fake up some execBase
 				uint execBase = stackPtr;
-				memory.UnsafeWrite8(execBase+0x129, 1<<4);//show 68881 present in AttnFlags
+				memory.UnsafeWrite8(execBase + 0x129, 1 << 4);//show 68881 present in AttnFlags
 
 				//all done, call the init function
 				uint libInit = Call(romTag.InitStruc.InitFn, stackPtr, libraryBase, execBase);
@@ -347,8 +344,17 @@ namespace Jammy.Tests
 				stackPtr = (uint)code.Content.Length + 0x1000;
 				libraryBase = Call(romTag.Init, stackPtr, 0, 0);
 			}
+			return libraryBase;
+		}
 
-			logger.LogTrace($"loaded library at {libraryBase:X8}");
+		[Test]
+		public void TestMathIEEESingBas()
+		{
+			const string libName = "mathieeesingbas.library";
+
+			uint libraryBase = LoadLibrary(libName, out uint stackPtr);
+
+			logger.LogTrace($"loaded {libName} at {libraryBase:X8}");
 
 			//Open					- 6		16
 			//Close					-12		15
@@ -452,6 +458,123 @@ namespace Jammy.Tests
 			d0 = BitConverter.SingleToUInt32Bits(1.9f);
 			rv = CallLVO(libraryBase, -96, stackPtr, d0);
 			logger.LogTrace($"Ceil({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+		}
+
+		[Test]
+		public void TestMathIEEESingTrans()
+		{
+			const string libName = "mathieeesingtrans.library";
+
+			uint libraryBase = LoadLibrary(libName, out uint stackPtr);
+
+			logger.LogTrace($"loaded {libName} at {libraryBase:X8}");
+
+			//_LVOIEEESPAtan equ     -30
+			//_LVOIEEESPSin equ     -36
+			//_LVOIEEESPCos equ     -42
+			//_LVOIEEESPTan equ     -48
+			//_LVOIEEESPSincos equ     -54
+			//_LVOIEEESPSinh equ     -60
+			//_LVOIEEESPCosh equ     -66
+			//_LVOIEEESPTanh equ     -72
+			//_LVOIEEESPExp equ     -78
+			//_LVOIEEESPLog equ     -84
+			//_LVOIEEESPPow equ     -90
+			//_LVOIEEESPSqrt equ     -96
+			//_LVOIEEESPTieee equ     -102
+			//_LVOIEEESPFieee equ     -108
+			//_LVOIEEESPAsin equ     -114
+			//_LVOIEEESPAcos equ     -120
+			//_LVOIEEESPLog10 equ     -126
+
+			uint d0, d1;
+			uint rv;
+
+			//Atan
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -30, stackPtr, d0);
+			logger.LogTrace($"Atan({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Sin
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -36, stackPtr, d0);
+			logger.LogTrace($"Sin({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Cos
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -42, stackPtr, d0);
+			logger.LogTrace($"Cos({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Tan
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -48, stackPtr, d0);
+			logger.LogTrace($"Tan({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//SinCos
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -54, stackPtr, d0, stackPtr-4);
+			logger.LogTrace($"SinCos({d0:X8}) {rv:X8},{memory.UnsafeRead32(stackPtr-4):X8} {BitConverter.UInt32BitsToSingle(rv)},{BitConverter.UInt32BitsToSingle(memory.UnsafeRead32(stackPtr - 4))}");
+
+			//Sinh
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -60, stackPtr, d0);
+			logger.LogTrace($"Sinh({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Cosh
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -66, stackPtr, d0);
+			logger.LogTrace($"Cosh({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Tanh
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -72, stackPtr, d0);
+			logger.LogTrace($"Tanh({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Exp
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -78, stackPtr, d0);
+			logger.LogTrace($"Exp({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Log
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -84, stackPtr, d0);
+			logger.LogTrace($"Log({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Pow
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			d1 = BitConverter.SingleToUInt32Bits(2.0f);
+			rv = CallLVO(libraryBase, -90, stackPtr, d0, d1);
+			logger.LogTrace($"Pow({d0:X8},{d1:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Sqrt
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -96, stackPtr, d0);
+			logger.LogTrace($"Sqrt({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Tieee
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -102, stackPtr, d0);
+			logger.LogTrace($"Tieee({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Fieee
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -108, stackPtr, d0);
+			logger.LogTrace($"Fieee({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Asin
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -114, stackPtr, d0);
+			logger.LogTrace($"Asin({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Acos
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -120, stackPtr, d0);
+			logger.LogTrace($"Acos({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
+
+			//Log10
+			d0 = BitConverter.SingleToUInt32Bits(18.33428f);
+			rv = CallLVO(libraryBase, -126, stackPtr, d0);
+			logger.LogTrace($"Log10({d0:X8}) {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 		}
 	}
 }
