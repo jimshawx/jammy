@@ -54,6 +54,27 @@ namespace Jammy.Disassembler
 		public uint Init { get;set;}
 
 		public InitStruct InitStruc { get; set; }
+
+		public void Rebase(uint baseAddress)
+		{
+			MatchTag += baseAddress;
+			EndSkip += baseAddress;
+			Name += baseAddress;
+			Id += baseAddress;
+			Init += baseAddress;
+			if (InitStruc != null)
+			{
+				InitStruc.InitFn += baseAddress;
+				if (InitStruc.VectorSize == Size.Long)
+				{
+					for (int i = 0; i < InitStruc.Vector.Count; i++)
+						InitStruc.Vector[i] += baseAddress;
+				}
+				InitStruc.Vectors.Start += baseAddress;
+				InitStruc.LibInit.Start += baseAddress;
+				InitStruc.Struct.Start += baseAddress;
+			}
+		}
 	}
 
 	public class RomTagProcessor : IRomTagProcessor

@@ -18,6 +18,7 @@ using Jammy.Types.Kickstart;
 using NUnit.Framework.Legacy;
 using Jammy.Core.CPU.Musashi.MC68030;
 using Jammy.Core.CPU.Musashi.CSharp;
+using Jammy.Core.CPU.Musashi.MC68020;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -56,7 +57,8 @@ namespace Jammy.Tests
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
 				//.AddSingleton<ICPU, Musashi68030CPU>()
-				.AddSingleton<ICPU, CPUWrapperMusashi>()
+				.AddSingleton<ICPU, Musashi68EC020CPU>()
+				//.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.AddSingleton<TestMemory>()
 				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
@@ -225,9 +227,13 @@ namespace Jammy.Tests
 			{
 				regs = cpu0.GetRegs();
 
-				//rts from stack frame
+				//rts from stack frame, or rte
 				if (memory.UnsafeRead16(regs.PC) == 0x4e75 && regs.A[7] == sp)
 					break;
+				if (memory.UnsafeRead16(regs.PC) == 0x4e73)
+				{
+					logger.LogTrace("Exception!"); break;
+				}
 
 				cpu0.Emulate();
 			}
@@ -247,16 +253,20 @@ namespace Jammy.Tests
 			{
 				regs = cpu0.GetRegs();
 
-				//rts from stack frame
+				//rts from stack frame, or rte
 				if (memory.UnsafeRead16(regs.PC) == 0x4e75 && regs.A[7] == sp)
 					break;
+				if (memory.UnsafeRead16(regs.PC) == 0x4e73)
+				{
+					logger.LogTrace("Exception!"); break;
+				}
 
 				cpu0.Emulate();
 			}
 			return regs.D[0];
 		}
 
-		private uint LoadLibrary(string libName, out uint stackPtr)
+		private uint LoadLibrary(uint loadAddress, string libName, out uint stackPtr)
 		{
 			var lib = File.ReadAllBytes(libName);
 
@@ -265,9 +275,17 @@ namespace Jammy.Tests
 			if (code.Content.Length >= 2 && code.Content[0] == 0x4e && code.Content[1] == 0x75)
 				codeBase += 2;
 
+			if (loadAddress < 0x1002)
+				logger.LogTrace("Not enough space to load interrupt vectors");
+
+			//fill all trap vectors with rte
+			for (uint i = 0; i < 0x1000; i+= 4)
+				memory.UnsafeWrite32(i, 0x1000);
+			memory.UnsafeWrite16(0x1000, 0x4e73);//rte
+
 			var libw = code.Content.AsUWord().ToArray();
 			for (uint i = 0; i < libw.Length; i++)
-				memory.UnsafeWrite16(i * 2, libw[i]);
+				memory.UnsafeWrite16(loadAddress + i * 2, libw[i]);
 
 			var romTag = romTagProcessor.ExtractRomTag(code.Content[codeBase..]);
 
@@ -275,12 +293,14 @@ namespace Jammy.Tests
 			//uint stackPtr;
 			if ((romTag.Flags & RTF.RTF_AUTOINIT) != 0)
 			{
+				romTag.Rebase(loadAddress);
+
 				//auto init
 
 				//decode the init struct
 				var struc = CommentStructureInit(romTag.InitStruc.Struct.Start, romTag.InitStruc.DataSize, libName);
 
-				uint libMem = (uint)lib.Length;
+				uint libMem = loadAddress + (uint)lib.Length;
 				foreach (var vec in romTag.InitStruc.Vector.Reverse<uint>())
 				{
 					memory.UnsafeWrite16(libMem, 0x4ef9);//jmp #
@@ -306,7 +326,7 @@ namespace Jammy.Tests
 				stackPtr = libMem + 0x1000;
 
 				bool lastWasEOB = true;
-				uint init = 0;//romTag.InitStruc.InitFn;
+				uint init = loadAddress;//romTag.InitStruc.InitFn;
 				uint p = init;
 				var codeBytes = memory.GetBulkRanges().First().Memory[(int)init..(int)libMem];
 				while (codeBytes.Length > 0)
@@ -353,7 +373,7 @@ namespace Jammy.Tests
 		{
 			const string libName = "mathieeesingbas.library";
 
-			uint libraryBase = LoadLibrary(libName, out uint stackPtr);
+			uint libraryBase = LoadLibrary(0x10000, libName, out uint stackPtr);
 
 			logger.LogTrace($"loaded {libName} at {libraryBase:X8}");
 
@@ -466,7 +486,7 @@ namespace Jammy.Tests
 		{
 			const string libName = "mathieeesingtrans.library";
 
-			uint libraryBase = LoadLibrary(libName, out uint stackPtr);
+			uint libraryBase = LoadLibrary(0x10000, libName, out uint stackPtr);
 
 			logger.LogTrace($"loaded {libName} at {libraryBase:X8}");
 
