@@ -98,8 +98,7 @@ namespace Jammy.Core.IO.Windows
 				//right, down is +ve
 				//left, up is -ve
 
-				int mousex = Cursor.Position.X;
-				int mousey = Cursor.Position.Y;
+				var mouse = Cursor.Position;
 
 				bool rmouse = (Control.MouseButtons & MouseButtons.Right) != 0;
 				bool mmouse = (Control.MouseButtons & MouseButtons.Middle) != 0;
@@ -122,8 +121,8 @@ namespace Jammy.Core.IO.Windows
 
 				if (oldMouseX != -1)
 				{
-					int dx = mousex - oldMouseX;
-					int dy = mousey - oldMouseY;
+					int dx = mouse.X - oldMouseX;
+					int dy = mouse.Y - oldMouseY;
 
 					if (Math.Abs(dx) > 255 || Math.Abs(dy) > 255) logger.LogTrace($"mouse too fast {dx},{dy}");
 					//dx = dx + (dx >> 1);
@@ -149,8 +148,8 @@ namespace Jammy.Core.IO.Windows
 				}
 				else
 				{
-					oldMouseX = mousex;
-					oldMouseY = mousey;
+					oldMouseX = mouse.X;
+					oldMouseY = mouse.Y;
 				}
 			}
 		}
