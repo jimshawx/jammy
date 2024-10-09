@@ -19,6 +19,7 @@ using NUnit.Framework.Legacy;
 using Jammy.Core.CPU.Musashi.MC68030;
 using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.CPU.Musashi.MC68020;
+using System.Text;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -57,8 +58,8 @@ namespace Jammy.Tests
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
 				//.AddSingleton<ICPU, Musashi68030CPU>()
-				.AddSingleton<ICPU, Musashi68EC020CPU>()
-				//.AddSingleton<ICPU, CPUWrapperMusashi>()
+				//.AddSingleton<ICPU, Musashi68EC020CPU>()
+				.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.AddSingleton<TestMemory>()
 				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
@@ -66,7 +67,7 @@ namespace Jammy.Tests
 				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IHunkProcessor, HunkProcessor>()
 				.AddSingleton<IRomTagProcessor, RomTagProcessor>()
-				.Configure<EmulationSettings>(o => configuration.GetSection("EmulationFPU").Bind(o))
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation030").Bind(o))
 				.BuildServiceProvider();
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider;
@@ -288,6 +289,26 @@ namespace Jammy.Tests
 				memory.UnsafeWrite16(loadAddress + i * 2, libw[i]);
 
 			var romTag = romTagProcessor.ExtractRomTag(code.Content[codeBase..]);
+			//there's no rom tag
+			if (romTag == null)
+			{
+				uint p = 0;
+				uint init = loadAddress;
+				uint libMem = loadAddress + (uint)code.Content.Length;
+				var codeBytes = memory.GetBulkRanges().First().Memory[(int)init..(int)libMem];
+				var sb = new StringBuilder();
+				while (codeBytes.Length > 0)
+				{ 
+					var dis = disassembler.Disassemble(p, codeBytes);
+					sb.AppendLine(dis.ToString());
+
+					codeBytes = codeBytes[dis.Bytes.Length..];
+					p += (uint)dis.Bytes.Length;
+				}
+				logger.LogTrace(sb.ToString());
+				stackPtr = loadAddress + (uint)code.Content.Length + 0x1000;
+				return loadAddress;
+			}
 
 			uint libraryBase;
 			//uint stackPtr;
@@ -325,35 +346,75 @@ namespace Jammy.Tests
 
 				stackPtr = libMem + 0x1000;
 
-				bool lastWasEOB = true;
 				uint init = loadAddress;//romTag.InitStruc.InitFn;
 				uint p = init;
 				var codeBytes = memory.GetBulkRanges().First().Memory[(int)init..(int)libMem];
+				var sb = new StringBuilder();
 				while (codeBytes.Length > 0)
 				{
-					if (codeBytes.Length >= 2 && codeBytes[0] == 0 && codeBytes[1] == 0 && lastWasEOB)
+					if (codeBytes.Length >= 6 && codeBytes[0] == 0x4A && codeBytes[1] == 0xFC)
 					{
-						logger.LogTrace($"{p:X6}  dc.w   0000");
-						p += 2;
-						codeBytes = codeBytes[2..];
+						//it's probably a romtag
+						//2,4,4,1,1,1,1,4,4,4
+						sb.AppendLine($"{p:X6}  dc.w   {codeBytes[0]:X2}{codeBytes[1]:X2}");
+						sb.AppendLine($"{p+2:X6}  dc.l   {codeBytes[2]:X2}{codeBytes[3]:X2}{codeBytes[4]:X2}{codeBytes[5]:X2}");
+						sb.AppendLine($"{p+6:X6}  dc.l   {codeBytes[6]:X2}{codeBytes[7]:X2}{codeBytes[8]:X2}{codeBytes[9]:X2}");
+						sb.AppendLine($"{p+10:X6}  dc.b   {codeBytes[10]:X2}");
+						sb.AppendLine($"{p+11:X6}  dc.b   {codeBytes[11]:X2}");
+						sb.AppendLine($"{p+12:X6}  dc.b   {codeBytes[12]:X2}");
+						sb.AppendLine($"{p+13:X6}  dc.b   {codeBytes[13]:X2}");
+						sb.AppendLine($"{p+14:X6}  dc.l   {codeBytes[14]:X2}{codeBytes[15]:X2}{codeBytes[16]:X2}{codeBytes[17]:X2}");
+						sb.AppendLine($"{p+18:X6}  dc.l   {codeBytes[18]:X2}{codeBytes[19]:X2}{codeBytes[20]:X2}{codeBytes[21]:X2}");
+						sb.AppendLine($"{p+22:X6}  dc.l   {codeBytes[22]:X2}{codeBytes[23]:X2}{codeBytes[24]:X2}{codeBytes[25]:X2}");
+						p+=26;
+						codeBytes = codeBytes[26..];
+						continue;
 					}
-					lastWasEOB = false;
+					if (codeBytes.Length > 2 && codeBytes[0] == 0xFF && codeBytes[1] == 0xFF)
+					{
+						//it's probably vectors
+						sb.AppendLine($"{p:X6}  dc.w   {codeBytes[0]:X2}{codeBytes[1]:X2}");
+						for (;;)
+						{
+							p += 2;
+							codeBytes = codeBytes[2..];
+
+							sb.AppendLine($"{p:X6}  dc.w   {codeBytes[0]:X2}{codeBytes[1]:X2}");
+							if (codeBytes[0] == 0xff && codeBytes[1] == 0xff)
+							{
+								p += 2;
+								codeBytes = codeBytes[2..];
+								break;
+							}
+						}
+						continue;
+					}
 
 					var dis = disassembler.Disassemble(p, codeBytes);
-					logger.LogTrace(dis.ToString());
-
-					if (dis.Bytes.Length >= 2 &&
-					((dis.Bytes[0] == 0x4E && dis.Bytes[1] == 0x75) ||//RTS
-					(dis.Bytes[0] == 0x60) ||//BRA
-					(dis.Bytes[0] == 0x4E && (dis.Bytes[1] & 0xC0) == 0xC0)))//JMP
-						lastWasEOB = true;
+					sb.AppendLine(dis.ToString());
 
 					codeBytes = codeBytes[dis.Bytes.Length..];
 					p += (uint)dis.Bytes.Length;
+
+					if (dis.Bytes.Length >= 2 &&
+						((dis.Bytes[0] == 0x4E && dis.Bytes[1] == 0x75) ||//RTS
+						(dis.Bytes[0] == 0x60) ||//BRA
+						(dis.Bytes[0] == 0x4E && (dis.Bytes[1] & 0xC0) == 0xC0)))//JMP
+					{
+						//non-fallthrough instruction followed by 0000
+						if (codeBytes.Length >= 2 && codeBytes[0] == 0 && codeBytes[1] == 0)
+						{
+							sb.AppendLine($"{p:X6}  dc.w   0000");
+							p += 2;
+							codeBytes = codeBytes[2..];
+						}
+					}
 				}
+				logger.LogTrace(sb.ToString());
 
 				//need to fake up some execBase
 				uint execBase = stackPtr;
+				memory.UnsafeWrite32(4, execBase);
 				memory.UnsafeWrite8(execBase + 0x129, 1 << 4);//show 68881 present in AttnFlags
 
 				//all done, call the init function
@@ -597,5 +658,17 @@ namespace Jammy.Tests
 			rv = CallLVO(libraryBase, -126, stackPtr, d0);
 			logger.LogTrace($"Log10({d0:X8}) 1.263 {rv:X8} {BitConverter.UInt32BitsToSingle(rv)}");
 		}
-	}
+
+		[Test]
+		public void TestMPEGA020FPU()
+		{
+			const string libName = "MPEGA020FPU.library";
+
+			uint libraryBase = LoadLibrary(0x10000, libName, out uint stackPtr);
+
+			logger.LogTrace($"loaded {libName} at {libraryBase:X8}");
+
+			Call(libraryBase, stackPtr, 0, 0);
+		}
+	}	
 }
