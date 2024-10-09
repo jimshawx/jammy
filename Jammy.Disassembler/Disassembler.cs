@@ -347,9 +347,9 @@ namespace Jammy.Disassembler
 			return 0;
 		}
 
-		private decimal fetchImmFP(FPSize size)
+		private double fetchImmFP(FPSize size)
 		{
-			decimal v = 0;
+			double v = 0.0;
 
 			if (size == FPSize.Single)
 			{	
@@ -357,12 +357,12 @@ namespace Jammy.Disassembler
 				pc += 4;
 				try
 				{ 
-					v = (decimal)BitConverter.UInt32BitsToSingle(b0);
+					v = (double)BitConverter.UInt32BitsToSingle(b0);
 				}
 				catch
 				{
 					Append($"#${b0:X8}");
-					return 0;
+					return 0.0;
 				}
 			}
 			else if (size == FPSize.Double)
@@ -372,12 +372,12 @@ namespace Jammy.Disassembler
 				pc += 8;
 				try
 				{ 
-					v = (decimal)BitConverter.UInt64BitsToDouble((b0<<32)|b1);
+					v = BitConverter.UInt64BitsToDouble((b0<<32)|b1);
 				}
 				catch
 				{
 					Append($"#${b0:X8}{b1:X8}");
-					return 0;
+					return 0.0;
 				}
 			}
 			else if (size == FPSize.Extended)
@@ -389,13 +389,13 @@ namespace Jammy.Disassembler
 				//todo: enough bits?
 				try
 				{
-					v = (decimal)BitConverter.UInt64BitsToDouble((b0<< 32) | b1);
-					v += (decimal)b2/(decimal)Math.Pow(2.0,53-16);
+					v = BitConverter.UInt64BitsToDouble((b0<< 32) | b1);
+					v += b2/(double)Math.Pow(2.0,53-16);
 				}
 				catch
 				{
 					Append($"#${b0:X8}{b1:X8}{b2:X4}");
-					return 0;
+					return 0.0;
 				}
 			}
 			else if (size == FPSize.Packed)
@@ -447,7 +447,7 @@ namespace Jammy.Disassembler
 			return v;
 		}
 
-		private decimal fetchOpFP(int type, uint ea, FPSize size)
+		private double fetchOpFP(int type, uint ea, FPSize size)
 		{
 			if (size == FPSize.Long) return fetchOp(type, ea, Size.Long);
 			if (size == FPSize.Word) return fetchOp(type, ea, Size.Word);
@@ -587,7 +587,7 @@ namespace Jammy.Disassembler
 			new Tuple<string,uint>("OGT"   ,0b000010),
 			new Tuple<string,uint>("ULE"   ,0b001101),
 			new Tuple<string,uint>("OGE"   ,0b000011),
-			new Tuple<string,uint>("ULT"   ,0b001101),
+			//new Tuple<string,uint>("ULT"   ,0b001101),//same as ULE so documentation I have must be wrong
 			new Tuple<string,uint>("OLT"   ,0b000100),
 			new Tuple<string,uint>("UGE"   ,0b001011),
 			new Tuple<string,uint>("OLE"   ,0b000101),
@@ -1870,7 +1870,9 @@ namespace Jammy.Disassembler
 			if ((type & 1) == 0)
 			{
 				//CR->reg
-				Append($"{crs[cw]},");
+				if (!crs.TryGetValue(cw, out string cwstring))
+					cwstring = "unknown_CR";
+				Append($"{cwstring},");
 				if ((imm & 0x8000)!=0)
 					Append($"a{reg}");
 				else
@@ -1884,7 +1886,9 @@ namespace Jammy.Disassembler
 					Append($"a{reg},");
 				else
 					Append($"d{reg},");
-				Append($"{crs[cw]}");
+				if (!crs.TryGetValue(cw, out string cwstring))
+					cwstring = "unknown_CR";
+				Append($"{cwstring}");
 			}
 		}
 
