@@ -90,8 +90,13 @@ namespace Jammy.Core.Memory
 			return new List<MemoryRange> {memoryRange, mirrorRange};
 		}
 
+		private bool? wasMirrored = null;
 		public void SetMirror(bool mirrored)
 		{
+			if (wasMirrored == mirrored) return;
+
+			wasMirrored = mirrored;
+
 			if (mirrored)
 				mirrorRange.Length = memoryRange.Length;
 			else
