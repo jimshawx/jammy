@@ -98,6 +98,7 @@ namespace Jammy.Core.Types
 
 		public Feature Disassemblies { get; set; }
 		public Feature Debugger { get; set; }
+		public Feature Prefetch { get; set;}
 
 		public CPUType CPU { get; set; }
 		public CPUSku Sku { get; set; }

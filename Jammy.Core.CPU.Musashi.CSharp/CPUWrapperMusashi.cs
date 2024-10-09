@@ -26,7 +26,8 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 			switch(settings.Value.Sku)
 			{ 
 				case CPUSku.MC68000: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68000);
-					M68KCPU.M68K_EMULATE_PREFETCH = M68KCPU.OPT_ON;
+					if (settings.Value.Prefetch.IsEnabled())
+						M68KCPU.M68K_EMULATE_PREFETCH = M68KCPU.OPT_ON;
 					break;
 				case CPUSku.MC68EC020: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68EC020); break;
 				case CPUSku.MC68030: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68030); break;
