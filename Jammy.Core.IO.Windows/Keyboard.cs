@@ -148,9 +148,9 @@ namespace Jammy.Core.IO.Windows
 		public void Emulate()
 		{
 			keyTimer++;
-			if (keyTimer >= 10)
+			if (keyTimer >= 200)
 			{
-				keyTimer -= 10;
+				keyTimer -= 200;
 
 				if (keyboardState == KeyboardState.Ready && !keyQueue.IsEmpty)
 				{
