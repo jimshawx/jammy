@@ -1,23 +1,24 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using Jammy.Core;
+﻿using Jammy.Core;
 using Jammy.Core.CPU.CSharp;
 using Jammy.Core.CPU.Musashi;
+using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Debugger;
 using Jammy.Disassembler;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using NUnit.Framework;
 using Jammy.Extensions.Extensions;
 using Jammy.Interface;
 using Jammy.Types.Options;
-using Parky.Logging;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Configuration;
+using NUnit.Framework;
 using NUnit.Framework.Legacy;
-using Jammy.Core.CPU.Musashi.CSharp;
+using Parky.Logging;
+using System;
+using System.IO;
+using System.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -25,6 +26,7 @@ using Jammy.Core.CPU.Musashi.CSharp;
 
 namespace Jammy.Tests
 {
+
 	[TestFixture]
 	public class CPUTest
 	{
@@ -33,6 +35,7 @@ namespace Jammy.Tests
 		private ServiceProvider serviceProvider2;
 		private CPUTestRig cpu0;
 		private CPUTestRig cpu1;
+		private ILogger logger;
 
 		[OneTimeSetUp]
 		public void CPUTestInit()
@@ -58,13 +61,13 @@ namespace Jammy.Tests
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
-				.AddSingleton<IMusashiCPU, MusashiCPU>()
+				.AddSingleton<ICPU, MusashiCPU>()
 				.AddSingleton<TestMemory>()
 				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
-				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000NoPrefetch").Bind(o))
 				.BuildServiceProvider();
 
 			serviceProvider1 = new ServiceCollection()
@@ -79,13 +82,13 @@ namespace Jammy.Tests
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
-				.AddSingleton<ICSharpCPU, CPU>()
+				.AddSingleton<ICPU, CPU>()
 				.AddSingleton<TestMemory>()
 				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
-				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000NoPrefetch").Bind(o))
 				.BuildServiceProvider();
 
 			serviceProvider2 = new ServiceCollection()
@@ -100,34 +103,36 @@ namespace Jammy.Tests
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()
-				.AddSingleton<IMusashiCSharpCPU, CPUWrapperMusashi>()
+				.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.AddSingleton<TestMemory>()
 				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
-				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000NoPrefetch").Bind(o))
 				.BuildServiceProvider();
 
+			logger = serviceProvider0.GetRequiredService<ILogger<CPUTest>>();
+
 			ServiceProviderFactory.ServiceProvider = serviceProvider0;
-			musashi = new CPUTestRig((ICPU)serviceProvider0.GetRequiredService<IMusashiCPU>(),
+			musashi = new CPUTestRig((ICPU)serviceProvider0.GetRequiredService<ICPU>(),
 				serviceProvider0.GetRequiredService<IDebugMemoryMapper>(),
 				(ITestMemory)serviceProvider0.GetRequiredService<IMemoryMappedDevice>());
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider1;
-			csharp = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<ICSharpCPU>(),
+			csharp = new CPUTestRig((ICPU)serviceProvider1.GetRequiredService<ICPU>(),
 				serviceProvider1.GetRequiredService<IDebugMemoryMapper>(),
 				(ITestMemory)serviceProvider1.GetRequiredService<IMemoryMappedDevice>());
 
 			ServiceProviderFactory.ServiceProvider = serviceProvider2;
-			musashicsharp = new CPUTestRig((ICPU)serviceProvider2.GetRequiredService<IMusashiCSharpCPU>(),
+			musashicsharp = new CPUTestRig((ICPU)serviceProvider2.GetRequiredService<ICPU>(),
 				serviceProvider2.GetRequiredService<IDebugMemoryMapper>(),
 				(ITestMemory)serviceProvider2.GetRequiredService<IMemoryMappedDevice>());
 
 
 			//which CPUs are we going to test?
 			cpu0 = musashi;
-			cpu1 = musashicsharp;
+			cpu1 = csharp;
 
 			cpu0.Reset();
 			cpu1.Reset();
@@ -285,10 +290,11 @@ namespace Jammy.Tests
 		[Test(Description = "SHIFT/ROTATE")]
 		public void FuzzCPUE() { FuzzCPU(0xE000); }
 
-		[Ignore("Not Implemented MC6888x")]
-		[Test(Description="FPU MC68881")]
+		//[Ignore("Not Implemented MC6888x")]
+		[Test(Description = "FPU MC68881")]
 		public void FuzzCPUF() { FuzzCPU(0xF000); }
 
+		[Ignore("")]
 		[Test(Description = "More random instructions")]
 		public void FuzzCPUMore()
 		{
