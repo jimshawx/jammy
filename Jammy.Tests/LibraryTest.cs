@@ -660,6 +660,26 @@ namespace Jammy.Tests
 		}
 
 		[Test]
+		public void TestMathIEEEDoubTrans()
+		{
+			const string libName = "mathieeedoubtrans.library";
+
+			uint libraryBase = LoadLibrary(0x10000, libName, out uint stackPtr);
+
+			logger.LogTrace($"loaded {libName} at {libraryBase:X8}"); 
+		}
+
+		[Test]
+		public void TestMathIEEEDoubBas()
+		{
+			const string libName = "mathieeedoubbas.library";
+
+			uint libraryBase = LoadLibrary(0x10000, libName, out uint stackPtr);
+
+			logger.LogTrace($"loaded {libName} at {libraryBase:X8}");
+		}
+
+		[Test]
 		public void TestMPEGA020FPU()
 		{
 			const string libName = "MPEGA020FPU.library";

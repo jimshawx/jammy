@@ -821,6 +821,64 @@ namespace Jammy.Disassembler
 					case 0b0111010: Append("ftst"); break;
 					case 0b0010001: Append("ftwotox"); break;
 				}
+				//fmove has some special cases
+				if (ins == 0b0000000)
+				{
+					if ((ext>>14)==0b10)//100,101
+					{
+						Append(".l ");
+						string cr = ss==0b001?"FPIAR":(ss==0b010?"FPSR":"FPCR");
+						if (rm)
+						{
+							Append($"{cr},");
+							uint ea = fetchEA(type);
+							fetchOpFP(type, ea, (FPSize)ss);
+						}
+						else
+						{
+							uint ea = fetchEA(type);
+							fetchOpFP(type, ea, (FPSize)ss);
+							Append($",{cr}");
+						}
+						return;
+					}
+					if ((ext>>13)==0b010 || (ext >> 13) == 0b000)
+					{ 
+						if (!rm)
+						{
+							//reg to reg
+							Append(".x ");
+							Append($"fp{ss},");
+						}
+						else
+						{
+							//ea to reg
+							string sizes = "lsxpwdb?";
+							Append($".{sizes[ss]} ");
+							uint ea = fetchEA(type);
+							fetchOpFP(type, ea, (FPSize)ss);
+							Append(",");
+						}
+						Append($"fp{dr}");
+						return;
+					}
+					if ((ext >> 13) == 0b011)
+					{
+						//reg to ea
+						string sizes = "lsxpwdbp";
+						Append($".{sizes[ss]} ");
+						Append($"fp{dr},");
+						uint ea = fetchEA(type);
+						fetchOpFP(type, ea, (FPSize)ss);
+						int k = ((sbyte)((ext&0x7f)<<1))>>1;
+						if (ss == 3)
+							Append($",{k}");
+						else if (ss==7)
+							Append($",d{(ext>>4)&7}");
+						return;
+					}
+				}
+
 				if (rm)
 				{
 					string sizes = "lsxpwdb?";

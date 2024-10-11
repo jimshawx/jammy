@@ -1,11 +1,14 @@
 ﻿using Jammy.Core.Types.Types;
 using Jammy.Disassembler;
+using Jammy.Extensions.Extensions;
+using Jammy.Types.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -260,5 +263,26 @@ namespace Jammy.Tests
 				logger.LogTrace(sb.ToString());
 			}
 		}
+
+		[Test]
+		public void TestFMOVEFPCR()
+		{
+			var w = new List<ushort> { 0xf200, 0x9000}.ToArray();
+			var dasm = disassembler.Disassemble(0,w.AsByte());
+			var s = dasm.ToString(new DisassemblyOptions { IncludeBytes = false });
+			//FMOVE.L        D0,FPCR
+			logger.LogTrace(s);
+		}
+
+		[Test]
+		public void TestFMOVE()
+		{
+			var w = new List<ushort> { 0xF200, 0x6400 }.ToArray();
+			var dasm = disassembler.Disassemble(0, w.AsByte());
+			var s = dasm.ToString(new DisassemblyOptions { IncludeBytes = false });
+			//FMOVE.S        FP0,D0
+			logger.LogTrace(s);
+		}
+		
 	}
 }
