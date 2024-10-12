@@ -153,6 +153,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IKickstartROM : IMemoryMappedDevice, IDebuggableMemory
 	{
 		void SetMirror(bool mirrored);
+		bool IsPresent();
 	}
 
 	public interface IZorro

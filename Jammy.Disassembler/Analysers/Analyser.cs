@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
@@ -13,6 +7,13 @@ using Jammy.Types;
 using Jammy.Types.Kickstart;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -58,6 +59,15 @@ namespace Jammy.Disassembler.Analysers
 			LoadComments();
 
 			kickstartAnalysis.ShowRomTags();
+		}
+
+		public void UpdateAnalysis()
+		{
+			ROMTags();
+			var ranges = mem.GetBulkRanges();
+			foreach (var range in mem.GetBulkRanges().Select(x=>new MemoryRange(x.Start, x.Length)))
+				Analysis(range);
+			DeDupe();
 		}
 
 		private void NoNL()
@@ -148,6 +158,11 @@ namespace Jammy.Disassembler.Analysers
 
 		private void ROMTags()
 		{
+			if (!kickstartROM.IsPresent())
+			{
+				FindROMTags();
+				return;
+			}
 			ExtractROMTags();
 			ExtractExecBase();
 		}
@@ -209,9 +224,65 @@ namespace Jammy.Disassembler.Analysers
 				logger.LogTrace($"Did not find Execbase Function Table for {version.Major}.{version.Minor}");
 		}
 
+		private void FindROMTags()
+		{
+			var sb = new StringBuilder();
+			var romtags = new List<Resident>();
+			foreach (var range in mem.GetBulkRanges())
+			{
+				uint i = 0;
+				while (i < range.Length)
+				{
+					if (mem.UnsafeRead16(i) == KickstartAnalysis.RTC_MATCHWORD)
+					{
+						var r = new Resident();
+						romtags.Add(r);
+
+						r.MatchWord = mem.UnsafeRead16(i);
+						r.MatchTag = mem.UnsafeRead32(i+2);
+						r.EndSkip = mem.UnsafeRead32(i+6);
+						r.Flags = (RTF)mem.UnsafeRead8(i+10);
+						r.Version = mem.UnsafeRead8(i+11);
+						r.Type = (NT_Type)mem.UnsafeRead8(i + 12);
+						r.Pri = (sbyte)mem.UnsafeRead8(i + 13);
+						r.NamePtr = mem.UnsafeRead32(i + 14);
+						r.IdStringPtr = mem.UnsafeRead32(i + 18);
+						r.Init = mem.UnsafeRead32(i + 22);
+
+						char c;
+						uint np;
+
+						sb.Clear();
+						np = r.NamePtr;
+						while ((c = (char)mem.UnsafeRead8(np++))!=0)
+							sb.Append(c);
+						r.Name = sb.ToString();
+
+						sb.Clear();
+						np = r.IdStringPtr;
+						while ((c = (char)mem.UnsafeRead8(np++)) != 0)
+							sb.Append(c);
+						r.IdString = sb.ToString();
+
+						i += 26;
+					}
+					else
+					{
+						i += 2;
+					}
+				}
+			}
+			ExtractROMTags(romtags);
+		}
+
 		private void ExtractROMTags()
 		{
 			var romtags = kickstartAnalysis.GetRomTags();
+			ExtractROMTags(romtags);
+		}
+
+		private void ExtractROMTags(List<Resident> romtags)
+		{
 			foreach (var tag in romtags)
 			{
 				var com = KickstartAnalysis.ROMTagLines(tag);
@@ -638,6 +709,9 @@ namespace Jammy.Disassembler.Analysers
 
 		private string LVO(NT_Type type, string name, int idx)
 		{
+			if (name == null)
+				return "";
+
 			var lvos = analysis.GetLVOs();
 			if (lvos.TryGetValue(name, out var lvolist))
 			{
@@ -670,19 +744,31 @@ namespace Jammy.Disassembler.Analysers
 
 		private void Analysis()
 		{
+			Analysis(kickstartROM.MappedRange().First());
+		}
+
+		private void Analysis(MemoryRange range)
+		{
 			uint i;
 
-			i = kickstartROM.MappedRange().First().Start;
-			foreach (uint s in mem.AsULong(kickstartROM.MappedRange().First().Start))
+			i = range.Start;
+			foreach (uint s in mem.AsULong(range.Start))
 			{
-				//rts 0000
-				if (s == 0x4e750000)
+				//rts/rte 0000
+				if (s == 0x4e750000 || s == 0x4e730000)
 					MakeMemType(i + 2, MemType.Word, null);
+				//bra 0000
+				if ((s & 0xff00ffff) == 0x60000000)
+					MakeMemType(i + 2, MemType.Word, null);
+				//jmp 0000
+				if ((s & 0xffc0ffff) == 0x4ec00000)
+					MakeMemType(i + 2, MemType.Word, null);
+
 				i += 4;
 			}
 
-			i = kickstartROM.MappedRange().First().Start;
-			foreach (ushort s in mem.AsUWord(kickstartROM.MappedRange().First().Start))
+			i = range.Start;
+			foreach (ushort s in mem.AsUWord(range.Start))
 			{
 				//bra
 				if ((s & 0xff00) == 0x6000)
@@ -785,6 +871,9 @@ namespace Jammy.Disassembler.Analysers
 
 		private void LoadComments()
 		{
+			if (string.IsNullOrEmpty(settings.KickStartDisassembly))
+				return;
+
 			var dirs = Directory.GetDirectories(settings.LVODirectory);
 
 			var fullPath = dirs.SingleOrDefault(x => x.Contains(settings.KickStartDisassembly));

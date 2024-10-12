@@ -38,6 +38,17 @@ namespace Jammy.Core.Memory
 			//		name = Path.GetFileName(settings.Value.KickStart);
 			//		break;
 			//}
+			if (string.IsNullOrEmpty(settings.Value.KickStart))
+			{
+				logger.LogTrace($"No Kickstart ROM specified");
+
+				memoryRange = new MemoryRange(0, 0);
+				mirrorRange = new MemoryRange(0, 0);
+				addressMask = 0;
+
+				return;
+			}
+
 			path = settings.Value.KickStart;
 			name = Path.GetFileName(settings.Value.KickStart);
 
@@ -78,6 +89,11 @@ namespace Jammy.Core.Memory
 				mirrorRange = new MemoryRange(0, 0);
 				addressMask = 0;
 			}
+		}
+
+		public bool IsPresent()
+		{
+			return memoryRange.Length != 0;
 		}
 
 		public new bool IsMapped(uint address)

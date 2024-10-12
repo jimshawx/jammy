@@ -1,19 +1,15 @@
 ﻿using Jammy.Core.Types.Types;
-using Jammy.Disassembler.Analysers;
 using Jammy.Types;
-using Jammy.Types.AmigaTypes;
 using Jammy.Types.Kickstart;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Xml.Serialization;
 
 namespace Jammy.Disassembler
 {
 	public interface IRomTagProcessor
 	{
 		RomTag ExtractRomTag(byte[] b);
+		void FindAndFixupROMTags(byte[] code, uint baseAddress);
 	}
 
 	//F8574C  4AFC                                    RTC_MATCHWORD(start of ROMTAG marker)
@@ -95,6 +91,19 @@ namespace Jammy.Disassembler
 			return x;
 		}
 
+		private uint RebaseLong(uint b)
+		{
+			uint v = ReadLong();
+			if (v == 0) return v;
+			v += b;
+			sptr -= 4;
+			source[sptr++] = (byte)(v >> 24);
+			source[sptr++] = (byte)(v >> 16);
+			source[sptr++] = (byte)(v >> 8);
+			source[sptr++] = (byte)v;
+			return v;
+		}
+
 		private ushort ReadWord()
 		{
 			ushort x =  (ushort)((source[sptr] << 8) | source[sptr + 1]);
@@ -130,6 +139,37 @@ namespace Jammy.Disassembler
 		private uint sptr;
 
 		private const int ROMTAG = 0x4AFC;
+
+		public void FindAndFixupROMTags(byte[] code, uint baseAddress)
+		{
+			source = code;
+			sptr = 0;
+
+			while (sptr < source.Length)
+			{
+				if (ReadWord() == ROMTAG)
+				{
+					RebaseLong(baseAddress);
+					RebaseLong(baseAddress);
+					var flags = (RTF)ReadByte();
+					sptr += 3;//flags, version,type,pri
+					RebaseLong(baseAddress);
+					RebaseLong(baseAddress);
+					uint init = RebaseLong(baseAddress);
+					if ((flags & RTF.RTF_AUTOINIT) != 0)
+					{
+						uint tmp = sptr;
+						
+						sptr = init+4;
+						//RebaseLong(baseAddress);//size
+						RebaseLong(baseAddress);//vectors
+						RebaseLong(baseAddress);//structure
+						RebaseLong(baseAddress);//init
+						sptr = tmp;
+					}
+				}
+			}
+		}
 
 		public RomTag ExtractRomTag(byte[] b)
 		{

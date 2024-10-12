@@ -1,6 +1,12 @@
-﻿using Jammy.Core.Types.Types;
+﻿using Jammy.Core;
+using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Memory;
+using Jammy.Core.Types;
+using Jammy.Core.Types.Types;
 using Jammy.Disassembler;
+using Jammy.Disassembler.Analysers;
 using Jammy.Extensions.Extensions;
+using Jammy.Interface;
 using Jammy.Types.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +29,9 @@ namespace Jammy.Tests
 		private ILogger logger;
 		private IHunkProcessor hunkProcessor;
 		private IRomTagProcessor romTagProcessor;
+		private IAnalyser analyser;
+		private IDisassembly disassembly;
+		private IDebugMemoryMapper memory;
 
 		[OneTimeSetUp]
 		public void DisassemblerTestInit()
@@ -40,11 +49,34 @@ namespace Jammy.Tests
 							})
 				.AddSingleton<IHunkProcessor, HunkProcessor>()
 				.AddSingleton<IRomTagProcessor, RomTagProcessor>()
+
+				//just for the full disassembler
+				.AddSingleton<IDisassembly, Disassembly>()
+				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
+				.AddSingleton<IAnalysis, Analysis>()
+				.AddSingleton<IAnalyser, Analyser>()
+				.AddSingleton<ILabeller, Labeller>()
+				.AddSingleton<IDiskAnalysis, DiskAnalysis>()
+				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
+				.AddSingleton<IKickstartROM, KickstartROM>()
+				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("DisassemblerTest"))
+				.AddSingleton<TestMemory>()
+				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
+				.AddSingleton<IMemoryManager, MemoryManager>()
+				.Configure<EmulationSettings>(o => configuration.GetSection("DisassemblerTest").Bind(o))
+
 				.BuildServiceProvider();
 
 			logger = serviceProvider.GetRequiredService<ILogger<DisassemblerTest>>();
 			hunkProcessor = serviceProvider.GetRequiredService<IHunkProcessor>();
 			romTagProcessor = serviceProvider.GetRequiredService<IRomTagProcessor>();
+
+			memory = serviceProvider.GetRequiredService<IDebugMemoryMapper>();
+			analyser = serviceProvider.GetRequiredService<IAnalyser>();
+			disassembly = serviceProvider.GetRequiredService<IDisassembly>();
 
 			disassembler = new Disassembler.Disassembler();
 		}
@@ -283,6 +315,33 @@ namespace Jammy.Tests
 			//FMOVE.S        FP0,D0
 			logger.LogTrace(s);
 		}
-		
+
+		private int LoadLibrary(uint loadAddress, string libName)
+		{
+			var lib = File.ReadAllBytes(libName);
+
+			var code = hunkProcessor.RetrieveHunks(lib).First(x => x.HunkType == HUNK.HUNK_CODE);
+			var libw = code.Content.AsUWord().ToArray();
+			for (uint i = 0; i < libw.Length; i++)
+				memory.UnsafeWrite16(loadAddress + i * 2, libw[i]);
+
+			romTagProcessor.FindAndFixupROMTags(memory.GetBulkRanges().Single().Memory, loadAddress);
+			analyser.UpdateAnalysis();
+
+			return code.Content.Length;
+		}
+
+		[Test]
+		public void TestDisassmbler()
+		{
+			const string libName = "mathieeedoubbas.library";
+
+			int librarySize = LoadLibrary(0x10000, libName);
+
+			var dis = disassembly.DisassembleTxt(new List<AddressRange>{new AddressRange(0x10000, (ulong)librarySize)}, new DisassemblyOptions { IncludeComments = true});
+			logger.LogTrace(Environment.NewLine + dis);
+
+			logger.LogTrace($"loaded {libName} at {0x10000:X8}");
+		}
 	}
 }

@@ -29,7 +29,7 @@ namespace Jammy.Disassembler
 		private readonly IDisassembly disassembly;
 		private readonly EmulationSettings settings;
 
-		private const int RTC_MATCHWORD = 0x4AFC;
+		public const int RTC_MATCHWORD = 0x4AFC;
 
 		public KickstartAnalysis(IDebugMemoryMapper memory, ILogger<KickstartAnalysis> logger, IKickstartROM kickstartROM,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly)
@@ -51,8 +51,8 @@ namespace Jammy.Disassembler
 			uint kickstartBaseAddress = kickstartROM.MappedRange().First().Start;
 			return new KickstartVersion
 			{
-				Major = (ushort)kickstartROM.Read(0, kickstartBaseAddress + 0x10, Size.Word),
-				Minor = (ushort)kickstartROM.Read(0, kickstartBaseAddress + 0x12, Size.Word)
+				Major = (ushort)kickstartROM.DebugRead(kickstartBaseAddress + 0x10, Size.Word),
+				Minor = (ushort)kickstartROM.DebugRead(kickstartBaseAddress + 0x12, Size.Word)
 			};
 		}
 
@@ -60,7 +60,7 @@ namespace Jammy.Disassembler
 		{
 			//This is the CRC32 embedded in the ROM
 			var mappedRange = kickstartROM.MappedRange().First();
-			return kickstartROM.Read(0, (uint)(mappedRange.Start + mappedRange.Length - 24), Size.Long);
+			return kickstartROM.DebugRead((uint)(mappedRange.Start + mappedRange.Length - 24), Size.Long);
 		}
 
 		public uint GetCRC()
