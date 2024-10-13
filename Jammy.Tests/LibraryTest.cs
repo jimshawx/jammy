@@ -20,6 +20,9 @@ using Jammy.Core.CPU.Musashi.MC68030;
 using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.CPU.Musashi.MC68020;
 using System.Text;
+using Jammy.Disassembler.Analysers;
+using Jammy.Core.Memory;
+using Jammy.Types.Options;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -35,7 +38,8 @@ namespace Jammy.Tests
 		private ICPU cpu0;
 		private ILogger logger;
 		private IDebugMemoryMapper memory;
-		private Disassembler.Disassembler disassembler;
+		private IAnalyser analyser;
+		private IDisassembly disassembly;
 
 		[OneTimeSetUp]
 		public void LibraryTestInit()
@@ -67,6 +71,18 @@ namespace Jammy.Tests
 				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IHunkProcessor, HunkProcessor>()
 				.AddSingleton<IRomTagProcessor, RomTagProcessor>()
+
+				//extra for the full disassembler
+				.AddSingleton<IDisassembly, Disassembly>()
+				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
+				.AddSingleton<IAnalysis, Analysis>()
+				.AddSingleton<IAnalyser, Analyser>()
+				.AddSingleton<ILabeller, Labeller>()
+				.AddSingleton<IDiskAnalysis, DiskAnalysis>()
+				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
+				.AddSingleton<IKickstartROM, KickstartROM>()
+				.AddSingleton<IMemoryManager, MemoryManager>()
+
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation030").Bind(o))
 				.BuildServiceProvider();
 
@@ -76,7 +92,8 @@ namespace Jammy.Tests
 			hunkProcessor = serviceProvider.GetRequiredService<IHunkProcessor>();
 			romTagProcessor = serviceProvider.GetRequiredService<IRomTagProcessor>();
 			memory = serviceProvider.GetRequiredService<IDebugMemoryMapper>();
-			disassembler = new Disassembler.Disassembler();
+			disassembly = serviceProvider.GetRequiredService<IDisassembly>();
+			analyser = serviceProvider.GetRequiredService<IAnalyser>();
 
 			cpu0 = serviceProvider.GetRequiredService<ICPU>();
 			cpu0.Reset();
@@ -134,7 +151,7 @@ namespace Jammy.Tests
 			return r.Concat(pads).ToList();
 		}
 
-		private List<Member> CommentStructureInit(uint address, uint structSize, string libName)
+		private List<Member> CreateStructure(uint address, uint structSize, string libName)
 		{
 			uint header = address;
 			byte c;
@@ -267,14 +284,28 @@ namespace Jammy.Tests
 			return regs.D[0];
 		}
 
-		private uint LoadLibrary(uint loadAddress, string libName, out uint stackPtr)
+		private int LoadLibrary(uint loadAddress, string libName)
 		{
 			var lib = File.ReadAllBytes(libName);
 
 			var code = hunkProcessor.RetrieveHunks(lib).First(x => x.HunkType == HUNK.HUNK_CODE);
-			int codeBase = 0;
-			if (code.Content.Length >= 2 && code.Content[0] == 0x4e && code.Content[1] == 0x75)
-				codeBase += 2;
+			var libw = code.Content.AsUWord().ToArray();
+			for (uint i = 0; i < libw.Length; i++)
+				memory.UnsafeWrite16(loadAddress + i * 2, libw[i]);
+
+			romTagProcessor.FindAndFixupROMTags(memory.GetBulkRanges().Single().Memory, loadAddress);
+			analyser.UpdateAnalysis();
+
+			return code.Content.Length;
+		}
+
+		private const int stackSize = 0x1000;
+
+		private uint LoadLibrary(uint loadAddress, string libName, out uint stackPtr)
+		{
+			analyser.ClearSomeAnalysis();
+
+			int librarySize = LoadLibrary(loadAddress, libName);
 
 			if (loadAddress < 0x1002)
 				logger.LogTrace("Not enough space to load interrupt vectors");
@@ -284,56 +315,47 @@ namespace Jammy.Tests
 				memory.UnsafeWrite32(i, 0x1000);
 			memory.UnsafeWrite16(0x1000, 0x4e73);//rte
 
-			var libw = code.Content.AsUWord().ToArray();
-			for (uint i = 0; i < libw.Length; i++)
-				memory.UnsafeWrite16(loadAddress + i * 2, libw[i]);
+			var romTagLocations = romTagProcessor.FindAndFixupROMTags(memory.GetBulkRanges().Single().Memory, 0);
 
-			var romTag = romTagProcessor.ExtractRomTag(code.Content[codeBase..]);
+			RomTag romTag = null;
+
+			if (romTagLocations.Any())
+				romTag = romTagProcessor.ExtractRomTag(memory.GetBulkRanges().Single().Memory[(int)romTagLocations.Single()..]);
+
 			//there's no rom tag
 			if (romTag == null)
 			{
-				uint p = 0;
-				uint init = loadAddress;
-				uint libMem = loadAddress + (uint)code.Content.Length;
-				var codeBytes = memory.GetBulkRanges().First().Memory[(int)init..(int)libMem];
-				var sb = new StringBuilder();
-				while (codeBytes.Length > 0)
-				{ 
-					var dis = disassembler.Disassemble(p, codeBytes);
-					sb.AppendLine(dis.ToString());
+				var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(loadAddress, (ulong)librarySize) }, new DisassemblyOptions { IncludeComments = true });
+				logger.LogTrace(Environment.NewLine + dis);
 
-					codeBytes = codeBytes[dis.Bytes.Length..];
-					p += (uint)dis.Bytes.Length;
-				}
-				logger.LogTrace(sb.ToString());
-				stackPtr = loadAddress + (uint)code.Content.Length + 0x1000;
+				stackPtr = (uint)(loadAddress + librarySize + stackSize);
 				return loadAddress;
 			}
 
 			uint libraryBase;
-			//uint stackPtr;
 			if ((romTag.Flags & RTF.RTF_AUTOINIT) != 0)
 			{
-				romTag.Rebase(loadAddress);
+				//romTag.Rebase(loadAddress);
 
 				//auto init
 
-				//decode the init struct
-				var struc = CommentStructureInit(romTag.InitStruc.Struct.Start, romTag.InitStruc.DataSize, libName);
-
-				uint libMem = loadAddress + (uint)lib.Length;
+				//generate the vectors into memory
+				uint libMem = loadAddress + (uint)librarySize;
 				foreach (var vec in romTag.InitStruc.Vector.Reverse<uint>())
 				{
 					memory.UnsafeWrite16(libMem, 0x4ef9);//jmp #
 					if (romTag.InitStruc.VectorSize == Size.Long)
-						memory.UnsafeWrite32(libMem + 2, vec);
+						memory.UnsafeWrite32(libMem + 2, loadAddress + vec);
 					else
-						memory.UnsafeWrite32(libMem + 2, vec + romTag.InitStruc.Vectors.Start + 2);
+						memory.UnsafeWrite32(libMem + 2, loadAddress + vec + romTag.InitStruc.Vectors.Start + 2);
 					libMem += 6;
 				}
 
 				//this is ultimately the library base
 				libraryBase = libMem;
+
+				//decode the init struct into memory
+				var struc = CreateStructure(romTag.InitStruc.Struct.Start, romTag.InitStruc.DataSize, libName);
 
 				foreach (var m in struc)
 				{
@@ -344,75 +366,14 @@ namespace Jammy.Tests
 					if (m.Size == Size.Long) libMem += 4;
 				}
 
-				stackPtr = libMem + 0x1000;
+				//the stack starts after the init struct
+				stackPtr = libMem + stackSize;
 
-				uint init = loadAddress;//romTag.InitStruc.InitFn;
-				uint p = init;
-				var codeBytes = memory.GetBulkRanges().First().Memory[(int)init..(int)libMem];
-				var sb = new StringBuilder();
-				while (codeBytes.Length > 0)
-				{
-					if (codeBytes.Length >= 6 && codeBytes[0] == 0x4A && codeBytes[1] == 0xFC)
-					{
-						//it's probably a romtag
-						//2,4,4,1,1,1,1,4,4,4
-						sb.AppendLine($"{p:X6}  dc.w   {codeBytes[0]:X2}{codeBytes[1]:X2}");
-						sb.AppendLine($"{p+2:X6}  dc.l   {codeBytes[2]:X2}{codeBytes[3]:X2}{codeBytes[4]:X2}{codeBytes[5]:X2}");
-						sb.AppendLine($"{p+6:X6}  dc.l   {codeBytes[6]:X2}{codeBytes[7]:X2}{codeBytes[8]:X2}{codeBytes[9]:X2}");
-						sb.AppendLine($"{p+10:X6}  dc.b   {codeBytes[10]:X2}");
-						sb.AppendLine($"{p+11:X6}  dc.b   {codeBytes[11]:X2}");
-						sb.AppendLine($"{p+12:X6}  dc.b   {codeBytes[12]:X2}");
-						sb.AppendLine($"{p+13:X6}  dc.b   {codeBytes[13]:X2}");
-						sb.AppendLine($"{p+14:X6}  dc.l   {codeBytes[14]:X2}{codeBytes[15]:X2}{codeBytes[16]:X2}{codeBytes[17]:X2}");
-						sb.AppendLine($"{p+18:X6}  dc.l   {codeBytes[18]:X2}{codeBytes[19]:X2}{codeBytes[20]:X2}{codeBytes[21]:X2}");
-						sb.AppendLine($"{p+22:X6}  dc.l   {codeBytes[22]:X2}{codeBytes[23]:X2}{codeBytes[24]:X2}{codeBytes[25]:X2}");
-						p+=26;
-						codeBytes = codeBytes[26..];
-						continue;
-					}
-					if (codeBytes.Length > 2 && codeBytes[0] == 0xFF && codeBytes[1] == 0xFF)
-					{
-						//it's probably vectors
-						sb.AppendLine($"{p:X6}  dc.w   {codeBytes[0]:X2}{codeBytes[1]:X2}");
-						for (;;)
-						{
-							p += 2;
-							codeBytes = codeBytes[2..];
+				//disassemble
+				var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(loadAddress, (ulong)(libraryBase - loadAddress)) }, new DisassemblyOptions { IncludeComments = true });
+				logger.LogTrace(Environment.NewLine + dis);
 
-							sb.AppendLine($"{p:X6}  dc.w   {codeBytes[0]:X2}{codeBytes[1]:X2}");
-							if (codeBytes[0] == 0xff && codeBytes[1] == 0xff)
-							{
-								p += 2;
-								codeBytes = codeBytes[2..];
-								break;
-							}
-						}
-						continue;
-					}
-
-					var dis = disassembler.Disassemble(p, codeBytes);
-					sb.AppendLine(dis.ToString());
-
-					codeBytes = codeBytes[dis.Bytes.Length..];
-					p += (uint)dis.Bytes.Length;
-
-					if (dis.Bytes.Length >= 2 &&
-						((dis.Bytes[0] == 0x4E && dis.Bytes[1] == 0x75) ||//RTS
-						(dis.Bytes[0] == 0x60) ||//BRA
-						(dis.Bytes[0] == 0x4E && (dis.Bytes[1] & 0xC0) == 0xC0)))//JMP
-					{
-						//non-fallthrough instruction followed by 0000
-						if (codeBytes.Length >= 2 && codeBytes[0] == 0 && codeBytes[1] == 0)
-						{
-							sb.AppendLine($"{p:X6}  dc.w   0000");
-							p += 2;
-							codeBytes = codeBytes[2..];
-						}
-					}
-				}
-				logger.LogTrace(sb.ToString());
-
-				//need to fake up some execBase
+				//need to fake up some execBase in the space above the stack
 				uint execBase = stackPtr;
 				memory.UnsafeWrite32(4, execBase);
 				memory.UnsafeWrite8(execBase + 0x129, 1 << 4);//show 68881 present in AttnFlags
@@ -423,7 +384,7 @@ namespace Jammy.Tests
 			}
 			else
 			{
-				stackPtr = (uint)code.Content.Length + 0x1000;
+				stackPtr = (uint)(loadAddress + librarySize + stackSize);
 				libraryBase = Call(romTag.Init, stackPtr, 0, 0);
 			}
 			return libraryBase;

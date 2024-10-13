@@ -70,6 +70,11 @@ namespace Jammy.Disassembler.Analysers
 			DeDupe();
 		}
 
+		public void ClearSomeAnalysis()
+		{
+			analysis.ClearSomeAnalysis();
+		}
+
 		private void NoNL()
 		{
 			var headers = analysis.GetHeaders();

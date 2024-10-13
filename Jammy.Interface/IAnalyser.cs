@@ -17,5 +17,6 @@ namespace Jammy.Interface
 		void ExtractFunction(uint address, string name);
 		void AnalyseLibraryBase(string library, uint address);
 		void UpdateAnalysis();
+		void ClearSomeAnalysis();
 	}
 }

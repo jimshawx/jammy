@@ -26,6 +26,14 @@ namespace Jammy.Disassembler.Analysers
 			this.settings = settings.Value;
 		}
 
+		public void ClearSomeAnalysis()
+		{
+			for (int i = 0; i < memType.Length; i++)
+				memType[i] = null;
+			headers.Clear();
+			comments.Clear();
+		}
+
 		public MemTypeCollection GetMemTypes()
 		{
 			return new MemTypeCollection(memType);

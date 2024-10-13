@@ -9,7 +9,7 @@ namespace Jammy.Disassembler
 	public interface IRomTagProcessor
 	{
 		RomTag ExtractRomTag(byte[] b);
-		void FindAndFixupROMTags(byte[] code, uint baseAddress);
+		List<uint> FindAndFixupROMTags(byte[] code, uint baseAddress);
 	}
 
 	//F8574C  4AFC                                    RTC_MATCHWORD(start of ROMTAG marker)
@@ -140,8 +140,10 @@ namespace Jammy.Disassembler
 
 		private const int ROMTAG = 0x4AFC;
 
-		public void FindAndFixupROMTags(byte[] code, uint baseAddress)
+		public List<uint> FindAndFixupROMTags(byte[] code, uint baseAddress)
 		{
+			var romTagAddresses = new List<uint>();
+
 			source = code;
 			sptr = 0;
 
@@ -151,6 +153,8 @@ namespace Jammy.Disassembler
 				if (ReadWord() == ROMTAG)
 				{
 					if (ReadLong() != tagptr-baseAddress) continue;
+					romTagAddresses.Add(sptr-6);
+
 					sptr -= 4;
 					RebaseLong(baseAddress);
 					RebaseLong(baseAddress);
@@ -172,6 +176,7 @@ namespace Jammy.Disassembler
 					}
 				}
 			}
+			return romTagAddresses;
 		}
 
 		public RomTag ExtractRomTag(byte[] b)
