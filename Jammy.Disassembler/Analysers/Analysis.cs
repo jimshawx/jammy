@@ -17,16 +17,13 @@ namespace Jammy.Disassembler.Analysers
 		private readonly Dictionary<uint, Comment> comments = new Dictionary<uint, Comment>();
 		private readonly Dictionary<uint, Header> headers = new Dictionary<uint, Header>();
 		private readonly Dictionary<string, LVOCollection> lvos = new Dictionary<string, LVOCollection>();
-		private readonly MemType[] memType;
+		private readonly MemType[][] memType = new MemType[MemTypeCollection.MEMTYPE_NUM_BLOCKS][];
 
 		private readonly EmulationSettings settings;
 
 		public Analysis(IOptions<EmulationSettings> settings, ILogger<Analyser> logger)
 		{
 			this.settings = settings.Value;
-
-			//todo: make this work for full 32bit address space.
-			memType = new MemType[1ul<<Math.Min(settings.Value.AddressBits,24)];
 		}
 
 		public MemTypeCollection GetMemTypes()
@@ -104,10 +101,18 @@ namespace Jammy.Disassembler.Analysers
 			headers[address].TextLines.AddRange(hdr);
 		}
 
+		private MemType[] Ensure(uint address)
+		{
+			uint block = address >> MemTypeCollection.MEMTYPE_SHIFT;
+			if (memType[block] == null)
+				memType[block] = new MemType[MemTypeCollection.MEMTYPE_BLOCKSIZE];
+			return memType[block];
+		}
+
 		public void SetMemType(uint address, MemType type)
 		{
-			if (address < memType.Length)
-				memType[address] = type;
+			var block = Ensure(address);
+			block[address&MemTypeCollection.MEMTYPE_MASK] = type;
 		}
 
 		public void AddLVO(string currentLib, LVO lvo)
@@ -122,7 +127,7 @@ namespace Jammy.Disassembler.Analysers
 
 		public bool OutOfMemtypeRange(uint address)
 		{
-			return address >= memType.Length;
+			return false;
 		}
 	}
 }

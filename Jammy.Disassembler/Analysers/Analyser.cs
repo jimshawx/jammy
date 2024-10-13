@@ -1117,6 +1117,10 @@ namespace Jammy.Disassembler.Analysers
 			}
 			else if (type == MemType.Code)
 			{
+				//todo: this is expensive!
+				if (!mem.MappedRange().Any(x=>x.Contains(address)))
+					return 0;
+
 				var asm = disassembler.Disassemble(address, mem.GetEnumerable(address, 20));
 				for (uint i = address; i < address + asm.Bytes.Length; i++)
 					analysis.SetMemType(i, type);

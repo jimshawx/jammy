@@ -16,14 +16,28 @@ namespace Jammy.Types
 
 	public class MemTypeCollection
 	{
-		public MemType[] memTypes;
+		public const int MEMTYPE_BLOCKSIZE = 1 << MEMTYPE_SHIFT;
+		public const int MEMTYPE_MASK = MEMTYPE_BLOCKSIZE - 1;
+		public const int MEMTYPE_SHIFT = 20;
+		public const int MEMTYPE_NUM_BLOCKS = 1 << (32 - MEMTYPE_SHIFT);
 
-		public MemTypeCollection(MemType[] memTypes)
+		public MemType[][] memTypes;
+
+		public MemTypeCollection(MemType[][] memTypes)
 		{
 			this.memTypes = memTypes;
 		}
 
-		public MemType this[int i] => (i>=0 && i < memTypes.Length)  ? memTypes[i]: MemType.Unknown;
+		public MemType this[int i]
+		{
+			get
+			{
+				var block = memTypes[(uint)i >> MEMTYPE_SHIFT];
+				if (block == null) return MemType.Unknown;
+				return block[i & MEMTYPE_MASK];
+			}
+		}
+
 		public MemType this[uint i] => this[(int)i];
 	}
 }
