@@ -147,8 +147,11 @@ namespace Jammy.Disassembler
 
 			while (sptr < source.Length)
 			{
+				uint tagptr = sptr;
 				if (ReadWord() == ROMTAG)
 				{
+					if (ReadLong() != tagptr-baseAddress) continue;
+					sptr -= 4;
 					RebaseLong(baseAddress);
 					RebaseLong(baseAddress);
 					var flags = (RTF)ReadByte();
