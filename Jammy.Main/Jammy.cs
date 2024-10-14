@@ -951,22 +951,22 @@ namespace Jammy.Main
 			private static readonly object s_restoreEvent = new();
 			private static readonly object s_closeEvent = new();
 
-			public event EventHandler? MinimizeEvent
+			public event EventHandler MinimizeEvent
 			{
 				add => Events.AddHandler(s_minimizeEvent, value);
 				remove => Events.RemoveHandler(s_minimizeEvent, value);
 			}
-			public event EventHandler? MaximizeEvent
+			public event EventHandler MaximizeEvent
 			{
 				add => Events.AddHandler(s_maximizeEvent, value);
 				remove => Events.RemoveHandler(s_maximizeEvent, value);
 			}
-			public event EventHandler? RestoreEvent
+			public event EventHandler RestoreEvent
 			{
 				add => Events.AddHandler(s_restoreEvent, value);
 				remove => Events.RemoveHandler(s_restoreEvent, value);
 			}
-			public event EventHandler? CloseEvent
+			public event EventHandler CloseEvent
 			{
 				add => Events.AddHandler(s_closeEvent, value);
 				remove => Events.RemoveHandler(s_closeEvent, value);
