@@ -11,5 +11,7 @@ namespace Jammy.Types.Options
 		public bool IncludeBreakpoints { get; set; }
 		public bool IncludeComments { get; set; }
 		public bool Full32BitAddress { get; set; }
+		public bool UpperCase { get; set;}
+		public bool UseMOVEA { get; set; }
 	}
 }

@@ -164,7 +164,7 @@ namespace Jammy.Tests
 
 			int librarySize = LoadLibrary(0x10000, libName);
 
-			var dis = disassembly.DisassembleTxt(new List<AddressRange>{new AddressRange(0x10000, (ulong)librarySize)}, new DisassemblyOptions { IncludeComments = true});
+			var dis = disassembly.DisassembleTxt(new List<AddressRange>{new AddressRange(0x10000, (ulong)librarySize)}, new DisassemblyOptions { IncludeComments = true, UpperCase = true});
 			logger.LogTrace(Environment.NewLine + dis);
 
 			logger.LogTrace($"loaded {libName} at {0x10000:X8}");

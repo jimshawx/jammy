@@ -221,6 +221,9 @@ namespace Jammy.Disassembler
 					}
 				}
 
+				if (options.UpperCase)
+					asm = asm.ToUpper();
+
 				if (options.IncludeComments)
 				{
 					if (comments.TryGetValue(lineAddress, out Comment comment))

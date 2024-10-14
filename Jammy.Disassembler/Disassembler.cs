@@ -116,8 +116,14 @@ namespace Jammy.Disassembler
 
 		private void Append(Size s)
 		{
-			if (s == Size.Byte)
-				asm.Append(".b ");
+			if (s == Size.Byte)	asm.Append(".b ");
+			else if (s == Size.Word) asm.Append(".w ");
+			else if (s == Size.Long) asm.Append(".l ");
+		}
+
+		private void AppendBcc(Size s)
+		{
+			if (s == Size.Byte) asm.Append(".s ");
 			else if (s == Size.Word) asm.Append(".w ");
 			else if (s == Size.Long) asm.Append(".l ");
 		}
@@ -240,18 +246,30 @@ namespace Jammy.Disassembler
 					return 0;
 				case 1:
 					//return a[x];
-					Append($"a{x}");
+					if (x == 7)
+						Append("sp");
+					else
+						Append($"a{x}");
 					return 0;
 				case 2:
 					//return a[x];
-					Append($"(a{x})");
+					if (x == 7)
+						Append("(sp)");
+					else
+						Append($"(a{x})");
 					return 0;
 				case 3:
-					Append($"(a{x})+");
+					if (x == 7)
+						Append("(sp)+");
+					else
+						Append($"(a{x})+");
 					return 0;
 				//					return a[x];
 				case 4:
-					Append($"-(a{x})");
+					if (x == 7)
+						Append("-(sp)");
+					else
+						Append($"-(a{x})");
 					return 0;
 				//return a[x];
 				case 5://(d16,An)
@@ -827,7 +845,7 @@ namespace Jammy.Disassembler
 					if ((ext>>14)==0b10)//100,101
 					{
 						Append(".l ");
-						string cr = ss==0b001?"FPIAR":(ss==0b010?"FPSR":"FPCR");
+						string cr = ss==0b001?"fpiar":(ss==0b010?"fpsr":"fpcr");
 						if (rm)
 						{
 							Append($"{cr},");
@@ -1435,7 +1453,7 @@ namespace Jammy.Disassembler
 				//moveq
 				int Xn = (type >> 9) & 7;
 				sbyte imm8 = (sbyte)(type & 0xff);
-				Append($"moveq.l #{imm8},d{Xn}");
+				Append($"moveq #{imm8},d{Xn}");
 			}
 			else
 			{
@@ -1615,7 +1633,7 @@ namespace Jammy.Disassembler
 			else if (disp == 0xffffffff) {disp = read32(pc); pc += 4; size = Size.Long; }
 			disp += address+2;
 			dasm.ea = disp;
-			Append(size);
+			AppendBcc(size);
 			Append($"#{fmtX8(disp)}");
 		}
 
@@ -2201,7 +2219,9 @@ namespace Jammy.Disassembler
 		private void movel(int type)
 		{
 			Append("move");
+			if (((type>>6)&0b111) == 0b001) Append("a");
 			Append(Size.Long);
+
 			uint ea = fetchEA(type);
 			uint op = fetchOp(type, ea, Size.Long);
 			Append(",");
@@ -2213,6 +2233,7 @@ namespace Jammy.Disassembler
 		private void movew(int type)
 		{
 			Append("move");
+			if (((type >> 6) & 0b111) == 0b001) Append("a");
 			Append(Size.Word);
 
 			uint ea = fetchEA(type);
@@ -2225,6 +2246,7 @@ namespace Jammy.Disassembler
 		private void moveb(int type)
 		{
 			Append("move");
+			if (((type >> 6) & 0b111) == 0b001) Append("a");
 			Append(Size.Byte);
 
 			uint ea = fetchEA(type);
