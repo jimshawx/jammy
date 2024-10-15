@@ -15,7 +15,15 @@ namespace Jammy.Core.EmulationWindow.DIB
 		private class OwnDCForm : Form
 		{
 			private const Int32 CS_OWNDC = 0x20;
-			private const int WM_MOVE = 3;
+
+			private const int WM_MOVE = 0x0003;
+			private const int WM_SIZE = 0x0005;
+			private const int WM_SETFOCUS = 0x0007;
+			private const int WM_KILLFOCUS = 0x0008;
+			private const int WM_PAINT = 0x000F;
+			private const int WM_ERASEBKGND = 0x0014;
+			private const int WM_SETCURSOR = 0x0020;
+			private const int WM_WINDOWPOSCHANGED = 0x0047;
 
 			public Rectangle ScreenRect { get; private set; } = new Rectangle();
 
@@ -28,13 +36,33 @@ namespace Jammy.Core.EmulationWindow.DIB
 					return cp;
 				}
 			}
-			
+
+			protected override void OnPaint(PaintEventArgs e)
+			{
+			}
+
 			protected override void WndProc(ref Message m)
 			{
-				if (m.Msg == WM_MOVE)
-					ScreenRect = RectangleToScreen(ClientRectangle);
+				if (m.Msg == WM_ERASEBKGND)
+				{ 
+					m.Result = 1;
+					return;
+				}
+
+				if (m.Msg == WM_SETCURSOR)
+					m.Result = 0;
+
+				//instant 50% frame-rate loss, due to flood of WM_PAINT messages
+				//if (m.Msg == WM_PAINT)
+				//{
+				//	m.Result = 0;
+				//	return;
+				//}
 
 				base.WndProc(ref m);
+
+				if (m.Msg == WM_MOVE || m.Msg == WM_SIZE || m.Msg == WM_WINDOWPOSCHANGED)
+					ScreenRect = RectangleToScreen(ClientRectangle);
 			}
 		}
 
@@ -69,7 +97,7 @@ namespace Jammy.Core.EmulationWindow.DIB
 				emulation.KeyPress += Emulation_KeyPress;
 				emulation.KeyDown += Emulation_KeyDown;
 				emulation.Deactivate += Emulation_Deactivate;
-				//emulation.TopMost = true;
+
 				emulation.Show();
 
 				Application.Run(emulation);
