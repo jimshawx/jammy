@@ -140,6 +140,9 @@ namespace Jammy.Core.EmulationWindow.Window
 					var h = Events.GetHandlers<KeyEventHandler>(EventHandlers.s_keyDownEvent);
 					var k = new KeyEventArgs((Keys)wParam | ModifierKeys);
 					h.ForEach(x=>x(new object(), k));
+
+					if ((GetAsyncKeyState((int)VK.VK_MENU) & 0x8000) != 0)
+						PostMessage(hWnd, WM_CHAR, (UIntPtr)VK.VK_TAB, IntPtr.Zero);
 					}
 					break;
 
@@ -233,7 +236,7 @@ namespace Jammy.Core.EmulationWindow.Window
 			if (regResult == 0)
 				throw new Exception("Failed to register window class.");
 
-			hWnd = CreateWindowEx(WS_EX_TOPMOST, ClassName, "Jammy : Alt-Tab or Middle Mouse Click to detach mouse", WS_VISIBLE, 100,100, 100, 100, IntPtr.Zero, IntPtr.Zero, wndClass.hInstance, IntPtr.Zero);
+			hWnd = CreateWindowEx(0/*WS_EX_TOPMOST*/, ClassName, "Jammy : Alt-Tab or Middle Mouse Click to detach mouse", WS_VISIBLE, 100,100, 100, 100, IntPtr.Zero, IntPtr.Zero, wndClass.hInstance, IntPtr.Zero);
 			if (hWnd == IntPtr.Zero)
 				throw new Exception("Failed to create window.");
 		}
@@ -364,6 +367,9 @@ namespace Jammy.Core.EmulationWindow.Window
 
 		[DllImport("user32.dll")]
 		private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+		[DllImport("user32.dll")]
+		private static extern int PostMessage(IntPtr hWnd, int msg, UIntPtr wParam, IntPtr lParam);
 
 		[StructLayout(LayoutKind.Sequential)]
 		private struct BITMAPINFO
