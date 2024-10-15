@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Jammy.Core.EmulationWindow.DIB\Jammy.Core.EmulationWindow.DIB.csproj" />
     <ProjectReference Include="..\Jammy.Core.EmulationWindow.DXGI\Jammy.Core.EmulationWindow.DXGI.csproj" />
     <ProjectReference Include="..\Jammy.Core.EmulationWindow.GDI\Jammy.Core.EmulationWindow.GDI.csproj" />
+    <ProjectReference Include="..\Jammy.Core.EmulationWindow.Window\Jammy.Core.EmulationWindow.Window.csproj" />
     <ProjectReference Include="..\Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj" />
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
     <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
