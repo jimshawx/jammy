@@ -22,6 +22,7 @@ namespace Jammy.Core.EmulationWindow.Window
 
 		private const int WM_MOVE = 0x0003;
 		private const int WM_SIZE = 0x0005;
+		private const int WM_ACTIVATE = 0x0006;
 		private const int WM_SETFOCUS = 0x0007;
 		private const int WM_KILLFOCUS = 0x0008;
 		private const int WM_CLOSE = 0x0010;
@@ -34,9 +35,12 @@ namespace Jammy.Core.EmulationWindow.Window
 		private const int WM_CHAR = 0x0102;
 		private const int WM_SYSKEYDOWN = 0x0104;
 		private const int WM_SYSKEYUP = 0x0105;
+		private const int WM_SYSCHAR = 0x0106;
+		private const int WM_SYSCOMMAND = 0x0112;
 		private const int WM_LBUTTONDOWN = 0x0201;
-		private const int WM_MBUTTONDOWN = 0x0207;
 		private const int WM_RBUTTONDOWN = 0x0204;
+		private const int WM_MBUTTONDOWN = 0x0207;
+		private const int WM_IME_CHAR = 0x0286;
 
 		private RECT emuRect = new RECT();
 		private Point EmuPos = new Point();
@@ -111,11 +115,18 @@ namespace Jammy.Core.EmulationWindow.Window
 			}
 		}
 
+		private const int SC_KEYMENU = 0xF100;
+
 		// Window procedure to handle messages
+		private bool windowIsActive = false;
+
 		private IntPtr WindowProc(IntPtr hWnd, uint msg, UIntPtr wParam, IntPtr lParam)
 		{
 			switch (msg)
 			{
+				case WM_ACTIVATE:
+					windowIsActive = wParam != UIntPtr.Zero;
+					break;
 				case WM_CLOSE:
 					DestroyWindow(hWnd);
 					break;
@@ -141,8 +152,11 @@ namespace Jammy.Core.EmulationWindow.Window
 					}
 					break;
 
+				case WM_IME_CHAR:
+				case WM_SYSCHAR:
 				case WM_CHAR:
 					{ 
+						logger.LogTrace($"{wParam:X8}");
 					var h = Events.GetHandlers<KeyPressEventHandler>(EventHandlers.s_keyPressEvent);
 					var k = new KeyPressEventArgs((char)wParam);
 					h.ForEach(x => x(new object(), k));
@@ -150,6 +164,7 @@ namespace Jammy.Core.EmulationWindow.Window
 					break;
 
 				case WM_LBUTTONDOWN:
+					if (!windowIsActive) break;
 					{
 					var h = Events.GetHandlers<MouseEventHandler>(EventHandlers.s_mouseClickEvent);
 					var m = new MouseEventArgs(MouseButtons.Left, 1, (short)(lParam >> 16), (short)(lParam & 0xffff), 0);
@@ -203,7 +218,7 @@ namespace Jammy.Core.EmulationWindow.Window
 
 		public void Create()
 		{
-			arrow = LoadCursor(IntPtr.Zero, IDC_ARROW);
+			//arrow = LoadCursor(IntPtr.Zero, IDC_ARROW);
 			wndProcDelegate = new WndProc(WindowProc);
 
 			var wndClass = new WNDCLASSEX();
@@ -212,13 +227,13 @@ namespace Jammy.Core.EmulationWindow.Window
 			wndClass.lpfnWndProc = Marshal.GetFunctionPointerForDelegate(wndProcDelegate); ;
 			wndClass.style = CS_OWNDC;
 			wndClass.hInstance = Marshal.GetHINSTANCE(typeof(EmulationWindow).Module);
-			wndClass.hCursor = arrow;
+			//wndClass.hCursor = arrow;
 
 			ushort regResult = RegisterClassEx(ref wndClass);
 			if (regResult == 0)
 				throw new Exception("Failed to register window class.");
 
-			hWnd = CreateWindowEx(WS_EX_TOPMOST, ClassName, "Jammy : Alt-Tab or Middle Mouse Click to detach mouse", WS_VISIBLE, 0, 0, 300, 200, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+			hWnd = CreateWindowEx(WS_EX_TOPMOST, ClassName, "Jammy : Alt-Tab or Middle Mouse Click to detach mouse", WS_VISIBLE, 100,100, 100, 100, IntPtr.Zero, IntPtr.Zero, wndClass.hInstance, IntPtr.Zero);
 			if (hWnd == IntPtr.Zero)
 				throw new Exception("Failed to create window.");
 		}
@@ -255,8 +270,8 @@ namespace Jammy.Core.EmulationWindow.Window
 		[DllImport("user32.dll", CharSet = CharSet.Unicode)]
 		private static extern ushort RegisterClassEx(ref WNDCLASSEX lpWndClass);
 
-		[DllImport("user32.dll")]
-		private static extern IntPtr CreateWindowEx(int dwExStyle, string lpClassName, string lpWindowName, uint dwStyle,
+		[DllImport("user32.dll", CharSet = CharSet.Unicode)]
+		private static extern IntPtr CreateWindowEx(int dwExStyle, string lpClassName, [MarshalAs(UnmanagedType.LPUTF8Str)] string lpWindowName, uint dwStyle,
 			int x, int y, int nWidth, int nHeight, IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
 
 		[DllImport("user32.dll")]
@@ -338,6 +353,18 @@ namespace Jammy.Core.EmulationWindow.Window
 		[DllImport("user32.dll")]
 		private static extern bool SetWindowPos(IntPtr hwnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
+		[DllImport("user32.dll")]
+		private static extern int AdjustWindowRectEx(ref RECT lpRect, int dwStyle, int bMenu, int dwExStyle);
+
+		[DllImport("user32.dll")]
+		private static extern IntPtr GetFocus();
+
+		[DllImport("user32.dll")]
+		private static extern int ShowCursor(int show);
+
+		[DllImport("user32.dll")]
+		private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
 		[StructLayout(LayoutKind.Sequential)]
 		private struct BITMAPINFO
 		{
@@ -408,12 +435,12 @@ namespace Jammy.Core.EmulationWindow.Window
 			{
 				Create();
 
-				ss.Release();
-
 				MouseClick += Emulation_MouseClick;
 				KeyPress += Emulation_KeyPress;
 				KeyDown += Emulation_KeyDown;
 				//emulation.Deactivate += Emulation_Deactivate;
+
+				ss.Release();
 
 				// Main message loop
 				MSG msg;
@@ -439,19 +466,21 @@ namespace Jammy.Core.EmulationWindow.Window
 		{
 			if (!IsCaptured)
 			{
-				//logger.LogTrace($"Capture {where}");
+				logger.LogTrace($"Capture {where}");
 				IsCaptured = true;
-				SetCursor(IntPtr.Zero);
+				//SetCursor(IntPtr.Zero);
+				ShowCursor(0);
 			}
 		}
 
 		private void Release(string where)
 		{
-			//logger.LogTrace($"Release {where} Was Captured? {IsCaptured}");
+			logger.LogTrace($"Release {where} Was Captured? {IsCaptured}");
 			if (IsCaptured)
 			{
 				IsCaptured = false;
-				SetCursor(arrow);
+				//SetCursor(arrow);
+				ShowCursor(1);
 			}
 		}
 
@@ -473,6 +502,8 @@ namespace Jammy.Core.EmulationWindow.Window
 
 		private void Emulation_KeyPress(object sender, KeyPressEventArgs e)
 		{
+			logger.LogTrace($"KeyPress {(int)e.KeyChar:X8}");
+
 			if (e.KeyChar == 0x9 && (GetAsyncKeyState((int)VK.VK_MENU) & 0x8000) != 0)
 				Release("AltTab");
 
@@ -500,6 +531,9 @@ namespace Jammy.Core.EmulationWindow.Window
 		private const uint SWP_NOREDRAW = 0x0008;
 		private const uint SWP_SHOWWINDOW = 0x0040;
 
+		private const int GWL_STYLE = -16;
+		private const int GWL_EXSTYLE = -20;
+
 		public void SetPicture(int width, int height)
 		{
 			var dm = new DEVMODE();
@@ -525,7 +559,11 @@ namespace Jammy.Core.EmulationWindow.Window
 			lpbmi.biClrImportant = 0;
 			lpbmi.cols = null!;
 
-			SetWindowPos(hWnd, IntPtr.Zero, 0,0,width, height, SWP_NOMOVE|SWP_SHOWWINDOW| SWP_NOZORDER| SWP_NOREDRAW);
+			var rect = new RECT { right = width, bottom = height};
+			var style = GetWindowLong(hWnd, GWL_STYLE);
+			var exstyle = GetWindowLong(hWnd, GWL_EXSTYLE);
+			AdjustWindowRectEx(ref rect, style, 0, exstyle);
+			SetWindowPos(hWnd, IntPtr.Zero, 0,0, rect.right-rect.left, rect.bottom-rect.top, SWP_NOMOVE|SWP_SHOWWINDOW| SWP_NOZORDER| SWP_NOREDRAW);
 		}
 
 		public bool PowerLight { private get; set; }
