@@ -87,12 +87,6 @@ namespace Jammy.Core.Custom
 				if ((clock.HorizontalPos & 1) != 0)
 				{ 
 					CopperInstruction();
-					//todo: hack: is this not supposed to happen later?
-					if (status == CopperStatus.Execute)
-					{
-						memory.DebugExecuteDMAActivity(DMASource.Copper);
-						CopperInstruction();
-					}
 				}
 				//if (status == CopperStatus.Waiting && data != 0xfffe)
 				//	logger.LogTrace($"Hit VBL while still waiting for {data:X2}");
@@ -118,10 +112,10 @@ namespace Jammy.Core.Custom
 				copPC = cop1lc;
 			if (copjmp2 != 0)
 				copPC = cop2lc;
-			if (copPC != lastcoppc)
-			{
-				logger.LogTrace($"N {copjmp1}{copjmp2} {copPC:X6} {cop1lc:X6} {cop2lc:X6}");
-			}
+			//if (copPC != lastcoppc)
+			//{
+			//	logger.LogTrace($"N {copjmp1}{copjmp2} {copPC:X6} {cop1lc:X6} {cop2lc:X6}");
+			//}
 			copjmp1 = copjmp2 = 0;
 			lastcoppc = copPC;
 
@@ -208,9 +202,7 @@ namespace Jammy.Core.Custom
 					{
 						if (((copcon & 2) != 0 && reg >= 0x40) || reg >= 0x80)
 						{
-							custom.Write(copPC-4, regAddress, data, Size.Word);
-							//memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
-							//memory.Write(DMASource.Copper, regAddress, DMA.COPEN, data, Size.Word);
+							memory.WriteReg(DMASource.Copper, regAddress, DMA.COPEN, data);
 						}
 						else
 						{
@@ -222,9 +214,7 @@ namespace Jammy.Core.Custom
 					{
 						if ((copcon & 2) != 0 || reg >= 0x40)
 						{
-							custom.Write(copPC - 4, regAddress, data, Size.Word);
-							//memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
-							//memory.Write(DMASource.Copper, regAddress, DMA.COPEN, data, Size.Word);
+							memory.WriteReg(DMASource.Copper, regAddress, DMA.COPEN, data);
 						}
 						else
 						{
@@ -339,10 +329,11 @@ namespace Jammy.Core.Custom
 
 		private void DebugCOP(int idx, string reg, uint insaddr, uint cop)
 		{
-			if (cop != lastcop[idx]) { 
-			logger.LogTrace($"{reg} {insaddr:X6} {cop:X6}");
-			lastcop[idx] = cop;
-			}
+			//if (cop != lastcop[idx])
+			//{ 
+			//	logger.LogTrace($"{reg} {insaddr:X6} {cop:X6}");
+			//	lastcop[idx] = cop;
+			//}
 		}
 
 		public void Write(uint insaddr, uint address, ushort value)
@@ -360,8 +351,8 @@ namespace Jammy.Core.Custom
 					//	break;
 					//case ChipRegs.COPJMP2: copjmp2 = value; copPC = cop2lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
 					//	break;
-					case ChipRegs.COPJMP1: copjmp1 = 1; logger.LogTrace($"{insaddr:X6} COPJMP1"); break;
-					case ChipRegs.COPJMP2: copjmp2 = 1; logger.LogTrace($"{insaddr:X6} COPJMP2"); break;
+					case ChipRegs.COPJMP1: copjmp1 = 1; /*logger.LogTrace($"{insaddr:X6} COPJMP1");*/ break;
+					case ChipRegs.COPJMP2: copjmp2 = 1; /*logger.LogTrace($"{insaddr:X6} COPJMP2");*/ break;
 					case ChipRegs.COPINS: copins = value; break;
 				}
 			}

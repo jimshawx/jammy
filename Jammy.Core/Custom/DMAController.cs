@@ -15,6 +15,7 @@ public enum DMAActivityType
 	None,
 	Read,
 	Write,
+	WriteReg,
 	Consume,
 	CPU
 }
@@ -177,31 +178,48 @@ public class DMAController : IDMA
 		activities[(int)DMASource.CPU].Type = DMAActivityType.CPU;
 	}
 
+	private void Consume(DMAActivity activity)
+	{
+		activity.Type = DMAActivityType.None;
+		//todo: debugging, remove
+		activity.Address =0;
+		activity.Value =0;
+		activity.Size = Size.Byte;
+		activity.Priority = 0;
+		activity.ChipReg = 0;
+	}
+
 	private void ExecuteDMATransfer(DMAActivity activity)
 	{
 		if (activity.Type == DMAActivityType.Consume)
 		{
-			activity.Type = DMAActivityType.None;
+			Consume(activity);
 			return;
 		}
 
 		if (activity.Type == DMAActivityType.CPU)
 		{
-			activity.Type = DMAActivityType.None;
+			Consume(activity);
 			cpuMemTick = 1;
 			return;
 		}
 
 		if (activity.Type == DMAActivityType.Write)
 		{
-			activity.Type = DMAActivityType.None;
 			memory.Write(0, activity.Address, (uint)activity.Value, activity.Size);
+			Consume(activity);
+			return;
+		}
+
+		if (activity.Type == DMAActivityType.WriteReg)
+		{
+			custom.Write(0, activity.ChipReg, (uint)activity.Value, Size.Word);
+			Consume(activity);
 			return;
 		}
 
 		if (activity.Type == DMAActivityType.Read)
 		{
-			activity.Type = DMAActivityType.None;
 			if (activity.Size == Size.QWord)
 			{	
 				ulong value = memory.Read(0, activity.Address, Size.Long);
@@ -213,8 +231,11 @@ public class DMAController : IDMA
 				uint value = memory.Read(0, activity.Address, activity.Size);
 				custom.Write(0, activity.ChipReg, value, activity.Size);
 			}
+			Consume(activity);
 			return;
 		}
+
+		if (activity.Type == DMAActivityType.None) return;
 
 		throw new ArgumentOutOfRangeException();
 	}
@@ -263,6 +284,15 @@ public class DMAController : IDMA
 		activity.Priority = priority;
 		activity.Value = value;
 		activity.Size = size;
+	}
+
+	public void WriteReg(DMASource source, uint chipReg, DMA priority, ushort value)
+	{
+		var activity = activities[(int)source];
+		activity.Type = DMAActivityType.WriteReg;
+		activity.ChipReg = chipReg;
+		activity.Priority = priority;
+		activity.Value = value;
 	}
 
 	public ushort Read(uint insaddr, uint address)
