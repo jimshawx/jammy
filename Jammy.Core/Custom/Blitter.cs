@@ -22,7 +22,7 @@ namespace Jammy.Core.Custom
 		private readonly IChipsetClock clock;
 		private readonly IMemoryMappedDevice ram;
 		private readonly IDMA dma;
-		private readonly IOptions<EmulationSettings> settings;
+		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 
 		public Blitter(IChips custom, IInterrupt interrupt, IChipsetClock clock, IChipRAM ram, 
@@ -33,7 +33,7 @@ namespace Jammy.Core.Custom
 			this.clock = clock;
 			this.ram = ram;
 			this.dma = dma;
-			this.settings = settings;
+			this.settings = settings.Value;
 			this.logger = logger;
 			PreComputeFill();
 		}
@@ -353,8 +353,10 @@ namespace Jammy.Core.Custom
 			if ((dmacon & (1 << 9)) == 0)
 				logger.LogTrace($"DMAEN is off! @{insaddr:X8}");
 
-			BlitImmediate(blitWidth, blitHeight);
-			//BeginBlit();
+			if (settings.BlitterMode == BlitterMode.Immediate)
+				BlitImmediate(blitWidth, blitHeight);
+			else
+				BeginBlit();
 		}
 
 		private bool BeginBlit()
@@ -716,8 +718,10 @@ namespace Jammy.Core.Custom
 				DumpBlitterState(insaddr, bltsize>>6);
 
 			//Line2(insaddr, logger);
-			//LineImmediate(insaddr);
-			LineBegin();
+			if (settings.BlitterMode == BlitterMode.Immediate)
+				LineImmediate(insaddr);
+			else
+				LineBegin();
 		}
 
 		private uint length;

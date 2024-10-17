@@ -692,7 +692,6 @@ namespace Jammy.UI.Settings
 			// 
 			rbSynchronous.AutoSize = true;
 			rbSynchronous.Checked = true;
-			rbSynchronous.Enabled = false;
 			rbSynchronous.Location = new System.Drawing.Point(186, 44);
 			rbSynchronous.Name = "rbSynchronous";
 			rbSynchronous.Size = new System.Drawing.Size(182, 36);
@@ -704,7 +703,6 @@ namespace Jammy.UI.Settings
 			// rbImmediate
 			// 
 			rbImmediate.AutoSize = true;
-			rbImmediate.Enabled = false;
 			rbImmediate.Location = new System.Drawing.Point(21, 44);
 			rbImmediate.Name = "rbImmediate";
 			rbImmediate.Size = new System.Drawing.Size(159, 36);
