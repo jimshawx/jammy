@@ -141,7 +141,7 @@ namespace Jammy.Core.Custom
 			Retrace,
 			RunningWord1,
 			RunningWord2,
-			Execute,
+			FetchWait,
 			Waiting,
 			WakingUp,
 			Stopped
@@ -178,23 +178,13 @@ namespace Jammy.Core.Custom
 
 				ins = copins;
 
-				status = CopperStatus.Execute;
-				memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
-				copPC += 2;
-			}
-			else if (status == CopperStatus.Execute)
-			{
-				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
-
-				data = copins;
-				
-				status = CopperStatus.RunningWord1;
-
 				if ((ins & 0x0001) == 0)
-				{
+				{ 
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 					uint regAddress = ChipRegs.ChipBase + reg;
+
+					status = CopperStatus.RunningWord1;
 
 					//in OCS mode CDANG in COPCON means can access >= 0x40->0x7E as well as the usual >= 0x80
 					//in ECS/AGA mode CDANG in COPCON means can access ALL chip regs, otherwise only >= 040
@@ -202,7 +192,8 @@ namespace Jammy.Core.Custom
 					{
 						if (((copcon & 2) != 0 && reg >= 0x40) || reg >= 0x80)
 						{
-							memory.WriteReg(DMASource.Copper, regAddress, DMA.COPEN, data);
+							memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
+							copPC += 2;
 						}
 						else
 						{
@@ -214,7 +205,8 @@ namespace Jammy.Core.Custom
 					{
 						if ((copcon & 2) != 0 || reg >= 0x40)
 						{
-							memory.WriteReg(DMASource.Copper, regAddress, DMA.COPEN, data);
+							memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
+							copPC += 2;
 						}
 						else
 						{
@@ -223,38 +215,46 @@ namespace Jammy.Core.Custom
 						}
 					}
 				}
-				else if ((ins & 0x0001) == 1)
+				else
+				{
+					status = CopperStatus.FetchWait;
+					memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+					copPC += 2;
+				}
+			}
+			else if (status == CopperStatus.FetchWait)
+			{ 
+				data = copins;
+
+				//WAIT
+				waitH = ins & 0xfe;
+				waitV = (ins >> 8) & 0xff;
+
+				waitHMask = data & 0xfe;
+				waitVMask = ((data >> 8) & 0x7f) | 0x80;
+
+				waitMask = (uint)(waitHMask | (waitVMask << 8));
+				waitPos = (uint)((waitV << 8) | waitH);
+
+				waitBlit = (uint)(data >> 15);
+
+				if ((data & 1) == 0)
 				{
 					//WAIT
-					waitH = ins & 0xfe;
-					waitV = (ins >> 8) & 0xff;
-
-					waitHMask = data & 0xfe;
-					waitVMask = ((data >> 8) & 0x7f) | 0x80;
-
-					waitMask = (uint)(waitHMask | (waitVMask << 8));
-					waitPos = (uint)((waitV << 8) | waitH);
-
-					waitBlit = (uint)(data >> 15);
-
-					if ((data & 1) == 0)
+					status = CopperStatus.Waiting;
+				}
+				else
+				{
+					//SKIP
+					uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.HorizontalPos & 0xff);
+					coppos &= waitMask;
+					if (CopperCompare(coppos, (waitPos & waitMask)))
 					{
-						//WAIT
-						status = CopperStatus.Waiting;
-					}
-					else
-					{
-						//SKIP
-						uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.HorizontalPos & 0xff);
-						coppos &= waitMask;
-						if (CopperCompare(coppos, (waitPos & waitMask)))
-						{
-							//logger.LogTrace($"RUN  {h},{currentLine} {coppos:X4} {waitPos:X4}");
-							//todo: this isn't what happens, the next instruction is fetched, but ignored
-							//https://eab.abime.net/showpost.php?p=206242&postcount=1
+						//logger.LogTrace($"RUN  {h},{currentLine} {coppos:X4} {waitPos:X4}");
+						//todo: this isn't what happens, the next instruction is fetched, but ignored
+						//https://eab.abime.net/showpost.php?p=206242&postcount=1
 
-							copPC += 4;
-						}
+						copPC += 4;
 					}
 				}
 			}
