@@ -253,6 +253,12 @@ public class DMAController : IDMA
 		ExecuteDMATransfer(activity);
 	}
 
+	public void DebugExecuteAllDMAActivity()
+	{
+		foreach (var activity in activities)
+			ExecuteDMATransfer(activity);
+	}
+
 	public void NoDMA(DMASource source)
 	{
 		activities[(int)source].Type = DMAActivityType.None;

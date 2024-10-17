@@ -181,6 +181,8 @@ namespace Jammy.Core
 		{
 			emulations.ForEach(x => x.Emulate());
 
+			//totalWaits = 0;
+			//totalCycles = 0;
 			if (totalWaits == 0 && totalCycles == 0)
 			{
 				ulong nchipRAMReads;
@@ -233,6 +235,8 @@ namespace Jammy.Core
 
 			//use up a CPU cycle
 			if (totalCycles > 0) totalCycles--;
+
+			//dma.DebugExecuteAllDMAActivity();
 
 			//this will allocate the DMA slot
 			clock.AllThreadsFinished();
