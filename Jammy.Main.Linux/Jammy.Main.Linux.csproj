@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj" />
+    <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
+    <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
+    <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />
+    <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
+
+    
+    <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
+    <ProjectReference Include="..\Jammy.Interface\Jammy.Interface.csproj" />
+    <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />
+    <ProjectReference Include="..\Jammy.UI\Jammy.UI.csproj" />
+    <ProjectReference Include="..\Jammy.Types\Jammy.Types.csproj" />
+    <ProjectReference Include="..\Jammy.Core.EmulationWindow.X\Jammy.Core.EmulationWindow.X.csproj" />
+    <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />
+    <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
+    <ProjectReference Include="..\Jammy.Core.IO.Linux\Jammy.Core.IO.Linux.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+<ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+  </ItemGroup>
+</Project>
