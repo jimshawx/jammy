@@ -7,7 +7,7 @@
     <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />
     <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
 
-    
+
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
     <ProjectReference Include="..\Jammy.Interface\Jammy.Interface.csproj" />
     <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />
@@ -18,7 +18,22 @@
     <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
     <ProjectReference Include="..\Jammy.Core.IO.Linux\Jammy.Core.IO.Linux.csproj" />
   </ItemGroup>
-
+<ItemGroup>
+    <None Remove="appSettings.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="appSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="emulationSettings.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="emulationSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

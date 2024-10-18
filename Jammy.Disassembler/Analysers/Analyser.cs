@@ -112,43 +112,44 @@ namespace Jammy.Disassembler.Analysers
 
 		private void LoadLVOs()
 		{
-			string filename = "LVOs.i.txt";
-			using (var f = File.OpenText(Path.Combine(settings.LVODirectory, filename)))
+			try
 			{
-				if (f == null)
+				string filename = "LVOs.i.txt";
+				using (var f = File.OpenText(Path.Combine(settings.LVODirectory, filename)))
 				{
-					logger.LogTrace($"Can't find {filename} LVOs file");
-					return;
-				}
-
-				string currentLib = string.Empty;
-				for (; ; )
-				{
-					string line = f.ReadLine();
-					if (line == null) break;
-
-					if (string.IsNullOrWhiteSpace(line))
-						continue;
-
-					if (line.StartsWith("***"))
+					string currentLib = string.Empty;
+					for (; ; )
 					{
-						if (!line.Contains("LVO"))
+						string line = f.ReadLine();
+						if (line == null) break;
+
+						if (string.IsNullOrWhiteSpace(line))
 							continue;
 
-						currentLib = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)[3];
-						var lvoType = GetLVOType(currentLib);
-						analysis.SetLVO(currentLib, new LVOCollection(lvoType));
-					}
-					else
-					{
-						var bits = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-						analysis.AddLVO(currentLib, new LVO
+						if (line.StartsWith("***"))
 						{
-							Name = bits[0].Substring(4),//strip off _LVO
-							Offset = int.Parse(bits[2])
-						});
+							if (!line.Contains("LVO"))
+								continue;
+
+							currentLib = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries)[3];
+							var lvoType = GetLVOType(currentLib);
+							analysis.SetLVO(currentLib, new LVOCollection(lvoType));
+						}
+						else
+						{
+							var bits = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+							analysis.AddLVO(currentLib, new LVO
+							{
+								Name = bits[0].Substring(4),//strip off _LVO
+								Offset = int.Parse(bits[2])
+							});
+						}
 					}
 				}
+			}
+			catch
+			{
+				logger.LogTrace($"Can't find the LVOs file");
 			}
 		}
 
