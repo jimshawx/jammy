@@ -168,8 +168,6 @@ public class Denise : IDenise
 	{
 		for (int i = 0; i < 8; i++)
 		{
-			//bpldatpix[i].Shl1();
-			//bpldatpixul[i] <<= 1;
 			bpldatpix[i].Item1 <<= 1;
 			bpldatpix[i].Item1 |= bpldatpix[i].Item2 >> 63;
 			bpldatpix[i].Item2 <<= 1;
@@ -205,6 +203,7 @@ public class Denise : IDenise
 	private readonly ulong[] sprdatbpix = new ulong[8];
 	private readonly uint[] spriteMask = new uint[8];
 	private readonly int[] clx = new int[8];
+	private readonly byte[] sprpix = new byte[8];
 
 	private Action GetModeConversion()
 	{
@@ -280,6 +279,12 @@ public class Denise : IDenise
 					col = pix1 != 0 ? col1 : col0;
 				else
 					col = pix0 != 0 ? col0 : col1;
+
+				//pix1 = (pix1 == 0) ? (byte)0 : (byte)(pix1 + 8);
+				//if ((bplcon2 & (1 << 6)) != 0)
+				//	pix = pix1 != 0 ? pix1 : pix0;
+				//else
+				//	pix = pix0 != 0 ? pix0 : pix1;
 			}
 			else if (planes == 6 && ((bplcon0 & (1 << 11)) != 0))
 			{
@@ -382,6 +387,7 @@ public class Denise : IDenise
 		for (int s = 7; s >= 0; s--)
 		{
 			clx[s] = 0;
+			sprpix[s] = 0;
 			if (spriteMask[s] != 0)
 			{
 				uint x = spriteMask[s];
@@ -398,27 +404,57 @@ public class Denise : IDenise
 				clx[s] = spix;
 				clxm |= clx[s];
 
+				//byte finalpix = 0;
 				if (attached)
 				{
 					s--;
 					spix <<= 2;
 					int apix = ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
 					clx[s] = apix;
+					sprpix[s] = 0;
 					clxm |= clx[s];
 					spix += apix;
 
 					if (shift)
 						spriteMask[s] >>= 1;
 					if (spix != 0)
-						col = truecolour[16 + spix];
+					{ 
+						//col = truecolour[16 + spix];
+						sprpix[s] = sprpix[s + 1] = (byte)(16+spix);
+						col = truecolour[sprpix[s]];
+					}
 				}
 				else
 				{
 					if (spix != 0)
-						col = truecolour[16 + 4 * (s >> 1) + spix];
+					{	//col = truecolour[16 + 4 * (s >> 1) + spix];
+						sprpix[s] = (byte)(16 + 4 * (s >> 1) + spix);
+						col = truecolour[sprpix[s]];
+					}
 				}
 			}
 		}
+
+		//uint originalcol = col;
+		////0,1,2,3,4 in bplcon2
+		//int pri2 = (bplcon2 >> 3) & 7;
+		//int pri1;
+		//if ((bplcon0 & (1 << 10)) != 0)
+		//	pri1 = bplcon2 & 7;
+		//else
+		//	pri1 = pri2;
+		//pri2 <<= 1;
+		//pri1 <<= 1;
+		//if (pri2 == 8 || pri1 == 8) col = originalcol;
+		//for (int s = 7; s >= 0; s--)
+		//{
+		//	if (sprpix[s] != 0)
+		//		col = truecolour[sprpix[s]];
+		//	if (pri2 == s && pix != 0)
+		//		col = originalcol;
+		//	if (pri1 == s && pix != 0)
+		//		col = originalcol;
+		//}
 
 		//sprite collision
 
@@ -515,15 +551,17 @@ public class Denise : IDenise
 	private uint oldbplcon2;
 	private void UpdateBPLCON2()
 	{
-		if (bplcon2 != oldbplcon2)
+		//if (bplcon2 != oldbplcon2)
+		if (false)
 		{
 			int pf1 = bplcon2 & 7;
 			int pf2 = (bplcon2 >> 3)&7;
+			bool dpf = ((bplcon0 & (1 << 10)) != 0);
 			List<string> s = ["SP01", "SP23", "SP45", "SP67"];
 			s.Insert(pf1, "PF1");
 			if (pf2 >= pf1) pf2++;
 			s.Insert(pf2, "PF2");
-			logger.LogTrace($"PF{((bplcon2>>6)&1)+1} {string.Join(' ',s)}");
+			logger.LogTrace($"{(dpf?"DPF":" X ")} PF{((bplcon2>>6)&1)+1} {string.Join(' ',s)}");
 			oldbplcon2 = bplcon2;
 		}
 		pixelAction = GetModeConversion();
