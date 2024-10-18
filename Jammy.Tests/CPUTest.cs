@@ -55,7 +55,7 @@ namespace Jammy.Tests
 					//x.AddDebug();
 					x.AddDebugAsync();
 				})
-				.AddSingleton<IInterrupt, Interrupt>()
+				.AddSingleton<IInterrupt, Core.Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()

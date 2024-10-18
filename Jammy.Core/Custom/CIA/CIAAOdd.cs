@@ -59,7 +59,7 @@ namespace Jammy.Core.Custom.CIA
 			this.logger = logger;
 		}
 
-		protected override uint interruptLevel => Interrupt.PORTS;
+		protected override uint interruptLevel => Types.Interrupt.PORTS;
 		protected override char cia => 'A';
 
 		private ulong lastTick = 0;

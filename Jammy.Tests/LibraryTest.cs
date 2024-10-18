@@ -57,7 +57,7 @@ namespace Jammy.Tests
 					//x.AddDebugAsync();
 				})
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("FPU"))
-				.AddSingleton<IInterrupt, Interrupt>()
+				.AddSingleton<IInterrupt, Core.Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<ITracer, NullTracer>()

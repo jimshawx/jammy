@@ -562,54 +562,54 @@ namespace Jammy.Main
 		private void btnIRQ_Click(object sender, EventArgs e)
 		{
 			Amiga.LockEmulation();
-			if (cbIRQ.Text == "EXTER") debugger.IRQ(Interrupt.EXTER);
-			if (cbIRQ.Text == "DSKBLK") debugger.IRQ(Interrupt.DSKBLK);
-			if (cbIRQ.Text == "PORTS") debugger.IRQ(Interrupt.PORTS);
-			if (cbIRQ.Text == "BLIT") debugger.IRQ(Interrupt.BLIT);
-			if (cbIRQ.Text == "COPPER") debugger.IRQ(Interrupt.COPPER);
-			if (cbIRQ.Text == "DSKSYNC") debugger.IRQ(Interrupt.DSKSYNC);
-			if (cbIRQ.Text == "AUD0") debugger.IRQ(Interrupt.AUD0);
-			if (cbIRQ.Text == "AUD1") debugger.IRQ(Interrupt.AUD1);
-			if (cbIRQ.Text == "AUD2") debugger.IRQ(Interrupt.AUD2);
-			if (cbIRQ.Text == "AUD3") debugger.IRQ(Interrupt.AUD3);
-			if (cbIRQ.Text == "VERTB") debugger.IRQ(Interrupt.VERTB);
-			if (cbIRQ.Text == "SOFTINT") debugger.IRQ(Interrupt.SOFTINT);
+			if (cbIRQ.Text == "EXTER") debugger.IRQ(Core.Types.Interrupt.EXTER);
+			if (cbIRQ.Text == "DSKBLK") debugger.IRQ(Core.Types.Interrupt.DSKBLK);
+			if (cbIRQ.Text == "PORTS") debugger.IRQ(Core.Types.Interrupt.PORTS);
+			if (cbIRQ.Text == "BLIT") debugger.IRQ(Core.Types.Interrupt.BLIT);
+			if (cbIRQ.Text == "COPPER") debugger.IRQ(Core.Types.Interrupt.COPPER);
+			if (cbIRQ.Text == "DSKSYNC") debugger.IRQ(Core.Types.Interrupt.DSKSYNC);
+			if (cbIRQ.Text == "AUD0") debugger.IRQ(Core.Types.Interrupt.AUD0);
+			if (cbIRQ.Text == "AUD1") debugger.IRQ(Core.Types.Interrupt.AUD1);
+			if (cbIRQ.Text == "AUD2") debugger.IRQ(Core.Types.Interrupt.AUD2);
+			if (cbIRQ.Text == "AUD3") debugger.IRQ(Core.Types.Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.IRQ(Core.Types.Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.IRQ(Core.Types.Interrupt.SOFTINT);
 			Amiga.UnlockEmulation();
 		}
 
 		private void btnINTENA_Click(object sender, EventArgs e)
 		{
 			Amiga.LockEmulation();
-			if (cbIRQ.Text == "EXTER") debugger.INTENA(Interrupt.EXTER);
-			if (cbIRQ.Text == "DSKBLK") debugger.INTENA(Interrupt.DSKBLK);
-			if (cbIRQ.Text == "PORTS") debugger.INTENA(Interrupt.PORTS);
-			if (cbIRQ.Text == "BLIT") debugger.INTENA(Interrupt.BLIT);
-			if (cbIRQ.Text == "COPPER") debugger.INTENA(Interrupt.COPPER);
-			if (cbIRQ.Text == "DSKSYNC") debugger.INTENA(Interrupt.DSKSYNC);
-			if (cbIRQ.Text == "AUD0") debugger.INTENA(Interrupt.AUD0);
-			if (cbIRQ.Text == "AUD1") debugger.INTENA(Interrupt.AUD1);
-			if (cbIRQ.Text == "AUD2") debugger.INTENA(Interrupt.AUD2);
-			if (cbIRQ.Text == "AUD3") debugger.INTENA(Interrupt.AUD3);
-			if (cbIRQ.Text == "VERTB") debugger.INTENA(Interrupt.VERTB);
-			if (cbIRQ.Text == "SOFTINT") debugger.INTENA(Interrupt.SOFTINT);
+			if (cbIRQ.Text == "EXTER") debugger.INTENA(Core.Types.Interrupt.EXTER);
+			if (cbIRQ.Text == "DSKBLK") debugger.INTENA(Core.Types.Interrupt.DSKBLK);
+			if (cbIRQ.Text == "PORTS") debugger.INTENA(Core.Types.Interrupt.PORTS);
+			if (cbIRQ.Text == "BLIT") debugger.INTENA(Core.Types.Interrupt.BLIT);
+			if (cbIRQ.Text == "COPPER") debugger.INTENA(Core.Types.Interrupt.COPPER);
+			if (cbIRQ.Text == "DSKSYNC") debugger.INTENA(Core.Types.Interrupt.DSKSYNC);
+			if (cbIRQ.Text == "AUD0") debugger.INTENA(Core.Types.Interrupt.AUD0);
+			if (cbIRQ.Text == "AUD1") debugger.INTENA(Core.Types.Interrupt.AUD1);
+			if (cbIRQ.Text == "AUD2") debugger.INTENA(Core.Types.Interrupt.AUD2);
+			if (cbIRQ.Text == "AUD3") debugger.INTENA(Core.Types.Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.INTENA(Core.Types.Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.INTENA(Core.Types.Interrupt.SOFTINT);
 			Amiga.UnlockEmulation();
 		}
 
 		private void btnINTDIS_Click(object sender, EventArgs e)
 		{
 			Amiga.LockEmulation();
-			if (cbIRQ.Text == "EXTER") debugger.INTDIS(Interrupt.EXTER);
-			if (cbIRQ.Text == "DSKBLK") debugger.INTDIS(Interrupt.DSKBLK);
-			if (cbIRQ.Text == "PORTS") debugger.INTDIS(Interrupt.PORTS);
-			if (cbIRQ.Text == "BLIT") debugger.INTDIS(Interrupt.BLIT);
-			if (cbIRQ.Text == "COPPER") debugger.INTDIS(Interrupt.COPPER);
-			if (cbIRQ.Text == "DSKSYNC") debugger.INTDIS(Interrupt.DSKSYNC);
-			if (cbIRQ.Text == "AUD0") debugger.INTDIS(Interrupt.AUD0);
-			if (cbIRQ.Text == "AUD1") debugger.INTDIS(Interrupt.AUD1);
-			if (cbIRQ.Text == "AUD2") debugger.INTDIS(Interrupt.AUD2);
-			if (cbIRQ.Text == "AUD3") debugger.INTDIS(Interrupt.AUD3);
-			if (cbIRQ.Text == "VERTB") debugger.INTDIS(Interrupt.VERTB);
-			if (cbIRQ.Text == "SOFTINT") debugger.INTDIS(Interrupt.SOFTINT);
+			if (cbIRQ.Text == "EXTER") debugger.INTDIS(Core.Types.Interrupt.EXTER);
+			if (cbIRQ.Text == "DSKBLK") debugger.INTDIS(Core.Types.Interrupt.DSKBLK);
+			if (cbIRQ.Text == "PORTS") debugger.INTDIS(Core.Types.Interrupt.PORTS);
+			if (cbIRQ.Text == "BLIT") debugger.INTDIS(Core.Types.Interrupt.BLIT);
+			if (cbIRQ.Text == "COPPER") debugger.INTDIS(Core.Types.Interrupt.COPPER);
+			if (cbIRQ.Text == "DSKSYNC") debugger.INTDIS(Core.Types.Interrupt.DSKSYNC);
+			if (cbIRQ.Text == "AUD0") debugger.INTDIS(Core.Types.Interrupt.AUD0);
+			if (cbIRQ.Text == "AUD1") debugger.INTDIS(Core.Types.Interrupt.AUD1);
+			if (cbIRQ.Text == "AUD2") debugger.INTDIS(Core.Types.Interrupt.AUD2);
+			if (cbIRQ.Text == "AUD3") debugger.INTDIS(Core.Types.Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.INTDIS(Core.Types.Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.INTDIS(Core.Types.Interrupt.SOFTINT);
 			Amiga.UnlockEmulation();
 		}
 

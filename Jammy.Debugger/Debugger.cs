@@ -1,8 +1,4 @@
-﻿using System.Linq;
-using System.Text;
-using Jammy.Core;
-using Jammy.Core.Custom;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
@@ -12,6 +8,8 @@ using Jammy.Types;
 using Jammy.Types.Debugger;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Linq;
+using System.Text;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -349,7 +347,7 @@ namespace Jammy.Debugger
 		{
 			ciaa.DebugSetICR(icr);
 			ciab.DebugSetICR(icr);
-			interrupt.AssertInterrupt(Interrupt.PORTS);
+			interrupt.AssertInterrupt(Core.Types.Interrupt.PORTS);
 		}
 
 		public void IRQ(uint irq)

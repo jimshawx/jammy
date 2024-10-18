@@ -20,6 +20,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Jammy.Core.Audio.Windows\Jammy.Core.Audio.Windows.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.MC68020\Jammy.Core.CPU.Musashi.MC68020.csproj" />
@@ -33,6 +34,7 @@
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
     <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
     <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
+    <ProjectReference Include="..\Jammy.Extensions.Windows\Jammy.Extensions.Windows.csproj" />
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
     <ProjectReference Include="..\Jammy.Graph\Jammy.Graph.csproj" />
     <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />

@@ -597,7 +597,7 @@ namespace Jammy.Core.Custom
 			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
-			interrupt.AssertInterrupt(Interrupt.BLIT);
+			interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 
 			status = BlitterState.Idle;
 			return false;
@@ -745,7 +745,7 @@ namespace Jammy.Core.Custom
 			length = bltsize >> 6;
 			if (length == 0)
 			{
-				interrupt.AssertInterrupt(Interrupt.BLIT);
+				interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 				status = BlitterState.Idle;
 				return false;
 			}
@@ -927,7 +927,7 @@ namespace Jammy.Core.Custom
 			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
-			interrupt.AssertInterrupt(Interrupt.BLIT);
+			interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 
 			status = BlitterState.Idle;
 			return false;
@@ -941,7 +941,7 @@ namespace Jammy.Core.Custom
 			uint length = bltsize >> 6;
 			if (length == 0)
 			{
-				interrupt.AssertInterrupt(Interrupt.BLIT);
+				interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 				return;
 			}
 
@@ -1040,7 +1040,7 @@ namespace Jammy.Core.Custom
 			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
-			interrupt.AssertInterrupt(Interrupt.BLIT);
+			interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 		}
 
 		private void BlitImmediate(uint width, uint height)
@@ -1171,7 +1171,7 @@ namespace Jammy.Core.Custom
 			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
-			interrupt.AssertInterrupt(Interrupt.BLIT);
+			interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 			status = BlitterState.Idle;
 		}
 

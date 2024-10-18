@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 
@@ -46,7 +47,7 @@ namespace Jammy.Core.Custom.IO
 			{
 				tbeCounter--;
 				if (tbeCounter == 0)
-					interrupt.AssertInterrupt(Interrupt.TBE);
+					interrupt.AssertInterrupt(Types.Interrupt.TBE);
 			}
 
 			serialInTimer++;
@@ -61,7 +62,7 @@ namespace Jammy.Core.Custom.IO
 						serdat &= 0xfc00;
 						serdat |= (ushort)(c & charMask);
 						serdat |= stopBit;
-						interrupt.AssertInterrupt(Interrupt.RBF);
+						interrupt.AssertInterrupt(Types.Interrupt.RBF);
 					}
 				}
 			}
@@ -123,12 +124,12 @@ namespace Jammy.Core.Custom.IO
 		public void WriteINTREQ(ushort intreq)
 		{
 			//need to mirror TBE/RBF into serdatr
-			if ((intreq & (1 << (int)Interrupt.TBE)) != 0)
+			if ((intreq & (1 << (int)Types.Interrupt.TBE)) != 0)
 				serdat |= (ushort)SERDAT.TBE;
 			else
 				serdat &= (ushort)~SERDAT.TBE;
 
-			if ((intreq & (1 << (int)Interrupt.RBF)) != 0)
+			if ((intreq & (1 << (int)Types.Interrupt.RBF)) != 0)
 				serdat |= (ushort)SERDAT.RBF;
 			else
 				serdat &= (ushort)~(SERDAT.RBF | SERDAT.OVRUN);

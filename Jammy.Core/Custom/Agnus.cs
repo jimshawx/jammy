@@ -122,7 +122,7 @@ public class Agnus : IAgnus
 		}
 
 		if ((clockState & ChipsetClockState.EndOfFrame)!=0)
-			interrupt.AssertInterrupt(Interrupt.VERTB);
+			interrupt.AssertInterrupt(Types.Interrupt.VERTB);
 
 		//clock.Ack();
 	}

@@ -32,6 +32,7 @@ using Jammy.Debugger.Interceptors;
 using Jammy.NativeOverlay;
 using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Graph;
+using Jammy.Core.Audio.Windows;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -97,7 +98,7 @@ namespace Jammy.Main
 				.AddSingleton<ICPUSlotRAM, CPUSlotRAM>()
 				.AddSingleton<IZorroConfigurator, ZorroConfigurator>()
 				.AddSingleton<IUnmappedMemory, UnmappedMemory>()
-				.AddSingleton<IInterrupt, Interrupt>()
+				.AddSingleton<IInterrupt, Core.Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<IDebugger, Debugger.Debugger>()
 				.AddSingleton<IChips, Chips>()

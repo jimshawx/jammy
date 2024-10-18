@@ -3,7 +3,6 @@ using System.IO;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
-using Jammy.Extensions.Windows;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -46,13 +45,15 @@ namespace Jammy.Core.Memory
 
 		public MemoryStream ToBmp(int w)
 		{
-			return memory[0..(int)chipSize].ToBmp(w);
+			//return memory[0..(int)chipSize].ToBmp(w);
+			throw new NotImplementedException();
 		}
 
 		public void FromBmp(Stream m)
 		{
-			var b = m.FromBmp();
-			Array.Copy(b, memory, b.Length);
+			//var b = m.FromBmp();
+			//Array.Copy(b, memory, b.Length);
+			throw new NotImplementedException();
 		}
 	}
 }

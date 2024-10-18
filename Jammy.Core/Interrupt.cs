@@ -2,6 +2,7 @@
 using System.Collections;
 using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 
 /*
@@ -15,23 +16,6 @@ namespace Jammy.Core
 		private IChips custom;
 
 		private readonly Queue q = new Queue();
-
-		public const uint NMI = 15;
-		public const uint INTEN = 14;
-		public const uint EXTER = 13;
-		public const uint DSKSYNC = 12;
-		public const uint RBF = 11;
-		public const uint AUD3 = 10;
-		public const uint AUD2 = 9;
-		public const uint AUD1 = 8;
-		public const uint AUD0 = 7;
-		public const uint BLIT = 6;
-		public const uint VERTB = 5;
-		public const uint COPPER = 4;
-		public const uint PORTS = 3;
-		public const uint SOFTINT = 2;
-		public const uint DSKBLK = 1;
-		public const uint TBE = 0;
 
 		public static uint[] priority = new uint[]{ 1,1,1,2,3,3,3,4,4,4,4,5,5,6,6,7};
 
@@ -102,12 +86,12 @@ namespace Jammy.Core
 				paulaInterruptLevel = 0;
 
 				//all interrupts disabled
-				if ((intena & (1 << (int)Interrupt.INTEN)) == 0) return;
+				if ((intena & (1 << (int)Types.Interrupt.INTEN)) == 0) return;
 
 				intreq &= intena;
 				if (intreq == 0) return;
 
-				for (int i = (int)Interrupt.EXTER; i >= 0; i--)
+				for (int i = (int)Types.Interrupt.EXTER; i >= 0; i--)
 				{
 					if ((intreq & (1u << i)) != 0)
 					{
@@ -133,9 +117,9 @@ namespace Jammy.Core
 			//}
 
 			//set CPU level using Paula INTREQ
-			if ((level & (1 << 2)) != 0) AssertInterrupt(PORTS);
-			if ((level & (1 << 3)) != 0) AssertInterrupt(COPPER);
-			if ((level & (1 << 6)) != 0) AssertInterrupt(EXTER);
+			if ((level & (1 << 2)) != 0) AssertInterrupt(Types.Interrupt.PORTS);
+			if ((level & (1 << 3)) != 0) AssertInterrupt(Types.Interrupt.COPPER);
+			if ((level & (1 << 6)) != 0) AssertInterrupt(Types.Interrupt.EXTER);
 		}
 	}
 }

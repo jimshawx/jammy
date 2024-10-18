@@ -178,7 +178,7 @@ namespace Jammy.Core.Floppy
 				diskInterruptPending--;
 				if (diskInterruptPending < 0)
 				{
-					interrupt.AssertInterrupt(Interrupt.DSKBLK);
+					interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
 					diskInterruptPending = -1;
 				}
 			}
@@ -263,7 +263,7 @@ namespace Jammy.Core.Floppy
 
 					if (value == 0)
 					{
-						interrupt.AssertInterrupt(Interrupt.DSKBLK);
+						interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
 						break;
 					}
 
@@ -299,7 +299,7 @@ namespace Jammy.Core.Floppy
 					{
 						if (df != -1)
 							logger.LogTrace($"Drive DF{df} Out of range! {(drive[df].disk == null?"no disk":"")} {(drive[df].attached?"":"not attached")}");
-						interrupt.AssertInterrupt(Interrupt.DSKBLK);
+						interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
 						return;
 					}
 
@@ -312,7 +312,7 @@ namespace Jammy.Core.Floppy
 					if (drive[df].track > 161)
 					{
 						logger.LogTrace($"Track {drive[df].track} {drive[df].track / 2}:{drive[df].track & 1} Out of range!");
-						interrupt.AssertInterrupt(Interrupt.DSKBLK);
+						interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
 						return;
 					}
 
@@ -326,7 +326,7 @@ namespace Jammy.Core.Floppy
 						if (!synced)
 						{
 							if (w != dsksync) continue;
-							interrupt.AssertInterrupt(Interrupt.DSKSYNC);
+							interrupt.AssertInterrupt(Types.Interrupt.DSKSYNC);
 							synced = true;
 						}
 

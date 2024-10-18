@@ -49,7 +49,7 @@ namespace Jammy.Core.Custom.CIA
 			this.logger = logger;
 		}
 
-		protected override uint interruptLevel => Interrupt.EXTER;
+		protected override uint interruptLevel => Types.Interrupt.EXTER;
 		protected override char cia => 'B';
 
 		private int divisor = 0;

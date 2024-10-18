@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ApplicationIcon>
     </ApplicationIcon>
     <AssemblyName>Jammy.Core</AssemblyName>
     <RootNamespace>Jammy.Core</RootNamespace>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Tests\**" />
@@ -14,15 +14,12 @@
     <None Remove="Tests\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="SharpDX.XAudio2" Version="4.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-    <PackageReference Include="Vortice.XAudio2" Version="3.3.4" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
     <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />
-    <ProjectReference Include="..\Jammy.Extensions.Windows\Jammy.Extensions.Windows.csproj" />
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
     <ProjectReference Include="..\Jammy.Interface\Jammy.Interface.csproj" />
     <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />

@@ -16,7 +16,7 @@ namespace Jammy.Core.Custom.Audio
 		private readonly IMemoryMappedDevice memory;
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
-		private readonly uint[] intr = { Interrupt.AUD0, Interrupt.AUD1, Interrupt.AUD2, Interrupt.AUD3 };
+		private readonly uint[] intr = { Types.Interrupt.AUD0, Types.Interrupt.AUD1, Types.Interrupt.AUD2, Types.Interrupt.AUD3 };
 		private readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 

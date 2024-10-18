@@ -1,22 +1,19 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using SharpDX;
-using SharpDX.Multimedia;
-using SharpDX.XAudio2;
+using System.Runtime.InteropServices;
+using Vortice.Multimedia;
+using Vortice.XAudio2;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Core.Custom.Audio
+namespace Jammy.Core.Audio.Windows
 {
-	public class AudioV2 : IAudio
+	public class AudioVortice : IAudio
 	{
 		private readonly IChipsetClock clock;
 		private readonly IMemoryMappedDevice memory;
@@ -26,13 +23,13 @@ namespace Jammy.Core.Custom.Audio
 		private readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
-		public AudioV2(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioV2> logger)
+		public AudioVortice(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioVortice> logger)
 		{
 			this.clock = clock;
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
-			
+
 			InitMixer();
 		}
 
@@ -214,7 +211,7 @@ namespace Jammy.Core.Custom.Audio
 			else
 				adkcon &= (ushort)~v;
 
-			v = (ushort)(adkcon & 0xff);
+			v = (ushort)(adkcon&0xff);
 			if (v != lastMod)
 			{
 				if ((v & 1) != 0) logger.LogTrace("C0 modulates volume");
@@ -298,7 +295,7 @@ namespace Jammy.Core.Custom.Audio
 				case ChipRegs.AUD3DAT: ch[3].auddat = value; ChannelIRQOn(3); break;
 				case ChipRegs.AUD3LCH: ch[3].audlc = (ch[3].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD3LCL: ch[3].audlc = ((ch[3].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
-				
+
 				case ChipRegs.ADKCON: WriteADKCON(value); break;
 			}
 		}
@@ -350,26 +347,12 @@ namespace Jammy.Core.Custom.Audio
 			}
 			return value;
 		}
-		[Flags]
-		public enum XAUDIO2_LOG
-		{
-			ERRORS = 0x0001, // For handled errors with serious effects.
-			WARNINGS = 0x0002, // For handled errors that may be recoverable.
-			INFO = 0x0004, // Informational chit-chat (e.g. state changes).
-			DETAIL = 0x0008, // More detailed chit-chat.
-			API_CALLS = 0x0010, // Public API function entries and exits.
-			FUNC_CALLS = 0x0020, // Internal function entries and exits.
-			TIMING = 0x0040, // Delays detected and other timing data.
-			LOCKS = 0x0080, // Usage of critical sections and mutexes.
-			MEMORY = 0x0100, // Memory heap usage information.
-			STREAMING = 0x1000, // Audio streaming information.
-		}
-		private XAudio2 xaudio;
-		private MasteringVoice masteringVoice;
+		private IXAudio2 xaudio;
+		private IXAudio2MasteringVoice masteringVoice;
 
 		private class AmigaChannel
 		{
-			public SourceVoice xaudioVoice { get; set; }
+			public IXAudio2SourceVoice xaudioVoice { get; set; }
 			public AudioBuffer[] xaudioBuffer { get; set; }
 			public byte[] xaudioCBuffer { get; set; }
 			public int xaudioCIndex { get; set; }
@@ -384,42 +367,42 @@ namespace Jammy.Core.Custom.Audio
 
 		private void InitMixer()
 		{
-			xaudio = new XAudio2();
-			masteringVoice = new MasteringVoice(xaudio);
-			masteringVoice.GetVoiceDetails(out VoiceDetails masteringChannelDetails);
+			xaudio = XAudio2.XAudio2Create(ProcessorSpecifier.DefaultProcessor);
+			masteringVoice = xaudio.CreateMasteringVoice();
+			var masteringChannelDetails = masteringVoice.VoiceDetails;
 
 			xaudio.SetDebugConfiguration(new DebugConfiguration
 			{
-				TraceMask = (int)(XAUDIO2_LOG.ERRORS | XAUDIO2_LOG.WARNINGS | XAUDIO2_LOG.DETAIL | XAUDIO2_LOG.API_CALLS | XAUDIO2_LOG.FUNC_CALLS),
+				TraceMask = LogType.Errors | LogType.Warnings | LogType.Detail | LogType.ApiCalls | LogType.FuncCalls,
 				BreakMask = 0,
 				LogThreadID = true,
 				LogFileline = true,
 				LogFunctionName = true,
 				LogTiming = true
-			}, IntPtr.Zero);
+			});
 
 			for (int i = 0; i < 4; i++)
 			{
-				channels[i].xaudioVoice = new SourceVoice(xaudio, new WaveFormat(SAMPLE_RATE, 8*SAMPLE_SIZE, 1), VoiceFlags.None);
+				channels[i].xaudioVoice = xaudio.CreateSourceVoice(new WaveFormat(SAMPLE_RATE, 8*SAMPLE_SIZE, 1), VoiceFlags.None);
 				channels[i].xaudioVoice.Start();
 
 				channels[i].xaudioBuffer = new AudioBuffer[2];
-				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
-				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
+				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = SharpDX.Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
+				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = SharpDX.Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
 				channels[i].xaudioCBuffer = new byte[BUFFER_SIZE];
 				channels[i].xaudioCIndex = 0;
 				channels[i].currentBuffer = 0;
 
 				//panning 1,2 left   0,3 right
-				channels[i].xaudioVoice.GetVoiceDetails(out VoiceDetails channelDetails);
-				float[] outputMatrix = new float[channelDetails.InputChannelCount * masteringChannelDetails.InputChannelCount];
+				var channelDetails = channels[i].xaudioVoice.VoiceDetails;
+				float[] outputMatrix = new float[channelDetails.InputChannels * masteringChannelDetails.InputChannels];
 
 				//if (i == 0 || i == 3) { outputMatrix[0] = 0.0f; outputMatrix[1] = 1.0f; }//hard right
 				//else { outputMatrix[0] = 1.0f; outputMatrix[1] = 0.0f; }//hard left
 				if (i == 0 || i == 3) { outputMatrix[0] = 0.2f; outputMatrix[1] = 0.8f; }//soft right
 				else { outputMatrix[0] = 0.8f; outputMatrix[1] = 0.2f; }//soft left
 
-				channels[i].xaudioVoice.SetOutputMatrix(null, channelDetails.InputChannelCount, masteringChannelDetails.InputChannelCount, outputMatrix);
+				channels[i].xaudioVoice.SetOutputMatrix(null, channelDetails.InputChannels, masteringChannelDetails.InputChannels, outputMatrix);
 			}
 		}
 

@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Jammy.Core.Custom;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
