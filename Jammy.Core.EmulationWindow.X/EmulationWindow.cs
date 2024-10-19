@@ -14,7 +14,7 @@ namespace Jammy.Core.EmulationWindow.X
 		private const string X11Library = "libX11.so.6";
 
 		[DllImport(X11Library)]
-		private static extern IntPtr XOpenDisplay(IntPtr display);
+		private static extern IntPtr XOpenDisplay(IntPtr displayName);
 
 		[DllImport(X11Library)]
 		private static extern IntPtr XCreateSimpleWindow(IntPtr display, IntPtr rootWindow, int x, int y, uint width, uint height, uint borderWidth, ulong border, ulong background);
@@ -47,7 +47,7 @@ namespace Jammy.Core.EmulationWindow.X
 		private static extern void XNextEvent(IntPtr display, out XEvent xevent);
 
 		[DllImport(X11Library)]
-		private static extern IntPtr XCreateGC(IntPtr display, IntPtr window, int m, int n);
+		private static extern IntPtr XCreateGC(IntPtr display, IntPtr window, uint valueMask, IntPtr values);
 
 		[DllImport(X11Library)]
 		private static extern IntPtr XPutImage(IntPtr display, IntPtr window, IntPtr gc, ref XImage ximage, int src_x, int src_y, int dest_x, int dest_y, uint width, uint height);
@@ -56,9 +56,64 @@ namespace Jammy.Core.EmulationWindow.X
 		private static extern void XFreeGC(IntPtr display, IntPtr gc);
 
 		[DllImport(X11Library)]
-		private static extern IntPtr XCreateImage(IntPtr xdisplay, ref IntPtr xvisual, uint bpp, int format, int offset, IntPtr data, uint width, uint height, int bitmap_pad, int bytes_per_line);
+		private static extern IntPtr XDefaultScreen(IntPtr display);
+
+		[DllImport(X11Library)]
+		private static extern IntPtr XDefaultGC(IntPtr display, int parm);
+
+		[DllImport(X11Library)]
+		private static extern IntPtr XRootWindow(IntPtr display, IntPtr screen);
+
+		[DllImport(X11Library)]
+		private static extern IntPtr XGetVisualInfo(IntPtr display, int vinfo_mask, ref XVisualInfo vinfo_template, out int nitems_return);
+
+		[DllImport(X11Library)]
+		private static extern IntPtr XCreateImage(IntPtr xdisplay, IntPtr xvisual, uint bpp, int format, int offset, IntPtr data, uint width, uint height, int bitmap_pad, int bytes_per_line);
 		private const int ZPixmap = 2;
 
+		[StructLayout(LayoutKind.Sequential)]
+		public struct Display
+		{
+			public IntPtr ext_data;   // hook for extension to hang data
+			public IntPtr private1;   // private to the display
+			public int fd;            // Network socket
+			public int private2;      // private to the display
+			public int proto_major_version; // major version of the protocol
+			public int proto_minor_version; // minor version of the protocol
+			public IntPtr vendor;     // vendor of the server
+			public IntPtr private3;   // private to the display
+			public int private4;      // private to the display
+			public int private5;      // private to the display
+			public int private6;      // private to the display
+			public IntPtr resource_alloc; // private allocator
+			public int byte_order;    // screen byte order
+			public int bitmap_unit;   // padding boundary
+			public int bitmap_pad;    // pad bits
+			public int bitmap_bit_order;  // bit order
+			public int nformats;      // number of pixmap formats
+			public IntPtr pixmap_format; // pixmap format
+			public int private8;      // private to the display
+			public int release;       // release of the protocol
+			public IntPtr private9;   // private to the display
+			public IntPtr private10;  // private to the display
+			public IntPtr private11;  // private to the display
+			public IntPtr private12;  // private to the display
+			public IntPtr private13;  // private to the display
+			public int private14;     // private to the display
+			public IntPtr default_screen; // default screen
+			public IntPtr screens;    // screens
+			public int nscreens;      // number of screens
+			public IntPtr private15;  // private to the display
+			public int private16;     // private to the display
+			public int min_keycode;   // minimum keycode
+			public int max_keycode;   // maximum keycode
+			public IntPtr private17;  // private to the display
+			public IntPtr private18;  // private to the display
+			public IntPtr private19;  // private to the display
+			public IntPtr private20;  // private to the display
+			public IntPtr private21;  // private to the display
+			public IntPtr private22;  // private to the display
+		}
 		[StructLayout(LayoutKind.Sequential)]
 		private struct XImage
 		{
@@ -164,13 +219,7 @@ namespace Jammy.Core.EmulationWindow.X
 			RenderTicks();
 			RenderLights();
 
-			var handle = GCHandle.Alloc(screen, GCHandleType.Pinned);
-			ximage.data = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
-
 			XPutImage(xdisplay, xwindow, gc, ref ximage, 0, 0, 0, 0, screenWidth, screenHeight);
-			
-			handle.Free();
-
 			XFlush(xdisplay);
 		}
 
@@ -183,23 +232,47 @@ namespace Jammy.Core.EmulationWindow.X
 		private IntPtr xdisplay;
 		private IntPtr xwindow;
 		private XImage ximage;
-		private IntPtr xvisual;
 		private IntPtr gc;
+
+		private const int VisualNoMask = 0x0;
+		private const int VisualIDMask = 0x1;
+		private const int VisualScreenMask = 0x2;
+		private const int VisualDepthMask = 0x4;
+		private const int VisualClassMask = 0x8;
+		private const int VisualRedMaskMask = 0x10;
+		private const int VisualGreenMaskMask = 0x20;
+		private const int VisualBlueMaskMask = 0x40;
+		private const int VisualColormapSizeMask = 0x80;
+		private const int VisualBitsPerRGBMask = 0x100;
+		private const int VisualAllMask = 0x1FF;
+
+		[StructLayout(LayoutKind.Sequential)]
+		private struct XVisualInfo
+		{
+			public IntPtr visual;
+			public UInt64 visualid;
+			public int screen;
+			public uint depth;
+			public int @class;
+			public uint red_mask;
+			public uint green_mask;
+			public uint blue_mask;
+			public int colormap_size;
+			public int bits_per_rgb;
+		}
 
 		public void SetPicture(int width, int height)
 		{
 			xdisplay = XOpenDisplay(IntPtr.Zero);
-
-			IntPtr rootWindow = Marshal.ReadIntPtr(xdisplay);
+			var rootWindow = XRootWindow(xdisplay, XDefaultScreen(xdisplay));
 			xwindow = XCreateSimpleWindow(xdisplay, rootWindow, 10, 10, (uint)width, (uint)height, 1, 0, 0xFFFFFF);
-
-			XStoreName(xdisplay, xwindow, "Simple X11 Window");
+			XStoreName(xdisplay, xwindow, "Jammy : Alt-Tab or Middle Mouse Click to detach mouse");
 			XSelectInput(xdisplay, xwindow, KeyPress | KeyRelease | ButtonPressMask | ButtonReleaseMask);
 
-			gc = XCreateGC(xdisplay, xwindow, 0, 0);
+			gc = XCreateGC(xdisplay, xwindow, 0, IntPtr.Zero);
+			//gc = XDefaultGC(xdisplay, 0);
 
 			XMapWindow(xdisplay, xwindow);
-
 			XClearWindow(xdisplay, xwindow);
 			XFlush(xdisplay);
 
@@ -207,7 +280,14 @@ namespace Jammy.Core.EmulationWindow.X
 			screenHeight = (uint)height;
 			displayHz = 60;
 
-			var ximagePtr = XCreateImage(xdisplay, ref xvisual, 32, ZPixmap, 0, IntPtr.Zero, screenWidth, screenHeight, 32, 0);
+			var xvis = new XVisualInfo { depth = 24 };
+			int items;
+			var xptr = XGetVisualInfo(xdisplay, VisualBitsPerRGBMask, ref xvis, out items);
+			if (xptr != 0)
+			{
+				var xvis2 = Marshal.PtrToStructure<XVisualInfo>(xptr);
+			}
+			var ximagePtr = XCreateImage(xdisplay, IntPtr.Zero, 24, ZPixmap, 0, IntPtr.Zero, screenWidth, screenHeight, 32, 0);
 			ximage = Marshal.PtrToStructure<XImage>(ximagePtr);
 
 			// XEvent xevent;
@@ -221,8 +301,24 @@ namespace Jammy.Core.EmulationWindow.X
 			// 	}
 
 			// }
-			screen = new int[screenWidth * screenHeight];
+			//screen = new int[screenWidth * screenHeight];
+			screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
+			ximage.data = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
 		}
+
+		// private void XEventHandler()
+		// {
+		// 	XEvent xevent;
+		// 	while (true)
+		// 	{
+		// 		XNextEvent(xdisplay, out xevent);
+
+		// 		if (xevent.type == Expose)
+		// 		{
+		// 			Console.WriteLine("Window exposed");
+		// 		}
+
+		// }
 
 		private DateTime lastTick = DateTime.Now;
 		private float[] fpsarr = new float[128];

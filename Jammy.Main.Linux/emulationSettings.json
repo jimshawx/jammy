@@ -1,1 +1,34 @@
-{}
+{
+    "Emulation": {
+      "KickStart": "kick13.rom",
+      "KickStartDisassembly": "",
+      "DF0": "",
+      "DF1": "",
+      "DF2": "",
+      "DF3": "",
+      "AddressBits": 24,
+      "UnknownInstructionSizeExceptions": false,
+      "FloppyCount": 1,
+      "HardDiskCount": 0,
+      "ZorroIIMemory": "0",
+      "ZorroIIIMemory": "0",
+      "TrapdoorMemory": 0.5,
+      "ChipMemory": 0.5,
+      "MotherboardMemory": 0.0,
+      "CPUSlotMemory": 0.0,
+      "CPUFrequency": 7093790,
+      "Disassemblies": "Disabled",
+      "Debugger": "Disabled",
+      "Prefetch": "Disabled",
+      "CPU": "MusashiCSharp",
+      "Sku": "MC68000",
+      "Audio": "Null",
+      "Tracer": "Disabled",
+      "ChipSet": "AGA",
+      "Console": "Null",
+      "DiskController": "None",
+      "VideoFormat": "PAL",
+      "BlitterMode": "Synchronous",
+      "LVODirectory": ""
+    }
+  }
