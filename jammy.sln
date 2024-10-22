@@ -1,4 +1,5 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -64,13 +65,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Assembler", "Jammy.As
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.EmulationWindow.Window", "Jammy.Core.EmulationWindow.Window\Jammy.Core.EmulationWindow.Window.csproj", "{1EAF6C94-94B7-4E63-BF80-62378CC37308}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.Audio.Windows", "Jammy.Core.Audio.Windows\Jammy.Core.Audio.Windows.csproj", "{D85F8A7D-477D-4EC6-9115-30CDBFE697C6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.Audio.Windows", "Jammy.Core.Audio.Windows\Jammy.Core.Audio.Windows.csproj", "{D85F8A7D-477D-4EC6-9115-30CDBFE697C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Main.Linux", "Jammy.Main.Linux\Jammy.Main.Linux.csproj", "{E5B92299-74B3-4187-AEE8-72A12A89B9A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Main.Linux", "Jammy.Main.Linux\Jammy.Main.Linux.csproj", "{E5B92299-74B3-4187-AEE8-72A12A89B9A0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.EmulationWindow.X", "Jammy.Core.EmulationWindow.X\Jammy.Core.EmulationWindow.X.csproj", "{973EA08D-6434-490F-A4F2-215B7D186C8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.EmulationWindow.X", "Jammy.Core.EmulationWindow.X\Jammy.Core.EmulationWindow.X.csproj", "{973EA08D-6434-490F-A4F2-215B7D186C8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.IO.Linux", "Jammy.Core.IO.Linux\Jammy.Core.IO.Linux.csproj", "{932E96B5-7123-4720-ADCA-F003798B8254}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.Core.IO.Linux", "Jammy.Core.IO.Linux\Jammy.Core.IO.Linux.csproj", "{932E96B5-7123-4720-ADCA-F003798B8254}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jammy.UI.Settings.Qt", "Jammy.UI.Settings.Qt\Jammy.UI.Settings.Qt.csproj", "{1E8E722A-FAF2-46B9-AB87-728534AA89F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.UI.Settings.Avalonia", "Jammy.UI.Settings.Avalonia\Jammy.UI.Settings.Avalonia.csproj", "{B4B6BA59-8D10-4D27-9AD2-D5A6B4314B7E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -218,6 +223,14 @@ Global
 		{932E96B5-7123-4720-ADCA-F003798B8254}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{932E96B5-7123-4720-ADCA-F003798B8254}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{932E96B5-7123-4720-ADCA-F003798B8254}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E8E722A-FAF2-46B9-AB87-728534AA89F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E8E722A-FAF2-46B9-AB87-728534AA89F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E8E722A-FAF2-46B9-AB87-728534AA89F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E8E722A-FAF2-46B9-AB87-728534AA89F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4B6BA59-8D10-4D27-9AD2-D5A6B4314B7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4B6BA59-8D10-4D27-9AD2-D5A6B4314B7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4B6BA59-8D10-4D27-9AD2-D5A6B4314B7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4B6BA59-8D10-4D27-9AD2-D5A6B4314B7E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
