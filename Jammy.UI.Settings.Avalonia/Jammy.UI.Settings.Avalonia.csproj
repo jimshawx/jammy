@@ -16,9 +16,9 @@
     <AvaloniaXaml Include="Another.xaml">
       <Generator></Generator>
     </AvaloniaXaml>
-    <AvaloniaResource Include="App.xaml">
+    <AvaloniaXaml Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
-    </AvaloniaResource>
+    </AvaloniaXaml>
     <AvaloniaXaml Include="Settings.xaml" />
   </ItemGroup>
 
@@ -31,6 +31,9 @@
   <ItemGroup>
     <Compile Update="Another.axaml.cs">
       <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Update="App.axaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
 
