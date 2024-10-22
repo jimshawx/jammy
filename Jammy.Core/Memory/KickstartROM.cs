@@ -44,6 +44,7 @@ namespace Jammy.Core.Memory
 
 				memoryRange = new MemoryRange(0, 0);
 				mirrorRange = new MemoryRange(0, 0);
+				memory = Array.Empty<byte>();
 				addressMask = 0;
 
 				return;
