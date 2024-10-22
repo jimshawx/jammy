@@ -5,589 +5,169 @@
         Width="800"
         Height="600">
 
-  <Panel
-		
-	  Name="settings"
-	  Width="800"
-	  Height="600"
+  <Panel	  Name="settings"	  Width="800"	  Height="600">
 
-	  Color= "#7f7f7f">
+	<ComboBox		  Name="cbQuickStart"		  Width="331"		  Height="40"			>	</ComboBox>
+
+	<Button		Name="btnQuickStart">	  Quick Start	</Button>
 
 
+	<Panel		Name="groupBox4"		Width="525"		Height="200">
+	  <TextBlock>Floppy Disk</TextBlock>
 
-	<ComboBox
-		  Name="cbQuickStart"
-		x="23"
-		y="21"
-		  Width="331"
-		  Height="40"
-			>
-	</ComboBox>
 
-	<Button
-		Name="btnQuickStart"
-		  
-			  x="360"
-		  y="21">
-	  Quick Start
-	</Button>
+	  <NumericUpDown		Name="nudFloppyCount"		Value= "1"		Minimum="0"		Maximum="4">	</NumericUpDown>
 
-<?ignore	
-	<GroupBox
-		Name="groupBox4"
-		x="310"
-		y="103"
-		Width="525"
-		Height="200"
-			
-			
-		Header="Floppy Disk">
+	  <TextBox		Name="txtDF0"		Width="344"		Height="40">	</TextBox>
+	  <TextBox		Name="txtDF1"		Width="344"		Height="40">	</TextBox>
+	  <TextBox		Name="txtDF2"		Width="344"	Height="40">	</TextBox>
+	  <TextBox		Name="txtDF3"		Width="344"		Height="40">	</TextBox>
 
-	  <SpinBox
-		  Name="nudFloppyCount"
-		  x="385"
-		  y="25"
-		  value= "1"
-		  to= "4">
-	  </SpinBox>
+	  <Button		Name="btnDF0Pick"		Width="29"		Height="40">	  ...	</Button>
+	  <Button		Name="btnDF1Pick"		Width="29"		Height="40">	  ...	</Button>
+	  <Button		Name="btnDF2Pick"		Width="29"		Height="40">	  ...	</Button>
+	  <Button		Name="btnDF3Pick"		Width="29"	Height="40">	  ...	</Button>
+	</Panel>
 
-	  <TextBox
-		  Name="txtDF0"
-		  x="0"
-		  y="25"
-		  Width="344"
-		  Height="40">
-	  </TextBox>
+	<Panel	  Name="groupBox5"	  Width="525"	  Height="97">
 
-	  <TextBox
-		  Name="txtDF1"
-		  x="0"
-		  y="66"
-		  Width="344"
-		  Height="40">
-	  </TextBox>
+	  <TextBlock>Hard Disk</TextBlock>
 
-	  <TextBox
-		  Name="txtDF2"
-		  x="0"
-		  y="106"
-		  Width="344"
-		  Height="40">
-	  </TextBox>
+	  <ComboBox		Name="cbDiskController"		Width="275"		Height="40">
 
-	  <TextBox
-		  Name="txtDF3"
-		  x="0"
-		  y="148"
-		  Width="344"
-		  Height="40">
-	  </TextBox>
+		<ComboBoxItem>		None	  </ComboBoxItem>
+		<ComboBoxItem>		A600_A1200	  </ComboBoxItem>
+		<ComboBoxItem>		A3000	  </ComboBoxItem>
+		<ComboBoxItem>		A4000	  </ComboBoxItem>
 
-	  <Button
-		  Name="btnDF0Pick"
-		  x="350"
-		  y="25"
-		  Width="29"
-		  Height="40">
-		...
-	  </Button>
-
-	  <Button
-		  Name="btnDF1Pick"
-		  x="350"
-		  y="66"
-		  Width="29"
-		  Height="40">
-		...
-	  </Button>
-
-	  <Button
-		  Name="btnDF2Pick"
-		  x="350"
-		  y="106"
-		  Width="29"
-		  Height="40">
-		...
-	  </Button>
-
-	  <Button
-		  Name="btnDF3Pick"
-		  x="350"
-		  y="148"
-		  Width="29"
-		  Height="40">
-		...
-	  </Button>
-	</GroupBox>
-
-	<GroupBox
-		Name="groupBox5"
-		x="310"
-		y="309"
-		Width="525"
-		Height="97"
-			
-			
-		Header="Hard Disk">
-
-	  <ComboBox
-		  Name="cbDiskController"
-		  x="0"
-		  y="29"
-		  Width="275"
-		  Height="40">
-		<ComboBox.Items>
-		  <x:String>
-			None
-		  </x:String>
-		  <x:String>
-			A600_A1200
-		  </x:String>
-		  <x:String>
-			A3000
-		  </x:String>
-		  <x:String>
-			A4000
-		  </x:String>
-		</ComboBox.Items>
 	  </ComboBox>
 
-	  <SpinBox
+	  <NumericUpDown
 		  Name="nudHardDiskCount"
-		  x="385"
-		  y="23">
-	  </SpinBox>
-	</GroupBox>
 
-	<GroupBox
-		Name="groupBox6"
-		x="310"
-		y="412"
-		Width="525"
-		Height="83"
-			
-			
-		Header="Kickstart">
+		  Minimum="0"
+		  Maximum="4">
+	  </NumericUpDown>
+	</Panel>
 
-	  <TextBox
-		  Name="txtKickstart"
-		  x="0"
-		  y="34"
-		  Width="344"
-		  Height="40">
-	  </TextBox>
+	<Panel	  Name="groupBox6"	  Width="525"	  Height="83">
 
-	  <Button
-		  Name="btnROMPick"
-		  x="350"
-		  y="34"
-		  Width="29">
-		...
-	  </Button>
-	</GroupBox>
+	  <TextBlock>Kickstart</TextBlock>
 
-	<GroupBox
-		Name="groupBox7"
-		x="310"
-		y="505"
-		Width="228"
-		Height="70"
-			
-			
-		Header="Miscellaneous">
+	  <TextBox		Name="txtKickstart"		Width="344"		Height="40">	</TextBox>
+	  <Button		Name="btnROMPick"		Width="29">	  ...	</Button>
+	</Panel>
 
-	  <CheckBox
-		  Name="cbAudio"
-		  x="0"
-		  y="27">
-		Audio
-	  </CheckBox>
+	<Panel	  Name="groupBox7"	  Width="228"	  Height="70">
 
-	  <CheckBox
-		  Name="cbDebugging"
-		  x="93"
-		  y="27">
-		Debugging
-	  </CheckBox>
-	</GroupBox>
+	  <TextBlock>Miscellaneous</TextBlock>
 
-	<GroupBox
-		Name="groupBox8"
-		x="544"
-		y="505"
-		Width="291"
-		Height="70"
-			
-			
-		Header="Blitter">
+	  <CheckBox		Name="cbAudio">	  Audio	</CheckBox>
+	  <CheckBox		Name="cbDebugging">	  Debugging	</CheckBox>
+	</Panel>
 
-	  <RadioButton
-		  Name="rbImmediate"
-		  x="12"
-		  y="26">
-		Immediate
-	  </RadioButton>
+	<Panel	  Name="groupBox8"	  Width="291"	  Height="70">
 
-	  <RadioButton
-		  Name="rbSynchronous"
-		  x="136"
-		  y="26"
-		  Checked="true">
-		Synchronous
-	  </RadioButton>
-	</GroupBox>
+	  <TextBlock>Blitter</TextBlock>
 
-	<GroupBox
-		Name="groupBox2"
-		x="23"
-		y="232"
-		Width="281"
-		Height="118"
-			
-			
-		Header="Chipset">
+	  <RadioButton		Name="rbImmediate">	  Immediate	</RadioButton>
+	  <RadioButton		Name="rbSynchronous"		IsChecked="true">	  Synchronous	</RadioButton>
+	</Panel>
 
-	  <ComboBox
-		  Name="cbChipset"
-		  x="12"
-		  y="34">
-		<ComboBox.Items>
-		  <x:String>
-			OCS
-		  </x:String>
-		  <x:String>
-			ECS
-		  </x:String>
-		  <x:String>
-			AGA
-		  </x:String>
-		</ComboBox.Items>
+	<Panel	  Name="groupBox2"	  Width="281"	  Height="118">
+
+	  <TextBlock>Chipset</TextBlock>
+
+	  <ComboBox		Name="cbChipset">
+		<ComboBoxItem>		OCS	  </ComboBoxItem>
+		<ComboBoxItem>		ECS	  </ComboBoxItem>
+		<ComboBoxItem>		AGA	  </ComboBoxItem>
 	  </ComboBox>
 
-	  <RadioButton
-		  Name="rbPAL"
-		  x="168"
-		  y="34">
-		PAL
-	  </RadioButton>
+	  <RadioButton		Name="rbPAL">	  PAL	</RadioButton>
+	  <RadioButton		Name="rbNTSC">	  NTSC	</RadioButton>
+	</Panel>
 
-	  <RadioButton
-		  Name="rbNTSC"
-		  x="168"
-		  y="70">
-		NTSC
-	  </RadioButton>
-	</GroupBox>
+	<Panel	  Name="groupBox1"	  Width="281"	  Height="147">
 
-	<GroupBox
-		Name="groupBox1"
-		x="23"
-		y="79"
-		Width="281"
-		Height="147"
+	  <TextBlock>CPU</TextBlock>
 
-		Header="CPU">
-
-	  <ComboBox
-		  Name="cbSku"
-		  x="12"
-		  y="44">
-		<ComboBox.Items>
-		  <x:String>
-			MC68000
-		  </x:String>
-		  <x:String>
-			MC68EC020
-		  </x:String>
-		  <x:String>
-			MC68030
-		  </x:String>
-		  <x:String>
-			MC68040
-		  </x:String>
-		</ComboBox.Items>
+	  <ComboBox Name="cbSku">
+		<ComboBoxItem>		MC68000	  </ComboBoxItem>
+		<ComboBoxItem>		MC68EC020	  </ComboBoxItem>
+		<ComboBoxItem>		MC68030	  </ComboBoxItem>
+		<ComboBoxItem>		MC68040	  </ComboBoxItem>
 	  </ComboBox>
 
-	  <RadioButton
-		  Name="rbNative"
-		  x="158"
-		  y="34">
-		Native
-	  </RadioButton>
+	  <RadioButton		Name="rbNative">	  Native	</RadioButton>
+	  <RadioButton		Name="rbMusashi">	  Musashi	</RadioButton>
+	  <RadioButton		Name="rbMusashiCS">	  Musashi C#	</RadioButton>
+	</Panel>
 
-	  <RadioButton
-		  Name="rbMusashi"
-		  x="158"
-		  y="67">
-		Musashi
-	  </RadioButton>
+	<Panel	  Name="groupBox3"	  Width="279"	  Height="311">
 
-	  <RadioButton
-		  Name="rbMusashiCS"
-		  x="158"
-		  y="102">
-		Musashi C#
-	  </RadioButton>
-	</GroupBox>
+	  <TextBlock>Memory</TextBlock>
 
-	<GroupBox
-		Name="groupBox3"
-		x="25"
-		y="371"
-		Width="279"
-		Height="311"
-			
-			
-		Header="Memory">
+	  <TextBlock		Name="_text"		Foreground="#0078d7">	  Chip	</TextBlock>
+	  <TextBlock		Name="_text2"		Foreground="#0078d7">	  Trapdoor	</TextBlock>
+	  <TextBlock		Name="_text3"		Foreground="#0078d7">	  Zorro II	</TextBlock>
+	  <TextBlock		Name="_text4"		Foreground="#0078d7">	  Zorro III	</TextBlock>
+	  <TextBlock		Name="_text5"		Foreground="#0078d7">  Motherboard	</TextBlock>
+	  <TextBlock		Name="_text6"		Foreground="#0078d7">	  CPU Slot	</TextBlock>
 
-	  <Label
-		  Name="_text"
-		  x="12"
-		  y="34"
-		  Width="24"
-		  Height="16"
-		  color="#0078d7">
-		Chip
-	  </Label>
-
-	  <Label
-		  Name="_text2"
-		  x="12"
-		  y="80"
-		  color="#0078d7">
-		Trapdoor
-	  </Label>
-
-	  <Label
-		  Name="_text3"
-		  x="12"
-		  y="126"
-		  color="#0078d7">
-		Zorro II
-	  </Label>
-
-	  <Label
-		  Name="_text4"
-		  x="12"
-		  y="172"
-		  color="#0078d7">
-		Zorro III
-	  </Label>
-
-	  <Label
-		  Name="_text5"
-		  x="12"
-		  y="218"
-		  color="#0078d7">
-		Motherboard
-	  </Label>
-
-	  <Label
-		  Name="_text6"
-		  x="12"
-		  y="264"
-		  color="#0078d7">
-		CPU Slot
-	  </Label>
-
-	  <ComboBox
-		  Name="dudChipRAM"
-		  x="98"
-		  y="22">
-		<ComboBox.Items>
-		  <x:String>
-			0.5"
-		  </x:String>
-		  <x:String>
-			1.0"
-		  </x:String>
-		  <x:String>
-			2.0"
-		  </x:String>
-		</ComboBox.Items>
+	  <ComboBox		Name="dudChipRAM">
+		<ComboBoxItem>		0.5	  </ComboBoxItem>
+		<ComboBoxItem>		1.0	  </ComboBoxItem>
+		<ComboBoxItem>		2.0	  </ComboBoxItem>
 	  </ComboBox>
-
-	  <ComboBox
-		  Name="dudTrapdoor"
-		  x="98"
-		  y="68">
-		<ComboBox.Items>
-		  <x:String>
-			0
-		  </x:String>
-		  <x:String>
-			0.5
-		  </x:String>
-		  <x:String>
-			1.0
-		  </x:String>
-
-		  <x:String>
-			1.5
-		  </x:String>
-		  <x:String>
-			1.75
-		  </x:String>
-		</ComboBox.Items>
+	  <ComboBox		Name="dudTrapdoor">
+		<ComboBoxItem>		0	  </ComboBoxItem>
+		<ComboBoxItem>		0.5	  </ComboBoxItem>
+		<ComboBoxItem>		1.0	  </ComboBoxItem>
+		<ComboBoxItem>		1.5	  </ComboBoxItem>
+		<ComboBoxItem>		1.75	  </ComboBoxItem>
 	  </ComboBox>
-
-	  <ComboBox
-		  Name="dudZ2"
-		  x="98"
-		  y="114">
-		<ComboBox.Items>
-		  <x:String>
-			0
-		  </x:String>
-
-		  <x:String>
-			0.5
-		  </x:String>
-
-		  <x:String>
-			1.0
-		  </x:String>
-
-		  <x:String>
-			2.0
-		  </x:String>
-
-		  <x:String>
-			4.0
-		  </x:String>
-		  <x:String>
-			8.0
-		  </x:String>
-		</ComboBox.Items>
+	  <ComboBox		Name="dudZ2">
+		<ComboBoxItem>		0	  </ComboBoxItem>
+		<ComboBoxItem>		0.5	  </ComboBoxItem>
+		<ComboBoxItem>		1.0	  </ComboBoxItem>
+		<ComboBoxItem>		2.0	  </ComboBoxItem>
+		<ComboBoxItem>		4.0	  </ComboBoxItem>
+		<ComboBoxItem>		8.0	  </ComboBoxItem>
 	  </ComboBox>
-	  <ComboBox
-		  Name="dudZ3"
-		  x="98"
-		  y="160">
-		<ComboBox.Items>
-		  <x:String>
-			0
-		  </x:String>
-
-		  <x:String>
-			128
-		  </x:String>
-
-		  <x:String>
-			256
-		  </x:String>
-
-		  <x:String>
-			512
-		  </x:String>
-
-		  <x:String>
-			1024
-		  </x:String>
-		  <x:String>
-			256+256
-		  </x:String>
-		  <x:String>
-			512+512
-		  </x:String>
-		  <x:String>
-			512+512+512
-		  </x:String>
-		</ComboBox.Items>
+	  <ComboBox		Name="dudZ3"	>
+		<ComboBoxItem>		0	  </ComboBoxItem>
+		<ComboBoxItem>		128	  </ComboBoxItem>
+		<ComboBoxItem>		256	  </ComboBoxItem>
+		<ComboBoxItem>		512	  </ComboBoxItem>
+		<ComboBoxItem>		1024	  </ComboBoxItem>
+		<ComboBoxItem>		256+256	  </ComboBoxItem>
+		<ComboBoxItem>		512+512	  </ComboBoxItem>
+		<ComboBoxItem>		512+512+512	  </ComboBoxItem>
 	  </ComboBox>
-	  <ComboBox
-		  Name="dudMotherboard"
-		  x="98"
-		  y="206">
-		<ComboBox.Items>
-		  <x:String>
-			0
-		  </x:String>
-
-		  <x:String>
-			8
-		  </x:String>
-
-		  <x:String>
-			16
-		  </x:String>
-
-		  <x:String>
-			32
-		  </x:String>
-
-		  <x:String>
-			64
-		  </x:String>
-		</ComboBox.Items>
+	  <ComboBox		Name="dudMotherboard"		>
+		<ComboBoxItem>		0	  </ComboBoxItem>
+		<ComboBoxItem>		8	  </ComboBoxItem>
+		<ComboBoxItem>		16	  </ComboBoxItem>
+		<ComboBoxItem>		32	  </ComboBoxItem>
+		<ComboBoxItem>		64	  </ComboBoxItem>
 	  </ComboBox>
-	  <ComboBox
-		  Name="dudCPUSlot"
-		  x="98"
-		  y="252">
-		<ComboBox.Items>
-		  <x:String>
-			0
-		  </x:String>
-
-		  <x:String>
-			8
-		  </x:String>
-
-		  <x:String>
-			16
-		  </x:String>
-
-		  <x:String>
-			32
-		  </x:String>
-
-		  <x:String>
-			64
-		  </x:String>
-		  <x:String>
-			128
-		  </x:String>
-		</ComboBox.Items>
+	  <ComboBox		Name="dudCPUSlot">
+		<ComboBoxItem>		0	  </ComboBoxItem>
+		<ComboBoxItem>		8	  </ComboBoxItem>
+		<ComboBoxItem>		16	  </ComboBoxItem>
+		<ComboBoxItem>		32	  </ComboBoxItem>
+		<ComboBoxItem>		64	  </ComboBoxItem>
+		<ComboBoxItem>		128	  </ComboBoxItem>
 	  </ComboBox>
-	</GroupBox>
+	</Panel>
 
-	<Button
-		Name="btnExit"
-		x="318"
-		y="634">
-	  Exit
+	<Button	  Name="btnExit">	Exit  </Button>
+	<Button	  Name="btnLoad">	Load...  </Button>
+	<Button	  Name="btnSave">	Save  </Button>
+	<Button	  Name="btnSaveAs">	Save As...  </Button>
+	<Button	  Name="btnGo">
+	  <TextBlock FontStyle="Italic">Go!</TextBlock>
 	</Button>
-
-	<Button
-		Name="btnLoad"
-		x="428"
-		y="634">
-	  Load...
-	</Button>
-
-	<Button
-		Name="btnSave"
-		x="534"
-		y="634">
-	  Save
-	</Button>
-
-	<Button
-		Name="btnSaveAs"
-		x="640"
-		y="634">
-	  Save As...
-	</Button>
-
-	<Button
-		Name="btnGo"
-		x="746"
-		y="634">
-	  Go!
-
-	</Button>
-?>
   </Panel>
-
 </Window>
