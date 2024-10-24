@@ -26,6 +26,7 @@
     <PackageReference Include="Avalonia" Version="11.1.4" />
     <PackageReference Include="Avalonia.Desktop" Version="11.1.4" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.4" />
+    <PackageReference Include="Avalonia.Themes.Simple" Version="11.1.4" />
   </ItemGroup>
 
   <ItemGroup>

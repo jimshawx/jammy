@@ -1,200 +1,228 @@
 <Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="Jammy.UI.Settings.Avalonia.Settings"
-        Title="Hello Settings"
-        Width="800"
-        Height="600">
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ x:Class="Jammy.UI.Settings.Avalonia.Settings"
+ Title="Settings"
+ Width="824"
+ Height="506"
+ Background="#f0f0f0">
 
-  <Panel	  Name="settings"	  Width="800"	  Height="600">
+  <Panel Name="settings" Margin="20">
 
-	<StackPanel Orientation="Horizontal">
-	  <ComboBox		  Name="cbQuickStart"		  Width="331"		  Height="40"			>	</ComboBox>
-	  <Button		Name="btnQuickStart">	  Quick Start	</Button>
-	</StackPanel>
+	<StackPanel Orientation="Vertical">
 
-	<StackPanel Orientation="Horizontal">
+	  <StackPanel Orientation="Horizontal" Margin="4">
+		<ComboBox Name="cbQuickStart" Width="400" Background="White"></ComboBox>
+		<Button Name="btnQuickStart" Margin="8 0">Quick Start</Button>
+	  </StackPanel>
 
-	  <Viewbox>
-	  <StackPanel Orientation="Vertical" Width="300" >
+	  <StackPanel Orientation="Horizontal">
+		<StackPanel Orientation="Vertical">
+		  <Border BorderThickness="1" BorderBrush="Black" Margin="4" >
+			<StackPanel x:Name="groupBox1" Margin="8">
 
-		<Viewbox>
-		<Panel	  x:Name="groupBox1"	>
+			  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">CPU</TextBlock>
 
-		  <TextBlock>CPU</TextBlock>
+			  <StackPanel Orientation="Horizontal">
+				<ComboBox x:Name="cbSku" Width="200" Height="30" Background="White">
+				  <ComboBoxItem>MC68000</ComboBoxItem>
+				  <ComboBoxItem>MC68EC020</ComboBoxItem>
+				  <ComboBoxItem>MC68030</ComboBoxItem>
+				  <ComboBoxItem>MC68040</ComboBoxItem>
+				</ComboBox>
 
-		  <ComboBox x:Name="cbSku" Width="100">
-			<ComboBoxItem>		MC68000	  </ComboBoxItem>
-			<ComboBoxItem>		MC68EC020	  </ComboBoxItem>
-			<ComboBoxItem>		MC68030	  </ComboBoxItem>
-			<ComboBoxItem>		MC68040	  </ComboBoxItem>
-		  </ComboBox>
+				<StackPanel Orientation="Vertical" Margin="8 0">
+				  <RadioButton Name="rbNative" Foreground="#0078d7">Native</RadioButton>
+				  <RadioButton Name="rbMusashi" Foreground="#0078d7">Musashi</RadioButton>
+				  <RadioButton Name="rbMusashiCS" Foreground="#0078d7">Musashi C#</RadioButton>
+				</StackPanel>
+			  </StackPanel>
+			</StackPanel>
+		  </Border>
 
-		  <RadioButton		x:Name="rbNative">	  Native	</RadioButton>
-		  <RadioButton		x:Name="rbMusashi">	  Musashi	</RadioButton>
-		  <RadioButton		x:Name="rbMusashiCS">	  Musashi C#	</RadioButton>
-		</Panel>
-		</Viewbox>
+		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
+			<StackPanel Name="groupBox2" Margin="8">
 
-		<Viewbox>
-		<Panel	  Name="groupBox2"	 >
+			  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">Chipset</TextBlock>
+			  <StackPanel Orientation="Horizontal" >
+				<ComboBox Name="cbChipset" Width="200" Height="30" Background="White">
+				  <ComboBoxItem>OCS</ComboBoxItem>
+				  <ComboBoxItem>ECS</ComboBoxItem>
+				  <ComboBoxItem>AGA</ComboBoxItem>
+				</ComboBox>
 
-		  <TextBlock>Chipset</TextBlock>
+				<StackPanel Orientation="Vertical" Margin="8 0">
+				  <RadioButton Name="rbPAL" Foreground="#0078d7">PAL</RadioButton>
+				  <RadioButton Name="rbNTSC" Foreground="#0078d7">NTSC</RadioButton>
+				</StackPanel>
+			  </StackPanel>
+			</StackPanel>
+		  </Border>
+		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
 
-		  <ComboBox		Name="cbChipset">
-			<ComboBoxItem>		OCS	  </ComboBoxItem>
-			<ComboBoxItem>		ECS	  </ComboBoxItem>
-			<ComboBoxItem>		AGA	  </ComboBoxItem>
-		  </ComboBox>
+			<StackPanel Name="groupBox3" Margin="8">
 
-		  <RadioButton		Name="rbPAL">	  PAL	</RadioButton>
-		  <RadioButton		Name="rbNTSC">	  NTSC	</RadioButton>
-		</Panel>
-		</Viewbox>
+			  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">Memory</TextBlock>
 
-		<Viewbox>
-		<Panel	  Name="groupBox3"	 >
+			  <StackPanel Orientation="Horizontal">
 
-		  <TextBlock>Memory</TextBlock>
+				<StackPanel Orientation="Vertical">
+				  <TextBlock Name="_text" Foreground="#0078d7" Width="100" Height="20">Chip</TextBlock>
+				  <TextBlock Name="_text2" Foreground="#0078d7" Width="100" Height="20">Trapdoor</TextBlock>
+				  <TextBlock Name="_text3" Foreground="#0078d7" Width="100" Height="20">Zorro II</TextBlock>
+				  <TextBlock Name="_text4" Foreground="#0078d7" Width="100" Height="20">Zorro III</TextBlock>
+				  <TextBlock Name="_text5" Foreground="#0078d7" Width="100" Height="20">Motherboard</TextBlock>
+				  <TextBlock Name="_text6" Foreground="#0078d7" Width="100" Height="20">CPU Slot</TextBlock>
+				</StackPanel>
+				<StackPanel Orientation="Vertical">
+				  <ComboBox Name="dudChipRAM" Width="100" Height="20" Background="White">
+					<ComboBoxItem>0.5</ComboBoxItem>
+					<ComboBoxItem>1.0</ComboBoxItem>
+					<ComboBoxItem>2.0</ComboBoxItem>
+				  </ComboBox>
+				  <ComboBox Name="dudTrapdoor" Width="100" Height="20" Background="White">
+					<ComboBoxItem>0</ComboBoxItem>
+					<ComboBoxItem>0.5</ComboBoxItem>
+					<ComboBoxItem>1.0</ComboBoxItem>
+					<ComboBoxItem>1.5</ComboBoxItem>
+					<ComboBoxItem>1.75</ComboBoxItem>
+				  </ComboBox>
+				  <ComboBox Name="dudZ2" Width="100" Height="20" Background="White">
+					<ComboBoxItem>0</ComboBoxItem>
+					<ComboBoxItem>0.5</ComboBoxItem>
+					<ComboBoxItem>1.0</ComboBoxItem>
+					<ComboBoxItem>2.0</ComboBoxItem>
+					<ComboBoxItem>4.0</ComboBoxItem>
+					<ComboBoxItem>8.0</ComboBoxItem>
+				  </ComboBox>
+				  <ComboBox Name="dudZ3" Width="100" Height="20" Background="White">
+					<ComboBoxItem>0</ComboBoxItem>
+					<ComboBoxItem>128</ComboBoxItem>
+					<ComboBoxItem>256</ComboBoxItem>
+					<ComboBoxItem>512</ComboBoxItem>
+					<ComboBoxItem>1024</ComboBoxItem>
+					<ComboBoxItem>256+256</ComboBoxItem>
+					<ComboBoxItem>512+512</ComboBoxItem>
+					<ComboBoxItem>512+512+512</ComboBoxItem>
+				  </ComboBox>
+				  <ComboBox Name="dudMotherboard" Width="100" Height="20" Background="White">
+					<ComboBoxItem>0</ComboBoxItem>
+					<ComboBoxItem>8</ComboBoxItem>
+					<ComboBoxItem>16</ComboBoxItem>
+					<ComboBoxItem>32</ComboBoxItem>
+					<ComboBoxItem>64</ComboBoxItem>
+				  </ComboBox>
+				  <ComboBox Name="dudCPUSlot" Width="100" Height="20" Background="White">
+					<ComboBoxItem>0</ComboBoxItem>
+					<ComboBoxItem>8</ComboBoxItem>
+					<ComboBoxItem>16</ComboBoxItem>
+					<ComboBoxItem>32</ComboBoxItem>
+					<ComboBoxItem>64</ComboBoxItem>
+					<ComboBoxItem>128</ComboBoxItem>
+				  </ComboBox>
+				</StackPanel>
+			  </StackPanel>
+			</StackPanel>
+		  </Border>
+		</StackPanel>
 
+		<StackPanel Orientation="Vertical">
+		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
+			<Panel Name="groupBox4" Margin="8">
+			  <StackPanel Orientation="Vertical">
+				<TextBlock Foreground="#0078d7" Margin="0 0 0 8">Floppy Disk</TextBlock>
+				<StackPanel Orientation="Horizontal">
+				  <TextBox Name="txtDF0" Width="344" Height="30"></TextBox>
+				  <Button Name="btnDF0Pick" Width="29" Height="30" Margin="4 0">...</Button>
+				  <NumericUpDown Name="nudFloppyCount" Value= "1" Minimum="0" Maximum="4" Width="50" Height="30" Padding="0"></NumericUpDown>
+				</StackPanel>
+
+				<StackPanel Orientation="Horizontal">
+				  <TextBox Name="txtDF1" Width="344" Height="30"></TextBox>
+				  <Button Name="btnDF1Pick" Width="29" Height="30" Margin="4 0">...</Button>
+				</StackPanel>
+
+				<StackPanel Orientation="Horizontal">
+				  <TextBox Name="txtDF2" Width="344" Height="30"></TextBox>
+				  <Button Name="btnDF2Pick" Width="29" Height="30" Margin="4 0">...</Button>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal">
+				  <TextBox Name="txtDF3" Width="344" Height="30"></TextBox>
+				  <Button Name="btnDF3Pick" Width="29" Height="30" Margin="4 0">...</Button>
+				</StackPanel>
+			  </StackPanel>
+			</Panel>
+		  </Border>
+
+		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
+
+			<Panel x:Name="groupBox5" Margin="8">
+
+			  <StackPanel Orientation="Vertical">
+				<TextBlock Foreground="#0078d7" Margin="0 0 0 8">Hard Disk</TextBlock>
+
+				<StackPanel Orientation="Horizontal">
+				  <ComboBox Name="cbDiskController" Width="344" Height="30" Background="White">
+					<ComboBoxItem>None</ComboBoxItem>
+					<ComboBoxItem>A600_A1200</ComboBoxItem>
+					<ComboBoxItem>A3000</ComboBoxItem>
+					<ComboBoxItem>A4000</ComboBoxItem>
+				  </ComboBox>
+
+				  <NumericUpDown Name="nudHardDiskCount" Minimum="0" Maximum="4" Value="0" Width="50" Height="30" Padding="0" Margin="4 0"></NumericUpDown>
+				</StackPanel>
+			  </StackPanel>
+			</Panel>
+		  </Border>
+		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
+
+			<Panel Name="groupBox6" Margin="8">
+			  <StackPanel Orientation="Vertical">
+				<TextBlock Foreground="#0078d7" Margin="0 0 0 8">Kickstart</TextBlock>
+				<StackPanel Orientation="Horizontal">
+				  <TextBox Name="txtKickstart" Width="344" Height="30"></TextBox>
+				  <Button Name="btnROMPick" Width="29" Height="30" Margin="4 0">...</Button>
+				</StackPanel>
+			  </StackPanel>
+			</Panel>
+		  </Border>
 		  <StackPanel Orientation="Horizontal">
+			<Border BorderThickness="1" BorderBrush="Black" Margin="4">
 
-			<StackPanel Orientation="Vertical">
-			  <TextBlock		Name="_text"		Foreground="#0078d7">	  Chip	</TextBlock>
-			  <TextBlock		Name="_text2"		Foreground="#0078d7">	  Trapdoor	</TextBlock>
-			  <TextBlock		Name="_text3"		Foreground="#0078d7">	  Zorro II	</TextBlock>
-			  <TextBlock		Name="_text4"		Foreground="#0078d7">	  Zorro III	</TextBlock>
-			  <TextBlock		Name="_text5"		Foreground="#0078d7">  Motherboard	</TextBlock>
-			  <TextBlock		Name="_text6"		Foreground="#0078d7">	  CPU Slot	</TextBlock>
-			</StackPanel>
-			<StackPanel Orientation="Vertical">
-			  <ComboBox		Name="dudChipRAM">
-				<ComboBoxItem>		0.5	  </ComboBoxItem>
-				<ComboBoxItem>		1.0	  </ComboBoxItem>
-				<ComboBoxItem>		2.0	  </ComboBoxItem>
-			  </ComboBox>
-			  <ComboBox		Name="dudTrapdoor">
-				<ComboBoxItem>		0	  </ComboBoxItem>
-				<ComboBoxItem>		0.5	  </ComboBoxItem>
-				<ComboBoxItem>		1.0	  </ComboBoxItem>
-				<ComboBoxItem>		1.5	  </ComboBoxItem>
-				<ComboBoxItem>		1.75	  </ComboBoxItem>
-			  </ComboBox>
-			  <ComboBox		Name="dudZ2">
-				<ComboBoxItem>		0	  </ComboBoxItem>
-				<ComboBoxItem>		0.5	  </ComboBoxItem>
-				<ComboBoxItem>		1.0	  </ComboBoxItem>
-				<ComboBoxItem>		2.0	  </ComboBoxItem>
-				<ComboBoxItem>		4.0	  </ComboBoxItem>
-				<ComboBoxItem>		8.0	  </ComboBoxItem>
-			  </ComboBox>
-			  <ComboBox		Name="dudZ3"	>
-				<ComboBoxItem>		0	  </ComboBoxItem>
-				<ComboBoxItem>		128	  </ComboBoxItem>
-				<ComboBoxItem>		256	  </ComboBoxItem>
-				<ComboBoxItem>		512	  </ComboBoxItem>
-				<ComboBoxItem>		1024	  </ComboBoxItem>
-				<ComboBoxItem>		256+256	  </ComboBoxItem>
-				<ComboBoxItem>		512+512	  </ComboBoxItem>
-				<ComboBoxItem>		512+512+512	  </ComboBoxItem>
-			  </ComboBox>
-			  <ComboBox		Name="dudMotherboard"		>
-				<ComboBoxItem>		0	  </ComboBoxItem>
-				<ComboBoxItem>		8	  </ComboBoxItem>
-				<ComboBoxItem>		16	  </ComboBoxItem>
-				<ComboBoxItem>		32	  </ComboBoxItem>
-				<ComboBoxItem>		64	  </ComboBoxItem>
-			  </ComboBox>
-			  <ComboBox		Name="dudCPUSlot">
-				<ComboBoxItem>		0	  </ComboBoxItem>
-				<ComboBoxItem>		8	  </ComboBoxItem>
-				<ComboBoxItem>		16	  </ComboBoxItem>
-				<ComboBoxItem>		32	  </ComboBoxItem>
-				<ComboBoxItem>		64	  </ComboBoxItem>
-				<ComboBoxItem>		128	  </ComboBoxItem>
-			  </ComboBox>
-			</StackPanel>
+			  <Panel Name="groupBox7" Margin="8">
+
+				<StackPanel Orientation="Vertical">
+
+				  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">Miscellaneous</TextBlock>
+				  <StackPanel Orientation="Horizontal">
+					<CheckBox Name="cbAudio" Margin="4 0" Foreground="#0078d7">Audio</CheckBox>
+					<CheckBox Name="cbDebugging" Margin="4 0" Foreground="#0078d7">Debugging</CheckBox>
+				  </StackPanel>
+				</StackPanel>
+			  </Panel>
+			</Border>
+			<Border BorderThickness="1" BorderBrush="Black" Margin="4">
+
+			  <Panel Name="groupBox8" Margin="8">
+				<StackPanel Orientation="Vertical">
+				  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">Blitter</TextBlock>
+				  <StackPanel Orientation="Horizontal">
+					<RadioButton Name="rbImmediate" Margin="4 0" Foreground="#0078d7">Immediate</RadioButton>
+					<RadioButton Name="rbSynchronous" IsChecked="true" Margin="4 0" Foreground="#0078d7">Synchronous</RadioButton>
+				  </StackPanel>
+				</StackPanel>
+			  </Panel>
+			</Border>
 		  </StackPanel>
-		</Panel>
-		</Viewbox>
+		  <StackPanel Orientation="Horizontal" Margin="4">
+			<Button Name="btnExit" Width="80" Margin="4 0">Exit</Button>
+			<Button Name="btnLoad" Width="80" Margin="4 0">Load...</Button>
+			<Button Name="btnSave" Width="80" Margin="4 0">Save</Button>
+			<Button Name="btnSaveAs" Width="80" Margin="4 0">Save As...</Button>
+			<Button Name="btnGo" Width="80" Margin="4 0" FontStyle="Italic">Go!</Button>
+		  </StackPanel>
+		</StackPanel>
+
 	  </StackPanel>
-	  </Viewbox>
-
-	  <Viewbox>
-	  <StackPanel Orientation="Vertical">
-		<Panel		Name="groupBox4">
-		  <TextBlock>Floppy Disk</TextBlock>
-
-
-		  <NumericUpDown		Name="nudFloppyCount"		Value= "1"		Minimum="0"		Maximum="4">	</NumericUpDown>
-
-		  <TextBox		Name="txtDF0"		Width="344"		Height="40">	</TextBox>
-		  <TextBox		Name="txtDF1"		Width="344"		Height="40">	</TextBox>
-		  <TextBox		Name="txtDF2"		Width="344"	Height="40">	</TextBox>
-		  <TextBox		Name="txtDF3"		Width="344"		Height="40">	</TextBox>
-
-		  <Button		Name="btnDF0Pick"		Width="29"		Height="40">	  ...	</Button>
-		  <Button		Name="btnDF1Pick"		Width="29"		Height="40">	  ...	</Button>
-		  <Button		Name="btnDF2Pick"		Width="29"		Height="40">	  ...	</Button>
-		  <Button		Name="btnDF3Pick"		Width="29"	Height="40">	  ...	</Button>
-		</Panel>
-
-		<Panel	  x:Name="groupBox5" >
-
-		  <TextBlock>Hard Disk</TextBlock>
-
-		  <ComboBox		Name="cbDiskController"		Width="275">
-
-			<ComboBoxItem>		None	  </ComboBoxItem>
-			<ComboBoxItem>		A600_A1200	  </ComboBoxItem>
-			<ComboBoxItem>		A3000	  </ComboBoxItem>
-			<ComboBoxItem>		A4000	  </ComboBoxItem>
-
-		  </ComboBox>
-
-		  <NumericUpDown
-			  Name="nudHardDiskCount"
-
-			  Minimum="0"
-			  Maximum="4">
-		  </NumericUpDown>
-		</Panel>
-
-		<Panel	  Name="groupBox6">
-
-		  <TextBlock>Kickstart</TextBlock>
-
-		  <TextBox		Name="txtKickstart"		Width="344">	</TextBox>
-		  <Button		Name="btnROMPick"		Width="29">	  ...	</Button>
-		</Panel>
-
-		<Panel	  Name="groupBox7"	>
-
-		  <TextBlock>Miscellaneous</TextBlock>
-
-		  <CheckBox		Name="cbAudio">	  Audio	</CheckBox>
-		  <CheckBox		Name="cbDebugging">	  Debugging	</CheckBox>
-		</Panel>
-
-		<Panel	  Name="groupBox8"	>
-
-		  <TextBlock>Blitter</TextBlock>
-
-		  <RadioButton		Name="rbImmediate">	  Immediate	</RadioButton>
-		  <RadioButton		Name="rbSynchronous"		IsChecked="true">	  Synchronous	</RadioButton>
-		</Panel>
-	  </StackPanel>
-	  </Viewbox>
-
-	  
-	</StackPanel>
-	<StackPanel Orientation="Horizontal">
-	  <Button	  Name="btnExit">	Exit  </Button>
-	  <Button	  Name="btnLoad">	Load...  </Button>
-	  <Button	  Name="btnSave">	Save  </Button>
-	  <Button	  Name="btnSaveAs">	Save As...  </Button>
-	  <Button	  Name="btnGo">
-		<TextBlock FontStyle="Italic">Go!</TextBlock>
-	  </Button>
 	</StackPanel>
   </Panel>
 </Window>
