@@ -120,9 +120,9 @@ namespace Jammy.UI.Settings
 		private void btnDF3Pick_Click(object sender, EventArgs e)
 		{
 			openFileDialog1.DefaultExt = ".adf";
-			openFileDialog1.FileName = txtDF2.Text;
+			openFileDialog1.FileName = txtDF3.Text;
 			if (openFileDialog1.ShowDialog() == DialogResult.OK)
-				txtDF2.Text = openFileDialog1.FileName;
+				txtDF3.Text = openFileDialog1.FileName;
 		}
 
 		private void btnROMPick_Click(object sender, EventArgs e)
@@ -357,10 +357,18 @@ namespace Jammy.UI.Settings
 			currentSettings.KickStart = txtKickstart.Text;
 
 			//Get the Kickstart CRC for identification
-			var rom = File.ReadAllBytes(currentSettings.KickStart);
-			var c = rom.Skip(rom.Length - 24).Take(4).Select(x=>(uint)x).ToArray();
-			uint crc = c[3] | (c[2] << 8) | (c[1] << 16) | (c[0] << 24);
-			currentSettings.KickStartDisassembly = $"{crc:X8}";
+			try
+			{
+				var rom = File.ReadAllBytes(currentSettings.KickStart);
+				var c = rom.Skip(rom.Length - 24).Take(4).Select(x=>(uint)x).ToArray();
+				uint crc = c[3] | (c[2] << 8) | (c[1] << 16) | (c[0] << 24);
+				currentSettings.KickStartDisassembly = $"{crc:X8}";
+			}
+			catch
+			{
+				currentSettings.KickStart = null;
+				currentSettings.KickStartDisassembly = null;
+			}
 
 			//Misc.
 			currentSettings.Audio = cbAudio.Checked ? AudioDriver.XAudio2 : AudioDriver.Null;
