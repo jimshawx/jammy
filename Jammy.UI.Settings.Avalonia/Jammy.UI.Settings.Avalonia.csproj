@@ -7,15 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Another.xaml" />
     <None Remove="App.xaml" />
+    <None Remove="emulationSettings.json" />
     <None Remove="Settings.xaml" />
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaXaml Include="Another.xaml">
-      <Generator></Generator>
-    </AvaloniaXaml>
     <AvaloniaXaml Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
     </AvaloniaXaml>
@@ -23,10 +20,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="emulationSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.1.4" />
     <PackageReference Include="Avalonia.Desktop" Version="11.1.4" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.4" />
     <PackageReference Include="Avalonia.Themes.Simple" Version="11.1.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />
   </ItemGroup>
 
   <ItemGroup>
