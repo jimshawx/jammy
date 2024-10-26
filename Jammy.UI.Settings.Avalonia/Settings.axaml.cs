@@ -14,17 +14,6 @@ namespace Jammy.UI.Settings.Avalonia
 	{
 		private string configPath = "../../../../config";
 
-		public static AppBuilder BuildAvaloniaApp()
-		=> AppBuilder.Configure<App>() // `App` is child of `Application`
-		.UsePlatformDetect()
-		.LogToTrace(LogEventLevel.Debug)
-		.UseReactiveUI();
-
-		public static void Run(string[] args)
-		{
-			BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-		}
-
 		public Settings()
 		{
 			InitializeComponent();
@@ -575,4 +564,17 @@ namespace Jammy.UI.Settings.Avalonia
 		}
 	}
 
+	public static class SettingsUI
+	{
+		public static AppBuilder BuildAvaloniaApp()
+		=> AppBuilder.Configure<App>() // `App` is child of `Application`
+		.UsePlatformDetect()
+		.LogToTrace(LogEventLevel.Verbose)
+		.UseReactiveUI();
+
+		public static void Run(string[] args)
+		{
+			BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+		}
+	}
 }

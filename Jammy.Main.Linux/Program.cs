@@ -22,7 +22,7 @@ using Jammy.UI.Settings.Avalonia;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Parky.Logging;
+
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -33,14 +33,13 @@ namespace Jammy.Main.Linux;
 
 public class Program
 {
-
 	static void Main(string[] args)
 	{
 		// Application.SetHighDpiMode(HighDpiMode.SystemAware);
 		// Application.EnableVisualStyles();
 		// Application.SetCompatibleTextRenderingDefault(false);
 
-		Settings.Run(args);
+		SettingsUI.Run(args);
 		// Application.Run(set);
 		// if (!set.ConfigOK) return;
 
