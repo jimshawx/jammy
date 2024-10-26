@@ -1,16 +1,29 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Logging;
+using Avalonia.Platform.Storage;
+using Avalonia.ReactiveUI;
+using Jammy.Core.Types;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Avalonia.Platform.Storage;
-using Jammy.Core.Types;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Jammy.UI.Settings.Avalonia
 {
 	public partial class Settings : Window
 	{
 		private string configPath = "../../../../config";
+
+		public static AppBuilder BuildAvaloniaApp()
+		=> AppBuilder.Configure<App>() // `App` is child of `Application`
+		.UsePlatformDetect()
+		.LogToTrace(LogEventLevel.Debug)
+		.UseReactiveUI();
+
+		public static void Run(string[] args)
+		{
+			BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+		}
 
 		public Settings()
 		{

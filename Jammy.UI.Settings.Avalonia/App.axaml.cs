@@ -1,14 +1,15 @@
 ﻿using Avalonia.Markup.Xaml;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Themes.Simple;
 
 namespace Jammy.UI.Settings.Avalonia
 {
-	public partial class App : Application
+	public class App : Application
 	{
 		public override void Initialize()
 		{
-			AvaloniaXamlLoader.Load(this);
+			Styles.Add(new SimpleTheme());
 		}
 
 		public override void OnFrameworkInitializationCompleted()
