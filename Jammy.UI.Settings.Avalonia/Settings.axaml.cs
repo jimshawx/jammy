@@ -4,9 +4,11 @@ using Avalonia.Interactivity;
 using Avalonia.Logging;
 using Avalonia.Platform.Storage;
 using Avalonia.ReactiveUI;
+using Avalonia.Threading;
 using Jammy.Core.Types;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Web;
 
 namespace Jammy.UI.Settings.Avalonia
 {
@@ -99,66 +101,81 @@ namespace Jammy.UI.Settings.Avalonia
 
 		private void btnDF0Pick_Click(object sender, RoutedEventArgs e)
 		{
-			var openFielDialog1 = StorageProvider.OpenFilePickerAsync(
+			StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions {
 					SuggestedFileName = txtDF0.Text,
 					FileTypeFilter = new List<FilePickerFileType>{new FilePickerFileType("ADF Files") { Patterns = new []{"*.adf", "*.zip", "*.adz", "*.rp9" } } }
-				}).Result;
-			
-			if (openFielDialog1.Any())
-				txtDF0.Text = openFielDialog1.First().Path.AbsolutePath.ToString();
+				}).ContinueWith((t) => {
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => txtDF0.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+					}
+				});
 		}
 
 		private void btnDF1Pick_Click(object sender, RoutedEventArgs e)
 		{
-			var openFielDialog1 = StorageProvider.OpenFilePickerAsync(
+			StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtDF1.Text,
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9" } } }
-				}).Result;
-
-			if (openFielDialog1.Any())
-				txtDF1.Text = openFielDialog1.First().Path.ToString();
+				}).ContinueWith((t)=>{
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => txtDF1.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+					}
+				});
 		}
 
 		private void btnDF2Pick_Click(object sender, RoutedEventArgs e)
 		{
-			var openFielDialog1 = StorageProvider.OpenFilePickerAsync(
+			var openFileDialog1 = StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtDF2.Text,
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9" } } }
-				}).Result;
-
-			if (openFielDialog1.Any())
-				txtDF2.Text = openFielDialog1.First().Path.ToString();
+				}).ContinueWith((t) => {
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => txtDF2.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+					}
+				});
 		}
 
 		private void btnDF3Pick_Click(object sender, RoutedEventArgs e)
 		{
-			var openFielDialog1 = StorageProvider.OpenFilePickerAsync(
+			var openFileDialog1 = StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtDF3.Text,
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9" } } }
-				}).Result;
-
-			if (openFielDialog1.Any())
-				txtDF3.Text = openFielDialog1.First().Path.ToString();
+				}).ContinueWith((t) => {
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{ 
+						Dispatcher.UIThread.Invoke(() => txtDF3.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+					}
+				});
 		}
 
 		private void btnROMPick_Click(object sender, RoutedEventArgs e)
 		{
-			var openFielDialog1 = StorageProvider.OpenFilePickerAsync(
+			var openFileDialog1 = StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtKickstart.Text,
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ROM Files") { Patterns = new[] {"*.rom"} } }
-				}).Result;
-
-			if (openFielDialog1.Any())
-				txtKickstart.Text = openFielDialog1.First().Path.ToString();
+				}).ContinueWith((t) => {
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => txtKickstart.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+					}
+				});
 		}
 
 		private void btnExit_Click(object sender, RoutedEventArgs e)
@@ -168,15 +185,18 @@ namespace Jammy.UI.Settings.Avalonia
 
 		private void btnLoadConfig_Click(object sender, RoutedEventArgs e)
 		{
-			var openFielDialog1 = StorageProvider.OpenFilePickerAsync(
+			var openFileDialog1 = StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = string.Empty,
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("Config Files") { Patterns = new[] {"*.cfg" } } }
-				}).Result;
-
-			if (openFielDialog1.Any())
-				LoadConfig(openFielDialog1.First().Path.ToString());
+				}).ContinueWith((t) => {
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => LoadConfig(HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath)));
+					}
+				});
 		}
 
 		private void btnSaveConfig_Click(object sender, RoutedEventArgs e)
@@ -186,15 +206,18 @@ namespace Jammy.UI.Settings.Avalonia
 
 		private void btnSaveAsConfig_Click(object sender, RoutedEventArgs e)
 		{
-			var openFielDialog1 = StorageProvider.OpenFilePickerAsync(
+			var openFileDialog1 = StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = string.Empty,
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("Config Files") { Patterns = new[] { "*.cfg" } } }
-				}).Result;
-
-			if (openFielDialog1.Any())
-				SaveConfig(openFielDialog1.First().Path.ToString());
+				}).ContinueWith((t) => {
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => SaveConfig(HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath)));
+					}
+				});
 		}
 
 		private void btnGo_Click(object sender, RoutedEventArgs e)
