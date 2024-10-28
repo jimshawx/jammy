@@ -880,15 +880,19 @@ namespace Jammy.Disassembler.Analysers
 			if (string.IsNullOrEmpty(settings.KickStartDisassembly))
 				return;
 
-			var dirs = Directory.GetDirectories(settings.LVODirectory);
-
-			var fullPath = dirs.SingleOrDefault(x => x.Contains(settings.KickStartDisassembly));
-			if (Directory.Exists(fullPath))
+			try
 			{
-				var files = Directory.GetFiles(fullPath, "*_disassembly.txt");
-				foreach (var file in files)
-					LoadComment(file);
+				var dirs = Directory.GetDirectories(settings.LVODirectory);
+
+				var fullPath = dirs.SingleOrDefault(x => x.Contains(settings.KickStartDisassembly));
+				if (Directory.Exists(fullPath))
+				{
+					var files = Directory.GetFiles(fullPath, "*_disassembly.txt");
+					foreach (var file in files)
+						LoadComment(file);
+				}
 			}
+			catch {}
 		}
 
 		private void LoadComment(string fullPath)
