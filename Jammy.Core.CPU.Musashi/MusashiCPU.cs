@@ -4,6 +4,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Core.CPU.Musashi
 {
-	public class MusashiCPU : ICPU, IMusashiCPU
+	public class MusashiCPU : ICPU, IMusashiCPU, IStatePersister
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
@@ -265,6 +266,14 @@ namespace Jammy.Core.CPU.Musashi
 		private void Musashi_write8(uint address, uint value)
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
+		}
+
+		public void Save(JArray obj)
+		{
+		}
+
+		public void Load(JObject obj)
+		{
 		}
 	}
 }

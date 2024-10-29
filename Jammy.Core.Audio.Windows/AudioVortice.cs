@@ -3,6 +3,7 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System.Runtime.InteropServices;
 using Vortice.Multimedia;
 using Vortice.XAudio2;
@@ -506,6 +507,14 @@ namespace Jammy.Core.Audio.Windows
 					channels[i].xaudioCBuffer[s * 2+1] = (byte)(v>>8);
 				}
 			}
+		}
+
+		public void Save(JArray obj)
+		{
+		}
+
+		public void Load(JObject obj)
+		{
 		}
 	}
 }

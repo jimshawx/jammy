@@ -11,6 +11,7 @@ using Jammy.Core.IDE;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.IO.Linux;
 using Jammy.Core.Memory;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Debugger;
 using Jammy.Debugger.Interceptors;
@@ -22,7 +23,6 @@ using Jammy.UI.Settings.Avalonia;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -136,6 +136,7 @@ public class Program
 			.AddSingleton<Jammy>()
 			//.AddSingleton<IGraph, Graph.Graph>()
 			.AddSingleton<IFlowAnalyser, FlowAnalyser>()
+			.AddSingleton<IPersistenceManager, PersistenceManager>()
 			.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 		//configure Blitter
@@ -191,6 +192,12 @@ public class Program
 		{
 			services.AddSingleton<IDiskController, NullDiskController>();
 		}
+
+		//set up the list of IStatePersisters
+		var types = services.Where(x => x.ImplementationType != null &&
+			x.ImplementationType.GetInterfaces().Contains(typeof(IStatePersister))).ToList();
+		foreach (var x in types)
+			services.AddSingleton(y => (IStatePersister)y.GetRequiredService(x.ServiceType));
 
 		var serviceProvider = services.BuildServiceProvider();
 

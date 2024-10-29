@@ -3,6 +3,7 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -365,5 +366,14 @@ namespace Jammy.Core.Custom.Audio
 				ch[i].CopyTo(dc[i]);
 			}
 		}
+
+		public void Save(JArray obj)
+		{
+		}
+
+		public void Load(JObject obj)
+		{
+		}
+
 	}
 }

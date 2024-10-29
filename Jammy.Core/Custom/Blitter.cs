@@ -7,6 +7,7 @@ using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -1307,5 +1308,14 @@ namespace Jammy.Core.Custom
 			//if ((bltcon1 & (3 << 3)) != 0 && (bltcon1 & (1u << 1)) != 0)
 			//	logger.LogTrace($"Fill EFE:{(bltcon1 >> 4) & 1} IFE:{(bltcon1 >> 3) & 1} FCI:{(bltcon1 >> 2) & 1}");
 		}
+
+		public void Save(JArray obj)
+		{
+		}
+
+		public void Load(JObject obj)
+		{
+		}
+
 	}
 }

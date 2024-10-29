@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Types
@@ -531,6 +531,13 @@ namespace Jammy.Core.Types
 		{
 			return customRegisterDetails.Select(x =>$"{x.Key:X6} {x.Value.Item1,-8} {x.Value.Item2}").ToList();
 		}
-	}
 
+		public static List<(string Name, uint Address)> GetPersistanceDetails()
+		{
+			return customRegisterDetails
+							.Where(x=>x.Value.Item1 != "RESERVED")
+							.Select(x => (x.Value.Item1, x.Key))
+							.ToList();
+		}
+	}
 }

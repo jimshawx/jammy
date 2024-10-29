@@ -5,6 +5,7 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -196,6 +197,14 @@ namespace Jammy.Core.Custom
 					regs[reg] = (byte)value;
 				}
 			}
+		}
+
+		public void Save(JArray obj)
+		{
+		}
+
+		public void Load(JObject obj)
+		{
 		}
 	}
 }

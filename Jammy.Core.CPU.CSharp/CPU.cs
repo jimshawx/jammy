@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Reflection;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 // ReSharper disable InconsistentNaming
 
@@ -13,7 +15,7 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.CPU.CSharp
 {
-	public class CPU : ICPU, ICSharpCPU
+	public class CPU : ICPU, ICSharpCPU, IStatePersister
 	{
 #pragma warning disable IDE1006 // Naming Styles
 
@@ -3491,5 +3493,18 @@ namespace Jammy.Core.CPU.CSharp
 				internalTrap(8);
 			}
 		}
+
+		public void Save(JArray obj)
+		{
+			var regs = GetRegs();
+			var ro = new JObject("CPURegs");
+			foreach (var p in typeof(Regs).GetProperties(BindingFlags.Public))
+				ro.Add(p.Name, p.GetValue(regs).ToString());
+		}
+
+		public void Load(JObject obj)
+		{
+		}
+
 	}
 }

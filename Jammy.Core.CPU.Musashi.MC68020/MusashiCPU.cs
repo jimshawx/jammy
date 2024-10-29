@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -11,7 +13,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Core.CPU.Musashi.MC68020
 {
-	public class Musashi68EC020CPU : ICPU, IMusashiCPU
+	public class Musashi68EC020CPU : ICPU, IMusashiCPU, IStatePersister
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
@@ -266,5 +268,17 @@ namespace Jammy.Core.CPU.Musashi.MC68020
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
 		}
+		public void Save(JArray obj)
+		{
+			var regs = GetRegs();
+			var ro = new JObject("CPURegs");
+			foreach (var p in typeof(Regs).GetProperties(BindingFlags.Public))
+				ro.Add(p.Name, p.GetValue(regs).ToString());
+		}
+
+		public void Load(JObject obj)
+		{
+		}
+
 	}
 }

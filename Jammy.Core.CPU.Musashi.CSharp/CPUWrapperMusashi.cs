@@ -4,10 +4,11 @@ using Jammy.Core.Types.Types;
 using m68kcpu;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 namespace Jammy.Core.CPU.Musashi.CSharp
 {
-	public class CPUWrapperMusashi : ICPU, IMusashiCSharpCPU
+	public class CPUWrapperMusashi : ICPU, IMusashiCSharpCPU, IStatePersister
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IBreakpointCollection breakpoints;
@@ -129,7 +130,33 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 			M68KCPU.m68k_set_reg(M68KCPU.m68k_register_t.M68K_REG_USP, regs.SP);
 			M68KCPU.m68k_set_reg(M68KCPU.m68k_register_t.M68K_REG_SR, regs.SR);
 		}
+
+		public void Save(JArray obj)
+		{
+			var regs = GetRegs();
+			var ro = new JObject();
+			foreach (var p in typeof(Regs).GetProperties())
+			{
+				if (p.PropertyType.IsArray)
+				{
+					var l = (Array)p.GetValue(regs);
+					int j =0;
+					foreach (var i in l)
+						ro.Add(p.Name+(j++).ToString(), i.ToString());
+				}
+				else
+					ro.Add(p.Name, p.GetValue(regs).ToString());
+			}
+			obj.Add(ro);
+		}
+
+		public void Load(JObject obj)
+		{
+		}
+
 	}
+
+
 }
 
 namespace m68kcpu
@@ -162,5 +189,6 @@ namespace m68kcpu
 		static void m68k_write_memory_16(uint A, uint v) { memoryMapper.Write(instructionStartPC, A, v, Size.Word); }
 		static void m68k_write_memory_32(uint A, uint v) { memoryMapper.Write(instructionStartPC, A, v, Size.Long); }
 	}
+
 }
 

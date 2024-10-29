@@ -3,6 +3,7 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 namespace Jammy.Core.Custom;
 
@@ -210,5 +211,19 @@ public class ChipsetClock : IChipsetClock
 		//var pt = new PerThread();
 		//tSync.TryAdd(Environment.CurrentManagedThreadId, pt);
 		//logger.LogTrace($"{pt.name} Registered");
+	}
+
+	public void Save(JArray obj)
+	{
+		var jo = new JObject();
+		jo.Add("HorizontalPos", HorizontalPos);
+		jo.Add("VerticalPos", VerticalPos);
+		jo.Add("FrameCount", FrameCount);
+		jo.Add("Tick", Tick);
+		obj.Add(jo);
+	}
+
+	public void Load(JObject obj)
+	{
 	}
 }

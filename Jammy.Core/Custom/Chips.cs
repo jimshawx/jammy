@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -532,6 +533,20 @@ namespace Jammy.Core.Custom
 			}
 
 			return 0;
+		}
+
+		public void Save(JArray obj)
+		{
+			var cr = new JObject();
+			var deets = ChipRegs.GetPersistanceDetails();
+			foreach (var reg in deets)
+				cr.Add(reg.Name, DebugChipsetRead(reg.Address, Size.Word));
+			obj.Add(cr);
+		}
+
+		public void Load(JObject obj)
+		{
+
 		}
 	}
 }

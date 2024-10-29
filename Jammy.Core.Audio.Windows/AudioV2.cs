@@ -3,6 +3,7 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using SharpDX;
 using SharpDX.Multimedia;
 using SharpDX.XAudio2;
@@ -522,5 +523,14 @@ namespace Jammy.Core.Audio.Windows
 				}
 			}
 		}
+
+		public void Save(JArray obj)
+		{
+		}
+
+		public void Load(JObject obj)
+		{
+		}
+
 	}
 }

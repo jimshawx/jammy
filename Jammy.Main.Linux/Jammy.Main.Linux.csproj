@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj" />
+    <ProjectReference Include="..\Jammy.Core.Persistence\Jammy.Core.Persistence.csproj" />
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
     <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />

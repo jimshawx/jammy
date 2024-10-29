@@ -3,6 +3,7 @@ using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -10,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.Memory
 {
-	public class MemoryManager : IMemoryManager
+	public class MemoryManager : IMemoryManager, IStatePersister
 	{
 		public MemoryMappedDeviceCollection MappedDevice { get; }
 		public MemoryMappedDeviceCollection DebugMappedDevice { get; }
@@ -43,6 +44,14 @@ namespace Jammy.Core.Memory
 		{
 			MappedDevice.BuildMappedDevices();
 			DebugMappedDevice.BuildMappedDevices();
+		}
+
+		public void Save(JArray obj)
+		{
+		}
+
+		public void Load(JObject obj)
+		{
 		}
 	}
 

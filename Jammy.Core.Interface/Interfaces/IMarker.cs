@@ -35,24 +35,24 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface ICustomReadWrite : ICustomRead, ICustomWrite { }
 
-	public interface IAudio : IEmulate, ICustomReadWrite, IDebugChipsetRead
+	public interface IAudio : IEmulate, ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	{
 		void WriteDMACON(ushort v);
 		void WriteINTREQ(ushort v);
 		void WriteINTENA(ushort v);
 	}
 
-	public interface IBattClock : IReset, IMemoryMappedDevice { }
+	public interface IBattClock : IReset, IMemoryMappedDevice, IStatePersister { }
 
 	public interface IMotherboard : IReset, IMemoryMappedDevice { }
 
-	public interface IBlitter : IReset, ICustomReadWrite, IEmulate, IRequiresDMA, IDebugChipsetRead
+	public interface IBlitter : IReset, ICustomReadWrite, IEmulate, IRequiresDMA, IDebugChipsetRead, IStatePersister
 	{
 		void Logging(bool enabled);
 		void Dumping(bool enabled);
 		bool IsIdle();
 	}
-	public interface ICIA : IEmulate, IMemoryMappedDevice
+	public interface ICIA : IEmulate, IMemoryMappedDevice, IStatePersister
 	{
 		byte SnoopICRR();
 		void SerialInterrupt();
@@ -114,7 +114,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IDebuggableMemory : IDebugRead, IDebugWrite { }
 
-	public interface IChips : IReset, IMemoryMappedDevice, IDebugChipsetRead
+	public interface IChips : IReset, IMemoryMappedDevice, IDebugChipsetRead, IStatePersister
 	{
 		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise, IDMA dma);
 		void WriteWide(uint address, ulong value);
@@ -211,7 +211,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Init(IDMA dma);
 	}
 
-	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead
+	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead, IStatePersister
 	{
 		void WriteWide(uint address, ulong value);
 		void FlushBitplanes();
@@ -220,7 +220,7 @@ namespace Jammy.Core.Interface.Interfaces
 				out ulong customReads, out ulong customWrites);
 	}
 
-	public interface IChipsetClock : IEmulate
+	public interface IChipsetClock : IEmulate, IStatePersister
 	{
 		uint HorizontalPos { get; }
 		uint VerticalPos { get; }

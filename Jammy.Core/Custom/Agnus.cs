@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jammy.Core.Debug;
+﻿using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
-using Jammy.Core.Types.Types;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -1063,5 +1064,13 @@ noBitplaneDMA:
 		}
 
 		return value;
+	}
+
+	public void Save(JArray obj)
+	{
+	}
+
+	public void Load(JObject obj)
+	{
 	}
 }

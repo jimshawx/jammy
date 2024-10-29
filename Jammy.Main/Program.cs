@@ -1,9 +1,8 @@
-using System;
-using System.IO;
-using System.Windows.Forms;
 using Jammy.Core;
+using Jammy.Core.Audio.Windows;
 using Jammy.Core.CPU.CSharp;
 using Jammy.Core.CPU.Musashi;
+using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.CPU.Musashi.MC68020;
 using Jammy.Core.CPU.Musashi.MC68030;
 using Jammy.Core.Custom;
@@ -14,25 +13,26 @@ using Jammy.Core.Debug;
 using Jammy.Core.Floppy;
 using Jammy.Core.IDE;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.IO.Windows;
 using Jammy.Core.Memory;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Debugger;
+using Jammy.Debugger.Interceptors;
 using Jammy.Disassembler;
 using Jammy.Disassembler.Analysers;
+using Jammy.Graph;
 using Jammy.Interface;
+using Jammy.NativeOverlay;
+using Jammy.UI.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Jammy.UI.Settings;
 using Parky.Logging;
-using Jammy.Core.IO.Windows;
-using Jammy.Core.EmulationWindow.GDI;
-using Jammy.Core.EmulationWindow.DX;
-using Jammy.Debugger.Interceptors;
-using Jammy.NativeOverlay;
-using Jammy.Core.CPU.Musashi.CSharp;
-using Jammy.Graph;
-using Jammy.Core.Audio.Windows;
+using System;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -145,6 +145,7 @@ namespace Jammy.Main
 				.AddSingleton<Jammy>()
 				.AddSingleton<IGraph, Graph.Graph>()
 				.AddSingleton<IFlowAnalyser, FlowAnalyser>()
+				.AddSingleton<IPersistenceManager, PersistenceManager>()
 				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 			//configure Blitter
@@ -209,6 +210,12 @@ namespace Jammy.Main
 			{
 				services.AddSingleton<IDiskController, NullDiskController>();
 			}
+
+			//set up the list of IStatePersisters
+			var types = services.Where(x=>x.ImplementationType != null &&
+				x.ImplementationType.GetInterfaces().Contains(typeof(IStatePersister))).ToList();
+			foreach (var x in types)
+				services.AddSingleton(y => (IStatePersister)y.GetRequiredService(x.ServiceType));
 
 			var serviceProvider = services.BuildServiceProvider();
 
