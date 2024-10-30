@@ -270,10 +270,14 @@ namespace Jammy.Core.CPU.Musashi
 
 		public void Save(JArray obj)
 		{
+			var regs = GetRegs();
+			obj.Add(JObject.FromObject(regs));
 		}
 
 		public void Load(JObject obj)
 		{
+			var regs = obj.ToObject<Regs>();
+			SetRegs(regs);
 		}
 	}
 }

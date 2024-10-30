@@ -4,6 +4,7 @@ using Jammy.Core.Types.Types;
 using m68kcpu;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Jammy.Core.CPU.Musashi.CSharp
@@ -134,29 +135,15 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 		public void Save(JArray obj)
 		{
 			var regs = GetRegs();
-			var ro = new JObject();
-			foreach (var p in typeof(Regs).GetProperties())
-			{
-				if (p.PropertyType.IsArray)
-				{
-					var l = (Array)p.GetValue(regs);
-					int j =0;
-					foreach (var i in l)
-						ro.Add(p.Name+(j++).ToString(), i.ToString());
-				}
-				else
-					ro.Add(p.Name, p.GetValue(regs).ToString());
-			}
-			obj.Add(ro);
+			obj.Add(JObject.FromObject(regs));
 		}
 
 		public void Load(JObject obj)
 		{
+			var regs = obj.ToObject<Regs>();
+			SetRegs(regs);
 		}
-
 	}
-
-
 }
 
 namespace m68kcpu

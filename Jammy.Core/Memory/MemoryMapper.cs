@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Compression;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -12,7 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Core.Memory
 {
-	public class MemoryMapper : IMemoryMapper, IDebugMemoryMapper
+	public class MemoryMapper : IMemoryMapper, IDebugMemoryMapper, IStatePersister
 	{
 		private readonly IMemoryManager memoryManager;
 		private IMemoryInterceptor interceptor;
@@ -215,6 +218,65 @@ namespace Jammy.Core.Memory
 				sb.Append(Convert.ToChar(c));
 				str++;
 			}
+		}
+
+		private class PersistMemory
+		{
+			public uint Start { get; set; }
+			public ulong Length { get; set; }
+			public string Content { get; set; }
+		}
+
+		private string Pack(byte[] mem)
+		{
+			using (var unzipped = new MemoryStream(mem))
+			{
+				using (var zipped = new MemoryStream())
+				{
+					using (var gz = new GZipStream(zipped, CompressionLevel.SmallestSize))
+					{
+						unzipped.CopyTo(zipped);
+						return Convert.ToBase64String(zipped.ToArray());
+					}
+				}
+			}
+		}
+
+		private byte[] Unpack(string mem)
+		{
+			using (var zipped = new MemoryStream(Convert.FromBase64String(mem)))
+			{
+				using (var unzipped = new MemoryStream())
+				{
+					using (var gz = new GZipStream(unzipped, CompressionMode.Decompress))
+					{ 
+						zipped.CopyTo(gz);
+						return unzipped.ToArray();
+					}
+				}
+			}
+		}
+
+		public void Save(JArray obj)
+		{
+			foreach (var m in GetBulkRanges())
+			{
+				obj.Add(JObject.FromObject(
+					new PersistMemory
+					{
+						Start = m.Start,
+						Length = m.Length,
+						Content = Pack(m.Memory)
+					}));
+			}
+		}
+
+		public void Load(JObject obj)
+		{
+			var mem = obj.ToObject<PersistMemory>();
+			var bytes = Unpack(mem.Content);
+			for (ulong address = mem.Start; address < mem.Start + mem.Length; address++)
+				UnsafeWrite8((uint)address, bytes[address]);
 		}
 	}
 }

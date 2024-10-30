@@ -3497,14 +3497,13 @@ namespace Jammy.Core.CPU.CSharp
 		public void Save(JArray obj)
 		{
 			var regs = GetRegs();
-			var ro = new JObject("CPURegs");
-			foreach (var p in typeof(Regs).GetProperties(BindingFlags.Public))
-				ro.Add(p.Name, p.GetValue(regs).ToString());
+			obj.Add(JObject.FromObject(regs));
 		}
 
 		public void Load(JObject obj)
 		{
+			var regs = obj.ToObject<Regs>();
+			SetRegs(regs);
 		}
-
 	}
 }
