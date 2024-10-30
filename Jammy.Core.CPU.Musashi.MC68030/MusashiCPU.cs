@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -272,11 +273,15 @@ namespace Jammy.Core.CPU.Musashi.MC68030
 		public void Save(JArray obj)
 		{
 			var regs = GetRegs();
-			obj.Add(JObject.FromObject(regs));
+			var jo = JObject.FromObject(regs);
+			jo["id"] = "cpuregs";
+			obj.Add(jo);
 		}
 
 		public void Load(JObject obj)
 		{
+			if (!PersistenceManager.Is(obj, "cpuregs")) return;
+
 			var regs = obj.ToObject<Regs>();
 			SetRegs(regs);
 		}

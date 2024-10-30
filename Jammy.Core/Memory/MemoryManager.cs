@@ -90,6 +90,11 @@ namespace Jammy.Core.Memory
 		{
 			return devices.OfType<IBulkMemoryRead>().ToList();
 		}
+
+		public List<IPersistableRAM> PersistableDevices()
+		{
+			return devices.OfType<IPersistableRAM>().ToList();
+		}
 	}
 
 	public interface IMemoryManager

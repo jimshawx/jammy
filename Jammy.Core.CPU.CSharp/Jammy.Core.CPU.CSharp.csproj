@@ -12,6 +12,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
+    <ProjectReference Include="..\Jammy.Core.Persistence\Jammy.Core.Persistence.csproj" />
     <ProjectReference Include="..\Jammy.UI\Jammy.UI.csproj" />
   </ItemGroup>
   <ItemGroup>

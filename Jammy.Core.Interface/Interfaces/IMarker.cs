@@ -163,18 +163,20 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IZorro2 : IMemoryMappedDevice { }
 	public interface IZorro3 : IMemoryMappedDevice { }
 
-	public interface IChipRAM : IMemoryMappedDevice, IDebuggableMemory
+	public interface IPersistableRAM { }
+
+	public interface IChipRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM
 	{
 		ulong Read64(uint address);
 		MemoryStream ToBmp(int w);
 		void FromBmp(Stream m);
 	}
 
-	public interface ITrapdoorRAM : IMemoryMappedDevice, IDebuggableMemory { }
+	public interface ITrapdoorRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM { }
 	public interface IUnmappedMemory : IMemoryMappedDevice, IDebuggableMemory { }
-	public interface IZorroRAM : IMemoryMappedDevice, IDebuggableMemory { }
-	public interface IMotherboardRAM : IMemoryMappedDevice, IDebuggableMemory { }
-	public interface ICPUSlotRAM : IMemoryMappedDevice, IDebuggableMemory { }
+	public interface IZorroRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM { }
+	public interface IMotherboardRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM { }
+	public interface ICPUSlotRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM { }
 
 	public interface IIDEController : IReset
 	{
@@ -211,7 +213,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Init(IDMA dma);
 	}
 
-	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead, IStatePersister
+	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead, IStatePersister, IPersistableRAM
 	{
 		void WriteWide(uint address, ulong value);
 		void FlushBitplanes();

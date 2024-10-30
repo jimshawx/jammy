@@ -3,6 +3,7 @@ using Jammy.Core.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using System.ComponentModel.DataAnnotations;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -19,28 +20,28 @@ namespace Jammy.Core.Persistence
 	public class PersistenceManager : IPersistenceManager
 	{
 		private readonly IEnumerable<IStatePersister> persisters;
-		private readonly IOptions<EmulationSettings> settings;
+		private readonly EmulationSettings settings;
 		private readonly ILogger<PersistenceManager> logger;
 
 		public PersistenceManager(IEnumerable<IStatePersister> persisters, IOptions<EmulationSettings> settings, ILogger<PersistenceManager> logger)
 		{
 			this.persisters = persisters;
-			this.settings = settings;
+			this.settings = settings.Value;
 			this.logger = logger;
 		}
 
 		public void Save(string filename)
 		{
 			var jo = new JArray();
-			using (var f = File.OpenWrite(filename))
+				jo.Add(JObject.FromObject(settings));
+
+			foreach (var p in persisters)
+				p.Save(jo);
+
+			using (var f = File.Open(filename, FileMode.Create, FileAccess.Write, FileShare.Read))
 			{
 				using (var x = new StreamWriter(f))
-				{
-					foreach (var p in persisters)
-						p.Save(jo);
 					x.Write(jo.ToString());
-				}
-				f.Close();
 			}
 		}
 
@@ -50,6 +51,11 @@ namespace Jammy.Core.Persistence
 			foreach (var o in objects)
 				foreach (var p in persisters)
 					p.Load((JObject)o);
+		}
+
+		public static bool Is(JObject obj, string id)
+		{
+			return (obj.TryGetValue("id", StringComparison.InvariantCulture, out var k) && k.ToString() == id);
 		}
 	}
 }

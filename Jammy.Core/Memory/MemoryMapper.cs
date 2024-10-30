@@ -8,6 +8,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using Jammy.Core.Persistence;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -203,6 +204,15 @@ namespace Jammy.Core.Memory
 		{
 			return memoryManager.MappedDevice.BulkReadableDevices()
 				.SelectMany(x => x.ReadBulk())
+				.Where(x => x.Length > 0)
+				.ToList();
+		}
+
+		public List<BulkMemoryRange> GetPersistableRanges()
+		{
+			return memoryManager.MappedDevice.PersistableDevices()
+				.SelectMany(x => ((IBulkMemoryRead)x).ReadBulk())
+				.Where(x=>x.Length > 0)
 				.ToList();
 		}
 
@@ -235,9 +245,9 @@ namespace Jammy.Core.Memory
 				{
 					using (var gz = new GZipStream(zipped, CompressionLevel.SmallestSize))
 					{
-						unzipped.CopyTo(zipped);
-						return Convert.ToBase64String(zipped.ToArray());
+						unzipped.CopyTo(gz);
 					}
+					return Convert.ToBase64String(zipped.ToArray());
 				}
 			}
 		}
@@ -248,35 +258,39 @@ namespace Jammy.Core.Memory
 			{
 				using (var unzipped = new MemoryStream())
 				{
-					using (var gz = new GZipStream(unzipped, CompressionMode.Decompress))
+					using (var gz = new GZipStream(zipped, CompressionMode.Decompress))
 					{ 
-						zipped.CopyTo(gz);
-						return unzipped.ToArray();
+						gz.CopyTo(unzipped);
 					}
+					return unzipped.ToArray();
 				}
 			}
 		}
 
 		public void Save(JArray obj)
 		{
-			foreach (var m in GetBulkRanges())
+			foreach (var m in GetPersistableRanges())
 			{
-				obj.Add(JObject.FromObject(
+				var jb = JObject.FromObject(
 					new PersistMemory
 					{
 						Start = m.Start,
 						Length = m.Length,
-						Content = Pack(m.Memory)
-					}));
+						Content = Pack(m.Memory),
+					});
+				jb["id"]="RAM";
+				obj.Add(jb);
 			}
 		}
 
 		public void Load(JObject obj)
 		{
+			if (!PersistenceManager.Is(obj, "RAM")) return;
+			
 			var mem = obj.ToObject<PersistMemory>();
 			var bytes = Unpack(mem.Content);
-			for (ulong address = mem.Start; address < mem.Start + mem.Length; address++)
-				UnsafeWrite8((uint)address, bytes[address]);
+			for (ulong address = 0; address < mem.Length; address++)
+				UnsafeWrite8((uint)(address+mem.Start), bytes[address]);
 		}
 	}
 }

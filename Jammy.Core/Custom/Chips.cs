@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 /*
@@ -538,6 +540,7 @@ namespace Jammy.Core.Custom
 		public void Save(JArray obj)
 		{
 			var cr = new JObject();
+			cr["id"] = "chipregs";
 			var deets = ChipRegs.GetPersistanceDetails();
 			foreach (var reg in deets)
 				cr.Add(reg.Name, DebugChipsetRead(reg.Address, Size.Word));
@@ -546,7 +549,12 @@ namespace Jammy.Core.Custom
 
 		public void Load(JObject obj)
 		{
+			if (!PersistenceManager.Is(obj, "chipregs")) return;
+			obj.Remove("id");
 
+			var deets = ChipRegs.GetPersistanceDetails().ToDictionary(x=>x.Name);
+			foreach (var pair in obj)
+				Write(0, deets[pair.Key].Address, ushort.Parse(pair.Value.ToString()), Size.Word);
 		}
 	}
 }
