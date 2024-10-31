@@ -1,12 +1,15 @@
 ﻿using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -793,5 +796,59 @@ public class Denise : IDenise
 		}
 
 		return value;
+	}
+
+	public void Save(JArray obj)
+	{
+		var jo = new JObject();
+
+		jo.Add("pixelMaskBit", pixelMaskBit);
+		jo.Add("planes", planes);
+		jo.Add("diwstrth", diwstrth);
+		jo.Add("diwstoph", diwstoph);
+		jo.Add("pixelLoop", lastcol);
+		jo.Add("lastcol", lastcol);
+		jo.Add("lineStart", lineStart);
+		jo.Add("dptr", dptr);
+		jo.Add("blanking", blanking);
+
+		jo.Add("bpldatpix", JToken.FromObject(bpldatpix));
+		jo.Add("sprdatapix", JToken.FromObject(sprdatapix));
+		jo.Add("sprdatbpix", JToken.FromObject(sprdatbpix));
+		jo.Add("spriteMask", JToken.FromObject(spriteMask));
+		jo.Add("clx", JToken.FromObject(clx));
+		jo.Add("sprpix", JToken.FromObject(sprpix));
+		jo.Add("colour", JToken.FromObject(colour));
+		jo.Add("lowcolour", JToken.FromObject(lowcolour));
+		jo.Add("truecolour", JToken.FromObject(truecolour));
+
+		jo.Add("id", "denise");
+		obj.Add(jo);
+	}
+
+	public void Load(JObject obj)
+	{
+		if (!PersistenceManager.Is(obj, "denise")) return;
+
+		pixelMaskBit = int.Parse((string)obj.GetValue("pixelMaskBit"));
+		planes = int.Parse((string)obj.GetValue("planes"));
+		diwstrth = int.Parse((string)obj.GetValue("diwstrth"));
+		diwstoph = int.Parse((string)obj.GetValue("diwstoph"));
+		pixelLoop = int.Parse((string)obj.GetValue("pixelLoop"));
+		lastcol = uint.Parse((string)obj.GetValue("lastcol"));
+		lineStart = int.Parse((string)obj.GetValue("lineStart"));
+		dptr = int.Parse((string)obj.GetValue("dptr"));
+		blanking = bool.Parse((string)obj.GetValue("blanking"));
+
+		//todo: serialize a ValueTuple?
+		obj.GetValue("bpldatpix").ToArray().Select(x => new ValueTuple<ulong, ulong>(ulong.Parse((string)x["Item1"]), ulong.Parse((string)x["Item2"]))).ToArray().CopyTo(bpldatpix, 0);
+		obj.GetValue("sprdatapix").ToArray().Select(x => ulong.Parse((string)x)).ToArray().CopyTo(sprdatapix, 0);
+		obj.GetValue("sprdatbpix").ToArray().Select(x => ulong.Parse((string)x)).ToArray().CopyTo(sprdatbpix, 0);
+		obj.GetValue("spriteMask").ToArray().Select(x => uint.Parse((string)x)).ToArray().CopyTo(spriteMask, 0);
+		obj.GetValue("clx").ToArray().Select(x => int.Parse((string)x)).ToArray().CopyTo(clx, 0);
+		obj.GetValue("sprpix").ToArray().Select(x => byte.Parse((string)x)).ToArray().CopyTo(sprpix, 0);
+		obj.GetValue("colour").ToArray().Select(x => ushort.Parse((string)x)).ToArray().CopyTo(colour, 0);
+		obj.GetValue("lowcolour").ToArray().Select(x => ushort.Parse((string)x)).ToArray().CopyTo(lowcolour, 0);
+		obj.GetValue("truecolour").ToArray().Select(x => uint.Parse((string)x)).ToArray().CopyTo(truecolour, 0);
 	}
 }

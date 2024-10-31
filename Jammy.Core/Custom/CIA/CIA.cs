@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
@@ -389,10 +390,33 @@ namespace Jammy.Core.Custom.CIA
 
 		public void Save(JArray obj)
 		{
+			var jo = new JObject();
+			jo.Add("timerA", timerA);
+			jo.Add("timerB", timerB);
+			jo.Add("timerAreset", timerAreset);
+			jo.Add("timerBreset", timerBreset);
+			jo.Add("todAlarm", todAlarm);
+			jo.Add("todLatch", todLatch);
+			jo.Add("todTimer", todTimer);
+			jo.Add("todStopped", todStopped);
+			jo.Add("todLatched", todLatched);
+			jo.Add("regs", JToken.FromObject(regs));
+			jo.Add("id", ("cia" + cia).ToLower());
+			obj.Add(jo);
 		}
 
-		public void Load(JObject obj)
+		public virtual void Load(JObject obj)
 		{
+			timerA = ushort.Parse((string)obj.GetValue("timerA"));
+			timerB = ushort.Parse((string)obj.GetValue("timerB"));
+			timerAreset = ushort.Parse((string)obj.GetValue("timerAreset"));
+			timerBreset = ushort.Parse((string)obj.GetValue("timerBreset"));
+			todAlarm = uint.Parse((string)obj.GetValue("todAlarm"));
+			todLatch = uint.Parse((string)obj.GetValue("todLatch"));
+			todTimer = uint.Parse((string)obj.GetValue("todTimer"));
+			todStopped = bool.Parse((string)obj.GetValue("todStopped"));
+			todLatched = bool.Parse((string)obj.GetValue("todLatched"));
+			obj.GetValue("regs").ToArray().Select(x=> uint.Parse((string)x)).ToArray().CopyTo(regs,0);
 		}
 	}
 

@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -220,10 +221,17 @@ public class ChipsetClock : IChipsetClock
 		jo.Add("VerticalPos", VerticalPos);
 		jo.Add("FrameCount", FrameCount);
 		jo.Add("Tick", Tick);
+		jo.Add("id", "chipclock");
 		obj.Add(jo);
 	}
 
 	public void Load(JObject obj)
 	{
+		if (!PersistenceManager.Is(obj, "chipclock")) return;
+
+		HorizontalPos = uint.Parse((string)obj.GetValue("HorizontalPos"));
+		VerticalPos = uint.Parse((string)obj.GetValue("VerticalPos"));
+		FrameCount = uint.Parse((string)obj.GetValue("FrameCount"));
+		Tick = uint.Parse((string)obj.GetValue("Tick"));
 	}
 }

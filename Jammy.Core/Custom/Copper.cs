@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Jammy.Core.Debug;
+using Newtonsoft.Json.Linq;
+using Jammy.Core.Persistence;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -460,6 +462,42 @@ namespace Jammy.Core.Custom
 		{
 			return DisassembleCopperList(activeCopperAddress);
 		}
+
+		public void Save(JArray obj)
+		{
+			var jo = new JObject();
+			jo.Add("status", status.ToString());
+			jo.Add("copPC", copPC);
+			jo.Add("activeCopperAddress", activeCopperAddress);
+			jo.Add("waitMask", waitMask);
+			jo.Add("waitPos", waitPos);
+			jo.Add("waitTimer", waitTimer);
+			jo.Add("waitBlit", waitBlit);
+			jo.Add("waitH", waitH);
+			jo.Add("waitV", waitV);
+			jo.Add("waitHMask", waitHMask);
+			jo.Add("waitVMask", waitVMask);
+			jo.Add("id", "copper");
+			obj.Add(jo);
+		}
+
+		public void Load(JObject obj)
+		{
+			if (!PersistenceManager.Is(obj, "copper")) return;
+
+			status = (CopperStatus)Enum.Parse(typeof(CopperStatus), (string)obj.GetValue("status"));
+			copPC = uint.Parse((string)obj.GetValue("copPC"));
+			activeCopperAddress = uint.Parse((string)obj.GetValue("activeCopperAddress"));
+			waitMask = uint.Parse((string)obj.GetValue("waitMask"));
+			waitPos = uint.Parse((string)obj.GetValue("waitPos"));
+			waitTimer = int.Parse((string)obj.GetValue("waitTimer"));
+			waitBlit = uint.Parse((string)obj.GetValue("waitBlit"));
+			waitH = int.Parse((string)obj.GetValue("waitH"));
+			waitV = int.Parse((string)obj.GetValue("waitV"));
+			waitHMask = int.Parse((string)obj.GetValue("waitHMask"));
+			waitVMask = int.Parse((string)obj.GetValue("waitVMask"));
+		}
 	}
 }
+
 

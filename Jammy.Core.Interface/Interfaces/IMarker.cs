@@ -62,7 +62,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface ICIAAOdd : ICIA { }
 	public interface ICIABEven : ICIA { }
 	public interface ICIAMemory : IMemoryMappedDevice { }
-	public interface ICopper : IEmulate, ICustomReadWrite, IRequiresDMA, IDebugChipsetRead
+	public interface ICopper : IEmulate, ICustomReadWrite, IRequiresDMA, IDebugChipsetRead, IStatePersister
 	{
 		void Dumping(bool enabled);
 		string GetDisassembly();
@@ -199,7 +199,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IAkiko : IMemoryMappedDevice { }
 	public interface IZorroConfigurator { }
 
-	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead
+	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	{
 		void EnterVisibleArea();
 		void ExitVisibleArea();

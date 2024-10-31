@@ -535,7 +535,7 @@ namespace Jammy.Core.Types
 		public static List<(string Name, uint Address)> GetPersistanceDetails()
 		{
 			return customRegisterDetails
-							.Where(x=>x.Value.Item1 != "RESERVED")
+							.Where(x=> x.Value.Item1 != "RESERVED")
 							.Select(x => (x.Value.Item1, x.Key))
 							.ToList();
 		}

@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -165,6 +167,12 @@ namespace Jammy.Core.Custom.CIA
 		public static List<string> GetCribSheet()
 		{
 			return new List<string>{"CIAA Odd"}.Concat(debug.Select (x => $"{x.Item1.ToUpper(),-6} {x.Item2}")).ToList();
+		}
+
+		public override void Load(JObject obj)
+		{
+			if (!PersistenceManager.Is(obj, "ciaa")) return;
+			base.Load(obj);
 		}
 	}
 }

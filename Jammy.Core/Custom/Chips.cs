@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml.XPath;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -541,7 +542,10 @@ namespace Jammy.Core.Custom
 		{
 			var cr = new JObject();
 			cr["id"] = "chipregs";
-			var deets = ChipRegs.GetPersistanceDetails();
+			var deets = ChipRegs.GetPersistanceDetails()
+							.Where(x => x.Name != "COPJMP1" && x.Name != "COPJMP2")
+							.Where(x => x.Name != "DMACON" && x.Name != "INTENA" && x.Name != "ADKCON")
+							.Where(x => x.Name != "LISAID");
 			foreach (var reg in deets)
 				cr.Add(reg.Name, DebugChipsetRead(reg.Address, Size.Word));
 			obj.Add(cr);
@@ -554,7 +558,20 @@ namespace Jammy.Core.Custom
 
 			var deets = ChipRegs.GetPersistanceDetails().ToDictionary(x=>x.Name);
 			foreach (var pair in obj)
-				Write(0, deets[pair.Key].Address, ushort.Parse(pair.Value.ToString()), Size.Word);
+			{
+				ushort value = ushort.Parse(pair.Value.ToString());
+				if (pair.Key == "DMACONR")
+					Write(0, ChipRegs.DMACON, (ushort)(value|0x8000), Size.Word);
+				else if (pair.Key == "INTENAR")
+					Write(0, ChipRegs.INTENA, (ushort)(value | 0x8000), Size.Word);
+				else if (pair.Key == "ADKCONR")
+					Write(0, ChipRegs.ADKCON, (ushort)(value | 0x8000), Size.Word);
+				else if (pair.Key == "BLTSIZE" || pair.Key == "BLTSIZH")
+					//todo: need to write this value without triggering a blit
+					;
+				else
+					Write(0, deets[pair.Key].Address, value, Size.Word);
+			}
 		}
 	}
 }
