@@ -806,7 +806,7 @@ public class Denise : IDenise
 		jo.Add("planes", planes);
 		jo.Add("diwstrth", diwstrth);
 		jo.Add("diwstoph", diwstoph);
-		jo.Add("pixelLoop", lastcol);
+		jo.Add("pixelLoop", pixelLoop);
 		jo.Add("lastcol", lastcol);
 		jo.Add("lineStart", lineStart);
 		jo.Add("dptr", dptr);

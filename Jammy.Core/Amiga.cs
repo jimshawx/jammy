@@ -1,14 +1,13 @@
-﻿using System;
+﻿using Jammy.Core.Debug;
+using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
+using Jammy.Core.Types.Enums;
+using Jammy.Core.Types.Types;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime;
 using System.Threading;
-using System.Threading.Tasks;
-using Jammy.Core.Custom;
-using Jammy.Core.Debug;
-using Jammy.Core.Interface.Interfaces;
-using Jammy.Core.Types.Types;
-using Microsoft.Extensions.Logging;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -27,7 +26,10 @@ namespace Jammy.Core
 		private readonly IDMA dma;
 		private readonly ICPUClock cpuClock;
 		private readonly IBreakpointCollection breakpointCollection;
-
+		private readonly IPersistenceManager persistenceManager;
+		private readonly IKickstartROM kickstart;
+		private readonly IEmulationWindow emulationWindow;
+		private readonly ILogger logger;
 		private readonly IDebugMemoryMapper memoryMapper;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
@@ -45,7 +47,8 @@ namespace Jammy.Core
 			IDiskDrives diskDrives, IMouse mouse, IDiskController diskController,
 			ISerial serial, IMotherboard motherboard, IAgnus agnus, IDenise denise, IChipsetClock clock, IDMA dma,
 			IPSUClock psuClock, ICPUClock cpuClock, IChipsetDebugger debugger,
-			IBreakpointCollection breakpointCollection, ILogger<Amiga> logger)
+			IBreakpointCollection breakpointCollection, IPersistenceManager statePersister,
+			IKickstartROM kickstart, IEmulationWindow emulationWindow, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
 			this.cpu = cpu;
@@ -57,11 +60,17 @@ namespace Jammy.Core
 			this.dma = dma;
 			this.cpuClock = cpuClock;
 			this.breakpointCollection = breakpointCollection;
+			this.persistenceManager = statePersister;
+			this.kickstart = kickstart;
+			this.emulationWindow = emulationWindow;
+			this.logger = logger;
 
 			//fulfil the circular dependencies
 			custom.Init(blitter, copper, audio, agnus, denise, dma);
 			keyboard.SetCIA(ciaa);
 			interrupt.Init(custom);
+
+			emulationWindow.SetKeyHandlers(AmigaKeydown, AmigaKeyup);
 
 			//all the emulators and resetters
 			emulations.Add(diskDrives);
@@ -162,6 +171,14 @@ namespace Jammy.Core
 			//emulationThreads.Add(t);
 		}
 
+		private bool takeASnapshot = false;
+		private void AmigaKeyup(int key)
+		{
+			if ((VK)key == VK.VK_F11) takeASnapshot = true;
+		}
+
+		private void AmigaKeydown(int obj) { }
+
 		public void Reset()
 		{
 			resetters.ForEach(x => x.Reset());
@@ -249,7 +266,7 @@ namespace Jammy.Core
 
 			agnus.FlushBitplanes();
 		}
-
+		
 		private Thread emuThread;
 
 		public void Start()
@@ -295,9 +312,17 @@ namespace Jammy.Core
 			emulationSemaphore.Wait();
 		}
 
+		private bool loadSnapshot = false;
+
 		public void Emulate()
 		{
 			//Thread.CurrentThread.Priority = ThreadPriority.Highest;
+
+			if (loadSnapshot)
+			{ 
+				kickstart.SetMirror(false);
+				persistenceManager.Load("state.json");
+			}
 
 			uint stepOutSp = 0xffffffff;
 			bool emulationHasRun = false;
@@ -306,6 +331,13 @@ namespace Jammy.Core
 			{
 				while (!requestExitEmulationMode)
 				{
+					if (takeASnapshot)
+					{
+						persistenceManager.Save("state.json");
+						takeASnapshot = false;
+						logger.LogTrace("Snapshot Recorded!");
+					}
+
 					switch (emulationMode)
 					{
 						case EmulationMode.Running:

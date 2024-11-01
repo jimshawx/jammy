@@ -117,7 +117,7 @@ namespace Jammy.Core.Custom.CIA
 				if (reg == PRB)
 				{
 					diskDrives.WritePRB(insaddr, (byte)value);
-					return;
+					//return;
 				}
 
 				//logger.LogTrace($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
@@ -134,6 +134,7 @@ namespace Jammy.Core.Custom.CIA
 		{
 			if (!PersistenceManager.Is(obj, "ciab")) return;
 			base.Load(obj);
+			WriteByte(0, PRB << 8, regs[PRB]);
 		}
 	}
 }

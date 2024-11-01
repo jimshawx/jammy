@@ -5,7 +5,6 @@ using Jammy.Core.Types.Types;
 using m68kcpu;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Jammy.Core.CPU.Musashi.CSharp
@@ -145,7 +144,13 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 		{
 			if (!PersistenceManager.Is(obj, "cpuregs")) return;
 
-			var regs = obj.ToObject<Regs>();
+			var regs = new Regs();
+			obj.GetValue("A").Select(x => uint.Parse((string)x)).ToArray().CopyTo(regs.A, 0);
+			obj.GetValue("D").Select(x => uint.Parse((string)x)).ToArray().CopyTo(regs.D, 0);
+			regs.PC = uint.Parse((string)obj["PC"]);
+			regs.SP = uint.Parse((string)obj["SP"]);
+			regs.SSP = uint.Parse((string)obj["SSP"]);
+			regs.SR = ushort.Parse((string)obj["SR"]);
 			SetRegs(regs);
 		}
 	}

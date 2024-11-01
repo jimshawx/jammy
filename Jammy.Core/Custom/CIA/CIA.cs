@@ -416,7 +416,7 @@ namespace Jammy.Core.Custom.CIA
 			todTimer = uint.Parse((string)obj.GetValue("todTimer"));
 			todStopped = bool.Parse((string)obj.GetValue("todStopped"));
 			todLatched = bool.Parse((string)obj.GetValue("todLatched"));
-			obj.GetValue("regs").ToArray().Select(x=> uint.Parse((string)x)).ToArray().CopyTo(regs,0);
+			obj.GetValue("regs").Select(x=> uint.Parse((string)x)).ToArray().CopyTo(regs,0);
 		}
 	}
 

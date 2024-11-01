@@ -3,7 +3,6 @@ using Jammy.Core.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
-using System.ComponentModel.DataAnnotations;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -51,6 +50,7 @@ namespace Jammy.Core.Persistence
 			foreach (var o in objects)
 				foreach (var p in persisters)
 					p.Load((JObject)o);
+			logger.LogTrace("Snapshot restored!");
 		}
 
 		public static bool Is(JObject obj, string id)

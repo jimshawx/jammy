@@ -148,6 +148,7 @@ namespace Jammy.Core.Custom.CIA
 					diskDrives.WritePRA(insaddr, (byte)value);
 					mouse.WritePRA(insaddr, (byte)value);
 					kickstartROM.SetMirror((value & 1) != 0);
+					base.Write(reg, value);
 				}
 				else if (reg == CRA)
 				{
@@ -173,6 +174,8 @@ namespace Jammy.Core.Custom.CIA
 		{
 			if (!PersistenceManager.Is(obj, "ciaa")) return;
 			base.Load(obj);
+			WriteByte(0, PRA << 8, regs[PRA]);
+			WriteByte(0, CRA << 8, regs[CRA]);
 		}
 	}
 }
