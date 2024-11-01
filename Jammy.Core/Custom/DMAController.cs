@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Linq;
 using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -351,5 +354,29 @@ public class DMAController : IDMA
 	public uint DebugRead(uint address, Size size)
 	{
 		return memory.Read(0, address, size);
+	}
+
+	public void Save(JArray obj)
+	{
+		var jo = new JObject();
+		jo.Add("activities", JToken.FromObject(activities));
+		jo.Add("id", "dma");
+		obj.Add(jo);
+	}
+
+	public void Load(JObject obj)
+	{
+		if (!PersistenceManager.Is(obj, "dma")) return;
+
+		obj.GetValue("activities").ToArray().Select(x => 
+		new DMAActivity
+		{
+			Address = uint.Parse((string)x["Address"]),
+			ChipReg = uint.Parse((string)x["ChipReg"]),
+			Priority = (DMA)Enum.Parse(typeof(DMA), (string)x["Priority"]),
+			Size = (Size)Enum.Parse(typeof(Size), (string)x["Size"]),
+			Type = (DMAActivityType)Enum.Parse(typeof(DMAActivityType), (string)x["Type"]),
+			Value = ulong.Parse((string)x["Value"]),
+		}).ToArray().CopyTo(activities, 0);
 	}
 }

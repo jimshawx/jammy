@@ -36,7 +36,7 @@ public enum DMASource
 	None,
 }
 
-public interface IDMA : ICustomReadWrite, IDebugChipsetRead
+public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 {
 	void Read(DMASource source, uint address, DMA priority, Size size, uint chipReg);
 	uint DebugRead(uint address, Size size);
