@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
@@ -3507,7 +3508,13 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (!PersistenceManager.Is(obj, "cpuregs")) return;
 
-			var regs = obj.ToObject<Regs>();
+			var regs = new Regs();
+			obj.GetValue("A").Select(x => uint.Parse((string)x)).ToArray().CopyTo(regs.A, 0);
+			obj.GetValue("D").Select(x => uint.Parse((string)x)).ToArray().CopyTo(regs.D, 0);
+			regs.PC = uint.Parse((string)obj["PC"]);
+			regs.SP = uint.Parse((string)obj["SP"]);
+			regs.SSP = uint.Parse((string)obj["SSP"]);
+			regs.SR = ushort.Parse((string)obj["SR"]);
 			SetRegs(regs);
 		}
 	}

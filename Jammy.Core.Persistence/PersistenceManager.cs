@@ -136,7 +136,8 @@ namespace Jammy.Core.Persistence
 
 		private static object GetDefaultValue(Type t)
 		{
-			if (t.IsValueType) return Activator.CreateInstance(t);
+			if (t.IsValueType && Nullable.GetUnderlyingType(t) == null)
+				return Activator.CreateInstance(t);
 			return null;
 		}
 

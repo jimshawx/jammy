@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Jammy.Core.Interface.Interfaces;
@@ -269,6 +270,7 @@ namespace Jammy.Core.CPU.Musashi.MC68020
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
 		}
+
 		public void Save(JArray obj)
 		{
 			var regs = GetRegs();
@@ -281,7 +283,13 @@ namespace Jammy.Core.CPU.Musashi.MC68020
 		{
 			if (!PersistenceManager.Is(obj, "cpuregs")) return;
 
-			var regs = obj.ToObject<Regs>();
+			var regs = new Regs();
+			obj.GetValue("A").Select(x => uint.Parse((string)x)).ToArray().CopyTo(regs.A, 0);
+			obj.GetValue("D").Select(x => uint.Parse((string)x)).ToArray().CopyTo(regs.D, 0);
+			regs.PC = uint.Parse((string)obj["PC"]);
+			regs.SP = uint.Parse((string)obj["SP"]);
+			regs.SSP = uint.Parse((string)obj["SSP"]);
+			regs.SR = ushort.Parse((string)obj["SR"]);
 			SetRegs(regs);
 		}
 	}
