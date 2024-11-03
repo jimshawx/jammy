@@ -368,15 +368,18 @@ public class DMAController : IDMA
 	{
 		if (!PersistenceManager.Is(obj, "dma")) return;
 
-		obj.GetValue("activities").ToArray().Select(x => 
-		new DMAActivity
-		{
-			Address = uint.Parse((string)x["Address"]),
-			ChipReg = uint.Parse((string)x["ChipReg"]),
-			Priority = (DMA)Enum.Parse(typeof(DMA), (string)x["Priority"]),
-			Size = (Size)Enum.Parse(typeof(Size), (string)x["Size"]),
-			Type = (DMAActivityType)Enum.Parse(typeof(DMAActivityType), (string)x["Type"]),
-			Value = ulong.Parse((string)x["Value"]),
-		}).ToArray().CopyTo(activities, 0);
+		obj.GetValue("activities")
+			.Select(x =>
+				new DMAActivity
+				{
+					Address = uint.Parse((string)x["Address"]),
+					ChipReg = uint.Parse((string)x["ChipReg"]),
+					Priority = (DMA)Enum.Parse(typeof(DMA), (string)x["Priority"]),
+					Size = (Size)Enum.Parse(typeof(Size), (string)x["Size"]),
+					Type = (DMAActivityType)Enum.Parse(typeof(DMAActivityType), (string)x["Type"]),
+					Value = ulong.Parse((string)x["Value"]),
+				})
+			.ToArray()
+			.CopyTo(activities, 0);
 	}
 }

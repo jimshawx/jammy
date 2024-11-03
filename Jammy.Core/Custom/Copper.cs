@@ -489,21 +489,6 @@ namespace Jammy.Core.Custom
 
 		public void Save(JArray obj)
 		{
-			//var jo = new JObject();
-			//jo.Add("status", status.ToString());
-			//jo.Add("copPC", copPC);
-			//jo.Add("activeCopperAddress", activeCopperAddress);
-			//jo.Add("waitMask", waitMask);
-			//jo.Add("waitPos", waitPos);
-			//jo.Add("waitTimer", waitTimer);
-			//jo.Add("waitBlit", waitBlit);
-			//jo.Add("waitH", waitH);
-			//jo.Add("waitV", waitV);
-			//jo.Add("waitHMask", waitHMask);
-			//jo.Add("waitVMask", waitVMask);
-			//jo.Add("id", "copper");
-			//obj.Add(jo);
-
 			var jo = PersistenceManager.ToJObject(this, "copper");
 			obj.Add(jo);
 		}
@@ -511,18 +496,6 @@ namespace Jammy.Core.Custom
 		public void Load(JObject obj)
 		{
 			if (!PersistenceManager.Is(obj, "copper")) return;
-
-			//status = (CopperStatus)Enum.Parse(typeof(CopperStatus), (string)obj.GetValue("status"));
-			//copPC = uint.Parse((string)obj.GetValue("copPC"));
-			//activeCopperAddress = uint.Parse((string)obj.GetValue("activeCopperAddress"));
-			//waitMask = uint.Parse((string)obj.GetValue("waitMask"));
-			//waitPos = uint.Parse((string)obj.GetValue("waitPos"));
-			//waitTimer = int.Parse((string)obj.GetValue("waitTimer"));
-			//waitBlit = uint.Parse((string)obj.GetValue("waitBlit"));
-			//waitH = int.Parse((string)obj.GetValue("waitH"));
-			//waitV = int.Parse((string)obj.GetValue("waitV"));
-			//waitHMask = int.Parse((string)obj.GetValue("waitHMask"));
-			//waitVMask = int.Parse((string)obj.GetValue("waitVMask"));
 
 			PersistenceManager.FromJObject(this, obj);
 		}

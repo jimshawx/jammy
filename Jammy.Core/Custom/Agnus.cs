@@ -1078,18 +1078,7 @@ noBitplaneDMA:
 
 	public void Save(JArray obj)
 	{
-		var jo = new JObject();
-		jo.Add("planes", planes);
-		jo.Add("diwstrtv", diwstrtv);
-		jo.Add("diwstopv", diwstopv);
-		jo.Add("ddfstrtfix", ddfstrtfix);
-		jo.Add("ddfstopfix", ddfstopfix);
-		jo.Add("pixmod", pixmod);
-		jo.Add("lineState", lineState.ToString());
-		jo.Add("plane", plane);
-		jo.Add("spriteState", JToken.FromObject(spriteState));
-		jo.Add("id", "agnus");
-		obj.Add(jo);
+		PersistenceManager.ToJObject(this, "agnus");
 	}
 
 	public void Load(JObject obj)
@@ -1097,19 +1086,5 @@ noBitplaneDMA:
 		if (!PersistenceManager.Is(obj, "agnus")) return;
 
 		PersistenceManager.FromJObject(this, obj);
-
-		//planes = int.Parse((string)obj.GetValue("planes"));
-		//diwstrtv = int.Parse((string)obj.GetValue("diwstrtv"));
-		//diwstopv = int.Parse((string)obj.GetValue("diwstopv"));
-		//ddfstrtfix = ushort.Parse((string)obj.GetValue("ddfstrtfix"));
-		//ddfstopfix = ushort.Parse((string)obj.GetValue("ddfstopfix"));
-		//pixmod = int.Parse((string)obj.GetValue("pixmod"));
-		//lineState = (DMALineState)Enum.Parse(typeof(DMALineState), (string)obj.GetValue("lineState"));
-		//plane = uint.Parse((string)obj.GetValue("plane"));
-		//obj.GetValue("spriteState")
-		//	.ToArray()
-		//	.Select(x => (SpriteState)Enum.Parse(typeof(SpriteState), (string)x))
-		//	.ToArray()
-		//	.CopyTo(spriteState, 0);
 	}
 }

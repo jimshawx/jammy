@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Compression;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using Jammy.Core.Persistence;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -237,36 +235,6 @@ namespace Jammy.Core.Memory
 			public string Content { get; set; }
 		}
 
-		private string Pack(byte[] mem)
-		{
-			using (var unzipped = new MemoryStream(mem))
-			{
-				using (var zipped = new MemoryStream())
-				{
-					using (var gz = new GZipStream(zipped, CompressionLevel.SmallestSize))
-					{
-						unzipped.CopyTo(gz);
-					}
-					return Convert.ToBase64String(zipped.ToArray());
-				}
-			}
-		}
-
-		private byte[] Unpack(string mem)
-		{
-			using (var zipped = new MemoryStream(Convert.FromBase64String(mem)))
-			{
-				using (var unzipped = new MemoryStream())
-				{
-					using (var gz = new GZipStream(zipped, CompressionMode.Decompress))
-					{ 
-						gz.CopyTo(unzipped);
-					}
-					return unzipped.ToArray();
-				}
-			}
-		}
-
 		public void Save(JArray obj)
 		{
 			foreach (var m in GetPersistableRanges())
@@ -276,7 +244,7 @@ namespace Jammy.Core.Memory
 					{
 						Start = m.Start,
 						Length = m.Length,
-						Content = Pack(m.Memory),
+						Content = PersistenceManager.Pack(m.Memory),
 					});
 				jb["id"]="RAM";
 				obj.Add(jb);
@@ -288,7 +256,7 @@ namespace Jammy.Core.Memory
 			if (!PersistenceManager.Is(obj, "RAM")) return;
 			
 			var mem = obj.ToObject<PersistMemory>();
-			var bytes = Unpack(mem.Content);
+			var bytes = PersistenceManager.Unpack(mem.Content);
 			for (ulong address = 0; address < mem.Length; address++)
 				UnsafeWrite8((uint)(address+mem.Start), bytes[address]);
 		}

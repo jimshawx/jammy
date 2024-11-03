@@ -548,7 +548,7 @@ namespace Jammy.Core.Custom
 							.Where(x => x.Name != "BLTSIZE" && x.Name != "BLTSIZH")
 							.Where(x => x.Name != "LISAID");
 			foreach (var reg in deets)
-				cr.Add(reg.Name, DebugChipsetRead(reg.Address, Size.Word));
+				cr.Add(reg.Name, (ushort)DebugChipsetRead(reg.Address, Size.Word));
 			obj.Add(cr);
 		}
 
