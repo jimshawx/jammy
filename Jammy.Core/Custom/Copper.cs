@@ -39,20 +39,32 @@ namespace Jammy.Core.Custom
 
 
 		//global state of the copper
-
+		[Persist]
 		private CopperStatus status;
+		[Persist]
 		private uint copPC;
+		[Persist]
 		private uint activeCopperAddress;
+		[Persist]
 		private uint waitMask;
+		[Persist]
 		private uint waitPos;
+		[Persist]
 		private int waitTimer;
+		[Persist]
 		private uint waitBlit;
+		[Persist]
 		private int waitH = 0;
+		[Persist]
 		private int waitV = 0;
+		[Persist]
 		private int waitHMask;
+		[Persist]
 		private int waitVMask;
 
+		[Persist]
 		private ushort ins;
+		[Persist]
 		private ushort data;
 
 		//HRM 3rd Ed, PP24
@@ -148,7 +160,10 @@ namespace Jammy.Core.Custom
 			WakingUp,
 			Stopped
 		}
-		
+
+		[Persist]
+		private bool nextMOVEisNOOP = false;
+
 		private void CopperInstruction()
 		{
 			if (status == CopperStatus.Retrace)
@@ -185,6 +200,12 @@ namespace Jammy.Core.Custom
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
 					uint regAddress = ChipRegs.ChipBase + reg;
+					if (nextMOVEisNOOP)
+					{
+						//todo: set reg here too, iff the ignored move would still stop the copper
+						regAddress = ChipRegs.NO_OP;
+						nextMOVEisNOOP = false;
+					}
 
 					status = CopperStatus.RunningWord1;
 
@@ -225,7 +246,9 @@ namespace Jammy.Core.Custom
 				}
 			}
 			else if (status == CopperStatus.FetchWait)
-			{ 
+			{
+				nextMOVEisNOOP = false;
+
 				data = copins;
 
 				//WAIT
@@ -256,7 +279,8 @@ namespace Jammy.Core.Custom
 						//todo: this isn't what happens, the next instruction is fetched, but ignored
 						//https://eab.abime.net/showpost.php?p=206242&postcount=1
 
-						copPC += 4;
+						//copPC += 4;
+						nextMOVEisNOOP = true;
 					}
 				}
 			}
@@ -465,19 +489,22 @@ namespace Jammy.Core.Custom
 
 		public void Save(JArray obj)
 		{
-			var jo = new JObject();
-			jo.Add("status", status.ToString());
-			jo.Add("copPC", copPC);
-			jo.Add("activeCopperAddress", activeCopperAddress);
-			jo.Add("waitMask", waitMask);
-			jo.Add("waitPos", waitPos);
-			jo.Add("waitTimer", waitTimer);
-			jo.Add("waitBlit", waitBlit);
-			jo.Add("waitH", waitH);
-			jo.Add("waitV", waitV);
-			jo.Add("waitHMask", waitHMask);
-			jo.Add("waitVMask", waitVMask);
-			jo.Add("id", "copper");
+			//var jo = new JObject();
+			//jo.Add("status", status.ToString());
+			//jo.Add("copPC", copPC);
+			//jo.Add("activeCopperAddress", activeCopperAddress);
+			//jo.Add("waitMask", waitMask);
+			//jo.Add("waitPos", waitPos);
+			//jo.Add("waitTimer", waitTimer);
+			//jo.Add("waitBlit", waitBlit);
+			//jo.Add("waitH", waitH);
+			//jo.Add("waitV", waitV);
+			//jo.Add("waitHMask", waitHMask);
+			//jo.Add("waitVMask", waitVMask);
+			//jo.Add("id", "copper");
+			//obj.Add(jo);
+
+			var jo = PersistenceManager.ToJObject(this, "copper");
 			obj.Add(jo);
 		}
 
@@ -485,17 +512,19 @@ namespace Jammy.Core.Custom
 		{
 			if (!PersistenceManager.Is(obj, "copper")) return;
 
-			status = (CopperStatus)Enum.Parse(typeof(CopperStatus), (string)obj.GetValue("status"));
-			copPC = uint.Parse((string)obj.GetValue("copPC"));
-			activeCopperAddress = uint.Parse((string)obj.GetValue("activeCopperAddress"));
-			waitMask = uint.Parse((string)obj.GetValue("waitMask"));
-			waitPos = uint.Parse((string)obj.GetValue("waitPos"));
-			waitTimer = int.Parse((string)obj.GetValue("waitTimer"));
-			waitBlit = uint.Parse((string)obj.GetValue("waitBlit"));
-			waitH = int.Parse((string)obj.GetValue("waitH"));
-			waitV = int.Parse((string)obj.GetValue("waitV"));
-			waitHMask = int.Parse((string)obj.GetValue("waitHMask"));
-			waitVMask = int.Parse((string)obj.GetValue("waitVMask"));
+			//status = (CopperStatus)Enum.Parse(typeof(CopperStatus), (string)obj.GetValue("status"));
+			//copPC = uint.Parse((string)obj.GetValue("copPC"));
+			//activeCopperAddress = uint.Parse((string)obj.GetValue("activeCopperAddress"));
+			//waitMask = uint.Parse((string)obj.GetValue("waitMask"));
+			//waitPos = uint.Parse((string)obj.GetValue("waitPos"));
+			//waitTimer = int.Parse((string)obj.GetValue("waitTimer"));
+			//waitBlit = uint.Parse((string)obj.GetValue("waitBlit"));
+			//waitH = int.Parse((string)obj.GetValue("waitH"));
+			//waitV = int.Parse((string)obj.GetValue("waitV"));
+			//waitHMask = int.Parse((string)obj.GetValue("waitHMask"));
+			//waitVMask = int.Parse((string)obj.GetValue("waitVMask"));
+
+			PersistenceManager.FromJObject(this, obj);
 		}
 	}
 }

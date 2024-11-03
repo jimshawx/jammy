@@ -57,19 +57,28 @@ public class Denise : IDenise
 		RunVerticalBlankStart();
 	}
 
-	public int pixelMaskBit;
+	[Persist]
+	private int pixelMaskBit;
 
-	public ValueTuple<ulong,ulong>[] bpldatpix = new ValueTuple<ulong, ulong>[8];
+	//[Persist] //handled manually
+	private readonly ValueTuple<ulong,ulong>[] bpldatpix = new ValueTuple<ulong, ulong>[8];
 
-	public int planes;
-	public int diwstrth = 0;
-	public int diwstoph = 0;
+	[Persist]
+	private int planes;
+	[Persist]
+	private int diwstrth = 0;
+	[Persist]
+	private int diwstoph = 0;
 
-	public int pixelLoop;
-	public uint lastcol = 0;
+	[Persist]
+	private int pixelLoop;
+	[Persist]
+	private uint lastcol = 0;
 
+	[Persist]
 	private int lineStart;
-	public int dptr = 0;
+	[Persist]
+	private int dptr = 0;
 
 	private Action pixelAction = () => { };
 
@@ -110,6 +119,7 @@ public class Denise : IDenise
 		//DebugLocation();
 	}
 
+	[Persist]
 	private bool blanking;
 
 	public void EnterVisibleArea()
@@ -202,10 +212,15 @@ public class Denise : IDenise
 		}
 	}
 
+	[Persist]
 	private readonly ulong[] sprdatapix = new ulong[8];
+	[Persist]
 	private readonly ulong[] sprdatbpix = new ulong[8];
+	[Persist]
 	private readonly uint[] spriteMask = new uint[8];
+	[Persist]
 	private readonly int[] clx = new int[8];
+	[Persist]
 	private readonly byte[] sprpix = new byte[8];
 
 	private Action GetModeConversion()
@@ -669,8 +684,11 @@ public class Denise : IDenise
 	private ushort fmode;
 	//private ushort beamcon0;
 
+	[Persist]
 	private readonly ushort[] colour = new ushort[256];
+	[Persist]
 	private readonly ushort[] lowcolour = new ushort[256];
+	[Persist]
 	private readonly uint[] truecolour = new uint[256];
 
 	public ushort Read(uint insaddr, uint address)
@@ -800,29 +818,33 @@ public class Denise : IDenise
 
 	public void Save(JArray obj)
 	{
-		var jo = new JObject();
+		//var jo = new JObject();
 
-		jo.Add("pixelMaskBit", pixelMaskBit);
-		jo.Add("planes", planes);
-		jo.Add("diwstrth", diwstrth);
-		jo.Add("diwstoph", diwstoph);
-		jo.Add("pixelLoop", pixelLoop);
-		jo.Add("lastcol", lastcol);
-		jo.Add("lineStart", lineStart);
-		jo.Add("dptr", dptr);
-		jo.Add("blanking", blanking);
+		//jo.Add("pixelMaskBit", pixelMaskBit);
+		//jo.Add("planes", planes);
+		//jo.Add("diwstrth", diwstrth);
+		//jo.Add("diwstoph", diwstoph);
+		//jo.Add("pixelLoop", pixelLoop);
+		//jo.Add("lastcol", lastcol);
+		//jo.Add("lineStart", lineStart);
+		//jo.Add("dptr", dptr);
+		//jo.Add("blanking", blanking);
 
+		//jo.Add("bpldatpix", JToken.FromObject(bpldatpix));
+		//jo.Add("sprdatapix", JToken.FromObject(sprdatapix));
+		//jo.Add("sprdatbpix", JToken.FromObject(sprdatbpix));
+		//jo.Add("spriteMask", JToken.FromObject(spriteMask));
+		//jo.Add("clx", JToken.FromObject(clx));
+		//jo.Add("sprpix", JToken.FromObject(sprpix));
+		//jo.Add("colour", JToken.FromObject(colour));
+		//jo.Add("lowcolour", JToken.FromObject(lowcolour));
+		//jo.Add("truecolour", JToken.FromObject(truecolour));
+
+		//jo.Add("id", "denise");
+		//obj.Add(jo);
+
+		var jo = PersistenceManager.ToJObject(this, "denise");
 		jo.Add("bpldatpix", JToken.FromObject(bpldatpix));
-		jo.Add("sprdatapix", JToken.FromObject(sprdatapix));
-		jo.Add("sprdatbpix", JToken.FromObject(sprdatbpix));
-		jo.Add("spriteMask", JToken.FromObject(spriteMask));
-		jo.Add("clx", JToken.FromObject(clx));
-		jo.Add("sprpix", JToken.FromObject(sprpix));
-		jo.Add("colour", JToken.FromObject(colour));
-		jo.Add("lowcolour", JToken.FromObject(lowcolour));
-		jo.Add("truecolour", JToken.FromObject(truecolour));
-
-		jo.Add("id", "denise");
 		obj.Add(jo);
 	}
 
@@ -830,25 +852,27 @@ public class Denise : IDenise
 	{
 		if (!PersistenceManager.Is(obj, "denise")) return;
 
-		pixelMaskBit = int.Parse((string)obj.GetValue("pixelMaskBit"));
-		planes = int.Parse((string)obj.GetValue("planes"));
-		diwstrth = int.Parse((string)obj.GetValue("diwstrth"));
-		diwstoph = int.Parse((string)obj.GetValue("diwstoph"));
-		pixelLoop = int.Parse((string)obj.GetValue("pixelLoop"));
-		lastcol = uint.Parse((string)obj.GetValue("lastcol"));
-		lineStart = int.Parse((string)obj.GetValue("lineStart"));
-		dptr = int.Parse((string)obj.GetValue("dptr"));
-		blanking = bool.Parse((string)obj.GetValue("blanking"));
+		//pixelMaskBit = int.Parse((string)obj.GetValue("pixelMaskBit"));
+		//planes = int.Parse((string)obj.GetValue("planes"));
+		//diwstrth = int.Parse((string)obj.GetValue("diwstrth"));
+		//diwstoph = int.Parse((string)obj.GetValue("diwstoph"));
+		//pixelLoop = int.Parse((string)obj.GetValue("pixelLoop"));
+		//lastcol = uint.Parse((string)obj.GetValue("lastcol"));
+		//lineStart = int.Parse((string)obj.GetValue("lineStart"));
+		//dptr = int.Parse((string)obj.GetValue("dptr"));
+		//blanking = bool.Parse((string)obj.GetValue("blanking"));
 
-		//todo: serialize a ValueTuple?
+		//obj.GetValue("bpldatpix").ToArray().Select(x => new ValueTuple<ulong, ulong>(ulong.Parse((string)x["Item1"]), ulong.Parse((string)x["Item2"]))).ToArray().CopyTo(bpldatpix, 0);
+		//obj.GetValue("sprdatapix").ToArray().Select(x => ulong.Parse((string)x)).ToArray().CopyTo(sprdatapix, 0);
+		//obj.GetValue("sprdatbpix").ToArray().Select(x => ulong.Parse((string)x)).ToArray().CopyTo(sprdatbpix, 0);
+		//obj.GetValue("spriteMask").ToArray().Select(x => uint.Parse((string)x)).ToArray().CopyTo(spriteMask, 0);
+		//obj.GetValue("clx").ToArray().Select(x => int.Parse((string)x)).ToArray().CopyTo(clx, 0);
+		//obj.GetValue("sprpix").ToArray().Select(x => byte.Parse((string)x)).ToArray().CopyTo(sprpix, 0);
+		//obj.GetValue("colour").ToArray().Select(x => ushort.Parse((string)x)).ToArray().CopyTo(colour, 0);
+		//obj.GetValue("lowcolour").ToArray().Select(x => ushort.Parse((string)x)).ToArray().CopyTo(lowcolour, 0);
+		//obj.GetValue("truecolour").ToArray().Select(x => uint.Parse((string)x)).ToArray().CopyTo(truecolour, 0);
+
+		PersistenceManager.FromJObject(this, obj);
 		obj.GetValue("bpldatpix").ToArray().Select(x => new ValueTuple<ulong, ulong>(ulong.Parse((string)x["Item1"]), ulong.Parse((string)x["Item2"]))).ToArray().CopyTo(bpldatpix, 0);
-		obj.GetValue("sprdatapix").ToArray().Select(x => ulong.Parse((string)x)).ToArray().CopyTo(sprdatapix, 0);
-		obj.GetValue("sprdatbpix").ToArray().Select(x => ulong.Parse((string)x)).ToArray().CopyTo(sprdatbpix, 0);
-		obj.GetValue("spriteMask").ToArray().Select(x => uint.Parse((string)x)).ToArray().CopyTo(spriteMask, 0);
-		obj.GetValue("clx").ToArray().Select(x => int.Parse((string)x)).ToArray().CopyTo(clx, 0);
-		obj.GetValue("sprpix").ToArray().Select(x => byte.Parse((string)x)).ToArray().CopyTo(sprpix, 0);
-		obj.GetValue("colour").ToArray().Select(x => ushort.Parse((string)x)).ToArray().CopyTo(colour, 0);
-		obj.GetValue("lowcolour").ToArray().Select(x => ushort.Parse((string)x)).ToArray().CopyTo(lowcolour, 0);
-		obj.GetValue("truecolour").ToArray().Select(x => uint.Parse((string)x)).ToArray().CopyTo(truecolour, 0);
 	}
 }

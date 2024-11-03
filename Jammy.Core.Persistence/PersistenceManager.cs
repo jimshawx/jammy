@@ -64,11 +64,11 @@ namespace Jammy.Core.Persistence
 			return (obj.TryGetValue("id", StringComparison.InvariantCulture, out var k) && k.ToString() == id);
 		}
 
-		public static object ToJObject(Type type, object obj, string id)
+		public static JObject ToJObject(object obj, string id)
 		{
 			var jo = new JObject();
 			jo.Add("id", id);
-			var props = type.GetProperties().Where(x=>x.IsDefined(typeof(Persist), false));
+			var props = obj.GetType().GetProperties().Where(x=>x.IsDefined(typeof(Persist), false));
 			foreach (var prop in props)
 			{
 				var x = prop.GetValue(obj);
@@ -76,6 +76,12 @@ namespace Jammy.Core.Persistence
 				else jo.Add(prop.Name, (string)x);
 			}
 			return jo;
+		}
+
+		private static object GetDefaultValue(Type t)
+		{
+			if (t.IsValueType) return Activator.CreateInstance(t);
+			return null;
 		}
 
 		public static void FromJObject(object obj, JObject jo)
@@ -91,7 +97,7 @@ namespace Jammy.Core.Persistence
 				}
 				else
 				{ 
-					prop.SetValue(obj, Convert.ChangeType(jo.GetValue(prop.Name), prop.PropertyType));
+					prop.SetValue(obj, Convert.ChangeType(jo.GetValue(prop.Name)??GetDefaultValue(prop.PropertyType), prop.PropertyType));
 				}
 			}
 
@@ -105,7 +111,7 @@ namespace Jammy.Core.Persistence
 				}
 				else
 				{
-					prop.SetValue(obj, Convert.ChangeType(jo.GetValue(prop.Name), prop.FieldType));
+					prop.SetValue(obj, Convert.ChangeType(jo.GetValue(prop.Name)??GetDefaultValue(prop.FieldType), prop.FieldType));
 				}
 			}
 		}

@@ -76,6 +76,7 @@ namespace Jammy.Core.Custom
 			LineEnd,
 		}
 
+		[Persist]
 		private BlitterState status = BlitterState.Idle;
 
 		public void Emulate()
@@ -386,15 +387,24 @@ namespace Jammy.Core.Custom
 			return false;
 		}
 
+		[Persist]
 		private uint bltabits;
+		[Persist]
 		private uint bltbbits;
+		[Persist]
 		private uint fci;
+		[Persist]
 		private int ashift;
+		[Persist]
 		private int bshift;
+		[Persist]
 		private uint bltzero;
 
+		[Persist]
 		private uint w, h;
+		[Persist]
 		private uint blitWidth, blitHeight;
+		[Persist]
 		private uint s_bltadat, s_bltbdat;
 
 		//eat a DMA slot
@@ -726,14 +736,23 @@ namespace Jammy.Core.Custom
 				LineBegin();
 		}
 
+		[Persist]
 		private uint length;
+		[Persist]
 		private bool writeBit;
+		[Persist]
 		private ushort mask;
+		[Persist]
 		private int x0, x1;
+		[Persist]
 		private int y1;
+		[Persist]
 		private int dm;
+		[Persist]
 		private bool sing;
+		[Persist]
 		private int sx, sy;
+		[Persist]
 		private int dx, dy;
 
 		private bool LineBegin()
@@ -1312,40 +1331,45 @@ namespace Jammy.Core.Custom
 
 		public void Save(JArray obj)
 		{
-			var jo = new JObject();
+			//var jo = new JObject();
 
-			jo.Add("status", status.ToString());
+			//jo.Add("status", status.ToString());
+			//jo.Add("writecacheAddress", writecache.Address);
+			//jo.Add("writecacheValue", writecache.Value);
+
+			////rect
+			//jo.Add("bltabits", bltabits);
+			//jo.Add("bltbbits", bltbbits);
+			//jo.Add("fci", fci);
+			//jo.Add("ashift", ashift);
+			//jo.Add("bshift", bshift);
+			//jo.Add("bltzero", bltzero);
+			//jo.Add("w", w);
+			//jo.Add("h", h);
+			//jo.Add("blitWidth", blitWidth);
+			//jo.Add("blitHeight", blitHeight);
+			//jo.Add("s_bltadat", s_bltadat);
+			//jo.Add("s_bltbdat", s_bltbdat);
+
+			////line
+			//jo.Add("length", length);
+			//jo.Add("writeBit", writeBit);
+			//jo.Add("mask", mask);
+			//jo.Add("x0", x0);
+			//jo.Add("x1", x1);
+			//jo.Add("y1", y1);
+			//jo.Add("dm", dm);
+			//jo.Add("sing", sing);
+			//jo.Add("sx", sx);
+			//jo.Add("sy", sy);
+			//jo.Add("dx", dx);
+			//jo.Add("dy", dy);
+			//jo.Add("id", "blitter");
+			//obj.Add(jo);
+
+			var jo = PersistenceManager.ToJObject(this, "blitter");
 			jo.Add("writecacheAddress", writecache.Address);
 			jo.Add("writecacheValue", writecache.Value);
-
-			//rect
-			jo.Add("bltabits", bltabits);
-			jo.Add("bltbbits", bltbbits);
-			jo.Add("fci", fci);
-			jo.Add("ashift", ashift);
-			jo.Add("bshift", bshift);
-			jo.Add("bltzero", bltzero);
-			jo.Add("w", w);
-			jo.Add("h", h);
-			jo.Add("blitWidth", blitWidth);
-			jo.Add("blitHeight", blitHeight);
-			jo.Add("s_bltadat", s_bltadat);
-			jo.Add("s_bltbdat", s_bltbdat);
-
-			//line
-			jo.Add("length", length);
-			jo.Add("writeBit", writeBit);
-			jo.Add("mask", mask);
-			jo.Add("x0", x0);
-			jo.Add("x1", x1);
-			jo.Add("y1", y1);
-			jo.Add("dm", dm);
-			jo.Add("sing", sing);
-			jo.Add("sx", sx);
-			jo.Add("sy", sy);
-			jo.Add("dx", dx);
-			jo.Add("dy", dy);
-			jo.Add("id", "blitter");
 			obj.Add(jo);
 		}
 
@@ -1353,37 +1377,41 @@ namespace Jammy.Core.Custom
 		{
 			if (!PersistenceManager.Is(obj, "blitter")) return;
 
-			status = (BlitterState)Enum.Parse(typeof(BlitterState), (string)obj.GetValue(nameof(status)));
+			//status = (BlitterState)Enum.Parse(typeof(BlitterState), (string)obj.GetValue(nameof(status)));
+			//writecache.Address = uint.Parse((string)obj.GetValue("writecacheAddress"));
+			//writecache.Value = ushort.Parse((string)obj.GetValue("writecacheValue"));
+
+			////rect
+			//bltabits = uint.Parse((string)obj.GetValue("bltabits"));
+			//bltbbits = uint.Parse((string)obj.GetValue("bltbbits"));
+			//fci = uint.Parse((string)obj.GetValue("fci"));
+			//ashift = int.Parse((string)obj.GetValue("ashift"));
+			//bshift = int.Parse((string)obj.GetValue("bshift"));
+			//bltzero = uint.Parse((string)obj.GetValue("bltzero"));
+			//w = uint.Parse((string)obj.GetValue("w"));
+			//h = uint.Parse((string)obj.GetValue("h"));
+			//blitWidth = uint.Parse((string)obj.GetValue("blitWidth"));
+			//blitHeight = uint.Parse((string)obj.GetValue("blitHeight"));
+			//s_bltadat = uint.Parse((string)obj.GetValue("s_bltadat"));
+			//s_bltbdat = uint.Parse((string)obj.GetValue("s_bltbdat"));
+
+			////line
+			//length = uint.Parse((string)obj.GetValue("length"));
+			//writeBit = bool.Parse((string)obj.GetValue("writeBit"));
+			//mask = ushort.Parse((string)obj.GetValue("mask"));
+			//x0 = int.Parse((string)obj.GetValue("x0"));
+			//x1 = int.Parse((string)obj.GetValue("x1"));
+			//y1 = int.Parse((string)obj.GetValue("y1"));
+			//dm = int.Parse((string)obj.GetValue("dm"));
+			//sing = bool.Parse((string)obj.GetValue("sing"));
+			//sx = int.Parse((string)obj.GetValue("sx"));
+			//sy = int.Parse((string)obj.GetValue("sy"));
+			//dx = int.Parse((string)obj.GetValue("dx"));
+			//dy = int.Parse((string)obj.GetValue("dy"));
+
+			PersistenceManager.FromJObject(this, obj);
 			writecache.Address = uint.Parse((string)obj.GetValue("writecacheAddress"));
 			writecache.Value = ushort.Parse((string)obj.GetValue("writecacheValue"));
-
-			//rect
-			bltabits = uint.Parse((string)obj.GetValue("bltabits"));
-			bltbbits = uint.Parse((string)obj.GetValue("bltbbits"));
-			fci = uint.Parse((string)obj.GetValue("fci"));
-			ashift = int.Parse((string)obj.GetValue("ashift"));
-			bshift = int.Parse((string)obj.GetValue("bshift"));
-			bltzero = uint.Parse((string)obj.GetValue("bltzero"));
-			w = uint.Parse((string)obj.GetValue("w"));
-			h = uint.Parse((string)obj.GetValue("h"));
-			blitWidth = uint.Parse((string)obj.GetValue("blitWidth"));
-			blitHeight = uint.Parse((string)obj.GetValue("blitHeight"));
-			s_bltadat = uint.Parse((string)obj.GetValue("s_bltadat"));
-			s_bltbdat = uint.Parse((string)obj.GetValue("s_bltbdat"));
-
-			//line
-			length = uint.Parse((string)obj.GetValue("length"));
-			writeBit = bool.Parse((string)obj.GetValue("writeBit"));
-			mask = ushort.Parse((string)obj.GetValue("mask"));
-			x0 = int.Parse((string)obj.GetValue("x0"));
-			x1 = int.Parse((string)obj.GetValue("x1"));
-			y1 = int.Parse((string)obj.GetValue("y1"));
-			dm = int.Parse((string)obj.GetValue("dm"));
-			sing = bool.Parse((string)obj.GetValue("sing"));
-			sx = int.Parse((string)obj.GetValue("sx"));
-			sy = int.Parse((string)obj.GetValue("sy"));
-			dx = int.Parse((string)obj.GetValue("dx"));
-			dy = int.Parse((string)obj.GetValue("dy"));
 		}
 	}
 }

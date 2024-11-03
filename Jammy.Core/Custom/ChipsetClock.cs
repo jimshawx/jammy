@@ -220,15 +220,16 @@ public class ChipsetClock : IChipsetClock
 
 	public void Save(JArray obj)
 	{
-		var jo = new JObject();
-		jo.Add("HorizontalPos", HorizontalPos);
-		jo.Add("VerticalPos", VerticalPos);
-		jo.Add("FrameCount", FrameCount);
-		jo.Add("Tick", Tick);
-		jo.Add("id", "chipclock");
-		obj.Add(jo);
+		//var jo = new JObject();
+		//jo.Add("HorizontalPos", HorizontalPos);
+		//jo.Add("VerticalPos", VerticalPos);
+		//jo.Add("FrameCount", FrameCount);
+		//jo.Add("Tick", Tick);
+		//jo.Add("id", "chipclock");
+		//obj.Add(jo);
 
-		var jp = PersistenceManager.ToJObject(typeof(ChipsetClock), this, "chipclock");
+		var jo = PersistenceManager.ToJObject(this, "chipclock");
+		obj.Add(jo);
 	}
 
 	public void Load(JObject obj)
