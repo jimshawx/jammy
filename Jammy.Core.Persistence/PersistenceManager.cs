@@ -68,12 +68,19 @@ namespace Jammy.Core.Persistence
 		{
 			var jo = new JObject();
 			jo.Add("id", id);
-			var props = obj.GetType().GetProperties().Where(x=>x.IsDefined(typeof(Persist), false));
+			var props = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(x=>x.IsDefined(typeof(Persist), false));
 			foreach (var prop in props)
 			{
 				var x = prop.GetValue(obj);
-				if (x is Array)	jo.Add(JToken.FromObject(x));
-				else jo.Add(prop.Name, (string)x);
+				if (x is Array)	jo.Add(prop.Name, JToken.FromObject(x));
+				else jo.Add(prop.Name, x.ToString());
+			}
+			var fields = obj.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(x => x.IsDefined(typeof(Persist), false));
+			foreach (var prop in fields)
+			{
+				var x = prop.GetValue(obj);
+				if (x is Array) jo.Add(prop.Name, JToken.FromObject(x));
+				else jo.Add(prop.Name, x.ToString());
 			}
 			return jo;
 		}
@@ -87,7 +94,6 @@ namespace Jammy.Core.Persistence
 		public static void FromJObject(object obj, JObject jo)
 		{
 			var props = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic|BindingFlags.Instance).Where(x => x.IsDefined(typeof(Persist), false));
-
 			foreach (var prop in props)
 			{
 				if (prop.PropertyType.IsArray)
