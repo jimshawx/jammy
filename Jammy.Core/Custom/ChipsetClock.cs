@@ -27,9 +27,13 @@ public class ChipsetClock : IChipsetClock
 		//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 	}
 
+	[Persist]
 	public uint HorizontalPos { get; private set; }
+	[Persist]
 	public uint VerticalPos { get; private set; }
+	[Persist]
 	public uint FrameCount { get; private set; }
+	[Persist]
 	public uint Tick { get; private set; }
 	//private bool startOfFrame;
 	//private bool endOfFrame;
@@ -223,15 +227,19 @@ public class ChipsetClock : IChipsetClock
 		jo.Add("Tick", Tick);
 		jo.Add("id", "chipclock");
 		obj.Add(jo);
+
+		var jp = PersistenceManager.ToJObject(typeof(ChipsetClock), this, "chipclock");
 	}
 
 	public void Load(JObject obj)
 	{
 		if (!PersistenceManager.Is(obj, "chipclock")) return;
 
-		HorizontalPos = uint.Parse((string)obj.GetValue("HorizontalPos"));
-		VerticalPos = uint.Parse((string)obj.GetValue("VerticalPos"));
-		FrameCount = uint.Parse((string)obj.GetValue("FrameCount"));
-		Tick = uint.Parse((string)obj.GetValue("Tick"));
+		//HorizontalPos = uint.Parse((string)obj.GetValue("HorizontalPos"));
+		//VerticalPos = uint.Parse((string)obj.GetValue("VerticalPos"));
+		//FrameCount = uint.Parse((string)obj.GetValue("FrameCount"));
+		//Tick = uint.Parse((string)obj.GetValue("Tick"));
+
+		PersistenceManager.FromJObject(this, obj);
 	}
 }

@@ -127,9 +127,9 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 			M68KCPU.m68k_set_reg(M68KCPU.m68k_register_t.M68K_REG_A7, regs.A[7]);
 
 			M68KCPU.m68k_set_reg(M68KCPU.m68k_register_t.M68K_REG_PC, regs.PC);
+			M68KCPU.m68k_set_reg(M68KCPU.m68k_register_t.M68K_REG_SR, regs.SR);
 			M68KCPU.m68k_set_reg(M68KCPU.m68k_register_t.M68K_REG_ISP, regs.SSP);
 			M68KCPU.m68k_set_reg(M68KCPU.m68k_register_t.M68K_REG_USP, regs.SP);
-			M68KCPU.m68k_set_reg(M68KCPU.m68k_register_t.M68K_REG_SR, regs.SR);
 		}
 
 		public void Save(JArray obj)

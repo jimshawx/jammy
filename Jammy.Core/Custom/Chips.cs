@@ -545,6 +545,7 @@ namespace Jammy.Core.Custom
 			var deets = ChipRegs.GetPersistanceDetails()
 							.Where(x => x.Name != "COPJMP1" && x.Name != "COPJMP2")
 							.Where(x => x.Name != "DMACON" && x.Name != "INTENA" && x.Name != "ADKCON")
+							.Where(x => x.Name != "BLTSIZE" && x.Name != "BLTSIZH")
 							.Where(x => x.Name != "LISAID");
 			foreach (var reg in deets)
 				cr.Add(reg.Name, DebugChipsetRead(reg.Address, Size.Word));
@@ -566,9 +567,6 @@ namespace Jammy.Core.Custom
 					Write(0, ChipRegs.INTENA, (ushort)(value | 0x8000), Size.Word);
 				else if (pair.Key == "ADKCONR")
 					Write(0, ChipRegs.ADKCON, (ushort)(value | 0x8000), Size.Word);
-				else if (pair.Key == "BLTSIZE" || pair.Key == "BLTSIZH")
-					//todo: need to write this value without triggering a blit
-					;
 				else
 					Write(0, deets[pair.Key].Address, value, Size.Word);
 			}

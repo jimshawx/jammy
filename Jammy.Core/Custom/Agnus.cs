@@ -142,13 +142,21 @@ public class Agnus : IAgnus
 		LineTerminated
 	}
 
+	[Persist]
 	private int planes;
+	[Persist]
 	private int diwstrtv = 0;
+	[Persist]
 	private int diwstopv = 0;
+	[Persist]
 	private ushort ddfstrtfix = 0;
+	[Persist]
 	private ushort ddfstopfix = 0;
+	[Persist]
 	private int pixmod;
+	[Persist]
 	private DMALineState lineState;
+	[Persist]
 	private uint plane;
 
 	private void RunAgnusTick()
@@ -412,6 +420,7 @@ noBitplaneDMA:
 		Fetching,
 	}
 
+	[Persist]
 	private readonly SpriteState[] spriteState = new SpriteState[8];
 
 	private bool SpritesEnabledForThisFrame()
@@ -1087,18 +1096,20 @@ noBitplaneDMA:
 	{
 		if (!PersistenceManager.Is(obj, "agnus")) return;
 
-		planes = int.Parse((string)obj.GetValue("planes"));
-		diwstrtv = int.Parse((string)obj.GetValue("diwstrtv"));
-		diwstopv = int.Parse((string)obj.GetValue("diwstopv"));
-		ddfstrtfix = ushort.Parse((string)obj.GetValue("ddfstrtfix"));
-		ddfstopfix = ushort.Parse((string)obj.GetValue("ddfstopfix"));
-		pixmod = int.Parse((string)obj.GetValue("pixmod"));
-		lineState = (DMALineState)Enum.Parse(typeof(DMALineState), (string)obj.GetValue("lineState"));
-		plane = uint.Parse((string)obj.GetValue("plane"));
-		obj.GetValue("spriteState")
-			.ToArray()
-			.Select(x => (SpriteState)Enum.Parse(typeof(SpriteState), (string)x))
-			.ToArray()
-			.CopyTo(spriteState, 0);
+		PersistenceManager.FromJObject(this, obj);
+
+		//planes = int.Parse((string)obj.GetValue("planes"));
+		//diwstrtv = int.Parse((string)obj.GetValue("diwstrtv"));
+		//diwstopv = int.Parse((string)obj.GetValue("diwstopv"));
+		//ddfstrtfix = ushort.Parse((string)obj.GetValue("ddfstrtfix"));
+		//ddfstopfix = ushort.Parse((string)obj.GetValue("ddfstopfix"));
+		//pixmod = int.Parse((string)obj.GetValue("pixmod"));
+		//lineState = (DMALineState)Enum.Parse(typeof(DMALineState), (string)obj.GetValue("lineState"));
+		//plane = uint.Parse((string)obj.GetValue("plane"));
+		//obj.GetValue("spriteState")
+		//	.ToArray()
+		//	.Select(x => (SpriteState)Enum.Parse(typeof(SpriteState), (string)x))
+		//	.ToArray()
+		//	.CopyTo(spriteState, 0);
 	}
 }
