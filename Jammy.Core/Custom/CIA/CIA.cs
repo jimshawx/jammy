@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
@@ -38,6 +39,7 @@ namespace Jammy.Core.Custom.CIA
 		public const int CRA = 14;
 		public const int CRB = 15;
 
+		[Persist]
 		protected readonly uint[] regs = new uint[16];
 
 		protected abstract uint interruptLevel { get; }
@@ -47,20 +49,29 @@ namespace Jammy.Core.Custom.CIA
 		//writing to regs[ICR] sets icr which controls which interrupts TO trigger.
 		//icrr has the equivalent bits set for which interrupt WAS triggered. reset to 0 after read.
 
+		[Persist]
 		private ushort timerA;
+		[Persist]
 		private ushort timerB;
 
+		[Persist]
 		private ushort timerAreset;
+		[Persist]
 		private ushort timerBreset;
 
 		protected IInterrupt interrupt;
 
+		[Persist]
 		private uint todAlarm;
+		[Persist]
 		private uint todLatch;
 
+		[Persist]
 		private uint todTimer;
 
+		[Persist]
 		private bool todStopped;
+		[Persist]
 		private bool todLatched;
 
 		public virtual void Emulate()
@@ -390,33 +401,13 @@ namespace Jammy.Core.Custom.CIA
 
 		public void Save(JArray obj)
 		{
-			var jo = new JObject();
-			jo.Add("timerA", timerA);
-			jo.Add("timerB", timerB);
-			jo.Add("timerAreset", timerAreset);
-			jo.Add("timerBreset", timerBreset);
-			jo.Add("todAlarm", todAlarm);
-			jo.Add("todLatch", todLatch);
-			jo.Add("todTimer", todTimer);
-			jo.Add("todStopped", todStopped);
-			jo.Add("todLatched", todLatched);
-			jo.Add("regs", JToken.FromObject(regs));
-			jo.Add("id", ("cia" + cia).ToLower());
+			var jo = PersistenceManager.ToJObject(this, ("cia" + cia).ToLower());
 			obj.Add(jo);
 		}
 
 		public virtual void Load(JObject obj)
 		{
-			timerA = ushort.Parse((string)obj.GetValue("timerA"));
-			timerB = ushort.Parse((string)obj.GetValue("timerB"));
-			timerAreset = ushort.Parse((string)obj.GetValue("timerAreset"));
-			timerBreset = ushort.Parse((string)obj.GetValue("timerBreset"));
-			todAlarm = uint.Parse((string)obj.GetValue("todAlarm"));
-			todLatch = uint.Parse((string)obj.GetValue("todLatch"));
-			todTimer = uint.Parse((string)obj.GetValue("todTimer"));
-			todStopped = bool.Parse((string)obj.GetValue("todStopped"));
-			todLatched = bool.Parse((string)obj.GetValue("todLatched"));
-			obj.GetValue("regs").Select(x=> uint.Parse((string)x)).ToArray().CopyTo(regs,0);
+			PersistenceManager.FromJObject(this, obj);
 		}
 	}
 

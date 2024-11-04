@@ -4,6 +4,7 @@ using Jammy.Core.Persistence;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime;
@@ -321,7 +322,13 @@ namespace Jammy.Core
 			if (loadSnapshot)
 			{ 
 				kickstart.SetMirror(false);
-				persistenceManager.Load("state.json");
+				//Desert Dream
+				//persistenceManager.Load("../../state-2024-11-01-20-00-00.json");
+				//persistenceManager.Load("../../state-2024-11-02-18-22-56.json");
+				//Mental Hangover
+				//persistenceManager.Load("../../state-2024-11-02-19-11-53.json");
+				//Blitter Miracle
+				persistenceManager.Load("../../state-2024-11-03-20-53-42.json");
 			}
 
 			uint stepOutSp = 0xffffffff;
@@ -333,7 +340,7 @@ namespace Jammy.Core
 				{
 					if (takeASnapshot)
 					{
-						persistenceManager.Save("state.json");
+						persistenceManager.Save($"../../state-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.json");
 						takeASnapshot = false;
 						logger.LogTrace("Snapshot Recorded!");
 					}
