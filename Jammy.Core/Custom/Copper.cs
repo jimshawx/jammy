@@ -166,22 +166,7 @@ namespace Jammy.Core.Custom
 
 		private void CopperInstruction()
 		{
-			if (status == CopperStatus.Retrace)
-			{
-				CopperNextFrame();
-			}
-			else if (status == CopperStatus.Stopped)
-			{
-				return;
-			}
-			else if (status == CopperStatus.WakingUp)
-			{
-				//burn a cycle after waking up
-				waitTimer--;
-				if (waitTimer <= 0)
-					status = CopperStatus.RunningWord1;
-			}
-			else if (status == CopperStatus.RunningWord1)
+			if (status == CopperStatus.RunningWord1)
 			{
 				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
 
@@ -244,6 +229,7 @@ namespace Jammy.Core.Custom
 					memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 					copPC += 2;
 				}
+
 			}
 			else if (status == CopperStatus.FetchWait)
 			{
@@ -306,6 +292,21 @@ namespace Jammy.Core.Custom
 						status = CopperStatus.Waiting;
 					}
 				}
+			}
+			else if (status == CopperStatus.WakingUp)
+			{
+				//burn a cycle after waking up
+				waitTimer--;
+				if (waitTimer <= 0)
+					status = CopperStatus.RunningWord1;
+			}
+			else if (status == CopperStatus.Retrace)
+			{
+				CopperNextFrame();
+			}
+			else if (status == CopperStatus.Stopped)
+			{
+				return;
 			}
 		}
 
