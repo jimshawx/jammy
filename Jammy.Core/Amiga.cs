@@ -243,7 +243,7 @@ namespace Jammy.Core
 				dchipsetWrites = nchipsetWrites - chipsetWrites; chipsetWrites = nchipsetWrites;
 
 				//how many chip bus slots did that use?
-				totalWaits = dchipRAMReads + dchipRAMWrites + dtrapdoorReads + dtrapdoorWrites + dchipsetReads + dtrapdoorWrites;
+				totalWaits = dchipRAMReads + dchipRAMWrites + dtrapdoorReads + dtrapdoorWrites + dchipsetReads + dchipsetWrites;
 			}
 			else if (totalWaits > 0)
 			{
@@ -328,7 +328,9 @@ namespace Jammy.Core
 				//Mental Hangover
 				//persistenceManager.Load("../../state-2024-11-02-19-11-53.json");
 				//Blitter Miracle
-				persistenceManager.Load("../../state-2024-11-03-20-53-42.json");
+				//persistenceManager.Load("../../state-2024-11-03-20-53-42.json");
+				//Pinball Fantasies
+				persistenceManager.Load("../../state-2024-11-04-22-05-32.json");
 			}
 
 			uint stepOutSp = 0xffffffff;
