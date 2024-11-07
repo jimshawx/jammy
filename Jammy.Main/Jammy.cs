@@ -30,6 +30,7 @@ using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Core.Memory;
 using Jammy.Debugger;
 using Jammy.Graph;
+using Jammy.Core.Debug;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -47,6 +48,7 @@ namespace Jammy.Main
 		private readonly IAnalysis analysis;
 		private readonly IFlowAnalyser flowAnalyser;
 		private readonly IGraph graph;
+		private readonly IChipsetDebugger chipsetDebugger;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
@@ -62,7 +64,7 @@ namespace Jammy.Main
 		};
 
 		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger, IAnalysis analysis,
-			IFlowAnalyser flowAnalyser, IGraph graph,
+			IFlowAnalyser flowAnalyser, IGraph graph, IChipsetDebugger chipsetDebugger,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -74,6 +76,7 @@ namespace Jammy.Main
 			this.analysis = analysis;
 			this.flowAnalyser = flowAnalyser;
 			this.graph = graph;
+			this.chipsetDebugger = chipsetDebugger;
 			this.logger = logger;
 
 			InitializeComponent();
@@ -670,15 +673,15 @@ namespace Jammy.Main
 			else if (e.ClickedItem == toolStripFind)
 			{
 				var findForm = new Find();
-				findForm.radioFindByte.Enabled 
-					= findForm.radioFindWord.Enabled 
+				findForm.radioFindByte.Enabled
+					= findForm.radioFindWord.Enabled
 					= findForm.radioFindLong.Enabled = false;
 				findForm.radioFindText.Checked = true;
 				var res = findForm.ShowDialog();
 				if (res == DialogResult.OK)
 				{
 					if (findForm.SearchText != null)
-					{ 
+					{
 						lastText = findForm.SearchText;
 						lastFound = txtDisassembly.Find(findForm.SearchText, 0, RichTextBoxFinds.NoHighlight);
 						if (lastFound != -1)
@@ -698,9 +701,9 @@ namespace Jammy.Main
 			{
 				if (lastFound == -1)
 					return;
-				lastFound = txtDisassembly.Find(lastText, lastFound+1, RichTextBoxFinds.NoHighlight);
+				lastFound = txtDisassembly.Find(lastText, lastFound + 1, RichTextBoxFinds.NoHighlight);
 				for (int i = 0; i < 2; i++)
-				{ 
+				{
 					if (lastFound != -1)
 					{
 						txtDisassembly.ReallySuspendLayout();
@@ -1300,6 +1303,13 @@ namespace Jammy.Main
 			var regs = debugger.GetRegs();
 			var trace = flowAnalyser.start_pc_trace(regs.PC);
 			graph.GraphBranches(trace);
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnDMAExplorer_Click(object sender, EventArgs e)
+		{
+			Amiga.LockEmulation();
+			var x = new DMAExplorer(chipsetDebugger, logger);
 			Amiga.UnlockEmulation();
 		}
 	}

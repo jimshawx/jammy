@@ -41,6 +41,8 @@ namespace Jammy.Main
 			toolStripBreakpoint = new System.Windows.Forms.ToolStripMenuItem();
 			toolStripSkip = new System.Windows.Forms.ToolStripMenuItem();
 			toolStripGoto = new System.Windows.Forms.ToolStripMenuItem();
+			toolStripFind = new System.Windows.Forms.ToolStripMenuItem();
+			toolStripFindNext = new System.Windows.Forms.ToolStripMenuItem();
 			btnStep = new System.Windows.Forms.Button();
 			btnStop = new System.Windows.Forms.Button();
 			btnGo = new System.Windows.Forms.Button();
@@ -93,8 +95,7 @@ namespace Jammy.Main
 			btnINTDIS = new System.Windows.Forms.Button();
 			btnStringScan = new System.Windows.Forms.Button();
 			btnAnalyseFlow = new System.Windows.Forms.Button();
-			toolStripFind = new System.Windows.Forms.ToolStripMenuItem();
-			toolStripFindNext = new System.Windows.Forms.ToolStripMenuItem();
+			btnDMAExplorer = new System.Windows.Forms.Button();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -147,26 +148,38 @@ namespace Jammy.Main
 			menuDisassembly.ImageScalingSize = new System.Drawing.Size(32, 32);
 			menuDisassembly.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripBreakpoint, toolStripSkip, toolStripGoto, toolStripFind, toolStripFindNext });
 			menuDisassembly.Name = "menuDisassembly";
-			menuDisassembly.Size = new System.Drawing.Size(301, 238);
+			menuDisassembly.Size = new System.Drawing.Size(204, 194);
 			menuDisassembly.ItemClicked += menuDisassembly_ItemClicked;
 			// 
 			// toolStripBreakpoint
 			// 
 			toolStripBreakpoint.Name = "toolStripBreakpoint";
-			toolStripBreakpoint.Size = new System.Drawing.Size(300, 38);
+			toolStripBreakpoint.Size = new System.Drawing.Size(203, 38);
 			toolStripBreakpoint.Text = "Breakpoint";
 			// 
 			// toolStripSkip
 			// 
 			toolStripSkip.Name = "toolStripSkip";
-			toolStripSkip.Size = new System.Drawing.Size(300, 38);
+			toolStripSkip.Size = new System.Drawing.Size(203, 38);
 			toolStripSkip.Text = "Skip";
 			// 
 			// toolStripGoto
 			// 
 			toolStripGoto.Name = "toolStripGoto";
-			toolStripGoto.Size = new System.Drawing.Size(300, 38);
+			toolStripGoto.Size = new System.Drawing.Size(203, 38);
 			toolStripGoto.Text = "Go To...";
+			// 
+			// toolStripFind
+			// 
+			toolStripFind.Name = "toolStripFind";
+			toolStripFind.Size = new System.Drawing.Size(203, 38);
+			toolStripFind.Text = "Find...";
+			// 
+			// toolStripFindNext
+			// 
+			toolStripFindNext.Name = "toolStripFindNext";
+			toolStripFindNext.Size = new System.Drawing.Size(203, 38);
+			toolStripFindNext.Text = "Find Next";
 			// 
 			// btnStep
 			// 
@@ -227,7 +240,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 647);
+			txtMemory.Size = new System.Drawing.Size(1390, 642);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -438,7 +451,7 @@ namespace Jammy.Main
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(507, 987);
+			txtCopper.Size = new System.Drawing.Size(502, 987);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -728,7 +741,7 @@ namespace Jammy.Main
 			lbIntvec.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbIntvec.FormattingEnabled = true;
 			lbIntvec.ItemHeight = 26;
-			lbIntvec.Location = new System.Drawing.Point(-7, 1007);
+			lbIntvec.Location = new System.Drawing.Point(-12, 1007);
 			lbIntvec.Name = "lbIntvec";
 			lbIntvec.Size = new System.Drawing.Size(519, 238);
 			lbIntvec.TabIndex = 27;
@@ -796,23 +809,22 @@ namespace Jammy.Main
 			btnAnalyseFlow.UseVisualStyleBackColor = true;
 			btnAnalyseFlow.Click += btnAnalyseFlow_Click;
 			// 
-			// findToolStripMenuItem
+			// btnDMAExplorer
 			// 
-			toolStripFind.Name = "findToolStripMenuItem";
-			toolStripFind.Size = new System.Drawing.Size(300, 38);
-			toolStripFind.Text = "Find...";
-			// 
-			// findNextToolStripMenuItem
-			// 
-			toolStripFindNext.Name = "findNextToolStripMenuItem";
-			toolStripFindNext.Size = new System.Drawing.Size(300, 38);
-			toolStripFindNext.Text = "Find Next";
+			btnDMAExplorer.Location = new System.Drawing.Point(2467, 1144);
+			btnDMAExplorer.Name = "btnDMAExplorer";
+			btnDMAExplorer.Size = new System.Drawing.Size(173, 46);
+			btnDMAExplorer.TabIndex = 55;
+			btnDMAExplorer.Text = "DMA Explorer";
+			btnDMAExplorer.UseVisualStyleBackColor = true;
+			btnDMAExplorer.Click += btnDMAExplorer_Click;
 			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2710, 1291);
+			Controls.Add(btnDMAExplorer);
 			Controls.Add(btnAnalyseFlow);
 			Controls.Add(btnStringScan);
 			Controls.Add(btnINTDIS);
@@ -934,6 +946,7 @@ namespace Jammy.Main
 		private System.Windows.Forms.Button btnAnalyseFlow;
 		private System.Windows.Forms.ToolStripMenuItem toolStripFind;
 		private System.Windows.Forms.ToolStripMenuItem toolStripFindNext;
+		private System.Windows.Forms.Button btnDMAExplorer;
 	}
 }
 

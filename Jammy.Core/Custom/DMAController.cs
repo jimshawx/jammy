@@ -14,49 +14,6 @@ using Newtonsoft.Json.Linq;
 
 namespace Jammy.Core.Custom;
 
-public enum DMAActivityType
-{
-	None,
-	Read,
-	Write,
-	WriteReg,
-	Consume,
-	CPU
-}
-
-public class DMAActivity
-{
-	public DMAActivity()
-	{
-		Type = DMAActivityType.None;
-	}
-
-	public DMAActivityType Type { get; set; }
-	public uint Address { get; set; }
-	public ulong Value { get; set; }
-	public Size Size { get; set; }
-	public DMA Priority { get; set; }
-	public uint ChipReg { get; set; }
-
-	public override string ToString()
-	{
-		switch (Priority)
-		{
-			case 0: return "c"; //CPU
-			case DMA.BPLEN: return "B";
-			case DMA.COPEN: return "C";
-			case DMA.BLTEN: return "b";
-			case DMA.SPREN: return "S";
-			case DMA.DSKEN: return "D";
-			case DMA.AUD0EN: return "A";
-			case DMA.AUD1EN: return "A";
-			case DMA.AUD2EN: return "A";
-			case DMA.AUD3EN: return "A";
-		}
-		return "x";
-	}
-}
-
 public class DMAController : IDMA
 {
 	private readonly IChipsetDebugger debugger;
@@ -145,13 +102,10 @@ public class DMAController : IDMA
 			slotTaken = activities[(int)DMASource.CPU];
 		}
 
-		if (slotTaken == null)
-		{
-			debugger.SetDMAActivity('-');
-			return;
-		}
+		debugger.SetDMAActivity(slotTaken);
 
-		debugger.SetDMAActivity(slotTaken.ToString()[0]);
+		if (slotTaken == null)
+			return;
 
 		//DMA required, execute the transaction
 		ExecuteDMATransfer(slotTaken);

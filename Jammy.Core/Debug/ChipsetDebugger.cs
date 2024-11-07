@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using Jammy.Core.Custom;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
@@ -10,6 +6,9 @@ using Jammy.Extensions.Extensions;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Linq;
+using System.Text;
 
 namespace Jammy.Core.Debug;
 
@@ -24,7 +23,8 @@ public interface IChipsetDebugger : IEmulate
 	int dma { get; set; }
 	int diwSHack { get; }
 	int diwEHack { get; }
-	void SetDMAActivity(char p0);
+	void SetDMAActivity(DMAActivity activity);
+	DMAEntry[] GetDMASummary();
 }
 
 public class ChipsetDebugger : IChipsetDebugger
@@ -58,7 +58,8 @@ public class ChipsetDebugger : IChipsetDebugger
 		dbugLine = -1;
 	}
 
-	private string regmsg = string.Empty;
+	private readonly StringBuilder regmsg = new StringBuilder();
+
 	public void Emulate()
 	{
 		var clockState = clock.ClockState;
@@ -73,7 +74,7 @@ public class ChipsetDebugger : IChipsetDebugger
 
 	private void EndOfLine()
 	{
-		regmsg += DebugEnd();
+		regmsg.Append(DebugEnd());
 	}
 
 	private void StartOfLine()
@@ -83,26 +84,39 @@ public class ChipsetDebugger : IChipsetDebugger
 			DebugPalette();
 			dma = 0;
 			//collect for later
-			regmsg = DebugStart();
+			regmsg.Clear();
+			regmsg.Append(DebugStart());
 		}
 	}
 
 	private void EndOfFrame()
 	{
-		if (dbugLine != -1 && regmsg != string.Empty)
+		if (dbugLine != -1 && regmsg.Length != 0)
 		{
 			overlay.TextScale(3);
-			overlay.WriteText(0, 80, 0xffffff, regmsg);
+			overlay.WriteText(0, 80, 0xffffff, regmsg.ToString());
 			DebugLocation();
 		}
 	}
 
-	public void SetDMAActivity(char p0)
+	private readonly char[] slot = new char[256];
+
+	private readonly DMADebug dmadebug = new DMADebug();
+
+	public DMAEntry[] GetDMASummary()
 	{
-		slot[clock.HorizontalPos] = p0;
+		return dmadebug.GetDMASummary();
 	}
 
-	private char[] slot = new char[256];
+	public void SetDMAActivity(DMAActivity activity)
+	{
+		if (activity == null)
+			slot[clock.HorizontalPos] = '-';
+		else
+			slot[clock.HorizontalPos] = activity.ToString()[0];
+		dmadebug[clock.HorizontalPos, clock.VerticalPos] = activity;
+	}
+
 	public char[] fetch { get; }= new char[256];
 	public char[] write { get; }= new char[256];
 	public int dma { get; set; }
@@ -132,7 +146,7 @@ public class ChipsetDebugger : IChipsetDebugger
 		return dsb;
 	}
 
-	private StringBuilder GetStringBuilder()
+	private StringBuilder GetTempStringBuilder()
 	{
 		tsb.Length = 0;
 		return tsb;
@@ -221,7 +235,7 @@ public class ChipsetDebugger : IChipsetDebugger
 
 		var sb = GetDebugStringBuilder();
 		
-		var tsb = GetStringBuilder();
+		var tsb = GetTempStringBuilder();
 		for (int i = 0; i < 256; i++)
 			tsb.Append(fetch[i]);
 		sb.Append(Split(tsb));
@@ -246,7 +260,7 @@ public class ChipsetDebugger : IChipsetDebugger
 		const int bits = 4;
 		string s = p0.ToString();
 		int l = (s.Length+bits-1) / bits;
-		var tsb = GetStringBuilder();
+		var tsb = GetTempStringBuilder();
 
 		int j = 0;
 		for (int i = 0; i < bits; i++)
@@ -260,7 +274,7 @@ public class ChipsetDebugger : IChipsetDebugger
 
 	private string Dmacon(ushort dmacon)
 	{
-		var sb = GetStringBuilder();
+		var sb = GetTempStringBuilder();
 		if ((dmacon & 0x200) != 0) sb.Append("DMA ");
 		if ((dmacon & 0x100) != 0) sb.Append("BPL ");
 		if ((dmacon & 0x80) != 0) sb.Append("COP ");
@@ -274,7 +288,7 @@ public class ChipsetDebugger : IChipsetDebugger
 		uint bplcon0 = chipRegs.DebugChipsetRead(ChipRegs.BPLCON0, Size.Word);
 		uint bplcon2 = chipRegs.DebugChipsetRead(ChipRegs.BPLCON2, Size.Word);
 
-		var sb = GetStringBuilder();
+		var sb = GetTempStringBuilder();
 		if ((bplcon0 & 0x8000) != 0) sb.Append("H ");
 		else if ((bplcon0 & 0x40) != 0) sb.Append("SH ");
 		else if ((bplcon0 & 0x80) != 0) sb.Append("UH ");
@@ -302,7 +316,7 @@ public class ChipsetDebugger : IChipsetDebugger
 
 	private string Bplcon2()
 	{
-		var sb = GetStringBuilder();
+		var sb = GetTempStringBuilder();
 		uint bplcon2 = chipRegs.DebugChipsetRead(ChipRegs.BPLCON2, Size.Word);
 		if ((bplcon2 & (1 << 9)) != 0) sb.Append("KILLEHB ");
 		if ((bplcon2 & (1 << 6)) != 0) sb.Append("PF2PRI ");
@@ -312,7 +326,7 @@ public class ChipsetDebugger : IChipsetDebugger
 	private string Bplcon3()
 	{
 		uint bplcon3 = chipRegs.DebugChipsetRead(ChipRegs.BPLCON3, Size.Word);
-		var sb = GetStringBuilder();
+		var sb = GetTempStringBuilder();
 		sb.Append($"BNK{bplcon3 >> 13} ");
 		sb.Append($"PF2O{(bplcon3 >> 10) & 7} ");
 		sb.Append($"SPRRES{(bplcon3 >> 6) & 3} ");
@@ -323,7 +337,7 @@ public class ChipsetDebugger : IChipsetDebugger
 	private string Bplcon4()
 	{
 		uint bplcon4 = chipRegs.DebugChipsetRead(ChipRegs.BPLCON4, Size.Word);
-		var sb = GetStringBuilder();
+		var sb = GetTempStringBuilder();
 		sb.Append($"BPLAM{bplcon4 >> 8:X2} ");
 		sb.Append($"ESPRM{(bplcon4 >> 4) & 15:X2} ");
 		sb.Append($"OSPRM{bplcon4 & 15:X2} ");
@@ -332,6 +346,8 @@ public class ChipsetDebugger : IChipsetDebugger
 
 	private void DebugPalette()
 	{
+		return;
+
 		int sx = 5;
 		int sy = 5;
 
