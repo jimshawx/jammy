@@ -93,12 +93,6 @@ namespace Jammy.Core.Types.Types
 	{
 		private readonly DMAEntry[] dmadebug = new DMAEntry[226 * 313+1];
 
-		//public DMADebug()
-		//{
-		//	for (int i  = 0; i < dmadebug.Length; i++)
-		//		dmadebug[i] = new DMAEntry();
-		//}
-
 		public DMAActivity this[uint i, uint j]
 		{
 			set
