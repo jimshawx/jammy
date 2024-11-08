@@ -1,8 +1,11 @@
 ﻿using Jammy.Core.Debug;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Drawing;
+using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -11,7 +14,8 @@ namespace Jammy.Main
 	public class DMAExplorer
 	{
 		private Form form;
-		private const int WW = 5;
+		private PictureBox pic;
+		private const int WW = 10;
 		private const int HH = 5;
 		private const int NX = 226;
 		private const int NY = 313;
@@ -35,11 +39,11 @@ namespace Jammy.Main
 				form = new Form { Name = "DMA", Text = "DMA", ControlBox = true, FormBorderStyle = FormBorderStyle.SizableToolWindow, MinimizeBox = true, MaximizeBox = true };
 				form.ClientSize = new System.Drawing.Size(NX * WW, NY * HH);
 				form.MaximumSize = form.Size;
-				var pic = new PictureBox { Dock = DockStyle.Fill };
-				pic.Paint += Form_Paint;
+				pic = new PictureBox { Dock = DockStyle.Fill };
+				pic.Controls.Add(textBox);
+				pic.Paint += Repaint;
+				pic.MouseMove += MouseMove;
 				form.Controls.Add(pic);
-
-				form.MouseMove += MouseMove;
 
 				if (form.Handle == IntPtr.Zero)
 					throw new ApplicationException();
@@ -48,6 +52,8 @@ namespace Jammy.Main
 
 				form.Show();
 
+				new Thread(()=>{for(;;){form.Invoke(()=>form.Refresh()); Thread.Sleep(33); }}).Start();
+
 				Application.Run(form);
 			});
 			t.SetApartmentState(ApartmentState.STA);
@@ -55,11 +61,50 @@ namespace Jammy.Main
 			ss.Wait();
 		}
 
+		private int selectX=-1, selectY=-1;
+		private Control textBox = new TextBox { Multiline = true, ReadOnly = true, Width = 200, Height = 200, Enabled = false, Font = new Font(FontFamily.GenericMonospace, 6), Visible = false };
+		private StringBuilder sb = new StringBuilder();
 		private void MouseMove(object sender, MouseEventArgs e)
 		{
+			var loc = e.Location;//form.PointToClient(e.Location);
+			selectX = loc.X / WW;
+			selectY = loc.Y / HH;
 			
-		}
+			if (selectX < 0 || selectY < 0) return;
+			if (selectX >= NX) return;
+			if (selectY >= NY) return;
 
+			ref var d = ref dbg[selectX+NX*selectY];
+			sb.Clear();
+			sb.AppendLine($"   Type: {d.Type}");
+			if (d.Type != DMAActivityType.None)
+			{
+				if (d.Type == DMAActivityType.WriteReg)
+					sb.AppendLine($"    Reg: {ChipRegs.Name(d.ChipReg)} {d.ChipReg:X6}");
+
+				if (d.Type != DMAActivityType.Consume)
+				{ 
+					sb.AppendLine($"Address: {d.Address:X8}");
+					sb.AppendLine($"   Size: {d.Size}");
+				}
+				sb.AppendLine($"    Pri: {d.Priority}");
+
+				if (d.Type != DMAActivityType.Consume)
+				{
+					if (d.Size == Core.Types.Types.Size.Long)
+						sb.AppendLine($"  Value: {d.Value:X8} {d.Value.ToBin(32)} {d.Value}");
+					if (d.Size == Core.Types.Types.Size.Word)
+						sb.AppendLine($"  Value: {d.Value:X4} {d.Value.ToBin(16)} {(short)d.Value}");
+					if (d.Size == Core.Types.Types.Size.Byte)
+						sb.AppendLine($"  Value: {d.Value:X2} {d.Value.ToBin(8)} {(sbyte)d.Value}");
+				}
+			}
+
+			textBox.Text = sb.ToString();
+			textBox.Left = selectX * WW;
+			textBox.Top = selectY * HH;
+			textBox.Visible = true;
+		}
 
 		private readonly Brush [] dmacols =
 		{
@@ -68,10 +113,28 @@ namespace Jammy.Main
 			new SolidBrush(Color.White),//Write
 			new SolidBrush(Color.Pink),//WriteReg
 			new SolidBrush(Color.Teal),//Consume
-			new SolidBrush(Color.Olive)//CPU
+			new SolidBrush(Color.Green)//CPU
 		};
 
-		private void Form_Paint(object sender, PaintEventArgs e)
+		private readonly Brush[] pricols =
+		{
+			new SolidBrush(Color.Cyan),//AUD0EN
+			new SolidBrush(Color.Cyan),//AUD1EN
+			new SolidBrush(Color.Cyan),//AUD2EN
+			new SolidBrush(Color.Cyan),//AUD3EN
+			new SolidBrush(Color.Teal),//DSKEN
+			new SolidBrush(Color.Green),//SPREN
+			new SolidBrush(Color.Blue),//BLTEN
+			new SolidBrush(Color.Red),//COPEN
+			new SolidBrush(Color.Orange),//BPLEN
+			new SolidBrush(Color.DarkGoldenrod),//DMAEN aka Refresh
+		};
+
+		private readonly Brush black = new SolidBrush(Color.Black);
+		private readonly Brush white = new SolidBrush(Color.White);
+		private readonly Brush grey = new SolidBrush(Color.Gray);
+
+		private void Repaint(object sender, PaintEventArgs e)
 		{
 			var r = new Rectangle();
 			r.Width = WW;
@@ -83,9 +146,18 @@ namespace Jammy.Main
 				{
 					r.X = x*WW;
 					var d = dbg[x+y*NX];
-					e.Graphics.FillRectangle(dmacols[(int)d.Type], r);
+					//e.Graphics.FillRectangle(dmacols[(int)d.Type], r);
+					if (d.Type == DMAActivityType.None)
+						e.Graphics.FillRectangle(black, r);
+					//else if (d.Type == DMAActivityType.Consume)
+					//	e.Graphics.FillRectangle(grey, r);
+					else if (d.Type == DMAActivityType.CPU)
+						e.Graphics.FillRectangle(white, r);
+					else
+						e.Graphics.FillRectangle(pricols[(int)Math.Log2((int)d.Priority)], r);
 				}
 			}
+			if (selectX < 0 || selectY < 0) return;
 		}
 	}
 }
