@@ -35,11 +35,16 @@ namespace Jammy.Core
 			gayleInterruptLevel = 0;
 		}
 
+		//in chipset clocks
+		//private const int PAULA_INTERRUPT_LATENCY = 20;
+		//minimum value
+		private const int PAULA_INTERRUPT_LATENCY = 1;
+
 		private int intreqPending = 0;
 		public void Emulate()
 		{
 			q.Enqueue(paulaInterruptLevel);
-			if (q.Count == 20)
+			if (q.Count == PAULA_INTERRUPT_LATENCY)
 				paulaInterruptLevelLagged = (uint)q.Dequeue();
 
 			//if (intreqPending > 0)
