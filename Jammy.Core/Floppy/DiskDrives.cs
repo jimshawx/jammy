@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using Jammy.Core.Custom;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
@@ -9,6 +6,8 @@ using Jammy.Extensions.Extensions;
 using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -43,7 +42,7 @@ namespace Jammy.Core.Floppy
 	public class DiskDrives : IDiskDrives
 	{
 		//300rpm = 5Hz = 0.2s = @7.09MHz, that's 1_418_000
-		private const int INDEX_INTERRUPT_RATE = 1_418_000;
+		private const int INDEX_INTERRUPT_RATE = 1_418_000/2;//these should be chipset clocks
 
 		private readonly IMemoryMappedDevice memory;
 		private ICIABEven ciab { get { return (ICIABEven)ServiceProviderFactory.ServiceProvider.GetService(typeof(ICIABEven)); } }
@@ -197,13 +196,13 @@ namespace Jammy.Core.Floppy
 
 			switch (address)
 			{
-
 				case ChipRegs.DSKDATR: value = dskdatr; break;
 				case ChipRegs.DSKBYTR: value = dskbytr; dskbytr = 0; break;
 				case ChipRegs.ADKCONR: value = adkcon&0x7f00; break;
 			}
 
-			//logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
+			if (verbose)
+				logger.LogTrace($"R {ChipRegs.Name(address)} {value:X4} @{insaddr:X8}");
 
 			return (ushort)value;
 		}
@@ -334,8 +333,8 @@ namespace Jammy.Core.Floppy
 					}
 
 					//this is far too fast, try triggering an interrupt later (should actually be one scanline per 3 words read)
-					//interrupt.AssertInterrupt(Interrupt.DSKBLK);
-					diskInterruptPending = 10000;
+					//interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
+					diskInterruptPending = (227 * (int)dsklen)/3;
 					break;
 
 				case ChipRegs.DSKDAT:
@@ -459,7 +458,7 @@ namespace Jammy.Core.Floppy
 							{
 								drive[i].track--;
 								//drive[i].state = DriveState.Track0NotReached;
-								pra |= PRA.DSKTRACK0;
+									pra |= PRA.DSKTRACK0;
 							}
 						}
 						else
