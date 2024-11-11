@@ -256,6 +256,8 @@ namespace Jammy.Core.Custom
 				}
 				else
 				{
+					status = CopperStatus.RunningWord1;
+
 					//SKIP
 					uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.HorizontalPos & 0xff);
 					coppos &= waitMask;
@@ -265,8 +267,8 @@ namespace Jammy.Core.Custom
 						//todo: this isn't what happens, the next instruction is fetched, but ignored
 						//https://eab.abime.net/showpost.php?p=206242&postcount=1
 
-						//copPC += 4;
-						nextMOVEisNOOP = true;
+						copPC += 4;
+						//nextMOVEisNOOP = true;
 					}
 				}
 			}
