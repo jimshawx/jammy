@@ -175,6 +175,10 @@ namespace Jammy.Core.Custom
 				{
 					regs[reg] = blitter.Read(insaddr, address);
 				}
+				else if (address == ChipRegs.COPJMP1 || address == ChipRegs.COPJMP2)
+				{
+					regs[reg] = copper.Read(insaddr, address);
+				}
 				else if (address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR)
 				{
 					regs[reg] = diskDrives.Read(insaddr, address);
