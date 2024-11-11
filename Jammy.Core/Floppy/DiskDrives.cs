@@ -49,6 +49,7 @@ namespace Jammy.Core.Floppy
 
 		private readonly IInterrupt interrupt;
 		private readonly IEmulationWindow window;
+		private IDMA dma;
 		private readonly ILogger logger;
 
 		private readonly MFM mfmEncoder;
@@ -110,6 +111,11 @@ namespace Jammy.Core.Floppy
 				for (int i = 0; i < settings.Value.FloppyCount; i++)
 					drive[i].attached = true;
 			}
+		}
+
+		public void Init(IDMA dma)
+		{
+			this.dma = dma;
 		}
 
 		public enum DriveState
@@ -290,6 +296,19 @@ namespace Jammy.Core.Floppy
 					if (upcomingDiskDMA != dsklen)
 					{
 						upcomingDiskDMA = -1;
+						break;
+					}
+
+					if (!dma.IsDMAEnabled(DMA.DSKEN))
+						logger.LogTrace("Disk DMA is OFF in DMACON");
+
+					if ((dsklen & (1<<15))==0)
+						logger.LogTrace("DSKLEN Secondary DMAEN not set");
+
+					if ((dsklen & (1<<14))!=0)
+					{ 
+						logger.LogTrace("Disk Write Not Supported");
+						interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
 						break;
 					}
 
