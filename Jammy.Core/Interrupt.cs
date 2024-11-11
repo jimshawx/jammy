@@ -36,9 +36,9 @@ namespace Jammy.Core
 		}
 
 		//in chipset clocks
-		//private const int PAULA_INTERRUPT_LATENCY = 20;
+		private const int PAULA_INTERRUPT_LATENCY = 2;
 		//minimum value
-		private const int PAULA_INTERRUPT_LATENCY = 1;
+		//private const int PAULA_INTERRUPT_LATENCY = 1;
 
 		private int intreqPending = 0;
 		public void Emulate()
