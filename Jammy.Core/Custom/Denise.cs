@@ -535,6 +535,9 @@ public class Denise : IDenise
 	private void UpdateBPLCON0()
 	{
 		planes = (bplcon0 >> 12) & 7;
+
+		//logger.LogTrace($"D BPLCON0 {bplcon0:X4} {planes} {clock.TimeStamp()}");
+
 		if (settings.ChipSet == ChipSet.AGA)
 		{
 			if (planes == 0 && (bplcon0 & (1 << 4)) != 0)
@@ -708,7 +711,7 @@ public class Denise : IDenise
 	{
 		switch (address)
 		{
-			case ChipRegs.BPLCON0: bplcon0 = value; UpdateBPLCON0(); break;
+			case ChipRegs.BPLCON0: bplcon0 = value; logger.LogTrace($"D BPLCON0 {bplcon0:X4} {planes} {insaddr:X8} {clock.TimeStamp()}"); UpdateBPLCON0(); break;
 			case ChipRegs.BPLCON1: bplcon1 = value; break;
 			case ChipRegs.BPLCON2: bplcon2 = value; UpdateBPLCON2(); break;
 			case ChipRegs.BPLCON3: bplcon3 = value; break;
