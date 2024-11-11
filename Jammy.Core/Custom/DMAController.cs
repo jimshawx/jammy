@@ -20,17 +20,20 @@ public class DMAController : IDMA
 	private readonly IChipRAM memory;
 	private readonly IAudio audio;
 	private readonly IChips custom;
+	private readonly IChipsetClock chipsetClock;
 	private readonly ILogger<DMAController> logger;
 	private readonly DMAActivity[] activities;
 
 	private volatile int cpuMemTick;
 
 	public DMAController(IChipRAM memory, IAudio audio, IChips custom,
+		IChipsetClock chipsetClock,
 		IChipsetDebugger debugger, ILogger<DMAController> logger)
 	{
 		this.memory = memory;
 		this.audio = audio;
 		this.custom = custom;
+		this.chipsetClock = chipsetClock;
 		this.logger = logger;
 		this.debugger = debugger;
 
@@ -281,9 +284,9 @@ public class DMAController : IDMA
 				dmacon &= (ushort)(~value | 0x6000); //can't clear BBUSY or BZERO
 
 			if ((dmacon & (int)DMA.COPEN) != (p & (int)DMA.COPEN))
-				logger.LogTrace($"COPEN {((dmacon & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8}");
+				logger.LogTrace($"COPEN {((dmacon & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock.TimeStamp()}");
 			if ((dmacon & (int)DMA.BLTEN) != (p & (int)DMA.BLTEN))
-				logger.LogTrace($"BLTEN {((dmacon & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8}");
+				logger.LogTrace($"BLTEN {((dmacon & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock.TimeStamp()}");
 
 			audio.WriteDMACON((ushort)(dmacon & 0x7fff));
 		}

@@ -811,6 +811,7 @@ namespace Jammy.Main
 			// 
 			// btnDMAExplorer
 			// 
+			btnDMAExplorer.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnDMAExplorer.Location = new System.Drawing.Point(2467, 1144);
 			btnDMAExplorer.Name = "btnDMAExplorer";
 			btnDMAExplorer.Size = new System.Drawing.Size(173, 46);

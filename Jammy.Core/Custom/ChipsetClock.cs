@@ -230,4 +230,9 @@ public class ChipsetClock : IChipsetClock
 
 		PersistenceManager.FromJObject(this, obj);
 	}
+
+	public string TimeStamp()
+	{
+		return $"{FrameCount} {VerticalPos} {HorizontalPos} {Tick}";
+	}
 }

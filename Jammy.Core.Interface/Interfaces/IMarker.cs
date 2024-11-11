@@ -73,6 +73,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void RemoveDisk(int df);
 		void ChangeDisk(int df, string fileName);
 		void ReadyDisk();
+		void Init(IDMA dma);
 	}
 	public interface IKeyboard : IEmulate
 	{
@@ -242,6 +243,8 @@ namespace Jammy.Core.Interface.Interfaces
 		void Resume();
 		void AllThreadsFinished();
 		uint LongFrame();
+
+		string TimeStamp();
 	}
 
 	public interface IPSUClock : IEmulate

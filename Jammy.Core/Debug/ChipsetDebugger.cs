@@ -375,6 +375,7 @@ public class ChipsetDebugger : IChipsetDebugger
 	{
 		if (dbugLine < 0) return;
 		if (dbugLine >= overlay.SCREEN_HEIGHT / 2) return;
+		screen = screen ?? window.GetFramebuffer();
 		for (int x = 0; x < overlay.SCREEN_WIDTH; x += 4)
 			screen[x + dbugLine * overlay.SCREEN_WIDTH * 2] ^= 0xffffff;
 	}
