@@ -128,7 +128,7 @@ namespace Jammy.Core.Custom
 				copPC = cop2lc;
 			//if (copPC != lastcoppc)
 			//{
-			//	logger.LogTrace($"N {copjmp1}{copjmp2} {copPC:X6} {cop1lc:X6} {cop2lc:X6}");
+			//	logger.LogTrace($"N {copjmp1}{copjmp2} {copPC:X6} {cop1lc:X6} {cop2lc:X6} {clock.TimeStamp()}");
 			//}
 			copjmp1 = copjmp2 = 0;
 			lastcoppc = copPC;
@@ -327,8 +327,8 @@ namespace Jammy.Core.Custom
 		{
 			switch (address)
 			{
-				case ChipRegs.COPJMP1: copjmp1 = 1; logger.LogTrace($"R {insaddr:X6} COPJMP1"); break;
-				case ChipRegs.COPJMP2: copjmp2 = 1; logger.LogTrace($"R {insaddr:X6} COPJMP2"); break;
+				case ChipRegs.COPJMP1: copjmp1 = 1; /*logger.LogTrace($"R {insaddr:X8} COPJMP1 {cop1lc:X6} {clock.TimeStamp()}");*/ break;
+				case ChipRegs.COPJMP2: copjmp2 = 1; /*logger.LogTrace($"R {insaddr:X8} COPJMP2 {cop2lc:X6} {clock.TimeStamp()}");*/ break;
 			}
 			return 0;
 		}
@@ -357,8 +357,8 @@ namespace Jammy.Core.Custom
 		private void DebugCOP(int idx, string reg, uint insaddr, uint cop)
 		{
 			//if (cop != lastcop[idx])
-			//{ 
-			//	logger.LogTrace($"{reg} {insaddr:X6} {cop:X6}");
+			//{
+			//	logger.LogTrace($"{reg} {insaddr:X8} {cop:X6} {clock.TimeStamp()}");
 			//	lastcop[idx] = cop;
 			//}
 		}
@@ -371,15 +371,15 @@ namespace Jammy.Core.Custom
 				{
 					case ChipRegs.COPCON: copcon = value; break;
 					case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOP(1, "COP1LCH", insaddr, cop1lc); break;
-					case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOP(1, "COP1LL", insaddr, cop1lc); break;
+					case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOP(1, "COP1LCL", insaddr, cop1lc); break;
 					case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOP(2, "COP2LCH", insaddr, cop2lc); break;
 					case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOP(2, "COP2LCL", insaddr, cop2lc); break;
 					//case ChipRegs.COPJMP1: copjmp1 = value; copPC = cop1lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
 					//	break;
 					//case ChipRegs.COPJMP2: copjmp2 = value; copPC = cop2lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
 					//	break;
-					case ChipRegs.COPJMP1: copjmp1 = 1; /*logger.LogTrace($"{insaddr:X6} COPJMP1");*/ break;
-					case ChipRegs.COPJMP2: copjmp2 = 1; /*logger.LogTrace($"{insaddr:X6} COPJMP2");*/ break;
+					case ChipRegs.COPJMP1: copjmp1 = 1; /*logger.LogTrace($"W {insaddr:X8} COPJMP1 {cop1lc:X6} {clock.TimeStamp()}");*/ break;
+					case ChipRegs.COPJMP2: copjmp2 = 1; /*logger.LogTrace($"W {insaddr:X8} COPJMP2 {cop2lc:X6} {clock.TimeStamp()}");*/ break;
 					case ChipRegs.COPINS: copins = value; break;
 				}
 			}
