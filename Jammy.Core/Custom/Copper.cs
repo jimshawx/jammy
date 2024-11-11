@@ -267,8 +267,8 @@ namespace Jammy.Core.Custom
 						//todo: this isn't what happens, the next instruction is fetched, but ignored
 						//https://eab.abime.net/showpost.php?p=206242&postcount=1
 
-						copPC += 4;
-						//nextMOVEisNOOP = true;
+						//copPC += 4;
+						nextMOVEisNOOP = true;
 					}
 				}
 			}
