@@ -353,7 +353,7 @@ namespace Jammy.Core.Floppy
 
 					//this is far too fast, try triggering an interrupt later (should actually be one scanline per 3 words read)
 					//interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
-					diskInterruptPending = (227 * (int)dsklen)/3;
+					diskInterruptPending = (227 * (int)dsklen)/3/1000;
 					break;
 
 				case ChipRegs.DSKDAT:
