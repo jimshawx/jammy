@@ -9,7 +9,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
-    <PackageReference Include="SharpDX.XAudio2" Version="4.2.0" />
     <PackageReference Include="Vortice.XAudio2" Version="3.6.2" />
   </ItemGroup>
 

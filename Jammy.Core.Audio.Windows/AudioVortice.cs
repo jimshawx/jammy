@@ -388,8 +388,8 @@ namespace Jammy.Core.Audio.Windows
 				channels[i].xaudioVoice.Start();
 
 				channels[i].xaudioBuffer = new AudioBuffer[2];
-				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = SharpDX.Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
-				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = SharpDX.Utilities.AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
+				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
+				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
 				channels[i].xaudioCBuffer = new byte[BUFFER_SIZE];
 				channels[i].xaudioCIndex = 0;
 				channels[i].currentBuffer = 0;
@@ -405,6 +405,11 @@ namespace Jammy.Core.Audio.Windows
 
 				channels[i].xaudioVoice.SetOutputMatrix(null, channelDetails.InputChannels, masteringChannelDetails.InputChannels, outputMatrix);
 			}
+		}
+
+		private nint AllocateMemory(int size)
+		{
+			return Marshal.AllocHGlobal(size);
 		}
 
 		private void AudioMix()
