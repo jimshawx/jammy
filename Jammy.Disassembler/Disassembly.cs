@@ -97,6 +97,13 @@ namespace Jammy.Disassembler
 
 				var ade = new AddressEntry();
 				ade.Address = address;
+				
+				if (addressToLine.ContainsKey(address))
+				{
+					logger.LogTrace($"Address {address:X8} already has disassembly, skipping this block");
+					break;
+				}
+
 				addressToLine.Add(address, ade);
 
 				if (options.IncludeComments && headers.TryGetValue(address, out Header hdrs))
