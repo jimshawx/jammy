@@ -172,8 +172,8 @@ namespace Jammy.Core.EmulationWindow.DX
 				surface = device.CreateTexture2D(new Texture2DDescription
 				{
 					Format = Format.B8G8R8A8_UNorm,
-					Width = screenWidth ,
-					Height = screenHeight ,
+					Width = (uint)screenWidth,
+					Height = (uint)screenHeight ,
 					CPUAccessFlags = CpuAccessFlags.Write | CpuAccessFlags.Read,
 					MipLevels = 1,
 					ArraySize = 1,
@@ -190,8 +190,8 @@ namespace Jammy.Core.EmulationWindow.DX
 					emulation.Handle,
 					new SwapChainDescription1
 					{
-						Width = screenWidth,
-						Height = screenHeight,
+						Width = (uint)screenWidth,
+						Height = (uint)screenHeight,
 						AlphaMode = AlphaMode.Ignore,
 						BufferCount = 2,
 						BufferUsage = Usage.RenderTargetOutput ,
