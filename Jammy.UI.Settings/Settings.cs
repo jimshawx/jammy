@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using Jammy.Core.Types;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.ComponentModel;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -52,6 +53,7 @@ namespace Jammy.UI.Settings
 			LoadConfig("emulationSettings.json");
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public bool ConfigOK { get; set; }
 
 		private void btnQuickStart_Click(object sender, EventArgs e)

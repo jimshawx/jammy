@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -15,9 +16,13 @@ namespace Jammy.Main.Dialogs
 			InitializeComponent();
 		}
 
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public bool SearchBackwards { get; set; } = false;
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public string SearchText { get; set; } = null;
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public byte[] SearchSeq { get; set; } = null;
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public uint SearchValue { get; set; } = 0;
 
 		private void CollectResults()

@@ -3,6 +3,7 @@ using Jammy.Core.Types.Enums;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -25,6 +26,7 @@ namespace Jammy.Core.EmulationWindow.DIB
 			private const int WM_SETCURSOR = 0x0020;
 			private const int WM_WINDOWPOSCHANGED = 0x0047;
 
+			[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 			public Rectangle ScreenRect { get; private set; } = new Rectangle();
 
 			protected override CreateParams CreateParams
