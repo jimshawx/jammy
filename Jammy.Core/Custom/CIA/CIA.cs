@@ -295,7 +295,10 @@ namespace Jammy.Core.Custom.CIA
 					value &= ~(uint)CR.LOAD;
 
 					if (((value >> 5) & 1) != 0)
-						logger.LogTrace($"A inmode: {(value >> 5) & 1}");
+					{ 
+						logger.LogTrace($"A inmode: {(value >> 5) & 1} unsupported, stopping Timer A");
+						value &= ~(uint)CR.START;
+					}
 
 					regs[CIA.CRA] = (byte)value;
 					break;
@@ -306,7 +309,10 @@ namespace Jammy.Core.Custom.CIA
 					value &= ~(uint)CR.LOAD;
 
 					if (((value >> 5) & 3) != 0 && ((value >> 5) & 3) != 2)
-						logger.LogTrace($"B inmode: {(value >> 5) & 3}");
+					{ 
+						logger.LogTrace($"B inmode: {(value >> 5) & 3} unsupported, stopping Timer B");
+						value &= ~(uint)CR.START;
+					}
 
 					regs[CIA.CRB] = (byte)value;
 					break;
