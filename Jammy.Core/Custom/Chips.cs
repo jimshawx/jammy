@@ -358,12 +358,15 @@ namespace Jammy.Core.Custom
 				{
 					/* can't write here on AGA */
 				}
+				else if (address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR)
+				{
+					/* can't write here */
+				}
 				else if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
 				    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.BPL8PTL) ||
 				    address == ChipRegs.BPL1MOD || address == ChipRegs.BPL2MOD ||
 				    (address >= ChipRegs.BPL1DAT && address <= ChipRegs.SPR7DATB) ||
-				    address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW ||
-				    address == ChipRegs.VHPOSW
+				     address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
 				    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL
 				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
 				    || address == ChipRegs.BEAMCON0)

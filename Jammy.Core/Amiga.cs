@@ -221,6 +221,8 @@ namespace Jammy.Core
 				//and every time round this RunEmulations loop is on of these ticks.
 				//the CPU is running at twice that rate ~7.08MHz
 
+				agnus.GetRGAReadWriteStats(out chipRAMReads, out chipRAMWrites, out trapdoorReads, out trapdoorWrites, out chipsetReads, out chipsetWrites);
+
 				totalCycles = 0;
 				//for (int i = 0; i < 2; i++)
 				{ 
@@ -235,17 +237,18 @@ namespace Jammy.Core
 
 				agnus.GetRGAReadWriteStats(out nchipRAMReads, out nchipRAMWrites, out ntrapdoorReads, out ntrapdoorWrites, out nchipsetReads, out nchipsetWrites);
 
-				dchipRAMReads = nchipRAMReads - chipRAMReads; chipRAMReads = nchipRAMReads;
-				dchipRAMWrites = nchipRAMWrites - chipRAMWrites; chipRAMWrites = nchipRAMWrites;
-				dtrapdoorReads = ntrapdoorReads - trapdoorReads; trapdoorReads = ntrapdoorReads;
-				dtrapdoorWrites = ntrapdoorWrites - trapdoorWrites; trapdoorWrites = ntrapdoorWrites;
-				dchipsetReads = nchipsetReads - chipsetReads; chipsetReads = nchipsetReads;
-				dchipsetWrites = nchipsetWrites - chipsetWrites; chipsetWrites = nchipsetWrites;
+				dchipRAMReads = nchipRAMReads - chipRAMReads;
+				dchipRAMWrites = nchipRAMWrites - chipRAMWrites;
+				dtrapdoorReads = ntrapdoorReads - trapdoorReads;
+				dtrapdoorWrites = ntrapdoorWrites - trapdoorWrites;
+				dchipsetReads = nchipsetReads - chipsetReads;
+				dchipsetWrites = nchipsetWrites - chipsetWrites;
 
 				//how many chip bus slots did that use?
 				totalWaits = dchipRAMReads + dchipRAMWrites + dtrapdoorReads + dtrapdoorWrites + dchipsetReads + dchipsetWrites;
 			}
-			else if (totalWaits > 0)
+			
+			if (totalWaits > 0)
 			{
 				//set waiting for a DMA slot
 				dma.SetCPUWaitingForDMA();
