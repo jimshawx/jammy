@@ -400,7 +400,7 @@ namespace Jammy.Core.Custom
 				{
 					/* can't write here */
 				}
-				else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
+				else if (address == ChipRegs.DSKSYNC
 				         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL ||
 				         address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT)
 				{

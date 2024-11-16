@@ -202,8 +202,8 @@ namespace Jammy.Core.Floppy
 
 			switch (address)
 			{
-				case ChipRegs.DSKDATR: value = dskdatr; break;
-				case ChipRegs.DSKBYTR: value = dskbytr; dskbytr = 0; break;
+				case ChipRegs.DSKDATR: logger.LogTrace("R DSKDATR not implemented"); value = dskdat; break;
+				case ChipRegs.DSKBYTR: logger.LogTrace("R DSKBYTR not implemented"); value = dskbytr; dskbytr = 0; break;
 				case ChipRegs.ADKCONR: value = adkcon&0x7f00; break;
 			}
 
@@ -220,7 +220,7 @@ namespace Jammy.Core.Floppy
 			switch (address)
 			{
 				case ChipRegs.DSKSYNC: value = dsksync; break;
-				case ChipRegs.DSKDATR: value = dskdatr; break;
+				case ChipRegs.DSKDATR: value = dskdat; break;
 				case ChipRegs.DSKBYTR: value = dskbytr; break;
 				case ChipRegs.DSKPTH: value = dskpt >> 16; break;
 				case ChipRegs.DSKPTL: value = dskpt & 0xffff; break;
@@ -233,7 +233,6 @@ namespace Jammy.Core.Floppy
 		}
 
 		private uint dsksync;
-		private uint dskdatr;
 		private uint dskbytr;
 		private uint dskpt;
 		private uint dsklen;
@@ -250,12 +249,6 @@ namespace Jammy.Core.Floppy
 			{
 				case ChipRegs.DSKSYNC:
 					dsksync = value;
-					break;
-				case ChipRegs.DSKDATR:
-					dskdatr = value;
-					break;
-				case ChipRegs.DSKBYTR:
-					dskbytr = value;
 					break;
 				case ChipRegs.DSKPTH:
 					dskpt = (dskpt & 0x0000ffff) | ((uint) value << 16);
@@ -353,10 +346,11 @@ namespace Jammy.Core.Floppy
 
 					//this is far too fast, try triggering an interrupt later (should actually be one scanline per 3 words read)
 					//interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
-					diskInterruptPending = (227 * (int)dsklen)/3/1000;
+					diskInterruptPending = (227 * (int)dsklen)/3;
 					break;
 
 				case ChipRegs.DSKDAT:
+					logger.LogTrace("W DSKDAT not implemented");
 					dskdat = value;
 					break;
 				case ChipRegs.ADKCON:
