@@ -35,7 +35,7 @@ namespace Jammy.Core
 			gayleInterruptLevel = 0;
 		}
 
-		//in chipset clocks
+		//in chipset clocks (Blitter Miracle wants this > 1)
 		private const int PAULA_INTERRUPT_LATENCY = 2;
 		//minimum value
 		//private const int PAULA_INTERRUPT_LATENCY = 1;
