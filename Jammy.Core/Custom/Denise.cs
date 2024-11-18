@@ -90,7 +90,7 @@ public class Denise : IDenise
 		if ((clockState&ChipsetClockState.StartOfFrame)!=0)
 			RunVerticalBlankStart();
 
-		if ((clockState & ChipsetClockState.StartOfLine)!=0)
+		if ((clockState & ChipsetClockState.StartOfLine) != 0) 
 			StartDeniseLine();
 
 		RunDeniseTick();
@@ -526,10 +526,10 @@ public class Denise : IDenise
 
 	private void StartDeniseLine()
 	{
+		dptr = (int)(clock.VerticalPos * SCREEN_WIDTH * 2);
 		lineStart = dptr;
 
 		FirstPixel();
-		//lineState = CopperLineState.LineStart;
 	}
 
 	private void UpdateBPLCON0()
