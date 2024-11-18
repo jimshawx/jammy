@@ -346,8 +346,8 @@ noBitplaneDMA:
 
 	public void FlushBitplanes()
 	{
-		if (plane == 0 && lineState == DMALineState.Fetching)
-			denise.WriteBitplanes(bpldat);
+		//if (plane == 0 && lineState == DMALineState.Fetching)
+		//	denise.WriteBitplanes(bpldat);
 
 		//if the sprite horiz position matches, clock the sprite data in
 		for (int s = 0; s < 8; s++)
@@ -706,7 +706,7 @@ noBitplaneDMA:
 
 			case ChipRegs.BPLCON0: bplcon0 = value; UpdateBPLCON0(); UpdateDDF(); break;
 
-			case ChipRegs.BPL1DAT: bpldat[0] = value; break;
+			case ChipRegs.BPL1DAT: bpldat[0] = value; denise.WriteBitplanes(bpldat); break;
 			case ChipRegs.BPL2DAT: bpldat[1] = value; break;
 			case ChipRegs.BPL3DAT: bpldat[2] = value; break;
 			case ChipRegs.BPL4DAT: bpldat[3] = value; break;
