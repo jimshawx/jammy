@@ -17,7 +17,7 @@ namespace Jammy.Main
 		private PictureBox pic;
 		private const int WW = 10;
 		private const int HH = 5;
-		private const int NX = 226;
+		private const int NX = 227;
 		private const int NY = 313;
 
 		//private IChipsetDebugger debugger;
@@ -52,7 +52,7 @@ namespace Jammy.Main
 
 				form.Show();
 
-				new Thread(()=>{for(;;){form.Invoke(()=>form.Refresh()); Thread.Sleep(33); }}).Start();
+				new Thread(()=>{for(;;){ if (form.IsDisposed) break; form.Invoke(()=>form.Refresh()); Thread.Sleep(33); }}).Start();
 
 				Application.Run(form);
 			});
@@ -77,7 +77,7 @@ namespace Jammy.Main
 			ref var d = ref dbg[selectX+NX*selectY];
 			sb.Clear();
 			sb.AppendLine($"   Type: {d.Type}");
-			if (d.Type != DMAActivityType.None)
+			if (d.Type != DMAActivityType.None && d.Type != DMAActivityType.CPU)
 			{
 				if (d.Type == DMAActivityType.WriteReg)
 					sb.AppendLine($"    Reg: {ChipRegs.Name(d.ChipReg)} {d.ChipReg:X6}");
