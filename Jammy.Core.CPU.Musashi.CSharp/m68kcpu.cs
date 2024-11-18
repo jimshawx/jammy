@@ -984,7 +984,7 @@ public static partial class M68KCPU
 			m68ki_check_bus_error_trap();
 
 			/* Main loop.  Keep going until we run out of clock cycles */
-			do
+			while (GET_CYCLES() > 0)
 			{
 				int i;
 				/* Set tracing accodring to T1. (T0 is done inside instruction) */
@@ -1013,7 +1013,7 @@ public static partial class M68KCPU
 
 				/* Trace m68k_exception, if necessary */
 				m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
-			} while (GET_CYCLES() > 0);
+			} 
 
 			/* set previous PC to current PC for the next entry into the loop */
 			REG_PPC = REG_PC;
