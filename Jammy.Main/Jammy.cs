@@ -199,12 +199,18 @@ namespace Jammy.Main
 			UpdateDiskLight();
 			//UpdateExecBase();
 			UpdateCopper();
+			UpdateClock();
 			UI.UI.IsDirty = false;
 		}
 
 		private void UpdateCopper()
 		{
 			txtCopper.Text = debugger.GetCopperDisassembly();
+		}
+
+		private void UpdateClock()
+		{
+			tbClock.Text = debugger.GetChipClock().ToString();
 		}
 
 		private void UpdateRegs()

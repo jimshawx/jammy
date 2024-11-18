@@ -22,6 +22,7 @@ namespace Jammy.Debugger
 		private readonly IBreakpointCollection breakpoints;
 		private readonly IKickstartROM kickstart;
 		private readonly ICopper copper;
+		private readonly IChipsetClock clock;
 		private readonly IDebugMemoryMapper memory;
 		private readonly ICPU cpu;
 		private readonly IChips custom;
@@ -40,13 +41,14 @@ namespace Jammy.Debugger
 
 		public Debugger(IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
-			IBreakpointCollection breakpoints, IKickstartROM kickstart, ICopper copper,
+			IBreakpointCollection breakpoints, IKickstartROM kickstart, ICopper copper, IChipsetClock clock,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser, IAnalysis analysis,
 			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases)
 		{
 			this.breakpoints = breakpoints;
 			this.kickstart = kickstart;
 			this.copper = copper;
+			this.clock = clock;
 			this.disassembly = disassembly;
 			this.tracer = tracer;
 			this.analyser = analyser;
@@ -416,6 +418,16 @@ namespace Jammy.Debugger
 		public void DumpBreakpoints()
 		{
 			breakpoints.DumpBreakpoints();
+		}
+
+		public ClockInfo GetChipClock()
+		{
+			var rv = new ClockInfo();
+			rv.Tick = clock.Tick;
+			rv.HorizontalPos = clock.HorizontalPos;
+			rv.VerticalPos = clock.VerticalPos;
+			rv.State = clock.ClockState;
+			return rv;
 		}
 	}
 }

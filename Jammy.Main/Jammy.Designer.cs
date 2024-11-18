@@ -96,6 +96,7 @@ namespace Jammy.Main
 			btnStringScan = new System.Windows.Forms.Button();
 			btnAnalyseFlow = new System.Windows.Forms.Button();
 			btnDMAExplorer = new System.Windows.Forms.Button();
+			tbClock = new System.Windows.Forms.TextBox();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -116,7 +117,6 @@ namespace Jammy.Main
 			lbRegisters.ColumnWidth = 85;
 			lbRegisters.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbRegisters.IntegralHeight = false;
-			lbRegisters.ItemHeight = 26;
 			lbRegisters.Location = new System.Drawing.Point(2012, 26);
 			lbRegisters.Margin = new System.Windows.Forms.Padding(6);
 			lbRegisters.MultiColumn = true;
@@ -240,7 +240,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 642);
+			txtMemory.Size = new System.Drawing.Size(1390, 627);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -451,7 +451,7 @@ namespace Jammy.Main
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(502, 987);
+			txtCopper.Size = new System.Drawing.Size(487, 987);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -546,13 +546,12 @@ namespace Jammy.Main
 			lbCallStack.ColumnWidth = 83;
 			lbCallStack.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbCallStack.IntegralHeight = false;
-			lbCallStack.ItemHeight = 26;
 			lbCallStack.Location = new System.Drawing.Point(2348, 26);
 			lbCallStack.Margin = new System.Windows.Forms.Padding(6);
 			lbCallStack.MultiColumn = true;
 			lbCallStack.Name = "lbCallStack";
 			lbCallStack.SelectionMode = System.Windows.Forms.SelectionMode.None;
-			lbCallStack.Size = new System.Drawing.Size(307, 503);
+			lbCallStack.Size = new System.Drawing.Size(328, 443);
 			lbCallStack.TabIndex = 35;
 			lbCallStack.MouseDoubleClick += lbCallStack_MouseDoubleClick;
 			// 
@@ -585,7 +584,6 @@ namespace Jammy.Main
 			lbCustom.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			lbCustom.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbCustom.FormattingEnabled = true;
-			lbCustom.ItemHeight = 26;
 			lbCustom.Location = new System.Drawing.Point(2348, 546);
 			lbCustom.Margin = new System.Windows.Forms.Padding(6);
 			lbCustom.Name = "lbCustom";
@@ -740,8 +738,7 @@ namespace Jammy.Main
 			lbIntvec.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
 			lbIntvec.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbIntvec.FormattingEnabled = true;
-			lbIntvec.ItemHeight = 26;
-			lbIntvec.Location = new System.Drawing.Point(-12, 1007);
+			lbIntvec.Location = new System.Drawing.Point(-27, 1007);
 			lbIntvec.Name = "lbIntvec";
 			lbIntvec.Size = new System.Drawing.Size(519, 238);
 			lbIntvec.TabIndex = 27;
@@ -820,11 +817,23 @@ namespace Jammy.Main
 			btnDMAExplorer.UseVisualStyleBackColor = true;
 			btnDMAExplorer.Click += btnDMAExplorer_Click;
 			// 
+			// tbClock
+			// 
+			tbClock.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			tbClock.BackColor = System.Drawing.SystemColors.Window;
+			tbClock.Location = new System.Drawing.Point(2348, 478);
+			tbClock.Multiline = true;
+			tbClock.Name = "tbClock";
+			tbClock.ReadOnly = true;
+			tbClock.Size = new System.Drawing.Size(328, 59);
+			tbClock.TabIndex = 56;
+			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2710, 1291);
+			Controls.Add(tbClock);
 			Controls.Add(btnDMAExplorer);
 			Controls.Add(btnAnalyseFlow);
 			Controls.Add(btnStringScan);
@@ -948,6 +957,7 @@ namespace Jammy.Main
 		private System.Windows.Forms.ToolStripMenuItem toolStripFind;
 		private System.Windows.Forms.ToolStripMenuItem toolStripFindNext;
 		private System.Windows.Forms.Button btnDMAExplorer;
+		private System.Windows.Forms.TextBox tbClock;
 	}
 }
 
