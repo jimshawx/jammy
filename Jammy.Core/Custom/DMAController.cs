@@ -69,11 +69,19 @@ public class DMAController : IDMA
 				if (activities[i].Type == DMAActivityType.None)
 				{
 					//if no DMA required, continue
+					continue;
 				}
 				else if ((activities[i].Priority & (DMA)dmacon) != 0)
 				{
 					//check this DMA channel is enabled and the DMA slot hasn't been taken
 					slotTaken = activities[i];
+
+					if ((DMASource)i == DMASource.Copper)
+					{
+						//copper can only use even-numbered slots
+						if ((chipsetClock.HorizontalPos & 1)!=0)
+							slotTaken = null;
+					}
 
 					if ((DMASource)i == DMASource.Blitter)
 					{
