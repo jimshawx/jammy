@@ -680,11 +680,12 @@ noBitplaneDMA:
 						value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC ? 0x0000 : 0x1000);
 						break; //OCS
 				}
-
+				//logger.LogTrace($"VPOSR v:{clock.VerticalPos} h:{clock.HorizontalPos} {value:X4} @ {insaddr:X6}");
 				break;
 
 			case ChipRegs.VHPOSR:
 				value = (ushort)((clock.VerticalPos << 8) | (clock.HorizontalPos & 0x00ff));
+				//logger.LogTrace($"VHPOSR v:{clock.VerticalPos} h:{clock.HorizontalPos} {value:X4} @ {insaddr:X6}");
 				break;
 		}
 

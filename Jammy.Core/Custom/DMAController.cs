@@ -78,7 +78,7 @@ public class DMAController : IDMA
 
 					if ((DMASource)i == DMASource.Copper)
 					{
-						//copper can only use even-numbered slots
+						//copper can only use odd-numbered slots
 						if ((chipsetClock.HorizontalPos & 1)!=0)
 							slotTaken = null;
 					}
@@ -107,7 +107,8 @@ public class DMAController : IDMA
 			}
 		}
 
-		if (slotTaken == null && activities[(int)DMASource.CPU].Type == DMAActivityType.CPU)
+		//cpu can only use even-numbered slots
+		if (slotTaken == null && activities[(int)DMASource.CPU].Type == DMAActivityType.CPU && (chipsetClock.HorizontalPos & 1) == 0)
 		{
 			//CPU memory access required
 			slotTaken = activities[(int)DMASource.CPU];
