@@ -240,7 +240,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 627);
+			txtMemory.Size = new System.Drawing.Size(1390, 622);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -451,7 +451,7 @@ namespace Jammy.Main
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(487, 987);
+			txtCopper.Size = new System.Drawing.Size(482, 987);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -738,7 +738,7 @@ namespace Jammy.Main
 			lbIntvec.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
 			lbIntvec.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbIntvec.FormattingEnabled = true;
-			lbIntvec.Location = new System.Drawing.Point(-27, 1007);
+			lbIntvec.Location = new System.Drawing.Point(-32, 1007);
 			lbIntvec.Name = "lbIntvec";
 			lbIntvec.Size = new System.Drawing.Size(519, 238);
 			lbIntvec.TabIndex = 27;
@@ -821,6 +821,7 @@ namespace Jammy.Main
 			// 
 			tbClock.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			tbClock.BackColor = System.Drawing.SystemColors.Window;
+			tbClock.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			tbClock.Location = new System.Drawing.Point(2348, 478);
 			tbClock.Multiline = true;
 			tbClock.Name = "tbClock";
