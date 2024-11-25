@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Xml.Serialization;
@@ -26,7 +27,16 @@ namespace Jammy.Core.Floppy
 				return;
 			}
 
-			data = File.ReadAllBytes(adfFileName);
+			try
+			{ 
+				data = File.ReadAllBytes(adfFileName);
+			}
+			catch (IOException)
+			{
+				//probably can't read the file because someone else is using it
+				data = null;
+				return;
+			}
 
 			//is it a zip file?
 			if (data.Length >= 4 && data[0] == 'P' && data[1] == 'K' && data[2] == 3 && data[3] == 4)
