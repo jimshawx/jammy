@@ -833,7 +833,7 @@ public class M68K
 				(strcmp(op.name, "or") == 0 && strcmp(op.spec_proc, "er") == 0) ||
 				(strcmp(op.name, "sub") == 0 && strcmp(op.spec_proc, "er") == 0) ||
 				strcmp(op.name, "suba") == 0))
-				return op.cycles[cpu_type] + g_ea_cycle_table[ea_mode][cpu_type][size] + 2;
+				return op.cycles[cpu_type] + g_ea_cycle_table[ea_mode][cpu_type][size] /*+ 2*/;
 
 			if (strcmp(op.name, "jmp") == 0)
 				return op.cycles[cpu_type] + g_jmp_cycle_table[ea_mode];
