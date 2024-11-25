@@ -267,7 +267,7 @@ namespace Jammy.Core.Custom.CIA
 
 				case CIA.TAHI:
 					timerAreset = (ushort)((timerAreset & 0x00ffu) | (value << 8));
-					if ((regs[CIA.CRA] & (uint)CR.START) == 0)
+					if (((regs[CIA.CRA] & (uint)CR.START) == 0) /*|| ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0)*/)
 					{
 						timerA = timerAreset;
 						regs[CIA.CRA] |= (uint)CR.START; //start the timer
@@ -279,7 +279,7 @@ namespace Jammy.Core.Custom.CIA
 
 				case CIA.TBHI:
 					timerBreset = (ushort)((timerBreset & 0x00ffu) | (value << 8));
-					if ((regs[CIA.CRB] & (uint)CR.START) == 0)
+					if (((regs[CIA.CRB] & (uint)CR.START) == 0) /*|| ((regs[CIA.CRB] & (uint)CR.RUNMODE) != 0)*/)
 					{
 						timerB = timerBreset;
 						regs[CIA.CRB] |= (uint)CR.START;//start the timer
@@ -433,7 +433,8 @@ namespace Jammy.Core.Custom.CIA
 			return address >> 16 == 0xbf;
 		}
 
-		readonly MemoryRange memoryRange = new MemoryRange(0xbf0000, 0x10000);
+		//readonly MemoryRange memoryRange = new MemoryRange(0xbf0000, 0x10000);
+		readonly MemoryRange memoryRange = new MemoryRange(0xa00000, 0x200000);
 		public List<MemoryRange> MappedRange()
 		{
 			return new List<MemoryRange> {memoryRange};
