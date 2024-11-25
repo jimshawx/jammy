@@ -17,12 +17,14 @@ public class ChipsetClock : IChipsetClock
 	private IDMA dma;
 	private readonly ILogger<ChipsetClock> logger;
 	private readonly uint displayScanlines;
+	private readonly uint displayHorizontal;
 
 	public ChipsetClock(IOptions<EmulationSettings> settings, ILogger<ChipsetClock> logger)
 	{
 		this.logger = logger;
 		displayScanlines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
-		
+		displayHorizontal = settings.Value.VideoFormat == VideoFormat.NTSC ? 228u : 227u;
+
 		//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
 		//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 	}
@@ -54,10 +56,10 @@ public class ChipsetClock : IChipsetClock
 		if (HorizontalPos == 0 && VerticalPos == 0)
 			ClockState |= ChipsetClockState.StartOfFrame;
 
-		if (HorizontalPos == 226)
+		if (HorizontalPos == displayHorizontal-1)
 			ClockState |= ChipsetClockState.EndOfLine;
 
-		if (HorizontalPos == 226 && VerticalPos == displayScanlines + LongFrame() - 1)
+		if (HorizontalPos == displayHorizontal-1 && VerticalPos == displayScanlines + LongFrame() - 1)
 		{
 			ClockState |= ChipsetClockState.EndOfFrame;
 			//logger.LogTrace($"{DateTime.Now:fff}");
@@ -91,7 +93,7 @@ public class ChipsetClock : IChipsetClock
 		// - execute DMA
 		// - tick the line clocks
 
-		dma.TriggerHighestPriorityDMA();
+		//dma.TriggerHighestPriorityDMA();
 
 		if ((ClockState&ChipsetClockState.EndOfLine)!=0)
 			HorizontalPos = 0;
@@ -233,6 +235,11 @@ public class ChipsetClock : IChipsetClock
 
 	public string TimeStamp()
 	{
-		return $"{FrameCount} {VerticalPos} {HorizontalPos} {Tick}";
+		return $"v:{VerticalPos} h:{HorizontalPos} t:{Tick} f:{FrameCount}";
+	}
+
+	public override string ToString()
+	{
+		return $"v:{VerticalPos} h:{HorizontalPos}";
 	}
 }

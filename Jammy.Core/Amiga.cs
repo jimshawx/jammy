@@ -221,6 +221,7 @@ namespace Jammy.Core
 				//and every time round this RunEmulations loop is on of these ticks.
 				//the CPU is running at twice that rate ~7.08MHz
 
+				agnus.Bookmark();
 				agnus.GetRGAReadWriteStats(out chipRAMReads, out chipRAMWrites, out trapdoorReads, out trapdoorWrites, out chipsetReads, out chipsetWrites);
 
 				totalCycles = 0;
@@ -229,6 +230,7 @@ namespace Jammy.Core
 					cpu.Emulate();
 					totalCycles += cpu.GetCycles();
 				}
+
 				//the last instruction took this many CPU cycles, we need to make sure we don't try to execute any more
 				//CPU instructions until that many cycles have gone past.
 				//since chipset cycles are two CPU cycles, then
@@ -247,26 +249,37 @@ namespace Jammy.Core
 				//how many chip bus slots did that use?
 				totalWaits = dchipRAMReads + dchipRAMWrites + dtrapdoorReads + dtrapdoorWrites + dchipsetReads + dchipsetWrites;
 			}
-			
+
+			//The CPU totalCycles time includes the 'usual' instruction fetch time.
+			//When running from Chip memory, that usual fetch coincides with an available DMA slot (x totalWaits)
+			//(usually an even-numbered one, but this is not essential).
+			//This gives the appearance of the CPU running at full speed. Only if there isn't a DMA slot
+			//available will the CPU slow down.
+			//NB. this code will only allocate even-numbered slots at the moment.
+			//If we assume that ordinarily the DMA slots needed will fall within the CPU instruction's clocks
+			//the idea is to allocate them while counting down the CPU clocks.
+			//If there are still any remaining once the CPU clocks are counted down, then that will be the delay.
+			//This isn't exactly how it works in reality, it's an approximation.
+
+			//set waiting for a DMA slot
 			if (totalWaits > 0)
-			{
-				//set waiting for a DMA slot
 				dma.SetCPUWaitingForDMA();
-			}
 
 			//use up a CPU cycle
-			if (totalCycles > 0) totalCycles--;
+			if (totalCycles > 0)
+				totalCycles--;
 
 			//dma.DebugExecuteAllDMAActivity();
 
-			//this will allocate the DMA slot
-			clock.AllThreadsFinished();
+			//allocate the DMA slot
+			dma.TriggerHighestPriorityDMA();
 
 			if (totalWaits > 0 && !dma.IsWaitingForDMA(DMASource.CPU))
 			{
 				//CPU DMA Slot was allocated
 				totalWaits--;
 			}
+			clock.AllThreadsFinished();
 
 			agnus.FlushBitplanes();
 		}

@@ -17,7 +17,7 @@ namespace Jammy.Main
 		private PictureBox pic;
 		private const int WW = 10;
 		private const int HH = 5;
-		private const int NX = 227;
+		private const int NX = 228;
 		private const int NY = 313;
 
 		//private IChipsetDebugger debugger;

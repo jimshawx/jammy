@@ -91,13 +91,13 @@ namespace Jammy.Core.Types.Types
 
 	public class DMADebug
 	{
-		private readonly DMAEntry[] dmadebug = new DMAEntry[227 * 313+1];
+		private readonly DMAEntry[] dmadebug = new DMAEntry[228 * 313];
 
 		public DMAActivity this[uint i, uint j]
 		{
 			set
 			{
-				ref var dbg = ref dmadebug[i + j * 227];
+				ref var dbg = ref dmadebug[i + j * 228];
 				if (value == null)
 				{
 					dbg.Type = DMAActivityType.None;

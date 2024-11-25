@@ -680,12 +680,12 @@ noBitplaneDMA:
 						value |= (ushort)(settings.VideoFormat == VideoFormat.NTSC ? 0x0000 : 0x1000);
 						break; //OCS
 				}
-				//logger.LogTrace($"VPOSR v:{clock.VerticalPos} h:{clock.HorizontalPos} {value:X4} @ {insaddr:X6}");
+				//logger.LogTrace($"VPOSR {clock} {value:X4} @ {insaddr:X6}");
 				break;
 
 			case ChipRegs.VHPOSR:
-				value = (ushort)((clock.VerticalPos << 8) | (clock.HorizontalPos & 0x00ff));
-				//logger.LogTrace($"VHPOSR v:{clock.VerticalPos} h:{clock.HorizontalPos} {value:X4} @ {insaddr:X6}");
+				value = (ushort)((clock.VerticalPos << 8) | ((clock.HorizontalPos+ReadsSinceBookmark()) & 0x00ff));
+				//logger.LogTrace($"VHPOSR {clock} {value:X4} @ {insaddr:X6}");
 				break;
 		}
 
@@ -880,6 +880,36 @@ noBitplaneDMA:
 		trapWrites = trapdoorWrites;
 		customReads = chipsetReads;
 		customWrites = chipsetWrites;
+	}
+
+	private ulong bmchipRAMReads = 0;
+	private ulong bmchipRAMWrites = 0;
+	private ulong bmtrapdoorReads = 0;
+	private ulong bmtrapdoorWrites = 0;
+	private ulong bmchipsetReads = 0;
+	private ulong bmchipsetWrites = 0;
+
+	public void Bookmark()
+	{
+		bmchipRAMReads = chipRAMReads;
+		bmchipRAMWrites = chipRAMWrites;
+		bmtrapdoorReads = trapdoorReads;
+		bmtrapdoorWrites = trapdoorWrites;
+		bmchipsetReads = chipsetReads;
+		bmchipsetWrites = chipsetWrites;
+	}
+
+	public ulong ReadsSinceBookmark()
+	{
+		return 0;
+		//ulong rv=
+		//chipRAMReads - bmchipRAMReads+
+		//trapdoorReads - bmtrapdoorReads+
+		//chipsetReads - bmchipsetReads;
+
+		//if (rv <= 1) return 0;
+		//rv-=1;
+		//return rv;
 	}
 
 	public uint Read(uint insaddr, uint address, Size size)
