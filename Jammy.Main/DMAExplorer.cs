@@ -19,13 +19,11 @@ namespace Jammy.Main
 		private const int HH = 5;
 		private const int NX = 228;
 		private const int NY = 313;
-
-		//private IChipsetDebugger debugger;
 		private ILogger logger;
 
 		private DMAEntry[] dbg;
 
-		public DMAExplorer(IChipsetDebugger debugger, ILogger logger)
+		public DMAExplorer(IChipsetDebugger debugger, ILogger<DMAExplorer> logger)
 		{
 			//this.debugger = debugger;
 			this.logger = logger;
@@ -52,7 +50,22 @@ namespace Jammy.Main
 
 				form.Show();
 
-				new Thread(()=>{for(;;){ if (form.IsDisposed) break; form.Invoke(()=>form.Refresh()); Thread.Sleep(33); }}).Start();
+				new Thread(() =>
+				{
+					try
+					{
+						for (;;)
+						{
+							form.Invoke(() => form.Refresh());
+							Thread.Sleep(33);
+						}
+					}
+					catch (ObjectDisposedException) { /* normal failure mode when closing */ }
+					catch (Exception ex) {
+						/* don't care, but something bad happened */
+						logger.LogTrace(ex.ToString());
+						}
+				}).Start();
 
 				Application.Run(form);
 			});

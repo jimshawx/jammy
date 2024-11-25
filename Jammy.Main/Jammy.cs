@@ -53,6 +53,7 @@ namespace Jammy.Main
 		private readonly IChipRAM chipRAM;
 		private readonly ILogger<GfxScan> gfxLogger;
 		private readonly ILogger<StringScan> stringLogger;
+		private readonly ILogger<DMAExplorer> dmaLogger;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
@@ -71,6 +72,7 @@ namespace Jammy.Main
 		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger, IAnalysis analysis,
 			IFlowAnalyser flowAnalyser, IGraph graph, IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
 			IChipRAM chipRAM, ILogger<GfxScan> gfxLogger, ILogger<StringScan> stringLogger, IMemoryMapper memoryMapper,
+			ILogger<DMAExplorer> dmaLogger,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -87,6 +89,7 @@ namespace Jammy.Main
 			this.chipRAM = chipRAM;
 			this.gfxLogger = gfxLogger;
 			this.stringLogger = stringLogger;
+			this.dmaLogger = dmaLogger;
 			this.memoryMapper = memoryMapper;
 			this.logger = logger;
 
@@ -1320,7 +1323,7 @@ namespace Jammy.Main
 		private void btnDMAExplorer_Click(object sender, EventArgs e)
 		{
 			Amiga.LockEmulation();
-			var x = new DMAExplorer(chipsetDebugger, logger);
+			var x = new DMAExplorer(chipsetDebugger, dmaLogger);
 			Amiga.UnlockEmulation();
 		}
 	}
