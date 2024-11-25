@@ -224,6 +224,11 @@ namespace Jammy.Tests
 				return cpu.GetRegs();
 			}
 
+			public uint GetCycles()
+			{
+				return cpu.GetCycles();
+			}
+
 			public void Write(uint address, ushort value)
 			{
 				memory.UnsafeWrite16(address, value);
@@ -401,15 +406,17 @@ namespace Jammy.Tests
 						ClassicAssert.IsFalse(r0.Compare(r1), "Test #{0} {1}\n{2}", i + 1, cpu0.Disassemble(pc), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
 						ClassicAssert.IsTrue(cpu0.GetMemory().SequenceEqual(cpu1.GetMemory()), $"Test {i + 1} Memory Contents Differ!\n{cpu0.Disassemble(pc)}\n{cpu0.GetMemory().DiffSummary(cpu1.GetMemory())}");
 					}
-
 					TestContext.WriteLine($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
+					uint c0 = cpu0.GetCycles();
+					uint c1 = cpu1.GetCycles();
+					if (c0 != c1) TestContext.WriteLine($"*** CYCLES DIFFER {c0} {c1}");
 				}
 				catch (AssertionException)
 				{
 					TestContext.WriteLine($"FAIL {ins:X4} {cpu0.Disassemble(pc)}");
 					Array.Copy(cpu0.GetMemory(), cpu1.GetMemory(), cpu0.GetMemory().Length);
 					failcount++;
-					break;
+					//break;
 				}
 			}
 			ClassicAssert.AreEqual(0, failcount, "Some instructions failed the test");
