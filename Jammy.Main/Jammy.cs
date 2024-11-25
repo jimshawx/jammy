@@ -50,6 +50,10 @@ namespace Jammy.Main
 		private readonly IGraph graph;
 		private readonly IChipsetDebugger chipsetDebugger;
 		private readonly IObjectMapper objectMapper;
+		private readonly IChipRAM chipRAM;
+		private readonly ILogger<GfxScan> gfxLogger;
+		private readonly ILogger<StringScan> stringLogger;
+		private readonly IMemoryMapper memoryMapper;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
@@ -66,6 +70,7 @@ namespace Jammy.Main
 
 		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger, IAnalysis analysis,
 			IFlowAnalyser flowAnalyser, IGraph graph, IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
+			IChipRAM chipRAM, ILogger<GfxScan> gfxLogger, ILogger<StringScan> stringLogger, IMemoryMapper memoryMapper,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -79,6 +84,10 @@ namespace Jammy.Main
 			this.graph = graph;
 			this.chipsetDebugger = chipsetDebugger;
 			this.objectMapper = objectMapper;
+			this.chipRAM = chipRAM;
+			this.gfxLogger = gfxLogger;
+			this.stringLogger = stringLogger;
+			this.memoryMapper = memoryMapper;
 			this.logger = logger;
 
 			InitializeComponent();
@@ -840,20 +849,14 @@ namespace Jammy.Main
 		private void btnGfxScan_Click(object sender, EventArgs e)
 		{
 			Amiga.LockEmulation();
-			//var gfxScan = new GfxScan(
-			//		ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<GfxScan>>(),
-			//		ServiceProviderFactory.ServiceProvider.GetRequiredService<IChipRAM>()
-			//	);
+			var gfxScan = new GfxScan(gfxLogger, chipRAM);
 			Amiga.UnlockEmulation();
 		}
 
 		private void btnStringScan_Click(object sender, EventArgs e)
 		{
 			Amiga.LockEmulation();
-			//var stringScan = new StringScan(
-			//		ServiceProviderFactory.ServiceProvider.GetRequiredService<ILogger<StringScan>>(),
-			//		ServiceProviderFactory.ServiceProvider.GetRequiredService<IMemoryMapper>()
-			//	);
+			var stringScan = new StringScan(stringLogger, memoryMapper);
 			Amiga.UnlockEmulation();
 		}
 
