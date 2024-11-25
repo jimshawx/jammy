@@ -5,7 +5,6 @@ using System.Text;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Interface;
 using Jammy.Types.AmigaTypes;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 /*
@@ -24,11 +23,11 @@ namespace Jammy.Disassembler.TypeMapper
 		private readonly HashSet<long> lookup = new HashSet<long>();
 		private StringBuilder sb;
 
-		public BaseMapper(IDebugMemoryMapper memory)
+		public BaseMapper(IDebugMemoryMapper memory, ILogger logger)
 		{
 			this.memory = memory;
 			mapper = new AmigaTypesMapper(memory);
-			this.logger = ServiceProviderFactory.ServiceProvider.GetRequiredService<ILoggerProvider>().CreateLogger("BaseMapper");
+			this.logger = logger;
 		}
 
 		private uint MapObject(Type type, object obj, uint addr, int depth)
@@ -233,18 +232,26 @@ namespace Jammy.Disassembler.TypeMapper
 		}
 	}
 
-	public class ObjectMapper
+	public class ObjectMapper : IObjectMapper
 	{
-		public static string MapObject(object tp, uint address)
+		private readonly IDebugMemoryMapper debugMemoryMapper;
+		private readonly ILogger logger;
+
+		public ObjectMapper(IDebugMemoryMapper debugMemoryMapper, ILogger<ObjectMapper> logger)
 		{
-			var memory = ServiceProviderFactory.ServiceProvider.GetRequiredService<IDebugMemoryMapper>();
-			return new BaseMapper(memory).FromAddress(tp, address);
+			this.debugMemoryMapper = debugMemoryMapper;
+			this.logger = logger;
 		}
 
-		public static string MapObject(object tp, byte[] b, uint address)
+		public string MapObject(object tp, uint address)
+		{
+			return new BaseMapper(debugMemoryMapper, logger).FromAddress(tp, address);
+		}
+
+		public string MapObject(object tp, byte[] b, uint address)
 		{
 			var memory = new ByteArrayDebugMemoryMapper(b);
-			return new BaseMapper(memory).FromAddress(tp, address);
+			return new BaseMapper(memory, logger).FromAddress(tp, address);
 		}
 	}
 }

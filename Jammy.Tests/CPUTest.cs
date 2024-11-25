@@ -1,5 +1,6 @@
 ﻿using Jammy.Core;
 using Jammy.Core.CPU.CSharp;
+using Jammy.Core.CPU.Moira;
 using Jammy.Core.CPU.Musashi;
 using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.CPU.Musashi.MC68020;
@@ -36,10 +37,32 @@ namespace Jammy.Tests
 		private CPUTestRig cpu1;
 		private ILogger logger;
 
+		private IServiceCollection GetBaseServices(IConfigurationRoot configuration)
+		{
+			var serviceCollection = new ServiceCollection()
+			.AddLogging(x =>
+			{
+				x.AddConfiguration(configuration.GetSection("Logging"));
+				//x.AddDebug();
+				x.AddDebugAsync();
+			})
+			.AddSingleton<IInterrupt, Core.Interrupt>()
+			.AddSingleton<IBreakpointCollection, BreakpointCollection>()
+			.AddSingleton<ILabeller, Labeller>()
+			.AddSingleton<ITracer, NullTracer>()
+			.AddSingleton<ICPUTestRig, CPUTestRig>()
+			.AddSingleton<ITestMemory, TestMemory>()
+			.AddSingleton<IMemoryMapper>(x => (IMemoryMapper)x.GetRequiredService<ITestMemory>())
+			.AddSingleton<IDebugMemoryMapper>(x => (IDebugMemoryMapper)x.GetRequiredService<ITestMemory>())
+			.AddSingleton<IMemoryMappedDevice>(x => (IMemoryMappedDevice)x.GetRequiredService<ITestMemory>());
+			return serviceCollection;
+		}
+
 		[OneTimeSetUp]
 		public void CPUTestInit()
 		{
 			ServiceProvider serviceProvider;
+			IServiceCollection serviceCollection;
 
 			var configuration = new ConfigurationBuilder()
 				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
@@ -48,27 +71,9 @@ namespace Jammy.Tests
 
 			var cpus = new List<ICPUTestRig>();
 
-			var serviceCollection = new ServiceCollection()
-				.AddLogging(x=>
-				{
-					x.AddConfiguration(configuration.GetSection("Logging"));
-					//x.AddDebug();
-					x.AddDebugAsync();
-				})
-				.AddSingleton<IInterrupt, Core.Interrupt>()
-				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
-				.AddSingleton<ILabeller, Labeller>()
-				.AddSingleton<ITracer, NullTracer>()
-				.AddSingleton<TestMemory>()
-				.AddSingleton<ICPUTestRig, CPUTestRig>()
-				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
-				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
-				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<TestMemory>())
-				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>());
-
 			//68000
 			//0
-			serviceCollection
+			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("CS68000"))
 				.AddSingleton<ICPU, CPU>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000NoPrefetch").Bind(o));
@@ -76,7 +81,7 @@ namespace Jammy.Tests
 			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
 
 			//1
-			serviceCollection
+			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Musashi68000"))
 				.AddSingleton<ICPU, MusashiCPU>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000NoPrefetch").Bind(o));
@@ -84,7 +89,7 @@ namespace Jammy.Tests
 			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
 
 			//2
-			serviceCollection
+			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("MusashiCS68000NoPrefetch"))
 				.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000NoPrefetch").Bind(o));
@@ -92,24 +97,32 @@ namespace Jammy.Tests
 			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
 
 			//3
-			serviceCollection
+			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("MusashiCS68000"))
 				.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000").Bind(o));
 			serviceProvider = serviceCollection.BuildServiceProvider();
 			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
 
-			//68EC020
 			//4
-			serviceCollection
+			serviceCollection = GetBaseServices(configuration)
+				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Moira68000"))
+				.AddSingleton<ICPU, MoiraCPU>()
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000NoPrefetch").Bind(o));
+			serviceProvider = serviceCollection.BuildServiceProvider();
+			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
+
+			//68EC020
+			//5
+			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Musashi68EC020"))
 				.AddSingleton<ICPU, Musashi68EC020CPU>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("EmulationEC020").Bind(o));
 			serviceProvider = serviceCollection.BuildServiceProvider();
 			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
 
-			//5
-			serviceCollection
+			//6
+			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("MusashiCS68EC020"))
 				.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("EmulationEC020").Bind(o));
@@ -117,16 +130,16 @@ namespace Jammy.Tests
 			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
 
 			//68030
-			//6
-			serviceCollection
+			//7
+			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Musashi68030"))
 				.AddSingleton<ICPU, Musashi68EC020CPU>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation030").Bind(o));
 			serviceProvider = serviceCollection.BuildServiceProvider();
 			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
 
-			//7
-			serviceCollection
+			//8
+			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("MusashiCS68030"))
 				.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation030").Bind(o));
@@ -134,8 +147,8 @@ namespace Jammy.Tests
 			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
 
 			//68040
-			//8
-			serviceCollection
+			//9
+			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("MusashiCS68040"))
 				.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation040").Bind(o));
@@ -145,8 +158,8 @@ namespace Jammy.Tests
 			logger = serviceProvider.GetRequiredService<ILogger<CPUTest>>();
 
 			//which CPUs are we going to test?
-			cpu0 = (CPUTestRig)cpus[0];
-			cpu1 = (CPUTestRig)cpus[1];
+			cpu0 = (CPUTestRig)cpus[1];
+			cpu1 = (CPUTestRig)cpus[4];
 
 			cpu0.Reset();
 			cpu1.Reset();
@@ -352,17 +365,18 @@ namespace Jammy.Tests
 						regs.A[x] = (uint)((r.Next() << 1) ^ r.Next());
 				}
 
-				cpu0.SetRegs(regs);
-				cpu1.SetRegs(regs);
+				//write the test instructions
+				ushort ins = (ushort)(i | prefix);
+				cpu0.Write(pc, ins);
+				cpu1.Write(pc, ins);
 
 				//put the traps back
 				cpu0.SetTraps();
 				cpu1.SetTraps();
-				
-				ushort ins = (ushort)(i|prefix);
 
-				cpu0.Write(pc, ins);
-				cpu1.Write(pc, ins);
+				//setregs last, because setting PC fixes the pre-fetch queue
+				cpu0.SetRegs(regs);
+				cpu1.SetRegs(regs);
 
 				try
 				{

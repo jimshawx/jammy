@@ -87,7 +87,7 @@ namespace Jammy.UI.Settings
 				rbMusashi.Enabled = false;
 			}
 
-			if (!rbMusashi.Checked && !rbNative.Checked)
+			if (!rbMusashi.Checked && !rbNative.Checked && !rbMoira.Checked)
 				rbMusashiCS.Checked = true;
 		}
 
@@ -254,6 +254,7 @@ namespace Jammy.UI.Settings
 			rbMusashi.Checked = currentSettings.CPU == CPUType.Musashi;
 			rbNative.Checked = currentSettings.CPU == CPUType.Native;
 			rbMusashiCS.Checked = currentSettings.CPU == CPUType.MusashiCSharp;
+			rbMoira.Checked = currentSettings.CPU == CPUType.Moira;
 
 			rbNative.Enabled = currentSettings.Sku == CPUSku.MC68000;
 			rbMusashi.Enabled = currentSettings.Sku == CPUSku.MC68000 || 
@@ -328,7 +329,7 @@ namespace Jammy.UI.Settings
 
 			//CPU
 			currentSettings.Sku = Enum.Parse<CPUSku>((string)cbSku.SelectedItem);
-			currentSettings.CPU = rbMusashi.Checked ? CPUType.Musashi : (rbMusashiCS.Checked ? CPUType.MusashiCSharp : CPUType.Native);
+			currentSettings.CPU = rbMusashi.Checked ? CPUType.Musashi : (rbMusashiCS.Checked ? CPUType.MusashiCSharp : (rbMoira.Checked ? CPUType.Moira : CPUType.Native));
 			currentSettings.AddressBits = (currentSettings.Sku == CPUSku.MC68030
 										|| currentSettings.Sku == CPUSku.MC68040) ? 32 : 24;
 

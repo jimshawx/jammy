@@ -17,6 +17,7 @@ using Jammy.Debugger;
 using Jammy.Debugger.Interceptors;
 using Jammy.Disassembler;
 using Jammy.Disassembler.Analysers;
+using Jammy.Disassembler.TypeMapper;
 using Jammy.Interface;
 using Jammy.NativeOverlay;
 using Jammy.UI.Settings.Avalonia;
@@ -115,6 +116,7 @@ public class Program
 			.AddSingleton<IDisassembly, Disassembly>()
 			.AddSingleton<IAnalysis, Analysis>()
 			.AddSingleton<IAnalyser, Analyser>()
+			.AddSingleton<IObjectMapper, ObjectMapper>()
 			.AddSingleton<IReturnValueSnagger, ReturnValueSnagger>()
 			.AddSingleton<ILVOInterceptors, LVOInterceptors>()
 			//.AddSingleton<ILVOInterceptorAction, ReadLogger>()
@@ -202,14 +204,13 @@ public class Program
 		var serviceProvider = services.BuildServiceProvider();
 
 		var dma = serviceProvider.GetRequiredService<IDMA>();
+		var ciab = serviceProvider.GetRequiredService<ICIABEven>();
 		serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 		serviceProvider.GetRequiredService<ICopper>().Init(dma);
 		serviceProvider.GetRequiredService<IBlitter>().Init(dma);
-		serviceProvider.GetRequiredService<IDiskDrives>().Init(dma);
+		serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab);
 
 		serviceProvider.GetRequiredService<IChipsetClock>().Init(dma);
-
-		ServiceProviderFactory.ServiceProvider = serviceProvider;
 
 		var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 		logger.LogTrace("Application Starting Up!");

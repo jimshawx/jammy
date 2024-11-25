@@ -29,6 +29,7 @@
     <ProjectReference Include="..\Jammy.Assembler\Jammy.Assembler.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Gen\Jammy.Core.CPU.Gen.csproj" />
+    <ProjectReference Include="..\Jammy.Core.CPU.Moira\Jammy.Core.CPU.Moira.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.MC68020\Jammy.Core.CPU.Musashi.MC68020.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.MC68030\Jammy.Core.CPU.Musashi.MC68030.csproj" />

@@ -45,7 +45,7 @@ namespace Jammy.Core.Floppy
 		private const int INDEX_INTERRUPT_RATE = 1_418_000/2;//these should be chipset clocks
 
 		private readonly IMemoryMappedDevice memory;
-		private ICIABEven ciab { get { return (ICIABEven)ServiceProviderFactory.ServiceProvider.GetService(typeof(ICIABEven)); } }
+		private ICIABEven ciab;
 
 		private readonly IInterrupt interrupt;
 		private readonly IEmulationWindow window;
@@ -113,9 +113,10 @@ namespace Jammy.Core.Floppy
 			}
 		}
 
-		public void Init(IDMA dma)
+		public void Init(IDMA dma, ICIABEven ciab)
 		{
 			this.dma = dma;
+			this.ciab = ciab;
 		}
 
 		public enum DriveState

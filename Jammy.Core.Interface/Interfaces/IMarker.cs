@@ -73,7 +73,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void RemoveDisk(int df);
 		void ChangeDisk(int df, string fileName);
 		void ReadyDisk();
-		void Init(IDMA dma);
+		void Init(IDMA dma, ICIABEven ciab);
 	}
 	public interface IKeyboard : IEmulate
 	{
@@ -221,6 +221,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
 				out ulong trapReads, out ulong trapWrites,
 				out ulong customReads, out ulong customWrites);
+		void Bookmark();
 	}
 
 	public interface IChipsetClock : IEmulate, IStatePersister

@@ -18,4 +18,5 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IMusashiCPU { }
 	public interface ICSharpCPU { }
 	public interface IMusashiCSharpCPU { }
+	public interface IMoiraCPU { }
 }

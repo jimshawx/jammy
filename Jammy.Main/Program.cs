@@ -1,6 +1,7 @@
 using Jammy.Core;
 using Jammy.Core.Audio.Windows;
 using Jammy.Core.CPU.CSharp;
+using Jammy.Core.CPU.Moira;
 using Jammy.Core.CPU.Musashi;
 using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.CPU.Musashi.MC68020;
@@ -21,6 +22,7 @@ using Jammy.Debugger;
 using Jammy.Debugger.Interceptors;
 using Jammy.Disassembler;
 using Jammy.Disassembler.Analysers;
+using Jammy.Disassembler.TypeMapper;
 using Jammy.Graph;
 using Jammy.Interface;
 using Jammy.NativeOverlay;
@@ -124,6 +126,7 @@ namespace Jammy.Main
 				.AddSingleton<IDisassembly, Disassembly>()
 				.AddSingleton<IAnalysis, Analysis>()
 				.AddSingleton<IAnalyser, Analyser>()
+				.AddSingleton<IObjectMapper, ObjectMapper>()
 				.AddSingleton<IReturnValueSnagger, ReturnValueSnagger>()
 				.AddSingleton<ILVOInterceptors, LVOInterceptors>()
 				//.AddSingleton<ILVOInterceptorAction, ReadLogger>()
@@ -170,6 +173,10 @@ namespace Jammy.Main
 			else if (settings.CPU == CPUType.MusashiCSharp)
 			{
 				services.AddSingleton<ICPU, CPUWrapperMusashi>();
+			}
+			else if (settings.CPU == CPUType.Moira)
+			{
+				services.AddSingleton<ICPU, MoiraCPU>();
 			}
 			else
 			{
@@ -220,14 +227,13 @@ namespace Jammy.Main
 			var serviceProvider = services.BuildServiceProvider();
 
 			var dma = serviceProvider.GetRequiredService<IDMA>();
+			var ciab = serviceProvider.GetRequiredService<ICIABEven>();
 			serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 			serviceProvider.GetRequiredService<ICopper>().Init(dma);
 			serviceProvider.GetRequiredService<IBlitter>().Init(dma);
-			serviceProvider.GetRequiredService<IDiskDrives>().Init(dma);
+			serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab);
 
 			serviceProvider.GetRequiredService<IChipsetClock>().Init(dma);
-
-			ServiceProviderFactory.ServiceProvider = serviceProvider;
 
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");

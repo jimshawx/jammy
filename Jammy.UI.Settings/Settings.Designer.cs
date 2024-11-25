@@ -41,6 +41,7 @@ namespace Jammy.UI.Settings
 			panel1 = new System.Windows.Forms.Panel();
 			groupBox1 = new System.Windows.Forms.GroupBox();
 			rbMusashiCS = new System.Windows.Forms.RadioButton();
+			rbMoira = new System.Windows.Forms.RadioButton();
 			panel2 = new System.Windows.Forms.Panel();
 			groupBox2 = new System.Windows.Forms.GroupBox();
 			rbPAL = new System.Windows.Forms.RadioButton();
@@ -182,12 +183,13 @@ namespace Jammy.UI.Settings
 			groupBox1.Controls.Add(cbSku);
 			groupBox1.Controls.Add(rbNative);
 			groupBox1.Controls.Add(rbMusashi);
+			groupBox1.Controls.Add(rbMoira);
 			groupBox1.ForeColor = System.Drawing.SystemColors.Highlight;
 			groupBox1.Location = new System.Drawing.Point(0, 0);
 			groupBox1.Margin = new System.Windows.Forms.Padding(6);
 			groupBox1.Name = "groupBox1";
 			groupBox1.Padding = new System.Windows.Forms.Padding(6);
-			groupBox1.Size = new System.Drawing.Size(420, 169);
+			groupBox1.Size = new System.Drawing.Size(420, 193);
 			groupBox1.TabIndex = 6;
 			groupBox1.TabStop = false;
 			groupBox1.Text = "CPU";
@@ -203,6 +205,18 @@ namespace Jammy.UI.Settings
 			rbMusashiCS.TabStop = true;
 			rbMusashiCS.Text = "Musashi C#";
 			rbMusashiCS.UseVisualStyleBackColor = true;
+			// 
+			// rbMoira
+			// 
+			rbMoira.AutoSize = true;
+			rbMoira.Location = new System.Drawing.Point(247, 161);
+			rbMoira.Margin = new System.Windows.Forms.Padding(6);
+			rbMoira.Name = "rbMoira";
+			rbMoira.Size = new System.Drawing.Size(169, 36);
+			rbMoira.TabIndex = 6;
+			rbMoira.TabStop = true;
+			rbMoira.Text = "Moira";
+			rbMoira.UseVisualStyleBackColor = true;
 			// 
 			// panel2
 			// 
@@ -899,5 +913,6 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.RadioButton rbImmediate;
 		private System.Windows.Forms.NumericUpDown nudHardDiskCount;
 		private System.Windows.Forms.RadioButton rbMusashiCS;
+		private System.Windows.Forms.RadioButton rbMoira;
 	}
 }

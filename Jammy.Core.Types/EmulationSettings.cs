@@ -8,7 +8,8 @@ namespace Jammy.Core.Types
 	{
 		Native,
 		Musashi,
-		MusashiCSharp
+		MusashiCSharp,
+		Moira
 	}
 
 	public enum CPUSku

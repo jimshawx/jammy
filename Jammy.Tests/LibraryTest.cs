@@ -86,8 +86,6 @@ namespace Jammy.Tests
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation030").Bind(o))
 				.BuildServiceProvider();
 
-			ServiceProviderFactory.ServiceProvider = serviceProvider;
-
 			logger = serviceProvider.GetRequiredService<ILogger<DisassemblerTest>>();
 			hunkProcessor = serviceProvider.GetRequiredService<IHunkProcessor>();
 			romTagProcessor = serviceProvider.GetRequiredService<IRomTagProcessor>();
