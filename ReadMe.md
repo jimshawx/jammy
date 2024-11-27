@@ -13,11 +13,12 @@ So here is my humble attempt at an Amiga emulation.
   * A1000, A500, A500+, A600, A1200, A2000, A3000, A4000, CD32
   * 68000 in C#, verified against the Musashi 68000 CPU
   * Other 680x0 using the Musashi CPU emulation, in C or C#
+  * Other 680x0 using the Moira CPU emulation, in C++
   * Copper, Blitter, CIA emulations
   * Sprite and bitplane collision
   * Good quality Audio
   * OCS, ECS, AGA emulation
-  * Floppy Disks (read) and ATA Hard Disks (read/write)
+  * Floppy Disks, ADF/Zipped ADF/ADZ/DMS/RP9 (read) and ATA Hard Disks (read/write)
   * All kinds of RAM expansions (Chip, Trapdoor, CPU slot, Zorro II/III)
   * Battery-backed clock
   * VT100 Serial terminal
@@ -30,6 +31,7 @@ So here is my humble attempt at an Amiga emulation.
 * More efforts need to be made to get closer to cycle exact
 * Akiko not implemented
 * Emulation of CPUs running faster than the standard 7MHz is poor
+* There are still many pieces of software that don't work yet
 
 The C# 68000 is slightly faster than the C Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
 In an effort to fix this, I have ported most of Musashi to C#, and it is significantly faster now.
@@ -45,6 +47,7 @@ Anyway, Workbench is totally usable right now, and it plays a pretty mean Buggyb
 Thanks to Toni Wilen and Brian King and all the other contributors for [WinUAE](https://www.winuae.net), the most complete Amiga emulation package. What a brilliant piece of software!
 Also thanks to Petter Schau, Torsten Enderling and all the others for [WinFellow](http://petschau.github.io/WinFellow), which I have always admired for its simplicity and ability to play games.
 Thanks to Karl Stenerud for the amazing [Musashi](https://github.com/kstenerud/Musashi) CPU emulation package.
+Thanks to Dirk W. Hoffmann for the superb [Moira](https://dirkwhoffmann.github.io/Moira/) CPU emulation package, and the incredibly useful [vAmiga Test Suite](https://github.com/dirkwhoffmann/vAmigaTS).
 
 Contributions, PRs and comments welcome!
 
