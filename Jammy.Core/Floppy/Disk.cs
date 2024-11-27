@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Jammy.Core.Floppy.DMS;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -120,6 +121,19 @@ namespace Jammy.Core.Floppy
 					//couldn't isolate a floppy file
 					data = null;
 				}
+			}
+			//is it a DMS file?
+			else if (data.Length >= 4 && data[0] == 'D' && data[1] == 'M' && data[2] == 'S' && data[3] == '!')
+			{
+				byte[] unpacked;
+				//dump the DMS structure to the console
+				xDMS.Process_File(data, out unpacked, xDMS.CMD_VIEWFULL, xDMS.OPT_QUIET, 0, 0);
+				//unpack the DMS
+				var success = xDMS.Process_File(data, out unpacked, xDMS.CMD_UNPACK, xDMS.OPT_QUIET, 0, 0);
+				if (success == xDMS.NO_PROBLEM)
+					data = unpacked;
+				else
+					data = null;
 			}
 		}
 	}
