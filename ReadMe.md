@@ -48,6 +48,7 @@ Thanks to Toni Wilen and Brian King and all the other contributors for [WinUAE](
 Also thanks to Petter Schau, Torsten Enderling and all the others for [WinFellow](http://petschau.github.io/WinFellow), which I have always admired for its simplicity and ability to play games.
 Thanks to Karl Stenerud for the amazing [Musashi](https://github.com/kstenerud/Musashi) CPU emulation package.
 Thanks to Dirk W. Hoffmann for the superb [Moira](https://dirkwhoffmann.github.io/Moira/) CPU emulation package, and the incredibly useful [vAmiga Test Suite](https://github.com/dirkwhoffmann/vAmigaTS).
+Thanks to Heikki Orsila and Andre Rodrigues de la Rocha for [xDMS](https://gitlab.com/heikkiorsila/xdms).
 
 Contributions, PRs and comments welcome!
 
