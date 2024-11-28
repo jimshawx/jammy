@@ -36,13 +36,15 @@ namespace Jammy.Core
 		}
 
 		//in chipset clocks (Blitter Miracle wants this > 1)
-		private const int PAULA_INTERRUPT_LATENCY = 2;
+		private const int PAULA_INTERRUPT_LATENCY = 0;
 		//minimum value
 		//private const int PAULA_INTERRUPT_LATENCY = 1;
 
 		private int intreqPending = 0;
 		public void Emulate()
 		{
+			if (PAULA_INTERRUPT_LATENCY == 0) return;
+
 			q.Enqueue(paulaInterruptLevel);
 			if (q.Count == PAULA_INTERRUPT_LATENCY)
 				paulaInterruptLevelLagged = (uint)q.Dequeue();
@@ -55,8 +57,8 @@ namespace Jammy.Core
 			//		SetPaulaInterruptLevelReal(intenaStash, intreqStash);
 			//	}
 			//}
-
 		}
+
 		private uint paulaInterruptLevelLagged;
 
 		//level is the IPLx interrupt bits in SR
@@ -70,6 +72,8 @@ namespace Jammy.Core
 		{
 			//lock (locker)
 			{
+				if (PAULA_INTERRUPT_LATENCY == 0)
+					return (ushort)Math.Max(paulaInterruptLevel, gayleInterruptLevel);
 				return (ushort)Math.Max(paulaInterruptLevelLagged, gayleInterruptLevel);
 			}
 		}
