@@ -24,8 +24,8 @@ public static partial class xDMS
 	private static USHORT[] left = new USHORT[2 * NC - 1], right = new USHORT[2 * NC - 1 + 9];
 	private static UCHAR[] c_len = new UCHAR[NC], pt_len = new UCHAR[NPT];
 	private static USHORT[] c_table = new USHORT[4096], pt_table = new USHORT[256];
-	private static USHORT lastlen, np;
-	private static USHORT heavy_text_loc;
+	private static USHORT np;
+	private static USHORT heavy_text_loc, heavy_lastlen;
 
 	public static USHORT Unpack_HEAVY(UCHAR[]@in, UCHAR[]@out, UCHAR flags, USHORT origsize)
 	{
@@ -127,10 +127,10 @@ public static partial class xDMS
 				j = (USHORT)(GETBITS((byte)(i = (USHORT)(j - 1))) | (1U << (j - 1)));
 				DROPBITS((byte)i);
 			}
-			lastlen = j;
+			heavy_lastlen = j;
 		}
 
-		return lastlen;
+		return heavy_lastlen;
 
 	}
 

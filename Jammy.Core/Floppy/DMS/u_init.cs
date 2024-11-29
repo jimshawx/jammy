@@ -7,13 +7,13 @@
  */
 namespace Jammy.Core.Floppy.DMS;
 
-
 public static partial class xDMS
 {
 	public static void Init_Decrunchers()
 	{
 		quick_text_loc = 251;
 		medium_text_loc = 0x3fbe;
+		heavy_lastlen = 0;
 		heavy_text_loc = 0;
 		deep_text_loc = 0x3fc4;
 		init_deep_tabs = true;
