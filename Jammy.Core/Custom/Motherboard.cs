@@ -25,7 +25,9 @@ namespace Jammy.Core.Custom
 			this.settings = settings.Value;
 
 			//Gayle is D0, AA Gayle D1)
-			if (this.settings.ChipSet == ChipSet.AGA)
+			if (this.settings.ChipSet == ChipSet.ECS || this.settings.ChipSet == ChipSet.ECS)
+				GAYLE_BITS = 0;
+			else if (this.settings.ChipSet == ChipSet.AGA)
 				GAYLE_BITS = 0xD1D1;
 			else
 				GAYLE_BITS = 0xD0D0;
@@ -84,8 +86,8 @@ namespace Jammy.Core.Custom
 			else if (address == 0xde0002) reg_COLDSTART = (byte)value;
 			else if (address == 0xde0003) reg_RAMSEY = (byte)value;
 			else if (address == 0xde0043) reg_RAMSEYID = (byte)value;
-			else if (address == 0xde1000) { gayleBits = GAYLE_BITS; logger.LogTrace("GAYLE Check"); }
-			else if (address == 0xde1002) { garyBits = GARY_BITS; logger.LogTrace("GARY Check"); }
+			else if (address == 0xde1000) { gayleBits = GAYLE_BITS; logger.LogTrace($"GAYLE Check @{insaddr:X8} {GAYLE_BITS:X4}"); }
+			else if (address == 0xde1002) { garyBits = GARY_BITS; logger.LogTrace($"GARY Check @{insaddr:X8} {GARY_BITS:X4}"); }
 			//else if (address == 0xde109a) { /*something writes 0xbfff here at boot time */ }
 			else	logger.LogTrace($"W {address:X6} not mapped.");
 		}
