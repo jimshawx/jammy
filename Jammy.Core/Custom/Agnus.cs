@@ -805,13 +805,15 @@ noBitplaneDMA:
 			case ChipRegs.SPR7DATB: sprdatb[7] = value; break;
 
 			//ECS/AGA
-			case ChipRegs.VBSTRT: vbstrt = value; break;
-			case ChipRegs.VBSTOP: vbstop = value; break;
-			case ChipRegs.VSSTOP: vsstop = value; break;
-			case ChipRegs.VSSTRT: vsstrt = value; break;
-			case ChipRegs.VTOTAL: vtotal = value; break;
+			case ChipRegs.VBSTRT: vbstrt = value; /*logger.LogTrace($"VBSTRT {value:X4} @{insaddr:X8}");*/ break;
+			case ChipRegs.VBSTOP: vbstop = value; /*logger.LogTrace($"VBSTOP {value:X4} @{insaddr:X8}");*/ break;
+			case ChipRegs.VSSTOP: vsstop = value; logger.LogTrace($"VSSTOP {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.VSSTRT: vsstrt = value; logger.LogTrace($"VSSTRT {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.VTOTAL: vtotal = value; /*logger.LogTrace($"VTOTAL {value:X4} @{insaddr:X8}");*/ break;
 			case ChipRegs.FMODE: fmode = value; break;
-			case ChipRegs.BEAMCON0: beamcon0 = value; break;
+			case ChipRegs.BEAMCON0: beamcon0 = value; logger.LogTrace($"BEAMCON0 {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.VPOSW: logger.LogTrace($"VPOSW {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.VHPOSW: logger.LogTrace($"VHPOSW {value:X4} @{insaddr:X8}"); break;
 		}
 	}
 
@@ -902,14 +904,13 @@ noBitplaneDMA:
 	public ulong ReadsSinceBookmark()
 	{
 		return 0;
-		//ulong rv=
-		//chipRAMReads - bmchipRAMReads+
-		//trapdoorReads - bmtrapdoorReads+
-		//chipsetReads - bmchipsetReads;
+		//long rv =
+		//	(long)(
+		//	chipRAMReads - bmchipRAMReads +
+		//	trapdoorReads - bmtrapdoorReads +
+		//	chipsetReads - bmchipsetReads);
 
-		//if (rv <= 1) return 0;
-		//rv-=1;
-		//return rv;
+		//return (ulong)Math.Max(0,rv-4);
 	}
 
 	public uint Read(uint insaddr, uint address, Size size)
