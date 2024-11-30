@@ -184,7 +184,6 @@ namespace Jammy.Core.Custom
 		public uint Read(uint insaddr, uint address, Size size)
 		{
 			logger.LogTrace($"Akiko Read {address:X8} @{insaddr:X8} {size}");
-
 			address &= 63;
 			switch (size)
 			{
@@ -192,13 +191,13 @@ namespace Jammy.Core.Custom
 				case Size.Word : return (uint)(registers[address]<<8) | (uint)registers[address+1];
 				case Size.Long: return (uint)(registers[address]<<24) | (uint)(registers[address+1]<<16) | (uint)(registers[address+2]<<8) | registers[address+3];
 			}
-
 			return 0;
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			logger.LogTrace($"Akiko Write {address:X8} @{insaddr:X8} {value:X8} {size}");
+			address &= 63;
 			switch (size)
 			{
 				case Size.Byte:
