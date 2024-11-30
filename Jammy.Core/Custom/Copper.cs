@@ -76,6 +76,7 @@ namespace Jammy.Core.Custom
 		public void Reset()
 		{
 			status = CopperStatus.Stopped;
+			copcon = 0;
 		}
 
 		//private object locker = new object();
@@ -113,8 +114,6 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		private uint lastcoppc;
-
 		private void CopperNextFrame()
 		{
 			memory.ClearWaitingForDMA(DMASource.Copper);
@@ -126,12 +125,8 @@ namespace Jammy.Core.Custom
 				copPC = cop1lc;
 			if (copjmp2 != 0)
 				copPC = cop2lc;
-			//if (copPC != lastcoppc)
-			//{
-			//	logger.LogTrace($"N {copjmp1}{copjmp2} {copPC:X6} {cop1lc:X6} {cop2lc:X6} {clock.TimeStamp()}");
-			//}
+			DebugCOPPC(copPC);
 			copjmp1 = copjmp2 = 0;
-			lastcoppc = copPC;
 
 			if ((clock.ClockState & ChipsetClockState.EndOfFrame) != 0)
 				activeCopperAddress = copPC;
@@ -143,7 +138,9 @@ namespace Jammy.Core.Custom
 			waitBlit = 0;
 			//status = CopperStatus.RunningWord1;
 			status = CopperStatus.WakingUp;
-			waitTimer = 2;
+			//vAmigaTS\Agnus\Copper\Skip\copstrt1
+			//vAmigaTS\Agnus\Copper\Skip\copstrt2
+			waitTimer = 7;
 
 			if (copperDumping)
 				CopperDump();
@@ -166,6 +163,34 @@ namespace Jammy.Core.Custom
 		[Persist]
 		private bool nextMOVEisNOOP = false;
 
+		private bool IllegalCopperInstruction(uint reg)
+		{
+			//in OCS mode CDANG in COPCON means can access >= 0x40->0x7E as well as the usual >= 0x80
+			//in ECS/AGA mode CDANG in COPCON means can access ALL chip regs, otherwise only >= 040
+			if (settings.ChipSet == ChipSet.OCS)
+			{
+				if (((copcon & 2) != 0 && reg >= 0x40) || reg >= 0x80)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}
+			else
+			{
+				if ((copcon & 2) != 0 || reg >= 0x40)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}
+		}
+
 		private void CopperInstruction()
 		{
 			if (status == CopperStatus.RunningWord1)
@@ -186,47 +211,25 @@ namespace Jammy.Core.Custom
 				{ 
 					//MOVE
 					uint reg = (uint)(ins & 0x1fe);
-					uint regAddress = ChipRegs.ChipBase + reg;
-					if (nextMOVEisNOOP)
-					{
-						//todo: set reg here too, iff the ignored move would still stop the copper
-						regAddress = ChipRegs.NO_OP;
-						nextMOVEisNOOP = false;
-					}
 
-					status = CopperStatus.RunningWord1;
-
-					//in OCS mode CDANG in COPCON means can access >= 0x40->0x7E as well as the usual >= 0x80
-					//in ECS/AGA mode CDANG in COPCON means can access ALL chip regs, otherwise only >= 040
-					if (settings.ChipSet == ChipSet.OCS)
-					{
-						if (((copcon & 2) != 0 && reg >= 0x40) || reg >= 0x80)
-						{
-							memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
-							copPC += 2;
-						}
-						else
-						{
-							status = CopperStatus.Stopped;
-							//logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {((copcon&2)!=0?1:0)}");
-						}
+					if (IllegalCopperInstruction(reg))
+					{ 
+						status = CopperStatus.Stopped;
+						DebugCOPStopped(reg);
 					}
 					else
 					{
-						if ((copcon & 2) != 0 || reg >= 0x40)
-						{
-							memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
-							copPC += 2;
-						}
-						else
-						{
-							status = CopperStatus.Stopped;
-							//logger.LogTrace($"Copper Stopped! W {ChipRegs.Name(regAddress)} {data:X4} CDANG: {((copcon&2)!=0?1:0)}");
-						}
+						status = CopperStatus.RunningWord1;
+						//if this is being skipped, write to COPINS instead of the specified register
+						uint regAddress = nextMOVEisNOOP ? ChipRegs.COPINS : ChipRegs.ChipBase + reg;
+						nextMOVEisNOOP = false;
+						memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
+						copPC += 2;
 					}
 				}
 				else
 				{
+					//todo: should we do the NOOP thing here too?
 					status = CopperStatus.FetchWait;
 					memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 					copPC += 2;
@@ -287,9 +290,17 @@ namespace Jammy.Core.Custom
 				coppos &= waitMask;
 				if (CopperCompare(coppos, (waitPos & waitMask)))
 				{
-					waitTimer = 1;
+					//n ticks later
+					//waitTimer = 1;
 					//status = CopperStatus.WakingUp;
+
+					//0 ticks delay
 					status = CopperStatus.RunningWord1;
+
+					//one tick sooner
+					//memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+					//copPC += 2;
+					//status = CopperStatus.RunningWord2;
 
 					if (ins == 0xffff && data == 0xfffe)
 					{
@@ -317,6 +328,7 @@ namespace Jammy.Core.Custom
 
 		private bool CopperCompare(uint coppos, uint waitPos)
 		{
+			if ((clock.HorizontalPos&1)==0) return false;
 			return coppos >= waitPos;
 		}
 
@@ -332,8 +344,8 @@ namespace Jammy.Core.Custom
 		{
 			switch (address)
 			{
-				case ChipRegs.COPJMP1: copjmp1 = 1; /*logger.LogTrace($"R {insaddr:X8} COPJMP1 {cop1lc:X6} {clock.TimeStamp()}");*/ break;
-				case ChipRegs.COPJMP2: copjmp2 = 1; /*logger.LogTrace($"R {insaddr:X8} COPJMP2 {cop2lc:X6} {clock.TimeStamp()}");*/ break;
+				case ChipRegs.COPJMP1: copjmp1 = 1; DebugCOPJmp('R', 1, "COPJMP1", insaddr, cop1lc); break;
+				case ChipRegs.COPJMP2: copjmp2 = 1; DebugCOPJmp('R', 2, "COPJMP2", insaddr, cop2lc); break;
 			}
 			return 0;
 		}
@@ -357,15 +369,45 @@ namespace Jammy.Core.Custom
 			return value;
 		}
 
-		private uint [] lastcop = new uint[3];
-
-		private void DebugCOP(int idx, string reg, uint insaddr, uint cop)
+		private uint [] lastcopptr = new uint[3];
+		private void DebugCOPPtr(int idx, string reg, uint insaddr, uint copptr)
 		{
-			//if (cop != lastcop[idx])
-			//{
-			//	logger.LogTrace($"{reg} {insaddr:X8} {cop:X6} {clock.TimeStamp()}");
-			//	lastcop[idx] = cop;
-			//}
+			if (copptr != lastcopptr[idx])
+			{
+				logger.LogTrace($"{reg} {insaddr:X8} {copptr:X6} {clock.TimeStamp()}");
+				if (reg.EndsWith('L'))
+					logger.LogTrace(DisassembleCopperList(copptr));
+				lastcopptr[idx] = copptr;
+			}
+		}
+
+		private uint[] lastjmp = new uint[3];
+		private void DebugCOPJmp(char rw, int idx, string reg, uint insaddr, uint copptr)
+		{
+			if (copptr != lastjmp[idx])
+			{
+				logger.LogTrace($"{rw} {reg} {insaddr:X8} {copptr:X6} {clock.TimeStamp()}");
+				lastjmp[idx] = copptr;
+			}
+			//copPC = copptr;
+			//status = CopperStatus.RunningWord1;
+			//copjmp1 = copjmp2 = 0;
+		}
+
+		private uint [] lastcoppc =new uint[4];
+		private void DebugCOPPC(uint pc)
+		{
+			int idx = (copjmp1<<1)+copjmp2;
+			if (pc != lastcoppc[idx])
+			{
+				logger.LogTrace($"N {copjmp1}{copjmp2} {pc:X6} {cop1lc:X6} {cop2lc:X6} {clock.TimeStamp()}");
+				lastcoppc[idx] = pc;
+			}
+		}
+
+		private void DebugCOPStopped(uint reg)
+		{
+			logger.LogTrace($"Copper Stopped dff{reg:x4} {ChipRegs.Name(0xdff000+reg)}");
 		}
 
 		public void Write(uint insaddr, uint address, ushort value)
@@ -375,16 +417,16 @@ namespace Jammy.Core.Custom
 				switch (address)
 				{
 					case ChipRegs.COPCON: copcon = value; break;
-					case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOP(1, "COP1LCH", insaddr, cop1lc); break;
-					case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOP(1, "COP1LCL", insaddr, cop1lc); break;
-					case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOP(2, "COP2LCH", insaddr, cop2lc); break;
-					case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOP(2, "COP2LCL", insaddr, cop2lc); break;
+					case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOPPtr(1, "COP1LCH", insaddr, cop1lc); break;
+					case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOPPtr(1, "COP1LCL", insaddr, cop1lc); break;
+					case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOPPtr(2, "COP2LCH", insaddr, cop2lc); break;
+					case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOPPtr(2, "COP2LCL", insaddr, cop2lc); break;
 					//case ChipRegs.COPJMP1: copjmp1 = value; copPC = cop1lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
 					//	break;
 					//case ChipRegs.COPJMP2: copjmp2 = value; copPC = cop2lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
 					//	break;
-					case ChipRegs.COPJMP1: copjmp1 = 1; /*logger.LogTrace($"W {insaddr:X8} COPJMP1 {cop1lc:X6} {clock.TimeStamp()}");*/ break;
-					case ChipRegs.COPJMP2: copjmp2 = 1; /*logger.LogTrace($"W {insaddr:X8} COPJMP2 {cop2lc:X6} {clock.TimeStamp()}");*/ break;
+					case ChipRegs.COPJMP1: copjmp1 = 1; DebugCOPJmp('W', 1, "COPJMP1", insaddr, cop1lc); break;
+					case ChipRegs.COPJMP2: copjmp2 = 1; DebugCOPJmp('W', 2, "COPJMP2", insaddr, cop2lc); break;
 					case ChipRegs.COPINS: copins = value; break;
 				}
 			}
