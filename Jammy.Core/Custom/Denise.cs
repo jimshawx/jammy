@@ -731,6 +731,8 @@ public class Denise : IDenise
 		{
 			value &= 0x0fff;
 
+			//if (address == ChipRegs.COLOR00) logger.LogTrace($"{value:X3} {clock}");
+
 			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
 
 			//Amiga colour

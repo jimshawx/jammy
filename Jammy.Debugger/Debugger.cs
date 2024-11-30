@@ -76,6 +76,7 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0xF84514);//strap init
 				//AddBreakpoint(0xF847BC);//OpenDevice("trackdisk.device") in strap
 				//AddBreakpoint(0xFC03F0);//disk.resource drive detection
+				//AddBreakpoint(0xF804AE);//exec Gayle check
 			}
 
 			if (settings.Value.KickStartDisassembly.StartsWith("9FDEEEF6"))//3.1
