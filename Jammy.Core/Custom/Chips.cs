@@ -3,6 +3,7 @@ using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -10,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Xml.XPath;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -22,7 +22,6 @@ namespace Jammy.Core.Custom
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IDiskDrives diskDrives;
-		private readonly ushort[] regs = new ushort[32768];
 
 		private ICopper copper;
 		private IBlitter blitter;
@@ -79,6 +78,10 @@ namespace Jammy.Core.Custom
 			this.dma = dma;
 		}
 
+		private uint lisaid;
+		private ushort intena;
+		private ushort intreq;
+
 		public void Reset()
 		{
 			//http://eab.abime.net/showthread.php?t=72300
@@ -87,13 +90,13 @@ namespace Jammy.Core.Custom
 				case ChipSet.OCS:
 					//OCS, setting this means KS3.1 sees OCS and gets copper list right for this
 					//LISAID doesn't exist on OCS (OCS Denise 8362 just returns last value on bus).
-					regs[REG(ChipRegs.LISAID)] = 0xffff;
+					lisaid = 0xffff;
 					break;
 				case ChipSet.ECS:
-					regs[REG(ChipRegs.LISAID)] = 0x00fc;//LISA (0x00fc ECS Denise 8373) 
+					lisaid = 0x00fc;//LISA (0x00fc ECS Denise 8373) 
 					break;
 				case ChipSet.AGA:
-					regs[REG(ChipRegs.LISAID)] = 0x00f8;//Lisa returns 0xF8, upper byte is 0 for A1200, non-zero for A4000
+					lisaid = 0x00f8;//Lisa returns 0xF8, upper byte is 0 for A1200, non-zero for A4000
 					break;
 			}
 		}
@@ -165,56 +168,58 @@ namespace Jammy.Core.Custom
 
 				if (address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR)
 				{
-					regs[reg] = agnus.Read(insaddr, address);
+					return agnus.Read(insaddr, address);
 				}
 				else if (address == ChipRegs.CLXDAT)
 				{
-					regs[reg] = denise.Read(insaddr, address);
+					return denise.Read(insaddr, address);
 				}
 				else if (address == ChipRegs.BLTDDAT)
 				{
-					regs[reg] = blitter.Read(insaddr, address);
+					return blitter.Read(insaddr, address);
 				}
 				else if (address == ChipRegs.COPJMP1 || address == ChipRegs.COPJMP2)
 				{
-					regs[reg] = copper.Read(insaddr, address);
+					return copper.Read(insaddr, address);
 				}
 				else if (address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR)
 				{
-					regs[reg] = diskDrives.Read(insaddr, address);
+					return diskDrives.Read(insaddr, address);
 				}
 				else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT ||
 				         address == ChipRegs.POTGOR || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT)
 				{
-					regs[reg] = mouse.Read(insaddr, address);
+					return mouse.Read(insaddr, address);
 				}
 				else if (address == ChipRegs.ADKCONR)
 				{
-					regs[reg] = (ushort)(audio.Read(insaddr, address) | diskDrives.Read(insaddr, address));
+					return (ushort)(audio.Read(insaddr, address) | diskDrives.Read(insaddr, address));
 				}
 				else if (address == ChipRegs.DMACONR)
 				{
-					regs[reg] = dma.Read(insaddr, address);
+					return dma.Read(insaddr, address);
 				}
-				else if (address == ChipRegs.INTENAR || address == ChipRegs.INTREQR
-				         || address == ChipRegs.LISAID)
+				else if (address == ChipRegs.INTENAR)
 				{
-					//here
+					return (uint)(intena & 0x7fff);
+				}
+				else if (address == ChipRegs.INTREQR)
+				{
+					return (uint)(intreq & 0x7fff);
+				}
+				else if (address == ChipRegs.LISAID)
+				{
+					return lisaid;
 				}
 				else if (address == ChipRegs.SERDATR)
 				{
-					regs[reg] = serial.Read(insaddr, address);
+					return serial.Read(insaddr, address);
 				}
-				else
-				{
-					//logger.LogTrace($"R {ChipRegs.Name(address)} {originalAddress:X8} #{regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} {regs[reg]} @{insaddr:X8}");
-					//almost certainly, this is code using clr.x on a chip register.  you were TOLD not to do that!
-					return 0;
-				}
-
-				return (uint)regs[reg];
+				if ((originalAddress >> 12)==0xdff)
+					logger.LogTrace($"R UNMAPPED {ChipRegs.Name(address)} {originalAddress:X8} @{insaddr:X8}");
+				//almost certainly, this is code using clr.x on a chip register.  you were TOLD not to do that!
+				return 0;
 			}
-		
 		}
 
 		//private object locker = new object();
@@ -274,39 +279,19 @@ namespace Jammy.Core.Custom
 				}
 				else if (address == ChipRegs.INTENA)
 				{
-					ushort prevIntena = regs[reg];
+					ushort prevIntena = intena;
 
-					//logger.LogTrace($"INTENA {value.ToBin(2) @{insaddr:X8}");
 					if ((value & 0x8000) != 0)
-						regs[reg] |= (ushort)value;
+						intena |= (ushort)value;
 					else
-						regs[reg] &= (ushort)~value;
-					//logger.LogTrace($"    -> {regs[reg].ToBin()} {regs[reg]:X4}");
+						intena &= (ushort)~value;
 
-					if (((prevIntena ^ regs[reg])&0x0020)!=0)
-						logger.LogTrace($"VERTB {((regs[reg]&0x0020)!=0?"on":"off")} @ {insaddr:X8}");
+					if (((prevIntena ^ intena)&0x0020)!=0)
+						logger.LogTrace($"VERTB {((intena&0x0020)!=0?"on":"off")} @ {insaddr:X8}");
 
-					//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("INTEN ");
-					//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("EXTER ");
-					//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("DSKSYN ");
-					//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("RBF ");
-					//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("AUD3 ");
-					//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("AUD2 ");
-					//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("AUD1 ");
-					//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("AUD0 ");
-					//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLIT ");
-					//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("VERTB ");
-					//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("COPER ");
-					//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("PORTS ");
-					//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("SOFT ");
-					//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("DSKBLK ");
-					//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
-					//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
-					audio.WriteINTENA((ushort)(regs[reg] & 0x7fff));
+					audio.WriteINTENA((ushort)(intena & 0x7fff));
 
-					regs[REG(ChipRegs.INTENAR)] = (ushort)(regs[reg] & 0x7fff);
-
-					interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
+					interrupt.SetPaulaInterruptLevel((uint)intreq & 0x7fff, (uint)intena & 0x7fff);
 				}
 				else if (address == ChipRegs.INTENAR)
 				{
@@ -315,40 +300,14 @@ namespace Jammy.Core.Custom
 				else if (address == ChipRegs.INTREQ)
 				{
 					if ((value & 0x8000) != 0)
-					{
-						regs[reg] |= (ushort)value;
-						//logger.LogTrace($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
-					}
+						intreq |= (ushort)value;
 					else
-					{
-						regs[reg] &= (ushort)~value;
-					}
+						intreq &= (ushort)~value;
 
-					//logger.LogTrace($"INTREQ {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')}");
+					audio.WriteINTREQ((ushort)(intreq & 0x7fff));
+					serial.WriteINTREQ((ushort)(intreq & 0x7fff));
 
-					//if ((regs[reg] & 0x4000) != 0) logger.LogTrace("INTEN ");
-					//if ((regs[reg] & 0x2000) != 0) logger.LogTrace("EXTER ");
-					//if ((regs[reg] & 0x1000) != 0) logger.LogTrace("DSKSYN ");
-					//if ((regs[reg] & 0x0800) != 0) logger.LogTrace("RBF ");
-					//if ((regs[reg] & 0x0400) != 0) logger.LogTrace("AUD3 ");
-					//if ((regs[reg] & 0x0200) != 0) logger.LogTrace("AUD2 ");
-					//if ((regs[reg] & 0x0100) != 0) logger.LogTrace("AUD1 ");
-					//if ((regs[reg] & 0x0080) != 0) logger.LogTrace("AUD0 ");
-					//if ((regs[reg] & 0x0040) != 0) logger.LogTrace("BLIT ");
-					//if ((regs[reg] & 0x0020) != 0) logger.LogTrace("VERTB ");
-					//if ((regs[reg] & 0x0010) != 0) logger.LogTrace("COPER ");
-					//if ((regs[reg] & 0x0008) != 0) logger.LogTrace("PORTS ");
-					//if ((regs[reg] & 0x0004) != 0) logger.LogTrace("SOFT ");
-					//if ((regs[reg] & 0x0002) != 0) logger.LogTrace("DSKBLK ");
-					//if ((regs[reg] & 0x0001) != 0) logger.LogTrace("TBE ");
-					//if ((regs[reg] & 0x7fff) != 0) logger.LogTrace("");
-
-					audio.WriteINTREQ((ushort)(regs[reg] & 0x7fff));
-					serial.WriteINTREQ((ushort)(regs[reg] & 0x7fff));
-
-					regs[REG(ChipRegs.INTREQR)] = (ushort)(regs[reg] & 0x7fff);
-
-					interrupt.SetPaulaInterruptLevel(regs[REG(ChipRegs.INTREQR)], regs[REG(ChipRegs.INTENAR)]);
+					interrupt.SetPaulaInterruptLevel((uint)intreq & 0x7fff, (uint)intena & 0x7fff);
 				}
 				else if (address == ChipRegs.INTREQR)
 				{
@@ -422,7 +381,7 @@ namespace Jammy.Core.Custom
 				}
 				else if (address == ChipRegs.NO_OP)
 				{
-
+					/* nothing happens */
 				}
 				else if (address == ChipRegs.SERDAT || address == ChipRegs.SERDATR || address == ChipRegs.SERPER)
 				{
@@ -430,8 +389,8 @@ namespace Jammy.Core.Custom
 				}
 				else
 				{
-					logger.LogTrace($"W {ChipRegs.Name(address)} {originalAddress:X8} {regs[reg]:X4} {Convert.ToString(regs[reg], 2).PadLeft(16, '0')} @{insaddr:X8}");
-					regs[reg] = (ushort)value;
+					if ((originalAddress >> 12) == 0xdff)
+						logger.LogTrace($"W UNMAPPED {ChipRegs.Name(address)} {originalAddress:X8} {value:X4} {value.ToBin()} @{insaddr:X8}");
 				}
 			}
 		}
@@ -444,33 +403,6 @@ namespace Jammy.Core.Custom
 
 			if (address >= ChipRegs.BPL1DAT && address <= ChipRegs.BPL8DAT)
 				agnus.WriteWide(address, value);
-		}
-
-		private void DebugInfo(uint insaddr, uint address, uint value, Size size)
-		{
-			logger.LogTrace($"Custom Write {insaddr:X8} {address:X8} {value:X8} {size} {ChipRegs.Name(address)} {ChipRegs.Description(address)}");
-
-			if (address == ChipRegs.BPLCON0)
-			{
-				var log = new StringBuilder();
-				if ((value & 2) != 0) log.Append("ESRY ");
-				if ((value & 4) != 0) log.Append("LACE ");
-				if ((value & 8) != 0) log.Append("LPEN ");
-				if ((value & 256) != 0) log.Append("GAUD ");
-				if ((value & 512) != 0) log.Append("COLOR_ON ");
-				if ((value & 1024) != 0) log.Append("DBLPF ");
-				if ((value & 2048) != 0) log.Append("HOMOD ");
-				log.Append($"{(value >> 12) & 7}BPP ");
-				if ((value & 32768) != 0) log.Append("HIRES ");
-				logger.LogTrace(log.ToString());
-			}
-
-			if (address == ChipRegs.SERPER)
-			{
-				if ((value & 0x8000) != 0) logger.LogTrace("9bit"); else logger.LogTrace("8bit");
-				logger.LogTrace($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.27936)} NTSC");
-				logger.LogTrace($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.28194)} PAL");
-			}
 		}
 
 		public uint DebugChipsetRead(uint address, Size size)
@@ -522,12 +454,17 @@ namespace Jammy.Core.Custom
 			{
 				return (ushort)(audio.DebugChipsetRead(address, size) | diskDrives.DebugChipsetRead(address, size));
 			}
-			else if (address == ChipRegs.INTENA || address == ChipRegs.INTREQ ||
-				 address == ChipRegs.INTENAR || address == ChipRegs.INTREQR
-				 || address == ChipRegs.NO_OP)
+			else if (address == ChipRegs.INTENA || address == ChipRegs.INTENAR)
 			{
-				int reg = REG(address);
-				return regs[reg];
+				return intena;
+			}
+			else if (address == ChipRegs.INTREQ || address == ChipRegs.INTREQR)
+			{
+				return intreq;
+			}
+			else if (address == ChipRegs.NO_OP)
+			{
+				return 0;
 			}
 			else if (address == ChipRegs.DMACONR || address == ChipRegs.DMACON)
 			{
@@ -537,11 +474,8 @@ namespace Jammy.Core.Custom
 			{
 				return serial.DebugChipsetRead(address, size);
 			}
-			else
-			{
-				logger.LogTrace($"DR {ChipRegs.Name(address)}");
-			}
 
+			logger.LogTrace($"DR {ChipRegs.Name(address)}");
 			return 0;
 		}
 
@@ -551,7 +485,7 @@ namespace Jammy.Core.Custom
 			cr["id"] = "chipregs";
 			var deets = ChipRegs.GetPersistanceDetails()
 							.Where(x => x.Name != "COPJMP1" && x.Name != "COPJMP2")
-							.Where(x => x.Name != "DMACON" && x.Name != "INTENA" && x.Name != "ADKCON")
+							.Where(x => x.Name != "DMACON" && x.Name != "INTENA" && x.Name != "ADKCON" && x.Name != "INTREQ")
 							.Where(x => x.Name != "BLTSIZE" && x.Name != "BLTSIZH")
 							.Where(x => x.Name != "LISAID");
 			foreach (var reg in deets)
@@ -572,6 +506,8 @@ namespace Jammy.Core.Custom
 					Write(0, ChipRegs.DMACON, (ushort)(value|0x8000), Size.Word);
 				else if (pair.Key == "INTENAR")
 					Write(0, ChipRegs.INTENA, (ushort)(value | 0x8000), Size.Word);
+				else if (pair.Key == "INTREQR")
+					Write(0, ChipRegs.INTREQ, (ushort)(value | 0x8000), Size.Word);
 				else if (pair.Key == "ADKCONR")
 					Write(0, ChipRegs.ADKCON, (ushort)(value | 0x8000), Size.Word);
 				else
