@@ -53,6 +53,10 @@ namespace Jammy.UI.Settings
 			btnROMPick = new System.Windows.Forms.Button();
 			panel4 = new System.Windows.Forms.Panel();
 			groupBox5 = new System.Windows.Forms.GroupBox();
+			btnDF3Eject = new System.Windows.Forms.Button();
+			btnDF2Eject = new System.Windows.Forms.Button();
+			btnDF1Eject = new System.Windows.Forms.Button();
+			btnDF0Eject = new System.Windows.Forms.Button();
 			btnDF3Pick = new System.Windows.Forms.Button();
 			txtDF0 = new System.Windows.Forms.TextBox();
 			btnDF2Pick = new System.Windows.Forms.Button();
@@ -212,7 +216,7 @@ namespace Jammy.UI.Settings
 			rbMoira.Location = new System.Drawing.Point(247, 161);
 			rbMoira.Margin = new System.Windows.Forms.Padding(6);
 			rbMoira.Name = "rbMoira";
-			rbMoira.Size = new System.Drawing.Size(169, 36);
+			rbMoira.Size = new System.Drawing.Size(107, 36);
 			rbMoira.TabIndex = 6;
 			rbMoira.TabStop = true;
 			rbMoira.Text = "Moira";
@@ -309,6 +313,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnROMPick
 			// 
+			btnROMPick.ForeColor = System.Drawing.SystemColors.WindowText;
 			btnROMPick.Location = new System.Drawing.Point(594, 45);
 			btnROMPick.Margin = new System.Windows.Forms.Padding(6);
 			btnROMPick.Name = "btnROMPick";
@@ -329,6 +334,10 @@ namespace Jammy.UI.Settings
 			// 
 			// groupBox5
 			// 
+			groupBox5.Controls.Add(btnDF3Eject);
+			groupBox5.Controls.Add(btnDF2Eject);
+			groupBox5.Controls.Add(btnDF1Eject);
+			groupBox5.Controls.Add(btnDF0Eject);
 			groupBox5.Controls.Add(btnDF3Pick);
 			groupBox5.Controls.Add(txtDF0);
 			groupBox5.Controls.Add(btnDF2Pick);
@@ -348,8 +357,53 @@ namespace Jammy.UI.Settings
 			groupBox5.TabStop = false;
 			groupBox5.Text = "Floppy Disk";
 			// 
+			// btnDF3Eject
+			// 
+			btnDF3Eject.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnDF3Eject.Location = new System.Drawing.Point(659, 230);
+			btnDF3Eject.Name = "btnDF3Eject";
+			btnDF3Eject.Size = new System.Drawing.Size(27, 46);
+			btnDF3Eject.TabIndex = 12;
+			btnDF3Eject.Text = "⏏";
+			btnDF3Eject.UseVisualStyleBackColor = true;
+			btnDF3Eject.Click += btnDF3Eject_Click;
+			// 
+			// btnDF2Eject
+			// 
+			btnDF2Eject.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnDF2Eject.Location = new System.Drawing.Point(659, 169);
+			btnDF2Eject.Name = "btnDF2Eject";
+			btnDF2Eject.Size = new System.Drawing.Size(27, 46);
+			btnDF2Eject.TabIndex = 11;
+			btnDF2Eject.Text = "⏏";
+			btnDF2Eject.UseVisualStyleBackColor = true;
+			btnDF2Eject.Click += btnDF2Eject_Click;
+			// 
+			// btnDF1Eject
+			// 
+			btnDF1Eject.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnDF1Eject.Location = new System.Drawing.Point(659, 107);
+			btnDF1Eject.Name = "btnDF1Eject";
+			btnDF1Eject.Size = new System.Drawing.Size(27, 46);
+			btnDF1Eject.TabIndex = 10;
+			btnDF1Eject.Text = "⏏";
+			btnDF1Eject.UseVisualStyleBackColor = true;
+			btnDF1Eject.Click += btnDF1Eject_Click;
+			// 
+			// btnDF0Eject
+			// 
+			btnDF0Eject.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnDF0Eject.Location = new System.Drawing.Point(659, 45);
+			btnDF0Eject.Name = "btnDF0Eject";
+			btnDF0Eject.Size = new System.Drawing.Size(27, 46);
+			btnDF0Eject.TabIndex = 9;
+			btnDF0Eject.Text = "⏏";
+			btnDF0Eject.UseVisualStyleBackColor = true;
+			btnDF0Eject.Click += btnDF0Eject_Click;
+			// 
 			// btnDF3Pick
 			// 
+			btnDF3Pick.ForeColor = System.Drawing.SystemColors.WindowText;
 			btnDF3Pick.Location = new System.Drawing.Point(594, 226);
 			btnDF3Pick.Margin = new System.Windows.Forms.Padding(6);
 			btnDF3Pick.Name = "btnDF3Pick";
@@ -369,6 +423,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnDF2Pick
 			// 
+			btnDF2Pick.ForeColor = System.Drawing.SystemColors.WindowText;
 			btnDF2Pick.Location = new System.Drawing.Point(594, 166);
 			btnDF2Pick.Margin = new System.Windows.Forms.Padding(6);
 			btnDF2Pick.Name = "btnDF2Pick";
@@ -380,19 +435,20 @@ namespace Jammy.UI.Settings
 			// 
 			// nudFloppyCount
 			// 
-			nudFloppyCount.Location = new System.Drawing.Point(667, 43);
+			nudFloppyCount.Location = new System.Drawing.Point(695, 49);
 			nudFloppyCount.Margin = new System.Windows.Forms.Padding(6);
 			nudFloppyCount.Maximum = new decimal(new int[] { 4, 0, 0, 0 });
 			nudFloppyCount.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
 			nudFloppyCount.Name = "nudFloppyCount";
 			nudFloppyCount.ReadOnly = true;
-			nudFloppyCount.Size = new System.Drawing.Size(80, 39);
+			nudFloppyCount.Size = new System.Drawing.Size(69, 39);
 			nudFloppyCount.TabIndex = 0;
 			nudFloppyCount.Value = new decimal(new int[] { 1, 0, 0, 0 });
 			nudFloppyCount.ValueChanged += nudFloppyCount_ValueChanged;
 			// 
 			// btnDF1Pick
 			// 
+			btnDF1Pick.ForeColor = System.Drawing.SystemColors.WindowText;
 			btnDF1Pick.Location = new System.Drawing.Point(592, 105);
 			btnDF1Pick.Margin = new System.Windows.Forms.Padding(6);
 			btnDF1Pick.Name = "btnDF1Pick";
@@ -412,6 +468,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnDF0Pick
 			// 
+			btnDF0Pick.ForeColor = System.Drawing.SystemColors.WindowText;
 			btnDF0Pick.Location = new System.Drawing.Point(592, 43);
 			btnDF0Pick.Margin = new System.Windows.Forms.Padding(6);
 			btnDF0Pick.Name = "btnDF0Pick";
@@ -914,5 +971,9 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.NumericUpDown nudHardDiskCount;
 		private System.Windows.Forms.RadioButton rbMusashiCS;
 		private System.Windows.Forms.RadioButton rbMoira;
+		private System.Windows.Forms.Button btnDF0Eject;
+		private System.Windows.Forms.Button btnDF3Eject;
+		private System.Windows.Forms.Button btnDF2Eject;
+		private System.Windows.Forms.Button btnDF1Eject;
 	}
 }

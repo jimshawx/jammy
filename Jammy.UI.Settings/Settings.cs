@@ -257,8 +257,8 @@ namespace Jammy.UI.Settings
 			rbMoira.Checked = currentSettings.CPU == CPUType.Moira;
 
 			rbNative.Enabled = currentSettings.Sku == CPUSku.MC68000;
-			rbMusashi.Enabled = currentSettings.Sku == CPUSku.MC68000 || 
-								currentSettings.Sku == CPUSku.MC68EC020 || 
+			rbMusashi.Enabled = currentSettings.Sku == CPUSku.MC68000 ||
+								currentSettings.Sku == CPUSku.MC68EC020 ||
 								currentSettings.Sku == CPUSku.MC68030;
 
 			//Chipset
@@ -270,19 +270,19 @@ namespace Jammy.UI.Settings
 			{
 				//We're gonna say it's an A500
 				if (currentSettings.VideoFormat == VideoFormat.PAL) currentSettings.CPUFrequency = 7093790;
-				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency= 7159090;
+				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency = 7159090;
 			}
 			if (currentSettings.Sku == CPUSku.MC68EC020)
 			{
 				//We're gonna say it's an A1200
 				if (currentSettings.VideoFormat == VideoFormat.PAL) currentSettings.CPUFrequency = 14180000;
-				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency= 14320000;
+				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency = 14320000;
 			}
 			else if (currentSettings.Sku == CPUSku.MC68030 || currentSettings.Sku == CPUSku.MC68040)
 			{
 				//We're gonna say it's an A3000/4000 25MHz
 				if (currentSettings.VideoFormat == VideoFormat.PAL) currentSettings.CPUFrequency = 25000000;
-				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency= 25000000;
+				if (currentSettings.VideoFormat == VideoFormat.NTSC) currentSettings.CPUFrequency = 25000000;
 			}
 			//todo: until all the code understands this (e.g. CIA timers think they run 1/10th CPU speed)
 			currentSettings.CPUFrequency = 7093790;
@@ -363,7 +363,7 @@ namespace Jammy.UI.Settings
 			try
 			{
 				var rom = File.ReadAllBytes(currentSettings.KickStart);
-				var c = rom.Skip(rom.Length - 24).Take(4).Select(x=>(uint)x).ToArray();
+				var c = rom.Skip(rom.Length - 24).Take(4).Select(x => (uint)x).ToArray();
 				uint crc = c[3] | (c[2] << 8) | (c[1] << 16) | (c[0] << 24);
 				currentSettings.KickStartDisassembly = $"{crc:X8}";
 			}
@@ -519,6 +519,26 @@ namespace Jammy.UI.Settings
 					btnSaveConfig.Enabled = true;
 					break;
 			}
+		}
+
+		private void btnDF0Eject_Click(object sender, EventArgs e)
+		{
+			txtDF0.Text = string.Empty;
+		}
+
+		private void btnDF1Eject_Click(object sender, EventArgs e)
+		{
+			txtDF1.Text = string.Empty;
+		}
+
+		private void btnDF2Eject_Click(object sender, EventArgs e)
+		{
+			txtDF2.Text = string.Empty;
+		}
+
+		private void btnDF3Eject_Click(object sender, EventArgs e)
+		{
+			txtDF3.Text = string.Empty;
 		}
 	}
 }
