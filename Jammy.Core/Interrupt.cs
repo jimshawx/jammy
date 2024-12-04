@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections;
-using Jammy.Core.Custom;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using System.Collections;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -17,7 +15,7 @@ namespace Jammy.Core
 
 		private readonly Queue q = new Queue();
 
-		public static uint[] priority = new uint[]{ 1,1,1,2,3,3,3,4,4,4,4,5,5,6,6,7};
+		public static readonly uint[] priority = [ 1,1,1,2,3,3,3,4,4,4,4,5,5,6,6,7];
 
 		public static uint CPUPriority(uint interrupt)
 		{
