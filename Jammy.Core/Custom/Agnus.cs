@@ -2,6 +2,7 @@
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -197,16 +198,23 @@ public class Agnus : IAgnus
 
 		bool fetched = false;
 
+		var blanking = Blanking.None;
+
+		//is it in the vertical blanking zone (should swap to using some of the ECS registers)
+		if (clock.VerticalPos >= 0 && clock.VerticalPos <= 0x19)
+			blanking |= Blanking.VerticalBlank;
+
 		//is it the visible area, vertically?
 		if (clock.VerticalPos < diwstrtv || clock.VerticalPos >= diwstopv)
-		{
-			//tell Denise to stop processing pixels and start blanking
-			denise.OutsideVerticalDisplayWindow();
-			goto noBitplaneDMA;
-		}
+			blanking |= Blanking.OutsideDisplayWindow;
 
-		//tell Denise to stop blanking and start processing pixel data
-		denise.InsideVerticalDisplayWindow();
+		if (clock.DeniseHorizontalPos >= 0x10 && clock.DeniseHorizontalPos <= 0x5e)
+			blanking |= Blanking.HorizontalBlank;
+
+		//tell Denise the blaking status and whether to start processing pixel data
+		denise.SetBlankingStatus(blanking);
+
+		if (blanking != Blanking.None) goto noBitplaneDMA;
 
 		//debugging
 		if (clock.VerticalPos == debugger.dbugLine)

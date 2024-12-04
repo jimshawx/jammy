@@ -30,7 +30,7 @@ public class ChipsetClock : IChipsetClock
 
 	[Persist]
 	public uint HorizontalPos { get; private set; }
-	public uint DeniseHorizontalPos { get { return HorizontalPos; } }
+	public uint DeniseHorizontalPos { get { return HorizontalPos*2; } }
 
 	[Persist]
 	public uint VerticalPos { get; private set; }

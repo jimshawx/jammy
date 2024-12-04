@@ -3,7 +3,7 @@ using Jammy.Core.Types.Types;
 using System.IO;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Interface.Interfaces
@@ -202,8 +202,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	{
-		void InsideVerticalDisplayWindow();
-		void OutsideVerticalDisplayWindow();
+		void SetBlankingStatus(Blanking blanking);
 		void WriteBitplanes(ulong[] planes);
 		void WriteSprite(int s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl);
 		public uint[] DebugGetPalette();

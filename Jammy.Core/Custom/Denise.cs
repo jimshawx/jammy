@@ -2,6 +2,7 @@
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
@@ -32,8 +33,9 @@ public class Denise : IDenise
 		SuperHiRes = 1 << 6,
 	}
 
-	private const int FIRST_DMA = 0x18;
+	private const int FIRST_DMA = 0;//0x18*2;
 	private const int RIGHT_BORDER = 0x18;//cosmetic
+
 	public const int DMA_WIDTH = 227;// Agnus.DMA_END - Agnus.DMA_START;
 	private const int SCREEN_WIDTH = (DMA_WIDTH-FIRST_DMA+RIGHT_BORDER) * 4; //227 (E3) * 4;
 	private const int SCREEN_HEIGHT = 313 * 2; //x2 for scan double
@@ -120,16 +122,11 @@ public class Denise : IDenise
 	}
 
 	[Persist]
-	private bool outsideVerticalWindow;
+	private Blanking blankingStatus;
 
-	public void InsideVerticalDisplayWindow()
+	public void SetBlankingStatus(Blanking blanking)
 	{
-		outsideVerticalWindow = false;
-	}
-
-	public void OutsideVerticalDisplayWindow()
-	{
-		outsideVerticalWindow = true;
+		blankingStatus = blanking;
 	}
 
 	public void WriteBitplanes(ulong[] bpldat)
@@ -619,15 +616,15 @@ public class Denise : IDenise
 
 	private void RunDeniseTick()
 	{
-		if (clock.HorizontalPos < FIRST_DMA)
+		if (clock.DeniseHorizontalPos < FIRST_DMA)
 			return;
 
-		if (!outsideVerticalWindow)
+		if (blankingStatus == Blanking.None)
 		{
 			//is it the visible area horizontally?
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
 			//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
-			if (clock.HorizontalPos >= ((diwstrth + debugger.diwSHack -0) >> 1)  && clock.HorizontalPos < ((diwstoph + debugger.diwEHack -0) >> 1) )
+			if (clock.DeniseHorizontalPos >= ((diwstrth + debugger.diwSHack -0) )  && clock.DeniseHorizontalPos < ((diwstoph + debugger.diwEHack -0) ) )
 			{
 				//CopperBitplaneConvert();
 				pixelAction();
@@ -652,12 +649,26 @@ public class Denise : IDenise
 		}
 		else
 		{
-			//outside vertical area
+			if (blankingStatus != Blanking.OutsideDisplayWindow)
+			{
+				//horizontal/vertical blanking
+				uint c0 = 0xffffff;
+				uint c1 = 0x000000;
+				if ((blankingStatus & Blanking.HorizontalBlank)!=0) c0 = 0xff0000;
+				if ((blankingStatus & Blanking.VerticalBlank)!=0) c1 = 0x0000ff;
+				uint col = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0 ? c0 : c1;
+				for (int k = 0; k < 4; k++)
+					screen[dptr++] = (int)col;
+			}
+			else
+			{ 
+				//outside display window vertical area
 
-			//output colour 0 pixels
-			uint col = lastcol = truecolour[0];
-			for (int k = 0; k < 4; k++)
-				screen[dptr++] = (int)col;
+				//output colour 0 pixels
+				uint col = lastcol = truecolour[0];
+				for (int k = 0; k < 4; k++)
+					screen[dptr++] = (int)col;
+			}
 		}
 	}
 
@@ -775,7 +786,7 @@ public class Denise : IDenise
 	private void EndDeniseLine()
 	{
 		//cosmetics, draw some right border
-		outsideVerticalWindow = true;
+		blankingStatus = Blanking.OutsideDisplayWindow;
 		for (int i = 0; i < RIGHT_BORDER; i++)
 			RunDeniseTick();
 
