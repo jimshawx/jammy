@@ -32,45 +32,24 @@ namespace Jammy.Core
 		public void Reset()
 		{
 			paulaInterruptLevel = 0;
-			gayleInterruptLevel = 0;
 		}
 
-		//in chipset clocks (Blitter Miracle wants this > 1)
-		private const int PAULA_INTERRUPT_LATENCY = 0;
-		//minimum value
-		//private const int PAULA_INTERRUPT_LATENCY = 1;
+		//delay interrupt by N cpu instructions (Blitter Miracle wants this > 1)
+		private const int PAULA_INTERRUPT_LATENCY = 1;
 
-		private int intreqPending = 0;
 		public void Emulate()
 		{
-			if (PAULA_INTERRUPT_LATENCY == 0) return;
-
-			q.Enqueue(paulaInterruptLevel);
-			if (q.Count == PAULA_INTERRUPT_LATENCY)
-				paulaInterruptLevelLagged = (uint)q.Dequeue();
-
-			//if (intreqPending > 0)
-			//{
-			//	intreqPending--;
-			//	if (intreqPending == 0)
-			//	{
-			//		SetPaulaInterruptLevelReal(intenaStash, intreqStash);
-			//	}
-			//}
 		}
 
-		private uint paulaInterruptLevelLagged;
-
-		//level is the IPLx interrupt bits in SR
-
 		private uint paulaInterruptLevel;
-		private uint gayleInterruptLevel;
 
+		//This is called once per instruction
 		public ushort GetInterruptLevel()
 		{
-			if (PAULA_INTERRUPT_LATENCY == 0)
-				return (ushort)Math.Max(paulaInterruptLevel, gayleInterruptLevel);
-			return (ushort)Math.Max(paulaInterruptLevelLagged, gayleInterruptLevel);
+			q.Enqueue(paulaInterruptLevel);
+			if (q.Count <= PAULA_INTERRUPT_LATENCY)
+				return 0;
+			return (ushort)(uint)q.Dequeue();
 		}
 
 		public void AssertInterrupt(uint intreq, bool asserted = true)
@@ -102,18 +81,6 @@ namespace Jammy.Core
 
 		public void SetGayleInterruptLevel(uint level)
 		{
-			//set CPU level outside of Paula
-
-			//gayleInterruptLevel = 0;
-			//for (int i = 6; i >= 0; i--)
-			//{
-			//	if ((level & (1 << i)) != 0)
-			//	{
-			//		gayleInterruptLevel = (uint)i;
-			//		break;
-			//	}
-			//}
-
 			//set CPU level using Paula INTREQ
 			if ((level & (1 << 2)) != 0) AssertInterrupt(Types.Interrupt.PORTS);
 			if ((level & (1 << 3)) != 0) AssertInterrupt(Types.Interrupt.COPPER);
