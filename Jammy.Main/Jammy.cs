@@ -1326,6 +1326,13 @@ namespace Jammy.Main
 			var x = new DMAExplorer(chipsetDebugger, dmaLogger);
 			Amiga.UnlockEmulation();
 		}
+
+		private void btnGenDisassemblies_Click(object sender, EventArgs e)
+		{
+			Amiga.LockEmulation();
+			debugger.GenerateDisassemblies();
+			Amiga.UnlockEmulation();
+		}
 	}
 
 	public static class LayoutExtensions

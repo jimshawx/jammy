@@ -1165,5 +1165,10 @@ namespace Jammy.Disassembler.Analysers
 			if (found)
 				analysed.Add(library);
 		}
+
+		public void GenerateDisassemblies()
+		{
+			kickstartAnalysis.GenerateDisassemblies();
+		}
 	}
 }

@@ -97,6 +97,7 @@ namespace Jammy.Main
 			btnAnalyseFlow = new System.Windows.Forms.Button();
 			btnDMAExplorer = new System.Windows.Forms.Button();
 			tbClock = new System.Windows.Forms.TextBox();
+			btnGenDisassemblies = new System.Windows.Forms.Button();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -240,7 +241,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 622);
+			txtMemory.Size = new System.Drawing.Size(1390, 617);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "";
 			txtMemory.WordWrap = false;
@@ -451,7 +452,7 @@ namespace Jammy.Main
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(482, 987);
+			txtCopper.Size = new System.Drawing.Size(477, 987);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -533,7 +534,7 @@ namespace Jammy.Main
 			cbTypes.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			cbTypes.FormattingEnabled = true;
 			cbTypes.Items.AddRange(new object[] { "(None)", "ExecBase", "timerequest", "Library", "Task", "KeyMapResource", "MsgPort", "Unit", "Resident" });
-			cbTypes.Location = new System.Drawing.Point(2348, 1206);
+			cbTypes.Location = new System.Drawing.Point(2312, 1207);
 			cbTypes.Margin = new System.Windows.Forms.Padding(6);
 			cbTypes.Name = "cbTypes";
 			cbTypes.Size = new System.Drawing.Size(292, 40);
@@ -738,7 +739,7 @@ namespace Jammy.Main
 			lbIntvec.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
 			lbIntvec.Font = new System.Drawing.Font("Consolas", 8.25F);
 			lbIntvec.FormattingEnabled = true;
-			lbIntvec.Location = new System.Drawing.Point(-32, 1007);
+			lbIntvec.Location = new System.Drawing.Point(-37, 1007);
 			lbIntvec.Name = "lbIntvec";
 			lbIntvec.Size = new System.Drawing.Size(519, 238);
 			lbIntvec.TabIndex = 27;
@@ -829,11 +830,22 @@ namespace Jammy.Main
 			tbClock.Size = new System.Drawing.Size(328, 59);
 			tbClock.TabIndex = 56;
 			// 
+			// btnGenDisassemblies
+			// 
+			btnGenDisassemblies.Location = new System.Drawing.Point(2613, 1204);
+			btnGenDisassemblies.Name = "btnGenDisassemblies";
+			btnGenDisassemblies.Size = new System.Drawing.Size(79, 46);
+			btnGenDisassemblies.TabIndex = 57;
+			btnGenDisassemblies.Text = "Dis";
+			btnGenDisassemblies.UseVisualStyleBackColor = true;
+			btnGenDisassemblies.Click += btnGenDisassemblies_Click;
+			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2710, 1291);
+			Controls.Add(btnGenDisassemblies);
 			Controls.Add(tbClock);
 			Controls.Add(btnDMAExplorer);
 			Controls.Add(btnAnalyseFlow);
@@ -959,6 +971,7 @@ namespace Jammy.Main
 		private System.Windows.Forms.ToolStripMenuItem toolStripFindNext;
 		private System.Windows.Forms.Button btnDMAExplorer;
 		private System.Windows.Forms.TextBox tbClock;
+		private System.Windows.Forms.Button btnGenDisassemblies;
 	}
 }
 

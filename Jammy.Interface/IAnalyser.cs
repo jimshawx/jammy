@@ -3,7 +3,7 @@ using Jammy.Types;
 using Jammy.Types.Kickstart;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Interface
@@ -18,5 +18,6 @@ namespace Jammy.Interface
 		void AnalyseLibraryBase(string library, uint address);
 		void UpdateAnalysis();
 		void ClearSomeAnalysis();
+		void GenerateDisassemblies();
 	}
 }

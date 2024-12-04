@@ -7,7 +7,7 @@ using Jammy.Types;
 using Jammy.Types.Debugger;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Interface
@@ -41,5 +41,6 @@ namespace Jammy.Interface
 		void RemoveBreakpoint(uint address);
 		void DumpBreakpoints();
 		ClockInfo GetChipClock();
+		void GenerateDisassemblies();
 	}
 }

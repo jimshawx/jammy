@@ -2,7 +2,7 @@
 using Jammy.Types;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Interface
@@ -26,5 +26,4 @@ namespace Jammy.Interface
 		bool OutOfMemtypeRange(uint address);
 		void ClearSomeAnalysis();
 	}
-
 }

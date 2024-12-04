@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using Jammy.Core.Types;
+﻿using Jammy.Core.Types;
 using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Collections.Generic;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Disassembler.Analysers

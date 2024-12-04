@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Disassembler
@@ -260,13 +260,14 @@ namespace Jammy.Disassembler
 				logger.LogTrace($"{rt.MatchTag:X8} {rt.Name} {rt.Flags} v:{rt.Version} {rt.Type} pri:{rt.Pri} init:{rt.Init:X8} {rt.IdString}");
 
 			if (settings.Disassemblies.IsEnabled())
-			{
-				//var memoryDump = new MemoryDump(memory.GetEnumerable(0));
-				var memoryDump = new MemoryDump(memory.GetBulkRanges());
-				Disassemble(resident, memoryDump);
-			}
+				GenerateDisassemblies();
+		}
 
-			//KickLogo.KSLogo(this);
+		public void GenerateDisassemblies()
+		{
+			var resident = GetRomTags();
+			var memoryDump = new MemoryDump(memory.GetBulkRanges());
+			Disassemble(resident, memoryDump);
 		}
 	}
 }

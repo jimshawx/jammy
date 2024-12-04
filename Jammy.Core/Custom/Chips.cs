@@ -206,6 +206,7 @@ namespace Jammy.Core.Custom
 			}
 			else if (address == ChipRegs.LISAID)
 			{
+				logger.LogTrace($"LISAID Check @{insaddr:X8}");
 				return lisaid;
 			}
 			else if (address == ChipRegs.SERDATR)

@@ -430,5 +430,10 @@ namespace Jammy.Debugger
 			rv.State = clock.ClockState;
 			return rv;
 		}
+
+		public void GenerateDisassemblies()
+		{
+			analyser.GenerateDisassemblies();	
+		}
 	}
 }
