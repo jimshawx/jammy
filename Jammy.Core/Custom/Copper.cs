@@ -95,7 +95,7 @@ namespace Jammy.Core.Custom
 				return;
 
 			//copper instruction every odd clock (and copper DMA is on)
-			//if ((clock.HorizontalPos & 1) != 0)
+			//if ((clock.CopperHorizontalPos & 1) != 0)
 			{ 
 				CopperInstruction();
 			}
@@ -254,7 +254,7 @@ namespace Jammy.Core.Custom
 					status = CopperStatus.RunningWord1;
 
 					//SKIP
-					uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.HorizontalPos & 0xff);
+					uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
 					coppos &= waitMask;
 					if (CopperCompare(coppos, (waitPos & waitMask)))
 					{
@@ -276,10 +276,12 @@ namespace Jammy.Core.Custom
 					return;
 				}
 
-				uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.HorizontalPos & 0xff);
+				uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
 				coppos &= waitMask;
 				if (CopperCompare(coppos, (waitPos & waitMask)))
 				{
+					//logger.LogTrace($"AWOKE @{clock}");
+
 					//n ticks later
 					//waitTimer = 1;
 					//status = CopperStatus.WakingUp;
@@ -325,7 +327,7 @@ namespace Jammy.Core.Custom
 
 		private bool CopperCompare(uint coppos, uint waitPos)
 		{
-			if ((clock.HorizontalPos&1)==0) return false;
+			//if ((clock.CopperHorizontalPos&1)==0) return false;
 			return coppos >= waitPos;
 		}
 

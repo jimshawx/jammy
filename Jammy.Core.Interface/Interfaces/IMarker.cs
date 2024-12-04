@@ -227,6 +227,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		uint HorizontalPos { get; }
 		uint DeniseHorizontalPos { get; }
+		uint CopperHorizontalPos { get; }
 		uint VerticalPos { get; }
 		uint Tick { get; }
 		ChipsetClockState ClockState { get; }
