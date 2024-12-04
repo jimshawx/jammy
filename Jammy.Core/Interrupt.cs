@@ -66,47 +66,36 @@ namespace Jammy.Core
 		private uint paulaInterruptLevel;
 		private uint gayleInterruptLevel;
 
-		//private readonly object locker = new object();
-
 		public ushort GetInterruptLevel()
 		{
-			//lock (locker)
-			{
-				if (PAULA_INTERRUPT_LATENCY == 0)
-					return (ushort)Math.Max(paulaInterruptLevel, gayleInterruptLevel);
-				return (ushort)Math.Max(paulaInterruptLevelLagged, gayleInterruptLevel);
-			}
+			if (PAULA_INTERRUPT_LATENCY == 0)
+				return (ushort)Math.Max(paulaInterruptLevel, gayleInterruptLevel);
+			return (ushort)Math.Max(paulaInterruptLevelLagged, gayleInterruptLevel);
 		}
 
 		public void AssertInterrupt(uint intreq, bool asserted = true)
 		{
-			//lock (locker)
-			{
-				uint mask = (1u << (int)intreq);
-				if (asserted) mask |= 0x8000;
-				custom.Write(0, ChipRegs.INTREQ, mask, Size.Word);
-			}
+			uint mask = (1u << (int)intreq);
+			if (asserted) mask |= 0x8000;
+			custom.Write(0, ChipRegs.INTREQ, mask, Size.Word);
 		}
 
 		public void SetPaulaInterruptLevel(uint intreq, uint intena)
 		{
-			//lock (locker)
+			paulaInterruptLevel = 0;
+
+			//all interrupts disabled
+			if ((intena & (1 << (int)Types.Interrupt.INTEN)) == 0) return;
+
+			intreq &= intena;
+			if (intreq == 0) return;
+
+			for (int i = (int)Types.Interrupt.EXTER; i >= 0; i--)
 			{
-				paulaInterruptLevel = 0;
-
-				//all interrupts disabled
-				if ((intena & (1 << (int)Types.Interrupt.INTEN)) == 0) return;
-
-				intreq &= intena;
-				if (intreq == 0) return;
-
-				for (int i = (int)Types.Interrupt.EXTER; i >= 0; i--)
+				if ((intreq & (1u << i)) != 0)
 				{
-					if ((intreq & (1u << i)) != 0)
-					{
-						paulaInterruptLevel = CPUPriority((uint)i);
-						break;
-					}
+					paulaInterruptLevel = CPUPriority((uint)i);
+					break;
 				}
 			}
 		}

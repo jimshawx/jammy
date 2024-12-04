@@ -25,8 +25,6 @@ public class CPUClock : ICPUClock
 
 	public void Emulate()
 	{
-		clock.WaitForTick();
-		clock.Ack();
 	}
 
 	public void Reset()

@@ -233,8 +233,6 @@ namespace Jammy.Main
 			serviceProvider.GetRequiredService<IBlitter>().Init(dma);
 			serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab);
 
-			serviceProvider.GetRequiredService<IChipsetClock>().Init(dma);
-
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");
 

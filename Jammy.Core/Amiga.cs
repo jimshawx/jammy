@@ -279,7 +279,7 @@ namespace Jammy.Core
 				//CPU DMA Slot was allocated
 				totalWaits--;
 			}
-			clock.AllThreadsFinished();
+			clock.UpdateClock();
 
 			agnus.FlushBitplanes();
 		}
@@ -417,11 +417,6 @@ namespace Jammy.Core
 				emulationSemaphore.Wait();
 
 				emulationMode = desiredEmulationMode;
-
-				if (emulationMode != EmulationMode.Stopped)
-					clock.Resume();
-				else
-					clock.Suspend();
 			}
 		}
 	}

@@ -14,8 +14,7 @@ namespace Jammy.Core.Custom;
 
 public class ChipsetClock : IChipsetClock
 {
-	private IDMA dma;
-	private readonly ILogger<ChipsetClock> logger;
+	private readonly ILogger logger;
 	private readonly uint displayScanlines;
 	private readonly uint displayHorizontal;
 
@@ -31,21 +30,21 @@ public class ChipsetClock : IChipsetClock
 
 	[Persist]
 	public uint HorizontalPos { get; private set; }
+	public uint DeniseHorizontalPos { get { return HorizontalPos; } }
+
 	[Persist]
 	public uint VerticalPos { get; private set; }
+
 	[Persist]
 	public uint FrameCount { get; private set; }
+
 	[Persist]
 	public uint Tick { get; private set; }
-	//private bool startOfFrame;
-	//private bool endOfFrame;
-	//private bool startOfLine;
-	//private bool endOfLine;
+
 	public ChipsetClockState ClockState { get; private set; }
 
 	public void Emulate()
 	{
-		//startOfFrame = endOfFrame = endOfLine = startOfLine = false;
 		ClockState = 0;
 
 		Tick++;
@@ -60,70 +59,26 @@ public class ChipsetClock : IChipsetClock
 			ClockState |= ChipsetClockState.EndOfLine;
 
 		if (HorizontalPos == displayHorizontal-1 && VerticalPos == displayScanlines + LongFrame() - 1)
-		{
 			ClockState |= ChipsetClockState.EndOfFrame;
-			//logger.LogTrace($"{DateTime.Now:fff}");
-		}
-
-		//Tick();
-
-		//now all the threads are busy
-
-		//wait for all the threads to be done
-		//Tock();
 	}
 
-	public void Suspend()
+	public void UpdateClock()
 	{
-		//suspended = true;
-	}
-
-	public void Resume()
-	{
-		//suspended = false;
-	}
-
-	public void AllThreadsFinished()
-	{
-		//block ready for the next Tick()
-		//clockEvent.Reset();
-		//tick = 0;
-
-		//do all the end of tick things
-		// - execute DMA
-		// - tick the line clocks
-
-		//dma.TriggerHighestPriorityDMA();
-
-		if ((ClockState&ChipsetClockState.EndOfLine)!=0)
+		if ((ClockState & ChipsetClockState.EndOfLine) != 0)
+		{ 
 			HorizontalPos = 0;
+			VerticalPos++;
+		}
 		else
+		{ 
 			HorizontalPos++;
+		}
 
 		if ((ClockState & ChipsetClockState.EndOfFrame)!=0)
 		{
 			VerticalPos = 0;
 			FrameCount++;
 		}
-		else if ((ClockState & ChipsetClockState.EndOfLine)!=0)
-		{
-			VerticalPos++;
-		}
-
-		//now the end of Tock() is finished, release all the threads
-		//which will all block until the next Tick()
-		//foreach (var w in tSync.Values.Select(x => x.ackHandle))
-		//	w.Set();
-		//tock = 1;
-
-		//while (Interlocked.CompareExchange(ref acks2, 0, tSync.Count) != tSync.Count) ;
-
-		//tock = 0;
-	}
-
-	public void Init(IDMA dma)
-	{
-		this.dma = dma;
 	}
 
 	public void Reset()
@@ -135,89 +90,6 @@ public class ChipsetClock : IChipsetClock
 	public uint LongFrame()
 	{
 		return FrameCount&1;
-	}
-
-	//public bool StartOfLine()
-	//{
-	//	return startOfLine;
-	//}
-
-	//public bool EndOfLine()
-	//{
-	//	return endOfLine;
-	//}
-	
-	//public bool StartOfFrame()
-	//{
-	//	return startOfFrame;
-	//}
-
-	//public bool EndOfFrame()
-	//{
-	//	return endOfFrame;
-	//}
-
-	//private volatile int tick;
-	//private volatile int tock;
-	//private void Tick()
-	//{
-	//	//clockEvent.Set();
-	//	//tick = 1;
-	//}
-
-	//private void Tock()
-	//{
-	//	for (;;)
-	//	{
-	//		if (Interlocked.CompareExchange(ref acks, 0, tSync.Count) == tSync.Count)
-	//		{
-	//			AllThreadsFinished();
-	//			return;
-	//		}
-	//	}
-	//}
-
-	//private SpinWait tickSpin = new SpinWait();
-	public void WaitForTick()
-	{
-		//clockEvent.Wait();
-		//while (tick == 0) Thread.Yield();
-			//tickSpin.SpinOnce();
-	}
-
-	//private int acks = 0;
-	//private int acks2 = 0;
-	//private SpinWait tockSpin = new SpinWait();
-	public void Ack()
-	{
-		//signal a chipset thread is done
-		//Interlocked.Increment(ref acks);
-		//block until all the chipset threads are done and end of Tock() is reached
-		//tSync[Environment.CurrentManagedThreadId].ackHandle.WaitOne();
-		//while (tock == 0) Thread.Yield() ;
-			//tockSpin.SpinOnce();
-		//Interlocked.Increment(ref acks2);
-	}
-
-	//private class PerThread
-	//{
-	//	public PerThread()
-	//	{
-	//		ackHandle = new AutoResetEvent(false);
-	//		name = Thread.CurrentThread.Name;
-	//	}
-
-	//	public string name;
-	//	public AutoResetEvent ackHandle;
-	//}
-
-	//private readonly ConcurrentDictionary<int, PerThread> tSync = new ConcurrentDictionary<int, PerThread>();
-
-	public void RegisterThread()
-	{
-		//var pt = new PerThread();
-		//tSync.TryAdd(Environment.CurrentManagedThreadId, pt);
-		//logger.LogTrace($"{pt.name} Registered");
 	}
 
 	public void Save(JArray obj)

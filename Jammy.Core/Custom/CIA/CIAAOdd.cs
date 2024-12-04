@@ -66,28 +66,21 @@ namespace Jammy.Core.Custom.CIA
 
 		private ulong lastTick = 0;
 		private int divisor=0;
-		private readonly object locker = new object();
+
 		public override void Emulate()
 		{
-			clock.WaitForTick();
-
-			//lock (locker)
+			if (psuClock.CurrentTick != lastTick)
 			{
-				if (psuClock.CurrentTick != lastTick)
-				{
-					IncrementTODTimer();
-					lastTick = psuClock.CurrentTick;
-				}
-
-				divisor++;
-				if (divisor == 5)
-				{
-					divisor = 0;
-					base.Emulate();
-				}
+				IncrementTODTimer();
+				lastTick = psuClock.CurrentTick;
 			}
 
-			clock.Ack();
+			divisor++;
+			if (divisor == 5)
+			{
+				divisor = 0;
+				base.Emulate();
+			}
 		}
 
 		public override bool IsMapped(uint address)
@@ -106,63 +99,57 @@ namespace Jammy.Core.Custom.CIA
 
 		public override uint ReadByte(uint insaddr, uint address)
 		{
-			//lock (locker)
+			byte value;
+			byte reg = GetReg(address, Size.Byte);
+
+			if (reg == PRA)
 			{
-				byte value;
-				byte reg = GetReg(address, Size.Byte);
-
-				if (reg == PRA)
-				{
-					byte p = 0;
-					p |= diskDrives.ReadPRA(insaddr);
-					p |= mouse.ReadPRA(insaddr);
-					value = p;
-				}
-				else if (reg == SDR)
-				{
-					value = keyboard.ReadKey();
-				}
-				else
-				{
-					value = (byte)base.Read(reg);
-				}
-
-				//if (reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
-				//	logger.LogTrace($"CIAA Read @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
-
-				return value;
+				byte p = 0;
+				p |= diskDrives.ReadPRA(insaddr);
+				p |= mouse.ReadPRA(insaddr);
+				value = p;
 			}
+			else if (reg == SDR)
+			{
+				value = keyboard.ReadKey();
+			}
+			else
+			{
+				value = (byte)base.Read(reg);
+			}
+
+			//if (reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
+			//	logger.LogTrace($"CIAA Read @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+
+			return value;
 		}
 
 		public override void WriteByte(uint insaddr, uint address, uint value)
 		{
-			//lock (locker)
+			byte reg = GetReg(address, Size.Byte);
+
+			if (reg == PRA)
 			{
-				byte reg = GetReg(address, Size.Byte);
+				UI.UI.PowerLight = (value & 2) == 0;
+				window.PowerLight = UI.UI.PowerLight;
 
-				if (reg == PRA)
-				{
-					UI.UI.PowerLight = (value & 2) == 0;
-					window.PowerLight = UI.UI.PowerLight;
-
-					diskDrives.WritePRA(insaddr, (byte)value);
-					mouse.WritePRA(insaddr, (byte)value);
-					kickstartROM.SetMirror((value & 1) != 0);
-					base.Write(reg, value);
-				}
-				else if (reg == CRA)
-				{
-					keyboard.WriteCRA(insaddr, (byte)value);
-					base.Write(reg, value);
-				}
-				else
-				{
-					base.Write(reg, value);
-				}
-
-				//if (reg != CIA.TBLO && reg != CIA.TBHI && reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
-				//	logger.LogTrace($"CIAA Write @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+				diskDrives.WritePRA(insaddr, (byte)value);
+				mouse.WritePRA(insaddr, (byte)value);
+				kickstartROM.SetMirror((value & 1) != 0);
+				base.Write(reg, value);
 			}
+			else if (reg == CRA)
+			{
+				keyboard.WriteCRA(insaddr, (byte)value);
+				base.Write(reg, value);
+			}
+			else
+			{
+				base.Write(reg, value);
+			}
+
+			//if (reg != CIA.TBLO && reg != CIA.TBHI && reg != CIA.TODLO && reg != CIA.TODMID && reg != CIA.TODHI)
+			//	logger.LogTrace($"CIAA Write @{insaddr:X8} {address:X8} {value:X2} {debug[reg].Item1} {Convert.ToString(value, 2).PadLeft(8, '0')}");
 		}
 
 		public static List<string> GetCribSheet()

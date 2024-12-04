@@ -120,16 +120,16 @@ public class Denise : IDenise
 	}
 
 	[Persist]
-	private bool blanking;
+	private bool outsideVerticalWindow;
 
-	public void EnterVisibleArea()
+	public void InsideVerticalDisplayWindow()
 	{
-		blanking = false;
+		outsideVerticalWindow = false;
 	}
 
-	public void ExitVisibleArea()
+	public void OutsideVerticalDisplayWindow()
 	{
-		blanking = true;
+		outsideVerticalWindow = true;
 	}
 
 	public void WriteBitplanes(ulong[] bpldat)
@@ -622,7 +622,7 @@ public class Denise : IDenise
 		if (clock.HorizontalPos < FIRST_DMA)
 			return;
 
-		if (!blanking)
+		if (!outsideVerticalWindow)
 		{
 			//is it the visible area horizontally?
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
@@ -702,6 +702,13 @@ public class Denise : IDenise
 		switch (address)
 		{
 			case ChipRegs.CLXDAT: value = clxdat; clxdat = 0; break;
+
+			case ChipRegs.STREQU:
+			case ChipRegs.STRHOR:
+			case ChipRegs.STRLONG:
+			case ChipRegs.STRVBL:
+				logger.LogTrace($"Strobe R {ChipRegs.Name(address)} @ {insaddr:X8}");
+				break;
 		}
 
 		return value;
@@ -752,6 +759,12 @@ public class Denise : IDenise
 			//24bit colour
 			truecolour[index] = Explode(colour[index]) | (Explode(lowcolour[index]) >> 4);
 		}
+		else if (address == ChipRegs.STREQU || address == ChipRegs.STRHOR
+						 || address == ChipRegs.STRLONG || address == ChipRegs.STRVBL)
+		{
+			logger.LogTrace($"Strobe W {ChipRegs.Name(address)} @ {insaddr:X8}");
+		}
+
 	}
 
 	private uint Explode(ushort c)
@@ -762,7 +775,7 @@ public class Denise : IDenise
 	private void EndDeniseLine()
 	{
 		//cosmetics, draw some right border
-		blanking = true;
+		outsideVerticalWindow = true;
 		for (int i = 0; i < RIGHT_BORDER; i++)
 			RunDeniseTick();
 

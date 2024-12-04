@@ -241,7 +241,7 @@ namespace Jammy.Core.Custom
 				case ChipRegs.BLTDMOD: bltdmod = (uint)(short)value & 0xfffffffe; break;
 
 				case ChipRegs.BLTCDAT: bltcdat = value; break;
-				case ChipRegs.BLTBDAT: bltbdat = value; break;
+				case ChipRegs.BLTBDAT: bltbdat = value; /*(ushort)(value << (int)(bltcon1 >> 12));*/ break;
 				case ChipRegs.BLTADAT: bltadat = value; break;
 				case ChipRegs.BLTDDAT: bltddat = value; break;
 			}

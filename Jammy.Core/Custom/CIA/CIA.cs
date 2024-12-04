@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -267,7 +266,7 @@ namespace Jammy.Core.Custom.CIA
 
 				case CIA.TAHI:
 					timerAreset = (ushort)((timerAreset & 0x00ffu) | (value << 8));
-					if (((regs[CIA.CRA] & (uint)CR.START) == 0) /*|| ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0)*/)
+					if (((regs[CIA.CRA] & (uint)CR.START) == 0) || ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0))
 					{
 						timerA = timerAreset;
 						regs[CIA.CRA] |= (uint)CR.START; //start the timer
@@ -279,7 +278,7 @@ namespace Jammy.Core.Custom.CIA
 
 				case CIA.TBHI:
 					timerBreset = (ushort)((timerBreset & 0x00ffu) | (value << 8));
-					if (((regs[CIA.CRB] & (uint)CR.START) == 0) /*|| ((regs[CIA.CRB] & (uint)CR.RUNMODE) != 0)*/)
+					if (((regs[CIA.CRB] & (uint)CR.START) == 0) || ((regs[CIA.CRB] & (uint)CR.RUNMODE) != 0))
 					{
 						timerB = timerBreset;
 						regs[CIA.CRB] |= (uint)CR.START;//start the timer

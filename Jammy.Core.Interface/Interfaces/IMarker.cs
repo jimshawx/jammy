@@ -202,8 +202,8 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	{
-		void EnterVisibleArea();
-		void ExitVisibleArea();
+		void InsideVerticalDisplayWindow();
+		void OutsideVerticalDisplayWindow();
 		void WriteBitplanes(ulong[] planes);
 		void WriteSprite(int s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl);
 		public uint[] DebugGetPalette();
@@ -227,22 +227,12 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IChipsetClock : IEmulate, IStatePersister
 	{
 		uint HorizontalPos { get; }
+		uint DeniseHorizontalPos { get; }
 		uint VerticalPos { get; }
 		uint Tick { get; }
-		//bool StartOfLine(); 
-		//bool EndOfLine();
-		//bool StartOfFrame();
-		//bool EndOfFrame();
 		ChipsetClockState ClockState { get; }
 
-		void WaitForTick();
-		void Ack();
-		void RegisterThread();
-
-		void Init(IDMA dma);
-		void Suspend();
-		void Resume();
-		void AllThreadsFinished();
+		void UpdateClock();
 		uint LongFrame();
 
 		string TimeStamp();

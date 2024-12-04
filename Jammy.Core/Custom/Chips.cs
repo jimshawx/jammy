@@ -10,7 +10,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -118,8 +117,6 @@ namespace Jammy.Core.Custom
 			return (int)(address & 0x00000ffe) >> 1;
 		}
 
-		private object locker = new object();
-
 		public uint Read(uint insaddr, uint address, Size size)
 		{
 			uint originalAddress = address;
@@ -162,67 +159,64 @@ namespace Jammy.Core.Custom
 			DENISEID/LISAID->Chips		
 			 */
 
-			//lock (locker)
+			int reg = REG(address);
+
+			if (address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR)
 			{
-				int reg = REG(address);
-
-				if (address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR)
-				{
-					return agnus.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.CLXDAT)
-				{
-					return denise.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.BLTDDAT)
-				{
-					return blitter.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.COPJMP1 || address == ChipRegs.COPJMP2)
-				{
-					return copper.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR)
-				{
-					return diskDrives.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT ||
-				         address == ChipRegs.POTGOR || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT)
-				{
-					return mouse.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.ADKCONR)
-				{
-					return (ushort)(audio.Read(insaddr, address) | diskDrives.Read(insaddr, address));
-				}
-				else if (address == ChipRegs.DMACONR)
-				{
-					return dma.Read(insaddr, address);
-				}
-				else if (address == ChipRegs.INTENAR)
-				{
-					return (uint)(intena & 0x7fff);
-				}
-				else if (address == ChipRegs.INTREQR)
-				{
-					return (uint)(intreq & 0x7fff);
-				}
-				else if (address == ChipRegs.LISAID)
-				{
-					return lisaid;
-				}
-				else if (address == ChipRegs.SERDATR)
-				{
-					return serial.Read(insaddr, address);
-				}
-				if ((originalAddress >> 12)==0xdff)
-					logger.LogTrace($"R UNMAPPED {ChipRegs.Name(address)} {originalAddress:X8} @{insaddr:X8}");
-				//almost certainly, this is code using clr.x on a chip register.  you were TOLD not to do that!
-				return 0;
+				return agnus.Read(insaddr, address);
 			}
+			else if (address == ChipRegs.CLXDAT
+						|| address == ChipRegs.STREQU || address == ChipRegs.STRHOR
+						|| address == ChipRegs.STRLONG || address == ChipRegs.STRVBL)
+			{
+				return denise.Read(insaddr, address);
+			}
+			else if (address == ChipRegs.BLTDDAT)
+			{
+				return blitter.Read(insaddr, address);
+			}
+			else if (address == ChipRegs.COPJMP1 || address == ChipRegs.COPJMP2)
+			{
+				return copper.Read(insaddr, address);
+			}
+			else if (address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR)
+			{
+				return diskDrives.Read(insaddr, address);
+			}
+			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT ||
+				        address == ChipRegs.POTGOR || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT)
+			{
+				return mouse.Read(insaddr, address);
+			}
+			else if (address == ChipRegs.ADKCONR)
+			{
+				return (ushort)(audio.Read(insaddr, address) | diskDrives.Read(insaddr, address));
+			}
+			else if (address == ChipRegs.DMACONR)
+			{
+				return dma.Read(insaddr, address);
+			}
+			else if (address == ChipRegs.INTENAR)
+			{
+				return (uint)(intena & 0x7fff);
+			}
+			else if (address == ChipRegs.INTREQR)
+			{
+				return (uint)(intreq & 0x7fff);
+			}
+			else if (address == ChipRegs.LISAID)
+			{
+				return lisaid;
+			}
+			else if (address == ChipRegs.SERDATR)
+			{
+				return serial.Read(insaddr, address);
+			}
+			if ((originalAddress >> 12)==0xdff)
+				logger.LogTrace($"R UNMAPPED {ChipRegs.Name(address)} {originalAddress:X8} @{insaddr:X8}");
+			//almost certainly, this is code using clr.x on a chip register.  you were TOLD not to do that!
+			return 0;
 		}
-
-		//private object locker = new object();
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
@@ -265,133 +259,134 @@ namespace Jammy.Core.Custom
 				return;
 			}
 
-			//lock (locker)
+			int reg = REG(address);
+
+			if (address == ChipRegs.DMACON)
 			{
-				int reg = REG(address);
+				dma.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == ChipRegs.DMACONR)
+			{
+				/* can't write here */
+			}
+			else if (address == ChipRegs.INTENA)
+			{
+				ushort prevIntena = intena;
 
-				if (address == ChipRegs.DMACON)
-				{
-					dma.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.DMACONR)
-				{
-					/* can't write here */
-				}
-				else if (address == ChipRegs.INTENA)
-				{
-					ushort prevIntena = intena;
-
-					if ((value & 0x8000) != 0)
-						intena |= (ushort)value;
-					else
-						intena &= (ushort)~value;
-
-					if (((prevIntena ^ intena)&0x0020)!=0)
-						logger.LogTrace($"VERTB {((intena&0x0020)!=0?"on":"off")} @ {insaddr:X8}");
-
-					audio.WriteINTENA((ushort)(intena & 0x7fff));
-
-					interrupt.SetPaulaInterruptLevel((uint)intreq & 0x7fff, (uint)intena & 0x7fff);
-				}
-				else if (address == ChipRegs.INTENAR)
-				{
-					/* can't write here */
-				}
-				else if (address == ChipRegs.INTREQ)
-				{
-					if ((value & 0x8000) != 0)
-						intreq |= (ushort)value;
-					else
-						intreq &= (ushort)~value;
-
-					audio.WriteINTREQ((ushort)(intreq & 0x7fff));
-					serial.WriteINTREQ((ushort)(intreq & 0x7fff));
-
-					interrupt.SetPaulaInterruptLevel((uint)intreq & 0x7fff, (uint)intena & 0x7fff);
-				}
-				else if (address == ChipRegs.INTREQR)
-				{
-					/* can't write here */
-				}
-				else if (address == ChipRegs.LISAID && settings.ChipSet == ChipSet.AGA)
-				{
-					/* can't write here on AGA */
-				}
-				else if (address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR)
-				{
-					/* can't write here */
-				}
-				else if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
-				    (address >= ChipRegs.BPL1PTH && address <= ChipRegs.BPL8PTL) ||
-				    address == ChipRegs.BPL1MOD || address == ChipRegs.BPL2MOD ||
-				    (address >= ChipRegs.BPL1DAT && address <= ChipRegs.SPR7DATB) ||
-				     address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
-				    || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL
-				    || address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-				    || address == ChipRegs.BEAMCON0)
-				{
-					agnus.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.DIWSTRT || address == ChipRegs.DIWSTOP ||
-				         address == ChipRegs.DIWHIGH || address == ChipRegs.BPLCON0 || address == ChipRegs.FMODE)
-				{
-					agnus.Write(insaddr, address, (ushort)value);
-					denise.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.BPLCON1 || address == ChipRegs.BPLCON2 ||
-				         address == ChipRegs.BPLCON3 || address == ChipRegs.BPLCON4 || address == ChipRegs.CLXCON ||
-				         address == ChipRegs.CLXCON2
-				         || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31))
-				{
-					denise.Write(insaddr, address, (ushort)value);
-				}
-				else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
-				{
-					copper.Write(insaddr, address, (ushort)value);
-				}
-				else if (address >= ChipRegs.BLTCON0 && address <= ChipRegs.BLTADAT || address == ChipRegs.BLTDDAT)
-				{
-					blitter.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.ADKCON)
-				{
-					diskDrives.Write(insaddr, address, (ushort)value);
-					audio.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.ADKCONR)
-				{
-					/* can't write here */
-				}
-				else if (address == ChipRegs.DSKSYNC
-				         || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL ||
-				         address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT)
-				{
-					diskDrives.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO ||
-				         address == ChipRegs.POTGOR
-				         || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT ||
-				         address == ChipRegs.JOYTEST)
-				{
-					mouse.Write(insaddr, address, (ushort)value);
-				}
-				else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
-				{
-					audio.Write(insaddr, address, (ushort)value);
-				}
-				else if (address == ChipRegs.NO_OP)
-				{
-					/* nothing happens */
-				}
-				else if (address == ChipRegs.SERDAT || address == ChipRegs.SERDATR || address == ChipRegs.SERPER)
-				{
-					serial.Write(insaddr, address, (ushort)value);
-				}
+				if ((value & 0x8000) != 0)
+					intena |= (ushort)value;
 				else
-				{
-					if ((originalAddress >> 12) == 0xdff)
-						logger.LogTrace($"W UNMAPPED {ChipRegs.Name(address)} {originalAddress:X8} {value:X4} {value.ToBin()} @{insaddr:X8}");
-				}
+					intena &= (ushort)~value;
+
+				if (((prevIntena ^ intena)&0x0020)!=0)
+					logger.LogTrace($"VERTB {((intena&0x0020)!=0?"on":"off")} @ {insaddr:X8}");
+
+				audio.WriteINTENA((ushort)(intena & 0x7fff));
+
+				interrupt.SetPaulaInterruptLevel((uint)intreq & 0x7fff, (uint)intena & 0x7fff);
+			}
+			else if (address == ChipRegs.INTENAR)
+			{
+				/* can't write here */
+			}
+			else if (address == ChipRegs.INTREQ)
+			{
+				if ((value & 0x8000) != 0)
+					intreq |= (ushort)value;
+				else
+					intreq &= (ushort)~value;
+
+				audio.WriteINTREQ((ushort)(intreq & 0x7fff));
+				serial.WriteINTREQ((ushort)(intreq & 0x7fff));
+
+				interrupt.SetPaulaInterruptLevel((uint)intreq & 0x7fff, (uint)intena & 0x7fff);
+			}
+			else if (address == ChipRegs.INTREQR)
+			{
+				/* can't write here */
+			}
+			else if (address == ChipRegs.LISAID && settings.ChipSet == ChipSet.AGA)
+			{
+				/* can't write here on AGA */
+			}
+			else if (address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR)
+			{
+				/* can't write here */
+			}
+			else if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
+				(address >= ChipRegs.BPL1PTH && address <= ChipRegs.BPL8PTL) ||
+				address == ChipRegs.BPL1MOD || address == ChipRegs.BPL2MOD ||
+				(address >= ChipRegs.BPL1DAT && address <= ChipRegs.SPR7DATB) ||
+				address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW ||
+				address == ChipRegs.VTOTAL || address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP ||
+				address == ChipRegs.HTOTAL || address == ChipRegs.HBSTRT || address == ChipRegs.HBSTOP ||
+				address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP ||
+				address == ChipRegs.HSSTRT || address == ChipRegs.HSSTOP || address == ChipRegs.HCENTER ||
+				address == ChipRegs.BEAMCON0)
+			{
+				agnus.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == ChipRegs.DIWSTRT || address == ChipRegs.DIWSTOP ||
+				        address == ChipRegs.DIWHIGH || address == ChipRegs.BPLCON0 || address == ChipRegs.FMODE)
+			{
+				agnus.Write(insaddr, address, (ushort)value);
+				denise.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == ChipRegs.BPLCON1 || address == ChipRegs.BPLCON2 ||
+				        address == ChipRegs.BPLCON3 || address == ChipRegs.BPLCON4 || address == ChipRegs.CLXCON ||
+				        address == ChipRegs.CLXCON2
+				        || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
+						|| address == ChipRegs.STREQU || address == ChipRegs.STRHOR
+						|| address == ChipRegs.STRLONG || address == ChipRegs.STRVBL)
+			{
+				denise.Write(insaddr, address, (ushort)value);
+			}
+			else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
+			{
+				copper.Write(insaddr, address, (ushort)value);
+			}
+			else if (address >= ChipRegs.BLTCON0 && address <= ChipRegs.BLTADAT || address == ChipRegs.BLTDDAT)
+			{
+				blitter.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == ChipRegs.ADKCON)
+			{
+				diskDrives.Write(insaddr, address, (ushort)value);
+				audio.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == ChipRegs.ADKCONR)
+			{
+				/* can't write here */
+			}
+			else if (address == ChipRegs.DSKSYNC
+				        || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL ||
+				        address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT)
+			{
+				diskDrives.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO ||
+				        address == ChipRegs.POTGOR
+				        || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT ||
+				        address == ChipRegs.JOYTEST)
+			{
+				mouse.Write(insaddr, address, (ushort)value);
+			}
+			else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
+			{
+				audio.Write(insaddr, address, (ushort)value);
+			}
+			else if (address == ChipRegs.NO_OP)
+			{
+				/* nothing happens */
+			}
+			else if (address == ChipRegs.SERDAT || address == ChipRegs.SERDATR || address == ChipRegs.SERPER)
+			{
+				serial.Write(insaddr, address, (ushort)value);
+			}
+			else
+			{
+				if ((originalAddress >> 12) == 0xdff)
+					logger.LogTrace($"W UNMAPPED {ChipRegs.Name(address)} {originalAddress:X8} {value:X4} {value.ToBin()} @{insaddr:X8}");
 			}
 		}
 
@@ -501,6 +496,8 @@ namespace Jammy.Core.Custom
 			var deets = ChipRegs.GetPersistanceDetails().ToDictionary(x=>x.Name);
 			foreach (var pair in obj)
 			{
+				//todo: really need to implement a DebugChipsetWrite(), since some of these
+				//writes will just drop on the floor
 				ushort value = ushort.Parse(pair.Value.ToString());
 				if (pair.Key == "DMACONR")
 					Write(0, ChipRegs.DMACON, (ushort)(value|0x8000), Size.Word);

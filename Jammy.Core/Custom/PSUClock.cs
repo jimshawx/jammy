@@ -52,16 +52,12 @@ public class PSUClock : IPSUClock
 
 	public void Emulate()
 	{
-		clock.WaitForTick();
-
 		psuTime++;
 		if (psuTime == psuDivisor)
 		{
 			CurrentTick++;
 			psuTime = 0;
 		}
-
-		clock.Ack();
 	}
 
 	public void Reset()

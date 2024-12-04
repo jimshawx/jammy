@@ -1280,9 +1280,9 @@ namespace Jammy.Main
 
 					case "?":
 						logger.LogTrace("b address - breakpoint on execute at address");
-						logger.LogTrace("bw address [size(W)] [value] - breakpoint on read at address");
-						logger.LogTrace("br address [size(W)] [value] - breakpoint on write at address");
-						logger.LogTrace("brw address [size(W)] [value] - breakpoint on read/write at address");
+						logger.LogTrace("bw address [size(W)] - breakpoint on write at address");
+						logger.LogTrace("br address [size(W)] - breakpoint on read at address");
+						logger.LogTrace("brw address [size(W)] - breakpoint on read/write at address");
 						logger.LogTrace("bc address - remove breakpoint at address");
 						logger.LogTrace("t address - toggle breakpoint at address");
 						logger.LogTrace("bl - list all breakpoints");

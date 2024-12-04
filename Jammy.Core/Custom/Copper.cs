@@ -79,38 +79,33 @@ namespace Jammy.Core.Custom
 			copcon = 0;
 		}
 
-		//private object locker = new object();
-
 		public void Emulate()
 		{
-			//lock (locker)
+			if ((clock.ClockState & ChipsetClockState.EndOfFrame)!=0)
+				copjmp1 = 1;
+
+			if (copjmp1 != 0 || copjmp2 != 0)
 			{
-				if ((clock.ClockState & ChipsetClockState.EndOfFrame)!=0)
-					copjmp1 = 1;
+				status = CopperStatus.Retrace;
+				CopperInstruction();
+				return;
+			}
 
-				if (copjmp1 != 0 || copjmp2 != 0)
-				{
-					status = CopperStatus.Retrace;
-					CopperInstruction();
-					return;
-				}
+			if (memory.IsWaitingForDMA(DMASource.Copper))
+				return;
 
-				if (memory.IsWaitingForDMA(DMASource.Copper))
-					return;
+			//copper instruction every odd clock (and copper DMA is on)
+			//if ((clock.HorizontalPos & 1) != 0)
+			{ 
+				CopperInstruction();
+			}
+			//if (status == CopperStatus.Waiting && data != 0xfffe)
+			//	logger.LogTrace($"Hit VBL while still waiting for {data:X2}");
 
-				//copper instruction every odd clock (and copper DMA is on)
-				//if ((clock.HorizontalPos & 1) != 0)
-				{ 
-					CopperInstruction();
-				}
-				//if (status == CopperStatus.Waiting && data != 0xfffe)
-				//	logger.LogTrace($"Hit VBL while still waiting for {data:X2}");
-
-				if (debugger.dbug)
-				{
-					DebugCopperList(cop1lc);
-					debugger.dbug = false;
-				}
+			if (debugger.dbug)
+			{
+				DebugCopperList(cop1lc);
+				debugger.dbug = false;
 			}
 		}
 
@@ -136,11 +131,6 @@ namespace Jammy.Core.Custom
 			waitHMask = 0xff;
 			waitVMask = 0xff;
 			waitBlit = 0;
-			//status = CopperStatus.RunningWord1;
-			status = CopperStatus.WakingUp;
-			//vAmigaTS\Agnus\Copper\Skip\copstrt1
-			//vAmigaTS\Agnus\Copper\Skip\copstrt2
-			waitTimer = 7;
 
 			if (copperDumping)
 				CopperDump();
@@ -305,7 +295,7 @@ namespace Jammy.Core.Custom
 					if (ins == 0xffff && data == 0xfffe)
 					{
 						logger.LogTrace("Went off the end of the Copper List");
-						status = CopperStatus.Waiting;
+						status = CopperStatus.Stopped;
 					}
 				}
 			}
@@ -319,6 +309,13 @@ namespace Jammy.Core.Custom
 			else if (status == CopperStatus.Retrace)
 			{
 				CopperNextFrame();
+
+				//status = CopperStatus.RunningWord1;
+
+				//vAmigaTS\Agnus\Copper\Skip\copstrt1
+				//vAmigaTS\Agnus\Copper\Skip\copstrt2
+				status = CopperStatus.WakingUp;
+				waitTimer = 7;
 			}
 			else if (status == CopperStatus.Stopped)
 			{
@@ -388,6 +385,7 @@ namespace Jammy.Core.Custom
 			{
 				logger.LogTrace($"{rw} {reg} {insaddr:X8} {copptr:X6} {clock.TimeStamp()}");
 				lastjmp[idx] = copptr;
+				logger.LogTrace(DisassembleCopperList(copptr));
 			}
 			//copPC = copptr;
 			//status = CopperStatus.RunningWord1;
@@ -401,6 +399,7 @@ namespace Jammy.Core.Custom
 			if (pc != lastcoppc[idx])
 			{
 				logger.LogTrace($"N {copjmp1}{copjmp2} {pc:X6} {cop1lc:X6} {cop2lc:X6} {clock.TimeStamp()}");
+				logger.LogTrace(DisassembleCopperList(pc));
 				lastcoppc[idx] = pc;
 			}
 		}

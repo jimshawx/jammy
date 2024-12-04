@@ -201,12 +201,12 @@ public class Agnus : IAgnus
 		if (clock.VerticalPos < diwstrtv || clock.VerticalPos >= diwstopv)
 		{
 			//tell Denise to stop processing pixels and start blanking
-			denise.ExitVisibleArea();
+			denise.OutsideVerticalDisplayWindow();
 			goto noBitplaneDMA;
 		}
 
 		//tell Denise to stop blanking and start processing pixel data
-		denise.EnterVisibleArea();
+		denise.InsideVerticalDisplayWindow();
 
 		//debugging
 		if (clock.VerticalPos == debugger.dbugLine)
@@ -634,6 +634,8 @@ noBitplaneDMA:
 	private ushort[] sprctl = new ushort[8];
 	private ulong[] sprdata = new ulong[8];
 	private ulong[] sprdatb = new ulong[8];
+	private ushort vpos;
+	private ushort vhpos;
 
 	//ECS/AGA
 	private ushort vbstrt;
@@ -642,6 +644,12 @@ noBitplaneDMA:
 	private ushort vsstrt;
 	private ushort diwhigh;
 	private ushort vtotal;
+	private ushort htotal;
+	private ushort hbstrt;
+	private ushort hbstop;
+	private ushort hsstrt;
+	private ushort hsstop;
+	private ushort hcentre;
 	private ushort fmode;
 	private ushort beamcon0;
 
@@ -681,11 +689,13 @@ noBitplaneDMA:
 						break; //OCS
 				}
 				//logger.LogTrace($"VPOSR {clock} {value:X4} @ {insaddr:X6}");
+				vpos = value;
 				break;
 
 			case ChipRegs.VHPOSR:
 				value = (ushort)((clock.VerticalPos << 8) | ((clock.HorizontalPos+ReadsSinceBookmark()) & 0x00ff));
 				//logger.LogTrace($"VHPOSR {clock} {value:X4} @ {insaddr:X6}");
+				vhpos = value;
 				break;
 		}
 
@@ -810,10 +820,17 @@ noBitplaneDMA:
 			case ChipRegs.VSSTOP: vsstop = value; logger.LogTrace($"VSSTOP {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.VSSTRT: vsstrt = value; logger.LogTrace($"VSSTRT {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.VTOTAL: vtotal = value; /*logger.LogTrace($"VTOTAL {value:X4} @{insaddr:X8}");*/ break;
-			case ChipRegs.FMODE: fmode = value; break;
-			case ChipRegs.BEAMCON0: beamcon0 = value; logger.LogTrace($"BEAMCON0 {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.VPOSW: logger.LogTrace($"VPOSW {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.VHPOSW: logger.LogTrace($"VHPOSW {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.HTOTAL: htotal = value; logger.LogTrace($"VHPOSW {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.HBSTRT: hbstrt = value; logger.LogTrace($"HBSTRT {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.HBSTOP: hbstop = value; logger.LogTrace($"HBSTOP {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.HSSTRT: hsstrt = value; logger.LogTrace($"HSSTRT {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.HSSTOP: hsstop = value; logger.LogTrace($"HSSTOP {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.HCENTER: hcentre = value; logger.LogTrace($"HCENTER {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.BEAMCON0: beamcon0 = value; logger.LogTrace($"BEAMCON0 {value:X4} @{insaddr:X8}"); break;
+
+			case ChipRegs.FMODE: fmode = value; break;
 		}
 	}
 
@@ -870,7 +887,6 @@ noBitplaneDMA:
 	private ulong trapdoorWrites = 0;
 	private ulong chipsetReads = 0;
 	private ulong chipsetWrites = 0;
-
 
 	public void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
 				out ulong trapReads, out ulong trapWrites,
@@ -1095,12 +1111,23 @@ noBitplaneDMA:
 			case ChipRegs.SPR7DATA: value = (ushort)sprdata[7]; break;
 			case ChipRegs.SPR7DATB: value = (ushort)sprdatb[7]; break;
 
+			case ChipRegs.VPOSR: value = vpos; break;
+			case ChipRegs.VHPOSR: value = vhpos; break;
+
 			//ECS/AGA
 			case ChipRegs.VBSTRT: value = vbstrt; break;
 			case ChipRegs.VBSTOP: value = vbstop; break;
 			case ChipRegs.VSSTOP: value = vsstop; break;
 			case ChipRegs.VSSTRT: value = vsstrt; break;
 			case ChipRegs.VTOTAL: value = vtotal; break;
+
+			case ChipRegs.HTOTAL: value = htotal; break;
+			case ChipRegs.HBSTRT: value = hbstrt; break;
+			case ChipRegs.HBSTOP: value = hbstop; break;
+			case ChipRegs.HSSTRT: value = hsstrt; break;
+			case ChipRegs.HSSTOP: value = hsstop; break;
+			case ChipRegs.HCENTER: value = hcentre; break;
+
 			case ChipRegs.FMODE: value = fmode; break;
 			case ChipRegs.BEAMCON0: value = beamcon0; break;
 		}
