@@ -210,6 +210,7 @@ public class DMAController : IDMA
 		throw new ArgumentOutOfRangeException();
 	}
 
+	//requires to be the highest priority DMA, but does not eat the memory cycle (CPU can still have it)
 	public void NeedsDMA(DMASource source, DMA priority)
 	{
 		var activity = activities[(int)source];

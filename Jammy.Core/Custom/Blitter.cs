@@ -59,13 +59,12 @@ namespace Jammy.Core.Custom
 			BlitStartUp2,
 			BlitA,
 			BlitB,
-			BlitC,
-			BlitMinterm,
-			BlitD,
+			BlitX,
+			BlitY,
 			BlitEndOfWord,
 			BlitDLast,
 			BlitEnd,
-
+			
 			LineA,
 			LineB,
 			LineC,
@@ -81,7 +80,6 @@ namespace Jammy.Core.Custom
 
 		public void Emulate()
 		{
-			//clock.WaitForTick();
 			while (RunStateMachine()) ;
 
 			var currentState = status;
@@ -96,8 +94,6 @@ namespace Jammy.Core.Custom
 			//	if (memory.IsWaitingForDMA(DMASource.Blitter))
 			//		memory.DebugExecuteDMAActivity(DMASource.Blitter);
 			//}
-
-			//clock.Ack();
 		}
 
 		private bool RunStateMachine()
@@ -106,17 +102,19 @@ namespace Jammy.Core.Custom
 
 			if (memory.IsWaitingForDMA(DMASource.Blitter)) return false;
 
+			//Trying to follow
+			//Blitter hidden details from chip schematics
+			//https://eab.abime.net/showthread.php?t=104887
+
 			switch (status)
 			{
 				case BlitterState.BlitStartUp1: return BlitStartUp1();
 				case BlitterState.BlitStartUp2: return BlitStartUp2();
 				case BlitterState.BlitA: return BlitA();
 				case BlitterState.BlitB: return BlitB();
-				case BlitterState.BlitC: return BlitC();
-				case BlitterState.BlitMinterm: return BlitMinterm();
-				case BlitterState.BlitD: return BlitD();
+				case BlitterState.BlitX: return BlitX();
+				case BlitterState.BlitY: return BlitY();
 				case BlitterState.BlitEndOfWord: return BlitEndOfWord();
-
 				case BlitterState.BlitDLast: return BlitDLast();
 				case BlitterState.BlitEnd: return BlitEnd();
 
@@ -312,16 +310,13 @@ namespace Jammy.Core.Custom
 		private bool DelayedWrite()
 		{
 			if (writecache.Address == NO_WRITECACHE) return true;
-
 			memory.Write(DMASource.Blitter, writecache.Address, DMA.BLTEN, writecache.Value, Size.Word);
-			
 			return false;
 		}
 
 		private void DelayedWriteImmediate()
 		{
 			if (writecache.Address == NO_WRITECACHE) return;
-
 			ram.Write(0, writecache.Address, writecache.Value, Size.Word);
 		}
 
@@ -423,12 +418,26 @@ namespace Jammy.Core.Custom
 			return false;
 		}
 
-		//Read A if needed
+		private enum BLTCON0 : uint
+		{
+			USEA = 1<<11,
+			USEB = 1<<10,
+			USEC = 1<<9,
+			USED = 1<<8,
+		}
+
+		private enum BLTCON1 : uint
+		{
+			DOFF = 1<<7
+		}
+
+		//Read A if needed.
+		//A cycle is always used.
 		private bool BlitA()
 		{
 			status = BlitterState.BlitB;
 
-			if ((bltcon0 & (1u << 11)) == 0)
+			if ((bltcon0 & (uint)BLTCON0.USEA) == 0)
 			{
 				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 				return false;
@@ -438,16 +447,20 @@ namespace Jammy.Core.Custom
 			return false;
 		}
 
-		//Read B if needed, Shift / Mask A
 		private bool BlitB()
 		{
-			status = BlitterState.BlitC;
+			status = BlitterState.BlitX;
 
-			if ((bltcon0 & (1u << 10)) != 0)
+			if ((bltcon0 & (uint)BLTCON0.USEB) != 0)
+			{ 
 				memory.Read(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
-			else
-				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				return false;
+			}
+			return true;
+		}
 
+		private void AReady()
+		{
 			s_bltadat = bltadat;
 
 			if (w == 0) s_bltadat &= bltafwm;
@@ -467,20 +480,31 @@ namespace Jammy.Core.Custom
 				bltabits = s_bltadat << 16; // 1110000000000000:0000000000000000
 				s_bltadat >>= 16; // 0000000000000000:aaa1111111111111
 			}
-
-			return false;
 		}
 
 		//Read C if needed, Shift B
-		private bool BlitC()
+		private bool BlitX()
 		{
-			if ((bltcon0 & (1u << 9)) != 0)
+			AReady();
+			BReady();
+
+			status = BlitterState.BlitY;
+
+			if ((bltcon0 & (uint)BLTCON0.USEC) != 0)
+			{
 				memory.Read(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
-			else
+				return false;
+			}
+			else if (IsFillEnabled())
+			{
 				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				return false;
+			}
+			return true;
+		}
 
-			status = BlitterState.BlitMinterm;
-
+		private void BReady()
+		{
 			s_bltbdat = bltbdat;
 
 			if ((bltcon1 & (1u << 1)) != 0)
@@ -497,15 +521,10 @@ namespace Jammy.Core.Custom
 				bltbbits = s_bltbdat << 16;
 				s_bltbdat >>= 16;
 			}
-			return false;
 		}
 
-		private bool BlitMinterm()
+		private void Minterm()
 		{
-			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
-
-			status = BlitterState.BlitD;
-
 			bltddat = 0;
 			if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat;
 			if ((bltcon0 & 0x02) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & bltcdat;
@@ -515,21 +534,19 @@ namespace Jammy.Core.Custom
 			if ((bltcon0 & 0x20) != 0) bltddat |= s_bltadat & ~s_bltbdat & bltcdat;
 			if ((bltcon0 & 0x40) != 0) bltddat |= s_bltadat & s_bltbdat & ~bltcdat;
 			if ((bltcon0 & 0x80) != 0) bltddat |= s_bltadat & s_bltbdat & bltcdat;
-
-			//todo: does this need an extra cycle?
-			Fill();
-
-			return false;
 		}
 
-		private bool BlitD()
+		private bool BlitY()
 		{
+			Minterm();
+			Fill();
+
 			status = BlitterState.BlitEndOfWord;
 
 			bltzero |= bltddat;
 
 			bool x = false;
-			if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
+			if (((bltcon0 & (uint)BLTCON0.USED) != 0) && ((bltcon1 & (uint)BLTCON1.DOFF) == 0))
 				x = DelayedWrite(bltdpt, (ushort)bltddat);
 
 			return x;
@@ -556,7 +573,8 @@ namespace Jammy.Core.Custom
 			if (w != blitWidth)
 			{
 				status = BlitterState.BlitA;
-				return true;
+				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				return false;
 			}
 
 			if ((bltcon1 & (1u << 1)) != 0)
@@ -583,18 +601,19 @@ namespace Jammy.Core.Custom
 			if (h != blitHeight)
 			{
 				status = BlitterState.BlitA;
-				return true;
+				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				return false;
 			}
 
 			status = BlitterState.BlitDLast;
-			return true;
+			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			return false;
 		}
 
 		private bool BlitDLast()
 		{
 			status = BlitterState.BlitEnd;
-			DelayedWrite();
-			return false;
+			return DelayedWrite();
 		}
 
 		private bool BlitEnd()
@@ -648,6 +667,14 @@ namespace Jammy.Core.Custom
 				FillInline();
 				fills[3][i] = bltddat | ((bltcon1 & (1 << 2)) << 16);
 			}
+		}
+
+		private bool IsFillEnabled()
+		{
+			uint mode = (bltcon1 >> 3) & 3;
+			//descending mode and one of the fill modes must be set
+			if (mode == 0 || (bltcon1 & (1 << 1)) == 0) return false;
+			return true;
 		}
 
 		private void Fill()
