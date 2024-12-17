@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Numerics;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Memory
@@ -26,18 +27,7 @@ namespace Jammy.Core.Memory
 		{
 			this.memoryManager = memoryManager;
 			this.logger = logger;
-			//switch (settings.Value.KickStartDisassembly)
-			//{
-			//	case "1.2": path = "kick12.rom"; name = "Kickstart 1.2"; break;
-			//	case "1.3": path = "kick13.rom"; name = "Kickstart 1.3"; break;
-			//	case "2.04": path = "kick204.rom"; name = "Kickstart 2.04"; break;
-			//	case "2.05": path = "kick205.rom"; name = "Kickstart 2.05"; break;
-			//	case "3.1": path = "kick31.rom"; name = "Kickstart 3.1"; break;
-			//	default:
-			//		path = settings.Value.KickStart;
-			//		name = Path.GetFileName(settings.Value.KickStart);
-			//		break;
-			//}
+
 			if (string.IsNullOrEmpty(settings.Value.KickStart))
 			{
 				logger.LogTrace($"No Kickstart ROM specified");
@@ -72,12 +62,23 @@ namespace Jammy.Core.Memory
 				}
 				else if (memory.Length == 0x2000)
 				{
+					//this is for Test cases
 					memoryRange = new MemoryRange(0xf80000, 0x2000);
 					mirrorRange = new MemoryRange(0, 0x2000);
 				}
 				else
 				{
-					throw new ArgumentOutOfRangeException();
+					logger.LogTrace($"Kickstart ROM is not a standard size ({memory.Length:X8})");
+					uint pot = BitOperations.RoundUpToPowerOf2((uint)memory.Length);
+					if (pot > 512 * 1024)
+						throw new ArgumentOutOfRangeException();
+					logger.LogTrace($"Rounding ROM size up to {pot:X8} ({pot/1024}KB)");
+					if (pot > 256 * 1024)
+						memoryRange = new MemoryRange(0xf80000, pot);
+					else
+						memoryRange = new MemoryRange(0xfc0000, pot);
+					mirrorRange = new MemoryRange(0, pot);
+					Array.Resize(ref memory, (int)pot);
 				}
 
 				addressMask = (uint)(memoryRange.Length - 1);
