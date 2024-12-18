@@ -149,6 +149,7 @@ namespace Jammy.Main
 
 		private void Repaint(object sender, PaintEventArgs e)
 		{
+			try { 
 			var r = new Rectangle();
 			r.Width = WW;
 			r.Height = HH;
@@ -171,6 +172,11 @@ namespace Jammy.Main
 				}
 			}
 			if (selectX < 0 || selectY < 0) return;
+			}
+			catch (IndexOutOfRangeException ex)
+			{
+				logger.LogTrace(ex.ToString());
+			}
 		}
 	}
 }

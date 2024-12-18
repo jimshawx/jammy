@@ -39,7 +39,6 @@ namespace Jammy.Core
 		private static AutoResetEvent nonEmulationCompleteEvent;
 
 		private readonly List<IEmulate> emulations = new List<IEmulate>();
-		private readonly List<IEmulate> threadedEmulations = new List<IEmulate>();
 		private readonly List<IReset> resetters = new List<IReset>();
 
 		public Amiga(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock, 
@@ -70,6 +69,11 @@ namespace Jammy.Core
 			custom.Init(blitter, copper, audio, agnus, denise, dma);
 			keyboard.SetCIA(ciaa);
 			interrupt.Init(custom);
+			if (cpu is IMoiraCPU)
+			{
+				((IMoiraCPU)cpu).SetSync(this.RunChipsetEmulation);
+				agnus.SetSync(this.RunChipsetEmulation2);
+			}
 
 			emulationWindow.SetKeyHandlers(AmigaKeydown, AmigaKeyup);
 
@@ -92,19 +96,13 @@ namespace Jammy.Core
 			emulations.Add(debugger);
 			emulations.Add(interrupt);
 
-			//managed by the DMA controller
-			//threadedEmulations.Add(copper);
-			//threadedEmulations.Add(blitter);
-			//threadedEmulations.Add(agnus);
-			//threadedEmulations.Add(clock);
-			threadedEmulations.Add(ciaa);
-			threadedEmulations.Add(ciab);
-			threadedEmulations.Add(psuClock);
-			threadedEmulations.Add(cpuClock);
-			threadedEmulations.Add(denise);
+			emulations.Add(ciaa);
+			emulations.Add(ciab);
+			emulations.Add(psuClock);
+			emulations.Add(cpuClock);
+			emulations.Add(denise);
 
 			emulations.Insert(0, clock);
-			emulations.AddRange(threadedEmulations);
 
 			resetters.Add(diskController);
 			//resetters.Add(interrupt);
@@ -117,9 +115,7 @@ namespace Jammy.Core
 				throw new AmbiguousImplementationException();
 
 			resetters.AddRange(emulations);
-			resetters.AddRange(threadedEmulations);
 			resetters.Add(cpu);
-			resetters.Add(clock);
 
 			Reset();
 
@@ -128,48 +124,6 @@ namespace Jammy.Core
 
 			emulationSemaphore = new SemaphoreSlim(0,1);
 			nonEmulationCompleteEvent = new AutoResetEvent(false);
-
-			emulationThreads = new List<Thread>();
-			//threadedEmulations.ForEach(
-			//	x =>
-			//	{
-			//		var t = new Thread(() =>
-			//		{
-			//			clock.RegisterThread();
-			//			Thread.CurrentThread.Priority = ThreadPriority.Highest;
-			//			for (;;)
-			//			{
-			//				//clock.WaitForTick();
-			//				x.Emulate(0);
-			//			}
-			//		});
-			//		t.Name = x.GetType().Name;
-			//		emulationThreads.Add(t);
-			//	});
-			Thread t;
-			//cpu needs special treatment
-			//t = new Thread(() =>
-			//{
-			//	Thread.CurrentThread.Priority = ThreadPriority.Highest;
-			//	for (;;)
-			//	{
-			//		cpuClock.WaitForTick();
-			//		cpu.Emulate();
-			//	}
-			//});
-			//t.Name = "CPU";
-			//emulationThreads.Add(t);
-			//clock needs special treatment
-			//t = new Thread(() =>
-			//{
-			//	Thread.CurrentThread.Priority = ThreadPriority.Highest;
-			//	for (; ; )
-			//	{
-			//		clock.Emulate(0);
-			//	}
-			//});
-			//t.Name = "Clock";
-			//emulationThreads.Add(t);
 		}
 
 		private bool takeASnapshot = false;
@@ -195,8 +149,54 @@ namespace Jammy.Core
 		private ulong totalWaits = 0;
 		private uint totalCycles = 0;
 
-		public void RunEmulations(ulong ns)
+		private ushort RunChipsetEmulation2()
 		{
+			//dma.SetCPUWaitingForDMA();
+			while (dma.IsWaitingForDMA(DMASource.CPU))
+			{
+				emulations.ForEach(x => x.Emulate());
+
+				dma.TriggerHighestPriorityDMA();
+
+				clock.UpdateClock();
+				agnus.FlushBitplanes();
+			}
+			return dma.LastRead;
+		}
+
+		private void RunChipsetEmulation(int count)
+		{
+			for (int i = 0; i < count; i++)
+			{
+				emulations.ForEach(x => x.Emulate());
+
+				dma.TriggerHighestPriorityDMA();
+
+				clock.UpdateClock();
+				agnus.FlushBitplanes();
+			}
+
+			//while (dma.IsWaitingForDMA(DMASource.CPU))
+			//{
+			//	emulations.ForEach(x => x.Emulate());
+
+			//	dma.TriggerHighestPriorityDMA();
+
+			//	clock.UpdateClock();
+			//	agnus.FlushBitplanes();
+			//}
+		}
+
+		private bool cycleExact = true;
+
+		public void RunEmulations()
+		{
+			if (cycleExact)
+			{
+				cpu.Emulate();
+				return;
+			}	
+
 			emulations.ForEach(x => x.Emulate());
 
 			//totalWaits = 0;
@@ -283,16 +283,11 @@ namespace Jammy.Core
 
 			agnus.FlushBitplanes();
 		}
-		
+
 		private Thread emuThread;
 
 		public void Start()
 		{
-			foreach (var t in emulationThreads)
-				t.Start();
-
-			Thread.Sleep(1000);
-
 			emuThread = new Thread(Emulate);
 			emuThread.Name = "Amiga";
 			emuThread.Start();
@@ -314,7 +309,6 @@ namespace Jammy.Core
 
 		private static volatile bool requestExitEmulationMode;
 		private static volatile EmulationMode desiredEmulationMode;
-		private readonly List<Thread> emulationThreads;
 
 		public static void UnlockEmulation()
 		{
@@ -366,14 +360,14 @@ namespace Jammy.Core
 					switch (emulationMode)
 					{
 						case EmulationMode.Running:
-							RunEmulations(8);
+							RunEmulations();
 							emulationHasRun = true;
 							break;
 
 						case EmulationMode.Step:
 							do
 							{
-								RunEmulations(8);
+								RunEmulations();
 							} while (totalCycles != 0 || totalWaits != 0);
 							emulationHasRun = true;
 							emulationMode = EmulationMode.Stopped;
@@ -384,7 +378,7 @@ namespace Jammy.Core
 							if (stepOutSp == 0xffffffff) stepOutSp = regs.A[7];
 							ushort ins = memoryMapper.UnsafeRead16(regs.PC);
 							bool stopping = (ins == 0x4e75 || ins == 0x4e73) && regs.A[7] == stepOutSp; //rts or rte
-							RunEmulations(8);
+							RunEmulations();
 							emulationHasRun = true;
 							if (stopping)
 								emulationMode = EmulationMode.Stopped;

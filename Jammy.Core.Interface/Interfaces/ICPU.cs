@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Types;
+using System;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -18,5 +19,9 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IMusashiCPU { }
 	public interface ICSharpCPU { }
 	public interface IMusashiCSharpCPU { }
-	public interface IMoiraCPU { }
+
+	public interface IMoiraCPU
+	{
+		void SetSync(Action<int> sync);
+	}
 }

@@ -20,9 +20,10 @@ namespace Jammy.Core.CPU.Moira
 		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
 		private readonly ITracer tracer;
+		private readonly ILogger logger;
 
 		[DllImport("Moira.dll")]
-		static extern void Moira_init(IntPtr r16, IntPtr r8, IntPtr w16, IntPtr w8);
+		static extern void Moira_init(IntPtr r16, IntPtr r8, IntPtr w16, IntPtr w8, IntPtr sync);
 
 		[DllImport("Moira.dll")]
 		static extern uint Moira_execute(ref int cycles);
@@ -43,6 +44,7 @@ namespace Jammy.Core.CPU.Moira
 		private Moira_Reader r8;
 		private Moira_Writer w16;
 		private Moira_Writer w8;
+		private Moira_Sync sync;
 
 		public MoiraCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
 			IBreakpointCollection breakpoints, ITracer tracer, ILogger<MoiraCPU> logger)
@@ -51,19 +53,21 @@ namespace Jammy.Core.CPU.Moira
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
 			this.tracer = tracer;
-
+			this.logger = logger;
 			logger.LogTrace("Starting Moira C 68000 CPU");
 
 			r16 = new Moira_Reader(Moira_read16);
 			r8 = new Moira_Reader(Moira_read8);
 			w16 = new Moira_Writer(Moira_write16);
 			w8 = new Moira_Writer(Moira_write8);
+			sync = new Moira_Sync(Moira_sync);
 
 			Moira_init(
 				Marshal.GetFunctionPointerForDelegate(r16),
 				Marshal.GetFunctionPointerForDelegate(r8),
 				Marshal.GetFunctionPointerForDelegate(w16),
-				Marshal.GetFunctionPointerForDelegate(w8)
+				Marshal.GetFunctionPointerForDelegate(w8),
+				Marshal.GetFunctionPointerForDelegate(sync)
 			);
 		}
 
@@ -234,6 +238,7 @@ namespace Jammy.Core.CPU.Moira
 
 		private delegate uint Moira_Reader(uint address);
 		private delegate void Moira_Writer(uint address, uint value);
+		private delegate void Moira_Sync(int cycles);
 
 		private uint Moira_read16(uint address)
 		{
@@ -254,6 +259,18 @@ namespace Jammy.Core.CPU.Moira
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
 		}
+
+		private Action<int> syncChipset = NullSync;
+
+		private void Moira_sync(int cycles)
+		{
+			syncChipset(cycles>>1);
+		}
+		public void SetSync(Action<int> syncChipset)
+		{
+			this.syncChipset = syncChipset;
+		}
+		private static void NullSync(int _) {}
 
 		public void Save(JArray obj)
 		{

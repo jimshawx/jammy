@@ -36,6 +36,14 @@ namespace Jammy.Core.Types.Types
 		None,
 	}
 
+	public enum CPUTarget
+	{
+		None,
+		ChipRAM,
+		ChipReg,
+		SlowRAM
+	}
+
 	public enum DMAActivityType
 	{
 		None,
@@ -43,7 +51,9 @@ namespace Jammy.Core.Types.Types
 		Write,
 		WriteReg,
 		Consume,
-		CPU
+		CPU,
+		ReadCPU,
+		WriteCPU
 	}
 
 	public class DMAActivity
@@ -59,6 +69,7 @@ namespace Jammy.Core.Types.Types
 		public Size Size { get; set; }
 		public DMA Priority { get; set; }
 		public uint ChipReg { get; set; }
+		public CPUTarget Target { get; set; }
 
 		public override string ToString()
 		{

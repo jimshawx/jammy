@@ -61,7 +61,7 @@ namespace Jammy.Core.Custom;
 public class Agnus : IAgnus
 {
 	private readonly IChipsetClock clock;
-	private IDMA memory;
+	private IDMA dma;
 	private readonly IDenise denise;
 	private readonly IInterrupt interrupt;
 	private readonly IChipRAM chipRam;
@@ -103,6 +103,13 @@ public class Agnus : IAgnus
 		lineState = DMALineState.LineStart;
 	}
 
+	private Func<ushort> chipsetSync = NullSync;
+	public void SetSync(Func<ushort> chipsetSync)
+	{
+		this.chipsetSync = chipsetSync;
+	}
+	private static ushort NullSync() { return 0; }
+
 	public void Emulate()
 	{
 		//clock.WaitForTick();
@@ -132,7 +139,7 @@ public class Agnus : IAgnus
 
 	public void Init(IDMA dma)
 	{
-		memory = dma;
+		this.dma = dma;
 	}
 
 	private enum DMALineState
@@ -171,7 +178,7 @@ public class Agnus : IAgnus
 		//debugging
 
 		//start by saying there's no DMA required, later code will overwrite it
-		memory.NoDMA(DMASource.Agnus);
+		dma.NoDMA(DMASource.Agnus);
 
 		if (clock.HorizontalPos < 0x18)
 		{
@@ -180,16 +187,16 @@ public class Agnus : IAgnus
 
 			switch (clock.HorizontalPos)
 			{
-				case 1: memory.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 3: memory.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 5: memory.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 7: if (memory.IsDMAEnabled(DMA.DSKEN)) memory.NeedsDMA(DMASource.Agnus, DMA.DSKEN); break;//actually Disk DMA
-				case 9: if (memory.IsDMAEnabled(DMA.DSKEN)) memory.NeedsDMA(DMASource.Agnus, DMA.DSKEN); break;//actually Disk DMA
-				case 0xB: if (memory.IsDMAEnabled(DMA.DSKEN)) memory.NeedsDMA(DMASource.Agnus, DMA.DSKEN); break;//actually Disk DMA
-				case 0xD: if (memory.IsDMAEnabled(DMA.AUD0EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD0EN); break;//actually Audio 0 DMA
-				case 0xF: if (memory.IsDMAEnabled(DMA.AUD1EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
-				case 0x11: if (memory.IsDMAEnabled(DMA.AUD2EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
-				case 0x13: if (memory.IsDMAEnabled(DMA.AUD3EN)) memory.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
+				case 1: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+				case 3: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+				case 5: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+				case 7: if (dma.IsDMAEnabled(DMA.DSKEN)) dma.NeedsDMA(DMASource.Agnus, DMA.DSKEN); break;//actually Disk DMA
+				case 9: if (dma.IsDMAEnabled(DMA.DSKEN)) dma.NeedsDMA(DMASource.Agnus, DMA.DSKEN); break;//actually Disk DMA
+				case 0xB: if (dma.IsDMAEnabled(DMA.DSKEN)) dma.NeedsDMA(DMASource.Agnus, DMA.DSKEN); break;//actually Disk DMA
+				case 0xD: if (dma.IsDMAEnabled(DMA.AUD0EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD0EN); break;//actually Audio 0 DMA
+				case 0xF: if (dma.IsDMAEnabled(DMA.AUD1EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
+				case 0x11: if (dma.IsDMAEnabled(DMA.AUD2EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
+				case 0x13: if (dma.IsDMAEnabled(DMA.AUD3EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
 				case 0x15: RunSpriteDMA(0); break;
 				case 0x17: RunSpriteDMA(1); break;
 			}
@@ -227,7 +234,7 @@ public class Agnus : IAgnus
 		if (clock.HorizontalPos >= ddfstrtfix /*+ debugger.ddfSHack*/ && clock.HorizontalPos < ddfstopfix /*+ debugger.ddfEHack*/ &&
 			(lineState == DMALineState.Fetching || lineState == DMALineState.LineStart))
 		{
-			if (memory.IsDMAEnabled(DMA.BPLEN))
+			if (dma.IsDMAEnabled(DMA.BPLEN))
 				fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
 			if (fetched)
 				lineState = DMALineState.Fetching;
@@ -304,17 +311,17 @@ noBitplaneDMA:
 		{
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 			{
-				memory.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Word, ChipRegs.BPL1DAT+plane*2);
+				dma.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Word, ChipRegs.BPL1DAT+plane*2);
 				bplpt[plane] += 2;
 			}
 			else if ((fmode & 3) == 3)
 			{
-				memory.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.QWord, ChipRegs.BPL1DAT + plane * 2);
+				dma.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.QWord, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 8;
 			}
 			else
 			{
-				memory.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Long, ChipRegs.BPL1DAT + plane * 2);
+				dma.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Long, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 4;
 			}
 
@@ -461,19 +468,19 @@ noBitplaneDMA:
 		}
 
 		//if DMA is off, or not possible, then don't do any
-		if (!memory.IsDMAEnabled(DMA.SPREN) || !SpritesEnabledForThisFrame())
+		if (!dma.IsDMAEnabled(DMA.SPREN) || !SpritesEnabledForThisFrame())
 			return;
 
 		if ((slot & 1) == 0)
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS+s*8);
+				dma.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS+s*8);
 				sprpt[s] += 2;
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATA+s*8);
+				dma.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATA+s*8);
 				sprpt[s] += 2;
 			}
 		}
@@ -481,12 +488,12 @@ noBitplaneDMA:
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0CTL+s*8);
+				dma.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0CTL+s*8);
 				sprpt[s] += 2;
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				memory.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
+				dma.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
 				sprpt[s] += 2;
 			}
 		}
@@ -701,7 +708,7 @@ noBitplaneDMA:
 				break;
 
 			case ChipRegs.VHPOSR:
-				value = (ushort)((clock.VerticalPos << 8) | ((clock.HorizontalPos+ReadsSinceBookmark()) & 0x00ff));
+				value = (ushort)((clock.VerticalPos << 8) | (clock.HorizontalPos & 0x00ff));
 				//logger.LogTrace($"VHPOSR {clock} {value:X4} @ {insaddr:X6}");
 				vhpos = value;
 				break;
@@ -925,22 +932,45 @@ noBitplaneDMA:
 		bmchipsetWrites = chipsetWrites;
 	}
 
-	public ulong ReadsSinceBookmark()
-	{
-		return 0;
-		//long rv =
-		//	(long)(
-		//	chipRAMReads - bmchipRAMReads +
-		//	trapdoorReads - bmtrapdoorReads +
-		//	chipsetReads - bmchipsetReads);
-
-		//return (ulong)Math.Max(0,rv-4);
-	}
-
 	public uint Read(uint insaddr, uint address, Size size)
 	{
-		//memory.WaitForChipRamDMASlot();
+		uint v = 0;
 
+		ulong reads = (size == Size.Long)?2U:1U;
+		var target = CPUTarget.ChipRAM;
+
+		if (chipRam.IsMapped(address))
+		{
+			chipRAMReads += reads;
+			target = CPUTarget.ChipRAM;
+		}
+		if (trapdoorRam.IsMapped(address))
+		{
+			trapdoorReads += reads;
+			target = CPUTarget.SlowRAM;
+		}
+		if (custom.IsMapped(address))
+		{
+			chipsetReads += reads;
+			target = CPUTarget.ChipReg;
+		}
+
+		if (size == Size.Long)
+		{
+			dma.ReadCPU(target, address, Size.Word);
+			v = ((uint)chipsetSync())<<16;
+			size = Size.Word;
+			address += 2;
+		}
+
+		dma.ReadCPU(target, address, size);
+		v |= chipsetSync();
+	
+		return v;
+	}
+
+	public uint ReadX(uint insaddr, uint address, Size size)
+	{
 		if (chipRam.IsMapped(address))
 		{ 
 			chipRAMReads++;
@@ -962,10 +992,41 @@ noBitplaneDMA:
 		return 0;
 	}
 
+	public void WriteX(uint insaddr, uint address, uint value, Size size)
+	{
+		ulong writes = (size == Size.Long) ? 2U : 1U;
+		var target = CPUTarget.ChipRAM;
+
+		if (chipRam.IsMapped(address))
+		{
+			chipRAMWrites += writes;
+			target = CPUTarget.ChipRAM;
+		}
+		if (trapdoorRam.IsMapped(address))
+		{
+			trapdoorWrites += writes;
+			target = CPUTarget.SlowRAM;
+		}
+		if (custom.IsMapped(address))
+		{
+			chipsetWrites += writes;
+			target = CPUTarget.ChipReg;
+		}
+
+		if (size == Size.Long)
+		{
+			dma.WriteCPU(target, address, (ushort)(value>>16), Size.Word);
+			chipsetSync();
+			size = Size.Word;
+			address += 2;
+		}
+
+		dma.WriteCPU(target, address, (ushort)value, size);
+		chipsetSync();
+	}
+
 	public void Write(uint insaddr, uint address, uint value, Size size)
 	{
-		//memory.WaitForChipRamDMASlot();
-
 		if (chipRam.IsMapped(address))
 		{
 			chipRAMWrites++;

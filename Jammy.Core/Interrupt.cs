@@ -1,7 +1,9 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Microsoft.Extensions.Logging;
 using System.Collections;
+using System.Collections.Concurrent;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -13,9 +15,16 @@ namespace Jammy.Core
 	{
 		private IChips custom;
 
-		private readonly Queue q = new Queue();
+		public static readonly uint[] priority = [1, 1, 1, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7];
+		private readonly ConcurrentQueue<uint> interruptLevelQueue;
+		private readonly ILogger logger;
 
-		public static readonly uint[] priority = [ 1,1,1,2,3,3,3,4,4,4,4,5,5,6,6,7];
+		public Interrupt(ILogger<Interrupt> logger)
+		{
+			this.logger = logger;
+			logger.LogTrace("Interrupt Construction");
+			interruptLevelQueue = new ConcurrentQueue<uint>();
+		}
 
 		public static uint CPUPriority(uint interrupt)
 		{
@@ -44,10 +53,12 @@ namespace Jammy.Core
 		//This is called once per instruction
 		public ushort GetInterruptLevel()
 		{
-			q.Enqueue(paulaInterruptLevel);
-			if (q.Count <= PAULA_INTERRUPT_LATENCY)
+			interruptLevelQueue.Enqueue(paulaInterruptLevel);
+			if (interruptLevelQueue.Count <= PAULA_INTERRUPT_LATENCY)
 				return 0;
-			return (ushort)(uint)q.Dequeue();
+			interruptLevelQueue.TryDequeue(out uint i);
+			return (ushort)(uint)i;
+			//return (ushort)(uint)interruptLevelQueue.Dequeue();
 		}
 
 		public void AssertInterrupt(uint intreq, bool asserted = true)

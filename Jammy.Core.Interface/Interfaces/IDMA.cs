@@ -11,7 +11,6 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	void NoDMA(DMASource source);
 	void NeedsDMA(DMASource source, DMA priority);
 	bool IsDMAEnabled(DMA source);
-	//void WaitForChipRamDMASlot();
 	void TriggerHighestPriorityDMA();
 	bool IsWaitingForDMA(DMASource source);
 	void ClearWaitingForDMA(DMASource source);
@@ -19,4 +18,7 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	void WriteDMACON(ushort bits);
 	void DebugExecuteDMAActivity(DMASource source);
 	void DebugExecuteAllDMAActivity();
+	void ReadCPU(CPUTarget target, uint address, Size size);
+	void WriteCPU(CPUTarget target, uint address, ushort value, Size size);
+	ushort LastRead { get; }
 }

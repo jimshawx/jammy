@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using System;
 using System.IO;
 
 /*
@@ -221,6 +222,7 @@ namespace Jammy.Core.Interface.Interfaces
 				out ulong trapReads, out ulong trapWrites,
 				out ulong customReads, out ulong customWrites);
 		void Bookmark();
+		void SetSync(Func<ushort> runChipsetEmulation);
 	}
 
 	public interface IChipsetClock : IEmulate, IStatePersister
