@@ -161,6 +161,9 @@ namespace Jammy.Tests
 			cpu0 = (CPUTestRig)cpus[1];
 			cpu1 = (CPUTestRig)cpus[4];
 
+			cpu0.Initialise();
+			cpu1.Initialise();
+
 			cpu0.Reset();
 			cpu1.Reset();
 
@@ -256,6 +259,11 @@ namespace Jammy.Tests
 			public void Reset()
 			{
 				cpu.Reset();
+			}
+
+			public void Initialise()
+			{
+				cpu.Initialise();
 			}
 
 			public byte[] GetMemory()

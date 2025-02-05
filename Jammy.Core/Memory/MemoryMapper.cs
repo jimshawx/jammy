@@ -17,26 +17,34 @@ namespace Jammy.Core.Memory
 	public class MemoryMapper : IMemoryMapper, IDebugMemoryMapper, IStatePersister
 	{
 		private readonly IMemoryManager memoryManager;
+		private readonly ILogger logger;
 		private IMemoryInterceptor interceptor;
 
 		public MemoryMapper(
 			IMemoryManager memoryManager, IZorroConfigurator zorroConfigurator,
-
 			ICIAMemory ciaMemory, IBattClock battClock,
 			IZorro2 zorro2, IZorro3 zorro3, IAgnus agnus, IUnmappedMemory unmappedMemory,
-			IKickstartROM kickstartROM, IDiskController diskController,
+			IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM,
+ 			IKickstartROM kickstartROM, IDiskController diskController,
 			IAkiko akiko, IMotherboard motherboard, IMotherboardRAM motherboardRAM, ICPUSlotRAM cpuSlotRAM,
+			IChips chips,
 			ILogger<MemoryMapper> logger)
 		{
 			this.memoryManager = memoryManager;
+			this.logger = logger;
 			_ = zorroConfigurator;
 
 			var devices = new List<IMemoryMappedDevice>
 			{
 				unmappedMemory,
 				ciaMemory,
-				agnus,
+
+				chipRAM,
+				trapdoorRAM,
 				kickstartROM,
+
+				//agnus,
+				chips,
 				battClock,
 				motherboard,
 				zorro2,
@@ -79,6 +87,9 @@ namespace Jammy.Core.Memory
 
 		public uint Read(uint insaddr, uint address, Size size)
 		{
+			//if (address >> 16 == 0)
+			//	logger.LogTrace($"*** Read From Address 0 - {memoryManager.MappedDevice[0]}");
+
 			uint value = memoryManager.MappedDevice[address].Read(insaddr, address, size);
 			if (interceptor != null) interceptor.Read(insaddr, address, value, size);
 			return value;
@@ -90,8 +101,27 @@ namespace Jammy.Core.Memory
 			memoryManager.MappedDevice[address].Write(insaddr, address, value, size);
 		}
 
+		public uint ImmediateRead(uint insaddr, uint address, Size size)
+		{
+			//if (address >> 16 == 0)
+			//	logger.LogTrace($"*** Read From Address 0 - {memoryManager.MappedDevice[0]}");
+
+			uint value = ((IContendedMemoryMappedDevice)memoryManager.MappedDevice[address]).ImmediateRead(insaddr, address, size);
+			if (interceptor != null) interceptor.Read(insaddr, address, value, size);
+			return value;
+		}
+
+		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
+		{
+			if (interceptor != null) interceptor.Write(insaddr, address, value, size);
+			((IContendedMemoryMappedDevice)memoryManager.MappedDevice[address]).ImmediateWrite(insaddr, address, value, size);
+		}
+
 		public uint Fetch(uint insaddr, uint address, Size size)
 		{
+			//if (address>>16 == 0)
+			//	logger.LogTrace($"*** Fetch From Address 0 - {memoryManager.MappedDevice[0]}");
+
 			uint value = memoryManager.MappedDevice[address].Read(insaddr, address, size);
 			if (interceptor != null) interceptor.Fetch(insaddr, address, value, size);
 			return value;

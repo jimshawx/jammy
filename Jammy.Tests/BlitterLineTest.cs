@@ -27,7 +27,7 @@ namespace Jammy.Tests
 		private readonly ILogger logger;
 		private int blit;
 
-		public LoggedChipRAM(IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger) : base(settings, logger)
+		public LoggedChipRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger) : base(dma, settings, logger)
 		{
 			this.logger = logger;
 			blit = 0;

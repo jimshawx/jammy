@@ -12,31 +12,41 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 	public class CPUWrapperMusashi : ICPU, IMusashiCSharpCPU, IStatePersister
 	{
 		private readonly IInterrupt interrupt;
+		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
+		private readonly ILogger logger;
+		private readonly EmulationSettings settings;
 
 		public CPUWrapperMusashi(IInterrupt interrupt, IMemoryMapper memoryMapper,
 			IBreakpointCollection breakpoints, ITracer tracer,
 			IOptions<EmulationSettings> settings,
 			ILogger<CPUWrapperMusashi> logger)
 		{
-			M68KCPU.Init(memoryMapper);
 			this.interrupt = interrupt;
+			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
+			this.logger = logger;
+			this.settings = settings.Value;
+		}
+
+		public void Initialise()
+		{
+			M68KCPU.Init(memoryMapper);
 
 			M68KCPU.M68K_EMULATE_PREFETCH = M68KCPU.OPT_OFF;
 			M68KCPU.m68k_init();
-			switch(settings.Value.Sku)
+			switch(settings.Sku)
 			{ 
 				case CPUSku.MC68000: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68000);
-					if (settings.Value.Prefetch.IsEnabled())
+					if (settings.Prefetch.IsEnabled())
 						M68KCPU.M68K_EMULATE_PREFETCH = M68KCPU.OPT_ON;
 					break;
 				case CPUSku.MC68EC020: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68EC020); break;
 				case CPUSku.MC68030: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68030); break;
 				case CPUSku.MC68040: M68KCPU.m68k_set_cpu_type(M68KCPU.M68K_CPU_TYPE.M68K_CPU_TYPE_68040); break;
-				default: throw new ArgumentOutOfRangeException(nameof(settings.Value.Sku));
+				default: throw new ArgumentOutOfRangeException(nameof(settings.Sku));
 			}
-			logger.LogTrace($"Starting Musashi C# {settings.Value.Sku.ToString().Split('.').Last().Substring(2)} CPU");
+			logger.LogTrace($"Starting Musashi C# {settings.Sku.ToString().Split('.').Last().Substring(2)} CPU");
 
 			M68KCPU.m68k_pulse_reset();
 		}

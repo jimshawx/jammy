@@ -25,20 +25,21 @@ public interface IChipsetDebugger : IEmulate
 	int diwEHack { get; }
 	void SetDMAActivity(DMAActivity activity);
 	DMAEntry[] GetDMASummary();
+	void Init(IChips chips);
 }
 
 public class ChipsetDebugger : IChipsetDebugger
 {
 	private readonly IChipsetClock clock;
 	//private readonly IDenise denise;
-	private readonly IDebugChipsetRead chipRegs;
+	private IDebugChipsetRead chipRegs;
 	private readonly INativeOverlay overlay;
 	private readonly EmulationSettings settings;
 	private readonly IEmulationWindow window;
 	private readonly ILogger<ChipsetDebugger> logger;
 	private int[] screen;
 
-	public ChipsetDebugger(IChipsetClock clock, IChips chipRegs, INativeOverlay overlay,
+	public ChipsetDebugger(IChipsetClock clock, /*IChips chipRegs,*/ INativeOverlay overlay,
 		IEmulationWindow emulationWindow, IOptions<EmulationSettings> settings, ILogger<ChipsetDebugger> logger)
 	{
 		this.clock = clock;
@@ -51,6 +52,11 @@ public class ChipsetDebugger : IChipsetDebugger
 
 		emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 		screen = emulationWindow.GetFramebuffer();
+	}
+
+	public void Init(IChips chips)
+	{
+		chipRegs = chips;
 	}
 
 	public void Reset()
@@ -108,6 +114,8 @@ public class ChipsetDebugger : IChipsetDebugger
 		return dmadebug.GetDMASummary();
 	}
 
+	private ulong lastTick = 0;
+	private DMAActivity lastActivy = null;
 	public void SetDMAActivity(DMAActivity activity)
 	{
 		if (activity == null)
@@ -115,6 +123,10 @@ public class ChipsetDebugger : IChipsetDebugger
 		else
 			slot[clock.HorizontalPos] = activity.ToString()[0];
 		dmadebug[clock.HorizontalPos, clock.VerticalPos] = activity;
+		//if (clock.Tick == lastTick && ((lastActivy == null ^ activity == null) || lastActivy != null && lastActivy.Type != DMAActivityType.None))
+		//	logger.LogTrace("overwrote DMA activity");
+		//lastTick = clock.Tick;
+		//lastActivy = activity;
 	}
 
 	public char[] fetch { get; }= new char[256];

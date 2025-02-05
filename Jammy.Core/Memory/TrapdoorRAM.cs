@@ -11,13 +11,14 @@ using Microsoft.Extensions.Options;
 namespace Jammy.Core.Memory
 {
 
-	public class TrapdoorRAM : Memory, ITrapdoorRAM
+	public class TrapdoorRAM : ContendedMemory, ITrapdoorRAM
 	{
 		//AKA Slow-fast RAM
 		//Up to 1.75MB mapped from 0xC00000-0xDC0000
 		//detected by looking for mirrors of custom registers
+		protected override CPUTarget target => CPUTarget.SlowRAM;
 
-		public TrapdoorRAM(IOptions<EmulationSettings> settings, ILogger<TrapdoorRAM> logger)
+		public TrapdoorRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<TrapdoorRAM> logger) : base(dma)
 		{
 			if (settings.Value.TrapdoorMemory != 0.0)
 			{

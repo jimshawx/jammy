@@ -63,7 +63,10 @@ namespace Jammy.Core.CPU.Musashi
 			w32 = new Musashi_Writer(Musashi_write32);
 			w16 = new Musashi_Writer(Musashi_write16);
 			w8 = new Musashi_Writer(Musashi_write8);
+		}
 
+		public void Initialise()
+		{
 			Musashi_init(
 				Marshal.GetFunctionPointerForDelegate(r32),
 				Marshal.GetFunctionPointerForDelegate(r16),

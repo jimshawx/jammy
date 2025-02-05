@@ -64,9 +64,8 @@ public class Agnus : IAgnus
 	private IDMA dma;
 	private readonly IDenise denise;
 	private readonly IInterrupt interrupt;
-	private readonly IChipRAM chipRam;
-	private readonly ITrapdoorRAM trapdoorRam;
-	private readonly IChips custom;
+	//private readonly IChipRAM chipRam;
+	//private readonly IChips custom;
 	private readonly IChipsetDebugger debugger;
 	private readonly EmulationSettings settings;
 	private readonly ILogger<Agnus> logger;
@@ -79,15 +78,16 @@ public class Agnus : IAgnus
 	//public const int DMA_END = 0xF0;
 
 	public Agnus(IChipsetClock clock, IDenise denise, IInterrupt interrupt,
-		IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IChips custom, IChipsetDebugger debugger,
+		/*IChips custom,*/ IChipsetDebugger debugger,
 		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
 	{
 		this.clock = clock;
 		this.denise = denise;
 		this.interrupt = interrupt;
-		chipRam = chipRAM;
-		trapdoorRam = trapdoorRAM;
-		this.custom = custom;
+		//chipRam = chipRAM;
+		//trapdoorRam = trapdoorRAM;
+		//this.kickstartROM = kickstartROM;
+		//this.custom = custom;
 		this.debugger = debugger;
 		this.settings = settings.Value;
 		this.logger = logger;
@@ -103,12 +103,6 @@ public class Agnus : IAgnus
 		lineState = DMALineState.LineStart;
 	}
 
-	private Func<ushort> chipsetSync = NullSync;
-	public void SetSync(Func<ushort> chipsetSync)
-	{
-		this.chipsetSync = chipsetSync;
-	}
-	private static ushort NullSync() { return 0; }
 
 	public void Emulate()
 	{
@@ -275,6 +269,8 @@ noBitplaneDMA:
 				case 0x33: RunSpriteDMA(15); break;
 			}
 		}
+		if (clock.HorizontalPos == 0xE1)
+			dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN);
 	}
 
 	private readonly uint SPRITE_DMA_START_LINE;
@@ -708,7 +704,10 @@ noBitplaneDMA:
 				break;
 
 			case ChipRegs.VHPOSR:
-				value = (ushort)((clock.VerticalPos << 8) | (clock.HorizontalPos & 0x00ff));
+				int h = (int)clock.HorizontalPos;
+				h -= 2;
+				if (h < 0) h += 227;
+				value = (ushort)((clock.VerticalPos << 8) | ((uint)h & 0x00ff));
 				//logger.LogTrace($"VHPOSR {clock} {value:X4} @ {insaddr:X6}");
 				vhpos = value;
 				break;
@@ -881,20 +880,16 @@ noBitplaneDMA:
 		}
 	}
 
-	public bool IsMapped(uint address)
-	{
-		return chipRam.IsMapped(address)
-		       || trapdoorRam.IsMapped(address)
-		       || custom.IsMapped(address);
-	}
+	//public bool IsMapped(uint address)
+	//{
+	//	return custom.IsMapped(address);
 
-	public List<MemoryRange> MappedRange()
-	{
-		return chipRam.MappedRange()
-			.Concat(trapdoorRam.MappedRange())
-			.Concat(custom.MappedRange())
-			.ToList();
-	}
+	//}
+
+	//public List<MemoryRange> MappedRange()
+	//{
+	//	return custom.MappedRange();
+	//}
 
 	private ulong chipRAMReads = 0;
 	private ulong chipRAMWrites = 0;
@@ -902,10 +897,12 @@ noBitplaneDMA:
 	private ulong trapdoorWrites = 0;
 	private ulong chipsetReads = 0;
 	private ulong chipsetWrites = 0;
+	private ulong kickROMReads = 0;
 
 	public void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
 				out ulong trapReads, out ulong trapWrites,
-				out ulong customReads, out ulong customWrites)
+				out ulong customReads, out ulong customWrites,
+				out ulong kickReads)
 	{
 		chipReads = chipRAMReads;
 		chipWrites = chipRAMWrites;
@@ -913,6 +910,7 @@ noBitplaneDMA:
 		trapWrites = trapdoorWrites;
 		customReads = chipsetReads;
 		customWrites = chipsetWrites;
+		kickReads = kickROMReads;
 	}
 
 	private ulong bmchipRAMReads = 0;
@@ -921,6 +919,7 @@ noBitplaneDMA:
 	private ulong bmtrapdoorWrites = 0;
 	private ulong bmchipsetReads = 0;
 	private ulong bmchipsetWrites = 0;
+	private ulong bmkickROMReads = 0;
 
 	public void Bookmark()
 	{
@@ -930,6 +929,7 @@ noBitplaneDMA:
 		bmtrapdoorWrites = trapdoorWrites;
 		bmchipsetReads = chipsetReads;
 		bmchipsetWrites = chipsetWrites;
+		bmkickROMReads = kickROMReads;
 	}
 
 	public uint Read(uint insaddr, uint address, Size size)
@@ -937,148 +937,66 @@ noBitplaneDMA:
 		uint v = 0;
 
 		ulong reads = (size == Size.Long)?2U:1U;
-		var target = CPUTarget.ChipRAM;
 
-		if (chipRam.IsMapped(address))
-		{
-			chipRAMReads += reads;
-			target = CPUTarget.ChipRAM;
-		}
-		if (trapdoorRam.IsMapped(address))
-		{
-			trapdoorReads += reads;
-			target = CPUTarget.SlowRAM;
-		}
-		if (custom.IsMapped(address))
-		{
-			chipsetReads += reads;
-			target = CPUTarget.ChipReg;
-		}
+		chipsetReads += reads;
 
 		if (size == Size.Long)
 		{
-			dma.ReadCPU(target, address, Size.Word);
-			v = ((uint)chipsetSync())<<16;
+			dma.ReadCPU(CPUTarget.ChipReg, address, Size.Word);
+			v = dma.ChipsetSync()<<16;
 			size = Size.Word;
 			address += 2;
 		}
 
-		dma.ReadCPU(target, address, size);
-		v |= chipsetSync();
+		dma.ReadCPU(CPUTarget.ChipReg, address, size);
+		v |= dma.ChipsetSync();
 	
 		return v;
 	}
 
-	public uint ReadX(uint insaddr, uint address, Size size)
-	{
-		if (chipRam.IsMapped(address))
-		{ 
-			chipRAMReads++;
-			if (size == Size.Long) chipRAMReads++;
-			return chipRam.Read(insaddr, address, size);
-		}
-		if (trapdoorRam.IsMapped(address))
-		{
-			trapdoorReads++;
-			if (size == Size.Long) trapdoorReads++;
-			return trapdoorRam.Read(insaddr, address, size);
-		}
-		if (custom.IsMapped(address))
-		{	
-			chipsetReads++;
-			if (size == Size.Long) chipsetReads++;
-			return custom.Read(insaddr, address, size);
-		}
-		return 0;
-	}
+	//public uint ReadX(uint insaddr, uint address, Size size)
+	//{
+	//		chipsetReads++;
+	//		if (size == Size.Long) chipsetReads++;
+	//		return custom.Read(insaddr, address, size);
+	//}
 
-	public void WriteX(uint insaddr, uint address, uint value, Size size)
+	public void Write(uint insaddr, uint address, uint value, Size size)
 	{
 		ulong writes = (size == Size.Long) ? 2U : 1U;
-		var target = CPUTarget.ChipRAM;
-
-		if (chipRam.IsMapped(address))
-		{
-			chipRAMWrites += writes;
-			target = CPUTarget.ChipRAM;
-		}
-		if (trapdoorRam.IsMapped(address))
-		{
-			trapdoorWrites += writes;
-			target = CPUTarget.SlowRAM;
-		}
-		if (custom.IsMapped(address))
-		{
-			chipsetWrites += writes;
-			target = CPUTarget.ChipReg;
-		}
 
 		if (size == Size.Long)
 		{
-			dma.WriteCPU(target, address, (ushort)(value>>16), Size.Word);
-			chipsetSync();
+			dma.WriteCPU(CPUTarget.ChipReg, address, (ushort)(value>>16), Size.Word);
+			dma.ChipsetSync();
 			size = Size.Word;
 			address += 2;
 		}
 
-		dma.WriteCPU(target, address, (ushort)value, size);
-		chipsetSync();
+		dma.WriteCPU(CPUTarget.ChipReg, address, (ushort)value, size);
+		dma.ChipsetSync();
 	}
 
-	public void Write(uint insaddr, uint address, uint value, Size size)
-	{
-		if (chipRam.IsMapped(address))
-		{
-			chipRAMWrites++;
-			if (size == Size.Long) chipRAMWrites++;
-			chipRam.Write(insaddr, address, value, size);
-			return;
-		}
-
-		if (trapdoorRam.IsMapped(address))
-		{
-			trapdoorWrites++;
-			if (size == Size.Long) trapdoorWrites++;
-			trapdoorRam.Write(insaddr, address, value, size);
-			return;
-		}
-		if (custom.IsMapped(address))
-		{
-			chipsetWrites++;
-			if (size == Size.Long) chipsetWrites++;
-			custom.Write(insaddr, address, value, size);
-			return;
-		}
-	}
+	//public void WriteX(uint insaddr, uint address, uint value, Size size)
+	//{
+	//		chipsetWrites++;
+	//		if (size == Size.Long) chipsetWrites++;
+	//		custom.Write(insaddr, address, value, size);
+	//		return;
+	//}
 
 	public List<BulkMemoryRange> ReadBulk()
 	{
-		return ((IBulkMemoryRead)chipRam).ReadBulk()
-			.Concat(((IBulkMemoryRead)trapdoorRam).ReadBulk())
-			.ToList();
+		return new List<BulkMemoryRange>();
 	}
 
 	public uint DebugRead(uint address, Size size)
 	{
-		if (chipRam.IsMapped(address))
-			return chipRam.DebugRead(address, size);
-
-		if (trapdoorRam.IsMapped(address))
-			return trapdoorRam.DebugRead(address, size);
-		
 		return 0;
 	}
 
 	public void DebugWrite(uint address, uint value, Size size)
 	{
-		if (chipRam.IsMapped(address))
-		{
-			chipRam.DebugWrite(address, value, size);
-			return;
-		}
-
-		if (trapdoorRam.IsMapped(address))
-			trapdoorRam.DebugWrite(address, value, size);
 	}
 
 	public uint DebugChipsetRead(uint address, Size size)

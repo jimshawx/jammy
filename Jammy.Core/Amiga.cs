@@ -69,11 +69,18 @@ namespace Jammy.Core
 			custom.Init(blitter, copper, audio, agnus, denise, dma);
 			keyboard.SetCIA(ciaa);
 			interrupt.Init(custom);
-			if (cpu is IMoiraCPU)
+
+			if (cycleExact && cpu is IMoiraCPU)
 			{
-				((IMoiraCPU)cpu).SetSync(this.RunChipsetEmulation);
-				agnus.SetSync(this.RunChipsetEmulation2);
+				((IMoiraCPU)cpu).SetSync(this.RunChipsetEmulationForCPU);
+				dma.SetSync(this.RunChipsetEmulationForRAM);
 			}
+			else
+			{
+				dma.SetSync(this.RunChipsetEmulationForRAMImmediate);
+			}
+
+			cpu.Initialise();
 
 			emulationWindow.SetKeyHandlers(AmigaKeydown, AmigaKeyup);
 
@@ -102,7 +109,8 @@ namespace Jammy.Core
 			emulations.Add(cpuClock);
 			emulations.Add(denise);
 
-			emulations.Insert(0, clock);
+			if (!cycleExact)
+				emulations.Insert(0, clock);
 
 			resetters.Add(diskController);
 			//resetters.Add(interrupt);
@@ -145,49 +153,54 @@ namespace Jammy.Core
 		private ulong trapdoorWrites = 0;
 		private ulong chipsetReads = 0; 
 		private ulong chipsetWrites = 0;
+		private ulong kickROMReads = 0;
 
 		private ulong totalWaits = 0;
 		private uint totalCycles = 0;
 
-		private ushort RunChipsetEmulation2()
+		private ushort RunChipsetEmulationForRAM()
 		{
-			//dma.SetCPUWaitingForDMA();
-			while (dma.IsWaitingForDMA(DMASource.CPU))
+			while (dma.LastDMASlotWasUsedByChipset())
 			{
-				emulations.ForEach(x => x.Emulate());
-
-				dma.TriggerHighestPriorityDMA();
-
 				clock.UpdateClock();
-				agnus.FlushBitplanes();
-			}
+				clock.Emulate();
+				emulations.ForEach(x => x.Emulate());
+				dma.TriggerHighestPriorityDMA();
+			} 
+			dma.ExecuteCPUDMASlot();
+
+			//if (clock.VerticalPos == 100)
+			//	logger.LogTrace($"RAM {clock.HorizontalPos}");
+
 			return dma.LastRead;
 		}
 
-		private void RunChipsetEmulation(int count)
+		private ushort RunChipsetEmulationForRAMImmediate()
 		{
-			for (int i = 0; i < count; i++)
-			{
-				emulations.ForEach(x => x.Emulate());
-
-				dma.TriggerHighestPriorityDMA();
-
-				clock.UpdateClock();
-				agnus.FlushBitplanes();
-			}
-
-			//while (dma.IsWaitingForDMA(DMASource.CPU))
-			//{
-			//	emulations.ForEach(x => x.Emulate());
-
-			//	dma.TriggerHighestPriorityDMA();
-
-			//	clock.UpdateClock();
-			//	agnus.FlushBitplanes();
-			//}
+			dma.ExecuteCPUDMASlot();
+			return dma.LastRead;
 		}
 
-		private bool cycleExact = true;
+		private void RunChipsetEmulationForCPU(int count)
+		{
+			//if (clock.VerticalPos == 100)
+			//{ 
+			//	if (count == 1)
+			//		logger.LogTrace($"S {clock.HorizontalPos}");
+			//	else
+			//		logger.LogTrace($"S {clock.HorizontalPos}-{clock.HorizontalPos + count - 1}");
+			//}
+
+			for (int i = 0; i < count; i++)
+			{
+				clock.UpdateClock();
+				clock.Emulate();
+				emulations.ForEach(x => x.Emulate());
+				dma.TriggerHighestPriorityDMA();
+			}
+		}
+
+		private const bool cycleExact = true;
 
 		public void RunEmulations()
 		{
@@ -195,8 +208,9 @@ namespace Jammy.Core
 			{
 				cpu.Emulate();
 				return;
-			}	
+			}
 
+			clock.UpdateClock();
 			emulations.ForEach(x => x.Emulate());
 
 			//totalWaits = 0;
@@ -209,6 +223,7 @@ namespace Jammy.Core
 				ulong ntrapdoorWrites;
 				ulong nchipsetReads;
 				ulong nchipsetWrites;
+				ulong nkickROMReads;
 
 				ulong dchipRAMReads;
 				ulong dchipRAMWrites;
@@ -216,17 +231,18 @@ namespace Jammy.Core
 				ulong dtrapdoorWrites;
 				ulong dchipsetReads;
 				ulong dchipsetWrites;
+				ulong dkickROMReads;
 
 				//in PAL, there are 312 x 227 ticks of the ChipsetClock per frame = 321 x 227 x 50 = 3,541,200 ticks per second
 				//and every time round this RunEmulations loop is on of these ticks.
 				//the CPU is running at twice that rate ~7.08MHz
 
 				agnus.Bookmark();
-				agnus.GetRGAReadWriteStats(out chipRAMReads, out chipRAMWrites, out trapdoorReads, out trapdoorWrites, out chipsetReads, out chipsetWrites);
+				agnus.GetRGAReadWriteStats(out chipRAMReads, out chipRAMWrites, out trapdoorReads, out trapdoorWrites, out chipsetReads, out chipsetWrites, out kickROMReads);
 
 				totalCycles = 0;
 				//for (int i = 0; i < 2; i++)
-				{ 
+				{
 					cpu.Emulate();
 					totalCycles += cpu.GetCycles();
 				}
@@ -237,7 +253,7 @@ namespace Jammy.Core
 				totalCycles /= 2;
 				//we need to eat this many cycles before we try to execute any more CPU
 
-				agnus.GetRGAReadWriteStats(out nchipRAMReads, out nchipRAMWrites, out ntrapdoorReads, out ntrapdoorWrites, out nchipsetReads, out nchipsetWrites);
+				agnus.GetRGAReadWriteStats(out nchipRAMReads, out nchipRAMWrites, out ntrapdoorReads, out ntrapdoorWrites, out nchipsetReads, out nchipsetWrites, out nkickROMReads);
 
 				dchipRAMReads = nchipRAMReads - chipRAMReads;
 				dchipRAMWrites = nchipRAMWrites - chipRAMWrites;
@@ -245,9 +261,10 @@ namespace Jammy.Core
 				dtrapdoorWrites = ntrapdoorWrites - trapdoorWrites;
 				dchipsetReads = nchipsetReads - chipsetReads;
 				dchipsetWrites = nchipsetWrites - chipsetWrites;
+				dkickROMReads = nkickROMReads - kickROMReads;
 
 				//how many chip bus slots did that use?
-				totalWaits = dchipRAMReads + dchipRAMWrites + dtrapdoorReads + dtrapdoorWrites + dchipsetReads + dchipsetWrites;
+				totalWaits = dchipRAMReads + dchipRAMWrites + dtrapdoorReads + dtrapdoorWrites + dchipsetReads + dchipsetWrites + dkickROMReads;
 			}
 
 			//The CPU totalCycles time includes the 'usual' instruction fetch time.
@@ -279,9 +296,9 @@ namespace Jammy.Core
 				//CPU DMA Slot was allocated
 				totalWaits--;
 			}
-			clock.UpdateClock();
 
-			agnus.FlushBitplanes();
+
+			//agnus.FlushBitplanes();
 		}
 
 		private Thread emuThread;

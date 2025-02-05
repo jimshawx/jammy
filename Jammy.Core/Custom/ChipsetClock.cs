@@ -30,8 +30,10 @@ public class ChipsetClock : IChipsetClock
 
 	[Persist]
 	public uint HorizontalPos { get; private set; }
-	public uint DeniseHorizontalPos { get { uint hp = (HorizontalPos+2)*2; if (hp < 4) hp += displayHorizontal*2; return hp; } }
+	public uint DeniseHorizontalPos { get { uint hp = (HorizontalPos + 2) * 2; if (hp < 4) hp += displayHorizontal * 2; return hp; } }
 	public uint CopperHorizontalPos { get { uint hp = HorizontalPos + 4; if (hp < 4) hp += displayHorizontal; return hp; } }
+	//public uint DeniseHorizontalPos { get { uint hp = HorizontalPos * 2; return hp; } }
+	//public uint CopperHorizontalPos { get { uint hp = HorizontalPos; return hp; } }
 
 	[Persist]
 	public uint VerticalPos { get; private set; }
@@ -51,7 +53,7 @@ public class ChipsetClock : IChipsetClock
 		Tick++;
 
 		if (HorizontalPos == 0)
-			ClockState|= ChipsetClockState.StartOfLine;
+			ClockState |= ChipsetClockState.StartOfLine;
 
 		if (HorizontalPos == 0 && VerticalPos == 0)
 			ClockState |= ChipsetClockState.StartOfFrame;
@@ -75,7 +77,7 @@ public class ChipsetClock : IChipsetClock
 			HorizontalPos++;
 		}
 
-		if ((ClockState & ChipsetClockState.EndOfFrame)!=0)
+		if ((ClockState & ChipsetClockState.EndOfFrame) != 0)
 		{
 			VerticalPos = 0;
 			FrameCount++;

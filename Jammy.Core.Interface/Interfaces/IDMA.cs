@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Types.Types;
+using System;
 
 namespace Jammy.Core.Interface.Interfaces;
 
@@ -21,4 +22,9 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	void ReadCPU(CPUTarget target, uint address, Size size);
 	void WriteCPU(CPUTarget target, uint address, ushort value, Size size);
 	ushort LastRead { get; }
+	bool LastDMASlotWasUsedByChipset();
+	void ExecuteCPUDMASlot();
+	void Init(IAudio audio, IMemoryMapper memoryMapper);
+	uint ChipsetSync();
+	void SetSync(Func<ushort> runChipsetEmulation);
 }

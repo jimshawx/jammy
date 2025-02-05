@@ -41,7 +41,8 @@ namespace Jammy.Core.Types.Types
 		None,
 		ChipRAM,
 		ChipReg,
-		SlowRAM
+		SlowRAM,
+		KickROM
 	}
 
 	public enum DMAActivityType
@@ -98,6 +99,7 @@ namespace Jammy.Core.Types.Types
 		public Size Size;
 		public DMA Priority;
 		public uint ChipReg;
+		public CPUTarget Target;
 	}
 
 	public class DMADebug
@@ -120,6 +122,20 @@ namespace Jammy.Core.Types.Types
 				dbg.Size = value.Size;
 				dbg.Priority = value.Priority;
 				dbg.ChipReg = value.ChipReg;
+				dbg.Target = value.Target;
+			}
+			get {
+				var d = dmadebug[i + j * 228];
+				return new DMAActivity
+				{
+					Type = d.Type,
+					Address = d.Address,
+					Value = d.Value,
+					Size = d.Size,
+					Priority = d.Priority,
+					ChipReg = d.ChipReg,
+					Target = d.Target
+				};
 			}
 		}
 

@@ -146,6 +146,8 @@ namespace Jammy.Main
 		private readonly Brush black = new SolidBrush(Color.Black);
 		private readonly Brush white = new SolidBrush(Color.White);
 		private readonly Brush grey = new SolidBrush(Color.Gray);
+		private readonly Brush red = new SolidBrush(Color.Red);
+		private readonly Brush blue = new SolidBrush(Color.Blue);
 
 		private void Repaint(object sender, PaintEventArgs e)
 		{
@@ -165,8 +167,10 @@ namespace Jammy.Main
 						e.Graphics.FillRectangle(black, r);
 					//else if (d.Type == DMAActivityType.Consume)
 					//	e.Graphics.FillRectangle(grey, r);
-					else if (d.Type == DMAActivityType.CPU)
-						e.Graphics.FillRectangle(white, r);
+					else if (d.Type == DMAActivityType.CPU || d.Type == DMAActivityType.ReadCPU)
+						e.Graphics.FillRectangle(red, r);
+					else if (d.Type == DMAActivityType.WriteCPU)
+						e.Graphics.FillRectangle(blue, r);
 					else
 						e.Graphics.FillRectangle(pricols[(int)Math.Log2((int)d.Priority)], r);
 				}

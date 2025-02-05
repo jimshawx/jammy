@@ -1,6 +1,7 @@
 ﻿using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 /*
@@ -116,7 +117,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IDebuggableMemory : IDebugRead, IDebugWrite { }
 
-	public interface IChips : IReset, IMemoryMappedDevice, IDebugChipsetRead, IStatePersister
+	public interface IChips : IReset, IContendedMemoryMappedDevice, IMemoryMappedDevice, IDebugChipsetRead, IStatePersister
 	{
 		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise, IDMA dma);
 		void WriteWide(uint address, ulong value);
@@ -129,7 +130,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Fetch(uint insaddr, uint address, uint value, Size size);
 	}
 
-	public interface IMemoryMapper : IMemoryMappedDevice, IReset
+	public interface IMemoryMapper : IContendedMemoryMappedDevice, IMemoryMappedDevice, IReset
 	{
 		void AddMemoryIntercept(IMemoryInterceptor interceptor);
 		uint Fetch(uint insaddr, uint address, Size size);
@@ -214,15 +215,15 @@ namespace Jammy.Core.Interface.Interfaces
 		void Init(IDMA dma);
 	}
 
-	public interface IAgnus : IEmulate, IMemoryMappedDevice, IRequiresDMA, IDebuggableMemory, ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead, IStatePersister, IPersistableRAM
+	public interface IAgnus : IEmulate, /*IMemoryMappedDevice,*/ IRequiresDMA, /*IDebuggableMemory,*/ ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead, IStatePersister, IPersistableRAM
 	{
 		void WriteWide(uint address, ulong value);
 		void FlushBitplanes();
 		void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
 				out ulong trapReads, out ulong trapWrites,
-				out ulong customReads, out ulong customWrites);
+				out ulong customReads, out ulong customWrites,
+				out ulong kickReads);
 		void Bookmark();
-		void SetSync(Func<ushort> runChipsetEmulation);
 	}
 
 	public interface IChipsetClock : IEmulate, IStatePersister

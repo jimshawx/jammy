@@ -15,6 +15,12 @@ namespace Jammy.Core.Interface.Interfaces
 		public void Write(uint insaddr, uint address, uint value, Size size);
 	}
 
+	public interface IContendedMemoryMappedDevice
+	{
+		public uint ImmediateRead(uint insaddr, uint address, Size size);
+		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size);
+	}
+
 	public interface IBulkMemoryRead
 	{
 		public List<BulkMemoryRange> ReadBulk();

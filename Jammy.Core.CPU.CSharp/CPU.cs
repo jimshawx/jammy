@@ -89,6 +89,8 @@ namespace Jammy.Core.CPU.CSharp
 			//Reset();
 		}
 
+		public void Initialise() { }
+
 		public void Reset()
 		{
 			fetchMode = FetchMode.Running;

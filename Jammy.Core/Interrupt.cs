@@ -2,8 +2,7 @@
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
-using System.Collections;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -16,14 +15,14 @@ namespace Jammy.Core
 		private IChips custom;
 
 		public static readonly uint[] priority = [1, 1, 1, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7];
-		private readonly ConcurrentQueue<uint> interruptLevelQueue;
+		private readonly Queue<uint> interruptLevelQueue;
 		private readonly ILogger logger;
 
 		public Interrupt(ILogger<Interrupt> logger)
 		{
 			this.logger = logger;
 			logger.LogTrace("Interrupt Construction");
-			interruptLevelQueue = new ConcurrentQueue<uint>();
+			interruptLevelQueue = new Queue<uint>();
 		}
 
 		public static uint CPUPriority(uint interrupt)

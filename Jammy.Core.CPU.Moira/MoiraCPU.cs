@@ -21,6 +21,7 @@ namespace Jammy.Core.CPU.Moira
 		private readonly IBreakpointCollection breakpoints;
 		private readonly ITracer tracer;
 		private readonly ILogger logger;
+		private readonly IChipsetClock clock;
 
 		[DllImport("Moira.dll")]
 		static extern void Moira_init(IntPtr r16, IntPtr r8, IntPtr w16, IntPtr w8, IntPtr sync);
@@ -47,12 +48,15 @@ namespace Jammy.Core.CPU.Moira
 		private Moira_Sync sync;
 
 		public MoiraCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
-			IBreakpointCollection breakpoints, ITracer tracer, ILogger<MoiraCPU> logger)
+			IBreakpointCollection breakpoints, ITracer tracer,
+			IChipsetClock clock,
+			ILogger<MoiraCPU> logger)
 		{
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
 			this.tracer = tracer;
+			this.clock = clock;
 			this.logger = logger;
 			logger.LogTrace("Starting Moira C 68000 CPU");
 
@@ -61,7 +65,10 @@ namespace Jammy.Core.CPU.Moira
 			w16 = new Moira_Writer(Moira_write16);
 			w8 = new Moira_Writer(Moira_write8);
 			sync = new Moira_Sync(Moira_sync);
+		}
 
+		public void Initialise()
+		{
 			Moira_init(
 				Marshal.GetFunctionPointerForDelegate(r16),
 				Marshal.GetFunctionPointerForDelegate(r8),
@@ -244,8 +251,16 @@ namespace Jammy.Core.CPU.Moira
 		{
 			//word read at instruction address is instruction fetch
 			if (address == instructionStartPC)
-				return memoryMapper.Fetch(instructionStartPC, address, Size.Word);
-			return memoryMapper.Read(instructionStartPC, address, Size.Word);
+			{ 
+				uint m = memoryMapper.Fetch(instructionStartPC, address, Size.Word);
+				//if (clock.VerticalPos == 100)
+				//	logger.LogTrace($"F {address:X8} @ {instructionStartPC:X8} {m:X4} {clock.HorizontalPos} {clock.HorizontalPos:X2}");
+				return m;
+			}
+			uint n = memoryMapper.Read(instructionStartPC, address, Size.Word);
+			//if (clock.VerticalPos == 100)
+			//	logger.LogTrace($"R {address:X8} @ {instructionStartPC:X8} {n:X4} {clock.HorizontalPos} {clock.HorizontalPos:X2}");
+			return n;
 		}
 		private uint Moira_read8(uint address)
 		{

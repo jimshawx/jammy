@@ -2,7 +2,6 @@
 using System.Linq;
 using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
-using Jammy.Core.Memory;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
@@ -18,29 +17,35 @@ namespace Jammy.Core.Custom;
 public class DMAController : IDMA
 {
 	private readonly IChipsetDebugger debugger;
-	private readonly IChipRAM chipRAM;
-	private readonly ITrapdoorRAM trapdoorRAM;
-	private readonly IAudio audio;
-	private readonly IChips custom;
+	private IAudio audio;
+	//private readonly IChips custom;
 	private readonly IChipsetClock chipsetClock;
+	private IMemoryMapper memoryMapper;
 	private readonly ILogger<DMAController> logger;
 	private readonly DMAActivity[] activities;
 
-	public DMAController(IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM, IAudio audio, IChips custom,
+	public DMAController(
+		//IAudio audio,// IChips custom,
 		IChipsetClock chipsetClock,
+		//IMemoryMapper memoryMapper,
 		IChipsetDebugger debugger, ILogger<DMAController> logger)
 	{
-		this.chipRAM = chipRAM;
-		this.trapdoorRAM = trapdoorRAM;
-		this.audio = audio;
-		this.custom = custom;
+		//this.audio = audio;
+		//this.custom = custom;
 		this.chipsetClock = chipsetClock;
+		//this.memoryMapper = memoryMapper;
 		this.logger = logger;
 		this.debugger = debugger;
 
 		activities = new DMAActivity[(int)DMASource.NumDMASources];
 		for (int i = 0; i < (int)DMASource.NumDMASources; i++)
 			activities[i] = new DMAActivity();
+	}
+
+	public void Init(IAudio audio, IMemoryMapper memoryMapper)
+	{
+		this.audio = audio;
+		this.memoryMapper = memoryMapper;
 	}
 
 	public void Reset()
@@ -50,6 +55,18 @@ public class DMAController : IDMA
 		{
 			activity.Type = DMAActivityType.None;
 		}
+	}
+
+	private Func<ushort> chipsetSync = NullSync;
+	public void SetSync(Func<ushort> chipsetSync)
+	{
+		this.chipsetSync = chipsetSync;
+	}
+	private static ushort NullSync() { return 0; }
+
+	public uint ChipsetSync()
+	{
+		return chipsetSync();
 	}
 
 	private int blitHogCount = 0;
@@ -108,24 +125,43 @@ public class DMAController : IDMA
 			}
 		}
 
-		//cpu can only use even-numbered slots
-		if (slotTaken == null && 
-			(activities[(int)DMASource.CPU].Type == DMAActivityType.CPU 
-			|| activities[(int)DMASource.CPU].Type == DMAActivityType.ReadCPU
-			|| activities[(int)DMASource.CPU].Type == DMAActivityType.WriteCPU ) 
-			/*&& (chipsetClock.HorizontalPos & 1) == 0*/)
-		{
-			//CPU memory access required
-			slotTaken = activities[(int)DMASource.CPU];
-		}
+		lastDMASlot = slotTaken;
+
+		////cpu can only use even-numbered slots
+		//if (slotTaken == null && 
+		//	(activities[(int)DMASource.CPU].Type == DMAActivityType.CPU 
+		//	|| activities[(int)DMASource.CPU].Type == DMAActivityType.ReadCPU
+		//	|| activities[(int)DMASource.CPU].Type == DMAActivityType.WriteCPU ) 
+		//	/*&& (chipsetClock.HorizontalPos & 1) == 0*/)
+		//{
+		//	//CPU memory access required
+		//	slotTaken = activities[(int)DMASource.CPU];
+		//}
 
 		debugger.SetDMAActivity(slotTaken);
 
 		if (slotTaken == null)
+		{
+			//if (chipsetClock.VerticalPos == 100)
+			//	logger.LogTrace($"None {chipsetClock.HorizontalPos}");
 			return;
+		}
 
 		//DMA required, execute the transaction
 		ExecuteDMATransfer(slotTaken);
+	}
+
+	private DMAActivity lastDMASlot = null;
+	public bool LastDMASlotWasUsedByChipset()
+	{
+		return lastDMASlot != null;
+	}
+
+	public void ExecuteCPUDMASlot()
+	{
+		//debugger.SetDMAActivity(activities[(int)DMASource.CPU]);
+		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
+		lastDMASlot = activities[(int)DMASource.CPU];
 	}
 
 	public bool IsWaitingForDMA(DMASource source)
@@ -160,49 +196,59 @@ public class DMAController : IDMA
 
 	private void ExecuteDMATransfer(DMAActivity activity)
 	{
+		//if (chipsetClock.VerticalPos == 100)
+		//	logger.LogTrace($"{activity.Type} {chipsetClock.HorizontalPos}");
+
 		switch (activity.Type)
 		{
 			case DMAActivityType.Consume:break;
 			case DMAActivityType.CPU: break;
 
 			case DMAActivityType.Write:
-				chipRAM.Write(0, activity.Address, (uint)activity.Value, activity.Size);
+				memoryMapper.Write(0, activity.Address, (uint)activity.Value, activity.Size);
 				break;
 
 			case DMAActivityType.WriteReg:
-				custom.Write(0, activity.ChipReg, (uint)activity.Value, Size.Word);
+				memoryMapper.ImmediateWrite(0, activity.ChipReg, (uint)activity.Value, Size.Word);
 				break;
 
 			case DMAActivityType.Read:
 				if (activity.Size == Size.QWord)
 				{
-					ulong value = chipRAM.Read(0, activity.Address, Size.Long);
-					value = (value << 32) | chipRAM.Read(0, activity.Address + 4, Size.Long);
-					custom.WriteWide(activity.ChipReg, value);
+					ulong value = memoryMapper.ImmediateRead(0, activity.Address, Size.Long);
+					value = (value << 32) | memoryMapper.ImmediateRead(0, activity.Address + 4, Size.Long);
+					throw new NotImplementedException();
+					//custom.WriteWide(activity.ChipReg, value);
 				}
 				else
 				{
-					uint value = chipRAM.Read(0, activity.Address, activity.Size);
-					custom.Write(0, activity.ChipReg, value, activity.Size);
+					uint value = memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
+					memoryMapper.ImmediateWrite(0, activity.ChipReg, value, activity.Size);
 				}
 				break;
 
 			case DMAActivityType.ReadCPU:
 				if (activity.Target == CPUTarget.ChipRAM)
-					LastRead = (ushort)chipRAM.Read(0, activity.Address, activity.Size);
+					LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
 				else if (activity.Target == CPUTarget.SlowRAM)
-					LastRead = (ushort)trapdoorRAM.Read(0, activity.Address, activity.Size);
+					LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
 				else if (activity.Target == CPUTarget.ChipReg)
-					LastRead = (ushort)custom.Read(0, activity.Address, activity.Size);
+					LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
+				else if (activity.Target == CPUTarget.KickROM)
+					LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
+				//if (chipsetClock.VerticalPos == 100)
+				//	logger.LogTrace($"R {chipsetClock.HorizontalPos}");
 				break;
 
 			case DMAActivityType.WriteCPU:
 				if (activity.Target == CPUTarget.ChipRAM)
-					chipRAM.Write(0, activity.Address, (uint)activity.Value, activity.Size);
+					memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
 				else if (activity.Target == CPUTarget.SlowRAM)
-					trapdoorRAM.Write(0, activity.Address, (uint)activity.Value, activity.Size);
+					memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
 				else if (activity.Target == CPUTarget.ChipReg)
-					custom.Write(0, activity.Address, (uint)activity.Value, activity.Size);
+					memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
+				//if (chipsetClock.VerticalPos == 100)
+				//	logger.LogTrace($"W {chipsetClock.HorizontalPos}");
 				break;
 
 			case DMAActivityType.None: break;
@@ -344,7 +390,7 @@ public class DMAController : IDMA
 
 	public uint DebugRead(uint address, Size size)
 	{
-		return chipRAM.Read(0, address, size);
+		return memoryMapper.ImmediateRead(0, address, size);
 	}
 
 	public void Save(JArray obj)

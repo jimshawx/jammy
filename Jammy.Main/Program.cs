@@ -160,6 +160,8 @@ namespace Jammy.Main
 			else
 				services.AddSingleton<IAudio, Audio>();
 
+			//services.AddSingleton<IAudio, NullAudio>();
+
 			//configure CPU
 			if (settings.CPU == CPUType.Musashi)
 			{
@@ -223,10 +225,16 @@ namespace Jammy.Main
 				x.ImplementationType.GetInterfaces().Contains(typeof(IStatePersister))).ToList();
 			foreach (var x in types)
 				services.AddSingleton(y => (IStatePersister)y.GetRequiredService(x.ServiceType));
-
+			
 			var serviceProvider = services.BuildServiceProvider();
 
+			var audio = serviceProvider.GetRequiredService<IAudio>();
 			var dma = serviceProvider.GetRequiredService<IDMA>();
+			var memoryMapper = serviceProvider.GetRequiredService<MemoryMapper>();
+			var chipsetDebugger = serviceProvider.GetRequiredService<IChipsetDebugger>();
+			var chips = serviceProvider.GetRequiredService<IChips>();
+			dma.Init(audio, memoryMapper);
+			chipsetDebugger.Init(chips);
 			var ciab = serviceProvider.GetRequiredService<ICIABEven>();
 			serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 			serviceProvider.GetRequiredService<ICopper>().Init(dma);

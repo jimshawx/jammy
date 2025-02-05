@@ -324,7 +324,7 @@ namespace Jammy.Graph
 			var t = new Thread(() =>
 			{
 				var window = CreateBranchNodes(trace);
-				window.FormClosing += (object? sender, FormClosingEventArgs e) =>
+				window.FormClosing += (object sender, FormClosingEventArgs e) =>
 					{
 						var controls = new List<Control>(window.Controls.Cast<Control>());
 						window.Controls.Clear();

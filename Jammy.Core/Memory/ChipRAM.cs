@@ -13,14 +13,15 @@ using Microsoft.Extensions.Options;
 namespace Jammy.Core.Memory
 {
 
-	public class ChipRAM : Memory, IChipRAM
+	public class ChipRAM : ContendedMemory, IChipRAM
 	{
 		//Up to 2MB Mapped from 0x0 to 0x00200000
 		//Detected by writing 0 to location 0x00000000 and then writing signature long every 4KB
 		//until address 0 is overwritten caused by incomplete address decoding causing a wrap
+		protected override CPUTarget target => CPUTarget.ChipRAM;
 
 		private readonly uint chipSize;
-		public ChipRAM(IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger)
+		public ChipRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger) : base(dma)
 		{
 			chipSize = (uint)(Math.Max(settings.Value.ChipMemory, 0.5) * 1024 * 1024);
 			

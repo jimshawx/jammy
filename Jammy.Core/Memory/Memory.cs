@@ -74,6 +74,16 @@ namespace Jammy.Core.Memory
 			throw new ArgumentOutOfRangeException();
 		}
 
+		public uint ImmediateRead(uint insaddr, uint address, Size size)
+		{
+			return Read(insaddr, address, size);
+		}
+
+		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
+		{
+			Write(insaddr, address, value, size);
+		}
+
 		public virtual List<BulkMemoryRange> ReadBulk()
 		{
 			return new List<BulkMemoryRange>

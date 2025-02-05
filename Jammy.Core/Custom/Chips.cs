@@ -401,6 +401,16 @@ namespace Jammy.Core.Custom
 				agnus.WriteWide(address, value);
 		}
 
+		public uint ImmediateRead(uint insaddr, uint address, Size size)
+		{
+			return Read(insaddr, address, size);
+		}
+
+		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
+		{
+			Write(insaddr, address, value, size);
+		}
+
 		public uint DebugChipsetRead(uint address, Size size)
 		{
 			if (size == Size.Long)
