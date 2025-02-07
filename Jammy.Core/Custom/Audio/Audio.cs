@@ -14,7 +14,7 @@ namespace Jammy.Core.Custom.Audio
 	public class Audio : IAudio
 	{
 		private readonly IChipsetClock clock;
-		private readonly IMemoryMappedDevice memory;
+		private readonly IContendedMemoryMappedDevice memory;
 		private readonly IInterrupt interrupt;
 		private readonly ILogger logger;
 		private readonly uint[] intr = { Types.Interrupt.AUD0, Types.Interrupt.AUD1, Types.Interrupt.AUD2, Types.Interrupt.AUD3 };
@@ -24,7 +24,7 @@ namespace Jammy.Core.Custom.Audio
 		public Audio(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<Audio> logger)
 		{
 			this.clock = clock;
-			this.memory = memory;
+			this.memory = (IContendedMemoryMappedDevice)memory;
 			this.interrupt = interrupt;
 			this.logger = logger;
 		}
@@ -66,7 +66,7 @@ namespace Jammy.Core.Custom.Audio
 			if (ch[channel].working_audper <= 0)
 			{
 				//read the sample into live audXdat
-				ch[channel].auddat = (ushort)memory.Read(0, ch[channel].working_audlc, Size.Word);
+				ch[channel].auddat = (ushort)memory.ImmediateRead(0, ch[channel].working_audlc, Size.Word);
 				//update the pointers and reset the period
 				ch[channel].working_audlc += 2;
 				ch[channel].working_audlen--;
