@@ -365,7 +365,7 @@ namespace Jammy.Main
 			txtDisassembly.DeselectAll();
 
 			//disassemblyView = disassembly.DisassemblyView(pc, 10, 100, disassemblyOptions);
-			int line = disassemblyView.GetAddressLine(pc);
+			int line = disassemblyView.GetAddressLine(pc & (uint)((1<<settings.AddressBits)-1));
 
 			//only need to do this is disassembly is actually updated
 			//txtDisassembly.Text = disassemblyView.Text;
