@@ -159,7 +159,7 @@ public class DMAController : IDMA
 
 	public void ExecuteCPUDMASlot()
 	{
-		//debugger.SetDMAActivity(activities[(int)DMASource.CPU]);
+		debugger.SetDMAActivity(activities[(int)DMASource.CPU]);
 		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
 		lastDMASlot = activities[(int)DMASource.CPU];
 	}
@@ -205,7 +205,7 @@ public class DMAController : IDMA
 			case DMAActivityType.CPU: break;
 
 			case DMAActivityType.Write:
-				memoryMapper.Write(0, activity.Address, (uint)activity.Value, activity.Size);
+				memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
 				break;
 
 			case DMAActivityType.WriteReg:

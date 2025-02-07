@@ -965,6 +965,8 @@ noBitplaneDMA:
 	{
 		ulong writes = (size == Size.Long) ? 2U : 1U;
 
+		chipsetWrites += writes;
+
 		if (size == Size.Long)
 		{
 			dma.WriteCPU(CPUTarget.ChipReg, address, (ushort)(value>>16), Size.Word);
