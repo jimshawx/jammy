@@ -1,11 +1,14 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
 using Jammy.Core.Types;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Parky.Configuration.WritableJson;
+using System;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Windows.Forms;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -16,6 +19,7 @@ namespace Jammy.UI.Settings
 	public partial class Settings : Form
 	{
 		private string configPath = "../../../../config";
+		private readonly IConfigurationRoot appConfig;
 
 		public Settings()
 		{
@@ -33,6 +37,11 @@ namespace Jammy.UI.Settings
 				};
 				return s;
 			};
+
+			appConfig = new ConfigurationBuilder()
+				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.AddWritableJsonFile("appSettings.json", false)
+				.Build();
 
 			//Quickstart
 			cbQuickStart.SelectedIndex = 0;
@@ -97,43 +106,52 @@ namespace Jammy.UI.Settings
 
 		private void btnDF0Pick_Click(object sender, EventArgs e)
 		{
+			openFileDialog1.InitialDirectory = appConfig["Application:Directories:GamePath"];
 			openFileDialog1.DefaultExt = ".adf";
 			openFileDialog1.FileName = txtDF0.Text;
 			if (openFileDialog1.ShowDialog() == DialogResult.OK)
 				txtDF0.Text = openFileDialog1.FileName;
+			appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(openFileDialog1.FileName);
 		}
 
 		private void btnDF1Pick_Click(object sender, EventArgs e)
 		{
+			openFileDialog1.InitialDirectory = appConfig["Application:Directories:GamePath"];
 			openFileDialog1.DefaultExt = ".adf";
 			openFileDialog1.FileName = txtDF1.Text;
 			if (openFileDialog1.ShowDialog() == DialogResult.OK)
 				txtDF1.Text = openFileDialog1.FileName;
+			appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(openFileDialog1.FileName);
 		}
 
 		private void btnDF2Pick_Click(object sender, EventArgs e)
 		{
+			openFileDialog1.InitialDirectory = appConfig["Application:Directories:GamePath"];
 			openFileDialog1.DefaultExt = ".adf";
 			openFileDialog1.FileName = txtDF2.Text;
 			if (openFileDialog1.ShowDialog() == DialogResult.OK)
 				txtDF2.Text = openFileDialog1.FileName;
+			appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(openFileDialog1.FileName);
 		}
 
 		private void btnDF3Pick_Click(object sender, EventArgs e)
 		{
+			openFileDialog1.InitialDirectory = appConfig["Application:Directories:GamePath"];
 			openFileDialog1.DefaultExt = ".adf";
 			openFileDialog1.FileName = txtDF3.Text;
 			if (openFileDialog1.ShowDialog() == DialogResult.OK)
 				txtDF3.Text = openFileDialog1.FileName;
+			appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(openFileDialog1.FileName);
 		}
 
 		private void btnROMPick_Click(object sender, EventArgs e)
 		{
-			openFileDialog1.DefaultExt = ".adf";
+			openFileDialog1.InitialDirectory = appConfig["Application:Directories:ROMPath"];
+			openFileDialog1.DefaultExt = ".rom";
 			openFileDialog1.FileName = txtKickstart.Text;
 			if (openFileDialog1.ShowDialog() == DialogResult.OK)
 				txtKickstart.Text = openFileDialog1.FileName;
-
+			appConfig["Application:Directories:ROMPath"] = Path.GetDirectoryName(openFileDialog1.FileName);
 		}
 
 		private void btnExit_Click(object sender, EventArgs e)
