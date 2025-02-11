@@ -48,7 +48,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IMotherboard : IReset, IMemoryMappedDevice { }
 
-	public interface IBlitter : IReset, ICustomReadWrite, IEmulate, IRequiresDMA, IDebugChipsetRead, IStatePersister
+	public interface IBlitter : IReset, ICustomReadWrite, IEmulate, IDebugChipsetRead, IStatePersister
 	{
 		void Logging(bool enabled);
 		void Dumping(bool enabled);
@@ -218,7 +218,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IAgnus : IEmulate, /*IMemoryMappedDevice,*/ IRequiresDMA, /*IDebuggableMemory,*/ ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead, IStatePersister, IPersistableRAM
 	{
 		void WriteWide(uint address, ulong value);
-		void FlushBitplanes();
+		void UpdateSprites();
 		void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
 				out ulong trapReads, out ulong trapWrites,
 				out ulong customReads, out ulong customWrites,

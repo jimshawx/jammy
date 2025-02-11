@@ -119,6 +119,7 @@ public class Agnus : IAgnus
 			lineState = DMALineState.LineStart;
 
 		RunAgnusTick();
+		UpdateSprites();
 
 		if ((clockState & ChipsetClockState.EndOfLine)!=0)
 		{
@@ -307,17 +308,17 @@ noBitplaneDMA:
 		{
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 			{
-				dma.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Word, ChipRegs.BPL1DAT+plane*2);
+				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Word, ChipRegs.BPL1DAT+plane*2);
 				bplpt[plane] += 2;
 			}
 			else if ((fmode & 3) == 3)
 			{
-				dma.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.QWord, ChipRegs.BPL1DAT + plane * 2);
+				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.QWord, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 8;
 			}
 			else
 			{
-				dma.Read(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Long, ChipRegs.BPL1DAT + plane * 2);
+				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Long, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 4;
 			}
 
@@ -355,7 +356,7 @@ noBitplaneDMA:
 		return false;
 	}
 
-	public void FlushBitplanes()
+	public void UpdateSprites()
 	{
 		//if (plane == 0 && lineState == DMALineState.Fetching)
 		//	denise.WriteBitplanes(bpldat);
@@ -471,12 +472,12 @@ noBitplaneDMA:
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				dma.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS+s*8);
+				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS+s*8);
 				sprpt[s] += 2;
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				dma.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATA+s*8);
+				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATA+s*8);
 				sprpt[s] += 2;
 			}
 		}
@@ -484,12 +485,12 @@ noBitplaneDMA:
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				dma.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0CTL+s*8);
+				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0CTL+s*8);
 				sprpt[s] += 2;
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				dma.Read(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
+				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
 				sprpt[s] += 2;
 			}
 		}

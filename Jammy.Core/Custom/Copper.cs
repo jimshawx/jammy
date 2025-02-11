@@ -188,7 +188,7 @@ namespace Jammy.Core.Custom
 				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
 
 				status = CopperStatus.RunningWord2;
-				memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+				memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 				copPC += 2;
 			}
 			else if (status == CopperStatus.RunningWord2)
@@ -213,7 +213,7 @@ namespace Jammy.Core.Custom
 						//if this is being skipped, write to COPINS instead of the specified register
 						uint regAddress = nextMOVEisNOOP ? ChipRegs.COPINS : ChipRegs.ChipBase + reg;
 						nextMOVEisNOOP = false;
-						memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
+						memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
 						copPC += 2;
 					}
 				}
@@ -221,7 +221,7 @@ namespace Jammy.Core.Custom
 				{
 					//todo: should we do the NOOP thing here too?
 					status = CopperStatus.FetchWait;
-					memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+					memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 					copPC += 2;
 				}
 

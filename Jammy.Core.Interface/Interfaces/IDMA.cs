@@ -5,9 +5,9 @@ namespace Jammy.Core.Interface.Interfaces;
 
 public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 {
-	void Read(DMASource source, uint address, DMA priority, Size size, uint chipReg);
+	void ReadReg(DMASource source, uint address, DMA priority, Size size, uint chipReg);
 	uint DebugRead(uint address, Size size);
-	void Write(DMASource source, uint address, DMA priority, ushort value, Size size);
+	void WriteChip(DMASource source, uint address, DMA priority, ushort value, Size size);
 	void WriteReg(DMASource source, uint chipReg, DMA priority, ushort value);
 	void NoDMA(DMASource source);
 	void NeedsDMA(DMASource source, DMA priority);
@@ -17,6 +17,7 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	void ClearWaitingForDMA(DMASource source);
 	void SetCPUWaitingForDMA();
 	void WriteDMACON(ushort bits);
+	ushort ReadDMACON();
 	void DebugExecuteDMAActivity(DMASource source);
 	void DebugExecuteAllDMAActivity();
 	void ReadCPU(CPUTarget target, uint address, Size size);

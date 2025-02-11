@@ -18,37 +18,27 @@ namespace Jammy.Core.Custom
 {
 	public class Blitter : IBlitter
 	{
-		private readonly IChips custom;
-		private IDMA memory;
 		private readonly IInterrupt interrupt;
-		private readonly IChipsetClock clock;
-		private readonly IChipRAM chipRam;
+		private readonly IContendedMemoryMappedDevice chipRam;
 		private readonly IDMA dma;
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 
-		public Blitter(IChips custom, IInterrupt interrupt, IChipsetClock clock, IChipRAM chipRam, 
-			IDMA dma, IOptions<EmulationSettings> settings, ILogger<Blitter> logger)
+		public Blitter(IInterrupt interrupt, IChipRAM chipRam, IDMA dma, IOptions<EmulationSettings> settings,
+			ILogger<Blitter> logger)
 		{
-			this.custom = custom;
 			this.interrupt = interrupt;
-			this.clock = clock;
-			this.chipRam = chipRam;
+			this.chipRam = (IContendedMemoryMappedDevice)chipRam;
 			this.dma = dma;
 			this.settings = settings.Value;
 			this.logger = logger;
 			PreComputeFill();
 		}
 
-		public void Init(IDMA dma)
-		{
-			memory = dma;
-		}
-
 		private bool blitterLog = false;
 		private bool blitterDump = false;
 
-		private int bmode = 0;
+		private int bmode = 1;
 		public void Logging(bool enabled) { blitterLog = enabled; }
 		public void Dumping(bool enabled) { /*blitterDump = enabled;*/ bmode ^= 1; }
 
@@ -101,7 +91,7 @@ namespace Jammy.Core.Custom
 		{
 			if (status == BlitterState.Idle) return false;
 
-			if (memory.IsWaitingForDMA(DMASource.Blitter)) return false;
+			if (dma.IsWaitingForDMA(DMASource.Blitter)) return false;
 
 			//Trying to follow
 			//Blitter hidden details from chip schematics
@@ -252,7 +242,7 @@ namespace Jammy.Core.Custom
 			if (blitterLog)
 				WriteBlitterState();
 
-			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			ushort dmacon = dma.ReadDMACON();
 			if ((dmacon & (1<<14)) != 0 || status != BlitterState.Idle)
 				logger.LogTrace($"Previous blit not finished {((dmacon & (1<<14))!=0?"BBUSY":"~BBUSY")} {status}");
 
@@ -260,12 +250,12 @@ namespace Jammy.Core.Custom
 			{
 				//tw = File.CreateText($"bline-{DateTime.Now:HHmmss-fff}");
 				
-				//if (bmode == 1)
-				//{	
-				//	var b = Line2(insaddr,logger, null);
-				//	Line2CopyBack(b);
-				//}
-				//else if (bmode == 0)
+				if (bmode == 1)
+				{	
+					var b = Line2(insaddr,logger, null);
+					Line2CopyBack(b);
+				}
+				else if (bmode == 0)
 				{
 					logger.LogTrace($"{bltapt:X6} {((bltcon1&(uint)BLTCON1.SIGN)!=0?"":"~")}SIGN");
 					Line(insaddr);
@@ -291,7 +281,7 @@ namespace Jammy.Core.Custom
 			if (blitterLog)
 				WriteBlitterState();
 
-			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			ushort dmacon = dma.ReadDMACON();
 			if ((dmacon & (1 << 14)) != 0 || status != BlitterState.Idle)
 				logger.LogTrace($"Previous blit not finished {((dmacon & (1 << 14)) != 0 ? "BBUSY" : "~BBUSY")} {status}");
 
@@ -324,14 +314,14 @@ namespace Jammy.Core.Custom
 		private bool DelayedWrite()
 		{
 			if (writecache.Address == NO_WRITECACHE) return true;
-			memory.Write(DMASource.Blitter, writecache.Address, DMA.BLTEN, writecache.Value, Size.Word);
+			dma.WriteChip(DMASource.Blitter, writecache.Address, DMA.BLTEN, writecache.Value, Size.Word);
 			return false;
 		}
 
 		private void DelayedWriteImmediate()
 		{
 			if (writecache.Address == NO_WRITECACHE) return;
-			chipRam.Write(0, writecache.Address, writecache.Value, Size.Word);
+			chipRam.ImmediateWrite(0, writecache.Address, writecache.Value, Size.Word);
 		}
 
 		private bool DelayedWrite(uint address, ushort value)
@@ -359,7 +349,7 @@ namespace Jammy.Core.Custom
 			blitWidth = h;
 			blitHeight = v;
 
-			ushort dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
+			ushort dmacon = dma.ReadDMACON();
 			if ((dmacon & (1 << 6)) == 0)
 				logger.LogTrace($"BLTEN is off! @{insaddr:X8}");
 			if ((dmacon & (1 << 9)) == 0)
@@ -373,7 +363,7 @@ namespace Jammy.Core.Custom
 
 		private bool BeginBlit()
 		{
-			memory.ClearWaitingForDMA(DMASource.Blitter);
+			dma.ClearWaitingForDMA(DMASource.Blitter);
 
 			//set blitter busy in DMACON
 			//custom.Write(0, ChipRegs.DMACON, 0x8000 + (1u << 14), Size.Word);
@@ -420,7 +410,7 @@ namespace Jammy.Core.Custom
 		private bool BlitStartUp1()
 		{
 			status = BlitterState.BlitStartUp2;
-			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 			return false;
 		}
 
@@ -428,7 +418,7 @@ namespace Jammy.Core.Custom
 		private bool BlitStartUp2()
 		{
 			status = BlitterState.BlitA;
-			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 			return false;
 		}
 
@@ -454,11 +444,11 @@ namespace Jammy.Core.Custom
 
 			if ((bltcon0 & (uint)BLTCON0.USEA) == 0)
 			{
-				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 				return false;
 			}
 
-			memory.Read(DMASource.Blitter, bltapt, DMA.BLTEN, Size.Word, ChipRegs.BLTADAT);
+			dma.ReadReg(DMASource.Blitter, bltapt, DMA.BLTEN, Size.Word, ChipRegs.BLTADAT);
 			return false;
 		}
 
@@ -468,7 +458,7 @@ namespace Jammy.Core.Custom
 
 			if ((bltcon0 & (uint)BLTCON0.USEB) != 0)
 			{ 
-				memory.Read(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
+				dma.ReadReg(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
 				return false;
 			}
 			return true;
@@ -507,12 +497,12 @@ namespace Jammy.Core.Custom
 
 			if ((bltcon0 & (uint)BLTCON0.USEC) != 0)
 			{
-				memory.Read(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
+				dma.ReadReg(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
 				return false;
 			}
 			else if (IsFillEnabled())
 			{
-				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 				return false;
 			}
 			return true;
@@ -588,7 +578,7 @@ namespace Jammy.Core.Custom
 			if (w != blitWidth)
 			{
 				status = BlitterState.BlitA;
-				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 				return false;
 			}
 
@@ -616,12 +606,12 @@ namespace Jammy.Core.Custom
 			if (h != blitHeight)
 			{
 				status = BlitterState.BlitA;
-				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 				return false;
 			}
 
 			status = BlitterState.BlitDLast;
-			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 			return false;
 		}
 
@@ -800,7 +790,7 @@ namespace Jammy.Core.Custom
 
 		private bool LineBegin()
 		{
-			memory.ClearWaitingForDMA(DMASource.Blitter);
+			dma.ClearWaitingForDMA(DMASource.Blitter);
 
 			uint octant = (bltcon1 >> 2) & 7;
 			sing = (bltcon1 & (1 << 1)) != 0;
@@ -852,7 +842,7 @@ namespace Jammy.Core.Custom
 			status = BlitterState.LineB;
 
 			bltadat = 0x8000u >> x0;
-			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 			return false;
 		}
 
@@ -863,7 +853,7 @@ namespace Jammy.Core.Custom
 			//if USEB is off, then it's -C-D, else if -BC-BD
 			if ((bltcon0 & (1u << 10)) == 0) return true;//B is off, keep going
 
-			memory.Read(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
+			dma.ReadReg(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
 			return false;
 		}
 
@@ -879,11 +869,11 @@ namespace Jammy.Core.Custom
 
 			if ((bltcon0 & (1u << 9)) == 0)
 			{
-				memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+				dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 				return false;
 			}
 
-			memory.Read(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
+			dma.ReadReg(DMASource.Blitter, bltcpt, DMA.BLTEN, Size.Word, ChipRegs.BLTCDAT);
 			return false;
 		}
 
@@ -904,7 +894,7 @@ namespace Jammy.Core.Custom
 
 			status = BlitterState.LineB2;
 
-			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 
 			return false;
 		}
@@ -916,7 +906,7 @@ namespace Jammy.Core.Custom
 			//if USEB is off, then it's -C-D, else if -BC-BD
 			if ((bltcon0 & (1u << 10)) == 0) return true;//B is off, keep going
 
-			memory.Read(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
+			dma.ReadReg(DMASource.Blitter, bltbpt, DMA.BLTEN, Size.Word, ChipRegs.BLTBDAT);
 			return false;
 		}
 
@@ -936,12 +926,12 @@ namespace Jammy.Core.Custom
 				if (writeBit)
 				{
 					if (sing) writeBit = false;
-					memory.Write(DMASource.Blitter, bltdpt, DMA.BLTEN, (ushort)bltddat, Size.Word);
+					dma.WriteChip(DMASource.Blitter, bltdpt, DMA.BLTEN, (ushort)bltddat, Size.Word);
 					return false;
 				}
 			}
 
-			memory.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
+			dma.NeedsDMA(DMASource.Blitter, DMA.BLTEN);
 			return false;
 		}
 
@@ -1047,12 +1037,12 @@ namespace Jammy.Core.Custom
 			{
 				if ((bltcon0 & (1u << 10)) != 0)
 				{
-					bltbdat = chipRam.Read(insaddr, bltbpt, Size.Word);
+					bltbdat = chipRam.ImmediateRead(insaddr, bltbpt, Size.Word);
 					mask = (ushort)((bltbdat >> ror) | (bltbdat << (16 - ror)));
 				}
 
 				if ((bltcon0 & (1u << 9)) != 0)
-					bltcdat = chipRam.Read(insaddr, bltcpt, Size.Word);
+					bltcdat = chipRam.ImmediateRead(insaddr, bltcpt, Size.Word);
 
 				bltadat = 0x8000u >> x0;
 
@@ -1075,7 +1065,7 @@ namespace Jammy.Core.Custom
 				{
 					if (writeBit)
 					{
-						chipRam.Write(insaddr, bltdpt, bltddat, Size.Word);
+						chipRam.ImmediateWrite(insaddr, bltdpt, bltddat, Size.Word);
 						if (sing) writeBit = false;
 					}
 				}
@@ -1085,7 +1075,7 @@ namespace Jammy.Core.Custom
 				x1 -= dx;
 				if (x1 < 0 && !sign)
 				{
-					logger.LogTrace($"x {x1}");
+					//logger.LogTrace($"x {x1}");
 					x1 += dm;
 					x0 += sx;
 					if (x0 >= 16) { x0 = 0; bltcpt += 2; }
@@ -1094,7 +1084,7 @@ namespace Jammy.Core.Custom
 				y1 -= dy;
 				if (y1 < 0 && !sign)
 				{
-					logger.LogTrace($"y {y1} ({x1})");
+					//logger.LogTrace($"y {y1} ({x1})");
 					bltcpt += (uint)(bltcmod * sy);
 					y1 += dm;
 					writeBit = true;
@@ -1139,7 +1129,7 @@ namespace Jammy.Core.Custom
 				for (uint w = 0; w < width; w++)
 				{
 					if ((bltcon0 & (1u << 11)) != 0)
-						bltadat = chipRam.Read(0, bltapt, Size.Word);
+						bltadat = chipRam.ImmediateRead(0, bltapt, Size.Word);
 
 					s_bltadat = bltadat;
 
@@ -1162,7 +1152,7 @@ namespace Jammy.Core.Custom
 					}
 
 					if ((bltcon0 & (1u << 10)) != 0)
-						bltbdat = chipRam.Read(0, bltbpt, Size.Word);
+						bltbdat = chipRam.ImmediateRead(0, bltbpt, Size.Word);
 
 					s_bltbdat = bltbdat;
 
@@ -1182,7 +1172,7 @@ namespace Jammy.Core.Custom
 					}
 
 					if ((bltcon0 & (1u << 9)) != 0)
-						bltcdat = chipRam.Read(0, bltcpt, Size.Word);
+						bltcdat = chipRam.ImmediateRead(0, bltcpt, Size.Word);
 
 					bltddat = 0;
 					if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat;
@@ -1397,6 +1387,70 @@ namespace Jammy.Core.Custom
 			PersistenceManager.FromJObject(this, obj);
 			writecache.Address = uint.Parse((string)obj.GetValue("writecacheAddress"));
 			writecache.Value = ushort.Parse((string)obj.GetValue("writecacheValue"));
+		}
+
+		private BlitterLine.FellowBlitter Line2(uint insaddr, ILogger logger, TextWriter log)
+		{
+			var b = new BlitterLine.FellowBlitter(chipRam, logger, log);
+
+			b.bltadat = (ushort)bltadat;
+			b.bltbdat = (ushort)bltbdat;
+			b.bltbdat_original = bltbdat;
+			b.bltcdat = (ushort)bltcdat;
+
+			b.bltcon = (bltcon0 << 16) | bltcon1;
+			b.bltamod = (ushort)bltamod;
+			b.bltbmod = (ushort)bltbmod;
+			b.bltcmod = (ushort)bltcmod;
+
+			b.bltafwm = (ushort)bltafwm;
+
+			b.bltapt = bltapt;
+			b.bltcpt = bltcpt;
+			b.bltdpt = bltdpt;
+
+			b.height = bltsize >> 6;
+
+			b.a_shift_asc = bltcon0 >> 12;
+			b.a_shift_desc = 16 - b.a_shift_asc;
+
+			b.b_shift_asc = bltcon1 >> 12;
+
+			b.bltzero = 0;
+			
+			//set bbusy and bzero
+			dma.WriteDMACON(0x8000 + (1 << 14) + (1 << 13));
+
+			b.blitterLineMode(b, chipRam, logger);
+			return b;
+		}
+
+		private void Line2CopyBack(BlitterLine.FellowBlitter b)
+		{
+			bltadat = b.bltadat;
+			bltbdat = b.bltbdat;
+			bltcdat = b.bltcdat;
+
+			bltcon1 = b.bltcon & 0xffff;
+			bltcon0 = b.bltcon >> 16;
+			bltamod = b.bltamod;
+			bltbmod = b.bltbmod;
+			bltcmod = b.bltcmod;
+			bltafwm = b.bltafwm;
+
+			bltapt = b.bltapt;
+			bltcpt = b.bltcpt;
+			bltdpt = b.bltdpt;
+
+			//write the BZERO bit in DMACON
+			//clear BZERO if necessary and disable BBUSY in DMACON
+			ushort dmacon = 1 << 14;
+			if (b.bltzero != 0)
+				dmacon |= 1 << 13;
+
+			dma.WriteDMACON(dmacon);
+
+			interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 		}
 	}
 }

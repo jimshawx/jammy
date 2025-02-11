@@ -238,7 +238,6 @@ namespace Jammy.Main
 			var ciab = serviceProvider.GetRequiredService<ICIABEven>();
 			serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 			serviceProvider.GetRequiredService<ICopper>().Init(dma);
-			serviceProvider.GetRequiredService<IBlitter>().Init(dma);
 			serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab);
 
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();

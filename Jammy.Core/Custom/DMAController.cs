@@ -292,7 +292,7 @@ public class DMAController : IDMA
 		return ((DMA)dmacon & mask) == mask;
 	}
 
-	public void Read(DMASource source, uint address, DMA priority, Size size, uint chipReg)
+	public void ReadReg(DMASource source, uint address, DMA priority, Size size, uint chipReg)
 	{
 		var activity = activities[(int)source];
 		activity.Type = DMAActivityType.Read;
@@ -302,7 +302,7 @@ public class DMAController : IDMA
 		activity.ChipReg = chipReg;
 	}
 
-	public void Write(DMASource source, uint address, DMA priority, ushort value, Size size)
+	public void WriteChip(DMASource source, uint address, DMA priority, ushort value, Size size)
 	{
 		var activity = activities[(int)source];
 		activity.Type = DMAActivityType.Write;
@@ -379,6 +379,11 @@ public class DMAController : IDMA
 			dmacon |= bits;
 		else
 			dmacon &= (ushort)~bits;
+	}
+
+	public ushort ReadDMACON()
+	{
+		return dmacon;
 	}
 
 	public uint DebugChipsetRead(uint address, Size size)

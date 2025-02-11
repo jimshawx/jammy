@@ -159,7 +159,6 @@ namespace Jammy.Tests
 			var blitter = serviceProvider0.GetRequiredService<IBlitter>();
 			var chipRAM = (LoggedChipRAM)serviceProvider0.GetRequiredService<IChipRAM>();
 			var dma = serviceProvider0.GetRequiredService<IDMA>();
-			blitter.Init(dma);
 
 			using (var f = File.OpenRead(BlitterLineTestCases.TestCases2RAM()))
 				chipRAM.FromBmp(f);
