@@ -33,7 +33,7 @@ namespace Jammy.Core.Memory
 			dma.ReadCPU(target, address, size);
 			v |= dma.ChipsetSync();
 
-			return dma.LastRead;
+			return v;
 		}
 
 		public new void Write(uint insaddr, uint address, uint value, Size size)

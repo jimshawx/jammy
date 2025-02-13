@@ -210,8 +210,13 @@ public class Agnus : IAgnus
 		if (clock.VerticalPos < diwstrtv || clock.VerticalPos >= diwstopv)
 			blanking |= Blanking.OutsideDisplayWindow;
 
-		if (clock.DeniseHorizontalPos >= 0x10 && clock.DeniseHorizontalPos <= 0x5e)
+		//what are the correct values? Agnus can fetch at 0x18, how does that correspond to Denise clock?
+		if (clock.DeniseHorizontalPos >= 0x10 && clock.DeniseHorizontalPos <= 51)//0x5e)
+		{
+			if (clock.HorizontalPos >= ddfstrtfix)
+				logger.LogTrace($"Fetch in HPOS {clock.DeniseHorizontalPos:X2} {clock.HorizontalPos:X2}");
 			blanking |= Blanking.HorizontalBlank;
+		}
 
 		//tell Denise the blaking status and whether to start processing pixel data
 		denise.SetBlankingStatus(blanking);
@@ -226,7 +231,7 @@ public class Agnus : IAgnus
 		//is it time to do bitplane DMA?
 		//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
 		//bitplane DMA is ON
-		if (clock.HorizontalPos >= ddfstrtfix /*+ debugger.ddfSHack*/ && clock.HorizontalPos < ddfstopfix /*+ debugger.ddfEHack*/ &&
+		if (clock.HorizontalPos >= ddfstrtfix + debugger.ddfSHack && clock.HorizontalPos < ddfstopfix + debugger.ddfEHack &&
 			(lineState == DMALineState.Fetching || lineState == DMALineState.LineStart))
 		{
 			if (dma.IsDMAEnabled(DMA.BPLEN))
@@ -235,7 +240,7 @@ public class Agnus : IAgnus
 				lineState = DMALineState.Fetching;
 		}
 
-		if (clock.HorizontalPos >= ddfstopfix /*+ debugger.ddfEHack*/ && lineState == DMALineState.Fetching)
+		if (clock.HorizontalPos >= ddfstopfix + debugger.ddfEHack && lineState == DMALineState.Fetching)
 		{
 			lineState = DMALineState.LineComplete;
 		}
@@ -285,6 +290,7 @@ noBitplaneDMA:
 	private bool CopperBitplaneFetch(int h)
 	{
 		int planeIdx = (h - ddfstrtfix) % pixmod;
+		while (planeIdx < 0) planeIdx += pixmod;
 
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 		{
@@ -380,6 +386,7 @@ noBitplaneDMA:
 		//next horizontal line, and we did some fetching this line, add on the modulos
 		if (clock.VerticalPos >= diwstrtv && clock.VerticalPos < diwstopv && lineState == DMALineState.LineComplete)
 		{
+			//logger.LogTrace($"MOD {clock} {planes} {bpl1mod:X4} {bpl2mod:X4}");
 			for (int i = 0; i < planes; i++)
 			{
 				bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
@@ -630,6 +637,8 @@ noBitplaneDMA:
 				pixmod = 16;
 			}
 		}
+		debugger.ddfStrtFix = ddfstrtfix;
+		debugger.ddfStopFix = ddfstopfix;
 	}
 
 	private ulong[] bpldat = new ulong[8];
@@ -764,12 +773,13 @@ noBitplaneDMA:
 
 			case ChipRegs.DDFSTRT:
 				ddfstrt = (ushort)(value & (settings.ChipSet == ChipSet.OCS ? 0xfc : 0xfe));
-				lineState = DMALineState.LineTerminated;
+				//causes modulo not to be added, even if there was fetching on the line before this is written
+				//lineState = DMALineState.LineTerminated;
 				UpdateDDF();
 				break;
 			case ChipRegs.DDFSTOP:
 				ddfstop = (ushort)(value & (settings.ChipSet == ChipSet.OCS ? 0xfc : 0xfe));
-				lineState = DMALineState.LineTerminated;
+				//lineState = DMALineState.LineTerminated;
 				UpdateDDF();
 				break;
 

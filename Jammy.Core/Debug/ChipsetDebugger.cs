@@ -21,8 +21,12 @@ public interface IChipsetDebugger : IEmulate
 	byte bitplaneMod { get; }
 	bool dbug { get; set; }
 	int dma { get; set; }
+	int ddfSHack { get; }
+	int ddfEHack { get; }
 	int diwSHack { get; }
 	int diwEHack { get; }
+	int ddfStrtFix { get; set; }
+	int ddfStopFix { get; set; }
 	void SetDMAActivity(DMAActivity activity);
 	DMAEntry[] GetDMASummary();
 	void Init(IChips chips);
@@ -137,10 +141,14 @@ public class ChipsetDebugger : IChipsetDebugger
 	public byte bitplaneMask { get; private set; } = 0xff;
 	public byte bitplaneMod { get; private set; } = 0;
 
-	//	public int ddfSHack;
-	//	public int ddfEHack;
+	public int ddfSHack { get; private set; } = 0;
+	public int ddfEHack { get; private set; } = 0;
+
 	public int diwSHack { get; private set; } = 0;
 	public int diwEHack { get; private set; } = 0;
+
+	public int ddfStrtFix { get; set; } = 0;
+	public int ddfStopFix { get; set; } = 0;
 
 	//	public bool ws;
 	private StringBuilder tsb = new StringBuilder();
@@ -214,18 +222,18 @@ public class ChipsetDebugger : IChipsetDebugger
 		}
 
 		//currently unused
-		uint wordCount = 0;
-		uint ddfstrtfix = 0;
-		uint ddfSHack = 0;
-		uint ddfstopfix = 0;
-		uint ddfEHack = 0;
-		uint diwSHack = 0;
-		uint diwEHack = 0;
+		int wordCount = 0;
+		//uint ddfstrtfix = 0;
+		//uint ddfSHack = 0;
+		//uint ddfstopfix = 0;
+		//uint ddfEHack = 0;
+		//uint diwSHack = 0;
+		//uint diwEHack = 0;
 
 		var sb = GetDebugStringBuilder();
 
 		sb.AppendLine($"LINE {dbugLine}");
-		sb.AppendLine(($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfstrtfix:X4}{ddfSHack:+#0;-#0} {ddfstopfix:X4}{ddfEHack:+#0;-#0} FMODE {fmode:X4}"));
+		sb.AppendLine(($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfStrtFix:X4}{ddfSHack:+#0;-#0} {ddfStopFix:X4}{ddfEHack:+#0;-#0} FMODE {fmode:X4}"));
 		sb.AppendLine(($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({diwstopv - diwstrtv}) H:{diwstrth}{diwSHack:+#0;-#0}->{diwstoph}{diwEHack:+#0;-#0}({diwstoph - diwstrth}/16={(diwstoph - diwstrth) / 16})"));
 		sb.AppendLine($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
 		sb.AppendLine($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()} 3:{bplcon3:X4} {Bplcon3()} 4:{bplcon4:X4} {Bplcon4()}");
@@ -414,12 +422,12 @@ public class ChipsetDebugger : IChipsetDebugger
 			if (obj == (int)VK.VK_F8) dbugLine = -1;
 			//if (obj == (int)VK.VK_F5) dbugLine = diwstrt >> 8;
 
-			//if (obj == (int)'Q') ddfSHack++;
-			//if (obj == (int)'W') ddfSHack--;
-			//if (obj == (int)'E') ddfSHack = 0;
-			//if (obj == (int)'R') ddfEHack++;
-			//if (obj == (int)'T') ddfEHack--;
-			//if (obj == (int)'Y') ddfEHack = 0;
+			if (obj == (int)'Q') ddfSHack++;
+			if (obj == (int)'W') ddfSHack--;
+			if (obj == (int)'E') ddfSHack = 0;
+			if (obj == (int)'R') ddfEHack++;
+			if (obj == (int)'T') ddfEHack--;
+			if (obj == (int)'Y') ddfEHack = 0;
 
 			if (obj == (int)'1') diwSHack++;
 			if (obj == (int)'2') diwSHack--;

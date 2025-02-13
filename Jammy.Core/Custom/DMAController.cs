@@ -18,7 +18,7 @@ public class DMAController : IDMA
 {
 	private readonly IChipsetDebugger debugger;
 	private IAudio audio;
-	//private readonly IChips custom;
+	private readonly IAgnus agnus;
 	private readonly IChipsetClock chipsetClock;
 	private IMemoryMapper memoryMapper;
 	private readonly ILogger<DMAController> logger;
@@ -28,10 +28,11 @@ public class DMAController : IDMA
 		//IAudio audio,// IChips custom,
 		IChipsetClock chipsetClock,
 		//IMemoryMapper memoryMapper,
+		IAgnus agnus,
 		IChipsetDebugger debugger, ILogger<DMAController> logger)
 	{
 		//this.audio = audio;
-		//this.custom = custom;
+		this.agnus = agnus;
 		this.chipsetClock = chipsetClock;
 		//this.memoryMapper = memoryMapper;
 		this.logger = logger;
@@ -217,8 +218,7 @@ public class DMAController : IDMA
 				{
 					ulong value = memoryMapper.ImmediateRead(0, activity.Address, Size.Long);
 					value = (value << 32) | memoryMapper.ImmediateRead(0, activity.Address + 4, Size.Long);
-					throw new NotImplementedException();
-					//custom.WriteWide(activity.ChipReg, value);
+					agnus.WriteWide(activity.ChipReg, value);
 				}
 				else
 				{

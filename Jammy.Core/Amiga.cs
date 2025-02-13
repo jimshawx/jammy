@@ -200,7 +200,7 @@ namespace Jammy.Core
 			}
 		}
 
-		private const bool cycleExact = true;
+		private bool cycleExact { get { return cpu is IMoiraCPU; } }
 
 		public void RunEmulations()
 		{
@@ -355,9 +355,9 @@ namespace Jammy.Core
 				//Mental Hangover
 				//persistenceManager.Load("../../state-2024-11-02-19-11-53.json");
 				//Blitter Miracle
-				//persistenceManager.Load("../../state-2024-11-03-20-53-42.json");
+				persistenceManager.Load("../../state-2025-02-12-12-23-09.json");
 				//Pinball Fantasies
-				persistenceManager.Load("../../state-2024-11-04-22-05-32.json");
+				//persistenceManager.Load("../../state-2024-11-04-22-05-32.json");
 			}
 
 			uint stepOutSp = 0xffffffff;
