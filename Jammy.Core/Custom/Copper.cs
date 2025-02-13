@@ -27,6 +27,8 @@ namespace Jammy.Core.Custom
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 
+		private bool copperPtrDebug = false;
+
 		public Copper(IChipsetClock clock, IChips custom, IChipsetDebugger debugger,
 			IOptions<EmulationSettings> settings, ILogger<Copper> logger)
 		{
@@ -214,6 +216,7 @@ namespace Jammy.Core.Custom
 						uint regAddress = nextMOVEisNOOP ? ChipRegs.COPINS : ChipRegs.ChipBase + reg;
 						nextMOVEisNOOP = false;
 						memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
+						//logger.LogTrace($"{regAddress:X6} {ChipRegs.Name(regAddress)}");
 						copPC += 2;
 					}
 				}
@@ -269,8 +272,10 @@ namespace Jammy.Core.Custom
 			}
 			else if (status == CopperStatus.Waiting)
 			{
+				memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+
 				//If blitter-busy bit is set the comparisons will fail.
-				if (waitBlit == 0 && (custom.Read(0, ChipRegs.DMACONR, Size.Word) & (1 << 14)) != 0)
+				if (waitBlit == 0 && (memory.ReadDMACON() & (1 << 14)) != 0)
 				{
 					logger.LogTrace("WAIT delayed due to blitter running");
 					return;
@@ -283,11 +288,11 @@ namespace Jammy.Core.Custom
 					//logger.LogTrace($"AWOKE @{clock}");
 
 					//n ticks later
-					//waitTimer = 1;
-					//status = CopperStatus.WakingUp;
+					waitTimer = 1;
+					status = CopperStatus.WakingUp;
 
 					//0 ticks delay
-					status = CopperStatus.RunningWord1;
+					//status = CopperStatus.RunningWord1;
 
 					//one tick sooner
 					//memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
@@ -307,6 +312,7 @@ namespace Jammy.Core.Custom
 				waitTimer--;
 				if (waitTimer <= 0)
 					status = CopperStatus.RunningWord1;
+				memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 			}
 			else if (status == CopperStatus.Retrace)
 			{
@@ -371,6 +377,8 @@ namespace Jammy.Core.Custom
 		private uint [] lastcopptr = new uint[3];
 		private void DebugCOPPtr(int idx, string reg, uint insaddr, uint copptr)
 		{
+			if (!copperPtrDebug) return;
+
 			if (copptr != lastcopptr[idx])
 			{
 				logger.LogTrace($"{reg} {insaddr:X8} {copptr:X6} {clock.TimeStamp()}");
@@ -383,6 +391,8 @@ namespace Jammy.Core.Custom
 		private uint[] lastjmp = new uint[3];
 		private void DebugCOPJmp(char rw, int idx, string reg, uint insaddr, uint copptr)
 		{
+			if (!copperPtrDebug) return;
+
 			if (copptr != lastjmp[idx])
 			{
 				logger.LogTrace($"{rw} {reg} {insaddr:X8} {copptr:X6} {clock.TimeStamp()}");
@@ -397,6 +407,8 @@ namespace Jammy.Core.Custom
 		private uint [] lastcoppc =new uint[4];
 		private void DebugCOPPC(uint pc)
 		{
+			if (!copperPtrDebug) return;
+
 			int idx = (copjmp1<<1)+copjmp2;
 			if (pc != lastcoppc[idx])
 			{
@@ -413,23 +425,16 @@ namespace Jammy.Core.Custom
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
-			//lock(locker)
+			switch (address)
 			{
-				switch (address)
-				{
-					case ChipRegs.COPCON: copcon = value; break;
-					case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOPPtr(1, "COP1LCH", insaddr, cop1lc); break;
-					case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOPPtr(1, "COP1LCL", insaddr, cop1lc); break;
-					case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOPPtr(2, "COP2LCH", insaddr, cop2lc); break;
-					case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOPPtr(2, "COP2LCL", insaddr, cop2lc); break;
-					//case ChipRegs.COPJMP1: copjmp1 = value; copPC = cop1lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
-					//	break;
-					//case ChipRegs.COPJMP2: copjmp2 = value; copPC = cop2lc; status = CopperStatus.RunningWord1; memory.ClearWaitingForDMA(DMASource.Copper);
-					//	break;
-					case ChipRegs.COPJMP1: copjmp1 = 1; DebugCOPJmp('W', 1, "COPJMP1", insaddr, cop1lc); break;
-					case ChipRegs.COPJMP2: copjmp2 = 1; DebugCOPJmp('W', 2, "COPJMP2", insaddr, cop2lc); break;
-					case ChipRegs.COPINS: copins = value; break;
-				}
+				case ChipRegs.COPCON: copcon = value; break;
+				case ChipRegs.COP1LCH: cop1lc = (cop1lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOPPtr(1, "COP1LCH", insaddr, cop1lc); break;
+				case ChipRegs.COP1LCL: cop1lc = (cop1lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOPPtr(1, "COP1LCL", insaddr, cop1lc); break;
+				case ChipRegs.COP2LCH: cop2lc = (cop2lc & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugCOPPtr(2, "COP2LCH", insaddr, cop2lc); break;
+				case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOPPtr(2, "COP2LCL", insaddr, cop2lc); break;
+				case ChipRegs.COPJMP1: copjmp1 = 1; DebugCOPJmp('W', 1, "COPJMP1", insaddr, cop1lc); break;
+				case ChipRegs.COPJMP2: copjmp2 = 1; DebugCOPJmp('W', 2, "COPJMP2", insaddr, cop2lc); break;
+				case ChipRegs.COPINS: copins = value; break;
 			}
 		}
 
