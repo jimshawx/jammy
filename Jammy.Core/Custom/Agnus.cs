@@ -572,7 +572,8 @@ noBitplaneDMA:
 			}
 			else if ((fmode & 3) == 3)
 			{
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 0xf) >> 4) + 1) << 4));
+				//ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 0xf) >> 4) + 1) << 4));
+				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
 				//FetchWidth(ddfstrt, ddfstop, AGA, HIRES, 3);
 				pixmod = 16;
 			}
@@ -855,7 +856,7 @@ noBitplaneDMA:
 			case ChipRegs.HCENTER: hcentre = value; logger.LogTrace($"HCENTER {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.BEAMCON0: beamcon0 = value; logger.LogTrace($"BEAMCON0 {value:X4} @{insaddr:X8}"); break;
 
-			case ChipRegs.FMODE: fmode = value; break;
+			case ChipRegs.FMODE: fmode = value; UpdateDDF(); break;
 		}
 	}
 
@@ -863,7 +864,7 @@ noBitplaneDMA:
 	{
 		switch (address)
 		{
-			case ChipRegs.BPL1DAT: bpldat[0] = value; break;
+			case ChipRegs.BPL1DAT: bpldat[0] = value; denise.WriteBitplanes(bpldat); break;
 			case ChipRegs.BPL2DAT: bpldat[1] = value; break;
 			case ChipRegs.BPL3DAT: bpldat[2] = value; break;
 			case ChipRegs.BPL4DAT: bpldat[3] = value; break;
