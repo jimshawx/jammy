@@ -77,6 +77,15 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0xF847BC);//OpenDevice("trackdisk.device") in strap
 				//AddBreakpoint(0xFC03F0);//disk.resource drive detection
 				//AddBreakpoint(0xF804AE);//exec Gayle check
+				//AddBreakpoint(0xF8FA24);//graphics.library LISA check
+				//AddBreakpoint(0xF94B64);//graphics.library after LISA check
+				//AddBreakpoint(0xF94B4E);//graphics.library VPOSR AGA check
+				//AddBreakpoint(0xF94B3C);//graphics.library SetChipRev()
+				//AddBreakpoint(0xF92590);//thing that is generating the incorrect copper list colours
+				//AddBreakpoint(0xF86FD0);//MrgCop
+				//AddBreakpoint(0xFD1F20);//RemakeDisplay
+				//AddBreakpoint(0xFCFAE4);//OpenScreenTagList
+				//AddBreakpoint(0xF856E8);//LoadRGB32
 			}
 
 			if (settings.Value.KickStartDisassembly.StartsWith("9FDEEEF6"))//3.1
