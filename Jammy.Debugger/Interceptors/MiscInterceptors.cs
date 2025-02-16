@@ -2,6 +2,7 @@
 using Jammy.Core.Types;
 using Jammy.Interface;
 using Jammy.Types;
+using Jammy.Types.AmigaTypes;
 using Microsoft.Extensions.Logging;
 
 /*
@@ -253,6 +254,30 @@ namespace Jammy.Debugger.Interceptors
 		{
 			var regs = cpu.GetRegs(gregs);
 			logger.LogTrace($"@{pc:X8} {lvo.Name}() : {regs.A[0]:X8} {regs.D[0]:X8} {regs.D[1]:X8} {regs.A[1]:X8} ");
+		}
+	}
+
+	public class MrgCopLogger : LVOLoggerBase, ILVOInterceptorAction
+	{
+		public MrgCopLogger(ICPU cpu, IDebugMemoryMapper memory, IReturnValueSnagger returnValueSnagger, IAnalyser analyser,
+			IObjectMapper objectMapper,
+		ILibraryBases libraryBases, ILogger<MrgCopLogger> logger) : base(cpu, memory, returnValueSnagger, analyser, libraryBases, logger)
+		{
+			this.objectMapper = objectMapper;
+		}
+
+		public string Library => "graphics.library";
+		public string VectorName => "MrgCop";
+		private Regs gregs = new Regs();
+		private readonly IObjectMapper objectMapper;
+
+		public void Intercept(LVO lvo, uint pc)
+		{
+			var regs = cpu.GetRegs(gregs);
+			logger.LogTrace($"@{pc:X8} {lvo.Name}() : {regs.A[1]:X8}");
+			object tp = new View();// Activator.CreateInstance(type);
+			string view = objectMapper.MapObject(tp, regs.A[1]);
+			logger.LogTrace(view);
 		}
 	}
 }

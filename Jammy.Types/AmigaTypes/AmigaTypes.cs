@@ -22,6 +22,18 @@ namespace Jammy.Types.AmigaTypes
 	using UBYTEPtr = System.UInt32;
 	using ULONGPtr = System.UInt32;
 
+	//using ViewPortPtr = System.UInt32;
+	//using ColorMapPtr = System.UInt32;
+	using CopListPtr = System.UInt32;
+	using UCopListPtr = System.UInt32;
+	using cprlistPtr = System.UInt32;
+	//using RasInfoPtr = System.UInt32;
+
+	using BitMapPtr = System.UInt32;
+	using ViewPortExtraPtr = System.UInt32;
+	using TagItemPtr = System.UInt32;
+	using PaletteExtraPtr = System.UInt32;
+
 	public enum NodeType
 	{
 		NT_UNKNOWN = 0,
@@ -55,6 +67,25 @@ namespace Jammy.Types.AmigaTypes
 		uint Address { get; set; }
 		T Wrapped { get; set; }
 	}
+
+	public class WrappedPtr<T> : IWrappedPtr<T>
+	{
+		public uint Address { get; set; }
+		public T Wrapped { get; set; }
+	}
+
+	public class ViewPortPtr : WrappedPtr<ViewPort>;
+
+	public class ColorMapPtr : WrappedPtr<ColorMap>;
+	//public class CopListPtr : WrappedPtr<CopList>;
+	//public class UCopListPtr : WrappedPtr<UCopList>;
+	//public class cprlistPtr : WrappedPtr<cprlist>;
+	public class RasInfoPtr : WrappedPtr<RasInfo>;
+
+	//public class BitMapPtr : WrappedPtr<BitMap>;
+	//public class ViewPortExtraPtr : WrappedPtr<ViewPortExtra>;
+	//public class TagItemPtr : WrappedPtr<TagItem>;
+	//public class PaletteExtraPtr : WrappedPtr<PaletteExtra>;
 
 	public class TaskPtr : IWrappedPtr
 	{
@@ -390,6 +421,68 @@ namespace Jammy.Types.AmigaTypes
 		public CharPtr rt_Name { get; set; }      /* pointer to node name	*/
 		public CharPtr rt_IdString { get; set; }  /* pointer to identification string */
 		public APTR rt_Init { get; set; }       /* pointer to init code	*/
+	}
+
+	public class ViewPort
+	{
+		public ViewPortPtr Next { get; set; }
+		public ColorMapPtr ColorMap { get; set; }     /* table of colors for this viewport */
+		/* if this is nil, MakeVPort assumes default values */
+		public CopListPtr DspIns { get; set; }    /* used by MakeVPort() */
+		public CopListPtr SprIns { get; set; }    /* used by sprite stuff */
+		public CopListPtr ClrIns { get; set; }    /* used by sprite stuff */
+		public UCopListPtr UCopIns { get; set; }  /* User copper list */
+		public WORD DWidth { get; set; }
+		public WORD DHeight { get; set; }
+		public WORD DxOffset { get; set; }
+		public WORD DyOffset { get; set; }
+		public UWORD Modes { get; set; }
+		public UBYTE SpritePriorities { get; set; }
+		public UBYTE ExtendedModes { get; set; }
+		public RasInfoPtr RasInfo { get; set; }
+	}
+
+	public class View
+	{
+		public ViewPortPtr ViewPort { get; set; }
+		public cprlistPtr LOFCprList { get; set; }    /* used for interlaced and noninterlaced */
+		public cprlistPtr SHFCprList { get; set; }    /* only used during interlace */
+		public WORD DyOffset { get; set; }
+		public WORD DxOffset { get; set; }    /* for complete View positioning */
+		/* offsets are +- adjustments to standard #s */
+		public UWORD Modes { get; set; }            /* such as INTERLACE, GENLOC */
+	}
+
+	public class RasInfo  /* used by callers to and InitDspC() */
+	{
+		public RasInfoPtr Next { get; set; }        /* used for dualpf */
+		public BitMapPtr BitMap { get; set; }
+		public WORD RxOffset { get; set; }
+		public WORD RyOffset { get; set; }     /* scroll offsets in this BitMap */
+	}
+
+	public class ColorMap
+	{
+		public UBYTE Flags { get; set; }
+		public UBYTE Type { get; set; }
+		public UWORD Count { get; set; }
+		public APTR ColorTable { get; set; }
+		public ViewPortExtraPtr cm_vpe { get; set; }
+		public APTR LowColorBits { get; set; }
+		public UBYTE TransparencyPlane { get; set; }
+		public UBYTE SpriteResolution { get; set; }
+		public UBYTE SpriteResDefault { get; set; }  /* what resolution you get when you have set SPRITERESN_DEFAULT */
+		public UBYTE AuxFlags { get; set; }
+		public ViewPortPtr cm_vp { get; set; }
+		public APTR NormalDisplayInfo { get; set; }
+		public APTR CoerceDisplayInfo { get; set; }
+		public TagItemPtr cm_batch_items { get; set; }
+		public ULONG VPModeID { get; set; }
+		public PaletteExtraPtr PalExtra { get; set; }
+		public UWORD SpriteBase_Even { get; set; }
+		public UWORD SpriteBase_Odd { get; set; }
+		public UWORD Bp_0_base { get; set; }
+		public UWORD Bp_1_base { get; set; }
 	}
 
 }

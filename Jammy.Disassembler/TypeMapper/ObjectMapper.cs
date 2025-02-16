@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Interface;
 using Jammy.Types.AmigaTypes;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -100,6 +100,24 @@ namespace Jammy.Disassembler.TypeMapper
 							{
 								tp.MinNode = new MinNode();
 								MapObject(typeof(MinNode), tp.MinNode, tp.Address, depth+1);
+							}
+							else
+							{
+								tp = null;
+							}
+							rv = tp;
+						}
+						else if (propType.Name.EndsWith("Ptr"))
+						{
+							//we want the type that corresponds to the name without Ptr on the end
+							var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == "Jammy.Types");
+							Type otype = assembly.GetTypes().SingleOrDefault(x => x.Name == propType.Name[..^3]);
+							dynamic tp = Activator.CreateInstance(propType);
+							tp.Address = memory.UnsafeRead32(addr); addr += 4;
+							if (tp.Address != 0 && tp.Address < 0x1000000)
+							{
+								tp.Wrapped = Activator.CreateInstance(otype);
+								MapObject(otype, tp.MinNode, tp.Address, depth + 1);
 							}
 							else
 							{
