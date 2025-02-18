@@ -30,12 +30,12 @@ public interface IChipsetDebugger : IEmulate
 	void SetDMAActivity(DMAActivity activity);
 	DMAEntry[] GetDMASummary();
 	void Init(IChips chips);
+	void SetColor(int index, uint rgb);
 }
 
 public class ChipsetDebugger : IChipsetDebugger
 {
 	private readonly IChipsetClock clock;
-	//private readonly IDenise denise;
 	private IDebugChipsetRead chipRegs;
 	private readonly INativeOverlay overlay;
 	private readonly EmulationSettings settings;
@@ -43,11 +43,10 @@ public class ChipsetDebugger : IChipsetDebugger
 	private readonly ILogger<ChipsetDebugger> logger;
 	private int[] screen;
 
-	public ChipsetDebugger(IChipsetClock clock, /*IChips chipRegs,*/ INativeOverlay overlay,
+	public ChipsetDebugger(IChipsetClock clock, INativeOverlay overlay,
 		IEmulationWindow emulationWindow, IOptions<EmulationSettings> settings, ILogger<ChipsetDebugger> logger)
 	{
 		this.clock = clock;
-		this.chipRegs = chipRegs;
 		this.overlay = overlay;
 		this.settings = settings.Value;
 		this.logger = logger;
@@ -364,14 +363,18 @@ public class ChipsetDebugger : IChipsetDebugger
 		return sb.ToString();
 	}
 
+	private uint[] truecolour = new uint[256];
+
+	public void SetColor(int index, uint rgb)
+	{
+		truecolour[index] = rgb;
+	}
+
 	private void DebugPalette()
 	{
-		return;
-
-		int sx = 5;
+		int sx = 256;
 		int sy = 5;
 
-		uint[] truecolour = new uint[256]; //denise.DebugGetPalette();
 		screen = screen??window.GetFramebuffer();
 
 		int box = 5;

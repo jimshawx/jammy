@@ -756,7 +756,7 @@ namespace Jammy.Main
 
 				uint address = ValueFromRegName(regs, (string)addressFollowBox.SelectedItem);
 
-				var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == "Jammy.Disassembler");
+				var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == "Jammy.Types");
 				if (assembly != null)
 				{
 					var type = assembly.GetTypes().SingleOrDefault(x => x.Name == typeName);
@@ -765,9 +765,7 @@ namespace Jammy.Main
 						object tp = Activator.CreateInstance(type);
 						if (tp != null)
 						{
-							Amiga.LockEmulation();
 							txtCopper.Text = objectMapper.MapObject(tp, address);
-
 						}
 					}
 				}
@@ -1173,6 +1171,7 @@ namespace Jammy.Main
 				return;
 
 			uint A(int i) { string s = P(i); return uint.Parse(s, NumberStyles.HexNumber); }
+			uint AD(int i, uint def) { string s = P(i); return string.IsNullOrEmpty(s) ? def : uint.Parse(s, NumberStyles.HexNumber); }
 			uint? N(int i) { string s = P(i); return string.IsNullOrWhiteSpace(s) ? null : A(i); }
 			Core.Types.Types.Size? S(int i)
 			{
@@ -1200,13 +1199,14 @@ namespace Jammy.Main
 
 			Amiga.LockEmulation();
 			bool refresh = false;
+			var regs = debugger.GetRegs();
 
 			try
 			{
 				switch (P(0))
 				{
 					case "b":
-						debugger.AddBreakpoint(A(1));
+						debugger.AddBreakpoint(AD(1, regs.PC));
 						break;
 
 					case "bw":
@@ -1223,11 +1223,11 @@ namespace Jammy.Main
 						break;
 
 					case "bc":
-						debugger.RemoveBreakpoint(A(1));
+						debugger.RemoveBreakpoint(AD(1, regs.PC));
 						break;
 
 					case "t":
-						debugger.ToggleBreakpoint(A(1));
+						debugger.ToggleBreakpoint(AD(1, regs.PC));
 						break;
 
 					case "d":

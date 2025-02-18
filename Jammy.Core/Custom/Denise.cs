@@ -749,8 +749,6 @@ public class Denise : IDenise
 		{
 			value &= 0x0fff;
 
-			//if (address == ChipRegs.COLOR00) logger.LogTrace($"{value:X3} {clock}");
-
 			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
 
 			//Amiga colour
@@ -768,14 +766,15 @@ public class Denise : IDenise
 			}
 
 			//24bit colour
-			truecolour[index] = Explode(colour[index]) | (Explode(lowcolour[index]) >> 4);
+			var rgb = Explode(colour[index]) | (Explode(lowcolour[index]) >> 4);
+			truecolour[index] = rgb;
+			debugger.SetColor(index, rgb);
 		}
 		else if (address == ChipRegs.STREQU || address == ChipRegs.STRHOR
 						 || address == ChipRegs.STRLONG || address == ChipRegs.STRVBL)
 		{
 			logger.LogTrace($"Strobe W {ChipRegs.Name(address)} @ {insaddr:X8}");
 		}
-
 	}
 
 	private uint Explode(ushort c)
