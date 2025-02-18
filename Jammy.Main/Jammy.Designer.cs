@@ -116,7 +116,7 @@ namespace Jammy.Main
 			// 
 			lbRegisters.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			lbRegisters.ColumnWidth = 85;
-			lbRegisters.Font = new System.Drawing.Font("Consolas", 8.25F);
+			lbRegisters.Font = new System.Drawing.Font("Cascadia Mono", 8.25F);
 			lbRegisters.IntegralHeight = false;
 			lbRegisters.Location = new System.Drawing.Point(2012, 26);
 			lbRegisters.Margin = new System.Windows.Forms.Padding(6);
@@ -133,7 +133,7 @@ namespace Jammy.Main
 			txtDisassembly.BackColor = System.Drawing.SystemColors.Window;
 			txtDisassembly.ContextMenuStrip = menuDisassembly;
 			txtDisassembly.DetectUrls = false;
-			txtDisassembly.Font = new System.Drawing.Font("Consolas", 7.25F);
+			txtDisassembly.Font = new System.Drawing.Font("Cascadia Mono", 7.25F);
 			txtDisassembly.HideSelection = false;
 			txtDisassembly.Location = new System.Drawing.Point(6, 6);
 			txtDisassembly.Margin = new System.Windows.Forms.Padding(6);
@@ -236,14 +236,14 @@ namespace Jammy.Main
 			txtMemory.BackColor = System.Drawing.SystemColors.Window;
 			txtMemory.ContextMenuStrip = menuMemory;
 			txtMemory.DetectUrls = false;
-			txtMemory.Font = new System.Drawing.Font("Consolas", 7.25F);
+			txtMemory.Font = new System.Drawing.Font("Cascadia Mono", 7.25F);
 			txtMemory.Location = new System.Drawing.Point(6, 6);
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
 			txtMemory.Size = new System.Drawing.Size(1390, 617);
 			txtMemory.TabIndex = 6;
-			txtMemory.Text = "";
+			txtMemory.Text = "00000160 0000000000000000 0000000000000000 0000000000000000 0000000000000000   ................................";
 			txtMemory.WordWrap = false;
 			// 
 			// menuMemory
@@ -447,7 +447,7 @@ namespace Jammy.Main
 			txtCopper.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
 			txtCopper.BackColor = System.Drawing.SystemColors.Window;
 			txtCopper.DetectUrls = false;
-			txtCopper.Font = new System.Drawing.Font("Consolas", 7.25F);
+			txtCopper.Font = new System.Drawing.Font("Cascadia Mono", 7.25F);
 			txtCopper.Location = new System.Drawing.Point(5, 16);
 			txtCopper.Margin = new System.Windows.Forms.Padding(6);
 			txtCopper.Name = "txtCopper";
@@ -545,7 +545,7 @@ namespace Jammy.Main
 			// 
 			lbCallStack.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			lbCallStack.ColumnWidth = 83;
-			lbCallStack.Font = new System.Drawing.Font("Consolas", 8.25F);
+			lbCallStack.Font = new System.Drawing.Font("Cascadia Mono", 8.25F);
 			lbCallStack.IntegralHeight = false;
 			lbCallStack.Location = new System.Drawing.Point(2348, 26);
 			lbCallStack.Margin = new System.Windows.Forms.Padding(6);
@@ -583,7 +583,7 @@ namespace Jammy.Main
 			// lbCustom
 			// 
 			lbCustom.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			lbCustom.Font = new System.Drawing.Font("Consolas", 8.25F);
+			lbCustom.Font = new System.Drawing.Font("Cascadia Mono", 8.25F);
 			lbCustom.FormattingEnabled = true;
 			lbCustom.Location = new System.Drawing.Point(2348, 546);
 			lbCustom.Margin = new System.Windows.Forms.Padding(6);
@@ -737,7 +737,7 @@ namespace Jammy.Main
 			// lbIntvec
 			// 
 			lbIntvec.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-			lbIntvec.Font = new System.Drawing.Font("Consolas", 8.25F);
+			lbIntvec.Font = new System.Drawing.Font("Cascadia Mono", 8.25F);
 			lbIntvec.FormattingEnabled = true;
 			lbIntvec.Location = new System.Drawing.Point(-37, 1007);
 			lbIntvec.Name = "lbIntvec";
