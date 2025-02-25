@@ -1,11 +1,13 @@
-﻿
+﻿/*
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
+*/
+
 global using FunctionPtr = System.UInt32;
 global using voidPtr = System.UInt32;
 global using VOIDPtr = System.UInt32;
 
-//worth changing these to string?
-global using STRPTR = System.UInt32;
-global using BSTR = System.UInt32;
+global using STRPTR = string;
+global using BSTR = string;
 
 global using IClass = System.UInt32;
 global using Object = System.UInt32;
@@ -32,15 +34,14 @@ global using APTR = System.UInt32;
 global using BPTR = System.UInt32;
 global using CPTR = System.UInt32;
 
-global using UBYTEPtr = System.UInt32;
-global using ULONGPtr = System.UInt32;
 global using PLANEPTR = System.UInt32;
 
 namespace Jammy.AmigaTypes;
 
 public struct Point
 {
-	WORD x, y;
+	public WORD x { get; set; }
+	public WORD y { get; set; }
 }
 
 public enum NodeType : byte

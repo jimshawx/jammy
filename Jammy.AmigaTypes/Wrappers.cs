@@ -1,4 +1,8 @@
-﻿namespace Jammy.AmigaTypes
+﻿/*
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
+*/
+
+namespace Jammy.AmigaTypes
 {
 	public interface IWrappedPtr { }
 

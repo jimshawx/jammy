@@ -8,7 +8,7 @@ using Jammy.Interface;
 using Jammy.AmigaTypes;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Disassembler.TypeMapper
@@ -25,7 +25,7 @@ namespace Jammy.Disassembler.TypeMapper
 		{
 			if (s.GetType() == typeof(SByte) || s.GetType() == typeof(Byte) || s.GetType() == typeof(NodeType)) return 1;
 			if (s.GetType() == typeof(Int16) || s.GetType() == typeof(UInt16)) return 2;
-			if (s.GetType() == typeof(Int32) || s.GetType() == typeof(UInt32) || s.GetType() == typeof(UInt32) || s.GetType() == typeof(UInt32)) return 4;
+			if (s.GetType() == typeof(Int32) || s.GetType() == typeof(UInt32) /*|| s.GetType() == typeof(UInt32) || s.GetType() == typeof(UInt32)*/) return 4;
 			throw new ArgumentOutOfRangeException();
 		}
 
@@ -43,7 +43,6 @@ namespace Jammy.Disassembler.TypeMapper
 			throw new ArgumentOutOfRangeException();
 		}
 	}
-
 
 	public class ByteArrayDebugMemoryMapper : IDebugMemoryMapper
 	{

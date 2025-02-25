@@ -8,7 +8,7 @@ using System.Text;
 using Jammy.AmigaTypes;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Disassembler.TypeMapper
