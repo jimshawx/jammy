@@ -9,6 +9,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Jammy.AmigaTypes\Jammy.AmigaTypes.csproj" />
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
     <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />

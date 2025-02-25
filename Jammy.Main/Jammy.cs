@@ -756,7 +756,7 @@ namespace Jammy.Main
 
 				uint address = ValueFromRegName(regs, (string)addressFollowBox.SelectedItem);
 
-				var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == "Jammy.Types");
+				var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == "Jammy.AmigaTypes");
 				if (assembly != null)
 				{
 					var type = assembly.GetTypes().SingleOrDefault(x => x.Name == typeName);

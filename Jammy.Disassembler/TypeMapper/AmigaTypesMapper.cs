@@ -5,7 +5,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Jammy.Interface;
-using Jammy.Types.AmigaTypes;
+using Jammy.AmigaTypes;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -38,8 +38,8 @@ namespace Jammy.Disassembler.TypeMapper
 			if (type == typeof(Int16)) return (Int16)memory.UnsafeRead16(addr);
 			if (type == typeof(UInt32)) return (UInt32)memory.UnsafeRead32(addr);
 			if (type == typeof(Int32)) return (Int32)memory.UnsafeRead32(addr);
-			if (type == typeof(UInt32)) return (UInt32)memory.UnsafeRead32(addr);
-			if (type == typeof(UInt32)) return (UInt32)memory.UnsafeRead32(addr);
+			//if (type == typeof(UInt32)) return (UInt32)memory.UnsafeRead32(addr);
+			//if (type == typeof(UInt32)) return (UInt32)memory.UnsafeRead32(addr);
 			throw new ArgumentOutOfRangeException();
 		}
 	}

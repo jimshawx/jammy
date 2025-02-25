@@ -2,8 +2,9 @@
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Types.AmigaTypes
+namespace Jammy.AmigaTypes
 {
+#if USE_OLD_TYPES
 	using UBYTE = System.Byte;
 	using BYTE = System.SByte;
 	using UWORD = System.UInt16;
@@ -59,19 +60,6 @@ namespace Jammy.Types.AmigaTypes
 
 		NT_USER = 254,  /* User node types work down from here */
 		NT_EXTENDED = 255,
-	}
-
-	public interface IWrappedPtr { }
-	public interface IWrappedPtr<T> : IWrappedPtr
-	{
-		uint Address { get; set; }
-		T Wrapped { get; set; }
-	}
-
-	public class WrappedPtr<T> : IWrappedPtr<T>
-	{
-		public uint Address { get; set; }
-		public T Wrapped { get; set; }
 	}
 
 	public class ViewPortPtr : WrappedPtr<ViewPort>;
@@ -484,5 +472,5 @@ namespace Jammy.Types.AmigaTypes
 		public UWORD Bp_0_base { get; set; }
 		public UWORD Bp_1_base { get; set; }
 	}
-
+#endif
 }

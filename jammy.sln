@@ -81,6 +81,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.CPU.Moira", "Jam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parky.Configuration.WritableJson", "Parky.Configuration.WritableJson\Parky.Configuration.WritableJson.csproj", "{054BCC47-DDA7-4FB6-8FBB-5B874A092FCF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.AmigaTypes", "Jammy.AmigaTypes\Jammy.AmigaTypes.csproj", "{E573B789-8103-46F9-BD31-8D639F1DCB8F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -242,6 +244,10 @@ Global
 		{054BCC47-DDA7-4FB6-8FBB-5B874A092FCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{054BCC47-DDA7-4FB6-8FBB-5B874A092FCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{054BCC47-DDA7-4FB6-8FBB-5B874A092FCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E573B789-8103-46F9-BD31-8D639F1DCB8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E573B789-8103-46F9-BD31-8D639F1DCB8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E573B789-8103-46F9-BD31-8D639F1DCB8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E573B789-8103-46F9-BD31-8D639F1DCB8F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
