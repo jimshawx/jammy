@@ -2,7 +2,7 @@
 using Jammy.Core.Types;
 using Jammy.Interface;
 using Jammy.Types;
-using Jammy.Types.AmigaTypes;
+using Jammy.AmigaTypes;
 using Microsoft.Extensions.Logging;
 
 /*
