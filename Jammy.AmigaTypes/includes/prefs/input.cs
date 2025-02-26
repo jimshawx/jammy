@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct InputPrefs
+public class InputPrefs
 {
 	[AmigaArraySize(16)]
 	public char[] ip_Keymap { get; set; }

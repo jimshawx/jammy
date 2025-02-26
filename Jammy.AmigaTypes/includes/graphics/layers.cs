@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Layer_Info
+public class Layer_Info
 {
 	public LayerPtr top_layer { get; set; }
 	public LayerPtr check_lp { get; set; }

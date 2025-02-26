@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct KeyMap
+public class KeyMap
 {
 	public UBYTEPtr km_LoKeyMapTypes { get; set; }
 	public ULONGPtr km_LoKeyMap { get; set; }
@@ -12,13 +12,13 @@ public struct KeyMap
 	public UBYTEPtr km_HiRepeatable { get; set; }
 }
 
-public struct KeyMapNode
+public class KeyMapNode
 {
 	public Node kn_Node { get; set; }
 	public KeyMap kn_KeyMap { get; set; }
 }
 
-public struct KeyMapResource
+public class KeyMapResource
 {
 	public Node kr_Node { get; set; }
 	public List kr_List { get; set; }

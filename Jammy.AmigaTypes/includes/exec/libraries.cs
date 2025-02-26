@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Library
+public class Library
 {
 	public Node lib_Node { get; set; }
 	public UBYTE lib_Flags { get; set; }

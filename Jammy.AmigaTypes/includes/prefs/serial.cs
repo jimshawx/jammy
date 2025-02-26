@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct SerialPrefs
+public class SerialPrefs
 {
 	[AmigaArraySize(3)]
 	public LONG[] sp_Reserved { get; set; }

@@ -1,13 +1,13 @@
 namespace Jammy.AmigaTypes;
 
-public struct DateStamp
+public class DateStamp
 {
 	public LONG ds_Days { get; set; }
 	public LONG ds_Minute { get; set; }
 	public LONG ds_Tick { get; set; }
 }
 
-public struct FileInfoBlock
+public class FileInfoBlock
 {
 	public LONG fib_DiskKey { get; set; }
 	public LONG fib_DirEntryType { get; set; }
@@ -24,7 +24,7 @@ public struct FileInfoBlock
 	public char[] fib_Reserved { get; set; }
 }
 
-public struct InfoData
+public class InfoData
 {
 	public LONG id_NumSoftErrors { get; set; }
 	public LONG id_UnitNumber { get; set; }

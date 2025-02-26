@@ -1,13 +1,13 @@
 namespace Jammy.AmigaTypes;
 
-public struct CSource
+public class CSource
 {
 	public UBYTEPtr CS_Buffer { get; set; }
 	public LONG CS_Length { get; set; }
 	public LONG CS_CurChr { get; set; }
 }
 
-public struct RDArgs
+public class RDArgs
 {
 	public CSource RDA_Source { get; set; }
 	public LONG RDA_DAList { get; set; }

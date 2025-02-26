@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct ViewPort
+public class ViewPort
 {
 	public ViewPortPtr Next { get; set; }
 	public ColorMapPtr ColorMap { get; set; }
@@ -18,7 +18,7 @@ public struct ViewPort
 	public RasInfoPtr RasInfo { get; set; }
 }
 
-public struct View
+public class View
 {
 	public ViewPortPtr ViewPort { get; set; }
 	public cprlistPtr LOFCprList { get; set; }
@@ -28,21 +28,21 @@ public struct View
 	public UWORD Modes { get; set; }
 }
 
-public struct ViewExtra
+public class ViewExtra
 {
 	public ExtendedNode n { get; set; }
 	public ViewPtr View { get; set; }
 	public MonitorSpecPtr Monitor { get; set; }
 }
 
-public struct ViewPortExtra
+public class ViewPortExtra
 {
 	public ExtendedNode n { get; set; }
 	public ViewPortPtr ViewPort { get; set; }
 	public Rectangle DisplayClip { get; set; }
 }
 
-public struct RasInfo
+public class RasInfo
 {
 	public RasInfoPtr Next { get; set; }
 	public BitMapPtr BitMap { get; set; }
@@ -50,7 +50,7 @@ public struct RasInfo
 	public WORD RyOffset { get; set; }
 }
 
-public struct ColorMap
+public class ColorMap
 {
 	public UBYTE Flags { get; set; }
 	public UBYTE Type { get; set; }

@@ -1,12 +1,12 @@
 namespace Jammy.AmigaTypes;
 
-public struct LocaleBase
+public class LocaleBase
 {
 	public Library lb_LibNode { get; set; }
 	public BOOL lb_SysPatches { get; set; }
 }
 
-public struct Locale
+public class Locale
 {
 	public STRPTR loc_LocaleName { get; set; }
 	public STRPTR loc_LanguageName { get; set; }
@@ -56,7 +56,7 @@ public struct Locale
 	public UBYTE loc_Reserved3 { get; set; }
 }
 
-public struct Catalog
+public class Catalog
 {
 	public Node cat_Link { get; set; }
 	public UWORD cat_Pad { get; set; }

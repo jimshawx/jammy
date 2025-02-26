@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct FontPrefs
+public class FontPrefs
 {
 	[AmigaArraySize(3)]
 	public LONG[] fp_Reserved { get; set; }

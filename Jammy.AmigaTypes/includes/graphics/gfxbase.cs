@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct GfxBase
+public class GfxBase
 {
 	public Library LibNode { get; set; }
 	public ViewPtr ActiView { get; set; }

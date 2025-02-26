@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct ScreenModePrefs
+public class ScreenModePrefs
 {
 	[AmigaArraySize(4)]
 	public ULONG[] sm_Reserved { get; set; }

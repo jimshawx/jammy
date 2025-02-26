@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct ExpansionRom
+public class ExpansionRom
 {
 	public UBYTE er_Type { get; set; }
 	public UBYTE er_Product { get; set; }
@@ -15,7 +15,7 @@ public struct ExpansionRom
 	public UBYTE er_Reserved0f { get; set; }
 }
 
-public struct ExpansionControl
+public class ExpansionControl
 {
 	public UBYTE ec_Interrupt { get; set; }
 	public UBYTE ec_Z3_HighBase { get; set; }
@@ -35,7 +35,7 @@ public struct ExpansionControl
 	public UBYTE ec_Reserved1f { get; set; }
 }
 
-public struct DiagArea
+public class DiagArea
 {
 	public UBYTE da_Config { get; set; }
 	public UBYTE da_Flags { get; set; }

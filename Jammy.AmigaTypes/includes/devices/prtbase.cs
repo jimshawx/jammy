@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct DeviceData
+public class DeviceData
 {
 	public Library dd_Device { get; set; }
 	public APTR dd_Segment { get; set; }
@@ -10,7 +10,7 @@ public struct DeviceData
 	public UWORD dd_NumCommands { get; set; }
 }
 
-public struct PrinterData
+public class PrinterData
 {
 	public DeviceData pd_Device { get; set; }
 	public MsgPort pd_Unit { get; set; }
@@ -38,20 +38,20 @@ public struct PrinterData
 	public UBYTE[] pd_Stk { get; set; }
 }
 
-public struct _pd_ior0
+public class _pd_ior0
 {
 	public IOExtPar pd_p0 { get; set; }
 	public IOExtSer pd_s0 { get; set; }
 }
 
-public struct _pd_ior1
+public class _pd_ior1
 {
 	public IOExtPar pd_p1 { get; set; }
 	public IOExtSer pd_s1 { get; set; }
 }
 
 
-public struct PrinterExtendedData
+public class PrinterExtendedData
 {
 	public charPtr ped_PrinterName { get; set; }
 	public FunctionPtr ped_Init { get; set; }
@@ -76,7 +76,7 @@ public struct PrinterExtendedData
 	public FunctionPtr ped_ConvFunc { get; set; }
 }
 
-public struct PrinterSegment
+public class PrinterSegment
 {
 	public ULONG ps_NextSegment { get; set; }
 	public ULONG ps_runAlert { get; set; }

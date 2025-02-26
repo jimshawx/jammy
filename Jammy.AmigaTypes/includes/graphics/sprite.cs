@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct SimpleSprite
+public class SimpleSprite
 {
 	public UWORDPtr posctldata { get; set; }
 	public UWORD height { get; set; }

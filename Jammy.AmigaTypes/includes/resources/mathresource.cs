@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct MathIEEEResource
+public class MathIEEEResource
 {
 	public Node MathIEEEResource_Node { get; set; }
 	public unsignedshort MathIEEEResource_Flags { get; set; }

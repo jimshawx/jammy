@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct DateTime
+public class DateTime
 {
 	public DateStamp dat_Stamp { get; set; }
 	public UBYTE dat_Format { get; set; }

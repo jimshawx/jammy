@@ -1,11 +1,11 @@
 namespace Jammy.AmigaTypes;
 
-public struct Device
+public class Device
 {
 	public Library dd_Library { get; set; }
 }
 
-public struct Unit
+public class Unit
 {
 	public MsgPort unit_MsgPort { get; set; }
 	public UBYTE unit_flags { get; set; }

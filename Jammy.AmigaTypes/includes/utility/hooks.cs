@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Hook
+public class Hook
 {
 	public MinNode h_MinNode { get; set; }
 	public FunctionPtr h_Entry { get; set; }

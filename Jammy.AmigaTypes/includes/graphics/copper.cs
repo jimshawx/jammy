@@ -1,19 +1,19 @@
 namespace Jammy.AmigaTypes;
 
-public struct CopIns
+public class CopIns
 {
 	public WORD OpCode { get; set; }
 //BROKEN - union not supported in C#
 	public _u3 u3 { get; set; }
 }
 
-public struct _u3
+public class _u3
 {
 	public CopListPtr nxtlist { get; set; }
 	public _u4 u4 { get; set; }
 }
 
-public struct _u4
+public class _u4
 {
 //BROKEN - union not supported in C#
 	public _u1 u1 { get; set; }
@@ -21,13 +21,13 @@ public struct _u4
 	public _u2 u2 { get; set; }
 }
 
-public struct _u1
+public class _u1
 {
 	public WORD VWaitPos { get; set; }
 	public WORD DestAddr { get; set; }
 }
 
-public struct _u2
+public class _u2
 {
 	public WORD HWaitPos { get; set; }
 	public WORD DestData { get; set; }
@@ -36,14 +36,14 @@ public struct _u2
 
 
 
-public struct cprlist
+public class cprlist
 {
 	public cprlistPtr Next { get; set; }
 	public UWORDPtr start { get; set; }
 	public WORD MaxCount { get; set; }
 }
 
-public struct CopList
+public class CopList
 {
 	public CopListPtr Next { get; set; }
 	public CopListPtr _CopList { get; set; }
@@ -61,14 +61,14 @@ public struct CopList
 	public UWORDPtr Cop5Start { get; set; }
 }
 
-public struct UCopList
+public class UCopList
 {
 	public UCopListPtr Next { get; set; }
 	public CopListPtr FirstCopList { get; set; }
 	public CopListPtr CopList { get; set; }
 }
 
-public struct copinit
+public class copinit
 {
 	[AmigaArraySize(2)]
 	public UWORD[] vsync_hblank { get; set; }

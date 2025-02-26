@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct IORequest
+public class IORequest
 {
 	public Message io_Message { get; set; }
 	public DevicePtr io_Device { get; set; }
@@ -10,7 +10,7 @@ public struct IORequest
 	public BYTE io_Error { get; set; }
 }
 
-public struct IOStdReq
+public class IOStdReq
 {
 	public Message io_Message { get; set; }
 	public DevicePtr io_Device { get; set; }

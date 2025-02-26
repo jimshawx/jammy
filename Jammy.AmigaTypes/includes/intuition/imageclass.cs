@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct impFrameBox
+public class impFrameBox
 {
 	public ULONG MethodID { get; set; }
 	public IBoxPtr imp_ContentsBox { get; set; }
@@ -9,7 +9,7 @@ public struct impFrameBox
 	public ULONG imp_FrameFlags { get; set; }
 }
 
-public struct impDraw
+public class impDraw
 {
 	public ULONG MethodID { get; set; }
 	public RastPortPtr imp_RPort { get; set; }
@@ -19,19 +19,20 @@ public struct impDraw
 	public _imp_Dimensions imp_Dimensions { get; set; }
 }
 
-public struct _imp_Offset
+public class _imp_Offset
 {
 	public WORD X { get; set; }
 	public WORD Y { get; set; }
 }
 
-public struct _imp_Dimensions
+public class _imp_Dimensions
 {
 	public WORD Width { get; set; }
 	public WORD Height { get; set; }
 }
 
-public struct impErase
+
+public class impErase
 {
 	public ULONG MethodID { get; set; }
 	public RastPortPtr imp_RPort { get; set; }
@@ -39,15 +40,17 @@ public struct impErase
 	public _imp_Dimensions imp_Dimensions { get; set; }
 }
 
-public struct impHitTest
+public class impHitTest
 {
 	public ULONG MethodID { get; set; }
 	public _imp_Point imp_Point { get; set; }
 	public _imp_Dimensions imp_Dimensions { get; set; }
 }
 
-public struct _imp_Point
+public class _imp_Point
 {
 	public WORD X { get; set; }
 	public WORD Y { get; set; }
 }
+
+

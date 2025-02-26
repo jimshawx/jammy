@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct GadgetInfo
+public class GadgetInfo
 {
 	public ScreenPtr gi_Screen { get; set; }
 	public WindowPtr gi_Window { get; set; }
@@ -14,14 +14,14 @@ public struct GadgetInfo
 	public ULONG[] gi_Reserved { get; set; }
 }
 
-public struct _gi_Pens
+public class _gi_Pens
 {
 	public UBYTE DetailPen { get; set; }
 	public UBYTE BlockPen { get; set; }
 }
 
 
-public struct PGX
+public class PGX
 {
 	public IBox pgx_Container { get; set; }
 	public IBox pgx_NewKnob { get; set; }

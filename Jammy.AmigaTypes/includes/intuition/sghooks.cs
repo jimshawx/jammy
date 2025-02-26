@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct StringExtend
+public class StringExtend
 {
 	public TextFontPtr Font { get; set; }
 	[AmigaArraySize(2)]
@@ -14,7 +14,7 @@ public struct StringExtend
 	public ULONG[] Reserved { get; set; }
 }
 
-public struct SGWork
+public class SGWork
 {
 	public GadgetPtr Gadget { get; set; }
 	public StringInfoPtr StringInfo { get; set; }

@@ -1,12 +1,12 @@
 namespace Jammy.AmigaTypes;
 
-public struct IOTArray
+public class IOTArray
 {
 	public ULONG TermArray0 { get; set; }
 	public ULONG TermArray1 { get; set; }
 }
 
-public struct IOExtSer
+public class IOExtSer
 {
 	public IOStdReq IOSer { get; set; }
 	public ULONG io_CtlChar { get; set; }

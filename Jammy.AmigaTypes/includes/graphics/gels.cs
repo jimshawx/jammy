@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct VSprite
+public class VSprite
 {
 	public VSpritePtr NextVSprite { get; set; }
 	public VSpritePtr PrevVSprite { get; set; }
@@ -26,7 +26,7 @@ public struct VSprite
 	public VUserStuff VUserExt { get; set; }
 }
 
-public struct Bob
+public class Bob
 {
 	public WORD Flags { get; set; }
 	public WORDPtr SaveBuffer { get; set; }
@@ -39,7 +39,7 @@ public struct Bob
 	public BUserStuff BUserExt { get; set; }
 }
 
-public struct AnimComp
+public class AnimComp
 {
 	public WORD Flags { get; set; }
 	public WORD Timer { get; set; }
@@ -55,7 +55,7 @@ public struct AnimComp
 	public BobPtr AnimBob { get; set; }
 }
 
-public struct AnimOb
+public class AnimOb
 {
 	public AnimObPtr NextOb { get; set; }
 	public AnimObPtr PrevOb { get; set; }
@@ -75,7 +75,7 @@ public struct AnimOb
 	public AUserStuff AUserExt { get; set; }
 }
 
-public struct DBufPacket
+public class DBufPacket
 {
 	public WORD BufY { get; set; }
 	public WORD BufX { get; set; }
@@ -83,7 +83,7 @@ public struct DBufPacket
 	public WORDPtr BufBuffer { get; set; }
 }
 
-public struct collTable
+public class collTable
 {
 	[AmigaArraySize(16)]
 	public FunctionPtr[] collPtrs { get; set; }

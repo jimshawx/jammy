@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct bltnode
+public class bltnode
 {
 	public bltnodePtr n { get; set; }
 	public FunctionPtr function { get; set; }

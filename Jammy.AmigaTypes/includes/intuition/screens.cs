@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct DrawInfo
+public class DrawInfo
 {
 	public UWORD dri_Version { get; set; }
 	public UWORD dri_NumPens { get; set; }
@@ -13,14 +13,14 @@ public struct DrawInfo
 	public ULONG[] dri_Reserved { get; set; }
 }
 
-public struct _dri_Resolution
+public class _dri_Resolution
 {
 	public UWORD X { get; set; }
 	public UWORD Y { get; set; }
 }
 
 
-public struct Screen
+public class Screen
 {
 	public ScreenPtr NextScreen { get; set; }
 	public WindowPtr FirstWindow { get; set; }
@@ -56,7 +56,7 @@ public struct Screen
 	public UBYTEPtr UserData { get; set; }
 }
 
-public struct NewScreen
+public class NewScreen
 {
 	public WORD LeftEdge { get; set; }
 	public WORD TopEdge { get; set; }
@@ -73,7 +73,7 @@ public struct NewScreen
 	public BitMapPtr CustomBitMap { get; set; }
 }
 
-public struct ExtNewScreen
+public class ExtNewScreen
 {
 	public WORD LeftEdge { get; set; }
 	public WORD TopEdge { get; set; }
@@ -91,7 +91,7 @@ public struct ExtNewScreen
 	public TagItemPtr Extension { get; set; }
 }
 
-public struct PubScreenNode
+public class PubScreenNode
 {
 	public Node psn_Node { get; set; }
 	public ScreenPtr psn_Screen { get; set; }

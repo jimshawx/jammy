@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Task
+public class Task
 {
 	public Node tc_Node { get; set; }
 	public UBYTE tc_Flags { get; set; }
@@ -26,7 +26,7 @@ public struct Task
 	public APTR tc_UserData { get; set; }
 }
 
-public struct StackSwapStruct
+public class StackSwapStruct
 {
 	public APTR stk_Lower { get; set; }
 	public ULONG stk_Upper { get; set; }

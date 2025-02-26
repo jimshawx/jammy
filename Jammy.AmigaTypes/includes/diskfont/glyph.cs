@@ -1,12 +1,12 @@
 namespace Jammy.AmigaTypes;
 
-public struct GlyphEngine
+public class GlyphEngine
 {
 	public LibraryPtr gle_Library { get; set; }
 	public charPtr gle_Name { get; set; }
 }
 
-public struct GlyphMap
+public class GlyphMap
 {
 	public UWORD glm_BMModulo { get; set; }
 	public UWORD glm_BMRows { get; set; }
@@ -24,7 +24,7 @@ public struct GlyphMap
 	public UBYTEPtr glm_BitMap { get; set; }
 }
 
-public struct GlyphWidthEntry
+public class GlyphWidthEntry
 {
 	public MinNode gwe_Node { get; set; }
 	public UWORD gwe_Code { get; set; }

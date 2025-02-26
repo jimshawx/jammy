@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct FileRequester
+public class FileRequester
 {
 	[AmigaArraySize(4)]
 	public UBYTE[] fr_Reserved0 { get; set; }
@@ -22,7 +22,7 @@ public struct FileRequester
 	public STRPTR fr_Pattern { get; set; }
 }
 
-public struct FontRequester
+public class FontRequester
 {
 	[AmigaArraySize(8)]
 	public UBYTE[] fo_Reserved0 { get; set; }
@@ -39,7 +39,7 @@ public struct FontRequester
 	public TTextAttr fo_TAttr { get; set; }
 }
 
-public struct ScreenModeRequester
+public class ScreenModeRequester
 {
 	public ULONG sm_DisplayID { get; set; }
 	public ULONG sm_DisplayWidth { get; set; }
@@ -61,7 +61,7 @@ public struct ScreenModeRequester
 	public APTR sm_UserData { get; set; }
 }
 
-public struct DisplayMode
+public class DisplayMode
 {
 	public Node dm_Node { get; set; }
 	public DimensionInfo dm_DimensionInfo { get; set; }

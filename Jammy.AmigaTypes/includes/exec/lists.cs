@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct List
+public class List
 {
 	public NodePtr lh_Head { get; set; }
 	public NodePtr lh_Tail { get; set; }
@@ -9,7 +9,7 @@ public struct List
 	public UBYTE l_pad { get; set; }
 }
 
-public struct MinList
+public class MinList
 {
 	public MinNodePtr mlh_Head { get; set; }
 	public MinNodePtr mlh_Tail { get; set; }

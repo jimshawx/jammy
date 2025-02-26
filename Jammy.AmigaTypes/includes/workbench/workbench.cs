@@ -1,13 +1,13 @@
 namespace Jammy.AmigaTypes;
 
-public struct OldDrawerData
+public class OldDrawerData
 {
 	public NewWindow dd_NewWindow { get; set; }
 	public LONG dd_CurrentX { get; set; }
 	public LONG dd_CurrentY { get; set; }
 }
 
-public struct DrawerData
+public class DrawerData
 {
 	public NewWindow dd_NewWindow { get; set; }
 	public LONG dd_CurrentX { get; set; }
@@ -16,7 +16,7 @@ public struct DrawerData
 	public UWORD dd_ViewModes { get; set; }
 }
 
-public struct DiskObject
+public class DiskObject
 {
 	public UWORD do_Magic { get; set; }
 	public UWORD do_Version { get; set; }
@@ -31,13 +31,13 @@ public struct DiskObject
 	public LONG do_StackSize { get; set; }
 }
 
-public struct FreeList
+public class FreeList
 {
 	public WORD fl_NumFree { get; set; }
 	public List fl_MemList { get; set; }
 }
 
-public struct AppMessage
+public class AppMessage
 {
 	public Message am_Message { get; set; }
 	public UWORD am_Type { get; set; }
@@ -55,17 +55,17 @@ public struct AppMessage
 	public ULONG[] am_Reserved { get; set; }
 }
 
-public struct AppWindow
+public class AppWindow
 {
 	public voidPtr aw_PRIVATE { get; set; }
 }
 
-public struct AppIcon
+public class AppIcon
 {
 	public voidPtr ai_PRIVATE { get; set; }
 }
 
-public struct AppMenuItem
+public class AppMenuItem
 {
 	public voidPtr ami_PRIVATE { get; set; }
 }

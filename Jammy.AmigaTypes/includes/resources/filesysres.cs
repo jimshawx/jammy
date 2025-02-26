@@ -1,13 +1,13 @@
 namespace Jammy.AmigaTypes;
 
-public struct FileSysResource
+public class FileSysResource
 {
 	public Node fsr_Node { get; set; }
 	public charPtr fsr_Creator { get; set; }
 	public List fsr_FileSysEntries { get; set; }
 }
 
-public struct FileSysEntry
+public class FileSysEntry
 {
 	public Node fse_Node { get; set; }
 	public ULONG fse_DosType { get; set; }

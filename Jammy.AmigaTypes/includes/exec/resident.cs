@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Resident
+public class Resident
 {
 	public UWORD rt_MatchWord { get; set; }
 	public ResidentPtr rt_MatchTag { get; set; }

@@ -1,13 +1,13 @@
 namespace Jammy.AmigaTypes;
 
-public struct BootNode
+public class BootNode
 {
 	public Node bn_Node { get; set; }
 	public UWORD bn_Flags { get; set; }
 	public APTR bn_DeviceNode { get; set; }
 }
 
-public struct ExpansionBase
+public class ExpansionBase
 {
 	public Library LibNode { get; set; }
 	public UBYTE Flags { get; set; }

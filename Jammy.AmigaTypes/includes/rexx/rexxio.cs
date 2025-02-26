@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct IoBuff
+public class IoBuff
 {
 	public RexxRsrc iobNode { get; set; }
 	public APTR iobRpt { get; set; }
@@ -12,7 +12,7 @@ public struct IoBuff
 	public BYTE[] iobArea { get; set; }
 }
 
-public struct RexxMsgPort
+public class RexxMsgPort
 {
 	public RexxRsrc rmp_Node { get; set; }
 	public MsgPort rmp_Port { get; set; }

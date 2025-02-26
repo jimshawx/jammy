@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct PrinterTxtPrefs
+public class PrinterTxtPrefs
 {
 	[AmigaArraySize(4)]
 	public LONG[] pt_Reserved { get; set; }
@@ -17,7 +17,7 @@ public struct PrinterTxtPrefs
 	public UWORD pt_Quality { get; set; }
 }
 
-public struct PrinterUnitPrefs
+public class PrinterUnitPrefs
 {
 	[AmigaArraySize(4)]
 	public LONG[] pu_Reserved { get; set; }

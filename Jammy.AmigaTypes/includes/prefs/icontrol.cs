@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct IControlPrefs
+public class IControlPrefs
 {
 	[AmigaArraySize(4)]
 	public LONG[] ic_Reserved { get; set; }

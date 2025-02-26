@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Process
+public class Process
 {
 	public Task pr_Task { get; set; }
 	public MsgPort pr_MsgPort { get; set; }
@@ -30,7 +30,7 @@ public struct Process
 	public BPTR pr_CES { get; set; }
 }
 
-public struct FileHandle
+public class FileHandle
 {
 	public MessagePtr fh_Link { get; set; }
 	public MsgPortPtr fh_Port { get; set; }
@@ -45,7 +45,7 @@ public struct FileHandle
 	public LONG fh_Arg2 { get; set; }
 }
 
-public struct DosPacket
+public class DosPacket
 {
 	public MessagePtr dp_Link { get; set; }
 	public MsgPortPtr dp_Port { get; set; }
@@ -61,19 +61,19 @@ public struct DosPacket
 	public LONG dp_Arg7 { get; set; }
 }
 
-public struct StandardPacket
+public class StandardPacket
 {
 	public Message sp_Msg { get; set; }
 	public DosPacket sp_Pkt { get; set; }
 }
 
-public struct ErrorString
+public class ErrorString
 {
 	public LONGPtr estr_Nums { get; set; }
 	public UBYTEPtr estr_Strings { get; set; }
 }
 
-public struct DosLibrary
+public class DosLibrary
 {
 	public Library dl_lib { get; set; }
 	public RootNodePtr dl_Root { get; set; }
@@ -87,7 +87,7 @@ public struct DosLibrary
 	public LibraryPtr dl_IntuitionBase { get; set; }
 }
 
-public struct RootNode
+public class RootNode
 {
 	public BPTR rn_TaskArray { get; set; }
 	public BPTR rn_ConsoleSegment { get; set; }
@@ -101,14 +101,14 @@ public struct RootNode
 	public LONG rn_Flags { get; set; }
 }
 
-public struct CliProcList
+public class CliProcList
 {
 	public MinNode cpl_Node { get; set; }
 	public LONG cpl_First { get; set; }
 	public MsgPortPtrPtr cpl_Array { get; set; }
 }
 
-public struct DosInfo
+public class DosInfo
 {
 	public BPTR di_McName { get; set; }
 	public BPTR di_DevInfo { get; set; }
@@ -120,7 +120,7 @@ public struct DosInfo
 	public SignalSemaphore di_DeleteLock { get; set; }
 }
 
-public struct Segment
+public class Segment
 {
 	public BPTR seg_Next { get; set; }
 	public LONG seg_UC { get; set; }
@@ -129,7 +129,7 @@ public struct Segment
 	public UBYTE[] seg_Name { get; set; }
 }
 
-public struct CommandLineInterface
+public class CommandLineInterface
 {
 	public LONG cli_Result2 { get; set; }
 	public BSTR cli_SetName { get; set; }
@@ -149,7 +149,7 @@ public struct CommandLineInterface
 	public BPTR cli_Module { get; set; }
 }
 
-public struct DeviceList
+public class DeviceList
 {
 	public BPTR dl_Next { get; set; }
 	public LONG dl_Type { get; set; }
@@ -162,7 +162,7 @@ public struct DeviceList
 	public BSTR dl_Name { get; set; }
 }
 
-public struct DevInfo
+public class DevInfo
 {
 	public BPTR dvi_Next { get; set; }
 	public LONG dvi_Type { get; set; }
@@ -177,7 +177,7 @@ public struct DevInfo
 	public BSTR dvi_Name { get; set; }
 }
 
-public struct DosList
+public class DosList
 {
 	public BPTR dol_Next { get; set; }
 	public LONG dol_Type { get; set; }
@@ -188,14 +188,14 @@ public struct DosList
 	public BSTR dol_Name { get; set; }
 }
 
-public struct _dol_misc
+public class _dol_misc
 {
 	public _dol_handler dol_handler { get; set; }
 	public _dol_volume dol_volume { get; set; }
 	public _dol_assign dol_assign { get; set; }
 }
 
-public struct _dol_handler
+public class _dol_handler
 {
 	public BSTR dol_Handler { get; set; }
 	public LONG dol_StackSize { get; set; }
@@ -205,14 +205,14 @@ public struct _dol_handler
 	public BPTR dol_GlobVec { get; set; }
 }
 
-public struct _dol_volume
+public class _dol_volume
 {
 	public DateStamp dol_VolumeDate { get; set; }
 	public BPTR dol_LockList { get; set; }
 	public LONG dol_DiskType { get; set; }
 }
 
-public struct _dol_assign
+public class _dol_assign
 {
 	public UBYTEPtr dol_AssignName { get; set; }
 	public AssignListPtr dol_List { get; set; }
@@ -220,13 +220,13 @@ public struct _dol_assign
 
 
 
-public struct AssignList
+public class AssignList
 {
 	public AssignListPtr al_Next { get; set; }
 	public BPTR al_Lock { get; set; }
 }
 
-public struct DevProc
+public class DevProc
 {
 	public MsgPortPtr dvp_Port { get; set; }
 	public BPTR dvp_Lock { get; set; }
@@ -234,7 +234,7 @@ public struct DevProc
 	public DosListPtr dvp_DevNode { get; set; }
 }
 
-public struct FileLock
+public class FileLock
 {
 	public BPTR fl_Link { get; set; }
 	public LONG fl_Key { get; set; }

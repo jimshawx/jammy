@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Custom
+public class Custom
 {
 	public UWORD bltddat { get; set; }
 	public UWORD dmaconr { get; set; }
@@ -117,7 +117,7 @@ public struct Custom
 	public UWORD diwhigh { get; set; }
 }
 
-public struct _aud
+public class _aud
 {
 	public UWORDPtr ac_ptr { get; set; }
 	public UWORD ac_len { get; set; }
@@ -128,7 +128,7 @@ public struct _aud
 	public UWORD[] ac_pad { get; set; }
 }
 
-public struct _spr
+public class _spr
 {
 	public UWORD pos { get; set; }
 	public UWORD ctl { get; set; }

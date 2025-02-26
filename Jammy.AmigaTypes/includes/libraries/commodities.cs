@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct NewBroker
+public class NewBroker
 {
 	public BYTE nb_Version { get; set; }
 	public STRPTR nb_Name { get; set; }
@@ -13,7 +13,7 @@ public struct NewBroker
 	public WORD nb_ReservedChannel { get; set; }
 }
 
-public struct InputXpression
+public class InputXpression
 {
 	public UBYTE ix_Version { get; set; }
 	public UBYTE ix_Class { get; set; }

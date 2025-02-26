@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct IntuitionBase
+public class IntuitionBase
 {
 	public Library LibNode { get; set; }
 	public View ViewLord { get; set; }

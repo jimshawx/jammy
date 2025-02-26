@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct BitScaleArgs
+public class BitScaleArgs
 {
 	public UWORD bsa_SrcX { get; set; }
 	public UWORD bsa_SrcY { get; set; }

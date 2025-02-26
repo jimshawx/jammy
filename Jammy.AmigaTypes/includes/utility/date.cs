@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct ClockData
+public class ClockData
 {
 	public UWORD sec { get; set; }
 	public UWORD min { get; set; }

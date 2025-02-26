@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct SCSICmd
+public class SCSICmd
 {
 	public UWORDPtr scsi_Data { get; set; }
 	public ULONG scsi_Length { get; set; }

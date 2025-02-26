@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct RigidDiskBlock
+public class RigidDiskBlock
 {
 	public ULONG rdb_ID { get; set; }
 	public ULONG rdb_SummedLongs { get; set; }
@@ -50,13 +50,13 @@ public struct RigidDiskBlock
 	public ULONG[] rdb_Reserved5 { get; set; }
 }
 
-public struct BadBlockEntry
+public class BadBlockEntry
 {
 	public ULONG bbe_BadBlock { get; set; }
 	public ULONG bbe_GoodBlock { get; set; }
 }
 
-public struct BadBlockBlock
+public class BadBlockBlock
 {
 	public ULONG bbb_ID { get; set; }
 	public ULONG bbb_SummedLongs { get; set; }
@@ -68,7 +68,7 @@ public struct BadBlockBlock
 	public BadBlockEntry[] bbb_BlockPairs { get; set; }
 }
 
-public struct PartitionBlock
+public class PartitionBlock
 {
 	public ULONG pb_ID { get; set; }
 	public ULONG pb_SummedLongs { get; set; }
@@ -89,7 +89,7 @@ public struct PartitionBlock
 	public ULONG[] pb_EReserved { get; set; }
 }
 
-public struct FileSysHeaderBlock
+public class FileSysHeaderBlock
 {
 	public ULONG fhb_ID { get; set; }
 	public ULONG fhb_SummedLongs { get; set; }
@@ -117,7 +117,7 @@ public struct FileSysHeaderBlock
 	public ULONG[] fhb_Reserved3 { get; set; }
 }
 
-public struct LoadSegBlock
+public class LoadSegBlock
 {
 	public ULONG lsb_ID { get; set; }
 	public ULONG lsb_SummedLongs { get; set; }

@@ -1,12 +1,12 @@
 namespace Jammy.AmigaTypes;
 
-public struct SemaphoreRequest
+public class SemaphoreRequest
 {
 	public MinNode sr_Link { get; set; }
 	public TaskPtr sr_Waiter { get; set; }
 }
 
-public struct SignalSemaphore
+public class SignalSemaphore
 {
 	public Node ss_Link { get; set; }
 	public WORD ss_NestCount { get; set; }
@@ -16,7 +16,7 @@ public struct SignalSemaphore
 	public WORD ss_QueueCount { get; set; }
 }
 
-public struct Semaphore
+public class Semaphore
 {
 	public MsgPort sm_MsgPort { get; set; }
 	public WORD sm_Bids { get; set; }

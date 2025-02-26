@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct DosEnvec
+public class DosEnvec
 {
 	public ULONG de_TableSize { get; set; }
 	public ULONG de_SizeBlock { get; set; }
@@ -24,7 +24,7 @@ public struct DosEnvec
 	public ULONG de_BootBlocks { get; set; }
 }
 
-public struct FileSysStartupMsg
+public class FileSysStartupMsg
 {
 	public ULONG fssm_Unit { get; set; }
 	public BSTR fssm_Device { get; set; }
@@ -32,7 +32,7 @@ public struct FileSysStartupMsg
 	public ULONG fssm_Flags { get; set; }
 }
 
-public struct DeviceNode
+public class DeviceNode
 {
 	public BPTR dn_Next { get; set; }
 	public ULONG dn_Type { get; set; }

@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct MathIEEEBase
+public class MathIEEEBase
 {
 	public Library MathIEEEBase_LibNode { get; set; }
 	[AmigaArraySize(18)]

@@ -38,6 +38,34 @@ global using PLANEPTR = System.UInt32;
 
 namespace Jammy.AmigaTypes;
 
+public static class AmigaType
+{
+	private static readonly List<string> excludeTypes = ["AmigaType"];
+
+	private static Dictionary<string, Type> types = null;
+
+	public static Dictionary<string, Type> GetAmigaTypes()
+	{
+		if (types == null)
+		{ 
+			var allTypes = AppDomain.CurrentDomain.GetAssemblies()
+				.SingleOrDefault(x => x.GetName().Name == "Jammy.AmigaTypes")
+				.GetTypes()
+				.ToList();
+
+			allTypes.RemoveAll(x => excludeTypes.Contains(x.Name));
+
+			var dic = allTypes.ToDictionary(x => x.Name);
+
+			Thread.MemoryBarrier();
+
+			types = dic;
+		}
+
+		return types;
+	}
+}
+
 public struct Point
 {
 	public WORD x { get; set; }

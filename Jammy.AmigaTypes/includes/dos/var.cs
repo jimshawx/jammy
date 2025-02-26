@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct LocalVar
+public class LocalVar
 {
 	public Node lv_Node { get; set; }
 	public UWORD lv_Flags { get; set; }

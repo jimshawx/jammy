@@ -1,20 +1,20 @@
 namespace Jammy.AmigaTypes;
 
-public struct IFFHandle
+public class IFFHandle
 {
 	public ULONG iff_Stream { get; set; }
 	public ULONG iff_Flags { get; set; }
 	public LONG iff_Depth { get; set; }
 }
 
-public struct IFFStreamCmd
+public class IFFStreamCmd
 {
 	public LONG sc_Command { get; set; }
 	public APTR sc_Buf { get; set; }
 	public LONG sc_NBytes { get; set; }
 }
 
-public struct ContextNode
+public class ContextNode
 {
 	public MinNode cn_Node { get; set; }
 	public LONG cn_ID { get; set; }
@@ -23,7 +23,7 @@ public struct ContextNode
 	public LONG cn_Scan { get; set; }
 }
 
-public struct LocalContextItem
+public class LocalContextItem
 {
 	public MinNode lci_Node { get; set; }
 	public ULONG lci_ID { get; set; }
@@ -31,20 +31,20 @@ public struct LocalContextItem
 	public ULONG lci_Ident { get; set; }
 }
 
-public struct StoredProperty
+public class StoredProperty
 {
 	public LONG sp_Size { get; set; }
 	public UBYTEPtr sp_Data { get; set; }
 }
 
-public struct CollectionItem
+public class CollectionItem
 {
 	public CollectionItemPtr ci_Next { get; set; }
 	public LONG ci_Size { get; set; }
 	public UBYTEPtr ci_Data { get; set; }
 }
 
-public struct ClipboardHandle
+public class ClipboardHandle
 {
 	public IOClipReq cbh_Req { get; set; }
 	public MsgPort cbh_CBport { get; set; }

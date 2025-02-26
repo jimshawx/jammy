@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct MonitorSpec
+public class MonitorSpec
 {
 	public ExtendedNode ms_Node { get; set; }
 	public UWORD ms_Flags { get; set; }
@@ -29,13 +29,13 @@ public struct MonitorSpec
 	public ULONG ms_reserved01 { get; set; }
 }
 
-public struct AnalogSignalInterval
+public class AnalogSignalInterval
 {
 	public UWORD asi_Start { get; set; }
 	public UWORD asi_Stop { get; set; }
 }
 
-public struct SpecialMonitor
+public class SpecialMonitor
 {
 	public ExtendedNode spm_Node { get; set; }
 	public UWORD spm_Flags { get; set; }

@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct DiscResourceUnit
+public class DiscResourceUnit
 {
 	public Message dru_Message { get; set; }
 	public Interrupt dru_DiscBlock { get; set; }
@@ -8,7 +8,7 @@ public struct DiscResourceUnit
 	public Interrupt dru_Index { get; set; }
 }
 
-public struct DiscResource
+public class DiscResource
 {
 	public Library dr_Library { get; set; }
 	public DiscResourceUnitPtr dr_Current { get; set; }

@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct OverscanPrefs
+public class OverscanPrefs
 {
 	[AmigaArraySize(4)]
 	public ULONG[] os_Reserved { get; set; }

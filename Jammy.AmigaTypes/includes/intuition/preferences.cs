@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Preferences
+public class Preferences
 {
 	public BYTE FontHeight { get; set; }
 	public UBYTE PrinterPort { get; set; }

@@ -1,13 +1,13 @@
 namespace Jammy.AmigaTypes;
 
-public struct IOExtTD
+public class IOExtTD
 {
 	public IOStdReq iotd_Req { get; set; }
 	public ULONG iotd_Count { get; set; }
 	public ULONG iotd_SecLabel { get; set; }
 }
 
-public struct DriveGeometry
+public class DriveGeometry
 {
 	public ULONG dg_SectorSize { get; set; }
 	public ULONG dg_TotalSectors { get; set; }
@@ -21,7 +21,7 @@ public struct DriveGeometry
 	public UWORD dg_Reserved { get; set; }
 }
 
-public struct TDU_PublicUnit
+public class TDU_PublicUnit
 {
 	public Unit tdu_Unit { get; set; }
 	public UWORD tdu_Comp01Track { get; set; }

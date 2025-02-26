@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct NewGadget
+public class NewGadget
 {
 	public WORD ng_LeftEdge { get; set; }
 	public WORD ng_TopEdge { get; set; }
@@ -14,7 +14,7 @@ public struct NewGadget
 	public APTR ng_UserData { get; set; }
 }
 
-public struct NewMenu
+public class NewMenu
 {
 	public UBYTE nm_Type { get; set; }
 	public STRPTR nm_Label { get; set; }

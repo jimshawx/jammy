@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct NotifyMessage
+public class NotifyMessage
 {
 	public Message nm_ExecMessage { get; set; }
 	public ULONG nm_Class { get; set; }
@@ -10,7 +10,7 @@ public struct NotifyMessage
 	public ULONG nm_DoNotTouch2 { get; set; }
 }
 
-public struct NotifyRequest
+public class NotifyRequest
 {
 	public UBYTEPtr nr_Name { get; set; }
 	public UBYTEPtr nr_FullName { get; set; }
@@ -24,18 +24,18 @@ public struct NotifyRequest
 	public MsgPortPtr nr_Handler { get; set; }
 }
 
-public struct _nr_stuff
+public class _nr_stuff
 {
 	public _nr_Msg nr_Msg { get; set; }
 	public _nr_Signal nr_Signal { get; set; }
 }
 
-public struct _nr_Msg
+public class _nr_Msg
 {
 	public MsgPortPtr nr_Port { get; set; }
 }
 
-public struct _nr_Signal
+public class _nr_Signal
 {
 	public TaskPtr nr_Task { get; set; }
 	public UBYTE nr_SignalNum { get; set; }

@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct WBStartup
+public class WBStartup
 {
 	public Message sm_Message { get; set; }
 	public MsgPortPtr sm_Process { get; set; }
@@ -10,7 +10,7 @@ public struct WBStartup
 	public WBArgPtr sm_ArgList { get; set; }
 }
 
-public struct WBArg
+public class WBArg
 {
 	public BPTR wa_Lock { get; set; }
 	public BYTEPtr wa_Name { get; set; }

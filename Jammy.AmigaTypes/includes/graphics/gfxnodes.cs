@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct ExtendedNode
+public class ExtendedNode
 {
 	public NodePtr xln_Succ { get; set; }
 	public NodePtr xln_Pred { get; set; }

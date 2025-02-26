@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct ConUnit
+public class ConUnit
 {
 	public MsgPort cu_MP { get; set; }
 	public WindowPtr cu_Window { get; set; }

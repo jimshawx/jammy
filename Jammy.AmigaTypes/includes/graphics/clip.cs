@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Layer
+public class Layer
 {
 	public LayerPtr front { get; set; }
 	public LayerPtr back { get; set; }
@@ -34,7 +34,7 @@ public struct Layer
 	public RegionPtr DamageList { get; set; }
 }
 
-public struct ClipRect
+public class ClipRect
 {
 	public ClipRectPtr Next { get; set; }
 	public ClipRectPtr prev { get; set; }

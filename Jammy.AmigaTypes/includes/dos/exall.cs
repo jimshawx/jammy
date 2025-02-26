@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct ExAllData
+public class ExAllData
 {
 	public ExAllDataPtr ed_Next { get; set; }
 	public UBYTEPtr ed_Name { get; set; }
@@ -13,7 +13,7 @@ public struct ExAllData
 	public UBYTEPtr ed_Comment { get; set; }
 }
 
-public struct ExAllControl
+public class ExAllControl
 {
 	public ULONG eac_Entries { get; set; }
 	public ULONG eac_LastKey { get; set; }

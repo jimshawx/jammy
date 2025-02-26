@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct CountryPrefs
+public class CountryPrefs
 {
 	[AmigaArraySize(4)]
 	public ULONG[] cp_Reserved { get; set; }
@@ -60,7 +60,7 @@ public struct CountryPrefs
 	public UBYTE cp_CalendarType { get; set; }
 }
 
-public struct LocalePrefs
+public class LocalePrefs
 {
 	[AmigaArraySize(4)]
 	public ULONG[] lp_Reserved { get; set; }

@@ -1,20 +1,20 @@
 namespace Jammy.AmigaTypes;
 
-public struct gpHitTest
+public class gpHitTest
 {
 	public ULONG MethodID { get; set; }
 	public GadgetInfoPtr gpht_GInfo { get; set; }
 	public _gpht_Mouse gpht_Mouse { get; set; }
 }
 
-public struct _gpht_Mouse
+public class _gpht_Mouse
 {
 	public WORD X { get; set; }
 	public WORD Y { get; set; }
 }
 
 
-public struct gpRender
+public class gpRender
 {
 	public ULONG MethodID { get; set; }
 	public GadgetInfoPtr gpr_GInfo { get; set; }
@@ -22,7 +22,7 @@ public struct gpRender
 	public LONG gpr_Redraw { get; set; }
 }
 
-public struct gpInput
+public class gpInput
 {
 	public ULONG MethodID { get; set; }
 	public GadgetInfoPtr gpi_GInfo { get; set; }
@@ -31,14 +31,14 @@ public struct gpInput
 	public _gpi_Mouse gpi_Mouse { get; set; }
 }
 
-public struct _gpi_Mouse
+public class _gpi_Mouse
 {
 	public WORD X { get; set; }
 	public WORD Y { get; set; }
 }
 
 
-public struct gpGoInactive
+public class gpGoInactive
 {
 	public ULONG MethodID { get; set; }
 	public GadgetInfoPtr gpgi_GInfo { get; set; }

@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct PrinterGfxPrefs
+public class PrinterGfxPrefs
 {
 	[AmigaArraySize(4)]
 	public LONG[] pg_Reserved { get; set; }

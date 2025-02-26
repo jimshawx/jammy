@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct CIA
+public class CIA
 {
 	public UBYTE ciapra { get; set; }
 	[AmigaArraySize(0xff)]

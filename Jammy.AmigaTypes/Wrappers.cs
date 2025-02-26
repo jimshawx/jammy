@@ -16,15 +16,20 @@ namespace Jammy.AmigaTypes
 	{
 		public uint Address { get; set; }
 		public T Wrapped { get; set; }
+
+		public override string ToString()
+		{
+			return Wrapped.ToString();
+		}
 	}
 
 	public class AmigaArraySize: Attribute
 	{
-		private readonly int size;
+		public int Size { get; set;}
 
 		public AmigaArraySize(int size)
 		{
-			this.size = size;
+			Size = size;
 		}
 	}
 }

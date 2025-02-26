@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct IOAudio
+public class IOAudio
 {
 	public IORequest ioa_Request { get; set; }
 	public WORD ioa_AllocKey { get; set; }

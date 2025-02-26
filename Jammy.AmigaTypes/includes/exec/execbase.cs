@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct ExecBase
+public class ExecBase
 {
 	public Library LibNode { get; set; }
 	public UWORD SoftVer { get; set; }

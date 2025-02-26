@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct BootBlock
+public class BootBlock
 {
 	[AmigaArraySize(4)]
 	public UBYTE[] bb_id { get; set; }

@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Rectangle
+public class Rectangle
 {
 	public WORD MinX { get; set; }
 	public WORD MinY { get; set; }
@@ -8,7 +8,7 @@ public struct Rectangle
 	public WORD MaxY { get; set; }
 }
 
-public struct Rect32
+public class Rect32
 {
 	public LONG MinX { get; set; }
 	public LONG MinY { get; set; }
@@ -16,7 +16,7 @@ public struct Rect32
 	public LONG MaxY { get; set; }
 }
 
-public struct BitMap
+public class BitMap
 {
 	public UWORD BytesPerRow { get; set; }
 	public UWORD Rows { get; set; }

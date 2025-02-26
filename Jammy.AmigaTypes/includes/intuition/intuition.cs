@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Menu
+public class Menu
 {
 	public MenuPtr NextMenu { get; set; }
 	public WORD LeftEdge { get; set; }
@@ -16,7 +16,7 @@ public struct Menu
 	public WORD BeatY { get; set; }
 }
 
-public struct MenuItem
+public class MenuItem
 {
 	public MenuItemPtr NextItem { get; set; }
 	public WORD LeftEdge { get; set; }
@@ -32,7 +32,7 @@ public struct MenuItem
 	public UWORD NextSelect { get; set; }
 }
 
-public struct Requester
+public class Requester
 {
 	public RequesterPtr OlderRequest { get; set; }
 	public WORD LeftEdge { get; set; }
@@ -56,7 +56,7 @@ public struct Requester
 	public UBYTE[] ReqPad2 { get; set; }
 }
 
-public struct Gadget
+public class Gadget
 {
 	public GadgetPtr NextGadget { get; set; }
 	public WORD LeftEdge { get; set; }
@@ -75,14 +75,14 @@ public struct Gadget
 	public APTR UserData { get; set; }
 }
 
-public struct BoolInfo
+public class BoolInfo
 {
 	public UWORD Flags { get; set; }
 	public UWORDPtr Mask { get; set; }
 	public ULONG Reserved { get; set; }
 }
 
-public struct PropInfo
+public class PropInfo
 {
 	public UWORD Flags { get; set; }
 	public UWORD HorizPot { get; set; }
@@ -97,7 +97,7 @@ public struct PropInfo
 	public UWORD TopBorder { get; set; }
 }
 
-public struct StringInfo
+public class StringInfo
 {
 	public UBYTEPtr Buffer { get; set; }
 	public UBYTEPtr UndoBuffer { get; set; }
@@ -114,7 +114,7 @@ public struct StringInfo
 	public KeyMapPtr AltKeyMap { get; set; }
 }
 
-public struct IntuiText
+public class IntuiText
 {
 	public UBYTE FrontPen { get; set; }
 	public UBYTE BackPen { get; set; }
@@ -126,7 +126,7 @@ public struct IntuiText
 	public IntuiTextPtr NextText { get; set; }
 }
 
-public struct Border
+public class Border
 {
 	public WORD LeftEdge { get; set; }
 	public WORD TopEdge { get; set; }
@@ -138,7 +138,7 @@ public struct Border
 	public BorderPtr NextBorder { get; set; }
 }
 
-public struct Image
+public class Image
 {
 	public WORD LeftEdge { get; set; }
 	public WORD TopEdge { get; set; }
@@ -151,7 +151,7 @@ public struct Image
 	public ImagePtr NextImage { get; set; }
 }
 
-public struct IntuiMessage
+public class IntuiMessage
 {
 	public Message ExecMessage { get; set; }
 	public ULONG Class { get; set; }
@@ -166,7 +166,7 @@ public struct IntuiMessage
 	public IntuiMessagePtr SpecialLink { get; set; }
 }
 
-public struct IBox
+public class IBox
 {
 	public WORD Left { get; set; }
 	public WORD Top { get; set; }
@@ -174,7 +174,7 @@ public struct IBox
 	public WORD Height { get; set; }
 }
 
-public struct Window
+public class Window
 {
 	public WindowPtr NextWindow { get; set; }
 	public WORD LeftEdge { get; set; }
@@ -227,7 +227,7 @@ public struct Window
 	public ULONG MoreFlags { get; set; }
 }
 
-public struct NewWindow
+public class NewWindow
 {
 	public WORD LeftEdge { get; set; }
 	public WORD TopEdge { get; set; }
@@ -249,7 +249,7 @@ public struct NewWindow
 	public UWORD Type { get; set; }
 }
 
-public struct ExtNewWindow
+public class ExtNewWindow
 {
 	public WORD LeftEdge { get; set; }
 	public WORD TopEdge { get; set; }
@@ -272,14 +272,14 @@ public struct ExtNewWindow
 	public TagItemPtr Extension { get; set; }
 }
 
-public struct Remember
+public class Remember
 {
 	public RememberPtr NextRemember { get; set; }
 	public ULONG RememberSize { get; set; }
 	public UBYTEPtr Memory { get; set; }
 }
 
-public struct ColorSpec
+public class ColorSpec
 {
 	public WORD ColorIndex { get; set; }
 	public UWORD Red { get; set; }
@@ -287,7 +287,7 @@ public struct ColorSpec
 	public UWORD Blue { get; set; }
 }
 
-public struct EasyStruct
+public class EasyStruct
 {
 	public ULONG es_StructSize { get; set; }
 	public ULONG es_Flags { get; set; }

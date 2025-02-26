@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct AreaInfo
+public class AreaInfo
 {
 	public WORDPtr VctrTbl { get; set; }
 	public WORDPtr VctrPtr { get; set; }
@@ -12,13 +12,13 @@ public struct AreaInfo
 	public WORD FirstY { get; set; }
 }
 
-public struct TmpRas
+public class TmpRas
 {
 	public BYTEPtr RasPtr { get; set; }
 	public LONG Size { get; set; }
 }
 
-public struct GelsInfo
+public class GelsInfo
 {
 	public BYTE sprRsrvd { get; set; }
 	public UBYTE Flags { get; set; }
@@ -35,7 +35,7 @@ public struct GelsInfo
 	public APTR lastBlissObj { get; set; }
 }
 
-public struct RastPort
+public class RastPort
 {
 	public LayerPtr Layer { get; set; }
 	public BitMapPtr BitMap { get; set; }

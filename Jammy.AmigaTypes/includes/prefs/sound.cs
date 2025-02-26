@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct SoundPrefs
+public class SoundPrefs
 {
 	[AmigaArraySize(4)]
 	public LONG[] sop_Reserved { get; set; }

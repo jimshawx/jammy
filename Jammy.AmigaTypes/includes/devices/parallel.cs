@@ -1,12 +1,12 @@
 namespace Jammy.AmigaTypes;
 
-public struct IOPArray
+public class IOPArray
 {
 	public ULONG PTermArray0 { get; set; }
 	public ULONG PTermArray1 { get; set; }
 }
 
-public struct IOExtPar
+public class IOExtPar
 {
 	public IOStdReq IOPar { get; set; }
 	public ULONG io_PExtFlags { get; set; }

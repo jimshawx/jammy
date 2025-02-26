@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct TextAttr
+public class TextAttr
 {
 	public STRPTR ta_Name { get; set; }
 	public UWORD ta_YSize { get; set; }
@@ -8,7 +8,7 @@ public struct TextAttr
 	public UBYTE ta_Flags { get; set; }
 }
 
-public struct TTextAttr
+public class TTextAttr
 {
 	public STRPTR tta_Name { get; set; }
 	public UWORD tta_YSize { get; set; }
@@ -17,7 +17,7 @@ public struct TTextAttr
 	public TagItemPtr tta_Tags { get; set; }
 }
 
-public struct TextFont
+public class TextFont
 {
 	public Message tf_Message { get; set; }
 	public UWORD tf_YSize { get; set; }
@@ -36,7 +36,7 @@ public struct TextFont
 	public APTR tf_CharKern { get; set; }
 }
 
-public struct TextFontExtension
+public class TextFontExtension
 {
 	public UWORD tfe_MatchWord { get; set; }
 	public UBYTE tfe_Flags0 { get; set; }
@@ -48,14 +48,14 @@ public struct TextFontExtension
 	public UWORDPtr tfe_OFontPatchK { get; set; }
 }
 
-public struct ColorFontColors
+public class ColorFontColors
 {
 	public UWORD cfc_Reserved { get; set; }
 	public UWORD cfc_Count { get; set; }
 	public UWORDPtr cfc_ColorTable { get; set; }
 }
 
-public struct ColorTextFont
+public class ColorTextFont
 {
 	public TextFont ctf_TF { get; set; }
 	public UWORD ctf_Flags { get; set; }
@@ -70,7 +70,7 @@ public struct ColorTextFont
 	public APTR[] ctf_CharData { get; set; }
 }
 
-public struct TextExtent
+public class TextExtent
 {
 	public UWORD te_Width { get; set; }
 	public UWORD te_Height { get; set; }

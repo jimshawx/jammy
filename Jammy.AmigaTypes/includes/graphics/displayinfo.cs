@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct QueryHeader
+public class QueryHeader
 {
 	public ULONG StructID { get; set; }
 	public ULONG DisplayID { get; set; }
@@ -8,7 +8,7 @@ public struct QueryHeader
 	public ULONG Length { get; set; }
 }
 
-public struct DisplayInfo
+public class DisplayInfo
 {
 	public QueryHeader Header { get; set; }
 	public UWORD NotAvailable { get; set; }
@@ -24,7 +24,7 @@ public struct DisplayInfo
 	public ULONG[] reserved { get; set; }
 }
 
-public struct DimensionInfo
+public class DimensionInfo
 {
 	public QueryHeader Header { get; set; }
 	public UWORD MaxDepth { get; set; }
@@ -43,7 +43,7 @@ public struct DimensionInfo
 	public ULONG[] reserved { get; set; }
 }
 
-public struct MonitorInfo
+public class MonitorInfo
 {
 	public QueryHeader Header { get; set; }
 	public MonitorSpecPtr Mspc { get; set; }
@@ -62,7 +62,7 @@ public struct MonitorInfo
 	public ULONG[] reserved { get; set; }
 }
 
-public struct NameInfo
+public class NameInfo
 {
 	public QueryHeader Header { get; set; }
 	[AmigaArraySize(32)]

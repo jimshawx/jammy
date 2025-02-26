@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct Isrvstr
+public class Isrvstr
 {
 	public Node is_Node { get; set; }
 	public IsrvstrPtr Iptr { get; set; }

@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct ConfigDev
+public class ConfigDev
 {
 	public Node cd_Node { get; set; }
 	public UBYTE cd_Flags { get; set; }
@@ -16,7 +16,7 @@ public struct ConfigDev
 	public ULONG[] cd_Unused { get; set; }
 }
 
-public struct CurrentBinding
+public class CurrentBinding
 {
 	public ConfigDevPtr cb_ConfigDev { get; set; }
 	public UBYTEPtr cb_FileName { get; set; }

@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct NexxStr
+public class NexxStr
 {
 	public LONG ns_Ivalue { get; set; }
 	public UWORD ns_Length { get; set; }
@@ -10,7 +10,7 @@ public struct NexxStr
 	public BYTE[] ns_Buff { get; set; }
 }
 
-public struct RexxArg
+public class RexxArg
 {
 	public LONG ra_Size { get; set; }
 	public UWORD ra_Length { get; set; }
@@ -20,7 +20,7 @@ public struct RexxArg
 	public BYTE[] ra_Buff { get; set; }
 }
 
-public struct RexxMsg
+public class RexxMsg
 {
 	public Message rm_Node { get; set; }
 	public APTR rm_TaskBlock { get; set; }
@@ -38,7 +38,7 @@ public struct RexxMsg
 	public LONG rm_avail { get; set; }
 }
 
-public struct RexxRsrc
+public class RexxRsrc
 {
 	public Node rr_Node { get; set; }
 	public WORD rr_Func { get; set; }
@@ -48,7 +48,7 @@ public struct RexxRsrc
 	public LONG rr_Arg2 { get; set; }
 }
 
-public struct RexxTask
+public class RexxTask
 {
 	[AmigaArraySize(200)]
 	public BYTE[] rt_Global { get; set; }
@@ -68,7 +68,7 @@ public struct RexxTask
 	public List rt_Header5 { get; set; }
 }
 
-public struct SrcNode
+public class SrcNode
 {
 	public SrcNodePtr sn_Succ { get; set; }
 	public SrcNodePtr sn_Pred { get; set; }

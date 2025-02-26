@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct RecordLock
+public class RecordLock
 {
 	public BPTR rec_FH { get; set; }
 	public ULONG rec_Offset { get; set; }

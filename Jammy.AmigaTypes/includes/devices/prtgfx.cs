@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct PrtInfo
+public class PrtInfo
 {
 	public FunctionPtr pi_render { get; set; }
 	public RastPortPtr pi_rp { get; set; }

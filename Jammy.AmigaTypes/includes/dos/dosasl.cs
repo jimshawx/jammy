@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct AnchorPath
+public class AnchorPath
 {
 	public AChainPtr ap_Base { get; set; }
 	public AChainPtr ap_Last { get; set; }
@@ -14,7 +14,7 @@ public struct AnchorPath
 	public UBYTE[] ap_Buf { get; set; }
 }
 
-public struct AChain
+public class AChain
 {
 	public AChainPtr an_Child { get; set; }
 	public AChainPtr an_Parent { get; set; }

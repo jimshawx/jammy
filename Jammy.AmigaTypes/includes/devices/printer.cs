@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct IOPrtCmdReq
+public class IOPrtCmdReq
 {
 	public Message io_Message { get; set; }
 	public DevicePtr io_Device { get; set; }
@@ -15,7 +15,7 @@ public struct IOPrtCmdReq
 	public UBYTE io_Parm3 { get; set; }
 }
 
-public struct IODRPReq
+public class IODRPReq
 {
 	public Message io_Message { get; set; }
 	public DevicePtr io_Device { get; set; }

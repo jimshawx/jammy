@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct RxsLib
+public class RxsLib
 {
 	public Library rl_Node { get; set; }
 	public UBYTE rl_Flags { get; set; }

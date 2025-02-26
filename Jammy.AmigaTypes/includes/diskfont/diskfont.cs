@@ -1,6 +1,6 @@
 namespace Jammy.AmigaTypes;
 
-public struct FontContents
+public class FontContents
 {
 	[AmigaArraySize(256)]
 	public char[] fc_FileName { get; set; }
@@ -9,7 +9,7 @@ public struct FontContents
 	public UBYTE fc_Flags { get; set; }
 }
 
-public struct TFontContents
+public class TFontContents
 {
 	[AmigaArraySize(256-2)]
 	public char[] tfc_FileName { get; set; }
@@ -19,13 +19,13 @@ public struct TFontContents
 	public UBYTE tfc_Flags { get; set; }
 }
 
-public struct FontContentsHeader
+public class FontContentsHeader
 {
 	public UWORD fch_FileID { get; set; }
 	public UWORD fch_NumEntries { get; set; }
 }
 
-public struct DiskFontHeader
+public class DiskFontHeader
 {
 	public Node dfh_DF { get; set; }
 	public UWORD dfh_FileID { get; set; }
@@ -36,19 +36,19 @@ public struct DiskFontHeader
 	public TextFont dfh_TF { get; set; }
 }
 
-public struct AvailFonts
+public class AvailFonts
 {
 	public UWORD af_Type { get; set; }
 	public TextAttr af_Attr { get; set; }
 }
 
-public struct TAvailFonts
+public class TAvailFonts
 {
 	public UWORD taf_Type { get; set; }
 	public TTextAttr taf_Attr { get; set; }
 }
 
-public struct AvailFontsHeader
+public class AvailFontsHeader
 {
 	public UWORD afh_NumEntries { get; set; }
 }
