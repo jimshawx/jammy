@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Jammy.AmigaTypes;
+using System;
 using System.Linq;
 using System.Text;
 
@@ -82,11 +83,27 @@ namespace Jammy.Disassembler.TypeMapper
 				}
 				else if (p.PropertyType.BaseType == typeof(Enum))
 				{
-					sb.Append($"{space2}{p.GetValue(obj)}");
+					sb.Append($"{space2}\t{p.GetValue(obj)} {Convert.ToInt32(p.GetValue(obj))}");
+				}
+				else if (typeof(IWrappedPtr).IsAssignableFrom(p.PropertyType))
+				{
+					dynamic v = p.GetValue(obj);
+
+					//check for generic IWrapper<T>
+					if (v != null && p.PropertyType.GetInterfaces().Any(x => x.GenericTypeArguments.Length > 0))
+					{ 
+						sb.Append("\n");
+						DumpObj(v.Wrapped, sb, depth + 1);
+					}
 				}
 				else
 				{
-					sb.Append($"{space2}{p.GetValue(obj):X8} {p.GetValue(obj)}");
+					if (p.PropertyType == typeof(SByte) || p.PropertyType == typeof(Byte))
+						sb.Append($"{space2}\t{p.GetValue(obj):X2} {p.GetValue(obj)}");
+					else if (p.PropertyType == typeof(Int16) || p.PropertyType == typeof(UInt16))
+						sb.Append($"{space2}\t{p.GetValue(obj):X4} {p.GetValue(obj)}");
+					else
+						sb.Append($"{space2}\t{p.GetValue(obj):X8} {p.GetValue(obj)}");
 				}
 				sb.Append("\n");
 			}

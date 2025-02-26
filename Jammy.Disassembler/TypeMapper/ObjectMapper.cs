@@ -62,77 +62,13 @@ namespace Jammy.Disassembler.TypeMapper
 				{
 					if (typeof(IWrappedPtr).IsAssignableFrom(propType))
 					{
-						//if (propType == typeof(TaskPtr))
-						//{
-						//	var tp = new TaskPtr();
-						//	tp.Address = memory.UnsafeRead32(addr); addr += 4;
-						//	if (tp.Address != 0 && tp.Address < 0x1000000)
-						//	{
-						//		tp.Task = new Task();
-						//		MapObject(typeof(Task), tp.Task, tp.Address, depth+1);
-						//	}
-						//	else
-						//	{
-						//		tp = null;
-						//	}
-						//	rv = tp;
-						//}
-						//else if (propType == typeof(NodePtr))
-						//{
-						//	var tp = new NodePtr();
-						//	tp.Address = memory.UnsafeRead32(addr); addr += 4;
-						//	if (tp.Address != 0 && tp.Address < 0x1000000)
-						//	{
-						//		tp.Node = new Node();
-						//		MapObject(typeof(Node), tp.Node, tp.Address, depth+1);
-						//	}
-						//	else
-						//	{
-						//		tp = null;
-						//	}
-						//	rv = tp;
-						//}
-						//else if (propType == typeof(MinNodePtr))
-						//{
-						//	var tp = new MinNodePtr();
-						//	tp.Address = memory.UnsafeRead32(addr); addr += 4;
-						//	if (tp.Address != 0 && tp.Address < 0x1000000)
-						//	{
-						//		tp.MinNode = new MinNode();
-						//		MapObject(typeof(MinNode), tp.MinNode, tp.Address, depth+1);
-						//	}
-						//	else
-						//	{
-						//		tp = null;
-						//	}
-						//	rv = tp;
-						//}
-						//else
-						if (propType.Name.EndsWith("Ptr"))
-						{
-							//we want the type that corresponds to the name without Ptr on the end
-							var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == "Jammy.AmigaTypes");
-							Type otype = assembly.GetTypes().SingleOrDefault(x => x.Name == propType.Name[..^3]);
-							dynamic tp = Activator.CreateInstance(propType);
-							tp.Address = memory.UnsafeRead32(addr); addr += 4;
-							if (tp.Address != 0 && tp.Address < 0x1000000)
-							{
-								tp.Wrapped = Activator.CreateInstance(otype);
-								MapObject(otype, tp.MinNode, tp.Address, depth + 1);
-							}
-							else
-							{
-								tp = null;
-							}
-							rv = tp;
-						}
-						else if (propType.GetInterfaces().Any(x=>x.GenericTypeArguments.Length > 0))
+						if (propType.GetInterfaces().Any(x=>x.GenericTypeArguments.Length > 0))
 						{
 							var genericT = propType.GetInterfaces().Single(x => x.GenericTypeArguments.Length > 0).GenericTypeArguments[0];
 
 							dynamic tp = Activator.CreateInstance(propType);
 							tp.Address = memory.UnsafeRead32(addr); addr += 4;
-							if (tp.Address != 0 && tp.Address < 0x1000000)
+							if (tp.Address != 0 && tp.Address < 0x1000000 && !genericT.IsValueType)
 							{
 								tp.Wrapped = (dynamic)Convert.ChangeType(Activator.CreateInstance(genericT), genericT);
 								MapObject(genericT, tp.Wrapped, tp.Address, depth + 1);
@@ -156,6 +92,17 @@ namespace Jammy.Disassembler.TypeMapper
 					else if (propType.BaseType == typeof(Array))
 					{
 						var array = (Array)prop.GetValue(obj);
+						if (array == null)
+						{
+							//it didn't work, because the array on 'obj' hasn't been initialised
+							//does it have an AmigaArraySize attribute?
+							var sizeAttr = prop.GetCustomAttributes(typeof(AmigaArraySize), false).SingleOrDefault();
+							if (sizeAttr != null)
+							{ 
+								prop.SetValue(obj, Activator.CreateInstance(propType, ((AmigaArraySize)sizeAttr).Size));
+								array = (Array)prop.GetValue(obj);
+							}
+						}
 						var arrayType = array.GetType().GetElementType();
 
 						if (arrayType.BaseType == typeof(object))
@@ -247,7 +194,7 @@ namespace Jammy.Disassembler.TypeMapper
 			MapObject(amigaObj.GetType(), amigaObj, address, 0);
 
 			//Walk the object writing out property names, offsets and values
-			return ObjectWalk.Walk(amigaObj) + "\n" + sb.ToString();
+			return "\n" + ObjectWalk.Walk(amigaObj) + "\n" + sb.ToString();
 		}
 	}
 

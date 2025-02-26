@@ -102,6 +102,9 @@ namespace Jammy.Main
 
 			disassemblyOptions = new DisassemblyOptions { IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true, Full32BitAddress = settings.AddressBits > 24 };
 
+			//fill in the types we can use to map
+			GetAmigaTypes();
+
 			//prime the disassembly with a decent starting point
 			disassemblyRanges.Add(new AddressRange(0x000000, 0x3000));//exec
 			disassemblyRanges.Add(new AddressRange(0xfc0000, 0x40000));//roms
@@ -211,8 +214,8 @@ namespace Jammy.Main
 			UpdateMem();
 			UpdatePowerLight();
 			UpdateDiskLight();
-			//UpdateExecBase();
-			UpdateCopper();
+			UpdateExecBase();
+			//UpdateCopper();
 			UpdateClock();
 			UI.UI.IsDirty = false;
 		}
@@ -742,6 +745,15 @@ namespace Jammy.Main
 			//UpdateDisassembly();
 			SetSelection();
 			UpdateDisplay();
+		}
+
+		private void GetAmigaTypes()
+		{
+			var types = AmigaTypes.AmigaType.GetAmigaTypes();
+			cbTypes.Items.Clear();
+			cbTypes.Items.Add("(None)");
+			cbTypes.Items.AddRange(types.Keys.OrderBy(x=>x).ToArray());
+			cbTypes.SelectedIndex = 0;
 		}
 
 		private void UpdateExecBase()
