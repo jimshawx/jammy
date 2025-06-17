@@ -38,9 +38,15 @@ namespace Jammy.Core.Custom
 		private bool blitterLog = false;
 		private bool blitterDump = false;
 
-		private int bmode = 1;
+		private enum LineType
+		{
+			Local,
+			Fellow
+		}
+		private LineType bmode = LineType.Local;
+
 		public void Logging(bool enabled) { blitterLog = enabled; }
-		public void Dumping(bool enabled) { /*blitterDump = enabled;*/ bmode ^= 1; }
+		public void Dumping(bool enabled) { /*blitterDump = enabled;*/ bmode = (LineType)((int)bmode ^ 1); }
 
 		private enum BlitterState
 		{
@@ -250,7 +256,7 @@ namespace Jammy.Core.Custom
 			{
 				//tw = File.CreateText($"bline-{DateTime.Now:HHmmss-fff}");
 				
-				if (bmode == 1)
+				if (bmode == LineType.Fellow)
 				{	
 					var b = Line2(insaddr,logger, null);
 					Line2CopyBack(b);
@@ -260,7 +266,6 @@ namespace Jammy.Core.Custom
 					logger.LogTrace($"{bltapt:X6} {((bltcon1&(uint)BLTCON1.SIGN)!=0?"":"~")}SIGN");
 					Line(insaddr);
 				}
-				bmode^=1;
 				return;
 			}
 
@@ -1032,7 +1037,7 @@ namespace Jammy.Core.Custom
 			//x1 = 0;
 			//y1 = 0;
 
-			logger.LogTrace("line");
+			//logger.LogTrace("line");
 			while (length-- > 0)
 			{
 				if ((bltcon0 & (1u << 10)) != 0)
