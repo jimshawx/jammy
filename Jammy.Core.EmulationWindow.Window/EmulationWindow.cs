@@ -19,6 +19,7 @@ namespace Jammy.Core.EmulationWindow.Window
 	{
 		private const string ClassName = "JammyWindowClass";
 		private IntPtr hWnd;
+		private IntPtr hdc;
 
 		private const int WM_MOVE = 0x0003;
 		private const int WM_SIZE = 0x0005;
@@ -570,6 +571,7 @@ namespace Jammy.Core.EmulationWindow.Window
 			var exstyle = GetWindowLong(hWnd, GWL_EXSTYLE);
 			AdjustWindowRectEx(ref rect, style, 0, exstyle);
 			SetWindowPos(hWnd, IntPtr.Zero, 0,0, rect.right-rect.left, rect.bottom-rect.top, SWP_NOMOVE|SWP_SHOWWINDOW| SWP_NOZORDER| SWP_NOREDRAW);
+			hdc = GetDC(hWnd);
 		}
 
 		public bool PowerLight { private get; set; }
@@ -580,11 +582,11 @@ namespace Jammy.Core.EmulationWindow.Window
 			RenderTicks();
 			RenderLights();
 
-			var hdc = GetDC(hWnd);
+			//var hdc = GetDC(hWnd);
 			SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight,
 				0, 0, 0, (uint)screenHeight,
 				screen, ref lpbmi, BITMAPINFO.DIBColorTable.DIB_RGB_COLORS);
-			ReleaseDC(hWnd, hdc);
+			//ReleaseDC(hWnd, hdc);
 		}
 
 		private DateTime lastTick = DateTime.Now;
