@@ -263,7 +263,7 @@ namespace Jammy.Core.Custom
 				}
 				else if (bmode == 0)
 				{
-					logger.LogTrace($"{bltapt:X6} {((bltcon1&(uint)BLTCON1.SIGN)!=0?"":"~")}SIGN");
+					//logger.LogTrace($"{bltapt:X6} {((bltcon1&(uint)BLTCON1.SIGN)!=0?"":"~")}SIGN");
 					Line(insaddr);
 				}
 				return;
