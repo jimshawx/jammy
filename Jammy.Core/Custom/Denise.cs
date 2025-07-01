@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -174,6 +175,7 @@ public class Denise : IDenise
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void NextPixel()
 	{
 		for (int i = 0; i < 8; i++)
@@ -243,15 +245,27 @@ public class Denise : IDenise
 		//return f ? CopperBitplaneConvert : CopperBitplaneConvertNormal;
 	}
 
+	//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	//private static bool IsBitSet(ref ValueTuple<ulong, ulong> bp, int bit)
+	//{
+	//	//ulong mask = 1UL << (bit & 63);
+	//	//if (bit >= 64) return (bp.Item1 & mask) != 0;
+	//	//return (bp.Item2 & mask) != 0;
+	//	if (bit >= 64) return (bp.Item1 & (1UL << (bit - 64))) != 0;
+	//	return (bp.Item2 & (1UL << bit)) != 0;
+	//}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static bool IsBitSet(ref ValueTuple<ulong, ulong> bp, int bit)
 	{
-		//ulong mask = 1UL << (bit & 63);
-		//if (bit >= 64) return (bp.Item1 & mask) != 0;
-		//return (bp.Item2 & mask) != 0;
-		if (bit >= 64) return (bp.Item1 & (1UL << (bit - 64))) != 0;
-		return (bp.Item2 & (1UL << bit)) != 0;
+		// mask is 0 if bit < 64, ulong.MaxValue if bit >= 64
+		ulong mask = (ulong)-(bit >> 6); // (bit >> 6) is 0 for 0-63, 1 for 64-127
+		int shift = bit & 63;
+		ulong value = ((bp.Item2 & ~mask) | (bp.Item1 & mask));
+		return ((value >> shift) & 1UL) != 0;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void Or(ref ValueTuple<ulong, ulong> bp, ulong bits, int shift)
 	{
 		bp.Item1 |= bits >> (64 - shift);
@@ -267,15 +281,15 @@ public class Denise : IDenise
 
 			uint col;
 
-			byte pix = 0;
-			byte b=1;
+			uint pix = 0;
+			uint b=1;
 			for (int i = 0; i < planes; i++, b <<= 1)
-				pix |= (IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : (byte)0);
+				pix |= (IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
 
 			NextPixel();
 
 			//BPLAM
-			pix ^= (byte)(bplcon4 >> 8);
+			pix ^= (uint)(bplcon4 >> 8);
 
 			pix &= debugger.bitplaneMask;
 			pix |= debugger.bitplaneMod;
@@ -283,8 +297,8 @@ public class Denise : IDenise
 			if ((bplcon0 & (1 << 10)) != 0)
 			{
 				//DPF
-				byte pix0 = dpfLookup[pix];
-				byte pix1 = dpfLookup[pix >> 1];
+				uint pix0 = dpfLookup[pix];
+				uint pix1 = dpfLookup[pix >> 1];
 
 				uint col0 = truecolour[pix0];
 				uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
@@ -304,7 +318,7 @@ public class Denise : IDenise
 			else if (planes == 6 && ((bplcon0 & (1 << 11)) != 0))
 			{
 				//HAM6
-				byte ham = (byte)(pix & 0b11_0000);
+				uint ham = (pix & 0b11_0000);
 				pix &= 0xf;
 				if (ham == 0)
 				{
@@ -342,7 +356,7 @@ public class Denise : IDenise
 			else if (planes == 8 && ((bplcon0 & (1 << 11)) != 0))
 			{
 				//HAM8
-				byte ham = (byte)(pix & 0b11);
+				uint ham = (pix & 0b11);
 				pix &= 0xfc;
 				if (ham == 0)
 				{
@@ -376,7 +390,7 @@ public class Denise : IDenise
 			//remember the last colour for HAM modes
 			lastcol = col;
 
-			DoSprites(ref col, pix, (p&m)==m);
+			DoSprites(ref col, (byte)pix, (p&m)==m);
 
 			//pixel double
 			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
