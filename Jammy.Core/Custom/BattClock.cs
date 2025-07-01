@@ -145,6 +145,13 @@ namespace Jammy.Core.Custom
 					// year = 1900 + clock value
 					// if (year < 1978) year = 1978
 					int year = t.Year % 100;
+
+					//hack for WB1.2/1.3 clock
+					//calendar repeats every 28 years, but there are only 22 possible years in the 1.2/1.3 calendar, 78-99
+					if (t.Year >= 2006) year = (year - 28 + 2000) % 100;//2006-2027 same as 1978-1999
+					if (t.Year >= 2034) year = (year - 28 + 2000) % 100;//2034-2062 same as 1978-1999
+																		//but 2028 same as 2000,1972 (there's no year between 1978 and 1999 with the same days)
+
 					regs[10] = (byte)(year % 10);
 					regs[11] = (byte)(year / 10);
 
