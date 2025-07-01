@@ -158,13 +158,20 @@ namespace Jammy.Core
 		private ulong totalWaits = 0;
 		private uint totalCycles = 0;
 
+		private void RunAllEmulations()
+		{
+			for (int i = 0; i < emulations.Count; i++)
+				emulations[i].Emulate();
+		}
+
 		private ushort RunChipsetEmulationForRAM()
 		{
 			while (dma.LastDMASlotWasUsedByChipset())
 			{
 				clock.UpdateClock();
 				clock.Emulate();
-				emulations.ForEach(x => x.Emulate());
+				//emulations.ForEach(x => x.Emulate());
+				RunAllEmulations();
 				dma.TriggerHighestPriorityDMA();
 			} 
 			dma.ExecuteCPUDMASlot();
@@ -195,12 +202,14 @@ namespace Jammy.Core
 			{
 				clock.UpdateClock();
 				clock.Emulate();
-				emulations.ForEach(x => x.Emulate());
+				//emulations.ForEach(x => x.Emulate());
+				RunAllEmulations();
 				dma.TriggerHighestPriorityDMA();
 			}
 		}
 
 		private bool cycleExact { get { return cpu is IMoiraCPU; } }
+		private bool maximumSpeed { get { return false; } }
 
 		public void RunEmulations()
 		{
@@ -210,8 +219,18 @@ namespace Jammy.Core
 				return;
 			}
 
+			if (maximumSpeed)
+			{
+				clock.UpdateClock();
+				RunAllEmulations();
+				cpu.Emulate();
+				dma.DebugExecuteAllDMAActivity();
+				return;
+			}
+
 			clock.UpdateClock();
-			emulations.ForEach(x => x.Emulate());
+			//emulations.ForEach(x => x.Emulate());
+			RunAllEmulations();
 
 			//totalWaits = 0;
 			//totalCycles = 0;
