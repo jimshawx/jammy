@@ -179,7 +179,7 @@ namespace Jammy.Core.EmulationWindow.DX
 					SampleDescription = new SampleDescription { Count = 1, Quality = 0 },
 					Scaling = Scaling.Stretch,
 					Stereo = false,
-					SwapEffect = SwapEffect.Discard
+					SwapEffect = SwapEffect.FlipDiscard
 				};
 
 				swapchain = factory.CreateSwapChainForHwnd(
@@ -254,7 +254,7 @@ namespace Jammy.Core.EmulationWindow.DX
 				// Copy the staging texture to the back buffer
 				context.CopyResource(backBuffer, stagingTexture);
 
-				swapchain.Present(1, 0);
+				swapchain.Present(0, 0);
 			});
 		}
 
