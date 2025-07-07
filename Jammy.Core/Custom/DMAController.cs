@@ -363,10 +363,10 @@ public class DMAController : IDMA
 			else
 				dmacon &= (ushort)(~value | 0x6000); //can't clear BBUSY or BZERO
 
-			if ((dmacon & (int)DMA.COPEN) != (p & (int)DMA.COPEN))
-				logger.LogTrace($"COPEN {((dmacon & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock.TimeStamp()}");
-			if ((dmacon & (int)DMA.BLTEN) != (p & (int)DMA.BLTEN))
-				logger.LogTrace($"BLTEN {((dmacon & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock.TimeStamp()}");
+			//if ((dmacon & (int)DMA.COPEN) != (p & (int)DMA.COPEN))
+			//	logger.LogTrace($"COPEN {((dmacon & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock.TimeStamp()}");
+			//if ((dmacon & (int)DMA.BLTEN) != (p & (int)DMA.BLTEN))
+			//	logger.LogTrace($"BLTEN {((dmacon & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock.TimeStamp()}");
 
 			audio.WriteDMACON((ushort)(dmacon & 0x7fff));
 		}
