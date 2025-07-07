@@ -257,23 +257,25 @@ noBitplaneDMA:
 			if ((clock.HorizontalPos & 1) == 0)
 				return;
 
-			switch (clock.HorizontalPos)
-			{
-				case 0x19: RunSpriteDMA(2); break;
-				case 0x1B: RunSpriteDMA(3); break;
-				case 0x1D: RunSpriteDMA(4); break;
-				case 0x1F: RunSpriteDMA(5); break;
-				case 0x21: RunSpriteDMA(6); break;
-				case 0x23: RunSpriteDMA(7); break;
-				case 0x25: RunSpriteDMA(8); break;
-				case 0x27: RunSpriteDMA(9); break;
-				case 0x29: RunSpriteDMA(10); break;
-				case 0x2B: RunSpriteDMA(11); break;
-				case 0x2D: RunSpriteDMA(12); break;
-				case 0x2F: RunSpriteDMA(13); break;
-				case 0x31: RunSpriteDMA(14); break;
-				case 0x33: RunSpriteDMA(15); break;
-			}
+			//switch (clock.HorizontalPos)
+			//{
+			//	case 0x19: RunSpriteDMA(2); break;
+			//	case 0x1B: RunSpriteDMA(3); break;
+			//	case 0x1D: RunSpriteDMA(4); break;
+			//	case 0x1F: RunSpriteDMA(5); break;
+			//	case 0x21: RunSpriteDMA(6); break;
+			//	case 0x23: RunSpriteDMA(7); break;
+			//	case 0x25: RunSpriteDMA(8); break;
+			//	case 0x27: RunSpriteDMA(9); break;
+			//	case 0x29: RunSpriteDMA(10); break;
+			//	case 0x2B: RunSpriteDMA(11); break;
+			//	case 0x2D: RunSpriteDMA(12); break;
+			//	case 0x2F: RunSpriteDMA(13); break;
+			//	case 0x31: RunSpriteDMA(14); break;
+			//	case 0x33: RunSpriteDMA(15); break;
+			//}
+			uint spriteSlot = (clock.HorizontalPos - 0x15) / 2;
+			RunSpriteDMA(spriteSlot);
 		}
 		if (clock.HorizontalPos == 0xE1)
 			dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN);
@@ -289,6 +291,7 @@ noBitplaneDMA:
 
 	private bool CopperBitplaneFetch(int h)
 	{
+		//int planeIdx = h % pixmod;
 		int planeIdx = (h - ddfstrtfix) % pixmod;
 		while (planeIdx < 0) planeIdx += pixmod;
 
@@ -314,7 +317,7 @@ noBitplaneDMA:
 		{
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 			{
-				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Word, ChipRegs.BPL1DAT+plane*2);
+				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Word, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 2;
 			}
 			else if ((fmode & 3) == 3)
@@ -329,25 +332,21 @@ noBitplaneDMA:
 			}
 
 			//debugging
-
-			//we just filled BPL0DAT
-			if (plane == 0)
-			{
-				if (clock.VerticalPos == debugger.dbugLine)
+			if (clock.VerticalPos == debugger.dbugLine)
+			{ 
+				//we just filled BPL1DAT
+				if (plane == 0)
 				{
 					debugger.write[h] = 'x';
 					debugger.dma++;
 				}
-			}
-			else
-			{
-				if (clock.VerticalPos == debugger.dbugLine)
+				else
+				{
 					debugger.write[h] = '.';
-			}
+				}
 
-			if (clock.VerticalPos == debugger.dbugLine)
 				debugger.fetch[h] = Convert.ToChar(plane + 48 + 1);
-
+			}
 			//debugging
 
 			return true;
@@ -390,7 +389,6 @@ noBitplaneDMA:
 			for (int i = 0; i < planes; i++)
 			{
 				bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
-				bplpt[i] &= 0xfffffffe;
 			}
 			lineState = DMALineState.LineTerminated;
 		}
@@ -688,7 +686,7 @@ noBitplaneDMA:
 					value |= (ushort)((clock.VerticalPos & 1) << 7); //toggle LOL each alternate line (NTSC only)
 
 				//if we're in interlace mode
-				if ((bplcon0 & (1 << 2)) != 0)
+				if ((bplcon0 & (uint)Denise.BPLCON0.Interlace) != 0)
 				{
 					value |= (ushort)(clock.LongFrame() << 15); //set LOF=1/0 on alternate frames
 				}
