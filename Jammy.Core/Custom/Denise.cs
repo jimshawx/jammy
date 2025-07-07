@@ -12,12 +12,262 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Custom;
+
+#if DEBUG
+using BpldatPix = BpldatPix32;
+#else
+using BpldatPix = BpldatPix32AVX2;
+#endif
+
+static class BpldatPix32
+{
+	[Persist]
+	private static int pixelMaskBit;
+
+	//[Persist] //handled manually
+	private static readonly uint[] bpldatpix = new uint[8];
+
+	public static void WriteBitplanes(ref ulong[] bpldat, int even, int odd)
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			if ((i & 1) != 0)
+				Or(ref bpldatpix[i], bpldat[i], (16 - odd));
+			else
+				Or(ref bpldatpix[i], bpldat[i], (16 - even));
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void NextPixel()
+	{
+		for (int i = 0; i < 8; i++)
+			bpldatpix[i] <<= 1;
+	}
+
+	public static void SetPixelBitMask(uint pixelBits)
+	{
+		pixelMaskBit = (int)(pixelBits + 16);
+	}
+
+	public static void Clear()
+	{
+		for (int i = 0; i < 8; i++)
+			bpldatpix[i] = 0;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint GetPixel(int planes)
+	{
+		uint pix = 0;
+		uint b = 1;
+		for (int i = 0; i < planes; i++, b <<= 1)
+			pix |= (IsBitSet(bpldatpix[i], pixelMaskBit) ? b : 0);
+		return pix;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool IsBitSet(uint bp, int bit)
+	{
+		return (bp&(1<<bit))!=0;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void Or(ref uint bp, ulong bits, int shift)
+	{
+		bp |= (uint)(bits<<shift);
+	}
+
+	public static void Save(JObject jo)
+	{
+		jo.Add("bpldatpix", JToken.FromObject(bpldatpix));
+	}
+
+	public static void Load(JObject obj)
+	{
+		//obj.GetValue("bpldatpix")
+		//		.Select(x => new ValueTuple<ulong, ulong>(ulong.Parse((string)x["Item1"]), ulong.Parse((string)x["Item2"])))
+		//		.ToArray()
+		//		.CopyTo(bpldatpix, 0);
+	}
+}
+
+static class BpldatPix64
+{
+	[Persist]
+	private static int pixelMaskBit;
+
+	//[Persist] //handled manually
+	private static readonly ValueTuple<ulong, ulong>[] bpldatpix = new ValueTuple<ulong, ulong>[8];
+
+	public static void WriteBitplanes(ref ulong[] bpldat, int even, int odd)
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			if ((i & 1) != 0)
+				Or(ref bpldatpix[i], bpldat[i], (16 - odd));
+			else
+				Or(ref bpldatpix[i], bpldat[i], (16 - even));
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void NextPixel()
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			bpldatpix[i].Item1 <<= 1;
+			bpldatpix[i].Item1 |= bpldatpix[i].Item2 >> 63;
+			bpldatpix[i].Item2 <<= 1;
+		}
+	}
+
+	public static void SetPixelBitMask(uint pixelBits)
+	{
+		pixelMaskBit = (int)(pixelBits + 16);
+	}
+	public static void Clear()
+	{
+		for (int i = 0; i < 8; i++)
+			bpldatpix[i].Item1 = bpldatpix[i].Item2 = 0;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint GetPixel(int planes)
+	{
+		uint pix = 0;
+		uint b = 1;
+		for (int i = 0; i < planes; i++, b <<= 1)
+			pix |= (IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
+		return pix;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool IsBitSet(ref ValueTuple<ulong, ulong> bp, int bit)
+	{
+		// mask is 0 if bit < 64, ulong.MaxValue if bit >= 64
+		ulong mask = (ulong)-(bit >> 6); // (bit >> 6) is 0 for 0-63, 1 for 64-127
+		int shift = bit & 63;
+		ulong value = ((bp.Item2 & ~mask) | (bp.Item1 & mask));
+		return ((value >> shift) & 1UL) != 0;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void Or(ref ValueTuple<ulong, ulong> bp, ulong bits, int shift)
+	{
+		bp.Item1 |= bits >> (64 - shift);
+		bp.Item2 |= bits << shift;
+	}
+
+	public static void Save(JObject jo)
+	{
+		jo.Add("bpldatpix", JToken.FromObject(bpldatpix));
+	}
+
+	public static void Load(JObject obj)
+	{
+		obj.GetValue("bpldatpix")
+				.Select(x => new ValueTuple<ulong, ulong>(ulong.Parse((string)x["Item1"]), ulong.Parse((string)x["Item2"])))
+				.ToArray()
+				.CopyTo(bpldatpix, 0);
+	}
+}
+
+static class BpldatPix32AVX2
+{
+	[Persist]
+	private static int pixelMaskBit;
+
+	//[Persist] //handled manually
+	private static Vector256<uint> bpldatpix = Vector256<uint>.Zero;
+
+	private static readonly uint[] bits = new uint[8];
+
+	public static void WriteBitplanes(ref ulong[] bpldat, int even, int odd)
+	{
+		bits[0] = (uint)(bpldat[0] << (16 - even));
+		bits[1] = (uint)(bpldat[1] << (16 - odd));
+		bits[2] = (uint)(bpldat[2] << (16 - even));
+		bits[3] = (uint)(bpldat[3] << (16 - odd));
+		bits[4] = (uint)(bpldat[4] << (16 - even));
+		bits[5] = (uint)(bpldat[5] << (16 - odd));
+		bits[6] = (uint)(bpldat[6] << (16 - even));
+		bits[7] = (uint)(bpldat[7] << (16 - odd));
+		var newbits = Vector256.Create(bits);
+		bpldatpix |= newbits;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void NextPixel()
+	{
+		bpldatpix <<= 1;
+	}
+
+	public static void SetPixelBitMask(uint pixelBits)
+	{
+		pixelMaskBit = (int)(pixelBits + 16);
+	}
+
+	public static void Clear()
+	{
+		bpldatpix = Vector256<uint>.Zero;
+	}
+
+	private static readonly Vector256<uint> index = Vector256.Create(7+24u,6+24u,5+24u,4+24u,3+24u,2+24u,1+24u,0+24u);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint GetPixel(int planes)
+	{
+		//uint pix = 0;
+		//uint b = 1;
+		//for (int i = 0; i < planes; i++, b <<= 1)
+		//	pix |= (IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
+		//return pix;
+
+		var pixelMask = Vector256.Create((uint)(1 << pixelMaskBit));
+		//var index = Vector256<uint>.Indices;
+		//var index = Vector256.Create(7u,6u,5u,4u,3u,2u,1u,0u);
+
+		//var pix = (bpldatpix & pixelMask) >> index;
+		var pixelBits = Avx2.ShiftRightLogicalVariable(Avx2.And(bpldatpix, pixelMask), index);
+
+		//Vector128<uint> or128 = Sse2.Or(pixelBits.GetLower(), pixelBits.GetUpper());
+		//Vector128<uint> or64 = Sse2.Or(or128, Sse2.ShiftRightLogical128BitLane(or128, 8));
+		//Vector128<uint> pix = Sse2.Or(or64, Sse2.ShiftRightLogical(or64, 32));
+		//return pix.ToScalar();// >> 24;
+
+		Vector128<uint> or128 = Sse2.Or(pixelBits.GetLower(), pixelBits.GetUpper());
+
+		Vector128<uint> shuf1 = Sse2.Shuffle(or128, 0b_10_11_00_01); // [2,3,0,1]
+		Vector128<uint> or64 = Sse2.Or(or128, shuf1);
+
+		Vector128<uint> shuf2 = Sse2.Shuffle(or64, 0b_01_00_11_10); // [1,0,3,2]
+		Vector128<uint> pix = Sse2.Or(or64, shuf2);
+
+		return pix.ToScalar();// >> 24;
+	}
+
+	public static void Save(JObject jo)
+	{
+		jo.Add("bpldatpix", JToken.FromObject(bpldatpix));
+	}
+
+	public static void Load(JObject obj)
+	{
+		//obj.GetValue("bpldatpix")
+		//		.Select(x => new ValueTuple<ulong, ulong>(ulong.Parse((string)x["Item1"]), ulong.Parse((string)x["Item2"])))
+		//		.ToArray()
+		//		.CopyTo(bpldatpix, 0);
+	}
+}
 
 public class Denise : IDenise
 {
@@ -31,7 +281,10 @@ public class Denise : IDenise
 	public enum BPLCON0 : uint
 	{
 		HiRes = 1 << 15,
+		HAM = 1 << 11,
+		DPF = 1<<10,
 		SuperHiRes = 1 << 6,
+		Interlace = 1 << 2
 	}
 
 	private const int FIRST_DMA = 0;//0x18*2;
@@ -59,12 +312,6 @@ public class Denise : IDenise
 
 		RunVerticalBlankStart();
 	}
-
-	[Persist]
-	private int pixelMaskBit;
-
-	//[Persist] //handled manually
-	private readonly ValueTuple<ulong,ulong>[] bpldatpix = new ValueTuple<ulong, ulong>[8];
 
 	[Persist]
 	private int planes;
@@ -136,13 +383,7 @@ public class Denise : IDenise
 		int even = bplcon1 & 0xf;
 		int odd = (bplcon1 >> 4) & 0xf;
 
-		for (int i = 0; i < 8; i++)
-		{
-			if ((i & 1) != 0)
-				Or(ref bpldatpix[i], bpldat[i], (16 - odd));
-			else
-				Or(ref bpldatpix[i], bpldat[i], (16 - even));
-		}
+		BpldatPix.WriteBitplanes(ref bpldat, even, odd);
 	}
 
 	public void WriteSprite(int s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl)
@@ -163,28 +404,16 @@ public class Denise : IDenise
 		else
 			pixelBits = 31;
 
-		pixelMaskBit = (int)(pixelBits + 16);
+		BpldatPix.SetPixelBitMask(pixelBits);
 
 		//clear sprites from wrapping from the right
 		for (int s = 0; s < 8; s++)
 			spriteMask[s] = 0;
 
-		for (int i = 0; i < 8; i++)
-		{
-			bpldatpix[i].Item1 = bpldatpix[i].Item2 = 0;
-		}
+		BpldatPix.Clear();
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void NextPixel()
-	{
-		for (int i = 0; i < 8; i++)
-		{
-			bpldatpix[i].Item1 <<= 1;
-			bpldatpix[i].Item1 |= bpldatpix[i].Item2 >> 63;
-			bpldatpix[i].Item2 <<= 1;
-		}
-	}
+	
 
 	//(x&(1<<0))*1 + x&(1<<2)*2 + x&(1<<4)*4 + x&(1<<6) *8
 	//00000 -> 0  01000 -> 0  10000 -> 4  11000 -> 4
@@ -225,8 +454,8 @@ public class Denise : IDenise
 	private Action GetModeConversion()
 	{
 		return CopperBitplaneConvert;
-		
-		//bool f = (fmode&3)==3;
+
+		//bool f = (fmode & 3) == 3;
 		//int bp = (bplcon0 >> 12) & 7;
 
 		////DBF
@@ -234,7 +463,7 @@ public class Denise : IDenise
 
 		////HAM6
 		//if (bp == 6 && ((bplcon0 & (1 << 11)) != 0)) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
-		
+
 		////EHB
 		//if (bp == 6 && ((bplcon0 & (1 << 11)) == 0 &&
 		//                    (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0))) return f ? CopperBitplaneConvert : CopperBitplaneConvert;
@@ -245,32 +474,6 @@ public class Denise : IDenise
 		//return f ? CopperBitplaneConvert : CopperBitplaneConvertNormal;
 	}
 
-	//[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	//private static bool IsBitSet(ref ValueTuple<ulong, ulong> bp, int bit)
-	//{
-	//	//ulong mask = 1UL << (bit & 63);
-	//	//if (bit >= 64) return (bp.Item1 & mask) != 0;
-	//	//return (bp.Item2 & mask) != 0;
-	//	if (bit >= 64) return (bp.Item1 & (1UL << (bit - 64))) != 0;
-	//	return (bp.Item2 & (1UL << bit)) != 0;
-	//}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static bool IsBitSet(ref ValueTuple<ulong, ulong> bp, int bit)
-	{
-		// mask is 0 if bit < 64, ulong.MaxValue if bit >= 64
-		ulong mask = (ulong)-(bit >> 6); // (bit >> 6) is 0 for 0-63, 1 for 64-127
-		int shift = bit & 63;
-		ulong value = ((bp.Item2 & ~mask) | (bp.Item1 & mask));
-		return ((value >> shift) & 1UL) != 0;
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static void Or(ref ValueTuple<ulong, ulong> bp, ulong bits, int shift)
-	{
-		bp.Item1 |= bits >> (64 - shift);
-		bp.Item2 |= bits << shift;
-	}
 
 	private void CopperBitplaneConvert()
 	{
@@ -281,12 +484,9 @@ public class Denise : IDenise
 
 			uint col;
 
-			uint pix = 0;
-			uint b=1;
-			for (int i = 0; i < planes; i++, b <<= 1)
-				pix |= (IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
+			uint pix = BpldatPix.GetPixel(planes);
 
-			NextPixel();
+			BpldatPix.NextPixel();
 
 			//BPLAM
 			pix ^= (uint)(bplcon4 >> 8);
@@ -294,7 +494,7 @@ public class Denise : IDenise
 			pix &= debugger.bitplaneMask;
 			pix |= debugger.bitplaneMod;
 
-			if ((bplcon0 & (1 << 10)) != 0)
+			if ((bplcon0 & (uint)BPLCON0.DPF) != 0)
 			{
 				//DPF
 				uint pix0 = dpfLookup[pix];
@@ -315,7 +515,7 @@ public class Denise : IDenise
 				//else
 				//	pix = pix0 != 0 ? pix0 : pix1;
 			}
-			else if (planes == 6 && ((bplcon0 & (1 << 11)) != 0))
+			else if (planes == 6 && ((bplcon0 & (uint)BPLCON0.HAM) != 0))
 			{
 				//HAM6
 				uint ham = (pix & 0b11_0000);
@@ -345,7 +545,7 @@ public class Denise : IDenise
 					}
 				}
 			}
-			else if (planes == 6 && ((bplcon0 & (1 << 11)) == 0 &&
+			else if (planes == 6 && ((bplcon0 & (uint)BPLCON0.HAM) == 0 &&
 			         (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0)))
 			{
 				//EHB
@@ -353,7 +553,7 @@ public class Denise : IDenise
 				if ((pix & 0b100000) != 0)
 					col = (col & 0x00fefefe) >> 1;
 			}
-			else if (planes == 8 && ((bplcon0 & (1 << 11)) != 0))
+			else if (planes == 8 && ((bplcon0 & (uint)BPLCON0.HAM) != 0))
 			{
 				//HAM8
 				uint ham = (pix & 0b11);
@@ -403,8 +603,10 @@ public class Denise : IDenise
 			}
 			else
 			{
-				for (int k = 0; k < 4 / pixelLoop; k++)
-					screen[dptr++] = (int)col;
+				//for (int k = 0; k < 4 / pixelLoop; k++)
+				//	screen[dptr++] = (int)col;
+				int cnt = 4/pixelLoop;
+				Array.Fill(screen, (int)col, dptr, cnt); dptr += cnt;
 			}
 		}
 	}
@@ -649,7 +851,7 @@ public class Denise : IDenise
 				//outside horizontal area
 				for (int p = 0; p < pixelLoop; p++)
 				{
-					NextPixel();
+					BpldatPix.NextPixel();
 					if ((p & m) == m)
 						for (int s = 0; s < 8; s++)
 							spriteMask[s] >>= 1;
@@ -657,13 +859,15 @@ public class Denise : IDenise
 
 				//output colour 0 pixels
 				uint col = lastcol = truecolour[0];
-				for (int k = 0; k < 4; k++)
-					screen[dptr++] = (int)col;
+				//for (int k = 0; k < 4; k++)
+				//	screen[dptr++] = (int)col;
+				Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
 			}
 		}
 		else
 		{
-			if (blankingStatus != Blanking.OutsideDisplayWindow)
+			//if (blankingStatus != Blanking.OutsideDisplayWindow)
+			if (false)
 			{
 				//horizontal/vertical blanking
 				uint c0 = 0xffffff;
@@ -671,8 +875,9 @@ public class Denise : IDenise
 				if ((blankingStatus & Blanking.HorizontalBlank)!=0) c0 = 0xff0000;
 				if ((blankingStatus & Blanking.VerticalBlank)!=0) c1 = 0x0000ff;
 				uint col = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0 ? c0 : c1;
-				for (int k = 0; k < 4; k++)
-					screen[dptr++] = (int)col;
+				//for (int k = 0; k < 4; k++)
+				//	screen[dptr++] = (int)col;
+				Array.Fill(screen, (int)col, dptr, 4); dptr+= 4;
 			}
 			else
 			{ 
@@ -680,8 +885,9 @@ public class Denise : IDenise
 
 				//output colour 0 pixels
 				uint col = lastcol = truecolour[0];
-				for (int k = 0; k < 4; k++)
-					screen[dptr++] = (int)col;
+				//for (int k = 0; k < 4; k++)
+				//	screen[dptr++] = (int)col;
+				Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
 			}
 		}
 	}
@@ -757,37 +963,40 @@ public class Denise : IDenise
 
 			case ChipRegs.CLXCON: clxcon = value; clxcon2 = 0; break;
 			case ChipRegs.CLXCON2: clxcon2 = value; break;
-		}
 
-		if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
-		{
-			value &= 0x0fff;
+			case >= ChipRegs.COLOR00 and <= ChipRegs.COLOR31:
+				{
+					value &= 0x0fff;
 
-			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+					int bank = (bplcon3 & 0b111_00000_00000000) >> 13 - 5;
 
-			//Amiga colour
-			int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
+					//Amiga colour
+					int index = (int)(bank + (address - ChipRegs.COLOR00 >> 1));
 
-			int loct = bplcon3 & (1 << 9);
-			if (loct != 0)
-			{
-				lowcolour[index] = value;
-			}
-			else
-			{
-				colour[index] = value;
-				lowcolour[index] = value;
-			}
+					int loct = bplcon3 & 1 << 9;
+					if (loct != 0)
+					{
+						lowcolour[index] = value;
+					}
+					else
+					{
+						colour[index] = value;
+						lowcolour[index] = value;
+					}
 
-			//24bit colour
-			var rgb = Explode(colour[index]) | (Explode(lowcolour[index]) >> 4);
-			truecolour[index] = rgb;
-			debugger.SetColor(index, rgb);
-		}
-		else if (address == ChipRegs.STREQU || address == ChipRegs.STRHOR
-						 || address == ChipRegs.STRLONG || address == ChipRegs.STRVBL)
-		{
-			logger.LogTrace($"Strobe W {ChipRegs.Name(address)} @ {insaddr:X8}");
+					//24bit colour
+					var rgb = Explode(colour[index]) | Explode(lowcolour[index]) >> 4;
+					truecolour[index] = rgb;
+					debugger.SetColor(index, rgb);
+					break;
+				}
+
+			case ChipRegs.STREQU:
+			case ChipRegs.STRHOR:
+			case ChipRegs.STRLONG:
+			case ChipRegs.STRVBL:
+				logger.LogTrace($"Strobe W {ChipRegs.Name(address)} @ {insaddr:X8}");
+				break;
 		}
 	}
 
@@ -808,8 +1017,11 @@ public class Denise : IDenise
 		dptr += SCREEN_WIDTH - (dptr - lineStart);
 
 		//scan double
-		for (int i = lineStart; i < lineStart + SCREEN_WIDTH; i++)
-			screen[dptr++] = screen[i];
+		//for (int i = lineStart; i < lineStart + SCREEN_WIDTH; i++)
+		//	screen[dptr++] = screen[i];
+		// Replace the for loop with Array.Copy for better performance and clarity
+		Array.Copy(screen, lineStart, screen, dptr, SCREEN_WIDTH);
+		dptr += SCREEN_WIDTH;
 	}
 
 	public void Reset(uint copperPC)
@@ -838,21 +1050,22 @@ public class Denise : IDenise
 			case ChipRegs.DIWHIGH: value = diwhigh; break;
 
 			case ChipRegs.CLXDAT: value = clxdat; clxdat = 0; break;
-		}
 
-		if (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
-		{
-			int bank = (bplcon3 & 0b111_00000_00000000) >> (13 - 5);
+			case >= ChipRegs.COLOR00 and <= ChipRegs.COLOR31:
+				{
+					int bank = (bplcon3 & 0b111_00000_00000000) >> 13 - 5;
 
-			int loct = bplcon3 & (1 << 9);
+					int loct = bplcon3 & 1 << 9;
 
-			//Amiga colour
-			int index = (int)(bank + ((address - ChipRegs.COLOR00) >> 1));
+					//Amiga colour
+					int index = (int)(bank + (address - ChipRegs.COLOR00 >> 1));
 
-			if (loct != 0)
-				value = lowcolour[index];
-			else
-				value = colour[index];
+					if (loct != 0)
+						value = lowcolour[index];
+					else
+						value = colour[index];
+					break;
+				}
 		}
 
 		return value;
@@ -861,7 +1074,7 @@ public class Denise : IDenise
 	public void Save(JArray obj)
 	{
 		var jo = PersistenceManager.ToJObject(this, "denise");
-		jo.Add("bpldatpix", JToken.FromObject(bpldatpix));
+		BpldatPix.Save(jo);
 		obj.Add(jo);
 	}
 
@@ -870,9 +1083,6 @@ public class Denise : IDenise
 		if (!PersistenceManager.Is(obj, "denise")) return;
 
 		PersistenceManager.FromJObject(this, obj);
-		obj.GetValue("bpldatpix")
-			.Select(x => new ValueTuple<ulong, ulong>(ulong.Parse((string)x["Item1"]), ulong.Parse((string)x["Item2"])))
-			.ToArray()
-			.CopyTo(bpldatpix, 0);
+		BpldatPix.Load(obj);
 	}
 }
