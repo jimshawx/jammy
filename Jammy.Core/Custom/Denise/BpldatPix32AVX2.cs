@@ -1,6 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
-using Jammy.Core.Persistence;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -13,7 +13,7 @@ namespace Jammy.Core.Custom.Denise;
 
 public class BpldatPix32AVX2 : IBpldatPix
 {
-	[Persist]
+	//[Persist]
 	private int pixelMaskBit;
 
 	//[Persist] //handled manually
@@ -38,7 +38,8 @@ public class BpldatPix32AVX2 : IBpldatPix
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void NextPixel()
 	{
-		bpldatpix <<= 1;
+		//bpldatpix <<= 1;
+		bpldatpix = Avx2.ShiftLeftLogical(bpldatpix, 1);
 	}
 
 	public void SetPixelBitMask(uint pixelBits)
@@ -53,26 +54,25 @@ public class BpldatPix32AVX2 : IBpldatPix
 
 	private static readonly Vector256<uint> index = Vector256.Create(7+24u,6+24u,5+24u,4+24u,3+24u,2+24u,1+24u,0+24u);
 
+	private static readonly uint[] planeMasks = 
+		[
+			0b00000000,
+			0b00000001,
+			0b00000011,
+			0b00000111,
+			0b00001111,
+			0b00011111,
+			0b00111111,
+			0b01111111,
+			0b11111111,
+		];
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public uint GetPixel(int planes)
 	{
-		//uint pix = 0;
-		//uint b = 1;
-		//for (int i = 0; i < planes; i++, b <<= 1)
-		//	pix |= (IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
-		//return pix;
-
 		var pixelMask = Vector256.Create((uint)(1 << pixelMaskBit));
-		//var index = Vector256<uint>.Indices;
-		//var index = Vector256.Create(7u,6u,5u,4u,3u,2u,1u,0u);
 
-		//var pix = (bpldatpix & pixelMask) >> index;
 		var pixelBits = Avx2.ShiftRightLogicalVariable(Avx2.And(bpldatpix, pixelMask), index);
-
-		//Vector128<uint> or128 = Sse2.Or(pixelBits.GetLower(), pixelBits.GetUpper());
-		//Vector128<uint> or64 = Sse2.Or(or128, Sse2.ShiftRightLogical128BitLane(or128, 8));
-		//Vector128<uint> pix = Sse2.Or(or64, Sse2.ShiftRightLogical(or64, 32));
-		//return pix.ToScalar();// >> 24;
 
 		Vector128<uint> or128 = Sse2.Or(pixelBits.GetLower(), pixelBits.GetUpper());
 
@@ -82,19 +82,28 @@ public class BpldatPix32AVX2 : IBpldatPix
 		Vector128<uint> shuf2 = Sse2.Shuffle(or64, 0b_01_00_11_10); // [1,0,3,2]
 		Vector128<uint> pix = Sse2.Or(or64, shuf2);
 
-		return pix.ToScalar();// >> 24;
+		return pix.ToScalar() & planeMasks[planes];
 	}
 
 	public void Save(JArray jo)
 	{
-		//jo.Add("bpldatpix", JToken.FromObject(bpldatpix));
+		var obj = new JObject();
+		obj.Add("pixelBitMask", pixelMaskBit);
+		var bpldatpix32 = new uint[8];
+		for (int i  = 0; i < 8; i++)
+			bpldatpix32[i] = bpldatpix.GetElement(i);
+		obj.Add("bpldatpix", JToken.FromObject(bpldatpix32));
+		jo.Add(obj);
 	}
 
 	public void Load(JObject obj)
 	{
-		//obj.GetValue("bpldatpix")
-		//		.Select(x => new ValueTuple<ulong, ulong>(ulong.Parse((string)x["Item1"]), ulong.Parse((string)x["Item2"])))
-		//		.ToArray()
-		//		.CopyTo(bpldatpix, 0);
+		pixelMaskBit = int.Parse((string)obj.GetValue("pixelBitMask"));
+		var bpldatpix32 = new uint[8];
+		obj.GetValue("bpldatpix")
+				.Select(x => uint.Parse((string)x))
+				.ToArray()
+				.CopyTo(bpldatpix32, 0);
+		bpldatpix = Vector256.Create(bpldatpix32);
 	}
 }

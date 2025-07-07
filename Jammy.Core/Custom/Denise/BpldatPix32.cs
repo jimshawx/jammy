@@ -1,6 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
-using Jammy.Core.Persistence;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 /*
@@ -11,7 +11,7 @@ namespace Jammy.Core.Custom.Denise;
 
 public class BpldatPix32 : IBpldatPix
 {
-	[Persist]
+	//[Persist]
 	private int pixelMaskBit;
 
 	//[Persist] //handled manually
@@ -70,14 +70,18 @@ public class BpldatPix32 : IBpldatPix
 
 	public void Save(JArray jo)
 	{
-		//jo.Add("bpldatpix", JToken.FromObject(bpldatpix));
+		var obj = new JObject();
+		obj.Add("pixelBitMask", pixelMaskBit);
+		obj.Add("bpldatpix", JToken.FromObject(bpldatpix));
+		jo.Add(obj);
 	}
 
 	public void Load(JObject obj)
 	{
-		//obj.GetValue("bpldatpix")
-		//		.Select(x => new ValueTuple<ulong, ulong>(ulong.Parse((string)x["Item1"]), ulong.Parse((string)x["Item2"])))
-		//		.ToArray()
-		//		.CopyTo(bpldatpix, 0);
+		pixelMaskBit = int.Parse((string)obj.GetValue("pixelBitMask"));
+		obj.GetValue("bpldatpix")
+				.Select(x=>uint.Parse((string)x))
+				.ToArray()
+				.CopyTo(bpldatpix, 0);
 	}
 }
