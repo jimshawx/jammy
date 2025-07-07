@@ -19,7 +19,7 @@ using System.Runtime.Intrinsics.X86;
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Core.Custom;
+namespace Jammy.Core.Custom.Denise;
 
 #if DEBUG
 using BpldatPix = BpldatPix32;
@@ -40,9 +40,9 @@ static class BpldatPix32
 		for (int i = 0; i < 8; i++)
 		{
 			if ((i & 1) != 0)
-				Or(ref bpldatpix[i], bpldat[i], (16 - odd));
+				Or(ref bpldatpix[i], bpldat[i], 16 - odd);
 			else
-				Or(ref bpldatpix[i], bpldat[i], (16 - even));
+				Or(ref bpldatpix[i], bpldat[i], 16 - even);
 		}
 	}
 
@@ -70,14 +70,14 @@ static class BpldatPix32
 		uint pix = 0;
 		uint b = 1;
 		for (int i = 0; i < planes; i++, b <<= 1)
-			pix |= (IsBitSet(bpldatpix[i], pixelMaskBit) ? b : 0);
+			pix |= IsBitSet(bpldatpix[i], pixelMaskBit) ? b : 0;
 		return pix;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static bool IsBitSet(uint bp, int bit)
 	{
-		return (bp&(1<<bit))!=0;
+		return (bp&1<<bit)!=0;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -113,9 +113,9 @@ static class BpldatPix64
 		for (int i = 0; i < 8; i++)
 		{
 			if ((i & 1) != 0)
-				Or(ref bpldatpix[i], bpldat[i], (16 - odd));
+				Or(ref bpldatpix[i], bpldat[i], 16 - odd);
 			else
-				Or(ref bpldatpix[i], bpldat[i], (16 - even));
+				Or(ref bpldatpix[i], bpldat[i], 16 - even);
 		}
 	}
 
@@ -146,7 +146,7 @@ static class BpldatPix64
 		uint pix = 0;
 		uint b = 1;
 		for (int i = 0; i < planes; i++, b <<= 1)
-			pix |= (IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0);
+			pix |= IsBitSet(ref bpldatpix[i], pixelMaskBit) ? b : 0;
 		return pix;
 	}
 
@@ -156,14 +156,14 @@ static class BpldatPix64
 		// mask is 0 if bit < 64, ulong.MaxValue if bit >= 64
 		ulong mask = (ulong)-(bit >> 6); // (bit >> 6) is 0 for 0-63, 1 for 64-127
 		int shift = bit & 63;
-		ulong value = ((bp.Item2 & ~mask) | (bp.Item1 & mask));
-		return ((value >> shift) & 1UL) != 0;
+		ulong value = bp.Item2 & ~mask | bp.Item1 & mask;
+		return (value >> shift & 1UL) != 0;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void Or(ref ValueTuple<ulong, ulong> bp, ulong bits, int shift)
 	{
-		bp.Item1 |= bits >> (64 - shift);
+		bp.Item1 |= bits >> 64 - shift;
 		bp.Item2 |= bits << shift;
 	}
 
@@ -193,14 +193,14 @@ static class BpldatPix32AVX2
 
 	public static void WriteBitplanes(ref ulong[] bpldat, int even, int odd)
 	{
-		bits[0] = (uint)(bpldat[0] << (16 - even));
-		bits[1] = (uint)(bpldat[1] << (16 - odd));
-		bits[2] = (uint)(bpldat[2] << (16 - even));
-		bits[3] = (uint)(bpldat[3] << (16 - odd));
-		bits[4] = (uint)(bpldat[4] << (16 - even));
-		bits[5] = (uint)(bpldat[5] << (16 - odd));
-		bits[6] = (uint)(bpldat[6] << (16 - even));
-		bits[7] = (uint)(bpldat[7] << (16 - odd));
+		bits[0] = (uint)(bpldat[0] << 16 - even);
+		bits[1] = (uint)(bpldat[1] << 16 - odd);
+		bits[2] = (uint)(bpldat[2] << 16 - even);
+		bits[3] = (uint)(bpldat[3] << 16 - odd);
+		bits[4] = (uint)(bpldat[4] << 16 - even);
+		bits[5] = (uint)(bpldat[5] << 16 - odd);
+		bits[6] = (uint)(bpldat[6] << 16 - even);
+		bits[7] = (uint)(bpldat[7] << 16 - odd);
 		var newbits = Vector256.Create(bits);
 		bpldatpix |= newbits;
 	}
@@ -381,7 +381,7 @@ public class Denise : IDenise
 	{
 		//scrolling
 		int even = bplcon1 & 0xf;
-		int odd = (bplcon1 >> 4) & 0xf;
+		int odd = bplcon1 >> 4 & 0xf;
 
 		BpldatPix.WriteBitplanes(ref bpldat, even, odd);
 	}
@@ -477,7 +477,7 @@ public class Denise : IDenise
 
 	private void CopperBitplaneConvert()
 	{
-		int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
+		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
 		for (int p = 0; p < pixelLoop; p++)
 		{
 			//decode the colour
@@ -504,7 +504,7 @@ public class Denise : IDenise
 				uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
 
 				//which playfield is in front?
-				if ((bplcon2 & (1 << 6)) != 0)
+				if ((bplcon2 & 1 << 6) != 0)
 					col = pix1 != 0 ? col1 : col0;
 				else
 					col = pix0 != 0 ? col0 : col1;
@@ -515,10 +515,10 @@ public class Denise : IDenise
 				//else
 				//	pix = pix0 != 0 ? pix0 : pix1;
 			}
-			else if (planes == 6 && ((bplcon0 & (uint)BPLCON0.HAM) != 0))
+			else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
 			{
 				//HAM6
-				uint ham = (pix & 0b11_0000);
+				uint ham = pix & 0b11_0000;
 				pix &= 0xf;
 				if (ham == 0)
 				{
@@ -527,36 +527,36 @@ public class Denise : IDenise
 				else
 				{
 					ham >>= 4;
-					uint px = (uint)(pix * 0x11);
+					uint px = pix * 0x11;
 					if (ham == 1)
 					{
 						//col+B
-						col = (lastcol & 0xffffff00) | px;
+						col = lastcol & 0xffffff00 | px;
 					}
 					else if (ham == 3)
 					{
 						//col+G
-						col = (lastcol & 0xffff00ff) | (px << 8);
+						col = lastcol & 0xffff00ff | px << 8;
 					}
 					else
 					{
 						//col+R
-						col = (lastcol & 0xff00ffff) | (px << (8 + 8));
+						col = lastcol & 0xff00ffff | px << 8 + 8;
 					}
 				}
 			}
-			else if (planes == 6 && ((bplcon0 & (uint)BPLCON0.HAM) == 0 &&
-			         (settings.ChipSet != ChipSet.AGA || (bplcon2 & (1 << 9)) == 0)))
+			else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) == 0 &&
+			         (settings.ChipSet != ChipSet.AGA || (bplcon2 & 1 << 9) == 0))
 			{
 				//EHB
 				col = truecolour[pix & 0x1f];
 				if ((pix & 0b100000) != 0)
 					col = (col & 0x00fefefe) >> 1;
 			}
-			else if (planes == 8 && ((bplcon0 & (uint)BPLCON0.HAM) != 0))
+			else if (planes == 8 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
 			{
 				//HAM8
-				uint ham = (pix & 0b11);
+				uint ham = pix & 0b11;
 				pix &= 0xfc;
 				if (ham == 0)
 				{
@@ -564,21 +564,21 @@ public class Denise : IDenise
 				}
 				else
 				{
-					uint px = (uint)(pix | (pix >> 6));
+					uint px = pix | pix >> 6;
 					if (ham == 1)
 					{
 						//col+B
-						col = (lastcol & 0xffffff00) | px;
+						col = lastcol & 0xffffff00 | px;
 					}
 					else if (ham == 3)
 					{
 						//col+G
-						col = (lastcol & 0xffff00ff) | (px << 8);
+						col = lastcol & 0xffff00ff | px << 8;
 					}
 					else
 					{
 						//col+R
-						col = (lastcol & 0xff00ffff) | (px << (8 + 8));
+						col = lastcol & 0xff00ffff | px << 8 + 8;
 					}
 				}
 			}
@@ -691,13 +691,13 @@ public class Denise : IDenise
 
 		if (clxm != 0)
 		{
-			int clxconMatch = (clxcon & 0x3f) | ((clxcon2 & 0x3) << 6);
-			int clxconEnable = ((clxcon >> 6) & 0x3f) | (clxcon2 & 0xc0);
+			int clxconMatch = clxcon & 0x3f | (clxcon2 & 0x3) << 6;
+			int clxconEnable = clxcon >> 6 & 0x3f | clxcon2 & 0xc0;
 
 			//combine in the enabled odd-numbered sprites
 			for (int s = 0; s < 4; s++)
 			{
-				if ((clxcon & (0x1000 << s)) != 0)
+				if ((clxcon & 0x1000 << s) != 0)
 					clx[s] = (clx[s * 2] | clx[s * 2 + 1]) != 0 ? 0xff : 0;
 				else
 					clx[s] = clx[s * 2] != 0 ? 0xff : 0;
@@ -732,7 +732,7 @@ public class Denise : IDenise
 			}
 
 			//odd->even bitplane collision
-			if ((((pix & 0xb10101010) >> 1) & pix) != 0)
+			if (((pix & 0xb10101010) >> 1 & pix) != 0)
 				clxdat |= 1;
 		}
 	}
@@ -747,26 +747,26 @@ public class Denise : IDenise
 
 	private void UpdateBPLCON0()
 	{
-		planes = (bplcon0 >> 12) & 7;
+		planes = bplcon0 >> 12 & 7;
 
 		//logger.LogTrace($"D BPLCON0 {bplcon0:X4} {planes} {clock.TimeStamp()}");
 
 		if (settings.ChipSet == ChipSet.AGA)
 		{
-			if (planes == 0 && (bplcon0 & (1 << 4)) != 0)
+			if (planes == 0 && (bplcon0 & 1 << 4) != 0)
 				planes = 8;
 		}
 
 		//https://eab.abime.net/showthread.php?t=111329
 
 		//how many pixels should be fetched per clock in the current mode?
-		if ((bplcon0 & (uint)Denise.BPLCON0.HiRes) != 0)
+		if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 		{
 			//4 colour clocks, fetch 16 pixels
 			//1 colour clock, draw 4 pixel
 			pixelLoop = 4;
 		}
-		else if ((bplcon0 & (uint)Denise.BPLCON0.SuperHiRes) != 0)
+		else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0)
 		{
 			//2 colour clocks, fetch 16 pixels
 			//1 colour clock, draw 8 pixel
@@ -789,13 +789,13 @@ public class Denise : IDenise
 		if (false)
 		{
 			int pf1 = bplcon2 & 7;
-			int pf2 = (bplcon2 >> 3)&7;
-			bool dpf = ((bplcon0 & (1 << 10)) != 0);
+			int pf2 = bplcon2 >> 3&7;
+			bool dpf = (bplcon0 & 1 << 10) != 0;
 			List<string> s = ["SP01", "SP23", "SP45", "SP67"];
 			s.Insert(pf1, "PF1");
 			if (pf2 >= pf1) pf2++;
 			s.Insert(pf2, "PF2");
-			logger.LogTrace($"{(dpf?"DPF":" X ")} PF{((bplcon2>>6)&1)+1} {string.Join(' ',s)}");
+			logger.LogTrace($"{(dpf?"DPF":" X ")} PF{(bplcon2>>6&1)+1} {string.Join(' ',s)}");
 			oldbplcon2 = bplcon2;
 		}
 		pixelAction = GetModeConversion();
@@ -813,7 +813,7 @@ public class Denise : IDenise
 
 	private void UpdateDIWSTOP()
 	{
-		diwstoph = (diwstop & 0xff) | 0x100;
+		diwstoph = diwstop & 0xff | 0x100;
 	}
 
 	private void UpdateDIWHIGH()
@@ -840,14 +840,14 @@ public class Denise : IDenise
 			//is it the visible area horizontally?
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
 			//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
-			if (clock.DeniseHorizontalPos >= ((diwstrth + debugger.diwSHack -0) )  && clock.DeniseHorizontalPos < ((diwstoph + debugger.diwEHack -0) ) )
+			if (clock.DeniseHorizontalPos >= diwstrth + debugger.diwSHack -0   && clock.DeniseHorizontalPos < diwstoph + debugger.diwEHack -0  )
 			{
 				//CopperBitplaneConvert();
 				pixelAction();
 			}
 			else
 			{
-				int m = (pixelLoop / 2) - 1; //2->0,4->1,8->3
+				int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
 				//outside horizontal area
 				for (int p = 0; p < pixelLoop; p++)
 				{
@@ -1002,7 +1002,7 @@ public class Denise : IDenise
 
 	private uint Explode(ushort c)
 	{
-		return (uint)(((c & 0xf) << 4) | ((c & 0xf0) << 8) | ((c & 0xf00) << 12));
+		return (uint)((c & 0xf) << 4 | (c & 0xf0) << 8 | (c & 0xf00) << 12);
 	}
 
 	private void EndDeniseLine()

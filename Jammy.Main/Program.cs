@@ -9,6 +9,7 @@ using Jammy.Core.CPU.Musashi.MC68030;
 using Jammy.Core.Custom;
 using Jammy.Core.Custom.Audio;
 using Jammy.Core.Custom.CIA;
+using Jammy.Core.Custom.Denise;
 using Jammy.Core.Custom.IO;
 using Jammy.Core.Debug;
 using Jammy.Core.Floppy;
