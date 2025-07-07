@@ -43,7 +43,7 @@ namespace Jammy.Core.Custom
 			Local,
 			Fellow
 		}
-		private LineType bmode = LineType.Local;
+		private LineType bmode = LineType.Fellow;
 
 		public void Logging(bool enabled) { blitterLog = enabled; }
 		public void Dumping(bool enabled) { /*blitterDump = enabled;*/ bmode = (LineType)((int)bmode ^ 1); }

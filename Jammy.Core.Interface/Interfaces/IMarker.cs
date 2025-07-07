@@ -210,6 +210,15 @@ namespace Jammy.Core.Interface.Interfaces
 		public uint[] DebugGetPalette();
 	}
 
+	public interface IBpldatPix : IStatePersister
+	{
+		void Clear();
+		void NextPixel();
+		void SetPixelBitMask(uint pixelBits);
+		void WriteBitplanes(ref ulong[] bpldat, int even, int odd);
+		uint GetPixel(int planes);
+	}
+
 	public interface IRequiresDMA
 	{
 		void Init(IDMA dma);

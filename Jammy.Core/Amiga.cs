@@ -209,7 +209,7 @@ namespace Jammy.Core
 		}
 
 		private bool cycleExact { get { return cpu is IMoiraCPU; } }
-		private bool maximumSpeed { get { return false; } }
+		private bool maximumSpeed { get { return true; } }
 
 		public void RunEmulations()
 		{

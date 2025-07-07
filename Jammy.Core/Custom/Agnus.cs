@@ -297,9 +297,9 @@ noBitplaneDMA:
 
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 		{
-			if ((bplcon0 & (uint)Denise.BPLCON0.HiRes) != 0)
+			if ((bplcon0 & (uint)Denise.Denise.BPLCON0.HiRes) != 0)
 				plane = fetchHi[planeIdx] - 1;
-			else if ((bplcon0 & (uint)Denise.BPLCON0.SuperHiRes) != 0)
+			else if ((bplcon0 & (uint)Denise.Denise.BPLCON0.SuperHiRes) != 0)
 				plane = fetchSh[planeIdx] - 1;
 			else
 				plane = fetchLo[planeIdx] - 1;
@@ -553,7 +553,7 @@ noBitplaneDMA:
 		//https://eab.abime.net/showthread.php?t=111329
 
 		//how many pixels should be fetched per clock in the current mode?
-		if ((bplcon0 & (uint)Denise.BPLCON0.HiRes) != 0)
+		if ((bplcon0 & (uint)Denise.Denise.BPLCON0.HiRes) != 0)
 		{
 			//4 colour clocks, fetch 16 pixels
 			//1 colour clock, draw 4 pixel
@@ -582,7 +582,7 @@ noBitplaneDMA:
 				pixmod = 8;
 			}
 		}
-		else if ((bplcon0 & (uint)Denise.BPLCON0.SuperHiRes) != 0)
+		else if ((bplcon0 & (uint)Denise.Denise.BPLCON0.SuperHiRes) != 0)
 		{
 			//2 colour clocks, fetch 16 pixels
 			//1 colour clock, draw 8 pixel
@@ -686,7 +686,7 @@ noBitplaneDMA:
 					value |= (ushort)((clock.VerticalPos & 1) << 7); //toggle LOL each alternate line (NTSC only)
 
 				//if we're in interlace mode
-				if ((bplcon0 & (uint)Denise.BPLCON0.Interlace) != 0)
+				if ((bplcon0 & (uint)Denise.Denise.BPLCON0.Interlace) != 0)
 				{
 					value |= (ushort)(clock.LongFrame() << 15); //set LOF=1/0 on alternate frames
 				}

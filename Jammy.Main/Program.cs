@@ -35,6 +35,7 @@ using Parky.Logging;
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.Intrinsics.X86;
 using System.Windows.Forms;
 
 /*
@@ -226,6 +227,18 @@ namespace Jammy.Main
 			else
 			{
 				services.AddSingleton<IDiskController, NullDiskController>();
+			}
+
+			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
+			{
+				if (Avx2.IsSupported)
+					services.AddSingleton<IBpldatPix, BpldatPix32AVX2>();
+				else
+					services.AddSingleton<IBpldatPix, BpldatPix32>();
+			}
+			else
+			{
+				services.AddSingleton<IBpldatPix, BpldatPix64>();
 			}
 
 			//set up the list of IStatePersisters

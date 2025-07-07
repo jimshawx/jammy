@@ -25,6 +25,7 @@ using Jammy.UI.Settings.Avalonia;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Runtime.Intrinsics.X86;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -196,6 +197,18 @@ public class Program
 			services.AddSingleton<IDiskController, NullDiskController>();
 		}
 
+		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
+		{
+			if (Avx2.IsSupported)
+				services.AddSingleton<IBpldatPix, BpldatPix32AVX2>();
+			else
+				services.AddSingleton<IBpldatPix, BpldatPix32>();
+		}
+		else
+		{
+			services.AddSingleton<IBpldatPix, BpldatPix64>();
+		}
+
 		//set up the list of IStatePersisters
 		var types = services.Where(x => x.ImplementationType != null &&
 			x.ImplementationType.GetInterfaces().Contains(typeof(IStatePersister))).ToList();
@@ -208,7 +221,6 @@ public class Program
 		var ciab = serviceProvider.GetRequiredService<ICIABEven>();
 		serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 		serviceProvider.GetRequiredService<ICopper>().Init(dma);
-		serviceProvider.GetRequiredService<IBlitter>().Init(dma);
 		serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab);
 
 		var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
