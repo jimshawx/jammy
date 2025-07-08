@@ -82,6 +82,8 @@ public class BpldatPix32AVX2 : IBpldatPix
 		Vector128<uint> shuf2 = Sse2.Shuffle(or64, 0b_01_00_11_10); // [1,0,3,2]
 		Vector128<uint> pix = Sse2.Or(or64, shuf2);
 
+		NextPixel();
+
 		return pix.ToScalar() & planeMasks[planes];
 	}
 

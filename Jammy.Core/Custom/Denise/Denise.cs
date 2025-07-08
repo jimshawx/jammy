@@ -236,7 +236,7 @@ public class Denise : IDenise
 
 			uint pix = bpldatPix.GetPixel(planes);
 
-			bpldatPix.NextPixel();
+			//bpldatPix.NextPixel();
 
 			//BPLAM
 			pix ^= (uint)(bplcon4 >> 8);

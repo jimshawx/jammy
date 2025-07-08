@@ -53,6 +53,9 @@ public class BpldatPix32 : IBpldatPix
 		uint b = 1;
 		for (int i = 0; i < planes; i++, b <<= 1)
 			pix |= IsBitSet(bpldatpix[i], pixelMaskBit) ? b : 0;
+
+		NextPixel();
+
 		return pix;
 	}
 
