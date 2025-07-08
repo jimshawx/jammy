@@ -172,7 +172,7 @@ namespace Jammy.Core.EmulationWindow.DX
 					Width = (uint)screenWidth,
 					Height = (uint)screenHeight,
 					AlphaMode = AlphaMode.Ignore,
-					BufferCount = 2,
+					BufferCount = 3,
 					BufferUsage = Usage.RenderTargetOutput,
 					Flags = 0,
 					Format = Format.B8G8R8A8_UNorm,
