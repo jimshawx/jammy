@@ -40,7 +40,6 @@ namespace Jammy.Core.Memory
 				ciaMemory,
 
 				chipRAM,
-				trapdoorRAM,
 				kickstartROM,
 
 				//agnus,
@@ -52,7 +51,8 @@ namespace Jammy.Core.Memory
 				diskController,
 				akiko,
 				motherboardRAM,
-				cpuSlotRAM
+				cpuSlotRAM,
+				trapdoorRAM
 			};
 
 			memoryManager.AddDevices(devices);
