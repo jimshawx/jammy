@@ -1,6 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Enums;
-using Jammy.NativeOverlay.Overlays;
+using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -427,16 +427,14 @@ namespace Jammy.Core.EmulationWindow.Window
 			public int dmDisplayFrequency;
 		}
 
-		private readonly IDiskLightOverlay diskLightOverlay;
-		private readonly ITicksOverlay ticksOverlay;
+		private readonly IOverlayCollection overlayCollection;
 		private readonly ILogger logger;
 		// Form emulation;
 		private int[] screen;
 
-		public EmulationWindow(IDiskLightOverlay diskLightOverlay, ITicksOverlay ticksOverlay, ILogger<EmulationWindow> logger)
+		public EmulationWindow(IOverlayCollection overlayCollection, ILogger<EmulationWindow> logger)
 		{
-			this.diskLightOverlay = diskLightOverlay;
-			this.ticksOverlay = ticksOverlay;
+			this.overlayCollection = overlayCollection;
 			this.logger = logger;
 
 			var ss = new SemaphoreSlim(1);
@@ -579,8 +577,7 @@ namespace Jammy.Core.EmulationWindow.Window
 
 		public void Blit(int[] screen)
 		{
-			ticksOverlay.Render();
-			diskLightOverlay.Render();
+			overlayCollection.Render();
 
 			//var hdc = GetDC(hWnd);
 			SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight,

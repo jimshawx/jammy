@@ -1,5 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
-using Jammy.NativeOverlay.Overlays;
+using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using System.Runtime.InteropServices;
 
@@ -190,16 +190,14 @@ namespace Jammy.Core.EmulationWindow.X
 		private const long KeyReleaseMask = 1 << 1;
 		private const long ButtonPressMask = 1 << 2;
 		private const long ButtonReleaseMask = 1 << 3;
-		private readonly IDiskLightOverlay diskLightOverlay;
-		private readonly ITicksOverlay ticksOverlay;
+		private readonly IOverlayCollection overlayCollection;
 		private readonly ILogger logger;
 
 		private int[] screen;
 
-		public EmulationWindow(IDiskLightOverlay diskLightOverlay, ITicksOverlay ticksOverlay, ILogger<EmulationWindow> logger)
+		public EmulationWindow(IOverlayCollection overlayCollection, ILogger<EmulationWindow> logger)
 		{
-			this.diskLightOverlay = diskLightOverlay;
-			this.ticksOverlay = ticksOverlay;
+			this.overlayCollection = overlayCollection;
 			this.logger = logger;
 		}
 
@@ -214,8 +212,7 @@ namespace Jammy.Core.EmulationWindow.X
 
 		public void Blit(int[] screen)
 		{
-			ticksOverlay.Render();
-			diskLightOverlay.Render();
+			overlayCollection.Render();
 
 			XPutImage(xdisplay, xwindow, gc, ref ximage, 0, 0, 0, 0, screenWidth, screenHeight);
 			XFlush(xdisplay);

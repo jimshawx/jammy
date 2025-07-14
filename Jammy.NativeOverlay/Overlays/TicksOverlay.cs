@@ -56,8 +56,5 @@ namespace Jammy.NativeOverlay.Overlays
 				nativeOverlay.WriteText(20 + (int)avefps * ss + 4, 10 + 4 * ss, 0xffffff, $"{(int)avefps}");
 			}
 		}
-
-
-
 	}
 }

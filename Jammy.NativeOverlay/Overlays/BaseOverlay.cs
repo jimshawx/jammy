@@ -35,4 +35,9 @@ namespace Jammy.NativeOverlay.Overlays
 	public interface ITicksOverlay : IOverlayRenderer
 	{
 	}
+
+	public interface ICpuUsageOverlay : IOverlayRenderer
+	{
+	}
+
 }

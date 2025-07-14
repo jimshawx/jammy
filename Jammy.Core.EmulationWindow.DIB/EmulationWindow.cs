@@ -1,7 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Enums;
 using Jammy.NativeOverlay;
-using Jammy.NativeOverlay.Overlays;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -72,16 +71,14 @@ namespace Jammy.Core.EmulationWindow.DIB
 		[DllImport("user32.dll")]
 		private static extern short GetAsyncKeyState(int key);
 
-		private readonly IDiskLightOverlay diskLightOverlay;
-		private readonly ITicksOverlay ticksOverlay;
+		private readonly IOverlayCollection overlayCollection;
 		private readonly ILogger logger;
 		private Form emulation;
 		private int[] screen;
 
-		public EmulationWindow(IDiskLightOverlay diskLightOverlay, ITicksOverlay ticksOverlay, ILogger<EmulationWindow> logger)
+		public EmulationWindow(IOverlayCollection overlayCollection, ILogger<EmulationWindow> logger)
 		{
-			this.diskLightOverlay = diskLightOverlay;
-			this.ticksOverlay = ticksOverlay;
+			this.overlayCollection = overlayCollection;
 			this.logger = logger;
 
 			var ss = new SemaphoreSlim(1);
@@ -289,8 +286,7 @@ namespace Jammy.Core.EmulationWindow.DIB
 		{
 			if (emulation.IsDisposed) return;
 
-			ticksOverlay.Render();
-			diskLightOverlay.Render();
+			overlayCollection.Render();
 
 			var hdc = gfx.GetHdc();
 			SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight,
