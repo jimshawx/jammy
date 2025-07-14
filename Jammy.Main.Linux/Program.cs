@@ -209,6 +209,9 @@ public class Program
 		}
 		else
 		{
+			//if (Avx2.IsSupported)
+			//	services.AddSingleton<IBpldatPix, BpldatPix64AVX2>();
+			//else
 			services.AddSingleton<IBpldatPix, BpldatPix64>();
 		}
 
