@@ -21,6 +21,7 @@ using Jammy.Disassembler.Analysers;
 using Jammy.Disassembler.TypeMapper;
 using Jammy.Interface;
 using Jammy.NativeOverlay;
+using Jammy.NativeOverlay.Overlays;
 using Jammy.UI.Settings.Avalonia;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -135,6 +136,8 @@ public class Program
 			.AddSingleton<IOpenFileTracker, OpenFileTracker>()
 			.AddSingleton<ILibraryBases, LibraryBases>()
 			.AddSingleton<INativeOverlay, NativeOverlay.NativeOverlay>()
+			.AddSingleton<IDiskLightOverlay, DiskLightOverlay>()
+			.AddSingleton<ITicksOverlay, TicksOverlay>()
 			.AddSingleton<IChipsetDebugger, ChipsetDebugger>()
 			.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 			.AddSingleton<Jammy>()

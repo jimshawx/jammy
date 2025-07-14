@@ -4,6 +4,7 @@ using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Jammy.Interface;
+using Jammy.NativeOverlay.Overlays;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -49,6 +50,7 @@ namespace Jammy.Core.Floppy
 
 		private readonly IInterrupt interrupt;
 		private readonly IEmulationWindow window;
+		private readonly IDiskLightOverlay diskLightOverlay;
 		private IDMA dma;
 		private readonly ILogger logger;
 
@@ -68,11 +70,12 @@ namespace Jammy.Core.Floppy
 				verbose ^= true;
 		}
 
-		public DiskDrives(IChipRAM memory, IInterrupt interrupt, IEmulationWindow emulationWindow, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
+		public DiskDrives(IChipRAM memory, IInterrupt interrupt, IEmulationWindow emulationWindow, IDiskLightOverlay diskLightOverlay, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
 		{
 			this.memory = memory;
 			this.interrupt = interrupt;
 			this.window = emulationWindow;
+			this.diskLightOverlay = diskLightOverlay;
 			this.logger = logger;
 
 			this.mfmEncoder = new MFM();
@@ -487,7 +490,7 @@ namespace Jammy.Core.Floppy
 			}
 
 			UI.UI.DiskLight = drive[0].motor | drive[1].motor | drive[2].motor | drive[3].motor;
-			window.DiskLight = UI.UI.DiskLight;
+			diskLightOverlay.DiskLight = UI.UI.DiskLight;
 		}
 
 		//there is also bit 4, DSKINDEX in CIAB icr register BFDD00

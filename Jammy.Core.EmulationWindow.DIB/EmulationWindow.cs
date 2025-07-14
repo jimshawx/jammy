@@ -1,9 +1,10 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Enums;
 using Jammy.NativeOverlay;
+using Jammy.NativeOverlay.Overlays;
 using Microsoft.Extensions.Logging;
-using System.Runtime.InteropServices;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -70,15 +71,17 @@ namespace Jammy.Core.EmulationWindow.DIB
 
 		[DllImport("user32.dll")]
 		private static extern short GetAsyncKeyState(int key);
-	
-		private readonly INativeOverlay nativeOverlay;
+
+		private readonly IDiskLightOverlay diskLightOverlay;
+		private readonly ITicksOverlay ticksOverlay;
 		private readonly ILogger logger;
 		private Form emulation;
 		private int[] screen;
 
-		public EmulationWindow(INativeOverlay nativeOverlay, ILogger<EmulationWindow> logger)
+		public EmulationWindow(IDiskLightOverlay diskLightOverlay, ITicksOverlay ticksOverlay, ILogger<EmulationWindow> logger)
 		{
-			this.nativeOverlay = nativeOverlay;
+			this.diskLightOverlay = diskLightOverlay;
+			this.ticksOverlay = ticksOverlay;
 			this.logger = logger;
 
 			var ss = new SemaphoreSlim(1);
@@ -282,75 +285,18 @@ namespace Jammy.Core.EmulationWindow.DIB
 			public int dmDisplayFrequency;
 		}
 
-		public bool PowerLight { private get; set; }
-		public bool DiskLight {  private get; set; }
-
 		public void Blit(int[] screen)
 		{
 			if (emulation.IsDisposed) return;
 
-			RenderTicks();
-			RenderLights();
+			ticksOverlay.Render();
+			diskLightOverlay.Render();
 
 			var hdc = gfx.GetHdc();
 			SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight,
 				0, 0, 0, (uint)screenHeight,
 				screen, ref lpbmi, BITMAPINFO.DIBColorTable.DIB_RGB_COLORS);
 			gfx.ReleaseHdc(hdc);
-		}
-
-		private DateTime lastTick = DateTime.Now;
-		private float[] fpsarr = new float[128];
-		private int fpsarrpos = 0;
-		private void RenderTicks()
-		{
-			var now = DateTime.Now;
-			TimeSpan dt = now - lastTick;
-			lastTick = now;
-
-			if (dt > TimeSpan.Zero && dt.Milliseconds <= 1000)
-			{
-				int so = 20 + 10 * screenWidth;
-				int ss = 2;
-				var fps = 1000.0f / dt.Milliseconds;
-				fpsarr[fpsarrpos++] = fps;
-				fpsarrpos &= fpsarr.Length - 1;
-				var avefps = fpsarr.Sum() / fpsarr.Length;
-
-				for (int i = 0; i <= displayHz * ss; i += 10 * ss)
-				{
-					for (int y = 0; y < 8 * ss; y++)
-						screen[so + i + y * screenWidth] = 0xffffff;
-				}
-
-				for (int i = 0; i < fps * ss; i++)
-				{
-					for (int y = 0; y < 3 * ss; y++)
-						screen[so + i + y * screenWidth] = 0xff0000;
-				}
-
-				for (int i = 0; i < avefps * ss; i++)
-				{
-					for (int y = 0; y < 3 * ss; y++)
-						screen[so + i + (4 * ss + y) * screenWidth] = 0x0000ff;
-				}
-				nativeOverlay.WriteText(20 + (int)fps    * ss + 4, 10, 0xffffff, $"{(int)fps}");
-				nativeOverlay.WriteText(20 + (int)avefps * ss + 4, 10 + 4 * ss, 0xffffff, $"{(int)avefps}");
-			}
-		}
-
-		private void RenderLights()
-		{
-			int sx = screenWidth - 100;
-			int sy = 20;
-			for (int y = 0; y < 8; y++)
-			{
-				for (int x = 0; x < 24; x++)
-				{
-					screen[x + sx + (sy + y) * screenWidth] = PowerLight ? 0xff0000 : 0x7f0000;
-					screen[x + sx + 32 + (sy + y) * screenWidth] = DiskLight ? 0x00ff00 : 0x007f00;
-				}
-			}
 		}
 
 		public Types.Types.Point RecentreMouse()

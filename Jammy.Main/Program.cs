@@ -37,6 +37,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Intrinsics.X86;
 using System.Windows.Forms;
+using Jammy.NativeOverlay.Overlays;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -152,6 +153,8 @@ namespace Jammy.Main
 				.AddSingleton<IOpenFileTracker, OpenFileTracker>()
 				.AddSingleton<ILibraryBases, LibraryBases>()
 				.AddSingleton<INativeOverlay, NativeOverlay.NativeOverlay>()
+				.AddSingleton<IDiskLightOverlay, DiskLightOverlay>()
+				.AddSingleton<ITicksOverlay, TicksOverlay>()
 				.AddSingleton<IChipsetDebugger, ChipsetDebugger>()
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 				.AddSingleton<Jammy>()

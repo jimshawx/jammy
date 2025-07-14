@@ -1,10 +1,15 @@
-﻿namespace Jammy.NativeOverlay
+﻿/*
+	Copyright 2020-2021 James Shaw. All Rights Reserved.
+*/
+
+namespace Jammy.NativeOverlay
 {
 	public interface INativeOverlay
 	{
 		void Init(int[] screen, int screenWidth, int screenHeight);
 		void WriteText(int x, int y, int colour, string txt);
 		void TextScale(int s);
+		int[] Screen {get;}
 		int SCREEN_WIDTH { get; }
 		int SCREEN_HEIGHT { get; }
 	}
@@ -24,6 +29,7 @@
 
 		public int SCREEN_WIDTH => width;
 		public int SCREEN_HEIGHT => height;
+		public int[] Screen => screen;
 
 		private int sx = 2, sy = 2;
 
