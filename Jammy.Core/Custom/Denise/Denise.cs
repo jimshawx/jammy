@@ -455,7 +455,102 @@ public class Denise : IDenise
 		}
 	}
 
+
+	private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private void DoSprites(ref uint col, byte pix, bool shift)
+	{
+		uint active = 0;
+		uint attached = 0;
+
+		for (int s = 0; s < 8; s++)
+		{
+			active <<= 1;
+			attached <<= 1;
+
+			bits[s] = 0;
+			attached |= (uint)(sprctl[s] >> 7) & 1;
+			if (spriteMask[s] != 0)
+			{
+				active |= 1;
+				bits[s] = ((sprdatapix[s] & spriteMask[s]) != 0 ? 1u : 0) + ((sprdatbpix[s] & spriteMask[s]) != 0 ? 2u : 0);
+			}
+		}
+		//attached/active bits are now like so:
+		//01234567
+
+		uint oattached = attached;
+
+		for (int s = 7; s >= 0; s -= 2)
+		{
+			//if odd sprite is attached, shift its bits
+			if ((attached & 1) != 0)
+				bits[s] <<= 2;
+
+			attached >>= 2;
+		}
+
+		attached = oattached;
+
+		uint scol = 0;
+		int sp = 7;
+		while (sp >= 0)
+		{
+			//if first, or both are attached (check the attached bit on the odd sprite)
+			//https://eab.abime.net/showthread.php?t=113291&highlight=Attached+sprites
+			//only question is if the attach bit on even numbered sprites has any effect
+			if ((attached & 1) != 0)
+			{
+				//attached (even when not on top of each other)
+				scol = 0;
+				if ((active & 1) != 0) scol |= bits[sp];
+				if ((active & 2) != 0) scol |= bits[sp-1];
+
+				if (scol != 0)
+				{ 
+					col = truecolour[16 + scol];
+				}
+				sp -= 2;
+				active >>= 2;
+				attached >>= 2;
+			}
+			else
+			{
+				//odd
+				scol = 0;
+				if ((active & 1) != 0) scol |= bits[sp];
+
+				if (scol != 0)
+				{ 
+					col = truecolour[16 + 4 * (sp >> 1) + scol];
+				}
+
+				sp--;
+				active >>= 1;
+				attached >>= 1;
+
+				//even
+				scol = 0;
+				if ((active & 1) != 0) scol |= bits[sp];
+
+				if (scol != 0)
+				{
+					col = truecolour[16 + 4 * (sp >> 1) + scol];
+				}
+
+				sp--;
+				active >>= 1;
+				attached >>= 1;
+			}
+		}
+
+		if (shift)
+		{
+			for (int s = 0; s < 8; s++)
+				spriteMask[s] >>= 1;
+		}
+	}
+
+	private void DoSprites2(ref uint col, byte pix, bool shift)
 	{
 		//sprites
 		int clxm = 0;
@@ -495,7 +590,8 @@ public class Denise : IDenise
 					if (spix != 0)
 					{ 
 						//col = truecolour[16 + spix];
-						sprpix[s] = sprpix[s + 1] = (byte)(16+spix);
+						//sprpix[s] = sprpix[s + 1] = (byte)(16+spix);
+						sprpix[s] = (byte)(16 + spix);
 						col = truecolour[sprpix[s]];
 					}
 				}
@@ -710,7 +806,11 @@ public class Denise : IDenise
 				uint col = lastcol = truecolour[0];
 				//for (int k = 0; k < 4; k++)
 				//	screen[dptr++] = (int)col;
-				Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
+				//Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
 			}
 		}
 		else
@@ -724,9 +824,14 @@ public class Denise : IDenise
 				if ((blankingStatus & Blanking.HorizontalBlank)!=0) c0 = 0xff0000;
 				if ((blankingStatus & Blanking.VerticalBlank)!=0) c1 = 0x0000ff;
 				uint col = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0 ? c0 : c1;
+				lastcol = truecolour[0];
 				//for (int k = 0; k < 4; k++)
 				//	screen[dptr++] = (int)col;
-				Array.Fill(screen, (int)col, dptr, 4); dptr+= 4;
+				//Array.Fill(screen, (int)col, dptr, 4); dptr+= 4;
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
 			}
 			else
 			{ 
@@ -736,7 +841,11 @@ public class Denise : IDenise
 				uint col = lastcol = truecolour[0];
 				//for (int k = 0; k < 4; k++)
 				//	screen[dptr++] = (int)col;
-				Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
+				//Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
 			}
 		}
 	}

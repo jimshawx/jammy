@@ -4,12 +4,12 @@ using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -361,6 +361,13 @@ noBitplaneDMA:
 		return false;
 	}
 
+	private string MergeBP(ulong sprdata, ulong sprdatb)
+	{
+		ulong a = ulong.Parse(sprdata.ToBin());
+		ulong b = ulong.Parse(sprdata.ToBin());
+		return (a+b*2).ToString().PadLeft(16,'0');
+	}
+
 	public void UpdateSprites()
 	{
 		//if (plane == 0 && lineState == DMALineState.Fetching)
@@ -375,7 +382,10 @@ noBitplaneDMA:
 				hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
 
 				if (clock.HorizontalPos == hstart >> 1)
+				{
+					//logger.LogTrace($"S{s} H{clock.HorizontalPos,3} V{clock.VerticalPos,3} {MergeBP(sprdata[s], sprdatb[s])} H:{sprpos[s]&0xff,3} V:{sprpos[s]>>8,3} {sprctl[s].ToBin()}");
 					denise.WriteSprite(s, sprdata, sprdatb, sprctl);
+				}
 			}
 		}
 	}
