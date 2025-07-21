@@ -158,7 +158,7 @@ namespace Jammy.Main
 				.AddSingleton<IDiskLightOverlay>(x => x.GetRequiredService<DiskLightOverlay>())
 				.AddSingleton<IOverlayRenderer>(x => x.GetRequiredService<DiskLightOverlay>())
 				.AddSingleton<IOverlayRenderer, TicksOverlay>()
-				.AddSingleton<IOverlayRenderer, CpuUsageOverlay>()
+				//.AddSingleton<IOverlayRenderer, CpuUsageOverlay>()
 				.AddSingleton<IChipsetDebugger, ChipsetDebugger>()
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 				.AddSingleton<Jammy>()

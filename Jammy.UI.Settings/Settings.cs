@@ -77,11 +77,14 @@ namespace Jammy.UI.Settings
 			if ((string)cbSku.SelectedItem == "MC68000")
 			{
 				rbNative.Enabled = true;
+				rbMoira.Enabled = true;
 			}
 			else
 			{
 				rbNative.Checked = false;
 				rbNative.Enabled = false;
+				rbMoira.Checked = false;
+				rbMoira.Enabled = false;
 			}
 
 			if ((string)cbSku.SelectedItem == "MC68000" ||
