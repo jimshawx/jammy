@@ -76,11 +76,11 @@ namespace Jammy.Core.Memory
 					{
 						if (dev.device.IsMapped(i << 16))
 						{
-							if (i == 0)
-							{	
-								//logger.LogTrace($"Setting Slot 0 tid: {Thread.CurrentThread.ManagedThreadId} to {dev.device} @ {new System.Diagnostics.StackTrace(true)}");
-								logger.LogTrace($"Setting Slot 0 tid: {Thread.CurrentThread.ManagedThreadId} to {dev.device}");
-							}
+							//if (i == 0)
+							//{	
+							//	//logger.LogTrace($"Setting Slot 0 tid: {Thread.CurrentThread.ManagedThreadId} to {dev.device} @ {new System.Diagnostics.StackTrace(true)}");
+							//	logger.LogTrace($"Setting Slot 0 tid: {Thread.CurrentThread.ManagedThreadId} to {dev.device}");
+							//}
 							mapping[i] = dev.device;
 						}
 					}
