@@ -88,6 +88,12 @@ namespace Jammy.Core.Custom.CIA
 			{
 				return diskDrives.ReadPRB(insaddr);
 			}
+			else if (reg == PRA)
+			{
+				//the 7 is SEL, POUT, BUSY which are used in parallel port joysticks
+				//this turns the buttons off
+				return base.Read(reg)|7u;
+			}
 
 			if (reg == ICR)
 				diskDrives.ReadICR(SnoopICRR());

@@ -110,6 +110,11 @@ namespace Jammy.Core.Custom.CIA
 				p |= mouse.ReadPRA(insaddr);
 				value = p;
 			}
+			else if (reg == PRB)
+			{
+				//the parallel port data byte. Setting to 0xff turns off directions for parallel port joysticks
+				value = 0xff;
+			}
 			else if (reg == SDR)
 			{
 				value = keyboard.ReadKey();
