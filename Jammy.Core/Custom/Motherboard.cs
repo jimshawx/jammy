@@ -79,7 +79,9 @@ namespace Jammy.Core.Custom
 		{
 			if (size == Size.Word && address == 0xde109a && value == 0xbfff) { logger.LogTrace($"W 0xDE109A at boot time? not mapped."); return;/*something writes 0xbfff here at boot time */ }
 			if (size == Size.Word && address == 0xde109a && value == 0x4000) { logger.LogTrace($"W 0xDE109A at boot time? not mapped."); return;/*something writes 0x4000 here at boot time */ }
-			if (size != Size.Byte) throw new InvalidCustomRegisterSizeException(insaddr, address, size);
+			if (size == Size.Word && address == 0xde1000 && value == 0x8100) { gayleBits = GAYLE_BITS; return; /* Versatile Amiga Testprogram write a word here */ }
+			if (size != Size.Byte)
+				throw new InvalidCustomRegisterSizeException(insaddr, address, size);
 			logger.LogTrace($"[MOBO] W {address:X8} @ {insaddr:X8} {size} {value:X8}");
 			if (address == 0xde0000) reg_TIMEOUT = (byte)value;
 			else if (address == 0xde0001) reg_TOENB = (byte)value;
