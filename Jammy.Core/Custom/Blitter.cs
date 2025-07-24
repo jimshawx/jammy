@@ -236,7 +236,7 @@ namespace Jammy.Core.Custom
 				case ChipRegs.BLTDMOD: bltdmod = (uint)(short)value & 0xfffffffe; break;
 
 				case ChipRegs.BLTCDAT: bltcdat = value; break;
-				case ChipRegs.BLTBDAT: bltbdat = value; /*(ushort)(value << (int)(bltcon1 >> 12));*/ break;
+				case ChipRegs.BLTBDAT: bltbdat = value; break;
 				case ChipRegs.BLTADAT: bltadat = value; break;
 				case ChipRegs.BLTDDAT: bltddat = value; break;
 			}
@@ -536,7 +536,7 @@ namespace Jammy.Core.Custom
 		private void Minterm()
 		{
 			bltddat = 0;
-			if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat;
+			if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat & 0xffff;
 			if ((bltcon0 & 0x02) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & bltcdat;
 			if ((bltcon0 & 0x04) != 0) bltddat |= ~s_bltadat & s_bltbdat & ~bltcdat;
 			if ((bltcon0 & 0x08) != 0) bltddat |= ~s_bltadat & s_bltbdat & bltcdat;
@@ -650,7 +650,6 @@ namespace Jammy.Core.Custom
 		{
 			for (uint i = 0; i <= 0xffff; i++)
 			{
-				
 				bltddat = i;
 				bltcon1 = (1 << 3) | (1 << 1);
 				FillInline();
@@ -699,10 +698,10 @@ namespace Jammy.Core.Custom
 			mode--;
 			mode |= (bltcon1 & (1 << 2))>>1;
 
-			bltddat = fills[mode][bltddat];
+			uint tmp = fills[mode][bltddat];
 			bltcon1 &= ~(1u << 2);
-			bltcon1 |= bltddat >> 16;
-			bltddat = (ushort)bltddat;
+			bltcon1 |= tmp >> 16;
+			bltddat = (ushort)tmp;
 		}
 
 		private void FillInline()
@@ -887,7 +886,7 @@ namespace Jammy.Core.Custom
 			uint bltbdatror = ((mask & 1) != 0) ? 0xffffu : 0;
 
 			bltddat = 0;
-			if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat;
+			if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat & 0xffff;
 			if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdatror & bltcdat;
 			if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat & bltbdatror & ~bltcdat;
 			if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat & bltbdatror & bltcdat;
@@ -1054,7 +1053,7 @@ namespace Jammy.Core.Custom
 				uint bltbdatror = ((mask&1)!=0)?0xffffu:0;
 
 				bltddat = 0;
-				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat;
+				if ((bltcon0 & 0x01) != 0) bltddat |= ~bltadat & ~bltbdatror & ~bltcdat & 0xffff;
 				if ((bltcon0 & 0x02) != 0) bltddat |= ~bltadat & ~bltbdatror & bltcdat;
 				if ((bltcon0 & 0x04) != 0) bltddat |= ~bltadat & bltbdatror & ~bltcdat;
 				if ((bltcon0 & 0x08) != 0) bltddat |= ~bltadat & bltbdatror & bltcdat;
@@ -1156,7 +1155,7 @@ namespace Jammy.Core.Custom
 						s_bltadat >>= 16;                     // 0000000000000000:aaa1111111111111
 					}
 
-					if ((bltcon0 & (1u << 10)) != 0)
+					if ((bltcon0 & (1u << 10)) != 0) 
 						bltbdat = chipRam.ImmediateRead(0, bltbpt, Size.Word);
 
 					s_bltbdat = bltbdat;
@@ -1180,7 +1179,7 @@ namespace Jammy.Core.Custom
 						bltcdat = chipRam.ImmediateRead(0, bltcpt, Size.Word);
 
 					bltddat = 0;
-					if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat;
+					if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat & 0xffff;
 					if ((bltcon0 & 0x02) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & bltcdat;
 					if ((bltcon0 & 0x04) != 0) bltddat |= ~s_bltadat & s_bltbdat & ~bltcdat;
 					if ((bltcon0 & 0x08) != 0) bltddat |= ~s_bltadat & s_bltbdat & bltcdat;
