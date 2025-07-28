@@ -680,20 +680,25 @@ public class Denise : IDenise
 			//fortunately, hardly any game uses this feature, so it's not too important
 
 			//v1 - are bits set at the same position in both playfields?
-			//if (((pix & 0xb10101010) >> 1 & pix) != 0)
+			//if (((pix & 0b10101010) >> 1 & pix) != 0)
 			//	clxdat |= 1;
+
+			//v1.5
+			uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
+			if (match == 0)
+				clxdat |= 1;
 
 			//v2 - are enabled/colour bits set at the same position in both playfields?
 			//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
-			//if (((match & 0xb10101010) >> 1 & match) != 0)
+			//if (((match & 0b10101010) >> 1 & match) != 0)
 			//	clxdat |= 1;
 
 			//v3 - does playfield 1 collide with playfield 2 and vice versa?
-			uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
-			if (((match & 0xb10101010) >> 1 & pix) != 0)
-				clxdat |= 1;
-			if (((match & 0xb01010101) << 1 & pix) != 0)
-				clxdat |= 1;
+			//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
+			//if (((match & 0b10101010) >> 1 & pix) != 0)
+			//	clxdat |= 1;
+			//if (((match & 0b01010101) << 1 & pix) != 0)
+			//	clxdat |= 1;
 
 			//v4
 			//https://eab.abime.net/showpost.php?p=965074&postcount=2
@@ -712,18 +717,24 @@ public class Denise : IDenise
 				bool match = true;
 			int clp;
 
-			clp = (pix ^ ~clxconMatch) & clxconEnable & 0x01010101;
+			clp = (pix ^ ~clxconMatch) & clxconEnable & 0b01010101;
 			clp<<=1;
 			if ((clp&pix) == 0) match = false;
 			if (match) clxdat |= 1;
 
 			if ((bplcon0 & (uint)BPLCON0.DPF) != 0) match = true;
-			clp = (pix ^ ~clxconMatch) & clxconEnable & 0x10101010;
+			clp = (pix ^ ~clxconMatch) & clxconEnable & 0b10101010;
 			clp>>=1;
 			if ((clp & pix) == 0) match = false;
 			if (match) clxdat |= 1;
 			}
 			*/
+
+			//v5 - vAmiga algorithm
+			//	if ((pix & clxconEnable & 0b01010101) != (clxconMatch & clxconEnable & 0b01010101)) goto no;
+			//	if ((pix & clxconEnable & 0b10101010) != (clxconMatch & clxconEnable & 0b10101010)) goto no;
+			//	clxdat |= 1; 
+			//no:;
 		}
 	}
 
