@@ -459,23 +459,27 @@ public class Denise : IDenise
 	private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private void DoSprites(ref uint col, byte pix, bool shift)
 	{
-		DoSprites2(ref col, pix, shift);
-		return;
+		//DoSprites2(ref col, pix, shift);
+		//return;
 
 		uint active = 0;
 		uint attached = 0;
 
+		int clxm = 0;
 		for (int s = 0; s < 8; s++)
 		{
 			active <<= 1;
 			attached <<= 1;
 
 			bits[s] = 0;
+			clx[s] = 0;
 			attached |= (uint)(sprctl[s] >> 7) & 1;
 			if (spriteMask[s] != 0)
 			{
 				active |= 1;
 				bits[s] = ((sprdatapix[s] & spriteMask[s]) != 0 ? 1u : 0) + ((sprdatbpix[s] & spriteMask[s]) != 0 ? 2u : 0);
+				clx[s] = (int)bits[s];
+				clxm |= clx[s];
 			}
 		}
 		//attached/active bits are now like so:
@@ -551,6 +555,12 @@ public class Denise : IDenise
 			for (int s = 0; s < 8; s++)
 				spriteMask[s] >>= 1;
 		}
+
+
+		//sprite collision
+
+		if (clxm != 0)
+			CheckSpriteCollision(pix);
 	}
 
 	private void DoSprites2(ref uint col, byte pix, bool shift)
@@ -633,109 +643,112 @@ public class Denise : IDenise
 		//sprite collision
 
 		if (clxm != 0)
+			CheckSpriteCollision(pix);
+	}
+
+	private void CheckSpriteCollision(byte pix)
+	{
+		int clxconMatch = clxcon & 0x3f | (clxcon2 & 0x3) << 6;
+		int clxconEnable = clxcon >> 6 & 0x3f | clxcon2 & 0xc0;
+
+		//combine in the enabled odd-numbered sprites
+		for (int s = 0; s < 4; s++)
 		{
-			int clxconMatch = clxcon & 0x3f | (clxcon2 & 0x3) << 6;
-			int clxconEnable = clxcon >> 6 & 0x3f | clxcon2 & 0xc0;
-
-			//combine in the enabled odd-numbered sprites
-			for (int s = 0; s < 4; s++)
-			{
-				if ((clxcon & 0x1000 << s) != 0)
-					clx[s] = (clx[s * 2] | clx[s * 2 + 1]) != 0 ? 0xff : 0;
-				else
-					clx[s] = clx[s * 2] != 0 ? 0xff : 0;
-			}
-
-			ushort sscol = 1 << 9;
-			for (int s = 0; s < 4; s++)
-			{
-				//planes enabled for collision
-				int clp = (pix ^ ~clxconMatch) & clxconEnable;
-
-				int mask = clx[s] & clp;
-				if (mask != 0)
-				{
-					//sprite 's'->bitplane collision
-
-					//even plane collision
-					if ((mask & 0b01010101) != 0)
-						clxdat |= (ushort)(2 << s);
-					//odd plane collision
-					if ((mask & 0b10101010) != 0)
-						clxdat |= (ushort)(32 << s);
-				}
-
-				//sprite -> sprite collision
-				for (int t = s + 1; t < 4; t++)
-				{
-					if ((clx[s] & clx[t]) != 0)
-						clxdat |= sscol;
-					sscol <<= 1;
-				}
-			}
-
-			//odd->even bitplane collision
-
-			//TODO. none of the code below passes the tests in Versatile Amiga Test Program ROM
-			//fortunately, hardly any game uses this feature, so it's not too important
-
-			//v1 - are bits set at the same position in both playfields?
-			//if (((pix & 0b10101010) >> 1 & pix) != 0)
-			//	clxdat |= 1;
-
-			//v1.5
-			uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
-			if (match == 0)
-				clxdat |= 1;
-
-			//v2 - are enabled/colour bits set at the same position in both playfields?
-			//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
-			//if (((match & 0b10101010) >> 1 & match) != 0)
-			//	clxdat |= 1;
-
-			//v3 - does playfield 1 collide with playfield 2 and vice versa?
-			//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
-			//if (((match & 0b10101010) >> 1 & pix) != 0)
-			//	clxdat |= 1;
-			//if (((match & 0b01010101) << 1 & pix) != 0)
-			//	clxdat |= 1;
-
-			//v4
-			//https://eab.abime.net/showpost.php?p=965074&postcount=2
-			/*
-	match = true
-	loop twice (first select odd planes, next select even planes)
-	 if (dualplayfield)
-	   match = true
-	 check plane collision condition (odd or even planes, enabled plane's bit pattern == "match" value?)
-	 if no bitplane collision: match = false
-	 if (match == true) set sprite collision bit in CLXDAT if non-zero sprites in same bitplane pixel position
-	end loop		 
-			*/
-			/*
-			{
-				bool match = true;
-			int clp;
-
-			clp = (pix ^ ~clxconMatch) & clxconEnable & 0b01010101;
-			clp<<=1;
-			if ((clp&pix) == 0) match = false;
-			if (match) clxdat |= 1;
-
-			if ((bplcon0 & (uint)BPLCON0.DPF) != 0) match = true;
-			clp = (pix ^ ~clxconMatch) & clxconEnable & 0b10101010;
-			clp>>=1;
-			if ((clp & pix) == 0) match = false;
-			if (match) clxdat |= 1;
-			}
-			*/
-
-			//v5 - vAmiga algorithm
-			//	if ((pix & clxconEnable & 0b01010101) != (clxconMatch & clxconEnable & 0b01010101)) goto no;
-			//	if ((pix & clxconEnable & 0b10101010) != (clxconMatch & clxconEnable & 0b10101010)) goto no;
-			//	clxdat |= 1; 
-			//no:;
+			if ((clxcon & 0x1000 << s) != 0)
+				clx[s] = (clx[s * 2] | clx[s * 2 + 1]) != 0 ? 0xff : 0;
+			else
+				clx[s] = clx[s * 2] != 0 ? 0xff : 0;
 		}
+
+		ushort sscol = 1 << 9;
+		for (int s = 0; s < 4; s++)
+		{
+			//planes enabled for collision
+			int clp = (pix ^ ~clxconMatch) & clxconEnable;
+
+			int mask = clx[s] & clp;
+			if (mask != 0)
+			{
+				//sprite 's'->bitplane collision
+
+				//even plane collision
+				if ((mask & 0b01010101) != 0)
+					clxdat |= (ushort)(2 << s);
+				//odd plane collision
+				if ((mask & 0b10101010) != 0)
+					clxdat |= (ushort)(32 << s);
+			}
+
+			//sprite -> sprite collision
+			for (int t = s + 1; t < 4; t++)
+			{
+				if ((clx[s] & clx[t]) != 0)
+					clxdat |= sscol;
+				sscol <<= 1;
+			}
+		}
+
+		//odd->even bitplane collision
+
+		//TODO. none of the code below passes the tests in Versatile Amiga Test Program ROM
+		//fortunately, hardly any game uses this feature, so it's not too important
+
+		//v1 - are bits set at the same position in both playfields?
+		if (((pix & 0b10101010) >> 1 & pix) != 0)
+			clxdat |= 1;
+
+		//v1.5
+		//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
+		//if (match == 0)
+		//	clxdat |= 1;
+
+		//v2 - are enabled/colour bits set at the same position in both playfields?
+		//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
+		//if (((match & 0b10101010) >> 1 & match) != 0)
+		//	clxdat |= 1;
+
+		//v3 - does playfield 1 collide with playfield 2 and vice versa?
+		//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
+		//if (((match & 0b10101010) >> 1 & pix) != 0)
+		//	clxdat |= 1;
+		//if (((match & 0b01010101) << 1 & pix) != 0)
+		//	clxdat |= 1;
+
+		//v4
+		//https://eab.abime.net/showpost.php?p=965074&postcount=2
+		/*
+match = true
+loop twice (first select odd planes, next select even planes)
+ if (dualplayfield)
+   match = true
+ check plane collision condition (odd or even planes, enabled plane's bit pattern == "match" value?)
+ if no bitplane collision: match = false
+ if (match == true) set sprite collision bit in CLXDAT if non-zero sprites in same bitplane pixel position
+end loop		 
+		*/
+		/*
+		{
+			bool match = true;
+		int clp;
+
+		clp = (pix ^ ~clxconMatch) & clxconEnable & 0b01010101;
+		clp<<=1;
+		if ((clp&pix) == 0) match = false;
+		if (match) clxdat |= 1;
+
+		if ((bplcon0 & (uint)BPLCON0.DPF) != 0) match = true;
+		clp = (pix ^ ~clxconMatch) & clxconEnable & 0b10101010;
+		clp>>=1;
+		if ((clp & pix) == 0) match = false;
+		if (match) clxdat |= 1;
+		}
+		*/
+
+		//v5 - vAmiga algorithm
+		//	if ((pix & clxconEnable & 0b01010101) != (clxconMatch & clxconEnable & 0b01010101)) goto no;
+		//	if ((pix & clxconEnable & 0b10101010) != (clxconMatch & clxconEnable & 0b10101010)) goto no;
+		//	clxdat |= 1; 
+		//no:;
 	}
 
 	private void StartDeniseLine()
