@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
@@ -81,17 +82,20 @@ public class BpldatPix64 : IBpldatPix
 		bp.Item2 |= bits << shift;
 	}
 
-	public void Save(JArray jo)
+	public void Save(JArray jobj)
 	{
-		var obj = new JObject();
-		obj.Add("pixelBitMask", pixelMaskBit);
+		var jo = new JObject();
+		jo["id"] = "pixels";
+		jo.Add("pixelBitMask", pixelMaskBit);
 		var bpldatpix128 = bpldatpix.Select(x=> new UInt128(x.Item1, x.Item2));
-		obj.Add("bpldatpix", JToken.FromObject(bpldatpix128));
-		jo.Add(obj);
+		jo.Add("bpldatpix", JToken.FromObject(bpldatpix128));
+		jobj.Add(jo);
 	}
 
 	public void Load(JObject obj)
 	{
+		if (!PersistenceManager.Is(obj, "pixels")) return;
+
 		pixelMaskBit = int.Parse((string)obj.GetValue("pixelBitMask"));
 		obj.GetValue("bpldatpix")
 				.Select(x => new ValueTuple<ulong, ulong>((ulong)(UInt128.Parse((string)x) >> 64), (ulong)UInt128.Parse((string)x)))

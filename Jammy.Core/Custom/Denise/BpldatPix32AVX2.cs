@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -87,19 +88,22 @@ public class BpldatPix32AVX2 : IBpldatPix
 		return pix.ToScalar() & planeMasks[planes];
 	}
 
-	public void Save(JArray jo)
+	public void Save(JArray obj)
 	{
-		var obj = new JObject();
-		obj.Add("pixelBitMask", pixelMaskBit);
+		var jo = new JObject();
+		jo["id"] = "pixels";
+		jo.Add("pixelBitMask", pixelMaskBit);
 		var bpldatpix32 = new uint[8];
 		for (int i  = 0; i < 8; i++)
 			bpldatpix32[i] = bpldatpix.GetElement(i);
-		obj.Add("bpldatpix", JToken.FromObject(bpldatpix32));
-		jo.Add(obj);
+		jo.Add("bpldatpix", JToken.FromObject(bpldatpix32));
+		obj.Add(jo);
 	}
 
 	public void Load(JObject obj)
 	{
+		if (!PersistenceManager.Is(obj, "pixels")) return;
+
 		pixelMaskBit = int.Parse((string)obj.GetValue("pixelBitMask"));
 		var bpldatpix32 = new uint[8];
 		obj.GetValue("bpldatpix")
