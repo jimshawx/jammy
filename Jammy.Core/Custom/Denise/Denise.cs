@@ -10,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -434,9 +435,6 @@ public class Denise : IDenise
 			//pixel double
 			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
 			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
-			//pixel double
-			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
 			switch (pixelLoop)
 			{
 				case 8:
@@ -471,16 +469,18 @@ public class Denise : IDenise
 			active <<= 1;
 			attached <<= 1;
 
+			//colour bits
 			bits[s] = 0;
-			clx[s] = 0;
 			attached |= (uint)(sprctl[s] >> 7) & 1;
 			if (spriteMask[s] != 0)
 			{
 				active |= 1;
 				bits[s] = ((sprdatapix[s] & spriteMask[s]) != 0 ? 1u : 0) + ((sprdatbpix[s] & spriteMask[s]) != 0 ? 2u : 0);
-				clx[s] = (int)bits[s];
-				clxm |= clx[s];
 			}
+
+			//collision bits
+			clx[s] = (int)bits[s];
+			clxm |= clx[s];//keep a track of if ANY sprites have any bits set (optimisation)
 		}
 		//attached/active bits are now like so:
 		//01234567
@@ -552,73 +552,25 @@ public class Denise : IDenise
 
 		if (shift)
 		{
+			//in lowres, p=0,1, we want to shift every pixel (0,1) 01 &m==00
+			//in hires, p=0,1,2,3 we want to shift every 2 pixels (1 and 3) &m=0101
+			//in shires, p=0,1,2,3,4,5,6,7 we want to shift every 4 pixels (3 and 7) &m==01230123
+			//todo: in AGA, sprites can have different resolutions
+
 			for (int s = 0; s < 8; s++)
 				spriteMask[s] >>= 1;
 		}
-
 
 		//sprite collision
 
 		if (clxm != 0)
 			CheckSpriteCollision(pix);
-	}
 
-	private void DoSprites2(ref uint col, byte pix, bool shift)
-	{
-		//sprites
-		int clxm = 0;
-		for (int s = 7; s >= 0; s--)
-		{
-			clx[s] = 0;
-			sprpix[s] = 0;
-			if (spriteMask[s] != 0)
-			{
-				uint x = spriteMask[s];
-				bool attached = (sprctl[s] & 0x80) != 0 && (s & 1) != 0;
-				int spix = ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
+		//playfield collision
 
-				//in lowres, p=0,1, we want to shift every pixel (0,1) 01 &m==00
-				//in hires, p=0,1,2,3 we want to shift every 2 pixels (1 and 3) &m=0101
-				//in shires, p=0,1,2,3,4,5,6,7 we want to shift every 4 pixels (3 and 7) &m==01230123
-				//todo: in AGA, sprites can have different resolutions
-				if (shift)
-					spriteMask[s] >>= 1;
+		CheckPlayfieldCollision(pix);
 
-				clx[s] = spix;
-				clxm |= clx[s];
-
-				//byte finalpix = 0;
-				if (attached)
-				{
-					s--;
-					spix <<= 2;
-					int apix = ((sprdatapix[s] & x) != 0 ? 1 : 0) + ((sprdatbpix[s] & x) != 0 ? 2 : 0);
-					clx[s] = apix;
-					sprpix[s] = 0;
-					clxm |= clx[s];
-					spix += apix;
-
-					if (shift)
-						spriteMask[s] >>= 1;
-					if (spix != 0)
-					{ 
-						//col = truecolour[16 + spix];
-						//sprpix[s] = sprpix[s + 1] = (byte)(16+spix);
-						sprpix[s] = (byte)(16 + spix);
-						col = truecolour[sprpix[s]];
-					}
-				}
-				else
-				{
-					if (spix != 0)
-					{	//col = truecolour[16 + 4 * (s >> 1) + spix];
-						sprpix[s] = (byte)(16 + 4 * (s >> 1) + spix);
-						col = truecolour[sprpix[s]];
-					}
-				}
-			}
-		}
-
+		//stuff to try to deal with sprite/playfield priorities that doesn't work
 		//uint originalcol = col;
 		////0,1,2,3,4 in bplcon2
 		//int pri2 = (bplcon2 >> 3) & 7;
@@ -639,13 +591,9 @@ public class Denise : IDenise
 		//	if (pri1 == s && pix != 0)
 		//		col = originalcol;
 		//}
-
-		//sprite collision
-
-		if (clxm != 0)
-			CheckSpriteCollision(pix);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void CheckSpriteCollision(byte pix)
 	{
 		int clxconMatch = clxcon & 0x3f | (clxcon2 & 0x3) << 6;
@@ -687,11 +635,15 @@ public class Denise : IDenise
 				sscol <<= 1;
 			}
 		}
+	}
 
-		//odd->even bitplane collision
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void CheckPlayfieldCollision(byte pix)
+	{
+		//int clxconMatch = clxcon & 0x3f | (clxcon2 & 0x3) << 6;
+		//int clxconEnable = clxcon >> 6 & 0x3f | clxcon2 & 0xc0;
 
-		//TODO. none of the code below passes the tests in Versatile Amiga Test Program ROM
-		//fortunately, hardly any game uses this feature, so it's not too important
+		//odd->even playfield collision
 
 		//v1 - are bits set at the same position in both playfields?
 		if (((pix & 0b10101010) >> 1 & pix) != 0)
@@ -699,10 +651,10 @@ public class Denise : IDenise
 
 		//v1.5
 		//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
-		//if (match == 0)
+		//if (match != 0)
 		//	clxdat |= 1;
 
-		//v2 - are enabled/colour bits set at the same position in both playfields?
+		//v2 - are enabled / colour bits set at the same position in both playfields?
 		//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
 		//if (((match & 0b10101010) >> 1 & match) != 0)
 		//	clxdat |= 1;
