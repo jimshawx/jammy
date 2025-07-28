@@ -459,6 +459,9 @@ public class Denise : IDenise
 	private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private void DoSprites(ref uint col, byte pix, bool shift)
 	{
+		DoSprites2(ref col, pix, shift);
+		return;
+
 		uint active = 0;
 		uint attached = 0;
 
@@ -672,8 +675,55 @@ public class Denise : IDenise
 			}
 
 			//odd->even bitplane collision
-			if (((pix & 0xb10101010) >> 1 & pix) != 0)
+
+			//TODO. none of the code below passes the tests in Versatile Amiga Test Program ROM
+			//fortunately, hardly any game uses this feature, so it's not too important
+
+			//v1 - are bits set at the same position in both playfields?
+			//if (((pix & 0xb10101010) >> 1 & pix) != 0)
+			//	clxdat |= 1;
+
+			//v2 - are enabled/colour bits set at the same position in both playfields?
+			//uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
+			//if (((match & 0xb10101010) >> 1 & match) != 0)
+			//	clxdat |= 1;
+
+			//v3 - does playfield 1 collide with playfield 2 and vice versa?
+			uint match = (uint)((pix ^ ~clxconMatch) & clxconEnable);
+			if (((match & 0xb10101010) >> 1 & pix) != 0)
 				clxdat |= 1;
+			if (((match & 0xb01010101) << 1 & pix) != 0)
+				clxdat |= 1;
+
+			//v4
+			//https://eab.abime.net/showpost.php?p=965074&postcount=2
+			/*
+	match = true
+	loop twice (first select odd planes, next select even planes)
+	 if (dualplayfield)
+	   match = true
+	 check plane collision condition (odd or even planes, enabled plane's bit pattern == "match" value?)
+	 if no bitplane collision: match = false
+	 if (match == true) set sprite collision bit in CLXDAT if non-zero sprites in same bitplane pixel position
+	end loop		 
+			*/
+			/*
+			{
+				bool match = true;
+			int clp;
+
+			clp = (pix ^ ~clxconMatch) & clxconEnable & 0x01010101;
+			clp<<=1;
+			if ((clp&pix) == 0) match = false;
+			if (match) clxdat |= 1;
+
+			if ((bplcon0 & (uint)BPLCON0.DPF) != 0) match = true;
+			clp = (pix ^ ~clxconMatch) & clxconEnable & 0x10101010;
+			clp>>=1;
+			if ((clp & pix) == 0) match = false;
+			if (match) clxdat |= 1;
+			}
+			*/
 		}
 	}
 
