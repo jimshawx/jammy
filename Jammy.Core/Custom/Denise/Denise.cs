@@ -485,6 +485,8 @@ public class Denise : IDenise
 		//attached/active bits are now like so:
 		//01234567
 
+		if (clxm == 0) goto nospritebits;
+
 		uint oattached = attached;
 
 		for (int s = 7; s >= 0; s -= 2)
@@ -566,6 +568,7 @@ public class Denise : IDenise
 		if (clxm != 0)
 			CheckSpriteCollision(pix);
 
+nospritebits:
 		//playfield collision
 
 		CheckPlayfieldCollision(pix);
