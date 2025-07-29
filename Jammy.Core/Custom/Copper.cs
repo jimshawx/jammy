@@ -185,149 +185,157 @@ namespace Jammy.Core.Custom
 
 		private void CopperInstruction()
 		{
-			if (status == CopperStatus.RunningWord1)
+			switch (status)
 			{
-				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
+				case CopperStatus.RunningWord1:
+					if (!memory.IsDMAEnabled(DMA.COPEN)) return;
 
-				status = CopperStatus.RunningWord2;
-				memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
-				copPC += 2;
-			}
-			else if (status == CopperStatus.RunningWord2)
-			{
-				if (!memory.IsDMAEnabled(DMA.COPEN)) return;
-
-				ins = copins;
-
-				if ((ins & 0x0001) == 0)
-				{ 
-					//MOVE
-					uint reg = (uint)(ins & 0x1fe);
-
-					if (IllegalCopperInstruction(reg))
-					{ 
-						status = CopperStatus.Stopped;
-						DebugCOPStopped(reg);
-					}
-					else
-					{
-						status = CopperStatus.RunningWord1;
-						//if this is being skipped, write to COPINS instead of the specified register
-						uint regAddress = nextMOVEisNOOP ? ChipRegs.COPINS : ChipRegs.ChipBase + reg;
-						nextMOVEisNOOP = false;
-						memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
-						//logger.LogTrace($"{regAddress:X6} {ChipRegs.Name(regAddress)}");
-						copPC += 2;
-					}
-				}
-				else
-				{
-					//todo: should we do the NOOP thing here too?
-					status = CopperStatus.FetchWait;
+					status = CopperStatus.RunningWord2;
 					memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 					copPC += 2;
-				}
+					break;
 
-			}
-			else if (status == CopperStatus.FetchWait)
-			{
-				nextMOVEisNOOP = false;
-
-				data = copins;
-
-				//WAIT
-				waitH = ins & 0xfe;
-				waitV = (ins >> 8) & 0xff;
-
-				waitHMask = data & 0xfe;
-				waitVMask = ((data >> 8) & 0x7f) | 0x80;
-
-				waitMask = (uint)(waitHMask | (waitVMask << 8));
-				waitPos = (uint)((waitV << 8) | waitH);
-
-				waitBlit = (uint)(data >> 15);
-
-				if ((data & 1) == 0)
-				{
-					//WAIT
-					status = CopperStatus.Waiting;
-				}
-				else
-				{
-					status = CopperStatus.RunningWord1;
-
-					//SKIP
-					uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
-					coppos &= waitMask;
-					if (CopperCompare(coppos, (waitPos & waitMask)))
+				case CopperStatus.RunningWord2:
 					{
-						//logger.LogTrace($"RUN  {h},{currentLine} {coppos:X4} {waitPos:X4}");
-						//todo: this isn't what happens, the next instruction is fetched, but ignored
-						//https://eab.abime.net/showpost.php?p=206242&postcount=1
+						if (!memory.IsDMAEnabled(DMA.COPEN)) return;
 
-						//copPC += 4;
-						nextMOVEisNOOP = true;
+						ins = copins;
+
+						if ((ins & 0x0001) == 0)
+						{
+							//MOVE
+							uint reg = (uint)(ins & 0x1fe);
+
+							if (IllegalCopperInstruction(reg))
+							{
+								status = CopperStatus.Stopped;
+								DebugCOPStopped(reg);
+							}
+							else
+							{
+								status = CopperStatus.RunningWord1;
+								//if this is being skipped, write to COPINS instead of the specified register
+								uint regAddress = nextMOVEisNOOP ? ChipRegs.COPINS : ChipRegs.ChipBase + reg;
+								nextMOVEisNOOP = false;
+								memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
+								//logger.LogTrace($"{regAddress:X6} {ChipRegs.Name(regAddress)}");
+								copPC += 2;
+							}
+						}
+						else
+						{
+							//todo: should we do the NOOP thing here too?
+							status = CopperStatus.FetchWait;
+							memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+							copPC += 2;
+						}
+
+						break;
 					}
-				}
-			}
-			else if (status == CopperStatus.Waiting)
-			{
-				memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 
-				//If blitter-busy bit is set the comparisons will fail.
-				if (waitBlit == 0 && (memory.ReadDMACON() & (1 << 14)) != 0)
-				{
-					logger.LogTrace("WAIT delayed due to blitter running");
-					return;
-				}
+				case CopperStatus.FetchWait:
+					{
+						nextMOVEisNOOP = false;
 
-				uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
-				coppos &= waitMask;
-				if (CopperCompare(coppos, (waitPos & waitMask)))
-				{
-					//logger.LogTrace($"AWOKE @{clock}");
+						data = copins;
 
-					//n ticks later
-					waitTimer = 1;
-					status = CopperStatus.WakingUp;
+						//WAIT
+						waitH = ins & 0xfe;
+						waitV = (ins >> 8) & 0xff;
 
-					//0 ticks delay
+						waitHMask = data & 0xfe;
+						waitVMask = ((data >> 8) & 0x7f) | 0x80;
+
+						waitMask = (uint)(waitHMask | (waitVMask << 8));
+						waitPos = (uint)((waitV << 8) | waitH);
+
+						waitBlit = (uint)(data >> 15);
+
+						if ((data & 1) == 0)
+						{
+							//WAIT
+							status = CopperStatus.Waiting;
+						}
+						else
+						{
+							status = CopperStatus.RunningWord1;
+
+							//SKIP
+							uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
+							coppos &= waitMask;
+							if (CopperCompare(coppos, (waitPos & waitMask)))
+							{
+								//logger.LogTrace($"RUN  {h},{currentLine} {coppos:X4} {waitPos:X4}");
+								//todo: this isn't what happens, the next instruction is fetched, but ignored
+								//https://eab.abime.net/showpost.php?p=206242&postcount=1
+
+								//copPC += 4;
+								nextMOVEisNOOP = true;
+							}
+						}
+
+						break;
+					}
+
+				case CopperStatus.Waiting:
+					{
+						memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+
+						//If blitter-busy bit is set the comparisons will fail.
+						if (waitBlit == 0 && (memory.ReadDMACON() & (1 << 14)) != 0)
+						{
+							logger.LogTrace("WAIT delayed due to blitter running");
+							return;
+						}
+
+						uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
+						coppos &= waitMask;
+						if (CopperCompare(coppos, (waitPos & waitMask)))
+						{
+							//logger.LogTrace($"AWOKE @{clock}");
+
+							//n ticks later
+							waitTimer = 1;
+							status = CopperStatus.WakingUp;
+
+							//0 ticks delay
+							//status = CopperStatus.RunningWord1;
+
+							//one tick sooner
+							//memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+							//copPC += 2;
+							//status = CopperStatus.RunningWord2;
+
+							if (ins == 0xffff && data == 0xfffe)
+							{
+								logger.LogTrace("Went off the end of the Copper List");
+								status = CopperStatus.Stopped;
+							}
+						}
+
+						break;
+					}
+
+				case CopperStatus.WakingUp:
+					//burn a cycle after waking up
+					waitTimer--;
+					if (waitTimer <= 0)
+						status = CopperStatus.RunningWord1;
+					memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+					break;
+
+				case CopperStatus.Retrace:
+					CopperNextFrame();
+
 					//status = CopperStatus.RunningWord1;
 
-					//one tick sooner
-					//memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
-					//copPC += 2;
-					//status = CopperStatus.RunningWord2;
-
-					if (ins == 0xffff && data == 0xfffe)
-					{
-						logger.LogTrace("Went off the end of the Copper List");
-						status = CopperStatus.Stopped;
-					}
-				}
-			}
-			else if (status == CopperStatus.WakingUp)
-			{
-				//burn a cycle after waking up
-				waitTimer--;
-				if (waitTimer <= 0)
-					status = CopperStatus.RunningWord1;
-				memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
-			}
-			else if (status == CopperStatus.Retrace)
-			{
-				CopperNextFrame();
-
-				//status = CopperStatus.RunningWord1;
-
-				//vAmigaTS\Agnus\Copper\Skip\copstrt1
-				//vAmigaTS\Agnus\Copper\Skip\copstrt2
-				status = CopperStatus.WakingUp;
-				waitTimer = 7;
-			}
-			else if (status == CopperStatus.Stopped)
-			{
-				return;
+					//vAmigaTS\Agnus\Copper\Skip\copstrt1
+					//vAmigaTS\Agnus\Copper\Skip\copstrt2
+					status = CopperStatus.WakingUp;
+					waitTimer = 7;
+					break;
+				case CopperStatus.Stopped:
+					return;
 			}
 		}
 
