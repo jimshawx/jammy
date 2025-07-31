@@ -88,6 +88,7 @@ namespace Jammy.Core.Custom
 
 			if (copjmp1 != 0 || copjmp2 != 0)
 			{
+				//logger.LogTrace($"JUMP {clock} {copjmp1} {copjmp2}");
 				status = CopperStatus.Retrace;
 				CopperInstruction();
 				return;
@@ -254,6 +255,7 @@ namespace Jammy.Core.Custom
 						if ((data & 1) == 0)
 						{
 							//WAIT
+							//logger.LogTrace($"WAIT {clock} v:{waitV} h:{waitH}");
 							status = CopperStatus.Waiting;
 						}
 						else
@@ -332,8 +334,12 @@ namespace Jammy.Core.Custom
 					//vAmigaTS\Agnus\Copper\Skip\copstrt1
 					//vAmigaTS\Agnus\Copper\Skip\copstrt2
 					status = CopperStatus.WakingUp;
-					waitTimer = 7;
+					if ((clock.ClockState & ChipsetClockState.EndOfFrame) != 0)
+						waitTimer = 7;//apply a long delay at EOF
+					else
+						waitTimer = 1;//only 1 cycle delay after copjmp
 					break;
+
 				case CopperStatus.Stopped:
 					return;
 			}

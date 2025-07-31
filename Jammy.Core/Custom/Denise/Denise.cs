@@ -932,12 +932,17 @@ end loop
 		return value;
 	}
 
+	private void DebugBPLCON1()
+	{
+		//logger.LogTrace($"BPLCON1 {clock} {bplcon1:X4} {bplcon1&0xf} {(bplcon1>>4)&0xf}");
+	}
+
 	public void Write(uint insaddr, uint address, ushort value)
 	{
 		switch (address)
 		{
 			case ChipRegs.BPLCON0: bplcon0 = value; UpdateBPLCON0(); break;
-			case ChipRegs.BPLCON1: bplcon1 = value; break;
+			case ChipRegs.BPLCON1: bplcon1 = value; DebugBPLCON1(); break;
 			case ChipRegs.BPLCON2: bplcon2 = value; UpdateBPLCON2(); break;
 			case ChipRegs.BPLCON3: bplcon3 = value; break;
 			case ChipRegs.BPLCON4: bplcon4 = value; UpdateBPLCON4(); break;

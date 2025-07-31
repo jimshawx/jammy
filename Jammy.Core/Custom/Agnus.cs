@@ -121,10 +121,10 @@ public class Agnus : IAgnus
 		RunAgnusTick();
 		UpdateSprites();
 
-		if ((clockState & ChipsetClockState.EndOfLine)!=0)
-		{
-			EndAgnusLine();
-		}
+		//if ((clockState & ChipsetClockState.EndOfLine)!=0)
+		//{
+		//	EndAgnusLine();
+		//}
 
 		if ((clockState & ChipsetClockState.EndOfFrame)!=0)
 			interrupt.AssertInterrupt(Types.Interrupt.VERTB);
@@ -243,6 +243,7 @@ public class Agnus : IAgnus
 		if (clock.HorizontalPos >= ddfstopfix + debugger.ddfEHack && lineState == DMALineState.Fetching)
 		{
 			lineState = DMALineState.LineComplete;
+			EndAgnusLine();
 		}
 
 		if (fetched)
@@ -393,7 +394,7 @@ noBitplaneDMA:
 	private void EndAgnusLine()
 	{
 		//next horizontal line, and we did some fetching this line, add on the modulos
-		if (clock.VerticalPos >= diwstrtv && clock.VerticalPos < diwstopv && lineState == DMALineState.LineComplete)
+		if (/*clock.VerticalPos >= diwstrtv && clock.VerticalPos < diwstopv &&*/ lineState == DMALineState.LineComplete)
 		{
 			//logger.LogTrace($"MOD {clock} {planes} {bpl1mod:X4} {bpl2mod:X4}");
 			for (int i = 0; i < planes; i++)
@@ -741,6 +742,15 @@ noBitplaneDMA:
 		//sprpt[s] += 4;
 	}
 
+	private void DebugBPL(int plane, ushort value)
+	{
+		//logger.LogTrace($"BPL{plane + 1}DAT {clock} {value:X4}");
+	}
+	private void DebugBPLPT(int plane, ushort value)
+	{
+		//logger.LogTrace($"BPL{plane + 1}PT {clock} {value:X4}");
+	}
+
 	public void Write(uint insaddr, uint address, ushort value)
 	{
 		switch (address)
@@ -750,31 +760,31 @@ noBitplaneDMA:
 
 			case ChipRegs.BPLCON0: bplcon0 = value; UpdateBPLCON0(); UpdateDDF(); break;
 
-			case ChipRegs.BPL1DAT: bpldat[0] = value; denise.WriteBitplanes(bpldat); break;
-			case ChipRegs.BPL2DAT: bpldat[1] = value; break;
-			case ChipRegs.BPL3DAT: bpldat[2] = value; break;
-			case ChipRegs.BPL4DAT: bpldat[3] = value; break;
-			case ChipRegs.BPL5DAT: bpldat[4] = value; break;
-			case ChipRegs.BPL6DAT: bpldat[5] = value; break;
-			case ChipRegs.BPL7DAT: bpldat[6] = value; break;
-			case ChipRegs.BPL8DAT: bpldat[7] = value; break;
+			case ChipRegs.BPL1DAT: bpldat[0] = value; DebugBPL(0,value); denise.WriteBitplanes(bpldat); break;
+			case ChipRegs.BPL2DAT: bpldat[1] = value; DebugBPL(1, value); break;
+			case ChipRegs.BPL3DAT: bpldat[2] = value; DebugBPL(2, value); break;
+			case ChipRegs.BPL4DAT: bpldat[3] = value; DebugBPL(3, value); break;
+			case ChipRegs.BPL5DAT: bpldat[4] = value; DebugBPL(4, value); break;
+			case ChipRegs.BPL6DAT: bpldat[5] = value; DebugBPL(5, value); break;
+			case ChipRegs.BPL7DAT: bpldat[6] = value; DebugBPL(6, value); break;
+			case ChipRegs.BPL8DAT: bpldat[7] = value; DebugBPL(7, value); break;
 
-			case ChipRegs.BPL1PTL: bplpt[0] = (bplpt[0] & 0xffff0000) | (uint)(value & 0xfffe); break;
-			case ChipRegs.BPL1PTH: bplpt[0] = (bplpt[0] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-			case ChipRegs.BPL2PTL: bplpt[1] = (bplpt[1] & 0xffff0000) | (uint)(value & 0xfffe); break;
-			case ChipRegs.BPL2PTH: bplpt[1] = (bplpt[1] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-			case ChipRegs.BPL3PTL: bplpt[2] = (bplpt[2] & 0xffff0000) | (uint)(value & 0xfffe); break;
-			case ChipRegs.BPL3PTH: bplpt[2] = (bplpt[2] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-			case ChipRegs.BPL4PTL: bplpt[3] = (bplpt[3] & 0xffff0000) | (uint)(value & 0xfffe); break;
-			case ChipRegs.BPL4PTH: bplpt[3] = (bplpt[3] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-			case ChipRegs.BPL5PTL: bplpt[4] = (bplpt[4] & 0xffff0000) | (uint)(value & 0xfffe); break;
-			case ChipRegs.BPL5PTH: bplpt[4] = (bplpt[4] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-			case ChipRegs.BPL6PTL: bplpt[5] = (bplpt[5] & 0xffff0000) | (uint)(value & 0xfffe); break;
-			case ChipRegs.BPL6PTH: bplpt[5] = (bplpt[5] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-			case ChipRegs.BPL7PTL: bplpt[6] = (bplpt[6] & 0xffff0000) | (uint)(value & 0xfffe); break;
-			case ChipRegs.BPL7PTH: bplpt[6] = (bplpt[6] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-			case ChipRegs.BPL8PTL: bplpt[7] = (bplpt[7] & 0xffff0000) | (uint)(value & 0xfffe); break;
-			case ChipRegs.BPL8PTH: bplpt[7] = (bplpt[7] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
+			case ChipRegs.BPL1PTL: bplpt[0] = (bplpt[0] & 0xffff0000) | (uint)(value & 0xfffe); DebugBPLPT(0,value); break;
+			case ChipRegs.BPL1PTH: bplpt[0] = (bplpt[0] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugBPLPT(0, value); break;
+			case ChipRegs.BPL2PTL: bplpt[1] = (bplpt[1] & 0xffff0000) | (uint)(value & 0xfffe); DebugBPLPT(1, value); break;
+			case ChipRegs.BPL2PTH: bplpt[1] = (bplpt[1] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugBPLPT(1, value); break;
+			case ChipRegs.BPL3PTL: bplpt[2] = (bplpt[2] & 0xffff0000) | (uint)(value & 0xfffe); DebugBPLPT(2, value); break;
+			case ChipRegs.BPL3PTH: bplpt[2] = (bplpt[2] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugBPLPT(2, value); break;
+			case ChipRegs.BPL4PTL: bplpt[3] = (bplpt[3] & 0xffff0000) | (uint)(value & 0xfffe); DebugBPLPT(3, value); break;
+			case ChipRegs.BPL4PTH: bplpt[3] = (bplpt[3] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugBPLPT(3, value); break;
+			case ChipRegs.BPL5PTL: bplpt[4] = (bplpt[4] & 0xffff0000) | (uint)(value & 0xfffe); DebugBPLPT(4, value); break;
+			case ChipRegs.BPL5PTH: bplpt[4] = (bplpt[4] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugBPLPT(4, value); break;
+			case ChipRegs.BPL6PTL: bplpt[5] = (bplpt[5] & 0xffff0000) | (uint)(value & 0xfffe); DebugBPLPT(5, value); break;
+			case ChipRegs.BPL6PTH: bplpt[5] = (bplpt[5] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugBPLPT(5, value); break;
+			case ChipRegs.BPL7PTL: bplpt[6] = (bplpt[6] & 0xffff0000) | (uint)(value & 0xfffe); DebugBPLPT(6, value); break;
+			case ChipRegs.BPL7PTH: bplpt[6] = (bplpt[6] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugBPLPT(6, value); break;
+			case ChipRegs.BPL8PTL: bplpt[7] = (bplpt[7] & 0xffff0000) | (uint)(value & 0xfffe); DebugBPLPT(7, value); break;
+			case ChipRegs.BPL8PTH: bplpt[7] = (bplpt[7] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); DebugBPLPT(7, value); break;
 
 			case ChipRegs.DIWSTRT: diwstrt = value; diwhigh = 0; UpdateDIWSTRT(); break;
 			case ChipRegs.DIWSTOP: diwstop = value; diwhigh = 0; UpdateDIWSTOP(); break;
