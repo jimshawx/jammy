@@ -206,7 +206,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		void SetBlankingStatus(Blanking blanking);
 		void WriteBitplanes(ulong[] planes);
-		void WriteSprite(int s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl);
+		void WriteSprite(uint s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl);
 		public uint[] DebugGetPalette();
 	}
 

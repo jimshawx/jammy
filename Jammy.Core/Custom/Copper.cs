@@ -335,9 +335,14 @@ namespace Jammy.Core.Custom
 					//vAmigaTS\Agnus\Copper\Skip\copstrt2
 					status = CopperStatus.WakingUp;
 					if ((clock.ClockState & ChipsetClockState.EndOfFrame) != 0)
+					{
+						//logger.LogTrace("Retrace");
 						waitTimer = 7;//apply a long delay at EOF
-					else
+					}
+					else 
+					{ 
 						waitTimer = 1;//only 1 cycle delay after copjmp
+					}
 					break;
 
 				case CopperStatus.Stopped:

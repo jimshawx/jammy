@@ -375,16 +375,16 @@ noBitplaneDMA:
 		//	denise.WriteBitplanes(bpldat);
 
 		//if the sprite horiz position matches, clock the sprite data in
-		for (int s = 0; s < 8; s++)
+		for (uint s = 0; s < 8; s++)
 		{
-			if (spriteState[s] == SpriteState.Fetching)
+			//if (spriteState[s] == SpriteState.Fetching)
+			if (clock.VerticalPos >= VStart(s) && clock.VerticalPos < VStop(s) && spriteState[s] != SpriteState.Idle)
 			{
-				int hstart = (sprpos[s] & 0xff) << 1;
-				hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
+				int hstart = HStart(s);
 
-				if (clock.HorizontalPos == hstart >> 1)
+				if (clock.DeniseHorizontalPos == hstart)
 				{
-					//logger.LogTrace($"S{s} H{clock.HorizontalPos,3} V{clock.VerticalPos,3} {MergeBP(sprdata[s], sprdatb[s])} H:{sprpos[s]&0xff,3} V:{sprpos[s]>>8,3} {sprctl[s].ToBin()}");
+					//logger.LogTrace($"SPR{s} {clock} {MergeBP(sprdata[s], sprdatb[s])} h:{sprpos[s]&0xff,3} v:{sprpos[s]>>8,3} {sprctl[s].ToBin()}");
 					denise.WriteSprite(s, sprdata, sprdatb, sprctl);
 				}
 			}
@@ -459,14 +459,34 @@ noBitplaneDMA:
 		return clock.VerticalPos >= SPRITE_DMA_START_LINE;
 	}
 
+	private int VStart(uint s)
+	{
+		int vstart = sprpos[s] >> 8;
+		vstart += (sprctl[s] & 4) << 6; //bit 2 is high bit of vstart
+		return vstart;
+	}
+
+	private int VStop(uint s)
+	{
+		int vstop = sprctl[s] >> 8;
+		vstop += (sprctl[s] & 2) << 7; //bit 1 is high bit of vstop
+		return vstop;
+	}
+
+	private int HStart(uint s)
+	{
+		int hstart = (sprpos[s] & 0xff) << 1;
+		hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
+		return hstart;
+	}
+
 	private void RunSpriteDMA(uint slot)
 	{
 		uint s = slot >> 1;
 
 		if (spriteState[s] == SpriteState.Waiting)
 		{
-			int vstart = sprpos[s] >> 8;
-			vstart += (sprctl[s] & 4) << 6; //bit 2 is high bit of vstart
+			int vstart = VStart(s);
 			if (clock.VerticalPos == vstart)
 			{
 				spriteState[s] = SpriteState.Fetching;
@@ -474,8 +494,7 @@ noBitplaneDMA:
 		}
 		else if (spriteState[s] == SpriteState.Fetching)
 		{
-			int vstop = sprctl[s] >> 8;
-			vstop += (sprctl[s] & 2) << 7; //bit 1 is high bit of vstop
+			int vstop = VStop(s);
 			if (clock.VerticalPos == vstop)
 				spriteState[s] = SpriteState.Idle;
 		}
@@ -750,6 +769,10 @@ noBitplaneDMA:
 	{
 		//logger.LogTrace($"BPL{plane + 1}PT {clock} {value:X4}");
 	}
+	private void DebugSPRPOS(uint s)
+	{
+		//logger.LogTrace($"SPR{s}POS {clock} v:{VStart(s)} h:{HStart(s)} pos:{sprpos[s]:X4} ctl:{sprctl[s]:X4}");
+	}
 
 	public void Write(uint insaddr, uint address, ushort value)
 	{
@@ -804,7 +827,7 @@ noBitplaneDMA:
 
 			case ChipRegs.SPR0PTL: sprpt[0] = (sprpt[0] & 0xffff0000) | (uint)(value & 0xfffe); break;
 			case ChipRegs.SPR0PTH: sprpt[0] = (sprpt[0] & 0x0000ffff) | ((uint)(value & 0x1f) << 16); break;
-			case ChipRegs.SPR0POS: sprpos[0] = value; break;
+			case ChipRegs.SPR0POS: sprpos[0] = value; DebugSPRPOS(0); break;
 			case ChipRegs.SPR0CTL: sprctl[0] = value; UpdateSpriteState(0); break;
 			case ChipRegs.SPR0DATA: sprdata[0] = value; break;
 			case ChipRegs.SPR0DATB: sprdatb[0] = value; break;

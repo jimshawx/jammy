@@ -141,7 +141,7 @@ public class Denise : IDenise
 		bpldatPix.WriteBitplanes(ref bpldat, even, odd);
 	}
 
-	public void WriteSprite(int s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl)
+	public void WriteSprite(uint s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl)
 	{
 		sprdatapix[s] = sprdata[s];
 		sprdatbpix[s] = sprdatb[s];
