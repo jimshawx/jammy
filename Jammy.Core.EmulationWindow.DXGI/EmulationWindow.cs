@@ -51,7 +51,8 @@ namespace Jammy.Core.EmulationWindow.DX
 					ControlBox = false,
 					FormBorderStyle = FormBorderStyle.FixedSingle,
 					MinimizeBox = true,
-					MaximizeBox = true
+					MaximizeBox = true,
+					Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath)
 				};
 				if (emulation.Handle == IntPtr.Zero)
 					throw new ApplicationException();
