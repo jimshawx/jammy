@@ -336,6 +336,14 @@ namespace Jammy.Core.Floppy
 					dsklen &= 0x3fff;
 
 					bool synced = (adkcon & (1u << 10)) == 0;
+
+					if (mfm.Length < dsklen*2)
+					{
+						mfm = mfm.Concat(mfm).ToArray();
+						if (mfm.Length < dsklen * 2)
+							logger.LogTrace($"MFM data length is less than DSKLEN {mfm.Length} < {dsklen * 2}");
+					}
+
 					foreach (var w in mfm.AsUWord().Take((int)dsklen))
 					{
 						if (!synced)
@@ -344,7 +352,7 @@ namespace Jammy.Core.Floppy
 							interrupt.AssertInterrupt(Types.Interrupt.DSKSYNC);
 							synced = true;
 						}
-
+						//nb. could meet the sync word here again
 						memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
 					}
 
