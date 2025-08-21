@@ -83,11 +83,11 @@ namespace Jammy.Core.Floppy
 			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
-			Disk[] disks = new Disk[4];
-			if (!string.IsNullOrEmpty(settings.Value.DF0)) disks[0] = new Disk(settings.Value.DF0);
-			if (!string.IsNullOrEmpty(settings.Value.DF1)) disks[1] = new Disk(settings.Value.DF1);
-			if (!string.IsNullOrEmpty(settings.Value.DF2)) disks[2] = new Disk(settings.Value.DF2);
-			if (!string.IsNullOrEmpty(settings.Value.DF3)) disks[3] = new Disk(settings.Value.DF3);
+			var disks = new IDisk[4];
+			if (!string.IsNullOrEmpty(settings.Value.DF0)) disks[0] = Disk.Read(settings.Value.DF0);
+			if (!string.IsNullOrEmpty(settings.Value.DF1)) disks[1] = Disk.Read(settings.Value.DF1);
+			if (!string.IsNullOrEmpty(settings.Value.DF2)) disks[2] = Disk.Read(settings.Value.DF2);
+			if (!string.IsNullOrEmpty(settings.Value.DF3)) disks[3] = Disk.Read(settings.Value.DF3);
 
 			drive = new Drive[4];
 			for (int i = 0; i < 4; i++)
@@ -331,7 +331,7 @@ namespace Jammy.Core.Floppy
 						return;
 					}
 
-					byte[] mfm = mfmEncoder.EncodeTrack((drive[df].track << 1)+ drive[df].side, drive[df].disk.data, 0x4489);
+					byte[] mfm = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
 
 					dsklen &= 0x3fff;
 
@@ -339,7 +339,10 @@ namespace Jammy.Core.Floppy
 
 					if (mfm.Length < dsklen*2)
 					{
-						mfm = mfm.Concat(mfm).ToArray();
+						//same track, again (could be different for IPF)
+						byte[] mfm2 = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
+
+						mfm = mfm.Concat(mfm2).ToArray();
 						if (mfm.Length < dsklen * 2)
 							logger.LogTrace($"MFM data length is less than DSKLEN {mfm.Length} < {dsklen * 2}");
 					}
@@ -554,7 +557,7 @@ namespace Jammy.Core.Floppy
 
 		public void ChangeDisk(int df, string filename)
 		{
-			drive[df].disk = new Disk(filename);
+			drive[df].disk = Disk.Read(filename);
 			drive[df].diskinserted = true;
 			drive[df].ready = false;
 			drive[df].track = 0;

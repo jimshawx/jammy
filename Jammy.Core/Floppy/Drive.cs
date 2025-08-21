@@ -2,6 +2,8 @@
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
+using Jammy.Core.Interface.Interfaces;
+
 namespace Jammy.Core.Floppy
 {
 	public class Drive
@@ -19,7 +21,7 @@ namespace Jammy.Core.Floppy
 		public bool attached;
 		public bool diskinserted;
 
-		public Disk disk;
+		public IDisk disk;
 		public bool writeProtected;
 		public bool ready;
 

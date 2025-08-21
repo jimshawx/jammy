@@ -1,5 +1,5 @@
 ﻿using Jammy.Core.Floppy.DMS;
-using System;
+using Jammy.Core.Interface.Interfaces;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -13,20 +13,22 @@ namespace Jammy.Core.Floppy
 {
 	public class Disk
 	{
+		public static IDisk Read(string adfFileName)
+		{
+			return DiskRead(adfFileName);
+		}
+
 		private const string floppyPath = "../../../../games/";
 
-		public byte[] data;
-
-		public Disk(string adfFileName)
+		private static IDisk DiskRead(string adfFileName)
 		{
 			if (!adfFileName.StartsWith(floppyPath))
 				adfFileName = Path.Combine(floppyPath, adfFileName);
 
 			if (!File.Exists(adfFileName))
-			{
-				data = null;
-				return;
-			}
+				return null;
+
+			byte[] data;
 
 			try
 			{ 
@@ -35,8 +37,7 @@ namespace Jammy.Core.Floppy
 			catch (IOException)
 			{
 				//probably can't read the file because someone else is using it
-				data = null;
-				return;
+				return null;
 			}
 
 			//is it a zip file?
@@ -130,11 +131,21 @@ namespace Jammy.Core.Floppy
 				xDMS.Process_File(data, out unpacked, xDMS.CMD_VIEWFULL, xDMS.OPT_QUIET, 0, 0);
 				//unpack the DMS
 				var success = xDMS.Process_File(data, out unpacked, xDMS.CMD_UNPACK, xDMS.OPT_QUIET, 0, 0);
+				data = null;
 				if (success == xDMS.NO_PROBLEM)
 					data = unpacked;
-				else
-					data = null;
 			}
+			//is it an IPF file?
+			else if (data.Length >= 4 && data[0] == 'C' && data[1] == 'A' && data[2] == 'P' && data[3] == 'S')
+			{
+				int id = IPF.IPF.Load(adfFileName, data);
+				return new IPFDisk(id);
+			}
+
+			if (data == null)
+				return null;
+
+			return new MFMDisk(data);
 		}
 	}
 }

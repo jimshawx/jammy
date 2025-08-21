@@ -38,6 +38,7 @@ using System.Linq;
 using System.Runtime.Intrinsics.X86;
 using System.Windows.Forms;
 using Jammy.NativeOverlay.Overlays;
+using Jammy.Core.Floppy.IPF;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -165,6 +166,7 @@ namespace Jammy.Main
 				.AddSingleton<IGraph, Graph.Graph>()
 				.AddSingleton<IFlowAnalyser, FlowAnalyser>()
 				.AddSingleton<IPersistenceManager, PersistenceManager>()
+				.AddSingleton<IIPF, IPF>()
 				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 			//configure Blitter
@@ -270,6 +272,9 @@ namespace Jammy.Main
 			serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 			serviceProvider.GetRequiredService<ICopper>().Init(dma);
 			serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab);
+
+			//hack to start IPF
+			var ipf = serviceProvider.GetRequiredService<IIPF>();
 
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");
