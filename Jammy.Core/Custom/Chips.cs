@@ -288,6 +288,9 @@ namespace Jammy.Core.Custom
 					else
 						intreq &= (ushort)~value;
 
+					//if ((value & 0x0002) != 0)
+					//	logger.LogTrace($"DSKBLK set {((intreq & 0x0002) != 0 ? "on" : "off")} @ {insaddr:X8}");
+
 					audio.WriteINTREQ((ushort)(intreq & 0x7fff));
 					serial.WriteINTREQ((ushort)(intreq & 0x7fff));
 

@@ -263,9 +263,13 @@ namespace Jammy.Core.Floppy
 				case ChipRegs.DSKLEN:
 					dsklen = value;
 
+					//logger.LogTrace($"DSKLEN {dsklen:X4} @ {insaddr:X8}");
+
 					if (value == 0)
 					{
-						interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
+						//interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
+						//writing 0 to DSKLEN stops any in-progress DMA
+						//and doesn't trigger an interrupt
 						break;
 					}
 
@@ -337,7 +341,7 @@ namespace Jammy.Core.Floppy
 
 					bool synced = (adkcon & (1u << 10)) == 0;
 
-					if (mfm.Length < dsklen*2)
+					//if (mfm.Length < dsklen*2)
 					{
 						//same track, again (could be different for IPF)
 						byte[] mfm2 = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
