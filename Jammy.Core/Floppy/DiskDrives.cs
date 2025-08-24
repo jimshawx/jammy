@@ -296,7 +296,7 @@ namespace Jammy.Core.Floppy
 				return mfmBuffer.ToArray().AsUWord().ToArray();
 			}
 
-			public ushort FirstWord()
+			public ushort NextWord()
 			{
 				ushort w = mfmBuffer.FirstUWord();
 				ConsumeTrackData(1);
@@ -333,7 +333,7 @@ namespace Jammy.Core.Floppy
 				case ChipRegs.DSKLEN:
 					dsklen = value;
 
-					logger.LogTrace($"DSKLEN {dsklen:X4} @ {insaddr:X8}");
+					//logger.LogTrace($"DSKLEN {dsklen:X4} @ {insaddr:X8}");
 
 					if (value == 0)
 					{
@@ -491,22 +491,14 @@ namespace Jammy.Core.Floppy
 				return;
 			}
 
-			ushort word = trackCache[SelectedDrive()].FirstWord();
-
+			ushort word = trackCache[SelectedDrive()].NextWord();
 			if (!synced)
 			{
-				if (word == dsksync)
-				{ 
-					synced = true;
-					interrupt.AssertInterrupt(Types.Interrupt.DSKSYNC);
-				}
-				else
-				{
-					return;
-				}
+				if (word != dsksync) return;
+				synced = true;
+				interrupt.AssertInterrupt(Types.Interrupt.DSKSYNC);
 			}
 			dma.WriteChip(DMASource.Agnus, dskpt, DMA.DSKEN, word, Size.Word);
-			
 			dskpt += 2; dsklen--;
 
 			if (dsklen == 0)
