@@ -147,6 +147,8 @@ namespace Jammy.Core.CPU.CSharp
 			{
 				undisturbedSR = sr;
 
+				bool traceMode = T();
+
 				int ins = Fetch(pc);
 				pc += 2;
 
@@ -197,6 +199,9 @@ namespace Jammy.Core.CPU.CSharp
 						internalTrap(11);
 						break;
 				}
+
+				if (traceMode)
+					internalTrap(9);
 			}
 			catch (AbandonInstructionException)
 			{ 
@@ -276,6 +281,11 @@ namespace Jammy.Core.CPU.CSharp
 		private void clrSupervisor()
 		{
 			sr &= 0b11011111_11111111;
+		}
+
+		private void clrTrace()
+		{
+			sr &= 0b01111111_11111111;
 		}
 
 		private void setX()
@@ -523,7 +533,7 @@ namespace Jammy.Core.CPU.CSharp
 		private bool V() { return (sr & 2) != 0; }
 		private bool C() { return (sr & 1) != 0; }
 		private bool Supervisor() { return (sr & 0b00100000_00000000) != 0; }
-
+		private bool T() { return (sr & 0b10000000_00000000) != 0; }
 
 		public uint read32(uint address)
 		{
@@ -2734,6 +2744,9 @@ namespace Jammy.Core.CPU.CSharp
 			}
 			else
 			{
+				if (vector == 9)
+					clrTrace();
+
 				if (vector != 8)//used in multitasker
 				{
 					if (vector < 16)
