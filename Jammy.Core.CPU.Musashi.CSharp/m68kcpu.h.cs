@@ -627,20 +627,20 @@ public static partial class M68KCPU
 
 	/* Enable or disable trace emulation */
 	//#if M68K_EMULATE_TRACE
-	//	/* Initiates trace checking before each instruction (t1) */
-	//	const int m68ki_trace_t1=(); m68ki_tracing = FLAG_T1
-	//	/* adds t0 to trace checking if we encounter change of flow */
-	//	const int m68ki_trace_t0=(); m68ki_tracing |= FLAG_T0
-	//	/* Clear all tracing */
-	//	const int m68ki_clear_trace=(); m68ki_tracing = 0
-	//	/* Cause a trace exception if we are tracing */
-	//	const int m68ki_exception_if_trace=(); if(m68ki_tracing) m68ki_exception_trace()
+	/* Initiates trace checking before each instruction (t1) */
+	static void m68ki_trace_t1() { m68ki_tracing = FLAG_T1; }
+	/* adds t0 to trace checking if we encounter change of flow */
+	static void m68ki_trace_t0() { m68ki_tracing |= FLAG_T0; }
+	/* Clear all tracing */
+	static void m68ki_clear_trace() { m68ki_tracing = 0; }
+	/* Cause a trace exception if we are tracing */
+	static void m68ki_exception_if_trace() { if (m68ki_tracing!=0) m68ki_exception_trace(); }
 	//#else
-	static void m68ki_trace_t1() { }
-	static void m68ki_trace_t0() { }
-	static void m68ki_clear_trace() { }
-	static void m68ki_exception_if_trace() { }
-	//#endif
+	//static void m68ki_trace_t1() { }
+	//static void m68ki_trace_t0() { }
+	//static void m68ki_clear_trace() { }
+	//static void m68ki_exception_if_trace() { }
+	////#endif
 	/* M68K_EMULATE_TRACE */
 
 
