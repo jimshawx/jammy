@@ -229,9 +229,10 @@ public class Program
 
 		var dma = serviceProvider.GetRequiredService<IDMA>();
 		var ciab = serviceProvider.GetRequiredService<ICIABEven>();
+		var chipRAM = serviceProvider.GetRequiredService<IChipRAM>();
 		serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 		serviceProvider.GetRequiredService<ICopper>().Init(dma);
-		serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab);
+		serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab, chipRAM);
 
 		var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 		logger.LogTrace("Application Starting Up!");

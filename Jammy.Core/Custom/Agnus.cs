@@ -64,6 +64,8 @@ public class Agnus : IAgnus
 	private IDMA dma;
 	private readonly IDenise denise;
 	private readonly IInterrupt interrupt;
+	private readonly IDiskDrives diskDrives;
+
 	//private readonly IChipRAM chipRam;
 	//private readonly IChips custom;
 	private readonly IChipsetDebugger debugger;
@@ -78,12 +80,14 @@ public class Agnus : IAgnus
 	//public const int DMA_END = 0xF0;
 
 	public Agnus(IChipsetClock clock, IDenise denise, IInterrupt interrupt,
+		IDiskDrives diskDrives,
 		/*IChips custom,*/ IChipsetDebugger debugger,
 		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
 	{
 		this.clock = clock;
 		this.denise = denise;
 		this.interrupt = interrupt;
+		this.diskDrives = diskDrives;
 		//chipRam = chipRAM;
 		//trapdoorRam = trapdoorRAM;
 		//this.kickstartROM = kickstartROM;
@@ -185,9 +189,9 @@ public class Agnus : IAgnus
 				case 1: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
 				case 3: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
 				case 5: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 7: if (dma.IsDMAEnabled(DMA.DSKEN)) dma.NeedsDMA(DMASource.Agnus, DMA.DSKEN); break;//actually Disk DMA
-				case 9: if (dma.IsDMAEnabled(DMA.DSKEN)) dma.NeedsDMA(DMASource.Agnus, DMA.DSKEN); break;//actually Disk DMA
-				case 0xB: if (dma.IsDMAEnabled(DMA.DSKEN)) dma.NeedsDMA(DMASource.Agnus, DMA.DSKEN); break;//actually Disk DMA
+				case 7: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
+				case 9: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
+				case 0xB: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
 				case 0xD: if (dma.IsDMAEnabled(DMA.AUD0EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD0EN); break;//actually Audio 0 DMA
 				case 0xF: if (dma.IsDMAEnabled(DMA.AUD1EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
 				case 0x11: if (dma.IsDMAEnabled(DMA.AUD2EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
@@ -213,8 +217,8 @@ public class Agnus : IAgnus
 		//what are the correct values? Agnus can fetch at 0x18, how does that correspond to Denise clock?
 		if (clock.DeniseHorizontalPos >= 0x10 && clock.DeniseHorizontalPos <= 51)//0x5e)
 		{
-			if (clock.HorizontalPos >= ddfstrtfix)
-				logger.LogTrace($"Fetch in HPOS {clock.DeniseHorizontalPos:X2} {clock.HorizontalPos:X2}");
+			//if (clock.HorizontalPos >= ddfstrtfix)
+			//	logger.LogTrace($"Fetch in HPOS {clock.DeniseHorizontalPos:X2} {clock.HorizontalPos:X2}");
 			blanking |= Blanking.HorizontalBlank;
 		}
 
@@ -382,7 +386,7 @@ noBitplaneDMA:
 			{
 				int hstart = HStart(s);
 
-				if (clock.DeniseHorizontalPos == hstart)
+				if (clock.DeniseHorizontalPos == (uint)(hstart & 0xfffe))
 				{
 					//logger.LogTrace($"SPR{s} {clock} {MergeBP(sprdata[s], sprdatb[s])} h:{sprpos[s]&0xff,3} v:{sprpos[s]>>8,3} {sprctl[s].ToBin()}");
 					denise.WriteSprite(s, sprdata, sprdatb, sprctl);

@@ -72,6 +72,12 @@ namespace Jammy.Core.Types
 		A4000
 	}
 
+	public enum FloppySpeed
+	{
+		Immediate,
+		CycleExact
+	}
+
 	public class EmulationSettings
 	{
 		public string KickStart { get; set; }
@@ -110,6 +116,7 @@ namespace Jammy.Core.Types
 		public DiskController DiskController { get; set; }
 		public VideoFormat VideoFormat { get; set; }
 		public BlitterMode BlitterMode { get; set; }
+		public FloppySpeed FloppySpeed { get; set; }
 
 		public string LVODirectory { get { return "c:/source/programming/amiga";} set { } }
 	}

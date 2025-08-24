@@ -446,6 +446,9 @@ namespace Jammy.UI.Settings.Avalonia
 
 			//Blitter
 			currentSettings.BlitterMode = Default(rbImmediate.IsChecked) ? BlitterMode.Immediate : BlitterMode.Synchronous;
+
+			//Floppy Speed
+			currentSettings.FloppySpeed = FloppySpeed.Immediate;
 		}
 
 		private static EmulationSettings DefaultSettings()

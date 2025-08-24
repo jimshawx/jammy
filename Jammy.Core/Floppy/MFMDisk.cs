@@ -21,7 +21,7 @@ namespace Jammy.Core.Floppy
 		public byte[] GetTrack(uint track, uint side)
 		{
 			if (track >= 80 || side >= 2)
-				throw new ArgumentOutOfRangeException("Track or head number is out of range.");
+				throw new ArgumentOutOfRangeException($"Track or head number is out of range {track}.{side}");
 
 			return	mfmEncoder.EncodeTrack((track << 1) + side, data, 0x4489);
 		}

@@ -342,6 +342,9 @@ namespace Jammy.UI.Settings
 			//Blitter
 			rbImmediate.Checked = currentSettings.BlitterMode == BlitterMode.Immediate;
 			rbSynchronous.Checked = currentSettings.BlitterMode == BlitterMode.Synchronous;
+
+			//Floppy Speed
+			rbFloppyAccurate.Checked = currentSettings.FloppySpeed == FloppySpeed.CycleExact;
 		}
 
 		private void UnbindSettings()
@@ -402,6 +405,9 @@ namespace Jammy.UI.Settings
 
 			//Blitter
 			currentSettings.BlitterMode = rbImmediate.Checked ? BlitterMode.Immediate : BlitterMode.Synchronous;
+
+			//Floppy Speed
+			currentSettings.FloppySpeed = rbFloppyAccurate.Checked ? FloppySpeed.CycleExact : FloppySpeed.Immediate;
 		}
 
 		private static EmulationSettings DefaultSettings()

@@ -75,7 +75,8 @@ namespace Jammy.Core.Interface.Interfaces
 		void RemoveDisk(int df);
 		void ChangeDisk(int df, string fileName);
 		void ReadyDisk();
-		void Init(IDMA dma, ICIABEven ciab);
+		void Init(IDMA dma, ICIABEven ciab, IChipRAM memory);
+		void DoDMA();
 	}
 	public interface IKeyboard : IEmulate
 	{

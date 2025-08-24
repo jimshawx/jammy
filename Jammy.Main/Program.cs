@@ -266,12 +266,13 @@ namespace Jammy.Main
 			var memoryMapper = serviceProvider.GetRequiredService<MemoryMapper>();
 			var chipsetDebugger = serviceProvider.GetRequiredService<IChipsetDebugger>();
 			var chips = serviceProvider.GetRequiredService<IChips>();
+			var chipRAM = serviceProvider.GetRequiredService<IChipRAM>();
 			dma.Init(audio, memoryMapper);
 			chipsetDebugger.Init(chips);
 			var ciab = serviceProvider.GetRequiredService<ICIABEven>();
 			serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 			serviceProvider.GetRequiredService<ICopper>().Init(dma);
-			serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab);
+			serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab, chipRAM);
 
 			//hack to start IPF
 			var ipf = serviceProvider.GetRequiredService<IIPF>();

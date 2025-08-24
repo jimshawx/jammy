@@ -3,7 +3,6 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
-using Jammy.Interface;
 using Jammy.NativeOverlay.Overlays;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -11,7 +10,7 @@ using System;
 using System.Linq;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Floppy
@@ -45,16 +44,14 @@ namespace Jammy.Core.Floppy
 		//300rpm = 5Hz = 0.2s = @7.09MHz, that's 1_418_000
 		private const int INDEX_INTERRUPT_RATE = 1_418_000/2;//these should be chipset clocks
 
-		private readonly IMemoryMappedDevice memory;
+		private IContendedMemoryMappedDevice memory;
 		private ICIABEven ciab;
 
 		private readonly IInterrupt interrupt;
-		private readonly IEmulationWindow window;
 		private readonly IDiskLightOverlay diskLightOverlay;
 		private IDMA dma;
 		private readonly ILogger logger;
-
-		private readonly MFM mfmEncoder;
+		private readonly EmulationSettings settings;
 
 		//HRM pp241
 
@@ -70,15 +67,12 @@ namespace Jammy.Core.Floppy
 				verbose ^= true;
 		}
 
-		public DiskDrives(IChipRAM memory, IInterrupt interrupt, IEmulationWindow emulationWindow, IDiskLightOverlay diskLightOverlay, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
+		public DiskDrives(IInterrupt interrupt, IEmulationWindow emulationWindow, IDiskLightOverlay diskLightOverlay, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
 		{
-			this.memory = memory;
 			this.interrupt = interrupt;
-			this.window = emulationWindow;
 			this.diskLightOverlay = diskLightOverlay;
 			this.logger = logger;
-
-			this.mfmEncoder = new MFM();
+			this.settings = settings.Value;
 
 			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 
@@ -116,10 +110,11 @@ namespace Jammy.Core.Floppy
 			}
 		}
 
-		public void Init(IDMA dma, ICIABEven ciab)
+		public void Init(IDMA dma, ICIABEven ciab, IChipRAM memory)
 		{
 			this.dma = dma;
 			this.ciab = ciab;
+			this.memory = (IContendedMemoryMappedDevice)memory;
 		}
 
 		public enum DriveState
@@ -243,7 +238,45 @@ namespace Jammy.Core.Floppy
 		private uint dskdat;
 		private uint adkcon;
 
+		byte[] mfmBuffer;
+		uint lastTrack = uint.MaxValue;
+		uint lastSide = uint.MaxValue;
+		int lastDrive = int.MaxValue;
+
+		private void PrimeTrackData(int df)
+		{
+			if (lastTrack != drive[df].track || lastSide != drive[df].side || lastDrive != df)
+			{
+				//buffer 2 revolutions worth of data
+				byte[] mfm0 = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
+				byte[] mfm1 = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
+
+				lastTrack = drive[df].track;
+				lastSide = drive[df].side;
+				lastDrive = df;
+
+				mfmBuffer = mfm0.Concat(mfm1).ToArray();
+			}
+		}
+
+		private void ConsumeTrackData(int df, uint words)
+		{
+			if (drive[df].track != lastTrack || drive[df].side != lastSide || df != lastDrive)
+				throw new ApplicationException("Track/Side/Drive changed during disk DMA");
+
+			mfmBuffer = mfmBuffer.Skip((int)words * 2).ToArray();
+
+			//if the buffer is getting small, pull in another revolution
+			if (mfmBuffer.Length < 0x3fff)
+			{
+				byte[] mfm = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
+				mfmBuffer = mfmBuffer.Concat(mfm).ToArray();
+			}
+		}
+
 		private int upcomingDiskDMA = -1;
+		private bool runningDMA = false;
+		private bool synced = false;
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
@@ -263,13 +296,16 @@ namespace Jammy.Core.Floppy
 				case ChipRegs.DSKLEN:
 					dsklen = value;
 
-					//logger.LogTrace($"DSKLEN {dsklen:X4} @ {insaddr:X8}");
+					logger.LogTrace($"DSKLEN {dsklen:X4} @ {insaddr:X8}");
 
 					if (value == 0)
 					{
 						//interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
 						//writing 0 to DSKLEN stops any in-progress DMA
 						//and doesn't trigger an interrupt
+						diskInterruptPending = -1;
+						upcomingDiskDMA = -1;
+						runningDMA = false;
 						break;
 					}
 
@@ -322,10 +358,6 @@ namespace Jammy.Core.Floppy
 						return;
 					}
 
-					//dsklen is number of MFM encoded words (usually a track, 7358 = 668 x 11words, 1336 x 11 bytes)
-					//if ((dsklen&0x3fff) != 7358 && (dsklen & 0x3fff) != 6814 && (dsklen & 0x3fff) != 6784)
-					//	logger.LogTrace($"DSKLEN looks funny {dsklen&0x3fff:X4} {dsklen:X4}");
-
 					logger.LogTrace($"Reading DF{df} T: {drive[df].track} S: {drive[df].side} @ {dskpt:X6} L: {dsklen&0x3fff:X4} ({dsklen & 0x3fff}) L/11: {(dsklen&0x3fff)/11}");
 
 					if (drive[df].track > 161)
@@ -335,37 +367,16 @@ namespace Jammy.Core.Floppy
 						return;
 					}
 
-					byte[] mfm = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
-
 					dsklen &= 0x3fff;
 
-					bool synced = (adkcon & (1u << 10)) == 0;
+					synced = (adkcon & (1u << 10)) == 0;
 
-					//if (mfm.Length < dsklen*2)
-					{
-						//same track, again (could be different for IPF)
-						byte[] mfm2 = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
+					PrimeTrackData(df); 
+					
+					runningDMA = true;
 
-						mfm = mfm.Concat(mfm2).ToArray();
-						if (mfm.Length < dsklen * 2)
-							logger.LogTrace($"MFM data length is less than DSKLEN {mfm.Length} < {dsklen * 2}");
-					}
+					//data transfer will start at the next disk DMA slot, slots 7,9,11
 
-					foreach (var w in mfm.AsUWord().Take((int)dsklen))
-					{
-						if (!synced)
-						{
-							if (w != dsksync) continue;
-							interrupt.AssertInterrupt(Types.Interrupt.DSKSYNC);
-							synced = true;
-						}
-						//nb. could meet the sync word here again
-						memory.Write(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
-					}
-
-					//this is far too fast, try triggering an interrupt later (should actually be one scanline per 3 words read)
-					//interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
-					diskInterruptPending = (227 * (int)dsklen)/3;
 					break;
 
 				case ChipRegs.DSKDAT:
@@ -380,6 +391,97 @@ namespace Jammy.Core.Floppy
 					break;
 			}
 		}
+
+		private void DoImmediately()
+		{
+			if (!runningDMA)
+				return;
+
+			uint totalconsumed = 0;
+
+			while (dsklen != 0)
+			{
+				uint dskconsumed = 0;
+
+				foreach (ushort w in mfmBuffer.AsUWord())
+				{
+					dskconsumed++;
+
+					if (!synced)
+					{
+						if (w != dsksync) continue;
+						interrupt.AssertInterrupt(Types.Interrupt.DSKSYNC);
+						synced = true;
+					}
+
+					memory.ImmediateWrite(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
+					if (dsklen == 0) break;
+				}
+
+				ConsumeTrackData(SelectedDrive(), dskconsumed);
+				totalconsumed += dskconsumed;
+			}
+
+			runningDMA = false;
+
+			//now need to trigger DSKBLK interrupt to say we're all done
+
+			//wait for a couple of scanlines, then trigger the DSKBLK interrupt
+			diskInterruptPending = 227 * 2;
+
+			//wait until what would have been about the right amount of time, based on 3 words per scanline
+			//diskInterruptPending = (227 * (int)totalconsumed) / 3;
+
+			//wait until the next CCK
+			//diskInterruptPending = 0;
+
+			//do it now
+			//interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
+			return;
+		}
+
+
+		public void DoDMA()
+		{
+			if (dsklen == 0)
+				return;
+
+			if (!runningDMA)
+				return;
+
+			if (settings.FloppySpeed == FloppySpeed.Immediate)
+			{ 
+				DoImmediately();
+				return;
+			}
+
+			ushort word = mfmBuffer.AsUWord().First();
+			ConsumeTrackData(SelectedDrive(), 1);
+
+			if (!synced)
+			{
+				if (word == dsksync)
+				{ 
+					synced = true;
+					interrupt.AssertInterrupt(Types.Interrupt.DSKSYNC);
+				}
+				else
+				{
+					return;
+				}
+			}
+			//memory.Write(0, dskpt, word, Size.Word);
+			dma.WriteChip(DMASource.Agnus, dskpt, DMA.DSKEN, word, Size.Word);
+			
+			dskpt += 2; dsklen--;
+
+			if (dsklen == 0)
+			{
+				runningDMA = false;
+				interrupt.AssertInterrupt(Types.Interrupt.DSKBLK);
+			}
+		}
+
 		private PRA pra;
 		private PRB prb;
 

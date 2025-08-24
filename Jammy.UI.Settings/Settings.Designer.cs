@@ -97,6 +97,8 @@ namespace Jammy.UI.Settings
 			groupBox7 = new System.Windows.Forms.GroupBox();
 			nudHardDiskCount = new System.Windows.Forms.NumericUpDown();
 			cbDiskController = new System.Windows.Forms.ComboBox();
+			rbFloppyFast = new System.Windows.Forms.RadioButton();
+			rbFloppyAccurate = new System.Windows.Forms.RadioButton();
 			panel1.SuspendLayout();
 			groupBox1.SuspendLayout();
 			groupBox2.SuspendLayout();
@@ -291,7 +293,7 @@ namespace Jammy.UI.Settings
 			// panel3
 			// 
 			panel3.Controls.Add(groupBox3);
-			panel3.Location = new System.Drawing.Point(475, 531);
+			panel3.Location = new System.Drawing.Point(475, 577);
 			panel3.Margin = new System.Windows.Forms.Padding(6);
 			panel3.Name = "panel3";
 			panel3.Size = new System.Drawing.Size(789, 128);
@@ -329,12 +331,14 @@ namespace Jammy.UI.Settings
 			panel4.Location = new System.Drawing.Point(475, 90);
 			panel4.Margin = new System.Windows.Forms.Padding(6);
 			panel4.Name = "panel4";
-			panel4.Size = new System.Drawing.Size(789, 301);
+			panel4.Size = new System.Drawing.Size(789, 345);
 			panel4.TabIndex = 11;
 			// 
 			// groupBox5
 			// 
+			groupBox5.Controls.Add(rbFloppyAccurate);
 			groupBox5.Controls.Add(btnDF3Eject);
+			groupBox5.Controls.Add(rbFloppyFast);
 			groupBox5.Controls.Add(btnDF2Eject);
 			groupBox5.Controls.Add(btnDF1Eject);
 			groupBox5.Controls.Add(btnDF0Eject);
@@ -352,7 +356,7 @@ namespace Jammy.UI.Settings
 			groupBox5.Margin = new System.Windows.Forms.Padding(6);
 			groupBox5.Name = "groupBox5";
 			groupBox5.Padding = new System.Windows.Forms.Padding(6);
-			groupBox5.Size = new System.Drawing.Size(776, 301);
+			groupBox5.Size = new System.Drawing.Size(776, 343);
 			groupBox5.TabIndex = 16;
 			groupBox5.TabStop = false;
 			groupBox5.Text = "Floppy Disk";
@@ -674,7 +678,7 @@ namespace Jammy.UI.Settings
 			// btnGo
 			// 
 			btnGo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
-			btnGo.Location = new System.Drawing.Point(1114, 796);
+			btnGo.Location = new System.Drawing.Point(1114, 842);
 			btnGo.Margin = new System.Windows.Forms.Padding(6);
 			btnGo.Name = "btnGo";
 			btnGo.Size = new System.Drawing.Size(139, 49);
@@ -685,7 +689,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnExit
 			// 
-			btnExit.Location = new System.Drawing.Point(494, 794);
+			btnExit.Location = new System.Drawing.Point(494, 840);
 			btnExit.Margin = new System.Windows.Forms.Padding(6);
 			btnExit.Name = "btnExit";
 			btnExit.Size = new System.Drawing.Size(139, 49);
@@ -705,7 +709,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnLoadConfig
 			// 
-			btnLoadConfig.Location = new System.Drawing.Point(663, 794);
+			btnLoadConfig.Location = new System.Drawing.Point(663, 840);
 			btnLoadConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnLoadConfig.Name = "btnLoadConfig";
 			btnLoadConfig.Size = new System.Drawing.Size(139, 49);
@@ -716,7 +720,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnSaveAsConfig
 			// 
-			btnSaveAsConfig.Location = new System.Drawing.Point(964, 796);
+			btnSaveAsConfig.Location = new System.Drawing.Point(964, 842);
 			btnSaveAsConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnSaveAsConfig.Name = "btnSaveAsConfig";
 			btnSaveAsConfig.Size = new System.Drawing.Size(139, 49);
@@ -728,7 +732,7 @@ namespace Jammy.UI.Settings
 			// btnSaveConfig
 			// 
 			btnSaveConfig.Enabled = false;
-			btnSaveConfig.Location = new System.Drawing.Point(813, 796);
+			btnSaveConfig.Location = new System.Drawing.Point(813, 842);
 			btnSaveConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnSaveConfig.Name = "btnSaveConfig";
 			btnSaveConfig.Size = new System.Drawing.Size(139, 49);
@@ -741,7 +745,7 @@ namespace Jammy.UI.Settings
 			// 
 			panel6.Controls.Add(groupBox8);
 			panel6.Controls.Add(groupBox6);
-			panel6.Location = new System.Drawing.Point(475, 672);
+			panel6.Location = new System.Drawing.Point(475, 718);
 			panel6.Margin = new System.Windows.Forms.Padding(6);
 			panel6.Name = "panel6";
 			panel6.Size = new System.Drawing.Size(789, 111);
@@ -819,7 +823,7 @@ namespace Jammy.UI.Settings
 			// 
 			// panel7
 			// 
-			panel7.Location = new System.Drawing.Point(475, 401);
+			panel7.Location = new System.Drawing.Point(475, 447);
 			panel7.Margin = new System.Windows.Forms.Padding(6);
 			panel7.Name = "panel7";
 			panel7.Size = new System.Drawing.Size(789, 119);
@@ -830,7 +834,7 @@ namespace Jammy.UI.Settings
 			groupBox7.Controls.Add(nudHardDiskCount);
 			groupBox7.Controls.Add(cbDiskController);
 			groupBox7.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox7.Location = new System.Drawing.Point(475, 401);
+			groupBox7.Location = new System.Drawing.Point(475, 447);
 			groupBox7.Margin = new System.Windows.Forms.Padding(6);
 			groupBox7.Name = "groupBox7";
 			groupBox7.Padding = new System.Windows.Forms.Padding(6);
@@ -859,11 +863,35 @@ namespace Jammy.UI.Settings
 			cbDiskController.Size = new System.Drawing.Size(322, 40);
 			cbDiskController.TabIndex = 0;
 			// 
+			// rbFloppyFast
+			// 
+			rbFloppyFast.AutoSize = true;
+			rbFloppyFast.Checked = true;
+			rbFloppyFast.ForeColor = System.Drawing.SystemColors.Highlight;
+			rbFloppyFast.Location = new System.Drawing.Point(13, 287);
+			rbFloppyFast.Name = "rbFloppyFast";
+			rbFloppyFast.Size = new System.Drawing.Size(86, 36);
+			rbFloppyFast.TabIndex = 24;
+			rbFloppyFast.TabStop = true;
+			rbFloppyFast.Text = "Fast";
+			rbFloppyFast.UseVisualStyleBackColor = true;
+			// 
+			// rbFloppyAccurate
+			// 
+			rbFloppyAccurate.AutoSize = true;
+			rbFloppyAccurate.ForeColor = System.Drawing.SystemColors.Highlight;
+			rbFloppyAccurate.Location = new System.Drawing.Point(105, 287);
+			rbFloppyAccurate.Name = "rbFloppyAccurate";
+			rbFloppyAccurate.Size = new System.Drawing.Size(137, 36);
+			rbFloppyAccurate.TabIndex = 25;
+			rbFloppyAccurate.Text = "Accurate";
+			rbFloppyAccurate.UseVisualStyleBackColor = true;
+			// 
 			// Settings
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			ClientSize = new System.Drawing.Size(1278, 870);
+			ClientSize = new System.Drawing.Size(1278, 910);
 			Controls.Add(groupBox2);
 			Controls.Add(groupBox7);
 			Controls.Add(panel7);
@@ -975,5 +1003,7 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.Button btnDF3Eject;
 		private System.Windows.Forms.Button btnDF2Eject;
 		private System.Windows.Forms.Button btnDF1Eject;
+		private System.Windows.Forms.RadioButton rbFloppyFast;
+		private System.Windows.Forms.RadioButton rbFloppyAccurate;
 	}
 }
