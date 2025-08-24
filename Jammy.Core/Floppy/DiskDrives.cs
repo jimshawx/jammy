@@ -87,6 +87,10 @@ namespace Jammy.Core.Floppy
 			for (int i = 0; i < 4; i++)
 				drive[i] = new Drive();
 
+			trackCache = new TrackCache[4];
+			for (int i = 0; i < 4; i++)
+				trackCache[i] = new TrackCache(drive[i]);
+
 			drive[0].DSKSEL = PRB.DSKSEL0;
 			drive[1].DSKSEL = PRB.DSKSEL1;
 			drive[2].DSKSEL = PRB.DSKSEL2;
@@ -191,8 +195,12 @@ namespace Jammy.Core.Floppy
 		public void Reset()
 		{
 			for (int i = 0; i < 4; i++)
+			{
 				drive[i].Reset();
+				trackCache[i].Reset();
+			}
 			diskInterruptPending = -1;
+			runningDMA = false;
 		}
 
 		public ushort Read(uint insaddr, uint address)
@@ -238,39 +246,68 @@ namespace Jammy.Core.Floppy
 		private uint dskdat;
 		private uint adkcon;
 
-		byte[] mfmBuffer;
-		uint lastTrack = uint.MaxValue;
-		uint lastSide = uint.MaxValue;
-		int lastDrive = int.MaxValue;
+		private readonly TrackCache[] trackCache;
 
-		private void PrimeTrackData(int df)
-		{
-			if (lastTrack != drive[df].track || lastSide != drive[df].side || lastDrive != df)
+		private class TrackCache
+		{ 
+			private byte[] mfmBuffer;
+			private uint lastTrack = uint.MaxValue;
+			private uint lastSide = uint.MaxValue;
+
+			private Drive drive;
+
+			public TrackCache(Drive drive)
 			{
-				//buffer 2 revolutions worth of data
-				byte[] mfm0 = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
-				byte[] mfm1 = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
-
-				lastTrack = drive[df].track;
-				lastSide = drive[df].side;
-				lastDrive = df;
-
-				mfmBuffer = mfm0.Concat(mfm1).ToArray();
+				this.drive = drive;
 			}
-		}
 
-		private void ConsumeTrackData(int df, uint words)
-		{
-			if (drive[df].track != lastTrack || drive[df].side != lastSide || df != lastDrive)
-				throw new ApplicationException("Track/Side/Drive changed during disk DMA");
-
-			mfmBuffer = mfmBuffer.Skip((int)words * 2).ToArray();
-
-			//if the buffer is getting small, pull in another revolution
-			if (mfmBuffer.Length < 0x3fff)
+			public void PrimeTrackData()
 			{
-				byte[] mfm = drive[df].disk.GetTrack(drive[df].track, drive[df].side);
-				mfmBuffer = mfmBuffer.Concat(mfm).ToArray();
+				if (lastTrack != drive.track || lastSide != drive.side )
+				{
+					//buffer 2 revolutions worth of data
+					byte[] mfm0 = drive.disk.GetTrack(drive.track, drive.side);
+					byte[] mfm1 = drive.disk.GetTrack(drive.track, drive.side);
+
+					lastTrack = drive.track;
+					lastSide = drive.side;
+
+					mfmBuffer = mfm0.Concat(mfm1).ToArray();
+				}
+			}
+
+			public void ConsumeTrackData(uint words)
+			{
+				if (drive.track != lastTrack || drive.side != lastSide)
+					throw new ApplicationException("Track/Side changed during disk DMA");
+
+				mfmBuffer = mfmBuffer.Skip((int)words * 2).ToArray();
+
+				//if the buffer is getting small, pull in another revolution
+				if (mfmBuffer.Length < 0x3fff)
+				{
+					byte[] mfm = drive.disk.GetTrack(drive.track, drive.side);
+					mfmBuffer = mfmBuffer.Concat(mfm).ToArray();
+				}
+			}
+
+			public ushort[] GetBuffer()
+			{
+				return mfmBuffer.AsUWord().ToArray();
+			}
+
+			public ushort FirstWord()
+			{
+				ushort w = mfmBuffer.AsUWord().First();
+				ConsumeTrackData(1);
+				return w;
+			}
+
+			public void Reset()
+			{
+				mfmBuffer = Array.Empty<byte>();
+				lastTrack = uint.MaxValue;
+				lastSide = uint.MaxValue;
 			}
 		}
 
@@ -371,7 +408,7 @@ namespace Jammy.Core.Floppy
 
 					synced = (adkcon & (1u << 10)) == 0;
 
-					PrimeTrackData(df); 
+					trackCache[df].PrimeTrackData(); 
 					
 					runningDMA = true;
 
@@ -403,7 +440,7 @@ namespace Jammy.Core.Floppy
 			{
 				uint dskconsumed = 0;
 
-				foreach (ushort w in mfmBuffer.AsUWord())
+				foreach (ushort w in trackCache[SelectedDrive()].GetBuffer())
 				{
 					dskconsumed++;
 
@@ -418,7 +455,7 @@ namespace Jammy.Core.Floppy
 					if (dsklen == 0) break;
 				}
 
-				ConsumeTrackData(SelectedDrive(), dskconsumed);
+				trackCache[SelectedDrive()].ConsumeTrackData(dskconsumed);
 				totalconsumed += dskconsumed;
 			}
 
@@ -440,7 +477,6 @@ namespace Jammy.Core.Floppy
 			return;
 		}
 
-
 		public void DoDMA()
 		{
 			if (dsklen == 0)
@@ -455,8 +491,7 @@ namespace Jammy.Core.Floppy
 				return;
 			}
 
-			ushort word = mfmBuffer.AsUWord().First();
-			ConsumeTrackData(SelectedDrive(), 1);
+			ushort word = trackCache[SelectedDrive()].FirstWord();
 
 			if (!synced)
 			{
@@ -470,7 +505,6 @@ namespace Jammy.Core.Floppy
 					return;
 				}
 			}
-			//memory.Write(0, dskpt, word, Size.Word);
 			dma.WriteChip(DMASource.Agnus, dskpt, DMA.DSKEN, word, Size.Word);
 			
 			dskpt += 2; dsklen--;
