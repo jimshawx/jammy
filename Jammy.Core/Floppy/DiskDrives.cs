@@ -250,7 +250,7 @@ namespace Jammy.Core.Floppy
 
 		private class TrackCache
 		{ 
-			private byte[] mfmBuffer;
+			private Memory<byte> mfmBuffer = Memory<byte>.Empty;
 			private uint lastTrack = uint.MaxValue;
 			private uint lastSide = uint.MaxValue;
 
@@ -281,24 +281,24 @@ namespace Jammy.Core.Floppy
 				if (drive.track != lastTrack || drive.side != lastSide)
 					throw new ApplicationException("Track/Side changed during disk DMA");
 
-				mfmBuffer = mfmBuffer.Skip((int)words * 2).ToArray();
+				mfmBuffer = mfmBuffer[(int)(words*2)..];
 
 				//if the buffer is getting small, pull in another revolution
 				if (mfmBuffer.Length < 0x3fff)
 				{
 					byte[] mfm = drive.disk.GetTrack(drive.track, drive.side);
-					mfmBuffer = mfmBuffer.Concat(mfm).ToArray();
+					mfmBuffer = mfmBuffer.ToArray().Concat(mfm).ToArray();
 				}
 			}
 
 			public ushort[] GetBuffer()
 			{
-				return mfmBuffer.AsUWord().ToArray();
+				return mfmBuffer.ToArray().AsUWord().ToArray();
 			}
 
 			public ushort FirstWord()
 			{
-				ushort w = mfmBuffer.AsUWord().First();
+				ushort w = mfmBuffer.FirstUWord();
 				ConsumeTrackData(1);
 				return w;
 			}

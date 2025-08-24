@@ -32,6 +32,25 @@ namespace Jammy.Extensions.Extensions
 			}
 		}
 
+		public static IEnumerable<ushort> AsUWord(this Memory<byte> src)
+		{
+			for (int i = 0; i < src.Length; i += 2)
+			{
+				var span = src.Span;
+				ushort b = (ushort)(((ushort)span[i] << 8)
+									| (ushort)span[i + 1]);
+				yield return b;
+			}
+		}
+
+		public static ushort FirstUWord(this Memory<byte> src)
+		{
+			var span = src.Span;
+			ushort w = (ushort)(((ushort)span[0] << 8)
+								| (ushort)span[1]);
+			return w;
+		}
+
 		public static IEnumerable<byte> AsByte(this uint[] src)
 		{
 			for (int i = 0; i < src.Length; i++)
