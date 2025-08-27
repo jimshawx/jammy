@@ -149,7 +149,7 @@ namespace Jammy.Core.Floppy.IPF
 			CAPSInit();
 		}
 
-		public static int Load(string filename, byte[] data)
+		public static int Load(byte[] data)
 		{
 			int id = CAPSAddImage();
 

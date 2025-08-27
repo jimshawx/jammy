@@ -49,6 +49,7 @@ namespace Jammy.Core.Floppy
 
 		private readonly IInterrupt interrupt;
 		private readonly IDiskLightOverlay diskLightOverlay;
+		private readonly IDiskLoader diskLoader;
 		private IDMA dma;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
@@ -67,10 +68,12 @@ namespace Jammy.Core.Floppy
 				verbose ^= true;
 		}
 
-		public DiskDrives(IInterrupt interrupt, IEmulationWindow emulationWindow, IDiskLightOverlay diskLightOverlay, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
+		public DiskDrives(IInterrupt interrupt, IEmulationWindow emulationWindow, IDiskLightOverlay diskLightOverlay,
+			IDiskLoader diskLoader, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
 		{
 			this.interrupt = interrupt;
 			this.diskLightOverlay = diskLightOverlay;
+			this.diskLoader = diskLoader;
 			this.logger = logger;
 			this.settings = settings.Value;
 
@@ -78,10 +81,10 @@ namespace Jammy.Core.Floppy
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
 			var disks = new IDisk[4];
-			if (!string.IsNullOrEmpty(settings.Value.DF0)) disks[0] = Disk.Read(settings.Value.DF0);
-			if (!string.IsNullOrEmpty(settings.Value.DF1)) disks[1] = Disk.Read(settings.Value.DF1);
-			if (!string.IsNullOrEmpty(settings.Value.DF2)) disks[2] = Disk.Read(settings.Value.DF2);
-			if (!string.IsNullOrEmpty(settings.Value.DF3)) disks[3] = Disk.Read(settings.Value.DF3);
+			if (!string.IsNullOrEmpty(settings.Value.DF0)) disks[0] = diskLoader.DiskRead(settings.Value.DF0);
+			if (!string.IsNullOrEmpty(settings.Value.DF1)) disks[1] = diskLoader.DiskRead(settings.Value.DF1);
+			if (!string.IsNullOrEmpty(settings.Value.DF2)) disks[2] = diskLoader.DiskRead(settings.Value.DF2);
+			if (!string.IsNullOrEmpty(settings.Value.DF3)) disks[3] = diskLoader.DiskRead(settings.Value.DF3);
 
 			drive = new Drive[4];
 			for (int i = 0; i < 4; i++)
@@ -689,7 +692,7 @@ namespace Jammy.Core.Floppy
 
 		public void ChangeDisk(int df, string filename)
 		{
-			drive[df].disk = Disk.Read(filename);
+			drive[df].disk = diskLoader.DiskRead(filename);
 			drive[df].diskinserted = true;
 			drive[df].ready = false;
 			drive[df].track = 0;

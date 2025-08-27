@@ -167,6 +167,13 @@ namespace Jammy.Main
 				.AddSingleton<IFlowAnalyser, FlowAnalyser>()
 				.AddSingleton<IPersistenceManager, PersistenceManager>()
 				.AddSingleton<IIPF, IPF>()
+				.AddSingleton<IDiskLoader, DiskLoader>()
+				.AddSingleton<IDiskFormat, Rp9Format>()
+				.AddSingleton<IDiskFormat, ZippedADFFormat>()
+				.AddSingleton<IDiskFormat, GZipADZFormat>()
+				.AddSingleton<IDiskFormat, DMSFormat>()
+				.AddSingleton<IDiskFormat, IPFFormat>()
+				.AddSingleton<IDiskFormat, RawADFFormat>()
 				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 			//configure Blitter

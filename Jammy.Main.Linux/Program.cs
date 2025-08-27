@@ -148,6 +148,12 @@ public class Program
 			//.AddSingleton<IGraph, Graph.Graph>()
 			.AddSingleton<IFlowAnalyser, FlowAnalyser>()
 			.AddSingleton<IPersistenceManager, PersistenceManager>()
+			.AddSingleton<IDiskLoader, DiskLoader>()
+			.AddSingleton<IDiskFormat, Rp9Format>()
+			.AddSingleton<IDiskFormat, ZippedADFFormat>()
+			.AddSingleton<IDiskFormat, GZipADZFormat>()
+			.AddSingleton<IDiskFormat, DMSFormat>()
+			.AddSingleton<IDiskFormat, RawADFFormat>()
 			.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 		//configure Blitter
