@@ -79,6 +79,8 @@ public class Agnus : IAgnus
 	//bitmap DMA ends at 0xD8, with 8 slots after that
 	//public const int DMA_END = 0xF0;
 
+	public const int DMA_LAST_STOP = 0xD8;
+
 	public Agnus(IChipsetClock clock, IDenise denise, IInterrupt interrupt,
 		IDiskDrives diskDrives,
 		/*IChips custom,*/ IChipsetDebugger debugger,
@@ -145,6 +147,7 @@ public class Agnus : IAgnus
 	{
 		LineStart,
 		Fetching,
+		LastBitplaneFetch,
 		LineComplete,
 		LineTerminated
 	}
@@ -163,6 +166,8 @@ public class Agnus : IAgnus
 	private int pixmod;
 	[Persist]
 	private DMALineState lineState;
+	[Persist]
+	private int lastFetchCount;
 	[Persist]
 	private uint plane;
 
@@ -235,19 +240,31 @@ public class Agnus : IAgnus
 		//is it time to do bitplane DMA?
 		//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
 		//bitplane DMA is ON
-		if (clock.HorizontalPos >= ddfstrtfix + debugger.ddfSHack && clock.HorizontalPos < ddfstopfix + debugger.ddfEHack &&
-			(lineState == DMALineState.Fetching || lineState == DMALineState.LineStart))
+
+
+		if (clock.HorizontalPos == ddfstrt + debugger.ddfSHack && lineState == DMALineState.LineStart)
+		{
+			lineState = DMALineState.Fetching;
+		}
+		else if ((clock.HorizontalPos == ddfstop + debugger.ddfEHack || clock.HorizontalPos == DMA_LAST_STOP) && lineState == DMALineState.Fetching)
+		{
+			lineState = DMALineState.LastBitplaneFetch;
+			lastFetchCount = 9;
+		}
+		else if (lineState == DMALineState.LastBitplaneFetch)
+		{
+			lastFetchCount--;
+			if (lastFetchCount == 0)
+			{
+				lineState = DMALineState.LineComplete;
+				EndAgnusLine();
+			}
+		}
+
+		if (lineState == DMALineState.Fetching || lineState == DMALineState.LastBitplaneFetch)
 		{
 			if (dma.IsDMAEnabled(DMA.BPLEN))
 				fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
-			if (fetched)
-				lineState = DMALineState.Fetching;
-		}
-
-		if (clock.HorizontalPos >= ddfstopfix + debugger.ddfEHack && lineState == DMALineState.Fetching)
-		{
-			lineState = DMALineState.LineComplete;
-			EndAgnusLine();
 		}
 
 		if (fetched)
@@ -398,7 +415,7 @@ noBitplaneDMA:
 	private void EndAgnusLine()
 	{
 		//next horizontal line, and we did some fetching this line, add on the modulos
-		if (/*clock.VerticalPos >= diwstrtv && clock.VerticalPos < diwstopv &&*/ lineState == DMALineState.LineComplete)
+		if (lineState == DMALineState.LineComplete)
 		{
 			//logger.LogTrace($"MOD {clock} {planes} {bpl1mod:X4} {bpl2mod:X4}");
 			for (int i = 0; i < planes; i++)
