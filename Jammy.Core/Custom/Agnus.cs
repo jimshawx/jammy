@@ -79,7 +79,7 @@ public class Agnus : IAgnus
 	//bitmap DMA ends at 0xD8, with 8 slots after that
 	//public const int DMA_END = 0xF0;
 
-	public const int DMA_LAST_STOP = 0xD8;
+	public const int DMA_HARD_STOP = 0xD8;
 
 	public Agnus(IChipsetClock clock, IDenise denise, IInterrupt interrupt,
 		IDiskDrives diskDrives,
@@ -246,10 +246,10 @@ public class Agnus : IAgnus
 		{
 			lineState = DMALineState.Fetching;
 		}
-		else if ((clock.HorizontalPos == ddfstop + debugger.ddfEHack || clock.HorizontalPos == DMA_LAST_STOP) && lineState == DMALineState.Fetching)
+		else if ((clock.HorizontalPos == ddfstop + debugger.ddfEHack || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
 		{
 			lineState = DMALineState.LastBitplaneFetch;
-			lastFetchCount = 9;
+			lastFetchCount = 8;
 		}
 		else if (lineState == DMALineState.LastBitplaneFetch)
 		{
