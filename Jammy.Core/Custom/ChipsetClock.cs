@@ -29,7 +29,7 @@ public class ChipsetClock : IChipsetClock
 	}
 
 	private const uint deniseAdvance = 1;
-	private const uint copperAdvance = 6;//12;
+	private const uint copperAdvance = 0;//6;
 
 	[Persist]
 	public uint HorizontalPos { get; private set; }

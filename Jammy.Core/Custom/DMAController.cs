@@ -224,6 +224,9 @@ public class DMAController : IDMA
 				{
 					uint value = memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
 					memoryMapper.ImmediateWrite(0, activity.ChipReg, value, activity.Size);
+
+					//if (activity.ChipReg == 0xdff180)
+					//	logger.LogTrace($"{activity.ChipReg:X6} {value:X3} {chipsetClock}");
 				}
 				break;
 
@@ -236,8 +239,8 @@ public class DMAController : IDMA
 					LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
 				else if (activity.Target == CPUTarget.KickROM)
 					LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
-				//if (chipsetClock.VerticalPos == 100)
-				//	logger.LogTrace($"R {chipsetClock.HorizontalPos}");
+				//if (chipsetClock.VerticalPos == 32)
+				//	logger.LogTrace($"R {chipsetClock}");
 				break;
 
 			case DMAActivityType.WriteCPU:

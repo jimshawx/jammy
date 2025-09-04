@@ -457,9 +457,6 @@ public class Denise : IDenise
 	private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private void DoSprites(ref uint col, byte pix, bool shift)
 	{
-		//DoSprites2(ref col, pix, shift);
-		//return;
-
 		uint active = 0;
 		uint attached = 0;
 
@@ -816,6 +813,9 @@ end loop
 			//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
 			if (clock.DeniseHorizontalPos >= diwstrth + debugger.diwSHack -0   && clock.DeniseHorizontalPos < diwstoph + debugger.diwEHack -0  )
 			{
+				//if (clock.DeniseHorizontalPos-1 == diwstrth + debugger.diwSHack)
+				//	logger.LogTrace($"P0 @{clock}");
+
 				//CopperBitplaneConvert();
 				pixelAction();
 			}
@@ -844,38 +844,26 @@ end loop
 		}
 		else
 		{
-			//if (blankingStatus != Blanking.OutsideDisplayWindow)
-			if (false)
-			{
-				//horizontal/vertical blanking
-				uint c0 = 0xffffff;
-				uint c1 = 0x000000;
-				if ((blankingStatus & Blanking.HorizontalBlank)!=0) c0 = 0xff0000;
-				if ((blankingStatus & Blanking.VerticalBlank)!=0) c1 = 0x0000ff;
-				uint col = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0 ? c0 : c1;
-				lastcol = truecolour[0];
-				//for (int k = 0; k < 4; k++)
-				//	screen[dptr++] = (int)col;
-				//Array.Fill(screen, (int)col, dptr, 4); dptr+= 4;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-			}
-			else
-			{ 
-				//outside display window vertical area
 
-				//output colour 0 pixels
-				uint col = lastcol = truecolour[0];
-				//for (int k = 0; k < 4; k++)
-				//	screen[dptr++] = (int)col;
-				//Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-			}
+			//outside display window
+
+			//output colour 0 pixels
+			uint col = lastcol = truecolour[0];
+
+			//if (clock.VerticalPos == 64)
+			//	logger.LogTrace($"{col:X6}");
+
+			bool stipple = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0;
+			if (stipple && (blankingStatus & Blanking.HorizontalBlank) != 0) col |= 0xff0000;
+			if (stipple && (blankingStatus & Blanking.VerticalBlank) != 0) col |= 0x0000ff;
+
+			//for (int k = 0; k < 4; k++)
+			//	screen[dptr++] = (int)col;
+			//Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
+			screen[dptr++] = (int)col;
+			screen[dptr++] = (int)col;
+			screen[dptr++] = (int)col;
+			screen[dptr++] = (int)col;
 		}
 	}
 
@@ -980,6 +968,10 @@ end loop
 					var rgb = Explode(colour[index]) | Explode(lowcolour[index]) >> 4;
 					truecolour[index] = rgb;
 					debugger.SetColor(index, rgb);
+
+					//if (address == ChipRegs.COLOR00 && (value == 0xf0f || value == 0xa0a || value == 0x606))
+					//	logger.LogTrace($"Colour 0 {value:X3} {clock}");
+
 					break;
 				}
 
@@ -1000,9 +992,9 @@ end loop
 	private void EndDeniseLine()
 	{
 		//cosmetics, draw some right border
-		blankingStatus = Blanking.OutsideDisplayWindow;
-		for (int i = 0; i < RIGHT_BORDER; i++)
-			RunDeniseTick();
+		//blankingStatus = Blanking.OutsideDisplayWindow;
+		//for (int i = 0; i < RIGHT_BORDER; i++)
+		//	RunDeniseTick();
 
 		//this should be a no-op
 		//System.Diagnostics.Debug.Assert(SCREEN_WIDTH - (dptr - lineStart) == 0);

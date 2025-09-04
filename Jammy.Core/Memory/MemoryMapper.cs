@@ -106,6 +106,9 @@ namespace Jammy.Core.Memory
 			//if (address >> 16 == 0)
 			//	logger.LogTrace($"*** Read From Address 0 - {memoryManager.MappedDevice[0]}");
 
+			if (!(memoryManager.MappedDevice[address] is IContendedMemoryMappedDevice))
+				address &= (512*1024)-1; //return 0;
+
 			uint value = ((IContendedMemoryMappedDevice)memoryManager.MappedDevice[address]).ImmediateRead(insaddr, address, size);
 			if (interceptor != null) interceptor.Read(insaddr, address, value, size);
 			return value;

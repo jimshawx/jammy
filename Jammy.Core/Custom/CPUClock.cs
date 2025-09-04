@@ -15,7 +15,7 @@ public class CPUClock : ICPUClock
 {
 	private readonly IChipsetClock clock;
 	private readonly ILogger<CPUClock> logger;
-	private readonly AutoResetEvent cpuTick = new AutoResetEvent(false);
+	//private readonly AutoResetEvent cpuTick = new AutoResetEvent(false);
 
 	public CPUClock(IChipsetClock clock, IOptions<EmulationSettings> settings, ILogger<CPUClock> logger)
 	{
@@ -29,7 +29,7 @@ public class CPUClock : ICPUClock
 
 	public void Reset()
 	{
-		cpuTick.Reset();
+		//cpuTick.Reset();
 	}
 
 	public void WaitForTick()

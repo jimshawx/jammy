@@ -281,7 +281,9 @@ namespace Jammy.Core.Custom
 
 				case CopperStatus.Waiting:
 					{
-						memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+						//HRM 89, p17
+						//While waiting, the Copper is off the bus and not using memory cycles. 
+						//memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 
 						//If blitter-busy bit is set the comparisons will fail.
 						if (waitBlit == 0 && (memory.ReadDMACON() & (1 << 14)) != 0)
@@ -320,10 +322,10 @@ namespace Jammy.Core.Custom
 
 				case CopperStatus.WakingUp:
 					//burn a cycle after waking up
+					memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 					waitTimer--;
 					if (waitTimer <= 0)
 						status = CopperStatus.RunningWord1;
-					memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 					break;
 
 				case CopperStatus.Retrace:

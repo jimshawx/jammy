@@ -215,7 +215,7 @@ namespace Jammy.Main
 			UpdatePowerLight();
 			UpdateDiskLight();
 			UpdateExecBase();
-			//UpdateCopper();
+			UpdateCopper();
 			UpdateClock();
 			UI.UI.IsDirty = false;
 		}

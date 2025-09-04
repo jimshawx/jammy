@@ -177,7 +177,7 @@ namespace Jammy.Core
 			dma.ExecuteCPUDMASlot();
 
 			//if (clock.VerticalPos == 100)
-			//	logger.LogTrace($"RAM {clock.HorizontalPos}");
+			//	logger.LogTrace($"RAM {clock}");
 
 			return dma.LastRead;
 		}
@@ -190,10 +190,10 @@ namespace Jammy.Core
 
 		private void RunChipsetEmulationForCPU(int count)
 		{
-			//if (clock.VerticalPos == 100)
+			if (clock.VerticalPos == 32)
 			//{ 
 			//	if (count == 1)
-			//		logger.LogTrace($"S {clock.HorizontalPos}");
+			//		logger.LogTrace($"S {count} {clock}");
 			//	else
 			//		logger.LogTrace($"S {clock.HorizontalPos}-{clock.HorizontalPos + count - 1}");
 			//}
@@ -369,14 +369,14 @@ namespace Jammy.Core
 			{ 
 				kickstart.SetMirror(false);
 				//Desert Dream
-				//persistenceManager.Load("../../state-2024-11-01-20-00-00.json");
-				//persistenceManager.Load("../../state-2024-11-02-18-22-56.json");
+				//persistenceManager.Load("../../state-2025-07-28-14-46-40.json");
 				//Mental Hangover
 				//persistenceManager.Load("../../state-2024-11-02-19-11-53.json");
 				//Blitter Miracle
-				persistenceManager.Load("../../state-2025-02-12-12-23-09.json");
+				//persistenceManager.Load("../../state-2025-02-12-12-23-09.json");
 				//Pinball Fantasies
 				//persistenceManager.Load("../../state-2024-11-04-22-05-32.json");
+
 			}
 
 			uint stepOutSp = 0xffffffff;
