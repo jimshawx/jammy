@@ -219,15 +219,12 @@ public class Agnus : IAgnus
 		if (clock.VerticalPos < diwstrtv || clock.VerticalPos >= diwstopv)
 			blanking |= Blanking.OutsideDisplayWindow;
 
-		//what are the correct values? Agnus can fetch at 0x18, how does that correspond to Denise clock?
-		if (clock.DeniseHorizontalPos >= 0x10 && clock.DeniseHorizontalPos <= 51)//0x5e)
-		{
-			//if (clock.HorizontalPos >= ddfstrtfix)
-			//	logger.LogTrace($"Fetch in HPOS {clock.DeniseHorizontalPos:X2} {clock.HorizontalPos:X2}");
+		//HRM 89 p18
+		//Horizontal blanking falls in the range of $0F to $35.
+		if (clock.HorizontalPos >= 0x0f && clock.HorizontalPos <= 0x35)
 			blanking |= Blanking.HorizontalBlank;
-		}
 
-		//tell Denise the blaking status and whether to start processing pixel data
+		//tell Denise the blanking status and whether to start processing pixel data
 		denise.SetBlankingStatus(blanking);
 
 		if (blanking != Blanking.None) goto noBitplaneDMA;
@@ -765,7 +762,7 @@ noBitplaneDMA:
 
 			case ChipRegs.VHPOSR:
 				int h = (int)clock.HorizontalPos;
-				h -= 2;
+				h -= 1;
 				if (h < 0) h += 227;
 				value = (ushort)((clock.VerticalPos << 8) | ((uint)h & 0x00ff));
 				//logger.LogTrace($"VHPOSR {clock} {value:X4} @ {insaddr:X6}");
