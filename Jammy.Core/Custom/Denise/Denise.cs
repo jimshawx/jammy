@@ -844,38 +844,26 @@ end loop
 		}
 		else
 		{
-			//if (blankingStatus != Blanking.OutsideDisplayWindow)
-			if (false)
-			{
-				//horizontal/vertical blanking
-				uint c0 = 0xffffff;
-				uint c1 = 0x000000;
-				if ((blankingStatus & Blanking.HorizontalBlank)!=0) c0 = 0xff0000;
-				if ((blankingStatus & Blanking.VerticalBlank)!=0) c1 = 0x0000ff;
-				uint col = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0 ? c0 : c1;
-				lastcol = truecolour[0];
-				//for (int k = 0; k < 4; k++)
-				//	screen[dptr++] = (int)col;
-				//Array.Fill(screen, (int)col, dptr, 4); dptr+= 4;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-			}
-			else
-			{ 
-				//outside display window vertical area
 
-				//output colour 0 pixels
-				uint col = lastcol = truecolour[0];
-				//for (int k = 0; k < 4; k++)
-				//	screen[dptr++] = (int)col;
-				//Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-			}
+			//outside display window
+
+			//output colour 0 pixels
+			uint col = lastcol = truecolour[0];
+
+			//if (clock.VerticalPos == 64)
+			//	logger.LogTrace($"{col:X6}");
+
+			bool stipple = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0;
+			if (stipple && (blankingStatus & Blanking.HorizontalBlank) != 0) col |= 0xff0000;
+			if (stipple && (blankingStatus & Blanking.VerticalBlank) != 0) col |= 0x0000ff;
+
+			//for (int k = 0; k < 4; k++)
+			//	screen[dptr++] = (int)col;
+			//Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
+			screen[dptr++] = (int)col;
+			screen[dptr++] = (int)col;
+			screen[dptr++] = (int)col;
+			screen[dptr++] = (int)col;
 		}
 	}
 
