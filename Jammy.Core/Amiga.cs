@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 /*
@@ -164,45 +165,40 @@ namespace Jammy.Core
 				emulations[i].Emulate();
 		}
 
-		private ushort RunChipsetEmulationForRAM()
-		{
-			while (dma.LastDMASlotWasUsedByChipset())
-			{
-				clock.UpdateClock();
-				clock.Emulate();
-				//emulations.ForEach(x => x.Emulate());
-				RunAllEmulations();
-				dma.TriggerHighestPriorityDMA();
-			} 
-			dma.ExecuteCPUDMASlot();
-
-			//if (clock.VerticalPos == 100)
-			//	logger.LogTrace($"RAM {clock.HorizontalPos}");
-
-			return dma.LastRead;
-		}
-
+		//this is run by Agnus immediately after the CPU has done a Chip RAM read/write
+		//when the emulation is not in cycle-exact mode - the CPU read/write is executed immediately
 		private ushort RunChipsetEmulationForRAMImmediate()
 		{
 			dma.ExecuteCPUDMASlot();
 			return dma.LastRead;
 		}
 
+		//this is run by Agnus immediately after the CPU has done a Chip RAM read/write
+		//when the emulation is in cycle-exact mode - the CPU read/write may have to wait for a DMA slot
+		private ushort RunChipsetEmulationForRAM()
+		{
+			//keep executing chipset DMA slots and emulating the chipset
+			//until the chipset doesn't want any more DMA slots
+			while (dma.LastDMASlotWasUsedByChipset())
+			{
+				clock.UpdateClock();
+				clock.Emulate();
+				RunAllEmulations();
+				dma.TriggerHighestPriorityDMA();
+			}
+			//execute the CPU slot
+			dma.ExecuteCPUDMASlot();
+			return dma.LastRead;
+		}
+
+		//this is run by the CPU each time it needs to run the chipset emulation
+		//when the emulation is in cycle-exact mode
 		private void RunChipsetEmulationForCPU(int count)
 		{
-			//if (clock.VerticalPos == 100)
-			//{ 
-			//	if (count == 1)
-			//		logger.LogTrace($"S {clock.HorizontalPos}");
-			//	else
-			//		logger.LogTrace($"S {clock.HorizontalPos}-{clock.HorizontalPos + count - 1}");
-			//}
-
 			for (int i = 0; i < count; i++)
 			{
 				clock.UpdateClock();
 				clock.Emulate();
-				//emulations.ForEach(x => x.Emulate());
 				RunAllEmulations();
 				dma.TriggerHighestPriorityDMA();
 			}

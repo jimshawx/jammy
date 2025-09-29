@@ -762,7 +762,7 @@ noBitplaneDMA:
 
 			case ChipRegs.VHPOSR:
 				int h = (int)clock.HorizontalPos;
-				h -= 1;
+				h -= 2;
 				if (h < 0) h += 227;
 				value = (ushort)((clock.VerticalPos << 8) | ((uint)h & 0x00ff));
 				//logger.LogTrace($"VHPOSR {clock} {value:X4} @ {insaddr:X6}");
