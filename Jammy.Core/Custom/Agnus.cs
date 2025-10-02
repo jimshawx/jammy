@@ -906,7 +906,10 @@ noBitplaneDMA:
 			case ChipRegs.VSSTRT: vsstrt = value; logger.LogTrace($"VSSTRT {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.VTOTAL: vtotal = value; /*logger.LogTrace($"VTOTAL {value:X4} @{insaddr:X8}");*/ break;
 			case ChipRegs.VPOSW: logger.LogTrace($"VPOSW {value:X4} @{insaddr:X8}"); break;
-			case ChipRegs.VHPOSW: logger.LogTrace($"VHPOSW {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.VHPOSW:
+				logger.LogTrace($"VHPOSW {value:X4} @{insaddr:X8} {clock}");
+				clock.SetClock((uint)(value >> 8), (uint)(value & 0xff));
+				break;
 			case ChipRegs.HTOTAL: htotal = value; logger.LogTrace($"VHPOSW {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.HBSTRT: hbstrt = value; logger.LogTrace($"HBSTRT {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.HBSTOP: hbstop = value; logger.LogTrace($"HBSTOP {value:X4} @{insaddr:X8}"); break;

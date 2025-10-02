@@ -249,6 +249,7 @@ namespace Jammy.Core.Interface.Interfaces
 		uint LongFrame();
 
 		string TimeStamp();
+		void SetClock(uint v, uint h);
 	}
 
 	public interface IPSUClock : IEmulate

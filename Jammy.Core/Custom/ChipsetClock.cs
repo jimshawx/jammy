@@ -28,15 +28,11 @@ public class ChipsetClock : IChipsetClock
 		//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
 	}
 
-	private const uint deniseAdvance = 1;
-	private const uint copperAdvance = 0;
-
 	[Persist]
 	public uint HorizontalPos { get; private set; }
-	public uint DeniseHorizontalPos { get { uint hp = (HorizontalPos + deniseAdvance) * 2; if (hp < deniseAdvance*2) hp += displayHorizontal * 2; return hp; } }
-	public uint CopperHorizontalPos { get { uint hp = HorizontalPos + copperAdvance; if (hp < copperAdvance) hp += displayHorizontal; return hp; } }
-	//public uint DeniseHorizontalPos { get { uint hp = HorizontalPos * 2; return hp; } }
-	//public uint CopperHorizontalPos { get { uint hp = HorizontalPos; return hp; } }
+	[Persist]
+	public uint DeniseHorizontalPos { get; private set; }
+	public uint CopperHorizontalPos { get { return HorizontalPos; } }
 
 	[Persist]
 	public uint VerticalPos { get; private set; }
@@ -73,11 +69,13 @@ public class ChipsetClock : IChipsetClock
 		if ((ClockState & ChipsetClockState.EndOfLine) != 0)
 		{ 
 			HorizontalPos = 0;
+			DeniseHorizontalPos = 2;
 			VerticalPos++;
 		}
 		else
 		{ 
 			HorizontalPos++;
+			DeniseHorizontalPos += 2;
 		}
 
 		if ((ClockState & ChipsetClockState.EndOfFrame) != 0)
@@ -87,9 +85,16 @@ public class ChipsetClock : IChipsetClock
 		}
 	}
 
+	public void SetClock(uint v, uint h)
+	{
+		HorizontalPos = h;
+		//VerticalPos = v;
+	}
+
 	public void Reset()
 	{
 		HorizontalPos = 0;
+		DeniseHorizontalPos = 2;
 		VerticalPos = 0;
 	}
 
@@ -118,6 +123,6 @@ public class ChipsetClock : IChipsetClock
 
 	public override string ToString()
 	{
-		return $"[v:{VerticalPos,3} h:{HorizontalPos,3} dh:{DeniseHorizontalPos,3} ch:{CopperHorizontalPos,3}]";
+		return $"[v:{VerticalPos,3} h:{HorizontalPos,3} dh:{DeniseHorizontalPos,3}]";
 	}
 }
