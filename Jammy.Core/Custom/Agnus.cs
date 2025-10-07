@@ -121,9 +121,11 @@ public class Agnus : IAgnus
 				spriteState[i] = SpriteState.Idle;
 		}
 
-		if ((clockState & ChipsetClockState.StartOfLine)!=0)
+		if ((clockState & ChipsetClockState.StartOfLine) != 0)
+		{ 
 			lineState = DMALineState.LineStart;
-
+			fetchCount = 0;
+		}
 		RunAgnusTick();
 		UpdateSprites();
 
@@ -162,6 +164,8 @@ public class Agnus : IAgnus
 	private ushort ddfstrtfix = 0;
 	[Persist]
 	private ushort ddfstopfix = 0;
+	[Persist]
+	private ushort fetchCount = 0;
 	[Persist]
 	private int pixmod;
 	[Persist]
@@ -227,7 +231,7 @@ public class Agnus : IAgnus
 		//tell Denise the blanking status and whether to start processing pixel data
 		denise.SetBlankingStatus(blanking);
 
-		if (blanking != Blanking.None) goto noBitplaneDMA;
+		//if (blanking != Blanking.None) goto noBitplaneDMA;
 
 		//debugging
 		if (clock.VerticalPos == debugger.dbugLine)
@@ -243,11 +247,16 @@ public class Agnus : IAgnus
 		{
 			lineState = DMALineState.Fetching;
 		}
-		else if ((clock.HorizontalPos == ddfstop + debugger.ddfEHack || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
+		else if ((clock.HorizontalPos >= ddfstop + debugger.ddfEHack && ((fetchCount&7)==0) || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
 		{
 			lineState = DMALineState.LastBitplaneFetch;
 			lastFetchCount = 8;
 		}
+		//else if ((clock.HorizontalPos == ddfstopfix + debugger.ddfEHack) && lineState == DMALineState.Fetching)
+		//{
+		//	lineState = DMALineState.LineComplete;
+		//	EndAgnusLine();
+		//}
 		else if (lineState == DMALineState.LastBitplaneFetch)
 		{
 			lastFetchCount--;
@@ -262,6 +271,7 @@ public class Agnus : IAgnus
 		{
 			if (dma.IsDMAEnabled(DMA.BPLEN))
 				fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
+			fetchCount++;
 		}
 
 		if (fetched)
