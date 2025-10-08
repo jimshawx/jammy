@@ -42,5 +42,6 @@ namespace Jammy.Interface
 		void DumpBreakpoints();
 		ClockInfo GetChipClock();
 		void GenerateDisassemblies();
+		Vectors GetVectors();
 	}
 }

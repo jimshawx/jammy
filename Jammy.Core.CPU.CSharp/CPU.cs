@@ -200,8 +200,11 @@ namespace Jammy.Core.CPU.CSharp
 						break;
 				}
 
-				if (traceMode)
+				if (traceMode)			
+				{ 
+					instructionStartPC = pc;
 					internalTrap(9);
+				}
 			}
 			catch (AbandonInstructionException)
 			{ 

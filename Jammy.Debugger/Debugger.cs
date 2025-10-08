@@ -8,6 +8,7 @@ using Jammy.Types;
 using Jammy.Types.Debugger;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Linq;
 using System.Text;
 
@@ -125,6 +126,11 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0xFC4966);//disk.resource drive detection
 				//AddBreakpoint(0xeb4);
 				//AddBreakpoint(0xacc8);
+				//AddBreakpoint(0x4f6);
+				//AddBreakpoint(0x504);
+				//AddBreakpoint(0x53a);
+				//AddBreakpoint(0x53c);
+				//AddBreakpoint(0x620);
 				return;
 			}
 
@@ -443,6 +449,19 @@ namespace Jammy.Debugger
 		public void GenerateDisassemblies()
 		{
 			analyser.GenerateDisassemblies();	
+		}
+
+		public Vectors GetVectors()
+		{
+			var x = new Vectors();
+			
+			for (uint i = 0; i < Vectors.vectorNames.Length; i++)
+				x.Items[i] = new Tuple<string, uint>(Vectors.vectorNames[i], memory.UnsafeRead32(i*4));
+			
+			for (uint i = (uint)Vectors.vectorNames.Length; i < 256; i++)
+				x.Items[i] = new Tuple<string, uint>($"User {(i-Vectors.vectorNames.Length):X2}", memory.UnsafeRead32(i * 4));
+
+			return x;
 		}
 	}
 }

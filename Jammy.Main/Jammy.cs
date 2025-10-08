@@ -215,7 +215,8 @@ namespace Jammy.Main
 			UpdatePowerLight();
 			UpdateDiskLight();
 			UpdateExecBase();
-			//UpdateCopper();
+			UpdateCopper();
+			UpdateVectors();
 			UpdateClock();
 			UI.UI.IsDirty = false;
 		}
@@ -355,6 +356,11 @@ namespace Jammy.Main
 					lbIntvec.Items.Add($"{i} {debugger.Read32((i + 0x18) * 4):X8} {intsrc[i]}");
 				}
 			}
+		}
+
+		private void UpdateVectors()
+		{
+			txtCopper.Text = debugger.GetVectors().ToString();
 		}
 
 		private void SetSelection()

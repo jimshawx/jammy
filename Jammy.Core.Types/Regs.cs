@@ -69,8 +69,8 @@ namespace Jammy.Core.Types
 			for (int i = 0; i < 8; i++)
 				items.Add($"D{i} {D[i]:X8}");
 			items.Add($"PC {PC:X8}");
-			items.Add($"X N Z V C");
-			items.Add($"{(SR >> 4) & 1} {(SR >> 3) & 1} {(SR >> 2) & 1} {(SR >> 1) & 1} {SR & 1}");
+			items.Add($"X N Z V C S T");
+			items.Add($"{(SR >> 4) & 1} {(SR >> 3) & 1} {(SR >> 2) & 1} {(SR >> 1) & 1} {SR & 1} {(SR>>13)&1} {(SR>>15) & 1}");
 
 			//column 2
 			for (int i = 0; i < 7; i++)
