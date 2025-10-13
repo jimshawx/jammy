@@ -211,8 +211,6 @@ public class Agnus : IAgnus
 			return;
 		}
 
-		bool fetched = false;
-
 		var blanking = Blanking.None;
 
 		//is it in the vertical blanking zone (should swap to using some of the ECS registers)
@@ -231,7 +229,8 @@ public class Agnus : IAgnus
 		//tell Denise the blanking status and whether to start processing pixel data
 		denise.SetBlankingStatus(blanking);
 
-		//if (blanking != Blanking.None) goto noBitplaneDMA;
+		if ((blanking & Blanking.OutsideDisplayWindow) == Blanking.OutsideDisplayWindow)
+			goto noBitplaneDMA;
 
 		//debugging
 		if (clock.VerticalPos == debugger.dbugLine)
@@ -241,7 +240,6 @@ public class Agnus : IAgnus
 		//is it time to do bitplane DMA?
 		//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
 		//bitplane DMA is ON
-
 
 		if (clock.HorizontalPos == ddfstrt + debugger.ddfSHack && lineState == DMALineState.LineStart)
 		{
@@ -269,15 +267,16 @@ public class Agnus : IAgnus
 
 		if (lineState == DMALineState.Fetching || lineState == DMALineState.LastBitplaneFetch)
 		{
+
+			bool fetched = false;
 			if (dma.IsDMAEnabled(DMA.BPLEN))
 				fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
 			fetchCount++;
+			if (fetched)
+				return;
 		}
 
-		if (fetched)
-			return;
-
-noBitplaneDMA:
+	noBitplaneDMA:
 
 		//can we use the non-bitplane DMA for something else?
 
