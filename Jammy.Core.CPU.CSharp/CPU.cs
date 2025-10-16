@@ -27,7 +27,7 @@ namespace Jammy.Core.CPU.CSharp
 			Stopped
 		}
 
-		private uint[] d = new uint[8];
+		private readonly uint[] d = new uint[8];
 		private A a;
 
 		private class A
@@ -35,7 +35,7 @@ namespace Jammy.Core.CPU.CSharp
 			public uint ssp { get; set; }
 			public uint usp { get; set; }
 
-			private uint[] a = new uint[7];
+			private readonly uint[] a = new uint[7];
 			private Func<bool> isSupervisor;
 
 			public A(Func<bool> isSupervisor)
