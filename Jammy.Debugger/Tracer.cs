@@ -35,6 +35,8 @@ namespace Jammy.Debugger
 		public void TraceAsm(uint pc, Regs regs) { }
 
 		public void WriteTrace() { }
+
+		public void Enable(bool enabled) { }
 	}
 
 	public class Tracer : ITracer
@@ -70,9 +72,11 @@ namespace Jammy.Debugger
 		}
 
 		private readonly HashSet<uint> seen = new HashSet<uint>();
+		private bool enabled = false;
 
 		public void Trace(uint pc)
 		{
+			if (!enabled) return;
 			if (pc >= 0xf00000) return;
 			if (seen.Contains(pc)) return;
 			if (traces.Any())
@@ -84,6 +88,7 @@ namespace Jammy.Debugger
 
 		public void Trace(string v, uint pc, Regs regs)
 		{
+			if (!enabled) return;
 			if (pc >= 0xf00000) return;
 			if (seen.Contains(pc)) return;
 			seen.Add(pc);
@@ -118,6 +123,11 @@ namespace Jammy.Debugger
 			if (pc >= mem.Length) return "";
 			var dasm = disassembler.Disassemble(pc, mem.GetEnumerable(pc, 20));
 			return dasm.ToString();
+		}
+
+		public void Enable(bool enabled)
+		{ 
+			this.enabled = enabled;	
 		}
 	}
 }
