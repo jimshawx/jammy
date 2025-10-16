@@ -85,7 +85,7 @@ public class Denise : IDenise
 	[Persist]
 	private int dptr = 0;
 
-	private Action pixelAction = () => { };
+	private Action<int> pixelAction = (int p) => { };
 
 	public void Emulate()
 	{
@@ -98,7 +98,11 @@ public class Denise : IDenise
 		if ((clockState & ChipsetClockState.StartOfLine) != 0) 
 			StartDeniseLine();
 
-		RunDeniseTick();
+		for (int p = 0; p < pixelLoop; p++)
+		{ 
+			ClockBuffer();
+			RunDeniseTick(p);
+		}
 
 		if ((clockState & ChipsetClockState.EndOfLine)!=0)
 			EndDeniseLine();
@@ -138,7 +142,29 @@ public class Denise : IDenise
 		int even = bplcon1 & 0xf;
 		int odd = bplcon1 >> 4 & 0xf;
 
-		bpldatPix.WriteBitplanes(ref bpldat, even, odd);
+		if (bpldatDelay == 0)
+			bpldatPix.WriteBitplanes(ref bpldat, even, odd);
+		else
+			Buffer(bpldat);
+	}
+
+	private ulong[] buffered = new ulong[8];
+	private int bufferDelay = 0;
+	private const int bpldatDelay = 0;
+
+	private void Buffer(ulong[] bpldat)
+	{
+		Array.Copy(bpldat, buffered, 8);
+		bufferDelay = bpldatDelay;
+	}
+	private void ClockBuffer()
+	{
+		if (bufferDelay > 0)
+		{
+			bufferDelay--;
+			if (bufferDelay == 0)
+				bpldatPix.WriteBitplanes(ref buffered, bplcon1 & 0xf, bplcon1 >> 4 & 0xf);
+		}
 	}
 
 	public void WriteSprite(uint s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl)
@@ -206,7 +232,7 @@ public class Denise : IDenise
 	[Persist]
 	private readonly byte[] sprpix = new byte[8];
 
-	private Action GetModeConversion()
+	private Action<int> GetModeConversion()
 	{
 		//return CopperBitplaneConvert;
 
@@ -232,11 +258,13 @@ public class Denise : IDenise
 		return CopperBitplaneConvertNormal;
 	}
 
-	private void CopperBitplaneConvertNormal()
+	private void CopperBitplaneConvertNormal(int p)
 	{
 		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-		for (int p = 0; p < pixelLoop; p++)
+		//for (int p = 0; p < pixelLoop; p++)
 		{
+			//ClockBuffer();
+
 			uint pix = bpldatPix.GetPixel(planes);
 			uint col = truecolour[pix];
 			
@@ -266,11 +294,13 @@ public class Denise : IDenise
 		}
 	}
 
-	private void CopperBitplaneConvertDPF()
+	private void CopperBitplaneConvertDPF(int p)
 	{
 		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-		for (int p = 0; p < pixelLoop; p++)
+		//for (int p = 0; p < pixelLoop; p++)
 		{
+			//ClockBuffer();
+
 			uint col;
 
 			uint pix = bpldatPix.GetPixel(planes);
@@ -317,11 +347,13 @@ public class Denise : IDenise
 		}
 	}
 
-	private void CopperBitplaneConvertOther()
+	private void CopperBitplaneConvertOther(int p)
 	{
 		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-		for (int p = 0; p < pixelLoop; p++)
+		//for (int p = 0; p < pixelLoop; p++)
 		{
+			//ClockBuffer();
+
 			uint col;
 
 			uint pix = bpldatPix.GetPixel(planes);
@@ -804,27 +836,28 @@ end loop
 		}
 	}
 
-	private void RunDeniseTick()
+	private void RunDeniseTick(int p)
 	{
-		if (clock.DeniseHorizontalPos < FIRST_DMA)
-			return;
+		//if (clock.DeniseHorizontalPos < FIRST_DMA)
+		//	return;
 
 		if (blankingStatus == Blanking.None)
 		{
 			//is it the visible area horizontally?
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
-			//HACK-the minuses are a hack.  the bitplanes are ready from fetching but they're not supposed to be copied into Denise until 4 cycles later
-			if (clock.DeniseHorizontalPos >= diwstrth + debugger.diwSHack -0   && clock.DeniseHorizontalPos < diwstoph + debugger.diwEHack -0  )
+			if (clock.DeniseHorizontalPos+p >= diwstrth + debugger.diwSHack && clock.DeniseHorizontalPos+p < diwstoph + debugger.diwEHack)
 			{
 				//CopperBitplaneConvert();
-				pixelAction();
+				pixelAction(p);
 			}
 			else
 			{
 				int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
 				//outside horizontal area
-				for (int p = 0; p < pixelLoop; p++)
+				//for (int p = 0; p < pixelLoop; p++)
 				{
+					//ClockBuffer();
+
 					bpldatPix.NextPixel();
 					if ((p & m) == m)
 						for (int s = 0; s < 8; s++)
@@ -833,13 +866,25 @@ end loop
 
 				//output colour 0 pixels
 				uint col = lastcol = truecolour[0];
-				//for (int k = 0; k < 4; k++)
-				//	screen[dptr++] = (int)col;
-				//Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
-				screen[dptr++] = (int)col;
+				//screen[dptr++] = (int)col;
+				//screen[dptr++] = (int)col;
+				//screen[dptr++] = (int)col;
+				//screen[dptr++] = (int)col;
+				switch (pixelLoop)
+				{
+					case 8:
+						//hack for the 0.5x above - skip every other horizontal pixel
+						if ((p & 1) == 0)
+							screen[dptr++] = (int)col;
+						break;
+					case 4:
+						screen[dptr++] = (int)col;
+						break;
+					default:
+						screen[dptr++] = (int)col;
+						screen[dptr++] = (int)col;
+						break;
+				}
 			}
 		}
 		else
@@ -850,20 +895,29 @@ end loop
 			//output colour 0 pixels
 			uint col = lastcol = truecolour[0];
 
-			//if (clock.VerticalPos == 64)
-			//	logger.LogTrace($"{col:X6}");
-
 			bool stipple = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0;
 			if (stipple && (blankingStatus & Blanking.HorizontalBlank) != 0) col |= 0xff0000;
 			if (stipple && (blankingStatus & Blanking.VerticalBlank) != 0) col |= 0x0000ff;
 
-			//for (int k = 0; k < 4; k++)
-			//	screen[dptr++] = (int)col;
-			//Array.Fill(screen, (int)col, dptr, 4); dptr += 4;
-			screen[dptr++] = (int)col;
-			screen[dptr++] = (int)col;
-			screen[dptr++] = (int)col;
-			screen[dptr++] = (int)col;
+			//screen[dptr++] = (int)col;
+			//screen[dptr++] = (int)col;
+			//screen[dptr++] = (int)col;
+			//screen[dptr++] = (int)col;
+			switch (pixelLoop)
+			{
+				case 8:
+					//hack for the 0.5x above - skip every other horizontal pixel
+					if ((p & 1) == 0)
+						screen[dptr++] = (int)col;
+					break;
+				case 4:
+					screen[dptr++] = (int)col;
+					break;
+				default:
+					screen[dptr++] = (int)col;
+					screen[dptr++] = (int)col;
+					break;
+			}
 		}
 	}
 
@@ -990,16 +1044,15 @@ end loop
 		//cosmetics, draw some right border
 		blankingStatus = Blanking.OutsideDisplayWindow;
 		for (int i = 0; i < RIGHT_BORDER; i++)
-			RunDeniseTick();
-
+		{
+			for (int p = 0; p < pixelLoop; p++)
+				RunDeniseTick(p);
+		}
 		//this should be a no-op
 		//System.Diagnostics.Debug.Assert(SCREEN_WIDTH - (dptr - lineStart) == 0);
 		dptr += SCREEN_WIDTH - (dptr - lineStart);
 
 		//scan double
-		//for (int i = lineStart; i < lineStart + SCREEN_WIDTH; i++)
-		//	screen[dptr++] = screen[i];
-		// Replace the for loop with Array.Copy for better performance and clarity
 		Array.Copy(screen, lineStart, screen, dptr, SCREEN_WIDTH);
 		dptr += SCREEN_WIDTH;
 	}
