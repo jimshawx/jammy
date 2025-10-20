@@ -48,9 +48,8 @@ namespace Jammy.Core.Types.Types
 	public enum DMAActivityType
 	{
 		None,
-		Read,
-		Write,
-		WriteReg,
+		ReadChip,
+		WriteChip,
 		Consume,
 		CPU,
 		ReadCPU,

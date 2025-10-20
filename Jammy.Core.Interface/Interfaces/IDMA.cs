@@ -8,7 +8,6 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	void ReadReg(DMASource source, uint address, DMA priority, Size size, uint chipReg);
 	uint DebugRead(uint address, Size size);
 	void WriteChip(DMASource source, uint address, DMA priority, ushort value, Size size);
-	void WriteReg(DMASource source, uint chipReg, DMA priority, ushort value);
 	void NoDMA(DMASource source);
 	void NeedsDMA(DMASource source, DMA priority);
 	bool IsDMAEnabled(DMA source);
@@ -25,7 +24,7 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	ushort LastRead { get; }
 	bool LastDMASlotWasUsedByChipset();
 	void ExecuteCPUDMASlot();
-	void Init(IAudio audio, IMemoryMapper memoryMapper);
+	void Init(IAudio audio, IMemoryMapper memoryMapper, IChipRAM chipRAM);
 	uint ChipsetSync();
 	void SetSync(Func<ushort> runChipsetEmulation);
 }

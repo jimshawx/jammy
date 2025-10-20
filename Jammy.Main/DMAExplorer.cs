@@ -92,9 +92,6 @@ namespace Jammy.Main
 			sb.AppendLine($"   Type: {d.Type}");
 			if (d.Type != DMAActivityType.None && d.Type != DMAActivityType.CPU)
 			{
-				if (d.Type == DMAActivityType.WriteReg)
-					sb.AppendLine($"    Reg: {ChipRegs.Name(d.ChipReg)} {d.ChipReg:X6}");
-
 				if (d.Type != DMAActivityType.Consume)
 				{ 
 					sb.AppendLine($"Address: {d.Address:X8}");

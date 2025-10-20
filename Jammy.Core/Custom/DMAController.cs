@@ -20,14 +20,13 @@ public class DMAController : IDMA
 	private IAudio audio;
 	private readonly IAgnus agnus;
 	private readonly IChipsetClock chipsetClock;
+	private IContendedMemoryMappedDevice chipRAM;
 	private IMemoryMapper memoryMapper;
 	private readonly ILogger<DMAController> logger;
 	private readonly DMAActivity[] activities;
 
 	public DMAController(
-		//IAudio audio,// IChips custom,
 		IChipsetClock chipsetClock,
-		//IMemoryMapper memoryMapper,
 		IAgnus agnus,
 		IChipsetDebugger debugger, ILogger<DMAController> logger)
 	{
@@ -43,10 +42,11 @@ public class DMAController : IDMA
 			activities[i] = new DMAActivity();
 	}
 
-	public void Init(IAudio audio, IMemoryMapper memoryMapper)
+	public void Init(IAudio audio, IMemoryMapper memoryMapper, IChipRAM chipRAM)
 	{
 		this.audio = audio;
 		this.memoryMapper = memoryMapper;
+		this.chipRAM = (IContendedMemoryMappedDevice)chipRAM;
 	}
 
 	public void Reset()
@@ -205,24 +205,20 @@ public class DMAController : IDMA
 			case DMAActivityType.Consume:break;
 			case DMAActivityType.CPU: break;
 
-			case DMAActivityType.Write:
-				memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
+			case DMAActivityType.WriteChip:
+				chipRAM.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
 				break;
 
-			case DMAActivityType.WriteReg:
-				memoryMapper.ImmediateWrite(0, activity.ChipReg, (uint)activity.Value, Size.Word);
-				break;
-
-			case DMAActivityType.Read:
+			case DMAActivityType.ReadChip:
 				if (activity.Size == Size.QWord)
 				{
-					ulong value = memoryMapper.ImmediateRead(0, activity.Address, Size.Long);
-					value = (value << 32) | memoryMapper.ImmediateRead(0, activity.Address + 4, Size.Long);
+					ulong value = chipRAM.ImmediateRead(0, activity.Address, Size.Long);
+					value = (value << 32) | chipRAM.ImmediateRead(0, activity.Address + 4, Size.Long);
 					agnus.WriteWide(activity.ChipReg, value);
 				}
 				else
 				{
-					uint value = memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
+					uint value = chipRAM.ImmediateRead(0, activity.Address, activity.Size);
 					memoryMapper.ImmediateWrite(0, activity.ChipReg, value, activity.Size);
 				}
 				break;
@@ -295,7 +291,7 @@ public class DMAController : IDMA
 	public void ReadReg(DMASource source, uint address, DMA priority, Size size, uint chipReg)
 	{
 		var activity = activities[(int)source];
-		activity.Type = DMAActivityType.Read;
+		activity.Type = DMAActivityType.ReadChip;
 		activity.Address = address;
 		activity.Priority = priority;
 		activity.Size = size;
@@ -305,20 +301,11 @@ public class DMAController : IDMA
 	public void WriteChip(DMASource source, uint address, DMA priority, ushort value, Size size)
 	{
 		var activity = activities[(int)source];
-		activity.Type = DMAActivityType.Write;
+		activity.Type = DMAActivityType.WriteChip;
 		activity.Address = address;
 		activity.Priority = priority;
 		activity.Value = value;
 		activity.Size = size;
-	}
-
-	public void WriteReg(DMASource source, uint chipReg, DMA priority, ushort value)
-	{
-		var activity = activities[(int)source];
-		activity.Type = DMAActivityType.WriteReg;
-		activity.ChipReg = chipReg;
-		activity.Priority = priority;
-		activity.Value = value;
 	}
 
 	public void ReadCPU(CPUTarget target, uint address, Size size)

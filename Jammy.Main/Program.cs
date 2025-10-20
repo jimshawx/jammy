@@ -274,7 +274,7 @@ namespace Jammy.Main
 			var chipsetDebugger = serviceProvider.GetRequiredService<IChipsetDebugger>();
 			var chips = serviceProvider.GetRequiredService<IChips>();
 			var chipRAM = serviceProvider.GetRequiredService<IChipRAM>();
-			dma.Init(audio, memoryMapper);
+			dma.Init(audio, memoryMapper, chipRAM);
 			chipsetDebugger.Init(chips);
 			var ciab = serviceProvider.GetRequiredService<ICIABEven>();
 			serviceProvider.GetRequiredService<IAgnus>().Init(dma);
