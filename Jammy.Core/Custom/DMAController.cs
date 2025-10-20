@@ -18,7 +18,6 @@ public class DMAController : IDMA
 {
 	private readonly IChipsetDebugger debugger;
 	private IAudio audio;
-	//private readonly IAgnus agnus;
 	private readonly IChipsetClock chipsetClock;
 	private readonly IChips chips;
 	private IContendedMemoryMappedDevice chipRAM;
@@ -26,17 +25,11 @@ public class DMAController : IDMA
 	private readonly ILogger<DMAController> logger;
 	private readonly DMAActivity[] activities;
 
-	public DMAController(
-		IChipsetClock chipsetClock,
-		//IAgnus agnus,
-		IChips chips,
+	public DMAController(IChipsetClock chipsetClock, IChips chips,
 		IChipsetDebugger debugger, ILogger<DMAController> logger)
 	{
-		//this.audio = audio;
-		//this.agnus = agnus;
 		this.chipsetClock = chipsetClock;
 		this.chips = chips;
-		//this.memoryMapper = memoryMapper;
 		this.logger = logger;
 		this.debugger = debugger;
 
@@ -200,9 +193,6 @@ public class DMAController : IDMA
 
 	private void ExecuteDMATransfer(DMAActivity activity)
 	{
-		//if (chipsetClock.VerticalPos == 100)
-		//	logger.LogTrace($"{activity.Type} {chipsetClock.HorizontalPos}");
-
 		switch (activity.Type)
 		{
 			case DMAActivityType.Consume:break;
@@ -217,7 +207,7 @@ public class DMAController : IDMA
 				{
 					ulong value = chipRAM.ImmediateRead(0, activity.Address, Size.Long);
 					value = (value << 32) | chipRAM.ImmediateRead(0, activity.Address + 4, Size.Long);
-					chips.WriteWide(activity.ChipReg, value);
+					chips.ImmediateWriteWide(activity.ChipReg, value);
 				}
 				else
 				{
@@ -227,27 +217,11 @@ public class DMAController : IDMA
 				break;
 
 			case DMAActivityType.ReadCPU:
-				//if (activity.Target == CPUTarget.ChipRAM)
-				//	LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
-				//else if (activity.Target == CPUTarget.SlowRAM)
-				//	LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
-				//else if (activity.Target == CPUTarget.ChipReg)
-				//	LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
-				//else if (activity.Target == CPUTarget.KickROM)
-					LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
-				//if (chipsetClock.VerticalPos == 100)
-				//	logger.LogTrace($"R {chipsetClock.HorizontalPos}");
+				LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
 				break;
 
 			case DMAActivityType.WriteCPU:
-				//if (activity.Target == CPUTarget.ChipRAM)
-				//	memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
-				//else if (activity.Target == CPUTarget.SlowRAM)
-				//	memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
-				//else if (activity.Target == CPUTarget.ChipReg)
-					memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
-				//if (chipsetClock.VerticalPos == 100)
-				//	logger.LogTrace($"W {chipsetClock.HorizontalPos}");
+				memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
 				break;
 
 			case DMAActivityType.None: break;

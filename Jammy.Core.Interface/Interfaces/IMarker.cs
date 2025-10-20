@@ -121,7 +121,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IChips : IReset, IContendedMemoryMappedDevice, IMemoryMappedDevice, IDebugChipsetRead, IStatePersister
 	{
 		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise, IDMA dma);
-		void WriteWide(uint address, ulong value);
+		void ImmediateWriteWide(uint address, ulong value);
 	}
 
 	public interface IMemoryInterceptor

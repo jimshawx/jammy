@@ -392,7 +392,7 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		public void WriteWide(uint address, ulong value)
+		public void ImmediateWriteWide(uint address, ulong value)
 		{
 			uint originalAddress = address;
 			address |= 0xdf0000;
