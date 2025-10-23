@@ -85,7 +85,7 @@ public class Denise : IDenise
 	[Persist]
 	private int dptr = 0;
 
-	private Action<int> pixelAction = (int p) => { };
+	private Func<int, uint> pixelAction = (int p) => { return 0; };
 
 	public void Emulate()
 	{
@@ -231,7 +231,7 @@ public class Denise : IDenise
 	[Persist]
 	private readonly byte[] sprpix = new byte[8];
 
-	private Action<int> GetModeConversion()
+	private Func<int,uint> GetModeConversion()
 	{
 		//return CopperBitplaneConvert;
 
@@ -257,53 +257,66 @@ public class Denise : IDenise
 		return CopperBitplaneConvertNormal;
 	}
 
-	private void CopperBitplaneConvertNormal(int p)
+	private uint CopperBitplaneConvertNormal(int p)
 	{
 		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-		//for (int p = 0; p < pixelLoop; p++)
-		{
-			//ClockBuffer();
 
-			uint pix = bpldatPix.GetPixel(planes);
-			uint col = truecolour[pix];
+		uint pix = bpldatPix.GetPixel(planes);
+		uint col = truecolour[pix];
 			
-			//remember the last colour for HAM modes
-			lastcol = col;
+		//remember the last colour for HAM modes
+		lastcol = col;
 
-			DoSprites(ref col, (byte)pix, (p&m)==m);
+		DoSprites(ref col, (byte)pix, (p&m)==m);
 
-			//pixel double
-			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
-			switch (pixelLoop)
-			{
-				case 8:
-					//hack for the 0.5x above - skip every other horizontal pixel
-					if ((p & 1) == 0)
-						screen[dptr++] = (int)col;
-					break;
-				case 4:
-					screen[dptr++] = (int)col;
-					break;
-				default:
-					screen[dptr++] = (int)col;
-					screen[dptr++] = (int)col;
-					break;
-			}
-		}
+		return col;
 	}
 
-	private void CopperBitplaneConvertDPF(int p)
+	private uint CopperBitplaneConvertDPF(int p)
 	{
 		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-		//for (int p = 0; p < pixelLoop; p++)
+
+		uint col;
+
+		uint pix = bpldatPix.GetPixel(planes);
+
+		//DPF
+		uint pix0 = dpfLookup[pix];
+		uint pix1 = dpfLookup[pix >> 1];
+
+		uint col0 = truecolour[pix0];
+		uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
+
+		//which playfield is in front?
+		if ((bplcon2 & 1 << 6) != 0)
+			col = pix1 != 0 ? col1 : col0;
+		else
+			col = pix0 != 0 ? col0 : col1;
+
+		//remember the last colour for HAM modes
+		lastcol = col;
+
+		DoSprites(ref col, (byte)pix, (p & m) == m);
+
+		return col;
+	}
+
+	private uint CopperBitplaneConvertOther(int p)
+	{
+		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
+
+		uint col;
+
+		uint pix = bpldatPix.GetPixel(planes);
+
+		//BPLAM
+		pix ^= (uint)(bplcon4 >> 8);
+
+		//pix &= debugger.bitplaneMask;
+		//pix |= debugger.bitplaneMod;
+
+		if ((bplcon0 & (uint)BPLCON0.DPF) != 0)
 		{
-			//ClockBuffer();
-
-			uint col;
-
-			uint pix = bpldatPix.GetPixel(planes);
-
 			//DPF
 			uint pix0 = dpfLookup[pix];
 			uint pix1 = dpfLookup[pix >> 1];
@@ -317,171 +330,90 @@ public class Denise : IDenise
 			else
 				col = pix0 != 0 ? col0 : col1;
 
-			//remember the last colour for HAM modes
-			lastcol = col;
-
-			DoSprites(ref col, (byte)pix, (p & m) == m);
-
-			//pixel double
-			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
-			//pixel double
-			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
-			switch (pixelLoop)
-			{
-				case 8:
-					//hack for the 0.5x above - skip every other horizontal pixel
-					if ((p & 1) == 0)
-						screen[dptr++] = (int)col;
-					break;
-				case 4:
-					screen[dptr++] = (int)col;
-					break;
-				default:
-					screen[dptr++] = (int)col;
-					screen[dptr++] = (int)col;
-					break;
-			}
+			//pix1 = (pix1 == 0) ? (byte)0 : (byte)(pix1 + 8);
+			//if ((bplcon2 & (1 << 6)) != 0)
+			//	pix = pix1 != 0 ? pix1 : pix0;
+			//else
+			//	pix = pix0 != 0 ? pix0 : pix1;
 		}
-	}
-
-	private void CopperBitplaneConvertOther(int p)
-	{
-		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-		//for (int p = 0; p < pixelLoop; p++)
+		else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
 		{
-			//ClockBuffer();
-
-			uint col;
-
-			uint pix = bpldatPix.GetPixel(planes);
-
-			//bpldatPix.NextPixel();
-
-			//BPLAM
-			pix ^= (uint)(bplcon4 >> 8);
-
-			//pix &= debugger.bitplaneMask;
-			//pix |= debugger.bitplaneMod;
-
-			if ((bplcon0 & (uint)BPLCON0.DPF) != 0)
-			{
-				//DPF
-				uint pix0 = dpfLookup[pix];
-				uint pix1 = dpfLookup[pix >> 1];
-
-				uint col0 = truecolour[pix0];
-				uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
-
-				//which playfield is in front?
-				if ((bplcon2 & 1 << 6) != 0)
-					col = pix1 != 0 ? col1 : col0;
-				else
-					col = pix0 != 0 ? col0 : col1;
-
-				//pix1 = (pix1 == 0) ? (byte)0 : (byte)(pix1 + 8);
-				//if ((bplcon2 & (1 << 6)) != 0)
-				//	pix = pix1 != 0 ? pix1 : pix0;
-				//else
-				//	pix = pix0 != 0 ? pix0 : pix1;
-			}
-			else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
-			{
-				//HAM6
-				uint ham = pix & 0b11_0000;
-				pix &= 0xf;
-				if (ham == 0)
-				{
-					col = truecolour[pix];
-				}
-				else
-				{
-					ham >>= 4;
-					uint px = pix * 0x11;
-					if (ham == 1)
-					{
-						//col+B
-						col = lastcol & 0xffffff00 | px;
-					}
-					else if (ham == 3)
-					{
-						//col+G
-						col = lastcol & 0xffff00ff | px << 8;
-					}
-					else
-					{
-						//col+R
-						col = lastcol & 0xff00ffff | px << 8 + 8;
-					}
-				}
-			}
-			else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) == 0 &&
-					 (settings.ChipSet != ChipSet.AGA || (bplcon2 & (uint)BPLCON2.NoEHB) == 0))
-			{
-				//EHB
-				col = truecolour[pix & 0x1f];
-				if ((pix & 0b100000) != 0)
-					col = (col & 0x00fefefe) >> 1;
-			}
-			else if (planes == 8 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
-			{
-				//HAM8
-				uint ham = pix & 0b11;
-				pix &= 0xfc;
-				if (ham == 0)
-				{
-					col = truecolour[pix];
-				}
-				else
-				{
-					uint px = pix | pix >> 6;
-					if (ham == 1)
-					{
-						//col+B
-						col = lastcol & 0xffffff00 | px;
-					}
-					else if (ham == 3)
-					{
-						//col+G
-						col = lastcol & 0xffff00ff | px << 8;
-					}
-					else
-					{
-						//col+R
-						col = lastcol & 0xff00ffff | px << 8 + 8;
-					}
-				}
-			}
-			else
+			//HAM6
+			uint ham = pix & 0b11_0000;
+			pix &= 0xf;
+			if (ham == 0)
 			{
 				col = truecolour[pix];
 			}
-
-			//remember the last colour for HAM modes
-			lastcol = col;
-
-			DoSprites(ref col, (byte)pix, (p & m) == m);
-
-			//pixel double
-			//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
-			//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
-			switch (pixelLoop)
+			else
 			{
-				case 8:
-					//hack for the 0.5x above - skip every other horizontal pixel
-					if ((p & 1) == 0)
-						screen[dptr++] = (int)col;
-					break;
-				case 4:
-					screen[dptr++] = (int)col;
-					break;
-				default:
-					screen[dptr++] = (int)col;
-					screen[dptr++] = (int)col;
-					break;
+				ham >>= 4;
+				uint px = pix * 0x11;
+				if (ham == 1)
+				{
+					//col+B
+					col = lastcol & 0xffffff00 | px;
+				}
+				else if (ham == 3)
+				{
+					//col+G
+					col = lastcol & 0xffff00ff | px << 8;
+				}
+				else
+				{
+					//col+R
+					col = lastcol & 0xff00ffff | px << 8 + 8;
+				}
 			}
 		}
+		else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) == 0 &&
+					(settings.ChipSet != ChipSet.AGA || (bplcon2 & (uint)BPLCON2.NoEHB) == 0))
+		{
+			//EHB
+			col = truecolour[pix & 0x1f];
+			if ((pix & 0b100000) != 0)
+				col = (col & 0x00fefefe) >> 1;
+		}
+		else if (planes == 8 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
+		{
+			//HAM8
+			uint ham = pix & 0b11;
+			pix &= 0xfc;
+			if (ham == 0)
+			{
+				col = truecolour[pix];
+			}
+			else
+			{
+				uint px = pix | pix >> 6;
+				if (ham == 1)
+				{
+					//col+B
+					col = lastcol & 0xffffff00 | px;
+				}
+				else if (ham == 3)
+				{
+					//col+G
+					col = lastcol & 0xffff00ff | px << 8;
+				}
+				else
+				{
+					//col+R
+					col = lastcol & 0xff00ffff | px << 8 + 8;
+				}
+			}
+		}
+		else
+		{
+			col = truecolour[pix];
+		}
+
+		//remember the last colour for HAM modes
+		lastcol = col;
+
+		DoSprites(ref col, (byte)pix, (p & m) == m);
+
+		return col;
 	}
 
 
@@ -839,6 +771,7 @@ end loop
 	{
 		//if (clock.DeniseHorizontalPos < FIRST_DMA)
 		//	return;
+		uint col;
 
 		if (blankingStatus == Blanking.None)
 		{
@@ -846,8 +779,8 @@ end loop
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
 			if (clock.DeniseHorizontalPos+p >= diwstrth + debugger.diwSHack && clock.DeniseHorizontalPos+p < diwstoph + debugger.diwEHack)
 			{
-				//CopperBitplaneConvert();
-				pixelAction(p);
+				//col = CopperBitplaneConvert();
+				col = pixelAction(p);
 			}
 			else
 			{
@@ -864,59 +797,41 @@ end loop
 				}
 
 				//output colour 0 pixels
-				uint col = lastcol = truecolour[0];
-				//screen[dptr++] = (int)col;
-				//screen[dptr++] = (int)col;
-				//screen[dptr++] = (int)col;
-				//screen[dptr++] = (int)col;
-				switch (pixelLoop)
-				{
-					case 8:
-						//hack for the 0.5x above - skip every other horizontal pixel
-						if ((p & 1) == 0)
-							screen[dptr++] = (int)col;
-						break;
-					case 4:
-						screen[dptr++] = (int)col;
-						break;
-					default:
-						screen[dptr++] = (int)col;
-						screen[dptr++] = (int)col;
-						break;
-				}
+				col = lastcol = truecolour[0];
 			}
 		}
 		else
 		{
-
 			//outside display window
 
 			//output colour 0 pixels
-			uint col = lastcol = truecolour[0];
+			col = lastcol = truecolour[0];
 
 			bool stipple = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0;
 			if (stipple && (blankingStatus & Blanking.HorizontalBlank) != 0) col |= 0xff0000;
 			if (stipple && (blankingStatus & Blanking.VerticalBlank) != 0) col |= 0x0000ff;
+		}
 
-			//screen[dptr++] = (int)col;
-			//screen[dptr++] = (int)col;
-			//screen[dptr++] = (int)col;
-			//screen[dptr++] = (int)col;
-			switch (pixelLoop)
-			{
-				case 8:
-					//hack for the 0.5x above - skip every other horizontal pixel
-					if ((p & 1) == 0)
-						screen[dptr++] = (int)col;
-					break;
-				case 4:
+		//horizontal pixel double
+		//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+		//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
+		//pixel double
+		//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
+		//since we've only set up a hi-res window, it's 2x, 1x and 0.5x
+		switch (pixelLoop)
+		{
+			case 8:
+				//hack for the 0.5x above - skip every other horizontal pixel
+				if ((p & 1) == 0)
 					screen[dptr++] = (int)col;
-					break;
-				default:
-					screen[dptr++] = (int)col;
-					screen[dptr++] = (int)col;
-					break;
-			}
+				break;
+			case 4:
+				screen[dptr++] = (int)col;
+				break;
+			default:
+				screen[dptr++] = (int)col;
+				screen[dptr++] = (int)col;
+				break;
 		}
 	}
 
