@@ -142,7 +142,7 @@ public class Denise : IDenise
 		int even = bplcon1 & 0xf;
 		int odd = bplcon1 >> 4 & 0xf;
 
-		if (bpldatDelay == 0)
+		if (debugger.bplDelayHack == 0)
 			bpldatPix.WriteBitplanes(ref bpldat, even, odd);
 		else
 			Buffer(bpldat);
@@ -150,12 +150,11 @@ public class Denise : IDenise
 
 	private ulong[] buffered = new ulong[8];
 	private int bufferDelay = 0;
-	private const int bpldatDelay = 0;
 
 	private void Buffer(ulong[] bpldat)
 	{
 		Array.Copy(bpldat, buffered, 8);
-		bufferDelay = bpldatDelay;
+		bufferDelay = debugger.bplDelayHack;
 	}
 	private void ClockBuffer()
 	{

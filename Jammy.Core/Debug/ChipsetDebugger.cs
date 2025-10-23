@@ -27,6 +27,7 @@ public interface IChipsetDebugger : IEmulate
 	int diwEHack { get; }
 	int ddfStrtFix { get; set; }
 	int ddfStopFix { get; set; }
+	int bplDelayHack { get; set; }
 	void SetDMAActivity(DMAActivity activity);
 	DMAEntry[] GetDMASummary();
 	void Init(IChips chips);
@@ -149,6 +150,8 @@ public class ChipsetDebugger : IChipsetDebugger
 	public int ddfStrtFix { get; set; } = 0;
 	public int ddfStopFix { get; set; } = 0;
 
+	public int bplDelayHack { get; set; } = 0;
+
 	//	public bool ws;
 	private StringBuilder tsb = new StringBuilder();
 	private StringBuilder dsb = new StringBuilder();
@@ -233,7 +236,7 @@ public class ChipsetDebugger : IChipsetDebugger
 
 		sb.AppendLine($"LINE {dbugLine}");
 		sb.AppendLine(($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfStrtFix:X4}{ddfSHack:+#0;-#0} {ddfStopFix:X4}{ddfEHack:+#0;-#0} FMODE {fmode:X4}"));
-		sb.AppendLine(($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({diwstopv - diwstrtv}) H:{diwstrth}{diwSHack:+#0;-#0}->{diwstoph}{diwEHack:+#0;-#0}({diwstoph - diwstrth}/16={(diwstoph - diwstrth) / 16})"));
+		sb.AppendLine(($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({diwstopv - diwstrtv}) H:{diwstrth}{diwSHack:+#0;-#0}->{diwstoph}{diwEHack:+#0;-#0}({diwstoph - diwstrth}/16={(diwstoph - diwstrth) / 16}) BD={bplDelayHack}"));
 		sb.AppendLine($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
 		sb.AppendLine($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()} 3:{bplcon3:X4} {Bplcon3()} 4:{bplcon4:X4} {Bplcon4()}");
 		sb.AppendLine($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} {new string(bitplaneMask.ToBin().Reverse().ToArray())} {new string(bitplaneMod.ToBin().Reverse().ToArray())}");
@@ -423,7 +426,6 @@ public class ChipsetDebugger : IChipsetDebugger
 			if (obj == (int)VK.VK_F7) dbugLine--;
 			if (obj == (int)VK.VK_F6) dbugLine++;
 			if (obj == (int)VK.VK_F8) dbugLine = -1;
-			//if (obj == (int)VK.VK_F5) dbugLine = diwstrt >> 8;
 
 			if (obj == (int)'Q') ddfSHack++;
 			if (obj == (int)'W') ddfSHack--;
@@ -438,6 +440,10 @@ public class ChipsetDebugger : IChipsetDebugger
 			if (obj == (int)'4') diwEHack++;
 			if (obj == (int)'5') diwEHack--;
 			if (obj == (int)'6') diwEHack = 0;
+
+			if (obj == (int)'7') bplDelayHack++;
+			if (obj == (int)'8') bplDelayHack--; if (bplDelayHack < 0) bplDelayHack = 0;
+			if (obj == (int)'9') bplDelayHack = 0;
 
 			if (obj == (int)'A') bitplaneMask ^= 1;
 			if (obj == (int)'S') bitplaneMask ^= 2;
@@ -461,8 +467,6 @@ public class ChipsetDebugger : IChipsetDebugger
 			if (obj == (int)'N') bitplaneMod ^= 32;
 			if (obj == (int)'M') bitplaneMod ^= 64;
 			if (obj == (int)VK.VK_OEM_COMMA) bitplaneMod ^= 128;
-
-			//if (obj == (int)VK.VK_F10) ws = true;
 		}
 	}
 }
