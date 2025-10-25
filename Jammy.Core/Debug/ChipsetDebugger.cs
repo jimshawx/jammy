@@ -442,7 +442,7 @@ public class ChipsetDebugger : IChipsetDebugger
 			if (obj == (int)'6') diwEHack = 0;
 
 			if (obj == (int)'7') bplDelayHack++;
-			if (obj == (int)'8') bplDelayHack--; if (bplDelayHack < 0) bplDelayHack = 0;
+			if (obj == (int)'8') bplDelayHack--;
 			if (obj == (int)'9') bplDelayHack = 0;
 
 			if (obj == (int)'A') bitplaneMask ^= 1;
