@@ -98,11 +98,50 @@ public class Denise : IDenise
 		if ((clockState & ChipsetClockState.StartOfLine) != 0) 
 			StartDeniseLine();
 
-		for (int p = 0; p < pixelLoop; p++)
-		{ 
+		//for (int p = 0; p < pixelLoop; p++)
+		//{ 
+		//	ClockBuffer();
+		//	RunDeniseTick(p);
+		//}
+		if (pixelLoop == 2)
+		{
 			ClockBuffer();
-			RunDeniseTick(p);
+			RunDeniseTick(0,0);
+			ClockBuffer();
+			RunDeniseTick(1,1);
 		}
+		else if (pixelLoop == 4)
+		{
+			ClockBuffer();
+			RunDeniseTick(0,0);
+			ClockBuffer();
+			RunDeniseTick(0,1);
+			ClockBuffer();
+			RunDeniseTick(1,2);
+			ClockBuffer();
+			RunDeniseTick(1,3);
+		}
+		else if (pixelLoop == 8)
+		{
+			ClockBuffer();
+			RunDeniseTick(0,0);
+			ClockBuffer();
+			RunDeniseTick(0,1);
+			ClockBuffer();
+			RunDeniseTick(0,2);
+			ClockBuffer();
+			RunDeniseTick(0,3);
+			ClockBuffer();
+			RunDeniseTick(1,4);
+			ClockBuffer();
+			RunDeniseTick(1,5);
+			ClockBuffer();
+			RunDeniseTick(1,6);
+			ClockBuffer();
+			RunDeniseTick(1,7);
+		}
+
+
 
 		if ((clockState & ChipsetClockState.EndOfLine)!=0)
 			EndDeniseLine();
@@ -136,13 +175,43 @@ public class Denise : IDenise
 		blankingStatus = blanking;
 	}
 
+	[Persist]
+	private int scrollhack = 0;
+
+	public void SetDDFSTRTScrollHack(uint ddfstrt)
+	{
+		scrollhack = 0;
+		return;
+		if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
+		{
+			if ((ddfstrt & 3) != 0) logger.LogTrace("DDFSTRT is unaligned (hi-res)");
+		}
+		else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0)
+		{
+			if ((ddfstrt & 1) != 0) logger.LogTrace("DDFSTRT is unaligned (super hi-res)");
+		}
+		else
+		{
+			if ((ddfstrt&4)!=0) scrollhack = 8;
+			if ((ddfstrt&3)!=0) logger.LogTrace("DDFSTRT is unaligned");
+		}
+	}
+
+	private void ApplyDDFSTRTScrollHack(ref int even, ref int odd)
+	{
+		even += scrollhack; even &= 0xf;
+		odd += scrollhack; odd &= 0xf;
+	}
+
 	public void WriteBitplanes(ulong[] bpldat)
 	{
 		//scrolling
 		int even = bplcon1 & 0xf;
 		int odd = bplcon1 >> 4 & 0xf;
 
-		if (debugger.bplDelayHack == 0)
+		ApplyDDFSTRTScrollHack(ref even, ref odd);
+
+		if (bufferDelayBase + debugger.bplDelayHack == 0)
 			bpldatPix.WriteBitplanes(ref bpldat, even, odd);
 		else
 			Buffer(bpldat);
@@ -150,11 +219,12 @@ public class Denise : IDenise
 
 	private ulong[] buffered = new ulong[8];
 	private int bufferDelay = 0;
+	private const int bufferDelayBase = 0;
 
 	private void Buffer(ulong[] bpldat)
 	{
 		Array.Copy(bpldat, buffered, 8);
-		bufferDelay = debugger.bplDelayHack;
+		bufferDelay = bufferDelayBase + debugger.bplDelayHack;
 	}
 	private void ClockBuffer()
 	{
@@ -162,7 +232,15 @@ public class Denise : IDenise
 		{
 			bufferDelay--;
 			if (bufferDelay == 0)
-				bpldatPix.WriteBitplanes(ref buffered, bplcon1 & 0xf, bplcon1 >> 4 & 0xf);
+			{
+				//scrolling
+				int even = bplcon1 & 0xf;
+				int odd = bplcon1 >> 4 & 0xf;
+
+				ApplyDDFSTRTScrollHack(ref even, ref odd);
+
+				bpldatPix.WriteBitplanes(ref buffered, even, odd);
+			}
 		}
 	}
 
@@ -767,7 +845,7 @@ end loop
 		}
 	}
 
-	private void RunDeniseTick(int p)
+	private void RunDeniseTick(int d, int p)
 	{
 		//if (clock.DeniseHorizontalPos < FIRST_DMA)
 		//	return;
@@ -777,7 +855,7 @@ end loop
 		{
 			//is it the visible area horizontally?
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
-			if (clock.DeniseHorizontalPos+p >= diwstrth + debugger.diwSHack && clock.DeniseHorizontalPos+p < diwstoph + debugger.diwEHack)
+			if (clock.DeniseHorizontalPos+d >= diwstrth + debugger.diwSHack && clock.DeniseHorizontalPos+d <= diwstoph + debugger.diwEHack)
 			{
 				//col = CopperBitplaneConvert();
 				col = pixelAction(p);
@@ -785,16 +863,11 @@ end loop
 			else
 			{
 				int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-				//outside horizontal area
-				//for (int p = 0; p < pixelLoop; p++)
-				{
-					//ClockBuffer();
 
-					bpldatPix.NextPixel();
-					if ((p & m) == m)
-						for (int s = 0; s < 8; s++)
-							spriteMask[s] >>= 1;
-				}
+				bpldatPix.NextPixel();
+				if ((p & m) == m)
+					for (int s = 0; s < 8; s++)
+						spriteMask[s] >>= 1;
 
 				//output colour 0 pixels
 				col = lastcol = truecolour[0];
@@ -960,7 +1033,7 @@ end loop
 		for (int i = 0; i < RIGHT_BORDER; i++)
 		{
 			for (int p = 0; p < pixelLoop; p++)
-				RunDeniseTick(p);
+				RunDeniseTick(0,p);
 		}
 		//this should be a no-op
 		//System.Diagnostics.Debug.Assert(SCREEN_WIDTH - (dptr - lineStart) == 0);

@@ -845,6 +845,7 @@ public class Agnus : IAgnus
 				ddfstrt = (ushort)(value & (settings.ChipSet == ChipSet.OCS ? 0xfc : 0xfe));
 				//causes modulo not to be added, even if there was fetching on the line before this is written
 				//lineState = DMALineState.LineTerminated;
+				denise.SetDDFSTRTScrollHack(ddfstrt);
 				UpdateDDF();
 				break;
 			case ChipRegs.DDFSTOP:

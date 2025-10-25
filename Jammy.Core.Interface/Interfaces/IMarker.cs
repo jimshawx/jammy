@@ -206,6 +206,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	{
 		void SetBlankingStatus(Blanking blanking);
+		void SetDDFSTRTScrollHack(uint ddfstrt);
 		void WriteBitplanes(ulong[] planes);
 		void WriteSprite(uint s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl);
 		public uint[] DebugGetPalette();
