@@ -42,7 +42,7 @@ namespace Jammy.Core.Custom.CIA
 			new Tuple<string,string>("", "BFEB01 Not used"),
 			new Tuple<string,string>("sdr", "BFEC01 Serial data register (used for keyboard)"),
 			new Tuple<string,string>("icr", "BFED01 Interrupt control register FLAG SERIAL TODALARM TIMERB TIMERA"),
-			new Tuple<string,string>("cra", "BFEE01 Control register A"),
+			new Tuple<string,string>("cra", "BFEE01 Control register A xxx SPMODE INMODE LOAD RUNMODE OUTMODE PBON START"),
 			new Tuple<string,string>("crb", "BFEF01 Control register B")
 		};
 
