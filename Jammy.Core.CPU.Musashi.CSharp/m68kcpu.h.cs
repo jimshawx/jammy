@@ -470,15 +470,15 @@ public static partial class M68KCPU
 //	static bool CPU_TYPE_IS_EC020_LESS(uint32 A) { return CPU_TYPE_IS_020_LESS(A); }
 //#endif
 
-#if M68K_EMULATE_010
-	static bool CPU_TYPE_IS_010(uint32 A)        { return  ((A) == CPU_TYPE_010)
-	static bool CPU_TYPE_IS_010_PLUS(uint32 A)    { return ((A) & (CPU_TYPE_010 | CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_EC030 | CPU_TYPE_030 | CPU_TYPE_040 | CPU_TYPE_EC040));}
-	static bool CPU_TYPE_IS_010_LESS(uint32 A)   { return  ((A) & (CPU_TYPE_000 | CPU_TYPE_008 | CPU_TYPE_010));}
-#else
-	static bool CPU_TYPE_IS_010(uint32 A) { return false; }
-	static bool CPU_TYPE_IS_010_PLUS(uint32 A) { return CPU_TYPE_IS_EC020_PLUS(A); }
-	static bool CPU_TYPE_IS_010_LESS(uint32 A) { return CPU_TYPE_IS_EC020_LESS(A); }
-#endif
+//#if M68K_EMULATE_010
+	static bool CPU_TYPE_IS_010(uint32 A)        { return  ((A) == CPU_TYPE_010); }
+	static bool CPU_TYPE_IS_010_PLUS(uint32 A)    { return ((A) & (CPU_TYPE_010 | CPU_TYPE_EC020 | CPU_TYPE_020 | CPU_TYPE_EC030 | CPU_TYPE_030 | CPU_TYPE_040 | CPU_TYPE_EC040))!=0;}
+	static bool CPU_TYPE_IS_010_LESS(uint32 A)   { return  ((A) & (CPU_TYPE_000 | CPU_TYPE_008 | CPU_TYPE_010))!=0;}
+//#else
+//	static bool CPU_TYPE_IS_010(uint32 A) { return false; }
+//	static bool CPU_TYPE_IS_010_PLUS(uint32 A) { return CPU_TYPE_IS_EC020_PLUS(A); }
+//	static bool CPU_TYPE_IS_010_LESS(uint32 A) { return CPU_TYPE_IS_EC020_LESS(A); }
+//#endif
 
 //#if M68K_EMULATE_020 || M68K_EMULATE_EC020
 	static bool CPU_TYPE_IS_020_VARIANT(uint32 A) { return ((A) & (CPU_TYPE_EC020 | CPU_TYPE_020))!=0;}
