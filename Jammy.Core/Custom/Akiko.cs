@@ -1,6 +1,7 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
@@ -173,7 +174,7 @@ namespace Jammy.Core.Custom
 
 		//Akiko registers are mapped between $b80000 to $b87fff and registers repeat after every 64 bytes
 		//private readonly MemoryRange mappedRange = new MemoryRange(0xb80000, 0x8000);
-		//hack - needs to be >= 64k for now
+		//hack - needs to be >= 64k for MemoryManager to work correctly
 		private readonly MemoryRange mappedRange = new MemoryRange(0xb80000, 0x10000);
 
 		public List<MemoryRange> MappedRange()
@@ -188,6 +189,7 @@ namespace Jammy.Core.Custom
 		{
 			if (!rmsg[address&63])
 				logger.LogTrace($"Akiko Read {address:X8} @{insaddr:X8} {size}");
+
 			address &= 63;
 			rmsg[address] = true;
 			switch (size)
@@ -195,102 +197,135 @@ namespace Jammy.Core.Custom
 				case Size.Byte : 
 					switch (address)
 					{
-						case 0x38: IncC2PRead(); return planar[c2p_read] >> 24;
-						case 0x39: IncC2PRead(); return (planar[c2p_read] >> 16) & 0xff;
-						case 0x3A: IncC2PRead(); return (planar[c2p_read] >> 8) & 0xff;
-						case 0x3B: IncC2PRead(); return planar[c2p_read] & 0xff;
+						case 0x38: IncC2PRead(); return planar[planarRead] >> 24;
+						case 0x39: IncC2PRead(); return (planar[planarRead] >> 16) & 0xff;
+						case 0x3A: IncC2PRead(); return (planar[planarRead] >> 8) & 0xff;
+						case 0x3B: IncC2PRead(); return planar[planarRead] & 0xff;
+						default:
+							return registers[address];
 					}
-					return registers[address];
 				case Size.Word:
 					switch (address)
 					{
-						case 0x38: IncC2PRead(); return planar[c2p_read] >> 16;
-						case 0x3A: IncC2PRead(); return planar[c2p_read] & 0xffff;
+						case 0x38: IncC2PRead(); return planar[planarRead] >> 16;
+						case 0x3A: IncC2PRead(); return planar[planarRead] & 0xffff;
+						default:
+							return (uint)(registers[address]<<8) | (uint)registers[address+1];
 					}
-					return (uint)(registers[address]<<8) | (uint)registers[address+1];
 				case Size.Long:
 					switch (address)
 					{
-						case 0x38: IncC2PRead(); return planar[c2p_read];
+						case 0x38: IncC2PRead(); return planar[planarRead];
+						default:
+							return (uint)(registers[address]<<24) | (uint)(registers[address+1]<<16) | (uint)(registers[address+2]<<8) | registers[address+3];
 					}
-					return (uint)(registers[address]<<24) | (uint)(registers[address+1]<<16) | (uint)(registers[address+2]<<8) | registers[address+3];
 			}
 			return 0;
 		}
 
-		private readonly uint[] c2p = new uint[8];
+		private readonly uint[] chunky = new uint[8];
 		private readonly uint[] planar = new uint[8];
-		private int c2p_write = 0;
-		private int c2p_read = -1;
+		private int chunkyWrite = 0;
+		private int planarRead = -1;
 
 		private void IncC2PWrite()
 		{
-			c2p_write++;
-			c2p_write &= 7;
-			c2p_read = -1;//after any write, there must be a conversion before read
+			chunkyWrite++;
+			chunkyWrite &= 7;
+			planarRead = -1;//after any write, there must be a conversion before read
 		}
 
 		private void IncC2PRead()
 		{
-			if (c2p_read == -1)
+			if (planarRead == -1)
 				planarConvert();
-			c2p_read++;
-			c2p_read &= 7;
-			c2p_write = 0;//after any read, write starts from 0 again
+			planarRead++;
+			planarRead &= 7;
+			chunkyWrite = 0;//after any read, write starts from 0 again
 		}
 
 		private void planarConvert()
 		{
-			for (int b = 0; b < 4; b++)
-			{ 
-				for (int j = 0; j < 8; j++)
+			logger.LogTrace("C");
+			for (int i = 0; i < 8; i++)
+				logger.LogTrace($"{chunky[i].ToBin()}");
+
+			for (int i = 0; i < 8; i++)
+				planar[i] = 0;
+
+			for (int j = 7; j >= 0; j--)
+			{
+				for (int b = 0; b < 4; b++)
 				{
 					for (int i = 0; i < 8; i++)
 					{
-						if ((c2p[i] & 1) != 0) planar[j] |= 1;
-						c2p[i] >>= 1;
-						planar[j] <<= 1;
+						planar[i] >>= 1;
+						planar[i] |= (chunky[j] & 1) << 31;
+						chunky[j] >>= 1;
 					}
 				}
 			}
+
+			//alternative
+			//for (int k = 0; k < 256; k++)
+			//{
+			//	int i = k&7;
+			//	int j = (k>>5)^7;
+
+			//	planar[i] >>= 1;
+			//	planar[i] |= (chunky[j] & 1) << 31;
+			//	chunky[j] >>= 1;
+			//}
+
+			logger.LogTrace("to P");
+			for (int i = 0; i < 8; i++)
+				logger.LogTrace($"{planar[i].ToBin()}");
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			if (!wmsg[address & 63])
 				logger.LogTrace($"Akiko Write {address:X8} @{insaddr:X8} {value:X8} {size}");
+
 			address &= 63;
 			wmsg[address] = true;
+			if (address < 4) return;//readonly Akiko ID
 			switch (size)
 			{
 				case Size.Byte:
 					switch (address)
 					{
-						case 0x38: c2p[c2p_write] &= 0x00ffffff; c2p[c2p_write] |= value << 24; IncC2PWrite(); break;
-						case 0x39: c2p[c2p_write] &= 0xff00ffff; c2p[c2p_write] |= value << 16; break;
-						case 0x3A: c2p[c2p_write] &= 0xffff00ff; c2p[c2p_write] |= value << 8; break;
-						case 0x3B: c2p[c2p_write] = 0; break;//byte write to low byte clears the register
+						case 0x38: chunky[chunkyWrite] &= 0x00ffffff; chunky[chunkyWrite] |= value << 24; IncC2PWrite(); break;
+						case 0x39: chunky[chunkyWrite] &= 0xff00ffff; chunky[chunkyWrite] |= value << 16; break;
+						case 0x3A: chunky[chunkyWrite] &= 0xffff00ff; chunky[chunkyWrite] |= value << 8; break;
+						case 0x3B: chunky[chunkyWrite] = 0; break;//byte write to low byte clears the register
+						default:
+							registers[address] = (byte)value;
+							break;
 					}
-					registers[address] = (byte)value;
 					return;
 				case Size.Word:
 					switch (address)
 					{
-						case 0x38: c2p[c2p_write] &= 0x0000ffff; c2p[c2p_write] |= value << 16; IncC2PWrite(); break;
-						case 0x3A: c2p[c2p_write] &= 0xffff0000; c2p[c2p_write] |= value; break;
+						case 0x38: chunky[chunkyWrite] &= 0x0000ffff; chunky[chunkyWrite] |= value << 16; IncC2PWrite(); break;
+						case 0x3A: chunky[chunkyWrite] &= 0xffff0000; chunky[chunkyWrite] |= value; break;
+						default:
+							registers[address] = (byte)(value>>8);
+							registers[address + 1] = (byte)value;
+							break;
 					}
-					registers[address] = (byte)(value>>8);
-					registers[address + 1] = (byte)value;
 					return;
 				case Size.Long:
 					switch (address)
 					{
-						case 0x38: c2p[c2p_write] = value; IncC2PWrite(); break;
+						case 0x38: chunky[chunkyWrite] = value; IncC2PWrite(); break;
+						default:
+							registers[address] = (byte)(value >> 24);
+							registers[address + 1] = (byte)(value>>16);
+							registers[address + 2] = (byte)(value >> 8);
+							registers[address + 3] = (byte)value;
+							break;
 					}
-					registers[address] = (byte)(value >> 24);
-					registers[address + 1] = (byte)(value>>16);
-					registers[address + 2] = (byte)(value >> 8);
-					registers[address + 3] = (byte)value;
 					return;
 			}
 		}

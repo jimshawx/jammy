@@ -252,6 +252,11 @@ namespace Jammy.Debugger
 				//C037C8
 				return;
 			}
+
+			if (settings.Value.KickStartDisassembly.StartsWith("8F4549A5"))//CD32 
+			{
+				//AddBreakpoint(0xF8666C);//Akiko C2P check
+			}
 		}
 
 		//occurs after Read
