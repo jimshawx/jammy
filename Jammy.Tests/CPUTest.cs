@@ -158,8 +158,8 @@ namespace Jammy.Tests
 			logger = serviceProvider.GetRequiredService<ILogger<CPUTest>>();
 
 			//which CPUs are we going to test?
-			cpu0 = (CPUTestRig)cpus[1];
-			cpu1 = (CPUTestRig)cpus[4];
+			cpu0 = (CPUTestRig)cpus[5];
+			cpu1 = (CPUTestRig)cpus[6];
 
 			cpu0.Initialise();
 			cpu1.Initialise();
@@ -412,7 +412,7 @@ namespace Jammy.Tests
 					else
 					{
 						ClassicAssert.IsFalse(r0.Compare(r1), "Test #{0} {1}\n{2}", i + 1, cpu0.Disassemble(pc), string.Join(Environment.NewLine, r0.CompareSummary(r1)));
-						ClassicAssert.IsTrue(cpu0.GetMemory().SequenceEqual(cpu1.GetMemory()), $"Test {i + 1} Memory Contents Differ!\n{cpu0.Disassemble(pc)}\n{cpu0.GetMemory().DiffSummary(cpu1.GetMemory())}");
+						ClassicAssert.IsTrue(cpu0.GetMemory().SequenceEqual(cpu1.GetMemory()), $"Test {i + 1} Memory Contents Differ!\n{cpu0.Disassemble(pc)}\n{cpu0.GetMemory().DiffSummary(cpu1.GetMemory())}\nCPU0 {cpu0.GetRegs().RegString()}\nCPU1 {cpu1.GetRegs().RegString()}");
 					}
 					TestContext.WriteLine($"PASS {ins:X4} {cpu0.Disassemble(pc)}");
 					uint c0 = cpu0.GetCycles();
