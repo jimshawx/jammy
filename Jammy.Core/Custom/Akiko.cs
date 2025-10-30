@@ -4,10 +4,11 @@ using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 //From winaue.cpp
@@ -150,21 +151,24 @@ namespace Jammy.Core.Custom
 {
 	public class Akiko : IAkiko
 	{
+		private enum INTREQ : uint
+		{
+			BIT_31 = 1u << 31,//$80000000 = Subcode interrupt (One subcode buffer filled and B0018.B has changed)
+			BIT_30 = 1u << 30,//$40000000 = Drive has received all command bytes and executed the command(PIO only)
+			BIT_29 = 1u << 29,//$20000000 = Drive has status data pending(PIO only)
+			BIT_28 = 1u << 28,//$10000000 = Drive command DMA transmit complete(DMA only)
+			BIT_27 = 1u << 27,//$08000000 = Drive status DMA receive complete(DMA only)
+			BIT_26 = 1u << 26,//$04000000 = Drive data DMA complete
+			BIT_25 = 1u << 25,//$02000000 = DMA overflow(lost data)?
+		}
+
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
-
-		public readonly byte[] registers = new byte[64];
 
 		public Akiko(IOptions<EmulationSettings> settings, ILogger<Akiko> logger)
 		{
 			this.settings = settings.Value;
 			this.logger = logger;
-
-			//Akiko is identified by 0xC0CACAFE at register 0
-			registers[0] = 0xC0;
-			registers[1] = 0xCA;
-			registers[2] = 0xCA;
-			registers[3] = 0xFE;
 		}
 
 		public bool IsMapped(uint address)
@@ -185,9 +189,22 @@ namespace Jammy.Core.Custom
 		private bool[] rmsg = new bool[64];
 		private bool[] wmsg = new bool[64];
 
+		private uint intreq = 0;
+		private uint intena = 0;
+		private uint dmadata = 0;
+		private uint dmacmd = 0;
+		private byte txDMAend = 0;
+		private byte rxDMAend = 0;
+		private byte txDMApos = 0;
+		private byte rxDMApos = 0;
+		private uint config = 0;
+		private uint nvram = 0;
+		private ushort dmaena = 0;
+		private byte piorw = 0;
+
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			if (!rmsg[address&63])
+			if (address >= 0xb80000 && !rmsg[address&63])
 				logger.LogTrace($"Akiko Read {address:X8} @{insaddr:X8} {size}");
 
 			address &= 63;
@@ -197,12 +214,66 @@ namespace Jammy.Core.Custom
 				case Size.Byte : 
 					switch (address)
 					{
+						//AKIKO ID
+						case 0x0: return 0xC0;
+						case 0x1: return 0xCA;
+						case 0x2: return 0xCA;
+						case 0x3: return 0xFE;
+
+						//INTREQ
+						case 0x4: return intreq >> 24;
+						case 0x5: return (intreq >> 16) & 0xff;
+						case 0x6: return (intreq >> 8) & 0xff;
+						case 0x7: return intreq & 0xff;
+
+						//INTENA
+						case 0x8: return intena >> 24;
+						case 0x9: return (intena >> 16) & 0xff;
+						case 0xA: return (intena >> 8) & 0xff;
+						case 0xB: return intena & 0xff;
+
+						//DMADATA
+						case 0x10: return dmadata >> 24;
+						case 0x11: return (dmadata >> 16) & 0xff;
+						case 0x12: return (dmadata >> 8) & 0xff;
+						case 0x13: return dmadata & 0xff;
+
+						//DMACMD
+						case 0x14: return dmacmd >> 24;
+						case 0x15: return (dmacmd >> 16) & 0xff;
+						case 0x16: return (dmacmd >> 8) & 0xff;
+						case 0x17: return dmacmd & 0xff;
+
+						case 0x1d: case 0x19: return txDMApos;
+						case 0x1f: case 0x1A: return rxDMApos;
+
+						//DMAENABLE
+						case 0x20: return (uint)(dmaena >> 8);
+						case 0x21: return dmaena &= 0xff;
+
+						//CONFIG
+						case 0x24: return config >> 24;
+						case 0x25: return (config >> 16) & 0xff;
+						case 0x26: return (config >> 8) & 0xff;
+						case 0x27: return config & 0xff;
+
+						//PIO
+						case 0x28: return piorw;
+
+						//NVRAM
+						case 0x30: return nvram >> 24;
+						case 0x31: return (nvram >> 16) & 0xff;
+						case 0x32: return (nvram >> 8) & 0xff;
+						case 0x33: return nvram & 0xff;
+
+						//C2P
 						case 0x38: IncC2PRead(); return planar[planarRead] >> 24;
 						case 0x39: IncC2PRead(); return (planar[planarRead] >> 16) & 0xff;
 						case 0x3A: IncC2PRead(); return (planar[planarRead] >> 8) & 0xff;
 						case 0x3B: IncC2PRead(); return planar[planarRead] & 0xff;
+
 						default:
-							return registers[address];
+							throw new NotImplementedException($"Akiko Read not implemented for address {address:X8} size {size}");
 					}
 				case Size.Word:
 					switch (address)
@@ -210,18 +281,116 @@ namespace Jammy.Core.Custom
 						case 0x38: IncC2PRead(); return planar[planarRead] >> 16;
 						case 0x3A: IncC2PRead(); return planar[planarRead] & 0xffff;
 						default:
-							return (uint)(registers[address]<<8) | (uint)registers[address+1];
+							return (Read(insaddr, address, Size.Byte) <<8) | 
+									Read(insaddr, address + 1, Size.Byte);
 					}
 				case Size.Long:
 					switch (address)
 					{
 						case 0x38: IncC2PRead(); return planar[planarRead];
 						default:
-							return (uint)(registers[address]<<24) | (uint)(registers[address+1]<<16) | (uint)(registers[address+2]<<8) | registers[address+3];
+							return (Read(insaddr, address, Size.Byte) <<24) |
+									(Read(insaddr, address + 1, Size.Byte) <<16) | 
+									(Read(insaddr, address + 2, Size.Byte) <<8) |
+									Read(insaddr, address + 3, Size.Byte);
 					}
 			}
 			return 0;
 		}
+
+		public void Write(uint insaddr, uint address, uint value, Size size)
+		{
+			if (address >= 0xb80000 && !wmsg[address & 63])
+				logger.LogTrace($"Akiko Write {address:X8} @{insaddr:X8} {value:X8} {size}");
+
+			address &= 63;
+			wmsg[address] = true;
+			if (address < 4) return;//readonly Akiko ID
+			if (address < 8) return;//readonly INTREQ
+			switch (size)
+			{
+				case Size.Byte:
+					switch (address)
+					{
+						//INTENA
+						case 0x8: intena &= 0x00ffffff; intena |= value << 24; break;
+						case 0x9: intena &= 0xff00ffff; intena |= value << 16; break;
+						case 0xA: intena &= 0xffff00ff; intena |= value << 8; break;
+						case 0xB: intena &= 0xffffff00; intena |= value; break;
+
+						//DMADATA
+						case 0x10: dmadata &= 0x00ffffff; dmadata |= value << 24; break;
+						case 0x11: dmadata &= 0xff00ffff; dmadata |= value << 16; break;
+						case 0x12: dmadata &= 0xffff00ff; dmadata |= value << 8; break;
+						case 0x13: dmadata &= 0xffffff00; dmadata |= value; break;
+
+						//DMACMD
+						case 0x14: dmacmd &= 0x00ffffff; dmacmd |= value << 24; break;
+						case 0x15: dmacmd &= 0xff00ffff; dmacmd |= value << 16; break;
+						case 0x16: dmacmd &= 0xffff00ff; dmacmd |= value << 8; break;
+						case 0x17: dmacmd &= 0xffffff00; dmacmd |= value; break;
+
+						//
+						case 0x18: intreq &= (uint)~INTREQ.BIT_31; break;
+
+						case 0x1d: txDMAend = (byte)value; intreq &= (uint)~INTREQ.BIT_28; break;
+						case 0x1f: rxDMAend = (byte)value; intreq &= (uint)~INTREQ.BIT_27; break;
+
+						//DMAENABLE
+						case 0x20: dmaena &= 0x00ff; dmaena |= (ushort)(value << 8); intreq &= (uint)~INTREQ.BIT_26; break;
+						case 0x21: dmaena &= 0xff00; dmaena |= (ushort)value; intreq &= (uint)~INTREQ.BIT_26; break;
+
+						//CONFIG
+						case 0x24: config &= 0x00ffffff; config |= value << 24; break;
+						case 0x25: config &= 0xff00ffff; config |= value << 16; break;
+						case 0x26: config &= 0xffff00ff; config |= value << 8; break;
+						case 0x27: config &= 0xffffff00; config |= value; break;
+						
+						//PIO
+						case 0x28: piorw = (byte)value; break;
+
+						//NVRAM
+						case 0x30: nvram &= 0x00ffffff; nvram |= value << 24; break;
+						case 0x31: nvram &= 0xff00ffff; nvram |= value << 16; break;
+						case 0x32: nvram &= 0xffff00ff; nvram |= value << 8; break;
+						case 0x33: nvram &= 0xffffff00; nvram |= value; break;
+
+						//C2P
+						case 0x38: chunky[chunkyWrite] &= 0x00ffffff; chunky[chunkyWrite] |= value << 24; IncC2PWrite(); break;
+						case 0x39: chunky[chunkyWrite] &= 0xff00ffff; chunky[chunkyWrite] |= value << 16; break;
+						case 0x3A: chunky[chunkyWrite] &= 0xffff00ff; chunky[chunkyWrite] |= value << 8; break;
+						case 0x3B: chunky[chunkyWrite] = 0; break;//byte write to low byte clears the register
+
+						default:
+							throw new NotImplementedException($"Akiko Write not implemented for address {address:X8} size {size} value {value:X8}");
+					}
+					break;
+				case Size.Word:
+					switch (address)
+					{
+						case 0x38: chunky[chunkyWrite] &= 0x0000ffff; chunky[chunkyWrite] |= value << 16; IncC2PWrite(); break;
+						case 0x3A: chunky[chunkyWrite] &= 0xffff0000; chunky[chunkyWrite] |= value; break;
+						default:
+							Write(insaddr, address, (byte)(value >> 8), Size.Byte);
+							Write(insaddr, address+1, (byte)value, Size.Byte);
+							break;
+					}
+					break;
+				case Size.Long:
+					switch (address)
+					{
+						case 0x38: chunky[chunkyWrite] = value; IncC2PWrite(); break;
+						default:
+							Write(insaddr, address, (byte)(value >> 24), Size.Byte);
+							Write(insaddr, address + 1, (byte)(value >> 16), Size.Byte);
+							Write(insaddr, address + 2, (byte)(value >> 8), Size.Byte);
+							Write(insaddr, address + 3, (byte)value, Size.Byte);
+							break;
+					}
+					break;
+			}
+		}
+
 
 		private readonly uint[] chunky = new uint[8];
 		private readonly uint[] planar = new uint[8];
@@ -249,9 +418,6 @@ namespace Jammy.Core.Custom
 			logger.LogTrace("C");
 			for (int i = 0; i < 8; i++)
 				logger.LogTrace($"{chunky[i].ToBin()}");
-
-			for (int i = 0; i < 8; i++)
-				planar[i] = 0;
 
 			for (int j = 7; j >= 0; j--)
 			{
@@ -281,53 +447,32 @@ namespace Jammy.Core.Custom
 			for (int i = 0; i < 8; i++)
 				logger.LogTrace($"{planar[i].ToBin()}");
 		}
-
-		public void Write(uint insaddr, uint address, uint value, Size size)
-		{
-			if (!wmsg[address & 63])
-				logger.LogTrace($"Akiko Write {address:X8} @{insaddr:X8} {value:X8} {size}");
-
-			address &= 63;
-			wmsg[address] = true;
-			if (address < 4) return;//readonly Akiko ID
-			switch (size)
-			{
-				case Size.Byte:
-					switch (address)
-					{
-						case 0x38: chunky[chunkyWrite] &= 0x00ffffff; chunky[chunkyWrite] |= value << 24; IncC2PWrite(); break;
-						case 0x39: chunky[chunkyWrite] &= 0xff00ffff; chunky[chunkyWrite] |= value << 16; break;
-						case 0x3A: chunky[chunkyWrite] &= 0xffff00ff; chunky[chunkyWrite] |= value << 8; break;
-						case 0x3B: chunky[chunkyWrite] = 0; break;//byte write to low byte clears the register
-						default:
-							registers[address] = (byte)value;
-							break;
-					}
-					return;
-				case Size.Word:
-					switch (address)
-					{
-						case 0x38: chunky[chunkyWrite] &= 0x0000ffff; chunky[chunkyWrite] |= value << 16; IncC2PWrite(); break;
-						case 0x3A: chunky[chunkyWrite] &= 0xffff0000; chunky[chunkyWrite] |= value; break;
-						default:
-							registers[address] = (byte)(value>>8);
-							registers[address + 1] = (byte)value;
-							break;
-					}
-					return;
-				case Size.Long:
-					switch (address)
-					{
-						case 0x38: chunky[chunkyWrite] = value; IncC2PWrite(); break;
-						default:
-							registers[address] = (byte)(value >> 24);
-							registers[address + 1] = (byte)(value>>16);
-							registers[address + 2] = (byte)(value >> 8);
-							registers[address + 3] = (byte)value;
-							break;
-					}
-					return;
-			}
-		}
 	}
+
+	/*
+	 * // 0x18 mirrored to 0x10, 0x14 and 0x1c
+	 * // 0x19 mirrored to 0x11, 0x15 and 0x1d
+	 * // 0x1a mirrored to 0x12, 0x16 and 0x1e
+	 * // 0x1b mirrored to 0x13, 0x17 and 0x1f
+	 * 
+	 * case 0x0c:
+		case 0x0d:
+		case 0x0e:
+		case 0x0f:
+			// read only duplicate of intena
+	 * 
+Jammy.Core.Custom.Akiko: Trace: Akiko Write 00B8001F @00E57A24 00000000 Byte Receive DMA circular buffer end position.
+Jammy.Core.Custom.Akiko: Trace: Akiko Write 00B8001D @00E57A2A 00000000 Byte Transmit DMA circular buffer end position.
+Jammy.Core.Custom.Akiko: Trace: Akiko Write 00B80010 @00E57AD4 00C20000 Long DMA data base address (R/W. Must be 64k aligned)
+Jammy.Core.Custom.Akiko: Trace: Akiko Write 00B80014 @00E57B02 00CFFC00 Long Command/Status/Subcode DMA base. (R/W. Must be 1024 byte aligned)
+Jammy.Core.Custom.Akiko: Trace: Akiko Read 00B80019 @00E57BAC Byte			 Transmit DMA circular buffer current position
+Jammy.Core.Custom.Akiko: Trace: Akiko Read 00B80024 @00E57BB2 Long			 Config
+Jammy.Core.Custom.Akiko: Trace: Akiko Write 00B80024 @00E57BC2 79000000 Long Config
+Jammy.Core.Custom.Akiko: Trace: Akiko Read 00B8001A @00E57BC6 Byte           Receive DMA circular buffer current position.
+Jammy.Core.Custom.Akiko: Trace: Akiko Write 00B80008 @00E57BE6 18000000 Long INTENA
+Jammy.Core.Custom.Akiko: Trace: Akiko Read 00B80008 @00E593DA Long			 INTENA
+Jammy.Core.Custom.Akiko: Trace: Akiko Write 00B80030 @00E61A12 C000C000 Long NVRAM I2C IO. Bit 7 = SCL, bit 6 = SDA
+Jammy.Core.Custom.Akiko: Trace: Akiko Read 00B80030 @00E61C26 Long           NVRAM I2C IO. Bit 7 = SCL, bit 6 = SDA
+	*/
+
 }
