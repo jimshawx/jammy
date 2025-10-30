@@ -3,17 +3,19 @@
 ## Jim's Amiga Emulator
 
 This is a lockdown project I started in December 2020 with the intention of building an Amiga emulation that could interface the UI with Windows instead of Workbench.
-That quirky part of the project dropped away as soon as it became clear that you need to build a _really good_ emulation first before you can run almost anything.
+That quirky part of the project dropped away as soon as it became clear that you need to build a *really good* emulation first before you can run almost anything.
 So here is my humble attempt at an Amiga emulation.
 
 ### The good stuff
+
 * It's written in C#
 * It runs faster than real Amigas (on my i5-8250 laptop)
 * It can emulate most Amigas to at least some level
+
   * A1000, A500, A500+, A600, A1200, A2000, A3000, A4000, CD32
   * 68000 in C#, verified against the Musashi 68000 CPU
   * Other 680x0 using the Musashi CPU emulation, in C or C#
-  * Other 680x0 using the Moira CPU emulation, in C++
+  * Cycle-exact 68000/chipset using the Moira CPU emulation, in C++
   * Copper, Blitter, CIA emulations
   * Sprite and bitplane collision
   * Good quality Audio
@@ -22,16 +24,19 @@ So here is my humble attempt at an Amiga emulation.
   * All kinds of RAM expansions (Chip, Trapdoor, CPU slot, Zorro II/III)
   * Battery-backed clock
   * VT100 Serial terminal
+
 * There's a debugger and disassembler of sorts
 * There's some automated code analysis to produce good disassemblies
 * It's free! (MIT License)
 
 ### The not so good stuff
+
 * There are lot of problems with DMA timing
 * More efforts need to be made to get closer to cycle exact
 * Akiko not implemented
 * Emulation of CPUs running faster than the standard 7MHz is poor
 * There are still many pieces of software that don't work yet
+* There's a broken IPF floppy disk reader
 
 The C# 68000 is slightly faster than the C Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
 In an effort to fix this, I have ported most of Musashi to C#, and it is significantly faster now.
@@ -55,6 +60,4 @@ Contributions, PRs and comments welcome!
 Cheers,
 
 Jim
-
-
 
