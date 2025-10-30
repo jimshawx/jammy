@@ -41,8 +41,7 @@ namespace Jammy.Core.Types
 	{
 		OCS,
 		ECS,
-		AGA,
-		CD32
+		AGA
 	}
 
 	public enum VideoFormat
@@ -106,6 +105,7 @@ namespace Jammy.Core.Types
 		public Feature Disassemblies { get; set; }
 		public Feature Debugger { get; set; }
 		public Feature Prefetch { get; set;}
+		public Feature Akiko { get; set; }
 
 		public CPUType CPU { get; set; }
 		public CPUSku Sku { get; set; }

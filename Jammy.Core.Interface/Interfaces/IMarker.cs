@@ -160,6 +160,8 @@ namespace Jammy.Core.Interface.Interfaces
 		bool IsPresent();
 	}
 
+	public interface IExtendedKickstartROM : IMemoryMappedDevice, IDebuggableMemory { }
+
 	public interface IZorro
 	{
 		void AddConfiguration(ZorroConfiguration configuration);

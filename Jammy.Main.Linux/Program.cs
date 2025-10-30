@@ -88,6 +88,7 @@ public class Program
 			.AddSingleton<IChipRAM, ChipRAM>()
 			.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()
 			.AddSingleton<IKickstartROM, KickstartROM>()
+			.AddSingleton<IExtendedKickstartROM, ExtendedKickstartROM>()
 			.AddSingleton<IMotherboardRAM, MotherboardRAM>()
 			.AddSingleton<ICPUSlotRAM, CPUSlotRAM>()
 			.AddSingleton<IZorroConfigurator, ZorroConfigurator>()

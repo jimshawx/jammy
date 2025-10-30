@@ -26,24 +26,27 @@ namespace Jammy.Disassembler
 		private readonly IDebugMemoryMapper memory;
 		private readonly ILogger logger;
 		private readonly IKickstartROM kickstartROM;
+		private readonly IExtendedKickstartROM extendedKickstartROM;
 		private readonly IDisassembly disassembly;
 		private readonly EmulationSettings settings;
 
 		public const int RTC_MATCHWORD = 0x4AFC;
 
 		public KickstartAnalysis(IDebugMemoryMapper memory, ILogger<KickstartAnalysis> logger, IKickstartROM kickstartROM,
+			IExtendedKickstartROM extendedKickstartROM,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly)
 		{
 			this.memory = memory;
 			this.logger = logger;
 			this.kickstartROM = kickstartROM;
+			this.extendedKickstartROM = extendedKickstartROM;
 			this.disassembly = disassembly;
 			this.settings = settings.Value;
 		}
 
 		public List<Resident> GetRomTags()
 		{
-			return GetRomTags(kickstartROM, memory, 0);
+			return GetRomTags(kickstartROM, memory, 0).Union(GetRomTags(extendedKickstartROM, memory, 0)).ToList();
 		}
 
 		public KickstartVersion GetVersion()
@@ -79,7 +82,7 @@ namespace Jammy.Disassembler
 			return SHA1.HashData(memory.GetEnumerable(mappedRange.Start, mappedRange.Length).ToArray());
 		}
 
-		private static List<Resident> GetRomTags(IKickstartROM kickstartROM, IDebugMemoryMapper memory, uint rombase)
+		private static List<Resident> GetRomTags(IMemoryMappedDevice kickstartROM, IDebugMemoryMapper memory, uint rombase)
 		{
 			var resident = new List<Resident>();
 			var range = kickstartROM.MappedRange().First();

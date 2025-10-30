@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Collections.Generic;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -168,46 +168,125 @@ namespace Jammy.Core.Custom
 
 		public bool IsMapped(uint address)
 		{
-			if (settings.ChipSet != ChipSet.CD32) return false;
 			return mappedRange.Contains(address);
 		}
 
 		//Akiko registers are mapped between $b80000 to $b87fff and registers repeat after every 64 bytes
-		private readonly MemoryRange mappedRange = new MemoryRange(0xb80000, 0x8000);
+		//private readonly MemoryRange mappedRange = new MemoryRange(0xb80000, 0x8000);
+		//hack - needs to be >= 64k for now
+		private readonly MemoryRange mappedRange = new MemoryRange(0xb80000, 0x10000);
 
 		public List<MemoryRange> MappedRange()
 		{
-			if (settings.ChipSet != ChipSet.CD32) return new List<MemoryRange>();
 			return new List<MemoryRange> {mappedRange};
 		}
 
+		private bool[] rmsg = new bool[64];
+		private bool[] wmsg = new bool[64];
+
 		public uint Read(uint insaddr, uint address, Size size)
 		{
-			logger.LogTrace($"Akiko Read {address:X8} @{insaddr:X8} {size}");
+			if (!rmsg[address&63])
+				logger.LogTrace($"Akiko Read {address:X8} @{insaddr:X8} {size}");
 			address &= 63;
+			rmsg[address] = true;
 			switch (size)
 			{
-				case Size.Byte : return registers[address];
-				case Size.Word : return (uint)(registers[address]<<8) | (uint)registers[address+1];
-				case Size.Long: return (uint)(registers[address]<<24) | (uint)(registers[address+1]<<16) | (uint)(registers[address+2]<<8) | registers[address+3];
+				case Size.Byte : 
+					switch (address)
+					{
+						case 0x38: IncC2PRead(); return planar[c2p_read] >> 24;
+						case 0x39: IncC2PRead(); return (planar[c2p_read] >> 16) & 0xff;
+						case 0x3A: IncC2PRead(); return (planar[c2p_read] >> 8) & 0xff;
+						case 0x3B: IncC2PRead(); return planar[c2p_read] & 0xff;
+					}
+					return registers[address];
+				case Size.Word:
+					switch (address)
+					{
+						case 0x38: IncC2PRead(); return planar[c2p_read] >> 16;
+						case 0x3A: IncC2PRead(); return planar[c2p_read] & 0xffff;
+					}
+					return (uint)(registers[address]<<8) | (uint)registers[address+1];
+				case Size.Long:
+					switch (address)
+					{
+						case 0x38: IncC2PRead(); return planar[c2p_read];
+					}
+					return (uint)(registers[address]<<24) | (uint)(registers[address+1]<<16) | (uint)(registers[address+2]<<8) | registers[address+3];
 			}
 			return 0;
 		}
 
+		private readonly uint[] c2p = new uint[8];
+		private readonly uint[] planar = new uint[8];
+		private int c2p_write = 0;
+		private int c2p_read = -1;
+
+		private void IncC2PWrite()
+		{
+			c2p_write++;
+			c2p_write &= 7;
+			c2p_read = -1;//after any write, there must be a conversion before read
+		}
+
+		private void IncC2PRead()
+		{
+			if (c2p_read == -1)
+				planarConvert();
+			c2p_read++;
+			c2p_read &= 7;
+			c2p_write = 0;//after any read, write starts from 0 again
+		}
+
+		private void planarConvert()
+		{
+			for (int b = 0; b < 4; b++)
+			{ 
+				for (int j = 0; j < 8; j++)
+				{
+					for (int i = 0; i < 8; i++)
+					{
+						if ((c2p[i] & 1) != 0) planar[j] |= 1;
+						c2p[i] >>= 1;
+						planar[j] <<= 1;
+					}
+				}
+			}
+		}
+
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			logger.LogTrace($"Akiko Write {address:X8} @{insaddr:X8} {value:X8} {size}");
+			if (!wmsg[address & 63])
+				logger.LogTrace($"Akiko Write {address:X8} @{insaddr:X8} {value:X8} {size}");
 			address &= 63;
+			wmsg[address] = true;
 			switch (size)
 			{
 				case Size.Byte:
+					switch (address)
+					{
+						case 0x38: c2p[c2p_write] &= 0x00ffffff; c2p[c2p_write] |= value << 24; IncC2PWrite(); break;
+						case 0x39: c2p[c2p_write] &= 0xff00ffff; c2p[c2p_write] |= value << 16; break;
+						case 0x3A: c2p[c2p_write] &= 0xffff00ff; c2p[c2p_write] |= value << 8; break;
+						case 0x3B: c2p[c2p_write] = 0; break;//byte write to low byte clears the register
+					}
 					registers[address] = (byte)value;
 					return;
 				case Size.Word:
+					switch (address)
+					{
+						case 0x38: c2p[c2p_write] &= 0x0000ffff; c2p[c2p_write] |= value << 16; IncC2PWrite(); break;
+						case 0x3A: c2p[c2p_write] &= 0xffff0000; c2p[c2p_write] |= value; break;
+					}
 					registers[address] = (byte)(value>>8);
 					registers[address + 1] = (byte)value;
 					return;
 				case Size.Long:
+					switch (address)
+					{
+						case 0x38: c2p[c2p_write] = value; IncC2PWrite(); break;
+					}
 					registers[address] = (byte)(value >> 24);
 					registers[address + 1] = (byte)(value>>16);
 					registers[address + 2] = (byte)(value >> 8);

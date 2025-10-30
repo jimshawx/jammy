@@ -100,6 +100,7 @@ namespace Jammy.Main
 				.AddSingleton<IChipRAM, ChipRAM>()
 				.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()
 				.AddSingleton<IKickstartROM, KickstartROM>()
+				.AddSingleton<IExtendedKickstartROM, ExtendedKickstartROM>()
 				.AddSingleton<IMotherboardRAM, MotherboardRAM>()
 				.AddSingleton<ICPUSlotRAM, CPUSlotRAM>()
 				.AddSingleton<IZorroConfigurator, ZorroConfigurator>()

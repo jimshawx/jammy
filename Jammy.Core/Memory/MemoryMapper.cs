@@ -1,7 +1,9 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -18,6 +20,7 @@ namespace Jammy.Core.Memory
 	{
 		private readonly IMemoryManager memoryManager;
 		private readonly ILogger logger;
+		private readonly EmulationSettings settings;
 		private IMemoryInterceptor interceptor;
 
 		public MemoryMapper(
@@ -26,13 +29,16 @@ namespace Jammy.Core.Memory
 			IZorro2 zorro2, IZorro3 zorro3, IAgnus agnus, IUnmappedMemory unmappedMemory,
 			IChipRAM chipRAM, ITrapdoorRAM trapdoorRAM,
  			IKickstartROM kickstartROM, IDiskController diskController,
+			IExtendedKickstartROM extendedKickstartROM,
 			IAkiko akiko, IMotherboard motherboard, IMotherboardRAM motherboardRAM, ICPUSlotRAM cpuSlotRAM,
 			IChips chips,
+			IOptions<EmulationSettings> settings,
 			ILogger<MemoryMapper> logger)
 		{
 			this.memoryManager = memoryManager;
 			this.logger = logger;
 			_ = zorroConfigurator;
+			this.settings = settings.Value;
 
 			var devices = new List<IMemoryMappedDevice>
 			{
@@ -49,11 +55,14 @@ namespace Jammy.Core.Memory
 				zorro2,
 				zorro3,
 				diskController,
-				akiko,
 				motherboardRAM,
 				cpuSlotRAM,
-				trapdoorRAM
+				trapdoorRAM,
+				extendedKickstartROM
 			};
+
+			//if (settings.Value.Akiko.IsEnabled())
+				devices.Add(akiko);
 
 			memoryManager.AddDevices(devices);
 		}
@@ -97,6 +106,9 @@ namespace Jammy.Core.Memory
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			//if (address >> 16 == 0xb8)
+			//	logger.LogTrace($"*** Write to Address 0 - {memoryManager.MappedDevice[0]}");
+
 			if (interceptor != null) interceptor.Write(insaddr, address, value, size);
 			memoryManager.MappedDevice[address].Write(insaddr, address, value, size);
 		}
@@ -117,6 +129,9 @@ namespace Jammy.Core.Memory
 
 		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
 		{
+			//if (address >> 16 == 0xb8)
+			//	logger.LogTrace($"*** Write to Address 0 - {memoryManager.MappedDevice[0]}");
+
 			if (interceptor != null) interceptor.Write(insaddr, address, value, size);
 			((IContendedMemoryMappedDevice)memoryManager.MappedDevice[address]).ImmediateWrite(insaddr, address, value, size);
 		}

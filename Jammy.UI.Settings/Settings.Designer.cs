@@ -274,7 +274,7 @@ namespace Jammy.UI.Settings
 			// cbChipset
 			// 
 			cbChipset.FormattingEnabled = true;
-			cbChipset.Items.AddRange(new object[] { "OCS", "ECS", "AGA", "CD32" });
+			cbChipset.Items.AddRange(new object[] { "OCS", "ECS", "AGA" });
 			cbChipset.Location = new System.Drawing.Point(11, 47);
 			cbChipset.Margin = new System.Windows.Forms.Padding(6);
 			cbChipset.Name = "cbChipset";
