@@ -1,6 +1,11 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Text;
+
+/*
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
+*/
 
 namespace Jammy.Core.CDROM
 {
@@ -64,43 +69,29 @@ namespace Jammy.Core.CDROM
 			Command and response bytes have checksum byte appended.
 		 */
 
-		private readonly string[] cmdNames =
-		{
-			"*** UNUSED 0 ***",
-			"STOP",
-			"PAUSE",
-			"UNPAUSE",
-			"PLAY/READ",
-			"LED",
-			"SUBCODE",
-			"INFO",
-			"*** UNUSED 8 ***",
-			"*** UNUSED 9 ***",
-			"*** UNUSED A ***",
-			"*** UNUSED B ***",
-			"*** UNUSED C ***",
-			"*** UNUSED D ***",
-			"*** UNUSED E ***",
-			"*** UNUSED F ***",
-		};
+		private bool playing = false;
+		private bool dooropen = false;
 
-		//15 00 EA 27 D8
+		private readonly List<byte[]> responses = new List<byte[]>();
 
 		public void SendCommand(byte[] command)
 		{
+			responses.Clear();
+
 			int i = 0;
 
 			while (i < command.Length)
 			{ 
+				byte cmdByte = command[i];
 				uint seq = (uint)(command[i] >> 4);
 				uint cmd = (uint)(command[i] & 0xf);
 				i++;
 
 				switch (cmd)
 				{
-					case 1: logger.LogTrace($"{seq:X1} STOP"); break;
-					case 2: logger.LogTrace($"{seq:X1} PAUSE"); break;
-					case 3: logger.LogTrace($"{seq:X1} UNPAUSE"); break;
+					case 1: logger.LogTrace($"{seq:X1} STOP"); responses.Add(standardResponse(cmdByte)); break;
+					case 2: logger.LogTrace($"{seq:X1} PAUSE"); responses.Add(standardResponse(cmdByte)); break;
+					case 3: logger.LogTrace($"{seq:X1} UNPAUSE"); responses.Add(standardResponse(cmdByte)); break;
 					case 4:
 						var sb = new StringBuilder($"{seq:X1} PLAY/READ ");
 						for (int j = 0; j < 11; j++)
@@ -109,13 +100,16 @@ namespace Jammy.Core.CDROM
 							i++;
 						}
 						logger.LogTrace($"{sb.ToString()}");
+						responses.Add(standardResponse(cmdByte));
 						break;
 					case 5:
 						uint onOff = command[i]; i++;
 						logger.LogTrace($"{seq:X1} LED {(onOff==0?"OFF":"ON")}");
+						if ((onOff&0x80)!=0)
+							responses.Add(standardResponse(cmdByte));
 						break;
-					case 6: logger.LogTrace($"{seq:X1} SUBCODE"); break;
-					case 7: logger.LogTrace($"{seq:X1} INFO"); break;
+					case 6: logger.LogTrace($"{seq:X1} SUBCODE"); responses.Add(subcodeResponse(cmdByte)); break;
+					case 7: logger.LogTrace($"{seq:X1} INFO"); responses.Add(infoResponse(cmdByte)); break;
 					default:
 						logger.LogTrace($"{seq:X1} ***UNKNOWN{cmd:X2}***");
 						break;
@@ -124,6 +118,34 @@ namespace Jammy.Core.CDROM
 				logger.LogTrace($"CHK {chksum:X2}");
 				i++;
 			}
+		}
+
+		private byte[] infoResponse(byte cmdByte)
+		{
+			return new byte[0];
+		}
+
+		private byte[] subcodeResponse(byte cmdByte)
+		{
+			return new byte[0];
+		}
+
+		private byte[] standardResponse(byte cmdByte)
+		{
+			var r = new byte[0];
+			r[0] = cmdByte;
+			if (playing) r[1] |= 1<<3;
+			if (!dooropen) r[1] |= 1 << 0;
+			r[2] = checksum(r);
+			return r;
+		}
+
+		private byte checksum(byte[] r)
+		{
+			byte cs = 0;
+			for (int i = 0; i < r.Length - 1; i++)
+				cs |= r[i];//todo - what is the algorithm?
+			return cs;
 		}
 	}
 }

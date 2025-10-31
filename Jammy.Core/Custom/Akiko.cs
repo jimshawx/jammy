@@ -417,7 +417,7 @@ namespace Jammy.Core.Custom
 						//
 						case 0x18: intreq &= (uint)~INTREQ.BIT_31; break;
 
-						case 0x1d: txDMAend = (byte)value; cddrive.SendCommand(TxCmd()); intreq &= (uint)~INTREQ.BIT_28; break;
+						case 0x1d: cddrive.SendCommand(TxCmd(txDMAend, (byte)value)); txDMAend = (byte)value; intreq &= (uint)~INTREQ.BIT_28; break;
 						case 0x1f: rxDMAend = (byte)value; intreq &= (uint)~INTREQ.BIT_27; break;
 
 						//DMAENABLE
@@ -475,11 +475,21 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		private byte[] TxCmd()
+		private byte[] TxCmd(byte start, byte end)
 		{
-			var cmd = new byte[txDMAend];
-			for (uint i = 0; i < txDMAend; i++)
-				cmd[i] = (byte)memory.Read(0, dmacmd + i +512,Size.Byte);
+			var cmd = new List<byte>();
+			if (end < start)
+			{
+				for (uint i = start; i < 256; i++)
+					cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
+				for (uint i = 0; i < end; i++)
+					cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
+			}
+			else
+			{
+				for (uint i = start; i < end; i++)
+					cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
+			}
 
 			var sb = new StringBuilder();
 			sb.AppendLine();
@@ -521,7 +531,7 @@ namespace Jammy.Core.Custom
 			}
 			logger.LogTrace($"{sb.ToString()}");
 
-			return cmd;
+			return cmd.ToArray();
 		}
 
 
