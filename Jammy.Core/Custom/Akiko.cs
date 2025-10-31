@@ -245,8 +245,11 @@ namespace Jammy.Core.Custom
 			this.logger = logger;
 		}
 
+		int pq = 0;
 		public void Emulate()
 		{
+			if ((pq++ & 0x3ff)!=0) return;
+
 			//if there are any bytes in the incoming DMA queue
 			if (responseBytes.Any())
 			{ 
@@ -261,8 +264,19 @@ namespace Jammy.Core.Custom
 					logger.LogTrace($"Post RX {rxDMApos,2} {rxDMAend,2} {rxDMApos:X2} {rxDMAend:X2}");
 
 					//intreq |= (uint)(INTREQ.BIT_26 | INTREQ.BIT_27 | INTREQ.BIT_28);
-					intreq |= (uint)(INTREQ.BIT_27);
+					intreq |= (uint)INTREQ.BIT_27;
 				}
+			}
+			if (txDMApos != txDMAend)
+			{
+				logger.LogTrace($"Pre TX {txDMApos,2} {txDMAend,2} {txDMApos:X2} {txDMAend:X2}");
+
+				QueueResponses(cddrive.SendCommand(TxCmd(txDMApos, txDMAend)));
+				txDMApos = txDMAend;
+
+				intreq |= (uint)INTREQ.BIT_28;
+
+				logger.LogTrace($"Post TX {txDMApos,2} {txDMAend,2} {txDMApos:X2} {txDMAend:X2}");
 			}
 		}
 
@@ -445,9 +459,7 @@ namespace Jammy.Core.Custom
 						case 0x18: intreq &= (uint)~INTREQ.BIT_31; break;
 
 						case 0x1d:
-							QueueResponses(cddrive.SendCommand(TxCmd(txDMAend, (byte)value)));
-							//queued up the entire response
-							txDMAend = txDMApos = (byte)value;
+							txDMAend = (byte)value;
 							intreq &= (uint)~INTREQ.BIT_28;
 							break;
 
