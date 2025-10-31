@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 /*
@@ -152,6 +153,7 @@ namespace Jammy.Core.Custom
 {
 	public class Akiko : IAkiko
 	{
+		[Flags]
 		private enum INTREQ : uint
 		{
 			BIT_31 = 1u << 31,//$80000000 = Subcode interrupt (One subcode buffer filled and B0018.B has changed)
@@ -241,6 +243,32 @@ namespace Jammy.Core.Custom
 			this.cddrive = cddrive;
 			
 			this.logger = logger;
+		}
+
+		private List<byte[]> responses = new List<byte[]>();
+
+		public void Emulate()
+		{
+			if (responses.Any())
+			{
+				var allResponses = responses.SelectMany(x=>x);
+				int i = rxDMAend;
+				foreach (var b in allResponses)
+				{
+					memory.Write(0, dmacmd + (uint)(i&0xff), b, Size.Byte);
+					i++;
+				}
+				rxDMAend = (byte)(i & 0xff);
+				logger.LogTrace("Wrote some CDDrive responses");
+				DumpCommandBuffer();
+				intreq |= (uint)INTREQ.BIT_27;
+				responses.Clear();
+			}
+		}
+
+		public void Reset()
+		{
+			responses.Clear();
 		}
 
 		public void Init(IMemoryMapper memory)
@@ -417,7 +445,10 @@ namespace Jammy.Core.Custom
 						//
 						case 0x18: intreq &= (uint)~INTREQ.BIT_31; break;
 
-						case 0x1d: cddrive.SendCommand(TxCmd(txDMAend, (byte)value)); txDMAend = (byte)value; intreq &= (uint)~INTREQ.BIT_28; break;
+						case 0x1d: responses.AddRange(cddrive.SendCommand(TxCmd(txDMAend, (byte)value))); 
+									txDMAend = (byte)value;
+									intreq &= (uint)~INTREQ.BIT_28; break;
+
 						case 0x1f: rxDMAend = (byte)value; intreq &= (uint)~INTREQ.BIT_27; break;
 
 						//DMAENABLE
@@ -490,7 +521,14 @@ namespace Jammy.Core.Custom
 				for (uint i = start; i < end; i++)
 					cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
 			}
+			
+			DumpCommandBuffer();
 
+			return cmd.ToArray();
+		}
+
+		private void DumpCommandBuffer()
+		{ 
 			var sb = new StringBuilder();
 			sb.AppendLine();
 			sb.AppendLine("TX");
@@ -530,10 +568,7 @@ namespace Jammy.Core.Custom
 				sb.AppendLine();
 			}
 			logger.LogTrace($"{sb.ToString()}");
-
-			return cmd.ToArray();
 		}
-
 
 		private readonly uint[] chunky = new uint[8];
 		private readonly uint[] planar = new uint[8];

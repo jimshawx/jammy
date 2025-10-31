@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -74,7 +75,7 @@ namespace Jammy.Core.CDROM
 
 		private readonly List<byte[]> responses = new List<byte[]>();
 
-		public void SendCommand(byte[] command)
+		public List<byte[]> SendCommand(byte[] command)
 		{
 			responses.Clear();
 
@@ -118,16 +119,28 @@ namespace Jammy.Core.CDROM
 				logger.LogTrace($"CHK {chksum:X2}");
 				i++;
 			}
+			return responses;
 		}
+		
+		private const string FIRMWAREVERSION = "CHINON  O-658-2 24";
 
 		private byte[] infoResponse(byte cmdByte)
 		{
-			return new byte[0];
+			var r = new byte[21];
+			r[0] = cmdByte;
+			r[1] = 1;//something to do with the CDDrive's door
+			Array.Copy(Encoding.ASCII.GetBytes(FIRMWAREVERSION), 0, r, 2, FIRMWAREVERSION.Length);
+			r[20] = checksum(r);
+			return r;
 		}
 
 		private byte[] subcodeResponse(byte cmdByte)
 		{
-			return new byte[0];
+			var r = new byte[16];
+			r[0] = cmdByte;
+			//todo: what goes here?
+			r[15] = checksum(r);
+			return r;
 		}
 
 		private byte[] standardResponse(byte cmdByte)
@@ -142,9 +155,9 @@ namespace Jammy.Core.CDROM
 
 		private byte checksum(byte[] r)
 		{
-			byte cs = 0;
+			byte cs = 0xff;
 			for (int i = 0; i < r.Length - 1; i++)
-				cs |= r[i];//todo - what is the algorithm?
+				cs -= r[i];
 			return cs;
 		}
 	}

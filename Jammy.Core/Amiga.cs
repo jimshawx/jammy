@@ -47,6 +47,7 @@ namespace Jammy.Core
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IDiskDrives diskDrives, IMouse mouse, IDiskController diskController,
 			ISerial serial, IMotherboard motherboard, IAgnus agnus, IDenise denise, IChipsetClock clock, IDMA dma,
+			IAkiko akiko,
 			IPSUClock psuClock, ICPUClock cpuClock, IChipsetDebugger debugger,
 			IBreakpointCollection breakpointCollection, IPersistenceManager statePersister,
 			IKickstartROM kickstart, IEmulationWindow emulationWindow, ILogger<Amiga> logger)
@@ -109,6 +110,7 @@ namespace Jammy.Core
 			emulations.Add(psuClock);
 			emulations.Add(cpuClock);
 			emulations.Add(denise);
+			emulations.Add(akiko);
 
 			if (!cycleExact)
 				emulations.Insert(0, clock);

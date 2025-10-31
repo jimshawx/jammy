@@ -202,7 +202,7 @@ namespace Jammy.Core.Interface.Interfaces
 		public uint Read(uint insaddr, uint address, Size size);
 		public void Write(uint insaddr, uint address, uint value, Size size);
 	}
-	public interface IAkiko : IMemoryMappedDevice
+	public interface IAkiko : IMemoryMappedDevice, IEmulate
 	{
 		void Init(IMemoryMapper memory);
 	}
