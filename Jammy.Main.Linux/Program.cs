@@ -247,7 +247,7 @@ public class Program
 		akiko.Init(memoryMapper);
 		chipsetDebugger.Init(chips);
 
-		ar ciab = serviceProvider.GetRequiredService<ICIABEven>();
+		var ciab = serviceProvider.GetRequiredService<ICIABEven>();
 		serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 		serviceProvider.GetRequiredService<ICopper>().Init(dma);
 		serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab, chipRAM);

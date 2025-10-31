@@ -12,7 +12,7 @@ namespace Jammy.Core.CDROM
 {
 	public class CDDrive : ICDDrive
 	{
-		private readonly ILogger<CDDrive> logger;
+		private readonly ILogger logger;
 
 		public CDDrive(ILogger<CDDrive> logger)
 		{

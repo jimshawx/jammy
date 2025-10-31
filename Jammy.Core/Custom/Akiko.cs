@@ -245,30 +245,29 @@ namespace Jammy.Core.Custom
 			this.logger = logger;
 		}
 
-		private List<byte[]> responses = new List<byte[]>();
-
 		public void Emulate()
 		{
-			if (responses.Any())
-			{
-				var allResponses = responses.SelectMany(x=>x);
-				int i = rxDMAend;
-				foreach (var b in allResponses)
+			//if there are any bytes in the incoming DMA queue
+			if (responseBytes.Any())
+			{ 
+				//and we asked for some
+				if (rxDMApos != rxDMAend)
 				{
-					memory.Write(0, dmacmd + (uint)(i&0xff), b, Size.Byte);
-					i++;
+					logger.LogTrace($"Pre RX {rxDMApos,2} {rxDMAend,2} {rxDMApos:X2} {rxDMAend:X2}");
+
+					rxDMApos += RxCmd(rxDMApos, rxDMAend);
+					rxDMApos &= 0xff;
+
+					logger.LogTrace($"Post RX {rxDMApos,2} {rxDMAend,2} {rxDMApos:X2} {rxDMAend:X2}");
+
+					//intreq |= (uint)(INTREQ.BIT_26 | INTREQ.BIT_27 | INTREQ.BIT_28);
+					intreq |= (uint)(INTREQ.BIT_27);
 				}
-				rxDMAend = (byte)(i & 0xff);
-				logger.LogTrace("Wrote some CDDrive responses");
-				DumpCommandBuffer();
-				intreq |= (uint)INTREQ.BIT_27;
-				responses.Clear();
 			}
 		}
 
 		public void Reset()
 		{
-			responses.Clear();
 		}
 
 		public void Init(IMemoryMapper memory)
@@ -445,11 +444,17 @@ namespace Jammy.Core.Custom
 						//
 						case 0x18: intreq &= (uint)~INTREQ.BIT_31; break;
 
-						case 0x1d: responses.AddRange(cddrive.SendCommand(TxCmd(txDMAend, (byte)value))); 
-									txDMAend = (byte)value;
-									intreq &= (uint)~INTREQ.BIT_28; break;
+						case 0x1d:
+							QueueResponses(cddrive.SendCommand(TxCmd(txDMAend, (byte)value)));
+							//queued up the entire response
+							txDMAend = txDMApos = (byte)value;
+							intreq &= (uint)~INTREQ.BIT_28;
+							break;
 
-						case 0x1f: rxDMAend = (byte)value; intreq &= (uint)~INTREQ.BIT_27; break;
+						case 0x1f: 
+							rxDMAend = (byte)value;
+							intreq &= (uint)~INTREQ.BIT_27;
+							break;
 
 						//DMAENABLE
 						case 0x20: dmaena &= 0x00ff; dmaena |= (ushort)(value << 8); intreq &= (uint)~INTREQ.BIT_26; break;
@@ -506,6 +511,41 @@ namespace Jammy.Core.Custom
 			}
 		}
 
+		private readonly Queue<byte> responseBytes = new Queue<byte>();
+
+		private void QueueResponses(List<byte[]> list)
+		{
+			foreach (var response in list)
+			{ 
+				foreach (var b in response)
+					responseBytes.Enqueue(b);
+			}
+		}
+
+		private byte RxCmd(byte start, byte end)
+		{
+			byte cnt = 0;
+
+			logger.LogTrace($"RX {start}->{end} {responseBytes.Count}");
+
+			if (end < start)
+			{
+				for (uint i = start; i < 256 && responseBytes.Any(); i++)
+				{	memory.Write(0, dmacmd + i, responseBytes.Dequeue(), Size.Byte); cnt++; }
+				for (uint i = 0; i < end && responseBytes.Any(); i++)
+				{	memory.Write(0, dmacmd + i, responseBytes.Dequeue(), Size.Byte); cnt++; }
+			}
+			else
+			{
+				for (uint i = start; i < end && responseBytes.Any(); i++)
+				{	memory.Write(0, dmacmd + i, responseBytes.Dequeue(), Size.Byte); cnt++; }
+			}
+
+			DumpCommandBuffer();
+
+			return cnt;
+		}
+
 		private byte[] TxCmd(byte start, byte end)
 		{
 			var cmd = new List<byte>();
@@ -531,6 +571,16 @@ namespace Jammy.Core.Custom
 		{ 
 			var sb = new StringBuilder();
 			sb.AppendLine();
+			sb.AppendLine($"TX {txDMApos,2} {txDMAend,2} {txDMApos:X2} {txDMAend:X2}");
+			sb.AppendLine($"RX {rxDMApos,2} {rxDMAend,2} {rxDMApos:X2} {rxDMAend:X2}");
+
+			for (uint i = 0; i < 32; i++)
+				sb.Append($"{i:X2} ");
+			sb.AppendLine();
+			for (uint i = 0; i < 32; i++)
+				sb.Append($"{i,2} ");
+			sb.AppendLine();
+
 			sb.AppendLine("TX");
 			for (uint j = 0; j < 8; j++)
 			{ 
