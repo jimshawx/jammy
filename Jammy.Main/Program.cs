@@ -39,6 +39,7 @@ using System.Runtime.Intrinsics.X86;
 using System.Windows.Forms;
 using Jammy.NativeOverlay.Overlays;
 using Jammy.Core.Floppy.IPF;
+using Jammy.Core.CDROM;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -175,6 +176,7 @@ namespace Jammy.Main
 				.AddSingleton<IDiskFormat, DMSFormat>()
 				.AddSingleton<IDiskFormat, IPFFormat>()
 				.AddSingleton<IDiskFormat, RawADFFormat>()
+				.AddSingleton<ICDDrive, CDDrive>()
 				.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 			//configure Blitter
@@ -275,8 +277,11 @@ namespace Jammy.Main
 			var chipsetDebugger = serviceProvider.GetRequiredService<IChipsetDebugger>();
 			var chips = serviceProvider.GetRequiredService<IChips>();
 			var chipRAM = serviceProvider.GetRequiredService<IChipRAM>();
+			var akiko = serviceProvider.GetRequiredService<IAkiko>();
 			dma.Init(audio, memoryMapper, chipRAM);
+			akiko.Init(memoryMapper);
 			chipsetDebugger.Init(chips);
+			
 			var ciab = serviceProvider.GetRequiredService<ICIABEven>();
 			serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 			serviceProvider.GetRequiredService<ICopper>().Init(dma);

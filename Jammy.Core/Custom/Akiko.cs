@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 /*
 	Copyright 2020-2025 James Shaw. All Rights Reserved.
@@ -230,12 +231,21 @@ namespace Jammy.Core.Custom
 			};
 
 		private readonly EmulationSettings settings;
+		private readonly ICDDrive cddrive;
+		private IMemoryMapper memory;
 		private readonly ILogger logger;
 
-		public Akiko(IOptions<EmulationSettings> settings, ILogger<Akiko> logger)
+		public Akiko(ICDDrive cddrive, IOptions<EmulationSettings> settings, ILogger<Akiko> logger)
 		{
 			this.settings = settings.Value;
+			this.cddrive = cddrive;
+			
 			this.logger = logger;
+		}
+
+		public void Init(IMemoryMapper memory)
+		{
+			this.memory = memory;
 		}
 
 		public bool IsMapped(uint address)
@@ -407,7 +417,7 @@ namespace Jammy.Core.Custom
 						//
 						case 0x18: intreq &= (uint)~INTREQ.BIT_31; break;
 
-						case 0x1d: txDMAend = (byte)value; intreq &= (uint)~INTREQ.BIT_28; break;
+						case 0x1d: txDMAend = (byte)value; cddrive.SendCommand(TxCmd()); intreq &= (uint)~INTREQ.BIT_28; break;
 						case 0x1f: rxDMAend = (byte)value; intreq &= (uint)~INTREQ.BIT_27; break;
 
 						//DMAENABLE
@@ -463,6 +473,55 @@ namespace Jammy.Core.Custom
 					}
 					break;
 			}
+		}
+
+		private byte[] TxCmd()
+		{
+			var cmd = new byte[txDMAend];
+			for (uint i = 0; i < txDMAend; i++)
+				cmd[i] = (byte)memory.Read(0, dmacmd + i +512,Size.Byte);
+
+			var sb = new StringBuilder();
+			sb.AppendLine();
+			sb.AppendLine("TX");
+			for (uint j = 0; j < 8; j++)
+			{ 
+				for (uint i = 0; i < 32; i++)
+				{
+					sb.Append($"{memory.Read(0, dmacmd+i+j*32, Size.Byte):X2} ");
+				}
+				sb.AppendLine();
+			}
+			sb.AppendLine("SUB0");
+			for (uint j = 0; j < 4; j++)
+			{
+				for (uint i = 0; i < 32; i++)
+				{
+					sb.Append($"{memory.Read(0, dmacmd + i + j * 32+256, Size.Byte):X2} ");
+				}
+				sb.AppendLine();
+			}
+			sb.AppendLine("SUB1");
+			for (uint j = 0; j < 4; j++)
+			{
+				for (uint i = 0; i < 32; i++)
+				{
+					sb.Append($"{memory.Read(0, dmacmd + i + j * 32+384, Size.Byte):X2} ");
+				}
+				sb.AppendLine();
+			}
+			sb.AppendLine("RX");
+			for (uint j = 0; j < 8; j++)
+			{
+				for (uint i = 0; i < 32; i++)
+				{
+					sb.Append($"{memory.Read(0, dmacmd + i + j * 32+512, Size.Byte):X2} ");
+				}
+				sb.AppendLine();
+			}
+			logger.LogTrace($"{sb.ToString()}");
+
+			return cmd;
 		}
 
 

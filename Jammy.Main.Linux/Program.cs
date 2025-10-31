@@ -1,4 +1,5 @@
 ﻿using Jammy.Core;
+using Jammy.Core.CDROM;
 using Jammy.Core.CPU.CSharp;
 using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.Custom;
@@ -155,6 +156,7 @@ public class Program
 			.AddSingleton<IDiskFormat, GZipADZFormat>()
 			.AddSingleton<IDiskFormat, DMSFormat>()
 			.AddSingleton<IDiskFormat, RawADFFormat>()
+			.AddSingleton<ICDDrive, CDDrive>()
 			.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
 
 		//configure Blitter
@@ -234,9 +236,18 @@ public class Program
 
 		var serviceProvider = services.BuildServiceProvider();
 
+		var audio = serviceProvider.GetRequiredService<IAudio>();
 		var dma = serviceProvider.GetRequiredService<IDMA>();
-		var ciab = serviceProvider.GetRequiredService<ICIABEven>();
+		var memoryMapper = serviceProvider.GetRequiredService<MemoryMapper>();
+		var chipsetDebugger = serviceProvider.GetRequiredService<IChipsetDebugger>();
+		var chips = serviceProvider.GetRequiredService<IChips>();
 		var chipRAM = serviceProvider.GetRequiredService<IChipRAM>();
+		var akiko = serviceProvider.GetRequiredService<IAkiko>();
+		dma.Init(audio, memoryMapper, chipRAM);
+		akiko.Init(memoryMapper);
+		chipsetDebugger.Init(chips);
+
+		ar ciab = serviceProvider.GetRequiredService<ICIABEven>();
 		serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 		serviceProvider.GetRequiredService<ICopper>().Init(dma);
 		serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab, chipRAM);
