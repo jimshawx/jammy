@@ -81,6 +81,7 @@ namespace Jammy.Core.CDROM
 
 		private bool playing = false;
 		private bool dooropen = false;
+		private bool ledon = false;
 
 		private readonly List<byte[]> responses = new List<byte[]>();
 
@@ -114,9 +115,10 @@ namespace Jammy.Core.CDROM
 						break;
 					case 5:
 						uint onOff = command[i]; i++;
-						logger.LogTrace($"{seq:X1} LED {(onOff==0?"OFF":"ON")}");
+						ledon = (onOff&0x7f)!=0;
+						logger.LogTrace($"{seq:X1} LED {(ledon ? "ON":"OFF")}");
 						if ((onOff&0x80)!=0)
-							responses.Add(statusResponse(cmdByte));
+							responses.Add(ledResponse(cmdByte));
 						break;
 					case 6: logger.LogTrace($"{seq:X1} SUBCODE"); responses.Add(subcodeResponse(cmdByte)); break;
 					case 7: logger.LogTrace($"{seq:X1} INFO"); responses.Add(infoResponse(cmdByte)); break;
@@ -155,10 +157,19 @@ namespace Jammy.Core.CDROM
 
 		private byte[] statusResponse(byte cmdByte)
 		{
-			var r = new byte[0];
+			var r = new byte[3];
 			r[0] = cmdByte;
 			if (playing) r[1] |= 1<<3;
 			if (!dooropen) r[1] |= 1 << 0;
+			Checksum(r);
+			return r;
+		}
+
+		private byte[] ledResponse(byte cmdByte)
+		{
+			var r = new byte[3];
+			r[0] = cmdByte;
+			r[1] = ( byte)(ledon?1:0);
 			Checksum(r);
 			return r;
 		}
