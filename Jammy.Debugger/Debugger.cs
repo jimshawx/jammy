@@ -256,7 +256,12 @@ namespace Jammy.Debugger
 			if (settings.Value.KickStartDisassembly.StartsWith("8F4549A5"))//CD32 
 			{
 				//AddBreakpoint(0xF8666C);//Akiko C2P check
+				//AddBreakpoint(0xE59472);//Akiko ISR
 				//AddBreakpoint(0xE5947A);//Akiko INT28
+				//AddBreakpoint(0xE59486);//Akiko INT27
+				//AddBreakpoint(0xE59492);//Akiko INT31
+				//AddBreakpoint(0xE5949E);//Akiko INT26
+				//AddBreakpoint(0xE59700);//CD Inserted
 			}
 		}
 

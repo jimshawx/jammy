@@ -1,7 +1,7 @@
 ﻿using Jammy.Core.CDROM;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
-using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
@@ -272,50 +272,79 @@ namespace Jammy.Core.Custom
 			{
 				logger.LogTrace("Insert Disk");
 				//hack: insert a disk
-				byte[] insert = { 0x0a, 0x00, 0 };
+				const byte ismedia = 0x00;//false
+				byte[] insert = { 0x0a, ismedia, 0 };
 				CDDrive.Checksum(insert);
-				QueueResponses(new List<byte[]> { insert});
+				QueueResponses(new List<byte[]> { insert });
 				rxDMAend += 3;
-				rxDMAend &= 0xff;
 			}
 		}
 		
 		int pq = 0;
 		public void Emulate()
 		{
-			if ((pq++ & 0x3ff)!=0) return;
+			//slow it down a bit
+			if ((++pq & 0x3ff)!=0) return;
 
-			//if there are any bytes in the incoming DMA queue
-			if (responseBytes.Any())
-			{ 
-				//and we asked for some
-				if (rxDMApos != rxDMAend)
+			//input DMA enabled?
+			if ((config & (uint)CONFIG.BIT_28) != 0)
+			{
+				//any bytes in the incoming DMA queue?
+				if (responseBytes.Any())
 				{
-					logger.LogTrace($"Pre RX {rxDMApos,2} {rxDMAend,2} {rxDMApos:X2} {rxDMAend:X2}");
+					//any bytes requested in the status input buffer?
+					if (rxDMApos != rxDMAend)
+					{
+						logger.LogTrace($"Pre RX {rxDMApos,2} {rxDMAend,2} {rxDMApos:X2} {rxDMAend:X2}");
 
-					rxDMApos += RxCmd(rxDMApos, rxDMAend);
-					rxDMApos &= 0xff;
+						rxDMApos += RxCmd(rxDMApos, rxDMAend);
 
-					logger.LogTrace($"Post RX {rxDMApos,2} {rxDMAend,2} {rxDMApos:X2} {rxDMAend:X2}");
+						logger.LogTrace($"Post RX {rxDMApos,2} {rxDMAend,2} {rxDMApos:X2} {rxDMAend:X2}");
 
-					intreq |= (uint)INTREQ.BIT_27;
+						//intreq |= (uint)INTREQ.BIT_27;
+						intreq |= (uint)INTREQ.BIT_28;
+					}
 				}
 			}
-			if (txDMApos != txDMAend)
-			{
-				logger.LogTrace($"Pre TX {txDMApos,2} {txDMAend,2} {txDMApos:X2} {txDMAend:X2}");
 
-				QueueResponses(cddrive.SendCommand(TxCmd(txDMApos, txDMAend)));
-				txDMApos = txDMAend;
+			//output DMA enabled?
+			if ((config & (uint)CONFIG.BIT_27) != 0)
+			{ 
+				//any bytes in the command output buffer?
+				if (txDMApos != txDMAend)
+				{
+					logger.LogTrace($"Pre TX {txDMApos,2} {txDMAend,2} {txDMApos:X2} {txDMAend:X2}");
 
-				intreq |= (uint)INTREQ.BIT_28;
+					QueueResponses(cddrive.SendCommand(TxCmd(txDMApos, txDMAend)));
+					txDMApos = txDMAend;
 
-				logger.LogTrace($"Post TX {txDMApos,2} {txDMAend,2} {txDMApos:X2} {txDMAend:X2}");
+					//intreq |= (uint)INTREQ.BIT_28;
+					intreq |= (uint)INTREQ.BIT_27;
+
+					logger.LogTrace($"Post TX {txDMApos,2} {txDMAend,2} {txDMApos:X2} {txDMAend:X2}");
+				} 
 			}
 		}
 
 		public void Reset()
 		{
+			intreq = 0;
+			intena = 0;
+			dmadata = 0;
+			dmacmd = 0;
+			txDMAend = 0;
+			rxDMAend = 0;
+			txDMApos = 0;
+			rxDMApos = 0;
+			config = 0;
+			nvram = 0;
+			dmaena = 0;
+			piorw = 0;
+
+			chunkyWrite = 0;
+			planarRead = -1;
+
+			responseBytes.Clear();
 		}
 
 		public void Init(IMemoryMapper memory)
@@ -338,20 +367,32 @@ namespace Jammy.Core.Custom
 			return new List<MemoryRange> {mappedRange};
 		}
 
-		private bool[] rmsg = new bool[64];
-		private bool[] wmsg = new bool[64];
-
+		[Persist]
 		private uint intreq = 0;
+		[Persist]
 		private uint intena = 0;
+		[Persist]
 		private uint dmadata = 0;
+		[Persist]
 		private uint dmacmd = 0;
+
+		//these next four are all bytes so we get the free wraparound
+		[Persist]
 		private byte txDMAend = 0;
+		[Persist]
 		private byte rxDMAend = 0;
+		[Persist]
 		private byte txDMApos = 0;
+		[Persist]
 		private byte rxDMApos = 0;
+
+		[Persist]
 		private uint config = 0;
+		[Persist]
 		private uint nvram = 0;
+		[Persist]
 		private ushort dmaena = 0;
+		[Persist]
 		private byte piorw = 0;
 
 		public uint Read(uint insaddr, uint address, Size size)
@@ -360,7 +401,6 @@ namespace Jammy.Core.Custom
 			uint v = 0;
 
 			address &= 63;
-			//rmsg[address] = true;
 			switch (size)
 			{
 				case Size.Byte : 
@@ -451,7 +491,7 @@ namespace Jammy.Core.Custom
 					break;
 			}
 
-			if (origaddress >= 0xb80000 && !rmsg[address])
+			if (origaddress >= 0xb80000)
 				logger.LogTrace($"R {regNames[address],-18} {origaddress:X8} {size} {v:X8} {v.ToBin()} @{insaddr:X8}");
 
 			return v;
@@ -459,11 +499,10 @@ namespace Jammy.Core.Custom
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
-			if (address >= 0xb80000 && !wmsg[address & 63])
+			if (address >= 0xb80000)
 				logger.LogTrace($"W {regNames[address&63],-18} {address:X8} {size} {value:X8} {value.ToBin()} @{insaddr:X8}");
 
 			address &= 63;
-			//wmsg[address] = true;
 			if (address < 4) return;//readonly Akiko ID
 			if (address < 8) return;//readonly INTREQ
 			switch (size)
@@ -584,6 +623,7 @@ namespace Jammy.Core.Custom
 			logger.LogTrace($"CFG {config:X8} {sb.ToString().TrimEnd('|')}");
 		}
 
+		[Persist]
 		private readonly Queue<byte> responseBytes = new Queue<byte>();
 
 		private void QueueResponses(List<byte[]> list)
@@ -597,35 +637,27 @@ namespace Jammy.Core.Custom
 
 		private byte RxCmd(byte start, byte end)
 		{
-			byte cnt = 0;
-
 			logger.LogTrace($"RX {start}->{end} {responseBytes.Count}");
 
-			if (end < start)
-			{
-				for (uint i = start; i < 256 && responseBytes.Any(); i++)
-				{	memory.Write(0, dmacmd + i, responseBytes.Dequeue(), Size.Byte); cnt++; }
-				start = 0;
-			}
-			for (uint i = start; i < end && responseBytes.Any(); i++)
-			{	memory.Write(0, dmacmd + i, responseBytes.Dequeue(), Size.Byte); cnt++; }
+			uint iend = end;
+
+			if (end < start) iend += 256;
+			for (uint i = start; i < iend && responseBytes.Any(); i++)
+				memory.Write(0, dmacmd + (i&0xff), responseBytes.Dequeue(), Size.Byte);
 
 			DumpCommandBuffer();
 
-			return cnt;
+			return (byte)(iend - start);
 		}
 
 		private byte[] TxCmd(byte start, byte end)
 		{
 			var cmd = new List<byte>();
-			if (end < start)
-			{
-				for (uint i = start; i < 256; i++)
-					cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
-				start = 0;
-			}
-			for (uint i = start; i < end; i++)
-				cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
+			uint iend = end;
+
+			if (end < start) iend += 256;
+			for (uint i = start; i < iend; i++)
+				cmd.Add((byte)memory.Read(0, dmacmd + 512 + (i&0xff), Size.Byte));
 			
 			DumpCommandBuffer();
 
@@ -685,9 +717,13 @@ namespace Jammy.Core.Custom
 			logger.LogTrace($"{sb.ToString()}");
 		}
 
+		[Persist]
 		private readonly uint[] chunky = new uint[8];
+		[Persist]
 		private readonly uint[] planar = new uint[8];
+		[Persist]
 		private int chunkyWrite = 0;
+		[Persist]
 		private int planarRead = -1;
 
 		private void IncC2PWrite()
@@ -753,24 +789,6 @@ namespace Jammy.Core.Custom
 		case 0x0e:
 		case 0x0f:
 			// read only duplicate of intena
-	 * CD32 boot sequence
-Jammy.Core.Custom.Akiko: Trace: W RXDMAPOS(R)/END(W) 00B8001F Byte 00000000 00000000000000000000000000000000 @00E57A24
-Jammy.Core.Custom.Akiko: Trace: W TXDMAPOS(R)/END(W) 00B8001D Byte 00000000 00000000000000000000000000000000 @00E57A2A
-Jammy.Core.Custom.Akiko: Trace: W DMADATA3			 00B80010 Long 00C20000 00000000110000100000000000000000 @00E57AD4
-Jammy.Core.Custom.Akiko: Trace: W DMACMD3			 00B80014 Long 00CFFC00 00000000110011111111110000000000 @00E57B02
-Jammy.Core.Custom.Akiko: Trace: R TXDMAPOS(R)/END(W) 00B80019 Byte 00000000 00000000000000000000000000000000 @00E57BAC
-Jammy.Core.Custom.Akiko: Trace: R CONFIG3			 00B80024 Long 00000000 00000000000000000000000000000000 @00E57BB2
-Jammy.Core.Custom.Akiko: Trace: W CONFIG3			 00B80024 Long 79000000 01111001000000000000000000000000 @00E57BC2
-Jammy.Core.Custom.Akiko: Trace: R RXDMAPOS(R)/END(W) 00B8001A Byte 00000000 00000000000000000000000000000000 @00E57BC6
-Jammy.Core.Custom.Akiko: Trace: W RXDMAPOS(R)/END(W) 00B8001F Byte 00000001 00000000000000000000000000000001 @00E57BD2
-Jammy.Core.Custom.Akiko: Trace: W TXDMAPOS(R)/END(W) 00B8001D Byte 00000000 00000000000000000000000000000000 @00E57BE0
-Jammy.Core.Custom.Akiko: Trace: W INTENA3			 00B80008 Long 18000000 00011000000000000000000000000000 @00E57BE6
-Jammy.Core.Custom.Akiko: Trace: W TXDMAPOS(R)/END(W) 00B8001D Byte 00000003 00000000000000000000000000000011 @00E593B0
-Jammy.Core.Custom.Akiko: Trace: R INTENA3			 00B80008 Long 18000000 00011000000000000000000000000000 @00E593DA
-Jammy.Core.Custom.Akiko: Trace: W INTENA3			 00B80008 Long 18000000 00011000000000000000000000000000 @00E593DA
-Jammy.Core.Custom.Akiko: Trace: W TXDMAPOS(R)/END(W) 00B8001D Byte 00000005 00000000000000000000000000000101 @00E593B0
-Jammy.Core.Custom.Akiko: Trace: R INTENA3			 00B80008 Long 18000000 00011000000000000000000000000000 @00E593DA
-Jammy.Core.Custom.Akiko: Trace: W INTENA3			 00B80008 Long 18000000 00011000000000000000000000000000 @00E593DA
 	*/
 
 }

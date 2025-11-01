@@ -114,6 +114,9 @@ namespace Jammy.Main
 				disassemblyRanges.Add(new AddressRange(0xf80000, 0x40000));
 			if (debugger.KickstartSize() == 0x2000)
 				disassemblyRanges.Add(new AddressRange(0xf80000, 0x2000));
+			//hack - disassemble the cd32 extension rom
+			if (settings.KickStart.EndsWith("amiga-os-310-cd32.rom"))
+				disassemblyRanges.Add(new AddressRange(0xe00000, 0x80000));
 
 			emulation.Start();
 
