@@ -13,6 +13,7 @@ namespace Jammy.Core.CDROM
 	public class CDDrive : ICDDrive
 	{
 		private readonly ILogger logger;
+		private ICDImage cd = null;
 
 		public CDDrive(ILogger<CDDrive> logger)
 		{
@@ -21,6 +22,14 @@ namespace Jammy.Core.CDROM
 
 		public void InsertImage(ICDImage image)
 		{
+			cd = image;
+		}
+
+		public void EjectImage()
+		{
+			cd = null;
+			playing = false;
+			dooropen = true;
 		}
 
 		/*
@@ -90,9 +99,9 @@ namespace Jammy.Core.CDROM
 
 				switch (cmd)
 				{
-					case 1: logger.LogTrace($"{seq:X1} STOP"); responses.Add(standardResponse(cmdByte)); break;
-					case 2: logger.LogTrace($"{seq:X1} PAUSE"); responses.Add(standardResponse(cmdByte)); break;
-					case 3: logger.LogTrace($"{seq:X1} UNPAUSE"); responses.Add(standardResponse(cmdByte)); break;
+					case 1: logger.LogTrace($"{seq:X1} STOP"); responses.Add(statusResponse(cmdByte)); break;
+					case 2: logger.LogTrace($"{seq:X1} PAUSE"); responses.Add(statusResponse(cmdByte)); break;
+					case 3: logger.LogTrace($"{seq:X1} UNPAUSE"); responses.Add(statusResponse(cmdByte)); break;
 					case 4:
 						var sb = new StringBuilder($"{seq:X1} PLAY/READ ");
 						for (int j = 0; j < 11; j++)
@@ -101,13 +110,13 @@ namespace Jammy.Core.CDROM
 							i++;
 						}
 						logger.LogTrace($"{sb.ToString()}");
-						responses.Add(standardResponse(cmdByte));
+						responses.Add(statusResponse(cmdByte));
 						break;
 					case 5:
 						uint onOff = command[i]; i++;
 						logger.LogTrace($"{seq:X1} LED {(onOff==0?"OFF":"ON")}");
 						if ((onOff&0x80)!=0)
-							responses.Add(standardResponse(cmdByte));
+							responses.Add(statusResponse(cmdByte));
 						break;
 					case 6: logger.LogTrace($"{seq:X1} SUBCODE"); responses.Add(subcodeResponse(cmdByte)); break;
 					case 7: logger.LogTrace($"{seq:X1} INFO"); responses.Add(infoResponse(cmdByte)); break;
@@ -119,6 +128,7 @@ namespace Jammy.Core.CDROM
 				logger.LogTrace($"CHK {chksum:X2}");
 				i++;
 			}
+
 			return responses;
 		}
 		
@@ -130,7 +140,7 @@ namespace Jammy.Core.CDROM
 			r[0] = cmdByte;
 			r[1] = 1;//something to do with the CDDrive's door
 			Array.Copy(Encoding.ASCII.GetBytes(FIRMWAREVERSION), 0, r, 2, FIRMWAREVERSION.Length);
-			r[20] = checksum(r);
+			Checksum(r);
 			return r;
 		}
 
@@ -139,26 +149,26 @@ namespace Jammy.Core.CDROM
 			var r = new byte[16];
 			r[0] = cmdByte;
 			//todo: what goes here?
-			r[15] = checksum(r);
+			Checksum(r);
 			return r;
 		}
 
-		private byte[] standardResponse(byte cmdByte)
+		private byte[] statusResponse(byte cmdByte)
 		{
 			var r = new byte[0];
 			r[0] = cmdByte;
 			if (playing) r[1] |= 1<<3;
 			if (!dooropen) r[1] |= 1 << 0;
-			r[2] = checksum(r);
+			Checksum(r);
 			return r;
 		}
 
-		private byte checksum(byte[] r)
+		public static void Checksum(byte[] r)
 		{
 			byte cs = 0xff;
 			for (int i = 0; i < r.Length - 1; i++)
 				cs -= r[i];
-			return cs;
+			r[r.Length-1] = cs;
 		}
 	}
 }

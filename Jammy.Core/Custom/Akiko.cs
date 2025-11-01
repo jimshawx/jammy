@@ -1,5 +1,7 @@
-﻿using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.CDROM;
+using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
@@ -165,6 +167,20 @@ namespace Jammy.Core.Custom
 			BIT_25 = 1u << 25,//$02000000 = DMA overflow(lost data)?
 		}
 
+		[Flags]
+		private enum CONFIG : uint
+		{
+			BIT_31 = 1u << 31,//$80000000 = Subcode DMA enable
+			BIT_30 = 1u << 30,//$40000000 = Command write(to CD) DMA enable
+			BIT_29 = 1u << 29,//$20000000 = Status read(from CD) DMA enable
+			BIT_28 = 1u << 28,//$10000000 = Memory access mode?
+			BIT_27 = 1u << 27,//$08000000 = Data transfer DMA enable
+			BIT_26 = 1u << 26,//$04000000 = CD interface enable?
+			BIT_25 = 1u << 25,//$02000000 = CD data mode?
+			BIT_24 = 1u << 24,//$01000000 = CD data mode?
+			BIT_23 = 1u << 23,//$00800000 = Akiko internal CIA faked vsync rate(0=50Hz,1=60Hz)
+		}
+
 		private readonly string[] regNames = {
 			"AKIKOID3",
 			"AKIKOID2",
@@ -237,14 +253,33 @@ namespace Jammy.Core.Custom
 		private IMemoryMapper memory;
 		private readonly ILogger logger;
 
-		public Akiko(ICDDrive cddrive, IOptions<EmulationSettings> settings, ILogger<Akiko> logger)
+		public Akiko(ICDDrive cddrive, IEmulationWindow emulationWindow, IOptions<EmulationSettings> settings, ILogger<Akiko> logger)
 		{
 			this.settings = settings.Value;
 			this.cddrive = cddrive;
 			
 			this.logger = logger;
+
+			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
+		}
+		private void dbug_Keyup(int obj)
+		{
 		}
 
+		private void dbug_Keydown(int obj)
+		{
+			if (obj == (int)'C')
+			{
+				logger.LogTrace("Insert Disk");
+				//hack: insert a disk
+				byte[] insert = { 0x0a, 0x00, 0 };
+				CDDrive.Checksum(insert);
+				QueueResponses(new List<byte[]> { insert});
+				rxDMAend += 3;
+				rxDMAend &= 0xff;
+			}
+		}
+		
 		int pq = 0;
 		public void Emulate()
 		{
@@ -263,7 +298,6 @@ namespace Jammy.Core.Custom
 
 					logger.LogTrace($"Post RX {rxDMApos,2} {rxDMAend,2} {rxDMApos:X2} {rxDMAend:X2}");
 
-					//intreq |= (uint)(INTREQ.BIT_26 | INTREQ.BIT_27 | INTREQ.BIT_28);
 					intreq |= (uint)INTREQ.BIT_27;
 				}
 			}
@@ -460,12 +494,12 @@ namespace Jammy.Core.Custom
 
 						case 0x1d:
 							txDMAend = (byte)value;
-							intreq &= (uint)~INTREQ.BIT_28;
+							intreq &= (uint)~INTREQ.BIT_27;
 							break;
 
 						case 0x1f: 
 							rxDMAend = (byte)value;
-							intreq &= (uint)~INTREQ.BIT_27;
+							intreq &= (uint)~INTREQ.BIT_28;
 							break;
 
 						//DMAENABLE
@@ -473,10 +507,10 @@ namespace Jammy.Core.Custom
 						case 0x21: dmaena &= 0xff00; dmaena |= (ushort)value; intreq &= (uint)~INTREQ.BIT_26; break;
 
 						//CONFIG
-						case 0x24: config &= 0x00ffffff; config |= value << 24; break;
-						case 0x25: config &= 0xff00ffff; config |= value << 16; break;
-						case 0x26: config &= 0xffff00ff; config |= value << 8; break;
-						case 0x27: config &= 0xffffff00; config |= value; break;
+						case 0x24: config &= 0x00ffffff; config |= value << 24; UpdateConfig(); break;
+						case 0x25: config &= 0xff00ffff; config |= value << 16; UpdateConfig(); break;
+						case 0x26: config &= 0xffff00ff; config |= value << 8; UpdateConfig(); break;
+						case 0x27: config &= 0xffffff00; config |= value; UpdateConfig(); break;
 						
 						//PIO
 						case 0x28: piorw = (byte)value; break;
@@ -523,6 +557,33 @@ namespace Jammy.Core.Custom
 			}
 		}
 
+		/*
+			 31 $80000000 = Subcode DMA enable
+			 30 $40000000 = Command write (to CD) DMA enable
+			 29 $20000000 = Status read (from CD) DMA enable
+			 28 $10000000 = Memory access mode?
+			 27 $08000000 = Data transfer DMA enable
+			 26 $04000000 = CD interface enable?
+			 25 $02000000 = CD data mode?
+			 24 $01000000 = CD data mode?
+			 23 $00800000 = Akiko internal CIA faked vsync rate (0=50Hz,1=60Hz)
+			 00-22 = unused
+		*/
+		private void UpdateConfig()
+		{
+			var sb = new StringBuilder();
+			if ((config & (uint)CONFIG.BIT_31) != 0) sb.Append("Subcode DMA Enable|");
+			if ((config & (uint)CONFIG.BIT_30) != 0) sb.Append("CMD Write DMA Enable|");
+			if ((config & (uint)CONFIG.BIT_29) != 0) sb.Append("Status Read DMA Enable|");
+			if ((config & (uint)CONFIG.BIT_28) != 0) sb.Append("Memory access mode?|");
+			if ((config & (uint)CONFIG.BIT_27) != 0) sb.Append("Data Transfer DMA Enable|");
+			if ((config & (uint)CONFIG.BIT_26) != 0) sb.Append("CD Interface Enable?|");
+			if ((config & (uint)CONFIG.BIT_25) != 0) sb.Append("CD data mode? bit25|");
+			if ((config & (uint)CONFIG.BIT_24) != 0) sb.Append("CD data mode? bit24|");
+			if ((config & (uint)CONFIG.BIT_23) != 0) sb.Append("CIA sync rate 60Hz|"); else sb.Append("CIA sync rate 50Hz|");
+			logger.LogTrace($"CFG {config:X8} {sb.ToString().TrimEnd('|')}");
+		}
+
 		private readonly Queue<byte> responseBytes = new Queue<byte>();
 
 		private void QueueResponses(List<byte[]> list)
@@ -544,14 +605,10 @@ namespace Jammy.Core.Custom
 			{
 				for (uint i = start; i < 256 && responseBytes.Any(); i++)
 				{	memory.Write(0, dmacmd + i, responseBytes.Dequeue(), Size.Byte); cnt++; }
-				for (uint i = 0; i < end && responseBytes.Any(); i++)
-				{	memory.Write(0, dmacmd + i, responseBytes.Dequeue(), Size.Byte); cnt++; }
+				start = 0;
 			}
-			else
-			{
-				for (uint i = start; i < end && responseBytes.Any(); i++)
-				{	memory.Write(0, dmacmd + i, responseBytes.Dequeue(), Size.Byte); cnt++; }
-			}
+			for (uint i = start; i < end && responseBytes.Any(); i++)
+			{	memory.Write(0, dmacmd + i, responseBytes.Dequeue(), Size.Byte); cnt++; }
 
 			DumpCommandBuffer();
 
@@ -565,14 +622,10 @@ namespace Jammy.Core.Custom
 			{
 				for (uint i = start; i < 256; i++)
 					cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
-				for (uint i = 0; i < end; i++)
-					cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
+				start = 0;
 			}
-			else
-			{
-				for (uint i = start; i < end; i++)
-					cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
-			}
+			for (uint i = start; i < end; i++)
+				cmd.Add((byte)memory.Read(0, dmacmd + i + 512, Size.Byte));
 			
 			DumpCommandBuffer();
 

@@ -9,6 +9,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface ICDDrive
 	{
 		void InsertImage(ICDImage image);
+		void EjectImage();
 		List<byte[]> SendCommand(byte[] command);
 	}
 
