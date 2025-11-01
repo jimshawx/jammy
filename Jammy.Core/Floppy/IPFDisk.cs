@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using System.Linq;
 
 /*
 	Copyright 2025 James Shaw. All Rights Reserved.
@@ -18,7 +19,11 @@ namespace Jammy.Core.Floppy
 
 		public byte[] GetTrack(uint track, uint head)
 		{
-			return IPF.IPF.ReadTrack(id, track, head, variety++);
+			var data = IPF.IPF.ReadTrack(id, track, head, variety++);
+			//hack, how does this happen?
+			if ((data.Length & 1)!=0)
+				data = data.Concat(new byte[] { 0 }).ToArray();
+			return data;
 		}
 	}
 }
