@@ -249,7 +249,21 @@ public class Denise : IDenise
 		sprdatapix[s] = sprdata[s];
 		sprdatbpix[s] = sprdatb[s];
 		this.sprctl[s] = sprctl[s];
-		spriteMask[s] = 0x8000;
+		int spriteRes = (bplcon3>>6)&3;
+		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
+		{ 
+			spriteMask[s] = 0x8000;
+		}
+		else
+		{ 
+			switch (spriteRes)
+			{
+				case 0: spriteMask[s] = 0x8000; break;
+				case 1: spriteMask[s] = 0x80000000; break;
+				case 2: spriteMask[s] = 0x80000000; break;
+				case 3: spriteMask[s] = 0x8000000000000000; break;
+			}
+		}
 	}
 
 	private void FirstPixel()
@@ -303,7 +317,7 @@ public class Denise : IDenise
 	[Persist]
 	private readonly ulong[] sprdatbpix = new ulong[8];
 	[Persist]
-	private readonly uint[] spriteMask = new uint[8];
+	private readonly ulong[] spriteMask = new ulong[8];
 	[Persist]
 	private readonly int[] clx = new int[8];
 	[Persist]
