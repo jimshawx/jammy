@@ -356,7 +356,8 @@ public class Agnus : IAgnus
 			}
 			else
 			{
-				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Long, ChipRegs.BPL1DAT + plane * 2);
+				//even though we only want 4 bytes, we have to do a QWord read here, so that WriteWide get called
+				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.QWord, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 4;
 			}
 
