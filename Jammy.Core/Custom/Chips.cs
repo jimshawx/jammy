@@ -399,7 +399,7 @@ namespace Jammy.Core.Custom
 			address &= 0xdffffe;
 
 			if ((address >= ChipRegs.BPL1DAT && address <= ChipRegs.BPL8DAT) ||
-				(address >= ChipRegs.SPR0DATA && address <= ChipRegs.SPR7DATB))
+				(address >= ChipRegs.SPR0POS && address <= ChipRegs.SPR7DATB))
 				agnus.WriteWide(address, value);
 		}
 

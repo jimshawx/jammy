@@ -356,8 +356,7 @@ public class Agnus : IAgnus
 			}
 			else
 			{
-				//even though we only want 4 bytes, we have to do a QWord read here, so that WriteWide get called
-				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.QWord, ChipRegs.BPL1DAT + plane * 2);
+				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.LWord, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 4;
 			}
 
@@ -536,8 +535,21 @@ public class Agnus : IAgnus
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS+s*8);
-				sprpt[s] += 2;
+				if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || ((fmode >> 2) & 3) == 0)
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS + s * 8);
+					sprpt[s] += 2;
+				}
+				else if (((fmode >> 2) & 3) == 3)
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0POS + s * 8);
+					sprpt[s] += 8;
+				}
+				else
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.LWord, ChipRegs.SPR0POS + s * 8);
+					sprpt[s] += 4;
+				}
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
@@ -553,7 +565,7 @@ public class Agnus : IAgnus
 				}
 				else
 				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0DATA + s * 8);
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.LWord, ChipRegs.SPR0DATA + s * 8);
 					sprpt[s] += 4;
 				}
 			}
@@ -562,8 +574,21 @@ public class Agnus : IAgnus
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0CTL+s*8);
-				sprpt[s] += 2;
+				if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || ((fmode >> 2) & 3) == 0)
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0CTL + s * 8);
+					sprpt[s] += 2;
+				}
+				else if (((fmode >> 2) & 3) == 3)
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0CTL + s * 8);
+					sprpt[s] += 8;
+				}
+				else
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.LWord, ChipRegs.SPR0CTL + s * 8);
+					sprpt[s] += 4;
+				}
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
@@ -579,7 +604,7 @@ public class Agnus : IAgnus
 				}
 				else
 				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0DATB + s * 8);
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.LWord, ChipRegs.SPR0DATB + s * 8);
 					sprpt[s] += 4;
 				}
 			}
@@ -989,6 +1014,14 @@ public class Agnus : IAgnus
 			case ChipRegs.SPR6DATB: sprdatb[6] = value; break;
 			case ChipRegs.SPR7DATA: sprdata[7] = value; break;
 			case ChipRegs.SPR7DATB: sprdatb[7] = value; break;
+;
+			default:
+				//when SPRxPOS and SPRxCTL are 32 or 64 bits, the word we're interested in is the uppermost 16 bits
+				int sh = 0;
+				if (((fmode >> 2) & 3) == 3) sh = 48;
+				else if (((fmode >> 2) & 3) != 0) sh = 16;
+				Write(0, address, (ushort)(value>>sh));
+				break;
 		}
 	}
 

@@ -250,13 +250,15 @@ public class Denise : IDenise
 		sprdatbpix[s] = sprdatb[s];
 		this.sprctl[s] = sprctl[s];
 		int spriteRes = (bplcon3>>6)&3;
+		int spriteFetch = (fmode>>2)&3;
+
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
 		{ 
 			spriteMask[s] = 0x8000;
 		}
 		else
 		{ 
-			switch (spriteRes)
+			switch (spriteFetch)
 			{
 				case 0: spriteMask[s] = 0x8000; break;
 				case 1: spriteMask[s] = 0x80000000; break;

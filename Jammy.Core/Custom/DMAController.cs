@@ -209,6 +209,11 @@ public class DMAController : IDMA
 					value = (value << 32) | chipRAM.ImmediateRead(0, activity.Address + 4, Size.Long);
 					chips.ImmediateWriteWide(activity.ChipReg, value);
 				}
+				else if (activity.Size == Size.LWord)
+				{
+					ulong value = chipRAM.ImmediateRead(0, activity.Address, Size.Long);
+					chips.ImmediateWriteWide(activity.ChipReg, value);
+				}
 				else
 				{
 					uint value = chipRAM.ImmediateRead(0, activity.Address, activity.Size);

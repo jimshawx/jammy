@@ -10,7 +10,8 @@ namespace Jammy.Core.Types.Types
 		Word,
 		Long,
 		Extension,
-		QWord
+		QWord,
+		LWord
 	}
 
 	public enum FPSize
