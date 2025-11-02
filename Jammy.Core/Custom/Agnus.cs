@@ -541,8 +541,21 @@ public class Agnus : IAgnus
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATA+s*8);
-				sprpt[s] += 2;
+				if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || ((fmode>>2) & 3) == 0)
+				{ 
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATA+s*8);
+					sprpt[s] += 2;
+				}
+				else if (((fmode>>2)&3) == 3)
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0DATA + s * 8);
+					sprpt[s] += 8;
+				}
+				else
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0DATA + s * 8);
+					sprpt[s] += 4;
+				}
 			}
 		}
 		else
@@ -554,8 +567,21 @@ public class Agnus : IAgnus
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
-				sprpt[s] += 2;
+				if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || ((fmode >> 2) & 3) == 0)
+				{ 
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
+					sprpt[s] += 2;
+				}
+				else if (((fmode >> 2) & 3) == 3)
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0DATB + s * 8);
+					sprpt[s] += 8;
+				}
+				else
+				{
+					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0DATB + s * 8);
+					sprpt[s] += 4;
+				}
 			}
 		}
 	}
