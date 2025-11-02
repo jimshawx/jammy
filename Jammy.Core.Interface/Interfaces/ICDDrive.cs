@@ -11,7 +11,11 @@ namespace Jammy.Core.Interface.Interfaces
 		void InsertImage(ICDImage image);
 		void EjectImage();
 		List<byte[]> SendCommand(byte[] command);
+		byte[] ReadSector(byte sector);
 	}
 
-	public interface ICDImage { }
+	public interface ICDImage
+	{
+		byte[] ReadSector(byte sector);
+	}
 }

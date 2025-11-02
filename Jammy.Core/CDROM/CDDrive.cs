@@ -80,7 +80,7 @@ namespace Jammy.Core.CDROM
 		 */
 
 		private bool playing = false;
-		private bool dooropen = false;
+		private bool dooropen = true;
 		private bool ledon = false;
 
 		private readonly List<byte[]> responses = new List<byte[]>();
@@ -140,7 +140,7 @@ namespace Jammy.Core.CDROM
 		{
 			var r = new byte[21];
 			r[0] = cmdByte;
-			r[1] = 1;//something to do with the CDDrive's door
+			r[1] = 0;//something to do with the CDDrive's door
 			Array.Copy(Encoding.ASCII.GetBytes(FIRMWAREVERSION), 0, r, 2, FIRMWAREVERSION.Length);
 			Checksum(r);
 			return r;
@@ -180,6 +180,11 @@ namespace Jammy.Core.CDROM
 			for (int i = 0; i < r.Length - 1; i++)
 				cs -= r[i];
 			r[r.Length-1] = cs;
+		}
+
+		public byte[] ReadSector(byte sector)
+		{
+			return cd.ReadSector(sector);
 		}
 	}
 }

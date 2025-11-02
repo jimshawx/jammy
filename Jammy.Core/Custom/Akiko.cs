@@ -15,6 +15,9 @@ using System.Text;
 	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
+//NVRAM Docs
+//https://eab.abime.net/showthread.php?t=101312
+
 //From winaue.cpp
 //https://github.com/tonioni/WinUAE/blob/master/akiko.cpp
 
@@ -266,17 +269,20 @@ namespace Jammy.Core.Custom
 		{
 		}
 
+		private byte ismedia = 0x00;
 		private void dbug_Keydown(int obj)
 		{
 			if (obj == (int)'C')
 			{
 				logger.LogTrace("Insert Disk");
 				//hack: insert a disk
-				const byte ismedia = 0x00;//false
+
 				byte[] insert = { 0x0a, ismedia, 0 };
+				ismedia ^= 0x01;
 				CDDrive.Checksum(insert);
 				QueueResponses(new List<byte[]> { insert });
-				rxDMAend += 3;
+				intreq |= (uint)INTREQ.BIT_27;
+				//rxDMAend += 3;
 			}
 		}
 		
@@ -323,6 +329,28 @@ namespace Jammy.Core.Custom
 
 					logger.LogTrace($"Post TX {txDMApos,2} {txDMAend,2} {txDMApos:X2} {txDMAend:X2}");
 				} 
+			}
+
+			//input DMA enabled?
+			if ((config & (uint)CONFIG.BIT_27) != 0)
+			{
+				if (dmaena != 0)
+				{
+					for (int i = 0x8000; i >= 1; i >>= 1)
+					{
+						if ((dmaena & i) != 0)
+						{
+							ReadSector(dmaena);
+
+							DumpDMA(i);
+
+							dmaena &= (ushort)~i;
+							intreq |= (uint)INTREQ.BIT_26;
+
+							break;
+						}
+					}
+				}
 			}
 		}
 
@@ -541,7 +569,7 @@ namespace Jammy.Core.Custom
 							intreq &= (uint)~INTREQ.BIT_28;
 							break;
 
-						//DMAENABLE
+						////DMAENABLE
 						case 0x20: dmaena &= 0x00ff; dmaena |= (ushort)(value << 8); intreq &= (uint)~INTREQ.BIT_26; break;
 						case 0x21: dmaena &= 0xff00; dmaena |= (ushort)value; intreq &= (uint)~INTREQ.BIT_26; break;
 
@@ -573,6 +601,10 @@ namespace Jammy.Core.Custom
 				case Size.Word:
 					switch (address)
 					{
+						//DMAENABLE
+						case 0x20: dmaena |= (ushort)value; intreq &= (uint)~INTREQ.BIT_26; break;
+
+						//C2P
 						case 0x38: chunky[chunkyWrite] &= 0x0000ffff; chunky[chunkyWrite] |= value << 16; IncC2PWrite(); break;
 						case 0x3A: chunky[chunkyWrite] &= 0xffff0000; chunky[chunkyWrite] |= value; break;
 						default:
@@ -717,6 +749,58 @@ namespace Jammy.Core.Custom
 			logger.LogTrace($"{sb.ToString()}");
 		}
 
+		/*
+			0-2: zeroed
+			3: low 5 bits of sector number
+			4 to 2352: 2348 bytes raw sector data (with first 4 bytes skipped)
+			0xc00: 146 bytes of CD error correction data?
+			The rest is unused(?).
+		*/
+		private void DumpDMA(int d)
+		{
+			var sb = new StringBuilder();
+
+			int k;
+			for (k = 15; k >= 0; k--)
+				if ((d&(1<<k))!=0) break;
+
+			sb.AppendLine($"DMA BLOCK {k}");
+
+			//each block is 0x1000 bytes, and there are 16 blocks (64KB total)
+			uint data = (uint)(dmadata + k * 0x1000);
+
+			byte b0 = (byte)memory.Read(0, data, Size.Byte);
+			byte b1 = (byte)memory.Read(0, data+1, Size.Byte);
+			byte b3 = (byte)memory.Read(0, data + 2, Size.Byte);
+			sb.AppendLine($"Zero {b0:X2} {b1:X2} {b3:X2}");
+			byte s = (byte)memory.Read(0, data + 3, Size.Byte);
+			sb.AppendLine($"Sector {s:X2} {s,2}");
+
+			for (uint j = 0; j < 128; j++)
+			{
+				for (uint i = 0; i < 32; i++)
+				{
+					sb.Append($"{memory.Read(0, data + i + j * 32, Size.Byte):X2} ");
+				}
+				sb.AppendLine();
+			}
+			logger.LogTrace($"{sb.ToString()}");
+		}
+
+		private void ReadSector(ushort d)
+		{
+			int k;
+			for (k = 15; k >= 0; k--)
+				if ((d & (1 << k)) != 0) break;
+
+			logger.LogTrace($"READ DMA BLOCK {k}");
+
+			//each block is 0x1000 bytes, and there are 16 blocks (64KB total)
+			uint data = (uint)(dmadata + k * 0x1000);
+			byte sector = (byte)memory.Read(0, data + 3, Size.Byte);
+			var sectorData = cddrive.ReadSector(sector);
+		}
+
 		[Persist]
 		private readonly uint[] chunky = new uint[8];
 		[Persist]
@@ -791,4 +875,4 @@ namespace Jammy.Core.Custom
 			// read only duplicate of intena
 	*/
 
-}
+	}
