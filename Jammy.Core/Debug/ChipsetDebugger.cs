@@ -238,7 +238,8 @@ public class ChipsetDebugger : IChipsetDebugger
 		sb.AppendLine(($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfStrtFix:X4}{ddfSHack:+#0;-#0} {ddfStopFix:X4}{ddfEHack:+#0;-#0} FMODE {fmode:X4}"));
 		sb.AppendLine(($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({diwstopv - diwstrtv}) H:{diwstrth}{diwSHack:+#0;-#0}->{diwstoph}{diwEHack:+#0;-#0}({diwstoph - diwstrth}/16={(diwstoph - diwstrth) / 16}) BD={bplDelayHack}"));
 		sb.AppendLine($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
-		sb.AppendLine($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()} 3:{bplcon3:X4} {Bplcon3()} 4:{bplcon4:X4} {Bplcon4()}");
+		sb.AppendLine($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()}");
+		sb.AppendLine($"BCN 3:{bplcon3:X4} {Bplcon3()} 4:{bplcon4:X4} {Bplcon4()}");
 		sb.AppendLine($"BPL {bplpt[0]:X6} {bplpt[1]:X6} {bplpt[2]:X6} {bplpt[3]:X6} {bplpt[4]:X6} {bplpt[5]:X6} {bplpt[6]:X6} {bplpt[7]:X6} {new string(bitplaneMask.ToBin().Reverse().ToArray())} {new string(bitplaneMod.ToBin().Reverse().ToArray())}");
 
 		sb.AppendLine();
@@ -361,8 +362,8 @@ public class ChipsetDebugger : IChipsetDebugger
 		uint bplcon4 = chipRegs.DebugChipsetRead(ChipRegs.BPLCON4, Size.Word);
 		var sb = GetTempStringBuilder();
 		sb.Append($"BPLAM{bplcon4 >> 8:X2} ");
-		sb.Append($"ESPRM{(bplcon4 >> 4) & 15:X2} ");
-		sb.Append($"OSPRM{bplcon4 & 15:X2} ");
+		sb.Append($"ESPRM{(bplcon4 >> 4) & 15:X1} ");
+		sb.Append($"OSPRM{bplcon4 & 15:X1} ");
 		return sb.ToString();
 	}
 

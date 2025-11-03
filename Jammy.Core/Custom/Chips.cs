@@ -421,67 +421,90 @@ namespace Jammy.Core.Custom
 			if (size == Size.Byte)
 				throw new ArgumentOutOfRangeException();
 
-			if ((address >= ChipRegs.DDFSTRT && address <= ChipRegs.DDFSTOP) ||
-					(address >= ChipRegs.BPL1PTH && address <= ChipRegs.SPR7DATB) ||
-					address == ChipRegs.VPOSR || address == ChipRegs.VHPOSR || address == ChipRegs.VPOSW || address == ChipRegs.VHPOSW
-					|| address == ChipRegs.VBSTRT || address == ChipRegs.VBSTOP || address == ChipRegs.VTOTAL || address == ChipRegs.DIWHIGH
-					|| address == ChipRegs.VSSTRT || address == ChipRegs.VSSTOP
-					|| address == ChipRegs.FMODE)
+			switch (address)
 			{
-				return agnus.DebugChipsetRead(address, size);
-			}
-			else if (address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2 || address == ChipRegs.CLXDAT
-				|| address == ChipRegs.BPLCON1 || address == ChipRegs.BPLCON2 || address == ChipRegs.BPLCON3 || address == ChipRegs.BPLCON4
-					 || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
-					 || address == ChipRegs.DIWSTRT || address == ChipRegs.DIWSTOP)
-			{
-				return denise.DebugChipsetRead(address, size);
-			}
-			else if ((address >= ChipRegs.COP1LCH && address <= ChipRegs.COPINS) || address == ChipRegs.COPCON)
-			{
-				return copper.DebugChipsetRead(address, size);
-			}
-			else if (address >= ChipRegs.BLTCON0 && address < ChipRegs.SPRHDAT || address == ChipRegs.BLTDDAT)
-			{
-				return blitter.DebugChipsetRead(address, size);
-			}
-			else if (address == ChipRegs.DSKSYNC || address == ChipRegs.DSKDATR || address == ChipRegs.DSKBYTR
-				 || address == ChipRegs.DSKPTH || address == ChipRegs.DSKPTL || address == ChipRegs.DSKLEN || address == ChipRegs.DSKDAT)
-			{
-				return diskDrives.DebugChipsetRead(address, size);
-			}
-			else if (address == ChipRegs.JOY0DAT || address == ChipRegs.JOY1DAT || address == ChipRegs.POTGO || address == ChipRegs.POTGOR
-					 || address == ChipRegs.POT0DAT || address == ChipRegs.POT1DAT || address == ChipRegs.JOYTEST)
-			{
-				return mouse.DebugChipsetRead(address, size);
-			}
-			else if (address >= ChipRegs.AUD0LCH && address <= ChipRegs.AUD3DAT)
-			{
-				return audio.DebugChipsetRead(address, size);
-			}
-			else if (address == ChipRegs.ADKCON || address == ChipRegs.ADKCONR)
-			{
-				return (ushort)(audio.DebugChipsetRead(address, size) | diskDrives.DebugChipsetRead(address, size));
-			}
-			else if (address == ChipRegs.INTENA || address == ChipRegs.INTENAR)
-			{
-				return intena;
-			}
-			else if (address == ChipRegs.INTREQ || address == ChipRegs.INTREQR)
-			{
-				return intreq;
-			}
-			else if (address == ChipRegs.NO_OP)
-			{
-				return 0;
-			}
-			else if (address == ChipRegs.DMACONR || address == ChipRegs.DMACON)
-			{
-				return dma.DebugChipsetRead(address, size);
-			}
-			else if (address == ChipRegs.SERDATR || address == ChipRegs.SERDAT || address == ChipRegs.SERPER)
-			{
-				return serial.DebugChipsetRead(address, size);
+				case ChipRegs.DMACONR:
+				case ChipRegs.DMACON:
+					return dma.DebugChipsetRead(address, size);
+				case ChipRegs.INTENA:
+				case ChipRegs.INTENAR:
+					return intena;
+				case ChipRegs.INTREQ:
+				case ChipRegs.INTREQR:
+					return intreq;
+				case >= ChipRegs.DDFSTRT and <= ChipRegs.DDFSTOP:
+				case >= ChipRegs.BPL1PTH and <= ChipRegs.BPL8PTL:
+				case ChipRegs.BPL1MOD:
+				case ChipRegs.BPL2MOD:
+				case >= ChipRegs.BPL1DAT and <= ChipRegs.SPR7DATB:
+				case ChipRegs.VPOSR:
+				case ChipRegs.VHPOSR:
+				case ChipRegs.VPOSW:
+				case ChipRegs.VHPOSW:
+				case ChipRegs.VTOTAL:
+				case ChipRegs.VBSTRT:
+				case ChipRegs.VBSTOP:
+				case ChipRegs.HTOTAL:
+				case ChipRegs.HBSTRT:
+				case ChipRegs.HBSTOP:
+				case ChipRegs.VSSTRT:
+				case ChipRegs.VSSTOP:
+				case ChipRegs.HSSTOP:
+				case ChipRegs.HCENTER:
+				case ChipRegs.BEAMCON0:
+
+				case ChipRegs.DIWSTRT:
+				case ChipRegs.DIWSTOP:
+				case ChipRegs.DIWHIGH:
+				case ChipRegs.BPLCON0:
+				case ChipRegs.FMODE: return agnus.DebugChipsetRead(address, size);
+
+				case ChipRegs.BPLCON1:
+				case ChipRegs.BPLCON2:
+				case ChipRegs.BPLCON3:
+				case ChipRegs.BPLCON4:
+				case ChipRegs.CLXCON:
+				case ChipRegs.CLXCON2:
+				case ChipRegs.CLXDAT:
+				case >= ChipRegs.COLOR00 and <= ChipRegs.COLOR31:
+				case ChipRegs.STREQU:
+				case ChipRegs.STRHOR:
+				case ChipRegs.STRLONG:
+				case ChipRegs.STRVBL: 
+					return denise.DebugChipsetRead(address, size);
+				case >= ChipRegs.COP1LCH and <= ChipRegs.COPINS:
+				case ChipRegs.COPCON:
+					return copper.DebugChipsetRead(address, size);
+				case >= ChipRegs.BLTCON0 and < ChipRegs.SPRHDAT:
+				case ChipRegs.BLTDDAT:
+					return blitter.DebugChipsetRead(address, size);
+				case ChipRegs.DSKSYNC:
+				case ChipRegs.DSKDATR:
+				case ChipRegs.DSKBYTR:
+				case ChipRegs.DSKPTH:
+				case ChipRegs.DSKPTL:
+				case ChipRegs.DSKLEN:
+				case ChipRegs.DSKDAT:
+					return diskDrives.DebugChipsetRead(address, size);
+				case ChipRegs.JOY0DAT:
+				case ChipRegs.JOY1DAT:
+				case ChipRegs.POTGO:
+				case ChipRegs.POTGOR:
+				case ChipRegs.POT0DAT:
+				case ChipRegs.POT1DAT:
+				case ChipRegs.JOYTEST:
+					return mouse.DebugChipsetRead(address, size);
+				case >= ChipRegs.AUD0LCH and <= ChipRegs.AUD3DAT:
+					return audio.DebugChipsetRead(address, size);
+				case ChipRegs.ADKCON:
+				case ChipRegs.ADKCONR:
+					return (ushort)(audio.DebugChipsetRead(address, size) | diskDrives.DebugChipsetRead(address, size));
+				case ChipRegs.NO_OP:
+					return 0;
+				case ChipRegs.SERDATR:
+				case ChipRegs.SERDAT:
+				case ChipRegs.SERPER:
+					return serial.DebugChipsetRead(address, size);
 			}
 
 			logger.LogTrace($"DR {ChipRegs.Name(address)}");
