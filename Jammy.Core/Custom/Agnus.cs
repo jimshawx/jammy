@@ -106,6 +106,9 @@ public class Agnus : IAgnus
 		for (int i = 0; i < 8; i++)
 			spriteState[i] = SpriteState.Idle;
 
+		spriteStride = 2;
+		spriteSize = Size.Word;
+
 		lineState = DMALineState.LineStart;
 	}
 
@@ -535,78 +538,26 @@ public class Agnus : IAgnus
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || ((fmode >> 2) & 3) == 0)
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS + s * 8);
-					sprpt[s] += 2;
-				}
-				else if (((fmode >> 2) & 3) == 3)
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0POS + s * 8);
-					sprpt[s] += 8;
-				}
-				else
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.LWord, ChipRegs.SPR0POS + s * 8);
-					sprpt[s] += 4;
-				}
+				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0POS + s * 8);
+				sprpt[s] += spriteStride;
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || ((fmode>>2) & 3) == 0)
-				{ 
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATA+s*8);
-					sprpt[s] += 2;
-				}
-				else if (((fmode>>2)&3) == 3)
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0DATA + s * 8);
-					sprpt[s] += 8;
-				}
-				else
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.LWord, ChipRegs.SPR0DATA + s * 8);
-					sprpt[s] += 4;
-				}
+				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, spriteSize, ChipRegs.SPR0DATA + s * 8);
+				sprpt[s] += spriteStride;
 			}
 		}
 		else
 		{
 			if (spriteState[s] == SpriteState.Idle)
 			{
-				if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || ((fmode >> 2) & 3) == 0)
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0CTL + s * 8);
-					sprpt[s] += 2;
-				}
-				else if (((fmode >> 2) & 3) == 3)
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0CTL + s * 8);
-					sprpt[s] += 8;
-				}
-				else
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.LWord, ChipRegs.SPR0CTL + s * 8);
-					sprpt[s] += 4;
-				}
+				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0CTL + s * 8);
+				sprpt[s] += spriteStride;
 			}
 			else if (spriteState[s] == SpriteState.Fetching)
 			{
-				if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || ((fmode >> 2) & 3) == 0)
-				{ 
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.Word, ChipRegs.SPR0DATB+s*8);
-					sprpt[s] += 2;
-				}
-				else if (((fmode >> 2) & 3) == 3)
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.QWord, ChipRegs.SPR0DATB + s * 8);
-					sprpt[s] += 8;
-				}
-				else
-				{
-					dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, Size.LWord, ChipRegs.SPR0DATB + s * 8);
-					sprpt[s] += 4;
-				}
+				dma.ReadReg(DMASource.Agnus, sprpt[s], DMA.SPREN, spriteSize, ChipRegs.SPR0DATB + s *8 );
+				sprpt[s] += spriteStride;
 			}
 		}
 	}
@@ -750,6 +701,20 @@ public class Agnus : IAgnus
 		debugger.ddfStopFix = ddfstopfix;
 	}
 
+	private uint spriteStride = 2;
+	private Size spriteSize = Size.Word;
+
+	private void UpdateFMODE()
+	{
+		var spriteMode = (fmode >> 2) & 3;
+		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || spriteMode == 0)
+			{ spriteStride = 2; spriteSize = Size.Word; }
+		else if (spriteMode == 3)
+			{ spriteStride = 8; spriteSize = Size.QWord; }
+		else 
+			{ spriteStride = 4; spriteSize = Size.LWord; }
+	}
+
 	private ulong[] bpldat = new ulong[8];
 	private uint[] bplpt = new uint[8];
 	private ushort diwstrt;
@@ -838,7 +803,6 @@ public class Agnus : IAgnus
 	private void UpdateSpriteState(int s)
 	{
 		spriteState[s] = SpriteState.Waiting;
-		//sprpt[s] += 4;
 	}
 
 	private void DebugBPL(int plane, ushort value)
@@ -981,7 +945,7 @@ public class Agnus : IAgnus
 			case ChipRegs.HCENTER: hcentre = value; logger.LogTrace($"HCENTER {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.BEAMCON0: beamcon0 = value; logger.LogTrace($"BEAMCON0 {value:X4} @{insaddr:X8}"); break;
 
-			case ChipRegs.FMODE: fmode = value; UpdateDDF(); break;
+			case ChipRegs.FMODE: fmode = value; UpdateFMODE(); UpdateDDF(); break;
 		}
 	}
 
@@ -1016,25 +980,9 @@ public class Agnus : IAgnus
 			case ChipRegs.SPR7DATB: sprdatb[7] = value; break;
 ;
 			default:
-				//when SPRxPOS and SPRxCTL are 32 or 64 bits, the word we're interested in is the uppermost 16 bits
-				int sh = 0;
-				if (((fmode >> 2) & 3) == 3) sh = 48;
-				else if (((fmode >> 2) & 3) != 0) sh = 16;
-				Write(0, address, (ushort)(value>>sh));
-				break;
+				throw new NotImplementedException();
 		}
 	}
-
-	//public bool IsMapped(uint address)
-	//{
-	//	return custom.IsMapped(address);
-
-	//}
-
-	//public List<MemoryRange> MappedRange()
-	//{
-	//	return custom.MappedRange();
-	//}
 
 	private ulong chipRAMReads = 0;
 	private ulong chipRAMWrites = 0;
