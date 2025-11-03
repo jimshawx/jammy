@@ -641,9 +641,13 @@ nospritebits:
 		//		col = originalcol;
 		//}
 
+		//in lowres, p=0,1, we want to shift every pixel (0,1) 01 &m==00
+		//in hires, p=0,1,2,3 we want to shift every 2 pixels (1 and 3) &m=0101
+		//in shires, p=0,1,2,3,4,5,6,7 we want to shift every 4 pixels (3 and 7) &m==01230123
 		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
 		int shift = ((p & m) == m)?1:0;
 
+		//in AGA, sprites can have different resolutions
 		int spriteRes = (bplcon3 >> 6) & 3;
 		if (spriteRes != 0)
 		{
@@ -669,11 +673,6 @@ nospritebits:
 
 		if (shift!=0)
 		{
-			//in lowres, p=0,1, we want to shift every pixel (0,1) 01 &m==00
-			//in hires, p=0,1,2,3 we want to shift every 2 pixels (1 and 3) &m=0101
-			//in shires, p=0,1,2,3,4,5,6,7 we want to shift every 4 pixels (3 and 7) &m==01230123
-			//todo: in AGA, sprites can have different resolutions
-
 			for (int s = 0; s < 8; s++)
 				spriteMask[s] >>= shift;
 		}
