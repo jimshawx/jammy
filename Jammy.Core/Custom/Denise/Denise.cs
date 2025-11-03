@@ -152,7 +152,10 @@ public class Denise : IDenise
 		//clock.Ack();
 	}
 
-	public void Reset() { }
+	public void Reset()
+	{
+		bplcon4 = 0x0011;//OSPRM/ESPRM both set to 1 (sprites use bank 1 for colours)
+	}
 
 	private void RunVerticalBlankStart()
 	{
@@ -249,7 +252,6 @@ public class Denise : IDenise
 		sprdatapix[s] = sprdata[s];
 		sprdatbpix[s] = sprdatb[s];
 		this.sprctl[s] = sprctl[s];
-		int spriteRes = (bplcon3>>6)&3;
 		int spriteFetch = (fmode>>2)&3;
 
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
@@ -353,23 +355,19 @@ public class Denise : IDenise
 
 	private uint CopperBitplaneConvertNormal(int p)
 	{
-		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-
 		uint pix = bpldatPix.GetPixel(planes);
 		uint col = truecolour[pix];
 			
 		//remember the last colour for HAM modes
 		lastcol = col;
 
-		DoSprites(ref col, (byte)pix, (p&m)==m);
+		DoSprites(ref col, (byte)pix, p);
 
 		return col;
 	}
 
 	private uint CopperBitplaneConvertDPF(int p)
 	{
-		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-
 		uint col;
 
 		uint pix = bpldatPix.GetPixel(planes);
@@ -390,15 +388,13 @@ public class Denise : IDenise
 		//remember the last colour for HAM modes
 		lastcol = col;
 
-		DoSprites(ref col, (byte)pix, (p & m) == m);
+		DoSprites(ref col, (byte)pix, p);
 
 		return col;
 	}
 
 	private uint CopperBitplaneConvertOther(int p)
 	{
-		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
-
 		uint col;
 
 		uint pix = bpldatPix.GetPixel(planes);
@@ -505,14 +501,14 @@ public class Denise : IDenise
 		//remember the last colour for HAM modes
 		lastcol = col;
 
-		DoSprites(ref col, (byte)pix, (p & m) == m);
+		DoSprites(ref col, (byte)pix, p);
 
 		return col;
 	}
 
 
 	private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
-	private void DoSprites(ref uint col, byte pix, bool shift)
+	private void DoSprites(ref uint col, byte pix, int p)
 	{
 		//DoSprites2(ref col, pix, shift);
 		//return;
@@ -559,6 +555,10 @@ public class Denise : IDenise
 
 		uint scol = 0;
 		int sp = 7;
+		//bplcon4 defaults to 0x0011
+		uint bankEven = (uint)((bplcon4 & 0xf) * 16);
+		uint bankOdd = (uint)(((bplcon4>>4) & 0xf) * 16);
+
 		while (sp >= 0)
 		{
 			//if first, or both are attached (check the attached bit on the odd sprite)
@@ -573,7 +573,7 @@ public class Denise : IDenise
 
 				if (scol != 0)
 				{ 
-					col = truecolour[16 + scol];
+					col = truecolour[scol + bankEven];
 				}
 				sp -= 2;
 				active >>= 2;
@@ -587,7 +587,7 @@ public class Denise : IDenise
 
 				if (scol != 0)
 				{ 
-					col = truecolour[16 + 4 * (sp >> 1) + scol];
+					col = truecolour[4 * (sp >> 1) + scol + bankOdd];
 				}
 
 				sp--;
@@ -600,7 +600,7 @@ public class Denise : IDenise
 
 				if (scol != 0)
 				{
-					col = truecolour[16 + 4 * (sp >> 1) + scol];
+					col = truecolour[4 * (sp >> 1) + scol + bankEven];
 				}
 
 				sp--;
@@ -641,7 +641,33 @@ nospritebits:
 		//		col = originalcol;
 		//}
 
-		if (shift)
+		int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
+		int shift = ((p & m) == m)?1:0;
+
+		int spriteRes = (bplcon3 >> 6) & 3;
+		if (spriteRes != 0)
+		{
+			if (pixelLoop == 2)//lowres screen
+			{ 
+				if (spriteRes == 1) shift = 1; //lowres
+				else if (spriteRes == 2) shift = 2; //hires
+				else if (spriteRes == 3) shift = 4; //shres
+			}
+			else if (pixelLoop == 4)//hires screen
+			{
+				if (spriteRes == 1) shift = shift = p & 1; //lowres
+				else if (spriteRes == 2) shift = 1; //hires
+				else if (spriteRes == 3) shift = 2; //shres
+			}
+			else if (pixelLoop == 8)
+			{
+				if (spriteRes == 1) shift = shift = ((p & 3)==3)?1:0; //lowres
+				else if (spriteRes == 2) shift = p & 1; //hires
+				else if (spriteRes == 3) shift = 1; //shres
+			}
+		}
+
+		if (shift!=0)
 		{
 			//in lowres, p=0,1, we want to shift every pixel (0,1) 01 &m==00
 			//in hires, p=0,1,2,3 we want to shift every 2 pixels (1 and 3) &m=0101
@@ -649,7 +675,7 @@ nospritebits:
 			//todo: in AGA, sprites can have different resolutions
 
 			for (int s = 0; s < 8; s++)
-				spriteMask[s] >>= 1;
+				spriteMask[s] >>= shift;
 		}
 	}
 
