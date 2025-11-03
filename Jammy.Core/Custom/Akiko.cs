@@ -277,6 +277,9 @@ namespace Jammy.Core.Custom
 				logger.LogTrace("Insert Disk");
 				//hack: insert a disk
 
+				var cdrom = new RealCDImage();
+				cddrive.InsertImage(cdrom);
+
 				byte[] insert = { 0x0a, ismedia, 0 };
 				ismedia ^= 0x01;
 				CDDrive.Checksum(insert);
@@ -799,6 +802,9 @@ namespace Jammy.Core.Custom
 			uint data = (uint)(dmadata + k * 0x1000);
 			byte sector = (byte)memory.Read(0, data + 3, Size.Byte);
 			var sectorData = cddrive.ReadSector(sector);
+
+			for (uint i = 4; i < sectorData.Length; i++)
+				memory.Write(0, data + i, sectorData[i], Size.Byte);
 		}
 
 		[Persist]
