@@ -431,6 +431,7 @@ namespace Jammy.Core.Custom
 				return agnus.DebugChipsetRead(address, size);
 			}
 			else if (address == ChipRegs.CLXCON || address == ChipRegs.CLXCON2 || address == ChipRegs.CLXDAT
+				|| address == ChipRegs.BPLCON1 || address == ChipRegs.BPLCON2 || address == ChipRegs.BPLCON3 || address == ChipRegs.BPLCON4
 					 || (address >= ChipRegs.COLOR00 && address <= ChipRegs.COLOR31)
 					 || address == ChipRegs.DIWSTRT || address == ChipRegs.DIWSTOP)
 			{
