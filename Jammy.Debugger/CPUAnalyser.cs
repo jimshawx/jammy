@@ -473,50 +473,39 @@ namespace Jammy.Debugger
 
 		public uint read32(uint address)
 		{
-			//eas.Add(new EA(address, EAType.Read, Size.Long));
-			uint value = memoryMapper.UnsafeRead(address, Size.Long);
-			return value;
+			return memoryMapper.UnsafeRead(address, Size.Long);
 		}
 
 		public uint fetch32(uint address)
 		{
-			uint value = memoryMapper.UnsafeRead(address, Size.Long);
-			return value;
+			return memoryMapper.UnsafeRead(address, Size.Long);
 		}
 
 		public ushort read16(uint address)
 		{
-			//eas.Add(new EA(address, EAType.Read, Size.Word));
-			ushort value = (ushort)memoryMapper.UnsafeRead(address, Size.Word);
-			return value;
+			return (ushort)memoryMapper.UnsafeRead(address, Size.Word);
 		}
 
 		public ushort fetch16(uint address)
 		{
-			ushort value = (ushort)memoryMapper.UnsafeRead(address, Size.Word);
-			return value;
+			return (ushort)memoryMapper.UnsafeRead(address, Size.Word);
 		}
 
 		public byte read8(uint address)
 		{
-			//eas.Add(new EA(address, EAType.Read, Size.Byte));
-			byte value = (byte)memoryMapper.UnsafeRead(address, Size.Byte);
-			return value;
+			return (byte)memoryMapper.UnsafeRead(address, Size.Byte);
 		}
 
 		public void write32(uint address, uint value)
 		{
-			//eas.Add(new EA(address, EAType.Write, Size.Long));
 		}
 
 		public void write16(uint address, ushort value)
 		{
-			//eas.Add(new EA(address, EAType.Write, Size.Word));
 		}
 
 		public void write8(uint address, byte value)
 		{
-			//eas.Add(new EA(address, EAType.Write, Size.Byte));
 		}
 
 		private void push32(uint value)
@@ -549,7 +538,7 @@ namespace Jammy.Debugger
 		{
 			int m = (type >> 3) & 7;
 			var v = fetchEA2(type, size);
-			if (m<2)//don't log Dx/Ax
+			if (m >= 2)//don't log Dx/Ax
 				eas.Add(new EA(v, EAType.Write, size));
 			return v;
 		}
@@ -2189,6 +2178,8 @@ namespace Jammy.Debugger
 
 			uint target = pc + (uint)(short)fetch16(pc);
 			pc += 2;
+
+			eas.Add(new EA(target, EAType.Jump, Size.Long));
 
 			int cond = (type >> 8) & 0xf;
 			switch (cond)

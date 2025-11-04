@@ -14,7 +14,12 @@ using System.Text;
 
 namespace Jammy.Disassembler
 {
-	public class Disassembler
+	public interface IDisassembler
+	{
+		DAsm Disassemble(uint add, IEnumerable<byte> m);
+	}
+
+	public class Disassembler : IDisassembler
 	{
 		private StringBuilder asm;
 		private uint pc;

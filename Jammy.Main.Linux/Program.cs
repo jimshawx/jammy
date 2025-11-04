@@ -120,6 +120,7 @@ public class Program
 			.AddSingleton<IDiskAnalysis, DiskAnalysis>()
 			.AddSingleton<ILabeller, Labeller>()
 			.AddSingleton<IDisassembly, Disassembly>()
+			.AddSingleton<IDisassembler, Disassembler.Disassembler>()
 			.AddSingleton<IAnalysis, Analysis>()
 			.AddSingleton<IAnalyser, Analyser>()
 			.AddSingleton<IObjectMapper, ObjectMapper>()

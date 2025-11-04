@@ -20,19 +20,20 @@ namespace Jammy.Disassembler
 	public class Disassembly : IDisassembly
 	{
 		private readonly IBreakpointCollection breakpoints;
-		private readonly Disassembler disassembler;
+		private readonly IDisassembler disassembler;
 		private readonly ILogger logger;
 		private readonly IAnalysis analysis;
 		private readonly IDebugMemoryMapper memory;
 
 		public Disassembly(IDebugMemoryMapper memory, IBreakpointCollection breakpoints,
+			IDisassembler disassembler,
 			ILogger<Disassembly> logger, IAnalysis analysis)
 		{
 			this.logger = logger;
 			this.analysis = analysis;
 			this.memory = memory;
 			this.breakpoints = breakpoints;
-			disassembler = new Disassembler();
+			this.disassembler = disassembler;
 
 			Clear();
 		}
