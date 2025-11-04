@@ -32,7 +32,7 @@ namespace Jammy.Core.Custom.Denise
 
 		public void Load(JObject obj)
 		{
-			throw new System.NotImplementedException();
+			bp.Load(obj);
 		}
 
 		public void NextPixel()
@@ -50,7 +50,7 @@ namespace Jammy.Core.Custom.Denise
 
 		public void Save(JArray obj)
 		{
-			throw new System.NotImplementedException();
+			bp.Save(obj);
 		}
 
 		public void SetPixelBitMask(uint pixelBits)
