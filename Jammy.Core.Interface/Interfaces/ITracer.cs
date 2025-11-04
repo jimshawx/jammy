@@ -11,7 +11,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Trace(uint pc);
 		void Trace(string v, uint pc, Regs regs);
 		void DumpTrace();
-		void TraceAsm(uint pc, Regs regs);
+		void TraceAsm(Regs regs);
 		void WriteTrace();
 		void Enable(bool enabled);
 	}

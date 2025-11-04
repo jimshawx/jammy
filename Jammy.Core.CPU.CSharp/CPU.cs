@@ -100,7 +100,8 @@ namespace Jammy.Core.CPU.CSharp
 		private Regs gregs = new Regs();
 		private ushort Fetch(uint pc)
 		{
-			tracer.TraceAsm(pc, GetRegs(gregs));
+			if (settings.Tracer.IsEnabled())
+				tracer.TraceAsm(GetRegs(gregs));
 			return fetch16(pc);
 		}
 

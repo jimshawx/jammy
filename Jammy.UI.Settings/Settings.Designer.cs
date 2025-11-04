@@ -53,7 +53,9 @@ namespace Jammy.UI.Settings
 			btnROMPick = new System.Windows.Forms.Button();
 			panel4 = new System.Windows.Forms.Panel();
 			groupBox5 = new System.Windows.Forms.GroupBox();
+			rbFloppyAccurate = new System.Windows.Forms.RadioButton();
 			btnDF3Eject = new System.Windows.Forms.Button();
+			rbFloppyFast = new System.Windows.Forms.RadioButton();
 			btnDF2Eject = new System.Windows.Forms.Button();
 			btnDF1Eject = new System.Windows.Forms.Button();
 			btnDF0Eject = new System.Windows.Forms.Button();
@@ -91,14 +93,13 @@ namespace Jammy.UI.Settings
 			rbSynchronous = new System.Windows.Forms.RadioButton();
 			rbImmediate = new System.Windows.Forms.RadioButton();
 			groupBox6 = new System.Windows.Forms.GroupBox();
+			cbTrace = new System.Windows.Forms.CheckBox();
 			cbDebugging = new System.Windows.Forms.CheckBox();
 			cbAudio = new System.Windows.Forms.CheckBox();
 			panel7 = new System.Windows.Forms.Panel();
 			groupBox7 = new System.Windows.Forms.GroupBox();
 			nudHardDiskCount = new System.Windows.Forms.NumericUpDown();
 			cbDiskController = new System.Windows.Forms.ComboBox();
-			rbFloppyFast = new System.Windows.Forms.RadioButton();
-			rbFloppyAccurate = new System.Windows.Forms.RadioButton();
 			panel1.SuspendLayout();
 			groupBox1.SuspendLayout();
 			groupBox2.SuspendLayout();
@@ -296,7 +297,7 @@ namespace Jammy.UI.Settings
 			panel3.Location = new System.Drawing.Point(475, 577);
 			panel3.Margin = new System.Windows.Forms.Padding(6);
 			panel3.Name = "panel3";
-			panel3.Size = new System.Drawing.Size(789, 128);
+			panel3.Size = new System.Drawing.Size(802, 128);
 			panel3.TabIndex = 10;
 			// 
 			// groupBox3
@@ -308,7 +309,7 @@ namespace Jammy.UI.Settings
 			groupBox3.Margin = new System.Windows.Forms.Padding(6);
 			groupBox3.Name = "groupBox3";
 			groupBox3.Padding = new System.Windows.Forms.Padding(6);
-			groupBox3.Size = new System.Drawing.Size(776, 117);
+			groupBox3.Size = new System.Drawing.Size(765, 117);
 			groupBox3.TabIndex = 11;
 			groupBox3.TabStop = false;
 			groupBox3.Text = "Kickstart";
@@ -331,7 +332,7 @@ namespace Jammy.UI.Settings
 			panel4.Location = new System.Drawing.Point(475, 90);
 			panel4.Margin = new System.Windows.Forms.Padding(6);
 			panel4.Name = "panel4";
-			panel4.Size = new System.Drawing.Size(789, 345);
+			panel4.Size = new System.Drawing.Size(802, 345);
 			panel4.TabIndex = 11;
 			// 
 			// groupBox5
@@ -361,6 +362,17 @@ namespace Jammy.UI.Settings
 			groupBox5.TabStop = false;
 			groupBox5.Text = "Floppy Disk";
 			// 
+			// rbFloppyAccurate
+			// 
+			rbFloppyAccurate.AutoSize = true;
+			rbFloppyAccurate.ForeColor = System.Drawing.SystemColors.Highlight;
+			rbFloppyAccurate.Location = new System.Drawing.Point(105, 287);
+			rbFloppyAccurate.Name = "rbFloppyAccurate";
+			rbFloppyAccurate.Size = new System.Drawing.Size(137, 36);
+			rbFloppyAccurate.TabIndex = 25;
+			rbFloppyAccurate.Text = "Accurate";
+			rbFloppyAccurate.UseVisualStyleBackColor = true;
+			// 
 			// btnDF3Eject
 			// 
 			btnDF3Eject.ForeColor = System.Drawing.SystemColors.WindowText;
@@ -371,6 +383,19 @@ namespace Jammy.UI.Settings
 			btnDF3Eject.Text = "⏏";
 			btnDF3Eject.UseVisualStyleBackColor = true;
 			btnDF3Eject.Click += btnDF3Eject_Click;
+			// 
+			// rbFloppyFast
+			// 
+			rbFloppyFast.AutoSize = true;
+			rbFloppyFast.Checked = true;
+			rbFloppyFast.ForeColor = System.Drawing.SystemColors.Highlight;
+			rbFloppyFast.Location = new System.Drawing.Point(13, 287);
+			rbFloppyFast.Name = "rbFloppyFast";
+			rbFloppyFast.Size = new System.Drawing.Size(86, 36);
+			rbFloppyFast.TabIndex = 24;
+			rbFloppyFast.TabStop = true;
+			rbFloppyFast.Text = "Fast";
+			rbFloppyFast.UseVisualStyleBackColor = true;
 			// 
 			// btnDF2Eject
 			// 
@@ -748,7 +773,7 @@ namespace Jammy.UI.Settings
 			panel6.Location = new System.Drawing.Point(475, 718);
 			panel6.Margin = new System.Windows.Forms.Padding(6);
 			panel6.Name = "panel6";
-			panel6.Size = new System.Drawing.Size(789, 111);
+			panel6.Size = new System.Drawing.Size(802, 111);
 			panel6.TabIndex = 22;
 			// 
 			// groupBox8
@@ -756,9 +781,9 @@ namespace Jammy.UI.Settings
 			groupBox8.Controls.Add(rbSynchronous);
 			groupBox8.Controls.Add(rbImmediate);
 			groupBox8.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox8.Location = new System.Drawing.Point(358, 3);
+			groupBox8.Location = new System.Drawing.Point(416, 3);
 			groupBox8.Name = "groupBox8";
-			groupBox8.Size = new System.Drawing.Size(418, 105);
+			groupBox8.Size = new System.Drawing.Size(376, 105);
 			groupBox8.TabIndex = 1;
 			groupBox8.TabStop = false;
 			groupBox8.Text = "Blitter";
@@ -767,7 +792,7 @@ namespace Jammy.UI.Settings
 			// 
 			rbSynchronous.AutoSize = true;
 			rbSynchronous.Checked = true;
-			rbSynchronous.Location = new System.Drawing.Point(186, 44);
+			rbSynchronous.Location = new System.Drawing.Point(186, 43);
 			rbSynchronous.Name = "rbSynchronous";
 			rbSynchronous.Size = new System.Drawing.Size(182, 36);
 			rbSynchronous.TabIndex = 1;
@@ -778,7 +803,7 @@ namespace Jammy.UI.Settings
 			// rbImmediate
 			// 
 			rbImmediate.AutoSize = true;
-			rbImmediate.Location = new System.Drawing.Point(21, 44);
+			rbImmediate.Location = new System.Drawing.Point(21, 43);
 			rbImmediate.Name = "rbImmediate";
 			rbImmediate.Size = new System.Drawing.Size(159, 36);
 			rbImmediate.TabIndex = 0;
@@ -787,6 +812,7 @@ namespace Jammy.UI.Settings
 			// 
 			// groupBox6
 			// 
+			groupBox6.Controls.Add(cbTrace);
 			groupBox6.Controls.Add(cbDebugging);
 			groupBox6.Controls.Add(cbAudio);
 			groupBox6.ForeColor = System.Drawing.SystemColors.Highlight;
@@ -794,15 +820,25 @@ namespace Jammy.UI.Settings
 			groupBox6.Margin = new System.Windows.Forms.Padding(6);
 			groupBox6.Name = "groupBox6";
 			groupBox6.Padding = new System.Windows.Forms.Padding(6);
-			groupBox6.Size = new System.Drawing.Size(347, 109);
+			groupBox6.Size = new System.Drawing.Size(405, 109);
 			groupBox6.TabIndex = 0;
 			groupBox6.TabStop = false;
 			groupBox6.Text = "Miscellaneous";
 			// 
+			// cbTrace
+			// 
+			cbTrace.AutoSize = true;
+			cbTrace.Location = new System.Drawing.Point(307, 47);
+			cbTrace.Name = "cbTrace";
+			cbTrace.Size = new System.Drawing.Size(101, 36);
+			cbTrace.TabIndex = 2;
+			cbTrace.Text = "Trace";
+			cbTrace.UseVisualStyleBackColor = true;
+			// 
 			// cbDebugging
 			// 
 			cbDebugging.AutoSize = true;
-			cbDebugging.Location = new System.Drawing.Point(130, 47);
+			cbDebugging.Location = new System.Drawing.Point(132, 47);
 			cbDebugging.Margin = new System.Windows.Forms.Padding(6);
 			cbDebugging.Name = "cbDebugging";
 			cbDebugging.Size = new System.Drawing.Size(166, 36);
@@ -826,7 +862,7 @@ namespace Jammy.UI.Settings
 			panel7.Location = new System.Drawing.Point(475, 447);
 			panel7.Margin = new System.Windows.Forms.Padding(6);
 			panel7.Name = "panel7";
-			panel7.Size = new System.Drawing.Size(789, 119);
+			panel7.Size = new System.Drawing.Size(802, 119);
 			panel7.TabIndex = 23;
 			// 
 			// groupBox7
@@ -863,35 +899,11 @@ namespace Jammy.UI.Settings
 			cbDiskController.Size = new System.Drawing.Size(322, 40);
 			cbDiskController.TabIndex = 0;
 			// 
-			// rbFloppyFast
-			// 
-			rbFloppyFast.AutoSize = true;
-			rbFloppyFast.Checked = true;
-			rbFloppyFast.ForeColor = System.Drawing.SystemColors.Highlight;
-			rbFloppyFast.Location = new System.Drawing.Point(13, 287);
-			rbFloppyFast.Name = "rbFloppyFast";
-			rbFloppyFast.Size = new System.Drawing.Size(86, 36);
-			rbFloppyFast.TabIndex = 24;
-			rbFloppyFast.TabStop = true;
-			rbFloppyFast.Text = "Fast";
-			rbFloppyFast.UseVisualStyleBackColor = true;
-			// 
-			// rbFloppyAccurate
-			// 
-			rbFloppyAccurate.AutoSize = true;
-			rbFloppyAccurate.ForeColor = System.Drawing.SystemColors.Highlight;
-			rbFloppyAccurate.Location = new System.Drawing.Point(105, 287);
-			rbFloppyAccurate.Name = "rbFloppyAccurate";
-			rbFloppyAccurate.Size = new System.Drawing.Size(137, 36);
-			rbFloppyAccurate.TabIndex = 25;
-			rbFloppyAccurate.Text = "Accurate";
-			rbFloppyAccurate.UseVisualStyleBackColor = true;
-			// 
 			// Settings
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			ClientSize = new System.Drawing.Size(1278, 910);
+			ClientSize = new System.Drawing.Size(1292, 910);
 			Controls.Add(groupBox2);
 			Controls.Add(groupBox7);
 			Controls.Add(panel7);
@@ -1005,5 +1017,6 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.Button btnDF1Eject;
 		private System.Windows.Forms.RadioButton rbFloppyFast;
 		private System.Windows.Forms.RadioButton rbFloppyAccurate;
+		private System.Windows.Forms.CheckBox cbTrace;
 	}
 }

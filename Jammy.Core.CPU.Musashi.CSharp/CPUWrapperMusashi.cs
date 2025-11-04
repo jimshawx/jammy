@@ -61,13 +61,13 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 
 		private int cycles=0;
 
-		private Regs tRegs = new Regs();
+		private Regs tRegs = new();
 		public void Emulate()
 		{
 			CheckInterrupt();
 
-			//GetRegs(tRegs);
-			//tracer.TraceAsm(tRegs.PC, tRegs);
+			if (settings.Tracer.IsEnabled())
+				tracer.TraceAsm(GetRegs(tRegs));
 
 			cycles = M68KCPU.m68k_execute(1);
 			

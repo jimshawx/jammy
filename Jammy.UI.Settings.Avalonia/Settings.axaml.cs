@@ -382,7 +382,7 @@ namespace Jammy.UI.Settings.Avalonia
 			cbAudio.IsChecked = currentSettings.Audio != AudioDriver.Null;
 
 			//Debugging
-			cbDebugging.IsChecked = currentSettings.Debugger == Feature.Enabled;
+			cbDebugging.IsChecked = currentSettings.Debugger.IsEnabled();
 
 			//Blitter
 			rbImmediate.IsChecked = false;//currentSettings.BlitterMode == BlitterMode.Immediate;
@@ -443,6 +443,7 @@ namespace Jammy.UI.Settings.Avalonia
 
 			//Debugging
 			currentSettings.Debugger = Default(cbDebugging.IsChecked) ? Feature.Enabled : Feature.Disabled;
+			currentSettings.Tracer = Feature.Disabled;
 
 			//Blitter
 			currentSettings.BlitterMode = Default(rbImmediate.IsChecked) ? BlitterMode.Immediate : BlitterMode.Synchronous;

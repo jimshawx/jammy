@@ -337,7 +337,8 @@ namespace Jammy.UI.Settings
 			cbAudio.Checked = currentSettings.Audio != AudioDriver.Null;
 
 			//Debugging
-			cbDebugging.Checked = currentSettings.Debugger == Feature.Enabled;
+			cbDebugging.Checked = currentSettings.Debugger.IsEnabled();
+			cbTrace.Checked = currentSettings.Tracer.IsEnabled();
 
 			//Blitter
 			rbImmediate.Checked = currentSettings.BlitterMode == BlitterMode.Immediate;
@@ -402,6 +403,7 @@ namespace Jammy.UI.Settings
 
 			//Debugging
 			currentSettings.Debugger = cbDebugging.Checked ? Feature.Enabled : Feature.Disabled;
+			currentSettings.Tracer = cbTrace.Checked ? Feature.Enabled : Feature.Disabled;
 
 			//Blitter
 			currentSettings.BlitterMode = rbImmediate.Checked ? BlitterMode.Immediate : BlitterMode.Synchronous;

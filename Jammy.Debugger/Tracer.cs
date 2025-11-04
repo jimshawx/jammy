@@ -33,7 +33,7 @@ namespace Jammy.Debugger
 			logger.LogTrace("There is no trace being recorded");
 		}
 
-		public void TraceAsm(uint pc, Regs regs) { }
+		public void TraceAsm(Regs regs) { }
 
 		public void WriteTrace() { }
 
@@ -121,18 +121,18 @@ namespace Jammy.Debugger
 				s.WriteLine(t);
 		}
 
-		public void TraceAsm(uint pc, Regs regs)
+		public void TraceAsm(Regs regs)
 		{
 			var ana = cpuAnalyser.Analyse(regs);
 			if (ana.Any())				
 			{ 
 				var rv = new InstructionAnalysis();
-				rv.PC = pc;
+				rv.PC = regs.PC;
 				rv.EffectiveAddresses.AddRange(ana);
 				instructionAnalysisDatabase.Add(rv);
 			}
 
-			Trace(DisassembleAddress(pc), pc, regs.Clone());
+			Trace(DisassembleAddress(regs.PC), regs.PC, regs.Clone());
 		}
 
 		private string DisassembleAddress(uint pc)
