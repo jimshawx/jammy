@@ -52,5 +52,10 @@ namespace Jammy.Debugger
 		{
 			instructionAnalysis[analysis.PC] = analysis;
 		}
+
+		public bool Has(uint address)
+		{
+			return instructionAnalysis.ContainsKey(address);
+		}
 	}
 }

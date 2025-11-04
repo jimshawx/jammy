@@ -23,5 +23,6 @@ namespace Jammy.Interface
 	{
 		InstructionAnalysis GetInstructionAnalysis(uint address);
 		void Add(InstructionAnalysis analysis);
+		bool Has(uint address);
 	}
 }

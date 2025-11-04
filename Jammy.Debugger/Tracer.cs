@@ -123,13 +123,17 @@ namespace Jammy.Debugger
 
 		public void TraceAsm(Regs regs)
 		{
-			var ana = cpuAnalyser.Analyse(regs);
-			if (ana.Any())				
+			//for now, only call this once, it's dead slow
+			if (!instructionAnalysisDatabase.Has(regs.PC))
 			{ 
-				var rv = new InstructionAnalysis();
-				rv.PC = regs.PC;
-				rv.EffectiveAddresses.AddRange(ana);
-				instructionAnalysisDatabase.Add(rv);
+				var ana = cpuAnalyser.Analyse(regs);
+				if (ana.Any())				
+				{ 
+					var rv = new InstructionAnalysis();
+					rv.PC = regs.PC;
+					rv.EffectiveAddresses.AddRange(ana);
+					instructionAnalysisDatabase.Add(rv);
+				}
 			}
 
 			Trace(DisassembleAddress(regs.PC), regs.PC, regs.Clone());
