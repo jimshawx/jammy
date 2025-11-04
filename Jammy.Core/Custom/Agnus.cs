@@ -402,9 +402,6 @@ public class Agnus : IAgnus
 
 	public void UpdateSprites()
 	{
-		//if (plane == 0 && lineState == DMALineState.Fetching)
-		//	denise.WriteBitplanes(bpldat);
-
 		//if the sprite horiz position matches, clock the sprite data in
 		for (uint s = 0; s < 8; s++)
 		{
@@ -413,6 +410,7 @@ public class Agnus : IAgnus
 			{
 				int hstart = HStart(s);
 
+				//todo: this is wrong, because it only works at agnus tick resolution
 				if (clock.DeniseHorizontalPos == (uint)(hstart & 0xfffe))
 				{
 					//logger.LogTrace($"SPR{s} {clock} {MergeBP(sprdata[s], sprdatb[s])} h:{sprpos[s]&0xff,3} v:{sprpos[s]>>8,3} {sprctl[s].ToBin()}");

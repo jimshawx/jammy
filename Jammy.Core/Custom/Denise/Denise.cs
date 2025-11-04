@@ -309,8 +309,6 @@ public class Denise : IDenise
 	private readonly ulong[] spriteMask = new ulong[8];
 	[Persist]
 	private readonly int[] clx = new int[8];
-	[Persist]
-	private readonly byte[] sprpix = new byte[8];
 
 	private Func<int,uint> GetModeConversion()
 	{
