@@ -32,14 +32,15 @@ So here is my humble attempt at an Amiga emulation.
 ### The not so good stuff
 
 * There are lot of problems with DMA timing
+* Playfield/Sprite priorities incomplete
 * More efforts need to be made to get closer to cycle exact
-* Akiko not implemented
+* CD32 CDROM and NVRAM not working
 * Emulation of CPUs running faster than the standard 7MHz is poor
 * There are still many pieces of software that don't work yet
 * There's a broken IPF floppy disk reader
 
 The C# 68000 is slightly faster than the C Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
-In an effort to fix this, I have ported most of Musashi to C#, and it is significantly faster now.
+In an effort to fix this, I have ported Musashi to C#, and it is significantly faster now.
 
 The C Musashi 68030 option supports the 68881 and MMU instructions. There didn't seem any real need to add a 68040 or 68060 option because of this.
 
