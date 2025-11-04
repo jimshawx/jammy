@@ -89,7 +89,6 @@ public class Denise : IDenise
 
 	public void Emulate()
 	{
-		//clock.WaitForTick();
 		var clockState = clock.ClockState;
 
 		if ((clockState&ChipsetClockState.StartOfFrame)!=0)
@@ -141,15 +140,11 @@ public class Denise : IDenise
 			RunDeniseTick(1,7);
 		}
 
-
-
 		if ((clockState & ChipsetClockState.EndOfLine)!=0)
 			EndDeniseLine();
 
 		if ((clockState & ChipsetClockState.EndOfFrame)!=0)
 			RunVerticalBlankEnd();
-
-		//clock.Ack();
 	}
 
 	public void Reset()
@@ -272,16 +267,6 @@ public class Denise : IDenise
 
 	private void FirstPixel()
 	{
-		uint pixelBits;
-		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
-			pixelBits = 15;
-		else if ((fmode & 3) == 3)
-			pixelBits = 63;
-		else
-			pixelBits = 31;
-
-		bpldatPix.SetPixelBitMask(pixelBits);
-
 		//clear sprites from wrapping from the right
 		for (int s = 0; s < 8; s++)
 			spriteMask[s] = 0;
@@ -855,6 +840,16 @@ end loop
 	private void UpdateFMODE()
 	{
 		pixelAction = GetModeConversion();
+
+		uint pixelBits;
+		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
+			pixelBits = 15;
+		else if ((fmode & 3) == 3)
+			pixelBits = 63;
+		else
+			pixelBits = 31;
+
+		bpldatPix.SetPixelBitMask(pixelBits);
 	}
 
 	private void UpdateBPLCON4()
