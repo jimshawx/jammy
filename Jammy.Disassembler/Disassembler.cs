@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Types.Types;
+using Jammy.Interface;
 using Jammy.Types;
 using System;
 using System.Collections.Generic;
@@ -9,23 +10,27 @@ using System.Text;
 // ReSharper disable InconsistentNaming
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Disassembler
 {
-	public interface IDisassembler
-	{
-		DAsm Disassemble(uint add, IEnumerable<byte> m);
-	}
-
 	public class Disassembler : IDisassembler
 	{
-		private StringBuilder asm;
+		private readonly IEADatabase eaDatabase;
+		private readonly IInstructionAnalysisDatabase instructionAnalysisDatabase;
+		private readonly StringBuilder asm = new StringBuilder();
+
 		private uint pc;
 		private byte[] memory;
 		private uint address;
 		private DAsm dasm;
+
+		public Disassembler(IEADatabase eaDatabase, IInstructionAnalysisDatabase instructionAnalysisDatabase)
+		{
+			this.eaDatabase = eaDatabase;
+			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
+		}
 
 		public DAsm Disassemble(uint add, IEnumerable<byte> m)
 		{
@@ -36,7 +41,7 @@ namespace Jammy.Disassembler
 				//memoryE = m;
 				pc = 0;
 				this.address = add;
-				asm = new StringBuilder();
+				asm.Clear();
 				ushort ins = read16(pc);
 				pc += 2;
 
@@ -86,6 +91,19 @@ namespace Jammy.Disassembler
 					default:
 						Append($"unknown_instruction_{ins:X4}");
 						break;
+				}
+
+				var ia = instructionAnalysisDatabase.GetInstructionAnalysis(this.address);
+				if (ia != null)
+				{
+					foreach (var i in ia.EffectiveAddresses)
+					{ 
+						var ea = eaDatabase.GetEAName(i.Ea);
+						if (ea != null)
+						{	
+							asm.Append(' '); asm.Append(ea);
+						}
+					}
 				}
 
 				if (pc > memory.Length)

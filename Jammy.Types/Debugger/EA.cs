@@ -26,10 +26,13 @@ namespace Jammy.Types.Debugger
 		public uint Ea { get; set; }
 		public EAType Type { get; set; }
 		public Size Size { get; set; }
+
+		public string Name { get; set; }
 	}
 
 	public class InstructionAnalysis
 	{
+		public uint PC { get; set;}
 		public List<EA> EffectiveAddresses { get; } = new();
 	}
 }

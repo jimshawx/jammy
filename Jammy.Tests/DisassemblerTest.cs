@@ -3,6 +3,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Debugger;
 using Jammy.Disassembler;
 using Jammy.Disassembler.Analysers;
 using Jammy.Extensions.Extensions;
@@ -24,7 +25,7 @@ namespace Jammy.Tests
 	[TestFixture]
 	public class DisassemblerTest
 	{
-		private Disassembler.Disassembler disassembler;
+		private IDisassembler disassembler;
 		private ServiceProvider serviceProvider;
 		private ILogger logger;
 		private IHunkProcessor hunkProcessor;
@@ -52,6 +53,9 @@ namespace Jammy.Tests
 
 				//just for the full disassembler
 				.AddSingleton<IDisassembly, Disassembly>()
+				.AddSingleton<IDisassembler, Disassembler.Disassembler>()
+				.AddSingleton<IEADatabase, EADatabase>()
+				.AddSingleton<IInstructionAnalysisDatabase, InstructionAnalysisDatabase>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<IAnalysis, Analysis>()
 				.AddSingleton<IAnalyser, Analyser>()
@@ -78,7 +82,7 @@ namespace Jammy.Tests
 			analyser = serviceProvider.GetRequiredService<IAnalyser>();
 			disassembly = serviceProvider.GetRequiredService<IDisassembly>();
 
-			disassembler = new Disassembler.Disassembler();
+			disassembler = serviceProvider.GetRequiredService<IDisassembler>();
 		}
 
 		[Test]

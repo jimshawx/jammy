@@ -52,6 +52,9 @@ namespace Jammy.Tests
 			.AddSingleton<ITracer, NullTracer>()
 			.AddSingleton<ICPUTestRig, CPUTestRig>()
 			.AddSingleton<ITestMemory, TestMemory>()
+			.AddSingleton<IDisassembler, Disassembler.Disassembler>()
+			.AddSingleton<IEADatabase, EADatabase>()
+			.AddSingleton<IInstructionAnalysisDatabase, InstructionAnalysisDatabase>()
 			.AddSingleton<IMemoryMapper>(x => (IMemoryMapper)x.GetRequiredService<ITestMemory>())
 			.AddSingleton<IDebugMemoryMapper>(x => (IDebugMemoryMapper)x.GetRequiredService<ITestMemory>())
 			.AddSingleton<IMemoryMappedDevice>(x => (IMemoryMappedDevice)x.GetRequiredService<ITestMemory>());
@@ -176,13 +179,14 @@ namespace Jammy.Tests
 		private class CPUTestRig : ICPUTestRig
 		{
 			private readonly IDebugMemoryMapper memory;
+			private readonly IDisassembler disassembler;
 			private readonly ICPU cpu;
-			private readonly Jammy.Disassembler.Disassembler disassembler;
 			private readonly ITestMemory testMemory;
 
-			public CPUTestRig(ICPU cpu, IDebugMemoryMapper memory, ITestMemory testMemory)
+			public CPUTestRig(ICPU cpu, IDebugMemoryMapper memory, IDisassembler disassembler, ITestMemory testMemory)
 			{
 				this.memory = memory;
+				this.disassembler = disassembler;
 				this.testMemory = testMemory;
 				this.cpu = cpu;
 
@@ -199,9 +203,6 @@ namespace Jammy.Tests
 				trapSentinel = 0xDEAD0000;
 				for (uint i = 0x19*4; i <= 0x1f*4; i+=4)
 					memory.UnsafeWrite32(i, trapSentinel+=4);
-
-				disassembler = new Jammy.Disassembler.Disassembler();
-
 			}
 
 			public void SetTraps()

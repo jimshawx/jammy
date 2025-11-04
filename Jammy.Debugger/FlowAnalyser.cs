@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Debugger.Types;
+using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -14,14 +15,14 @@ namespace Jammy.Debugger
 
 	public class FlowAnalyser : IFlowAnalyser
 	{
+		private readonly IDisassembler disassembler;
 		private readonly ILogger logger;
-		private readonly Jammy.Disassembler.Disassembler disassembler;
 		private readonly IDebugMemoryMapper memory; 
 
-		public FlowAnalyser(IMemoryMapper memory, ILogger<FlowAnalyser> logger)
+		public FlowAnalyser(IMemoryMapper memory, IDisassembler disassembler, ILogger<FlowAnalyser> logger)
 		{
+			this.disassembler = disassembler;
 			this.logger = logger;
-			disassembler = new Jammy.Disassembler.Disassembler();
 			this.memory = (IDebugMemoryMapper)memory;
 		}
 

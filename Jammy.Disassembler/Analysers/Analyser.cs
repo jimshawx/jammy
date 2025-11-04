@@ -29,12 +29,13 @@ namespace Jammy.Disassembler.Analysers
 		private readonly ILogger logger;
 		private readonly IKickstartROM kickstartROM;
 		private readonly IAnalysis analysis;
-		private readonly Disassembler disassembler;
+		private readonly IDisassembler disassembler;
 
 		private readonly EmulationSettings settings;
 
 		public Analyser(IKickstartAnalysis kickstartAnalysis, ILabeller labeller,
 			IDebugMemoryMapper mem, IOptions<EmulationSettings> settings,
+			IDisassembler disassembler,
 			ILogger<Analyser> logger, IKickstartROM kickstartROM, IAnalysis analysis, IDiskAnalysis diskAnalysis)
 		{
 			this.kickstartAnalysis = kickstartAnalysis;
@@ -44,10 +45,8 @@ namespace Jammy.Disassembler.Analysers
 			this.analysis = analysis;
 			this.settings = settings.Value;
 			this.mem = mem;
-
+			this.disassembler = disassembler;
 			diskAnalysis.Extract();
-
-			disassembler = new Disassembler();
 			
 			LoadLVOs();
 			StartUp();

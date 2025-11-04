@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Debugger.Types;
+using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -107,15 +108,15 @@ namespace Jammy.Graph
 
 		private static int RGB(int r, int g, int b) { return (b << 16) | (g << 8) | r; }
 
+		private readonly IDisassembler disassembler;
 		private readonly ILogger logger;
-		private readonly Jammy.Disassembler.Disassembler disassembler;
 		private readonly IDebugMemoryMapper memory;
 
-		public Graph(IMemoryMapper memory, ILogger<Graph> logger)
+		public Graph(IMemoryMapper memory, IDisassembler disassembler, ILogger<Graph> logger)
 		{
+			this.disassembler = disassembler;
 			this.logger = logger;
 			this.memory = (IDebugMemoryMapper)memory;
-			disassembler = new Jammy.Disassembler.Disassembler();
 
 			var gvc = gvContext();
 

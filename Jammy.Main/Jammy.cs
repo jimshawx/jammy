@@ -54,6 +54,7 @@ namespace Jammy.Main
 		private readonly ILogger<GfxScan> gfxLogger;
 		private readonly ILogger<StringScan> stringLogger;
 		private readonly ILogger<DMAExplorer> dmaLogger;
+		private readonly IInstructionAnalysisDatabase instructionAnalysisDatabase;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
@@ -72,7 +73,7 @@ namespace Jammy.Main
 		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger, IAnalysis analysis,
 			IFlowAnalyser flowAnalyser, IGraph graph, IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
 			IChipRAM chipRAM, ILogger<GfxScan> gfxLogger, ILogger<StringScan> stringLogger, IMemoryMapper memoryMapper,
-			ILogger<DMAExplorer> dmaLogger,
+			ILogger<DMAExplorer> dmaLogger, IInstructionAnalysisDatabase instructionAnalysisDatabase,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -90,6 +91,7 @@ namespace Jammy.Main
 			this.gfxLogger = gfxLogger;
 			this.stringLogger = stringLogger;
 			this.dmaLogger = dmaLogger;
+			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
 			this.memoryMapper = memoryMapper;
 			this.logger = logger;
 
@@ -223,6 +225,7 @@ namespace Jammy.Main
 			UpdateClock();
 
 			var debug = debugger.Analyse();
+			instructionAnalysisDatabase.Add(debug);
 			logger.LogTrace($"{string.Join(" ", debug.EffectiveAddresses.Select(x => $"{x.Ea:X8}"))}"); 
 			
 			UI.UI.IsDirty = false;

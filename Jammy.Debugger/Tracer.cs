@@ -60,15 +60,15 @@ namespace Jammy.Debugger
 
 		private readonly IDebugMemoryMapper mem;
 		private readonly ILabeller labeller;
+		private readonly IDisassembler disassembler;
 		private readonly ILogger logger;
-		private readonly Jammy.Disassembler.Disassembler disassembler;
 
-		public Tracer(IDebugMemoryMapper memory, ILabeller labeller, ILogger<Tracer> logger)
+		public Tracer(IDebugMemoryMapper memory, ILabeller labeller, IDisassembler disassembler, ILogger<Tracer> logger)
 		{
 			this.mem = memory;
 			this.labeller = labeller;
+			this.disassembler = disassembler;
 			this.logger = logger;
-			this.disassembler = new Jammy.Disassembler.Disassembler();
 		}
 
 		private readonly HashSet<uint> seen = new HashSet<uint>();

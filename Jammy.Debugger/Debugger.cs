@@ -482,6 +482,7 @@ namespace Jammy.Debugger
 		{
 			var rv = new InstructionAnalysis();
 			var regs = cpu.GetRegs();
+			rv.PC = regs.PC;
 			rv.EffectiveAddresses.AddRange(cpuAnalyser.Analyse(regs));
 			return rv;
 		}

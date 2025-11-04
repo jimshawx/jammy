@@ -18,11 +18,13 @@ namespace Jammy.Disassembler
 	public class DiskAnalysis : IDiskAnalysis
 	{
 		private readonly IObjectMapper objectMapper;
+		private readonly IDisassembler disassembler;
 		private readonly ILogger logger;
 
-		public DiskAnalysis(IObjectMapper objectMapper, ILogger<DiskAnalysis> logger)
+		public DiskAnalysis(IObjectMapper objectMapper, IDisassembler disassembler, ILogger<DiskAnalysis> logger)
 		{
 			this.objectMapper = objectMapper;
+			this.disassembler = disassembler;
 			this.logger = logger;
 		}
 
@@ -353,7 +355,6 @@ namespace Jammy.Disassembler
 
 		private void DumpBoot(IEnumerable<byte> code, int d)
 		{
-			var disassembler = new Disassembler();
 			var options = new DisassemblyOptions { IncludeBytes = true };
 			var sb = new StringBuilder();
 			uint address = 0;

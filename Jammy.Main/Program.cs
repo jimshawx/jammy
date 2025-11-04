@@ -132,6 +132,8 @@ namespace Jammy.Main
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<IDisassembly, Disassembly>()
 				.AddSingleton<IDisassembler, Disassembler.Disassembler>()
+				.AddSingleton<IEADatabase, EADatabase>()
+				.AddSingleton<IInstructionAnalysisDatabase, InstructionAnalysisDatabase>()
 				.AddSingleton<IAnalysis, Analysis>()
 				.AddSingleton<IAnalyser, Analyser>()
 				.AddSingleton<IObjectMapper, ObjectMapper>()
