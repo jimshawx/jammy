@@ -5,9 +5,10 @@ using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Types;
 using Jammy.Types.Debugger;
+using System.Collections.Generic;
 
 /*
-	Copyright 2020-2024 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Interface
@@ -43,5 +44,11 @@ namespace Jammy.Interface
 		ClockInfo GetChipClock();
 		void GenerateDisassemblies();
 		Vectors GetVectors();
+		InstructionAnalysis Analyse();
+	}
+
+	public interface ICPUAnalyser
+	{
+		public List<EA> Analyse(Regs regs);
 	}
 }

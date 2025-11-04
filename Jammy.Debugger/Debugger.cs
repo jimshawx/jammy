@@ -36,6 +36,7 @@ namespace Jammy.Debugger
 		private readonly ITracer tracer;
 		private readonly IAnalyser analyser;
 		private readonly IAnalysis analysis;
+		private readonly ICPUAnalyser cpuAnalyser;
 		private readonly ILVOInterceptors interceptors;
 		private readonly IReturnValueSnagger returnValueSnagger;
 		private readonly ILibraryBases libraryBases;
@@ -44,6 +45,7 @@ namespace Jammy.Debugger
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
 			IBreakpointCollection breakpoints, IKickstartROM kickstart, ICopper copper, IChipsetClock clock,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser, IAnalysis analysis,
+			ICPUAnalyser cpuAnalyser,
 			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases)
 		{
 			this.breakpoints = breakpoints;
@@ -54,6 +56,7 @@ namespace Jammy.Debugger
 			this.tracer = tracer;
 			this.analyser = analyser;
 			this.analysis = analysis;
+			this.cpuAnalyser = cpuAnalyser;
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
@@ -473,6 +476,14 @@ namespace Jammy.Debugger
 				x.Items[i] = new Tuple<string, uint>($"User {(i-Vectors.vectorNames.Length):X2}", memory.UnsafeRead32(i * 4));
 
 			return x;
+		}
+
+		public InstructionAnalysis Analyse()
+		{
+			var rv = new InstructionAnalysis();
+			var regs = cpu.GetRegs();
+			rv.EffectiveAddresses.AddRange(cpuAnalyser.Analyse(regs));
+			return rv;
 		}
 	}
 }

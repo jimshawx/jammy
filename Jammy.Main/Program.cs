@@ -109,6 +109,7 @@ namespace Jammy.Main
 				.AddSingleton<IInterrupt, Core.Interrupt>()
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<IDebugger, Debugger.Debugger>()
+				.AddSingleton<ICPUAnalyser, CPUAnalyser>()
 				.AddSingleton<IChips, Chips>()
 				.AddSingleton<IAkiko, Akiko>()
 				.AddSingleton<IDenise, Denise>()

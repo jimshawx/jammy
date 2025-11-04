@@ -221,6 +221,10 @@ namespace Jammy.Main
 			UpdateCopper();
 			UpdateVectors();
 			UpdateClock();
+
+			var debug = debugger.Analyse();
+			logger.LogTrace($"{string.Join(" ", debug.EffectiveAddresses.Select(x => $"{x.Ea:X8}"))}"); 
+			
 			UI.UI.IsDirty = false;
 		}
 
