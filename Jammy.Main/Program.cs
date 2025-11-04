@@ -257,9 +257,9 @@ namespace Jammy.Main
 			}
 			else
 			{
-				//if (Avx2.IsSupported)
-				//	services.AddSingleton<IBpldatPix, BpldatPix64AVX2>();
-				//else
+				if (Avx2.IsSupported)
+					services.AddSingleton<IBpldatPix, BpldatPix64AVX2>();
+				else
 					services.AddSingleton<IBpldatPix, BpldatPix64>();
 			}
 
