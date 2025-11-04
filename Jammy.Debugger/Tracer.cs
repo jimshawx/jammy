@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
+using Jammy.Interface;
+using Jammy.Types.Debugger;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Jammy.Core.Interface.Interfaces;
-using Jammy.Core.Types;
-using Jammy.Interface;
-using Microsoft.Extensions.Logging;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -61,13 +62,20 @@ namespace Jammy.Debugger
 		private readonly IDebugMemoryMapper mem;
 		private readonly ILabeller labeller;
 		private readonly IDisassembler disassembler;
+		private readonly IInstructionAnalysisDatabase instructionAnalysisDatabase;
+		private readonly ICPUAnalyser cpuAnalyser;
 		private readonly ILogger logger;
 
-		public Tracer(IDebugMemoryMapper memory, ILabeller labeller, IDisassembler disassembler, ILogger<Tracer> logger)
+		public Tracer(IDebugMemoryMapper memory, ILabeller labeller, IDisassembler disassembler,
+			IInstructionAnalysisDatabase instructionAnalysisDatabase,
+			ICPUAnalyser cpuAnalyser,
+			ILogger<Tracer> logger)
 		{
 			this.mem = memory;
 			this.labeller = labeller;
 			this.disassembler = disassembler;
+			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
+			this.cpuAnalyser = cpuAnalyser;
 			this.logger = logger;
 		}
 
@@ -115,6 +123,15 @@ namespace Jammy.Debugger
 
 		public void TraceAsm(uint pc, Regs regs)
 		{
+			var ana = cpuAnalyser.Analyse(regs);
+			if (ana.Any())				
+			{ 
+				var rv = new InstructionAnalysis();
+				rv.PC = pc;
+				rv.EffectiveAddresses.AddRange(ana);
+				instructionAnalysisDatabase.Add(rv);
+			}
+
 			Trace(DisassembleAddress(pc), pc, regs.Clone());
 		}
 

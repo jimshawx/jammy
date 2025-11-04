@@ -218,7 +218,8 @@ namespace Jammy.Main
 			}
 
 			//configure Tracing
-			if (settings.Tracer == Feature.Enabled)
+			//settings.Tracer = Feature.Enabled;
+			if (settings.Tracer.IsEnabled())
 				services.AddSingleton<ITracer, Tracer>();
 			else
 				services.AddSingleton<ITracer, NullTracer>();

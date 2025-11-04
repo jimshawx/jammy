@@ -14,6 +14,7 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
+		private readonly ITracer tracer;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 
@@ -25,6 +26,7 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
+			this.tracer = tracer;
 			this.logger = logger;
 			this.settings = settings.Value;
 		}
@@ -58,9 +60,15 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 		}
 
 		private int cycles=0;
+
+		private Regs tRegs = new Regs();
 		public void Emulate()
 		{
 			CheckInterrupt();
+
+			//GetRegs(tRegs);
+			//tracer.TraceAsm(tRegs.PC, tRegs);
+
 			cycles = M68KCPU.m68k_execute(1);
 			
 			uint pc = M68KCPU.m68k_get_reg(null, M68KCPU.m68k_register_t.M68K_REG_PC);

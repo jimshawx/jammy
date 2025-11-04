@@ -539,5 +539,13 @@ namespace Jammy.Core.Types
 							.Select(x => (x.Value.Item1, x.Key))
 							.ToList();
 		}
+
+		public static List<(uint, string)> GetLabels()
+		{
+			return customRegisterDetails
+							.Where(x => x.Value.Item1 != "RESERVED")
+							.Select(x => (x.Key, x.Value.Item1))
+							.ToList();
+		}
 	}
 }

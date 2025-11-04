@@ -1,4 +1,5 @@
-﻿using Jammy.Core.Types;
+﻿using Jammy.Core.Custom.CIA;
+using Jammy.Core.Types;
 using Jammy.Interface;
 using Jammy.Types.Debugger;
 using System.Collections.Generic;
@@ -15,15 +16,19 @@ namespace Jammy.Debugger
 
 		public EADatabase()
 		{
-			foreach (var chipreg in ChipRegs.GetPersistanceDetails())
-				eaNames.Add(chipreg.Address, chipreg.Name);
+			foreach (var chipreg in ChipRegs.GetLabels())
+				eaNames.Add(chipreg.Item1, chipreg.Item2);
+			foreach (var chipreg in CIAAOdd.GetLabels())
+				eaNames.Add(chipreg.Item1, chipreg.Item2);
+			foreach (var chipreg in CIABEven.GetLabels())
+				eaNames.Add(chipreg.Item1, chipreg.Item2);
 		}
 
 		public string GetEAName(uint address)
 		{
 			if (eaNames.TryGetValue(address, out var name))
 				return name;
-			return null;
+			return $"{address:X8}";
 		}
 
 		public void Add(uint address, string name)
