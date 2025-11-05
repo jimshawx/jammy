@@ -30,12 +30,12 @@ namespace Jammy.Disassembler.Analysers
 		private readonly IKickstartROM kickstartROM;
 		private readonly IAnalysis analysis;
 		private readonly IDisassembler disassembler;
-
+		private readonly IEADatabase eaDatabase;
 		private readonly EmulationSettings settings;
 
 		public Analyser(IKickstartAnalysis kickstartAnalysis, ILabeller labeller,
 			IDebugMemoryMapper mem, IOptions<EmulationSettings> settings,
-			IDisassembler disassembler,
+			IDisassembler disassembler, IEADatabase eaDatabase,
 			ILogger<Analyser> logger, IKickstartROM kickstartROM, IAnalysis analysis, IDiskAnalysis diskAnalysis)
 		{
 			this.kickstartAnalysis = kickstartAnalysis;
@@ -46,6 +46,7 @@ namespace Jammy.Disassembler.Analysers
 			this.settings = settings.Value;
 			this.mem = mem;
 			this.disassembler = disassembler;
+			this.eaDatabase = eaDatabase;
 			diskAnalysis.Extract();
 			
 			LoadLVOs();
@@ -928,6 +929,11 @@ namespace Jammy.Disassembler.Analysers
 						//whitespace, lines starting with * or ; are all headers.
 						hdrs.Add(line);
 					}
+					else if (line.StartsWith("----------"))
+					{
+						//---------- todo: lines like this are usually labels - should add them to the labeller
+						hdrs.Add(line);
+					}
 					else if (reg.IsMatch(split[0]) && split.Length > 1)
 					{
 						//lines starting with D0-D7, A0-A7 with more following are all headers.
@@ -1154,8 +1160,17 @@ namespace Jammy.Disassembler.Analysers
 			foreach (var lvo in lvos.LVOs)
 			{ 
 				uint address = (uint)(baseAddress + lvo.Offset);
+
+				//name the jump table entry
+				eaDatabase.Add(address, lvo.Name+"()");
+
 				if (mem.UnsafeRead16(address) != 0x4ef9) break;
 				uint lvoaddress = mem.UnsafeRead32(address+2);
+
+				//name the actual function
+				eaDatabase.Add(lvoaddress, lvo.Name + "()");
+				labeller.AddLabel(lvoaddress, lvo.Name);
+
 				analysis.AddComment(address, lvo.Name);
 				ExtractFunction(lvoaddress, $"{lvo.Name}()");
 

@@ -12,6 +12,7 @@ namespace Jammy.Interface
 		string LabelName(uint address);
 		bool HasLabel(uint address);
 		Dictionary<uint, Label> GetLabels();
+		void AddLabel(uint address, string name);
 	}
 
 }

@@ -127,7 +127,7 @@ namespace Jammy.Debugger
 			if (!instructionAnalysisDatabase.Has(regs.PC))
 			{ 
 				var ana = cpuAnalyser.Analyse(regs);
-				if (ana.Any())				
+				if (ana.Count > 0)				
 				{ 
 					var rv = new InstructionAnalysis();
 					rv.PC = regs.PC;
