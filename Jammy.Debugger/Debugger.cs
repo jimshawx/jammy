@@ -265,6 +265,7 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0xE59492);//Akiko INT31
 				//AddBreakpoint(0xE5949E);//Akiko INT26
 				//AddBreakpoint(0xE59700);//CD Inserted
+				//AddBreakpoint(0xF804E0);//exec init
 			}
 		}
 

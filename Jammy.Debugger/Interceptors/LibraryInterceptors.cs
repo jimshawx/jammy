@@ -152,6 +152,7 @@ namespace Jammy.Debugger.Interceptors
 					uint ln_Name = memory.UnsafeRead32(regs.D[0] + 10);
 					string libraryName = memory.GetString(ln_Name);
 					libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
+					logger.LogTrace($"Name: {libraryName}");
 				}
 
 				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X8}");

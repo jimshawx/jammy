@@ -115,7 +115,7 @@ namespace Jammy.Disassembler.Analysers
 			try
 			{
 				string filename = "LVOs.i.txt";
-				using (var f = File.OpenText(Path.Combine(settings.LVODirectory, filename)))
+				using (var f = File.OpenText(filename))
 				{
 					string currentLib = string.Empty;
 					for (; ; )
@@ -205,11 +205,12 @@ namespace Jammy.Disassembler.Analysers
 			new ExecLocation("37.132","2.04","A500+", 0x000B927C,0x000B927C,0xF81F84),
 			new ExecLocation("37.151","2.05","A600", 0xDB27680D,0xDB27680D,0xF81FB0),
 			new ExecLocation("37.132","2.04","A3000", 0x54876DAB,0x54876DAB,0xF82000),
+			new ExecLocation("40.9", "3.1", "A3000", 0x97DC36A2,0x97DC36A2,0xF823CC),
+			new ExecLocation("40.9", "3.1", "A4000", 0xF90A56C0,0xF90A56C0,0xF823B4),
+			new ExecLocation("40.9", "3.1", "CD32", 0x8f4549a5,0x8f4549a5,0xF823B8),
 			new ExecLocation("40.10", "3.1", "A500/A600/A2000", 0x9FDEEEF6,0x9FDEEEF6,0xF8236C),
 			new ExecLocation("40.10", "3.1", "A1200", 0x87BA7A3E,0x87BA7A3E,0xF8236C),
-			new ExecLocation("40.9", "3.1", "A3000", 0x97DC36A2,0x97DC36A2,0xF823CC),
 			new ExecLocation("40.10", "3.1", "A3000", 0x0CC4ABE0,0x0CC4ABE0,0xF8238C),
-			new ExecLocation("40.9", "3.1", "A4000", 0xF90A56C0,0xF90A56C0,0xF823B4),
 			new ExecLocation("40.10", "3.1", "A4000", 0x45C3145E,0x45C3145E,0xF82374),
 			new ExecLocation("40.10", "3.1", "A4000", 0xE20F9194,0xE20F9194,0xF82374),
 		};
@@ -376,6 +377,8 @@ namespace Jammy.Disassembler.Analysers
 
 		public void ExtractFunction(uint address, string name)
 		{
+			if (!string.IsNullOrWhiteSpace(name)) return;
+
 			analysis.AddHeader(address, "");
 			analysis.AddHeader(address, "---------------------------------------------------------------------------");
 			analysis.AddHeader(address, $"\t{name}");
@@ -909,130 +912,143 @@ namespace Jammy.Disassembler.Analysers
 				return;
 			}
 
-			using (var f = File.OpenText(fullPath))
+			ReadFile(fullPath);
+			
+			uint currentAddress = 0;
+			var hdrs = new List<string> { "" };
+
+			for (; ; )
 			{
-				uint currentAddress = 0;
-				var hdrs = new List<string> { "" };
+				string line = ReadLine();
+				if (line == null) break;
+				if (line == "^Z") break;//EOF
 
-				for (; ; )
+				var split = line.SplitSmart(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+
+				if (string.IsNullOrWhiteSpace(line) || line.StartsWith('*') || line.TrimStart().StartsWith(';'))
 				{
-					string line = f.ReadLine();
-					if (line == null) break;
-					if (line == "^Z") break;//EOF
-
-					//if (currentAddress == 0xfc0018) System.Diagnostics.Debugger.Break();
-
-					var split = line.SplitSmart(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-
-					if (string.IsNullOrWhiteSpace(line) || line.StartsWith('*') || line.TrimStart().StartsWith(';'))
+					//whitespace, lines starting with * or ; are all headers.
+					hdrs.Add(line);
+				}
+				else if (line.StartsWith("----------"))
+				{
+					//todo: lines like this are usually labels - should add them to the labeller
+					//----------
+					//		label
+					//----------
+					string label = PeekLine(0);
+					string next	= PeekLine(1);
+					if (next.StartsWith("----------"))
 					{
-						//whitespace, lines starting with * or ; are all headers.
+						//if the label is all empty, just ignore the whole thing
+						if (!string.IsNullOrWhiteSpace(label))
+							labeller.AddLabel(currentAddress, label.Trim());
+						ConsumeLine();
+						ConsumeLine();
+					}
+					else
+					{  
 						hdrs.Add(line);
 					}
-					else if (line.StartsWith("----------"))
+				}
+				else if (reg.IsMatch(split[0]) && split.Length > 1)
+				{
+					//lines starting with D0-D7, A0-A7 with more following are all headers.
+					hdrs.Add(line);
+				}
+				else
+				{
+					//code is always xxxxxx..asm.....maybe followed by a comment
+					//data is sometimes xxxxxx.. followed by a mix of byte/word/long possibly followed by a comment
+					//     or           ........ followed by a mix of byte/word/long possibly followed by a comment
+
+					//there might be a bunch of tabs instead of spaces
+					line = Regex.Replace(line, "\t", "       ");
+
+					if (hex6.IsMatch(line))
 					{
-						//---------- todo: lines like this are usually labels - should add them to the labeller
-						hdrs.Add(line);
+						currentAddress = uint.Parse(split[0], NumberStyles.HexNumber);
+
+						if (hdrs.Any())
+						{
+							//attach any previous headers to the new address and start collecting new ones
+							analysis.ReplaceHeader(currentAddress, hdrs);
+							hdrs.Clear();
+						}
+
+						if (split.Length > 1)
+						{
+							//code or data starting with xxxxxx
+							if ((hex2.IsMatch(split[1]) || hex4.IsMatch(split[1]) || hex8.IsMatch(split[1]) || IsString(split[1])))
+							{
+								//it's data
+								uint nextAddress = currentAddress;
+								int i = 1;
+								while (i < split.Length && (hex2.IsMatch(split[i]) || hex4.IsMatch(split[i]) || hex8.IsMatch(split[i]) || IsString(split[i])))
+								{
+									if (hex2.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Byte, split[i]);
+									else if (hex4.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Word, split[i]);
+									else if (hex8.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Long, split[i]);
+									else if (IsString(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Str, split[i]);
+									i++;
+								}
+
+								//the comments are what's left after the i'th split
+								if (split.Length > i)
+								{
+									analysis.AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
+								}
+
+								currentAddress = nextAddress;
+							}
+							else
+							{
+								//it's code
+								if (split.Length > 3)
+								{
+									//the comments are what's left after the second split, usually starting at column 49
+									analysis.AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(3)) });
+								}
+								else if (split.Length < 3)
+								{
+									var oneWordOps = new List<string> {"rts", "nop", "illegal", "reset", "stop", "rte", "trapv", "rtr", "unknown"};
+									if (split.Length < 2 || !oneWordOps.Contains(split[1]))
+									{
+										//it's probably comments
+										analysis.AddComment(new Comment {Address = currentAddress, Text = string.Join(" ", split.Skip(1))});
+									}
+								}
+
+								//== 3 means it's just disassembled code
+							}
+						}
 					}
-					else if (reg.IsMatch(split[0]) && split.Length > 1)
+					else if (hex2.IsMatch(split[0]) || hex4.IsMatch(split[0]) || hex8.IsMatch(split[0]) || IsString(split[0]))
 					{
-						//lines starting with D0-D7, A0-A7 with more following are all headers.
-						hdrs.Add(line);
+						uint nextAddress = currentAddress;
+
+						//it's data
+						int i = 0;
+						while (i < split.Length && (hex2.IsMatch(split[i]) || hex4.IsMatch(split[i]) || hex8.IsMatch(split[i]) || IsString(split[i])))
+						{
+							if (hex2.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Byte, split[i]);
+							else if (hex4.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Word, split[i]);
+							else if (hex8.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Long, split[i]);
+							else if (IsString(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Str, split[i]);
+							i++;
+						}
+						//the comments are what's left after the i'th split
+						if (split.Length > i)
+						{
+							analysis.AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
+						}
+
+						currentAddress = nextAddress;
 					}
 					else
 					{
-						//code is always xxxxxx..asm.....maybe followed by a comment
-						//data is sometimes xxxxxx.. followed by a mix of byte/word/long possibly followed by a comment
-						//     or           ........ followed by a mix of byte/word/long possibly followed by a comment
-
-						//there might be a bunch of tabs instead of spaces
-						line = Regex.Replace(line, "\t", "       ");
-
-						if (hex6.IsMatch(line))
-						{
-							currentAddress = uint.Parse(split[0], NumberStyles.HexNumber);
-
-							if (hdrs.Any())
-							{
-								//attach any previous headers to the new address and start collecting new ones
-								analysis.ReplaceHeader(currentAddress, hdrs);
-								hdrs.Clear();
-							}
-
-							if (split.Length > 1)
-							{
-								//code or data starting with xxxxxx
-								if ((hex2.IsMatch(split[1]) || hex4.IsMatch(split[1]) || hex8.IsMatch(split[1]) || IsString(split[1])))
-								{
-									//it's data
-									uint nextAddress = currentAddress;
-									int i = 1;
-									while (i < split.Length && (hex2.IsMatch(split[i]) || hex4.IsMatch(split[i]) || hex8.IsMatch(split[i]) || IsString(split[i])))
-									{
-										if (hex2.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Byte, split[i]);
-										else if (hex4.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Word, split[i]);
-										else if (hex8.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Long, split[i]);
-										else if (IsString(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Str, split[i]);
-										i++;
-									}
-
-									//the comments are what's left after the i'th split
-									if (split.Length > i)
-									{
-										analysis.AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
-									}
-
-									currentAddress = nextAddress;
-								}
-								else
-								{
-									//it's code
-									if (split.Length > 3)
-									{
-										//the comments are what's left after the second split, usually starting at column 49
-										analysis.AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(3)) });
-									}
-									else if (split.Length < 3)
-									{
-										var oneWordOps = new List<string> {"rts", "nop", "illegal", "reset", "stop", "rte", "trapv", "rtr", "unknown"};
-										if (split.Length < 2 || !oneWordOps.Contains(split[1]))
-										{
-											//it's probably comments
-											analysis.AddComment(new Comment {Address = currentAddress, Text = string.Join(" ", split.Skip(1))});
-										}
-									}
-
-									//== 3 means it's just disassembled code
-								}
-							}
-						}
-						else if (hex2.IsMatch(split[0]) || hex4.IsMatch(split[0]) || hex8.IsMatch(split[0]) || IsString(split[0]))
-						{
-							uint nextAddress = currentAddress;
-
-							//it's data
-							int i = 0;
-							while (i < split.Length && (hex2.IsMatch(split[i]) || hex4.IsMatch(split[i]) || hex8.IsMatch(split[i]) || IsString(split[i])))
-							{
-								if (hex2.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Byte, split[i]);
-								else if (hex4.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Word, split[i]);
-								else if (hex8.IsMatch(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Long, split[i]);
-								else if (IsString(split[i])) nextAddress += MakeMemType(nextAddress, MemType.Str, split[i]);
-								i++;
-							}
-							//the comments are what's left after the i'th split
-							if (split.Length > i)
-							{
-								analysis.AddComment(new Comment { Address = currentAddress, Text = string.Join(" ", split.Skip(i)) });
-							}
-
-							currentAddress = nextAddress;
-						}
-						else
-						{
-							//it's probably header
-							hdrs.Add(line);
-						}
+						//it's probably header
+						hdrs.Add(line);
 					}
 				}
 			}
@@ -1069,6 +1085,40 @@ namespace Jammy.Disassembler.Analysers
 			}
 
 			return true;
+		}
+
+		private List<string> fileLines = new List<string>();
+		private void ReadFile(string fullPath)
+		{
+			fileLines.Clear();
+			using (var f = File.OpenText(fullPath))
+			{
+				string line;
+				do
+				{
+					line = f.ReadLine();
+					fileLines.Add(line);
+				} while (line != null && line != "^Z");
+			}
+		}
+		
+		private string ReadLine()
+		{
+			var line = fileLines.FirstOrDefault();
+			if (fileLines.Count > 0) fileLines.RemoveAt(0);
+			return line;
+		}
+
+		private string PeekLine(int offset)
+		{
+			if (fileLines.Count > offset)
+				return fileLines[offset];
+			return string.Empty;
+		}
+
+		private void ConsumeLine()
+		{
+			ReadLine();
 		}
 
 		public void MarkAsType(uint address, MemType type, Size size)
