@@ -64,6 +64,7 @@ namespace Jammy.Debugger
 		public void SetLibraryBaseaddress(string libraryName, uint address)
 		{
 			if (address == 0) return;
+			if (string.IsNullOrWhiteSpace(libraryName)) return;
 			libraryBaseAddresses[libraryName] = address;
 			analyser.AnalyseLibraryBase(libraryName, address);
 		}

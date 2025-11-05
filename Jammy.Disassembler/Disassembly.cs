@@ -21,12 +21,13 @@ namespace Jammy.Disassembler
 	{
 		private readonly IBreakpointCollection breakpoints;
 		private readonly IDisassembler disassembler;
+		private readonly ILabeller labeller;
 		private readonly ILogger logger;
 		private readonly IAnalysis analysis;
 		private readonly IDebugMemoryMapper memory;
 
 		public Disassembly(IDebugMemoryMapper memory, IBreakpointCollection breakpoints,
-			IDisassembler disassembler,
+			IDisassembler disassembler, ILabeller labeller,
 			ILogger<Disassembly> logger, IAnalysis analysis)
 		{
 			this.logger = logger;
@@ -34,7 +35,7 @@ namespace Jammy.Disassembler
 			this.memory = memory;
 			this.breakpoints = breakpoints;
 			this.disassembler = disassembler;
-
+			this.labeller = labeller;
 			Clear();
 		}
 
@@ -114,6 +115,16 @@ namespace Jammy.Disassembler
 						ade.Lines.Add(hdr);
 						line++;
 					}
+				}
+				if (labeller.HasLabel(address))
+				{
+					var label = labeller.LabelName(address);
+					ade.Lines.Add("");
+					ade.Lines.Add("---------------------------------------------------------------------------");
+					ade.Lines.Add($"\t{label}()");
+					ade.Lines.Add("---------------------------------------------------------------------------");
+					ade.Lines.Add("");
+					line += 5;
 				}
 
 				ade.Line = line;

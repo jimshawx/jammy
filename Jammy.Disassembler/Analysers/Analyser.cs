@@ -458,11 +458,11 @@ namespace Jammy.Disassembler.Analysers
 				{
 					uint u = fntable + s;
 					string lvo = LVO(type, name, idx);
-					analysis.AddHeader(u, "");
-					analysis.AddHeader(u, "---------------------------------------------------------------------------");
-					analysis.AddHeader(u, $"\t{lvo}");
-					analysis.AddHeader(u, "---------------------------------------------------------------------------");
-					analysis.AddHeader(u, "");
+					//analysis.AddHeader(u, "");
+					//analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					//analysis.AddHeader(u, $"\t{lvo}");
+					//analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					//analysis.AddHeader(u, "");
 
 					analysis.AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
 					MakeMemType(address, MemType.Word, null);
@@ -480,11 +480,11 @@ namespace Jammy.Disassembler.Analysers
 				while ((u = mem.UnsafeRead32(address)) != 0xFFFFFFFF)
 				{
 					string lvo = LVO(type, name, idx);
-					analysis.AddHeader(u, "");
-					analysis.AddHeader(u, "---------------------------------------------------------------------------");
-					analysis.AddHeader(u, $"\t{lvo}");
-					analysis.AddHeader(u, "---------------------------------------------------------------------------");
-					analysis.AddHeader(u, "");
+					//analysis.AddHeader(u, "");
+					//analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					//analysis.AddHeader(u, $"\t{lvo}");
+					//analysis.AddHeader(u, "---------------------------------------------------------------------------");
+					//analysis.AddHeader(u, "");
 
 					analysis.AddComment(address, $"\tjmp ${u:X6}\t{(idx + 1) * -6}\t{lvo}");
 					MakeMemType(address, MemType.Long, null);
@@ -1222,7 +1222,7 @@ namespace Jammy.Disassembler.Analysers
 				labeller.AddLabel(lvoaddress, lvo.Name);
 
 				analysis.AddComment(address, lvo.Name);
-				ExtractFunction(lvoaddress, $"{lvo.Name}()");
+				//ExtractFunction(lvoaddress, $"{lvo.Name}()");
 
 				found = true;
 			}

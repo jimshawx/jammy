@@ -606,8 +606,10 @@ namespace Jammy.Debugger
 							{
 								uint ext = fetch16(pc);
 								uint Xn = (ext >> 12) & 7;
-								uint d8 = ext & 0xff;
 								uint scale = 1u << (int)((ext >> 9) & 3);
+								if ((ext&0x100)!=0)
+									logger.LogTrace("Full Extension Word not implemented");
+								uint d8 = ext & 0xff;
 								uint dx;
 								if ((ext & 0x8000) != 0)
 									dx = (((ext >> 11) & 1) != 0) ? a[(int)Xn] : (uint)(short)a[(int)Xn];

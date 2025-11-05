@@ -311,8 +311,10 @@ namespace Jammy.Disassembler
 					{
 						uint ext = read16(pc); pc += 2;
 						uint Xn = (ext >> 12) & 7;
-						uint d8 = ext & 0xff;
 						uint scale = (ext >>9)&3;
+						if ((ext & 0x100) != 0)
+							Append("full_extension_word_not_implmented");
+						uint d8 = ext & 0xff;
 						string ss = scale == 0 ? "" : $"*{1<<(int)scale}";
 						string s = (((ext>>11)&1) != 0)?"l":"w";
 						if ((ext & 0x8000)!=0)
