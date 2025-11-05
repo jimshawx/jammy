@@ -28,6 +28,8 @@ namespace Jammy.Debugger
 		{
 			if (eaNames.TryGetValue(address, out var name))
 				return name;
+			if (address < 0x1000000)
+				return $"{address:X6}";
 			return $"{address:X8}";
 		}
 
