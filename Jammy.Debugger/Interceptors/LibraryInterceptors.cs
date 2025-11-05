@@ -1,10 +1,10 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
 using Jammy.Interface;
-using Jammy.Types.Kickstart;
 using Jammy.Types;
+using Jammy.Types.Kickstart;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using Jammy.Core.Types;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -32,7 +32,8 @@ namespace Jammy.Debugger.Interceptors
 			{
 				var regs = cpu.GetRegs();
 				logger.LogTrace($"{libraryName} {regs.D[0]:X8}");
-				libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
+				if (regs.D[0] != 0)
+					libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
@@ -57,7 +58,8 @@ namespace Jammy.Debugger.Interceptors
 			{
 				var regs = cpu.GetRegs(gregs);
 				logger.LogTrace($"{libraryName} {regs.D[0]:X8}");
-				libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
+				if (regs.D[0] != 0)
+					libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
@@ -76,11 +78,14 @@ namespace Jammy.Debugger.Interceptors
 		public void Intercept(LVO lvo, uint pc)
 		{
 			var regs = cpu.GetRegs(gregs);
-			logger.LogTrace($"@{pc:X8} {lvo.Name}() resName: {regs.A[1]:X8} {memory.GetString(regs.A[1])}");
+			string resourceName = memory.GetString(regs.A[1]);
+			logger.LogTrace($"@{pc:X8} {lvo.Name}() resName: {regs.A[1]:X8} {resourceName}");
 			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
 			{
 				var regs = cpu.GetRegs(gregs);
 				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X8}");
+				if (regs.D[0] != 0)
+					libraryBases.SetLibraryBaseaddress(resourceName, regs.D[0]);
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
@@ -99,11 +104,14 @@ namespace Jammy.Debugger.Interceptors
 		public void Intercept(LVO lvo, uint pc)
 		{
 			var regs = cpu.GetRegs(gregs);
-			logger.LogTrace($"@{pc:X8} {lvo.Name}() deviceName: {regs.A[0]:X8} {memory.GetString(regs.A[0])} unitNumber: {regs.D[0]} ioRq:{regs.A[1]:X8} flags:{regs.D[1]:X8}");
+			string deviceName = memory.GetString(regs.A[0]);
+			logger.LogTrace($"@{pc:X8} {lvo.Name}() deviceName: {regs.A[0]:X8} {deviceName} unitNumber: {regs.D[0]} ioRq:{regs.A[1]:X8} flags:{regs.D[1]:X8}");
 			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
 			{
 				var regs = cpu.GetRegs(gregs);
 				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X2} {((regs.D[0]&0xff)==0?"Success":"Failed")} @{regs.PC:X8}");
+				if (regs.D[0] != 0)
+					libraryBases.SetLibraryBaseaddress(deviceName, regs.D[0]);
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
@@ -137,6 +145,15 @@ namespace Jammy.Debugger.Interceptors
 			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
 			{
 				var regs = cpu.GetRegs(gregs);
+
+				if (regs.D[0] != 0)
+				{ 
+					//snag the library/resource/device name from the Node struct
+					uint ln_Name = memory.UnsafeRead32(regs.D[0] + 10);
+					string libraryName = memory.GetString(ln_Name);
+					libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
+				}
+
 				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X8}");
 			}, returnAddress));
 
@@ -183,7 +200,10 @@ namespace Jammy.Debugger.Interceptors
 					uint idStringAddress = memory.UnsafeRead32(library + 24);
 					string idString = memory.GetString(idStringAddress);
 
-					logger.LogTrace($"{lvo.Name} init: libaddr: {regs.D[0]:X8} seglist: {regs.A[0]:X8} execbase: {regs.A[6]:X8}, init {idString}");
+					uint ln_Name = memory.UnsafeRead32(library + 10);
+					string libraryName = memory.GetString(ln_Name);
+
+					logger.LogTrace($"{lvo.Name} init: libaddr: {regs.D[0]:X8} seglist: {regs.A[0]:X8} execbase: {regs.A[6]:X8}, init {idString} {libraryName}");
 
 				}, regs.A[2]));
 			}
