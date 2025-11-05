@@ -98,7 +98,7 @@ namespace Jammy.Debugger
 			{
 				undisturbedSR = sr;
 
-				bool traceMode = T();
+				//bool traceMode = T();
 
 				int ins = Fetch(pc);
 				pc += 2;
@@ -144,18 +144,18 @@ namespace Jammy.Debugger
 						t_fourteen(ins);
 						break;
 					case 10:
-						internalTrap(10);
+						//internalTrap(10);
 						break;
 					case 15:
-						internalTrap(11);
+						t_fifteen(ins);
 						break;
 				}
 
-				if (traceMode)			
-				{ 
-					instructionStartPC = pc;
-					internalTrap(9);
-				}
+				//if (traceMode)			
+				//{ 
+				//	instructionStartPC = pc;
+				//	internalTrap(9);
+				//}
 			}
 			catch (AbandonInstructionException)
 			{ 
@@ -584,12 +584,13 @@ namespace Jammy.Debugger
 						uint ext = fetch16(pc); pc += 2;
 						uint Xn = (ext >> 12) & 7;
 						uint d8 = ext & 0xff;
+						uint scale = 1u<<(int)((ext >> 9) & 3);
 						uint dx;
 						if ((ext&0x8000)!=0)
 							dx = (((ext >> 11) & 1) != 0) ? a[(int)Xn] : (uint)(short)a[(int)Xn];
 						else
 							dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
-						return a[x] + dx + (uint)(sbyte)d8;
+						return a[x] + dx*scale + (uint)(sbyte)d8;
 					}
 				case 7:
 					switch (x)
@@ -606,12 +607,13 @@ namespace Jammy.Debugger
 								uint ext = fetch16(pc);
 								uint Xn = (ext >> 12) & 7;
 								uint d8 = ext & 0xff;
+								uint scale = 1u << (int)((ext >> 9) & 3);
 								uint dx;
 								if ((ext & 0x8000) != 0)
 									dx = (((ext >> 11) & 1) != 0) ? a[(int)Xn] : (uint)(short)a[(int)Xn];
 								else
 									dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
-								uint ea = pc + dx + (uint)(sbyte)d8;
+								uint ea = pc + dx*scale + (uint)(sbyte)d8;
 								pc += 2;
 								return ea;
 							}
@@ -958,6 +960,294 @@ namespace Jammy.Debugger
 		private static bool IsPCRelative(int type)
 		{
 			return (type & 0b111_111) == 0b111_010 || (type & 0b111_111) == 0b111_011;
+		}
+
+		private void t_fifteen(int type)
+		{
+			int misc = (type >> 6) & 7;
+			if (misc != 0)
+			{
+				switch (misc)
+				{
+					case 0b010://FBcc or fnop (and ea is $+2.w)
+					case 0b011://FBcc
+						{
+							var size = (type >> 6) & 1;
+							var cc = type & 0x3f;
+							if (size == 0 && cc == 0 && read16(pc) == pc + 2)
+							{
+								//Append("fnop");
+								break;
+							}
+							//Append("fb");
+							//Append($"{GetFPCC(cc)}");
+							if (size == 1)
+							{
+								//Append(".l ");
+								uint ea = (uint)(int)read32(pc); pc += 4;
+								//Append($"#{fmtX8(ea + address + 2)}");
+							}
+							else
+							{
+								//Append(".w ");
+								uint ea = (uint)(short)read16(pc); pc += 2;
+								//Append($"#{fmtX4(ea + address + 2)}");
+							}
+						}
+						break;
+					case 0b101:
+						{
+							//Append("frestore");
+							//Append(" ");
+							Size size = getSize(type);
+							uint ea = fetchEA(type, size);
+							fetchOp(type, ea, size);
+						}
+						break;
+					case 0b100:
+						{
+							//Append("fsave");
+							//Append(" ");
+							Size size = getSize(type);
+							uint ea = fetchEA(type,size);
+							fetchOp(type, ea, size);
+						}
+						break;
+					case 0b001://FDBcc or FScc or FTRAPcc
+						{
+							var w2 = read16(pc); pc += 2;
+							var cc = w2 & 0x3f;
+							var ins = (type >> 3) & 7;
+							if (ins == 0b001)
+							{
+								var dr = type & 7;
+								//Append($"fdb{GetFPCC(cc)} ");
+								//Append($"d{dr},");
+								uint ea = (uint)(short)read16(pc); pc += 2;
+								//Append($"#{fmtX4(ea + address + 2)}");
+							}
+							else if (ins == 0xb111)
+							{
+								//Append($"ftrap{GetFPCC(cc)}");
+								var mode = type & 7;
+								if (mode == 0b010)
+								{
+									//Append($".w #{fmtX4(read16(pc))}"); pc += 2;
+								}
+								else if (mode == 0b011)
+								{
+									//Append($".l #{fmtX8(read32(pc))}"); pc += 4;
+								}
+								else if (mode != 0b100)
+								{
+									//Append("unknown_mode");
+								}
+							}
+							else
+							{
+								//Append($"fs{GetFPCC(cc)}.b ");
+								uint ea = fetchEA(type, Size.Byte);
+								fetchOp(type, ea, Size.Byte);
+							}
+						}
+						break;
+				}
+			}
+			else
+			{
+				int ext = read16(pc); pc += 2;
+
+				if ((type & 0b11_1111_1111) == 0 && (ext >> 12) == 0b010111)
+				{
+					int cc = ext & 0x7f;
+					//Append($"fmovecr.x #${cc:X2},fp{(ext >> 7) & 7}  ; {GetFPConst(cc)}");
+					return;
+				}
+				else if ((ext & 0b11_000_111_00000000) == 0b11_000_000_00000000)
+				{
+					//Append("fmovem.x ");
+
+					int mode = (ext >> 10) & 3;
+
+					if (((ext >> 13) & 1) == 0)//M->R
+					{
+						Size size = (Size)((type >> 6) & 3);
+						uint ea = fetchEA(type,size);
+						fetchOp(type, ea, size);
+						//Append(",");
+					}
+
+					var list = ext & 0xff;
+					if (mode == 0 || mode == 1)
+					{
+						//pre-decrement is backwards
+						for (int i = 0; i < 4; i++)
+						{
+							int b0 = list & (1 << i);
+							int b7 = list & (0x80 >> i);
+							list &= 0xff - (1 << i) - (0x80 >> i);
+							list |= b7 >> (7 - i);
+							list |= b0 << (7 - i);
+						}
+					}
+					if (mode == 1 || mode == 3)
+					{
+						//if (mode == 0 || mode == 1) Append("-");
+						//Append($"(a{(ext >> 4) & 7})");
+						//if (mode == 2 || mode == 3) Append("+");
+					}
+					else
+					{
+						var ls = list << 1;
+						bool dash = false;
+						bool slash = false;
+						for (int i = 0; i < 8; i++)
+						{
+							//if ((ls & 3) == 0b010) { if (slash) Append("/"); Append($"fp{i}"); slash = true; }
+							//if ((ls & 7) == 0b111) { if (!dash) { Append("-"); dash = true; } }
+							//if ((ls & 6) == 0b010) { if (dash) Append($"fp{i}"); dash = false; }
+							//if ((ls & 15) == 0b0110) { Append($"/fp{i + 1}"); }
+							ls >>= 1;
+						}
+					}
+
+					if (((ext >> 13) & 1) == 1)//R->M
+					{
+						//Append(",");
+						Size size = (Size)((type >> 6) & 3);
+						uint ea = fetchEA(type,size);
+						fetchOp(type, ea, size);
+					}
+
+					return;
+				}
+
+				bool rm = ((ext >> 14) & 1) != 0;
+				int ss = (ext >> 10) & 7;
+				int dr = (ext >> 7) & 7;
+
+				int ins = ext & 0x7f;
+				//if ((ins & 0b1111_000) == 0b0110_000)
+				//	Append("fsincos");
+				//switch (ins)
+				//{
+				//	case 0b0011000: Append("fabs"); break;
+				//	case 0b0011100: Append("facos"); break;
+				//	case 0b0100010: Append("fadd"); break;
+				//	case 0b0001100: Append("fasin"); break;
+				//	case 0b0001010: Append("fatan"); break;
+				//	case 0b0001101: Append("fatanh"); break;
+				//	case 0b0111000: Append("fcmp"); break;
+				//	case 0b0011101: Append("fcos"); break;
+				//	case 0b0011001: Append("fcosh"); break;
+				//	case 0b0100000: Append("fdiv"); break;
+				//	case 0b0010000: Append("fetox"); break;
+				//	case 0b0001000: Append("fetoxm1"); break;
+				//	case 0b0011110: Append("fgetexp"); break;
+				//	case 0b0011111: Append("fgetman"); break;
+				//	case 0b0000001: Append("fint"); break;
+				//	case 0b0000011: Append("fintrz"); break;
+				//	case 0b0010101: Append("flog10"); break;
+				//	case 0b0010110: Append("flog2"); break;
+				//	case 0b0010100: Append("flogn"); break;
+				//	case 0b0000110: Append("flognp1"); break;
+				//	case 0b0100001: Append("fmod"); break;
+				//	case 0b0000000: Append("fmove"); break;
+				//	case 0b0100011: Append("fmul"); break;
+				//	case 0b0011010: Append("fneg"); break;
+				//	case 0b0100101: Append("frem"); break;
+				//	case 0b0100110: Append("fscale"); break;
+				//	case 0b0100100: Append("fsgldiv"); break;
+				//	case 0b0100111: Append("fsglmul"); break;
+				//	case 0b0001110: Append("fsin"); break;
+				//	case 0b0000010: Append("fsinh"); break;
+				//	case 0b0000100: Append("fsqrt"); break;
+				//	case 0b0101000: Append("fsub"); break;
+				//	case 0b0001111: Append("ftan"); break;
+				//	case 0b0001001: Append("ftanh"); break;
+				//	case 0b0010010: Append("ftentox"); break;
+				//	case 0b0111010: Append("ftst"); break;
+				//	case 0b0010001: Append("ftwotox"); break;
+				//}
+				//fmove has some special cases
+				if (ins == 0b0000000)
+				{
+					if ((ext >> 14) == 0b10)//100,101
+					{
+						//Append(".l ");
+						string cr = ss == 0b001 ? "fpiar" : (ss == 0b010 ? "fpsr" : "fpcr");
+						if (rm)
+						{
+							//Append($"{cr},");
+							uint ea = fetchEA(type,Size.Byte);//todo wrong size
+							//fetchOpFP(type, ea, (FPSize)ss);
+						}
+						else
+						{
+							uint ea = fetchEA(type,Size.Byte);//todo wrong size
+							//fetchOpFP(type, ea, (FPSize)ss);
+							//Append($",{cr}");
+						}
+						return;
+					}
+					if ((ext >> 13) == 0b010 || (ext >> 13) == 0b000)
+					{
+						if (!rm)
+						{
+							//reg to reg
+							//Append(".x ");
+							//Append($"fp{ss},");
+						}
+						else
+						{
+							//ea to reg
+							string sizes = "lsxpwdb?";
+							//Append($".{sizes[ss]} ");
+							uint ea = fetchEA(type,Size.Byte);//todo wrong size
+							//fetchOpFP(type, ea, (FPSize)ss);
+							//Append(",");
+						}
+						//Append($"fp{dr}");
+						return;
+					}
+					if ((ext >> 13) == 0b011)
+					{
+						//reg to ea
+						string sizes = "lsxpwdbp";
+						//Append($".{sizes[ss]} ");
+						//Append($"fp{dr},");
+						uint ea = fetchEA(type,Size.Byte);//todo wrong size
+						//fetchOpFP(type, ea, (FPSize)ss);
+						//int k = ((sbyte)((ext & 0x7f) << 1)) >> 1;
+						//if (ss == 3)
+						//	Append($",{k}");
+						//else if (ss == 7)
+						//	Append($",d{(ext >> 4) & 7}");
+						return;
+					}
+				}
+
+				if (rm)
+				{
+					string sizes = "lsxpwdb?";
+					//Append($".{sizes[ss]} ");
+					uint ea = fetchEA(type,Size.Byte);//todo wrong size
+					//fetchOpFP(type, ea, (FPSize)ss);
+					//Append(",");
+					//if ((ins & 0b1111_000) == 0b0110_000)
+					//	Append($"fp{ins & 7}:");
+					//Append($"fp{dr}");
+				}
+				else
+				{
+					//Append(".x ");
+					//if (ss != dr)
+					//	Append($"fp{ss},");
+					//if ((ins & 0b1111_000) == 0b0110_000)
+					//	Append($"fp{ins & 7}:");
+					//Append($"fp{dr}");
+				}
+			}
 		}
 
 		private void t_fourteen(int type)
@@ -2659,6 +2949,7 @@ namespace Jammy.Debugger
 
 		void internalTrap(uint vector)
 		{
+			return;
 			ushort oldSR = sr;
 			uint oldPC = instructionStartPC;
 
