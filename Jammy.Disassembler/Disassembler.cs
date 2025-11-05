@@ -99,9 +99,12 @@ namespace Jammy.Disassembler
 					foreach (var i in ia.EffectiveAddresses)
 					{ 
 						var ea = eaDatabase.GetEAName(i.Ea);
-						if (ea != null)
-						{	
-							asm.Append(' '); asm.Append(ea);
+						if (!asm.ToString().Contains(ea))
+						{ 
+							if (ea != null)
+							{	
+								asm.Append(' '); asm.Append(ea);
+							}
 						}
 					}
 				}
