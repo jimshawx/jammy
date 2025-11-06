@@ -224,7 +224,7 @@ namespace Jammy.Disassembler
 					}
 					else
 					{
-						var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, 20));
+						var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, Disassembler.LONGEST_X86_INSTRUCTION));
 						asm = dasm.ToString(options);
 
 						uint start = address, end = (uint)(address + dasm.Bytes.Length);

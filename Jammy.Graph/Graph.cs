@@ -220,10 +220,10 @@ namespace Jammy.Graph
 			return f;
 		}
 
-		private byte[] peek_20(uint pc)
+		private byte[] peek_longest(uint pc)
 		{
-			var b = new byte[20];
-			for (uint p = 0; p < 20; p++)
+			var b = new byte[Disassembler.Disassembler.LONGEST_X86_INSTRUCTION];
+			for (uint p = 0; p < b.Length; p++)
 				b[p] = memory.UnsafeRead8(pc + p);
 			return b;
 		}
@@ -234,7 +234,7 @@ namespace Jammy.Graph
 			var sb = new StringBuilder();
 			do
 			{
-				var sz = disassembler.Disassemble(pc, peek_20(pc));
+				var sz = disassembler.Disassemble(pc, peek_longest(pc));
 				pc += (uint)sz.Bytes.Length;
 				sb.AppendLine(sz.ToString());
 				n_lines++;

@@ -36,10 +36,10 @@ namespace Jammy.Debugger
 
 		private ushort peek_fast(uint pc) { return memory.UnsafeRead16(pc); }
 
-		private byte[] peek_20(uint pc)
+		private byte[] peek_longest(uint pc)
 		{
-			var b = new byte[20];
-			for (uint p = 0; p < 20; p++)
+			var b = new byte[Disassembler.Disassembler.LONGEST_X86_INSTRUCTION];
+			for (uint p = 0; p < b.Length; p++)
 				b[p] = memory.UnsafeRead8(pc+p);
 			return b;
 		}
@@ -76,7 +76,7 @@ namespace Jammy.Debugger
 					return;
 				}
 
-				var dasm = disassembler.Disassemble(pc, peek_20(pc));//todo: need to add type and target to DAsm
+				var dasm = disassembler.Disassemble(pc, peek_longest(pc));//todo: need to add type and target to DAsm
 				uint size = (uint)dasm.Bytes.Length;
 				uint target = dasm.ea;//target of jump/call/branch, zero if none available
 				M_TYPE type = dasm.type;//extended code

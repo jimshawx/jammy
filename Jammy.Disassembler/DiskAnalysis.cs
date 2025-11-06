@@ -314,7 +314,7 @@ namespace Jammy.Disassembler
 		{
 			//time since 1/Jan/1978
 			var epoch = new DateTime(1978, 1, 1);
-			return epoch.AddDays(fileDays).AddMinutes(fileMins).AddMilliseconds(fileTicks * 20);
+			return epoch.AddDays(fileDays).AddMinutes(fileMins).AddMilliseconds(fileTicks * 22);
 		}
 
 		private uint intl_toupper(int c)
@@ -360,7 +360,7 @@ namespace Jammy.Disassembler
 			uint address = 0;
 			do
 			{
-				var asm = disassembler.Disassemble(address, code.Take(20));
+				var asm = disassembler.Disassemble(address, code.Take(Disassembler.LONGEST_X86_INSTRUCTION));
 				sb.AppendLine(asm.ToString(options));
 				address += (uint)asm.Bytes.Length;
 				code = code.Skip(asm.Bytes.Length);
