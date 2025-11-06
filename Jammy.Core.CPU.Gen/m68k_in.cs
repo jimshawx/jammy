@@ -2669,7 +2669,7 @@ M68KMAKE_OP(bfexts, 32, ., d)
 
 		data = ROL_32(data, offset);
 		FLAG_N = NFLAG_32(data);
-		data = (uint64)MAKE_INT_32(data) >> (int)(32 - width);
+		data = (uint64)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = (uint)data;
 		FLAG_V = VFLAG_CLEAR;
@@ -2717,7 +2717,7 @@ M68KMAKE_OP(bfexts, 32, ., .)
 			data |= (m68ki_read_8(ea+4) << offset) >> 8;
 
 		FLAG_N = NFLAG_32(data);
-		data  = (uint)MAKE_INT_32(data) >> (int)(32 - width);
+		data  = (uint)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = data;
 		FLAG_V = VFLAG_CLEAR;

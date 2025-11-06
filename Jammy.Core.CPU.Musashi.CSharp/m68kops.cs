@@ -5922,7 +5922,7 @@ static void mk68k_op_bfexts_32_d()
 
 		data = ROL_32(data, offset);
 		FLAG_N = NFLAG_32(data);
-		data = (uint64)MAKE_INT_32(data) >> (int)(32 - width);
+		data = (uint64)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = (uint)data;
 		FLAG_V = VFLAG_CLEAR;
@@ -5970,7 +5970,7 @@ static void mk68k_op_bfexts_32_ai()
 			data |= (m68ki_read_8(ea+4) << offset) >> 8;
 
 		FLAG_N = NFLAG_32(data);
-		data  = (uint)MAKE_INT_32(data) >> (int)(32 - width);
+		data  = (uint)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = data;
 		FLAG_V = VFLAG_CLEAR;
@@ -6018,7 +6018,7 @@ static void mk68k_op_bfexts_32_di()
 			data |= (m68ki_read_8(ea+4) << offset) >> 8;
 
 		FLAG_N = NFLAG_32(data);
-		data  = (uint)MAKE_INT_32(data) >> (int)(32 - width);
+		data  = (uint)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = data;
 		FLAG_V = VFLAG_CLEAR;
@@ -6066,7 +6066,7 @@ static void mk68k_op_bfexts_32_ix()
 			data |= (m68ki_read_8(ea+4) << offset) >> 8;
 
 		FLAG_N = NFLAG_32(data);
-		data  = (uint)MAKE_INT_32(data) >> (int)(32 - width);
+		data  = (uint)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = data;
 		FLAG_V = VFLAG_CLEAR;
@@ -6114,7 +6114,7 @@ static void mk68k_op_bfexts_32_aw()
 			data |= (m68ki_read_8(ea+4) << offset) >> 8;
 
 		FLAG_N = NFLAG_32(data);
-		data  = (uint)MAKE_INT_32(data) >> (int)(32 - width);
+		data  = (uint)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = data;
 		FLAG_V = VFLAG_CLEAR;
@@ -6162,7 +6162,7 @@ static void mk68k_op_bfexts_32_al()
 			data |= (m68ki_read_8(ea+4) << offset) >> 8;
 
 		FLAG_N = NFLAG_32(data);
-		data  = (uint)MAKE_INT_32(data) >> (int)(32 - width);
+		data  = (uint)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = data;
 		FLAG_V = VFLAG_CLEAR;
@@ -6210,7 +6210,7 @@ static void mk68k_op_bfexts_32_pcdi()
 			data |= (m68ki_read_8(ea+4) << offset) >> 8;
 
 		FLAG_N = NFLAG_32(data);
-		data  = (uint)MAKE_INT_32(data) >> (int)(32 - width);
+		data  = (uint)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = data;
 		FLAG_V = VFLAG_CLEAR;
@@ -6258,7 +6258,7 @@ static void mk68k_op_bfexts_32_pcix()
 			data |= (m68ki_read_8(ea+4) << offset) >> 8;
 
 		FLAG_N = NFLAG_32(data);
-		data  = (uint)MAKE_INT_32(data) >> (int)(32 - width);
+		data  = (uint)(MAKE_INT_32(data) >> (int)(32 - width));
 
 		FLAG_Z = data;
 		FLAG_V = VFLAG_CLEAR;
