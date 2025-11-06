@@ -12,6 +12,7 @@ using Jammy.Core.Types;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 
 /*
@@ -42,6 +43,7 @@ namespace Jammy.Tests
 				.AddSingleton<IMemoryMapper>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryManager, MemoryManager>()
 				.AddSingleton<IKickLogo, KickLogo>()
+				.AddSingleton<IDMA>(x=>new Mock<IDMA>().Object)
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation").Bind(o))
 				.BuildServiceProvider();
 

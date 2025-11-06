@@ -23,6 +23,8 @@ using System.Text;
 using Jammy.Disassembler.Analysers;
 using Jammy.Core.Memory;
 using Jammy.Types.Options;
+using Moq;
+using Jammy.Disassembler.TypeMapper;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -74,6 +76,10 @@ namespace Jammy.Tests
 
 				//extra for the full disassembler
 				.AddSingleton<IDisassembly, Disassembly>()
+				.AddSingleton<IDisassembler, Disassembler.Disassembler>()
+				.AddSingleton<IEADatabase, EADatabase>()
+				.AddSingleton<IInstructionAnalysisDatabase, InstructionAnalysisDatabase>()
+				.AddSingleton<IDMA>(x=>new Mock<IDMA>().Object)
 				.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 				.AddSingleton<IAnalysis, Analysis>()
 				.AddSingleton<IAnalyser, Analyser>()
@@ -81,6 +87,8 @@ namespace Jammy.Tests
 				.AddSingleton<IDiskAnalysis, DiskAnalysis>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<IKickstartROM, KickstartROM>()
+				.AddSingleton<IExtendedKickstartROM, ExtendedKickstartROM>()
+				.AddSingleton<IObjectMapper, ObjectMapper>()
 				.AddSingleton<IMemoryManager, MemoryManager>()
 
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation030").Bind(o))
@@ -94,6 +102,7 @@ namespace Jammy.Tests
 			analyser = serviceProvider.GetRequiredService<IAnalyser>();
 
 			cpu0 = serviceProvider.GetRequiredService<ICPU>();
+			cpu0.Initialise();
 			cpu0.Reset();
 			cpu0.Emulate();
 		}
