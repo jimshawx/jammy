@@ -83,6 +83,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parky.Configuration.Writabl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.AmigaTypes", "Jammy.AmigaTypes\Jammy.AmigaTypes.csproj", "{E573B789-8103-46F9-BD31-8D639F1DCB8F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.CPU.Musashi.MC68040", "Jammy.Core.CPU.Musashi.MC68040\Jammy.Core.CPU.Musashi.MC68040.csproj", "{D9CA2777-4EFF-420C-956D-3B479FF7378B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -248,6 +250,10 @@ Global
 		{E573B789-8103-46F9-BD31-8D639F1DCB8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E573B789-8103-46F9-BD31-8D639F1DCB8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E573B789-8103-46F9-BD31-8D639F1DCB8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9CA2777-4EFF-420C-956D-3B479FF7378B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9CA2777-4EFF-420C-956D-3B479FF7378B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9CA2777-4EFF-420C-956D-3B479FF7378B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9CA2777-4EFF-420C-956D-3B479FF7378B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

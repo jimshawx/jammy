@@ -5,6 +5,7 @@ using Jammy.Core.CPU.Musashi;
 using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.CPU.Musashi.MC68020;
 using Jammy.Core.CPU.Musashi.MC68030;
+using Jammy.Core.CPU.Musashi.MC68040;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Debugger;
@@ -154,6 +155,14 @@ namespace Jammy.Tests
 			//9
 			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("MusashiCS68040"))
+				.AddSingleton<ICPU, Musashi68040CPU>()
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation040").Bind(o));
+			serviceProvider = serviceCollection.BuildServiceProvider();
+			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
+
+			//10
+			serviceCollection = GetBaseServices(configuration)
+				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("MusashiCS68040"))
 				.AddSingleton<ICPU, CPUWrapperMusashi>()
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation040").Bind(o));
 			serviceProvider = serviceCollection.BuildServiceProvider();
@@ -162,8 +171,8 @@ namespace Jammy.Tests
 			logger = serviceProvider.GetRequiredService<ILogger<CPUTest>>();
 
 			//which CPUs are we going to test?
-			cpu0 = (CPUTestRig)cpus[7];
-			cpu1 = (CPUTestRig)cpus[8];
+			cpu0 = (CPUTestRig)cpus[9];
+			cpu1 = (CPUTestRig)cpus[10];
 
 			cpu0.Initialise();
 			cpu1.Initialise();
