@@ -89,7 +89,8 @@ namespace Jammy.UI.Settings
 
 			if ((string)cbSku.SelectedItem == "MC68000" ||
 				(string)cbSku.SelectedItem == "MC68EC020" ||
-				(string)cbSku.SelectedItem == "MC68030")
+				(string)cbSku.SelectedItem == "MC68030" ||
+				(string)cbSku.SelectedItem == "MC68040")
 			{
 				rbMusashi.Enabled = true;
 			}
@@ -203,6 +204,11 @@ namespace Jammy.UI.Settings
 			if (rbNative.Checked) cbSku.SelectedIndex = 0;
 		}
 
+		private void rbMoira_CheckedChanged(object sender, EventArgs e)
+		{
+			if (rbMoira.Checked) cbSku.SelectedIndex = 0;
+		}
+
 		private EmulationSettings currentSettings = DefaultSettings();
 
 		private string currentSettingsFile = "";
@@ -280,7 +286,9 @@ namespace Jammy.UI.Settings
 			rbNative.Enabled = currentSettings.Sku == CPUSku.MC68000;
 			rbMusashi.Enabled = currentSettings.Sku == CPUSku.MC68000 ||
 								currentSettings.Sku == CPUSku.MC68EC020 ||
-								currentSettings.Sku == CPUSku.MC68030;
+								currentSettings.Sku == CPUSku.MC68030 ||
+								currentSettings.Sku == CPUSku.MC68040;
+			rbMoira.Enabled = currentSettings.Sku == CPUSku.MC68000;
 
 			//Chipset
 			cbChipset.SelectedItem = currentSettings.ChipSet.ToString();
@@ -525,7 +533,7 @@ namespace Jammy.UI.Settings
 				case 6:
 					currentSettings = new EmulationSettings();
 					currentSettings.CPU = CPUType.Musashi;
-					currentSettings.Sku = CPUSku.MC68030;
+					currentSettings.Sku = CPUSku.MC68040;
 					currentSettings.ChipMemory = 2.0f;
 					currentSettings.MotherboardMemory = 16;
 					currentSettings.ZorroIIIMemory = "256";

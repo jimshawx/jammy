@@ -224,6 +224,7 @@ namespace Jammy.UI.Settings
 			rbMoira.TabStop = true;
 			rbMoira.Text = "Moira";
 			rbMoira.UseVisualStyleBackColor = true;
+			rbMoira.CheckedChanged += rbMoira_CheckedChanged;
 			// 
 			// panel2
 			// 
