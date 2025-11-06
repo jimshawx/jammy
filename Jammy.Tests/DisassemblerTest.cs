@@ -6,12 +6,14 @@ using Jammy.Core.Types.Types;
 using Jammy.Debugger;
 using Jammy.Disassembler;
 using Jammy.Disassembler.Analysers;
+using Jammy.Disassembler.TypeMapper;
 using Jammy.Extensions.Extensions;
 using Jammy.Interface;
 using Jammy.Types.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using System;
@@ -63,6 +65,10 @@ namespace Jammy.Tests
 				.AddSingleton<IDiskAnalysis, DiskAnalysis>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<IKickstartROM, KickstartROM>()
+				.AddSingleton<IExtendedKickstartROM, ExtendedKickstartROM>()
+				.AddSingleton<IDiskAnalysis, DiskAnalysis>()
+				.AddSingleton<IObjectMapper, ObjectMapper>()
+				.AddSingleton<IDMA>(x => new Mock<IDMA>().Object)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("DisassemblerTest"))
 				.AddSingleton<TestMemory>()
 				.AddSingleton<ITestMemory>(x => x.GetRequiredService<TestMemory>())
@@ -161,6 +167,18 @@ namespace Jammy.Tests
 			return code.Content.Length;
 		}
 
+		private int LoadExe(uint loadAddress, string libName)
+		{
+			var lib = File.ReadAllBytes(libName);
+
+			var code = hunkProcessor.RetrieveHunks(lib).First(x => x.HunkType == HUNK.HUNK_CODE);
+			var libw = code.Content.AsUWord().ToArray();
+			for (uint i = 0; i < libw.Length; i++)
+				memory.UnsafeWrite16(loadAddress + i * 2, libw[i]);
+
+			return code.Content.Length;
+		}
+
 		[Test]
 		public void TestDisassmbler()
 		{
@@ -169,6 +187,19 @@ namespace Jammy.Tests
 			int librarySize = LoadLibrary(0x10000, libName);
 
 			var dis = disassembly.DisassembleTxt(new List<AddressRange>{new AddressRange(0x10000, (ulong)librarySize)}, new DisassemblyOptions { IncludeComments = true, UpperCase = true});
+			logger.LogTrace(Environment.NewLine + dis);
+
+			logger.LogTrace($"loaded {libName} at {0x10000:X8}");
+		}
+
+		[Test]
+		public void TestDisassmblerExe()
+		{
+			const string libName = "cputest";
+
+			int librarySize = LoadExe(0x10000, libName);
+
+			var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) }, new DisassemblyOptions { IncludeComments = true, UpperCase = true });
 			logger.LogTrace(Environment.NewLine + dis);
 
 			logger.LogTrace($"loaded {libName} at {0x10000:X8}");
