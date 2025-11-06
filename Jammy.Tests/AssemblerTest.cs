@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace Jammy.Tests
 {
 	[TestFixture]
-	public class AssemberTest
+	public class AssemblerTest
 	{
 		IAssembler assembler;
 
