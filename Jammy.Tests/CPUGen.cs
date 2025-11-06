@@ -9,7 +9,6 @@ namespace Jammy.Tests
 		[Test(Description = "TestCPUGen")]
 		public void GenCPU()
 		{
-
 			var f = new M68K();
 			f.main(0, new string[0]);
 		}
