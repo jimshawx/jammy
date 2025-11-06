@@ -550,15 +550,15 @@ namespace Jammy.Debugger
 
 			switch (m)
 			{
-				case 0:
+				case 0://000
 					return d[x];
-				case 1:
+				case 1://001
 					return a[x];
-				case 2:
+				case 2://010
 					return a[x];
-				case 3:
+				case 3://011
 					return a[x];
-				case 4:
+				case 4://100
 					{
 						if (size == Size.Long)
 							return a[x] - 4;
@@ -573,26 +573,89 @@ namespace Jammy.Debugger
 						//never gets here
 						throw new ArgumentOutOfRangeException();
 					}
-				case 5://(d16,An)
+				case 5://101 (d16,An)
 					{
 						ushort d16 = fetch16(pc);
 						pc += 2;
 						return a[x] + (uint)(short)d16;
 					}
-				case 6://(d8,An,Xn)
+				case 6://110 (d8,An,Xn)
 					{
-						uint ext = fetch16(pc); pc += 2;
+						uint ext = fetch16(pc);
 						uint Xn = (ext >> 12) & 7;
-						uint d8 = ext & 0xff;
 						uint scale = 1u<<(int)((ext >> 9) & 3);
 						uint dx;
-						if ((ext&0x8000)!=0)
+						if ((ext & 0x8000) != 0)
 							dx = (((ext >> 11) & 1) != 0) ? a[(int)Xn] : (uint)(short)a[(int)Xn];
 						else
 							dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
-						return a[x] + dx*scale + (uint)(sbyte)d8;
+
+						uint ea = 0; 
+						if ((ext & 0x100) == 0)
+						{ 
+							uint d8 = ext & 0xff;
+							ea = a[x] + dx*scale + (uint)(sbyte)d8;
+							pc += 2;
+						}
+						else
+						{
+							uint extPC = pc + 2;
+
+							//BD
+							uint bdSize = (ext >> 4) & 3;
+							uint bd = 0;
+							if (bdSize == 0) logger.LogTrace("Reserved BD Size");
+							if (bdSize == 2) { bd = (uint)(short)fetch16(extPC); extPC += 2; }
+							if (bdSize == 3) { bd = fetch32(extPC); extPC += 4; }
+
+							//I/IS
+							uint isSize = ext & 3;//low 2 bits of 3bit I/IS field
+							uint iis = 0;
+							if (isSize == 0) logger.LogTrace("Reserved IS Size");
+							if (isSize == 2) { iis = (uint)(short)fetch16(extPC); extPC += 2; }
+							if (isSize == 3) { iis = fetch32(extPC); extPC += 4; }
+							pc = extPC;
+
+							//BS
+							uint bs = ext & (1 << 7);
+
+							//IS
+							if ((ext & (1 << 6)) == 0)
+							{
+								//pre or post-indexed? (top bit of 3bit I/IS field)
+								if ((ext & 4) == 0)
+								{
+									//memory indirect pre-indexed
+									uint baseReg = bs != 0 ? 0 : a[x];//which is the base register A0-A7 or PC
+									uint offsReg = dx;//which is the index register D0-D7 .w or .l
+									ea = fetch32(baseReg + bd + offsReg * scale) + iis;
+								}
+								else
+								{
+									//memory indirect post-indexed
+									uint baseReg = bs != 0 ? 0 : a[x];//which is the base register A0-A7 or PC
+									uint offsReg = dx;//which is the index register D0-D7 .w or .l
+									ea = fetch32(baseReg + bd) + offsReg * scale + iis;
+								}
+							}
+							else
+							{
+								if ((ext & 4) == 0)
+								{
+									//memory indirect
+									uint baseReg = bs != 0 ? 0 : a[x];//which is the base register A0-A7 or PC
+									uint offsReg = dx;//which is the index register D0-D7 .w or .l
+									ea = baseReg + offsReg * scale + bd;
+								}
+								else
+								{
+									logger.LogTrace("Reserved IS Size");
+								}
+							}
+						}
+						return ea;
 					}
-				case 7:
+				case 7://111
 					switch (x)
 					{
 						case 0b010://(d16,pc)
@@ -607,16 +670,75 @@ namespace Jammy.Debugger
 								uint ext = fetch16(pc);
 								uint Xn = (ext >> 12) & 7;
 								uint scale = 1u << (int)((ext >> 9) & 3);
-								if ((ext&0x100)!=0)
-									logger.LogTrace("Full Extension Word not implemented");
-								uint d8 = ext & 0xff;
 								uint dx;
 								if ((ext & 0x8000) != 0)
 									dx = (((ext >> 11) & 1) != 0) ? a[(int)Xn] : (uint)(short)a[(int)Xn];
 								else
 									dx = (((ext >> 11) & 1) != 0) ? d[Xn] : (uint)(short)d[Xn];
-								uint ea = pc + dx*scale + (uint)(sbyte)d8;
-								pc += 2;
+
+								uint ea = 0;
+								if ((ext & 0x100) == 0)
+								{ 
+									uint d8 = ext & 0xff;
+									ea = pc + dx*scale + (uint)(sbyte)d8;
+									pc += 2;
+								}
+								else
+								{
+									uint extPC = pc + 2;
+
+									//BD
+									uint bdSize = (ext>>4)&3;
+									uint bd = 0;
+									if (bdSize == 0) logger.LogTrace("Reserved BD Size");
+									if (bdSize == 2) {bd = (uint)(short)fetch16(extPC); extPC += 2; }
+									if (bdSize == 3) {bd = fetch32(extPC); extPC += 4; }
+
+									//I/IS
+									uint isSize = ext&3;//low 2 bits of 3bit I/IS field
+									uint iis = 0;
+									if (isSize == 0) logger.LogTrace("Reserved IS Size");
+									if (isSize == 2) { iis = (uint)(short)fetch16(extPC); extPC += 2; }
+									if (isSize == 3) { iis = fetch32(extPC); extPC += 4; }
+									pc = extPC;
+
+									//BS
+									uint bs = ext&(1<<7);
+
+									//IS
+									if ((ext & (1 << 6)) == 0)
+									{
+										//pre or post-indexed? (top bit of 3bit I/IS field)
+										if ((ext&4)==0)
+										{
+											//memory indirect pre-indexed
+											uint baseReg = bs != 0 ? 0 : pc;//which is the base register A0-A7 or PC
+											uint offsReg = dx;//which is the index register D0-D7 .w or .l
+											ea = fetch32(baseReg + bd + offsReg * scale) + iis;
+										}
+										else
+										{
+											//memory indirect post-indexed
+											uint baseReg = bs != 0 ? 0 : pc;//which is the base register A0-A7 or PC
+											uint offsReg = dx;//which is the index register D0-D7 .w or .l
+											ea = fetch32(baseReg + bd) + offsReg * scale + iis;
+										}
+									}
+									else
+									{
+										if ((ext & 4) == 0)
+										{
+											//memory indirect
+											uint baseReg = bs != 0 ? 0 : pc;//which is the base register A0-A7 or PC
+											uint offsReg = dx;//which is the index register D0-D7 .w or .l
+											ea = baseReg + offsReg * scale + bd;
+										}
+										else
+										{
+											logger.LogTrace("Reserved IS Size");
+										}
+									}
+								}
 								return ea;
 							}
 						case 0b000://(xxx).w
