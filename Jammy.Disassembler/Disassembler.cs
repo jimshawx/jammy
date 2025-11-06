@@ -309,18 +309,92 @@ namespace Jammy.Disassembler
 					}
 				case 6://(d8,An,Xn)
 					{
-						uint ext = read16(pc); pc += 2;
+						uint ext = read16(pc);
 						uint Xn = (ext >> 12) & 7;
 						uint scale = (ext >>9)&3;
-						if ((ext & 0x100) != 0)
-							Append("full_extension_word_not_implmented");
-						uint d8 = ext & 0xff;
+
 						string ss = scale == 0 ? "" : $"*{1<<(int)scale}";
 						string s = (((ext>>11)&1) != 0)?"l":"w";
-						if ((ext & 0x8000)!=0)
-							Append($"{fmtX2(d8)}(a{x},a{Xn}.{s}{ss})");
+						string dx;
+						if ((ext & 0x8000) != 0)
+							dx = $"a{Xn}.{s}{ss}";
 						else
-							Append($"{fmtX2(d8)}(a{x},d{Xn}.{s}{ss})");
+							dx = $"d{Xn}.{s}{ss}";
+
+						if ((ext & 0x100) == 0)
+						{ 
+							uint d8 = ext & 0xff;
+							pc += 2;
+							if ((ext & 0x8000)!=0)
+								Append($"{fmtX2(d8)}(a{x},{dx})");
+							else
+								Append($"{fmtX2(d8)}(a{x},{dx})");
+						}
+						else
+						{
+							uint extPC = pc + 2;
+
+							//BD
+							uint bdSize = (ext >> 4) & 3;
+							uint bd = 0;
+							if (bdSize == 0) Append("reserved_bd_size");
+							if (bdSize == 2) { bd = (uint)(short)read16(extPC); extPC += 2; }
+							if (bdSize == 3) { bd = read32(extPC); extPC += 4; }
+
+							//I/IS
+							uint isSize = ext & 3;//low 2 bits of 3bit I/IS field
+							uint iis = 0;
+							if (isSize == 0) Append("reserved_is_size");
+							if (isSize == 2) { iis = (uint)(short)read16(extPC); extPC += 2; }
+							if (isSize == 3) { iis = read32(extPC); extPC += 4; }
+							pc = extPC;
+
+							//BS
+							uint bs = ext & (1 << 7);
+
+							//IS
+							if ((ext & (1 << 6)) == 0)
+							{
+								//pre or post-indexed? (top bit of 3bit I/IS field)
+								if ((ext & 4) == 0)
+								{
+									//memory indirect pre-indexed
+									string baseReg = bs != 0 ? "" : $"a{x}";//which is the base register A0-A7 or PC
+									string offsReg = dx;//which is the index register D0-D7 .w or .l
+									if (bs == 0)
+										Append($"({fmtX8(iis)}[{offsReg},{fmtX8(bd)}])");
+									else
+										Append($"({fmtX8(iis)}[{baseReg},{offsReg},{fmtX8(bd)}])");
+								}
+								else
+								{
+									//memory indirect post-indexed
+									string baseReg = bs != 0 ? "" : $"a{x}";//which is the base register A0-A7 or PC
+									string offsReg = dx;//which is the index register D0-D7 .w or .l
+									if (bs == 0)
+										Append($"({fmtX8(iis)},{offsReg}[{fmtX8(bd)}])");
+									else
+										Append($"({fmtX8(iis)},{offsReg}[{baseReg},{fmtX8(bd)}])");
+								}
+							}
+							else
+							{
+								if ((ext & 4) == 0)
+								{
+									//memory indirect
+									string baseReg = bs != 0 ? "" : $"a{x}";//which is the base register A0-A7 or PC
+									string offsReg = dx;//which is the index register D0-D7 .w or .l
+									if (bs == 0)
+										Append($"{fmtX8(bd)}({offsReg})");
+									else
+										Append($"{fmtX8(bd)}({baseReg},{offsReg})");
+								}
+								else
+								{
+									Append("reserved_is_size");
+								}
+							}
+						}
 						return 0;
 					}
 				case 7:
@@ -339,16 +413,92 @@ namespace Jammy.Disassembler
 							{
 								uint ext = read16(pc);
 								uint Xn = (ext >> 12) & 7;
-								uint d8 = ext & 0xff;
 								uint scale = (ext >> 9) & 3;
 								string ss = scale == 0 ? "" : $"*{1 << (int)scale}";
 								string s = (((ext >> 11) & 1) != 0) ? "l" : "w";
-								d8 += (address + pc);
-								pc += 2;
-								if ((ext&0x8000)!=0)
-									Append($"{fmtX8(d8)}(a{Xn}.{s}{ss})");
+								string dx;
+								if ((ext & 0x8000) != 0)
+									dx = $"a{Xn}.{s}{ss}";
 								else
-									Append($"{fmtX8(d8)}(d{Xn}.{s}{ss})");
+									dx = $"d{Xn}.{s}{ss}";
+
+								if ((ext & 0x100) == 0)
+								{
+									uint d8 = ext & 0xff;
+									d8 += (address + pc);
+									pc += 2;
+									if ((ext&0x8000)!=0)
+										Append($"{fmtX8(d8)}({dx})");
+									else
+										Append($"{fmtX8(d8)}({dx})");
+								}
+								else
+								{
+									//x should == 3
+
+									uint extPC = pc + 2;
+
+									//BD
+									uint bdSize = (ext >> 4) & 3;
+									uint bd = 0;
+									if (bdSize == 0) Append("reserved_bd_size");
+									if (bdSize == 2) { bd = (uint)(short)read16(extPC); extPC += 2; }
+									if (bdSize == 3) { bd = read32(extPC); extPC += 4; }
+
+									//I/IS
+									uint isSize = ext & 3;//low 2 bits of 3bit I/IS field
+									uint iis = 0;
+									if (isSize == 0) Append("reserved_is_size");
+									if (isSize == 2) { iis = (uint)(short)read16(extPC); extPC += 2; }
+									if (isSize == 3) { iis = read32(extPC); extPC += 4; }
+									pc = extPC;
+
+									//BS
+									uint bs = ext & (1 << 7);
+
+									//IS
+									if ((ext & (1 << 6)) == 0)
+									{
+										//pre or post-indexed? (top bit of 3bit I/IS field)
+										if ((ext & 4) == 0)
+										{
+											//memory indirect pre-indexed
+											string baseReg = bs != 0 ? "" : $"pc";//which is the base register A0-A7 or PC
+											string offsReg = dx;//which is the index register D0-D7 .w or .l
+											if (bs == 0)
+												Append($"({fmtX8(iis)}[{offsReg},{fmtX8(bd)}])");
+											else
+												Append($"({fmtX8(iis)}[{baseReg},{offsReg},{fmtX8(bd)}])");
+										}
+										else
+										{
+											//memory indirect post-indexed
+											string baseReg = bs != 0 ? "" : $"pc";//which is the base register A0-A7 or PC
+											string offsReg = dx;//which is the index register D0-D7 .w or .l
+											if (bs == 0)
+												Append($"({fmtX8(iis)},{offsReg}[{fmtX8(bd)}])");
+											else
+												Append($"({fmtX8(iis)},{offsReg}[{baseReg},{fmtX8(bd)}])");
+										}
+									}
+									else
+									{
+										if ((ext & 4) == 0)
+										{
+											//memory indirect
+											string baseReg = bs != 0 ? "" : $"pc";//which is the base register A0-A7 or PC
+											string offsReg = dx;//which is the index register D0-D7 .w or .l
+											if (bs == 0)
+												Append($"{fmtX8(bd)}({offsReg})");
+											else
+												Append($"{fmtX8(bd)}({baseReg},{offsReg})");
+										}
+										else
+										{
+											Append("reserved_is_size");
+										}
+									}
+								}
 								return 0;
 							}
 						case 0b000://(xxx).w
