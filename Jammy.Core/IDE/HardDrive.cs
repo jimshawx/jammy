@@ -205,8 +205,6 @@ namespace Jammy.Core.IDE
 		{
 			uint sectorSize = 512;//common standard for sector size
 
-			SetSerialNumber($"0000000{diskNo}");
-
 			//configuration
 			driveId[0] = 1 << 6;//fixed drive
 
@@ -222,6 +220,7 @@ namespace Jammy.Core.IDE
 
 			//serial number (10-19)
 			SetString(10, 19, "3.14159265");
+			SetSerialNumber($"0000000{diskNo}");
 
 			//firmware revision (23-26)
 			SetString(23, 26, "24.06.72");
