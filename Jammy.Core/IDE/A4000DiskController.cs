@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.IDE
@@ -76,7 +76,8 @@ namespace Jammy.Core.IDE
 
 	public class A4000IDEController : IDEController, IA4000IDEController
 	{
-		public A4000IDEController(IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<A4000IDEController> logger) : base(interrupt, settings, logger)
+		public A4000IDEController(IEnumerable<IHardDrive> hardDrives, IInterrupt interrupt,
+			IOptions<EmulationSettings> settings, ILogger<A4000IDEController> logger) : base(hardDrives, interrupt, settings, logger)
 		{
 		}
 

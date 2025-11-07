@@ -191,6 +191,22 @@ namespace Jammy.Core.Interface.Interfaces
 		public void Write(uint insaddr, uint address, uint value, Size size);
 	}
 
+	public interface IHardDrive
+	{
+		ushort[] GetDriveId();
+		int Heads { get; }
+		int Sectors { get; }
+		byte ConfiguredParamsSectorsPerTrack { get; set; }
+		byte ConfiguredParamsHeads { get; set; }
+		void SyncDisk();
+		void BeginRead(ushort[] src);
+		void BeginRead(uint address, byte sectorCount);
+		void BeginWrite(uint address);
+		ushort Read();
+		void Write(ushort v);
+		void Dispose();
+	}
+
 	public interface IDiskController : IMemoryMappedDevice, IReset { }
 	public interface IA4000IDEController : IReset { }
 	public interface IA1200IDEController : IDiskController { }

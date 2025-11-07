@@ -1,33 +1,42 @@
-﻿using System;
+﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Extensions.Extensions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.IDE
 {
-	internal class HardDrive : IDisposable
+	public class HardDrive : IDisposable, IHardDrive
 	{
 		private readonly MemoryMappedFile diskMap;
 		private readonly MemoryMappedViewAccessor diskAccessor;
 
-		public HardDrive(long bytes, int diskNo, uint C, uint H, uint S)
+		public HardDrive(string diskFileName, int diskNo)
 		{
 			DiskNumber = diskNo;
-			this.Cylinders = (int)C;
-			this.Heads = (int)H;
-			this.Sectors = (int)S;
+			string fileName = Path.Combine(hardfilePath, diskFileName);
+			long bytes = new FileInfo(fileName).Length;
 
-			diskMap = MemoryMappedFile.CreateFromFile(Path.Combine(hardfilePath, $"dh{DiskNumber}.hdf"), FileMode.OpenOrCreate, $"dh{DiskNumber}", bytes, MemoryMappedFileAccess.ReadWrite);
+			diskMap = MemoryMappedFile.CreateFromFile(fileName, FileMode.OpenOrCreate, diskFileName, bytes, MemoryMappedFileAccess.ReadWrite);
 			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
 
 			Swab();
 
 			DriveIRQBit = 1 << diskNo;
+
+			CHS(bytes, out var C, out var H, out var S);
+
+			this.Cylinders = (int)C;
+			this.Heads = (int)H;
+			this.Sectors = (int)S;
+
+			InitDriveId(diskNo, C, H, S);
 		}
 
 		//drive id bit
@@ -162,5 +171,163 @@ namespace Jammy.Core.IDE
 			diskAccessor.Dispose();
 			diskMap.Dispose();
 		}
+
+		public ushort[] GetDriveId()
+		{
+			return driveId;
+		}
+
+		private void CHS(long bytes, out uint cylinders, out uint heads, out uint sectors)
+		{
+			//cylinders * heads * sectors = number of blocks
+			//cylinders * heads * sectors * 512 = size of disk
+			//blocks per track = sectors
+			//tracks per cylinder = heads
+			//blocks per cylinder = sectors * heads
+			//cylinders * blocks per cylinder = total number of blocks on the drive
+
+			uint sectorSize = 512;//common standard for sector size
+
+			//uint heads = 16;//these are 4 bits in ATA spec for head number
+			//uint sectors = 256;//there are 8 bits for sector number
+			//uint cylinders = 65536;//these are 16 bits for cylinder number
+
+			heads = 16;//standard (maximum) number of heads
+			sectors = 63;//standard is 63 sectors
+
+			uint blocks = (uint)(bytes / sectorSize); // 335,872
+			uint sectorCylinders = blocks / heads;//20,992 = sectors * cylinders
+			cylinders = sectorCylinders / sectors;//332
+
+		}
+
+		private void InitDriveId(int diskNo, uint cylinders, uint heads, uint sectors)
+		{
+			uint sectorSize = 512;//common standard for sector size
+
+			SetSerialNumber($"0000000{diskNo}");
+
+			//configuration
+			driveId[0] = 1 << 6;//fixed drive
+
+			//geometry
+			driveId[1] = (ushort)cylinders;
+			driveId[3] = (ushort)heads;
+			driveId[4] = (ushort)(sectors * sectorSize);//sectors = blocks per track
+			driveId[5] = (ushort)sectorSize;
+			driveId[6] = (ushort)sectors;
+
+			//vendor (7-9)
+			SetString(7, 9, "JIM");
+
+			//serial number (10-19)
+			SetString(10, 19, "3.14159265");
+
+			//firmware revision (23-26)
+			SetString(23, 26, "24.06.72");
+
+			//model number (27-46)
+			SetString(27, 46, "JIMHD");
+
+			//seems like Amiga ignores this and always uses CHS
+
+			//supports LBA
+			driveId[49] = 1 << 9;
+
+			//LBA number of sectors
+			uint total = cylinders * heads * sectors;
+			driveId[60] = (ushort)total;
+			driveId[61] = (ushort)(total >> 16);
+
+			//preconfigured drive params
+			//driveId[53] = 1;
+			//driveId[54] = (ushort)cylinders;
+			//driveId[55] = (ushort)heads;
+			//driveId[56] = (ushort)sectors;
+			//driveId[57] = (ushort)(cylinders * heads * sectors);
+			//driveId[58] = (ushort)((cylinders * heads * sectors) >> 16);
+
+			//it's little-endian, need to swap to big-endian for Amiga
+			for (int i = 0; i < driveId.Length; i++)
+				driveId[i] = (ushort)((driveId[i] >> 8) | (driveId[i] << 8));
+		}
+
+		private void SetString(int start, int end, string txt)
+		{
+			int wordLength = end - start + 1;
+			var b = new byte[Math.Max(txt.Length, wordLength * 2)];
+			Array.Fill(b, Convert.ToByte(' '));
+			for (int i = 0; i < txt.Length; i++)
+				b[i] = Convert.ToByte(txt[i]);
+			var src = b.AsUWord().Take(wordLength).ToArray();
+			Array.Copy(src, 0, driveId, start, src.Length);
+		}
+
+		private void SetSerialNumber(string serial)
+		{
+			SetString(10, 19, serial);
+		}
+
+		//drive identification
+		private readonly ushort[] driveId = new ushort[256]
+		{
+			0,// 0 general configuration
+			0,// 1 number of cylinders
+			0,// 2 reserved
+			0,// 3 number of heads
+			0,// 4 number of unformatted bytes per track
+			0,// 5 number of unformatted bytes per sector
+			0,// 6 number of sectors per track
+			0,0,0,//7-9 vendor unique
+			0,0,0,0,0,0,0,0,0,0,//10-19 serial number ASCII
+			0,//20 buffer type
+			0,//21 buffer size in 512 bytes increments (0 - not specified)
+			0,//22 # of ECC byte available on read/write long commands (0 - not specified)
+			0,0,0,0,//23-26 firmware revision
+			0,0,0,0,0,0,0,0,0,0,//27-46 model number
+			0,0,0,0,0,0,0,0,0,0,
+			0,//47 bits 15-8 vendor unique, 7-0 00 = read/write multiple commands not implemented, xx = maximum # of sectors that can be transferred per interrupt
+			0,//48 0 - cannot perform double-word IO
+			0,//49 capabilities 15-10 reserved, 9 - LBA supported 1/0, 8 - DMA supported 1/0, 7-0 vendor unique
+			0,//50 reserved
+			0,//51 15-8 PIO data transfer cycle timing mode, 7-0 vendor unique
+			0,//52 15-8 DMA data transfer cycle timing mode, 7-0 vendor unique
+			0,//53 15-1 reserved, 0 - words 54-58 are valid 1/0
+			0,//54 number of current cylinders
+			0,//55 number of current heads
+			0,//56 number of sectors per track
+			0,0,//57-58 current capacity in sectors
+			0,//59 15-9 reserved, 8 - multiple sector setting is valid 1/0, 7-0 xx = current setting for maximum number of settings transferred per interrupt
+			0,0,//60-61 total number of addressable sectors (LBA mode only)
+			0,//62 15-8 single word DMA transfer mode active, 7-0 single word DMA transfer modes supported
+			0,//63 15-8 multiword DMA transfer mode active, 7-0 multiword DMA transfer modes supported
+			
+			0,0,0,0,0,0,0,0,//64-127 reserved
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+
+			0,0,0,0,0,0,0,0,//128-159 vendor specific
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,
+
+			0,0,0,0,0,0,0,0,//160-255 reserved
+			0,0,0,0,0,0,0,0,//168
+			0,0,0,0,0,0,0,0,//176
+			0,0,0,0,0,0,0,0,//184
+			0,0,0,0,0,0,0,0,//192
+			0,0,0,0,0,0,0,0,//200
+			0,0,0,0,0,0,0,0,//208
+			0,0,0,0,0,0,0,0,//216
+			0,0,0,0,0,0,0,0,//224
+			0,0,0,0,0,0,0,0,//232
+			0,0,0,0,0,0,0,0,//240
+			0,0,0,0,0,0,0,0,//248...255
+		};
 	}
 }

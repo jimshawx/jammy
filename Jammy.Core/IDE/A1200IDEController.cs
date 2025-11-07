@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.IDE
@@ -29,7 +29,8 @@ namespace Jammy.Core.IDE
 	{
 		private readonly MemoryRange memoryRange;
 
-		public A1200IDEController(IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<A1200IDEController> logger) : base(interrupt, settings, logger)
+		public A1200IDEController(IEnumerable<IHardDrive> hardDrives, IInterrupt interrupt,
+			IOptions<EmulationSettings> settings, ILogger<A1200IDEController> logger) : base(hardDrives, interrupt, settings, logger)
 		{
 			memoryRange = new MemoryRange(0xda0000, 0x20000);
 		}

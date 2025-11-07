@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
-using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.IDE
@@ -54,14 +52,14 @@ namespace Jammy.Core.IDE
 		private readonly IInterrupt interrupt;
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
+		private readonly List<IHardDrive> hardDrives = new List<IHardDrive>();
 
-		public IDEController(IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<IDEController> logger)
+		public IDEController(IEnumerable<IHardDrive> hardDrives, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<IDEController> logger)
 		{
 			this.interrupt = interrupt;
 			this.settings = settings.Value;
 			this.logger = logger;
-
-			InitDriveId();
+			this.hardDrives.AddRange(hardDrives);
 		}
 
 		public void Reset()
@@ -100,8 +98,7 @@ namespace Jammy.Core.IDE
 		private GAYLE_INTENA gayleINTREQ;
 		private byte gayleConfig;
 
-		private readonly HardDrive[] hardDrives = new HardDrive[2];
-		private HardDrive currentDrive;
+		private IHardDrive currentDrive;
 
 		//registers
 		private byte driveHead;
@@ -233,7 +230,7 @@ namespace Jammy.Core.IDE
 				case IDE.SectorCount: sectorCount = (byte)value; break;
 
 				case IDE.DriveHead:
-					currentDrive = hardDrives[(value >> 4) & 1];
+					currentDrive = hardDrives[(int)((value >> 4) & 1)];
 					driveHead = (byte)value;
 					break;
 				case IDE.CylinderLow: cylinderLow = (byte)value; break;
@@ -413,159 +410,6 @@ namespace Jammy.Core.IDE
 			UpdateInterrupt();
 		}
 
-		private void InitDriveId()
-		{
-			//cylinders * heads * sectors = number of blocks
-			//cylinders * heads * sectors * 512 = size of disk
-			//blocks per track = sectors
-			//tracks per cylinder = heads
-			//blocks per cylinder = sectors * heads
-			//cylinders * blocks per cylinder = total number of blocks on the drive
-
-			//let's say we want a 165MB Hard Disk
-
-			uint sectorSize = 512;//common standard for sector size
-			long bytes = 165 * 1024 * 1024; // 173,015,040 bytes
-
-			//uint heads = 16;//these are 4 bits in ATA spec for head number
-			//uint sectors = 256;//there are 8 bits for sector number
-			//uint cylinders = 65536;//these are 16 bits for cylinder number
-
-			uint heads = 16;//standard (maximum) number of heads
-			uint sectors = 63;//standard is 63 sectors
-
-			uint blocks = (uint)(bytes / sectorSize); // 335,872
-			uint sectorCylinders = blocks / heads;//20,992 = sectors * cylinders
-			uint cylinders = sectorCylinders / sectors;//332
-
-			for (int i = 0; i < settings.HardDiskCount; i++)
-				hardDrives[i] = new HardDrive(bytes, i, cylinders, heads, sectors);
-
-			currentDrive = hardDrives[0];
-
-			//configuration
-			driveId[0] = 1 << 6;//fixed drive
-
-			//geometry
-			driveId[1] = (ushort)cylinders;
-			driveId[3] = (ushort)heads;
-			driveId[4] = (ushort)(sectors * sectorSize);//sectors = blocks per track
-			driveId[5] = (ushort)sectorSize;
-			driveId[6] = (ushort)sectors;
-
-			//vendor (7-9)
-			SetString(7, 9, "JIM");
-
-			//serial number (10-19)
-			SetString(10, 19, "3.14159265");
-
-			//firmware revision (23-26)
-			SetString(23, 26, "24.06.72");
-
-			//model number (27-46)
-			SetString(27, 46, "JIMHD");
-
-			//seems like Amiga ignores this and always uses CHS
-
-			//supports LBA
-			driveId[49] = 1 << 9;
-
-			//LBA number of sectors
-			uint total = cylinders * heads * sectors;
-			driveId[60] = (ushort)total;
-			driveId[61] = (ushort)(total >> 16);
-
-			//preconfigured drive params
-			//driveId[53] = 1;
-			//driveId[54] = (ushort)cylinders;
-			//driveId[55] = (ushort)heads;
-			//driveId[56] = (ushort)sectors;
-			//driveId[57] = (ushort)(cylinders * heads * sectors);
-			//driveId[58] = (ushort)((cylinders * heads * sectors) >> 16);
-
-			//it's little-endian, need to swap to big-endian for Amiga
-			for (int i = 0; i < driveId.Length; i++)
-				driveId[i] = (ushort)((driveId[i] >> 8) | (driveId[i] << 8));
-		}
-
-		private void SetString(int start, int end, string txt)
-		{
-			int wordLength = end - start + 1;
-			var b = new byte[Math.Max(txt.Length, wordLength * 2)];
-			Array.Fill(b, Convert.ToByte(' '));
-			for (int i = 0; i < txt.Length; i++)
-				b[i] = Convert.ToByte(txt[i]);
-			var src = b.AsUWord().Take(wordLength).ToArray();
-			Array.Copy(src, 0, driveId, start, src.Length);
-		}
-
-		private void SetSerialNumber(string serial)
-		{
-			SetString(10,19,serial);
-		}
-
-		//drive identification
-		private readonly ushort[] driveId = new ushort[256]
-		{
-			0,// 0 general configuration
-			0,// 1 number of cylinders
-			0,// 2 reserved
-			0,// 3 number of heads
-			0,// 4 number of unformatted bytes per track
-			0,// 5 number of unformatted bytes per sector
-			0,// 6 number of sectors per track
-			0,0,0,//7-9 vendor unique
-			0,0,0,0,0,0,0,0,0,0,//10-19 serial number ASCII
-			0,//20 buffer type
-			0,//21 buffer size in 512 bytes increments (0 - not specified)
-			0,//22 # of ECC byte available on read/write long commands (0 - not specified)
-			0,0,0,0,//23-26 firmware revision
-			0,0,0,0,0,0,0,0,0,0,//27-46 model number
-			0,0,0,0,0,0,0,0,0,0,
-			0,//47 bits 15-8 vendor unique, 7-0 00 = read/write multiple commands not implemented, xx = maximum # of sectors that can be transferred per interrupt
-			0,//48 0 - cannot perform double-word IO
-			0,//49 capabilities 15-10 reserved, 9 - LBA supported 1/0, 8 - DMA supported 1/0, 7-0 vendor unique
-			0,//50 reserved
-			0,//51 15-8 PIO data transfer cycle timing mode, 7-0 vendor unique
-			0,//52 15-8 DMA data transfer cycle timing mode, 7-0 vendor unique
-			0,//53 15-1 reserved, 0 - words 54-58 are valid 1/0
-			0,//54 number of current cylinders
-			0,//55 number of current heads
-			0,//56 number of sectors per track
-			0,0,//57-58 current capacity in sectors
-			0,//59 15-9 reserved, 8 - multiple sector setting is valid 1/0, 7-0 xx = current setting for maximum number of settings transferred per interrupt
-			0,0,//60-61 total number of addressable sectors (LBA mode only)
-			0,//62 15-8 single word DMA transfer mode active, 7-0 single word DMA transfer modes supported
-			0,//63 15-8 multiword DMA transfer mode active, 7-0 multiword DMA transfer modes supported
-			
-			0,0,0,0,0,0,0,0,//64-127 reserved
-			0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,
-
-			0,0,0,0,0,0,0,0,//128-159 vendor specific
-			0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,
-
-			0,0,0,0,0,0,0,0,//160-255 reserved
-			0,0,0,0,0,0,0,0,//168
-			0,0,0,0,0,0,0,0,//176
-			0,0,0,0,0,0,0,0,//184
-			0,0,0,0,0,0,0,0,//192
-			0,0,0,0,0,0,0,0,//200
-			0,0,0,0,0,0,0,0,//208
-			0,0,0,0,0,0,0,0,//216
-			0,0,0,0,0,0,0,0,//224
-			0,0,0,0,0,0,0,0,//232
-			0,0,0,0,0,0,0,0,//240
-			0,0,0,0,0,0,0,0,//248...255
-		};
-
 		private void Command(byte value)
 		{
 			if (currentDrive == null)
@@ -591,8 +435,7 @@ namespace Jammy.Core.IDE
 				case 0xEC:
 					cmd = "Identify Drive";
 					currentTransfer = new Transfer(1, Transfer.TransferDirection.HostRead);
-					SetSerialNumber($"0000000{currentDrive.DiskNumber}");
-					currentDrive.BeginRead(driveId);
+					currentDrive.BeginRead(currentDrive.GetDriveId());
 					NextSector();
 					break;
 
