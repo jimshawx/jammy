@@ -176,6 +176,8 @@ namespace Jammy.Tests
 			for (uint i = 0; i < libw.Length; i++)
 				memory.UnsafeWrite16(loadAddress + i * 2, libw[i]);
 
+			//File.WriteAllBytes("cputest.raw", code.Content);
+
 			return code.Content.Length;
 		}
 
@@ -199,7 +201,7 @@ namespace Jammy.Tests
 
 			int librarySize = LoadExe(0x10000, libName);
 
-			var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) }, new DisassemblyOptions { IncludeComments = true, UpperCase = true });
+			var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) }, new DisassemblyOptions { IncludeComments = true, UpperCase = true, IncludeBytes = true });
 			logger.LogTrace(Environment.NewLine + dis);
 
 			logger.LogTrace($"loaded {libName} at {0x10000:X8}");
