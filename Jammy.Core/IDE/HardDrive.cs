@@ -23,6 +23,38 @@ namespace Jammy.Core.IDE
 			string fileName = Path.Combine(hardfilePath, diskFileName);
 			long bytes = new FileInfo(fileName).Length;
 
+			byte[] id = new byte[4];
+			using (var file = File.OpenRead(fileName))
+			{	
+				file.ReadExactly(id, 0, 4);
+				file.Close();
+			}
+			if (id[0] == 'D' && id[1] == 'O' && id[2] == 'S' && id[3] == 0)
+			{
+				//http://lclevy.free.fr/adflib/adf_info.html
+				//https://amitools.readthedocs.io/en/latest/index.html
+				//this is equivalent to doing
+				//rdbtool full.hdf create size=130Mi + init + addimg simple.hdf
+				//where 130Mi is > size simple.hdf
+				var dos = File.ReadAllBytes(fileName);
+				fileName = Path.ChangeExtension(Path.Combine("c:/source/jammy", "random"), "hdf");
+				using (var file = File.OpenWrite(fileName))
+				{
+					var rdb = MakeRDB(dos.Length + 2*1024*1024);
+					var part = MakePart();
+					file.Write(rdb, 0, rdb.Length);
+					file.Write(new byte[256], 0, 256);
+					file.Write(part, 0, part.Length);
+					file.Write(new byte[256], 0, 256);
+					//offset 16384
+					file.Write(new byte[15*1024], 0, 15*1024);
+					//file.Write(new byte[63*16*512-1024], 0, 63 * 16 * 512 - 1024); //---------------- was 15 * 1024
+					file.Write(dos, 0, dos.Length);
+					file.Close();
+				}
+				bytes = new FileInfo(fileName).Length;
+			}
+
 			diskMap = MemoryMappedFile.CreateFromFile(fileName, FileMode.OpenOrCreate, diskFileName, bytes, MemoryMappedFileAccess.ReadWrite);
 			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
 
@@ -328,5 +360,368 @@ namespace Jammy.Core.IDE
 			0,0,0,0,0,0,0,0,//240
 			0,0,0,0,0,0,0,0,//248...255
 		};
+
+		/*
+			public class RigidDiskBlock
+			{
+				public ULONG rdb_ID { get; set; }
+				public ULONG rdb_SummedLongs { get; set; }
+				public LONG rdb_ChkSum { get; set; }
+				public ULONG rdb_HostID { get; set; }
+				public ULONG rdb_BlockBytes { get; set; }
+				public ULONG rdb_Flags { get; set; }
+				public ULONG rdb_BadBlockList { get; set; }
+				public ULONG rdb_PartitionList { get; set; }
+				public ULONG rdb_FileSysHeaderList { get; set; }
+				public ULONG rdb_DriveInit { get; set; }
+				[AmigaArraySize(6)]
+				public ULONG[] rdb_Reserved1 { get; set; }
+				public ULONG rdb_Cylinders { get; set; }
+				public ULONG rdb_Sectors { get; set; }
+				public ULONG rdb_Heads { get; set; }
+				public ULONG rdb_Interleave { get; set; }
+				public ULONG rdb_Park { get; set; }
+				[AmigaArraySize(3)]
+				public ULONG[] rdb_Reserved2 { get; set; }
+				public ULONG rdb_WritePreComp { get; set; }
+				public ULONG rdb_ReducedWrite { get; set; }
+				public ULONG rdb_StepRate { get; set; }
+				[AmigaArraySize(5)]
+				public ULONG[] rdb_Reserved3 { get; set; }
+				public ULONG rdb_RDBBlocksLo { get; set; }
+				public ULONG rdb_RDBBlocksHi { get; set; }
+				public ULONG rdb_LoCylinder { get; set; }
+				public ULONG rdb_HiCylinder { get; set; }
+				public ULONG rdb_CylBlocks { get; set; }
+				public ULONG rdb_AutoParkSeconds { get; set; }
+				public ULONG rdb_HighRDSKBlock { get; set; }
+				public ULONG rdb_Reserved4 { get; set; }
+				[AmigaArraySize(8)]
+				public char[] rdb_DiskVendor { get; set; }
+				[AmigaArraySize(16)]
+				public char[] rdb_DiskProduct { get; set; }
+				[AmigaArraySize(4)]
+				public char[] rdb_DiskRevision { get; set; }
+				[AmigaArraySize(8)]
+				public char[] rdb_ControllerVendor { get; set; }
+				[AmigaArraySize(16)]
+				public char[] rdb_ControllerProduct { get; set; }
+				[AmigaArraySize(4)]
+				public char[] rdb_ControllerRevision { get; set; }
+				[AmigaArraySize(10)]
+				public ULONG[] rdb_Reserved5 { get; set; }
+			}
+		*/
+		/*
+		 0 52 44 53 4B 00 00 00 40 4B A9 ED B7 00 00 00 07
+		 1 00 00 02 00 00 00 00 07 FF FF FF FF 00 00 00 01 
+		 2 FF FF FF FF FF FF FF FF 00 00 00 00 00 00 00 00
+		 3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+		 4 00 00 25 80 00 00 00 20 00 00 00 01 00 00 00 01
+		 5 00 00 25 80 00 00 00 00 00 00 00 00 00 00 00 00
+		 6 00 00 25 80 00 00 25 80 00 00 00 03 00 00 00 00 
+		 7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+		 8 00 00 00 00 00 00 00 1F 00 00 00 01 00 00 25 7F
+		 9 00 00 00 20 00 00 00 00 00 00 00 01 00 00 00 00
+		10 52 44 42 54 4F 4F 4C 00 49 4D 41 47 45 00 00 00
+		11 00 00 00 00 00 00 00 00 32 30 31 32 00 00 00 00
+		12 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+		13 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+		14 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+		15 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+		
+		*/
+		private void SetLong(byte[] data, int offset, ulong v)
+		{
+			data[offset] = (byte)(v >> 24);
+			data[offset+1] = (byte)(v >> 16);
+			data[offset+2] = (byte)(v >> 8);
+			data[offset+3] = (byte)v;
+		}
+
+		private void SetString(byte[] data, int offset, int length, string txt)
+		{
+			var b = new byte[length];
+			for (int i = 0; i < txt.Length; i++)
+				b[i] = Convert.ToByte(txt[i]);
+			Array.Copy(b, 0, data, offset, length);
+		}
+
+		private void SetStringLen(byte[] data, int offset, int length, string txt)
+		{
+			var b = new byte[length];
+			b[0] = (byte)txt.Length;
+			for (int i = 0; i < txt.Length; i++)
+				b[i+1] = Convert.ToByte(txt[i]);
+			Array.Copy(b, 0, data, offset, length);
+		}
+
+		private byte[] MakeRDB(int length)
+		{
+			var rdb = new byte[256];
+
+			CHS(length, out var C, out var H, out var S);
+
+			//RDSK header
+			rdb[0] = (byte)'R';
+			rdb[1] = (byte)'D';
+			rdb[2] = (byte)'S';
+			rdb[3] = (byte)'K';
+			
+			//64 longs
+			SetLong(rdb, 4, 64);
+
+			//Checksum 8
+
+			//HostID
+			SetLong(rdb, 12, 7);
+
+			//BlockBytes
+			SetLong(rdb, 16, 512);
+
+			//Flags
+			SetLong(rdb, 20, 7);
+
+			//Bad Block List
+			SetLong(rdb, 24, 0xffffffff);
+
+			//Partition List (follows this block at block 1)
+			SetLong(rdb, 28, 1);
+
+			//FileSys Header List
+			SetLong(rdb, 32, 0xffffffff);
+
+			//Drive Init
+			SetLong(rdb, 36, 0xffffffff);
+
+			//Reserved(6) 40,44,48,52,56,60
+			SetLong(rdb, 40, 0xffffffff);
+			SetLong(rdb, 44, 0xffffffff);
+			SetLong(rdb, 48, 0xffffffff);
+			SetLong(rdb, 52, 0xffffffff);
+			SetLong(rdb, 56, 0xffffffff);
+			SetLong(rdb, 60, 0xffffffff);
+
+			//Cylinders
+			SetLong(rdb, 64, C);
+
+			//Sectors
+			SetLong(rdb, 68, S);
+			
+			//Head
+			SetLong(rdb, 72, H);
+
+			//Interleave
+			SetLong(rdb, 76, 1);
+
+			//Park
+			SetLong(rdb, 80, C);
+
+			//Reserved(3) 84,88,92
+
+			//WritePreComp
+			SetLong(rdb, 96, C);
+
+			//ReducedWrite
+			SetLong(rdb, 100, C);
+
+			//StepRate
+			SetLong(rdb, 104, 3);
+
+			//Reserved(5) 108,112,116,120,124
+
+			//RDBBlocksLo
+			SetLong(rdb, 128, 0);
+
+			//RDBBlocksHi
+			SetLong(rdb, 132, 2);
+
+			//LoCylinder
+			SetLong(rdb, 136, 1);
+
+			//HiCylinder
+			SetLong(rdb, 140, C-1);
+
+			//CylBlocks
+			SetLong(rdb, 144, 0);
+
+			//AutoParkSeconds
+			SetLong(rdb, 148, 0);
+
+			//HighRDSKBlock
+			SetLong(rdb, 152, 1);
+
+			//Reserved(1) 156
+
+			//DiskVendor
+			SetString(rdb, 160, 8, "Jammy");
+
+			//DiskProduct
+			SetString(rdb, 168, 16, "JammyHD");
+
+			//DiskRevision
+			SetString(rdb, 184, 4, "1.0");
+
+			//ControllerVendor
+			//SetString(rdb, 188, 8, "Jammy");
+
+			//ControllerProduct
+			//SetString(rdb, 196, 16, "JammyHD");
+
+			//ControllerRevision
+			//SetString(rdb, 212, 4, "1.0");
+
+			//Reserved(10) 216,220,224,228,232,236,240,244,248,252
+			
+			//checksum
+			uint chksum = (uint)-rdb.AsULong().Aggregate(0u,(sum, item)=> sum+item);
+			SetLong(rdb, 8, chksum);
+
+			uint chksum2 = rdb.AsULong().Aggregate(0u, (sum, item) => sum + item);
+			//should be 0
+
+			return rdb;
+		}
+
+		/*
+			public class PartitionBlock
+			{
+				public ULONG pb_ID { get; set; }
+				public ULONG pb_SummedLongs { get; set; }
+				public LONG pb_ChkSum { get; set; }
+				public ULONG pb_HostID { get; set; }
+				public ULONG pb_Next { get; set; }
+				public ULONG pb_Flags { get; set; }
+				[AmigaArraySize(2)]
+				public ULONG[] pb_Reserved1 { get; set; }
+				public ULONG pb_DevFlags { get; set; }
+				[AmigaArraySize(32)]
+				public UBYTE[] pb_DriveName { get; set; }
+				[AmigaArraySize(15)]
+				public ULONG[] pb_Reserved2 { get; set; }
+				[AmigaArraySize(17)]
+				public ULONG[] pb_Environment { get; set; }
+				[AmigaArraySize(15)]
+				public ULONG[] pb_EReserved { get; set; }
+			}
+		*/
+		private byte[] MakePart()
+		{
+			var part = new byte[256];
+
+			//PART header
+			part[0] = (byte)'P';
+			part[1] = (byte)'A';
+			part[2] = (byte)'R';
+			part[3] = (byte)'T';
+
+			//64 longs
+			SetLong(part, 4, 64);
+
+			//Checksum 8
+
+			//HostID
+			SetLong(part, 12, 7);
+
+			//next
+			SetLong(part, 16, 0xffffffff);
+
+			//Flags
+			SetLong(part, 20, 0);
+
+			//Reserved(2) 24,28
+
+			//DevFlags
+			SetLong(part, 32, 0);
+
+			//DriveName { get; set; }
+			SetStringLen(part, 36, 32, "JammyDisk");
+
+			//Reserved(15)
+			//68,72,76,80,84
+			//88,92,96,100,104
+			//108,112,116,120,124
+
+			//Environment(17)
+			//128,132,136,140,144
+			//148,152,156,160,164
+			//168,172,176,180,184
+			//188,192
+
+			//00 00 00 10 00 00 00 80 00 00 00 00 00 00 00 01 00 00 00 01 00 00 00 20 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 01 00 00 20 6C 00 00 00 1E 00 00 00 00 00 FF FF FF 7F FF FF FE 00 00 00 00 44 4F 53 00
+			//byte [] env = [
+			//	//0x00, 0x00, 0x00, 0x10,
+			//	//0x00, 0x00, 0x00, 0x80,
+			//	//0x00, 0x00, 0x00, 0x00,
+			//	//0x00, 0x00, 0x00, 0x01,
+			//	//0x00, 0x00, 0x00, 0x01,
+			//	//0x00, 0x00, 0x00, 0x20,
+			//	//0x00, 0x00, 0x00, 0x02,
+			//	//0x00, 0x00, 0x00, 0x00,
+			//	//0x00, 0x00, 0x00, 0x00,
+			//	//0x00, 0x00, 0x00, 0x01,
+			//	//0x00, 0x00, 0x20, 0x6C,
+			//	//0x00, 0x00, 0x00, 0x1E,
+			//	//0x00, 0x00, 0x00, 0x00,
+			//	//0x00, 0xFF, 0xFF, 0xFF,
+			//	//0x7F, 0xFF, 0xFF, 0xFE,
+			//	//0x00, 0x00, 0x00, 0x00, 
+			//	0x44, 0x4F, 0x53, 0x00];
+			//for (int i = 0; i < env.Length; i++)
+			//	part[128+i] = env[i];
+
+//size of vector 	== 16 (longs), 11 is the minimal value
+			SetLong(part, 128, 16);
+//SizeBlock	size of the blocks in longs ==128 for BSIZE = 512
+			SetLong(part, 132, 128);
+//SecOrg 		== 0
+			SetLong(part, 136, 0);
+//Surfaces 	number of heads (surfaces) of drive
+			SetLong(part, 140, 1);//????            ------------- was 1
+//sectors/block 	sectors per block == 1
+			SetLong(part, 144, 1);
+//blocks/track 	blocks per track
+			SetLong(part, 148, 32);           //      ---------------- was 32
+//Reserved 	DOS reserved blocks at start of partition usually = 2 (minimum 1)
+			SetLong(part, 152, 2);
+//PreAlloc 	DOS reserved blocks at end of partition (no impact on Root block allocation) normally set to == 0
+			SetLong(part, 156, 0);
+//Interleave 	== 0
+			SetLong(part, 160, 0);
+//LowCyl		first cylinder of a partition (inclusive)
+			SetLong(part, 164, 1);
+//HighCyl		last cylinder of a partition (inclusive)
+			SetLong(part, 168, 0x206c);//????   --------------------- 206c
+//NumBuffer 	often 30 (used for buffering)
+			SetLong(part, 172, 30);
+//BufMemType 	type of mem to allocate for buffers ==0
+			SetLong(part, 176, 0);
+//MaxTransfer 	max number of type to transfer at a type 					often 0x7fffffff
+			SetLong(part, 180, 0xffffff);
+//Mask 		Address mask to block out certain memory 				often 0xffff fffe
+			SetLong(part, 184, 0x7ffffffe);
+//BootPri 	boot priority for autoboot
+			SetLong(part, 188,0);
+//DosType 	'DOS' and the FFS/OFS flag only 
+//					also 'UNI'\0 = AT&T SysV filesystem
+//					'UNI'\1 = UNIX boot filesystem
+//					'UNI'\2 = BSD filesystem for SysV
+//					'resv' = reserved (swap space)
+			SetString(part, 192, 4, "DOS\0");
+
+			//EReserved(15)
+			//196,200,204,208,212
+			//216,220,224,228,232
+			//236,240,244,248,252
+
+			//checksum
+			uint chksum = (uint)-part.AsULong().Aggregate(0u, (sum, item) => sum + item);
+			SetLong(part, 8, chksum);
+
+			uint chksum2 = part.AsULong().Aggregate(0u, (sum, item) => sum + item);
+			//should be 0
+
+			return part;
+		}
 	}
 }

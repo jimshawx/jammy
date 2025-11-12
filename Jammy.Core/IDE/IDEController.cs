@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
@@ -59,7 +60,7 @@ namespace Jammy.Core.IDE
 			this.interrupt = interrupt;
 			this.settings = settings.Value;
 			this.logger = logger;
-			this.hardDrives.AddRange(hardDrives);
+			this.hardDrives.AddRange(hardDrives.OrderBy(x=>x.DiskNumber));
 		}
 
 		public void Reset()

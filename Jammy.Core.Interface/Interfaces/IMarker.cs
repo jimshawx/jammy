@@ -196,6 +196,7 @@ namespace Jammy.Core.Interface.Interfaces
 		ushort[] GetDriveId();
 		int Heads { get; }
 		int Sectors { get; }
+		int DiskNumber { get; }
 		byte ConfiguredParamsSectorsPerTrack { get; set; }
 		byte ConfiguredParamsHeads { get; set; }
 		void SyncDisk();
