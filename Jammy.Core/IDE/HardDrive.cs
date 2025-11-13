@@ -17,6 +17,12 @@ namespace Jammy.Core.IDE
 		private readonly MemoryMappedFile diskMap;
 		private readonly MemoryMappedViewAccessor diskAccessor;
 
+		//default Heads/Sectors in a cylinder
+		private const int DefaultHeads = 1;//16;
+		private const int DefaultSectors = 32;//63;
+
+		private const int MAX_DISK_SIZE = DefaultHeads * DefaultSectors * 65536;
+
 		public HardDrive(string diskFileName, int diskNo)
 		{
 			DiskNumber = diskNo;
@@ -41,15 +47,20 @@ namespace Jammy.Core.IDE
 				using (var file = File.OpenWrite(fileName))
 				{
 					var rdb = MakeRDB(dos.Length + 2*1024*1024);
-					var part = MakePart();
+					var part = MakePart(dos.Length);
 					file.Write(rdb, 0, rdb.Length);
 					file.Write(new byte[256], 0, 256);
 					file.Write(part, 0, part.Length);
 					file.Write(new byte[256], 0, 256);
-					//offset 16384
-					file.Write(new byte[15*1024], 0, 15*1024);
-					//file.Write(new byte[63*16*512-1024], 0, 63 * 16 * 512 - 1024); //---------------- was 15 * 1024
+					
+					//pad to first cylinder
+					file.Write(new byte[DefaultSectors * DefaultHeads * 512-1024], 0, DefaultSectors * DefaultHeads * 512 - 1024); //---------------- was 15 * 1024
 					file.Write(dos, 0, dos.Length);
+
+					//pad to end of file
+					int p = dos.Length + 2*1024*1024 - (int)file.Position;
+					file.Write(new byte[p],0,p);
+
 					file.Close();
 				}
 				bytes = new FileInfo(fileName).Length;
@@ -224,8 +235,8 @@ namespace Jammy.Core.IDE
 			//uint sectors = 256;//there are 8 bits for sector number
 			//uint cylinders = 65536;//these are 16 bits for cylinder number
 
-			heads = 16;//standard (maximum) number of heads
-			sectors = 63;//standard is 63 sectors
+			heads = DefaultHeads;//standard (maximum) number of heads 16
+			sectors = DefaultSectors;//standard is 63 sectors
 
 			uint blocks = (uint)(bytes / sectorSize); // 335,872
 			uint sectorCylinders = blocks / heads;//20,992 = sectors * cylinders
@@ -477,7 +488,7 @@ namespace Jammy.Core.IDE
 			SetLong(rdb, 12, 7);
 
 			//BlockBytes
-			SetLong(rdb, 16, 512);
+			SetLong(rdb, 16, 512);//Amiga only supports 512
 
 			//Flags
 			SetLong(rdb, 20, 7);
@@ -534,16 +545,16 @@ namespace Jammy.Core.IDE
 			SetLong(rdb, 128, 0);
 
 			//RDBBlocksHi
-			SetLong(rdb, 132, 2);
+			SetLong(rdb, 132, H * S-1);//why -1?
 
 			//LoCylinder
 			SetLong(rdb, 136, 1);
 
 			//HiCylinder
-			SetLong(rdb, 140, C-1);
+			SetLong(rdb, 140, C);
 
 			//CylBlocks
-			SetLong(rdb, 144, 0);
+			SetLong(rdb, 144, H * S);
 
 			//AutoParkSeconds
 			SetLong(rdb, 148, 0);
@@ -605,9 +616,12 @@ namespace Jammy.Core.IDE
 				public ULONG[] pb_EReserved { get; set; }
 			}
 		*/
-		private byte[] MakePart()
+
+		private byte[] MakePart(int length)
 		{
 			var part = new byte[256];
+
+			CHS(length, out var C, out var H, out var S);
 
 			//PART header
 			part[0] = (byte)'P';
@@ -648,65 +662,59 @@ namespace Jammy.Core.IDE
 			//168,172,176,180,184
 			//188,192
 
-			//00 00 00 10 00 00 00 80 00 00 00 00 00 00 00 01 00 00 00 01 00 00 00 20 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 01 00 00 20 6C 00 00 00 1E 00 00 00 00 00 FF FF FF 7F FF FF FE 00 00 00 00 44 4F 53 00
-			//byte [] env = [
-			//	//0x00, 0x00, 0x00, 0x10,
-			//	//0x00, 0x00, 0x00, 0x80,
-			//	//0x00, 0x00, 0x00, 0x00,
-			//	//0x00, 0x00, 0x00, 0x01,
-			//	//0x00, 0x00, 0x00, 0x01,
-			//	//0x00, 0x00, 0x00, 0x20,
-			//	//0x00, 0x00, 0x00, 0x02,
-			//	//0x00, 0x00, 0x00, 0x00,
-			//	//0x00, 0x00, 0x00, 0x00,
-			//	//0x00, 0x00, 0x00, 0x01,
-			//	//0x00, 0x00, 0x20, 0x6C,
-			//	//0x00, 0x00, 0x00, 0x1E,
-			//	//0x00, 0x00, 0x00, 0x00,
-			//	//0x00, 0xFF, 0xFF, 0xFF,
-			//	//0x7F, 0xFF, 0xFF, 0xFE,
-			//	//0x00, 0x00, 0x00, 0x00, 
-			//	0x44, 0x4F, 0x53, 0x00];
-			//for (int i = 0; i < env.Length; i++)
-			//	part[128+i] = env[i];
-
-//size of vector 	== 16 (longs), 11 is the minimal value
+			//size of vector 	== 16 (longs), 11 is the minimal value
 			SetLong(part, 128, 16);
-//SizeBlock	size of the blocks in longs ==128 for BSIZE = 512
+			
+			//SizeBlock	size of the blocks in longs ==128 for BSIZE = 512
 			SetLong(part, 132, 128);
-//SecOrg 		== 0
+			
+			//SecOrg 		== 0
 			SetLong(part, 136, 0);
-//Surfaces 	number of heads (surfaces) of drive
-			SetLong(part, 140, 1);//????            ------------- was 1
-//sectors/block 	sectors per block == 1
+
+			//Surfaces 	number of heads (surfaces) of drive
+			SetLong(part, 140, H);
+
+			//sectors/block 	sectors per block == 1
 			SetLong(part, 144, 1);
-//blocks/track 	blocks per track
-			SetLong(part, 148, 32);           //      ---------------- was 32
-//Reserved 	DOS reserved blocks at start of partition usually = 2 (minimum 1)
+
+			//blocks/track 	blocks per track
+			SetLong(part, 148, H*S);
+
+			//Reserved DOS reserved blocks at start of partition usually = 2 (minimum 1)
 			SetLong(part, 152, 2);
-//PreAlloc 	DOS reserved blocks at end of partition (no impact on Root block allocation) normally set to == 0
+
+			//PreAlloc 	DOS reserved blocks at end of partition (no impact on Root block allocation) normally set to == 0
 			SetLong(part, 156, 0);
-//Interleave 	== 0
+
+			//Interleave 	== 0
 			SetLong(part, 160, 0);
-//LowCyl		first cylinder of a partition (inclusive)
+
+			//LowCyl		first cylinder of a partition (inclusive)
 			SetLong(part, 164, 1);
-//HighCyl		last cylinder of a partition (inclusive)
-			SetLong(part, 168, 0x206c);//????   --------------------- 206c
-//NumBuffer 	often 30 (used for buffering)
+
+			//HighCyl		last cylinder of a partition (inclusive)
+			SetLong(part, 168, C);
+
+			//NumBuffer 	often 30 (used for buffering)
 			SetLong(part, 172, 30);
-//BufMemType 	type of mem to allocate for buffers ==0
+
+			//BufMemType 	type of mem to allocate for buffers ==0
 			SetLong(part, 176, 0);
-//MaxTransfer 	max number of type to transfer at a type 					often 0x7fffffff
+
+			//MaxTransfer 	max number of type to transfer at a type 					often 0x7fffffff
 			SetLong(part, 180, 0xffffff);
-//Mask 		Address mask to block out certain memory 				often 0xffff fffe
+
+			//Mask 		Address mask to block out certain memory 				often 0xffff fffe
 			SetLong(part, 184, 0x7ffffffe);
-//BootPri 	boot priority for autoboot
+
+			//BootPri 	boot priority for autoboot
 			SetLong(part, 188,0);
-//DosType 	'DOS' and the FFS/OFS flag only 
-//					also 'UNI'\0 = AT&T SysV filesystem
-//					'UNI'\1 = UNIX boot filesystem
-//					'UNI'\2 = BSD filesystem for SysV
-//					'resv' = reserved (swap space)
+
+			//DosType 	'DOS' and the FFS/OFS flag only 
+			//					also 'UNI'\0 = AT&T SysV filesystem
+			//					'UNI'\1 = UNIX boot filesystem
+			//					'UNI'\2 = BSD filesystem for SysV
+			//					'resv' = reserved (swap space)
 			SetString(part, 192, 4, "DOS\0");
 
 			//EReserved(15)
