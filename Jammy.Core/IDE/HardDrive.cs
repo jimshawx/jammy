@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Extensions.Extensions;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,10 +13,25 @@ using System.Linq;
 
 namespace Jammy.Core.IDE
 {
+	public class HardDriveLoader : IHardDriveLoader
+	{
+		private readonly ILogger<HardDriveLoader> logger;
+
+		public HardDriveLoader(ILogger<HardDriveLoader> logger)
+		{
+			this.logger = logger;
+		}
+
+		public IHardDrive DiskRead(string diskFileName, int diskNo)
+		{
+			return new HardDrive(diskFileName, diskNo, logger);
+		}
+	}
+
 	public class HardDrive : IDisposable, IHardDrive
 	{
-		private readonly MemoryMappedFile diskMap;
-		private readonly MemoryMappedViewAccessor diskAccessor;
+		private MemoryMappedFile diskMap;
+		private MemoryMappedViewAccessor diskAccessor;
 
 		//default Heads/Sectors in a cylinder
 		private const int DefaultHeads = 10;
@@ -23,7 +39,7 @@ namespace Jammy.Core.IDE
 
 		private const int MAX_DISK_SIZE = DefaultHeads * DefaultSectors * 65536;
 
-		public HardDrive(string diskFileName, int diskNo)
+		public HardDrive(string diskFileName, int diskNo, ILogger<HardDriveLoader> logger)
 		{
 			DiskNumber = diskNo;
 			string fileName = Path.Combine(hardfilePath, diskFileName);
@@ -43,7 +59,17 @@ namespace Jammy.Core.IDE
 				//rdbtool full.hdf create size=130Mi + init + addimg simple.hdf
 				//where 130Mi is > size simple.hdf
 				var dos = File.ReadAllBytes(fileName);
-				fileName = Path.ChangeExtension(Path.Combine(hardfilePath, "random"), "hdf");
+
+				//test the length - might need to adjust
+				//DefaultSectors and DefaultHeads
+
+				if ((dos.Length % (DefaultSectors * DefaultHeads * 512)) != 0)
+				{
+					logger.LogTrace("Can't load DOS0 hard disk partition because it's not a multiple of cylinder size");
+					return;
+				}
+
+				fileName = RDSKFileName(fileName);
 				using (var file = File.OpenWrite(fileName))
 				{
 					var rdb = MakeRDB(dos.Length + 2*1024*1024);
@@ -75,11 +101,18 @@ namespace Jammy.Core.IDE
 
 			CHS(bytes, out var C, out var H, out var S);
 
-			this.Cylinders = (int)C;
-			this.Heads = (int)H;
-			this.Sectors = (int)S;
+			Cylinders = (int)C;
+			Heads = (int)H;
+			Sectors = (int)S;
 
 			InitDriveId(diskNo, C, H, S);
+		}
+
+		private string RDSKFileName(string fileName)
+		{
+			string directory = Path.GetDirectoryName(fileName) ?? string.Empty;
+			string tmpFileName = "_" + Path.GetFileName(fileName);
+			return Path.Combine(directory, tmpFileName);
 		}
 
 		//drive id bit
@@ -90,14 +123,14 @@ namespace Jammy.Core.IDE
 		public byte ConfiguredParamsHeads { get; set; }
 
 		//drive geometry provided by Drive
-		public int Cylinders { get; }
-		public int Heads { get; }
-		public int Sectors { get; }
+		public int Cylinders { get; private set; }
+		public int Heads { get; private set; }
+		public int Sectors { get; private set; }
 
 		//0 Primary or 1 Secondary
-		public int DiskNumber { get; }
+		public int DiskNumber { get; private set; }
 
-		private string hardfilePath = "../../../../";
+		private const string hardfilePath = "../../../../";
 
 		// Swab
 

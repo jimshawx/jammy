@@ -191,6 +191,11 @@ namespace Jammy.Core.Interface.Interfaces
 		public void Write(uint insaddr, uint address, uint value, Size size);
 	}
 
+	public interface IHardDriveLoader
+	{
+		IHardDrive DiskRead(string diskFileName, int diskNo);
+	}
+
 	public interface IHardDrive
 	{
 		ushort[] GetDriveId();
