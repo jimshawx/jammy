@@ -18,7 +18,7 @@ namespace Jammy.Core.IDE
 		private readonly MemoryMappedViewAccessor diskAccessor;
 
 		//default Heads/Sectors in a cylinder
-		private const int DefaultHeads = 1;//16;
+		private const int DefaultHeads = 10;
 		private const int DefaultSectors = 32;//63;
 
 		private const int MAX_DISK_SIZE = DefaultHeads * DefaultSectors * 65536;
@@ -678,7 +678,7 @@ namespace Jammy.Core.IDE
 			SetLong(part, 144, 1);
 
 			//blocks/track 	blocks per track
-			SetLong(part, 148, H*S);
+			SetLong(part, 148, S);
 
 			//Reserved DOS reserved blocks at start of partition usually = 2 (minimum 1)
 			SetLong(part, 152, 2);
