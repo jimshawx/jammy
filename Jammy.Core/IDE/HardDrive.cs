@@ -43,7 +43,7 @@ namespace Jammy.Core.IDE
 				//rdbtool full.hdf create size=130Mi + init + addimg simple.hdf
 				//where 130Mi is > size simple.hdf
 				var dos = File.ReadAllBytes(fileName);
-				fileName = Path.ChangeExtension(Path.Combine("c:/source/jammy", "random"), "hdf");
+				fileName = Path.ChangeExtension(Path.Combine(hardfilePath, "random"), "hdf");
 				using (var file = File.OpenWrite(fileName))
 				{
 					var rdb = MakeRDB(dos.Length + 2*1024*1024);
@@ -54,7 +54,7 @@ namespace Jammy.Core.IDE
 					file.Write(new byte[256], 0, 256);
 					
 					//pad to first cylinder
-					file.Write(new byte[DefaultSectors * DefaultHeads * 512-1024], 0, DefaultSectors * DefaultHeads * 512 - 1024); //---------------- was 15 * 1024
+					file.Write(new byte[DefaultSectors * DefaultHeads * 512-1024], 0, DefaultSectors * DefaultHeads * 512 - 1024);
 					file.Write(dos, 0, dos.Length);
 
 					//pad to end of file
@@ -372,76 +372,8 @@ namespace Jammy.Core.IDE
 			0,0,0,0,0,0,0,0,//248...255
 		};
 
-		/*
-			public class RigidDiskBlock
-			{
-				public ULONG rdb_ID { get; set; }
-				public ULONG rdb_SummedLongs { get; set; }
-				public LONG rdb_ChkSum { get; set; }
-				public ULONG rdb_HostID { get; set; }
-				public ULONG rdb_BlockBytes { get; set; }
-				public ULONG rdb_Flags { get; set; }
-				public ULONG rdb_BadBlockList { get; set; }
-				public ULONG rdb_PartitionList { get; set; }
-				public ULONG rdb_FileSysHeaderList { get; set; }
-				public ULONG rdb_DriveInit { get; set; }
-				[AmigaArraySize(6)]
-				public ULONG[] rdb_Reserved1 { get; set; }
-				public ULONG rdb_Cylinders { get; set; }
-				public ULONG rdb_Sectors { get; set; }
-				public ULONG rdb_Heads { get; set; }
-				public ULONG rdb_Interleave { get; set; }
-				public ULONG rdb_Park { get; set; }
-				[AmigaArraySize(3)]
-				public ULONG[] rdb_Reserved2 { get; set; }
-				public ULONG rdb_WritePreComp { get; set; }
-				public ULONG rdb_ReducedWrite { get; set; }
-				public ULONG rdb_StepRate { get; set; }
-				[AmigaArraySize(5)]
-				public ULONG[] rdb_Reserved3 { get; set; }
-				public ULONG rdb_RDBBlocksLo { get; set; }
-				public ULONG rdb_RDBBlocksHi { get; set; }
-				public ULONG rdb_LoCylinder { get; set; }
-				public ULONG rdb_HiCylinder { get; set; }
-				public ULONG rdb_CylBlocks { get; set; }
-				public ULONG rdb_AutoParkSeconds { get; set; }
-				public ULONG rdb_HighRDSKBlock { get; set; }
-				public ULONG rdb_Reserved4 { get; set; }
-				[AmigaArraySize(8)]
-				public char[] rdb_DiskVendor { get; set; }
-				[AmigaArraySize(16)]
-				public char[] rdb_DiskProduct { get; set; }
-				[AmigaArraySize(4)]
-				public char[] rdb_DiskRevision { get; set; }
-				[AmigaArraySize(8)]
-				public char[] rdb_ControllerVendor { get; set; }
-				[AmigaArraySize(16)]
-				public char[] rdb_ControllerProduct { get; set; }
-				[AmigaArraySize(4)]
-				public char[] rdb_ControllerRevision { get; set; }
-				[AmigaArraySize(10)]
-				public ULONG[] rdb_Reserved5 { get; set; }
-			}
-		*/
-		/*
-		 0 52 44 53 4B 00 00 00 40 4B A9 ED B7 00 00 00 07
-		 1 00 00 02 00 00 00 00 07 FF FF FF FF 00 00 00 01 
-		 2 FF FF FF FF FF FF FF FF 00 00 00 00 00 00 00 00
-		 3 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
-		 4 00 00 25 80 00 00 00 20 00 00 00 01 00 00 00 01
-		 5 00 00 25 80 00 00 00 00 00 00 00 00 00 00 00 00
-		 6 00 00 25 80 00 00 25 80 00 00 00 03 00 00 00 00 
-		 7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-		 8 00 00 00 00 00 00 00 1F 00 00 00 01 00 00 25 7F
-		 9 00 00 00 20 00 00 00 00 00 00 00 01 00 00 00 00
-		10 52 44 42 54 4F 4F 4C 00 49 4D 41 47 45 00 00 00
-		11 00 00 00 00 00 00 00 00 32 30 31 32 00 00 00 00
-		12 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
-		13 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
-		14 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-		15 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
-		
-		*/
+		//Fake up a RDB RDSK and PART header
+
 		private void SetLong(byte[] data, int offset, ulong v)
 		{
 			data[offset] = (byte)(v >> 24);
@@ -594,29 +526,6 @@ namespace Jammy.Core.IDE
 			return rdb;
 		}
 
-		/*
-			public class PartitionBlock
-			{
-				public ULONG pb_ID { get; set; }
-				public ULONG pb_SummedLongs { get; set; }
-				public LONG pb_ChkSum { get; set; }
-				public ULONG pb_HostID { get; set; }
-				public ULONG pb_Next { get; set; }
-				public ULONG pb_Flags { get; set; }
-				[AmigaArraySize(2)]
-				public ULONG[] pb_Reserved1 { get; set; }
-				public ULONG pb_DevFlags { get; set; }
-				[AmigaArraySize(32)]
-				public UBYTE[] pb_DriveName { get; set; }
-				[AmigaArraySize(15)]
-				public ULONG[] pb_Reserved2 { get; set; }
-				[AmigaArraySize(17)]
-				public ULONG[] pb_Environment { get; set; }
-				[AmigaArraySize(15)]
-				public ULONG[] pb_EReserved { get; set; }
-			}
-		*/
-
 		private byte[] MakePart(int length)
 		{
 			var part = new byte[256];
@@ -662,7 +571,7 @@ namespace Jammy.Core.IDE
 			//168,172,176,180,184
 			//188,192
 
-			//size of vector 	== 16 (longs), 11 is the minimal value
+			//size of vector == 16 (longs), 11 is the minimal value
 			SetLong(part, 128, 16);
 			
 			//SizeBlock	size of the blocks in longs ==128 for BSIZE = 512
@@ -674,7 +583,7 @@ namespace Jammy.Core.IDE
 			//Surfaces 	number of heads (surfaces) of drive
 			SetLong(part, 140, H);
 
-			//sectors/block 	sectors per block == 1
+			//sectors/block sectors per block == 1
 			SetLong(part, 144, 1);
 
 			//blocks/track 	blocks per track
