@@ -53,7 +53,8 @@ namespace Jammy.UI.Settings
 			try
 			{
 				cfgs = Directory.GetFiles(configPath, "*.cfg", SearchOption.TopDirectoryOnly);
-			} catch {}
+			}
+			catch { }
 			cbQuickStart.Items.AddRange(cfgs.Select(Path.GetFileNameWithoutExtension).OrderBy(x => x).Cast<object>().ToArray());
 
 			//bind in the default settings
@@ -209,6 +210,63 @@ namespace Jammy.UI.Settings
 			if (rbMoira.Checked) cbSku.SelectedIndex = 0;
 		}
 
+		private void btnDF0Eject_Click(object sender, EventArgs e)
+		{
+			txtDF0.Text = string.Empty;
+		}
+
+		private void btnDF1Eject_Click(object sender, EventArgs e)
+		{
+			txtDF1.Text = string.Empty;
+		}
+
+		private void btnDF2Eject_Click(object sender, EventArgs e)
+		{
+			txtDF2.Text = string.Empty;
+		}
+
+		private void btnDF3Eject_Click(object sender, EventArgs e)
+		{
+			txtDF3.Text = string.Empty;
+		}
+
+		private void btnDH0Pick_Click(object sender, EventArgs e)
+		{
+			openFileDialog1.InitialDirectory = appConfig["Application:Directories:HDPath"];
+			openFileDialog1.DefaultExt = ".hdf";
+			openFileDialog1.FileName = txtDH0.Text;
+			if (openFileDialog1.ShowDialog() == DialogResult.OK)
+				txtDH0.Text = openFileDialog1.FileName;
+			appConfig["Application:Directories:HDPath"] = Path.GetDirectoryName(openFileDialog1.FileName);
+		}
+
+		private void btnDH1Pick_Click(object sender, EventArgs e)
+		{
+			openFileDialog1.InitialDirectory = appConfig["Application:Directories:HDPath"];
+			openFileDialog1.DefaultExt = ".hdf";
+			openFileDialog1.FileName = txtDH1.Text;
+			if (openFileDialog1.ShowDialog() == DialogResult.OK)
+				txtDH1.Text = openFileDialog1.FileName;
+			appConfig["Application:Directories:HDPath"] = Path.GetDirectoryName(openFileDialog1.FileName);
+		}
+
+		private void btnDH0Eject_Click(object sender, EventArgs e)
+		{
+			txtDH0.Text = string.Empty;
+		}
+
+		private void btnDH1Eject_Click(object sender, EventArgs e)
+		{
+			txtDH1.Text = string.Empty;
+		}
+
+		private void nudHardDiskCount_ValueChanged(object sender, EventArgs e)
+		{
+			int f = (int)nudHardDiskCount.Value;
+			txtDH0.Enabled = btnDH0Pick.Enabled = f > 0;
+			txtDH1.Enabled = btnDH1Pick.Enabled = f > 1;
+		}
+
 		private EmulationSettings currentSettings = DefaultSettings();
 
 		private string currentSettingsFile = "";
@@ -337,6 +395,10 @@ namespace Jammy.UI.Settings
 			//Hard Disk
 			cbDiskController.SelectedItem = currentSettings.DiskController.ToString();
 			nudHardDiskCount.Value = currentSettings.HardDiskCount;
+			txtDH0.Enabled = btnDH0Pick.Enabled = nudHardDiskCount.Value > 0;
+			txtDH1.Enabled = btnDH1Pick.Enabled = nudHardDiskCount.Value > 1;
+			txtDH0.Text = currentSettings.DH0;
+			txtDH1.Text = currentSettings.DH1;
 
 			//Kickstart
 			txtKickstart.Text = currentSettings.KickStart;
@@ -388,6 +450,8 @@ namespace Jammy.UI.Settings
 			//Hard Disk
 			currentSettings.DiskController = Enum.Parse<DiskController>((string)cbDiskController.SelectedItem);
 			currentSettings.HardDiskCount = (int)nudHardDiskCount.Value;
+			currentSettings.DH0 = txtDH0.Text;
+			currentSettings.DH1 = txtDH1.Text;
 
 			//Kickstart
 			currentSettings.KickStart = txtKickstart.Text;
@@ -556,26 +620,6 @@ namespace Jammy.UI.Settings
 					btnSaveConfig.Enabled = true;
 					break;
 			}
-		}
-
-		private void btnDF0Eject_Click(object sender, EventArgs e)
-		{
-			txtDF0.Text = string.Empty;
-		}
-
-		private void btnDF1Eject_Click(object sender, EventArgs e)
-		{
-			txtDF1.Text = string.Empty;
-		}
-
-		private void btnDF2Eject_Click(object sender, EventArgs e)
-		{
-			txtDF2.Text = string.Empty;
-		}
-
-		private void btnDF3Eject_Click(object sender, EventArgs e)
-		{
-			txtDF3.Text = string.Empty;
 		}
 	}
 }

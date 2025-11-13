@@ -98,6 +98,12 @@ namespace Jammy.UI.Settings
 			cbAudio = new System.Windows.Forms.CheckBox();
 			panel7 = new System.Windows.Forms.Panel();
 			groupBox7 = new System.Windows.Forms.GroupBox();
+			btnDH1Eject = new System.Windows.Forms.Button();
+			btnDH0Eject = new System.Windows.Forms.Button();
+			btnDH1Pick = new System.Windows.Forms.Button();
+			btnDH0Pick = new System.Windows.Forms.Button();
+			txtDH0 = new System.Windows.Forms.TextBox();
+			txtDH1 = new System.Windows.Forms.TextBox();
 			nudHardDiskCount = new System.Windows.Forms.NumericUpDown();
 			cbDiskController = new System.Windows.Forms.ComboBox();
 			panel1.SuspendLayout();
@@ -153,7 +159,7 @@ namespace Jammy.UI.Settings
 			// rbNative
 			// 
 			rbNative.AutoSize = true;
-			rbNative.Location = new System.Drawing.Point(247, 41);
+			rbNative.Location = new System.Drawing.Point(247, 33);
 			rbNative.Margin = new System.Windows.Forms.Padding(6);
 			rbNative.Name = "rbNative";
 			rbNative.Size = new System.Drawing.Size(114, 36);
@@ -166,7 +172,7 @@ namespace Jammy.UI.Settings
 			// rbMusashi
 			// 
 			rbMusashi.AutoSize = true;
-			rbMusashi.Location = new System.Drawing.Point(247, 81);
+			rbMusashi.Location = new System.Drawing.Point(247, 73);
 			rbMusashi.Margin = new System.Windows.Forms.Padding(6);
 			rbMusashi.Name = "rbMusashi";
 			rbMusashi.Size = new System.Drawing.Size(133, 36);
@@ -196,7 +202,7 @@ namespace Jammy.UI.Settings
 			groupBox1.Margin = new System.Windows.Forms.Padding(6);
 			groupBox1.Name = "groupBox1";
 			groupBox1.Padding = new System.Windows.Forms.Padding(6);
-			groupBox1.Size = new System.Drawing.Size(420, 193);
+			groupBox1.Size = new System.Drawing.Size(420, 192);
 			groupBox1.TabIndex = 6;
 			groupBox1.TabStop = false;
 			groupBox1.Text = "CPU";
@@ -204,7 +210,7 @@ namespace Jammy.UI.Settings
 			// rbMusashiCS
 			// 
 			rbMusashiCS.AutoSize = true;
-			rbMusashiCS.Location = new System.Drawing.Point(247, 121);
+			rbMusashiCS.Location = new System.Drawing.Point(247, 113);
 			rbMusashiCS.Margin = new System.Windows.Forms.Padding(6);
 			rbMusashiCS.Name = "rbMusashiCS";
 			rbMusashiCS.Size = new System.Drawing.Size(169, 36);
@@ -216,7 +222,7 @@ namespace Jammy.UI.Settings
 			// rbMoira
 			// 
 			rbMoira.AutoSize = true;
-			rbMoira.Location = new System.Drawing.Point(247, 161);
+			rbMoira.Location = new System.Drawing.Point(247, 153);
 			rbMoira.Margin = new System.Windows.Forms.Padding(6);
 			rbMoira.Name = "rbMoira";
 			rbMoira.Size = new System.Drawing.Size(107, 36);
@@ -244,7 +250,7 @@ namespace Jammy.UI.Settings
 			groupBox2.Margin = new System.Windows.Forms.Padding(6);
 			groupBox2.Name = "groupBox2";
 			groupBox2.Padding = new System.Windows.Forms.Padding(6);
-			groupBox2.Size = new System.Drawing.Size(420, 115);
+			groupBox2.Size = new System.Drawing.Size(420, 109);
 			groupBox2.TabIndex = 0;
 			groupBox2.TabStop = false;
 			groupBox2.Text = "Chipset";
@@ -295,7 +301,7 @@ namespace Jammy.UI.Settings
 			// panel3
 			// 
 			panel3.Controls.Add(groupBox3);
-			panel3.Location = new System.Drawing.Point(475, 577);
+			panel3.Location = new System.Drawing.Point(476, 676);
 			panel3.Margin = new System.Windows.Forms.Padding(6);
 			panel3.Name = "panel3";
 			panel3.Size = new System.Drawing.Size(802, 128);
@@ -704,7 +710,7 @@ namespace Jammy.UI.Settings
 			// btnGo
 			// 
 			btnGo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
-			btnGo.Location = new System.Drawing.Point(1114, 842);
+			btnGo.Location = new System.Drawing.Point(1115, 941);
 			btnGo.Margin = new System.Windows.Forms.Padding(6);
 			btnGo.Name = "btnGo";
 			btnGo.Size = new System.Drawing.Size(139, 49);
@@ -715,7 +721,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnExit
 			// 
-			btnExit.Location = new System.Drawing.Point(494, 840);
+			btnExit.Location = new System.Drawing.Point(495, 939);
 			btnExit.Margin = new System.Windows.Forms.Padding(6);
 			btnExit.Name = "btnExit";
 			btnExit.Size = new System.Drawing.Size(139, 49);
@@ -735,7 +741,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnLoadConfig
 			// 
-			btnLoadConfig.Location = new System.Drawing.Point(663, 840);
+			btnLoadConfig.Location = new System.Drawing.Point(664, 939);
 			btnLoadConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnLoadConfig.Name = "btnLoadConfig";
 			btnLoadConfig.Size = new System.Drawing.Size(139, 49);
@@ -746,7 +752,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnSaveAsConfig
 			// 
-			btnSaveAsConfig.Location = new System.Drawing.Point(964, 842);
+			btnSaveAsConfig.Location = new System.Drawing.Point(965, 941);
 			btnSaveAsConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnSaveAsConfig.Name = "btnSaveAsConfig";
 			btnSaveAsConfig.Size = new System.Drawing.Size(139, 49);
@@ -758,7 +764,7 @@ namespace Jammy.UI.Settings
 			// btnSaveConfig
 			// 
 			btnSaveConfig.Enabled = false;
-			btnSaveConfig.Location = new System.Drawing.Point(813, 842);
+			btnSaveConfig.Location = new System.Drawing.Point(814, 941);
 			btnSaveConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnSaveConfig.Name = "btnSaveConfig";
 			btnSaveConfig.Size = new System.Drawing.Size(139, 49);
@@ -771,7 +777,7 @@ namespace Jammy.UI.Settings
 			// 
 			panel6.Controls.Add(groupBox8);
 			panel6.Controls.Add(groupBox6);
-			panel6.Location = new System.Drawing.Point(475, 718);
+			panel6.Location = new System.Drawing.Point(476, 817);
 			panel6.Margin = new System.Windows.Forms.Padding(6);
 			panel6.Name = "panel6";
 			panel6.Size = new System.Drawing.Size(802, 111);
@@ -863,11 +869,17 @@ namespace Jammy.UI.Settings
 			panel7.Location = new System.Drawing.Point(475, 447);
 			panel7.Margin = new System.Windows.Forms.Padding(6);
 			panel7.Name = "panel7";
-			panel7.Size = new System.Drawing.Size(802, 119);
+			panel7.Size = new System.Drawing.Size(803, 219);
 			panel7.TabIndex = 23;
 			// 
 			// groupBox7
 			// 
+			groupBox7.Controls.Add(btnDH1Eject);
+			groupBox7.Controls.Add(btnDH0Eject);
+			groupBox7.Controls.Add(btnDH1Pick);
+			groupBox7.Controls.Add(btnDH0Pick);
+			groupBox7.Controls.Add(txtDH0);
+			groupBox7.Controls.Add(txtDH1);
 			groupBox7.Controls.Add(nudHardDiskCount);
 			groupBox7.Controls.Add(cbDiskController);
 			groupBox7.ForeColor = System.Drawing.SystemColors.Highlight;
@@ -875,26 +887,89 @@ namespace Jammy.UI.Settings
 			groupBox7.Margin = new System.Windows.Forms.Padding(6);
 			groupBox7.Name = "groupBox7";
 			groupBox7.Padding = new System.Windows.Forms.Padding(6);
-			groupBox7.Size = new System.Drawing.Size(776, 117);
+			groupBox7.Size = new System.Drawing.Size(776, 217);
 			groupBox7.TabIndex = 0;
 			groupBox7.TabStop = false;
 			groupBox7.Text = "Hard Disk";
 			// 
+			// btnDH1Eject
+			// 
+			btnDH1Eject.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnDH1Eject.Location = new System.Drawing.Point(659, 162);
+			btnDH1Eject.Name = "btnDH1Eject";
+			btnDH1Eject.Size = new System.Drawing.Size(27, 46);
+			btnDH1Eject.TabIndex = 18;
+			btnDH1Eject.Text = "⏏";
+			btnDH1Eject.UseVisualStyleBackColor = true;
+			btnDH1Eject.Click += btnDH1Eject_Click;
+			// 
+			// btnDH0Eject
+			// 
+			btnDH0Eject.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnDH0Eject.Location = new System.Drawing.Point(659, 101);
+			btnDH0Eject.Name = "btnDH0Eject";
+			btnDH0Eject.Size = new System.Drawing.Size(27, 46);
+			btnDH0Eject.TabIndex = 17;
+			btnDH0Eject.Text = "⏏";
+			btnDH0Eject.UseVisualStyleBackColor = true;
+			btnDH0Eject.Click += btnDH0Eject_Click;
+			// 
+			// btnDH1Pick
+			// 
+			btnDH1Pick.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnDH1Pick.Location = new System.Drawing.Point(594, 158);
+			btnDH1Pick.Margin = new System.Windows.Forms.Padding(6);
+			btnDH1Pick.Name = "btnDH1Pick";
+			btnDH1Pick.Size = new System.Drawing.Size(65, 49);
+			btnDH1Pick.TabIndex = 16;
+			btnDH1Pick.Text = "...";
+			btnDH1Pick.UseVisualStyleBackColor = true;
+			btnDH1Pick.Click += btnDH1Pick_Click;
+			// 
+			// btnDH0Pick
+			// 
+			btnDH0Pick.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnDH0Pick.Location = new System.Drawing.Point(594, 98);
+			btnDH0Pick.Margin = new System.Windows.Forms.Padding(6);
+			btnDH0Pick.Name = "btnDH0Pick";
+			btnDH0Pick.Size = new System.Drawing.Size(65, 49);
+			btnDH0Pick.TabIndex = 15;
+			btnDH0Pick.Text = "...";
+			btnDH0Pick.UseVisualStyleBackColor = true;
+			btnDH0Pick.Click += btnDH0Pick_Click;
+			// 
+			// txtDH0
+			// 
+			txtDH0.Location = new System.Drawing.Point(11, 101);
+			txtDH0.Margin = new System.Windows.Forms.Padding(6);
+			txtDH0.Name = "txtDH0";
+			txtDH0.Size = new System.Drawing.Size(567, 39);
+			txtDH0.TabIndex = 13;
+			// 
+			// txtDH1
+			// 
+			txtDH1.Location = new System.Drawing.Point(11, 162);
+			txtDH1.Margin = new System.Windows.Forms.Padding(6);
+			txtDH1.Name = "txtDH1";
+			txtDH1.Size = new System.Drawing.Size(567, 39);
+			txtDH1.TabIndex = 14;
+			// 
 			// nudHardDiskCount
 			// 
-			nudHardDiskCount.Location = new System.Drawing.Point(358, 49);
+			nudHardDiskCount.Location = new System.Drawing.Point(348, 49);
 			nudHardDiskCount.Margin = new System.Windows.Forms.Padding(6);
 			nudHardDiskCount.Maximum = new decimal(new int[] { 4, 0, 0, 0 });
 			nudHardDiskCount.Name = "nudHardDiskCount";
 			nudHardDiskCount.ReadOnly = true;
 			nudHardDiskCount.Size = new System.Drawing.Size(80, 39);
 			nudHardDiskCount.TabIndex = 1;
+			nudHardDiskCount.ValueChanged += nudHardDiskCount_ValueChanged;
 			// 
 			// cbDiskController
 			// 
 			cbDiskController.FormattingEnabled = true;
 			cbDiskController.Items.AddRange(new object[] { "None", "A600_A1200", "A3000", "A4000" });
-			cbDiskController.Location = new System.Drawing.Point(24, 49);
+			cbDiskController.Location = new System.Drawing.Point(14, 48);
 			cbDiskController.Margin = new System.Windows.Forms.Padding(6);
 			cbDiskController.Name = "cbDiskController";
 			cbDiskController.Size = new System.Drawing.Size(322, 40);
@@ -904,7 +979,7 @@ namespace Jammy.UI.Settings
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			ClientSize = new System.Drawing.Size(1292, 910);
+			ClientSize = new System.Drawing.Size(1292, 1019);
 			Controls.Add(groupBox2);
 			Controls.Add(groupBox7);
 			Controls.Add(panel7);
@@ -946,6 +1021,7 @@ namespace Jammy.UI.Settings
 			groupBox6.ResumeLayout(false);
 			groupBox6.PerformLayout();
 			groupBox7.ResumeLayout(false);
+			groupBox7.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)nudHardDiskCount).EndInit();
 			ResumeLayout(false);
 		}
@@ -1019,5 +1095,11 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.RadioButton rbFloppyFast;
 		private System.Windows.Forms.RadioButton rbFloppyAccurate;
 		private System.Windows.Forms.CheckBox cbTrace;
+		private System.Windows.Forms.Button btnDH1Eject;
+		private System.Windows.Forms.Button btnDH0Eject;
+		private System.Windows.Forms.Button btnDH1Pick;
+		private System.Windows.Forms.Button btnDH0Pick;
+		private System.Windows.Forms.TextBox txtDH0;
+		private System.Windows.Forms.TextBox txtDH1;
 	}
 }

@@ -253,8 +253,14 @@ namespace Jammy.Main
 				services.AddSingleton<IDiskController, NullDiskController>();
 			}
 			services.AddSingleton<IHardDriveLoader, HardDriveLoader>();
-			services.AddSingleton<IHardDrive>(x => x.GetRequiredService<IHardDriveLoader>().DiskRead("simple_020.hdf", 1));
-			services.AddSingleton<IHardDrive>(x => x.GetRequiredService<IHardDriveLoader>().DiskRead("dh0.hdf", 0));
+			if (settings.HardDiskCount > 0)
+				services.AddSingleton<IHardDrive>(x => x.GetRequiredService<IHardDriveLoader>().DiskRead(settings.DH0, 0));
+			else
+				services.AddSingleton<IHardDrive>(x => new NullHardDrive(0));
+			if (settings.HardDiskCount > 1)
+				services.AddSingleton<IHardDrive>(x => x.GetRequiredService<IHardDriveLoader>().DiskRead(settings.DH1, 1));
+			else
+				services.AddSingleton<IHardDrive>(x => new NullHardDrive(1));
 
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
 			{

@@ -92,7 +92,7 @@ namespace Jammy.Core.IDE
 				bytes = new FileInfo(fileName).Length;
 			}
 
-			diskMap = MemoryMappedFile.CreateFromFile(fileName, FileMode.OpenOrCreate, diskFileName, bytes, MemoryMappedFileAccess.ReadWrite);
+			diskMap = MemoryMappedFile.CreateFromFile(fileName, FileMode.OpenOrCreate, Path.GetFileNameWithoutExtension(diskFileName), bytes, MemoryMappedFileAccess.ReadWrite);
 			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
 
 			Swab();
@@ -130,7 +130,7 @@ namespace Jammy.Core.IDE
 		//0 Primary or 1 Secondary
 		public int DiskNumber { get; private set; }
 
-		private const string hardfilePath = "../../../../";
+		private const string hardfilePath = "";
 
 		// Swab
 
@@ -672,6 +672,57 @@ namespace Jammy.Core.IDE
 			//should be 0
 
 			return part;
+		}
+	}
+
+	public class NullHardDrive : IHardDrive
+	{
+		public int Heads => 0;
+
+		public int Sectors => 0;
+
+		public int DiskNumber { get; private set;}
+
+		public byte ConfiguredParamsSectorsPerTrack { get => 0; set { }  }
+		public byte ConfiguredParamsHeads { get => 0; set { }  }
+
+		public NullHardDrive(int diskNo)
+		{
+			DiskNumber = diskNo;
+		}
+
+		public void BeginRead(ushort[] src)
+		{
+		}
+
+		public void BeginRead(uint address, byte sectorCount)
+		{
+		}
+
+		public void BeginWrite(uint address)
+		{
+		}
+
+		public void Dispose()
+		{
+		}
+
+		public ushort[] GetDriveId()
+		{
+			return new ushort[256];
+		}
+
+		public ushort Read()
+		{
+			return 0;
+		}
+
+		public void SyncDisk()
+		{
+		}
+
+		public void Write(ushort v)
+		{
 		}
 	}
 }
