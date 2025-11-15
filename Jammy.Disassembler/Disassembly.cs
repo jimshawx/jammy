@@ -22,12 +22,15 @@ namespace Jammy.Disassembler
 		private readonly IBreakpointCollection breakpoints;
 		private readonly IDisassembler disassembler;
 		private readonly ILabeller labeller;
+		private readonly IInstructionAnalysisDatabase instructionAnalysisDatabase;
+		private readonly IEADatabase eaDatabase;
 		private readonly ILogger logger;
 		private readonly IAnalysis analysis;
 		private readonly IDebugMemoryMapper memory;
 
 		public Disassembly(IDebugMemoryMapper memory, IBreakpointCollection breakpoints,
 			IDisassembler disassembler, ILabeller labeller,
+			IInstructionAnalysisDatabase instructionAnalysisDatabase, IEADatabase eaDatabase,
 			ILogger<Disassembly> logger, IAnalysis analysis)
 		{
 			this.logger = logger;
@@ -36,6 +39,8 @@ namespace Jammy.Disassembler
 			this.breakpoints = breakpoints;
 			this.disassembler = disassembler;
 			this.labeller = labeller;
+			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
+			this.eaDatabase = eaDatabase;
 			Clear();
 		}
 
@@ -226,6 +231,17 @@ namespace Jammy.Disassembler
 					{
 						var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, Disassembler.LONGEST_X86_INSTRUCTION));
 						asm = dasm.ToString(options);
+
+						var ia = instructionAnalysisDatabase.GetInstructionAnalysis(dasm.Address);
+						if (ia != null)
+						{
+							foreach (var i in ia.EffectiveAddresses)
+							{
+								var ea = eaDatabase.GetEAName(i.Ea);
+								if (ea != null && !asm.Contains(ea))
+									asm += $" {ea}";
+							}
+						}
 
 						uint start = address, end = (uint)(address + dasm.Bytes.Length);
 						for (uint i = start; i < end && i < memory.Length; i++)

@@ -20,20 +20,12 @@ namespace Jammy.Disassembler
 		//it's a MOVE (2 bytes) with 2 full extension word operands, each of 10 bytes, on the 020/030
 		public const int LONGEST_X86_INSTRUCTION = 22;
 
-		private readonly IEADatabase eaDatabase;
-		private readonly IInstructionAnalysisDatabase instructionAnalysisDatabase;
 		private readonly StringBuilder asm = new StringBuilder();
 
 		private uint pc;
 		private byte[] memory;
 		private uint address;
 		private DAsm dasm;
-
-		public Disassembler(IEADatabase eaDatabase, IInstructionAnalysisDatabase instructionAnalysisDatabase)
-		{
-			this.eaDatabase = eaDatabase;
-			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
-		}
 
 		public DAsm Disassemble(uint add, IEnumerable<byte> m)
 		{
@@ -94,22 +86,6 @@ namespace Jammy.Disassembler
 					default:
 						Append($"unknown_instruction_{ins:X4}");
 						break;
-				}
-
-				var ia = instructionAnalysisDatabase.GetInstructionAnalysis(this.address);
-				if (ia != null)
-				{
-					foreach (var i in ia.EffectiveAddresses)
-					{ 
-						var ea = eaDatabase.GetEAName(i.Ea);
-						if (!asm.ToString().Contains(ea))
-						{ 
-							if (ea != null)
-							{	
-								asm.Append(' '); asm.Append(ea);
-							}
-						}
-					}
 				}
 
 				if (pc > memory.Length)

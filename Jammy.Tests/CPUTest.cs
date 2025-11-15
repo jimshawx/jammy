@@ -55,8 +55,6 @@ namespace Jammy.Tests
 			.AddSingleton<ICPUTestRig, CPUTestRig>()
 			.AddSingleton<ITestMemory, TestMemory>()
 			.AddSingleton<IDisassembler, Disassembler.Disassembler>()
-			.AddSingleton<IEADatabase, EADatabase>()
-			.AddSingleton<IInstructionAnalysisDatabase, InstructionAnalysisDatabase>()
 			.AddSingleton<IMemoryMapper>(x => (IMemoryMapper)x.GetRequiredService<ITestMemory>())
 			.AddSingleton<IDebugMemoryMapper>(x => (IDebugMemoryMapper)x.GetRequiredService<ITestMemory>())
 			.AddSingleton<IMemoryMappedDevice>(x => (IMemoryMappedDevice)x.GetRequiredService<ITestMemory>());
