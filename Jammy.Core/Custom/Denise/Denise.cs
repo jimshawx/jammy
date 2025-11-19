@@ -316,7 +316,7 @@ public class Denise : IDenise
 
 		int bp = (bplcon0 >> 12) & 7;
 
-		//DBF
+		//DPF
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertDPF;
 
 		//HAM6
@@ -542,6 +542,18 @@ public class Denise : IDenise
 		uint bankEven = (uint)((bplcon4 & 0xf) * 16);
 		uint bankOdd = (uint)(((bplcon4>>4) & 0xf) * 16);
 
+		//bplcon2 informs us the priority of sprites/playfields
+		//in single PF mode, only sprpri2 is used
+		uint sprpri1 = (uint)(bplcon2 & 7);
+		uint sprpri2 = (uint)((bplcon2>>3) & 7);
+		if ((bplcon0 & (uint)BPLCON0.DPF) == 0) sprpri1 = sprpri2;
+		//000 - pf1 s01 s23 s45 s67
+		//001 - s01 pf1 s23 s45 s67
+		//010 - s01 s23 pf1 s45 s67
+		//011 - s01 s23 s45 pf1 s67
+		//100 - s01 s23 s45 s67 pf1
+		//other = special, see here https://eab.abime.net/showthread.php?t=119463
+
 		while (sp >= 0)
 		{
 			//if first, or both are attached (check the attached bit on the odd sprite)
@@ -602,6 +614,24 @@ nospritebits:
 
 		CheckPlayfieldCollision(pix);
 
+		/*
+		Mask off lower pri sprites against pf1
+		Mask off lower pri sprites against pf2
+		Compute whether pf1 or pf2 is in front
+		Apply sprites in reverse order
+		Might not need to compute all sprites if they're behind both playfielda
+		The pf2 bits describe the priority for single playfield
+		BPLCON2 contains the bits
+		2-0 pf1
+		3-5 pf2
+		Playfield is at priority n (0-4)
+		Who knows what 5,6,7 mean? 
+		https://eab.abime.net/showthread.php?t=119463
+		SWIV hi-score relies on this
+		6 pf2>pf1
+		Remaining bits 0 on ECS
+		*/
+
 		//stuff to try to deal with sprite/playfield priorities that doesn't work
 		//uint originalcol = col;
 		////0,1,2,3,4 in bplcon2
@@ -646,7 +676,7 @@ nospritebits:
 				else if (spriteRes == 2) shift = 1; //hires
 				else if (spriteRes == 3) shift = 2; //shres
 			}
-			else if (pixelLoop == 8)
+			else if (pixelLoop == 8)//shres screen
 			{
 				if (spriteRes == 1) shift = shift = ((p & 3)==3)?1:0; //lowres
 				else if (spriteRes == 2) shift = p & 1; //hires
