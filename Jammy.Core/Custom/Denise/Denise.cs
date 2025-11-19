@@ -495,9 +495,6 @@ public class Denise : IDenise
 	private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private void DoSprites(ref uint col, byte pix, int p)
 	{
-		//DoSprites2(ref col, pix, shift);
-		//return;
-
 		uint active = 0;
 		uint attached = 0;
 
@@ -556,6 +553,9 @@ public class Denise : IDenise
 		//100 - s01 s23 s45 s67 pf1
 		//other = special, see here https://eab.abime.net/showthread.php?t=119463
 
+		//todo
+		sprpri1 = sprpri2 = 4;
+
 		while (sp >= 0)
 		{
 			//if first, or both are attached (check the attached bit on the odd sprite)
@@ -568,8 +568,8 @@ public class Denise : IDenise
 				if ((active & 1) != 0) scol |= bits[sp];
 				if ((active & 2) != 0) scol |= bits[sp-1];
 
-				if (scol != 0)
-				{ 
+				if (scol != 0 && (sp >> 1) < sprpri2)
+				{
 					col = truecolour[scol + bankEven];
 				}
 				sp -= 2;
@@ -582,7 +582,7 @@ public class Denise : IDenise
 				scol = 0;
 				if ((active & 1) != 0) scol |= bits[sp];
 
-				if (scol != 0)
+				if (scol != 0 && (sp >> 1) < sprpri2)
 				{ 
 					col = truecolour[4 * (sp >> 1) + scol + bankOdd];
 				}
@@ -595,7 +595,7 @@ public class Denise : IDenise
 				scol = 0;
 				if ((active & 1) != 0) scol |= bits[sp];
 
-				if (scol != 0)
+				if (scol != 0 && (sp >> 1) < sprpri2)
 				{
 					col = truecolour[4 * (sp >> 1) + scol + bankEven];
 				}
