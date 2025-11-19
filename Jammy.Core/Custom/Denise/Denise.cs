@@ -59,6 +59,8 @@ public class Denise : IDenise
 		this.logger = logger;
 		this.emulationWindow = emulationWindow;
 
+		bpldatPix.SetPixelBitMask(15);
+
 		ComputeDPFLookup();
 
 		emulationWindow.SetPicture(SCREEN_WIDTH, SCREEN_HEIGHT);
