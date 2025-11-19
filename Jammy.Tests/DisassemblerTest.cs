@@ -98,7 +98,7 @@ namespace Jammy.Tests
 
 			int librarySize = LoadLibrary(0x10000, libName);
 
-			var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) }, new DisassemblyOptions { IncludeComments = true });
+			var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) }, new DisassemblyOptions { IncludeComments = true, IncludeBytes = true });
 			logger.LogTrace(Environment.NewLine + dis);
 
 			logger.LogTrace($"loaded {libName} at {0x10000:X8}");
@@ -161,6 +161,8 @@ namespace Jammy.Tests
 			for (uint i = 0; i < libw.Length; i++)
 				memory.UnsafeWrite16(loadAddress + i * 2, libw[i]);
 
+			File.WriteAllBytes(Path.ChangeExtension(libName, "raw"), code.Content);
+
 			romTagProcessor.FindAndFixupROMTags(memory.GetBulkRanges().Single().Memory, loadAddress);
 			analyser.UpdateAnalysis();
 
@@ -176,7 +178,7 @@ namespace Jammy.Tests
 			for (uint i = 0; i < libw.Length; i++)
 				memory.UnsafeWrite16(loadAddress + i * 2, libw[i]);
 
-			//File.WriteAllBytes("cputest.raw", code.Content);
+			File.WriteAllBytes(Path.ChangeExtension(libName, "raw"), code.Content);
 
 			return code.Content.Length;
 		}
