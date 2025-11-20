@@ -73,7 +73,7 @@ namespace Jammy.NativeOverlay
 					for (int xx = x; xx < Math.Min(width, x + 3 * sx); xx++)
 					{
 						if (letter[(yy - y) / sy][(xx - x) / sx] == 1)
-							screen[xx + yy * width] = colour;
+							screen[xx + yy * width] ^= colour;
 					}
 				}
 

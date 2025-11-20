@@ -103,7 +103,7 @@ public class ChipsetDebugger : IChipsetDebugger
 	{
 		if (dbugLine != -1 && regmsg.Length != 0)
 		{
-			overlay.TextScale(3);
+			overlay.TextScale(1);
 			overlay.WriteText(0, 80, 0xffffff, regmsg.ToString());
 			DebugLocation();
 		}
@@ -343,6 +343,8 @@ public class ChipsetDebugger : IChipsetDebugger
 		uint bplcon2 = chipRegs.DebugChipsetRead(ChipRegs.BPLCON2, Size.Word);
 		if ((bplcon2 & (1 << 9)) != 0) sb.Append("KILLEHB ");
 		if ((bplcon2 & (1 << 6)) != 0) sb.Append("PF2PRI ");
+		sb.Append($"SPR1PRI{bplcon2&7} ");
+		sb.Append($"SPR2PRI{(bplcon2>>3)&7} ");
 		return sb.ToString();
 	}
 
@@ -351,7 +353,7 @@ public class ChipsetDebugger : IChipsetDebugger
 		uint bplcon3 = chipRegs.DebugChipsetRead(ChipRegs.BPLCON3, Size.Word);
 		var sb = GetTempStringBuilder();
 		sb.Append($"BNK{bplcon3 >> 13} ");
-		sb.Append($"PF2O{(bplcon3 >> 10) & 7} ");
+		sb.Append($"PF2OF{(bplcon3 >> 10) & 7} ");
 		sb.Append($"SPRRES{(bplcon3 >> 6) & 3} ");
 		if ((bplcon3 & (1 << 9)) != 0) sb.Append("LOCT ");
 		return sb.ToString();
