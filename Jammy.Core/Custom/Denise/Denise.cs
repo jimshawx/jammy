@@ -554,7 +554,15 @@ public class Denise : IDenise
 		//other = special, see here https://eab.abime.net/showthread.php?t=119463
 
 		//todo
-		sprpri1 = sprpri2 = 4;
+		//sprpri1 = sprpri2 = 4;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		bool IsVis() 
+		{
+			//either the spritebank is in front of the playfield, or the playfield is transparent
+			int bank = sp>>1;
+			return bank < sprpri2 || pix == 0;
+		}
 
 		while (sp >= 0)
 		{
@@ -568,7 +576,7 @@ public class Denise : IDenise
 				if ((active & 1) != 0) scol |= bits[sp];
 				if ((active & 2) != 0) scol |= bits[sp-1];
 
-				if (scol != 0 && (sp >> 1) < sprpri2)
+				if (scol != 0 && IsVis())
 				{
 					col = truecolour[scol + bankEven];
 				}
@@ -582,7 +590,7 @@ public class Denise : IDenise
 				scol = 0;
 				if ((active & 1) != 0) scol |= bits[sp];
 
-				if (scol != 0 && (sp >> 1) < sprpri2)
+				if (scol != 0 && IsVis())
 				{ 
 					col = truecolour[4 * (sp >> 1) + scol + bankOdd];
 				}
@@ -595,7 +603,7 @@ public class Denise : IDenise
 				scol = 0;
 				if ((active & 1) != 0) scol |= bits[sp];
 
-				if (scol != 0 && (sp >> 1) < sprpri2)
+				if (scol != 0 && IsVis())
 				{
 					col = truecolour[4 * (sp >> 1) + scol + bankEven];
 				}
