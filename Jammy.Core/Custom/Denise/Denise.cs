@@ -553,10 +553,11 @@ public class Denise : IDenise
 		//100 - s01 s23 s45 s67 pf1
 		//other = special, see here https://eab.abime.net/showthread.php?t=119463
 
-		//todo
-		//sprpri1 = sprpri2 = 4;
+		//todo, fix dual-playfield
+		if ((bplcon0 & (uint)BPLCON0.DPF) != 0)
+			sprpri1 = sprpri2 = 4;
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IsVis() 
 		{
 			//either the spritebank is in front of the playfield, or the playfield is transparent
