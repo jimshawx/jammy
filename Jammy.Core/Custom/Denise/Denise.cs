@@ -87,7 +87,7 @@ public class Denise : IDenise
 	[Persist]
 	private int dptr = 0;
 
-	private Func<int, uint> pixelAction = (int p) => { return 0; };
+	private Func<uint, uint> pixelAction = (uint pix) => { return 0; };
 
 	public void Emulate()
 	{
@@ -312,10 +312,8 @@ public class Denise : IDenise
 	[Persist]
 	private readonly int[] clx = new int[8];
 
-	private Func<int,uint> GetModeConversion()
+	private Func<uint,uint> GetModeConversion()
 	{
-		//return CopperBitplaneConvert;
-
 		int bp = (bplcon0 >> 12) & 7;
 
 		//DPF
@@ -338,24 +336,14 @@ public class Denise : IDenise
 		return CopperBitplaneConvertNormal;
 	}
 
-	private uint CopperBitplaneConvertNormal(int p)
+	private uint CopperBitplaneConvertNormal(uint pix)
 	{
-		uint pix = bpldatPix.GetPixel(planes);
-		uint col = truecolour[pix];
-			
-		//remember the last colour for HAM modes
-		lastcol = col;
-
-		DoSprites(ref col, (byte)pix, p);
-
-		return col;
+		return truecolour[pix];
 	}
 
-	private uint CopperBitplaneConvertDPF(int p)
+	private uint CopperBitplaneConvertDPF(uint pix)
 	{
 		uint col;
-
-		uint pix = bpldatPix.GetPixel(planes);
 
 		//DPF
 		uint pix0 = dpfLookup[pix];
@@ -370,25 +358,12 @@ public class Denise : IDenise
 		else
 			col = pix0 != 0 ? col0 : col1;
 
-		//remember the last colour for HAM modes
-		lastcol = col;
-
-		DoSprites(ref col, (byte)pix, p);
-
 		return col;
 	}
 
-	private uint CopperBitplaneConvertOther(int p)
+	private uint CopperBitplaneConvertOther(uint pix)
 	{
 		uint col;
-
-		uint pix = bpldatPix.GetPixel(planes);
-
-		//BPLAM
-		pix ^= (uint)(bplcon4 >> 8);
-
-		//pix &= debugger.bitplaneMask;
-		//pix |= debugger.bitplaneMod;
 
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0)
 		{
@@ -404,12 +379,6 @@ public class Denise : IDenise
 				col = pix1 != 0 ? col1 : col0;
 			else
 				col = pix0 != 0 ? col0 : col1;
-
-			//pix1 = (pix1 == 0) ? (byte)0 : (byte)(pix1 + 8);
-			//if ((bplcon2 & (1 << 6)) != 0)
-			//	pix = pix1 != 0 ? pix1 : pix0;
-			//else
-			//	pix = pix0 != 0 ? pix0 : pix1;
 		}
 		else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
 		{
@@ -483,14 +452,8 @@ public class Denise : IDenise
 			col = truecolour[pix];
 		}
 
-		//remember the last colour for HAM modes
-		lastcol = col;
-
-		DoSprites(ref col, (byte)pix, p);
-
 		return col;
 	}
-
 
 	private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private void DoSprites(ref uint col, byte pix, int p)
@@ -553,11 +516,11 @@ public class Denise : IDenise
 		//100 - s01 s23 s45 s67 pf1
 		//other = special, see here https://eab.abime.net/showthread.php?t=119463
 
-		//todo, fix dual-playfield
+		//todo, fix dual-playfield (need to know which playfield 'won' so we can choose between sprpri1/2)
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0)
 			sprpri1 = sprpri2 = 4;
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IsVis() 
 		{
 			//either the spritebank is in front of the playfield, or the playfield is transparent
@@ -932,8 +895,16 @@ end loop
 			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
 			if (clock.DeniseHorizontalPos+d >= diwstrth + debugger.diwSHack && clock.DeniseHorizontalPos+d <= diwstoph + debugger.diwEHack)
 			{
-				//col = CopperBitplaneConvert();
-				col = pixelAction(p);
+				uint pix = bpldatPix.GetPixel(planes);
+				//BPLAM
+				pix ^= (uint)(bplcon4 >> 8);
+
+				col = pixelAction(pix);
+
+				//remember the last colour for HAM modes
+				lastcol = col;
+
+				DoSprites(ref col, (byte)pix, p);
 			}
 			else
 			{
