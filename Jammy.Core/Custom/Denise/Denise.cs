@@ -316,21 +316,21 @@ public class Denise : IDenise
 	{
 		int bp = (bplcon0 >> 12) & 7;
 
+		//BPLAM is set
+		if ((bplcon4 >> 8) != 0) return CopperBitplaneConvertOther;
+
 		//DPF
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertDPF;
 
 		//HAM6
-		if (bp == 6 && ((bplcon0 & (uint)BPLCON0.HAM) != 0)) return CopperBitplaneConvertOther;
+		if (bp == 6 && ((bplcon0 & (uint)BPLCON0.HAM) != 0)) return CopperBitplaneConvertHAM6;
 
 		//EHB
 		if (bp == 6 && ((bplcon0 & (uint)BPLCON0.HAM) == 0) &&
-			(settings.ChipSet != ChipSet.AGA || (bplcon2 & (uint)BPLCON2.NoEHB) == 0)) return CopperBitplaneConvertOther;
+			(settings.ChipSet != ChipSet.AGA || (bplcon2 & (uint)BPLCON2.NoEHB) == 0)) return CopperBitplaneConvertEHB;
 
 		//HAM8
-		if (bp == 8 && ((bplcon0 & (uint)BPLCON0.HAM) != 0)) return CopperBitplaneConvertOther;
-
-		//BPLAM is set
-		if ((bplcon4 >> 8) != 0) return CopperBitplaneConvertOther;
+		if (bp == 8 && ((bplcon0 & (uint)BPLCON0.HAM) != 0)) return CopperBitplaneConvertHAM8;
 
 		//Normal
 		return CopperBitplaneConvertNormal;
@@ -350,10 +350,10 @@ public class Denise : IDenise
 		uint pix1 = dpfLookup[pix >> 1];
 
 		uint col0 = truecolour[pix0];
-		uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
+		uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];//todo - it's not always 8 in AGA
 
 		//which playfield is in front?
-		if ((bplcon2 & 1 << 6) != 0)
+		if ((bplcon2 & (1 << 6)) != 0)
 			col = pix1 != 0 ? col1 : col0;
 		else
 			col = pix0 != 0 ? col0 : col1;
@@ -361,9 +361,65 @@ public class Denise : IDenise
 		return col;
 	}
 
+	private uint CopperBitplaneConvertHAM6(uint pix)
+	{
+		uint col;
+
+		//HAM6
+		uint ham = pix & 0b11_0000;
+		pix &= 0xf;
+		if (ham == 0)
+		{
+			col = truecolour[pix];
+		}
+		else
+		{
+			ham >>= 4;
+			uint px = pix * 0x11;
+			if (ham == 1) col = lastcol & 0xffffff00 | px; //col+B
+			else if (ham == 3) col = lastcol & 0xffff00ff | (px << 8); //col+G
+			else col = lastcol & 0xff00ffff | (px << 16); //col+R
+		}
+
+		return col;
+	}
+
+	private uint CopperBitplaneConvertHAM8(uint pix)
+	{
+		uint col;
+		//HAM8
+		uint ham = pix & 0b11;
+		pix &= 0xfc;
+		if (ham == 0)
+		{
+			col = truecolour[pix];
+		}
+		else
+		{
+			uint px = pix | pix >> 6;
+			if (ham == 1) col = lastcol & 0xffffff00 | px; //col+B
+			else if (ham == 3) col = lastcol & 0xffff00ff | (px << 8); //col+G
+			else col = lastcol & 0xff00ffff | (px << 16); //col+R
+		}
+		return col;
+	}
+
+	private uint CopperBitplaneConvertEHB(uint pix)
+	{
+		//EHB
+		uint col = truecolour[pix & 0x1f];
+		if ((pix & 0b100000) != 0)
+			col = (col & 0x00fefefe) >> 1;
+
+		return col;
+	}
+
 	private uint CopperBitplaneConvertOther(uint pix)
 	{
 		uint col;
+
+		//BPLAM
+		pix ^= (uint)(bplcon4 >> 8);
 
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0)
 		{
@@ -393,21 +449,9 @@ public class Denise : IDenise
 			{
 				ham >>= 4;
 				uint px = pix * 0x11;
-				if (ham == 1)
-				{
-					//col+B
-					col = lastcol & 0xffffff00 | px;
-				}
-				else if (ham == 3)
-				{
-					//col+G
-					col = lastcol & 0xffff00ff | px << 8;
-				}
-				else
-				{
-					//col+R
-					col = lastcol & 0xff00ffff | px << 8 + 8;
-				}
+				if (ham == 1) col = lastcol & 0xffffff00 | px; //col+B
+				else if (ham == 3) col = lastcol & 0xffff00ff | (px << 8); //col+G
+				else col = lastcol & 0xff00ffff | (px << 16); //col+R
 			}
 		}
 		else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) == 0 &&
@@ -430,21 +474,9 @@ public class Denise : IDenise
 			else
 			{
 				uint px = pix | pix >> 6;
-				if (ham == 1)
-				{
-					//col+B
-					col = lastcol & 0xffffff00 | px;
-				}
-				else if (ham == 3)
-				{
-					//col+G
-					col = lastcol & 0xffff00ff | px << 8;
-				}
-				else
-				{
-					//col+R
-					col = lastcol & 0xff00ffff | px << 8 + 8;
-				}
+				if (ham == 1) col = lastcol & 0xffffff00 | px; //col+B
+				else if (ham == 3) col = lastcol & 0xffff00ff | (px << 8); //col+G
+				else col = lastcol & 0xff00ffff | (px << 16); //col+R
 			}
 		}
 		else
@@ -896,8 +928,6 @@ end loop
 			if (clock.DeniseHorizontalPos+d >= diwstrth + debugger.diwSHack && clock.DeniseHorizontalPos+d <= diwstoph + debugger.diwEHack)
 			{
 				uint pix = bpldatPix.GetPixel(planes);
-				//BPLAM
-				pix ^= (uint)(bplcon4 >> 8);
 
 				col = pixelAction(pix);
 
