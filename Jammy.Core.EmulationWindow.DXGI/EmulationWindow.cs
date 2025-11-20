@@ -221,31 +221,21 @@ namespace Jammy.Core.EmulationWindow.DX
 				// Map the staging texture for writing
 				var dataBox = context.Map(stagingTexture, 0, MapMode.Write, Vortice.Direct3D11.MapFlags.None);
 
-				//unsafe
-				//{
-				//	byte* dest = (byte*)dataBox.DataPointer;
-				//	fixed (int* src = screen)
-				//	{
-				//		int rowBytes = screenWidth * sizeof(int);
-				//		for (int y = 0; y < screenHeight; y++)
-				//		{
-				//			Buffer.MemoryCopy(
-				//				src + y * screenWidth,
-				//				dest + y * dataBox.RowPitch,
-				//				rowBytes,
-				//				rowBytes);
-				//		}
-				//	}
-				//}
-
 				int rowBytes = screenWidth * sizeof(int);
-				for (int y = 0; y < screenHeight; y++)
+				if (rowBytes == dataBox.RowPitch)
 				{
-					IntPtr destRowPtr = IntPtr.Add(dataBox.DataPointer, y * (int)dataBox.RowPitch);
-					int srcOffset = y * screenWidth;
-					Marshal.Copy(screen, srcOffset, destRowPtr, screenWidth);
+					//pitch == width, so only one memcpy required
+					Marshal.Copy(screen, 0, dataBox.DataPointer, screenWidth * screenHeight);
 				}
-
+				else
+				{
+					for (int y = 0; y < screenHeight; y++)
+					{
+						IntPtr destRowPtr = IntPtr.Add(dataBox.DataPointer, y * (int)dataBox.RowPitch);
+						int srcOffset = y * screenWidth;
+						Marshal.Copy(screen, srcOffset, destRowPtr, screenWidth);
+					}
+				}
 				context.Unmap(stagingTexture, 0);
 
 				// Copy the staging texture to the back buffer
