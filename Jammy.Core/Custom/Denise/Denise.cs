@@ -39,7 +39,8 @@ public class Denise : IDenise
 	[Flags]
 	public enum BPLCON2 : uint
 	{
-		NoEHB = 1 << 9
+		NoEHB = 1 << 9,
+		PF2PRI = 1 << 6
 	}
 	private const int FIRST_DMA = 0;//0x18*2;
 	private const int RIGHT_BORDER = 0x18;//cosmetic
@@ -353,7 +354,7 @@ public class Denise : IDenise
 		uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];//todo - it's not always 8 in AGA
 
 		//which playfield is in front?
-		if ((bplcon2 & (1 << 6)) != 0)
+		if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)
 			col = pix1 != 0 ? col1 : col0;
 		else
 			col = pix0 != 0 ? col0 : col1;
@@ -431,7 +432,7 @@ public class Denise : IDenise
 			uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
 
 			//which playfield is in front?
-			if ((bplcon2 & 1 << 6) != 0)
+			if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)
 				col = pix1 != 0 ? col1 : col0;
 			else
 				col = pix0 != 0 ? col0 : col1;
@@ -538,9 +539,7 @@ public class Denise : IDenise
 
 		//bplcon2 informs us the priority of sprites/playfields
 		//in single PF mode, only sprpri2 is used
-		uint sprpri1 = (uint)(bplcon2 & 7);
-		uint sprpri2 = (uint)((bplcon2>>3) & 7);
-		if ((bplcon0 & (uint)BPLCON0.DPF) == 0) sprpri1 = sprpri2;
+		uint sprpri = (uint)((bplcon2>>3) & 7);//sprpri2
 		//000 - pf1 s01 s23 s45 s67
 		//001 - s01 pf1 s23 s45 s67
 		//010 - s01 s23 pf1 s45 s67
@@ -548,16 +547,48 @@ public class Denise : IDenise
 		//100 - s01 s23 s45 s67 pf1
 		//other = special, see here https://eab.abime.net/showthread.php?t=119463
 
-		//todo, fix dual-playfield (need to know which playfield 'won' so we can choose between sprpri1/2)
+		//fix dual-playfield (need to know which playfield 'won' so we can choose between sprpri1/2)
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0)
-			sprpri1 = sprpri2 = 4;
+		{
+			//in dual playfield, we need to use sprpri1 if
+			//1) playfield 1 is in front and is not zero
+			//or
+			//2) playfield 2 is in front and is zero
+
+			byte pix0 = dpfLookup[pix];
+			byte pix1 = dpfLookup[pix>>1];
+
+			if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)//pf1 in front
+				if (pix1 == 0) sprpri = (uint)(bplcon2 & 7);//SPRPRI1
+			else //pf2 in front
+				if (pix0 != 0) sprpri = (uint)(bplcon2 & 7);//SPRPRI1
+
+			////which playfield is in front?
+			//if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)
+			//	col = pix1 != 0 ? col1 : col0;
+			//else
+			//	col = pix0 != 0 ? col0 : col1;
+
+			////which playfield is in front?
+			//byte pix3;
+			//if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)
+			//	pix3 = pix1 != 0 ? (byte)(pix1 + 0) : pix0;
+			//else
+			//	pix3 = pix0 != 0 ? pix0 : (byte)(pix1+0);
+			//if (pix3 == 0) sprpri = 4;//show them all
+
+			//hack, the above code is broken
+			sprpri = 4;
+		}
+		else
+			if (pix == 0) sprpri = 4;//show them all
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IsVis() 
 		{
 			//either the spritebank is in front of the playfield, or the playfield is transparent
 			int bank = sp>>1;
-			return bank < sprpri2 || pix == 0;
+			return bank < sprpri;// || pix == 0;//in DPF, pix is not representative of the actual playfield pixel
 		}
 
 		while (sp >= 0)
