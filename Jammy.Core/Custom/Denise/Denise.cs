@@ -547,6 +547,10 @@ public class Denise : IDenise
 		//100 - s01 s23 s45 s67 pf1
 		//other = special, see here https://eab.abime.net/showthread.php?t=119463
 
+		//with Menace, PF2PRI is set, SPR1PRI=4 SPR2PRI=0
+		//so playfield 2 is in front of playfield 1, and sprites in front of pf1 are displayed, except where pf2 is non-zero
+		//we should be using sprpri1 for the sprites in this case
+
 		//fix dual-playfield (need to know which playfield 'won' so we can choose between sprpri1/2)
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0)
 		{
@@ -554,31 +558,15 @@ public class Denise : IDenise
 			//1) playfield 1 is in front and is not zero
 			//or
 			//2) playfield 2 is in front and is zero
+			//otherwise, we use sprpri2 (already set above)
 
 			byte pix0 = dpfLookup[pix];
 			byte pix1 = dpfLookup[pix>>1];
 
-			if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)//pf1 in front
-				if (pix1 == 0) sprpri = (uint)(bplcon2 & 7);//SPRPRI1
+			if ((bplcon2 & (uint)BPLCON2.PF2PRI) == 0)//pf1 in front
+			{	if (pix1 != 0) sprpri = (uint)(bplcon2 & 7); }//SPRPRI1
 			else //pf2 in front
-				if (pix0 != 0) sprpri = (uint)(bplcon2 & 7);//SPRPRI1
-
-			////which playfield is in front?
-			//if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)
-			//	col = pix1 != 0 ? col1 : col0;
-			//else
-			//	col = pix0 != 0 ? col0 : col1;
-
-			////which playfield is in front?
-			//byte pix3;
-			//if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)
-			//	pix3 = pix1 != 0 ? (byte)(pix1 + 0) : pix0;
-			//else
-			//	pix3 = pix0 != 0 ? pix0 : (byte)(pix1+0);
-			//if (pix3 == 0) sprpri = 4;//show them all
-
-			//hack, the above code is broken
-			sprpri = 4;
+			{	if (pix1 == 0) sprpri = (uint)(bplcon2 & 7); }//SPRPRI1
 		}
 		else
 			if (pix == 0) sprpri = 4;//show them all

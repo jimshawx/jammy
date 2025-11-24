@@ -17,7 +17,8 @@ So here is my humble attempt at an Amiga emulation.
   * Other 680x0 using the Musashi CPU emulation, in C or C#
   * Cycle-exact 68000/chipset using the Moira CPU emulation, in C++
   * Copper, Blitter, CIA emulations
-  * Sprite and bitplane collision
+  * Sprite and Playfield collision
+  * Sprite and Playfield priorities
   * Good quality Audio
   * OCS, ECS, AGA emulation
   * Floppy Disks, ADF/Zipped ADF/ADZ/DMS/RP9 (read) and ATA Hard Disks (read/write)
@@ -32,7 +33,6 @@ So here is my humble attempt at an Amiga emulation.
 ### The not so good stuff
 
 * There are lot of problems with DMA timing
-* Playfield/Sprite priorities incomplete
 * More efforts need to be made to get closer to cycle exact
 * CD32 CDROM and NVRAM not working
 * Emulation of CPUs running faster than the standard 7MHz is poor
@@ -40,7 +40,7 @@ So here is my humble attempt at an Amiga emulation.
 * There's a broken IPF floppy disk reader
 
 The C# 68000 is slightly faster than the C Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
-In an effort to fix this, I have ported Musashi to C#, and it is significantly faster now.
+In an effort to fix this, I have ported Musashi and the Musashi CPU generator to C#, and it is significantly faster now.
 
 The C and C# Musashi 68030/040 options support the 68881 and MMU instructions.
 
