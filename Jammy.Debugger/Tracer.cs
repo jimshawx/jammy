@@ -82,11 +82,18 @@ namespace Jammy.Debugger
 		private readonly HashSet<uint> seen = new HashSet<uint>();
 		private bool enabled = false;
 
+		private bool ShouldTrace(uint pc)
+		{
+			if (!enabled) return false;
+			if (pc >= 0xf00000) return false;
+			if (seen.Contains(pc)) return false;
+			return true;
+		}
+
 		public void Trace(uint pc)
 		{
-			if (!enabled) return;
-			if (pc >= 0xf00000) return;
-			if (seen.Contains(pc)) return;
+			if (!ShouldTrace(pc)) return;
+
 			if (traces.Any())
 			{
 				traces.Last().ToPC = pc;
@@ -96,9 +103,8 @@ namespace Jammy.Debugger
 
 		public void Trace(string v, uint pc, Regs regs)
 		{
-			if (!enabled) return;
-			if (pc >= 0xf00000) return;
-			if (seen.Contains(pc)) return;
+			if (!ShouldTrace(pc)) return;
+
 			seen.Add(pc);
 			traces.Add(new TraceEntry { Type = v, FromPC = pc, FromLabel = labeller.LabelName(pc), Regs = regs.Clone() });
 		}
@@ -123,7 +129,7 @@ namespace Jammy.Debugger
 
 		public void TraceAsm(Regs regs)
 		{
-			if (!enabled) return;
+			if (!ShouldTrace(regs.PC)) return;
 
 			//for now, only call this once, it's dead slow
 			if (!instructionAnalysisDatabase.Has(regs.PC))
