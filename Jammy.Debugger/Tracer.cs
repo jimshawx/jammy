@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 /*
@@ -24,9 +25,9 @@ namespace Jammy.Debugger
 			this.logger = logger;
 		}
 
-		public void Trace(uint pc) { }
+		public void TraceTo(uint pc) { }
 
-		public void Trace(string v, uint pc, Regs regs) { }
+		public void TraceFrom(string v, uint pc, Regs regs) { }
 
 		public void DumpTrace()
 		{
@@ -90,7 +91,7 @@ namespace Jammy.Debugger
 			return true;
 		}
 
-		public void Trace(uint pc)
+		public void TraceTo(uint pc)
 		{
 			if (!ShouldTrace(pc)) return;
 
@@ -101,7 +102,7 @@ namespace Jammy.Debugger
 			}
 		}
 
-		public void Trace(string v, uint pc, Regs regs)
+		public void TraceFrom(string v, uint pc, Regs regs)
 		{
 			if (!ShouldTrace(pc)) return;
 
@@ -127,6 +128,7 @@ namespace Jammy.Debugger
 				s.WriteLine(t);
 		}
 
+		//[MethodImpl(MethodImplOptions.NoOptimization|MethodImplOptions.NoInlining)]
 		public void TraceAsm(Regs regs)
 		{
 			if (!ShouldTrace(regs.PC)) return;
@@ -144,7 +146,7 @@ namespace Jammy.Debugger
 				}
 			}
 
-			Trace(DisassembleAddress(regs.PC), regs.PC, regs.Clone());
+			TraceFrom(DisassembleAddress(regs.PC), regs.PC, regs);
 		}
 
 		private string DisassembleAddress(uint pc)

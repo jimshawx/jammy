@@ -2153,21 +2153,21 @@ namespace Jammy.Core.CPU.CSharp
 
 		private void bsr(int type, uint target)
 		{
-			tracer.Trace("bsr", instructionStartPC, GetRegs(gregs));
+			tracer.TraceFrom("bsr", instructionStartPC, GetRegs(gregs));
 
 			push32(pc);
 			pc = target;
 
-			tracer.Trace(pc);
+			tracer.TraceTo(pc);
 		}
 
 		private void bra(int type, uint target)
 		{
-			tracer.Trace("bra", instructionStartPC, GetRegs(gregs));
+			tracer.TraceFrom("bra", instructionStartPC, GetRegs(gregs));
 
 			pc = target;
 
-			tracer.Trace(pc);
+			tracer.TraceTo(pc);
 		}
 
 		private void t_five(int type)
@@ -3445,7 +3445,7 @@ namespace Jammy.Core.CPU.CSharp
 
 		private void jmp(int type)
 		{
-			tracer.Trace("jmp", instructionStartPC, GetRegs(gregs));
+			tracer.TraceFrom("jmp", instructionStartPC, GetRegs(gregs));
 
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
@@ -3456,12 +3456,12 @@ namespace Jammy.Core.CPU.CSharp
 
 			pc = fetchEA(type, Size.Extension);
 
-			tracer.Trace(pc);
+			tracer.TraceTo(pc);
 		}
 
 		private void jsr(int type)
 		{
-			tracer.Trace("jsr", instructionStartPC, GetRegs(gregs));
+			tracer.TraceFrom("jsr", instructionStartPC, GetRegs(gregs));
 
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
@@ -3474,7 +3474,7 @@ namespace Jammy.Core.CPU.CSharp
 			push32(pc);
 			pc = ea;
 
-			tracer.Trace(pc);
+			tracer.TraceTo(pc);
 		}
 
 		private void rtr(int type)
@@ -3492,21 +3492,21 @@ namespace Jammy.Core.CPU.CSharp
 
 		private void rts(int type)
 		{
-			tracer.Trace("rts", instructionStartPC, GetRegs(gregs));
+			tracer.TraceFrom("rts", instructionStartPC, GetRegs(gregs));
 			pc = pop32();
-			tracer.Trace(pc);
+			tracer.TraceTo(pc);
 		}
 
 		private void rte(int type)
 		{
 			if (Supervisor())
 			{
-				tracer.Trace("rte", instructionStartPC, GetRegs(gregs));
+				tracer.TraceFrom("rte", instructionStartPC, GetRegs(gregs));
 				ushort tmpsr = pop16();//may clear the supervisor bit, causing following pop to come off the wrong stack
 				pc = pop32();
 				sr = tmpsr;
 				//CheckInterrupt();
-				tracer.Trace(pc);
+				tracer.TraceTo(pc);
 			}
 			else
 			{

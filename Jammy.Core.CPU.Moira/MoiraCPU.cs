@@ -1,15 +1,14 @@
-﻿using System;
-using System.Linq;
-using System.Runtime.InteropServices;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using System.Runtime.InteropServices;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2025 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.CPU.Moira
@@ -18,9 +17,11 @@ namespace Jammy.Core.CPU.Moira
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
+		private readonly IMemoryManager memoryManager;
 		private readonly IBreakpointCollection breakpoints;
 		private readonly ITracer tracer;
 		private readonly ILogger logger;
+		private readonly EmulationSettings settings;
 
 		[DllImport("Moira.dll")]
 		static extern void Moira_init(IntPtr r16, IntPtr r8, IntPtr w16, IntPtr w8, IntPtr sync);
@@ -47,14 +48,19 @@ namespace Jammy.Core.CPU.Moira
 		private Moira_Sync sync;
 
 		public MoiraCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
+			IMemoryManager memoryManager,
 			IBreakpointCollection breakpoints, ITracer tracer,
+			IOptions<EmulationSettings> settings,
 			ILogger<MoiraCPU> logger)
 		{
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
+			this.memoryManager = memoryManager;
 			this.breakpoints = breakpoints;
 			this.tracer = tracer;
 			this.logger = logger;
+			this.settings = settings.Value;
+
 			logger.LogTrace("Starting Moira C 68000 CPU");
 
 			r16 = new Moira_Reader(Moira_read16);
@@ -81,8 +87,12 @@ namespace Jammy.Core.CPU.Moira
 			Moira_set_irq(interruptLevel);
 		}
 
+		//tracer
+		private readonly Regs traceRegs = new Regs();
+		//tracer
+
 		private uint instructionStartPC = 0;
-		private int cycles=0;
+		private int cycles = 0;
 
 		public uint GetCycles()
 		{
@@ -93,67 +103,67 @@ namespace Jammy.Core.CPU.Moira
 		{
 			CheckInterrupt();
 
-			/*
-
 			//tracer
-			var regs = GetRegs();
-			tracer.TraceAsm(regs.PC, regs);
-			ushort ins = (ushort)memoryMapper.Read(0, regs.PC, Size.Word);
-			//bsr, bra, jmp, jsr, rts, rte
-			uint ipc = regs.PC; regs.PC += 2;
-			//tracer
+			ushort ins = 0;
+			uint ipc = 0;
+			if (settings.Tracer.IsEnabled())
+			{
 
-			*/
+				GetRegs(traceRegs);
+				tracer.TraceAsm(traceRegs);
+				ins = (ushort)((IDebuggableMemory)memoryManager.DebugMappedDevice[traceRegs.PC]).DebugRead(traceRegs.PC, Size.Word);
+				ipc = traceRegs.PC; traceRegs.PC += 2;
+			}
+			//tracer
 
 			uint pc = Moira_execute(ref cycles);
 
-			/*
-
 			//tracer
-			if ((ins & 0xff00) == 0x6100)
+			if (settings.Tracer.IsEnabled())
 			{
-				uint disp = (uint)(sbyte)ins & 0xff;
-				if (disp == 0) { regs.PC += 2; }
-				else if (disp == 0xff) { regs.PC += 4; }
-
-				tracer.Trace("bsr", ipc, regs); //bsr
-				tracer.Trace(pc); //bsr
-			}
-			else if ((ins & 0xf000) == 0x6000)
-			{
-				uint inssize = 2;
-				uint disp = (uint)(sbyte)ins & 0xff;
-				if (disp == 0) { inssize += 2; regs.PC += 2; }
-				else if (disp == 0xff) { inssize+=4; regs.PC += 4;}
-				if (pc != ipc+inssize)
+				if ((ins & 0xff00) == 0x6100)
 				{
-					tracer.Trace("bra", ipc, regs); //bcc
-					tracer.Trace(pc); //bsr
+					uint disp = (uint)(sbyte)ins & 0xff;
+					if (disp == 0) { traceRegs.PC += 2; }
+					else if (disp == 0xff) { traceRegs.PC += 4; }
+
+					tracer.TraceFrom("bsr", ipc, traceRegs); //bsr
+					tracer.TraceTo(pc); //bsr
+				}
+				else if ((ins & 0xf000) == 0x6000)
+				{
+					uint inssize = 2;
+					uint disp = (uint)(sbyte)ins & 0xff;
+					if (disp == 0) { inssize += 2; traceRegs.PC += 2; }
+					else if (disp == 0xff) { inssize+=4; traceRegs.PC += 4;}
+					if (pc != ipc+inssize)
+					{
+						tracer.TraceFrom("bra", ipc, traceRegs); //bcc
+						tracer.TraceTo(pc); //bsr
+					}
+				}
+				else if ((ins & 0xffc0) == 0x4e80)
+				{
+					tracer.TraceFrom("jsr", ipc, traceRegs);//jsr
+					tracer.TraceTo(pc); //bsr
+				}
+				else if ((ins & 0xffc0) == 0x4ec0)
+				{
+					tracer.TraceFrom("jmp", ipc, traceRegs);//jmp
+					tracer.TraceTo(pc); //bsr
+				}
+				else if (ins == 0x4e75)
+				{
+					tracer.TraceFrom("rts", ipc, traceRegs);//rts
+					tracer.TraceTo(pc); //bsr
+				}
+				else if (ins == 0x4e73)
+				{
+					tracer.TraceFrom("rte", ipc, traceRegs);//rte
+					tracer.TraceTo(pc); //bsr
 				}
 			}
-			else if ((ins & 0xffc0) == 0x4e80)
-			{
-				tracer.Trace("jsr", ipc, regs);//jsr
-				tracer.Trace(pc); //bsr
-			}
-			else if ((ins & 0xffc0) == 0x4ec0)
-			{
-				tracer.Trace("jmp", ipc, regs);//jmp
-				tracer.Trace(pc); //bsr
-			}
-			else if (ins == 0x4e75)
-			{
-				tracer.Trace("rts", ipc, regs);//rts
-				tracer.Trace(pc); //bsr
-			}
-			else if (ins == 0x4e73)
-			{
-				tracer.Trace("rte", ipc, regs);//rte
-				tracer.Trace(pc); //bsr
-			}
 			//tracer
-			
-			*/
 
 			instructionStartPC = pc;
 
