@@ -16,8 +16,8 @@ namespace Jammy.Core.Memory
 	{
 		private readonly ILogger logger;
 
-		public MemoryMappedDeviceCollection MappedDevice { get; }
-		public MemoryMappedDeviceCollection DebugMappedDevice { get; }
+		public IMemoryMappedDeviceCollection MappedDevice { get; }
+		public IMemoryMappedDeviceCollection DebugMappedDevice { get; }
 
 		public MemoryManager(ILogger<MemoryManager> logger, IOptions<EmulationSettings> settings)
 		{
@@ -51,7 +51,7 @@ namespace Jammy.Core.Memory
 		}
 	}
 
-	public class MemoryMappedDeviceCollection
+	public class MemoryMappedDeviceCollection : IMemoryMappedDeviceCollection
 	{
 		private readonly List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
 		private readonly IMemoryMappedDevice[] mapping = new IMemoryMappedDevice[0x10000];
@@ -109,14 +109,5 @@ namespace Jammy.Core.Memory
 		{
 			return devices.OfType<IPersistableRAM>().ToList();
 		}
-	}
-
-	public interface IMemoryManager
-	{
-		MemoryMappedDeviceCollection MappedDevice { get; }
-		MemoryMappedDeviceCollection DebugMappedDevice { get; }
-		void AddDevice(IMemoryMappedDevice device);
-		void AddDevices(List<IMemoryMappedDevice> devs);
-		void RefreshDevices();
 	}
 }

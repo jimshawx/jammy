@@ -25,4 +25,13 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		public List<BulkMemoryRange> ReadBulk();
 	}
+
+	public interface IMemoryMappedDeviceCollection
+	{
+		void BuildMappedDevices();
+		void AddRange(IEnumerable<IMemoryMappedDevice> devs);
+		IMemoryMappedDevice this[uint address] { get; }
+		List<IBulkMemoryRead> BulkReadableDevices();
+		List<IPersistableRAM> PersistableDevices();
+	}
 }
