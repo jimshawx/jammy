@@ -123,6 +123,8 @@ namespace Jammy.Debugger
 
 		public void TraceAsm(Regs regs)
 		{
+			if (!enabled) return;
+
 			//for now, only call this once, it's dead slow
 			if (!instructionAnalysisDatabase.Has(regs.PC))
 			{ 
