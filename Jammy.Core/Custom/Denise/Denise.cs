@@ -34,8 +34,10 @@ public class Denise : IDenise
 		HAM = 1 << 11,
 		DPF = 1<<10,
 		SuperHiRes = 1 << 6,
+		BPU3 = 1 << 4,
 		Interlace = 1 << 2
 	}
+
 	[Flags]
 	public enum BPLCON2 : uint
 	{
@@ -315,7 +317,7 @@ public class Denise : IDenise
 
 	private Func<uint,uint> GetModeConversion()
 	{
-		int bp = (bplcon0 >> 12) & 7;
+		int bp = planes;
 
 		//BPLAM is set
 		if ((bplcon4 >> 8) != 0) return CopperBitplaneConvertOther;
@@ -842,7 +844,7 @@ end loop
 
 		if (settings.ChipSet == ChipSet.AGA)
 		{
-			if (planes == 0 && (bplcon0 & 1 << 4) != 0)
+			if (planes == 0 && (bplcon0 & (uint)BPLCON0.BPU3) != 0)
 				planes = 8;
 		}
 
