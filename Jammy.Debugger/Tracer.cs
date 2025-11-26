@@ -25,6 +25,8 @@ namespace Jammy.Debugger
 			this.logger = logger;
 		}
 
+		public void Flush(uint address) { }
+
 		public void TraceTo(uint pc) { }
 
 		public void TraceFrom(string v, uint pc, Regs regs) { }
@@ -83,6 +85,11 @@ namespace Jammy.Debugger
 		private readonly HashSet<uint> seen = new HashSet<uint>();
 		private bool enabled = false;
 
+		public void Flush(uint address)
+		{
+			seen.Remove(address);
+		}
+
 		private bool ShouldTrace(uint pc)
 		{
 			if (!enabled) return false;
@@ -93,7 +100,7 @@ namespace Jammy.Debugger
 
 		public void TraceTo(uint pc)
 		{
-			if (!ShouldTrace(pc)) return;
+			if (!ShouldTrace(0xffffffff)) return;
 
 			if (traces.Any())
 			{
@@ -102,12 +109,12 @@ namespace Jammy.Debugger
 			}
 		}
 
-		public void TraceFrom(string v, uint pc, Regs regs)
+		public void TraceFrom(string type, uint pc, Regs regs)
 		{
 			if (!ShouldTrace(pc)) return;
 
 			seen.Add(pc);
-			traces.Add(new TraceEntry { Type = v, FromPC = pc, FromLabel = labeller.LabelName(pc), Regs = regs.Clone() });
+			traces.Add(new TraceEntry { Type = type, FromPC = pc, FromLabel = labeller.LabelName(pc), Regs = regs.Clone() });
 		}
 
 		public void DumpTrace()

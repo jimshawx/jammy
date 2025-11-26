@@ -272,10 +272,14 @@ namespace Jammy.Core.CPU.Moira
 		private void Moira_write16(uint address, uint value)
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Word);
+			if (settings.Tracer.IsEnabled())
+				tracer.Flush(address);
 		}
 		private void Moira_write8(uint address, uint value)
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
+			if (settings.Tracer.IsEnabled())
+				tracer.Flush(address);
 		}
 
 		private Action<int> syncChipset = NullSync;

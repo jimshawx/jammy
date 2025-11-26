@@ -134,6 +134,7 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0x53a);
 				//AddBreakpoint(0x53c);
 				//AddBreakpoint(0x620);
+				//AddBreakpoint(0x742);//Hammerfist copy protection end
 				return;
 			}
 
