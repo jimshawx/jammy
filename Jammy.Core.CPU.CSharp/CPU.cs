@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
@@ -97,11 +98,12 @@ namespace Jammy.Core.CPU.CSharp
 			a[7] = read32(0);
 			pc = read32(4);
 		}
-		private Regs gregs = new Regs();
+
+		//private Regs gregs = new Regs();
 		private ushort Fetch(uint pc)
 		{
-			if (settings.Tracer.IsEnabled())
-				tracer.TraceAsm(GetRegs(gregs));
+			//if (settings.Tracer.IsEnabled())
+			//	tracer.TraceAsm(GetRegs(gregs));
 			return fetch16(pc);
 		}
 
@@ -130,6 +132,8 @@ namespace Jammy.Core.CPU.CSharp
 			return 8;
 		}
 
+		private Regs traceRegs = new Regs();
+
 		public void Emulate()
 		{
 			instructionStartPC = pc;
@@ -142,6 +146,22 @@ namespace Jammy.Core.CPU.CSharp
 
 			if (fetchMode == FetchMode.Stopped)
 				return;
+
+			//pc is unaligned
+			if ((pc & 1) != 0)
+				internalTrap(3);
+
+			//tracer
+			ushort ins2 = 0;
+			uint ipc = 0;
+			if (settings.Tracer.IsEnabled())
+			{
+				GetRegs(traceRegs);
+				tracer.TraceAsm(traceRegs);
+				ins2 = ((IDebugMemoryMapper)memoryMapper).UnsafeRead16(traceRegs.PC);
+				ipc = traceRegs.PC; traceRegs.PC += 2;
+			}
+			//tracer
 
 			try
 			{
@@ -200,7 +220,12 @@ namespace Jammy.Core.CPU.CSharp
 						break;
 				}
 
-				if (traceMode)			
+				//tracer
+				if (settings.Tracer.IsEnabled())
+					tracer.TracePost(traceRegs, pc, ipc, ins2);
+				//tracer
+
+				if (traceMode && T())			
 				{ 
 					instructionStartPC = pc;
 					internalTrap(9);
@@ -571,16 +596,22 @@ namespace Jammy.Core.CPU.CSharp
 		public void write32(uint address, uint value)
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Long);
+			if (settings.Tracer.IsEnabled())
+				tracer.Flush(address);
 		}
 
 		public void write16(uint address, ushort value)
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Word);
+			if (settings.Tracer.IsEnabled())
+				tracer.Flush(address);
 		}
 
 		public void write8(uint address, byte value)
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
+			if (settings.Tracer.IsEnabled())
+				tracer.Flush(address);
 		}
 
 		private void push32(uint value)
@@ -2153,21 +2184,21 @@ namespace Jammy.Core.CPU.CSharp
 
 		private void bsr(int type, uint target)
 		{
-			tracer.TraceFrom("bsr", instructionStartPC, GetRegs(gregs));
+			//tracer.TraceFrom("bsr", instructionStartPC, GetRegs(gregs));
 
 			push32(pc);
 			pc = target;
 
-			tracer.TraceTo(pc);
+			//tracer.TraceTo(pc);
 		}
 
 		private void bra(int type, uint target)
 		{
-			tracer.TraceFrom("bra", instructionStartPC, GetRegs(gregs));
+			//tracer.TraceFrom("bra", instructionStartPC, GetRegs(gregs));
 
 			pc = target;
 
-			tracer.TraceTo(pc);
+			//tracer.TraceTo(pc);
 		}
 
 		private void t_five(int type)
@@ -2747,8 +2778,8 @@ namespace Jammy.Core.CPU.CSharp
 			}
 			else
 			{
-				if (vector == 9)
-					clrTrace();
+				//looks like all exceptions clear the T flag
+				clrTrace();
 
 				if (vector != 8)//used in multitasker
 				{
@@ -3010,6 +3041,7 @@ namespace Jammy.Core.CPU.CSharp
 			setNZ(op, size);
 		}
 
+		[MethodImpl(MethodImplOptions.NoInlining)]
 		private void eori(int type)
 		{
 			Size size = getSize(type);
@@ -3445,7 +3477,7 @@ namespace Jammy.Core.CPU.CSharp
 
 		private void jmp(int type)
 		{
-			tracer.TraceFrom("jmp", instructionStartPC, GetRegs(gregs));
+			//tracer.TraceFrom("jmp", instructionStartPC, GetRegs(gregs));
 
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
@@ -3456,12 +3488,12 @@ namespace Jammy.Core.CPU.CSharp
 
 			pc = fetchEA(type, Size.Extension);
 
-			tracer.TraceTo(pc);
+			//tracer.TraceTo(pc);
 		}
 
 		private void jsr(int type)
 		{
-			tracer.TraceFrom("jsr", instructionStartPC, GetRegs(gregs));
+			//tracer.TraceFrom("jsr", instructionStartPC, GetRegs(gregs));
 
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
@@ -3474,7 +3506,7 @@ namespace Jammy.Core.CPU.CSharp
 			push32(pc);
 			pc = ea;
 
-			tracer.TraceTo(pc);
+			//tracer.TraceTo(pc);
 		}
 
 		private void rtr(int type)
@@ -3492,21 +3524,21 @@ namespace Jammy.Core.CPU.CSharp
 
 		private void rts(int type)
 		{
-			tracer.TraceFrom("rts", instructionStartPC, GetRegs(gregs));
+			//tracer.TraceFrom("rts", instructionStartPC, GetRegs(gregs));
 			pc = pop32();
-			tracer.TraceTo(pc);
+			//tracer.TraceTo(pc);
 		}
 
 		private void rte(int type)
 		{
 			if (Supervisor())
 			{
-				tracer.TraceFrom("rte", instructionStartPC, GetRegs(gregs));
+				//tracer.TraceFrom("rte", instructionStartPC, GetRegs(gregs));
 				ushort tmpsr = pop16();//may clear the supervisor bit, causing following pop to come off the wrong stack
 				pc = pop32();
 				sr = tmpsr;
 				//CheckInterrupt();
-				tracer.TraceTo(pc);
+				//tracer.TraceTo(pc);
 			}
 			else
 			{

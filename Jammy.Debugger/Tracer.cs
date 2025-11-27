@@ -1,12 +1,15 @@
-﻿using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Floppy.IPF;
+using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Interface;
 using Jammy.Types.Debugger;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -41,6 +44,8 @@ namespace Jammy.Debugger
 		public void WriteTrace() { }
 
 		public void Enable(bool enabled) { }
+
+		public void TracePost(Regs traceRegs, uint pc, uint ipc, ushort ins) { }
 	}
 
 	public class Tracer : ITracer
@@ -83,7 +88,7 @@ namespace Jammy.Debugger
 		}
 
 		private readonly HashSet<uint> seen = new HashSet<uint>();
-		private bool enabled = false;
+		private bool enabled = true;
 
 		public void Flush(uint address)
 		{
@@ -166,6 +171,57 @@ namespace Jammy.Debugger
 		public void Enable(bool enabled)
 		{ 
 			this.enabled = enabled;	
+		}
+
+		public void TracePost(Regs traceRegs, uint pc, uint ipc, ushort ins)
+		{
+			if ((ins & 0xff00) == 0x6100)
+			{
+				//bsr
+				uint disp = (uint)(sbyte)ins & 0xff;
+				if (disp == 0) { traceRegs.PC += 2; }
+				else if (disp == 0xff) { traceRegs.PC += 4; }
+
+				TraceFrom("bsr", ipc, traceRegs);
+				TraceTo(pc);
+			}
+			else if ((ins & 0xf000) == 0x6000)
+			{
+				//bcc
+				uint inssize = 2;
+				uint disp = (uint)(sbyte)ins & 0xff;
+				if (disp == 0) { inssize += 2; traceRegs.PC += 2; }
+				else if (disp == 0xff) { inssize += 4; traceRegs.PC += 4; }
+				if (pc != ipc + inssize)
+				{
+					TraceFrom("bra", ipc, traceRegs);
+					TraceTo(pc);
+				}
+			}
+			else if ((ins & 0xffc0) == 0x4e80)
+			{
+				//jsr
+				TraceFrom("jsr", ipc, traceRegs);
+				TraceTo(pc);
+			}
+			else if ((ins & 0xffc0) == 0x4ec0)
+			{
+				//jmp
+				TraceFrom("jmp", ipc, traceRegs);
+				TraceTo(pc);
+			}
+			else if (ins == 0x4e75)
+			{
+				//rts
+				TraceFrom("rts", ipc, traceRegs);//rts
+				TraceTo(pc);
+			}
+			else if (ins == 0x4e73)
+			{
+				//rte
+				TraceFrom("rte", ipc, traceRegs);//rte
+				TraceTo(pc);
+			}
 		}
 	}
 }

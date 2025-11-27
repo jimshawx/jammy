@@ -17,7 +17,6 @@ namespace Jammy.Core.CPU.Moira
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
-		private readonly IMemoryManager memoryManager;
 		private readonly IBreakpointCollection breakpoints;
 		private readonly ITracer tracer;
 		private readonly ILogger logger;
@@ -48,14 +47,12 @@ namespace Jammy.Core.CPU.Moira
 		private Moira_Sync sync;
 
 		public MoiraCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
-			IMemoryManager memoryManager,
 			IBreakpointCollection breakpoints, ITracer tracer,
 			IOptions<EmulationSettings> settings,
 			ILogger<MoiraCPU> logger)
 		{
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
-			this.memoryManager = memoryManager;
 			this.breakpoints = breakpoints;
 			this.tracer = tracer;
 			this.logger = logger;
@@ -108,10 +105,9 @@ namespace Jammy.Core.CPU.Moira
 			uint ipc = 0;
 			if (settings.Tracer.IsEnabled())
 			{
-
 				GetRegs(traceRegs);
 				tracer.TraceAsm(traceRegs);
-				ins = (ushort)((IDebuggableMemory)memoryManager.DebugMappedDevice[traceRegs.PC]).DebugRead(traceRegs.PC, Size.Word);
+				ins = ((IDebugMemoryMapper)memoryMapper).UnsafeRead16(traceRegs.PC);
 				ipc = traceRegs.PC; traceRegs.PC += 2;
 			}
 			//tracer
@@ -120,49 +116,7 @@ namespace Jammy.Core.CPU.Moira
 
 			//tracer
 			if (settings.Tracer.IsEnabled())
-			{
-				if ((ins & 0xff00) == 0x6100)
-				{
-					uint disp = (uint)(sbyte)ins & 0xff;
-					if (disp == 0) { traceRegs.PC += 2; }
-					else if (disp == 0xff) { traceRegs.PC += 4; }
-
-					tracer.TraceFrom("bsr", ipc, traceRegs); //bsr
-					tracer.TraceTo(pc); //bsr
-				}
-				else if ((ins & 0xf000) == 0x6000)
-				{
-					uint inssize = 2;
-					uint disp = (uint)(sbyte)ins & 0xff;
-					if (disp == 0) { inssize += 2; traceRegs.PC += 2; }
-					else if (disp == 0xff) { inssize+=4; traceRegs.PC += 4;}
-					if (pc != ipc+inssize)
-					{
-						tracer.TraceFrom("bra", ipc, traceRegs); //bcc
-						tracer.TraceTo(pc); //bsr
-					}
-				}
-				else if ((ins & 0xffc0) == 0x4e80)
-				{
-					tracer.TraceFrom("jsr", ipc, traceRegs);//jsr
-					tracer.TraceTo(pc); //bsr
-				}
-				else if ((ins & 0xffc0) == 0x4ec0)
-				{
-					tracer.TraceFrom("jmp", ipc, traceRegs);//jmp
-					tracer.TraceTo(pc); //bsr
-				}
-				else if (ins == 0x4e75)
-				{
-					tracer.TraceFrom("rts", ipc, traceRegs);//rts
-					tracer.TraceTo(pc); //bsr
-				}
-				else if (ins == 0x4e73)
-				{
-					tracer.TraceFrom("rte", ipc, traceRegs);//rte
-					tracer.TraceTo(pc); //bsr
-				}
-			}
+				tracer.TracePost(traceRegs, pc, ipc, ins);
 			//tracer
 
 			instructionStartPC = pc;

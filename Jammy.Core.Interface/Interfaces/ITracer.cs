@@ -8,12 +8,13 @@ namespace Jammy.Core.Interface.Interfaces
 {
 	public interface ITracer
 	{
-		void TraceTo(uint pc);
+		//void TraceTo(uint pc);
 		void TraceFrom(string v, uint pc, Regs regs);
 		void DumpTrace();
 		void TraceAsm(Regs regs);
 		void WriteTrace();
 		void Enable(bool enabled);
 		void Flush(uint address);
+		void TracePost(Regs traceRegs, uint pc, uint ipc, ushort ins);
 	}
 }
