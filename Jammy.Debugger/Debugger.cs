@@ -136,8 +136,8 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0x620);
 				//AddBreakpoint(0x742);//Hammerfist decryption block end bra #$083f
 				//AddBreakpoint(0x726);//Hammerfist decryption block end eori.w #$2000,sr
-				AddBreakpoint(0x784);//Hammerfist decryption block end andi.w #$F8FF,sr
-				AddBreakpoint(0x7ac);//Hammerfist decryption block end bra.w #$05FE - manual jump to Trace vector
+				//AddBreakpoint(0x784);//Hammerfist decryption block end andi.w #$F8FF,sr
+				//AddBreakpoint(0x7ac);//Hammerfist decryption block end bra.w #$05FE - manual jump to Trace vector
 				return;
 			}
 
