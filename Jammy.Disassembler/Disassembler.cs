@@ -19,12 +19,12 @@ namespace Jammy.Disassembler
 {
 	public class Disassembler : IDisassembler
 	{
-		private readonly EmulationSettings settings;
+		//private readonly EmulationSettings settings;
 
-		public Disassembler(IOptions<EmulationSettings> settings)
-		{
-			this.settings = settings.Value;
-		}
+		//public Disassembler(IOptions<EmulationSettings> settings)
+		//{
+		//	this.settings = settings.Value;
+		//}
 
 		//it's a MOVE (2 bytes) with 2 full extension word operands, each of 10 bytes, on the 020/030
 		public const int LONGEST_X86_INSTRUCTION = 22;
@@ -300,8 +300,8 @@ namespace Jammy.Disassembler
 						uint ext = read16(pc);
 
 						//68000 only
-						if (settings.Sku == CPUSku.MC68000)
-							ext &= ~0x0700u;
+						//if (settings.Sku == CPUSku.MC68000)
+						//	ext &= ~0x0700u;
 
 						uint Xn = (ext >> 12) & 7;
 						uint scale = (ext >>9)&3;
@@ -407,8 +407,8 @@ namespace Jammy.Disassembler
 								uint ext = read16(pc);
 
 								//68000 only
-								if (settings.Sku == CPUSku.MC68000)
-									ext &= ~0x0700u;
+								//if (settings.Sku == CPUSku.MC68000)
+								//	ext &= ~0x0700u;
 
 								uint Xn = (ext >> 12) & 7;
 								uint scale = (ext >> 9) & 3;
