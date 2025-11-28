@@ -11,18 +11,18 @@ namespace Jammy.Core.Types
 
 	public class UnknownInstructionException : MC68000Exception
 	{
-		private uint pc;
-		private ushort instruction;
+		public uint PC { get; }
+		public ushort Ins { get; }
 
 		public UnknownInstructionException(uint pc, int instruction)
 		{
-			this.pc = pc;
-			this.instruction = (ushort)instruction;
+			PC = pc;
+			Ins = (ushort)instruction;
 		}
 
 		public override string ToString()
 		{
-			return $"Unknown Instruction @{pc:X6} {instruction:X4}. {base.ToString()}";
+			return $"Unknown Instruction @{PC:X6} {Ins:X4}. {base.ToString()}";
 		}
 	}
 
@@ -81,16 +81,16 @@ namespace Jammy.Core.Types
 
 	public class MemoryAlignmentException : MC68000Exception
 	{
-		private uint address;
+		public uint Address { get; }
 
 		public MemoryAlignmentException(uint address)
 		{
-			this.address = address;
+			Address = address;
 		}
 
 		public override string ToString()
 		{
-			return $"Unknown Memory Alignment @{address:X6}. {base.ToString()}";
+			return $"Unknown Memory Alignment @{Address:X8}. {base.ToString()}";
 		}
 	}
 

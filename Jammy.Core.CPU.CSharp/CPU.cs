@@ -1,13 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Linq;
 
 // ReSharper disable InconsistentNaming
 
@@ -147,10 +146,6 @@ namespace Jammy.Core.CPU.CSharp
 			if (fetchMode == FetchMode.Stopped)
 				return;
 
-			//pc is unaligned
-			if ((pc & 1) != 0)
-				internalTrap(3);
-
 			//tracer
 			ushort ins2 = 0;
 			uint ipc = 0;
@@ -163,13 +158,14 @@ namespace Jammy.Core.CPU.CSharp
 			}
 			//tracer
 
+			int ins=0;
 			try
 			{
 				undisturbedSR = sr;
 
 				bool traceMode = T();
 
-				int ins = Fetch(pc);
+				ins = Fetch(pc);
 				pc += 2;
 
 				int type = (int)(ins >> 12);
@@ -225,11 +221,19 @@ namespace Jammy.Core.CPU.CSharp
 					tracer.TracePost(traceRegs, pc, ipc, ins2);
 				//tracer
 
+				//pc is unaligned
+				if ((pc & 1) != 0)
+					internalTrap(3, new TrapInfo { Address = pc, Ins = (ushort)ins});
+
 				if (traceMode && T())			
 				{ 
 					instructionStartPC = pc;
 					internalTrap(9);
 				}
+			}
+			catch (MemoryAlignmentException ex)
+			{
+				internalTrap(3, new TrapInfo { Address = ex.Address, Ins = (ushort)ins });
 			}
 			catch (AbandonInstructionException)
 			{ 
@@ -565,24 +569,32 @@ namespace Jammy.Core.CPU.CSharp
 
 		public uint read32(uint address)
 		{
+			//if ((address&1)!=0)
+			//	throw new MemoryAlignmentException(address);
 			uint value = memoryMapper.Read(instructionStartPC, address, Size.Long);
 			return value;
 		}
 
 		public uint fetch32(uint address)
 		{
+			//if ((address & 1) != 0)
+			//	throw new MemoryAlignmentException(address);
 			uint value = memoryMapper.Fetch(instructionStartPC, address, Size.Long);
 			return value;
 		}
 
 		public ushort read16(uint address)
 		{
+			//if ((address & 1) != 0)
+			//	throw new MemoryAlignmentException(address);
 			ushort value = (ushort)memoryMapper.Read(instructionStartPC, address, Size.Word);
 			return value;
 		}
 
 		public ushort fetch16(uint address)
 		{
+			//if ((address & 1) != 0)
+			//	throw new MemoryAlignmentException(address);
 			ushort value = (ushort)memoryMapper.Fetch(instructionStartPC, address, Size.Word);
 			return value;
 		}
@@ -595,13 +607,20 @@ namespace Jammy.Core.CPU.CSharp
 
 		public void write32(uint address, uint value)
 		{
+			//if ((address & 1) != 0)
+			//	throw new MemoryAlignmentException(address);
 			memoryMapper.Write(instructionStartPC, address, value, Size.Long);
 			if (settings.Tracer.IsEnabled())
+			{ 
 				tracer.Flush(address);
+				tracer.Flush(address + 2);
+			}
 		}
 
 		public void write16(uint address, ushort value)
 		{
+			//if ((address & 1) != 0)
+			//	throw new MemoryAlignmentException(address);
 			memoryMapper.Write(instructionStartPC, address, value, Size.Word);
 			if (settings.Tracer.IsEnabled())
 				tracer.Flush(address);
@@ -611,7 +630,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
 			if (settings.Tracer.IsEnabled())
-				tracer.Flush(address);
+				tracer.Flush(address&0xfffffffe);
 		}
 
 		private void push32(uint value)
@@ -728,13 +747,13 @@ namespace Jammy.Core.CPU.CSharp
 							return pc;
 						default:
 							logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
-							internalTrap(3);
+							internalTrap(4);
 							throw new AbandonInstructionException();
 					}
 					break;
 			}
 			logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
-			internalTrap(3);
+			internalTrap(4);
 			throw new AbandonInstructionException();
 		}
 
@@ -759,7 +778,7 @@ namespace Jammy.Core.CPU.CSharp
 				return (uint)(sbyte)read8(ea);
 			
 			logger.LogTrace($"Unknown Effective Address {pc:X8}");
-			internalTrap(3);
+			internalTrap(4);
 			throw new AbandonInstructionException();
 		}
 
@@ -785,7 +804,7 @@ namespace Jammy.Core.CPU.CSharp
 			}
 			else if (size == Size.Extension)
 			{
-				internalTrap(3);
+				internalTrap(4);
 				throw new AbandonInstructionException();
 			}
 			return v;
@@ -795,7 +814,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (size == Size.Extension)
 			{
-				internalTrap(3);
+				internalTrap(4);
 				throw new AbandonInstructionException();
 			}
 
@@ -810,7 +829,7 @@ namespace Jammy.Core.CPU.CSharp
 				case 1:
 					if (size == Size.Byte)
 					{
-						internalTrap(3);
+						internalTrap(4);
 						throw new AbandonInstructionException();
 					}
 					return ea;
@@ -874,13 +893,13 @@ namespace Jammy.Core.CPU.CSharp
 							return fetchImm(size);//ea==pc
 						default:
 							logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
-							internalTrap(3);
+							internalTrap(4);
 							throw new AbandonInstructionException();
 					}
 			}
 
 			logger.LogTrace($"Unknown Effective Address {pc:X8} {type:X4}");
-			internalTrap(3);
+			internalTrap(4);
 			throw new AbandonInstructionException();
 		}
 
@@ -895,7 +914,7 @@ namespace Jammy.Core.CPU.CSharp
 			{ write8(ea, (byte)val); return; }
 
 			logger.LogTrace($"Unknown Effective Address {pc:X8}");
-			internalTrap(3);
+			internalTrap(4);
 			throw new AbandonInstructionException();
 		}
 
@@ -932,7 +951,7 @@ namespace Jammy.Core.CPU.CSharp
 							throw new UnknownInstructionSizeException(0,type);
 						logger.LogTrace($"Unknown Instruction Size {type:X4}");
 
-						internalTrap(3);
+						internalTrap(4);
 						throw new AbandonInstructionException();
 					}
 					break;
@@ -988,7 +1007,7 @@ namespace Jammy.Core.CPU.CSharp
 				case 7:
 					if (Xn == 0b100 || Xn == 0b010 || Xn == 0b011)
 					{
-						internalTrap(3);
+						internalTrap(4);
 						throw new AbandonInstructionException();
 					}
 					writeOp(ea, value, size);
@@ -1068,7 +1087,7 @@ namespace Jammy.Core.CPU.CSharp
 				//EA must be in memory, not a register
 				if (IsAddressReg(type) || IsDataReg(type))
 				{
-					internalTrap(3);
+					internalTrap(4);
 					return;
 				}
 				switch (op)
@@ -1079,7 +1098,7 @@ namespace Jammy.Core.CPU.CSharp
 					case 3: rod(type, 1, lr, Size.Word); break;
 					default: 
 						logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
-						internalTrap(3);
+						internalTrap(4);
 						break;
 				}
 			}
@@ -1391,7 +1410,7 @@ namespace Jammy.Core.CPU.CSharp
 				//byte size not allowed for address registers
 				if (size == Size.Byte && (type & 0b111000) == 0b001000)
 				{
-					internalTrap(3);
+					internalTrap(4);
 					return;
 				}
 
@@ -1448,7 +1467,7 @@ namespace Jammy.Core.CPU.CSharp
 				//can't be and ax,dy
 				if (IsAddressReg(type))
 				{
-					internalTrap(3);
+					internalTrap(4);
 					return;
 				}
 
@@ -1474,7 +1493,7 @@ namespace Jammy.Core.CPU.CSharp
 					tmp = d[Xn]; d[Xn] = a[Yn]; a[Yn] = tmp; break;
 				default:
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
-					internalTrap(3);
+					internalTrap(4);
 					break;
 			}
 		}
@@ -1585,7 +1604,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 			int Xn = (type >> 9) & 7;
@@ -1602,7 +1621,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 			int Xn = (type >> 9) & 7;
@@ -1641,7 +1660,7 @@ namespace Jammy.Core.CPU.CSharp
 				//can't be and ax,dy
 				if (IsAddressReg(type))
 				{
-					internalTrap(3);
+					internalTrap(4);
 					return;
 				}
 				writeEA(Xn, 0, size, d[Xn] ^ op);
@@ -1820,7 +1839,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -1832,7 +1851,7 @@ namespace Jammy.Core.CPU.CSharp
 			{
 				if (IsDataReg(type))
 				{
-					internalTrap(3);
+					internalTrap(4);
 					return;
 				}
 				//R->M
@@ -1965,7 +1984,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -1996,7 +2015,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2041,7 +2060,7 @@ namespace Jammy.Core.CPU.CSharp
 			else
 			{
 				logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
-				internalTrap(3);
+				internalTrap(4);
 			}
 		}
 
@@ -2354,7 +2373,7 @@ namespace Jammy.Core.CPU.CSharp
 			else if (size == Size.Byte)
 			{
 				//no byte-sized ops on address registers
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2388,7 +2407,7 @@ namespace Jammy.Core.CPU.CSharp
 			else if (size == Size.Byte)
 			{
 				//no byte-sized ops on address registers
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2497,7 +2516,7 @@ namespace Jammy.Core.CPU.CSharp
 			//MC68000 doesn't support tst on address registers or PC relative or immeditate
 			if (IsAddressReg(type) || IsPCRelative(type) || IsImmediate(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2512,7 +2531,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2529,7 +2548,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2546,7 +2565,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2565,13 +2584,13 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 			Size size = getSize(type);
 			if (size == Size.Extension)
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;;
 			}
 			uint ea = fetchEA(type, size);
@@ -2587,7 +2606,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2613,7 +2632,7 @@ namespace Jammy.Core.CPU.CSharp
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 			
@@ -2683,7 +2702,7 @@ namespace Jammy.Core.CPU.CSharp
 					break;
 				default: 
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
-					internalTrap(3);
+					internalTrap(4);
 					break;
 			}
 			clrCV();
@@ -2693,7 +2712,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2713,7 +2732,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2726,7 +2745,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -2758,7 +2777,13 @@ namespace Jammy.Core.CPU.CSharp
 			"Unitialized Interrupt Vector",
 			};
 
-		void internalTrap(uint vector)
+		public class TrapInfo
+		{
+			public uint Address { get; set; }
+			public ushort Ins { get; set; }
+		}
+
+		private void internalTrap(uint vector, TrapInfo trapInfo = null)
 		{
 			ushort oldSR = sr;
 			uint oldPC = instructionStartPC;
@@ -2781,7 +2806,7 @@ namespace Jammy.Core.CPU.CSharp
 				//looks like all exceptions clear the T flag
 				clrTrace();
 
-				if (vector != 8)//used in multitasker
+				if (vector != 8 && vector != 9)//8 used in multitasker, 9 when trace mode is enabled
 				{
 					if (vector < 16)
 						logger.LogTrace($"Trap {vector} {trapNames[vector]} {instructionStartPC:X8}");
@@ -2792,9 +2817,27 @@ namespace Jammy.Core.CPU.CSharp
 
 			fetchMode = FetchMode.Running;
 
+			//todo: this fixes Hammerfist, but
+			//MC68000UM.pdf 9th edition
+			//6.2.5
+			//"However, for bus error and address error, the value stacked for the program counter is
+			//unpredictable and may be incremented from the address of the instruction that caused the
+			//error."
+			if (vector == 3)
+				oldPC += 2;
+
 			setSupervisor();
 			push32(oldPC);
 			push16(oldSR);
+
+			//other stuff goes here for different errors
+			if (vector == 3)
+			{
+				//bus error
+				push16(trapInfo.Ins);//instruction word
+				push32(trapInfo.Address);//broken address
+				push16(0);//todo: instruction mode flags (0 is instruction mode, 8 is other)
+			}
 
 			pc = read32(vector << 2);
 
@@ -2895,7 +2938,7 @@ namespace Jammy.Core.CPU.CSharp
 						break;
 					default:
 						logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
-						internalTrap(3);
+						internalTrap(4);
 						break;
 				}
 			}
@@ -3004,7 +3047,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if(IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 			uint ea = fetchEA(type, Size.Byte);
@@ -3013,7 +3056,7 @@ namespace Jammy.Core.CPU.CSharp
 			type = swizzle(type);
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3028,7 +3071,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type) || IsImmediate(type) || IsPCRelative(type)/*MC68000*/)
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 			Size size = getSize(type);
@@ -3041,7 +3084,6 @@ namespace Jammy.Core.CPU.CSharp
 			setNZ(op, size);
 		}
 
-		[MethodImpl(MethodImplOptions.NoInlining)]
 		private void eori(int type)
 		{
 			Size size = getSize(type);
@@ -3073,14 +3115,14 @@ namespace Jammy.Core.CPU.CSharp
 				else
 				{
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
-					internalTrap(3);
+					internalTrap(4);
 				}
 				return;
 			}
 
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3098,7 +3140,7 @@ namespace Jammy.Core.CPU.CSharp
 
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3121,7 +3163,7 @@ namespace Jammy.Core.CPU.CSharp
 				bit = (uint)(imm16 & 0xff); pc += 2;
 				if (IsImmediate(type))
 				{
-					internalTrap(3);
+					internalTrap(4);
 					return;
 				}
 			}
@@ -3162,7 +3204,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3182,7 +3224,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3227,13 +3269,13 @@ namespace Jammy.Core.CPU.CSharp
 				else
 				{
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
-					internalTrap(3);
+					internalTrap(4);
 				}
 				return;
 			}
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3276,14 +3318,14 @@ namespace Jammy.Core.CPU.CSharp
 				else
 				{
 					logger.LogTrace($"Unknown Instruction {pc:X8} {type:X4}");
-					internalTrap(3);
+					internalTrap(4);
 				}
 				return;
 			}
 
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 			uint ea = fetchEA(type, size);
@@ -3298,7 +3340,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3308,7 +3350,7 @@ namespace Jammy.Core.CPU.CSharp
 			else
 			{
 				//not on MC68000
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 			uint ea = fetchEA(type, size);
@@ -3338,7 +3380,7 @@ namespace Jammy.Core.CPU.CSharp
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3351,7 +3393,7 @@ namespace Jammy.Core.CPU.CSharp
 		{
 			if (IsAddressReg(type) || IsDataReg(type) || IsImmediate(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3375,7 +3417,7 @@ namespace Jammy.Core.CPU.CSharp
 			{
 				if (IsAddressReg(type) || IsDataReg(type) || IsPreDecrement(type) || IsImmediate(type))
 				{
-					internalTrap(3);
+					internalTrap(4);
 					return;
 				}
 				//M->R
@@ -3419,7 +3461,7 @@ namespace Jammy.Core.CPU.CSharp
 			{
 				if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsImmediate(type))
 				{
-					internalTrap(3);
+					internalTrap(4);
 					return;
 				}
 
@@ -3437,7 +3479,7 @@ namespace Jammy.Core.CPU.CSharp
 				//}
 				if (IsPCRelative(type))
 				{
-					internalTrap(3);
+					internalTrap(4);
 					return;
 				}
 
@@ -3482,7 +3524,7 @@ namespace Jammy.Core.CPU.CSharp
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
@@ -3498,7 +3540,7 @@ namespace Jammy.Core.CPU.CSharp
 			//some EA are not valid
 			if (IsAddressReg(type) || IsDataReg(type) || IsPostIncrement(type) || IsPreDecrement(type) || IsImmediate(type))
 			{
-				internalTrap(3);
+				internalTrap(4);
 				return;
 			}
 
