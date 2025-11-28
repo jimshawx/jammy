@@ -169,8 +169,8 @@ namespace Jammy.Tests
 			logger = serviceProvider.GetRequiredService<ILogger<CPUTest>>();
 
 			//which CPUs are we going to test?
-			cpu0 = (CPUTestRig)cpus[9];
-			cpu1 = (CPUTestRig)cpus[10];
+			cpu0 = (CPUTestRig)cpus[0];
+			cpu1 = (CPUTestRig)cpus[4];
 
 			cpu0.Initialise();
 			cpu1.Initialise();
@@ -258,8 +258,8 @@ namespace Jammy.Tests
 
 			public string Disassemble(uint address)
 			{
-				if (address + 20 > memory.Length)
-					address -= address + 20 - (uint)memory.Length; 
+				if (address + Disassembler.Disassembler.LONGEST_X86_INSTRUCTION > memory.Length)
+					address -= address + Disassembler.Disassembler.LONGEST_X86_INSTRUCTION - (uint)memory.Length; 
 				
 				var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, Disassembler.Disassembler.LONGEST_X86_INSTRUCTION));
 				return dasm.ToString(new DisassemblyOptions{IncludeBytes = true});
@@ -437,6 +437,35 @@ namespace Jammy.Tests
 				}
 			}
 			ClassicAssert.AreEqual(0, failcount, "Some instructions failed the test");
+		}
+
+		[Test(Description = "What happens when S is enabled")]
+		public void EORISR()
+		{
+			uint pc = 0x10004;
+
+			var regs = new Regs();
+			regs.SR = 0x8000;
+			regs.PC = pc;
+
+			//0A7C 2000           eori.w    #$2000,sr
+
+			cpu0.SetRegs(regs);
+			cpu1.SetRegs(regs);
+
+			cpu0.Write(pc, 0x0a7c);
+			cpu0.Write(pc+2, 0x2000);
+
+			cpu1.Write(pc, 0x0a7c);
+			cpu1.Write(pc+2, 0x2000);
+
+			cpu0.Emulate();
+			cpu1.Emulate();
+
+			var r0 = cpu0.GetRegs();
+			var r1 = cpu1.GetRegs();
+
+			ClassicAssert.AreEqual(r0.SR, r1.SR);
 		}
 	}
 }

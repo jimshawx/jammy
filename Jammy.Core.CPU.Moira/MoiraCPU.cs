@@ -233,7 +233,7 @@ namespace Jammy.Core.CPU.Moira
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
 			if (settings.Tracer.IsEnabled())
-				tracer.Flush(address);
+				tracer.Flush(address & 0xfffffffe);
 		}
 
 		private Action<int> syncChipset = NullSync;

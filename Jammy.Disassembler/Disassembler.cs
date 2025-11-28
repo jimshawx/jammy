@@ -1,6 +1,8 @@
-﻿using Jammy.Core.Types.Types;
+﻿using Jammy.Core.Types;
+using Jammy.Core.Types.Types;
 using Jammy.Interface;
 using Jammy.Types;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,6 +19,13 @@ namespace Jammy.Disassembler
 {
 	public class Disassembler : IDisassembler
 	{
+		private readonly EmulationSettings settings;
+
+		public Disassembler(IOptions<EmulationSettings> settings)
+		{
+			this.settings = settings.Value;
+		}
+
 		//it's a MOVE (2 bytes) with 2 full extension word operands, each of 10 bytes, on the 020/030
 		public const int LONGEST_X86_INSTRUCTION = 22;
 
@@ -289,6 +298,11 @@ namespace Jammy.Disassembler
 				case 6://(d8,An,Xn)
 					{
 						uint ext = read16(pc);
+
+						//68000 only
+						if (settings.Sku == CPUSku.MC68000)
+							ext &= ~0x0700u;
+
 						uint Xn = (ext >> 12) & 7;
 						uint scale = (ext >>9)&3;
 
@@ -391,6 +405,11 @@ namespace Jammy.Disassembler
 						case 0b011://(d8,pc,Xn)
 							{
 								uint ext = read16(pc);
+
+								//68000 only
+								if (settings.Sku == CPUSku.MC68000)
+									ext &= ~0x0700u;
+
 								uint Xn = (ext >> 12) & 7;
 								uint scale = (ext >> 9) & 3;
 								string ss = scale == 0 ? "" : $"*{1 << (int)scale}";
@@ -777,6 +796,10 @@ namespace Jammy.Disassembler
 			new Tuple<string,uint>("SEQ"   ,0b010001),
 			new Tuple<string,uint>("SNE"   ,0b011110)
 		];
+
+		public Disassembler()
+		{
+		}
 
 		private string GetFPCC(int cc)
 		{
