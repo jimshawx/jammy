@@ -106,8 +106,10 @@ namespace Jammy.UI.Settings
 			txtDH1 = new System.Windows.Forms.TextBox();
 			nudHardDiskCount = new System.Windows.Forms.NumericUpDown();
 			cbDiskController = new System.Windows.Forms.ComboBox();
+			panel8 = new System.Windows.Forms.Panel();
 			panel1.SuspendLayout();
 			groupBox1.SuspendLayout();
+			panel2.SuspendLayout();
 			groupBox2.SuspendLayout();
 			panel3.SuspendLayout();
 			groupBox3.SuspendLayout();
@@ -119,8 +121,10 @@ namespace Jammy.UI.Settings
 			panel6.SuspendLayout();
 			groupBox8.SuspendLayout();
 			groupBox6.SuspendLayout();
+			panel7.SuspendLayout();
 			groupBox7.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)nudHardDiskCount).BeginInit();
+			panel8.SuspendLayout();
 			SuspendLayout();
 			// 
 			// cbQuickStart
@@ -197,12 +201,13 @@ namespace Jammy.UI.Settings
 			groupBox1.Controls.Add(rbNative);
 			groupBox1.Controls.Add(rbMusashi);
 			groupBox1.Controls.Add(rbMoira);
+			groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox1.ForeColor = System.Drawing.SystemColors.Highlight;
 			groupBox1.Location = new System.Drawing.Point(0, 0);
 			groupBox1.Margin = new System.Windows.Forms.Padding(6);
 			groupBox1.Name = "groupBox1";
 			groupBox1.Padding = new System.Windows.Forms.Padding(6);
-			groupBox1.Size = new System.Drawing.Size(420, 192);
+			groupBox1.Size = new System.Drawing.Size(442, 192);
 			groupBox1.TabIndex = 6;
 			groupBox1.TabStop = false;
 			groupBox1.Text = "CPU";
@@ -234,6 +239,7 @@ namespace Jammy.UI.Settings
 			// 
 			// panel2
 			// 
+			panel2.Controls.Add(groupBox2);
 			panel2.Location = new System.Drawing.Point(22, 294);
 			panel2.Margin = new System.Windows.Forms.Padding(6);
 			panel2.Name = "panel2";
@@ -245,12 +251,13 @@ namespace Jammy.UI.Settings
 			groupBox2.Controls.Add(rbPAL);
 			groupBox2.Controls.Add(rbNTSC);
 			groupBox2.Controls.Add(cbChipset);
+			groupBox2.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox2.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox2.Location = new System.Drawing.Point(22, 294);
+			groupBox2.Location = new System.Drawing.Point(0, 0);
 			groupBox2.Margin = new System.Windows.Forms.Padding(6);
 			groupBox2.Name = "groupBox2";
 			groupBox2.Padding = new System.Windows.Forms.Padding(6);
-			groupBox2.Size = new System.Drawing.Size(420, 109);
+			groupBox2.Size = new System.Drawing.Size(442, 115);
 			groupBox2.TabIndex = 0;
 			groupBox2.TabStop = false;
 			groupBox2.Text = "Chipset";
@@ -301,7 +308,7 @@ namespace Jammy.UI.Settings
 			// panel3
 			// 
 			panel3.Controls.Add(groupBox3);
-			panel3.Location = new System.Drawing.Point(476, 676);
+			panel3.Location = new System.Drawing.Point(475, 676);
 			panel3.Margin = new System.Windows.Forms.Padding(6);
 			panel3.Name = "panel3";
 			panel3.Size = new System.Drawing.Size(802, 128);
@@ -311,12 +318,13 @@ namespace Jammy.UI.Settings
 			// 
 			groupBox3.Controls.Add(txtKickstart);
 			groupBox3.Controls.Add(btnROMPick);
+			groupBox3.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox3.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox3.Location = new System.Drawing.Point(13, 2);
+			groupBox3.Location = new System.Drawing.Point(0, 0);
 			groupBox3.Margin = new System.Windows.Forms.Padding(6);
 			groupBox3.Name = "groupBox3";
 			groupBox3.Padding = new System.Windows.Forms.Padding(6);
-			groupBox3.Size = new System.Drawing.Size(765, 117);
+			groupBox3.Size = new System.Drawing.Size(802, 128);
 			groupBox3.TabIndex = 11;
 			groupBox3.TabStop = false;
 			groupBox3.Text = "Kickstart";
@@ -359,12 +367,13 @@ namespace Jammy.UI.Settings
 			groupBox5.Controls.Add(btnDF0Pick);
 			groupBox5.Controls.Add(txtDF2);
 			groupBox5.Controls.Add(txtDF3);
+			groupBox5.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox5.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox5.Location = new System.Drawing.Point(0, 2);
+			groupBox5.Location = new System.Drawing.Point(0, 0);
 			groupBox5.Margin = new System.Windows.Forms.Padding(6);
 			groupBox5.Name = "groupBox5";
 			groupBox5.Padding = new System.Windows.Forms.Padding(6);
-			groupBox5.Size = new System.Drawing.Size(776, 343);
+			groupBox5.Size = new System.Drawing.Size(802, 345);
 			groupBox5.TabIndex = 16;
 			groupBox5.TabStop = false;
 			groupBox5.Text = "Floppy Disk";
@@ -593,12 +602,13 @@ namespace Jammy.UI.Settings
 			groupBox4.Controls.Add(dudZ2);
 			groupBox4.Controls.Add(dudZ3);
 			groupBox4.Controls.Add(dudTrapdoor);
+			groupBox4.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox4.ForeColor = System.Drawing.SystemColors.Highlight;
 			groupBox4.Location = new System.Drawing.Point(0, 0);
 			groupBox4.Margin = new System.Windows.Forms.Padding(6);
 			groupBox4.Name = "groupBox4";
 			groupBox4.Padding = new System.Windows.Forms.Padding(6);
-			groupBox4.Size = new System.Drawing.Size(420, 420);
+			groupBox4.Size = new System.Drawing.Size(442, 420);
 			groupBox4.TabIndex = 16;
 			groupBox4.TabStop = false;
 			groupBox4.Text = "Memory";
@@ -775,22 +785,22 @@ namespace Jammy.UI.Settings
 			// 
 			// panel6
 			// 
-			panel6.Controls.Add(groupBox8);
 			panel6.Controls.Add(groupBox6);
 			panel6.Location = new System.Drawing.Point(476, 817);
 			panel6.Margin = new System.Windows.Forms.Padding(6);
 			panel6.Name = "panel6";
-			panel6.Size = new System.Drawing.Size(802, 111);
+			panel6.Size = new System.Drawing.Size(419, 111);
 			panel6.TabIndex = 22;
 			// 
 			// groupBox8
 			// 
 			groupBox8.Controls.Add(rbSynchronous);
 			groupBox8.Controls.Add(rbImmediate);
+			groupBox8.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox8.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox8.Location = new System.Drawing.Point(416, 3);
+			groupBox8.Location = new System.Drawing.Point(0, 0);
 			groupBox8.Name = "groupBox8";
-			groupBox8.Size = new System.Drawing.Size(376, 105);
+			groupBox8.Size = new System.Drawing.Size(376, 111);
 			groupBox8.TabIndex = 1;
 			groupBox8.TabStop = false;
 			groupBox8.Text = "Blitter";
@@ -822,12 +832,13 @@ namespace Jammy.UI.Settings
 			groupBox6.Controls.Add(cbTrace);
 			groupBox6.Controls.Add(cbDebugging);
 			groupBox6.Controls.Add(cbAudio);
+			groupBox6.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox6.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox6.Location = new System.Drawing.Point(2, 0);
+			groupBox6.Location = new System.Drawing.Point(0, 0);
 			groupBox6.Margin = new System.Windows.Forms.Padding(6);
 			groupBox6.Name = "groupBox6";
 			groupBox6.Padding = new System.Windows.Forms.Padding(6);
-			groupBox6.Size = new System.Drawing.Size(405, 109);
+			groupBox6.Size = new System.Drawing.Size(419, 111);
 			groupBox6.TabIndex = 0;
 			groupBox6.TabStop = false;
 			groupBox6.Text = "Miscellaneous";
@@ -866,6 +877,7 @@ namespace Jammy.UI.Settings
 			// 
 			// panel7
 			// 
+			panel7.Controls.Add(groupBox7);
 			panel7.Location = new System.Drawing.Point(475, 447);
 			panel7.Margin = new System.Windows.Forms.Padding(6);
 			panel7.Name = "panel7";
@@ -882,12 +894,13 @@ namespace Jammy.UI.Settings
 			groupBox7.Controls.Add(txtDH1);
 			groupBox7.Controls.Add(nudHardDiskCount);
 			groupBox7.Controls.Add(cbDiskController);
+			groupBox7.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox7.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox7.Location = new System.Drawing.Point(475, 447);
+			groupBox7.Location = new System.Drawing.Point(0, 0);
 			groupBox7.Margin = new System.Windows.Forms.Padding(6);
 			groupBox7.Name = "groupBox7";
 			groupBox7.Padding = new System.Windows.Forms.Padding(6);
-			groupBox7.Size = new System.Drawing.Size(776, 217);
+			groupBox7.Size = new System.Drawing.Size(803, 219);
 			groupBox7.TabIndex = 0;
 			groupBox7.TabStop = false;
 			groupBox7.Text = "Hard Disk";
@@ -975,13 +988,20 @@ namespace Jammy.UI.Settings
 			cbDiskController.Size = new System.Drawing.Size(322, 40);
 			cbDiskController.TabIndex = 0;
 			// 
+			// panel8
+			// 
+			panel8.Controls.Add(groupBox8);
+			panel8.Location = new System.Drawing.Point(904, 817);
+			panel8.Name = "panel8";
+			panel8.Size = new System.Drawing.Size(376, 111);
+			panel8.TabIndex = 24;
+			// 
 			// Settings
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(1292, 1019);
-			Controls.Add(groupBox2);
-			Controls.Add(groupBox7);
+			Controls.Add(panel8);
 			Controls.Add(panel7);
 			Controls.Add(panel6);
 			Controls.Add(btnSaveConfig);
@@ -1003,6 +1023,7 @@ namespace Jammy.UI.Settings
 			panel1.ResumeLayout(false);
 			groupBox1.ResumeLayout(false);
 			groupBox1.PerformLayout();
+			panel2.ResumeLayout(false);
 			groupBox2.ResumeLayout(false);
 			groupBox2.PerformLayout();
 			panel3.ResumeLayout(false);
@@ -1020,9 +1041,11 @@ namespace Jammy.UI.Settings
 			groupBox8.PerformLayout();
 			groupBox6.ResumeLayout(false);
 			groupBox6.PerformLayout();
+			panel7.ResumeLayout(false);
 			groupBox7.ResumeLayout(false);
 			groupBox7.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)nudHardDiskCount).EndInit();
+			panel8.ResumeLayout(false);
 			ResumeLayout(false);
 		}
 
@@ -1101,5 +1124,6 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.Button btnDH0Pick;
 		private System.Windows.Forms.TextBox txtDH0;
 		private System.Windows.Forms.TextBox txtDH1;
+		private System.Windows.Forms.Panel panel8;
 	}
 }
