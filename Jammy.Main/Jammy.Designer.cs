@@ -125,8 +125,9 @@ namespace Jammy.Main
 			// lbRegisters
 			// 
 			lbRegisters.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			lbRegisters.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			lbRegisters.ColumnWidth = 85;
-			lbRegisters.Font = new System.Drawing.Font("Cascadia Mono", 8.25F);
+			lbRegisters.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbRegisters.IntegralHeight = false;
 			lbRegisters.Location = new System.Drawing.Point(2012, 26);
 			lbRegisters.Margin = new System.Windows.Forms.Padding(6);
@@ -141,6 +142,7 @@ namespace Jammy.Main
 			// 
 			txtDisassembly.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
 			txtDisassembly.BackColor = System.Drawing.SystemColors.Window;
+			txtDisassembly.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			txtDisassembly.ContextMenuStrip = menuDisassembly;
 			txtDisassembly.DetectUrls = false;
 			txtDisassembly.Font = new System.Drawing.Font("Cascadia Mono", 7.25F);
@@ -244,6 +246,7 @@ namespace Jammy.Main
 			// 
 			txtMemory.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
 			txtMemory.BackColor = System.Drawing.SystemColors.Window;
+			txtMemory.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			txtMemory.ContextMenuStrip = menuMemory;
 			txtMemory.DetectUrls = false;
 			txtMemory.Font = new System.Drawing.Font("Cascadia Mono", 7.25F);
@@ -251,7 +254,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 602);
+			txtMemory.Size = new System.Drawing.Size(1390, 587);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "00000160 0000000000000000 0000000000000000 0000000000000000 0000000000000000   ................................";
 			txtMemory.WordWrap = false;
@@ -462,7 +465,7 @@ namespace Jammy.Main
 			txtCopper.Location = new System.Drawing.Point(3, 3);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(552, 939);
+			txtCopper.Size = new System.Drawing.Size(552, 942);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -544,18 +547,19 @@ namespace Jammy.Main
 			cbTypes.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			cbTypes.FormattingEnabled = true;
 			cbTypes.Items.AddRange(new object[] { "(None)", "ExecBase", "timerequest", "Library", "Task", "KeyMapResource", "MsgPort", "Unit", "Resident" });
-			cbTypes.Location = new System.Drawing.Point(2312, 1207);
+			cbTypes.Location = new System.Drawing.Point(3, 18);
 			cbTypes.Margin = new System.Windows.Forms.Padding(6);
 			cbTypes.Name = "cbTypes";
-			cbTypes.Size = new System.Drawing.Size(292, 40);
+			cbTypes.Size = new System.Drawing.Size(292, 33);
 			cbTypes.TabIndex = 34;
 			cbTypes.SelectionChangeCommitted += cbTypes_SelectionChangeCommitted;
 			// 
 			// lbCallStack
 			// 
 			lbCallStack.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			lbCallStack.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			lbCallStack.ColumnWidth = 83;
-			lbCallStack.Font = new System.Drawing.Font("Cascadia Mono", 8.25F);
+			lbCallStack.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbCallStack.IntegralHeight = false;
 			lbCallStack.Location = new System.Drawing.Point(2348, 26);
 			lbCallStack.Margin = new System.Windows.Forms.Padding(6);
@@ -593,12 +597,13 @@ namespace Jammy.Main
 			// lbCustom
 			// 
 			lbCustom.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			lbCustom.Font = new System.Drawing.Font("Cascadia Mono", 8.25F);
+			lbCustom.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			lbCustom.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbCustom.FormattingEnabled = true;
 			lbCustom.Location = new System.Drawing.Point(2348, 546);
 			lbCustom.Margin = new System.Windows.Forms.Padding(6);
 			lbCustom.Name = "lbCustom";
-			lbCustom.Size = new System.Drawing.Size(328, 555);
+			lbCustom.Size = new System.Drawing.Size(328, 552);
 			lbCustom.TabIndex = 38;
 			// 
 			// btnDumpTrace
@@ -681,7 +686,7 @@ namespace Jammy.Main
 			// 
 			radioDF3.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			radioDF3.AutoSize = true;
-			radioDF3.Location = new System.Drawing.Point(2269, 905);
+			radioDF3.Location = new System.Drawing.Point(2267, 905);
 			radioDF3.Margin = new System.Windows.Forms.Padding(6);
 			radioDF3.Name = "radioDF3";
 			radioDF3.Size = new System.Drawing.Size(27, 26);
@@ -717,7 +722,7 @@ namespace Jammy.Main
 			// btnCribSheet
 			// 
 			btnCribSheet.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnCribSheet.Location = new System.Drawing.Point(2164, 1201);
+			btnCribSheet.Location = new System.Drawing.Point(2467, 1204);
 			btnCribSheet.Name = "btnCribSheet";
 			btnCribSheet.Size = new System.Drawing.Size(139, 49);
 			btnCribSheet.TabIndex = 48;
@@ -749,7 +754,7 @@ namespace Jammy.Main
 			tabControl1.Controls.Add(tabCopper);
 			tabControl1.Controls.Add(tabExec);
 			tabControl1.Controls.Add(tabVectors);
-			tabControl1.Font = new System.Drawing.Font("Cascadia Mono", 7.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+			tabControl1.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			tabControl1.Location = new System.Drawing.Point(3, 6);
 			tabControl1.Name = "tabControl1";
 			tabControl1.SelectedIndex = 0;
@@ -759,10 +764,10 @@ namespace Jammy.Main
 			// tabCopper
 			// 
 			tabCopper.Controls.Add(txtCopper);
-			tabCopper.Location = new System.Drawing.Point(8, 42);
+			tabCopper.Location = new System.Drawing.Point(8, 39);
 			tabCopper.Name = "tabCopper";
 			tabCopper.Padding = new System.Windows.Forms.Padding(3);
-			tabCopper.Size = new System.Drawing.Size(558, 945);
+			tabCopper.Size = new System.Drawing.Size(558, 948);
 			tabCopper.TabIndex = 0;
 			tabCopper.Text = "Copper";
 			tabCopper.UseVisualStyleBackColor = true;
@@ -770,12 +775,13 @@ namespace Jammy.Main
 			// tabExec
 			// 
 			tabExec.Controls.Add(txtExecBase);
-			tabExec.Location = new System.Drawing.Point(8, 42);
+			tabExec.Controls.Add(cbTypes);
+			tabExec.Location = new System.Drawing.Point(8, 39);
 			tabExec.Name = "tabExec";
 			tabExec.Padding = new System.Windows.Forms.Padding(3);
-			tabExec.Size = new System.Drawing.Size(558, 945);
+			tabExec.Size = new System.Drawing.Size(558, 948);
 			tabExec.TabIndex = 1;
-			tabExec.Text = "ExecBase";
+			tabExec.Text = "Object";
 			tabExec.UseVisualStyleBackColor = true;
 			// 
 			// txtExecBase
@@ -783,12 +789,12 @@ namespace Jammy.Main
 			txtExecBase.BackColor = System.Drawing.SystemColors.Window;
 			txtExecBase.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			txtExecBase.DetectUrls = false;
-			txtExecBase.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtExecBase.Dock = System.Windows.Forms.DockStyle.Bottom;
 			txtExecBase.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-			txtExecBase.Location = new System.Drawing.Point(3, 3);
+			txtExecBase.Location = new System.Drawing.Point(3, 66);
 			txtExecBase.Name = "txtExecBase";
 			txtExecBase.ReadOnly = true;
-			txtExecBase.Size = new System.Drawing.Size(552, 939);
+			txtExecBase.Size = new System.Drawing.Size(552, 879);
 			txtExecBase.TabIndex = 0;
 			txtExecBase.Text = "";
 			txtExecBase.WordWrap = false;
@@ -796,10 +802,10 @@ namespace Jammy.Main
 			// tabVectors
 			// 
 			tabVectors.Controls.Add(txtVectors);
-			tabVectors.Location = new System.Drawing.Point(8, 42);
+			tabVectors.Location = new System.Drawing.Point(8, 39);
 			tabVectors.Name = "tabVectors";
 			tabVectors.Padding = new System.Windows.Forms.Padding(3);
-			tabVectors.Size = new System.Drawing.Size(558, 945);
+			tabVectors.Size = new System.Drawing.Size(558, 948);
 			tabVectors.TabIndex = 2;
 			tabVectors.Text = "Vectors";
 			tabVectors.UseVisualStyleBackColor = true;
@@ -814,25 +820,26 @@ namespace Jammy.Main
 			txtVectors.Location = new System.Drawing.Point(3, 3);
 			txtVectors.Name = "txtVectors";
 			txtVectors.ReadOnly = true;
-			txtVectors.Size = new System.Drawing.Size(552, 939);
+			txtVectors.Size = new System.Drawing.Size(552, 942);
 			txtVectors.TabIndex = 0;
 			txtVectors.Text = "";
 			txtVectors.WordWrap = false;
 			// 
 			// lbIntvec
 			// 
-			lbIntvec.Font = new System.Drawing.Font("Cascadia Mono", 8.25F);
+			lbIntvec.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			lbIntvec.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbIntvec.FormattingEnabled = true;
 			lbIntvec.Location = new System.Drawing.Point(14, 999);
 			lbIntvec.Name = "lbIntvec";
-			lbIntvec.Size = new System.Drawing.Size(466, 236);
+			lbIntvec.Size = new System.Drawing.Size(552, 227);
 			lbIntvec.TabIndex = 27;
 			lbIntvec.MouseDoubleClick += lbIntvec_MouseDoubleClick;
 			// 
 			// btnReadyDisk
 			// 
 			btnReadyDisk.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			btnReadyDisk.Location = new System.Drawing.Point(2240, 787);
+			btnReadyDisk.Location = new System.Drawing.Point(2240, 775);
 			btnReadyDisk.Margin = new System.Windows.Forms.Padding(6);
 			btnReadyDisk.Name = "btnReadyDisk";
 			btnReadyDisk.Size = new System.Drawing.Size(97, 49);
@@ -851,7 +858,7 @@ namespace Jammy.Main
 			tbCommand.Location = new System.Drawing.Point(2014, 1207);
 			tbCommand.Name = "tbCommand";
 			tbCommand.PlaceholderText = ">";
-			tbCommand.Size = new System.Drawing.Size(145, 39);
+			tbCommand.Size = new System.Drawing.Size(440, 39);
 			tbCommand.TabIndex = 51;
 			tbCommand.KeyDown += tbCommand_KeyDown;
 			// 
@@ -907,7 +914,7 @@ namespace Jammy.Main
 			tbClock.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			tbClock.BackColor = System.Drawing.SystemColors.Window;
 			tbClock.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			tbClock.Font = new System.Drawing.Font("Cascadia Mono", 7.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+			tbClock.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			tbClock.Location = new System.Drawing.Point(2348, 478);
 			tbClock.Multiline = true;
 			tbClock.Name = "tbClock";
@@ -953,7 +960,6 @@ namespace Jammy.Main
 			Controls.Add(btnINTENA);
 			Controls.Add(btnStepOut);
 			Controls.Add(lbCallStack);
-			Controls.Add(cbTypes);
 			Controls.Add(cbCIA);
 			Controls.Add(cbIRQ);
 			Controls.Add(btnIRQ);
