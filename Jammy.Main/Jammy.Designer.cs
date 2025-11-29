@@ -89,6 +89,12 @@ namespace Jammy.Main
 			btnClearBBUSY = new System.Windows.Forms.Button();
 			btnCribSheet = new System.Windows.Forms.Button();
 			splitContainer2 = new System.Windows.Forms.SplitContainer();
+			tabControl1 = new System.Windows.Forms.TabControl();
+			tabCopper = new System.Windows.Forms.TabPage();
+			tabExec = new System.Windows.Forms.TabPage();
+			txtExecBase = new System.Windows.Forms.RichTextBox();
+			tabVectors = new System.Windows.Forms.TabPage();
+			txtVectors = new System.Windows.Forms.RichTextBox();
 			lbIntvec = new System.Windows.Forms.ListBox();
 			btnReadyDisk = new System.Windows.Forms.Button();
 			tbCommand = new System.Windows.Forms.TextBox();
@@ -110,6 +116,10 @@ namespace Jammy.Main
 			splitContainer2.Panel1.SuspendLayout();
 			splitContainer2.Panel2.SuspendLayout();
 			splitContainer2.SuspendLayout();
+			tabControl1.SuspendLayout();
+			tabCopper.SuspendLayout();
+			tabExec.SuspendLayout();
+			tabVectors.SuspendLayout();
 			SuspendLayout();
 			// 
 			// lbRegisters
@@ -241,7 +251,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 617);
+			txtMemory.Size = new System.Drawing.Size(1390, 602);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "00000160 0000000000000000 0000000000000000 0000000000000000 0000000000000000   ................................";
 			txtMemory.WordWrap = false;
@@ -444,15 +454,15 @@ namespace Jammy.Main
 			// 
 			// txtCopper
 			// 
-			txtCopper.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
 			txtCopper.BackColor = System.Drawing.SystemColors.Window;
+			txtCopper.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			txtCopper.DetectUrls = false;
+			txtCopper.Dock = System.Windows.Forms.DockStyle.Fill;
 			txtCopper.Font = new System.Drawing.Font("Cascadia Mono", 7.25F);
-			txtCopper.Location = new System.Drawing.Point(5, 16);
-			txtCopper.Margin = new System.Windows.Forms.Padding(6);
+			txtCopper.Location = new System.Drawing.Point(3, 3);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(477, 987);
+			txtCopper.Size = new System.Drawing.Size(552, 939);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -588,7 +598,7 @@ namespace Jammy.Main
 			lbCustom.Location = new System.Drawing.Point(2348, 546);
 			lbCustom.Margin = new System.Windows.Forms.Padding(6);
 			lbCustom.Name = "lbCustom";
-			lbCustom.Size = new System.Drawing.Size(328, 576);
+			lbCustom.Size = new System.Drawing.Size(328, 555);
 			lbCustom.TabIndex = 38;
 			// 
 			// btnDumpTrace
@@ -727,21 +737,95 @@ namespace Jammy.Main
 			// 
 			// splitContainer2.Panel2
 			// 
+			splitContainer2.Panel2.Controls.Add(tabControl1);
 			splitContainer2.Panel2.Controls.Add(lbIntvec);
-			splitContainer2.Panel2.Controls.Add(txtCopper);
 			splitContainer2.Size = new System.Drawing.Size(1998, 1288);
 			splitContainer2.SplitterDistance = 1409;
 			splitContainer2.SplitterWidth = 9;
 			splitContainer2.TabIndex = 49;
 			// 
+			// tabControl1
+			// 
+			tabControl1.Controls.Add(tabCopper);
+			tabControl1.Controls.Add(tabExec);
+			tabControl1.Controls.Add(tabVectors);
+			tabControl1.Font = new System.Drawing.Font("Cascadia Mono", 7.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+			tabControl1.Location = new System.Drawing.Point(3, 6);
+			tabControl1.Name = "tabControl1";
+			tabControl1.SelectedIndex = 0;
+			tabControl1.Size = new System.Drawing.Size(574, 995);
+			tabControl1.TabIndex = 28;
+			// 
+			// tabCopper
+			// 
+			tabCopper.Controls.Add(txtCopper);
+			tabCopper.Location = new System.Drawing.Point(8, 42);
+			tabCopper.Name = "tabCopper";
+			tabCopper.Padding = new System.Windows.Forms.Padding(3);
+			tabCopper.Size = new System.Drawing.Size(558, 945);
+			tabCopper.TabIndex = 0;
+			tabCopper.Text = "Copper";
+			tabCopper.UseVisualStyleBackColor = true;
+			// 
+			// tabExec
+			// 
+			tabExec.Controls.Add(txtExecBase);
+			tabExec.Location = new System.Drawing.Point(8, 42);
+			tabExec.Name = "tabExec";
+			tabExec.Padding = new System.Windows.Forms.Padding(3);
+			tabExec.Size = new System.Drawing.Size(558, 945);
+			tabExec.TabIndex = 1;
+			tabExec.Text = "ExecBase";
+			tabExec.UseVisualStyleBackColor = true;
+			// 
+			// txtExecBase
+			// 
+			txtExecBase.BackColor = System.Drawing.SystemColors.Window;
+			txtExecBase.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			txtExecBase.DetectUrls = false;
+			txtExecBase.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtExecBase.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+			txtExecBase.Location = new System.Drawing.Point(3, 3);
+			txtExecBase.Name = "txtExecBase";
+			txtExecBase.ReadOnly = true;
+			txtExecBase.Size = new System.Drawing.Size(552, 939);
+			txtExecBase.TabIndex = 0;
+			txtExecBase.Text = "";
+			txtExecBase.WordWrap = false;
+			// 
+			// tabVectors
+			// 
+			tabVectors.Controls.Add(txtVectors);
+			tabVectors.Location = new System.Drawing.Point(8, 42);
+			tabVectors.Name = "tabVectors";
+			tabVectors.Padding = new System.Windows.Forms.Padding(3);
+			tabVectors.Size = new System.Drawing.Size(558, 945);
+			tabVectors.TabIndex = 2;
+			tabVectors.Text = "Vectors";
+			tabVectors.UseVisualStyleBackColor = true;
+			// 
+			// txtVectors
+			// 
+			txtVectors.BackColor = System.Drawing.SystemColors.Window;
+			txtVectors.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			txtVectors.DetectUrls = false;
+			txtVectors.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtVectors.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+			txtVectors.Location = new System.Drawing.Point(3, 3);
+			txtVectors.Name = "txtVectors";
+			txtVectors.ReadOnly = true;
+			txtVectors.Size = new System.Drawing.Size(552, 939);
+			txtVectors.TabIndex = 0;
+			txtVectors.Text = "";
+			txtVectors.WordWrap = false;
+			// 
 			// lbIntvec
 			// 
-			lbIntvec.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
 			lbIntvec.Font = new System.Drawing.Font("Cascadia Mono", 8.25F);
 			lbIntvec.FormattingEnabled = true;
-			lbIntvec.Location = new System.Drawing.Point(-37, 1007);
+			lbIntvec.Location = new System.Drawing.Point(14, 999);
 			lbIntvec.Name = "lbIntvec";
-			lbIntvec.Size = new System.Drawing.Size(519, 238);
+			lbIntvec.Size = new System.Drawing.Size(466, 236);
 			lbIntvec.TabIndex = 27;
 			lbIntvec.MouseDoubleClick += lbIntvec_MouseDoubleClick;
 			// 
@@ -823,6 +907,7 @@ namespace Jammy.Main
 			tbClock.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			tbClock.BackColor = System.Drawing.SystemColors.Window;
 			tbClock.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			tbClock.Font = new System.Drawing.Font("Cascadia Mono", 7.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			tbClock.Location = new System.Drawing.Point(2348, 478);
 			tbClock.Multiline = true;
 			tbClock.Name = "tbClock";
@@ -903,6 +988,10 @@ namespace Jammy.Main
 			splitContainer2.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
 			splitContainer2.ResumeLayout(false);
+			tabControl1.ResumeLayout(false);
+			tabCopper.ResumeLayout(false);
+			tabExec.ResumeLayout(false);
+			tabVectors.ResumeLayout(false);
 			ResumeLayout(false);
 			PerformLayout();
 		}
@@ -972,6 +1061,12 @@ namespace Jammy.Main
 		private System.Windows.Forms.Button btnDMAExplorer;
 		private System.Windows.Forms.TextBox tbClock;
 		private System.Windows.Forms.Button btnGenDisassemblies;
+		private System.Windows.Forms.TabControl tabControl1;
+		private System.Windows.Forms.TabPage tabCopper;
+		private System.Windows.Forms.TabPage tabExec;
+		private System.Windows.Forms.TabPage tabVectors;
+		private System.Windows.Forms.RichTextBox txtExecBase;
+		private System.Windows.Forms.RichTextBox txtVectors;
 	}
 }
 

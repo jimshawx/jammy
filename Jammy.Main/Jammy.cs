@@ -370,7 +370,7 @@ namespace Jammy.Main
 
 		private void UpdateVectors()
 		{
-			txtCopper.Text = debugger.GetVectors().ToString();
+			txtVectors.Text = debugger.GetVectors().ToString();
 		}
 
 		private void SetSelection()
@@ -793,7 +793,7 @@ namespace Jammy.Main
 						object tp = Activator.CreateInstance(type);
 						if (tp != null)
 						{
-							txtCopper.Text = objectMapper.MapObject(tp, address);
+							txtExecBase.Text = objectMapper.MapObject(tp, address);
 						}
 					}
 				}
