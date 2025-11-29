@@ -322,6 +322,16 @@ public class Denise : IDenise
 		//BPLAM is set
 		if ((bplcon4 >> 8) != 0) return CopperBitplaneConvertOther;
 
+		//SPRPRI2>=5 and SPF or SPRPRI1/2>=5 and DPF (weird sprite priority hacks)
+		if (settings.ChipSet != ChipSet.AGA && ((bplcon0 & (uint)BPLCON0.HAM) == 0))
+		{ 
+			//doesn't affect AGA or HAM modes
+			uint sprpri1 = (uint)(bplcon2 & 7);
+			uint sprpri2 = (uint)((bplcon2 >> 3) & 7);
+			if (sprpri2 >= 5) return CopperBitplaneConvertOther;
+			if (sprpri1 >= 5 && (bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertOther;
+		}
+
 		//DPF
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertDPF;
 
@@ -438,6 +448,12 @@ public class Denise : IDenise
 				col = pix1 != 0 ? col1 : col0;
 			else
 				col = pix0 != 0 ? col0 : col1;
+
+			//todo
+			//https://eab.abime.net/showpost.php?p=1213908&postcount=227
+			//If playfield's matching BPLCON2 PFx value is >=5 and
+			//if playfield is not transparent, it is always drawn using COLOR0
+			//see Running man / Scoopex intro logo
 		}
 		else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
 		{
@@ -461,6 +477,18 @@ public class Denise : IDenise
 					(settings.ChipSet != ChipSet.AGA || (bplcon2 & (uint)BPLCON2.NoEHB) == 0))
 		{
 			//EHB
+
+			//https://eab.abime.net/showpost.php?p=1213908&postcount=227
+			//If number of planes is 5 or 6 and
+			//BPLCON2 PF2 is >= 5 and
+			//if plane 5 (counting from 1) has bit set
+			//other planes are ignored in palette selection = COLOR16 is selected.
+			//PF1 does nothing.
+			//see SWIV score board feature
+			uint sprpri = (uint)((bplcon2 >> 3) & 7);//sprpri2
+			if (sprpri >= 5 && planes >= 5 && (pix & (1 << 4)) != 0 && settings.ChipSet != ChipSet.AGA)
+				pix = 16;
+
 			col = truecolour[pix & 0x1f];
 			if ((pix & 0b100000) != 0)
 				col = (col & 0x00fefefe) >> 1;
@@ -484,6 +512,17 @@ public class Denise : IDenise
 		}
 		else
 		{
+			//https://eab.abime.net/showpost.php?p=1213908&postcount=227
+			//If number of planes is 5 or 6 and
+			//BPLCON2 PF2 is >= 5 and
+			//if plane 5 (counting from 1) has bit set
+			//other planes are ignored in palette selection = COLOR16 is selected.
+			//PF1 does nothing.
+			//see SWIV score board feature
+			uint sprpri = (uint)((bplcon2 >> 3) & 7);//sprpri2
+			if (sprpri >= 5 && planes >= 5 && (pix & (1 << 4)) != 0 && settings.ChipSet != ChipSet.AGA)
+				pix = 16;
+
 			col = truecolour[pix];
 		}
 
