@@ -427,6 +427,7 @@ public class Denise : IDenise
 		return col;
 	}
 
+	//Full version that renders all the quirks, but is obviously slower
 	private uint CopperBitplaneConvertOther(uint pix)
 	{
 		uint col;
@@ -441,19 +442,25 @@ public class Denise : IDenise
 			uint pix1 = dpfLookup[pix >> 1];
 
 			uint col0 = truecolour[pix0];
-			uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
+			uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];//todo - it's not always 8 in AGA
+
+			//https://eab.abime.net/showpost.php?p=1213908&postcount=227
+			//If playfield's matching BPLCON2 PFx value is >=5 and
+			//if playfield is not transparent, it is always drawn using COLOR0
+			//see Running man / Scoopex intro logo
+			if (settings.ChipSet != ChipSet.AGA)
+			{ 
+				uint sprpri1 = (uint)(bplcon2 & 7);
+				uint sprpri2 = (uint)((bplcon2 >> 3) & 7);
+				if (pix0 != 0 && sprpri1 >= 5) col0 = truecolour[0];
+				if (pix1 != 0 && sprpri2 >= 5) col1 = truecolour[0];
+			}
 
 			//which playfield is in front?
 			if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)
 				col = pix1 != 0 ? col1 : col0;
 			else
 				col = pix0 != 0 ? col0 : col1;
-
-			//todo
-			//https://eab.abime.net/showpost.php?p=1213908&postcount=227
-			//If playfield's matching BPLCON2 PFx value is >=5 and
-			//if playfield is not transparent, it is always drawn using COLOR0
-			//see Running man / Scoopex intro logo
 		}
 		else if (planes == 6 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
 		{
@@ -485,9 +492,12 @@ public class Denise : IDenise
 			//other planes are ignored in palette selection = COLOR16 is selected.
 			//PF1 does nothing.
 			//see SWIV score board feature
-			uint sprpri = (uint)((bplcon2 >> 3) & 7);//sprpri2
-			if (sprpri >= 5 && planes >= 5 && (pix & (1 << 4)) != 0 && settings.ChipSet != ChipSet.AGA)
-				pix = 16;
+			if (settings.ChipSet != ChipSet.AGA)
+			{
+				uint sprpri = (uint)((bplcon2 >> 3) & 7);//sprpri2
+				if (sprpri >= 5 && planes >= 5 && (pix & (1 << 4)) != 0 && settings.ChipSet != ChipSet.AGA)
+					pix = 16;
+			}
 
 			col = truecolour[pix & 0x1f];
 			if ((pix & 0b100000) != 0)
@@ -519,10 +529,12 @@ public class Denise : IDenise
 			//other planes are ignored in palette selection = COLOR16 is selected.
 			//PF1 does nothing.
 			//see SWIV score board feature
-			uint sprpri = (uint)((bplcon2 >> 3) & 7);//sprpri2
-			if (sprpri >= 5 && planes >= 5 && (pix & (1 << 4)) != 0 && settings.ChipSet != ChipSet.AGA)
-				pix = 16;
-
+			if (settings.ChipSet != ChipSet.AGA)
+			{
+				uint sprpri = (uint)((bplcon2 >> 3) & 7);//sprpri2
+				if (sprpri >= 5 && planes >= 5 && (pix & (1 << 4)) != 0 && settings.ChipSet != ChipSet.AGA)
+					pix = 16;
+			}
 			col = truecolour[pix];
 		}
 
