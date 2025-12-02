@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />
+    <ProjectReference Include="..\Jammy.Extensions.Windows\Jammy.Extensions.Windows.csproj" />
     <ProjectReference Include="..\Parky.Configuration.WritableJson\Parky.Configuration.WritableJson.csproj" />
   </ItemGroup>
   <ItemGroup>

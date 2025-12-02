@@ -96,6 +96,7 @@ namespace Jammy.Main
 			this.logger = logger;
 
 			InitializeComponent();
+			//DarkMode.Apply(this);
 
 			addressFollowBox.SelectedIndex = 0;
 			cbTypes.SelectedIndex = 0;

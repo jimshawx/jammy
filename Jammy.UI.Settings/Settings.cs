@@ -1,4 +1,5 @@
 using Jammy.Core.Types;
+using Jammy.Extensions.Windows;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -24,6 +25,8 @@ namespace Jammy.UI.Settings
 		public Settings()
 		{
 			InitializeComponent();
+			//DarkMode.Apply(this);
+
 			rbSynchronous.Enabled = true;
 
 			JsonConvert.DefaultSettings = () =>
