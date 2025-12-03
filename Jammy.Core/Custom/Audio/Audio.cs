@@ -72,6 +72,20 @@ namespace Jammy.Core.Custom.Audio
 				ch[channel].working_audlen--;
 				ch[channel].working_audper += ch[channel].audper;
 
+				//is this channel modulating the next?
+				if ((adkcon & (0x11 << channel)) != 0)
+				{
+					if (channel != 3)
+					{
+						if (ch[channel].modulating_vp)
+							ch[channel + 1].working_audper = ch[channel].auddat;
+						else
+							ch[channel + 1].audvol = MapAudvol(ch[channel].auddat);
+					}
+					ch[channel].modulating_vp ^= ch[channel].modulate_toggle;
+					ch[channel].auddat = 0;
+				}
+
 				//loop restart?
 				if (ch[channel].working_audlen <= 0)
 				{
@@ -166,6 +180,9 @@ namespace Jammy.Core.Custom.Audio
 
 			public AudioMode mode { get; set; }
 
+			public bool modulating_vp { get; set; }//false = modulating volume, true = modulating period
+			public bool modulate_toggle { get; set; }//false = modulate only volume or period, true = modulate both
+
 			public void CopyTo(AudioChannel cp)
 			{
 				cp.audper = this.audper;
@@ -215,6 +232,12 @@ namespace Jammy.Core.Custom.Audio
 				adkcon &= (ushort)~v;
 
 			v = (ushort)(adkcon & 0xff);
+
+			SetModulation(0, v & 0x11);
+			SetModulation(1, (v & 0x22) >> 1);
+			SetModulation(2, (v & 0x44) >> 2);
+			SetModulation(3, (v & 0x88) >> 3);
+
 			if (v != lastMod)
 			{
 				if ((v & 1) != 0) logger.LogTrace("C0 modulates volume");
@@ -229,6 +252,17 @@ namespace Jammy.Core.Custom.Audio
 
 				if (v == 0) logger.LogTrace("No modulation");
 				lastMod = v;
+			}
+		}
+
+		private void SetModulation(int channel, int mask)
+		{
+			switch (mask)
+			{
+				case 0x00: break;
+				case 0x01: ch[channel].modulating_vp = false; ch[channel].modulate_toggle = false; break;
+				case 0x10: ch[channel].modulating_vp = true;  ch[channel].modulate_toggle = false; break;
+				case 0x11: ch[channel].modulating_vp = false; ch[channel].modulate_toggle = true; break;
 			}
 		}
 

@@ -79,6 +79,20 @@ namespace Jammy.Core.Audio.Windows
 				ch[channel].working_audlen--;
 				ch[channel].working_audper += ch[channel].audper;
 
+				//is this channel modulating the next?
+				if ((adkcon & (0x11<<channel)) != 0)
+				{
+					if (channel != 3)
+					{
+						if (ch[channel].modulating_vp)
+							ch[channel + 1].working_audper = ch[channel].auddat;
+						else
+							ch[channel + 1].audvol = MapAudvol(ch[channel].auddat);
+					}
+					ch[channel].modulating_vp ^= ch[channel].modulate_toggle;
+					ch[channel].auddat = 0;
+				}
+
 				//loop restart?
 				if (ch[channel].working_audlen <= 0)
 				{
@@ -173,6 +187,10 @@ namespace Jammy.Core.Audio.Windows
 
 			public AudioMode mode { get; set; }
 
+			//https://forum.amiga.org/index.php?topic=54117.0
+			public bool modulating_vp { get; set; }//false = modulating volume, true = modulating period
+			public bool modulate_toggle { get; set; }//false = modulate only volume or period, true = modulate both
+
 			public void Clear()
 			{
 				audper = 0;
@@ -213,6 +231,12 @@ namespace Jammy.Core.Audio.Windows
 				adkcon &= (ushort)~v;
 
 			v = (ushort)(adkcon&0xff);
+
+			SetModulation(0,  v & 0x11);
+			SetModulation(1, (v & 0x22) >> 1);
+			SetModulation(2, (v & 0x44) >> 2);
+			SetModulation(3, (v & 0x88) >> 3);
+
 			if (v != lastMod)
 			{
 				if ((v & 1) != 0) logger.LogTrace("C0 modulates volume");
@@ -227,6 +251,17 @@ namespace Jammy.Core.Audio.Windows
 
 				if (v == 0) logger.LogTrace("No modulation");
 				lastMod = v;
+			}
+		}
+
+		private void SetModulation(int channel, int mask)
+		{
+			switch (mask)
+			{
+				case 0x00: break;
+				case 0x01: ch[channel].modulating_vp = false; ch[channel].modulate_toggle = false; break;
+				case 0x10: ch[channel].modulating_vp = true;  ch[channel].modulate_toggle = false; break;
+				case 0x11: ch[channel].modulating_vp = false; ch[channel].modulate_toggle = true; break;
 			}
 		}
 
