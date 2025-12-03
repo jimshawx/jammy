@@ -84,7 +84,11 @@ namespace Jammy.Extensions.Extensions
 		//all the odd bits, followed by all the even bits
 		public static IEnumerable<byte> OddEven(this Span<byte> src)
 		{
-			return src.ToArray().OddEven();
+			//return src.ToArray().OddEven();
+			//hack - this is required to fix a problem with .net 10.0 where it's recursively calling
+			//this function instead of the IEnumerable<byte> version
+			IEnumerable<byte> rv = src.ToArray();
+			return rv.OddEven();
 		}
 
 		public static string DiffSummary(this byte[] m0, byte[] m1)
