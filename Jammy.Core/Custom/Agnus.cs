@@ -249,22 +249,27 @@ public class Agnus : IAgnus
 		{
 			lineState = DMALineState.Fetching;
 		}
-		else if ((clock.HorizontalPos >= ddfstop + debugger.ddfEHack && ((fetchCount&7)==0) || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
-		{
-			lineState = DMALineState.LastBitplaneFetch;
-			lastFetchCount = 8;
-		}
 		//else if ((clock.HorizontalPos == ddfstopfix + debugger.ddfEHack) && lineState == DMALineState.Fetching)
 		//{
 		//	lineState = DMALineState.LineComplete;
 		//	EndAgnusLine();
 		//}
+		else if ((clock.HorizontalPos >= ddfstop + debugger.ddfEHack && ((fetchCount & 7) == 0) || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
+		{
+			//if we've passed ddfstop and we've fetched all the planes, then fetch one more lot of planes
+			lineState = DMALineState.LastBitplaneFetch;
+			lastFetchCount = 8;
+		}
 		else if (lineState == DMALineState.LastBitplaneFetch)
 		{
 			lastFetchCount--;
 			if (lastFetchCount == 0)
 			{
 				lineState = DMALineState.LineComplete;
+
+				//if (clock.HorizontalPos != ddfstopfix)
+				//	logger.LogTrace($"{ddfstop:X3} {clock.HorizontalPos:X3} {ddfstopfix:X3}");
+
 				EndAgnusLine();
 			}
 		}
@@ -435,15 +440,15 @@ public class Agnus : IAgnus
 	}
 
 	//https://eab.abime.net/showthread.php?t=111329
-	private const int OCS = 0;
-	private const int ECS = 1;
-	private const int AGA = 2;
+	public const int OCS = 0;
+	public const int ECS = 1;
+	public const int AGA = 2;
 
-	private const int LORES = 0;
-	private const int HIRES = 1;
-	private const int SHRES = 2;
+	public const int LORES = 0;
+	public const int HIRES = 1;
+	public const int SHRES = 2;
 
-	private int FetchWidth(int DDFSTRT, int DDFSTOP, int chipset, int res, int FMODE)
+	public static int FetchWidth(int DDFSTRT, int DDFSTOP, int chipset, int res, int FMODE)
 	{
 		// validate bits
 		FMODE &= 3;
