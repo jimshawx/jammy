@@ -222,7 +222,7 @@ namespace Jammy.Core
 				clock.UpdateClock();
 				RunAllEmulations();
 				cpu.Emulate();
-				dma.DebugExecuteAllDMAActivity();
+				dma.FullSpeedExecuteAllDMAActivity();
 				return;
 			}
 

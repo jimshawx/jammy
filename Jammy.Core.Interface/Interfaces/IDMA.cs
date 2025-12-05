@@ -19,6 +19,7 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	ushort ReadDMACON();
 	void DebugExecuteDMAActivity(DMASource source);
 	void DebugExecuteAllDMAActivity();
+	void FullSpeedExecuteAllDMAActivity();
 	void ReadCPU(CPUTarget target, uint address, Size size);
 	void WriteCPU(CPUTarget target, uint address, ushort value, Size size);
 	ushort LastRead { get; }

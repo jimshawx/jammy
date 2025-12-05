@@ -257,6 +257,17 @@ public class DMAController : IDMA
 			ExecuteDMATransfer(activity);
 	}
 
+	public void FullSpeedExecuteAllDMAActivity()
+	{
+		for (int i = 0; i < activities.Length; i++)
+		{
+			//don't run the copper TOO fast
+			if ((DMASource)i == DMASource.Copper && (chipsetClock.HorizontalPos & 1) != 0)
+				continue;
+			ExecuteDMATransfer(activities[i]);
+		}
+	}
+
 	public void NoDMA(DMASource source)
 	{
 		activities[(int)source].Type = DMAActivityType.None;
