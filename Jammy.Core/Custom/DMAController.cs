@@ -135,12 +135,9 @@ public class DMAController : IDMA
 		//	slotTaken = activities[(int)DMASource.CPU];
 		//}
 
-		debugger.SetDMAActivity(slotTaken);
-
 		if (slotTaken == null)
 		{
-			//if (chipsetClock.VerticalPos == 100)
-			//	logger.LogTrace($"None {chipsetClock.HorizontalPos}");
+			debugger.SetDMAActivity(null);
 			return;
 		}
 
@@ -156,7 +153,6 @@ public class DMAController : IDMA
 
 	public void ExecuteCPUDMASlot()
 	{
-		debugger.SetDMAActivity(activities[(int)DMASource.CPU]);
 		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
 		lastDMASlot = activities[(int)DMASource.CPU];
 	}
@@ -207,22 +203,26 @@ public class DMAController : IDMA
 				{
 					ulong value = chipRAM.ImmediateRead(0, activity.Address, Size.Long);
 					value = (value << 32) | chipRAM.ImmediateRead(0, activity.Address + 4, Size.Long);
+					activity.Value = value;
 					chips.ImmediateWriteWide(activity.ChipReg, value);
 				}
 				else if (activity.Size == Size.LWord)
 				{
 					ulong value = chipRAM.ImmediateRead(0, activity.Address, Size.Long);
+					activity.Value = value;
 					chips.ImmediateWriteWide(activity.ChipReg, value);
 				}
 				else
 				{
 					uint value = chipRAM.ImmediateRead(0, activity.Address, activity.Size);
+					activity.Value = value;
 					chips.ImmediateWrite(0, activity.ChipReg, value, activity.Size);
 				}
 				break;
 
 			case DMAActivityType.ReadCPU:
 				LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
+				activity.Value = LastRead;
 				break;
 
 			case DMAActivityType.WriteCPU:
@@ -234,6 +234,7 @@ public class DMAController : IDMA
 			default:
 				throw new ArgumentOutOfRangeException(nameof(activity.Type));
 		}
+		debugger.SetDMAActivity(activity);
 		Consume(activity);
 	}
 

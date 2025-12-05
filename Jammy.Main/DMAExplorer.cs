@@ -98,16 +98,23 @@ namespace Jammy.Main
 					sb.AppendLine($"   Size: {d.Size}");
 				}
 				sb.AppendLine($"    Pri: {d.Priority}");
-
+				if (d.Type == DMAActivityType.ReadChip)
+					sb.AppendLine($"    Reg: {ChipRegs.Name(d.ChipReg)}");
 				if (d.Type != DMAActivityType.Consume)
 				{
 					if (d.Size == Core.Types.Types.Size.Long)
 						sb.AppendLine($"  Value: {d.Value:X8} {d.Value.ToBin(32)} {d.Value}");
-					if (d.Size == Core.Types.Types.Size.Word)
+					else if (d.Size == Core.Types.Types.Size.Word)
 						sb.AppendLine($"  Value: {d.Value:X4} {d.Value.ToBin(16)} {(short)d.Value}");
-					if (d.Size == Core.Types.Types.Size.Byte)
+					else if (d.Size == Core.Types.Types.Size.Byte)
 						sb.AppendLine($"  Value: {d.Value:X2} {d.Value.ToBin(8)} {(sbyte)d.Value}");
+					else if (d.Size == Core.Types.Types.Size.LWord)
+						sb.AppendLine($"  Value: {d.Value:X8} {d.Value.ToBin(32)} {d.Value}");
+					else if (d.Size == Core.Types.Types.Size.QWord)
+						sb.AppendLine($"  Value: {d.Value:X16} {d.Value.ToBin(64)} {d.Value}");
 				}
+				sb.AppendLine($"      H: {selectX:X2} {selectX}");
+				sb.AppendLine($"      V: {selectY:X2} {selectY}");
 			}
 
 			textBox.Text = sb.ToString();
@@ -119,11 +126,12 @@ namespace Jammy.Main
 		private readonly Brush [] dmacols =
 		{
 			new SolidBrush(Color.Black),//None
-			new SolidBrush(Color.Red),//Read
-			new SolidBrush(Color.White),//Write
-			new SolidBrush(Color.Pink),//WriteReg
+			new SolidBrush(Color.Red),//ReadChip
+			new SolidBrush(Color.White),//WriteChip
 			new SolidBrush(Color.Teal),//Consume
-			new SolidBrush(Color.Green)//CPU
+			new SolidBrush(Color.Green),//CPU
+			new SolidBrush(Color.Pink),//ReadCPU
+			new SolidBrush(Color.Yellow)//WriteCPU
 		};
 
 		private readonly Brush[] pricols =
@@ -135,7 +143,7 @@ namespace Jammy.Main
 			new SolidBrush(Color.Teal),//DSKEN
 			new SolidBrush(Color.Green),//SPREN
 			new SolidBrush(Color.Blue),//BLTEN
-			new SolidBrush(Color.Red),//COPEN
+			new SolidBrush(Color.Yellow),//COPEN
 			new SolidBrush(Color.Orange),//BPLEN
 			new SolidBrush(Color.DarkGoldenrod),//DMAEN aka Refresh
 		};
