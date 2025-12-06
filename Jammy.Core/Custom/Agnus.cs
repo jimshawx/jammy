@@ -573,6 +573,13 @@ public class Agnus : IAgnus
 			if (planes == 0 && (bplcon0 & (1 << 4)) != 0)
 				planes = 8;
 		}
+		else
+		{
+			//magic OCS/ECS quirk where planes is 7
+			//means 4 planes are fetched, and 2 are static and used to index the palette
+			if (planes == 7)
+				planes = 4;
+		}
 	}
 
 	private void UpdateDIWSTRT()

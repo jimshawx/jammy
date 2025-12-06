@@ -332,6 +332,15 @@ public class Denise : IDenise
 			if (sprpri1 >= 5 && (bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertOther;
 		}
 
+		//when planes == 7, 4 planes are fetched, 2 are static
+		if (settings.ChipSet != ChipSet.AGA && bp == 7)
+		{
+			planes = 6;
+			if ((bplcon0 & (uint)BPLCON0.HAM) != 0)
+				return CopperBitplaneConvertHAM6;
+			return CopperBitplaneConvertEHB;
+		}
+
 		//DPF
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertDPF;
 
