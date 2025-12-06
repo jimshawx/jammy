@@ -113,9 +113,9 @@ namespace Jammy.Main
 					else if (d.Size == Core.Types.Types.Size.QWord)
 						sb.AppendLine($"  Value: {d.Value:X16} {d.Value.ToBin(64)} {d.Value}");
 				}
-				sb.AppendLine($"      H: {selectX:X2} {selectX}");
-				sb.AppendLine($"      V: {selectY:X2} {selectY}");
 			}
+			sb.AppendLine($"      H: {selectX:X2} {selectX}");
+			sb.AppendLine($"      V: {selectY:X2} {selectY}");
 
 			textBox.Text = sb.ToString();
 			textBox.Left = selectX * WW;
