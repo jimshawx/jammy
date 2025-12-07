@@ -345,7 +345,9 @@ public class Denise : IDenise
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertDPF;
 
 		//HAM6
-		if (bp == 6 && ((bplcon0 & (uint)BPLCON0.HAM) != 0)) return CopperBitplaneConvertHAM6;
+		//https://eab.abime.net/showpost.php?p=1080177&postcount=11
+		if (settings.ChipSet == ChipSet.AGA && bp == 6 && ((bplcon0 & (uint)BPLCON0.HAM) != 0)) return CopperBitplaneConvertHAM6;
+		if (settings.ChipSet != ChipSet.AGA && ((bplcon0 & (uint)BPLCON0.HAM) != 0)) return CopperBitplaneConvertHAM6;
 
 		//EHB
 		if (bp == 6 && ((bplcon0 & (uint)BPLCON0.HAM) == 0) &&
