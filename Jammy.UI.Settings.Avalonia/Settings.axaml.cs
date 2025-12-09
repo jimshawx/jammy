@@ -385,8 +385,8 @@ namespace Jammy.UI.Settings.Avalonia
 			cbDebugging.IsChecked = currentSettings.Debugger.IsEnabled();
 
 			//Blitter
-			rbImmediate.IsChecked = false;//currentSettings.BlitterMode == BlitterMode.Immediate;
-			rbSynchronous.IsChecked = true;//currentSettings.BlitterMode == BlitterMode.Synchronous;
+			rbImmediate.IsChecked = currentSettings.BlitterMode == BlitterMode.Immediate;
+			rbSynchronous.IsChecked = currentSettings.BlitterMode == BlitterMode.Synchronous;
 		}
 
 		private void UnbindSettings()
