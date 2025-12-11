@@ -1,7 +1,9 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types.Enums;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using System.Runtime.InteropServices;
+using KeySym = ushort;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -9,7 +11,7 @@ using System.Runtime.InteropServices;
 
 namespace Jammy.Core.EmulationWindow.X
 {
-	public class EmulationWindow : IEmulationWindow, IDisposable
+	public class EmulationWindow : IEmulationWindow, IInputOutput, IDisposable
 	{
 		private const string X11Library = "libX11.so.6";
 
@@ -71,6 +73,20 @@ namespace Jammy.Core.EmulationWindow.X
 		private static extern IntPtr XCreateImage(IntPtr xdisplay, IntPtr xvisual, uint bpp, int format, int offset, IntPtr data, uint width, uint height, int bitmap_pad, int bytes_per_line);
 		private const int ZPixmap = 2;
 
+		[DllImport(X11Library)]
+		private static extern KeySym XLookupKeysym(ref XKeyEvent e, int index);
+
+		[DllImport(X11Library)]
+		private static extern int XWarpPointer(IntPtr display, IntPtr src_w, IntPtr dest_w, int src_x, int src_y, uint src_width, uint src_height, int dest_x, int dest_y);
+
+		[DllImport(X11Library)]
+		private static extern int XGetGeometry(IntPtr display, IntPtr d, out IntPtr root_return, out int x_return, out int y_return,
+			out uint width_return, out uint height_return, out uint border_width_return, out uint depth_return);
+
+		[DllImport(X11Library)]
+		private static extern int XGetWindowAttributes(IntPtr display, IntPtr window, ref XWindowAttributes attr);
+
+
 		[StructLayout(LayoutKind.Sequential)]
 		public struct Display
 		{
@@ -114,6 +130,7 @@ namespace Jammy.Core.EmulationWindow.X
 			public IntPtr private21;  // private to the display
 			public IntPtr private22;  // private to the display
 		}
+
 		[StructLayout(LayoutKind.Sequential)]
 		private struct XImage
 		{
@@ -136,6 +153,31 @@ namespace Jammy.Core.EmulationWindow.X
 			public IntPtr f;
 		}
 
+		[StructLayout(LayoutKind.Sequential)]
+		private struct XWindowAttributes
+		{
+			int x, y;                       // Window position relative to parent
+			int width, height;              // Window dimensions
+			int border_width;               // Border width in pixels
+			int depth;                      // Number of bits per pixel
+			IntPtr visual;                 // Pointer to visual structure
+			IntPtr root;                    // Root window ID
+			int @class;                      // InputOutput or InputOnly
+			int bit_gravity;                // Bit gravity
+			int win_gravity;                // Window gravity
+			int backing_store;              // Backing store hint
+			ulong backing_planes;   // Planes to be preserved
+			ulong backing_pixel;    // Pixel value for background
+			bool save_under;                // Save-under flag
+			IntPtr colormap;              // Associated colormap
+			bool map_installed;             // True if colormap is installed
+			int map_state;                  // IsUnmapped, IsUnviewable, IsViewable
+			long all_event_masks;           // All events selected on this window
+			long your_event_mask;           // Events selected by this client
+			long do_not_propagate_mask;     // Events not to propagate
+			bool override_redirect;         // Override-redirect flag
+			IntPtr screen;                 // Pointer to screen structure
+		}
 
 		[StructLayout(LayoutKind.Explicit)]
 		private struct XEvent
@@ -143,6 +185,7 @@ namespace Jammy.Core.EmulationWindow.X
 			[FieldOffset(0)] public int type;
 			[FieldOffset(0)] public XKeyEvent xkey;
 			[FieldOffset(0)] public XButtonEvent xbutton;
+			[FieldOffset(0)] public XMotionEvent xmotion;
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -181,15 +224,36 @@ namespace Jammy.Core.EmulationWindow.X
 			public bool same_screen;
 		}
 
+		[StructLayout(LayoutKind.Sequential)]
+		private struct XMotionEvent
+		{
+			public int type;
+			public IntPtr serial;
+			public bool send_event;
+			public IntPtr display;
+			public IntPtr window;
+			public IntPtr root;
+			public IntPtr subwindow;
+			public IntPtr time;
+			public int x, y;
+			public int x_root, y_root;
+			public uint state;
+			public byte is_hint;
+			public bool same_screen;
+		}
+
 		private const int KeyPress = 2;
 		private const int KeyRelease = 3;
 		private const int ButtonPress = 4;
 		private const int ButtonRelease = 5;
+		private const int MotionNotify = 6;
 
 		private const long KeyPressMask = 1 << 0;
 		private const long KeyReleaseMask = 1 << 1;
 		private const long ButtonPressMask = 1 << 2;
 		private const long ButtonReleaseMask = 1 << 3;
+		private const long PointerMotionMask = 1 << 6;
+
 		private readonly IOverlayCollection overlayCollection;
 		private readonly ILogger logger;
 
@@ -207,7 +271,6 @@ namespace Jammy.Core.EmulationWindow.X
 			XFreeGC(xdisplay, gc);
 			XDestroyWindow(xdisplay, xwindow);
 			XCloseDisplay(xdisplay);
-
 		}
 
 		public void Blit(int[] screen)
@@ -262,10 +325,9 @@ namespace Jammy.Core.EmulationWindow.X
 			var rootWindow = XRootWindow(xdisplay, XDefaultScreen(xdisplay));
 			xwindow = XCreateSimpleWindow(xdisplay, rootWindow, 10, 10, (uint)width, (uint)height, 1, 0, 0xFFFFFF);
 			XStoreName(xdisplay, xwindow, "Jammy : Alt-Tab or Middle Mouse Click to detach mouse");
-			XSelectInput(xdisplay, xwindow, KeyPress | KeyRelease | ButtonPressMask | ButtonReleaseMask);
+			XSelectInput(xdisplay, xwindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
 
 			gc = XCreateGC(xdisplay, xwindow, 0, IntPtr.Zero);
-			//gc = XDefaultGC(xdisplay, 0);
 
 			XMapWindow(xdisplay, xwindow);
 			XClearWindow(xdisplay, xwindow);
@@ -285,59 +347,493 @@ namespace Jammy.Core.EmulationWindow.X
 			var ximagePtr = XCreateImage(xdisplay, IntPtr.Zero, 24, ZPixmap, 0, IntPtr.Zero, screenWidth, screenHeight, 32, 0);
 			ximage = Marshal.PtrToStructure<XImage>(ximagePtr);
 
-			// XEvent xevent;
-			// while (true)
-			// {
-			// 	XNextEvent(display, out xevent);
-
-			// 	if (xevent.type == Expose)
-			// 	{
-			// 		Console.WriteLine("Window exposed");
-			// 	}
-
-			// }
-			//screen = new int[screenWidth * screenHeight];
 			screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
 			ximage.data = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
+
+			var t = new Thread(XEventHandler);
+			t.Start();
 		}
 
-		// private void XEventHandler()
-		// {
-		// 	XEvent xevent;
-		// 	while (true)
-		// 	{
-		// 		XNextEvent(xdisplay, out xevent);
+		private readonly InputOutput io = new InputOutput();
 
-		// 		if (xevent.type == Expose)
-		// 		{
-		// 			Console.WriteLine("Window exposed");
-		// 		}
+		public InputOutput GetInputOutput()
+		{
+			return io;
+		}
 
-		// }
+		private void XEventHandler()
+		{
+			XEvent xevent;
+			while (true)
+			{
+				XNextEvent(xdisplay, out xevent);
+
+				switch (xevent.type)
+				{
+					case KeyPress:
+						{
+						VK vk = 0;
+						KeySym ksym = XLookupKeysym(ref xevent.xkey, 0);
+
+						//https://wiki.linuxquestions.org/wiki/List_of_keysyms
+						if ((ksym & 0xff00) == 0)
+						{
+							vk = keylook[ksym & 0xff];
+							RunKeyDown(vk);
+							//io.Keyboard[ksym] = 1;
+							//io.DebKeyboard[ksym] = 1;
+						}
+						else if ((ksym & 0xff00) == 0xff00)
+						{
+							vk = keylook2[ksym & 0xff];
+							RunKeyDown(vk);
+							//io.Keyboard[ksym & 0xff] = 1;
+							//io.DebKeyboard[ksym & 0xff] = 1;
+						}
+						Console.WriteLine($"keydown {xevent.xkey.keycode} {ksym:X4} {vk}");
+
+						}
+						break;
+					case KeyRelease:
+						{
+						VK vk = 0;
+						KeySym ksym = XLookupKeysym(ref xevent.xkey, 0);
+
+						if ((ksym & 0xff00) == 0)
+						{
+							vk = keylook[ksym & 0xff];
+							//io.Keyboard[ksym] = 1;
+							//io.DebKeyboard[ksym] = 1;
+							RunKeyUp(vk);
+						}
+						else if ((ksym & 0xff00) == 0xff00)
+						{
+							vk = keylook2[ksym & 0xff];
+							//io.Keyboard[ksym & 0xff] = 1;
+							//io.DebKeyboard[ksym & 0xff] = 1;
+							RunKeyUp(vk);
+						}
+						Console.WriteLine($"keyup {xevent.xkey.keycode} {ksym:X4} {vk}");
+
+						}
+						break;
+					case ButtonPress:
+						//Console.WriteLine($"mousedown {xevent.xbutton.button:X8}");
+						switch (xevent.xbutton.button&0xff)
+						{
+							case 1: io.MouseButtons |= InputOutput.MouseButton.MouseLeft; break;
+							case 2: io.MouseButtons |= InputOutput.MouseButton.MouseMiddle; break;
+							case 3: io.MouseButtons |= InputOutput.MouseButton.MouseRight; break;
+						}
+						break;
+					case ButtonRelease:
+						//Console.WriteLine($"mouseup {xevent.xbutton.button:X8}");
+						switch (xevent.xbutton.button&0xff)
+						{
+							case 1: io.MouseButtons &= ~InputOutput.MouseButton.MouseLeft; break;
+							case 2: io.MouseButtons &= ~InputOutput.MouseButton.MouseMiddle; break;
+							case 3: io.MouseButtons &= ~InputOutput.MouseButton.MouseRight; break;
+						}
+						break;
+					case MotionNotify:
+						//Console.WriteLine($"mousemove {xevent.xmotion.x} {xevent.xmotion.y}");
+						io.MouseX = xevent.xmotion.x;
+						io.MouseY = xevent.xmotion.y;
+						break;
+					default:
+						Console.WriteLine("Unhandled XEvent type: " + xevent.type);
+						break;
+				}
+			}
+		}
 
 		public Types.Types.Point RecentreMouse()
 		{
+			return new Types.Types.Point { X = 0, Y = 0 };
+
 			//put the cursor back in the middle of the emulation window
 
-			int x = 0;
-			int y = 0;
-			return new Types.Types.Point { X = x, Y = y };
+			//can't be done on wslg or any wayland layer emulating X11
+
+			//IntPtr root;
+			//int x, y;
+			//uint width, height;
+			//uint borderWidth;
+			//uint depth;
+			//XGetGeometry(xdisplay, xwindow, out root,
+			//  out x,  out y, out width, out height,
+			//  out borderWidth, out depth);
+
+
+			//XWindowAttributes attr = new XWindowAttributes();
+			//XGetWindowAttributes(xdisplay, xwindow, ref attr);
+
+			//Console.WriteLine($"{x} {y} {width} {height}");
+			////int cx = 0;
+			////int cy = 0;
+
+			//int cx = (int)(width / 2);
+			//int cy = (int)(height / 2);
+			//int err = XWarpPointer(xdisplay, IntPtr.Zero, rootWindow, 0, 0, 0, 0, cx, cy);
+			//Console.WriteLine($"{err}");
+
+			//return new Types.Types.Point { X = cx, Y = cy };
 		}
+
+		private List<Tuple<Action<int>,Action<int>>> keyhandlers = new List<Tuple<Action<int>, Action<int>>>();
 
 		public void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp)
 		{
+			keyhandlers.Add(new Tuple<Action<int>, Action<int>>(addKeyDown, addKeyUp));
+		}
 
+		private void RunKeyDown(VK vk)
+		{
+			foreach (var k in keyhandlers)
+				if (k.Item1 != null) k.Item1((int)vk);
+		}
+
+		private void RunKeyUp(VK vk)
+		{
+			foreach (var k in keyhandlers)
+				if (k.Item2 != null) k.Item2((int)vk);
 		}
 
 		public bool IsActive()
 		{
-			return IsCaptured;
+			return true;//IsCaptured;
 		}
 
 		public int[] GetFramebuffer()
 		{
 			return screen;
 		}
+	
+		private readonly VK[] keylook = 
+		[
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,//0x10
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 0,
+		 VK.VK_SPACE, //0x20
+		(VK)'1',(VK)'2',(VK)'3',(VK)'4',(VK)'5',(VK)'6',(VK)'7',(VK)'8',(VK)'9',(VK)'0',
+		 0,
+		 0,//VK.VK_PLUS,
+		 0,//VK.VK_LESS_THAN,
+		 0,//VK.VK_GREATER_THAN,
+		 0,//VK.VK_QUESTION_MARK,
+		(VK)'0', //0x30
+		(VK)'1', (VK)'2', (VK)'3', (VK)'4', (VK)'5', (VK)'6',(VK) '7',(VK) '8', (VK)'9',
+		0,//VK.VK_SEMI_COLON,
+		 0,//VK.VK_SEMI_COLON,
+		 0,//VK.VK_LESS_THAN,
+		 0,//VK.VK_GREATER_THAN,
+		 0,//VK.VK_QUESTION_MARK,
+		 0,//VK.VK_SINGLE_QUOTE,
+		 0,//VK.VK_SINGLE_QUOTE,//0x40
+		(VK)'A',(VK)'B',(VK)'C',(VK)'D',(VK)'E',(VK)'F',(VK)'G',(VK)'H',(VK)'I',(VK)'J',(VK)'K',(VK)'L',(VK)'M',
+		(VK)'N',(VK)'O',(VK)'P',(VK)'Q',(VK)'R',(VK)'S',(VK)'T',(VK)'U',(VK)'V',(VK)'W',(VK)'X',(VK)'U',(VK)'Z',
+		 0,//VK.VK_OPEN_SQR_BRACKET,
+		 0,//VK.VK_RSX,
+		 0,//VK.VK_CLOSE_SQR_BRACKET,
+		0,// VK.VK_SQUIGLE,
+		 0,//VK.VK_MINUS,
+		 0,//VK.VK_SQUIGLE,//0x60
+		(VK)'A',(VK)'B',(VK)'C',(VK)'D',(VK)'E',(VK)'F',(VK)'G',(VK)'H',(VK)'I',(VK)'J',(VK)'K',(VK)'L',(VK)'M',
+		(VK)'N',(VK)'O',(VK)'P',(VK)'Q',(VK)'R',(VK)'S',(VK)'T',(VK)'U',(VK)'V',(VK)'W',(VK)'X',(VK)'U',(VK)'Z',
+		0,// VK.VK_OPEN_SQR_BRACKET,
+		 0,//VK.VK_RSX,
+		0,// VK.VK_CLOSE_SQR_BRACKET,
+		 0,//VK.VK_SQUIGLE,
+		];
+
+		VK[] keylook2 = 
+		[
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		VK.VK_BACK,//0x8
+		VK.VK_TAB,
+		0,
+		0,
+		0,
+		VK.VK_RETURN,//0xd
+		0,
+		0,
+		0,//0x10
+		0,
+		0,
+		0,//pause key
+		0,//scroll lock
+		0,//VK.VK_SYSRQ,//0x15
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0x20
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0x30
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0x40
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		VK.VK_HOME,//0x50
+		VK.VK_LEFT,
+		VK.VK_UP,
+		VK.VK_RIGHT,
+		VK.VK_DOWN,
+		VK.VK_PRIOR,
+		VK.VK_NEXT,
+		VK.VK_END,//0x57
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0x60
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0x70
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0x80
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//VK.VK_KEYPAD_ENTER,
+		0,
+		0,
+		0,//0x90
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0xa0
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//keypad times
+		0,//VK.VK_KEYPAD_PLUS,
+		0,
+		0,//VK.VK_KEYPAD_MINUS,
+		0,//VK.VK_KEYPAD_FULL_STOP,
+		0,//keypad divide
+		VK.VK_NUMPAD0,//0xb0
+		VK.VK_NUMPAD1,
+		VK.VK_NUMPAD2,
+		VK.VK_NUMPAD3,
+		VK.VK_NUMPAD4,
+		VK.VK_NUMPAD5,
+		VK.VK_NUMPAD6,
+		VK.VK_NUMPAD7,
+		VK.VK_NUMPAD8,
+		VK.VK_NUMPAD9,
+		0,
+		0,
+		0,
+		0,
+		VK.VK_F1,
+		VK.VK_F2,
+		VK.VK_F3,//0xc0
+		VK.VK_F4,
+		VK.VK_F5,
+		VK.VK_F6,
+		VK.VK_F7,
+		VK.VK_F8,
+		VK.VK_F9,
+		VK.VK_F10,
+		VK.VK_F11,
+		VK.VK_F12,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0xd0
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0xe0
+		VK.VK_LSHIFT,
+		VK.VK_RSHIFT,
+		VK.VK_LCONTROL,
+		VK.VK_RCONTROL,
+		VK.VK_CAPITAL,
+		0,
+		0,
+		0,
+		0,//VK.VK_LEFT_ALT,
+		0,//VK.VK_RIGHT_ALT,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,//0xf0
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0
+		];
 	}
 }
 
