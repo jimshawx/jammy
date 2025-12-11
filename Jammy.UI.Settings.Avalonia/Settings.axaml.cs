@@ -596,7 +596,7 @@ namespace Jammy.UI.Settings.Avalonia
 		public static AppBuilder BuildAvaloniaApp()
 		=> AppBuilder.Configure<App>() // `App` is child of `Application`
 		.UsePlatformDetect()
-		.LogToTrace(LogEventLevel.Verbose)
+		//.LogToTrace(LogEventLevel.Verbose)
 		.UseReactiveUI();
 
 		public static void Run(string[] args)
