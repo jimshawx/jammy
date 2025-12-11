@@ -27,6 +27,7 @@ using Jammy.UI.Settings.Avalonia;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Parky.Logging;
 using System.Runtime.Intrinsics.X86;
 
 /*
@@ -67,11 +68,12 @@ public class Program
 			.AddLogging(x =>
 			{
 				x.AddConfiguration(appConfig.GetSection("Logging"));
-				x.AddDebug();
+				//x.AddDebug();
 				//x.AddSQLite();
 				//x.AddDebugAsync();
 				//x.AddDebugAsyncRTF();
 				//x.AddOutputDebugString();
+				x.AddTerminalAsync();
 			})
 			.AddSingleton<IAmiga, Amiga>()
 			.AddSingleton<IBattClock, BattClock>()
