@@ -122,7 +122,7 @@ namespace Parky.Logging
 			var psi = new ProcessStartInfo
 			{
 				FileName = "xterm",
-				Arguments = $"-bg black -fg white -geometry 120x40 -e \"tail -f {tmpFile}\"",
+				Arguments = $"-bg black -fg white -geometry 120x32 -e \"tail -f {tmpFile}\"",
 				UseShellExecute = false
 			};
 			xterm = Process.Start(psi);
