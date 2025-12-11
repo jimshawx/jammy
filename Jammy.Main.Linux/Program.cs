@@ -1,4 +1,5 @@
 ﻿using Jammy.Core;
+using Jammy.Core.Audio.Linux;
 using Jammy.Core.CDROM;
 using Jammy.Core.CPU.CSharp;
 using Jammy.Core.CPU.Musashi.CSharp;
@@ -169,10 +170,10 @@ public class Program
 		services.AddSingleton<IBlitter, Blitter>();
 
 		//configure Audio
-		// if (settings.Audio == AudioDriver.XAudio2)
-		// 	services.AddSingleton<IAudio, AudioVortice>();
-		// else
-		services.AddSingleton<IAudio, Audio>();
+		if (settings.Audio == AudioDriver.XAudio2)
+			services.AddSingleton<IAudio, AudioALSA>();
+		else
+			services.AddSingleton<IAudio, Audio>();
 
 		//configure CPU
 		if (settings.CPU == CPUType.Musashi || settings.CPU == CPUType.MusashiCSharp)
