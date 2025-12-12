@@ -43,7 +43,13 @@ namespace Jammy.Core.Audio.Linux
 
 		[DllImport("asound")]
 		public static extern int snd_pcm_prepare(IntPtr pcm);
-		
+
+		[DllImport("asound")]
+		public static extern int snd_pcm_drop(IntPtr pcm);
+
+		[DllImport("asound")]
+		public static extern int snd_pcm_start(IntPtr pcm);
+
 		public AudioALSA(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioALSA> logger)
 		{
 			this.clock = clock;
@@ -429,7 +435,7 @@ namespace Jammy.Core.Audio.Linux
 				2,        // channels
 				31200,    // sample rate
 				1,        // allow resampling
-				1000);  // latency in microseconds
+				500000);  // latency in microseconds
 
 			for (int i = 0; i < 4; i++)
 			{
@@ -497,15 +503,16 @@ namespace Jammy.Core.Audio.Linux
 					mixBuffer[s * 2 + 3] = (byte)(R>>8);
 				}
 
-				int err;
-				err = snd_pcm_writei(pcmHandle, mixBuffer, mixBuffer.Length/4);
+				int err = snd_pcm_writei(pcmHandle, mixBuffer, mixBuffer.Length / 4);
 				if (err == EPIPE)
-				{ 
-					err = snd_pcm_prepare(pcmHandle);
-					logger.LogTrace("ALSA audio buffer underrun");
+				{
+					int e0 = snd_pcm_drop(pcmHandle);
+					int e1 = snd_pcm_prepare(pcmHandle);
+					int e2 = snd_pcm_start(pcmHandle);
+					logger.LogTrace($"ALSA audio buffer underrun {e0} {e1} {e2}");
 				}
 				else if (err < 0)
-				{ 
+				{
 					logger.LogTrace($"ALSA error {err}");
 				}
 
