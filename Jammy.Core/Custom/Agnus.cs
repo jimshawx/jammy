@@ -424,7 +424,7 @@ public class Agnus : IAgnus
 				//todo: this is wrong, because it only works at agnus tick resolution
 				if (clock.DeniseHorizontalPos == (uint)(hstart & 0xfffe))
 				{
-					DebugSprite(s);
+					//DebugSprite(s);
 					denise.WriteSprite(s, sprdata, sprdatb, sprctl);
 				}
 			}

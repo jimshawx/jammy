@@ -22,9 +22,10 @@ namespace Jammy.Core.Audio.Linux
 		private readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
 		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
-		const int SND_PCM_STREAM_PLAYBACK = 0;
-		const int SND_PCM_ACCESS_RW_INTERLEAVED = 3;
-		const int SND_PCM_FORMAT_S16_LE = 2;
+		private const int SND_PCM_STREAM_PLAYBACK = 0;
+		private const int SND_PCM_ACCESS_RW_INTERLEAVED = 3;
+		private const int SND_PCM_FORMAT_S16_LE = 2;
+		private const int EPIPE = -32;
 
 		[DllImport("asound", CharSet = CharSet.Ansi)]
 		private static extern int snd_pcm_open(out IntPtr handle, string name, int stream, int mode);
@@ -40,6 +41,9 @@ namespace Jammy.Core.Audio.Linux
 		[DllImport("asound")]
 		private static extern int snd_pcm_close(IntPtr handle);
 
+		[DllImport("asound")]
+		public static extern int snd_pcm_prepare(IntPtr pcm);
+		
 		public AudioALSA(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<AudioALSA> logger)
 		{
 			this.clock = clock;
@@ -419,14 +423,13 @@ namespace Jammy.Core.Audio.Linux
 		{
 			int err = snd_pcm_open(out pcmHandle, "default", SND_PCM_STREAM_PLAYBACK, 0);
 
-			//16-bit stereo, 44100 Hz
 			err = snd_pcm_set_params(pcmHandle,
 				SND_PCM_FORMAT_S16_LE,
 				SND_PCM_ACCESS_RW_INTERLEAVED,
 				2,        // channels
-				44100,    // sample rate
+				31200,    // sample rate
 				1,        // allow resampling
-				500000);  // latency in microseconds
+				1000);  // latency in microseconds
 
 			for (int i = 0; i < 4; i++)
 			{
@@ -480,10 +483,10 @@ namespace Jammy.Core.Audio.Linux
 
 				for (int s = 0; s < channels[0].xaudioCBuffer.Length; s += 2)
 				{
-					int v0 = (int)channels[0].xaudioCBuffer[s] + (int)channels[0].xaudioCBuffer[s + 1] << 8;
-					int v1 = (int)channels[1].xaudioCBuffer[s] + (int)channels[1].xaudioCBuffer[s + 1] << 8;
-					int v2 = (int)channels[2].xaudioCBuffer[s] + (int)channels[2].xaudioCBuffer[s + 1] << 8;
-					int v3 = (int)channels[3].xaudioCBuffer[s] + (int)channels[3].xaudioCBuffer[s + 1] << 8;
+					int v0 = (int)(short)((ushort)channels[0].xaudioCBuffer[s] + (ushort)(channels[0].xaudioCBuffer[s + 1] << 8));
+					int v1 = (int)(short)((ushort)channels[1].xaudioCBuffer[s] + (ushort)(channels[1].xaudioCBuffer[s + 1] << 8));
+					int v2 = (int)(short)((ushort)channels[2].xaudioCBuffer[s] + (ushort)(channels[2].xaudioCBuffer[s + 1] << 8));
+					int v3 = (int)(short)((ushort)channels[3].xaudioCBuffer[s] + (ushort)(channels[3].xaudioCBuffer[s + 1] << 8));
 
 					int L = (v0 + v1) >> 1;
 					int R = (v2 + v3) >> 1;
@@ -492,9 +495,19 @@ namespace Jammy.Core.Audio.Linux
 					mixBuffer[s * 2 + 1] = (byte)(L>>8);
 					mixBuffer[s * 2 + 2] = (byte)R;
 					mixBuffer[s * 2 + 3] = (byte)(R>>8);
-
 				}
-				int err = snd_pcm_writei(pcmHandle, mixBuffer, channels[0].xaudioCBuffer.Length/4);
+
+				int err;
+				err = snd_pcm_writei(pcmHandle, mixBuffer, mixBuffer.Length/4);
+				if (err == EPIPE)
+				{ 
+					err = snd_pcm_prepare(pcmHandle);
+					logger.LogTrace("ALSA audio buffer underrun");
+				}
+				else if (err < 0)
+				{ 
+					logger.LogTrace($"ALSA error {err}");
+				}
 
 				for (int i = 0; i < 4; i++)
 					channels[i].xaudioCIndex = 0;
