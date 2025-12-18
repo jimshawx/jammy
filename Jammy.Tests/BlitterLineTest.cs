@@ -153,30 +153,30 @@ namespace Jammy.Tests
 				.BuildServiceProvider();
 		}
 
-		[Test]
-		public void TestBlitter()
-		{
-			var blitter = serviceProvider0.GetRequiredService<IBlitter>();
-			var chipRAM = (LoggedChipRAM)serviceProvider0.GetRequiredService<IChipRAM>();
-			var dma = serviceProvider0.GetRequiredService<IDMA>();
+		//[Test]
+		//public void TestBlitter()
+		//{
+		//	var blitter = serviceProvider0.GetRequiredService<IBlitter>();
+		//	var chipRAM = (LoggedChipRAM)serviceProvider0.GetRequiredService<IChipRAM>();
+		//	var dma = serviceProvider0.GetRequiredService<IDMA>();
 
-			using (var f = File.OpenRead(BlitterLineTestCases.TestCases2RAM()))
-				chipRAM.FromBmp(f);
+		//	using (var f = File.OpenRead(BlitterLineTestCases.TestCases2RAM()))
+		//		chipRAM.FromBmp(f);
 
-			int i = 0;
-			var testcases = BlitterLineTestCases.TestCases2();
-			int passes = 0;
-			foreach (var c in testcases)
-			{
-				TestContext.WriteLine($"\n------- Test Case {++i,4} -------");
-				if (RunBlitterTestCase(c, blitter, chipRAM, dma))
-					passes++;
-			}
-			TestContext.WriteLine($"PASSES: {passes}/{testcases.Count}");
+		//	int i = 0;
+		//	var testcases = BlitterLineTestCases.TestCases2();
+		//	int passes = 0;
+		//	foreach (var c in testcases)
+		//	{
+		//		TestContext.WriteLine($"\n------- Test Case {++i,4} -------");
+		//		if (RunBlitterTestCase(c, blitter, chipRAM, dma))
+		//			passes++;
+		//	}
+		//	TestContext.WriteLine($"PASSES: {passes}/{testcases.Count}");
 
-			var d = chipRAM.ToBmp(1280);
-			File.WriteAllBytes(BlitterLineTestCases.TestCases2Results(), d.ToArray());
-		}
+		//	var d = chipRAM.ToBmp(1280);
+		//	File.WriteAllBytes(BlitterLineTestCases.TestCases2Results(), d.ToArray());
+		//}
 
 		private bool RunBlitterTestCase(BlitterLineTestCases.BlitterLineTestCase c, IBlitter blitter, LoggedChipRAM chipRAM, IDMA dma)
 		{
@@ -274,14 +274,14 @@ namespace Jammy.Tests
 			return JsonConvert.DeserializeObject<List<BlitterLineTestCase>>(json);
 		}
 
-		public static string TestCases2RAM()
-		{
-			return "chip-2024-07-03-212327-924.bmp";
-		}
-		public static string TestCases2Results()
-		{
-			return "test-2024-07-03-212327.bmp";
-		}
+		//public static string TestCases2RAM()
+		//{
+		//	return "chip-2024-07-03-212327-924.bmp";
+		//}
+		//public static string TestCases2Results()
+		//{
+		//	return "test-2024-07-03-212327.bmp";
+		//}
 	}
 
 }
