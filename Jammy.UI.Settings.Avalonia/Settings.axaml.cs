@@ -1,13 +1,12 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Logging;
 using Avalonia.Platform.Storage;
-using Avalonia.ReactiveUI;
 using Avalonia.Threading;
 using Jammy.Core.Types;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using ReactiveUI.Avalonia;
 using System.Web;
 
 namespace Jammy.UI.Settings.Avalonia
