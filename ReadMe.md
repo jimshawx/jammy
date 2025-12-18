@@ -28,6 +28,7 @@ So here is my humble attempt at an Amiga emulation.
 
 * There's a debugger and disassembler of sorts
 * There's some automated code analysis to produce good disassemblies
+* There's a Linux version!
 * It's free! (MIT License)
 
 ### The not so good stuff
@@ -38,6 +39,8 @@ So here is my humble attempt at an Amiga emulation.
 * Emulation of CPUs running faster than the standard 7MHz is poor
 * There are still many pieces of software that don't work yet
 * There's a broken IPF floppy disk reader
+* The Linux version is missing the debugging UIs
+* There's no ARM build
 
 The C# 68000 is slightly faster than the C Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
 In an effort to fix this, I have ported Musashi and the Musashi CPU generator to C#, and it is significantly faster now.
