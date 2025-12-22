@@ -560,7 +560,7 @@ namespace Jammy.Core.EmulationWindow.X
 		 0,//VK.VK_SINGLE_QUOTE,
 		 0,//VK.VK_SINGLE_QUOTE,//0x40
 		(VK)'A',(VK)'B',(VK)'C',(VK)'D',(VK)'E',(VK)'F',(VK)'G',(VK)'H',(VK)'I',(VK)'J',(VK)'K',(VK)'L',(VK)'M',
-		(VK)'N',(VK)'O',(VK)'P',(VK)'Q',(VK)'R',(VK)'S',(VK)'T',(VK)'U',(VK)'V',(VK)'W',(VK)'X',(VK)'U',(VK)'Z',
+		(VK)'N',(VK)'O',(VK)'P',(VK)'Q',(VK)'R',(VK)'S',(VK)'T',(VK)'U',(VK)'V',(VK)'W',(VK)'X',(VK)'Y',(VK)'Z',
 		 VK.VK_OEM_4,//VK.VK_OPEN_SQR_BRACKET,
 		 VK.VK_OEM_5,//VK.VK_RSX,
 		 VK.VK_OEM_6,//VK.VK_CLOSE_SQR_BRACKET,
@@ -568,7 +568,7 @@ namespace Jammy.Core.EmulationWindow.X
 		 0,//VK.VK_MINUS,
 		 VK.VK_OEM_3,//VK.VK_SQUIGLE,//0x60
 		(VK)'A',(VK)'B',(VK)'C',(VK)'D',(VK)'E',(VK)'F',(VK)'G',(VK)'H',(VK)'I',(VK)'J',(VK)'K',(VK)'L',(VK)'M',
-		(VK)'N',(VK)'O',(VK)'P',(VK)'Q',(VK)'R',(VK)'S',(VK)'T',(VK)'U',(VK)'V',(VK)'W',(VK)'X',(VK)'U',(VK)'Z',
+		(VK)'N',(VK)'O',(VK)'P',(VK)'Q',(VK)'R',(VK)'S',(VK)'T',(VK)'U',(VK)'V',(VK)'W',(VK)'X',(VK)'Y',(VK)'Z',
 		0,// VK.VK_OPEN_SQR_BRACKET,
 		 0,//VK.VK_RSX,
 		0,// VK.VK_CLOSE_SQR_BRACKET,
