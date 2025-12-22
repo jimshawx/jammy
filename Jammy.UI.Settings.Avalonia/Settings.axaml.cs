@@ -101,7 +101,7 @@ namespace Jammy.UI.Settings.Avalonia
 			StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions {
 					SuggestedFileName = txtDF0.Text,
-					FileTypeFilter = new List<FilePickerFileType>{new FilePickerFileType("ADF Files") { Patterns = new []{"*.adf", "*.zip", "*.adz", "*.rp9" } } }
+					FileTypeFilter = new List<FilePickerFileType>{new FilePickerFileType("ADF Files") { Patterns = new []{"*.adf", "*.zip", "*.adz", "*.rp9", "*.dms", "*.ipf" } } }
 				}).ContinueWith((t) => {
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
@@ -117,7 +117,7 @@ namespace Jammy.UI.Settings.Avalonia
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtDF1.Text,
-					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9" } } }
+					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9", "*.dms", "*.ipf" } } }
 				}).ContinueWith((t)=>{
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
@@ -133,7 +133,7 @@ namespace Jammy.UI.Settings.Avalonia
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtDF2.Text,
-					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9" } } }
+					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9", "*.dms", "*.ipf" } } }
 				}).ContinueWith((t) => {
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
@@ -149,7 +149,7 @@ namespace Jammy.UI.Settings.Avalonia
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtDF3.Text,
-					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9" } } }
+					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9", "*.dms", "*.ipf" } } }
 				}).ContinueWith((t) => {
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
