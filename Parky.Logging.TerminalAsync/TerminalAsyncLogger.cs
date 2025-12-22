@@ -119,10 +119,11 @@ namespace Parky.Logging
 			logfile = File.OpenWrite(tmpFile);
 			var writer = new StreamWriter(logfile) { AutoFlush = true };
 
+			int parentPid = Process.GetCurrentProcess().Id;
 			var psi = new ProcessStartInfo
 			{
 				FileName = "xterm",
-				Arguments = $"-bg black -fg white -geometry 120x32 -e \"tail -f {tmpFile}\"",
+				Arguments = $"-bg black -fg white -geometry 120x32 -e bash -c \"(while kill -0 {parentPid} 2>/dev/null; do sleep 1; done; kill $$) & tail -f {tmpFile}\"",
 				UseShellExecute = false
 			};
 			xterm = Process.Start(psi);
