@@ -30,6 +30,7 @@ namespace Jammy.Core.IO.Linux
 
 		private int lastKey = -1;
 		private bool canRepeat = false;
+		private bool caps = false;
 
 		private void AddKeyDown(int key)
 		{
@@ -58,6 +59,12 @@ namespace Jammy.Core.IO.Linux
 			switch (key)
 			{
 				case (int)VK.VK_CAPITAL://Caps Lock - ignore the keydown, keyup will report if caps is enabled or not
+					//this will have to do, but if CAPS is modified outside of the app, it'll get out of step
+					caps ^= true;
+					if (caps)
+						keyQueue.Enqueue((byte)(scanConvert[key]));
+					else
+						keyQueue.Enqueue((byte)(scanConvert[key] | 0x80));
 					break;
 				//case (int)VK.VK_F11:
 				//	//keyQueue.Enqueue(0x78);
