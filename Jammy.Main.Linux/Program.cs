@@ -1,4 +1,8 @@
-﻿using Jammy.Core;
+﻿using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Styling;
+using Avalonia.Themes.Simple;
+using Jammy.Core;
 using Jammy.Core.Audio.Linux;
 using Jammy.Core.CDROM;
 using Jammy.Core.CPU.CSharp;
@@ -29,6 +33,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Parky.Logging;
+using ReactiveUI.Avalonia;
 using System.Runtime.Intrinsics.X86;
 
 /*
@@ -37,19 +42,42 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Jammy.Main.Linux;
 
+public class JammyApplication : Application
+{
+	public override void Initialize()
+	{
+		Styles.Add(new SimpleTheme());
+	}
+
+	public override void OnFrameworkInitializationCompleted()
+	{
+		if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+		{ 
+			desktop.MainWindow = new Settings();
+			desktop.MainWindow.Closed += (s, e) => 
+			{
+				Program.AppMain();
+			};
+		}
+		base.OnFrameworkInitializationCompleted();
+	}
+}
 
 public class Program
 {
+	public static AppBuilder BuildAvaloniaApp() =>
+		AppBuilder.Configure<JammyApplication>()
+			.UsePlatformDetect()
+			//.LogToTrace(LogEventLevel.Verbose)
+			.UseReactiveUI();
+
 	static void Main(string[] args)
 	{
-		// Application.SetHighDpiMode(HighDpiMode.SystemAware);
-		// Application.EnableVisualStyles();
-		// Application.SetCompatibleTextRenderingDefault(false);
+		BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+	}
 
-		SettingsUI.Run(args);
-		// Application.Run(set);
-		// if (!set.ConfigOK) return;
-
+	public static void AppMain()
+	{
 		var appConfig = new ConfigurationBuilder()
 			.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
 			.AddJsonFile("appSettings.json", false)
@@ -266,8 +294,6 @@ public class Program
 		logger.LogTrace("Application Starting Up!");
 
 		var form = serviceProvider.GetRequiredService<Jammy>();
-		//Application.Run(form);
-		Thread.Sleep(Timeout.Infinite);
 	}
 }
 

@@ -15,23 +15,11 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.10" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.10" />
-    <PackageReference Include="Avalonia.Themes.Simple" Version="11.3.10" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Another.axaml.cs">
-      <DependentUpon>%(Filename)</DependentUpon>
-    </Compile>
-    <Compile Update="App.axaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-    </Compile>
   </ItemGroup>
 
 </Project>

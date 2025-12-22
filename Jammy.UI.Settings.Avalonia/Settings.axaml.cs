@@ -1,12 +1,10 @@
-﻿using Avalonia;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Jammy.Core.Types;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using ReactiveUI.Avalonia;
 using System.Web;
 
 namespace Jammy.UI.Settings.Avalonia
@@ -306,7 +304,7 @@ namespace Jammy.UI.Settings.Avalonia
 		{
 			return items.Cast<ComboBoxItem>().SingleOrDefault(x=>(string)x.Content == item);
 		}
-		private string StringFromSelection(object? item)
+		private string StringFromSelection(object item)
 		{
 			return (string)((ComboBoxItem)item).Content;
 		}
@@ -587,20 +585,6 @@ namespace Jammy.UI.Settings.Avalonia
 					btnSaveConfig.IsEnabled = true;
 					break;
 			}
-		}
-	}
-
-	public static class SettingsUI
-	{
-		public static AppBuilder BuildAvaloniaApp()
-		=> AppBuilder.Configure<App>() // `App` is child of `Application`
-		.UsePlatformDetect()
-		//.LogToTrace(LogEventLevel.Verbose)
-		.UseReactiveUI();
-
-		public static void Run(string[] args)
-		{
-			BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 		}
 	}
 }

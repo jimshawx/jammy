@@ -46,10 +46,14 @@
 	<ApplicationIcon>amiga.ico</ApplicationIcon>
   </PropertyGroup>
 <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.10" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.10" />
+    <PackageReference Include="Avalonia.Themes.Simple" Version="11.3.10" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.1" />
+    <PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8" />
   </ItemGroup>
 </Project>
