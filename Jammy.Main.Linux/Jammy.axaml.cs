@@ -1,9 +1,11 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Jammy.Core;
 using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Debugger;
 using Jammy.Disassembler;
@@ -12,6 +14,7 @@ using Jammy.Types;
 using Jammy.Types.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Web;
 
 namespace Jammy.Main.Linux
 {
@@ -112,6 +115,18 @@ namespace Jammy.Main.Linux
 		//		}
 		//	}, uiUpdateTokenSource.Token, TaskCreationOptions.LongRunning);
 		//	uiUpdateTask.Start();
+		//}
+
+		//private void UpdatePowerLight()
+		//{
+		//	bool power = UI.UI.PowerLight;
+		//	picPower.BackColor = power ? Color.Red : Color.DarkRed;
+		//}
+
+		//private void UpdateDiskLight()
+		//{
+		//	bool disk = global::Jammy.UI.UI.DiskLight;
+		//	picDisk.BackColor = disk ? Color.LightGreen : Color.DarkGreen;
 		//}
 
 		[Flags]
@@ -370,34 +385,230 @@ namespace Jammy.Main.Linux
 			}
 		}
 
-		private void btnGenDisassemblies_Click(object sender, RoutedEventArgs e) { }
-		private void btnDMAExplorer_Click(object sender, RoutedEventArgs e) { }
-		private void btnAnalyseFlow_Click(object sender, RoutedEventArgs e) { }
-		private void btnStringScan_Click(object sender, RoutedEventArgs e) { }
-		private void btnINTDIS_Click(object sender, RoutedEventArgs e) { }
-		private void btnReadyDisk_Click(object sender, RoutedEventArgs e) { }
-		private void btnCribSheet_Click(object sender, RoutedEventArgs e) { }
-		private void btnClearBBUSY_Click(object sender, RoutedEventArgs e) { }
+		private void SetSelection()
+		{
+			uint pc = uiData.Regs.PC;
+
+			txtDisassembly.ReallySuspendLayout();
+			txtDisassembly.DeselectAll();
+
+			int line = disassemblyView.GetAddressLine(pc & (uint)((1 << settings.AddressBits) - 1));
+
+			//scroll the view to the line 5 lines before the PC
+			txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
+			txtDisassembly.ScrollToCaret();
+
+			//find the line at the current pc, and the next line after that, and highlight it.
+			int start = txtDisassembly.GetFirstCharIndexFromLine(line);
+
+			if (start >= 0)
+				txtDisassembly.Select(start, txtDisassembly.GetFirstCharIndexFromLine(line + 1) - start);
+			else
+				txtDisassembly.DeselectAll();
+
+			txtDisassembly.ReallyResumeLayout();
+			txtDisassembly.Refresh();
+		}
+
+		private void btnStep_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.SetEmulationMode(EmulationMode.Step);
+		}
+
+		private void btnStepOut_Click(object sender, RoutedEventArgs e) 
+		{
+			Amiga.SetEmulationMode(EmulationMode.StepOut);
+		}
+
+		private void btnStop_Click(object sender, RoutedEventArgs e) 
+		{
+			Amiga.SetEmulationMode(EmulationMode.Stopped);
+		}
+
+		private void btnGo_Click(object sender, RoutedEventArgs e)
+		{
+			txtDisassembly.DeselectAll();
+			Amiga.SetEmulationMode(EmulationMode.Running);
+		}
+
+		private void btnReset_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.SetEmulationMode(EmulationMode.Stopped);
+
+			Amiga.LockEmulation();
+			emulation.Reset();
+			Amiga.UnlockEmulation();
+
+			FetchUI(FetchUIFlags.All);
+			SetSelection();
+			UpdateDisplay();
+		}
+		private void btnRefresh_Click(object sender, RoutedEventArgs e)
+		{
+			FetchUI(FetchUIFlags.All);
+			SetSelection();
+			UpdateDisplay();
+		}
+
+		private void btnStepOver_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			debugger.BreakAtNextPC();
+			Amiga.SetEmulationMode(EmulationMode.Running, true);
+			Amiga.UnlockEmulation();
+		}
+		private void btnDisassemble_Click(object sender, RoutedEventArgs e)
+		{
+			FetchUI(FetchUIFlags.All);
+			UpdateDisassembly();
+			SetSelection();
+			UpdateDisplay();
+		}
+
+		private void btnCIAInt_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			if (cbCIA.Text == "TIMERA") debugger.CIAInt(ICRB.TIMERA);
+			if (cbCIA.Text == "TIMERB") debugger.CIAInt(ICRB.TIMERB);
+			if (cbCIA.Text == "TODALARM") debugger.CIAInt(ICRB.TODALARM);
+			if (cbCIA.Text == "SERIAL") debugger.CIAInt(ICRB.SERIAL);
+			if (cbCIA.Text == "FLAG") debugger.CIAInt(ICRB.FLAG);
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnIRQ_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			if (cbIRQ.Text == "EXTER") debugger.IRQ(Core.Types.Interrupt.EXTER);
+			if (cbIRQ.Text == "DSKBLK") debugger.IRQ(Core.Types.Interrupt.DSKBLK);
+			if (cbIRQ.Text == "PORTS") debugger.IRQ(Core.Types.Interrupt.PORTS);
+			if (cbIRQ.Text == "BLIT") debugger.IRQ(Core.Types.Interrupt.BLIT);
+			if (cbIRQ.Text == "COPPER") debugger.IRQ(Core.Types.Interrupt.COPPER);
+			if (cbIRQ.Text == "DSKSYNC") debugger.IRQ(Core.Types.Interrupt.DSKSYNC);
+			if (cbIRQ.Text == "AUD0") debugger.IRQ(Core.Types.Interrupt.AUD0);
+			if (cbIRQ.Text == "AUD1") debugger.IRQ(Core.Types.Interrupt.AUD1);
+			if (cbIRQ.Text == "AUD2") debugger.IRQ(Core.Types.Interrupt.AUD2);
+			if (cbIRQ.Text == "AUD3") debugger.IRQ(Core.Types.Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.IRQ(Core.Types.Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.IRQ(Core.Types.Interrupt.SOFTINT);
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnINTENA_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			if (cbIRQ.Text == "EXTER") debugger.INTENA(Core.Types.Interrupt.EXTER);
+			if (cbIRQ.Text == "DSKBLK") debugger.INTENA(Core.Types.Interrupt.DSKBLK);
+			if (cbIRQ.Text == "PORTS") debugger.INTENA(Core.Types.Interrupt.PORTS);
+			if (cbIRQ.Text == "BLIT") debugger.INTENA(Core.Types.Interrupt.BLIT);
+			if (cbIRQ.Text == "COPPER") debugger.INTENA(Core.Types.Interrupt.COPPER);
+			if (cbIRQ.Text == "DSKSYNC") debugger.INTENA(Core.Types.Interrupt.DSKSYNC);
+			if (cbIRQ.Text == "AUD0") debugger.INTENA(Core.Types.Interrupt.AUD0);
+			if (cbIRQ.Text == "AUD1") debugger.INTENA(Core.Types.Interrupt.AUD1);
+			if (cbIRQ.Text == "AUD2") debugger.INTENA(Core.Types.Interrupt.AUD2);
+			if (cbIRQ.Text == "AUD3") debugger.INTENA(Core.Types.Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.INTENA(Core.Types.Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.INTENA(Core.Types.Interrupt.SOFTINT);
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnINTDIS_Click(object sender, RoutedEventArgs e) 
+		{
+			Amiga.LockEmulation();
+			if (cbIRQ.Text == "EXTER") debugger.INTDIS(Core.Types.Interrupt.EXTER);
+			if (cbIRQ.Text == "DSKBLK") debugger.INTDIS(Core.Types.Interrupt.DSKBLK);
+			if (cbIRQ.Text == "PORTS") debugger.INTDIS(Core.Types.Interrupt.PORTS);
+			if (cbIRQ.Text == "BLIT") debugger.INTDIS(Core.Types.Interrupt.BLIT);
+			if (cbIRQ.Text == "COPPER") debugger.INTDIS(Core.Types.Interrupt.COPPER);
+			if (cbIRQ.Text == "DSKSYNC") debugger.INTDIS(Core.Types.Interrupt.DSKSYNC);
+			if (cbIRQ.Text == "AUD0") debugger.INTDIS(Core.Types.Interrupt.AUD0);
+			if (cbIRQ.Text == "AUD1") debugger.INTDIS(Core.Types.Interrupt.AUD1);
+			if (cbIRQ.Text == "AUD2") debugger.INTDIS(Core.Types.Interrupt.AUD2);
+			if (cbIRQ.Text == "AUD3") debugger.INTDIS(Core.Types.Interrupt.AUD3);
+			if (cbIRQ.Text == "VERTB") debugger.INTDIS(Core.Types.Interrupt.VERTB);
+			if (cbIRQ.Text == "SOFTINT") debugger.INTDIS(Core.Types.Interrupt.SOFTINT);
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnDumpTrace_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			debugger.WriteTrace();
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnIDEACK_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			debugger.IDEACK();
+			Amiga.UnlockEmulation();
+		}
+
+		private int currentDrive = 0;
+		private void btnChange_Click(object sender, RoutedEventArgs e)
+		{
+			StorageProvider.OpenFilePickerAsync(
+				new FilePickerOpenOptions
+				{
+					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9", "*.dms", "*.ipf" } } }
+				}).ContinueWith((t) => {
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{
+						Amiga.LockEmulation();
+						debugger.ChangeDisk(currentDrive, HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+						Amiga.UnlockEmulation();
+					}
+				});
+		}
+
+		private void btnInsertDisk_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			debugger.InsertDisk(currentDrive);
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnRemoveDisk_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			debugger.RemoveDisk(currentDrive);
+			Amiga.UnlockEmulation();
+		}
+
 		private void btnGfxScan_Click(object sender, RoutedEventArgs e) { }
-		private void btnChange_Click(object sender, RoutedEventArgs e) { }
-		private void btnIDEACK_Click(object sender, RoutedEventArgs e) { }
-		private void btnDumpTrace_Click(object sender, RoutedEventArgs e) { }
-		private void btnINTENA_Click(object sender, RoutedEventArgs e) { }
-		private void btnStepOut_Click(object sender, RoutedEventArgs e) { }
-		private void btnIRQ_Click(object sender, RoutedEventArgs e) { }
-		private void btnCIAInt_Click(object sender, RoutedEventArgs e) { }
-		private void btnRemoveDisk_Click(object sender, RoutedEventArgs e) { }
-		private void btnInsertDisk_Click(object sender, RoutedEventArgs e) { }
-		private void btnDisassemble_Click(object sender, RoutedEventArgs e) { }
-		private void btnStepOver_Click(object sender, RoutedEventArgs e) { }
-		private void btnRefresh_Click(object sender, RoutedEventArgs e) { }
-		private void btnReset_Click(object sender, RoutedEventArgs e) { }
-		private void btnGo_Click(object sender, RoutedEventArgs e) { }
-		private void btnStop_Click(object sender, RoutedEventArgs e) { }
-		private void btnStep_Click(object sender, RoutedEventArgs e) { }
+
+		private void btnStringScan_Click(object sender, RoutedEventArgs e) { }
+
+		private void btnClearBBUSY_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			debugger.ClearBBUSY();
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnCribSheet_Click(object sender, RoutedEventArgs e) { }
+
+		private void btnReadyDisk_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			debugger.ReadyDisk();
+			Amiga.UnlockEmulation();
+		}
+
+		private void btnAnalyseFlow_Click(object sender, RoutedEventArgs e) { }
+
+		private void btnDMAExplorer_Click(object sender, RoutedEventArgs e) { }
+
+		private void btnGenDisassemblies_Click(object sender, RoutedEventArgs e)
+		{
+			Amiga.LockEmulation();
+			debugger.GenerateDisassemblies();
+			Amiga.UnlockEmulation();
+		}
 	}
 
-	public static class AvaloniaExtensions
+	public static class JammyAvaloniaExtensions
 	{
 		public static void AddRange(this ItemCollection itemColl, IEnumerable<object> itemEnum)
 		{
@@ -411,11 +622,36 @@ namespace Jammy.Main.Linux
 
 		public static void ScrollToCaret(this TextBox txtBox)
 		{
+			txtBox.CaretIndex = txtBox.SelectionStart;
 		}
 
 		public static int GetFirstCharIndexFromLine(this TextBox txtBox, int line)
 		{
 			return 0;
+		}
+
+		public static void DeselectAll(this TextBox txtBox)
+		{
+			txtBox.SelectionStart = -1;
+			txtBox.SelectionEnd = -1;
+		}
+
+		public static void ReallySuspendLayout(this TextBox txtBox)
+		{
+		}
+
+		public static void ReallyResumeLayout(this TextBox txtBox)
+		{
+		}
+
+		public static void Refresh(this TextBox txtBox)
+		{
+		}
+
+		public static void Select(this TextBox txtBox, int start, int length)
+		{
+			txtBox.SelectionStart = start;
+			txtBox.SelectionEnd = start + length;
 		}
 	}
 }
