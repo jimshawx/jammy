@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 using Avalonia.Themes.Simple;
@@ -56,7 +57,8 @@ public class JammyApplication : Application
 			desktop.MainWindow = new Settings();
 			desktop.MainWindow.Closed += (s, e) => 
 			{
-				Program.AppMain();
+				desktop.MainWindow = Program.AppMain();
+				desktop.MainWindow.Show();
 			};
 		}
 		base.OnFrameworkInitializationCompleted();
@@ -76,7 +78,7 @@ public class Program
 		BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 	}
 
-	public static void AppMain()
+	public static Window AppMain()
 	{
 		var appConfig = new ConfigurationBuilder()
 			.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
@@ -293,7 +295,7 @@ public class Program
 		var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 		logger.LogTrace("Application Starting Up!");
 
-		var form = serviceProvider.GetRequiredService<Jammy>();
+		return serviceProvider.GetRequiredService<Jammy>();
 	}
 }
 

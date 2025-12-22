@@ -56,4 +56,13 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.1" />
     <PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8" />
   </ItemGroup>
+
+  <ItemGroup>
+	<None Remove="Jammy.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<AvaloniaXaml Include="Jammy.xaml" />
+  </ItemGroup>
+  
 </Project>

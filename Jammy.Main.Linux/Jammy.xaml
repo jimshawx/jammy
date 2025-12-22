@@ -1,0 +1,131 @@
+<Window xmlns="https://github.com/avaloniaui"
+	 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		Title="Jammy"
+		x:Class="Jammy.Main.Linux.Jammy"
+		FontSize="9">
+  <Canvas Width="1094" Height="544">
+    <Button Canvas.Left="1045" Canvas.Top="481" Width="31" Height="18" Margin="0 0 0 0" Name="btnGenDisassemblies" Click="btnGenDisassemblies_Click">Dis</Button>
+    <TextBox Canvas.Left="939" Canvas.Top="191" Width="131" Height="23" Margin="0 0 0 0" Name="tbClock" AcceptsReturn="True" Text="" />
+    <Button Canvas.Left="986" Canvas.Top="457" Width="69" Height="18" Margin="0 0 0 0" Name="btnDMAExplorer" Click="btnDMAExplorer_Click">DMA Explorer</Button>
+    <Button Canvas.Left="805" Canvas.Top="258" Width="52" Height="19" Margin="0 0 0 0" Name="btnAnalyseFlow" Click="btnAnalyseFlow_Click">Analyse</Button>
+    <Button Canvas.Left="921" Canvas.Top="457" Width="61" Height="19" Margin="0 0 0 0" Name="btnStringScan" Click="btnStringScan_Click">String Scan</Button>
+    <Button Canvas.Left="833" Canvas.Top="432" Width="30" Height="19" Margin="0 0 0 0" Name="btnINTDIS" Click="btnINTDIS_Click">~EN</Button>
+    <TextBox Canvas.Left="805" Canvas.Top="482" Width="176" Height="19" Margin="0 0 0 0" Name="tbCommand" Text="" />
+    <Button Canvas.Left="896" Canvas.Top="310" Width="38" Height="19" Margin="0 0 0 0" Name="btnReadyDisk" Click="btnReadyDisk_Click">Ready</Button>
+    <Grid Canvas.Left="1" Canvas.Top="0" Width="799" Height="515" Margin="0 0 0 0" Name="splitContainer2" ColumnDefinitions="*,4,*">
+      <Panel Grid.Column="0" HorizontalAlignment="Stretch" Height="515">
+        <Grid Canvas.Left="0" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="splitContainer1" RowDefinitions="*,4,*">
+          <Panel Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <TextBox Canvas.Left="2" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="txtDisassembly" />
+          </Panel>
+          <GridSplitter Grid.Row="1" Height="4" ResizeDirection="Rows" />
+          <Panel Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <TextBox Canvas.Left="2" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="txtMemory" />
+          </Panel>
+        </Grid>
+      </Panel>
+      <GridSplitter Grid.Column="1" Width="4" ResizeDirection="Columns" />
+      <Panel Grid.Column="2" HorizontalAlignment="Stretch" Height="515">
+        <TabControl Canvas.Left="3" Canvas.Top="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="tabControl1">
+          <TabItem Header="Copper" >
+            <Panel Canvas.Left="3" Canvas.Top="15" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="379">
+              <TextBox Canvas.Left="1" Canvas.Top="1"  HorizontalAlignment="Stretch" Height="376" Margin="0 0 0 0" Name="txtCopper" />
+            </Panel>
+          </TabItem>
+          <TabItem Header="Object" >
+            <StackPanel Canvas.Left="3" Canvas.Top="15" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="379">
+              <ComboBox Canvas.Left="1" Canvas.Top="7" HorizontalAlignment="Left" Width="116" Height="19" Margin="0 0 0 0" Name="cbTypes">
+                <ComboBoxItem>(None)</ComboBoxItem>
+                <ComboBoxItem>ExecBase</ComboBoxItem>
+                <ComboBoxItem>timerequest</ComboBoxItem>
+                <ComboBoxItem>Library</ComboBoxItem>
+                <ComboBoxItem>Task</ComboBoxItem>
+                <ComboBoxItem>KeyMapResource</ComboBoxItem>
+                <ComboBoxItem>MsgPort</ComboBoxItem>
+                <ComboBoxItem>Unit</ComboBoxItem>
+                <ComboBoxItem>Resident</ComboBoxItem>
+              </ComboBox>
+				<TextBox Canvas.Left="1" Canvas.Top="26"  HorizontalAlignment="Stretch" Height="351" Margin="0 0 0 0" Name="txtExecBase" />
+            </StackPanel>
+          </TabItem>
+          <TabItem Header="Vectors" >
+            <Panel Canvas.Left="3" Canvas.Top="15" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="379">
+              <TextBox Canvas.Left="1" Canvas.Top="1"  HorizontalAlignment="Stretch" Height="376" Margin="0 0 0 0" Name="txtVectors" />
+            </Panel>
+          </TabItem>
+        </TabControl>
+        <ListBox Canvas.Left="5" Canvas.Top="399" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="90" Margin="0 0 0 0" Name="lbIntvec" />
+      </Panel>
+    </Grid>
+    <Button Canvas.Left="986" Canvas.Top="481" Width="55" Height="19" Margin="0 0 0 0" Name="btnCribSheet" Click="btnCribSheet_Click">Crib Sheet</Button>
+    <Button Canvas.Left="865" Canvas.Top="432" Width="55" Height="19" Margin="0 0 0 0" Name="btnClearBBUSY" Click="btnClearBBUSY_Click">~BBUSY</Button>
+    <Button Canvas.Left="865" Canvas.Top="457" Width="55" Height="19" Margin="0 0 0 0" Name="btnGfxScan" Click="btnGfxScan_Click">Gfx Scan</Button>
+    <RadioButton Canvas.Left="906" Canvas.Top="362" Width="10" Height="10" Margin="0 0 0 0" Name="radioDF3" />
+    <RadioButton Canvas.Left="892" Canvas.Top="362" Width="10" Height="10" Margin="0 0 0 0" Name="radioDF2" />
+    <RadioButton Canvas.Left="877" Canvas.Top="362" Width="10" Height="10" Margin="0 0 0 0" Name="radioDF1" />
+    <RadioButton Canvas.Left="862" Canvas.Top="362" Width="10" Height="10" Margin="0 0 0 0" Name="radioDF0" />
+    <Button Canvas.Left="805" Canvas.Top="360" Width="53" Height="19" Margin="0 0 0 0" Name="btnChange" Click="btnChange_Click">Change</Button>
+    <Button Canvas.Left="805" Canvas.Top="457" Width="53" Height="19" Margin="0 0 0 0" Name="btnIDEACK" Click="btnIDEACK_Click">IDEACK</Button>
+    <Button Canvas.Left="865" Canvas.Top="258" Width="69" Height="19" Margin="0 0 0 0" Name="btnDumpTrace" Click="btnDumpTrace_Click">Dump Trace</Button>
+    <ListBox Canvas.Left="939" Canvas.Top="218" Width="131" Height="220" Margin="0 0 0 0" Name="lbCustom" />
+    <Button Canvas.Left="805" Canvas.Top="432" Width="27" Height="19" Margin="0 0 0 0" Name="btnINTENA" Click="btnINTENA_Click">EN</Button>
+    <Button Canvas.Left="865" Canvas.Top="177" Width="52" Height="19" Margin="0 0 0 0" Name="btnStepOut" Click="btnStepOut_Click">Step Out</Button>
+    <ListBox Canvas.Left="939" Canvas.Top="10" Width="131" Height="177" Margin="0 0 0 0" Name="lbCallStack" />
+    <ComboBox Canvas.Left="865" Canvas.Top="384" Width="51" Height="16" Margin="0 0 0 0" Name="cbCIA">
+      <ComboBoxItem>TIMERA</ComboBoxItem>
+      <ComboBoxItem>TIMERB</ComboBoxItem>
+      <ComboBoxItem>TODALARM</ComboBoxItem>
+      <ComboBoxItem>SERIAL</ComboBoxItem>
+      <ComboBoxItem>FLAG</ComboBoxItem>
+    </ComboBox>
+    <ComboBox Canvas.Left="865" Canvas.Top="409" Width="51" Height="16" Margin="0 0 0 0" Name="cbIRQ">
+      <ComboBoxItem>EXTER</ComboBoxItem>
+      <ComboBoxItem>DSKSYNC</ComboBoxItem>
+      <ComboBoxItem>AUD0</ComboBoxItem>
+      <ComboBoxItem>AUD1</ComboBoxItem>
+      <ComboBoxItem>AUD2</ComboBoxItem>
+      <ComboBoxItem>AUD3</ComboBoxItem>
+      <ComboBoxItem>BLIT</ComboBoxItem>
+      <ComboBoxItem>VERTB</ComboBoxItem>
+      <ComboBoxItem>COPPER</ComboBoxItem>
+      <ComboBoxItem>PORTS</ComboBoxItem>
+      <ComboBoxItem>DSKBLK</ComboBoxItem>
+      <ComboBoxItem>SOFTINT</ComboBoxItem>
+    </ComboBox>
+    <Button Canvas.Left="805" Canvas.Top="409" Width="53" Height="19" Margin="0 0 0 0" Name="btnIRQ" Click="btnIRQ_Click">IRQ</Button>
+    <Button Canvas.Left="805" Canvas.Top="384" Width="53" Height="19" Margin="0 0 0 0" Name="btnCIAInt" Click="btnCIAInt_Click">CIA Int</Button>
+    <Button Canvas.Left="865" Canvas.Top="334" Width="52" Height="19" Margin="0 0 0 0" Name="btnRemoveDisk" Click="btnRemoveDisk_Click">Remove Disk</Button>
+    <Button Canvas.Left="805" Canvas.Top="334" Width="53" Height="19" Margin="0 0 0 0" Name="btnInsertDisk" Click="btnInsertDisk_Click">Insert Disk</Button>
+    <ComboBox Canvas.Left="805" Canvas.Top="308" Width="85" Height="16" Margin="0 0 0 0" Name="addressFollowBox">
+      <ComboBoxItem>(None)</ComboBoxItem>
+      <ComboBoxItem>A0</ComboBoxItem>
+      <ComboBoxItem>A1</ComboBoxItem>
+      <ComboBoxItem>A2</ComboBoxItem>
+      <ComboBoxItem>A3</ComboBoxItem>
+      <ComboBoxItem>A4</ComboBoxItem>
+      <ComboBoxItem>A5</ComboBoxItem>
+      <ComboBoxItem>A6</ComboBoxItem>
+      <ComboBoxItem>SP</ComboBoxItem>
+      <ComboBoxItem>SSP</ComboBoxItem>
+      <ComboBoxItem>D0</ComboBoxItem>
+      <ComboBoxItem>D1</ComboBoxItem>
+      <ComboBoxItem>D2</ComboBoxItem>
+      <ComboBoxItem>D3</ComboBoxItem>
+      <ComboBoxItem>D4</ComboBoxItem>
+      <ComboBoxItem>D5</ComboBoxItem>
+      <ComboBoxItem>D6</ComboBoxItem>
+      <ComboBoxItem>D7</ComboBoxItem>
+      <ComboBoxItem>PC</ComboBoxItem>
+    </ComboBox>
+    <Button Canvas.Left="865" Canvas.Top="283" Width="69" Height="19" Margin="0 0 0 0" Name="btnDisassemble" Click="btnDisassemble_Click">Disassemble</Button>
+    <Canvas Canvas.Left="883" Canvas.Top="228" Width="34" Height="8" Margin="0 0 0 0" Name="picDisk" />
+    <Canvas Canvas.Left="883" Canvas.Top="213" Width="34" Height="8" Margin="0 0 0 0" Name="picPower" />
+    <Button Canvas.Left="865" Canvas.Top="152" Width="52" Height="19" Margin="0 0 0 0" Name="btnStepOver" Click="btnStepOver_Click">Step Over</Button>
+    <Button Canvas.Left="805" Canvas.Top="283" Width="52" Height="19" Margin="0 0 0 0" Name="btnRefresh" Click="btnRefresh_Click">Refresh</Button>
+    <Button Canvas.Left="804" Canvas.Top="228" Width="52" Height="19" Margin="0 0 0 0" Name="btnReset" Click="btnReset_Click">Reset</Button>
+    <Button Canvas.Left="804" Canvas.Top="203" Width="52" Height="19" Margin="0 0 0 0" Name="btnGo" Click="btnGo_Click">Go</Button>
+    <Button Canvas.Left="804" Canvas.Top="177" Width="52" Height="19" Margin="0 0 0 0" Name="btnStop" Click="btnStop_Click">Stop</Button>
+    <Button Canvas.Left="804" Canvas.Top="152" Width="52" Height="19" Margin="0 0 0 0" Name="btnStep" Click="btnStep_Click">Step</Button>
+    <ListBox Canvas.Left="804" Canvas.Top="10" Width="128" Height="126" Margin="0 0 0 0" Name="lbRegisters" />
+  </Canvas>
+</Window>
