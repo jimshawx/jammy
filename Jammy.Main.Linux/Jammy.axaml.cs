@@ -43,11 +43,16 @@ namespace Jammy.Main.Linux
 					new AddressRange(0xfc0000, 0x40000)
 				};
 
+		public Jammy()
+		{
+			InitializeComponent();
+		}
+
 		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger, IAnalysis analysis,
 			IFlowAnalyser flowAnalyser, /*IGraph graph,*/ IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
 			IChipRAM chipRAM, /*ILogger<GfxScan> gfxLogger,*/ /*ILogger<StringScan> stringLogger,*/ IMemoryMapper memoryMapper,
 			/*ILogger<DMAExplorer> dmaLogger,*/ IInstructionAnalysisDatabase instructionAnalysisDatabase,
-			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
+			ILogger<Jammy> logger, IOptions<EmulationSettings> options) : this()
 		{
 			this.emulation = emulation;
 			this.disassembly = disassembly;
@@ -58,8 +63,6 @@ namespace Jammy.Main.Linux
 			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
 			//this.graph = graph;
 			this.logger = logger;
-
-			InitializeComponent();
 
 			settings = options.Value;
 
