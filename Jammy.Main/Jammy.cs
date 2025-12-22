@@ -31,6 +31,7 @@ using Jammy.Core.Memory;
 using Jammy.Debugger;
 using Jammy.Graph;
 using Jammy.Core.Debug;
+using Parky.FormToAvalonia;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -97,6 +98,7 @@ namespace Jammy.Main
 
 			InitializeComponent();
 			//DarkMode.Apply(this);
+			//Av.Convert(this);
 
 			addressFollowBox.SelectedIndex = 0;
 			cbTypes.SelectedIndex = 0;
