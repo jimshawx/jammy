@@ -1111,7 +1111,9 @@ namespace Jammy.Main
 
 		private void btnReadyDisk_Click(object sender, EventArgs e)
 		{
+			Amiga.LockEmulation();
 			debugger.ReadyDisk();
+			Amiga.UnlockEmulation();
 		}
 
 		private void lbIntvec_MouseDoubleClick(object sender, MouseEventArgs e)
