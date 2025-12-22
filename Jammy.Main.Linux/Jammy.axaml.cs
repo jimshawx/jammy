@@ -14,6 +14,8 @@ using Jammy.Types;
 using Jammy.Types.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ReactiveUI;
+using System.Reactive;
 using System.Web;
 
 namespace Jammy.Main.Linux
@@ -65,6 +67,9 @@ namespace Jammy.Main.Linux
 			this.logger = logger;
 
 			settings = options.Value;
+
+			menuMemory_ItemClickedEvent = ReactiveCommand.Create<string>(menuMemory_ItemClicked);
+			menuDisassembly_ItemClickedEvent = ReactiveCommand.Create<string>(menuDisassembly_ItemClicked);
 
 			disassemblyOptions = new DisassemblyOptions { IncludeBytes = true, IncludeBreakpoints = true, IncludeComments = true, Full32BitAddress = settings.AddressBits > 24 };
 
@@ -460,12 +465,74 @@ namespace Jammy.Main.Linux
 			Amiga.SetEmulationMode(EmulationMode.Running, true);
 			Amiga.UnlockEmulation();
 		}
+
 		private void btnDisassemble_Click(object sender, RoutedEventArgs e)
 		{
 			FetchUI(FetchUIFlags.All);
 			UpdateDisassembly();
 			SetSelection();
 			UpdateDisplay();
+		}
+
+		public ReactiveCommand<string, Unit> menuMemory_ItemClickedEvent {  get; }
+
+		private void menuMemory_ItemClicked(string e)
+		{
+			if (e == "menuMemoryGotoItem")
+			{
+				//var gotoForm = new GoTo();
+				//var res = gotoForm.ShowDialog();
+				//if (res == DialogResult.OK)
+				//{
+				//	uint address = gotoForm.GotoLocation;
+				//}
+			}
+			else if (e == "menuMemoryFindItem")
+			{
+				//var findForm = new Find();
+				//var res = findForm.ShowDialog();
+				//if (res == DialogResult.OK)
+				//{
+				//	if (findForm.SearchText != null)
+				//	{
+				//		uint address = debugger.FindMemoryText(findForm.SearchText);
+				//		if (address != 0)
+				//			JumpToMemoryAddress(address);
+				//	}
+				//	if (findForm.SearchSeq != null)
+				//	{
+				//		uint address = debugger.FindMemory(findForm.SearchSeq);
+				//		if (address != 0)
+				//			JumpToMemoryAddress(address);
+				//	}
+				//}
+			}
+		}
+
+		private void JumpToMemoryAddress(uint address)
+		{
+			//make sure the text is available in the memory dump
+			memoryDumpRanges.Add(new AddressRange(address, 256));
+
+			Amiga.LockEmulation();
+			var memory = debugger.GetMemory();
+
+			//make sure the text is available in the memory dump
+			var memoryText = memory.GetString(memoryDumpRanges);
+			memoryDumpView = new MemoryDumpView(memory, memoryText);
+
+			int gotoLine = memory.AddressToLine(address);
+			Amiga.UnlockEmulation();
+
+			txtMemory.SuspendLayout();
+			txtMemory.Text = memoryDumpView.Text;
+			txtMemory.SelectionStart = txtMemory.GetFirstCharIndexFromLine(gotoLine);
+			txtMemory.ScrollToCaret();
+			txtMemory.Select(txtMemory.GetFirstCharIndexFromLine(gotoLine),
+				txtMemory.GetFirstCharIndexFromLine(gotoLine + 1) - txtMemory.GetFirstCharIndexFromLine(gotoLine));
+			txtMemory.Invalidate();
+			txtMemory.ResumeLayout();
+			txtMemory.Update();
 		}
 
 		private void btnCIAInt_Click(object sender, RoutedEventArgs e)
@@ -531,6 +598,111 @@ namespace Jammy.Main.Linux
 			if (cbIRQ.Text == "VERTB") debugger.INTDIS(Core.Types.Interrupt.VERTB);
 			if (cbIRQ.Text == "SOFTINT") debugger.INTDIS(Core.Types.Interrupt.SOFTINT);
 			Amiga.UnlockEmulation();
+		}
+
+		private int lastFound = -1;
+		private string lastText = string.Empty;
+
+		public ReactiveCommand<string, Unit> menuDisassembly_ItemClickedEvent { get; }
+
+		private void menuDisassembly_ItemClicked(string e)
+		{
+			uint pc;
+			//{
+			//	var mouse = this.PointToClient(ctx.Location);
+			//	logger.LogTrace($"ctx {mouse.X} {mouse.Y}");
+			//	int c = txtDisassembly.GetCharIndexFromPosition(mouse);
+			//	logger.LogTrace($"char {c}");
+			//	int line = txtDisassembly.GetLineFromCharIndex(c) - 1;
+			//	logger.LogTrace($"line {line}");
+			//	pc = disassemblyView.GetLineAddress(line);
+			//	logger.LogTrace($"PC {pc:X8}");
+			//}
+
+			if (e == "toolStripBreakpoint")
+			{
+				//logger.LogTrace($"BP {pc:X8}");
+				//Amiga.LockEmulation();
+				//debugger.ToggleBreakpoint(pc);
+				//Amiga.UnlockEmulation();
+			}
+			else if (e == "toolStripSkip")
+			{
+				//logger.LogTrace($"SKIP {pc:X8}");
+				//Amiga.LockEmulation();
+				//debugger.SetPC(pc);
+				//Amiga.UnlockEmulation();
+			}
+			else if (e == "toolStripGoto")
+			{
+				//var gotoForm = new GoTo();
+				//var res = gotoForm.ShowDialog();
+				//if (res == DialogResult.OK)
+				//{
+				//	uint address = gotoForm.GotoLocation;
+				//	int gotoLine = disassemblyView.GetAddressLine(address);
+				//	txtDisassembly.SuspendLayout();
+				//	txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, gotoLine - 5));
+				//	txtDisassembly.ScrollToCaret();
+				//	txtDisassembly.Select(txtDisassembly.GetFirstCharIndexFromLine(gotoLine),
+				//		txtDisassembly.GetFirstCharIndexFromLine(gotoLine + 1) - txtDisassembly.GetFirstCharIndexFromLine(gotoLine));
+				//	txtDisassembly.Invalidate();
+				//	txtDisassembly.ResumeLayout();
+				//	txtDisassembly.Update();
+				//}
+			}
+			else if (e == "toolStripFind")
+			{
+				//var findForm = new Find();
+				//findForm.radioFindByte.Enabled
+				//	= findForm.radioFindWord.Enabled
+				//	= findForm.radioFindLong.Enabled = false;
+				//findForm.radioFindText.Checked = true;
+				//var res = findForm.ShowDialog();
+				//if (res == DialogResult.OK)
+				//{
+				//	if (findForm.SearchText != null)
+				//	{
+				//		lastText = findForm.SearchText;
+				//		lastFound = txtDisassembly.Find(findForm.SearchText, 0, RichTextBoxFinds.NoHighlight);
+				//		if (lastFound != -1)
+				//		{
+				//			txtDisassembly.ReallySuspendLayout();
+				//			txtDisassembly.DeselectAll();
+				//			txtDisassembly.SelectionStart = lastFound;
+				//			txtDisassembly.ScrollToCaret();
+				//			txtDisassembly.ReallyResumeLayout();
+				//			txtDisassembly.Refresh();
+				//		}
+				//	}
+				//	return;
+				//}
+			}
+			else if (e == "toolStripFindNext")
+			{
+				//if (lastFound == -1)
+				//	return;
+				//lastFound = txtDisassembly.Find(lastText, lastFound + 1, RichTextBoxFinds.NoHighlight);
+				//for (int i = 0; i < 2; i++)
+				//{
+				//	if (lastFound != -1)
+				//	{
+				//		txtDisassembly.ReallySuspendLayout();
+				//		txtDisassembly.DeselectAll();
+				//		txtDisassembly.SelectionStart = lastFound;
+				//		txtDisassembly.ScrollToCaret();
+				//		txtDisassembly.ReallyResumeLayout();
+				//		txtDisassembly.Refresh();
+				//		return;
+				//	}
+				//	lastFound = txtDisassembly.Find(lastText, 0, RichTextBoxFinds.NoHighlight);
+				//}
+			}
+
+			FetchUI(FetchUIFlags.All);
+			//UpdateDisassembly();
+			SetSelection();
+			UpdateDisplay();
 		}
 
 		private void btnDumpTrace_Click(object sender, RoutedEventArgs e)
@@ -647,7 +819,23 @@ namespace Jammy.Main.Linux
 		{
 		}
 
+		public static void SuspendLayout(this TextBox txtBox)
+		{
+		}
+
+		public static void ResumeLayout(this TextBox txtBox)
+		{
+		}
+
 		public static void Refresh(this TextBox txtBox)
+		{
+		}
+
+		public static void Invalidate(this TextBox txtBox)
+		{
+		}
+
+		public static void Update(this TextBox txtBox)
 		{
 		}
 

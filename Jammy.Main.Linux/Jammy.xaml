@@ -1,11 +1,12 @@
-<Window xmlns="https://github.com/avaloniaui"
+<local:Jammy xmlns="https://github.com/avaloniaui"
 	 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	 xmlns:local="clr-namespace:Jammy.Main.Linux"
 		Title="Jammy"
 		x:Class="Jammy.Main.Linux.Jammy"
 		FontSize="9">
   <Canvas Width="1094" Height="544">
     <Button Canvas.Left="1045" Canvas.Top="481" Width="31" Height="18" Margin="0 0 0 0" Name="btnGenDisassemblies" Click="btnGenDisassemblies_Click">Dis</Button>
-    <TextBox Canvas.Left="939" Canvas.Top="191" Width="131" Height="23" Margin="0 0 0 0" Name="tbClock" AcceptsReturn="True" Text="" />
+    <TextBox Canvas.Left="939" Canvas.Top="191" Width="131" Height="23" Margin="0 0 0 0" Name="tbClock" Text="" IsReadOnly="True"/>
     <Button Canvas.Left="986" Canvas.Top="457" Width="69" Height="18" Margin="0 0 0 0" Name="btnDMAExplorer" Click="btnDMAExplorer_Click">DMA Explorer</Button>
     <Button Canvas.Left="805" Canvas.Top="258" Width="52" Height="19" Margin="0 0 0 0" Name="btnAnalyseFlow" Click="btnAnalyseFlow_Click">Analyse</Button>
     <Button Canvas.Left="921" Canvas.Top="457" Width="61" Height="19" Margin="0 0 0 0" Name="btnStringScan" Click="btnStringScan_Click">String Scan</Button>
@@ -16,11 +17,27 @@
       <Panel Grid.Column="0" HorizontalAlignment="Stretch" Height="515">
         <Grid Canvas.Left="0" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="splitContainer1" RowDefinitions="*,4,*">
           <Panel Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <TextBox Canvas.Left="2" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="txtDisassembly" />
+            <TextBox Canvas.Left="2" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="txtDisassembly" IsReadOnly="True">
+				<TextBox.ContextMenu>
+					<ContextMenu>
+						<MenuItem Header="Breakpoint" Command="{Binding $parent[Window].menuDisassembly_ItemClickedEvent}" CommandParameter="toolStripBreakpoint" />
+						<MenuItem Header="Skip" Command="{Binding $parent[Window].menuDisassembly_ItemClickedEvent}" CommandParameter="toolStripSkip"/> 
+						<MenuItem Header="Go To..." Command="{Binding $parent[Window].menuDisassembly_ItemClickedEvent}" CommandParameter="toolStripGoto"/> 
+						<MenuItem Header="Find..." Command="{Binding $parent[Window].menuDisassembly_ItemClickedEvent}" CommandParameter="toolStripFind"/> 
+						<MenuItem Header="Find Next" Command="{Binding $parent[Window].menuDisassembly_ItemClickedEvent}" CommandParameter="toolStripFindNext"/> 
+					</ContextMenu> </TextBox.ContextMenu>
+				</TextBox>
           </Panel>
           <GridSplitter Grid.Row="1" Height="4" ResizeDirection="Rows" />
           <Panel Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <TextBox Canvas.Left="2" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="txtMemory" />
+            <TextBox Canvas.Left="2" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="txtMemory" IsReadOnly="True">
+				<TextBox.ContextMenu>
+					<ContextMenu>
+						<MenuItem Header="Go To..." Command="{Binding $parent[Window].menuMemory_ItemClickedEvent}" CommandParameter="menuMemoryGotoItem"/> 
+						<MenuItem Header="Find..." Command="{Binding $parent[Window].menuMemory_ItemClickedEvent}" CommandParameter="menuMemoryFindItem"/> 
+					</ContextMenu>
+				</TextBox.ContextMenu>
+			</TextBox>
           </Panel>
         </Grid>
       </Panel>
@@ -29,7 +46,7 @@
         <TabControl Canvas.Left="3" Canvas.Top="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="tabControl1">
           <TabItem Header="Copper" >
             <Panel Canvas.Left="3" Canvas.Top="15" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="379">
-              <TextBox Canvas.Left="1" Canvas.Top="1"  HorizontalAlignment="Stretch" Height="376" Margin="0 0 0 0" Name="txtCopper" />
+              <TextBox Canvas.Left="1" Canvas.Top="1"  HorizontalAlignment="Stretch" Height="376" Margin="0 0 0 0" Name="txtCopper" IsReadOnly="True" />
             </Panel>
           </TabItem>
           <TabItem Header="Object" >
@@ -50,7 +67,7 @@
           </TabItem>
           <TabItem Header="Vectors" >
             <Panel Canvas.Left="3" Canvas.Top="15" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="379">
-              <TextBox Canvas.Left="1" Canvas.Top="1"  HorizontalAlignment="Stretch" Height="376" Margin="0 0 0 0" Name="txtVectors" />
+              <TextBox Canvas.Left="1" Canvas.Top="1"  HorizontalAlignment="Stretch" Height="376" Margin="0 0 0 0" Name="txtVectors" IsReadOnly="True" />
             </Panel>
           </TabItem>
         </TabControl>
@@ -128,4 +145,4 @@
     <Button Canvas.Left="804" Canvas.Top="152" Width="52" Height="19" Margin="0 0 0 0" Name="btnStep" Click="btnStep_Click">Step</Button>
     <ListBox Canvas.Left="804" Canvas.Top="10" Width="128" Height="126" Margin="0 0 0 0" Name="lbRegisters" />
   </Canvas>
-</Window>
+</local:Jammy>
