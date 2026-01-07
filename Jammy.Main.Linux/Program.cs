@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Logging;
 using Avalonia.Styling;
 using Avalonia.Themes.Simple;
 using Jammy.Core;
@@ -70,7 +71,8 @@ public class Program
 	public static AppBuilder BuildAvaloniaApp() =>
 		AppBuilder.Configure<JammyApplication>()
 			.UsePlatformDetect()
-			//.LogToTrace(LogEventLevel.Verbose)
+			.UseSkia()
+			// .LogToTrace(LogEventLevel.Verbose)
 			.UseReactiveUI();
 
 	static void Main(string[] args)
@@ -147,7 +149,10 @@ public class Program
 			//.AddSingleton<IEmulationWindow, Core.EmulationWindow.DX.EmulationWindow>()
 			//.AddSingleton<IEmulationWindow, Core.EmulationWindow.DIB.EmulationWindow>()
 			//.AddSingleton<IEmulationWindow, Core.EmulationWindow.Window.EmulationWindow>()
-			.AddSingleton<IEmulationWindow, Core.EmulationWindow.X.EmulationWindow>()
+
+			//.AddSingleton<IEmulationWindow, Core.EmulationWindow.X.EmulationWindow>()
+			.AddSingleton<IEmulationWindow, Core.EmulationWindow.Wayland.EmulationWindow>()
+
 			.AddSingleton<IEmulation, Emulation>()
 			.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 			.AddSingleton<IDiskAnalysis, DiskAnalysis>()

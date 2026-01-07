@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="../Jammy.Core.EmulationWindow.Wayland/Jammy.Core.EmulationWindow.Wayland.csproj" />
     <ProjectReference Include="..\Jammy.AmigaTypes\Jammy.AmigaTypes.csproj" />
     <ProjectReference Include="..\Jammy.Core.Audio.Linux\Jammy.Core.Audio.Linux.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj" />
@@ -48,6 +49,7 @@
 <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.10" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.10" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.10" />
     <PackageReference Include="Avalonia.Themes.Simple" Version="11.3.10" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.1" />

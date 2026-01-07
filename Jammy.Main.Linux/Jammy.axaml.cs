@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Rendering;
 using Jammy.Core;
 using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
@@ -65,6 +66,9 @@ namespace Jammy.Main.Linux
 			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
 			//this.graph = graph;
 			this.logger = logger;
+
+			var renderer = ((IRenderRoot)this).Renderer;
+			logger.LogTrace($"Using Avalonia Renderer: {renderer.GetType().FullName}");
 
 			settings = options.Value;
 
