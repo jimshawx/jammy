@@ -115,18 +115,52 @@ namespace Parky.Logging
 		public TerminalLoggerReader(ConcurrentQueue<DbMessage> messageQueue)
 		{
 			string fileName = "jammy-"+Path.ChangeExtension(Path.GetRandomFileName(), "log");
-			string tmpFile = Path.Combine("/tmp", fileName);
+			string tmpFile;
+			try { 
+			tmpFile = Path.Combine("/tmp", fileName);
 			logfile = File.OpenWrite(tmpFile);
+			}
+			catch { }
+			try
+			{
+				tmpFile = Environment.ExpandEnvironmentVariables(Path.Combine(@"%TEMP%", fileName));
+				logfile = File.OpenWrite(tmpFile);
+			}
+			catch
+			{
+				Trace.WriteLine("Couldn't open a tmp log file, failed");
+				return;
+			}
+			
 			var writer = new StreamWriter(logfile) { AutoFlush = true };
 
 			int parentPid = Process.GetCurrentProcess().Id;
-			var psi = new ProcessStartInfo
-			{
-				FileName = "xterm",
-				Arguments = $"-bg black -fg white -geometry 120x32 -e bash -c \"(while kill -0 {parentPid} 2>/dev/null; do sleep 1; done; kill $$) & tail -f {tmpFile}\"",
-				UseShellExecute = false
-			};
-			xterm = Process.Start(psi);
+
+			(string cmd, string arg)[] terminals = [
+				("konsole", "--separate --geometry 120x32"),
+				("xfce4-terminal", "--geometry=120x32"),
+				("lxterminal", "--geometry=120x32"),
+				("gnome-terminal", "--geometry=120x32" ),
+				("xterm", "-bg black -fg white -geometry 120x32") ];
+			xterm = null;
+
+			foreach (var terminal in terminals)
+			{ 
+				try
+				{ 
+					var psi = new ProcessStartInfo
+					{
+						FileName = terminal.cmd,
+						Arguments = $"{terminal.arg} -e bash -c \"(while kill -0 {parentPid} 2>/dev/null; do sleep 1; done; kill $$) & tail -f {tmpFile}\"",
+						UseShellExecute = false
+					};
+					xterm = Process.Start(psi);
+					Trace.WriteLine($"Running {terminal.arg} terminal");
+				}
+				catch { /* Ignore and try next terminal */ }
+			}
+			if (xterm == null)
+				Trace.WriteLine($"Can't find a terminal, try 'tail -f {tmpFile}'");
 
 			cancellation = new CancellationTokenSource();
 			readerTask = new Task(() =>
