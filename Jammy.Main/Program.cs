@@ -40,6 +40,8 @@ using System.Windows.Forms;
 using Jammy.NativeOverlay.Overlays;
 using Jammy.Core.Floppy.IPF;
 using Jammy.Core.CDROM;
+using Jammy.Database;
+using Label = Jammy.Database.Label;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -283,6 +285,10 @@ namespace Jammy.Main
 			foreach (var x in types)
 				services.AddSingleton(y => (IStatePersister)y.GetRequiredService(x.ServiceType));
 			
+			services.AddSingleton<IUpgradeDatabase, UpgradeDatabase>();
+			services.AddSingleton<IDataAccess, DataAccess>();
+			services.AddSingleton<ILabelDao, LabelDao>();
+
 			var serviceProvider = services.BuildServiceProvider();
 
 			var audio = serviceProvider.GetRequiredService<IAudio>();

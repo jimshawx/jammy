@@ -37,6 +37,7 @@
     <ProjectReference Include="..\Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj" />
     <ProjectReference Include="..\Jammy.Core.Persistence\Jammy.Core.Persistence.csproj" />
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
+    <ProjectReference Include="..\Jammy.Database\Jammy.Database.csproj" />
     <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
     <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
     <ProjectReference Include="..\Jammy.Extensions.Windows\Jammy.Extensions.Windows.csproj" />

@@ -93,6 +93,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parky.FormToAvalonia", "Par
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Core.EmulationWindow.Wayland", "Jammy.Core.EmulationWindow.Wayland\Jammy.Core.EmulationWindow.Wayland.csproj", "{73768F02-1380-43F0-A6F7-C403DD78CC5F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Database", "Jammy.Database\Jammy.Database.csproj", "{A6D29B13-6CB9-4AC1-934F-E99EAE786367}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -279,6 +281,10 @@ Global
 		{73768F02-1380-43F0-A6F7-C403DD78CC5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73768F02-1380-43F0-A6F7-C403DD78CC5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73768F02-1380-43F0-A6F7-C403DD78CC5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6D29B13-6CB9-4AC1-934F-E99EAE786367}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6D29B13-6CB9-4AC1-934F-E99EAE786367}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6D29B13-6CB9-4AC1-934F-E99EAE786367}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6D29B13-6CB9-4AC1-934F-E99EAE786367}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
