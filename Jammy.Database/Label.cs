@@ -13,6 +13,7 @@ namespace Jammy.Database
 
 	public class LabelSearch : Search
 	{
+		public string Name { get; set; }
 	}
 
 	public interface ILabelDao : IDao<Label, LabelSearch>
@@ -25,24 +26,29 @@ namespace Jammy.Database
 		{
 		}
 
-		public override List<Label> Search(LabelSearch seatch)
+		public override List<Label> Search(LabelSearch search)
 		{
-			return dataAccess.Connection.Query<Label>("select * from jammylabel").AsList();
+			var where = AddBaseSearch(search);
+			if (search.Name != null)
+				where.Add("name = @Name");
+
+			return dataAccess.Connection.Query<Label>($"select * from jammylabel {WhereClause(where)}").AsList();
 		}
 
 		public override void Save(Label item)
 		{
-			dataAccess.Connection.Execute("insert into jammylabel (id) values (@Id)", item);
+			dataAccess.Connection.Execute("insert into jammylabel (id, name) values (@Id, @Name)", item);
 		}
 
 		public override void SaveOrUpdate(Label item)
 		{
 			if (Get(item.Id) != null)
 			{
-				dataAccess.Connection.Execute("update jammylabel set id = (@Id) where id = {@Id}", item);
+				dataAccess.Connection.Execute("update jammylabel set name = (@Name) where id = {@Id}", item);
 				return;
 			}
-			dataAccess.Connection.Execute("insert into jammylabel (id) values (@Id)", item);
+			Save(item);
 		}
 	}
 }
+

@@ -1,5 +1,4 @@
 ﻿using DbUp;
-using Microsoft.Data.Sqlite;
 using System.Reflection;
 
 /*
@@ -14,16 +13,9 @@ namespace Jammy.Database
 
 	public class UpgradeDatabase : IUpgradeDatabase
 	{
-		public UpgradeDatabase()
+		public UpgradeDatabase(IDatabaseConnection connection)
 		{
-			string connectionString = new SqliteConnectionStringBuilder
-			{
-				DataSource = "testing.db",
-				Mode = SqliteOpenMode.ReadWriteCreate,
-				Cache = SqliteCacheMode.Shared,
-			}.ToString();
-
-			var upgradeEngine = DeployChanges.To.SqliteDatabase(connectionString)
+			var upgradeEngine = DeployChanges.To.SqliteDatabase(connection.ConnectionString)
 				.WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
 				.LogToTrace()
 				.Build();

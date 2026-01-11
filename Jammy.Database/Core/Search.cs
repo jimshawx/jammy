@@ -6,12 +6,11 @@ namespace Jammy.Database.Core
 {
 	public interface ISearch
 	{
-		Guid Id { get; set; }
+		Guid? Id { get; set; }
 	}
 
 	public class Search : ISearch
 	{
-		public Guid Id { get; set; }
+		public Guid? Id { get; set; }
 	}
-
 }

@@ -285,6 +285,7 @@ namespace Jammy.Main
 			foreach (var x in types)
 				services.AddSingleton(y => (IStatePersister)y.GetRequiredService(x.ServiceType));
 			
+			services.AddSingleton<IDatabaseConnection>(x => new DatabaseConnection("testing.db"));
 			services.AddSingleton<IUpgradeDatabase, UpgradeDatabase>();
 			services.AddSingleton<IDataAccess, DataAccess>();
 			services.AddSingleton<ILabelDao, LabelDao>();

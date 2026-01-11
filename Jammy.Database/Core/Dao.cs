@@ -35,8 +35,20 @@ namespace Jammy.Database.Core
 
 		public abstract void SaveOrUpdate(T item);
 
-		public void AddBaseSearch(U search)
+		protected List<string> AddBaseSearch(U search)
 		{
+			var where = new List<string>();
+			if (search.Id != null)
+				where.Add("id = @Id");
+			return where;
+		}
+
+		protected string WhereClause(List<string> where)
+		{
+			if (where.Count == 0)
+				return string.Empty;
+
+			return "where " + string.Join(" and ", where);
 		}
 	}
 }

@@ -7,6 +7,26 @@ using Microsoft.Data.Sqlite;
 
 namespace Jammy.Database
 {
+	public interface IDatabaseConnection
+	{
+		string ConnectionString { get; }
+	}
+
+	public class DatabaseConnection : IDatabaseConnection
+	{
+		public string ConnectionString { get; }
+
+		public DatabaseConnection(string databaseFileName)
+		{
+			ConnectionString = new SqliteConnectionStringBuilder
+			{
+				DataSource = databaseFileName,
+				Mode = SqliteOpenMode.ReadWriteCreate,
+				Cache = SqliteCacheMode.Shared,
+			}.ToString();
+		}
+	}
+
 	public interface IDataAccess
 	{
 		IDbConnection Connection { get; }
@@ -16,16 +36,9 @@ namespace Jammy.Database
 	{
 		public IDbConnection Connection { get; }
 
-		public DataAccess(IUpgradeDatabase upgraded)
+		public DataAccess(IUpgradeDatabase upgraded, IDatabaseConnection connection)
 		{
-			string connectionString = new SqliteConnectionStringBuilder
-			{
-				DataSource = "testing.db",
-				Mode = SqliteOpenMode.ReadWriteCreate,
-				Cache = SqliteCacheMode.Shared,
-			}.ToString();
-
-			Connection = new SqliteConnection(connectionString);
+			Connection = new SqliteConnection(connection.ConnectionString);
 			Connection.Open();
 		}
 	}
