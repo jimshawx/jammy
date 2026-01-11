@@ -1,10 +1,12 @@
 ﻿/*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
+
+using Jammy.Database.Types;
 
 namespace Jammy.Types
 {
-	public class Label
+	public class Label : BaseDbObject
 	{
 		public Label( uint address, string name)
 		{

@@ -4,5 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />
+    <ProjectReference Include="..\Jammy.Database.Types\Jammy.Database.Types.csproj" />
   </ItemGroup>
 </Project>

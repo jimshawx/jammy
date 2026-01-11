@@ -41,7 +41,6 @@ using Jammy.NativeOverlay.Overlays;
 using Jammy.Core.Floppy.IPF;
 using Jammy.Core.CDROM;
 using Jammy.Database;
-using Label = Jammy.Database.Label;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -285,12 +284,18 @@ namespace Jammy.Main
 			foreach (var x in types)
 				services.AddSingleton(y => (IStatePersister)y.GetRequiredService(x.ServiceType));
 			
+			//set up the database access
 			services.AddSingleton<IDatabaseConnection>(x => new DatabaseConnection("testing.db"));
 			services.AddSingleton<IUpgradeDatabase, UpgradeDatabase>();
 			services.AddSingleton<IDataAccess, DataAccess>();
 			services.AddSingleton<ILabelDao, LabelDao>();
 
 			var serviceProvider = services.BuildServiceProvider();
+
+			//var labelDao = serviceProvider.GetRequiredService<ILabelDao>();
+			//var s = new LabelSearch();
+			//s.AddressRange.StartAddress = 0;
+			//var labels = labelDao.Search(s);
 
 			var audio = serviceProvider.GetRequiredService<IAudio>();
 			var dma = serviceProvider.GetRequiredService<IDMA>();
