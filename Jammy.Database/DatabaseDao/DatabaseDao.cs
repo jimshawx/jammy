@@ -36,18 +36,15 @@ namespace Jammy.Database.DatabaseDao
 
 		public override void Save(Types.Database item)
 		{
+			base.Save(item);
 			dataAccess.Connection.Execute($"insert into {tableName} (id, name, time) values (@Id, @Name, julianday('now'))", item);
 		}
 
-		public override void SaveOrUpdate(Types.Database item)
+		public override bool SaveOrUpdate(Types.Database item)
 		{
-			if (Get(item.Id) != null)
-			{
+			if (!base.SaveOrUpdate(item))
 				dataAccess.Connection.Execute($"update {tableName} set (name, time) = (@Name, julianday('now')) where id = @Id", item);
-				return;
-			}
-			Save(item);
+			return false;
 		}
 	}
 }
-

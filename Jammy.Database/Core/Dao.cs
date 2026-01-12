@@ -12,7 +12,7 @@ namespace Jammy.Database.Types
 	{
 		List<T> Search(U seatch);
 		void Save(T item);
-		void SaveOrUpdate(T item);
+		bool SaveOrUpdate(T item);
 		T Get(Guid id);
 	}
 
@@ -40,9 +40,20 @@ namespace Jammy.Database.Types
 
 		public abstract List<T> Search(U search);
 
-		public abstract void Save(T item);
+		public virtual void Save(T item)
+		{
+			EnsureId(item);
+		}
 
-		public abstract void SaveOrUpdate(T item);
+		public virtual bool SaveOrUpdate(T item)
+		{
+			if (item.Id == Guid.Empty || Get(item.Id) == null)
+			{
+				Save(item);
+				return true;
+			}
+			return false;
+		}
 
 		protected List<string> AddBaseSearch(U search)
 		{
@@ -58,6 +69,12 @@ namespace Jammy.Database.Types
 				return string.Empty;
 
 			return "where " + string.Join(" and ", where);
+		}
+
+		private void EnsureId(T item)
+		{
+			if (item.Id == Guid.Empty)
+				item.Id = Guid.NewGuid();
 		}
 	}
 

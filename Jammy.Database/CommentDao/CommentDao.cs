@@ -25,8 +25,8 @@ namespace Jammy.Database.CommentDao
 		public override List<Comment> Search(CommentSearch search)
 		{
 			var where = AddBaseSearch(search);
-			if (search.Name != null)
-				where.Add("name = @Name");
+			if (search.Text != null)
+				where.Add("text = @Text");
 			if (search.AddressRange.StartAddress.HasValue)
 				where.Add("address >= @StartAddress");
 			if (search.AddressRange.EndAddress.HasValue)
@@ -42,18 +42,15 @@ namespace Jammy.Database.CommentDao
 
 		public override void Save(Comment item)
 		{
-			dataAccess.Connection.Execute($"insert into {tableName} (id, name, time) values (@Id, @Name, julianday('now'))", item);
+			base.Save(item);
+			dataAccess.Connection.Execute($"insert into {tableName} (id, dbid, text, address, time) values (@Id, @DbId, @Text, @Address, julianday('now'))", item);
 		}
 
-		public override void SaveOrUpdate(Comment item)
+		public override bool SaveOrUpdate(Comment item)
 		{
-			if (Get(item.Id) != null)
-			{
-				dataAccess.Connection.Execute($"update {tableName} set (name, time) = (@Name, julianday('now')) where id = @Id", item);
-				return;
-			}
-			Save(item);
+			if (!base.SaveOrUpdate(item))
+				dataAccess.Connection.Execute($"update {tableName} set (text, address, time) = (@Text, @Address, julianday('now')) where id = @Id", item);
+			return false;
 		}
 	}
 }
-

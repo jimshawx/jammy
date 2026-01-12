@@ -53,7 +53,7 @@ create table comment (
 	id text primary key,
 	dbid text,
 	address uint not null,
-	comment text not null,
+	text text not null,
 	time real not null,
 	foreign key(dbid) references database (id)
 );

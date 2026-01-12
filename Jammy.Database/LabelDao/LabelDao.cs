@@ -42,17 +42,15 @@ namespace Jammy.Database.LabelDao
 
 		public override void Save(Label item)
 		{
-			dataAccess.Connection.Execute($"insert into {tableName} (id, name, time) values (@Id, @Name, julianday('now'))", item);
+			base.Save(item);
+			dataAccess.Connection.Execute($"insert into {tableName} (id, dbid, name, address, time) values (@Id, @DbId, @Name, @Address, julianday('now'))", item);
 		}
 
-		public override void SaveOrUpdate(Label item)
+		public override bool SaveOrUpdate(Label item)
 		{
-			if (Get(item.Id) != null)
-			{
-				dataAccess.Connection.Execute($"update {tableName} set (name, time) = (@Name, julianday('now')) where id = @Id", item);
-				return;
-			}
-			Save(item);
+			if (!base.SaveOrUpdate(item))
+				dataAccess.Connection.Execute($"update {tableName} set (name, address, time) = (@Name, @Address, julianday('now')) where id = @Id", item);
+			return false;
 		}
 	}
 }

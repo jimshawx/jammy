@@ -8,7 +8,7 @@ namespace Jammy.Database.CommentDao
 {
 	public class CommentSearch : DbSearch
 	{
-		public string Name { get; set; }
+		public string Text { get; set; }
 		public AddressRange AddressRange { get; } = new AddressRange();
 	}
 }
