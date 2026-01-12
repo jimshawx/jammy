@@ -25,5 +25,7 @@ namespace Jammy.Interface
 		void SetLVO(string currentLib, LVOCollection lvoCollection);
 		bool OutOfMemtypeRange(uint address);
 		void ClearSomeAnalysis();
+		void SaveAnalysis();
+		void LoadAnalysis();
 	}
 }

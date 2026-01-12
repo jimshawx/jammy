@@ -1,9 +1,14 @@
 ﻿using Jammy.Core.Types;
+using Jammy.Database.CommentDao;
+using Jammy.Database.DatabaseDao;
+using Jammy.Database.HeaderDao;
+using Jammy.Database.LabelDao;
 using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
+using System.Linq;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -19,10 +24,23 @@ namespace Jammy.Disassembler.Analysers
 		private readonly MemType[][] memType = new MemType[MemTypeCollection.MEMTYPE_NUM_BLOCKS][];
 
 		private readonly EmulationSettings settings;
+		private readonly ILabelDao labelDao;
+		private readonly IHeaderDao headerDao;
+		private readonly ICommentDao commentDao;
+		private readonly IDatabaseDao databaseDao;
+		private readonly ILabeller labeller;
 
-		public Analysis(IOptions<EmulationSettings> settings, ILogger<Analyser> logger)
+		public Analysis(
+			ILabelDao labelDao, IHeaderDao headerDao, ICommentDao commentDao, IDatabaseDao databaseDao,
+			ILabeller labeller,
+			IOptions<EmulationSettings> settings, ILogger<Analyser> logger)
 		{
 			this.settings = settings.Value;
+			this.labelDao = labelDao;
+			this.headerDao = headerDao;
+			this.commentDao = commentDao;
+			this.databaseDao = databaseDao;
+			this.labeller = labeller;
 		}
 
 		public void ClearSomeAnalysis()
@@ -82,6 +100,11 @@ namespace Jammy.Disassembler.Analysers
 			headers[address].TextLines.Add(hdr);
 		}
 
+		public void AddHeader(Header header)
+		{
+			headers[header.Address] = header;
+		}
+
 		public void AddHeader(uint address, List<string> hdr)
 		{
 			if (!headers.ContainsKey(address))
@@ -136,5 +159,42 @@ namespace Jammy.Disassembler.Analysers
 		{
 			return false;
 		}
+
+		public void SaveAnalysis()
+		{
+			var database = databaseDao.Search(new DatabaseSearch { Name = "default"}).SingleOrDefault();
+			foreach (var comment in comments.Values)
+				comment.DbId = database.Id;
+			commentDao.Save(comments.Values.ToList());
+
+			foreach (var header in headers.Values)
+				header.DbId = database.Id;
+			headerDao.Save(headers.Values.ToList());
+
+			var labels = labeller.GetLabels().Values;
+			foreach (var label in labels)
+				label.DbId = database.Id;
+			labelDao.Save(labels.ToList());
+		}
+
+		public void LoadAnalysis()
+		{
+			var database = databaseDao.Search(new DatabaseSearch { Name = "default" }).SingleOrDefault();
+			var comments = commentDao.Search(new CommentSearch { DbId = database.Id });
+			foreach (var comment in comments)
+				AddComment(comment);
+			var headers = headerDao.Search(new HeaderSearch { DbId = database.Id });
+			foreach (var header in headers)
+				AddHeader(header);
+			var labels = labelDao.Search(new LabelSearch { DbId = database.Id });
+			foreach (var  label in labels)
+				labeller.AddLabel(label);
+		}
+		/*
+delete from comment where dbid = (select id from database where name = 'default');
+delete from label where dbid = (select id from database where name = 'default');
+delete from headerline where headerid in (select id from header where dbid = (select id from database where name = 'default'));
+delete from header where dbid = (select id from database where name = 'default');
+		*/
 	}
 }

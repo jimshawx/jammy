@@ -40,6 +40,11 @@ namespace Jammy.Database.DatabaseDao
 			dataAccess.Connection.Execute($"insert into {tableName} (id, name, time) values (@Id, @Name, julianday('now'))", item);
 		}
 
+		public override void Save(List<Types.Database> items)
+		{
+			throw new NotImplementedException();
+		}
+
 		public override bool SaveOrUpdate(Types.Database item)
 		{
 			if (!base.SaveOrUpdate(item))

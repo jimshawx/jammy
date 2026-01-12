@@ -47,6 +47,7 @@ namespace Jammy.Disassembler.Analysers
 			this.mem = mem;
 			this.disassembler = disassembler;
 			this.eaDatabase = eaDatabase;
+
 			diskAnalysis.Extract();
 			
 			LoadLVOs();
@@ -59,6 +60,8 @@ namespace Jammy.Disassembler.Analysers
 			LoadComments();
 
 			kickstartAnalysis.ShowRomTags();
+
+			analysis.SaveAnalysis();
 		}
 
 		public void UpdateAnalysis()

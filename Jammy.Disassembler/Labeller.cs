@@ -46,6 +46,11 @@ namespace Jammy.Disassembler
 			asmLabels[address] = new Label(address, name);
 		}
 
+		public void AddLabel(Label label)
+		{
+			asmLabels[label.Address] = label;
+		}
+
 		private void MiscLabels()
 		{
 			foreach (var t in miscLabels)

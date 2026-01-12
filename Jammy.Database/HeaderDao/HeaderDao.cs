@@ -55,26 +55,38 @@ namespace Jammy.Database.HeaderDao
 		public override void Save(Header item)
 		{
 			base.Save(item);
+			var t = Begin();
 			dataAccess.Connection.Execute($"insert into {tableName} (id, dbid, address, time) values (@Id, @DbId, @Address, julianday('now'))", item);
-
 			SaveHeaderLines(item);
+			Commit(t);
+		}
+
+		public override void Save(List<Header> items)
+		{
+			base.Save(items);
+			var t = Begin();
+			dataAccess.Connection.Execute($"insert into {tableName} (id, dbid, address, time) values (@Id, @DbId, @Address, {Now()})", items);
+			foreach (var item in items)
+				SaveHeaderLines(item);
+			Commit(t);
 		}
 
 		private void SaveHeaderLines(Header item)
 		{
 			dataAccess.Connection.Execute("delete from headerline where headerid = @HeaderId", new { HeaderId = item.Id });
 			uint i = 0;
+			var lines = new List<HeaderLine>();
 			foreach (var lineText in item.TextLines)
 			{
-				var line = new HeaderLine
+				lines.Add(new HeaderLine
 				{
 					Id = Guid.NewGuid(),
 					HeaderId = item.Id,
 					Line = i++,
 					Text = lineText
-				};
-				dataAccess.Connection.Execute("insert into headerline (id, headerid, line, text) values (@Id, @HeaderId, @Line, @Text)", line);
+				});
 			}
+			dataAccess.Connection.Execute("insert into headerline (id, headerid, line, text) values (@Id, @HeaderId, @Line, @Text)", lines);
 		}
 
 		public override bool SaveOrUpdate(Header item)

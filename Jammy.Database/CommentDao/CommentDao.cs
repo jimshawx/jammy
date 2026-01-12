@@ -46,6 +46,14 @@ namespace Jammy.Database.CommentDao
 			dataAccess.Connection.Execute($"insert into {tableName} (id, dbid, text, address, time) values (@Id, @DbId, @Text, @Address, julianday('now'))", item);
 		}
 
+		public override void Save(List<Comment> items)
+		{
+			base.Save(items);
+			var t = Begin();
+			dataAccess.Connection.Execute($"insert into {tableName} (id, dbid, text, address, time) values (@Id, @DbId, @Text, @Address, {Now()})", items);
+			Commit(t);
+		}
+
 		public override bool SaveOrUpdate(Comment item)
 		{
 			if (!base.SaveOrUpdate(item))
