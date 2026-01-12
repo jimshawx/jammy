@@ -110,28 +110,31 @@ namespace Parky.Logging
 		private readonly CancellationTokenSource cancellation;
 		private readonly Task readerTask;
 		private readonly Process xterm;
-		private readonly FileStream logfile;
+		private readonly Stream logfile;
 
 		public TerminalLoggerReader(ConcurrentQueue<DbMessage> messageQueue)
 		{
 			string fileName = "jammy-"+Path.ChangeExtension(Path.GetRandomFileName(), "log");
-			string tmpFile;
-			try { 
-			tmpFile = Path.Combine("/tmp", fileName);
-			logfile = File.OpenWrite(tmpFile);
+
+			string[] tmpdirs = ["/tmp", "$TMPDIR", @"%TEMP%"];
+			string tmpFile = null;
+
+			foreach (var tmpdir in tmpdirs)
+			{ 
+				try
+				{
+					tmpFile = Environment.ExpandEnvironmentVariables(Path.Combine(tmpdir, fileName));
+					logfile = File.OpenWrite(tmpFile);
+				}
+				catch { /* ignore and try next tmp location */ }
 			}
-			catch { }
-			try
-			{
-				tmpFile = Environment.ExpandEnvironmentVariables(Path.Combine(@"%TEMP%", fileName));
-				logfile = File.OpenWrite(tmpFile);
-			}
-			catch
-			{
-				Trace.WriteLine("Couldn't open a tmp log file, failed");
+
+			if (logfile == null)
+			{ 
+				Trace.WriteLine("Can't open a tmp log file, there won't be any logging");
 				return;
 			}
-			
+
 			var writer = new StreamWriter(logfile) { AutoFlush = true };
 
 			int parentPid = Process.GetCurrentProcess().Id;
