@@ -9,6 +9,7 @@
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
     <ProjectReference Include="..\Jammy.Core.Types\Jammy.Core.Types.csproj" />
+    <ProjectReference Include="..\Jammy.Database\Jammy.Database.csproj" />
     <ProjectReference Include="..\Jammy.Disassembler\Jammy.Disassembler.csproj" />
 
 

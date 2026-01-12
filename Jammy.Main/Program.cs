@@ -42,7 +42,6 @@ using Jammy.Core.Floppy.IPF;
 using Jammy.Core.CDROM;
 using Jammy.Database.LabelDao;
 using Jammy.Database.Core;
-using Jammy.Database;
 using Jammy.Database.CommentDao;
 using Jammy.Database.DatabaseDao;
 using Jammy.Database.HeaderDao;

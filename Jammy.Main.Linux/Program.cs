@@ -22,6 +22,12 @@ using Jammy.Core.IO.Linux;
 using Jammy.Core.Memory;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
+using Jammy.Database;
+using Jammy.Database.CommentDao;
+using Jammy.Database.Core;
+using Jammy.Database.DatabaseDao;
+using Jammy.Database.HeaderDao;
+using Jammy.Database.LabelDao;
 using Jammy.Debugger;
 using Jammy.Debugger.Interceptors;
 using Jammy.Disassembler;
@@ -279,7 +285,23 @@ public class Program
 		foreach (var x in types)
 			services.AddSingleton(y => (IStatePersister)y.GetRequiredService(x.ServiceType));
 
+		//set up the database access
+		services.AddSingleton<IDatabaseConnection>(x => new DatabaseConnection("testing.db"));
+		services.AddSingleton<IUpgradeDatabase, UpgradeDatabase>();
+		services.AddSingleton<IDataAccess, DataAccess>();
+		services.AddSingleton<ILabelDao, LabelDao>();
+		services.AddSingleton<ICommentDao, CommentDao>();
+		services.AddSingleton<IDatabaseDao, DatabaseDao>();
+		services.AddSingleton<IHeaderDao, HeaderDao>();
+
 		var serviceProvider = services.BuildServiceProvider();
+
+		//ensure the default database exists
+		var databaseDao = serviceProvider.GetRequiredService<IDatabaseDao>();
+		var database = databaseDao
+			.Search(new DatabaseSearch { Name = "default" })
+			.SingleOrDefault() ?? new Database.Types.Database { Name = "default" };
+		databaseDao.SaveOrUpdate(database);
 
 		var audio = serviceProvider.GetRequiredService<IAudio>();
 		var dma = serviceProvider.GetRequiredService<IDMA>();
