@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Jammy.Database.Core;
 using Microsoft.Extensions.Logging;
 
 /*
@@ -29,6 +30,7 @@ namespace Jammy.Database.Types
 		{
 			this.dataAccess = dataAccess;
 			this.logger = logger;
+			this.table = table;
 		}
 
 		public T Get(Guid id)

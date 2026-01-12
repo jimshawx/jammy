@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Jammy.Database.Types;
+using System.Collections.Generic;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -6,7 +7,7 @@
 
 namespace Jammy.Types
 {
-	public class Comment
+	public class Comment : BaseDbObject
 	{
 		public uint Address { get; set; }
 		public string Text { get; set; }
@@ -19,7 +20,7 @@ namespace Jammy.Types
 		}
 	}
 
-	public class Header
+	public class Header : BaseDbObject
 	{
 		public Header()
 		{

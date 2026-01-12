@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Jammy.Database.Core;
 using Jammy.Database.Types;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
@@ -7,27 +8,17 @@ using Microsoft.Extensions.Logging;
 	Copyright 2026 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Database
+namespace Jammy.Database.LabelDao
 {
-	public class AddressRange
-	{
-		public uint? StartAddress { get; set; }
-		public uint? EndAddress { get; set; }
-	}
-
-	public class LabelSearch : DbSearch
-	{
-		public string Name { get; set; }
-		public AddressRange AddressRange { get; set; } = new AddressRange();
-	}
-
 	public interface ILabelDao : IDbDao<Label, LabelSearch>
 	{
 	}
 
 	public class LabelDao : BaseDbDao<Label, LabelSearch>, ILabelDao
 	{
-		public LabelDao(IDataAccess dataAccess, ILogger<LabelDao> logger) : base(dataAccess, logger, "jammylabel")
+		private const string tableName = "label";
+
+		public LabelDao(IDataAccess dataAccess, ILogger<LabelDao> logger) : base(dataAccess, logger, tableName)
 		{
 		}
 
@@ -41,7 +32,7 @@ namespace Jammy.Database
 			if (search.AddressRange.EndAddress.HasValue)
 				where.Add("address < @EndAddress");
 
-			string query = $"select * from jammylabel {WhereClause(where)}";
+			string query = $"select * from {tableName} {WhereClause(where)}";
 
 			var p = new DynamicParameters(search);
 			p.AddDynamicParams(search.AddressRange);
@@ -51,14 +42,14 @@ namespace Jammy.Database
 
 		public override void Save(Label item)
 		{
-			dataAccess.Connection.Execute("insert into jammylabel (id, name) values (@Id, @Name)", item);
+			dataAccess.Connection.Execute($"insert into {tableName} (id, name, time) values (@Id, @Name, julianday('now'))", item);
 		}
 
 		public override void SaveOrUpdate(Label item)
 		{
 			if (Get(item.Id) != null)
 			{
-				dataAccess.Connection.Execute("update jammylabel set name = (@Name) where id = {@Id}", item);
+				dataAccess.Connection.Execute($"update {tableName} set (name, time) = (@Name, julianday('now')) where id = @Id", item);
 				return;
 			}
 			Save(item);

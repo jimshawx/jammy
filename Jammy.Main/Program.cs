@@ -40,7 +40,10 @@ using System.Windows.Forms;
 using Jammy.NativeOverlay.Overlays;
 using Jammy.Core.Floppy.IPF;
 using Jammy.Core.CDROM;
+using Jammy.Database.LabelDao;
+using Jammy.Database.Core;
 using Jammy.Database;
+using Jammy.Database.CommentDao;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -289,13 +292,15 @@ namespace Jammy.Main
 			services.AddSingleton<IUpgradeDatabase, UpgradeDatabase>();
 			services.AddSingleton<IDataAccess, DataAccess>();
 			services.AddSingleton<ILabelDao, LabelDao>();
+			services.AddSingleton<ICommentDao, CommentDao>();
 
 			var serviceProvider = services.BuildServiceProvider();
 
-			//var labelDao = serviceProvider.GetRequiredService<ILabelDao>();
-			//var s = new LabelSearch();
-			//s.AddressRange.StartAddress = 0;
-			//var labels = labelDao.Search(s);
+			var labelDao = serviceProvider.GetRequiredService<ILabelDao>();
+			//labelDao.Save(new Types.Label() { Name = "Test Label" });
+			var s = new LabelSearch();
+			s.AddressRange.StartAddress = 0;
+			var labels = labelDao.Search(s);
 
 			var audio = serviceProvider.GetRequiredService<IAudio>();
 			var dma = serviceProvider.GetRequiredService<IDMA>();
