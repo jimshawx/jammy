@@ -45,6 +45,7 @@ using Jammy.Database.Core;
 using Jammy.Database;
 using Jammy.Database.CommentDao;
 using Jammy.Database.DatabaseDao;
+using Jammy.Database.HeaderDao;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -295,14 +296,35 @@ namespace Jammy.Main
 			services.AddSingleton<ILabelDao, LabelDao>();
 			services.AddSingleton<ICommentDao, CommentDao>();
 			services.AddSingleton<IDatabaseDao, DatabaseDao>();
+			services.AddSingleton<IHeaderDao, HeaderDao>();
 
 			var serviceProvider = services.BuildServiceProvider();
 
-			var labelDao = serviceProvider.GetRequiredService<ILabelDao>();
-			//labelDao.Save(new Types.Label() { Name = "Test Label" });
-			var s = new LabelSearch();
-			s.AddressRange.StartAddress = 0;
-			var labels = labelDao.Search(s);
+			//ensure the default database exists
+			var databaseDao = serviceProvider.GetRequiredService<IDatabaseDao>();
+			var database = databaseDao
+				.Search(new DatabaseSearch { Name = "default" })
+				.SingleOrDefault()?? new Database.Types.Database { Name = "default" };
+			databaseDao.SaveOrUpdate(database);
+
+			//var labelDao = serviceProvider.GetRequiredService<ILabelDao>();
+			//labelDao.Save(new Types.Label() { DbId = database.Id, Address = 1, Name = "Test Label 1" });
+			//labelDao.SaveOrUpdate(new Types.Label() { DbId = database.Id, Address = 2, Name = "Test Label 2" });
+			//var s = new LabelSearch();
+			//s.AddressRange.StartAddress = 0;
+			//var labels = labelDao.Search(s);
+
+			//var commentDao = serviceProvider.GetRequiredService<ICommentDao>();
+			//commentDao.Save(new Types.Comment() { DbId = database.Id, Address = 1, Text = "This Comment 1" });
+			//commentDao.SaveOrUpdate(new Types.Comment() { DbId = database.Id, Address = 2, Text = "Comment 2" });
+
+			//var headerDao = serviceProvider.GetRequiredService<IHeaderDao>();
+			//var header = new Types.Header() { DbId = database.Id, Address = 1 };
+			//header.TextLines.AddRange(["Header Line 1", "Header Line 2"]);
+			//headerDao.Save(header);
+			//header.TextLines.Clear();
+			//header.TextLines.AddRange(["Header Line 3", "Header Line 4", "Header Line 5"]);
+			//headerDao.SaveOrUpdate(header);
 
 			var audio = serviceProvider.GetRequiredService<IAudio>();
 			var dma = serviceProvider.GetRequiredService<IDMA>();
