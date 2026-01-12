@@ -44,6 +44,7 @@ using Jammy.Database.LabelDao;
 using Jammy.Database.Core;
 using Jammy.Database;
 using Jammy.Database.CommentDao;
+using Jammy.Database.DatabaseDao;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -293,6 +294,7 @@ namespace Jammy.Main
 			services.AddSingleton<IDataAccess, DataAccess>();
 			services.AddSingleton<ILabelDao, LabelDao>();
 			services.AddSingleton<ICommentDao, CommentDao>();
+			services.AddSingleton<IDatabaseDao, DatabaseDao>();
 
 			var serviceProvider = services.BuildServiceProvider();
 
