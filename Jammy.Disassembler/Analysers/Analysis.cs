@@ -8,7 +8,9 @@ using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 /*
@@ -280,6 +282,8 @@ namespace Jammy.Disassembler.Analysers
 
 		private List<MemRange> PackMemTypes()
 		{
+			//DumpMemTypes("Before");
+			
 			uint address = 0;
 			var currentType = MemType.Unknown;
 			uint currentTypeStart = 0;
@@ -298,11 +302,6 @@ namespace Jammy.Disassembler.Analysers
 							Size = address - currentTypeStart,
 						});
 					}
-					else
-					{
-						if (ranges.Count > 0)
-							ranges.Last().Size = address - currentTypeStart;
-					}
 					currentType = item;
 					currentTypeStart = address;
 				}
@@ -315,32 +314,7 @@ namespace Jammy.Disassembler.Analysers
 					foreach (var item in block)
 					{
 						CheckType(item);
-						switch (item)
-						{
-							case MemType.Code:
-								address += 2;
-								break;
-							case MemType.Byte:
-								address += 1;
-								break;
-							case MemType.Word:
-								address += 2;
-								break;
-							case MemType.Long:
-								address += 4;
-								break;
-							case MemType.Str:
-								// Find the length of the string
-								uint strLen = 0;
-								while (block[(address & MemTypeCollection.MEMTYPE_MASK) + strLen] == MemType.Str)
-									strLen++;
-								// +1 for the null terminator
-								address += strLen + 1;
-								break;
-							default:
-								address += 1;
-								break;
-						}
+						address++;
 					}
 				}
 				else
@@ -360,42 +334,45 @@ namespace Jammy.Disassembler.Analysers
 				ulong endAddress = range.Address + range.Size;
 				while (address < endAddress)
 				{
-					switch (range.Type)
+					SetMemType(address, range.Type);
+					address++;
+				}
+			}
+			
+			//DumpMemTypes("After");
+		}
+
+		private void DumpMemTypes(string label) 
+		{
+			using FileStream f = File.OpenWrite($"memtypes-{DateTime.Now:yyyyMMdd-HHmmss.fff}.txt");
+			using StreamWriter writer = new StreamWriter(f);
+
+			writer.WriteLine($"MemTypes Dump {label}:");
+			uint address = 0;
+			foreach (var block in memType)
+			{
+				if (block != null)
+				{
+					foreach (var item in block)
 					{
-						case MemType.Code:
-							SetMemType(address, MemType.Code);
-							address += 2;
-							break;
-						case MemType.Byte:
-							SetMemType(address, MemType.Byte);
-							address += 1;
-							break;
-						case MemType.Word:
-							SetMemType(address, MemType.Word);
-							address += 2;
-							break;
-						case MemType.Long:
-							SetMemType(address, MemType.Long);
-							address += 4;
-							break;
-						case MemType.Str:
-							SetMemType(address, MemType.Str);
-							address += 1;
-							break;
-						default:
-							address += 1;
-							break;
+						if (item != MemType.Unknown)
+							writer.WriteLine($"{address:X8} {item}");
+						address++;
 					}
+				}
+				else
+				{
+					address += MemTypeCollection.MEMTYPE_BLOCKSIZE;
 				}
 			}
 		}
 
-		/*
-delete from comment where dbid = (select id from database where name = 'default');
-delete from label where dbid = (select id from database where name = 'default');
-delete from headerline where headerid in (select id from header where dbid = (select id from database where name = 'default'));
-delete from header where dbid = (select id from database where name = 'default');
-delete from memtype where dbid = (select id from database where name = 'default');
-		*/
+				/*
+		delete from comment where dbid = (select id from database where name = 'default');
+		delete from label where dbid = (select id from database where name = 'default');
+		delete from headerline where headerid in (select id from header where dbid = (select id from database where name = 'default'));
+		delete from header where dbid = (select id from database where name = 'default');
+		delete from memtype where dbid = (select id from database where name = 'default');
+				*/
 	}
 }
