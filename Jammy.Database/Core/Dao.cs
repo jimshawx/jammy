@@ -17,6 +17,7 @@ namespace Jammy.Database.Types
 		bool SaveOrUpdate(T item);
 		T Get(Guid id);
 		void Delete(T item);
+		void Delete(List<T> items);
 	}
 
 	public interface IDbDao<T, U> : IDao<T,U> where T : IBaseDbObject where U : IDbSearch
@@ -44,6 +45,13 @@ namespace Jammy.Database.Types
 		public virtual void Delete(T item)
 		{
 			dataAccess.Connection.Execute($"delete from {table} where id = @Id", item);
+		}
+
+		public virtual void Delete(List<T> items)
+		{
+			var t = Begin();
+			dataAccess.Connection.Execute($"delete from {table} where id in (@Id)", items);
+			t.Commit();
 		}
 
 		public abstract List<T> Search(U search);

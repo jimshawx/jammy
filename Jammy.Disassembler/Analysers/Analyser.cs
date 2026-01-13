@@ -61,7 +61,10 @@ namespace Jammy.Disassembler.Analysers
 
 			kickstartAnalysis.ShowRomTags();
 
+			//analysis.DeleteAnalysis();
 			analysis.SaveAnalysis();
+			//analysis.ResetAnalysis();
+			//analysis.LoadAnalysis();
 		}
 
 		public void UpdateAnalysis()

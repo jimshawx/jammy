@@ -25,8 +25,6 @@ namespace Jammy.Database.HeaderDao
 		public override List<Header> Search(HeaderSearch search)
 		{
 			var where = AddBaseSearch(search);
-			if (search.Text != null)
-				where.Add("text = @Text");
 			if (search.AddressRange.StartAddress.HasValue)
 				where.Add("address >= @StartAddress");
 			if (search.AddressRange.EndAddress.HasValue)
@@ -37,18 +35,15 @@ namespace Jammy.Database.HeaderDao
 			var p = new DynamicParameters(search);
 			p.AddDynamicParams(search.AddressRange);
 
-			var headers = dataAccess.Connection.Query<Header>(query, p).AsList();
+			var headers = dataAccess.Connection.Query<Header, HeaderLine, Header>($"select t.*,h.text from {tableName} t join headerline h on h.headerid = t.id {WhereClause(where)}",
+					(header, line) => 
+					{ 
+						header.TextLines.Add(line.Text);
+						return header;
+					},
+					p,
+					splitOn: "text").AsList();
 
-			var linesByHeaderId = dataAccess.Connection
-				.Query<HeaderLine>("select * from headerline where headerid in @HeaderIds",
-				headers.Select(h => h.Id).ToList())
-				.GroupBy(x=>x.HeaderId).ToDictionary(x=>x.Key);
-
-			foreach (var header in headers)
-			{
-				if (linesByHeaderId.TryGetValue(header.Id, out var line))
-					header.TextLines.AddRange(line.OrderBy(x=>x.Line).Select(x=>x.Text));
-			}
 			return headers;
 		}
 
@@ -102,8 +97,14 @@ namespace Jammy.Database.HeaderDao
 
 		public override void Delete(Header item)
 		{
-			dataAccess.Connection.Execute("delete from headerline where headerid = @HeaderId", new { HeaderId = item.Id });
+			dataAccess.Connection.Execute("delete from headerline where headerid = @Id", item);
 			base.Delete(item);
+		}
+
+		public override void Delete(List<Header> items)
+		{
+			dataAccess.Connection.Execute("delete from headerline where headerid in (@Id)", items);
+			base.Delete(items);
 		}
 	}
 }

@@ -28,6 +28,7 @@ using Jammy.Database.Core;
 using Jammy.Database.DatabaseDao;
 using Jammy.Database.HeaderDao;
 using Jammy.Database.LabelDao;
+using Jammy.Database.MemTypeDao;
 using Jammy.Debugger;
 using Jammy.Debugger.Interceptors;
 using Jammy.Disassembler;
@@ -293,6 +294,7 @@ public class Program
 		services.AddSingleton<ICommentDao, CommentDao>();
 		services.AddSingleton<IDatabaseDao, DatabaseDao>();
 		services.AddSingleton<IHeaderDao, HeaderDao>();
+		services.AddSingleton<IMemTypeDao, MemTypeDao>();
 
 		var serviceProvider = services.BuildServiceProvider();
 

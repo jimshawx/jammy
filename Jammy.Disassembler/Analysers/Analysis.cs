@@ -3,6 +3,7 @@ using Jammy.Database.CommentDao;
 using Jammy.Database.DatabaseDao;
 using Jammy.Database.HeaderDao;
 using Jammy.Database.LabelDao;
+using Jammy.Database.MemTypeDao;
 using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
@@ -28,11 +29,12 @@ namespace Jammy.Disassembler.Analysers
 		private readonly IHeaderDao headerDao;
 		private readonly ICommentDao commentDao;
 		private readonly IDatabaseDao databaseDao;
+		private readonly IMemTypeDao memTypeDao;
 		private readonly ILabeller labeller;
 
 		public Analysis(
 			ILabelDao labelDao, IHeaderDao headerDao, ICommentDao commentDao, IDatabaseDao databaseDao,
-			ILabeller labeller,
+			IMemTypeDao memTypeDao, ILabeller labeller,
 			IOptions<EmulationSettings> settings, ILogger<Analyser> logger)
 		{
 			this.settings = settings.Value;
@@ -40,6 +42,7 @@ namespace Jammy.Disassembler.Analysers
 			this.headerDao = headerDao;
 			this.commentDao = commentDao;
 			this.databaseDao = databaseDao;
+			this.memTypeDao = memTypeDao;
 			this.labeller = labeller;
 		}
 
@@ -175,6 +178,74 @@ namespace Jammy.Disassembler.Analysers
 			foreach (var label in labels)
 				label.DbId = database.Id;
 			labelDao.Save(labels.ToList());
+
+			uint address = 0;
+			var currentType = MemType.Unknown;
+			uint currentTypeStart = 0;
+			var ranges = new List<MemTypeRange>();
+			void CheckType(MemType item)
+			{
+				if (item != currentType)
+				{
+					if (currentType != MemType.Unknown)
+					{
+						// Save the current type block
+						ranges.Add(new MemTypeRange
+						{
+							Address = currentTypeStart,
+							Type = (RangeType)currentType,
+							Size = address - currentTypeStart,
+							DbId = database.Id
+						});
+					}
+					currentType = item;
+					currentTypeStart = address;
+				}
+			}
+
+			foreach (var block in memType)
+			{
+				if (block != null)
+				{ 
+					foreach (var item in block)
+					{
+						CheckType(item);
+						switch (item)
+						{
+							case MemType.Code:
+								address += 2;
+								break;
+							case MemType.Byte:
+								address += 1;
+								break;
+							case MemType.Word:
+								address += 2;
+								break;
+							case MemType.Long:
+								address += 4;
+								break;
+							case MemType.Str:
+								// Find the length of the string
+								uint strLen = 0;
+								while (block[(address & MemTypeCollection.MEMTYPE_MASK) + strLen] == MemType.Str)
+									strLen++;
+								// +1 for the null terminator
+								address += strLen + 1;
+								break;
+							default:
+								address += 1;
+								break;
+						}
+					}
+				}
+				else
+				{
+					address += MemTypeCollection.MEMTYPE_BLOCKSIZE;
+				}
+			}
+			var ids = memTypeDao.Search(new MemTypeSearch { DbId = database.Id });
+			memTypeDao.Delete(ids);
+			memTypeDao.Save(ranges);
 		}
 
 		public void LoadAnalysis()
@@ -187,14 +258,73 @@ namespace Jammy.Disassembler.Analysers
 			foreach (var header in headers)
 				AddHeader(header);
 			var labels = labelDao.Search(new LabelSearch { DbId = database.Id });
-			foreach (var  label in labels)
+			foreach (var label in labels)
 				labeller.AddLabel(label);
+			var memTypes = memTypeDao.Search(new MemTypeSearch { DbId = database.Id });
+			foreach (var range in memTypes)
+			{
+				uint address = range.Address;
+				ulong endAddress = range.Address + range.Size;
+				while (address < endAddress)
+				{
+					switch (range.Type)
+					{
+						case RangeType.Code:
+							SetMemType(address, MemType.Code);
+							address += 2;
+							break;
+						case RangeType.Byte:
+							SetMemType(address, MemType.Byte);
+							address += 1;
+							break;
+						case RangeType.Word:
+							SetMemType(address, MemType.Word);
+							address += 2;
+							break;
+						case RangeType.Long:
+							SetMemType(address, MemType.Long);
+							address += 4;
+							break;
+						case RangeType.Str:
+							SetMemType(address, MemType.Str);
+							address += 1;
+							break;
+						default:
+							address += 1;
+							break;
+					}
+				}
+			}
 		}
+
+		public void DeleteAnalysis()
+		{
+			var database = databaseDao.Search(new DatabaseSearch { Name = "default" }).SingleOrDefault();
+			var comments = commentDao.Search(new CommentSearch { DbId = database.Id });
+			commentDao.Delete(comments);
+			var headers = headerDao.Search(new HeaderSearch { DbId = database.Id });
+			headerDao.Delete(headers);
+			var labels = labelDao.Search(new LabelSearch { DbId = database.Id });
+			labelDao.Delete(labels);
+			var memTypes = memTypeDao.Search(new MemTypeSearch { DbId = database.Id });
+			memTypeDao.Delete(memTypes);
+		}
+
+		public void ResetAnalysis()
+		{
+			comments.Clear();
+			headers.Clear();
+			for (int i = 0; i < memType.Length; i++)
+				memType[i] = null;
+			labeller.ResetLabels();
+		}
+
 		/*
 delete from comment where dbid = (select id from database where name = 'default');
 delete from label where dbid = (select id from database where name = 'default');
 delete from headerline where headerid in (select id from header where dbid = (select id from database where name = 'default'));
 delete from header where dbid = (select id from database where name = 'default');
+delete from memtype where dbid = (select id from database where name = 'default');
 		*/
 	}
 }

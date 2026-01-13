@@ -45,6 +45,7 @@ using Jammy.Database.Core;
 using Jammy.Database.CommentDao;
 using Jammy.Database.DatabaseDao;
 using Jammy.Database.HeaderDao;
+using Jammy.Database.MemTypeDao;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -296,6 +297,7 @@ namespace Jammy.Main
 			services.AddSingleton<ICommentDao, CommentDao>();
 			services.AddSingleton<IDatabaseDao, DatabaseDao>();
 			services.AddSingleton<IHeaderDao, HeaderDao>();
+			services.AddSingleton<IMemTypeDao, MemTypeDao>();
 
 			var serviceProvider = services.BuildServiceProvider();
 
@@ -324,6 +326,12 @@ namespace Jammy.Main
 			//header.TextLines.Clear();
 			//header.TextLines.AddRange(["Header Line 3", "Header Line 4", "Header Line 5"]);
 			//headerDao.SaveOrUpdate(header);
+
+			//var memTypeDao = serviceProvider.GetRequiredService<IMemTypeDao>();
+			//var range = new MemTypeRange { DbId = database.Id, Address = 0x000000, Size = 0x20000, Type = RangeType.Byte };
+			//memTypeDao.Save(range);
+			//range.Type = RangeType.Code;
+			//memTypeDao.SaveOrUpdate(range);
 
 			var audio = serviceProvider.GetRequiredService<IAudio>();
 			var dma = serviceProvider.GetRequiredService<IDMA>();

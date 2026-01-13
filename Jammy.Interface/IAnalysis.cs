@@ -27,5 +27,7 @@ namespace Jammy.Interface
 		void ClearSomeAnalysis();
 		void SaveAnalysis();
 		void LoadAnalysis();
+		void DeleteAnalysis();
+		void ResetAnalysis();
 	}
 }

@@ -60,3 +60,16 @@ create table comment (
 create index comment_id on comment (id);
 create index comment_dbid on comment (dbid);
 create index comment_address on comment (address);
+
+create table memtype (
+	id text primary key,
+	dbid text,
+	type int not null,
+	address uint not null,
+	size uint not null,
+	time real not null,
+	foreign key(dbid) references database (id)
+);
+create index memtype_id on memtype (id);
+create index memtype_dbid on memtype (dbid);
+create index memtype_address on memtype (address);

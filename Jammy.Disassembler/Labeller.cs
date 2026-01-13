@@ -51,6 +51,11 @@ namespace Jammy.Disassembler
 			asmLabels[label.Address] = label;
 		}
 
+		public void ResetLabels()
+		{
+			asmLabels.Clear();
+		}
+
 		private void MiscLabels()
 		{
 			foreach (var t in miscLabels)
