@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 /*
-	Copyright 2020-2024 James Shaw. All Rights Reserved.
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Disassembler.Analysers
@@ -187,75 +187,17 @@ namespace Jammy.Disassembler.Analysers
 				label.DbId = database.Id;
 			labelDao.Save(labels.ToList());
 
-			logger.LogTrace("...MemTypes#1");
-			uint address = 0;
-			var currentType = MemType.Unknown;
-			uint currentTypeStart = 0;
-			var ranges = new List<MemTypeRange>();
-			void CheckType(MemType item)
-			{
-				if (item != currentType)
+			logger.LogTrace("...MemTypes");
+			var ranges = PackMemTypes().Select(x =>
+				new MemTypeRange
 				{
-					if (currentType != MemType.Unknown)
-					{
-						// Save the current type block
-						ranges.Add(new MemTypeRange
-						{
-							Address = currentTypeStart,
-							Type = (RangeType)currentType,
-							Size = address - currentTypeStart,
-							DbId = database.Id
-						});
-					}
-					currentType = item;
-					currentTypeStart = address;
-				}
-			}
-
-			foreach (var block in memType)
-			{
-				if (block != null)
-				{ 
-					foreach (var item in block)
-					{
-						CheckType(item);
-						switch (item)
-						{
-							case MemType.Code:
-								address += 2;
-								break;
-							case MemType.Byte:
-								address += 1;
-								break;
-							case MemType.Word:
-								address += 2;
-								break;
-							case MemType.Long:
-								address += 4;
-								break;
-							case MemType.Str:
-								// Find the length of the string
-								uint strLen = 0;
-								while (block[(address & MemTypeCollection.MEMTYPE_MASK) + strLen] == MemType.Str)
-									strLen++;
-								// +1 for the null terminator
-								address += strLen + 1;
-								break;
-							default:
-								address += 1;
-								break;
-						}
-					}
-				}
-				else
-				{
-					address += MemTypeCollection.MEMTYPE_BLOCKSIZE;
-				}
-			}
-			logger.LogTrace("...MemTypes#2");
+					DbId = database.Id,
+					Address = x.Address,
+					Size = x.Size,
+					Type = (RangeType)x.Type
+				}).ToList();
 			var ids = memTypeDao.Search(new MemTypeSearch { DbId = database.Id });
 			memTypeDao.Delete(ids);
-			logger.LogTrace("...MemTypes#3");
 			memTypeDao.Save(ranges);
 			logger.LogTrace("Complete");
 		}
@@ -283,40 +225,14 @@ namespace Jammy.Disassembler.Analysers
 			
 			logger.LogTrace("...MemTypes");
 			var memTypes = memTypeDao.Search(new MemTypeSearch { DbId = database.Id });
-			foreach (var range in memTypes)
-			{
-				uint address = range.Address;
-				ulong endAddress = range.Address + range.Size;
-				while (address < endAddress)
+			var ranges = memTypes.Select(x => 
+				new MemRange
 				{
-					switch (range.Type)
-					{
-						case RangeType.Code:
-							SetMemType(address, MemType.Code);
-							address += 2;
-							break;
-						case RangeType.Byte:
-							SetMemType(address, MemType.Byte);
-							address += 1;
-							break;
-						case RangeType.Word:
-							SetMemType(address, MemType.Word);
-							address += 2;
-							break;
-						case RangeType.Long:
-							SetMemType(address, MemType.Long);
-							address += 4;
-							break;
-						case RangeType.Str:
-							SetMemType(address, MemType.Str);
-							address += 1;
-							break;
-						default:
-							address += 1;
-							break;
-					}
-				}
-			}
+					Address = x.Address,
+					Size = x.Size,
+					Type = (MemType)x.Type
+				}).ToList();
+			UnpackMemTypes(ranges);
 			logger.LogTrace("Complete");
 		}
 
@@ -353,6 +269,125 @@ namespace Jammy.Disassembler.Analysers
 			for (int i = 0; i < memType.Length; i++)
 				memType[i] = null;
 			labeller.ResetLabels();
+		}
+
+		private class MemRange
+		{
+			public uint Address { get; set; }
+			public ulong Size { get; set; }
+			public MemType Type { get; set; }
+		}
+
+		private List<MemRange> PackMemTypes()
+		{
+			uint address = 0;
+			var currentType = MemType.Unknown;
+			uint currentTypeStart = 0;
+			var ranges = new List<MemRange>();
+
+			void CheckType(MemType item)
+			{
+				if (item != currentType)
+				{
+					if (currentType != MemType.Unknown)
+					{
+						ranges.Add(new MemRange
+						{
+							Address = currentTypeStart,
+							Type = currentType,
+							Size = address - currentTypeStart,
+						});
+					}
+					else
+					{
+						if (ranges.Count > 0)
+							ranges.Last().Size = address - currentTypeStart;
+					}
+					currentType = item;
+					currentTypeStart = address;
+				}
+			}
+
+			foreach (var block in memType)
+			{
+				if (block != null)
+				{
+					foreach (var item in block)
+					{
+						CheckType(item);
+						switch (item)
+						{
+							case MemType.Code:
+								address += 2;
+								break;
+							case MemType.Byte:
+								address += 1;
+								break;
+							case MemType.Word:
+								address += 2;
+								break;
+							case MemType.Long:
+								address += 4;
+								break;
+							case MemType.Str:
+								// Find the length of the string
+								uint strLen = 0;
+								while (block[(address & MemTypeCollection.MEMTYPE_MASK) + strLen] == MemType.Str)
+									strLen++;
+								// +1 for the null terminator
+								address += strLen + 1;
+								break;
+							default:
+								address += 1;
+								break;
+						}
+					}
+				}
+				else
+				{
+					CheckType(MemType.Unknown);
+					address += MemTypeCollection.MEMTYPE_BLOCKSIZE;
+				}
+			}
+			return ranges;
+		}
+
+		private void UnpackMemTypes(List<MemRange> ranges)
+		{
+			foreach (var range in ranges)
+			{
+				uint address = range.Address;
+				ulong endAddress = range.Address + range.Size;
+				while (address < endAddress)
+				{
+					switch (range.Type)
+					{
+						case MemType.Code:
+							SetMemType(address, MemType.Code);
+							address += 2;
+							break;
+						case MemType.Byte:
+							SetMemType(address, MemType.Byte);
+							address += 1;
+							break;
+						case MemType.Word:
+							SetMemType(address, MemType.Word);
+							address += 2;
+							break;
+						case MemType.Long:
+							SetMemType(address, MemType.Long);
+							address += 4;
+							break;
+						case MemType.Str:
+							SetMemType(address, MemType.Str);
+							address += 1;
+							break;
+						default:
+							address += 1;
+							break;
+					}
+				}
+			}
 		}
 
 		/*
