@@ -68,7 +68,7 @@ namespace Jammy.Database.HeaderDao
 
 		private void SaveHeaderLines(Header item)
 		{
-			dataAccess.Connection.Execute("delete from headerline where headerid = @HeaderId", new { HeaderId = item.Id });
+			dataAccess.Connection.Execute("delete from headerline where headerid = @Id", item);
 			uint i = 0;
 			var lines = new List<HeaderLine>();
 			foreach (var lineText in item.TextLines)
@@ -89,7 +89,7 @@ namespace Jammy.Database.HeaderDao
 			if (!base.SaveOrUpdate(item))
 			{
 				dataAccess.Connection.Execute($"update {tableName} set (address, time) = (@Address, julianday('now')) where id = @Id", item);
-				dataAccess.Connection.Execute("delete from headerline where headerid = @HeaderId", new { HeaderId = item.Id });
+				dataAccess.Connection.Execute("delete from headerline where headerid = @Id", item);
 				SaveHeaderLines(item);
 			}
 			return false;
@@ -104,14 +104,8 @@ namespace Jammy.Database.HeaderDao
 		public override void Delete(List<Header> items)
 		{
 			var t = Begin();
-			Batch(items, (batch) =>
-			{
-				dataAccess.Connection.Execute("delete from headerline where headerid in (@Id)", batch);
-			});
-			Batch(items, (batch) =>
-			{
-				dataAccess.Connection.Execute($"delete from {tableName} where id in (@Id)", batch);
-			});
+			Batch(items, (batch) => { dataAccess.Connection.Execute("delete from headerline where headerid in (@Id)", batch); });
+			Batch(items, (batch) => { dataAccess.Connection.Execute($"delete from {tableName} where id in (@Id)", batch); });
 			t.Commit();
 		}
 	}

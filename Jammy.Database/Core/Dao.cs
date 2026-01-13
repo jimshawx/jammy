@@ -117,7 +117,7 @@ namespace Jammy.Database.Types
 		protected void Batch(List<T> items, Action<IEnumerable<T>> action, int batchSize = 999)
 		{
 			for (int n = 0; n < items.Count; n += batchSize)
-				action(items.Skip(n).Take(batchSize));
+				action(items.Slice(n, Math.Min(batchSize, items.Count - n)));
 		}
 	}
 
