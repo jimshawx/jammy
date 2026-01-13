@@ -48,6 +48,7 @@ create table headerline (
 	foreign key(headerid) references header (id)
 );
 create index headerline_id on headerline (id);
+create index headerline_headerid on headerline (headerid);
 
 create table comment (
 	id text primary key,

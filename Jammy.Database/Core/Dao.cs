@@ -113,6 +113,12 @@ namespace Jammy.Database.Types
 		{
 			transaction.Commit();
 		}
+
+		protected void Batch(List<T> items, Action<IEnumerable<T>> action, int batchSize = 999)
+		{
+			for (int n = 0; n < items.Count; n += batchSize)
+				action(items.Skip(n).Take(batchSize));
+		}
 	}
 
 	public abstract class BaseDbDao<T, U> : BaseDao<T, U>, IDbDao<T, U> where T : IBaseDbObject, new() where U : IDbSearch

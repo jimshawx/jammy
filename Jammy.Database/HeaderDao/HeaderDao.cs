@@ -103,8 +103,16 @@ namespace Jammy.Database.HeaderDao
 
 		public override void Delete(List<Header> items)
 		{
-			dataAccess.Connection.Execute("delete from headerline where headerid in (@Id)", items);
-			base.Delete(items);
+			var t = Begin();
+			Batch(items, (batch) =>
+			{
+				dataAccess.Connection.Execute("delete from headerline where headerid in (@Id)", batch);
+			});
+			Batch(items, (batch) =>
+			{
+				dataAccess.Connection.Execute($"delete from {tableName} where id in (@Id)", batch);
+			});
+			t.Commit();
 		}
 	}
 }
