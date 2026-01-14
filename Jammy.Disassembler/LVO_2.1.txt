@@ -1,0 +1,1504 @@
+
+***************** asl
+* "asl.library"
+##base _AslBase
+##bias 30
+##public
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+*
+* OBSOLETE -- Please use the generic requester functions instead
+*
+ 30 $ffe2 -$001e AllocFileRequest()()
+ 36 $ffdc -$0024 FreeFileRequest(fileReq)(a0)
+ 42 $ffd6 -$002a RequestFile(fileReq)(a0)
+*
+* GENERIC
+*
+ 48 $ffd0 -$0030 AllocAslRequest(reqType,tagList)(d0/a0)
+ 54 $ffca -$0036 FreeAslRequest(requester)(a0)
+ 60 $ffc4 -$003c AslRequest(requester,tagList)(a0/a1)
+##end
+
+***************** battclock
+* "battclock.resource"
+##base _BattClockBase
+##bias 6
+##public
+  6 $fffa -$0006 ResetBattClock()()
+ 12 $fff4 -$000c ReadBattClock()()
+ 18 $ffee -$0012 WriteBattClock(time)(d0)
+##private
+ 24 $ffe8 -$0018 battclockPrivate1()()
+ 30 $ffe2 -$001e battclockPrivate2()()
+##end
+
+***************** battmem
+* "battmem.resource"
+##base _BattMemBase
+##bias 6
+##public
+  6 $fffa -$0006 ObtainBattSemaphore()()
+ 12 $fff4 -$000c ReleaseBattSemaphore()()
+ 18 $ffee -$0012 ReadBattMem(buffer,offset,length)(a0,d0/d1)
+ 24 $ffe8 -$0018 WriteBattMem(buffer,offset,length)(a0,d0/d1)
+##end
+
+***************** bullet
+* "bullet.library"
+##base _BulletBase
+##bias 30
+##public
+ 30 $ffe2 -$001e OpenEngine()()
+ 36 $ffdc -$0024 CloseEngine(glyphEngine)(a0)
+ 42 $ffd6 -$002a SetInfoA(glyphEngine,tagList)(a0/a1)
+ 48 $ffd0 -$0030 ObtainInfoA(glyphEngine,tagList)(a0/a1)
+ 54 $ffca -$0036 ReleaseInfoA(glyphEngine,tagList)(a0/a1)
+##private
+ 60 $ffc4 -$003c bulletPrivate1()()
+##public
+##end
+
+***************** cardres
+* "card.resource"
+##base _CardResource
+##bias 6
+##public
+  6 $fffa -$0006 OwnCard(handle)(a1)
+ 12 $fff4 -$000c ReleaseCard(handle,flags)(a1,d0)
+ 18 $ffee -$0012 GetCardMap()()
+ 24 $ffe8 -$0018 BeginCardAccess(handle)(a1)
+ 30 $ffe2 -$001e EndCardAccess(handle)(a1)
+ 36 $ffdc -$0024 ReadCardStatus()()
+ 42 $ffd6 -$002a CardResetRemove(handle,flag)(a1,d0)
+ 48 $ffd0 -$0030 CardMiscControl(handle,control_bits)(a1,d1)
+ 54 $ffca -$0036 CardAccessSpeed(handle,nanoseconds)(a1,d0)
+ 60 $ffc4 -$003c CardProgramVoltage(handle,voltage)(a1,d0)
+ 66 $ffbe -$0042 CardResetCard(handle)(a1)
+ 72 $ffb8 -$0048 CopyTuple(handle,buffer,tuplecode,size)(a1,a0,d1,d0)
+ 78 $ffb2 -$004e DeviceTuple(tuple_data,storage)(a0/a1)
+ 84 $ffac -$0054 IfAmigaXIP(handle)(a2)
+ 90 $ffa6 -$005a CardForceChange()()
+ 96 $ffa0 -$0060 CardChangeCount()()
+102 $ff9a -$0066 CardInterface()()
+##end
+
+***************** cia
+* "CiaA.Resource" and "CiaB.Resource"
+##bias 6
+##public
+  6 $fffa -$0006 AddICRVector(resource,iCRBit,interrupt)(a6,d0/a1)
+ 12 $fff4 -$000c RemICRVector(resource,iCRBit,interrupt)(a6,d0/a1)
+ 18 $ffee -$0012 AbleICR(resource,mask)(a6,d0)
+ 24 $ffe8 -$0018 SetICR(resource,mask)(a6,d0)
+##end
+
+***************** commodities
+* "commodities.library"
+##base _CxBase
+##bias 30
+##public
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+*
+*  OBJECT UTILITIES
+*
+ 30 $ffe2 -$001e CreateCxObj(type,arg1,arg2)(d0/a0/a1)
+ 36 $ffdc -$0024 CxBroker(nb,error)(a0,d0)
+ 42 $ffd6 -$002a ActivateCxObj(co,true)(a0,d0)
+ 48 $ffd0 -$0030 DeleteCxObj(co)(a0)
+ 54 $ffca -$0036 DeleteCxObjAll(co)(a0)
+ 60 $ffc4 -$003c CxObjType(co)(a0)
+ 66 $ffbe -$0042 CxObjError(co)(a0)
+ 72 $ffb8 -$0048 ClearCxObjError(co)(a0)
+ 78 $ffb2 -$004e SetCxObjPri(co,pri)(a0,d0)
+*
+*  OBJECT ATTACHMENT
+*
+ 84 $ffac -$0054 AttachCxObj(headObj,co)(a0/a1)
+ 90 $ffa6 -$005a EnqueueCxObj(headObj,co)(a0/a1)
+ 96 $ffa0 -$0060 InsertCxObj(headObj,co,pred)(a0/a1/a2)
+102 $ff9a -$0066 RemoveCxObj(co)(a0)
+*
+*  TYPE SPECIFIC
+*
+##private
+108 $ff94 -$006c commoditiesPrivate1()()
+##public
+114 $ff8e -$0072 SetTranslate(translator,events)(a0/a1)
+120 $ff88 -$0078 SetFilter(filter,text)(a0/a1)
+126 $ff82 -$007e SetFilterIX(filter,ix)(a0/a1)
+132 $ff7c -$0084 ParseIX(description,ix)(a0/a1)
+*
+*  COMMON MESSAGE
+*
+138 $ff76 -$008a CxMsgType(cxm)(a0)
+144 $ff70 -$0090 CxMsgData(cxm)(a0)
+150 $ff6a -$0096 CxMsgID(cxm)(a0)
+*
+*  MESSAGE ROUTING
+*
+156 $ff64 -$009c DivertCxMsg(cxm,headObj,returnObj)(a0/a1/a2)
+162 $ff5e -$00a2 RouteCxMsg(cxm,co)(a0/a1)
+168 $ff58 -$00a8 DisposeCxMsg(cxm)(a0)
+*
+*  INPUT EVENT HANDLING
+*
+174 $ff52 -$00ae InvertKeyMap(ansiCode,event,km)(d0/a0/a1)
+180 $ff4c -$00b4 AddIEvents(events)(a0)
+##private
+*
+* FOR USE ONLY BY CONTROLLER PROGRAM
+*
+186 $ff46 -$00ba commoditiesPrivate2()()
+192 $ff40 -$00c0 commoditiesPrivate3()()
+198 $ff3a -$00c6 commoditiesPrivate4()()
+##public
+*--- functions in V38 or higher (distributed as Release 2.1) ---
+*  MORE INPUT EVENT HANDLING
+204 $ff34 -$00cc MatchIX(event,ix)(a0/a1)
+##private
+*
+* Reserved entries
+*
+210 $ff2e -$00d2 commoditiesPrivate5()()
+216 $ff28 -$00d8 commoditiesPrivate6()()
+222 $ff22 -$00de commoditiesPrivate7()()
+228 $ff1c -$00e4 commoditiesPrivate8()()
+234 $ff16 -$00ea commoditiesPrivate9()()
+##end
+
+***************** console
+* "console.device"
+##base _ConsoleDevice
+##bias 42
+##public
+ 42 $ffd6 -$002a CDInputHandler(events,consoleDevice)(a0/a1)
+ 48 $ffd0 -$0030 RawKeyConvert(events,buffer,length,keyMap)(a0/a1,d1/a2)
+##private
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+ 54 $ffca -$0036 consolePrivate1()()
+ 60 $ffc4 -$003c consolePrivate2()()
+ 66 $ffbe -$0042 consolePrivate3()()
+ 72 $ffb8 -$0048 consolePrivate4()()
+##end
+
+***************** disk
+* "disk.resource"
+##base _DiskBase
+##bias 6
+##public
+  6 $fffa -$0006 AllocUnit(unitNum)(d0)
+ 12 $fff4 -$000c FreeUnit(unitNum)(d0)
+ 18 $ffee -$0012 GetUnit(unitPointer)(a1)
+ 24 $ffe8 -$0018 GiveUnit()()
+ 30 $ffe2 -$001e GetUnitID(unitNum)(d0)
+*------ new for V37 ------
+ 36 $ffdc -$0024 ReadUnitID(unitNum)(d0)
+##end
+
+***************** diskfont
+* "diskfont.library"
+##base _DiskfontBase
+##bias 30
+##public
+ 30 $ffe2 -$001e OpenDiskFont(textAttr)(a0)
+ 36 $ffdc -$0024 AvailFonts(buffer,bufBytes,flags)(a0,d0/d1)
+*--- functions in V34 or higher (distributed as Release 1.3) ---
+ 42 $ffd6 -$002a NewFontContents(fontsLock,fontName)(a0/a1)
+ 48 $ffd0 -$0030 DisposeFontContents(fontContentsHeader)(a1)
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+ 54 $ffca -$0036 NewScaledDiskFont(sourceFont,destTextAttr)(a0/a1)
+##end
+
+***************** dos
+* "dos.library"
+##base _DOSBase
+##bias 30
+##public
+ 30 $ffe2 -$001e Open(name,accessMode)(d1/d2)
+ 36 $ffdc -$0024 Close(file)(d1)
+ 42 $ffd6 -$002a Read(file,buffer,length)(d1/d2/d3)
+ 48 $ffd0 -$0030 Write(file,buffer,length)(d1/d2/d3)
+ 54 $ffca -$0036 Input()()
+ 60 $ffc4 -$003c Output()()
+ 66 $ffbe -$0042 Seek(file,position,offset)(d1/d2/d3)
+ 72 $ffb8 -$0048 DeleteFile(name)(d1)
+ 78 $ffb2 -$004e Rename(oldName,newName)(d1/d2)
+ 84 $ffac -$0054 Lock(name,type)(d1/d2)
+ 90 $ffa6 -$005a UnLock(lock)(d1)
+ 96 $ffa0 -$0060 DupLock(lock)(d1)
+102 $ff9a -$0066 Examine(lock,fileInfoBlock)(d1/d2)
+108 $ff94 -$006c ExNext(lock,fileInfoBlock)(d1/d2)
+114 $ff8e -$0072 Info(lock,parameterBlock)(d1/d2)
+120 $ff88 -$0078 CreateDir(name)(d1)
+126 $ff82 -$007e CurrentDir(lock)(d1)
+132 $ff7c -$0084 IoErr()()
+138 $ff76 -$008a CreateProc(name,pri,segList,stackSize)(d1/d2/d3/d4)
+144 $ff70 -$0090 Exit(returnCode)(d1)
+150 $ff6a -$0096 LoadSeg(name)(d1)
+156 $ff64 -$009c UnLoadSeg(seglist)(d1)
+##private
+162 $ff5e -$00a2 dosPrivate1()()
+168 $ff58 -$00a8 dosPrivate2()()
+##public
+174 $ff52 -$00ae DeviceProc(name)(d1)
+180 $ff4c -$00b4 SetComment(name,comment)(d1/d2)
+186 $ff46 -$00ba SetProtection(name,protect)(d1/d2)
+192 $ff40 -$00c0 DateStamp(date)(d1)
+198 $ff3a -$00c6 Delay(timeout)(d1)
+204 $ff34 -$00cc WaitForChar(file,timeout)(d1/d2)
+210 $ff2e -$00d2 ParentDir(lock)(d1)
+216 $ff28 -$00d8 IsInteractive(file)(d1)
+222 $ff22 -$00de Execute(string,file,file2)(d1/d2/d3)
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+*	DOS Object creation/deletion
+228 $ff1c -$00e4 AllocDosObject(type,tags)(d1/d2)
+234 $ff16 -$00ea FreeDosObject(type,ptr)(d1/d2)
+*	Packet Level routines
+240 $ff10 -$00f0 DoPkt(port,action,arg1,arg2,arg3,arg4,arg5)
+                  (d1/d2/d3/d4/d5/d6/d7)
+246 $ff0a -$00f6 SendPkt(dp,port,replyport)(d1/d2/d3)
+252 $ff04 -$00fc WaitPkt()()
+258 $fefe -$0102 ReplyPkt(dp,res1,res2)(d1/d2/d3)
+264 $fef8 -$0108 AbortPkt(port,pkt)(d1/d2)
+*	Record Locking
+270 $fef2 -$010e LockRecord(fh,offset,length,mode,timeout)(d1/d2/d3/d4/d5)
+276 $feec -$0114 LockRecords(recArray,timeout)(d1/d2)
+282 $fee6 -$011a UnLockRecord(fh,offset,length)(d1/d2/d3)
+288 $fee0 -$0120 UnLockRecords(recArray)(d1)
+*	Buffered File I/O
+294 $feda -$0126 SelectInput(fh)(d1)
+300 $fed4 -$012c SelectOutput(fh)(d1)
+306 $fece -$0132 FGetC(fh)(d1)
+312 $fec8 -$0138 FPutC(fh,ch)(d1/d2)
+318 $fec2 -$013e UnGetC(fh,character)(d1/d2)
+324 $febc -$0144 FRead(fh,block,blocklen,number)(d1/d2/d3/d4)
+330 $feb6 -$014a FWrite(fh,block,blocklen,number)(d1/d2/d3/d4)
+336 $feb0 -$0150 FGets(fh,buf,buflen)(d1/d2/d3)
+342 $feaa -$0156 FPuts(fh,str)(d1/d2)
+348 $fea4 -$015c VFWritef(fh,format,argarray)(d1/d2/d3)
+354 $fe9e -$0162 VFPrintf(fh,format,argarray)(d1/d2/d3)
+360 $fe98 -$0168 Flush(fh)(d1)
+366 $fe92 -$016e SetVBuf(fh,buff,type,size)(d1/d2/d3/d4)
+*	DOS Object Management
+372 $fe8c -$0174 DupLockFromFH(fh)(d1)
+378 $fe86 -$017a OpenFromLock(lock)(d1)
+384 $fe80 -$0180 ParentOfFH(fh)(d1)
+390 $fe7a -$0186 ExamineFH(fh,fib)(d1/d2)
+396 $fe74 -$018c SetFileDate(name,date)(d1/d2)
+402 $fe6e -$0192 NameFromLock(lock,buffer,len)(d1/d2/d3)
+408 $fe68 -$0198 NameFromFH(fh,buffer,len)(d1/d2/d3)
+414 $fe62 -$019e SplitName(name,seperator,buf,oldpos,size)(d1/d2/d3/d4/d5)
+420 $fe5c -$01a4 SameLock(lock1,lock2)(d1/d2)
+426 $fe56 -$01aa SetMode(fh,mode)(d1/d2)
+432 $fe50 -$01b0 ExAll(lock,buffer,size,data,control)(d1/d2/d3/d4/d5)
+438 $fe4a -$01b6 ReadLink(port,lock,path,buffer,size)(d1/d2/d3/d4/d5)
+444 $fe44 -$01bc MakeLink(name,dest,soft)(d1/d2/d3)
+450 $fe3e -$01c2 ChangeMode(type,fh,newmode)(d1/d2/d3)
+456 $fe38 -$01c8 SetFileSize(fh,pos,mode)(d1/d2/d3)
+*	Error Handling
+462 $fe32 -$01ce SetIoErr(result)(d1)
+468 $fe2c -$01d4 Fault(code,header,buffer,len)(d1/d2/d3/d4)
+474 $fe26 -$01da PrintFault(code,header)(d1/d2)
+480 $fe20 -$01e0 ErrorReport(code,type,arg1,device)(d1/d2/d3/d4)
+*--- (1 function slot reserved here) ---
+##bias 492
+*	Process Management
+492 $fe14 -$01ec Cli()()
+498 $fe0e -$01f2 CreateNewProc(tags)(d1)
+504 $fe08 -$01f8 RunCommand(seg,stack,paramptr,paramlen)(d1/d2/d3/d4)
+510 $fe02 -$01fe GetConsoleTask()()
+516 $fdfc -$0204 SetConsoleTask(task)(d1)
+522 $fdf6 -$020a GetFileSysTask()()
+528 $fdf0 -$0210 SetFileSysTask(task)(d1)
+534 $fdea -$0216 GetArgStr()()
+540 $fde4 -$021c SetArgStr(string)(d1)
+546 $fdde -$0222 FindCliProc(num)(d1)
+552 $fdd8 -$0228 MaxCli()()
+558 $fdd2 -$022e SetCurrentDirName(name)(d1)
+564 $fdcc -$0234 GetCurrentDirName(buf,len)(d1/d2)
+570 $fdc6 -$023a SetProgramName(name)(d1)
+576 $fdc0 -$0240 GetProgramName(buf,len)(d1/d2)
+582 $fdba -$0246 SetPrompt(name)(d1)
+588 $fdb4 -$024c GetPrompt(buf,len)(d1/d2)
+594 $fdae -$0252 SetProgramDir(lock)(d1)
+600 $fda8 -$0258 GetProgramDir()()
+*	Device List Management
+606 $fda2 -$025e SystemTagList(command,tags)(d1/d2)
+612 $fd9c -$0264 AssignLock(name,lock)(d1/d2)
+618 $fd96 -$026a AssignLate(name,path)(d1/d2)
+624 $fd90 -$0270 AssignPath(name,path)(d1/d2)
+630 $fd8a -$0276 AssignAdd(name,lock)(d1/d2)
+636 $fd84 -$027c RemAssignList(name,lock)(d1/d2)
+642 $fd7e -$0282 GetDeviceProc(name,dp)(d1/d2)
+648 $fd78 -$0288 FreeDeviceProc(dp)(d1)
+654 $fd72 -$028e LockDosList(flags)(d1)
+660 $fd6c -$0294 UnLockDosList(flags)(d1)
+666 $fd66 -$029a AttemptLockDosList(flags)(d1)
+672 $fd60 -$02a0 RemDosEntry(dlist)(d1)
+678 $fd5a -$02a6 AddDosEntry(dlist)(d1)
+684 $fd54 -$02ac FindDosEntry(dlist,name,flags)(d1/d2/d3)
+690 $fd4e -$02b2 NextDosEntry(dlist,flags)(d1/d2)
+696 $fd48 -$02b8 MakeDosEntry(name,type)(d1/d2)
+702 $fd42 -$02be FreeDosEntry(dlist)(d1)
+708 $fd3c -$02c4 IsFileSystem(name)(d1)
+*	Handler Interface
+714 $fd36 -$02ca Format(filesystem,volumename,dostype)(d1/d2/d3)
+720 $fd30 -$02d0 Relabel(drive,newname)(d1/d2)
+726 $fd2a -$02d6 Inhibit(name,onoff)(d1/d2)
+732 $fd24 -$02dc AddBuffers(name,number)(d1/d2)
+*	Date, Time Routines
+738 $fd1e -$02e2 CompareDates(date1,date2)(d1/d2)
+744 $fd18 -$02e8 DateToStr(datetime)(d1)
+750 $fd12 -$02ee StrToDate(datetime)(d1)
+*	Image Management
+756 $fd0c -$02f4 InternalLoadSeg(fh,table,funcarray,stack)(d0/a0/a1/a2)
+762 $fd06 -$02fa InternalUnLoadSeg(seglist,freefunc)(d1/a1)
+768 $fd00 -$0300 NewLoadSeg(file,tags)(d1/d2)
+774 $fcfa -$0306 AddSegment(name,seg,system)(d1/d2/d3)
+780 $fcf4 -$030c FindSegment(name,seg,system)(d1/d2/d3)
+786 $fcee -$0312 RemSegment(seg)(d1)
+*	Command Support
+792 $fce8 -$0318 CheckSignal(mask)(d1)
+798 $fce2 -$031e ReadArgs(template,array,args)(d1/d2/d3)
+804 $fcdc -$0324 FindArg(keyword,template)(d1/d2)
+810 $fcd6 -$032a ReadItem(name,maxchars,cSource)(d1/d2/d3)
+816 $fcd0 -$0330 StrToLong(string,value)(d1/d2)
+822 $fcca -$0336 MatchFirst(pat,anchor)(d1/d2)
+828 $fcc4 -$033c MatchNext(anchor)(d1)
+834 $fcbe -$0342 MatchEnd(anchor)(d1)
+840 $fcb8 -$0348 ParsePattern(pat,buf,buflen)(d1/d2/d3)
+846 $fcb2 -$034e MatchPattern(pat,str)(d1/d2)
+##private
+* Not currently implemented.
+852 $fcac -$0354 dosPrivate3()()
+##public
+858 $fca6 -$035a FreeArgs(args)(d1)
+*--- (1 function slot reserved here) ---
+##bias 870
+870 $fc9a -$0366 FilePart(path)(d1)
+876 $fc94 -$036c PathPart(path)(d1)
+882 $fc8e -$0372 AddPart(dirname,filename,size)(d1/d2/d3)
+*	Notification
+888 $fc88 -$0378 StartNotify(notify)(d1)
+894 $fc82 -$037e EndNotify(notify)(d1)
+*	Environment Variable functions
+900 $fc7c -$0384 SetVar(name,buffer,size,flags)(d1/d2/d3/d4)
+906 $fc76 -$038a GetVar(name,buffer,size,flags)(d1/d2/d3/d4)
+912 $fc70 -$0390 DeleteVar(name,flags)(d1/d2)
+918 $fc6a -$0396 FindVar(name,type)(d1/d2)
+##private
+924 $fc64 -$039c dosPrivate4()()
+##public
+930 $fc5e -$03a2 CliInitNewcli(dp)(a0)
+936 $fc58 -$03a8 CliInitRun(dp)(a0)
+942 $fc52 -$03ae WriteChars(buf,buflen)(d1/d2)
+948 $fc4c -$03b4 PutStr(str)(d1)
+954 $fc46 -$03ba VPrintf(format,argarray)(d1/d2)
+*--- (1 function slot reserved here) ---
+##bias 966
+* these were unimplemented until dos 36.147
+966 $fc3a -$03c6 ParsePatternNoCase(pat,buf,buflen)(d1/d2/d3)
+972 $fc34 -$03cc MatchPatternNoCase(pat,str)(d1/d2)
+##private
+978 $fc2e -$03d2 dosPrivate5()()
+##public
+* this was added for V37 dos, returned 0 before then.
+984 $fc28 -$03d8 SameDevice(lock1,lock2)(d1/d2)
+##private
+* These were added in dos 36.147
+*--- (4 function slots reserved here) ---
+##bias 1014
+* these were added in dos 37.1
+*--- (2 function slots reserved here) ---
+##bias 1026
+* these were added in dos 37.8
+*--- (2 function slots reserved here) ---
+##bias 1038
+##end
+
+***************** exec
+* "exec.library"
+##base _SysBase
+##bias 30
+##public
+*------ misc ---------------------------------------------------------
+ 30 $ffe2 -$001e Supervisor(userFunction)(a5)
+*------ special patchable hooks to internal exec activity ------------
+##private
+ 36 $ffdc -$0024 execPrivate1()()
+ 42 $ffd6 -$002a execPrivate2()()
+ 48 $ffd0 -$0030 execPrivate3()()
+ 54 $ffca -$0036 execPrivate4()()
+ 60 $ffc4 -$003c execPrivate5()()
+ 66 $ffbe -$0042 execPrivate6()()
+##public
+*------ module creation ----------------------------------------------
+ 72 $ffb8 -$0048 InitCode(startClass,version)(d0/d1)
+ 78 $ffb2 -$004e InitStruct(initTable,memory,size)(a1/a2,d0)
+ 84 $ffac -$0054 MakeLibrary(funcInit,structInit,libInit,dataSize,segList)
+                  (a0/a1/a2,d0/d1)
+ 90 $ffa6 -$005a MakeFunctions(target,functionArray,funcDispBase)(a0/a1/a2)
+ 96 $ffa0 -$0060 FindResident(name)(a1)
+102 $ff9a -$0066 InitResident(resident,segList)(a1,d1)
+*------ diagnostics --------------------------------------------------
+108 $ff94 -$006c Alert(alertNum)(d7)
+114 $ff8e -$0072 Debug(flags)(d0)
+*------ interrupts ---------------------------------------------------
+120 $ff88 -$0078 Disable()()
+126 $ff82 -$007e Enable()()
+132 $ff7c -$0084 Forbid()()
+138 $ff76 -$008a Permit()()
+144 $ff70 -$0090 SetSR(newSR,mask)(d0/d1)
+150 $ff6a -$0096 SuperState()()
+156 $ff64 -$009c UserState(sysStack)(d0)
+162 $ff5e -$00a2 SetIntVector(intNumber,interrupt)(d0/a1)
+168 $ff58 -$00a8 AddIntServer(intNumber,interrupt)(d0/a1)
+174 $ff52 -$00ae RemIntServer(intNumber,interrupt)(d0/a1)
+180 $ff4c -$00b4 Cause(interrupt)(a1)
+*------ memory allocation --------------------------------------------
+186 $ff46 -$00ba Allocate(freeList,byteSize)(a0,d0)
+192 $ff40 -$00c0 Deallocate(freeList,memoryBlock,byteSize)(a0/a1,d0)
+198 $ff3a -$00c6 AllocMem(byteSize,requirements)(d0/d1)
+204 $ff34 -$00cc AllocAbs(byteSize,location)(d0/a1)
+210 $ff2e -$00d2 FreeMem(memoryBlock,byteSize)(a1,d0)
+216 $ff28 -$00d8 AvailMem(requirements)(d1)
+222 $ff22 -$00de AllocEntry(entry)(a0)
+228 $ff1c -$00e4 FreeEntry(entry)(a0)
+*------ lists --------------------------------------------------------
+234 $ff16 -$00ea Insert(list,node,pred)(a0/a1/a2)
+240 $ff10 -$00f0 AddHead(list,node)(a0/a1)
+246 $ff0a -$00f6 AddTail(list,node)(a0/a1)
+252 $ff04 -$00fc Remove(node)(a1)
+258 $fefe -$0102 RemHead(list)(a0)
+264 $fef8 -$0108 RemTail(list)(a0)
+270 $fef2 -$010e Enqueue(list,node)(a0/a1)
+276 $feec -$0114 FindName(list,name)(a0/a1)
+*------ tasks --------------------------------------------------------
+282 $fee6 -$011a AddTask(task,initPC,finalPC)(a1/a2/a3)
+288 $fee0 -$0120 RemTask(task)(a1)
+294 $feda -$0126 FindTask(name)(a1)
+300 $fed4 -$012c SetTaskPri(task,priority)(a1,d0)
+306 $fece -$0132 SetSignal(newSignals,signalSet)(d0/d1)
+312 $fec8 -$0138 SetExcept(newSignals,signalSet)(d0/d1)
+318 $fec2 -$013e Wait(signalSet)(d0)
+324 $febc -$0144 Signal(task,signalSet)(a1,d0)
+330 $feb6 -$014a AllocSignal(signalNum)(d0)
+336 $feb0 -$0150 FreeSignal(signalNum)(d0)
+342 $feaa -$0156 AllocTrap(trapNum)(d0)
+348 $fea4 -$015c FreeTrap(trapNum)(d0)
+*------ messages -----------------------------------------------------
+354 $fe9e -$0162 AddPort(port)(a1)
+360 $fe98 -$0168 RemPort(port)(a1)
+366 $fe92 -$016e PutMsg(port,message)(a0/a1)
+372 $fe8c -$0174 GetMsg(port)(a0)
+378 $fe86 -$017a ReplyMsg(message)(a1)
+384 $fe80 -$0180 WaitPort(port)(a0)
+390 $fe7a -$0186 FindPort(name)(a1)
+*------ libraries ----------------------------------------------------
+396 $fe74 -$018c AddLibrary(library)(a1)
+402 $fe6e -$0192 RemLibrary(library)(a1)
+408 $fe68 -$0198 OldOpenLibrary(libName)(a1)
+414 $fe62 -$019e CloseLibrary(library)(a1)
+420 $fe5c -$01a4 SetFunction(library,funcOffset,newFunction)(a1,a0,d0)
+426 $fe56 -$01aa SumLibrary(library)(a1)
+*------ devices ------------------------------------------------------
+432 $fe50 -$01b0 AddDevice(device)(a1)
+438 $fe4a -$01b6 RemDevice(device)(a1)
+444 $fe44 -$01bc OpenDevice(devName,unit,ioRequest,flags)(a0,d0/a1,d1)
+450 $fe3e -$01c2 CloseDevice(ioRequest)(a1)
+456 $fe38 -$01c8 DoIO(ioRequest)(a1)
+462 $fe32 -$01ce SendIO(ioRequest)(a1)
+468 $fe2c -$01d4 CheckIO(ioRequest)(a1)
+474 $fe26 -$01da WaitIO(ioRequest)(a1)
+480 $fe20 -$01e0 AbortIO(ioRequest)(a1)
+*------ resources ----------------------------------------------------
+486 $fe1a -$01e6 AddResource(resource)(a1)
+492 $fe14 -$01ec RemResource(resource)(a1)
+498 $fe0e -$01f2 OpenResource(resName)(a1)
+*------ private diagnostic support -----------------------------------
+##private
+504 $fe08 -$01f8 execPrivate7()()
+510 $fe02 -$01fe execPrivate8()()
+516 $fdfc -$0204 execPrivate9()()
+##public
+*------ misc ---------------------------------------------------------
+522 $fdf6 -$020a RawDoFmt(formatString,dataStream,putChProc,putChData)
+                  (a0/a1/a2/a3)
+528 $fdf0 -$0210 GetCC()()
+534 $fdea -$0216 TypeOfMem(address)(a1)
+540 $fde4 -$021c Procure(semaport,bidMsg)(a0/a1)
+546 $fdde -$0222 Vacate(semaport)(a0)
+552 $fdd8 -$0228 OpenLibrary(libName,version)(a1,d0)
+*--- functions in V33 or higher (distributed as Release 1.2) ---
+*------ signal semaphores (note funny registers)----------------------
+558 $fdd2 -$022e InitSemaphore(sigSem)(a0)
+564 $fdcc -$0234 ObtainSemaphore(sigSem)(a0)
+570 $fdc6 -$023a ReleaseSemaphore(sigSem)(a0)
+576 $fdc0 -$0240 AttemptSemaphore(sigSem)(a0)
+582 $fdba -$0246 ObtainSemaphoreList(sigSem)(a0)
+588 $fdb4 -$024c ReleaseSemaphoreList(sigSem)(a0)
+594 $fdae -$0252 FindSemaphore(sigSem)(a1)
+600 $fda8 -$0258 AddSemaphore(sigSem)(a1)
+606 $fda2 -$025e RemSemaphore(sigSem)(a1)
+*------ kickmem support ----------------------------------------------
+612 $fd9c -$0264 SumKickData()()
+*------ more memory support ------------------------------------------
+618 $fd96 -$026a AddMemList(size,attributes,pri,base,name)(d0/d1/d2/a0/a1)
+624 $fd90 -$0270 CopyMem(source,dest,size)(a0/a1,d0)
+630 $fd8a -$0276 CopyMemQuick(source,dest,size)(a0/a1,d0)
+*------ cache --------------------------------------------------------
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+636 $fd84 -$027c CacheClearU()()
+642 $fd7e -$0282 CacheClearE(address,length,caches)(a0,d0/d1)
+648 $fd78 -$0288 CacheControl(cacheBits,cacheMask)(d0/d1)
+*------ misc ---------------------------------------------------------
+654 $fd72 -$028e CreateIORequest(port,size)(a0,d0)
+660 $fd6c -$0294 DeleteIORequest(iorequest)(a0)
+666 $fd66 -$029a CreateMsgPort()()
+672 $fd60 -$02a0 DeleteMsgPort(port)(a0)
+678 $fd5a -$02a6 ObtainSemaphoreShared(sigSem)(a0)
+*------ even more memory support -------------------------------------
+684 $fd54 -$02ac AllocVec(byteSize,requirements)(d0/d1)
+690 $fd4e -$02b2 FreeVec(memoryBlock)(a1)
+696 $fd48 -$02b8 CreatePrivatePool(requirements,puddleSize,puddleThresh)
+                  (d0/d1/d2)
+702 $fd42 -$02be DeletePrivatePool(poolHeader)(a0)
+708 $fd3c -$02c4 AllocPooled(memSize,poolHeader)(d0/a0)
+714 $fd36 -$02ca FreePooled(memory,poolHeader)(a1,a0)
+*------ misc ---------------------------------------------------------
+720 $fd30 -$02d0 AttemptSemaphoreShared(sigSem)(a0)
+726 $fd2a -$02d6 ColdReboot()()
+732 $fd24 -$02dc StackSwap(newStack)(a0)
+*------ task trees ---------------------------------------------------
+738 $fd1e -$02e2 ChildFree(tid)(d0)
+744 $fd18 -$02e8 ChildOrphan(tid)(d0)
+750 $fd12 -$02ee ChildStatus(tid)(d0)
+756 $fd0c -$02f4 ChildWait(tid)(d0)
+*------ future expansion ---------------------------------------------
+762 $fd06 -$02fa CachePreDMA(address,length,flags)(a0/a1,d1)
+768 $fd00 -$0300 CachePostDMA(address,length,flags)(a0/a1,d1)
+##private
+774 $fcfa -$0306 execPrivate10()()
+780 $fcf4 -$030c execPrivate11()()
+786 $fcee -$0312 execPrivate12()()
+792 $fce8 -$0318 execPrivate13()()
+##public
+##end
+
+***************** expansion
+* "expansion.library"
+##base _ExpansionBase
+##bias 30
+##public
+*--- functions in V33 or higher (distributed as Release 1.2) ---
+ 30 $ffe2 -$001e AddConfigDev(configDev)(a0)
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+ 36 $ffdc -$0024 AddBootNode(bootPri,flags,deviceNode,configDev)
+                  (d0/d1/a0/a1)
+*--- functions in V33 or higher (distributed as Release 1.2) ---
+ 42 $ffd6 -$002a AllocBoardMem(slotSpec)(d0)
+ 48 $ffd0 -$0030 AllocConfigDev()()
+ 54 $ffca -$0036 AllocExpansionMem(numSlots,slotAlign)(d0/d1)
+ 60 $ffc4 -$003c ConfigBoard(board,configDev)(a0/a1)
+ 66 $ffbe -$0042 ConfigChain(baseAddr)(a0)
+ 72 $ffb8 -$0048 FindConfigDev(oldConfigDev,manufacturer,product)(a0,d0/d1)
+ 78 $ffb2 -$004e FreeBoardMem(startSlot,slotSpec)(d0/d1)
+ 84 $ffac -$0054 FreeConfigDev(configDev)(a0)
+ 90 $ffa6 -$005a FreeExpansionMem(startSlot,numSlots)(d0/d1)
+ 96 $ffa0 -$0060 ReadExpansionByte(board,offset)(a0,d0)
+102 $ff9a -$0066 ReadExpansionRom(board,configDev)(a0/a1)
+108 $ff94 -$006c RemConfigDev(configDev)(a0)
+114 $ff8e -$0072 WriteExpansionByte(board,offset,byte)(a0,d0/d1)
+120 $ff88 -$0078 ObtainConfigBinding()()
+126 $ff82 -$007e ReleaseConfigBinding()()
+132 $ff7c -$0084 SetCurrentBinding(currentBinding,bindingSize)(a0,d0)
+138 $ff76 -$008a GetCurrentBinding(currentBinding,bindingSize)(a0,d0)
+144 $ff70 -$0090 MakeDosNode(parmPacket)(a0)
+150 $ff6a -$0096 AddDosNode(bootPri,flags,deviceNode)(d0/d1/a0)
+##private
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+156 $ff64 -$009c expansionPrivate1()()
+162 $ff5e -$00a2 expansionPrivate2()()
+##end
+
+***************** gadtools
+* "gadtools.library"
+##base _GadToolsBase
+##bias 30
+##public
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+*
+* Gadget Functions
+*
+ 30 $ffe2 -$001e CreateGadgetA(kind,gad,ng,taglist)(d0/a0/a1/a2)
+ 36 $ffdc -$0024 FreeGadgets(gad)(a0)
+ 42 $ffd6 -$002a GT_SetGadgetAttrsA(gad,win,req,taglist)(a0/a1/a2/a3)
+*
+* Menu functions
+*
+ 48 $ffd0 -$0030 CreateMenusA(newmenu,taglist)(a0/a1)
+ 54 $ffca -$0036 FreeMenus(menu)(a0)
+ 60 $ffc4 -$003c LayoutMenuItemsA(firstitem,vi,taglist)(a0/a1/a2)
+ 66 $ffbe -$0042 LayoutMenusA(firstmenu,vi,taglist)(a0/a1/a2)
+*
+* Misc Event-Handling Functions
+*
+ 72 $ffb8 -$0048 GT_GetIMsg(iport)(a0)
+ 78 $ffb2 -$004e GT_ReplyIMsg(imsg)(a1)
+ 84 $ffac -$0054 GT_RefreshWindow(win,req)(a0/a1)
+ 90 $ffa6 -$005a GT_BeginRefresh(win)(a0)
+ 96 $ffa0 -$0060 GT_EndRefresh(win,complete)(a0,d0)
+102 $ff9a -$0066 GT_FilterIMsg(imsg)(a1)
+108 $ff94 -$006c GT_PostFilterIMsg(imsg)(a1)
+114 $ff8e -$0072 CreateContext(glistptr)(a0)
+*
+* Rendering Functions
+*
+120 $ff88 -$0078 DrawBevelBoxA(rport,left,top,width,height,taglist)
+                  (a0,d0/d1/d2/d3/a1)
+*
+* Visuals Functions
+*
+126 $ff82 -$007e GetVisualInfoA(screen,taglist)(a0/a1)
+132 $ff7c -$0084 FreeVisualInfo(vi)(a0)
+##private
+*
+* Reserved entries
+*
+138 $ff76 -$008a gadtoolsPrivate1()()
+144 $ff70 -$0090 gadtoolsPrivate2()()
+150 $ff6a -$0096 gadtoolsPrivate3()()
+156 $ff64 -$009c gadtoolsPrivate4()()
+162 $ff5e -$00a2 gadtoolsPrivate5()()
+168 $ff58 -$00a8 gadtoolsPrivate6()()
+##end
+
+***************** graphics
+* "graphics.library"
+##base _GfxBase
+##bias 30
+##public
+*------ BitMap primitives ------
+ 30 $ffe2 -$001e BltBitMap(srcBitMap,xSrc,ySrc,destBitMap,xDest,yDest,xSize, 
+                  ySize,minterm,mask,tempA)(a0,d0/d1/a1,d2/d3/d4/d5/d6/d7/a2)
+ 36 $ffdc -$0024 BltTemplate(source,xSrc,srcMod,destRP,xDest,yDest,xSize, 
+                  ySize)(a0,d0/d1/a1,d2/d3/d4/d5)
+*------ Text routines ------
+ 42 $ffd6 -$002a ClearEOL(rp)(a1)
+ 48 $ffd0 -$0030 ClearScreen(rp)(a1)
+ 54 $ffca -$0036 TextLength(rp,string,count)(a1,a0,d0)
+ 60 $ffc4 -$003c Text(rp,string,count)(a1,a0,d0)
+ 66 $ffbe -$0042 SetFont(rp,textFont)(a1,a0)
+ 72 $ffb8 -$0048 OpenFont(textAttr)(a0)
+ 78 $ffb2 -$004e CloseFont(textFont)(a1)
+ 84 $ffac -$0054 AskSoftStyle(rp)(a1)
+ 90 $ffa6 -$005a SetSoftStyle(rp,style,enable)(a1,d0/d1)
+*------	Gels routines ------
+ 96 $ffa0 -$0060 AddBob(bob,rp)(a0/a1)
+102 $ff9a -$0066 AddVSprite(vSprite,rp)(a0/a1)
+108 $ff94 -$006c DoCollision(rp)(a1)
+114 $ff8e -$0072 DrawGList(rp,vp)(a1,a0)
+120 $ff88 -$0078 InitGels(head,tail,gelsInfo)(a0/a1/a2)
+126 $ff82 -$007e InitMasks(vSprite)(a0)
+132 $ff7c -$0084 RemIBob(bob,rp,vp)(a0/a1/a2)
+138 $ff76 -$008a RemVSprite(vSprite)(a0)
+144 $ff70 -$0090 SetCollision(num,routine,gelsInfo)(d0/a0/a1)
+150 $ff6a -$0096 SortGList(rp)(a1)
+156 $ff64 -$009c AddAnimOb(anOb,anKey,rp)(a0/a1/a2)
+162 $ff5e -$00a2 Animate(anKey,rp)(a0/a1)
+168 $ff58 -$00a8 GetGBuffers(anOb,rp,flag)(a0/a1,d0)
+174 $ff52 -$00ae InitGMasks(anOb)(a0)
+*------	General graphics routines ------
+180 $ff4c -$00b4 DrawEllipse(rp,xCenter,yCenter,a,b)(a1,d0/d1/d2/d3)
+186 $ff46 -$00ba AreaEllipse(rp,xCenter,yCenter,a,b)(a1,d0/d1/d2/d3)
+192 $ff40 -$00c0 LoadRGB4(vp,colors,count)(a0/a1,d0)
+198 $ff3a -$00c6 InitRastPort(rp)(a1)
+204 $ff34 -$00cc InitVPort(vp)(a0)
+210 $ff2e -$00d2 MrgCop(view)(a1)
+216 $ff28 -$00d8 MakeVPort(view,vp)(a0/a1)
+222 $ff22 -$00de LoadView(view)(a1)
+228 $ff1c -$00e4 WaitBlit()()
+234 $ff16 -$00ea SetRast(rp,pen)(a1,d0)
+240 $ff10 -$00f0 Move(rp,x,y)(a1,d0/d1)
+246 $ff0a -$00f6 Draw(rp,x,y)(a1,d0/d1)
+252 $ff04 -$00fc AreaMove(rp,x,y)(a1,d0/d1)
+258 $fefe -$0102 AreaDraw(rp,x,y)(a1,d0/d1)
+264 $fef8 -$0108 AreaEnd(rp)(a1)
+270 $fef2 -$010e WaitTOF()()
+276 $feec -$0114 QBlit(blit)(a1)
+282 $fee6 -$011a InitArea(areaInfo,vectorBuffer,maxVectors)(a0/a1,d0)
+288 $fee0 -$0120 SetRGB4(vp,index,red,green,blue)(a0,d0/d1/d2/d3)
+294 $feda -$0126 QBSBlit(blit)(a1)
+300 $fed4 -$012c BltClear(memBlock,byteCount,flags)(a1,d0/d1)
+306 $fece -$0132 RectFill(rp,xMin,yMin,xMax,yMax)(a1,d0/d1/d2/d3)
+312 $fec8 -$0138 BltPattern(rp,mask,xMin,yMin,xMax,yMax,maskBPR)
+                  (a1,a0,d0/d1/d2/d3/d4)
+318 $fec2 -$013e ReadPixel(rp,x,y)(a1,d0/d1)
+324 $febc -$0144 WritePixel(rp,x,y)(a1,d0/d1)
+330 $feb6 -$014a Flood(rp,mode,x,y)(a1,d2,d0/d1)
+336 $feb0 -$0150 PolyDraw(rp,count,polyTable)(a1,d0/a0)
+342 $feaa -$0156 SetAPen(rp,pen)(a1,d0)
+348 $fea4 -$015c SetBPen(rp,pen)(a1,d0)
+354 $fe9e -$0162 SetDrMd(rp,drawMode)(a1,d0)
+360 $fe98 -$0168 InitView(view)(a1)
+366 $fe92 -$016e CBump(copList)(a1)
+372 $fe8c -$0174 CMove(copList,destination,data)(a1,d0/d1)
+378 $fe86 -$017a CWait(copList,v,h)(a1,d0/d1)
+384 $fe80 -$0180 VBeamPos()()
+390 $fe7a -$0186 InitBitMap(bitMap,depth,width,height)(a0,d0/d1/d2)
+396 $fe74 -$018c ScrollRaster(rp,dx,dy,xMin,yMin,xMax,yMax)
+                  (a1,d0/d1/d2/d3/d4/d5)
+402 $fe6e -$0192 WaitBOVP(vp)(a0)
+408 $fe68 -$0198 GetSprite(sprite,num)(a0,d0)
+414 $fe62 -$019e FreeSprite(num)(d0)
+420 $fe5c -$01a4 ChangeSprite(vp,sprite,newData)(a0/a1/a2)
+426 $fe56 -$01aa MoveSprite(vp,sprite,x,y)(a0/a1,d0/d1)
+432 $fe50 -$01b0 LockLayerRom(layer)(a5)
+438 $fe4a -$01b6 UnlockLayerRom(layer)(a5)
+444 $fe44 -$01bc SyncSBitMap(layer)(a0)
+450 $fe3e -$01c2 CopySBitMap(layer)(a0)
+456 $fe38 -$01c8 OwnBlitter()()
+462 $fe32 -$01ce DisownBlitter()()
+468 $fe2c -$01d4 InitTmpRas(tmpRas,buffer,size)(a0/a1,d0)
+474 $fe26 -$01da AskFont(rp,textAttr)(a1,a0)
+480 $fe20 -$01e0 AddFont(textFont)(a1)
+486 $fe1a -$01e6 RemFont(textFont)(a1)
+492 $fe14 -$01ec AllocRaster(width,height)(d0/d1)
+498 $fe0e -$01f2 FreeRaster(p,width,height)(a0,d0/d1)
+504 $fe08 -$01f8 AndRectRegion(region,rectangle)(a0/a1)
+510 $fe02 -$01fe OrRectRegion(region,rectangle)(a0/a1)
+516 $fdfc -$0204 NewRegion()()
+522 $fdf6 -$020a ClearRectRegion(region,rectangle)(a0/a1)
+528 $fdf0 -$0210 ClearRegion(region)(a0)
+534 $fdea -$0216 DisposeRegion(region)(a0)
+540 $fde4 -$021c FreeVPortCopLists(vp)(a0)
+546 $fdde -$0222 FreeCopList(copList)(a0)
+552 $fdd8 -$0228 ClipBlit(srcRP,xSrc,ySrc,destRP,xDest,yDest,xSize,ySize, 
+                  minterm)(a0,d0/d1/a1,d2/d3/d4/d5/d6)
+558 $fdd2 -$022e XorRectRegion(region,rectangle)(a0/a1)
+564 $fdcc -$0234 FreeCprList(cprList)(a0)
+570 $fdc6 -$023a GetColorMap(entries)(d0)
+576 $fdc0 -$0240 FreeColorMap(colorMap)(a0)
+582 $fdba -$0246 GetRGB4(colorMap,entry)(a0,d0)
+588 $fdb4 -$024c ScrollVPort(vp)(a0)
+594 $fdae -$0252 UCopperListInit(uCopList,n)(a0,d0)
+600 $fda8 -$0258 FreeGBuffers(anOb,rp,flag)(a0/a1,d0)
+606 $fda2 -$025e BltBitMapRastPort(srcBitMap,xSrc,ySrc,destRP,xDest,yDest, 
+                  xSize,ySize,minterm)(a0,d0/d1/a1,d2/d3/d4/d5/d6)
+612 $fd9c -$0264 OrRegionRegion(srcRegion,destRegion)(a0/a1)
+618 $fd96 -$026a XorRegionRegion(srcRegion,destRegion)(a0/a1)
+624 $fd90 -$0270 AndRegionRegion(srcRegion,destRegion)(a0/a1)
+630 $fd8a -$0276 SetRGB4CM(colorMap,index,red,green,blue)(a0,d0/d1/d2/d3)
+636 $fd84 -$027c BltMaskBitMapRastPort(srcBitMap,xSrc,ySrc,destRP,xDest, 
+                  yDest,xSize,ySize,minterm,bltMask)(a0,d0/d1/a1,d2/d3/d4/d5/d6/a2)
+*--- (2 function slots reserved here) ---
+##bias 654
+654 $fd72 -$028e AttemptLockLayerRom(layer)(a5)
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+660 $fd6c -$0294 GfxNew(gfxNodeType)(d0)
+666 $fd66 -$029a GfxFree(gfxNodePtr)(a0)
+672 $fd60 -$02a0 GfxAssociate(associateNode,gfxNodePtr)(a0/a1)
+678 $fd5a -$02a6 BitMapScale(bitScaleArgs)(a0)
+684 $fd54 -$02ac ScalerDiv(factor,numerator,denominator)(d0/d1/d2)
+690 $fd4e -$02b2 TextExtent(rp,string,count,textExtent)(a1,a0,d0/a2)
+696 $fd48 -$02b8 TextFit(rp,string,strLen,textExtent,constrainingExtent, 
+                  strDirection,constrainingBitWidth,constrainingBitHeight)(a1,a0,d0/a2/a3,d1/d2/d3)
+702 $fd42 -$02be GfxLookUp(associateNode)(a0)
+708 $fd3c -$02c4 VideoControl(colorMap,tagarray)(a0/a1)
+714 $fd36 -$02ca OpenMonitor(monitorName,displayID)(a1,d0)
+720 $fd30 -$02d0 CloseMonitor(monitorSpec)(a0)
+726 $fd2a -$02d6 FindDisplayInfo(displayID)(d0)
+732 $fd24 -$02dc NextDisplayInfo(displayID)(d0)
+##private
+738 $fd1e -$02e2 graphicsPrivate1()()
+744 $fd18 -$02e8 graphicsPrivate2()()
+750 $fd12 -$02ee graphicsPrivate3()()
+##public
+756 $fd0c -$02f4 GetDisplayInfoData(handle,buf,size,tagID,displayID)
+                  (a0/a1,d0/d1/d2)
+762 $fd06 -$02fa FontExtent(font,fontExtent)(a0/a1)
+768 $fd00 -$0300 ReadPixelLine8(rp,xstart,ystart,width,array,tempRP)
+                  (a0,d0/d1/d2/a2,a1)
+774 $fcfa -$0306 WritePixelLine8(rp,xstart,ystart,width,array,tempRP)
+                  (a0,d0/d1/d2/a2,a1)
+780 $fcf4 -$030c ReadPixelArray8(rp,xstart,ystart,xstop,ystop,array,temprp)
+                  (a0,d0/d1/d2/d3/a2,a1)
+786 $fcee -$0312 WritePixelArray8(rp,xstart,ystart,xstop,ystop,array,temprp)
+                  (a0,d0/d1/d2/d3/a2,a1)
+792 $fce8 -$0318 GetVPModeID(vp)(a0)
+798 $fce2 -$031e ModeNotAvailable(modeID)(d0)
+804 $fcdc -$0324 WeighTAMatch(reqTextAttr,targetTextAttr,targetTags)
+                  (a0/a1/a2)
+810 $fcd6 -$032a EraseRect(rp,xMin,yMin,xMax,yMax)(a1,d0/d1/d2/d3)
+816 $fcd0 -$0330 ExtendFont(font,fontTags)(a0/a1)
+822 $fcca -$0336 StripFont(font)(a0)
+##end
+
+***************** icon
+* "icon.library"
+##base _IconBase
+##bias 30
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+*	Use DiskObjects instead of obsolete WBObjects
+##private
+ 30 $ffe2 -$001e iconPrivate1()()
+ 36 $ffdc -$0024 iconPrivate2()()
+##public
+ 42 $ffd6 -$002a GetIcon(name,icon,freelist)(a0/a1/a2)
+ 48 $ffd0 -$0030 PutIcon(name,icon)(a0/a1)
+ 54 $ffca -$0036 FreeFreeList(freelist)(a0)
+##private
+ 60 $ffc4 -$003c iconPrivate3()()
+ 66 $ffbe -$0042 iconPrivate4()()
+##public
+ 72 $ffb8 -$0048 AddFreeList(freelist,mem,size)(a0/a1/a2)
+ 78 $ffb2 -$004e GetDiskObject(name)(a0)
+ 84 $ffac -$0054 PutDiskObject(name,diskobj)(a0/a1)
+ 90 $ffa6 -$005a FreeDiskObject(diskobj)(a0)
+ 96 $ffa0 -$0060 FindToolType(toolTypeArray,typeName)(a0/a1)
+102 $ff9a -$0066 MatchToolValue(typeString,value)(a0/a1)
+108 $ff94 -$006c BumpRevision(newname,oldname)(a0/a1)
+##private
+114 $ff8e -$0072 iconPrivate5()()
+##public
+120 $ff88 -$0078 GetDefDiskObject(type)(d0)
+126 $ff82 -$007e PutDefDiskObject(diskObject)(a0)
+132 $ff7c -$0084 GetDiskObjectNew(name)(a0)
+138 $ff76 -$008a DeleteDiskObject(name)(a0)
+*--- (4 function slots reserved here) ---
+##bias 168
+##end
+
+***************** iffparse
+* "iffparse.library"
+##base _IFFParseBase
+##bias 30
+##public
+*--- functions in V33 or higher (distributed as Release 1.2) ---
+*------ Basic functions ------
+ 30 $ffe2 -$001e AllocIFF()()
+ 36 $ffdc -$0024 OpenIFF(iff,rwMode)(a0,d0)
+ 42 $ffd6 -$002a ParseIFF(iff,control)(a0,d0)
+ 48 $ffd0 -$0030 CloseIFF(iff)(a0)
+ 54 $ffca -$0036 FreeIFF(iff)(a0)
+*------ Read/Write functions ------
+ 60 $ffc4 -$003c ReadChunkBytes(iff,buf,size)(a0/a1,d0)
+ 66 $ffbe -$0042 WriteChunkBytes(iff,buf,size)(a0/a1,d0)
+ 72 $ffb8 -$0048 ReadChunkRecords(iff,buf,bytesPerRecord,nRecords)
+                  (a0/a1,d0/d1)
+ 78 $ffb2 -$004e WriteChunkRecords(iff,buf,bytesPerRecord,nRecords)
+                  (a0/a1,d0/d1)
+*------ Context entry/exit ------
+ 84 $ffac -$0054 PushChunk(iff,type,id,size)(a0,d0/d1/d2)
+ 90 $ffa6 -$005a PopChunk(iff)(a0)
+*--- (1 function slot reserved here) ---
+##bias 102
+*------ Low-level handler installation ------
+102 $ff9a -$0066 EntryHandler(iff,type,id,position,handler,object)
+                  (a0,d0/d1/d2/a1/a2)
+108 $ff94 -$006c ExitHandler(iff,type,id,position,handler,object)
+                  (a0,d0/d1/d2/a1/a2)
+*------ Built-in chunk/property handlers ------
+114 $ff8e -$0072 PropChunk(iff,type,id)(a0,d0/d1)
+120 $ff88 -$0078 PropChunks(iff,propArray,nProps)(a0/a1,d0)
+126 $ff82 -$007e StopChunk(iff,type,id)(a0,d0/d1)
+132 $ff7c -$0084 StopChunks(iff,propArray,nProps)(a0/a1,d0)
+138 $ff76 -$008a CollectionChunk(iff,type,id)(a0,d0/d1)
+144 $ff70 -$0090 CollectionChunks(iff,propArray,nProps)(a0/a1,d0)
+150 $ff6a -$0096 StopOnExit(iff,type,id)(a0,d0/d1)
+*------ Context utilities ------
+156 $ff64 -$009c FindProp(iff,type,id)(a0,d0/d1)
+162 $ff5e -$00a2 FindCollection(iff,type,id)(a0,d0/d1)
+168 $ff58 -$00a8 FindPropContext(iff)(a0)
+174 $ff52 -$00ae CurrentChunk(iff)(a0)
+180 $ff4c -$00b4 ParentChunk(contextNode)(a0)
+*------ LocalContextItem support functions ------
+186 $ff46 -$00ba AllocLocalItem(type,id,ident,dataSize)(d0/d1/d2/d3)
+192 $ff40 -$00c0 LocalItemData(localItem)(a0)
+198 $ff3a -$00c6 SetLocalItemPurge(localItem,purgeHook)(a0/a1)
+204 $ff34 -$00cc FreeLocalItem(localItem)(a0)
+210 $ff2e -$00d2 FindLocalItem(iff,type,id,ident)(a0,d0/d1/d2)
+216 $ff28 -$00d8 StoreLocalItem(iff,localItem,position)(a0/a1,d0)
+222 $ff22 -$00de StoreItemInContext(iff,localItem,contextNode)(a0/a1/a2)
+*------ IFFHandle initialization ------
+228 $ff1c -$00e4 InitIFF(iff,flags,streamHook)(a0,d0/a1)
+234 $ff16 -$00ea InitIFFasDOS(iff)(a0)
+240 $ff10 -$00f0 InitIFFasClip(iff)(a0)
+*------ Internal clipboard support ------
+246 $ff0a -$00f6 OpenClipboard(unitNum)(d0)
+252 $ff04 -$00fc CloseClipboard(clipboard)(a0)
+*------ Miscellaneous ------
+258 $fefe -$0102 GoodID(id)(d0)
+264 $fef8 -$0108 GoodType(type)(d0)
+270 $fef2 -$010e IDtoStr(id,buf)(d0/a0)
+##end
+
+***************** input
+* "input.device"
+##base _InputBase
+##bias 42
+##public
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+ 42 $ffd6 -$002a PeekQualifier()()
+##end
+
+***************** intuition
+* "intuition.library"
+##base _IntuitionBase
+##bias 30
+##public
+* Public functions OpenIntuition() and Intuition() are intentionally
+* not documented.
+ 30 $ffe2 -$001e OpenIntuition()()
+ 36 $ffdc -$0024 Intuition(iEvent)(a0)
+ 42 $ffd6 -$002a AddGadget(window,gadget,position)(a0/a1,d0)
+ 48 $ffd0 -$0030 ClearDMRequest(window)(a0)
+ 54 $ffca -$0036 ClearMenuStrip(window)(a0)
+ 60 $ffc4 -$003c ClearPointer(window)(a0)
+ 66 $ffbe -$0042 CloseScreen(screen)(a0)
+ 72 $ffb8 -$0048 CloseWindow(window)(a0)
+ 78 $ffb2 -$004e CloseWorkBench()()
+ 84 $ffac -$0054 CurrentTime(seconds,micros)(a0/a1)
+ 90 $ffa6 -$005a DisplayAlert(alertNumber,string,height)(d0/a0,d1)
+ 96 $ffa0 -$0060 DisplayBeep(screen)(a0)
+102 $ff9a -$0066 DoubleClick(sSeconds,sMicros,cSeconds,cMicros)(d0/d1/d2/d3)
+108 $ff94 -$006c DrawBorder(rp,border,leftOffset,topOffset)(a0/a1,d0/d1)
+114 $ff8e -$0072 DrawImage(rp,image,leftOffset,topOffset)(a0/a1,d0/d1)
+120 $ff88 -$0078 EndRequest(requester,window)(a0/a1)
+126 $ff82 -$007e GetDefPrefs(preferences,size)(a0,d0)
+132 $ff7c -$0084 GetPrefs(preferences,size)(a0,d0)
+138 $ff76 -$008a InitRequester(requester)(a0)
+144 $ff70 -$0090 ItemAddress(menuStrip,menuNumber)(a0,d0)
+150 $ff6a -$0096 ModifyIDCMP(window,flags)(a0,d0)
+156 $ff64 -$009c ModifyProp(gadget,window,requester,flags,horizPot,vertPot, 
+                  horizBody,vertBody)(a0/a1/a2,d0/d1/d2/d3/d4)
+162 $ff5e -$00a2 MoveScreen(screen,dx,dy)(a0,d0/d1)
+168 $ff58 -$00a8 MoveWindow(window,dx,dy)(a0,d0/d1)
+174 $ff52 -$00ae OffGadget(gadget,window,requester)(a0/a1/a2)
+180 $ff4c -$00b4 OffMenu(window,menuNumber)(a0,d0)
+186 $ff46 -$00ba OnGadget(gadget,window,requester)(a0/a1/a2)
+192 $ff40 -$00c0 OnMenu(window,menuNumber)(a0,d0)
+198 $ff3a -$00c6 OpenScreen(newScreen)(a0)
+204 $ff34 -$00cc OpenWindow(newWindow)(a0)
+210 $ff2e -$00d2 OpenWorkBench()()
+216 $ff28 -$00d8 PrintIText(rp,iText,left,top)(a0/a1,d0/d1)
+222 $ff22 -$00de RefreshGadgets(gadgets,window,requester)(a0/a1/a2)
+228 $ff1c -$00e4 RemoveGadget(window,gadget)(a0/a1)
+* The official calling sequence for ReportMouse is given below.
+* Note the register order.  For the complete story, read the ReportMouse
+* autodoc.
+234 $ff16 -$00ea ReportMouse(flag,window)(d0/a0)
+240 $ff10 -$00f0 Request(requester,window)(a0/a1)
+246 $ff0a -$00f6 ScreenToBack(screen)(a0)
+252 $ff04 -$00fc ScreenToFront(screen)(a0)
+258 $fefe -$0102 SetDMRequest(window,requester)(a0/a1)
+264 $fef8 -$0108 SetMenuStrip(window,menu)(a0/a1)
+270 $fef2 -$010e SetPointer(window,pointer,height,width,xOffset,yOffset)
+                  (a0/a1,d0/d1/d2/d3)
+276 $feec -$0114 SetWindowTitles(window,windowTitle,screenTitle)(a0/a1/a2)
+282 $fee6 -$011a ShowTitle(screen,showIt)(a0,d0)
+288 $fee0 -$0120 SizeWindow(window,dx,dy)(a0,d0/d1)
+294 $feda -$0126 ViewAddress()()
+300 $fed4 -$012c ViewPortAddress(window)(a0)
+306 $fece -$0132 WindowToBack(window)(a0)
+312 $fec8 -$0138 WindowToFront(window)(a0)
+318 $fec2 -$013e WindowLimits(window,widthMin,heightMin,widthMax,heightMax)
+                  (a0,d0/d1/d2/d3)
+*--- start of next generation of names -------------------------------------
+324 $febc -$0144 SetPrefs(preferences,size,inform)(a0,d0/d1)
+*--- start of next next generation of names --------------------------------
+330 $feb6 -$014a IntuiTextLength(iText)(a0)
+336 $feb0 -$0150 WBenchToBack()()
+342 $feaa -$0156 WBenchToFront()()
+*--- start of next next next generation of names ---------------------------
+348 $fea4 -$015c AutoRequest(window,body,posText,negText,pFlag,nFlag,width, 
+                  height)(a0/a1/a2/a3,d0/d1/d2/d3)
+354 $fe9e -$0162 BeginRefresh(window)(a0)
+360 $fe98 -$0168 BuildSysRequest(window,body,posText,negText,flags,width, 
+                  height)(a0/a1/a2/a3,d0/d1/d2)
+366 $fe92 -$016e EndRefresh(window,complete)(a0,d0)
+372 $fe8c -$0174 FreeSysRequest(window)(a0)
+378 $fe86 -$017a MakeScreen(screen)(a0)
+384 $fe80 -$0180 RemakeDisplay()()
+390 $fe7a -$0186 RethinkDisplay()()
+*--- start of next next next next generation of names ----------------------
+396 $fe74 -$018c AllocRemember(rememberKey,size,flags)(a0,d0/d1)
+* Public function AlohaWorkbench() is intentionally not documented
+402 $fe6e -$0192 AlohaWorkbench(wbport)(a0)
+408 $fe68 -$0198 FreeRemember(rememberKey,reallyForget)(a0,d0)
+*--- start of 15 Nov 85 names ------------------------
+414 $fe62 -$019e LockIBase(dontknow)(d0)
+420 $fe5c -$01a4 UnlockIBase(ibLock)(a0)
+*--- functions in V33 or higher (distributed as Release 1.2) ---
+426 $fe56 -$01aa GetScreenData(buffer,size,type,screen)(a0,d0/d1/a1)
+432 $fe50 -$01b0 RefreshGList(gadgets,window,requester,numGad)(a0/a1/a2,d0)
+438 $fe4a -$01b6 AddGList(window,gadget,position,numGad,requester)
+                  (a0/a1,d0/d1/a2)
+444 $fe44 -$01bc RemoveGList(remPtr,gadget,numGad)(a0/a1,d0)
+450 $fe3e -$01c2 ActivateWindow(window)(a0)
+456 $fe38 -$01c8 RefreshWindowFrame(window)(a0)
+462 $fe32 -$01ce ActivateGadget(gadgets,window,requester)(a0/a1/a2)
+468 $fe2c -$01d4 NewModifyProp(gadget,window,requester,flags,horizPot, 
+                  vertPot,horizBody,vertBody,numGad)(a0/a1/a2,d0/d1/d2/d3/d4/d5)
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+474 $fe26 -$01da QueryOverscan(displayID,rect,oScanType)(a0/a1,d0)
+480 $fe20 -$01e0 MoveWindowInFrontOf(window,behindWindow)(a0/a1)
+486 $fe1a -$01e6 ChangeWindowBox(window,left,top,width,height)
+                  (a0,d0/d1/d2/d3)
+492 $fe14 -$01ec SetEditHook(hook)(a0)
+498 $fe0e -$01f2 SetMouseQueue(window,queueLength)(a0,d0)
+504 $fe08 -$01f8 ZipWindow(window)(a0)
+*--- public screens ---
+510 $fe02 -$01fe LockPubScreen(name)(a0)
+516 $fdfc -$0204 UnlockPubScreen(name,screen)(a0/a1)
+522 $fdf6 -$020a LockPubScreenList()()
+528 $fdf0 -$0210 UnlockPubScreenList()()
+534 $fdea -$0216 NextPubScreen(screen,namebuf)(a0/a1)
+540 $fde4 -$021c SetDefaultPubScreen(name)(a0)
+546 $fdde -$0222 SetPubScreenModes(modes)(d0)
+552 $fdd8 -$0228 PubScreenStatus(screen,statusFlags)(a0,d0)
+*
+558 $fdd2 -$022e ObtainGIRPort(gInfo)(a0)
+564 $fdcc -$0234 ReleaseGIRPort(rp)(a0)
+570 $fdc6 -$023a GadgetMouse(gadget,gInfo,mousePoint)(a0/a1/a2)
+##private
+* system private and not to be used by applications:
+576 $fdc0 -$0240 intuitionPrivate1()()
+##public
+582 $fdba -$0246 GetDefaultPubScreen(nameBuffer)(a0)
+588 $fdb4 -$024c EasyRequestArgs(window,easyStruct,idcmpPtr,args)
+                  (a0/a1/a2/a3)
+594 $fdae -$0252 BuildEasyRequestArgs(window,easyStruct,idcmp,args)
+                  (a0/a1,d0/a3)
+600 $fda8 -$0258 SysReqHandler(window,idcmpPtr,waitInput)(a0/a1,d0)
+606 $fda2 -$025e OpenWindowTagList(newWindow,tagList)(a0/a1)
+612 $fd9c -$0264 OpenScreenTagList(newScreen,tagList)(a0/a1)
+*
+*	new Image functions
+618 $fd96 -$026a DrawImageState(rp,image,leftOffset,topOffset,state,drawInfo)
+                  (a0/a1,d0/d1/d2/a2)
+624 $fd90 -$0270 PointInImage(point,image)(d0/a0)
+630 $fd8a -$0276 EraseImage(rp,image,leftOffset,topOffset)(a0/a1,d0/d1)
+*
+636 $fd84 -$027c NewObjectA(classPtr,classID,tagList)(a0/a1/a2)
+*
+642 $fd7e -$0282 DisposeObject(object)(a0)
+648 $fd78 -$0288 SetAttrsA(object,tagList)(a0/a1)
+*
+654 $fd72 -$028e GetAttr(attrID,object,storagePtr)(d0/a0/a1)
+*
+* 	special set attribute call for gadgets
+660 $fd6c -$0294 SetGadgetAttrsA(gadget,window,requester,tagList)
+                  (a0/a1/a2/a3)
+*
+*	for class implementors only
+666 $fd66 -$029a NextObject(objectPtrPtr)(a0)
+##private
+672 $fd60 -$02a0 intuitionPrivate2()()
+##public
+678 $fd5a -$02a6 MakeClass(classID,superClassID,superClassPtr,instanceSize, 
+                  flags)(a0/a1/a2,d0/d1)
+684 $fd54 -$02ac AddClass(classPtr)(a0)
+*
+*
+690 $fd4e -$02b2 GetScreenDrawInfo(screen)(a0)
+696 $fd48 -$02b8 FreeScreenDrawInfo(screen,drawInfo)(a0/a1)
+*
+702 $fd42 -$02be ResetMenuStrip(window,menu)(a0/a1)
+708 $fd3c -$02c4 RemoveClass(classPtr)(a0)
+714 $fd36 -$02ca FreeClass(classPtr)(a0)
+##private
+720 $fd30 -$02d0 intuitionPrivate3()()
+726 $fd2a -$02d6 intuitionPrivate4()()
+##public
+##end
+
+***************** keymap
+* "keymap.library"
+##base _KeymapBase
+##bias 30
+##public
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+ 30 $ffe2 -$001e SetKeyMapDefault(keyMap)(a0)
+ 36 $ffdc -$0024 AskKeyMapDefault()()
+ 42 $ffd6 -$002a MapRawKey(event,buffer,length,keyMap)(a0/a1,d1/a2)
+ 48 $ffd0 -$0030 MapANSI(string,count,buffer,length,keyMap)(a0,d0/a1,d1/a2)
+##end
+
+***************** layers
+* "layers.library"
+##base _LayersBase
+##bias 30
+##public
+ 30 $ffe2 -$001e InitLayers(li)(a0)
+ 36 $ffdc -$0024 CreateUpfrontLayer(li,bm,x0,y0,x1,y1,flags,bm2)
+                  (a0/a1,d0/d1/d2/d3/d4/a2)
+ 42 $ffd6 -$002a CreateBehindLayer(li,bm,x0,y0,x1,y1,flags,bm2)
+                  (a0/a1,d0/d1/d2/d3/d4/a2)
+ 48 $ffd0 -$0030 UpfrontLayer(dummy,layer)(a0/a1)
+ 54 $ffca -$0036 BehindLayer(dummy,layer)(a0/a1)
+ 60 $ffc4 -$003c MoveLayer(dummy,layer,dx,dy)(a0/a1,d0/d1)
+ 66 $ffbe -$0042 SizeLayer(dummy,layer,dx,dy)(a0/a1,d0/d1)
+ 72 $ffb8 -$0048 ScrollLayer(dummy,layer,dx,dy)(a0/a1,d0/d1)
+ 78 $ffb2 -$004e BeginUpdate(l)(a0)
+ 84 $ffac -$0054 EndUpdate(layer,flag)(a0,d0)
+ 90 $ffa6 -$005a DeleteLayer(dummy,layer)(a0/a1)
+ 96 $ffa0 -$0060 LockLayer(dummy,layer)(a0/a1)
+102 $ff9a -$0066 UnlockLayer(layer)(a0)
+108 $ff94 -$006c LockLayers(li)(a0)
+114 $ff8e -$0072 UnlockLayers(li)(a0)
+120 $ff88 -$0078 LockLayerInfo(li)(a0)
+126 $ff82 -$007e SwapBitsRastPortClipRect(rp,cr)(a0/a1)
+132 $ff7c -$0084 WhichLayer(li,x,y)(a0,d0/d1)
+138 $ff76 -$008a UnlockLayerInfo(li)(a0)
+144 $ff70 -$0090 NewLayerInfo()()
+150 $ff6a -$0096 DisposeLayerInfo(li)(a0)
+156 $ff64 -$009c FattenLayerInfo(li)(a0)
+162 $ff5e -$00a2 ThinLayerInfo(li)(a0)
+168 $ff58 -$00a8 MoveLayerInFrontOf(layer_to_move,other_layer)(a0/a1)
+174 $ff52 -$00ae InstallClipRegion(layer,region)(a0/a1)
+180 $ff4c -$00b4 MoveSizeLayer(layer,dx,dy,dw,dh)(a0,d0/d1/d2/d3)
+186 $ff46 -$00ba CreateUpfrontHookLayer(li,bm,x0,y0,x1,y1,flags,hook,bm2)
+                  (a0/a1,d0/d1/d2/d3/d4/a3,a2)
+192 $ff40 -$00c0 CreateBehindHookLayer(li,bm,x0,y0,x1,y1,flags,hook,bm2)
+                  (a0/a1,d0/d1/d2/d3/d4/a3,a2)
+198 $ff3a -$00c6 InstallLayerHook(layer,hook)(a0/a1)
+##end
+
+***************** locale
+* "locale.library"
+##base _LocaleBase
+##bias 30
+##public
+*--- functions in V38 or higher (distributed as Release 2.1) ---
+##private
+* ARexx function host entry point
+* This function also returns a (struct RexxMsg *) in A1
+ 30 $ffe2 -$001e localePrivate1()()
+##public
+*
+* Public entries
+*
+ 36 $ffdc -$0024 CloseCatalog(catalog)(a0)
+ 42 $ffd6 -$002a CloseLocale(locale)(a0)
+ 48 $ffd0 -$0030 ConvToLower(locale,character)(a0,d0)
+ 54 $ffca -$0036 ConvToUpper(locale,character)(a0,d0)
+ 60 $ffc4 -$003c FormatDate(locale,template,date,putCharFunc)(a0/a1/a2/a3)
+ 66 $ffbe -$0042 FormatString(locale,string,dataStream,putCharFunc)
+                  (a0/a1/a2/a3)
+ 72 $ffb8 -$0048 GetCatalogStr(catalog,stringNum,defaultString)(a0,d0/a1)
+ 78 $ffb2 -$004e GetLocaleStr(locale,stringNum)(a0,d0)
+ 84 $ffac -$0054 IsAlNum(locale,character)(a0,d0)
+ 90 $ffa6 -$005a IsAlpha(locale,character)(a0,d0)
+ 96 $ffa0 -$0060 IsCntrl(locale,character)(a0,d0)
+102 $ff9a -$0066 IsDigit(locale,character)(a0,d0)
+108 $ff94 -$006c IsGraph(locale,character)(a0,d0)
+114 $ff8e -$0072 IsLower(locale,character)(a0,d0)
+120 $ff88 -$0078 IsPrint(locale,character)(a0,d0)
+126 $ff82 -$007e IsPunct(locale,character)(a0,d0)
+132 $ff7c -$0084 IsSpace(locale,character)(a0,d0)
+138 $ff76 -$008a IsUpper(locale,character)(a0,d0)
+144 $ff70 -$0090 IsXDigit(locale,character)(a0,d0)
+150 $ff6a -$0096 OpenCatalogA(locale,name,tags)(a0/a1/a2)
+156 $ff64 -$009c OpenLocale(name)(a0)
+162 $ff5e -$00a2 ParseDate(locale,date,template,getCharFunc)(a0/a1/a2/a3)
+##private
+168 $ff58 -$00a8 localePrivate2()()
+##public
+174 $ff52 -$00ae StrConvert(locale,string,buffer,bufferSize,type)
+                  (a0/a1/a2,d0/d1)
+180 $ff4c -$00b4 StrnCmp(locale,string1,string2,length,type)(a0/a1/a2,d0/d1)
+##private
+*
+* Reserved entries
+*
+186 $ff46 -$00ba localePrivate3()()
+192 $ff40 -$00c0 localePrivate4()()
+198 $ff3a -$00c6 localePrivate5()()
+204 $ff34 -$00cc localePrivate6()()
+210 $ff2e -$00d2 localePrivate7()()
+216 $ff28 -$00d8 localePrivate8()()
+##end
+
+***************** mathffp
+* "mathffp.library"
+##base _MathBase
+##bias 30
+##public
+ 30 $ffe2 -$001e SPFix(parm)(d0)
+ 36 $ffdc -$0024 SPFlt(integer)(d0)
+ 42 $ffd6 -$002a SPCmp(leftParm,rightParm)(d1,d0)
+ 48 $ffd0 -$0030 SPTst(parm)(d1)
+ 54 $ffca -$0036 SPAbs(parm)(d0)
+ 60 $ffc4 -$003c SPNeg(parm)(d0)
+ 66 $ffbe -$0042 SPAdd(leftParm,rightParm)(d1,d0)
+ 72 $ffb8 -$0048 SPSub(leftParm,rightParm)(d1,d0)
+ 78 $ffb2 -$004e SPMul(leftParm,rightParm)(d1,d0)
+ 84 $ffac -$0054 SPDiv(leftParm,rightParm)(d1,d0)
+*--- functions in V33 or higher (distributed as Release 1.2) ---
+ 90 $ffa6 -$005a SPFloor(parm)(d0)
+ 96 $ffa0 -$0060 SPCeil(parm)(d0)
+##end
+
+***************** mathieeedoubbas
+* "mathieeedoubbas.library"
+##base _MathIeeeDoubBasBase
+##bias 30
+##public
+ 30 $ffe2 -$001e IEEEDPFix(parm)(d0/d1)
+ 36 $ffdc -$0024 IEEEDPFlt(integer)(d0)
+ 42 $ffd6 -$002a IEEEDPCmp(leftParm,rightParm)(d0/d1/d2/d3)
+ 48 $ffd0 -$0030 IEEEDPTst(parm)(d0/d1)
+ 54 $ffca -$0036 IEEEDPAbs(parm)(d0/d1)
+ 60 $ffc4 -$003c IEEEDPNeg(parm)(d0/d1)
+ 66 $ffbe -$0042 IEEEDPAdd(leftParm,rightParm)(d0/d1/d2/d3)
+ 72 $ffb8 -$0048 IEEEDPSub(leftParm,rightParm)(d0/d1/d2/d3)
+ 78 $ffb2 -$004e IEEEDPMul(factor1,factor2)(d0/d1/d2/d3)
+ 84 $ffac -$0054 IEEEDPDiv(dividend,divisor)(d0/d1/d2/d3)
+*--- functions in V33 or higher (distributed as Release 1.2) ---
+ 90 $ffa6 -$005a IEEEDPFloor(parm)(d0/d1)
+ 96 $ffa0 -$0060 IEEEDPCeil(parm)(d0/d1)
+##end
+
+***************** mathieeedoubtrans
+* "mathieeedoubtrans.library"
+##base _MathIeeeDoubTransBase
+##bias 30
+##public
+ 30 $ffe2 -$001e IEEEDPAtan(parm)(d0/d1)
+ 36 $ffdc -$0024 IEEEDPSin(parm)(d0/d1)
+ 42 $ffd6 -$002a IEEEDPCos(parm)(d0/d1)
+ 48 $ffd0 -$0030 IEEEDPTan(parm)(d0/d1)
+ 54 $ffca -$0036 IEEEDPSincos(pf2,parm)(a0,d0/d1)
+ 60 $ffc4 -$003c IEEEDPSinh(parm)(d0/d1)
+ 66 $ffbe -$0042 IEEEDPCosh(parm)(d0/d1)
+ 72 $ffb8 -$0048 IEEEDPTanh(parm)(d0/d1)
+ 78 $ffb2 -$004e IEEEDPExp(parm)(d0/d1)
+ 84 $ffac -$0054 IEEEDPLog(parm)(d0/d1)
+ 90 $ffa6 -$005a IEEEDPPow(exp,arg)(d2/d3,d0/d1)
+ 96 $ffa0 -$0060 IEEEDPSqrt(parm)(d0/d1)
+102 $ff9a -$0066 IEEEDPTieee(parm)(d0/d1)
+108 $ff94 -$006c IEEEDPFieee(single)(d0)
+114 $ff8e -$0072 IEEEDPAsin(parm)(d0/d1)
+120 $ff88 -$0078 IEEEDPAcos(parm)(d0/d1)
+126 $ff82 -$007e IEEEDPLog10(parm)(d0/d1)
+##end
+
+***************** mathieeesingbas
+* "mathieeesingbas.library"
+##base _MathIeeeSingBasBase
+##bias 30
+##public
+ 30 $ffe2 -$001e IEEESPFix(parm)(d0)
+ 36 $ffdc -$0024 IEEESPFlt(integer)(d0)
+ 42 $ffd6 -$002a IEEESPCmp(leftParm,rightParm)(d0/d1)
+ 48 $ffd0 -$0030 IEEESPTst(parm)(d0)
+ 54 $ffca -$0036 IEEESPAbs(parm)(d0)
+ 60 $ffc4 -$003c IEEESPNeg(parm)(d0)
+ 66 $ffbe -$0042 IEEESPAdd(leftParm,rightParm)(d0/d1)
+ 72 $ffb8 -$0048 IEEESPSub(leftParm,rightParm)(d0/d1)
+ 78 $ffb2 -$004e IEEESPMul(leftParm,rightParm)(d0/d1)
+ 84 $ffac -$0054 IEEESPDiv(dividend,divisor)(d0/d1)
+ 90 $ffa6 -$005a IEEESPFloor(parm)(d0)
+ 96 $ffa0 -$0060 IEEESPCeil(parm)(d0)
+##end
+
+***************** mathieeesingtrans
+* "mathieeesingtrans.library"
+##base _MathIeeeSingTransBase
+##bias 30
+##public
+ 30 $ffe2 -$001e IEEESPAtan(parm)(d0)
+ 36 $ffdc -$0024 IEEESPSin(parm)(d0)
+ 42 $ffd6 -$002a IEEESPCos(parm)(d0)
+ 48 $ffd0 -$0030 IEEESPTan(parm)(d0)
+ 54 $ffca -$0036 IEEESPSincos(cosptr,parm)(a0,d0)
+ 60 $ffc4 -$003c IEEESPSinh(parm)(d0)
+ 66 $ffbe -$0042 IEEESPCosh(parm)(d0)
+ 72 $ffb8 -$0048 IEEESPTanh(parm)(d0)
+ 78 $ffb2 -$004e IEEESPExp(parm)(d0)
+ 84 $ffac -$0054 IEEESPLog(parm)(d0)
+ 90 $ffa6 -$005a IEEESPPow(exp,arg)(d1,d0)
+ 96 $ffa0 -$0060 IEEESPSqrt(parm)(d0)
+102 $ff9a -$0066 IEEESPTieee(parm)(d0)
+108 $ff94 -$006c IEEESPFieee(parm)(d0)
+114 $ff8e -$0072 IEEESPAsin(parm)(d0)
+120 $ff88 -$0078 IEEESPAcos(parm)(d0)
+126 $ff82 -$007e IEEESPLog10(parm)(d0)
+##end
+
+***************** mathtrans
+* "mathtrans.library"
+##base _MathTransBase
+##bias 30
+##public
+ 30 $ffe2 -$001e SPAtan(parm)(d0)
+ 36 $ffdc -$0024 SPSin(parm)(d0)
+ 42 $ffd6 -$002a SPCos(parm)(d0)
+ 48 $ffd0 -$0030 SPTan(parm)(d0)
+ 54 $ffca -$0036 SPSincos(cosResult,parm)(d1,d0)
+ 60 $ffc4 -$003c SPSinh(parm)(d0)
+ 66 $ffbe -$0042 SPCosh(parm)(d0)
+ 72 $ffb8 -$0048 SPTanh(parm)(d0)
+ 78 $ffb2 -$004e SPExp(parm)(d0)
+ 84 $ffac -$0054 SPLog(parm)(d0)
+ 90 $ffa6 -$005a SPPow(power,arg)(d1,d0)
+ 96 $ffa0 -$0060 SPSqrt(parm)(d0)
+102 $ff9a -$0066 SPTieee(parm)(d0)
+108 $ff94 -$006c SPFieee(parm)(d0)
+*--- functions in V31 or higher (distributed as Release 1.1) ---
+114 $ff8e -$0072 SPAsin(parm)(d0)
+120 $ff88 -$0078 SPAcos(parm)(d0)
+126 $ff82 -$007e SPLog10(parm)(d0)
+##end
+
+***************** misc
+##base _MiscBase
+##bias 6
+##public
+  6 $fffa -$0006 AllocMiscResource(unitNum,name)(d0/a1)
+ 12 $fff4 -$000c FreeMiscResource(unitNum)(d0)
+##end
+
+***************** potgo
+* "potgo.resource"
+##base _PotgoBase
+##bias 6
+##public
+  6 $fffa -$0006 AllocPotBits(bits)(d0)
+ 12 $fff4 -$000c FreePotBits(bits)(d0)
+ 18 $ffee -$0012 WritePotgo(word,mask)(d0/d1)
+##end
+
+***************** ramdrive
+* "ramdrive.device"
+##base _RamdriveDevice
+##bias 42
+##public
+*--- functions in V34 or higher (distributed as Release 1.3) ---
+ 42 $ffd6 -$002a KillRAD0()()
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+ 48 $ffd0 -$0030 KillRAD(unit)(d0)
+##end
+
+***************** rexxsyslib
+* "rexxsyslib.library"
+##base _RexxSysBase
+##bias 30
+*--- functions in V33 or higher (distributed as Release 1.2) ---
+*
+##private
+*--- (16 function slots reserved here) ---
+##bias 126
+##public
+*
+126 $ff82 -$007e CreateArgstring(string,length)(a0,d0)
+132 $ff7c -$0084 DeleteArgstring(argstring)(a0)
+138 $ff76 -$008a LengthArgstring(argstring)(a0)
+144 $ff70 -$0090 CreateRexxMsg(port,extension,host)(a0/a1,d0)
+150 $ff6a -$0096 DeleteRexxMsg(packet)(a0)
+156 $ff64 -$009c ClearRexxMsg(msgptr,count)(a0,d0)
+162 $ff5e -$00a2 FillRexxMsg(msgptr,count,mask)(a0,d0/d1)
+168 $ff58 -$00a8 IsRexxMsg(msgptr)(a0)
+*
+##private
+*--- (46 function slots reserved here) ---
+##bias 450
+##public
+*
+450 $fe3e -$01c2 LockRexxBase(resource)(d0)
+456 $fe38 -$01c8 UnlockRexxBase(resource)(d0)
+*
+##end
+
+***************** timer
+* "Timer.Device"
+##base _TimerBase
+##bias 42
+##public
+ 42 $ffd6 -$002a AddTime(dest,src)(a0/a1)
+ 48 $ffd0 -$0030 SubTime(dest,src)(a0/a1)
+ 54 $ffca -$0036 CmpTime(dest,src)(a0/a1)
+ 60 $ffc4 -$003c ReadEClock(dest)(a0)
+ 66 $ffbe -$0042 GetSysTime(dest)(a0)
+##end
+
+***************** utility
+* "utility.library"
+##base _UtilityBase
+##bias 30
+##public
+* *** TagItem FUNCTIONS ***
+ 30 $ffe2 -$001e FindTagItem(tagVal,tagList)(d0/a0)
+ 36 $ffdc -$0024 GetTagData(tagVal,defaultVal,tagList)(d0/d1/a0)
+ 42 $ffd6 -$002a PackBoolTags(initialFlags,tagList,boolMap)(d0/a0/a1)
+ 48 $ffd0 -$0030 NextTagItem(tagListPtr)(a0)
+ 54 $ffca -$0036 FilterTagChanges(newTagList,oldTagList,apply)(a0/a1,d0)
+ 60 $ffc4 -$003c MapTags(tagList,mapList,includeMiss)(a0/a1,d0)
+ 66 $ffbe -$0042 AllocateTagItems(numItems)(d0)
+ 72 $ffb8 -$0048 CloneTagItems(tagList)(a0)
+ 78 $ffb2 -$004e FreeTagItems(tagList)(a0)
+ 84 $ffac -$0054 RefreshTagItemClones(cloneList,origList)(a0/a1)
+ 90 $ffa6 -$005a TagInArray(tagVal,tagArray)(d0/a0)
+ 96 $ffa0 -$0060 FilterTagItems(tagList,filterArray,logic)(a0/a1,d0)
+*
+* *** HOOK FUNCTIONS *** *
+102 $ff9a -$0066 CallHookPkt(hook,object,paramPacket)(a0/a2,a1)
+*--- (1 function slot reserved here) ---
+##bias 114
+*
+* *** DATE FUNCTIONS *** *
+*--- (1 function slot reserved here) ---
+##bias 120
+120 $ff88 -$0078 Amiga2Date(amigaTime,date)(d0/a0)
+126 $ff82 -$007e Date2Amiga(date)(a0)
+132 $ff7c -$0084 CheckDate(date)(a0)
+*
+* *** 32 BIT MATH FUNCTIONS *** *
+138 $ff76 -$008a SMult32(factor1,factor2)(d0/d1)
+144 $ff70 -$0090 UMult32(factor1,factor2)(d0/d1)
+* NOTE: Quotient:Remainder returned in d0:d1
+150 $ff6a -$0096 SDivMod32(dividend,divisor)(d0/d1)
+156 $ff64 -$009c UDivMod32(dividend,divisor)(d0/d1)
+*
+* *** International string routines ***
+162 $ff5e -$00a2 Stricmp(string1,string2)(a0/a1)
+168 $ff58 -$00a8 Strnicmp(string1,string2,length)(a0/a1,d0)
+174 $ff52 -$00ae ToUpper(character)(d0)
+180 $ff4c -$00b4 ToLower(character)(d0)
+##end
+
+***************** wb
+* "workbench.library"
+##base _WorkbenchBase
+##bias 30
+*--- functions in V36 or higher (distributed as Release 2.0) ---
+*
+##private
+*
+ 30 $ffe2 -$001e wbPrivate1()()
+ 36 $ffdc -$0024 wbPrivate2()()
+*
+ 42 $ffd6 -$002a wbPrivate3()()
+*
+##public
+*
+ 48 $ffd0 -$0030 AddAppWindowA(id,userdata,window,msgport,taglist)
+                  (d0/d1/a0/a1/a2)
+*
+ 54 $ffca -$0036 RemoveAppWindow(appWindow)(a0)
+*
+ 60 $ffc4 -$003c AddAppIconA(id,userdata,text,msgport,lock,diskobj,taglist)
+                  (d0/d1/a0/a1/a2/a3/a4)
+*
+ 66 $ffbe -$0042 RemoveAppIcon(appIcon)(a0)
+*
+ 72 $ffb8 -$0048 AddAppMenuItemA(id,userdata,text,msgport,taglist)
+                  (d0/d1/a0/a1/a2)
+*
+ 78 $ffb2 -$004e RemoveAppMenuItem(appMenuItem)(a0)
+*
+*--- (5 function slots reserved here) ---
+##bias 114
+*
+##end

@@ -51,6 +51,7 @@ namespace Jammy.Disassembler.Analysers
 			diskAnalysis.Extract();
 			
 			LoadLVOs();
+			LoadLVO2_1();
 			StartUp();
 			Analysis();
 			ROMTags();
@@ -155,7 +156,44 @@ namespace Jammy.Disassembler.Analysers
 			}
 			catch
 			{
-				logger.LogTrace($"Can't find the LVOs file");
+				logger.LogTrace($"Can't parse the LVOs file");
+			}
+		}
+
+		private void LoadLVO2_1()
+		{
+			try
+			{
+				string filename = "LVO_2.1.txt";
+				using (var f = File.OpenText(filename))
+				{
+					string currentLib = string.Empty;
+					for (; ; )
+					{
+						string line = f.ReadLine();
+						if (line == null) break;
+						if (line.Length < 4) continue;
+
+						if (int.TryParse(line.Substring(0,4), out _))
+						{
+							var lvo = line.TrimStart().Split(' ')[3];
+							var fn = lvo.Split('(');
+
+							var parmNames = new List<string>();
+							var parmRegs = new List<string>();
+							string fnName = fn[0];
+							if (fn.Length >= 2) parmNames.AddRange(fn[1].TrimEnd(')').Split(',', StringSplitOptions.RemoveEmptyEntries));
+							if (fn.Length >= 3) parmRegs.AddRange(fn[2].TrimEnd(')').Split([',', '/'], StringSplitOptions.RemoveEmptyEntries));
+
+							if (parmNames.Any() || parmRegs.Any())
+								analysis.AugmentLVO(fnName, parmNames, parmRegs);
+						}
+					}
+				}
+			}
+			catch
+			{
+				logger.LogTrace($"Can't parse the LVO2.1 file");
 			}
 		}
 
@@ -732,7 +770,7 @@ namespace Jammy.Disassembler.Analysers
 			{
 				var lvo = lvolist.LVOs.SingleOrDefault(x => x.Index == idx);
 				if (lvo != null)
-					return $"{lvo.Name}()";
+					return lvo.GetFnSignature();
 			}
 
 			return "";
@@ -1218,13 +1256,13 @@ namespace Jammy.Disassembler.Analysers
 				uint address = (uint)(baseAddress + lvo.Offset);
 
 				//name the jump table entry
-				eaDatabase.Add(address, lvo.Name+"()");
+				eaDatabase.Add(address, lvo.Name/*+"()"*/);
 
 				if (mem.UnsafeRead16(address) != 0x4ef9) break;
 				uint lvoaddress = mem.UnsafeRead32(address+2);
 
 				//name the actual function
-				eaDatabase.Add(lvoaddress, lvo.Name + "()");
+				eaDatabase.Add(lvoaddress, lvo.Name/* + "()"*/);
 				labeller.AddLabel(lvoaddress, lvo.Name);
 
 				analysis.AddComment(address, lvo.Name);

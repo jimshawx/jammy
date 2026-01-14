@@ -23,6 +23,7 @@ namespace Jammy.Interface
 		void SetMemType(uint address, MemType type);
 		void AddLVO(string currentLib, LVO lvo);
 		void SetLVO(string currentLib, LVOCollection lvoCollection);
+		void AugmentLVO(string lvoName, List<string> parms, List<string> regs);
 		bool OutOfMemtypeRange(uint address);
 		void ClearSomeAnalysis();
 		void SaveAnalysis();

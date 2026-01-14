@@ -162,6 +162,28 @@ namespace Jammy.Disassembler.Analysers
 			lvos[currentLib] = lvoCollection;
 		}
 
+		private LVO FindLVO(string name)
+		{
+			foreach (var lib in lvos)
+			{
+				foreach (var lvo in lib.Value.LVOs)
+				{
+					if (lvo.Name == name)
+						return lvo;
+				}
+			}
+			return null;
+		}
+
+		public void AugmentLVO(string lvoName, List<string> parms, List<string> regs)
+		{
+			var lvo = FindLVO(lvoName);
+			if (lvo != null)
+				lvo.parms.AddRange(parms.Zip(regs, (p, r) => new LVO.LVOParm { Name = p, Reg = r }));
+			else
+				logger.LogTrace($"Could not find LVO to augment: {lvoName}");
+		}
+
 		public bool OutOfMemtypeRange(uint address)
 		{
 			return false;
