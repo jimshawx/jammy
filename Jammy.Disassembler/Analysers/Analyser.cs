@@ -1230,7 +1230,7 @@ namespace Jammy.Disassembler.Analysers
 				if (!mem.MappedRange().Any(x=>x.Contains(address)))
 					return 0;
 
-				var asm = disassembler.Disassemble(address, mem.GetEnumerable(address, Disassembler.LONGEST_X86_INSTRUCTION));
+				var asm = disassembler.Disassemble(address, mem.GetEnumerable(address, Disassembler.LONGEST_68K_INSTRUCTION));
 				for (uint i = address; i < address + asm.Bytes.Length; i++)
 					analysis.SetMemType(i, type);
 			}

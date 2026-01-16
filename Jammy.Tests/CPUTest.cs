@@ -258,10 +258,10 @@ namespace Jammy.Tests
 
 			public string Disassemble(uint address)
 			{
-				if (address + Disassembler.Disassembler.LONGEST_X86_INSTRUCTION > memory.Length)
-					address -= address + Disassembler.Disassembler.LONGEST_X86_INSTRUCTION - (uint)memory.Length; 
+				if (address + Disassembler.Disassembler.LONGEST_68K_INSTRUCTION > memory.Length)
+					address -= address + Disassembler.Disassembler.LONGEST_68K_INSTRUCTION - (uint)memory.Length; 
 				
-				var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, Disassembler.Disassembler.LONGEST_X86_INSTRUCTION));
+				var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, Disassembler.Disassembler.LONGEST_68K_INSTRUCTION));
 				return dasm.ToString(new DisassemblyOptions{IncludeBytes = true});
 			}
 

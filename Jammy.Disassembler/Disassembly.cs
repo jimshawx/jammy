@@ -229,7 +229,7 @@ namespace Jammy.Disassembler
 					}
 					else
 					{
-						var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, Disassembler.LONGEST_X86_INSTRUCTION));
+						var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, Disassembler.LONGEST_68K_INSTRUCTION));
 						asm = dasm.ToString(options);
 
 						var ia = instructionAnalysisDatabase.GetInstructionAnalysis(dasm.Address);

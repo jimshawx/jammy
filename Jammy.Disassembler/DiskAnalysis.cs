@@ -360,7 +360,7 @@ namespace Jammy.Disassembler
 			uint address = 0;
 			do
 			{
-				var asm = disassembler.Disassemble(address, code.Take(Disassembler.LONGEST_X86_INSTRUCTION));
+				var asm = disassembler.Disassemble(address, code.Take(Disassembler.LONGEST_68K_INSTRUCTION));
 				sb.AppendLine(asm.ToString(options));
 				address += (uint)asm.Bytes.Length;
 				code = code.Skip(asm.Bytes.Length);

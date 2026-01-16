@@ -27,7 +27,7 @@ namespace Jammy.Disassembler
 		//}
 
 		//it's a MOVE (2 bytes) with 2 full extension word operands, each of 10 bytes, on the 020/030
-		public const int LONGEST_X86_INSTRUCTION = 22;
+		public const int LONGEST_68K_INSTRUCTION = 22;
 
 		private readonly StringBuilder asm = new StringBuilder();
 

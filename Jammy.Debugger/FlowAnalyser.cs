@@ -38,7 +38,7 @@ namespace Jammy.Debugger
 
 		private byte[] peek_longest(uint pc)
 		{
-			var b = new byte[Disassembler.Disassembler.LONGEST_X86_INSTRUCTION];
+			var b = new byte[Disassembler.Disassembler.LONGEST_68K_INSTRUCTION];
 			for (uint p = 0; p < b.Length; p++)
 				b[p] = memory.UnsafeRead8(pc+p);
 			return b;
