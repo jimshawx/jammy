@@ -1256,14 +1256,14 @@ namespace Jammy.Disassembler.Analysers
 				uint address = (uint)(baseAddress + lvo.Offset);
 
 				//name the jump table entry
-				eaDatabase.Add(address, lvo.Name/*+"()"*/);
+				eaDatabase.Add(address, lvo.Name+"()");
 
 				if (mem.UnsafeRead16(address) != 0x4ef9) break;
 				uint lvoaddress = mem.UnsafeRead32(address+2);
 
 				//name the actual function
-				eaDatabase.Add(lvoaddress, lvo.Name/* + "()"*/);
-				labeller.AddLabel(lvoaddress, lvo.Name);
+				eaDatabase.Add(lvoaddress, lvo.Name + "()");
+				labeller.AddLabel(lvoaddress, lvo.GetFnSignature());
 
 				analysis.AddComment(address, lvo.Name);
 				//ExtractFunction(lvoaddress, $"{lvo.Name}()");
