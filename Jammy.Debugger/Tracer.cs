@@ -1,16 +1,12 @@
-﻿using Jammy.Core.Floppy.IPF;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Interface;
 using Jammy.Types.Debugger;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 /*
@@ -140,31 +136,25 @@ namespace Jammy.Debugger
 				s.WriteLine(t);
 		}
 
-		//[MethodImpl(MethodImplOptions.NoOptimization|MethodImplOptions.NoInlining)]
 		public void TraceAsm(Regs regs)
 		{
-			if (!ShouldTrace(regs.PC)) return;
-
 			//for now, only call this once, it's dead slow
 			if (!instructionAnalysisDatabase.Has(regs.PC))
-			{ 
-				var ana = cpuAnalyser.Analyse(regs);
-				if (ana.Count > 0)				
-				{ 
-					var rv = new InstructionAnalysis();
-					rv.PC = regs.PC;
-					rv.EffectiveAddresses.AddRange(ana);
-					instructionAnalysisDatabase.Add(rv);
-				}
+			{
+				var rv = new InstructionAnalysis { PC = regs.PC };
+				rv.EffectiveAddresses.AddRange(cpuAnalyser.Analyse(regs));
+				instructionAnalysisDatabase.Add(rv);
 			}
 
-			TraceFrom(DisassembleAddress(regs.PC), regs.PC, regs);
+			//early check of ShouldTrace to avoid disassembling code we're not tracing
+			if (!ShouldTrace(regs.PC)) return;
+				TraceFrom(DisassembleAddress(regs.PC), regs.PC, regs);
 		}
 
 		private string DisassembleAddress(uint pc)
 		{
 			if (pc >= mem.Length) return "";
-			var dasm = disassembler.Disassemble(pc, mem.GetEnumerable(pc, Disassembler.Disassembler.LONGEST_X86_INSTRUCTION));
+			var dasm = disassembler.Disassemble(pc, mem.GetEnumerable(pc, Disassembler.Disassembler.LONGEST_68K_INSTRUCTION));
 			return dasm.ToString();
 		}
 
