@@ -42,34 +42,6 @@ namespace Jammy.Debugger
 		public string VectorName { get; }
 	}
 
-	public interface ILibraryBases
-	{
-		Dictionary<string, uint> Addresses { get; }
-		void SetLibraryBaseaddress(string libraryName, uint address);
-	}
-
-	public class LibraryBases : ILibraryBases
-	{
-		private readonly IAnalyser analyser;
-		private Dictionary<string, uint> libraryBaseAddresses = new Dictionary<string, uint>();
-
-		public LibraryBases(IDebugMemoryMapper memory, IAnalyser analyser)
-		{
-			this.analyser = analyser;
-			SetLibraryBaseaddress("exec.library", memory.UnsafeRead32(4));
-		}
-
-		public Dictionary<string, uint> Addresses => libraryBaseAddresses;
-
-		public void SetLibraryBaseaddress(string libraryName, uint address)
-		{
-			if (address == 0) return;
-			if (string.IsNullOrWhiteSpace(libraryName)) return;
-			libraryBaseAddresses[libraryName] = address;
-			analyser.AnalyseLibraryBase(libraryName, address);
-		}
-	}
-
 	public interface ILVOInterceptors
 	{
 		void CheckLVOAccess(uint address, Size size);
@@ -82,21 +54,57 @@ namespace Jammy.Debugger
 		public ILVOInterceptorAction Action { get; set; }
 	}
 
+	public interface ILVOInterceptorCollection
+	{
+		void AddInterceptor(LVOInterceptor interceptor);
+		Dictionary<uint, LVOInterceptor> ActiveLVOInterceptors { get; }
+		void UpdateActiveLVOInterceptors(Dictionary<string, uint> libraryBaseAddresses);
+	}
+
+	public class LVOInterceptorCollection : ILVOInterceptorCollection
+	{
+		private readonly List<LVOInterceptor> lvoInterceptors = new List<LVOInterceptor>();
+		private readonly Dictionary<uint, LVOInterceptor> activeLvoInterceptors = new Dictionary<uint, LVOInterceptor>();
+		private readonly IDebugMemoryMapper memory;
+
+		public LVOInterceptorCollection(IDebugMemoryMapper memory)
+		{
+			this.memory = memory;
+		}
+
+		public void AddInterceptor(LVOInterceptor interceptor)
+		{
+			lvoInterceptors.Add(interceptor);
+		}
+
+		//opened a new library or library base changed
+		public void UpdateActiveLVOInterceptors(Dictionary<string, uint> libraryBaseAddresses)
+		{
+			activeLvoInterceptors.Clear();
+			foreach (var interceptor in lvoInterceptors)
+			{
+				if (libraryBaseAddresses.ContainsKey(interceptor.Library))
+				{
+					uint address = memory.UnsafeRead32((uint)(libraryBaseAddresses[interceptor.Library] + interceptor.LVO.Offset + 2));
+					activeLvoInterceptors[address] = interceptor;
+				}
+			}
+		}
+
+		public Dictionary<uint, LVOInterceptor> ActiveLVOInterceptors => activeLvoInterceptors;
+	}
+
 	public class LVOInterceptors : ILVOInterceptors
 	{
-		private readonly ICPU cpu;
-		private readonly IDebugMemoryMapper memory;
+		private readonly ILVOInterceptorCollection lvoInterceptorCollection;
 		private readonly IAnalysis analysis;
-		private readonly ILibraryBases libraryBases;
 
-		private List<LVOInterceptor> lvoInterceptors { get; } = new List<LVOInterceptor>();
-
-		public LVOInterceptors(IEnumerable<ILVOInterceptorAction> actions, ICPU cpu, IDebugMemoryMapper memory, IAnalysis analysis, ILibraryBases libraryBases)
+		public LVOInterceptors(IEnumerable<ILVOInterceptorAction> actions,
+			ILVOInterceptorCollection lvoInterceptorCollection,	IAnalysis analysis)
 		{
-			this.cpu = cpu;
-			this.memory = memory;
+			
+			this.lvoInterceptorCollection = lvoInterceptorCollection;
 			this.analysis = analysis;
-			this.libraryBases = libraryBases;
 			foreach (var act in actions)
 				AddLVOIntercept(act.Library, act.VectorName, act);
 		}
@@ -109,7 +117,7 @@ namespace Jammy.Debugger
 				var vector = lib.LVOs.SingleOrDefault(x => x.Name == vectorName);
 				if (vector != null)
 				{
-					lvoInterceptors.Add(new LVOInterceptor
+					lvoInterceptorCollection.AddInterceptor(new LVOInterceptor
 					{
 						Library = library,
 						LVO = vector,
@@ -123,15 +131,10 @@ namespace Jammy.Debugger
 		{
 			if (size == Size.Word)
 			{
-				//todo: speed this up!
-				var lvo = lvoInterceptors
-					.Where(x => libraryBases.Addresses.ContainsKey(x.Library))
-					.SingleOrDefault(x => memory.UnsafeRead32((uint)(libraryBases.Addresses[x.Library] + x.LVO.Offset + 2)) == pc);
-				if (lvo != null)
-				{
-					//breakpoints.SignalBreakpoint(pc);
-					lvo.Action.Intercept(lvo.LVO, pc);
-				}
+				if (!lvoInterceptorCollection.ActiveLVOInterceptors.TryGetValue(pc, out var lvo))
+					return;
+
+				lvo.Action.Intercept(lvo.LVO, pc);
 			}
 		}
 	}

@@ -35,7 +35,6 @@ namespace Jammy.Debugger
 		private readonly ILogger logger;
 		private readonly ITracer tracer;
 		private readonly IAnalyser analyser;
-		private readonly IAnalysis analysis;
 		private readonly ICPUAnalyser cpuAnalyser;
 		private readonly ILVOInterceptors interceptors;
 		private readonly IReturnValueSnagger returnValueSnagger;
@@ -44,7 +43,7 @@ namespace Jammy.Debugger
 		public Debugger(IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
 			IBreakpointCollection breakpoints, IKickstartROM kickstart, ICopper copper, IChipsetClock clock,
-			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser, IAnalysis analysis,
+			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser,
 			ICPUAnalyser cpuAnalyser,
 			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases)
 		{
@@ -55,7 +54,6 @@ namespace Jammy.Debugger
 			this.disassembly = disassembly;
 			this.tracer = tracer;
 			this.analyser = analyser;
-			this.analysis = analysis;
 			this.cpuAnalyser = cpuAnalyser;
 			this.memory = memory;
 			this.cpu = cpu;
@@ -289,16 +287,17 @@ namespace Jammy.Debugger
 		{
 			//update execbase
 			if (address == 4 && size == Size.Long)
-				libraryBases.SetLibraryBaseaddress("exec.library", value);
+				libraryBases.SetLibraryBaseAddress("exec.library", value);
 			
 			breakpoints.Write(insaddr, address, value, size);
 		}
 
+		private readonly Regs snagRegs = new Regs();
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
 			interceptors.CheckLVOAccess(address, size);
 			//cpu PC might not be the actual instruction address at this point
-			returnValueSnagger.CheckSnaggers(address, cpu.GetRegs().SP);
+			returnValueSnagger.CheckSnaggers(address, cpu.GetRegs(snagRegs).SP);
 
 			//analyser.MarkAsType(address, MemType.Code, size);
 			

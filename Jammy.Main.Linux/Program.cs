@@ -185,6 +185,8 @@ public class Program
 			.AddSingleton<ILVOInterceptorAction, MakeLibraryLogger>()
 			.AddSingleton<ILVOInterceptorAction, OpenDeviceLogger>()
 			.AddSingleton<IOpenFileTracker, OpenFileTracker>()
+			.AddSingleton<ILVOInterceptorCollection, LVOInterceptorCollection>()
+			.AddSingleton<ILibraryBaseCollection, LibraryBaseCollection>()
 			.AddSingleton<ILibraryBases, LibraryBases>()
 			.AddSingleton<INativeOverlay, NativeOverlay.NativeOverlay>()
 			.AddSingleton<IOverlayCollection, OverlayCollection>()

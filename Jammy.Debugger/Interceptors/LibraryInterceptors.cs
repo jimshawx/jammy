@@ -33,7 +33,7 @@ namespace Jammy.Debugger.Interceptors
 				var regs = cpu.GetRegs();
 				logger.LogTrace($"{libraryName} {regs.D[0]:X8}");
 				if (regs.D[0] != 0)
-					libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
+					libraryBases.SetLibraryBaseAddress(libraryName, regs.D[0]);
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
@@ -59,7 +59,7 @@ namespace Jammy.Debugger.Interceptors
 				var regs = cpu.GetRegs(gregs);
 				logger.LogTrace($"{libraryName} {regs.D[0]:X8}");
 				if (regs.D[0] != 0)
-					libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
+					libraryBases.SetLibraryBaseAddress(libraryName, regs.D[0]);
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
@@ -85,7 +85,7 @@ namespace Jammy.Debugger.Interceptors
 				var regs = cpu.GetRegs(gregs);
 				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X8}");
 				if (regs.D[0] != 0)
-					libraryBases.SetLibraryBaseaddress(resourceName, regs.D[0]);
+					libraryBases.SetLibraryBaseAddress(resourceName, regs.D[0]);
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
@@ -111,7 +111,7 @@ namespace Jammy.Debugger.Interceptors
 				var regs = cpu.GetRegs(gregs);
 				logger.LogTrace($"{lvo.Name} returned: {regs.D[0]:X2} {((regs.D[0]&0xff)==0?"Success":"Failed")} @{regs.PC:X8}");
 				if (regs.D[0] != 0)
-					libraryBases.SetLibraryBaseaddress(deviceName, regs.D[0]);
+					libraryBases.SetLibraryBaseAddress(deviceName, regs.D[0]);
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
@@ -127,7 +127,7 @@ namespace Jammy.Debugger.Interceptors
 
 		public string Library => "exec.library";
 		public string VectorName => "MakeLibrary";
-		private Regs gregs = new Regs();
+		private readonly Regs gregs = new Regs();
 
 		public void Intercept(LVO lvo, uint pc)
 		{
@@ -151,7 +151,7 @@ namespace Jammy.Debugger.Interceptors
 					//snag the library/resource/device name from the Node struct
 					uint ln_Name = memory.UnsafeRead32(regs.D[0] + 10);
 					string libraryName = memory.GetString(ln_Name);
-					libraryBases.SetLibraryBaseaddress(libraryName, regs.D[0]);
+					libraryBases.SetLibraryBaseAddress(libraryName, regs.D[0]);
 					logger.LogTrace($"Name: {libraryName}");
 				}
 

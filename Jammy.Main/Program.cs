@@ -164,6 +164,8 @@ namespace Jammy.Main
 				//.AddSingleton<ILVOInterceptorAction, GetRGB4Logger>()
 				//.AddSingleton<ILVOInterceptorAction, MrgCopLogger>()
 				.AddSingleton<IOpenFileTracker, OpenFileTracker>()
+				.AddSingleton<ILVOInterceptorCollection, LVOInterceptorCollection>()
+				.AddSingleton<ILibraryBaseCollection, LibraryBaseCollection>()
 				.AddSingleton<ILibraryBases, LibraryBases>()
 				.AddSingleton<INativeOverlay, NativeOverlay.NativeOverlay>()
 				.AddSingleton<IOverlayCollection, OverlayCollection>()
