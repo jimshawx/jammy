@@ -89,9 +89,12 @@ namespace Jammy.Debugger
 				activeLvoInterceptors[address] = interceptor;
 			}
 
-			lvoInterceptorsByLibrary.Clear();
-			foreach (var kv in lvoInterceptors.GroupBy(x => x.Library))
-				lvoInterceptorsByLibrary.Add(kv.Key, kv.ToList());
+			if (!lvoInterceptorsByLibrary.TryGetValue(interceptor.Library, out var list))
+			{ 
+				list = new List<LVOInterceptor>();
+				lvoInterceptorsByLibrary.Add(interceptor.Library, list);
+			}
+			list.Add(interceptor);
 		}
 
 		//opened a new library or library base changed
@@ -113,12 +116,15 @@ namespace Jammy.Debugger
 				libraryBaseCache.Add(kv.Key, kv.Value);
 		}
 
+		//private LVOInterceptor IsHit0(uint pc)
+		//{
+		//	return lvoInterceptors
+		//		.Where(x => libraryBaseCache.ContainsKey(x.Library))
+		//		.FirstOrDefault(x => memory.UnsafeRead32((uint)(libraryBaseCache[x.Library] + x.LVO.Offset + 2)) == pc);
+		//}
+
 		public LVOInterceptor IsHit(uint pc)
 		{
-			//return lvoInterceptors
-			//	.Where(x => libraryBaseCache.ContainsKey(x.Library))
-			//	.SingleOrDefault(x => memory.UnsafeRead32((uint)(libraryBaseCache[x.Library] + x.LVO.Offset + 2)) == pc);
-
 			foreach (var kv in lvoInterceptorsByLibrary)
 			{
 				if (!libraryBaseCache.TryGetValue(kv.Key, out var libraryBase)) continue;
@@ -129,12 +135,27 @@ namespace Jammy.Debugger
 				}
 			}
 			return null;
-
-			//or, if the cache is working correctly.
-			//current not working because execbase is written before the vectors are filled in
-			//and because it doesn't allow for patching of the vectors after OpenLibrary
-			//return ActiveLVOInterceptors.GetValueOrDefault(pc);
 		}
+
+		//private LVOInterceptor IsHit2(uint pc)
+		//{
+		//	//or, if the cache is working correctly.
+		//	//currently not working because execbase is written before the vectors are filled in
+		//	//and because it doesn't allow for patching of the vectors after OpenLibrary
+		//	return ActiveLVOInterceptors.GetValueOrDefault(pc);
+		//}
+
+		//public LVOInterceptor IsHit(uint pc)
+		//{
+		//	var h0 = IsHit0(pc);
+		//	var h1 = IsHit1(pc);
+		//	var h2 = IsHit2(pc);
+
+		//	if (h0 != h1 || h1 != h2 || h0 != h2)
+		//		logger.LogTrace($"{(h0 == null ? "none" : h0.LVO.Name)} {(h1 == null ? "none" : h1.LVO.Name)} {(h2 == null ? "none" : h2.LVO.Name)}");
+
+		//	return h1;
+		//}
 
 		public Dictionary<uint, LVOInterceptor> ActiveLVOInterceptors => activeLvoInterceptors;
 	}
