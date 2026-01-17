@@ -84,11 +84,8 @@ namespace Jammy.Debugger
 
 			if (libraryBaseCache.TryGetValue(interceptor.Library, out var libraryBase))
 			{ 
-				if (libraryBase != LibraryBaseCollection.InvalidLibraryBaseAddress)
-				{
-					uint address = memory.UnsafeRead32((uint)(libraryBase + interceptor.LVO.Offset + 2));
-					activeLvoInterceptors[address] = interceptor;
-				}
+				uint address = memory.UnsafeRead32((uint)(libraryBase + interceptor.LVO.Offset + 2));
+				activeLvoInterceptors[address] = interceptor;
 			}
 		}
 
