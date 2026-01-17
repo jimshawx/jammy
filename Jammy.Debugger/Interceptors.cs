@@ -59,6 +59,7 @@ namespace Jammy.Debugger
 		void AddInterceptor(LVOInterceptor interceptor);
 		Dictionary<uint, LVOInterceptor> ActiveLVOInterceptors { get; }
 		void UpdateActiveLVOInterceptors(Dictionary<string, uint> libraryBaseAddresses);
+		LVOInterceptor IsHit(uint pc);
 	}
 
 	public class LVOInterceptorCollection : ILVOInterceptorCollection
@@ -66,15 +67,29 @@ namespace Jammy.Debugger
 		private readonly List<LVOInterceptor> lvoInterceptors = new List<LVOInterceptor>();
 		private readonly Dictionary<uint, LVOInterceptor> activeLvoInterceptors = new Dictionary<uint, LVOInterceptor>();
 		private readonly IDebugMemoryMapper memory;
+		private readonly ILogger<LVOInterceptorCollection> logger;
+		private readonly Dictionary <string, uint> libraryBaseCache = new Dictionary<string, uint>();
 
-		public LVOInterceptorCollection(IDebugMemoryMapper memory)
+		public LVOInterceptorCollection(IDebugMemoryMapper memory, ILogger<LVOInterceptorCollection> logger)
 		{
 			this.memory = memory;
+			this.logger = logger;
 		}
 
 		public void AddInterceptor(LVOInterceptor interceptor)
 		{
+			logger.LogTrace($"Adding Interceptor for {interceptor.Library}:{interceptor.LVO.Name}()");
+
 			lvoInterceptors.Add(interceptor);
+
+			if (libraryBaseCache.TryGetValue(interceptor.Library, out var libraryBase))
+			{ 
+				if (libraryBase != LibraryBaseCollection.InvalidLibraryBaseAddress)
+				{
+					uint address = memory.UnsafeRead32((uint)(libraryBase + interceptor.LVO.Offset + 2));
+					activeLvoInterceptors[address] = interceptor;
+				}
+			}
 		}
 
 		//opened a new library or library base changed
@@ -83,12 +98,29 @@ namespace Jammy.Debugger
 			activeLvoInterceptors.Clear();
 			foreach (var interceptor in lvoInterceptors)
 			{
-				if (libraryBaseAddresses.ContainsKey(interceptor.Library))
+				if (libraryBaseAddresses.TryGetValue(interceptor.Library, out var libraryBase))
 				{
-					uint address = memory.UnsafeRead32((uint)(libraryBaseAddresses[interceptor.Library] + interceptor.LVO.Offset + 2));
+					uint address = memory.UnsafeRead32((uint)(libraryBase + interceptor.LVO.Offset + 2));
 					activeLvoInterceptors[address] = interceptor;
 				}
 			}
+
+			//keep a local copy of the library bases
+			libraryBaseCache.Clear();
+			foreach (var kv in libraryBaseAddresses)
+				libraryBaseCache.Add(kv.Key, kv.Value);
+		}
+
+		public LVOInterceptor IsHit(uint pc)
+		{
+			return lvoInterceptors
+				.Where(x => libraryBaseCache.ContainsKey(x.Library))
+				.SingleOrDefault(x => memory.UnsafeRead32((uint)(libraryBaseCache[x.Library] + x.LVO.Offset + 2)) == pc);
+
+			//or, if the cache is working correctly.
+			//current not working because execbase is written before the vectors are filled in
+			//and because it doesn't allow for patching of the vectors after OpenLibrary
+			//return ActiveLVOInterceptors.GetValueOrDefault(pc);
 		}
 
 		public Dictionary<uint, LVOInterceptor> ActiveLVOInterceptors => activeLvoInterceptors;
@@ -98,13 +130,15 @@ namespace Jammy.Debugger
 	{
 		private readonly ILVOInterceptorCollection lvoInterceptorCollection;
 		private readonly IAnalysis analysis;
+		private readonly ILogger<LVOInterceptor> logger;
 
 		public LVOInterceptors(IEnumerable<ILVOInterceptorAction> actions,
-			ILVOInterceptorCollection lvoInterceptorCollection,	IAnalysis analysis)
+			ILVOInterceptorCollection lvoInterceptorCollection,	IAnalysis analysis,
+			ILogger<LVOInterceptor> logger)
 		{
-			
 			this.lvoInterceptorCollection = lvoInterceptorCollection;
 			this.analysis = analysis;
+			this.logger = logger;
 			foreach (var act in actions)
 				AddLVOIntercept(act.Library, act.VectorName, act);
 		}
@@ -131,8 +165,10 @@ namespace Jammy.Debugger
 		{
 			if (size == Size.Word)
 			{
-				if (!lvoInterceptorCollection.ActiveLVOInterceptors.TryGetValue(pc, out var lvo))
-					return;
+				var lvo = lvoInterceptorCollection.IsHit(pc);
+				if (lvo == null) return;
+
+				logger.LogTrace($"{lvo.Library}:{lvo.LVO.Name} intercepted at {pc:X8}");
 
 				lvo.Action.Intercept(lvo.LVO, pc);
 			}

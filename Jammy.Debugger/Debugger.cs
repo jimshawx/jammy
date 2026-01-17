@@ -287,8 +287,17 @@ namespace Jammy.Debugger
 		{
 			//update execbase
 			if (address == 4 && size == Size.Long)
+			{
+				//some emulated CPUs write a long...
 				libraryBases.SetLibraryBaseAddress("exec.library", value);
-			
+			}
+			else if (address == 6 && size == Size.Word)
+			{
+				//...others write two words
+				uint execbase = (((uint)memory.UnsafeRead16(4)) << 16) | value;
+				libraryBases.SetLibraryBaseAddress("exec.library", execbase);
+			}
+
 			breakpoints.Write(insaddr, address, value, size);
 		}
 
