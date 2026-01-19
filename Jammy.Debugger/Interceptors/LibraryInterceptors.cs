@@ -34,6 +34,10 @@ namespace Jammy.Debugger.Interceptors
 				logger.LogTrace($"{libraryName} {regs.D[0]:X8}");
 				if (regs.D[0] != 0)
 					libraryBases.SetLibraryBaseAddress(libraryName, regs.D[0]);
+
+				//fix execbase, since the vector at location 4 is written before the jump table is filled in
+				analyser.AnalyseLibraryBase("exec.library", regs.A[6]);
+
 			}, memory.UnsafeRead32(regs.SP)));
 		}
 	}
