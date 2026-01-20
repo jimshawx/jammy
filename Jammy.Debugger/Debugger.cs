@@ -491,6 +491,14 @@ namespace Jammy.Debugger
 			return x;
 		}
 
+		public Libraries GetLibraries()
+		{
+			var rv = new Libraries();
+			foreach (var lib in libraryBases.GetAllLibraryBases())
+				rv.Items.Add(new Tuple<string, uint>(lib.Key, lib.Value));
+			return rv;
+		}
+
 		public InstructionAnalysis Analyse()
 		{
 			var rv = new InstructionAnalysis();

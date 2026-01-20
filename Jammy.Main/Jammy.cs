@@ -225,6 +225,7 @@ namespace Jammy.Main
 			UpdateExecBase();
 			UpdateCopper();
 			UpdateVectors();
+			UpdateLibraries();
 			UpdateClock();
 
 			var debug = debugger.Analyse();
@@ -374,6 +375,11 @@ namespace Jammy.Main
 		private void UpdateVectors()
 		{
 			txtVectors.Text = debugger.GetVectors().ToString();
+		}
+
+		private void UpdateLibraries()
+		{
+			txtLibraries.Text = debugger.GetLibraries().ToString();
 		}
 
 		private void SetSelection()

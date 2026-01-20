@@ -13,6 +13,7 @@ namespace Jammy.Debugger
 	{
 		bool HasLibrary(string libraryName, uint address);
 		void AddLibrary(string libraryName, uint address);
+		Dictionary<string, uint> GetAllLibraryBases();
 	}
 
 	public class LibraryBaseCollection : ILibraryBaseCollection
@@ -35,11 +36,17 @@ namespace Jammy.Debugger
 			libraryBaseAddresses[libraryName] = address;
 			lvoInterceptorCollection.UpdateActiveLVOInterceptors(libraryBaseAddresses);
 		}
+
+		public Dictionary<string, uint> GetAllLibraryBases()
+		{
+			return libraryBaseAddresses;
+		}
 	}
 
 	public interface ILibraryBases
 	{
 		void SetLibraryBaseAddress(string libraryName, uint address);
+		Dictionary<string, uint> GetAllLibraryBases();
 	}
 
 	public class LibraryBases : ILibraryBases
@@ -70,6 +77,14 @@ namespace Jammy.Debugger
 
 			libraryBaseCollection.AddLibrary(libraryName, address);
 			analyser.AnalyseLibraryBase(libraryName, address);
+		}
+
+		public Dictionary<string,uint> GetAllLibraryBases()
+		{
+			var v = libraryBaseCollection.GetAllLibraryBases();
+			foreach (var w in v)
+				analyser.AnalyseLibraryBase(w.Key, w.Value);
+			return v;
 		}
 	}
 }

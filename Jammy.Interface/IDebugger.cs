@@ -44,6 +44,7 @@ namespace Jammy.Interface
 		ClockInfo GetChipClock();
 		void GenerateDisassemblies();
 		Vectors GetVectors();
+		Libraries GetLibraries();
 		InstructionAnalysis Analyse();
 	}
 
