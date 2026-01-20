@@ -18,6 +18,8 @@ _LVOAddAmigaGuideHostA         equ     -138
 _LVORemoveAmigaGuideHostA      equ     -144
 _LVOGetAmigaGuideString        equ     -210
 
+************************** LVOs for audio.device ************************
+
 ********************** LVOs for asl.library *****************************
 
 _LVOAllocFileRequest   equ     -30     ; Functions in V36 or higher (2.0)
@@ -299,7 +301,7 @@ _LVOFlush              equ     -360
 _LVOSetVBuf            equ     -366
 _LVODupLockFromFH      equ     -372
 _LVOOpenFromLock       equ     -378
-_LVOParentOffH         equ     -384
+_LVOParentOfFH         equ     -384
 _LVOExamineFH          equ     -390
 _LVOSetFileDate        equ     -396
 _LVONameFromLock       equ     -402
@@ -388,7 +390,7 @@ _LVOGetVar             equ     -906
 _LVODeleteVar          equ     -912
 _LVOFindVar            equ     -918
 _LVOCliInit            equ     -924
-_LVOCliInitNewCli      equ     -930
+_LVOCliInitNewcli      equ     -930
 _LVOCliInitRun         equ     -936
 _LVOWriteChars         equ     -942
 _LVOPutStr             equ     -948
@@ -694,7 +696,7 @@ _LVOGT_PostFilterIMsg  equ     -108
 _LVOCreateContext      equ     -114
 _LVODrawBevelBoxA      equ     -120
 _LVOGetVisualInfoA     equ     -126
-_LVOFreeVisualInfoA    equ     -132
+_LVOFreeVisualInfo     equ     -132
 _LVOGTReserved0        equ     -138
 _LVOGTReserved1        equ     -144
 _LVOGTReserved2        equ     -150
@@ -814,7 +816,7 @@ _LVOGfxNew             equ     -660    ; Functions in V36 or higher (2.0)
 _LVOGfxFree            equ     -666
 _LVOGfxAssociate       equ     -672
 _LVOBitMapScale        equ     -678
-_LVOScaleDiv           equ     -684
+_LVOScalerDiv          equ     -684
 _LVOTextExtent         equ     -690
 _LVOTextFit            equ     -696
 _LVOGfxLookUp          equ     -702
@@ -1533,9 +1535,9 @@ _LVORL_SetResourceScreen     equ -72
 
 ******************** LVOs for rexxsyslib.library ************************
 
-_LVOCreateArgString    equ     -126    ; Functions in V33 or higher (1.2)
-_LVODeleteArgString    equ     -132
-_LVOLengthArgString    equ     -138
+_LVOCreateArgstring    equ     -126    ; Functions in V33 or higher (1.2)
+_LVODeleteArgstring    equ     -132
+_LVOLengthArgstring    equ     -138
 _LVOCreateRexxMsg      equ     -144
 _LVODeleteRexxMsg      equ     -150
 _LVOClearRexxMsg       equ     -156
@@ -1658,7 +1660,7 @@ _LVORethinkVirtualSize     equ -42
 _LVOUpdateWorkbench    equ     -30     ; Functions in V36 or higher (2.0)
 _LVOQuoteWorkbench     equ     -36
 _LVOStartWorkbench     equ     -42
-_LVOAddAppWindow       equ     -48
+_LVOAddAppWindowA      equ     -48
 _LVORemoveAppWindow    equ     -54
 _LVOAddAppIconA        equ     -60
 _LVORemoveAppIcon      equ     -66
