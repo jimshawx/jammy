@@ -1258,8 +1258,13 @@ namespace Jammy.Disassembler.Analysers
 				//name the jump table entry
 				eaDatabase.Add(address, lvo.Name+"()");
 
-				if (mem.UnsafeRead16(address) != 0x4ef9) break;
-				uint lvoaddress = mem.UnsafeRead32(address+2);
+				uint lvoaddress = 0;
+				if (mem.UnsafeRead16(address) == 0x4ef9)
+					lvoaddress = mem.UnsafeRead32(address+2);
+				else if (mem.UnsafeRead16(address+2) == 0x6000)//dos.library BCPL lib is move/bra instead of jmp
+					lvoaddress = address + mem.UnsafeRead16(address+4);
+				else
+					break;
 
 				//name the actual function
 				eaDatabase.Add(lvoaddress, lvo.Name + "()");
