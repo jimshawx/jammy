@@ -39,6 +39,8 @@ namespace Jammy.Debugger.Interceptors
 
 	public class AllocatedMemoryTracker : IAllocatedMemoryTracker
 	{
+		private const uint MIN_LOGGED_SIZE = 0;
+
 		private readonly Dictionary<uint, (uint size, MEMF type)> allocations = new Dictionary<uint, (uint size, MEMF type)>();
 		private readonly ILogger<AllocatedMemoryTracker> logger;
 
@@ -49,6 +51,8 @@ namespace Jammy.Debugger.Interceptors
 
 		public void Allocate(uint address, uint size, MEMF type)
 		{
+			if (size < MIN_LOGGED_SIZE) return;
+
 			if (allocations.TryGetValue(address, out var existing))
 			{	
 				logger.LogTrace($"*** Realloc {address:X8} {existing.size:X8} {existing.type} -> {size:X8} {type}");
@@ -60,10 +64,23 @@ namespace Jammy.Debugger.Interceptors
 
 		public void Free(uint address, uint size)
 		{
+			if (size < MIN_LOGGED_SIZE) return;
+
+			if (size == 0) 
+			{
+				logger.LogTrace($"*** FreeMem({address:X8}, 0) ignored");
+				return;
+			}
+
 			if (allocations.TryGetValue(address, out var alloc))
 			{
 				if (alloc.size != size)
+				{ 
 					logger.LogTrace($"*** FreeMem({address:X8}, {size:X8}) size mismatch ({alloc.size:X8})");
+					//retain the un-freed part
+					allocations.Add(address + size, (alloc.size - size, alloc.type));
+				}
+
 				allocations.Remove(address);
 			}
 			else
@@ -118,7 +135,7 @@ namespace Jammy.Debugger.Interceptors
 		{
 			var regs = cpu.GetRegs(gregs);
 			logger.LogTrace($"@{pc:X8} {lvo.Name}() address: {regs.A[1]:X8} size: {regs.D[0]:X8}");
-			allocatedMemoryTracker.Free(regs.A[0], regs.D[0]);
+			allocatedMemoryTracker.Free(regs.A[1], regs.D[0]);
 			returnValueSnagger.AddSnagger(new ReturnAddressSnagger(() =>
 			{
 				var regs = cpu.GetRegs(gregs);
