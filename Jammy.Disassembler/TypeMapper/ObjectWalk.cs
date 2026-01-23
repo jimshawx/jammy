@@ -11,7 +11,17 @@ namespace Jammy.Disassembler.TypeMapper
 {
 	public class ObjectWalk
 	{
-		private static void DumpObj(object obj, StringBuilder sb, int depth)
+		private static void Align(ref int offset)
+		{
+			//pack 2
+			offset++;
+			offset &= 0x7ffffffe;
+			//pack 4
+			//offset+=3;
+			//offset &= 0x7ffffffc;
+		}
+
+		private static int DumpObj(object obj, StringBuilder sb, int depth, int offset)
 		{
 			const string space = " ";
 			const string space2 = "  ";
@@ -22,16 +32,28 @@ namespace Jammy.Disassembler.TypeMapper
 				for (int j = 0; j < depth; j++)
 					sb.Append(space);
 				sb.Append($"(null)");
-				return;
+				return offset;
 			}
 
 			var properties = obj.GetType().GetProperties().OrderBy(x => x.MetadataToken).ToList();
 
 			if (!properties.Any())
 			{
-				sb.Append($"{space2}{obj:X8} {obj}");
+				sb.Append($"{space2}{offset,4} {obj:X8} {obj}");
 				sb.Append("\n");
-				return;
+
+				var objType = obj.GetType();
+
+				if (objType == typeof(SByte) || objType == typeof(Byte))
+					offset = 1;
+				else if (objType == typeof(Int16) || objType == typeof(UInt16))
+					offset = 2;
+				else if (objType == typeof(Int32) || objType == typeof(UInt32))
+					offset = 4;
+				else
+					sb.Append($"*** unknown type with no properties {objType.Name} ***");
+
+				return offset;
 			}
 
 			foreach (var p in properties)
@@ -39,15 +61,18 @@ namespace Jammy.Disassembler.TypeMapper
 				for (int j = 0; j < depth; j++)
 					sb.Append(space);
 
-				sb.Append($"{p.Name} ");
+				sb.Append($"{offset,4} {p.Name} ");
 
 				if (p.PropertyType == typeof(string))
 				{
 					sb.Remove(sb.Length - 1, 1);
-					sb.Append($"{space2}{p.GetValue(obj)}");
+					sb.Append($"{space2}{offset,4} {p.GetValue(obj)}");
+					offset += 4;
 				}
 				else if (p.PropertyType.BaseType == typeof(Array))
 				{
+					Align(ref offset);
+
 					sb.Append("\n");
 					var array = (Array)p.GetValue(obj);
 					if (array == null)
@@ -70,66 +95,63 @@ namespace Jammy.Disassembler.TypeMapper
 					{
 						for (int j = 0; j < depth; j++)
 							sb.Append(space);
-						sb.Append($"[{i}]");
+						sb.Append($"{offset,4} [{i}]");
 						object v = array.GetValue(i);
-						if (v != null)
-						{
-							sb.Append("\n");
-							DumpObj(v, sb, depth + 1);
-						}
-						else
-						{
-							sb.Append("(null)\n");
-						}
+						if (v == null) v = Activator.CreateInstance(p.PropertyType.GetElementType());
+						sb.Append("\n");
+						offset += DumpObj(v, sb, depth + 1, 0);
 					}
 					sb.Remove(sb.Length - 1, 1);
 				}
 				else if (p.PropertyType.BaseType == typeof(object))
 				{
+					Align(ref offset);
+
 					object v = p.GetValue(obj);
-					if (v != null)
-					{
-						sb.Append("\n");
-						DumpObj(v, sb, depth + 1);
-					}
-					else
-					{
-						sb.Append("(null)");
-					}
+					if (v == null) v = Activator.CreateInstance(p.PropertyType);
+					sb.Append("\n");
+					offset += DumpObj(v, sb, depth + 1, 0);
 				}
 				else if (p.PropertyType.BaseType == typeof(Enum))
 				{
-					sb.Append($"{space2}\t{p.GetValue(obj)} {Convert.ToInt32(p.GetValue(obj))}");
+					Align(ref offset);
+
+					sb.Append($"{space2}\t{offset,4} {p.GetValue(obj)} {Convert.ToInt32(p.GetValue(obj))}");
+					offset += 1;//enums are all bytes
 				}
 				else if (typeof(IWrappedPtr).IsAssignableFrom(p.PropertyType))
 				{
+					Align(ref offset);
+
 					dynamic v = p.GetValue(obj);
 
 					//check for generic IWrapper<T>
 					if (v != null && p.PropertyType.GetInterfaces().Any(x => x.GenericTypeArguments.Length > 0))
 					{ 
 						sb.Append("\n");
-						DumpObj(v.Wrapped, sb, depth + 1);
+						DumpObj(v.Wrapped, sb, depth + 1, 0);
 					}
+					offset += 4;
 				}
 				else
 				{
 					if (p.PropertyType == typeof(SByte) || p.PropertyType == typeof(Byte))
-						sb.Append($"{space2}\t{p.GetValue(obj):X2} {p.GetValue(obj)}");
+					{ sb.Append($"{space2}\t{offset,4} {p.GetValue(obj):X2} {p.GetValue(obj)}"); offset += 1; }
 					else if (p.PropertyType == typeof(Int16) || p.PropertyType == typeof(UInt16))
-						sb.Append($"{space2}\t{p.GetValue(obj):X4} {p.GetValue(obj)}");
+					{ Align(ref offset); sb.Append($"{space2}\t{offset,4} {p.GetValue(obj):X4} {p.GetValue(obj)}"); offset += 2; }
 					else
-						sb.Append($"{space2}\t{p.GetValue(obj):X8} {p.GetValue(obj)}");
+					{ Align(ref offset); sb.Append($"{space2}\t{offset,4} {p.GetValue(obj):X8} {p.GetValue(obj)}"); offset += 4; }
 				}
 				sb.Append("\n");
 			}
+			return offset;
 		}
 
 		public static string Walk(object o)
 		{
 			var sb = new StringBuilder();
-			DumpObj(o, sb, 0);
-			return sb.ToString();
+			int size = DumpObj(o, sb, 0, 0);
+			return $"sizeof({o.GetType().Name})={size}" + sb.ToString();
 		}
 
 		//public override string ToString()
