@@ -102,6 +102,11 @@ namespace Jammy.Disassembler.TypeMapper
 								prop.SetValue(obj, Activator.CreateInstance(propType, ((AmigaArraySize)sizeAttr).Size));
 								array = (Array)prop.GetValue(obj);
 							}
+							else
+							{
+								//empty array (or should the following code support null arrays?)
+								array = Array.CreateInstance(propType.GetElementType(), 0);
+							}
 						}
 						var arrayType = array.GetType().GetElementType();
 

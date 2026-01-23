@@ -50,6 +50,22 @@ namespace Jammy.Disassembler.TypeMapper
 				{
 					sb.Append("\n");
 					var array = (Array)p.GetValue(obj);
+					if (array == null)
+					{
+						//it didn't work, because the array on 'obj' hasn't been initialised
+						//does it have an AmigaArraySize attribute?
+						var sizeAttr = p.GetCustomAttributes(typeof(AmigaArraySize), false).SingleOrDefault();
+						if (sizeAttr != null)
+						{
+							p.SetValue(obj, Activator.CreateInstance(p.PropertyType, ((AmigaArraySize)sizeAttr).Size));
+							array = (Array)p.GetValue(obj);
+						}
+						else
+						{
+							//empty array (or should the following code support null arrays?)
+							array = Array.CreateInstance(p.PropertyType.GetElementType(), 0);
+						}
+					}
 					for (int i = 0; i < array.Length; i++)
 					{
 						for (int j = 0; j < depth; j++)
