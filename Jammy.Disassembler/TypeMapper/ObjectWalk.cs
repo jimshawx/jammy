@@ -1,14 +1,41 @@
 ﻿using Jammy.AmigaTypes;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 /*
-	Copyright 2020-2025 James Shaw. All Rights Reserved.
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Disassembler.TypeMapper
 {
+	public enum WalkEntryType
+	{
+		Unknown,
+		Integer,
+		String,
+		Array,
+		Object,
+		Enum,
+		Pointer,
+		Integer2,
+		Unhandled,
+		ArrayElement,
+		Root
+	}
+
+	public class WalkEntry
+	{
+		public WalkEntryType Type { get; set; }
+		public int Offset { get; set; }
+		public int Size { get; set; }
+		public string Name { get; set; }
+		public string Value1 { get; set; }
+		public string Value2 { get; set; }
+		public List<WalkEntry> Children { get; } = new List<WalkEntry>();
+	}
+
 	public class ObjectWalk
 	{
 		private static void Align(ref int offset)
@@ -21,59 +48,59 @@ namespace Jammy.Disassembler.TypeMapper
 			//offset &= 0x7ffffffc;
 		}
 
-		private static int DumpObj(object obj, StringBuilder sb, int depth, int offset)
+		private static int DumpObj(object obj, int offset, WalkEntry parent)
 		{
-			const string space = " ";
-			const string space2 = "  ";
-
-			//if (depth > 5) return;
 			if (obj == null)
-			{
-				for (int j = 0; j < depth; j++)
-					sb.Append(space);
-				sb.Append($"(null)");
 				return offset;
-			}
 
 			var properties = obj.GetType().GetProperties().OrderBy(x => x.MetadataToken).ToList();
 
 			if (!properties.Any())
 			{
-				sb.Append($"{space2}{offset,4} {obj:X8} {obj}");
-				sb.Append("\n");
+				var p = new WalkEntry();
+				parent.Children.Add(p);
+
+				p.Type = WalkEntryType.Integer2;
+				p.Name = $".";
+				p.Offset = offset;
+				p.Value1 = $"{obj:X8}";
+				p.Value2 = $"{obj}";
 
 				var objType = obj.GetType();
 
 				if (objType == typeof(SByte) || objType == typeof(Byte))
-					offset = 1;
+				{ p.Size =1;	offset = 1; }
 				else if (objType == typeof(Int16) || objType == typeof(UInt16))
-					offset = 2;
+				{ p.Size = 2;	offset = 2; }
 				else if (objType == typeof(Int32) || objType == typeof(UInt32))
-					offset = 4;
+				{p.Size = 4;	offset = 4; }
 				else
-					sb.Append($"*** unknown type with no properties {objType.Name} ***");
+					p.Type = WalkEntryType.Unhandled;
 
 				return offset;
 			}
 
 			foreach (var p in properties)
 			{
-				for (int j = 0; j < depth; j++)
-					sb.Append(space);
+				var tree = new WalkEntry();
+				parent.Children.Add(tree);
 
-				sb.Append($"{offset,4} {p.Name} ");
+				tree.Offset = offset;
+				tree.Name = p.Name;
 
 				if (p.PropertyType == typeof(string))
 				{
-					sb.Remove(sb.Length - 1, 1);
-					sb.Append($"{space2}{offset,4} {p.GetValue(obj)}");
+					tree.Type = WalkEntryType.String;
+					tree.Value1 = $"{p.GetValue(obj)}";
+					tree.Value2 = null;
+					tree.Size = 4;
 					offset += 4;
 				}
 				else if (p.PropertyType.BaseType == typeof(Array))
 				{
 					Align(ref offset);
+					tree.Type = WalkEntryType.Array;
 
-					sb.Append("\n");
 					var array = (Array)p.GetValue(obj);
 					if (array == null)
 					{
@@ -93,56 +120,89 @@ namespace Jammy.Disassembler.TypeMapper
 					}
 					for (int i = 0; i < array.Length; i++)
 					{
-						for (int j = 0; j < depth; j++)
-							sb.Append(space);
-						sb.Append($"{offset,4} [{i}]");
+						var t = new WalkEntry();
+						tree.Children.Add(t);
+						t.Offset = offset;
+						t.Name = $"[{i}]";
+						t.Type = WalkEntryType.ArrayElement;
 						object v = array.GetValue(i);
 						if (v == null) v = Activator.CreateInstance(p.PropertyType.GetElementType());
-						sb.Append("\n");
-						offset += DumpObj(v, sb, depth + 1, 0);
+						int size = DumpObj(v, 0, t);
+						t.Size = size;
+						offset += size;
 					}
-					sb.Remove(sb.Length - 1, 1);
+					//sb.Remove(sb.Length - 1, 1);
 				}
 				else if (p.PropertyType.BaseType == typeof(object))
 				{
 					Align(ref offset);
+					tree.Type = WalkEntryType.Object;
 
 					object v = p.GetValue(obj);
 					if (v == null) v = Activator.CreateInstance(p.PropertyType);
-					sb.Append("\n");
-					offset += DumpObj(v, sb, depth + 1, 0);
+					int size = DumpObj(v, 0, tree);
+					tree.Size = size;
+					offset += size;
 				}
 				else if (p.PropertyType.BaseType == typeof(Enum))
 				{
 					Align(ref offset);
-
-					sb.Append($"{space2}\t{offset,4} {p.GetValue(obj)} {Convert.ToInt32(p.GetValue(obj))}");
+					tree.Type = WalkEntryType.Enum;
+					tree.Offset = offset;
+					tree.Value1 = $"{p.GetValue(obj)}";
+					tree.Value2 = $"{Convert.ToInt32(p.GetValue(obj))}";
+					tree.Size = 1;
 					offset += 1;//enums are all bytes
 				}
 				else if (typeof(IWrappedPtr).IsAssignableFrom(p.PropertyType))
 				{
 					Align(ref offset);
+					tree.Type = WalkEntryType.Pointer;
+					tree.Offset = offset;
 
 					dynamic v = p.GetValue(obj);
 
 					//check for generic IWrapper<T>
 					if (v != null && p.PropertyType.GetInterfaces().Any(x => x.GenericTypeArguments.Length > 0))
 					{ 
-						sb.Append("\n");
-						DumpObj(v.Wrapped, sb, depth + 1, 0);
+						DumpObj(v.Wrapped, 0, tree);
 					}
 					offset += 4;
+					tree.Size = 4;
 				}
 				else
 				{
+					tree.Type = WalkEntryType.Integer;
 					if (p.PropertyType == typeof(SByte) || p.PropertyType == typeof(Byte))
-					{ sb.Append($"{space2}\t{offset,4} {p.GetValue(obj):X2} {p.GetValue(obj)}"); offset += 1; }
+					{
+						tree.Value1 = $"{p.GetValue(obj):X2}";
+						tree.Value2 = $"{p.GetValue(obj)}";
+						tree.Size = 1;
+						offset += 1;
+					}
 					else if (p.PropertyType == typeof(Int16) || p.PropertyType == typeof(UInt16))
-					{ Align(ref offset); sb.Append($"{space2}\t{offset,4} {p.GetValue(obj):X4} {p.GetValue(obj)}"); offset += 2; }
+					{
+						Align(ref offset);
+						tree.Offset = offset;
+						tree.Value1 = $"{p.GetValue(obj):X4}";
+						tree.Value2 = $"{p.GetValue(obj)}";
+						tree.Size = 2;
+						offset += 2;
+					}
+					else if (p.PropertyType == typeof(Int32) || p.PropertyType == typeof(UInt32))
+					{
+						Align(ref offset);
+						tree.Offset = offset;
+						tree.Value1 = $"{p.GetValue(obj):X8}";
+						tree.Value2 = $"{p.GetValue(obj)}";
+						tree.Size = 4;
+						offset += 4; 
+					}
 					else
-					{ Align(ref offset); sb.Append($"{space2}\t{offset,4} {p.GetValue(obj):X8} {p.GetValue(obj)}"); offset += 4; }
+					{
+						tree.Type = WalkEntryType.Unhandled;
+					}
 				}
-				sb.Append("\n");
 			}
 			return offset;
 		}
@@ -150,8 +210,33 @@ namespace Jammy.Disassembler.TypeMapper
 		public static string Walk(object o)
 		{
 			var sb = new StringBuilder();
-			int size = DumpObj(o, sb, 0, 0);
-			return $"sizeof({o.GetType().Name})={size}" + sb.ToString();
+			var we = new WalkEntry();
+			int size = DumpObj(o, 0, we);
+			we.Size = size;
+			we.Type = WalkEntryType.Root;
+			we.Name = o.GetType().Name;
+			Dump(sb,we,0, "");
+			return $"sizeof({o.GetType().Name})={size}\n" + sb.ToString();
+		}
+
+		private static void Dump(StringBuilder sb, WalkEntry we, int depth, string trace)
+		{
+			for (int i = 0; i < depth; i++)
+				sb.Append(" ");
+
+			if (we.Name != null)
+			{ 
+				if (we.Name.StartsWith('['))
+					trace = $"{trace}{we.Name}";
+				else if (trace == "")
+					trace = we.Name;
+				else
+					trace = $"{trace}.{we.Name}";
+			}
+
+			sb.Append($"o:{we.Offset,5} s:{we.Size} {we.Type} {we.Name} {we.Value1} {we.Value2} {trace}\n");
+			foreach (var c in we.Children)
+				Dump(sb, c, depth+1, trace);
 		}
 
 		//public override string ToString()
