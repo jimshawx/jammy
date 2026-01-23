@@ -1,6 +1,7 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Disassembler.TypeMapper;
 using Jammy.Extensions.Extensions;
 using Jammy.Interface;
 using Jammy.Types;
@@ -29,6 +30,7 @@ namespace Jammy.Disassembler.Analysers
 		private readonly ILogger logger;
 		private readonly IKickstartROM kickstartROM;
 		private readonly IAnalysis analysis;
+		private readonly IObjectMapper objectMapper;
 		private readonly IDisassembler disassembler;
 		private readonly IEADatabase eaDatabase;
 		private readonly EmulationSettings settings;
@@ -36,13 +38,16 @@ namespace Jammy.Disassembler.Analysers
 		public Analyser(IKickstartAnalysis kickstartAnalysis, ILabeller labeller,
 			IDebugMemoryMapper mem, IOptions<EmulationSettings> settings,
 			IDisassembler disassembler, IEADatabase eaDatabase,
-			ILogger<Analyser> logger, IKickstartROM kickstartROM, IAnalysis analysis, IDiskAnalysis diskAnalysis)
+			ILogger<Analyser> logger, IKickstartROM kickstartROM,
+			IAnalysis analysis, IDiskAnalysis diskAnalysis,
+			IObjectMapper objectMapper)
 		{
 			this.kickstartAnalysis = kickstartAnalysis;
 			this.labeller = labeller;
 			this.logger = logger;
 			this.kickstartROM = kickstartROM;
 			this.analysis = analysis;
+			this.objectMapper = objectMapper;
 			this.settings = settings.Value;
 			this.mem = mem;
 			this.disassembler = disassembler;
@@ -1242,6 +1247,7 @@ namespace Jammy.Disassembler.Analysers
 		{
 			//OpenLibrary just returned this address, so there should be a bunch of
 			//jmp instructions just before there pointing at the library functions
+			//and a data structure after it with all the library base variables
 
 			//avoid doing it twice
 			if (analysed.Contains(library)) return;
@@ -1275,6 +1281,22 @@ namespace Jammy.Disassembler.Analysers
 
 				found = true;
 			}
+
+			string s = string.Empty;
+			if (library == "exec.library")
+				s = ObjectWalk.Walk(new Jammy.AmigaTypes.ExecBase());
+			else if (library == "graphics.library")
+				s = ObjectWalk.Walk(new Jammy.AmigaTypes.GfxBase());
+			else if (library == "intuition.library")
+				s = ObjectWalk.Walk(new Jammy.AmigaTypes.IntuitionBase());
+			else if (library == "locale.library")
+				s = ObjectWalk.Walk(new Jammy.AmigaTypes.LocaleBase());
+			else if (library == "expansion.library")
+				s = ObjectWalk.Walk(new Jammy.AmigaTypes.ExpansionBase());
+			//MathIEEEBase
+
+			logger.LogTrace(s);
+
 			if (found)
 				analysed.Add(library);
 		}
