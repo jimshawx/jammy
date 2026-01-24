@@ -189,7 +189,7 @@ namespace Jammy.Disassembler.TypeMapper
 					if (v != null)
 					{
 						tree.Value1 = $"{v.Address:X8}";
-						tree.Value2 = v.Address;
+						tree.Value2 = v.Address.ToString();
 					}
 
 					//check for generic IWrapper<T>
