@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
+using Jammy.Disassembler;
 using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
@@ -43,11 +44,15 @@ namespace Jammy.Debugger.Interceptors
 
 		private readonly Dictionary<uint, (uint size, MEMF type)> allocations = new Dictionary<uint, (uint size, MEMF type)>();
 		private readonly IAnalysis analysis;
+		private readonly IDisassemblyRanges disassemblyRanges;
 		private readonly ILogger<AllocatedMemoryTracker> logger;
 
-		public AllocatedMemoryTracker(IAnalysis analysis, ILogger<AllocatedMemoryTracker> logger)
+		public AllocatedMemoryTracker(IAnalysis analysis,
+			IDisassemblyRanges disassemblyRanges,
+			ILogger<AllocatedMemoryTracker> logger)
 		{
 			this.analysis = analysis;
+			this.disassemblyRanges = disassemblyRanges;
 			this.logger = logger;
 		}
 
@@ -63,6 +68,7 @@ namespace Jammy.Debugger.Interceptors
 			}
 			allocations.Add(address, (size,type));
 			//analysis.SetMemType(address, size, MemType.Byte);
+			disassemblyRanges.Add(address, size);
 		}
 
 		public void Free(uint address, uint size)

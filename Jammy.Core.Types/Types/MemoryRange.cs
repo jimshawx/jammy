@@ -1,10 +1,10 @@
-﻿/*
-	Copyright 2020-2024 James Shaw. All Rights Reserved.
-*/
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
+/*
+	Copyright 2020-2024 James Shaw. All Rights Reserved.
+*/
 
 namespace Jammy.Core.Types.Types
 {
@@ -122,5 +122,31 @@ namespace Jammy.Core.Types.Types
 		}
 	}
 
+	public interface IAddressRanges
+	{
+		void Add(AddressRange range);
+		void Add(uint start, ulong size);
+		List<AddressRange> GetRanges();
+	}
+
+	public class AddressRanges
+	{
+		private readonly List<AddressRange> ranges = new List<AddressRange>();
+
+		public void Add(uint start, ulong length)
+		{
+			ranges.Add(new AddressRange(start, length));
+		}
+
+		public void Add(AddressRange range)
+		{
+			ranges.Add(range);
+		}
+
+		public List<AddressRange> GetRanges()
+		{
+			return ranges;
+		}
+	}
 }
 

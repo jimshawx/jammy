@@ -35,8 +35,7 @@ namespace Jammy.Main.Linux
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
-
-		private readonly List<AddressRange> disassemblyRanges = new List<AddressRange>();
+		private readonly IDisassemblyRanges disassemblyRanges;
 
 		private readonly List<AddressRange> memoryDumpRanges = new List<AddressRange>
 				{
@@ -55,6 +54,7 @@ namespace Jammy.Main.Linux
 			IFlowAnalyser flowAnalyser, /*IGraph graph,*/ IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
 			IChipRAM chipRAM, /*ILogger<GfxScan> gfxLogger,*/ /*ILogger<StringScan> stringLogger,*/ IMemoryMapper memoryMapper,
 			/*ILogger<DMAExplorer> dmaLogger,*/ IInstructionAnalysisDatabase instructionAnalysisDatabase,
+			IDisassemblyRanges disassemblyRanges,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options) : this()
 		{
 			this.emulation = emulation;
@@ -66,6 +66,7 @@ namespace Jammy.Main.Linux
 			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
 			//this.graph = graph;
 			this.logger = logger;
+			this.disassemblyRanges = disassemblyRanges;
 
 			var renderer = ((IRenderRoot)this).Renderer;
 			logger.LogTrace($"Using Avalonia Renderer: {renderer.GetType().FullName}");

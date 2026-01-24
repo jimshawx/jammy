@@ -56,12 +56,11 @@ namespace Jammy.Main
 		private readonly ILogger<StringScan> stringLogger;
 		private readonly ILogger<DMAExplorer> dmaLogger;
 		private readonly IInstructionAnalysisDatabase instructionAnalysisDatabase;
+		private readonly IDisassemblyRanges disassemblyRanges;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
-
-		private readonly List<AddressRange> disassemblyRanges = new List<AddressRange>();
 
 		private readonly List<AddressRange> memoryDumpRanges = new List<AddressRange>
 		{
@@ -75,6 +74,7 @@ namespace Jammy.Main
 			IFlowAnalyser flowAnalyser, IGraph graph, IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
 			IChipRAM chipRAM, ILogger<GfxScan> gfxLogger, ILogger<StringScan> stringLogger, IMemoryMapper memoryMapper,
 			ILogger<DMAExplorer> dmaLogger, IInstructionAnalysisDatabase instructionAnalysisDatabase,
+			IDisassemblyRanges disassemblyRanges,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -93,6 +93,7 @@ namespace Jammy.Main
 			this.stringLogger = stringLogger;
 			this.dmaLogger = dmaLogger;
 			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
+			this.disassemblyRanges = disassemblyRanges;
 			this.memoryMapper = memoryMapper;
 			this.logger = logger;
 

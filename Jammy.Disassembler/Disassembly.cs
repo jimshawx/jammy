@@ -60,9 +60,10 @@ namespace Jammy.Disassembler
 		private readonly Dictionary<uint, AddressEntry> globalAddressToLine = new Dictionary<uint, AddressEntry>();
 		private readonly Dictionary<int, uint> globalLineToAddress = new Dictionary<int, uint>();
 
-		public string DisassembleTxt(List<AddressRange > ranges, DisassemblyOptions options)
+		public string DisassembleTxt(IDisassemblyRanges dranges, DisassemblyOptions options)
 		{
 			var lines = new List<string>();
+			var ranges = dranges.GetRanges();
 
 			ranges = AddressRange.NoOverlaps(ranges);
 

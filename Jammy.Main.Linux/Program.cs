@@ -164,6 +164,7 @@ public class Program
 			.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 			.AddSingleton<IDiskAnalysis, DiskAnalysis>()
 			.AddSingleton<ILabeller, Labeller>()
+			.AddSingleton<IDisassemblyRanges, DisassemblyRanges>()
 			.AddSingleton<IDisassembly, Disassembly>()
 			.AddSingleton<IDisassembler, Disassembler.Disassembler>()
 			.AddSingleton<IEADatabase, EADatabase>()

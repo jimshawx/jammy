@@ -212,10 +212,10 @@ namespace Jammy.Disassembler
 				if (i != resident.Count - 1)
 					endAddress = resident[i + 1].MatchTag;
 
-				string asm = disassembly.DisassembleTxt(new List<AddressRange>
-					{
-						new AddressRange(rt.MatchTag, endAddress - rt.MatchTag + 1)
-					},
+				var ranges = new DisassemblyRanges();
+				ranges.Add(new AddressRange(rt.MatchTag, endAddress - rt.MatchTag + 1));
+
+				string asm = disassembly.DisassembleTxt(ranges,
 					new DisassemblyOptions { IncludeBytes = false, CommentPad = true, IncludeComments = true });
 
 				var dmp = new StringBuilder();

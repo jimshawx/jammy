@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Jammy.Core.Types.Types;
+﻿using Jammy.Core.Types.Types;
 using Jammy.Types.Options;
 
 /*
@@ -8,9 +7,13 @@ using Jammy.Types.Options;
 
 namespace Jammy.Interface
 {
+	public interface IDisassemblyRanges : IAddressRanges
+	{
+	}
+
 	public interface IDisassembly
 	{
-		string DisassembleTxt(List<AddressRange> ranges, DisassemblyOptions options);
+		string DisassembleTxt(IDisassemblyRanges disassemblyRanges, DisassemblyOptions options);
 		int GetAddressLine(uint address);
 		uint GetLineAddress(int line);
 		IDisassemblyView DisassemblyView(uint address, int linesBefore, int linesAfter, DisassemblyOptions options);
