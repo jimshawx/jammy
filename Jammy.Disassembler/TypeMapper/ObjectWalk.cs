@@ -1,5 +1,4 @@
-﻿using DbUp.ScriptProviders;
-using Jammy.AmigaTypes;
+﻿using Jammy.AmigaTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,6 +42,7 @@ namespace Jammy.Disassembler.TypeMapper
 	public class LibOffset
 	{
 		public string Name { get; set; }
+		public string ShortName { get; set; }
 		public uint Offset { get; set; }
 		public uint Size { get; set; }
 	}
@@ -281,7 +281,6 @@ namespace Jammy.Disassembler.TypeMapper
 			return rv;
 		}
 
-
 		private static void Dump(StringBuilder sb, WalkEntry we, int depth)
 		{
 			//for (int i = 0; i < depth; i++)
@@ -301,6 +300,7 @@ namespace Jammy.Disassembler.TypeMapper
 				offs.Add(new LibOffset
 				{
 					Name = we.FullName,
+					ShortName = we.Name,
 					Size = we.Size,
 					Offset = we.BaseOffset
 				});
