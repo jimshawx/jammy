@@ -65,8 +65,6 @@ namespace Jammy.Disassembler
 			var lines = new List<string>();
 			var ranges = dranges.GetRanges();
 
-			ranges = AddressRange.NoOverlaps(ranges);
-
 			foreach (var range in ranges.OrderBy(x=>x.Start))
 			{
 				uint address = range.Start;

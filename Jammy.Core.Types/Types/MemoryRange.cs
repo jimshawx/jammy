@@ -145,6 +145,11 @@ namespace Jammy.Core.Types.Types
 
 		public List<AddressRange> GetRanges()
 		{
+			//tidy up the ranges on demand
+			var tmp = AddressRange.NoOverlaps(ranges);
+			ranges.Clear();
+			ranges.AddRange(tmp);
+
 			return ranges;
 		}
 	}
