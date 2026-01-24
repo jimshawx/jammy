@@ -1,8 +1,8 @@
-﻿/*
+﻿using Jammy.Database.Types;
+
+/*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
-
-using Jammy.Database.Types;
 
 namespace Jammy.Types
 {

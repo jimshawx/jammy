@@ -1,5 +1,9 @@
 ﻿using Jammy.Core.Types.Types;
 
+/*
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Types.Debugger
 {
 	public class ClockInfo
