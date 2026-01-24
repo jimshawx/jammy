@@ -1,4 +1,5 @@
-﻿using Jammy.AmigaTypes;
+﻿using DbUp.ScriptProviders;
+using Jammy.AmigaTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -236,7 +237,7 @@ namespace Jammy.Disassembler.TypeMapper
 			return offset;
 		}
 
-		public static string Walk(object o)
+		private static WalkEntry WalkObject(object o)
 		{
 			var root = new WalkEntry();
 			uint size = DumpObj(o, 0, root);
@@ -249,6 +250,13 @@ namespace Jammy.Disassembler.TypeMapper
 			WalkOffsets(root, 0);
 			//complete the names
 			WalkNames(root,"");
+
+			return root;
+		}
+
+		public static string Walk(object o)
+		{ 
+			var root = WalkObject(o);
 
 			var sb = new StringBuilder();
 			sb.Append('\n');
@@ -264,6 +272,15 @@ namespace Jammy.Disassembler.TypeMapper
 
 			return sb.ToString() + sb2.ToString();
 		}
+
+		public static List<LibOffset> GetLibraryOffsets(object o)
+		{
+			var root = WalkObject(o);
+			var rv = new List<LibOffset>();
+			DumpLeaves(rv, root);
+			return rv;
+		}
+
 
 		private static void Dump(StringBuilder sb, WalkEntry we, int depth)
 		{

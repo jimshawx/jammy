@@ -1282,20 +1282,46 @@ namespace Jammy.Disassembler.Analysers
 				found = true;
 			}
 
-			string s = string.Empty;
+			List<LibOffset> s = null;
 			if (library == "exec.library")
-				s = ObjectWalk.Walk(new Jammy.AmigaTypes.ExecBase());
+				s = ObjectWalk.GetLibraryOffsets(new Jammy.AmigaTypes.ExecBase());
 			else if (library == "graphics.library")
-				s = ObjectWalk.Walk(new Jammy.AmigaTypes.GfxBase());
+				s = ObjectWalk.GetLibraryOffsets(new Jammy.AmigaTypes.GfxBase());
 			else if (library == "intuition.library")
-				s = ObjectWalk.Walk(new Jammy.AmigaTypes.IntuitionBase());
+				s = ObjectWalk.GetLibraryOffsets(new Jammy.AmigaTypes.IntuitionBase());
 			else if (library == "locale.library")
-				s = ObjectWalk.Walk(new Jammy.AmigaTypes.LocaleBase());
+				s = ObjectWalk.GetLibraryOffsets(new Jammy.AmigaTypes.LocaleBase());
 			else if (library == "expansion.library")
-				s = ObjectWalk.Walk(new Jammy.AmigaTypes.ExpansionBase());
-			//MathIEEEBase
+				s = ObjectWalk.GetLibraryOffsets(new Jammy.AmigaTypes.ExpansionBase());
+			//MathIEEEBase etc.
 
-			logger.LogTrace(s);
+			if (s != null)
+			{ 
+				//var sb2 = new StringBuilder();
+				//sb2.Append('\n');
+				//foreach (var r in s)
+				//	sb2.Append($"{r.Offset,4} {r.Size,4} {r.Name}\n");
+				//logger.LogTrace(sb2.ToString());
+
+				foreach (var r in s)
+				{
+					uint labelAddress = baseAddress + r.Offset;
+
+					//set the memory type
+					switch (r.Size)
+					{
+						case 4:	analysis.SetMemType(labelAddress, MemType.Long); break;
+						case 2: analysis.SetMemType(labelAddress, MemType.Word); break;
+						case 1:	analysis.SetMemType(labelAddress, MemType.Byte); break;
+					}
+
+					//add a name to use for naming effective addresses
+					eaDatabase.Add(labelAddress, r.Name);
+
+					//add a comment at the address
+					analysis.AddComment(labelAddress, r.Name);
+				}
+			}
 
 			if (found)
 				analysed.Add(library);
