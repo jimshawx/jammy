@@ -53,6 +53,8 @@ namespace Jammy.Disassembler.Analysers
 			this.disassembler = disassembler;
 			this.eaDatabase = eaDatabase;
 
+			//analysis.SetMemType(0, 0xf00000, MemType.Word);
+
 			diskAnalysis.Extract();
 			
 			LoadLVOs();
@@ -60,6 +62,7 @@ namespace Jammy.Disassembler.Analysers
 			StartUp();
 			Analysis();
 			ROMTags();
+			Vectors();
 			Labeller();
 			//NoNL();
 			DeDupe();
@@ -71,6 +74,24 @@ namespace Jammy.Disassembler.Analysers
 			analysis.SaveAnalysis();
 			//analysis.ResetAnalysis();
 			//analysis.LoadAnalysis();
+		}
+
+		private void Vectors()
+		{
+			analysis.SetMemType(0, 0x400, MemType.Long);
+			uint vecAdd = 0;
+			foreach (var name in Jammy.Types.Vectors.vectorNames)
+			{ 
+				analysis.AddComment(vecAdd, name);
+				eaDatabase.Add(vecAdd, name);
+				vecAdd += 4;
+			}
+			for (int i = Jammy.Types.Vectors.vectorNames.Length; i < 256; i++)
+			{
+				analysis.AddComment(vecAdd, $"User Vector {i,3}");
+				eaDatabase.Add(vecAdd, $"User Vector {i,3}");
+				vecAdd += 4;
+			}
 		}
 
 		public void UpdateAnalysis()
@@ -1260,6 +1281,9 @@ namespace Jammy.Disassembler.Analysers
 			foreach (var lvo in lvos.LVOs)
 			{ 
 				uint address = (uint)(baseAddress + lvo.Offset);
+
+				//mark the jump table entry as code
+				analysis.SetMemType(address, 6, MemType.Code);
 
 				//name the jump table entry
 				eaDatabase.Add(address, lvo.Name+"()");

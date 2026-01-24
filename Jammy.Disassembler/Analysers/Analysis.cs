@@ -155,7 +155,7 @@ namespace Jammy.Disassembler.Analysers
 		public void SetMemType(uint address, uint size, MemType type)
 		{
 			uint typeSize = GetMemTypeSize(type);
-			for (uint addr = address; addr < address + size; addr += typeSize)
+			for (uint addr = address; addr < address + size; addr++)
 			{ 
 				var block = Ensure(addr);
 				block[addr & MemTypeCollection.MEMTYPE_MASK] = type;

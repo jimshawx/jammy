@@ -61,7 +61,6 @@ namespace Jammy.Debugger
 			this.analyser = analyser;
 			this.libraryBaseCollection = libraryBaseCollection;
 			this.logger = logger;
-			SetLibraryBaseAddress("exec.library", memory.UnsafeRead32(4));
 		}
 
 		public void SetLibraryBaseAddress(string libraryName, uint address)

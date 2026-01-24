@@ -50,6 +50,6 @@ namespace Jammy.Interface
 
 	public interface ICPUAnalyser
 	{
-		public List<EA> Analyse(Regs regs);
+		public EAAnalysis Analyse(Regs regs);
 	}
 }

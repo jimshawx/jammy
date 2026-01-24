@@ -504,7 +504,9 @@ namespace Jammy.Debugger
 			var rv = new InstructionAnalysis();
 			var regs = cpu.GetRegs();
 			rv.PC = regs.PC;
-			rv.EffectiveAddresses.AddRange(cpuAnalyser.Analyse(regs));
+			var eaAnalysis = cpuAnalyser.Analyse(regs);
+			rv.EffectiveAddresses.AddRange(eaAnalysis.EAs);
+			rv.Size = eaAnalysis.Size;
 			return rv;
 		}
 	}

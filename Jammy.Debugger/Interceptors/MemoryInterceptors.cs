@@ -62,7 +62,7 @@ namespace Jammy.Debugger.Interceptors
 				return;
 			}
 			allocations.Add(address, (size,type));
-			analysis.SetMemType(address, size, MemType.Byte);
+			//analysis.SetMemType(address, size, MemType.Byte);
 		}
 
 		public void Free(uint address, uint size)

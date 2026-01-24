@@ -145,13 +145,10 @@ namespace Jammy.Debugger
 			if (!instructionAnalysisDatabase.Has(regs.PC))
 			{
 				var rv = new InstructionAnalysis { PC = regs.PC };
-				rv.EffectiveAddresses.AddRange(cpuAnalyser.Analyse(regs));
+				var eaAnalysis = cpuAnalyser.Analyse(regs);
+				rv.EffectiveAddresses.AddRange(eaAnalysis.EAs);
 				instructionAnalysisDatabase.Add(rv);
-				analysis.SetMemType(regs.PC, MemType.Code);
-				if (rv.EffectiveAddresses.Count >= 1)
-					analysis.SetMemType(regs.PC + 2, MemType.Code);
-				if (rv.EffectiveAddresses.Count >= 2)
-					analysis.SetMemType(regs.PC + 4, MemType.Code);
+				analysis.SetMemType(regs.PC, eaAnalysis.Size, MemType.Code);
 			}
 
 			//early check of ShouldTrace to avoid disassembling code we're not tracing

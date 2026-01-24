@@ -13,6 +13,22 @@ namespace Jammy.Types.Debugger
 		Write,
 		Jump
 	}
+	
+	public class EAAnalysis
+	{
+		public List<EA> EAs { get; } = new List<EA>();
+		public uint Size { get; set; }
+
+		public void Clear()
+		{
+			EAs.Clear();
+		}
+
+		public void Add(EA ea)
+		{
+			EAs.Add(ea);
+		}
+	}
 
 	public class EA
 	{
@@ -33,6 +49,7 @@ namespace Jammy.Types.Debugger
 	public class InstructionAnalysis
 	{
 		public uint PC { get; set;}
+		public uint Size { get; set; }
 		public List<EA> EffectiveAddresses { get; } = new();
 	}
 }

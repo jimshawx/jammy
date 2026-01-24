@@ -21,11 +21,14 @@ namespace Jammy.Debugger
 {
 	public class CPUAnalyser : ICPUAnalyser
 	{
-		public List<EA> Analyse(Regs regs)
+		public EAAnalysis Analyse(Regs regs)
 		{
 			SetRegs(regs);
 			eas.Clear();
+			uint size = regs.PC;
 			Emulate();
+			size = regs.PC - size;
+			eas.Size = size;
 			return eas;
 		}
 
@@ -33,7 +36,7 @@ namespace Jammy.Debugger
 
 		private readonly uint[] d = new uint[8];
 		private A a;
-		private readonly List<EA> eas = new List<EA>();
+		private readonly EAAnalysis eas = new EAAnalysis();
 
 		private class A
 		{
