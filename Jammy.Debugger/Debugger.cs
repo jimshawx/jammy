@@ -1,14 +1,17 @@
-﻿using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.AmigaTypes;
+using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
+using Jammy.Debugger.Interceptors;
 using Jammy.Interface;
 using Jammy.Types;
 using Jammy.Types.Debugger;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -36,6 +39,7 @@ namespace Jammy.Debugger
 		private readonly ITracer tracer;
 		private readonly IAnalyser analyser;
 		private readonly ICPUAnalyser cpuAnalyser;
+		private readonly IAllocatedMemoryTracker allocatedMemoryTracker;
 		private readonly ILVOInterceptors interceptors;
 		private readonly IReturnValueSnagger returnValueSnagger;
 		private readonly ILibraryBases libraryBases;
@@ -44,7 +48,7 @@ namespace Jammy.Debugger
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
 			IBreakpointCollection breakpoints, IKickstartROM kickstart, ICopper copper, IChipsetClock clock,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser,
-			ICPUAnalyser cpuAnalyser,
+			ICPUAnalyser cpuAnalyser, IAllocatedMemoryTracker allocatedMemoryTracker,
 			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases)
 		{
 			this.breakpoints = breakpoints;
@@ -55,6 +59,7 @@ namespace Jammy.Debugger
 			this.tracer = tracer;
 			this.analyser = analyser;
 			this.cpuAnalyser = cpuAnalyser;
+			this.allocatedMemoryTracker = allocatedMemoryTracker;
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
@@ -508,6 +513,11 @@ namespace Jammy.Debugger
 			rv.EffectiveAddresses.AddRange(eaAnalysis.EAs);
 			rv.Size = eaAnalysis.Size;
 			return rv;
+		}
+
+		public MemoryAllocations GetAllocations()
+		{
+			return allocatedMemoryTracker.GetAllocations();
 		}
 	}
 }

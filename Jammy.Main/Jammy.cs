@@ -228,6 +228,7 @@ namespace Jammy.Main
 			UpdateVectors();
 			UpdateLibraries();
 			UpdateClock();
+			UpdateAllocations();
 
 			var debug = debugger.Analyse();
 			instructionAnalysisDatabase.Add(debug);
@@ -244,6 +245,17 @@ namespace Jammy.Main
 		private void UpdateClock()
 		{
 			tbClock.Text = debugger.GetChipClock().ToString();
+		}
+
+		private void UpdateAllocations()
+		{
+			var allocs = debugger.GetAllocations();
+
+			var sb = new StringBuilder();
+			foreach (var alloc in allocs.Allocations.OrderBy(x=>x.Address))
+				sb.AppendLine($"{alloc.Address:X8} {alloc.Size,8} {alloc.Type}");
+
+			txtAllocations.Text = sb.ToString();
 		}
 
 		private void UpdateRegs()

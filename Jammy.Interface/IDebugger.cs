@@ -46,6 +46,7 @@ namespace Jammy.Interface
 		Vectors GetVectors();
 		Libraries GetLibraries();
 		InstructionAnalysis Analyse();
+		MemoryAllocations GetAllocations();
 	}
 
 	public interface ICPUAnalyser

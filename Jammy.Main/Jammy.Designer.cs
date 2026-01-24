@@ -95,6 +95,8 @@ namespace Jammy.Main
 			txtExecBase = new System.Windows.Forms.RichTextBox();
 			tabVectors = new System.Windows.Forms.TabPage();
 			txtVectors = new System.Windows.Forms.RichTextBox();
+			tabLibraries = new System.Windows.Forms.TabPage();
+			txtLibraries = new System.Windows.Forms.RichTextBox();
 			lbIntvec = new System.Windows.Forms.ListBox();
 			btnReadyDisk = new System.Windows.Forms.Button();
 			tbCommand = new System.Windows.Forms.TextBox();
@@ -104,8 +106,8 @@ namespace Jammy.Main
 			btnDMAExplorer = new System.Windows.Forms.Button();
 			tbClock = new System.Windows.Forms.TextBox();
 			btnGenDisassemblies = new System.Windows.Forms.Button();
-			tabLibraries = new System.Windows.Forms.TabPage();
-			txtLibraries = new System.Windows.Forms.RichTextBox();
+			tabAllocations = new System.Windows.Forms.TabPage();
+			txtAllocations = new System.Windows.Forms.RichTextBox();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -123,6 +125,7 @@ namespace Jammy.Main
 			tabExec.SuspendLayout();
 			tabVectors.SuspendLayout();
 			tabLibraries.SuspendLayout();
+			tabAllocations.SuspendLayout();
 			SuspendLayout();
 			// 
 			// lbRegisters
@@ -257,7 +260,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 582);
+			txtMemory.Size = new System.Drawing.Size(1390, 577);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "00000160 0000000000000000 0000000000000000 0000000000000000 0000000000000000   ................................";
 			txtMemory.WordWrap = false;
@@ -758,6 +761,7 @@ namespace Jammy.Main
 			tabControl1.Controls.Add(tabExec);
 			tabControl1.Controls.Add(tabVectors);
 			tabControl1.Controls.Add(tabLibraries);
+			tabControl1.Controls.Add(tabAllocations);
 			tabControl1.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			tabControl1.Location = new System.Drawing.Point(3, 6);
 			tabControl1.Name = "tabControl1";
@@ -828,6 +832,31 @@ namespace Jammy.Main
 			txtVectors.TabIndex = 0;
 			txtVectors.Text = "";
 			txtVectors.WordWrap = false;
+			// 
+			// tabLibraries
+			// 
+			tabLibraries.Controls.Add(txtLibraries);
+			tabLibraries.Location = new System.Drawing.Point(8, 39);
+			tabLibraries.Name = "tabLibraries";
+			tabLibraries.Padding = new System.Windows.Forms.Padding(3);
+			tabLibraries.Size = new System.Drawing.Size(558, 948);
+			tabLibraries.TabIndex = 3;
+			tabLibraries.Text = "Libraries";
+			tabLibraries.UseVisualStyleBackColor = true;
+			// 
+			// txtLibraries
+			// 
+			txtLibraries.BackColor = System.Drawing.SystemColors.Window;
+			txtLibraries.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			txtLibraries.DetectUrls = false;
+			txtLibraries.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtLibraries.Location = new System.Drawing.Point(3, 3);
+			txtLibraries.Name = "txtLibraries";
+			txtLibraries.ReadOnly = true;
+			txtLibraries.Size = new System.Drawing.Size(552, 942);
+			txtLibraries.TabIndex = 0;
+			txtLibraries.Text = "";
+			txtLibraries.WordWrap = false;
 			// 
 			// lbIntvec
 			// 
@@ -936,30 +965,29 @@ namespace Jammy.Main
 			btnGenDisassemblies.UseVisualStyleBackColor = true;
 			btnGenDisassemblies.Click += btnGenDisassemblies_Click;
 			// 
-			// tabLibraries
+			// tabAllocations
 			// 
-			tabLibraries.Controls.Add(txtLibraries);
-			tabLibraries.Location = new System.Drawing.Point(8, 39);
-			tabLibraries.Name = "tabLibraries";
-			tabLibraries.Padding = new System.Windows.Forms.Padding(3);
-			tabLibraries.Size = new System.Drawing.Size(558, 948);
-			tabLibraries.TabIndex = 3;
-			tabLibraries.Text = "Libraries";
-			tabLibraries.UseVisualStyleBackColor = true;
+			tabAllocations.Controls.Add(txtAllocations);
+			tabAllocations.Location = new System.Drawing.Point(8, 39);
+			tabAllocations.Name = "tabAllocations";
+			tabAllocations.Size = new System.Drawing.Size(558, 948);
+			tabAllocations.TabIndex = 4;
+			tabAllocations.Text = "Allocations";
+			tabAllocations.UseVisualStyleBackColor = true;
 			// 
-			// txtLibraries
+			// txtAllocations
 			// 
-			txtLibraries.BackColor = System.Drawing.SystemColors.Window;
-			txtLibraries.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			txtLibraries.DetectUrls = false;
-			txtLibraries.Dock = System.Windows.Forms.DockStyle.Fill;
-			txtLibraries.Location = new System.Drawing.Point(3, 3);
-			txtLibraries.Name = "txtLibraries";
-			txtLibraries.ReadOnly = true;
-			txtLibraries.Size = new System.Drawing.Size(552, 942);
-			txtLibraries.TabIndex = 0;
-			txtLibraries.Text = "";
-			txtLibraries.WordWrap = false;
+			txtAllocations.BackColor = System.Drawing.SystemColors.Window;
+			txtAllocations.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			txtAllocations.DetectUrls = false;
+			txtAllocations.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtAllocations.Location = new System.Drawing.Point(0, 0);
+			txtAllocations.Name = "txtAllocations";
+			txtAllocations.ReadOnly = true;
+			txtAllocations.Size = new System.Drawing.Size(558, 948);
+			txtAllocations.TabIndex = 1;
+			txtAllocations.Text = "";
+			txtAllocations.WordWrap = false;
 			// 
 			// Jammy
 			// 
@@ -1028,6 +1056,7 @@ namespace Jammy.Main
 			tabExec.ResumeLayout(false);
 			tabVectors.ResumeLayout(false);
 			tabLibraries.ResumeLayout(false);
+			tabAllocations.ResumeLayout(false);
 			ResumeLayout(false);
 			PerformLayout();
 		}
@@ -1105,6 +1134,8 @@ namespace Jammy.Main
 		private System.Windows.Forms.RichTextBox txtVectors;
 		private System.Windows.Forms.TabPage tabLibraries;
 		private System.Windows.Forms.RichTextBox txtLibraries;
+		private System.Windows.Forms.TabPage tabAllocations;
+		private System.Windows.Forms.RichTextBox txtAllocations;
 	}
 }
 

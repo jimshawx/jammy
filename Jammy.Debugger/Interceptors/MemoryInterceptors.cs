@@ -3,9 +3,11 @@ using Jammy.Core.Types;
 using Jammy.Disassembler;
 using Jammy.Interface;
 using Jammy.Types;
+using Jammy.Types.Debugger;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -13,29 +15,11 @@ using System.Collections.Generic;
 
 namespace Jammy.Debugger.Interceptors
 {
-	[Flags]
-	public enum MEMF
-	{
-		MEMF_ANY = (0),    /* Any type of memory will do */
-		MEMF_PUBLIC = (1 << 0),
-		MEMF_CHIP = (1 << 1),
-		MEMF_FAST = (1 << 2),
-		MEMF_LOCAL = (1 << 8), /* Memory that does not go away at RESET */
-		MEMF_24BITDMA = (1 << 9),  /* DMAable memory within 24 bits of address */
-		MEMF_KICK = (1 << 10), /* Memory that can be used for KickTags */
-
-		MEMF_CLEAR = (1 << 16),    /* AllocMem: NULL out area before return */
-		MEMF_LARGEST = (1 << 17),  /* AvailMem: return the largest chunk size */
-		MEMF_REVERSE = (1 << 18),  /* AllocMem: allocate from the top down */
-		MEMF_TOTAL = (1 << 19),    /* AvailMem: return total size of memory */
-
-		MEMF_NO_EXPUNGE = (1 << 31), /*AllocMem: Do not cause expunge on failure */
-	}
-
 	public interface IAllocatedMemoryTracker
 	{
 		void Free(uint address, uint size);
 		void Allocate(uint address, uint size, MEMF type);
+		MemoryAllocations GetAllocations();
 	}
 
 	public class AllocatedMemoryTracker : IAllocatedMemoryTracker
@@ -96,6 +80,18 @@ namespace Jammy.Debugger.Interceptors
 			{
 				logger.LogTrace($"*** FreeMem({address:X8}, {size:X8}) not allocated");
 			}
+		}
+
+		public MemoryAllocations GetAllocations()
+		{
+			var rv = new MemoryAllocations();
+			rv.Allocations.AddRange(allocations.Select(x=>new MemoryEntry
+			{
+				Address = x.Key,
+				Size = x.Value.size,
+				Type = x.Value.type
+			}));
+			return rv;
 		}
 	}
 
