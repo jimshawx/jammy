@@ -28,27 +28,37 @@ namespace Jammy.Disassembler.TypeMapper
 	public class WalkEntry
 	{
 		public WalkEntryType Type { get; set; }
-		public int Offset { get; set; }
-		public int Size { get; set; }
+		public uint Offset { get; set; }
+		public uint BaseOffset { get; set; }
+		public uint Size { get; set; }
+		public Type ObjType { get; set; }
 		public string Name { get; set; }
+		public string FullName { get; set; }
 		public string Value1 { get; set; }
 		public string Value2 { get; set; }
 		public List<WalkEntry> Children { get; } = new List<WalkEntry>();
 	}
 
+	public class LibOffset
+	{
+		public string Name { get; set; }
+		public uint Offset { get; set; }
+		public uint Size { get; set; }
+	}
+
 	public class ObjectWalk
 	{
-		private static void Align(ref int offset)
+		private static void Align(ref uint offset)
 		{
 			//pack 2
 			offset++;
-			offset &= 0x7ffffffe;
+			offset &= 0xfffffffe;
 			//pack 4
 			//offset+=3;
-			//offset &= 0x7ffffffc;
+			//offset &= 0xfffffffc;
 		}
 
-		private static int DumpObj(object obj, int offset, WalkEntry parent)
+		private static uint DumpObj(object obj, uint offset, WalkEntry parent)
 		{
 			if (obj == null)
 				return offset;
@@ -57,11 +67,19 @@ namespace Jammy.Disassembler.TypeMapper
 
 			if (!properties.Any())
 			{
-				var p = new WalkEntry();
-				parent.Children.Add(p);
+				WalkEntry p;
+				if (parent.Type == WalkEntryType.ArrayElement)
+				{
+					p = parent;
+				}
+				else
+				{ 
+					p = new WalkEntry();
+					parent.Children.Add(p);
+					p.Type = WalkEntryType.Integer2;
+					p.Name = $"x";
+				}
 
-				p.Type = WalkEntryType.Integer2;
-				p.Name = $".";
 				p.Offset = offset;
 				p.Value1 = $"{obj:X8}";
 				p.Value2 = $"{obj}";
@@ -87,6 +105,7 @@ namespace Jammy.Disassembler.TypeMapper
 
 				tree.Offset = offset;
 				tree.Name = p.Name;
+				tree.ObjType = p.PropertyType;
 
 				if (p.PropertyType == typeof(string))
 				{
@@ -118,20 +137,25 @@ namespace Jammy.Disassembler.TypeMapper
 							array = Array.CreateInstance(p.PropertyType.GetElementType(), 0);
 						}
 					}
+					uint off = 0;
 					for (int i = 0; i < array.Length; i++)
 					{
 						var t = new WalkEntry();
 						tree.Children.Add(t);
-						t.Offset = offset;
+						t.Offset = off;
 						t.Name = $"[{i}]";
 						t.Type = WalkEntryType.ArrayElement;
+						t.ObjType = p.PropertyType.GetElementType();
 						object v = array.GetValue(i);
 						if (v == null) v = Activator.CreateInstance(p.PropertyType.GetElementType());
-						int size = DumpObj(v, 0, t);
+						uint size = DumpObj(v, 0, t);
 						t.Size = size;
+						//bit of a hack to deal with arrays of primitive types
+						if (t.Children.Count == 0)
+							t.Offset = off;
 						offset += size;
+						off += size;
 					}
-					//sb.Remove(sb.Length - 1, 1);
 				}
 				else if (p.PropertyType.BaseType == typeof(object))
 				{
@@ -140,7 +164,7 @@ namespace Jammy.Disassembler.TypeMapper
 
 					object v = p.GetValue(obj);
 					if (v == null) v = Activator.CreateInstance(p.PropertyType);
-					int size = DumpObj(v, 0, tree);
+					uint size = DumpObj(v, 0, tree);
 					tree.Size = size;
 					offset += size;
 				}
@@ -161,6 +185,11 @@ namespace Jammy.Disassembler.TypeMapper
 					tree.Offset = offset;
 
 					dynamic v = p.GetValue(obj);
+					if (v != null)
+					{
+						tree.Value1 = $"{v.Address:X8}";
+						tree.Value2 = v.Address;
+					}
 
 					//check for generic IWrapper<T>
 					if (v != null && p.PropertyType.GetInterfaces().Any(x => x.GenericTypeArguments.Length > 0))
@@ -209,23 +238,72 @@ namespace Jammy.Disassembler.TypeMapper
 
 		public static string Walk(object o)
 		{
+			var root = new WalkEntry();
+			uint size = DumpObj(o, 0, root);
+			root.Size = size;
+			root.Type = WalkEntryType.Root;
+			root.Name = o.GetType().Name;
+			root.ObjType = o.GetType();
+			
+			//complete the offsets (doesn't make sense with objects with non-null pointers)
+			WalkOffsets(root, 0);
+			//complete the names
+			WalkNames(root,"");
+
 			var sb = new StringBuilder();
-			var we = new WalkEntry();
-			int size = DumpObj(o, 0, we);
-			we.Size = size;
-			we.Type = WalkEntryType.Root;
-			we.Name = o.GetType().Name;
-			Dump(sb,we,0, "");
-			return $"sizeof({o.GetType().Name})={size}\n" + sb.ToString();
+			sb.Append('\n');
+			Dump(sb,root,0);
+
+			var rv = new List<LibOffset>();
+			DumpLeaves(rv, root);
+
+			var sb2 = new StringBuilder();
+			sb2.Append('\n');
+			foreach (var r in rv)
+				sb2.Append($"{r.Offset,4} {r.Size,4} {r.Name}\n");
+
+			return sb.ToString() + sb2.ToString();
 		}
 
-		private static void Dump(StringBuilder sb, WalkEntry we, int depth, string trace)
+		private static void Dump(StringBuilder sb, WalkEntry we, int depth)
 		{
-			for (int i = 0; i < depth; i++)
-				sb.Append(" ");
+			//for (int i = 0; i < depth; i++)
+			//	sb.Append(" ");
+			string pad = new(' ', depth);
+			string pad0 = new(' ', (depth>1)?2:0);
 
+			sb.Append($"{pad0}{we.Offset,4} {we.Size,3} {we.BaseOffset,4} {we.Type,-10} {we.ObjType.Name,-30} {pad} {we.Name,-20} {we.Value1,-10} {we.Value2,-10} {we.FullName}\n");
+			foreach (var c in we.Children)
+				Dump(sb, c, depth+1);
+		}
+
+		private static void DumpLeaves(List<LibOffset> offs, WalkEntry we)
+		{
+			if (we.Children.Count == 0)
+			{
+				offs.Add(new LibOffset
+				{
+					Name = we.FullName,
+					Size = we.Size,
+					Offset = we.BaseOffset
+				});
+			}
+
+			foreach (var c in we.Children)
+				DumpLeaves(offs, c);
+		}
+
+		private static void WalkOffsets(WalkEntry we, uint baseOffset)
+		{
+			we.BaseOffset = we.Offset + baseOffset;
+			foreach (var c in we.Children)
+				WalkOffsets(c, we.BaseOffset);
+		}
+
+		private static void WalkNames(WalkEntry we, string trace)
+		{
 			if (we.Name != null)
-			{ 
+			{
 				if (we.Name.StartsWith('['))
 					trace = $"{trace}{we.Name}";
 				else if (trace == "")
@@ -234,9 +312,10 @@ namespace Jammy.Disassembler.TypeMapper
 					trace = $"{trace}.{we.Name}";
 			}
 
-			sb.Append($"o:{we.Offset,5} s:{we.Size} {we.Type} {we.Name} {we.Value1} {we.Value2} {trace}\n");
+			we.FullName = trace;
+
 			foreach (var c in we.Children)
-				Dump(sb, c, depth+1, trace);
+				WalkNames(c, trace);
 		}
 
 		//public override string ToString()
