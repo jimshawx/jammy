@@ -152,6 +152,29 @@ namespace Jammy.Disassembler.Analysers
 			block[address&MemTypeCollection.MEMTYPE_MASK] = type;
 		}
 
+		public void SetMemType(uint address, uint size, MemType type)
+		{
+			uint typeSize = GetMemTypeSize(type);
+			for (uint addr = address; addr < address + size; addr += typeSize)
+			{ 
+				var block = Ensure(addr);
+				block[addr & MemTypeCollection.MEMTYPE_MASK] = type;
+			}
+		}
+		
+		private uint GetMemTypeSize(MemType type)
+		{
+			return type switch
+			{
+				MemType.Code => 2,
+				MemType.Byte => 1,
+				MemType.Word => 2,
+				MemType.Long => 4,
+				MemType.Str => 1,
+				_ => 1,
+			};
+		}
+
 		public void AddLVO(string currentLib, LVO lvo)
 		{
 			lvos[currentLib].LVOs.Add(lvo);

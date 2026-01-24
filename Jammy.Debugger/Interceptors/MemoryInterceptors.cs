@@ -42,10 +42,12 @@ namespace Jammy.Debugger.Interceptors
 		private const uint MIN_LOGGED_SIZE = 0;
 
 		private readonly Dictionary<uint, (uint size, MEMF type)> allocations = new Dictionary<uint, (uint size, MEMF type)>();
+		private readonly IAnalysis analysis;
 		private readonly ILogger<AllocatedMemoryTracker> logger;
 
-		public AllocatedMemoryTracker(ILogger<AllocatedMemoryTracker> logger)
+		public AllocatedMemoryTracker(IAnalysis analysis, ILogger<AllocatedMemoryTracker> logger)
 		{
+			this.analysis = analysis;
 			this.logger = logger;
 		}
 
@@ -60,6 +62,7 @@ namespace Jammy.Debugger.Interceptors
 				return;
 			}
 			allocations.Add(address, (size,type));
+			analysis.SetMemType(address, size, MemType.Byte);
 		}
 
 		public void Free(uint address, uint size)

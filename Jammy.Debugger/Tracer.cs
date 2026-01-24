@@ -1,6 +1,7 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Interface;
+using Jammy.Types;
 using Jammy.Types.Debugger;
 using Microsoft.Extensions.Logging;
 using System;
@@ -10,7 +11,7 @@ using System.Linq;
 using System.Text;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Debugger
@@ -68,11 +69,12 @@ namespace Jammy.Debugger
 		private readonly IDisassembler disassembler;
 		private readonly IInstructionAnalysisDatabase instructionAnalysisDatabase;
 		private readonly ICPUAnalyser cpuAnalyser;
+		private readonly IAnalysis analysis;
 		private readonly ILogger logger;
 
 		public Tracer(IDebugMemoryMapper memory, ILabeller labeller, IDisassembler disassembler,
 			IInstructionAnalysisDatabase instructionAnalysisDatabase,
-			ICPUAnalyser cpuAnalyser,
+			ICPUAnalyser cpuAnalyser, IAnalysis analysis,
 			ILogger<Tracer> logger)
 		{
 			this.mem = memory;
@@ -80,6 +82,7 @@ namespace Jammy.Debugger
 			this.disassembler = disassembler;
 			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
 			this.cpuAnalyser = cpuAnalyser;
+			this.analysis = analysis;
 			this.logger = logger;
 		}
 
@@ -144,6 +147,11 @@ namespace Jammy.Debugger
 				var rv = new InstructionAnalysis { PC = regs.PC };
 				rv.EffectiveAddresses.AddRange(cpuAnalyser.Analyse(regs));
 				instructionAnalysisDatabase.Add(rv);
+				analysis.SetMemType(regs.PC, MemType.Code);
+				if (rv.EffectiveAddresses.Count >= 1)
+					analysis.SetMemType(regs.PC + 2, MemType.Code);
+				if (rv.EffectiveAddresses.Count >= 2)
+					analysis.SetMemType(regs.PC + 4, MemType.Code);
 			}
 
 			//early check of ShouldTrace to avoid disassembling code we're not tracing

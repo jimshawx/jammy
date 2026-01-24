@@ -21,6 +21,7 @@ namespace Jammy.Interface
 		void ReplaceHeader(uint address, string hdr);
 		void ReplaceHeader(uint address, List<string> hdr);
 		void SetMemType(uint address, MemType type);
+		void SetMemType(uint address, uint size, MemType type);
 		void AddLVO(string currentLib, LVO lvo);
 		void SetLVO(string currentLib, LVOCollection lvoCollection);
 		void AugmentLVO(string lvoName, List<string> parms, List<string> regs);
