@@ -98,7 +98,9 @@ namespace Jammy.Tests
 
 			int librarySize = LoadLibrary(0x10000, libName);
 
-			var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) }, new DisassemblyOptions { IncludeComments = true, IncludeBytes = true });
+			var ranges = new DisassemblyRanges();
+			ranges.AddRange(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) });
+			var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true, IncludeBytes = true });
 			logger.LogTrace(Environment.NewLine + dis);
 
 			logger.LogTrace($"loaded {libName} at {0x10000:X8}");
@@ -190,7 +192,9 @@ namespace Jammy.Tests
 
 			int librarySize = LoadLibrary(0x10000, libName);
 
-			var dis = disassembly.DisassembleTxt(new List<AddressRange>{new AddressRange(0x10000, (ulong)librarySize)}, new DisassemblyOptions { IncludeComments = true, UpperCase = true});
+			var ranges = new DisassemblyRanges();
+			ranges.AddRange(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) });
+			var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true, UpperCase = true});
 			logger.LogTrace(Environment.NewLine + dis);
 
 			logger.LogTrace($"loaded {libName} at {0x10000:X8}");
@@ -203,7 +207,9 @@ namespace Jammy.Tests
 
 			int librarySize = LoadExe(0x10000, libName);
 
-			var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) }, new DisassemblyOptions { IncludeComments = true, UpperCase = true, IncludeBytes = true });
+			var ranges = new DisassemblyRanges();
+			ranges.AddRange(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) });
+			var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true, UpperCase = true, IncludeBytes = true });
 			logger.LogTrace(Environment.NewLine + dis);
 
 			logger.LogTrace($"loaded {libName} at {0x10000:X8}");

@@ -126,6 +126,7 @@ namespace Jammy.Core.Types.Types
 	{
 		void Add(AddressRange range);
 		void Add(uint start, ulong size);
+		void AddRange(List<AddressRange> ranges);
 		List<AddressRange> GetRanges();
 	}
 
@@ -141,6 +142,11 @@ namespace Jammy.Core.Types.Types
 		public void Add(AddressRange range)
 		{
 			ranges.Add(range);
+		}
+
+		public void AddRange(List<AddressRange> ranges)
+		{
+			ranges.AddRange(ranges);
 		}
 
 		public List<AddressRange> GetRanges()

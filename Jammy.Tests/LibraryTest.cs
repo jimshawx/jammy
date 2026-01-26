@@ -332,7 +332,9 @@ namespace Jammy.Tests
 			//there's no rom tag
 			if (romTag == null)
 			{
-				var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(loadAddress, (ulong)librarySize) }, new DisassemblyOptions { IncludeComments = true });
+				var ranges = new DisassemblyRanges();
+				ranges.AddRange(new List<AddressRange> { new AddressRange(loadAddress, (ulong)librarySize) });
+				var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true });
 				logger.LogTrace(Environment.NewLine + dis);
 
 				stackPtr = (uint)(loadAddress + librarySize + stackSize);
@@ -377,7 +379,9 @@ namespace Jammy.Tests
 				stackPtr = libMem + stackSize;
 
 				//disassemble
-				var dis = disassembly.DisassembleTxt(new List<AddressRange> { new AddressRange(loadAddress, (ulong)(libraryBase - loadAddress)) }, new DisassemblyOptions { IncludeComments = true });
+				var ranges = new DisassemblyRanges();
+				ranges.AddRange(new List<AddressRange> { new AddressRange(loadAddress, (ulong)(libraryBase - loadAddress)) });
+				var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true });
 				logger.LogTrace(Environment.NewLine + dis);
 
 				//need to fake up some execBase in the space above the stack
