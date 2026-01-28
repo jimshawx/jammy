@@ -1,37 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Jammy.Core;
+﻿using Jammy.Core;
 using Jammy.Core.Custom.CIA;
-using Jammy.Core.Custom;
+using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using Jammy.Core.Types.Types.Breakpoints;
+using Jammy.Debugger;
 using Jammy.Disassembler;
-using Jammy.Disassembler.TypeMapper;
 using Jammy.Extensions.Windows;
+using Jammy.Graph;
 using Jammy.Interface;
 using Jammy.Main.Dialogs;
+using Jammy.Plugins.Interface;
 using Jammy.Types;
 using Jammy.Types.Options;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Vortice.Direct3D11;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Globalization;
+using System.Linq;
 using System.Runtime.InteropServices;
-using Jammy.Core.Types.Types.Breakpoints;
-using Jammy.Core.Memory;
-using Jammy.Debugger;
-using Jammy.Graph;
-using Jammy.Core.Debug;
-using Parky.FormToAvalonia;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -57,6 +52,7 @@ namespace Jammy.Main
 		private readonly ILogger<DMAExplorer> dmaLogger;
 		private readonly IInstructionAnalysisDatabase instructionAnalysisDatabase;
 		private readonly IDisassemblyRanges disassemblyRanges;
+		private readonly IPluginManager pluginManager;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
@@ -74,7 +70,7 @@ namespace Jammy.Main
 			IFlowAnalyser flowAnalyser, IGraph graph, IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
 			IChipRAM chipRAM, ILogger<GfxScan> gfxLogger, ILogger<StringScan> stringLogger, IMemoryMapper memoryMapper,
 			ILogger<DMAExplorer> dmaLogger, IInstructionAnalysisDatabase instructionAnalysisDatabase,
-			IDisassemblyRanges disassemblyRanges,
+			IDisassemblyRanges disassemblyRanges, IPluginManager pluginManager,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -94,6 +90,7 @@ namespace Jammy.Main
 			this.dmaLogger = dmaLogger;
 			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
 			this.disassemblyRanges = disassemblyRanges;
+			this.pluginManager = pluginManager;
 			this.memoryMapper = memoryMapper;
 			this.logger = logger;
 

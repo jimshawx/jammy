@@ -1,5 +1,6 @@
 using Jammy.Core;
 using Jammy.Core.Audio.Windows;
+using Jammy.Core.CDROM;
 using Jammy.Core.CPU.CSharp;
 using Jammy.Core.CPU.Moira;
 using Jammy.Core.CPU.Musashi;
@@ -13,12 +14,19 @@ using Jammy.Core.Custom.Denise;
 using Jammy.Core.Custom.IO;
 using Jammy.Core.Debug;
 using Jammy.Core.Floppy;
+using Jammy.Core.Floppy.IPF;
 using Jammy.Core.IDE;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.IO.Windows;
 using Jammy.Core.Memory;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
+using Jammy.Database.CommentDao;
+using Jammy.Database.Core;
+using Jammy.Database.DatabaseDao;
+using Jammy.Database.HeaderDao;
+using Jammy.Database.LabelDao;
+using Jammy.Database.MemTypeDao;
 using Jammy.Debugger;
 using Jammy.Debugger.Interceptors;
 using Jammy.Disassembler;
@@ -27,6 +35,12 @@ using Jammy.Disassembler.TypeMapper;
 using Jammy.Graph;
 using Jammy.Interface;
 using Jammy.NativeOverlay;
+using Jammy.NativeOverlay.Overlays;
+using Jammy.Plugins;
+using Jammy.Plugins.Interface;
+using Jammy.Plugins.JavaScript;
+using Jammy.Plugins.Lua;
+using Jammy.Plugins.Windows;
 using Jammy.UI.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,15 +51,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Intrinsics.X86;
 using System.Windows.Forms;
-using Jammy.NativeOverlay.Overlays;
-using Jammy.Core.Floppy.IPF;
-using Jammy.Core.CDROM;
-using Jammy.Database.LabelDao;
-using Jammy.Database.Core;
-using Jammy.Database.CommentDao;
-using Jammy.Database.DatabaseDao;
-using Jammy.Database.HeaderDao;
-using Jammy.Database.MemTypeDao;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -303,6 +308,12 @@ namespace Jammy.Main
 			services.AddSingleton<IDatabaseDao, DatabaseDao>();
 			services.AddSingleton<IHeaderDao, HeaderDao>();
 			services.AddSingleton<IMemTypeDao, MemTypeDao>();
+
+			//plugins
+			services.AddSingleton<IPluginWindowFactory, WindowsPluginWindowFactory>();
+			services.AddSingleton<IPluginManager, PluginManager>();
+			services.AddSingleton<IPluginEngine, LuaEngine>();
+			services.AddSingleton<IPluginEngine, JavaScriptEngine>();
 
 			var serviceProvider = services.BuildServiceProvider();
 
