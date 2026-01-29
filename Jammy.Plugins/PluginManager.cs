@@ -22,8 +22,8 @@ namespace Jammy.Plugins
 			var jsEngine = pluginEngines.FirstOrDefault(e => e is JavaScript.JavaScriptEngine);
 			var jsplugin = jsEngine.NewPlugin(TestScript.js);
 
-			//pluginWindowFactory.CreatePluginWindow(luaplugin);
-			//pluginWindowFactory.CreatePluginWindow(jsplugin);
+			pluginWindowFactory.CreatePluginWindow(luaplugin);
+			pluginWindowFactory.CreatePluginWindow(jsplugin);
 		}
 	}
 
@@ -35,12 +35,10 @@ namespace Jammy.Plugins
 
 			if imgui.Button(""Button A"") then
 				print(""Button A clicked"")
-
 			end
 
 			if imgui.Button(""Button B"") then
 				print(""Button B clicked"")
-
 			end
 
 			imgui.End()

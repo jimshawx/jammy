@@ -9,15 +9,17 @@ namespace Jammy.Plugins.Windows
 {
 	public class ImGuiInput
 	{
-		public static void SetImGuiInput(Control control)
+		public static void SetImGuiInput(SkiaHostControl control)
 		{
 			control.MouseMove += (_, e) =>
 			{
+				using var imgui = control.Lock();
 				ImGui.GetIO().AddMousePosEvent(e.X, e.Y);
 			};
 
 			control.MouseDown += (_, e) =>
 			{
+				using var imgui = control.Lock();
 				if (e.Button == MouseButtons.Left)
 					ImGui.GetIO().AddMouseButtonEvent(0, true);
 				if (e.Button == MouseButtons.Right)
@@ -28,6 +30,7 @@ namespace Jammy.Plugins.Windows
 
 			control.MouseUp += (_, e) =>
 			{
+				using var imgui = control.Lock();
 				if (e.Button == MouseButtons.Left)
 					ImGui.GetIO().AddMouseButtonEvent(0, false);
 				if (e.Button == MouseButtons.Right)
@@ -38,6 +41,7 @@ namespace Jammy.Plugins.Windows
 
 			control.MouseWheel += (_, e) =>
 			{
+				using var imgui = control.Lock();
 				// WinForms gives wheel in "notches" of 120
 				float delta = e.Delta > 0 ? 1f : -1f;
 				ImGui.GetIO().AddMouseWheelEvent(0, delta);
@@ -45,6 +49,7 @@ namespace Jammy.Plugins.Windows
 
 			control.KeyDown += (_, e) =>
 			{
+				using var imgui = control.Lock();
 				var io = ImGui.GetIO();
 				io.AddKeyEvent(MapKey(e.KeyCode), true);
 
@@ -55,6 +60,7 @@ namespace Jammy.Plugins.Windows
 
 			control.KeyUp += (_, e) =>
 			{
+				using var imgui = control.Lock();
 				var io = ImGui.GetIO();
 				io.AddKeyEvent(MapKey(e.KeyCode), false);
 
@@ -65,6 +71,7 @@ namespace Jammy.Plugins.Windows
 
 			control.KeyPress += (_, e) =>
 			{
+				using var imgui = control.Lock();
 				ImGui.GetIO().AddInputCharacter(e.KeyChar);
 			};
 		}

@@ -1,4 +1,5 @@
 ﻿using Jammy.Plugins.Interface;
+using Microsoft.Extensions.Logging;
 using MoonSharp.Interpreter;
 
 /*
@@ -17,17 +18,20 @@ namespace Jammy.Plugins.Lua
 
 	public class LuaEngine : IPluginEngine
 	{
+		private readonly ILogger<LuaEngine> logger;
 		private LuaImGui imguiApi = new LuaImGui();
 
-		public LuaEngine()
+		public LuaEngine(ILogger<LuaEngine> logger)
 		{
 			UserData.RegisterType<LuaImGui>();
+			this.logger = logger;
 		}
 
 		public IPlugin NewPlugin(string code)
 		{
 			var script = new Script();
 			script.Globals["imgui"] = imguiApi;
+			script.Globals["print"] = (object o)=>logger.LogTrace($"{o?.ToString()}");
 			script.DoString(code);
 			return new LuaPlugin(script);
 		}

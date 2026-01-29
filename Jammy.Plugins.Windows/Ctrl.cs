@@ -1,13 +1,12 @@
 ﻿using ImGuiNET;
 using Jammy.Plugins.Interface;
 using Jammy.Plugins.Renderer;
+using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Windows.Forms;
 
 /*
@@ -20,6 +19,7 @@ namespace Jammy.Plugins.Windows
 	{
 		private readonly IPluginRenderer renderer;
 		private readonly IPlugin plugin;
+		private readonly ILogger logger;
 		private SKImageInfo info;
 		private SKSurface surface;
 		private SKCanvas canvas;
@@ -30,14 +30,12 @@ namespace Jammy.Plugins.Windows
 
 		private Bitmap gdiBitmap;
 
-		private ImGuiInput input;
-
-		public SkiaHostControl(IPluginRenderer renderer, IPlugin plugin)
+		public SkiaHostControl(IPluginRenderer renderer, IPlugin plugin, ILogger logger)
 		{
-			input = new ImGuiInput();
 			this.renderer = renderer;
 			this.plugin = plugin;
-			this.DoubleBuffered = true; // Reduce flicker
+			this.logger = logger;
+			this.DoubleBuffered = true;
 			this.SetStyle(ControlStyles.AllPaintingInWmPaint |
 						  ControlStyles.UserPaint |
 						  ControlStyles.OptimizedDoubleBuffer, true);
@@ -84,9 +82,13 @@ namespace Jammy.Plugins.Windows
 				info.Height,
 				info.RowBytes,
 				PixelFormat.Format32bppPArgb,
-				//PixelFormat.Format32bppArgb,
 				pixelPtr
 			);
+		}
+
+		public IDisposable Lock()
+		{
+			return renderer.Lock();
 		}
 
 		protected override void OnPaint(PaintEventArgs e)
@@ -94,10 +96,9 @@ namespace Jammy.Plugins.Windows
 			if (canvas == null || gdiBitmap == null)
 				return;
 
-			// Clear
-			//canvas.Clear(SKColors.Transparent);
-			//canvas.Clear(SKColors.Black);
-			canvas.Clear(SKColors.Gray);
+			using var imgui = Lock();
+
+			canvas.Clear(SKColors.Black);
 
 			var io = ImGui.GetIO();
 			io.DisplaySize = new System.Numerics.Vector2(Width, Height);
@@ -116,27 +117,6 @@ namespace Jammy.Plugins.Windows
 
 			// Blit directly — no PNG, no encoding, no decoding
 			e.Graphics.DrawImage(gdiBitmap, 0, 0);
-		}
-
-		private void DrawUI()
-		{
-			//ImGui.Begin("Y");
-			//if (ImGui.Button("X"))
-			//	Trace.WriteLine('X');
-			//ImGui.End();
-			//return;
-
-			ImGui.ShowStyleEditor();
-			return;
-
-			ImGui.Begin("Skia Host Control");
-			ImGui.Text("This is a Skia-hosted ImGui window.");
-			ImGui.Text("Width: " + Width);
-			ImGui.Text("Height: " + Height);
-			if (ImGui.Button("A BIG BUTTON"))
-				Trace.WriteLine("A BIG BUTTON");
-			ImGui.End();
-
 		}
 
 		protected override void Dispose(bool disposing)

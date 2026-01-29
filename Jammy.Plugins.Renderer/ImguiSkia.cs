@@ -1,7 +1,9 @@
 ﻿using ImGuiNET;
+using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -12,6 +14,7 @@ namespace Jammy.Plugins.Renderer
 	public interface IPluginRenderer
 	{
 		void Render(SKCanvas canvas, ImDrawDataPtr drawData);
+		IDisposable Lock();
 	}
 
 	public class ImGuiSkiaRenderer : IPluginRenderer
@@ -19,14 +22,18 @@ namespace Jammy.Plugins.Renderer
 		private readonly SKImage fontTexture;
 		private readonly GCHandle handle;
 		private readonly SKShader fontImage;
+		private readonly IntPtr imguiContext;
 
-		public ImGuiSkiaRenderer()
+		public ImGuiSkiaRenderer(ILogger logger)
 		{
-			ImGui.CreateContext();
+			imguiContext = ImGui.CreateContext();
+			ImGui.SetCurrentContext(imguiContext);
+
 			ImGui.StyleColorsClassic();
 
 			var io = ImGui.GetIO();
 			io.Fonts.AddFontDefault();
+			io.Fonts.Build();
 			io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out _);
 
 			if (pixels == IntPtr.Zero || width <= 0 || height <= 0)
@@ -78,39 +85,14 @@ namespace Jammy.Plugins.Renderer
 							localMatrix);
 		}
 
-		/*
-		// 1. Load the SkSL shader
-string sksl = @"
-uniform shader tex;
+		private static readonly SemaphoreSlim renderSemaphore = new SemaphoreSlim(1, 1);
+		public IDisposable Lock()
+		{
+			var locked = new RenderLock(renderSemaphore);
+			ImGui.SetCurrentContext(imguiContext);
+			return locked;
+		}
 
-half4 main(float2 uv, half4 color) {
-    return tex.eval(uv) * color;
-}
-";
-
-// 2. Compile the shader
-var effect = SKRuntimeEffect.Create(sksl, out var errorText);
-if (effect == null)
-    throw new Exception("Shader compile error: " + errorText);
-
-// 3. Create the shader with your texture
-SKShader shader = effect.ToShader(new SKRuntimeEffectUniforms(),
-    new SKRuntimeEffectChildren
-    {
-        ["tex"] = yourTextureShader  // usually SKShader.CreateBitmap(...)
-    });
-
-// 4. Use it in a paint
-using var paint = new SKPaint
-{
-    Shader = shader,
-    IsAntialias = false,
-    FilterQuality = SKFilterQuality.None
-};
-
-// 5. Draw your ImGui mesh
-canvas.DrawVertices(vertices, SKBlendMode.SrcOver, paint);
-*/
 		public void Render(SKCanvas canvas, ImDrawDataPtr drawData)
 		{
 			if (drawData.CmdListsCount == 0)
@@ -139,8 +121,8 @@ canvas.DrawVertices(vertices, SKBlendMode.SrcOver, paint);
 						cmd.ClipRect.Z - cmd.ClipRect.X,
 						cmd.ClipRect.W - cmd.ClipRect.Y
 					);
-					var debug = new SKPaint { Color = SKColors.Red, Style = SKPaintStyle.Stroke, StrokeWidth = 3 };
-					canvas.DrawRect(clip, debug);
+					//var debug = new SKPaint { Color = SKColors.Red, Style = SKPaintStyle.Stroke, StrokeWidth = 3 };
+					//canvas.DrawRect(clip, debug);
 
 					canvas.Save();
 					canvas.ClipRect(clip);
@@ -221,4 +203,52 @@ canvas.DrawVertices(vertices, SKBlendMode.SrcOver, paint);
 			canvas.Restore();
 		}
 	}
+
+	public sealed class RenderLock : IDisposable
+	{
+		private readonly SemaphoreSlim sem;
+		
+		internal RenderLock(SemaphoreSlim sem)
+		{
+			this.sem = sem;
+			sem.Wait();
+		}
+
+		public void Dispose() { sem.Release(); }
+	}
+
+	/*
+			// 1. Load the SkSL shader
+	string sksl = @"
+	uniform shader tex;
+
+	half4 main(float2 uv, half4 color) {
+		return tex.eval(uv) * color;
+	}
+	";
+
+	// 2. Compile the shader
+	var effect = SKRuntimeEffect.Create(sksl, out var errorText);
+	if (effect == null)
+		throw new Exception("Shader compile error: " + errorText);
+
+	// 3. Create the shader with your texture
+	SKShader shader = effect.ToShader(new SKRuntimeEffectUniforms(),
+		new SKRuntimeEffectChildren
+		{
+			["tex"] = yourTextureShader  // usually SKShader.CreateBitmap(...)
+		});
+
+	// 4. Use it in a paint
+	using var paint = new SKPaint
+	{
+		Shader = shader,
+		IsAntialias = false,
+		FilterQuality = SKFilterQuality.None
+	};
+
+	// 5. Draw your ImGui mesh
+	canvas.DrawVertices(vertices, SKBlendMode.SrcOver, paint);
+	*/
+
 }

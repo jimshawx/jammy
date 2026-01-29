@@ -1,5 +1,6 @@
 ﻿using Jammy.Plugins.Interface;
 using Jammy.Plugins.Renderer;
+using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -11,49 +12,43 @@ namespace Jammy.Plugins.Windows
 {
 	public class WindowsPluginWindowFactory : IPluginWindowFactory
 	{
-		private readonly IPluginRenderer renderer;
-		public WindowsPluginWindowFactory()
+		private readonly ILogger<WindowsPluginWindowFactory> logger;
+
+		public WindowsPluginWindowFactory(ILogger<WindowsPluginWindowFactory> logger)
 		{
-			renderer = new ImGuiSkiaRenderer();
+			this.logger = logger;
 		}
 
 		public IPluginWindow CreatePluginWindow(IPlugin plugin)
 		{
-			return new WindowsPluginWindow(renderer, plugin);
+			return new WindowsPluginWindow(plugin, logger);
 		}
 	}
 
 	internal class WindowsPluginWindow : IPluginWindow
 	{
-		System.Windows.Forms.Timer timer;
-		Thread t;
-		Form form;
+		private System.Windows.Forms.Timer timer;
+		private readonly Thread t;
+		private Form form;
 
-		public WindowsPluginWindow(IPluginRenderer renderer, IPlugin plugin)
+		public WindowsPluginWindow(IPlugin plugin, ILogger logger)
 		{
+			var ss = new SemaphoreSlim(1);
+			ss.Wait();
+
 			t = new Thread(() =>
 			{
+				var renderer = new ImGuiSkiaRenderer(logger);
+
 				form = new Form();
 				form.Width = 800;
 				form.Height = 600;
-				form.Text = "Lua Plugin Window";
+				form.Text = $"{plugin.GetType().Name} Window";
 
-				//ImGui.StyleColorsLight();
-
-				//io.FontGlobalScale = 2.0f;
-
-				//var style = ImGui.GetStyle();
-				//style.ScaleAllSizes(2.0f);
-
-				var sk = new SkiaHostControl(renderer, plugin);
+				var sk = new SkiaHostControl(renderer, plugin, logger);
 				ImGuiInput.SetImGuiInput(sk);
 				sk.Dock = DockStyle.Fill;
 				form.Controls.Add(sk);
-				//form.Paint += (s, e) =>
-				//{
-				//	var canvas = e.Graphics;
-				//	renderer.Render(canvas, ImGui.GetDrawData());
-				//};	
 
 				form.Show();
 
@@ -61,10 +56,13 @@ namespace Jammy.Plugins.Windows
 				timer.Tick += (_, __) => { sk.Invalidate(); };
 				timer.Start();
 
+				ss.Release();
+
 				Application.Run(form);
 			});
 			t.SetApartmentState(ApartmentState.STA);
 			t.Start();
+			ss.Wait();
 		}
 	}
 }
