@@ -11,7 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
     <ProjectReference Include="..\Jammy.Plugins.Interface\Jammy.Plugins.Interface.csproj" />
+    <ProjectReference Include="..\Jammy.Plugins.Renderer\Jammy.Plugins.Renderer.csproj" />
   </ItemGroup>
 
 </Project>

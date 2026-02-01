@@ -453,23 +453,23 @@ namespace Jammy.Main
 
 		private void btnStep_Click(object sender, EventArgs e)
 		{
-			Amiga.SetEmulationMode(EmulationMode.Step);
+			debugger.Step();
 		}
 
 		private void btnStepOut_Click(object sender, EventArgs e)
 		{
-			Amiga.SetEmulationMode(EmulationMode.StepOut);
+			debugger.StepOut();
 		}
 
 		private void btnStop_Click(object sender, EventArgs e)
 		{
-			Amiga.SetEmulationMode(EmulationMode.Stopped);
+			debugger.Stop();
 		}
 
 		private void btnGo_Click(object sender, EventArgs e)
 		{
 			txtDisassembly.DeselectAll();
-			Amiga.SetEmulationMode(EmulationMode.Running);
+			debugger.Go();
 		}
 
 		private void btnReset_Click(object sender, EventArgs e)

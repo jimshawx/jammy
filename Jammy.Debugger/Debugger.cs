@@ -1,4 +1,5 @@
 ﻿using Jammy.AmigaTypes;
+using Jammy.Core;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
@@ -518,6 +519,26 @@ namespace Jammy.Debugger
 		public MemoryAllocations GetAllocations()
 		{
 			return allocatedMemoryTracker.GetAllocations();
+		}
+
+		public void Step()
+		{
+			Amiga.SetEmulationMode(EmulationMode.Step);
+		}
+
+		public void StepOut()
+		{
+			Amiga.SetEmulationMode(EmulationMode.StepOut);
+		}
+
+		public void Stop()
+		{
+			Amiga.SetEmulationMode(EmulationMode.Stopped);
+		}
+
+		public void Go()
+		{
+			Amiga.SetEmulationMode(EmulationMode.Running);
 		}
 	}
 }

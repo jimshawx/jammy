@@ -47,6 +47,10 @@ namespace Jammy.Interface
 		Libraries GetLibraries();
 		InstructionAnalysis Analyse();
 		MemoryAllocations GetAllocations();
+		void Step();
+		void StepOut();
+		void Stop();
+		void Go();
 	}
 
 	public interface ICPUAnalyser

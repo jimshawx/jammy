@@ -33,12 +33,20 @@ namespace Jammy.Plugins
 		function update()
 			imgui.Begin(""My Lua Window"")
 
-			if imgui.Button(""Button A"") then
-				print(""Button A clicked"")
+			if imgui.Button(""Step"") then
+				jammy.Step()
 			end
 
-			if imgui.Button(""Button B"") then
-				print(""Button B clicked"")
+			if imgui.Button(""Step Out"") then
+				jammy.StepOut()
+			end
+
+			if imgui.Button(""Stop"") then
+				jammy.Stop()
+			end
+
+			if imgui.Button(""Go"") then
+				jammy.Go()
 			end
 
 			imgui.End()
@@ -50,17 +58,22 @@ namespace Jammy.Plugins
 		{
 			imgui.Begin(""My JS Window"");
 
-			if (imgui.Button(""Button A""))
-			{
-				console.log(""Button A clicked"");
-			}
+			if (imgui.Button(""Step""))
+				jammy.Step();
 
-			if (imgui.Button(""Button B""))
-			{
-				console.log(""Button B clicked"");
-			}
+			if (imgui.Button(""Step Out""))
+				jammy.StepOut();
+
+			if (imgui.Button(""Stop""))
+				jammy.Stop();
+
+			if (imgui.Button(""Go""))
+				jammy.Go();
 
 			imgui.End();
+
+			//var x = jammy.GetRegs();
+			//console.log(""PC: "" + x.PC.toString(16));
 		}
 		";
 	}

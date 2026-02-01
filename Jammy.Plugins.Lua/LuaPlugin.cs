@@ -1,4 +1,5 @@
-﻿using Jammy.Plugins.Interface;
+﻿using Jammy.Interface;
+using Jammy.Plugins.Interface;
 using Microsoft.Extensions.Logging;
 using MoonSharp.Interpreter;
 
@@ -8,22 +9,17 @@ using MoonSharp.Interpreter;
 
 namespace Jammy.Plugins.Lua
 {
-	public class LuaImGui
-	{
-		public void Begin(string title) => ImGuiNET.ImGui.Begin(title);
-		public void End() => ImGuiNET.ImGui.End();
-
-		public bool Button(string label) => ImGuiNET.ImGui.Button(label);
-	}
-
 	public class LuaEngine : IPluginEngine
 	{
+		private readonly IDebugger debugger;
 		private readonly ILogger<LuaEngine> logger;
-		private LuaImGui imguiApi = new LuaImGui();
+		private static object imguiApi = ImGuiAPI.Instance;
 
-		public LuaEngine(ILogger<LuaEngine> logger)
+		public LuaEngine(IDebugger debugger, ILogger<LuaEngine> logger)
 		{
-			UserData.RegisterType<LuaImGui>();
+			UserData.RegisterType(imguiApi.GetType());
+			UserData.RegisterType(debugger.GetType());
+			this.debugger = debugger;
 			this.logger = logger;
 		}
 
@@ -32,6 +28,7 @@ namespace Jammy.Plugins.Lua
 			var script = new Script();
 			script.Globals["imgui"] = imguiApi;
 			script.Globals["print"] = (object o)=>logger.LogTrace($"{o?.ToString()}");
+			script.Globals["jammy"] = debugger;
 			script.DoString(code);
 			return new LuaPlugin(script);
 		}
@@ -44,11 +41,14 @@ namespace Jammy.Plugins.Lua
 		public LuaPlugin(Script script)
 		{
 			this.script = script;
+			var fn = script.Globals.Get("init");
+			if (fn.Type == DataType.Function)
+				script.Call(fn);
 		}
 
 		public void Render()
 		{
-			DynValue fn = script.Globals.Get("update");
+			var fn = script.Globals.Get("update");
 			if (fn.Type == DataType.Function)
 				script.Call(fn);
 		}
