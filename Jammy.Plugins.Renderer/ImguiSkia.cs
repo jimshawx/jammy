@@ -34,44 +34,24 @@ namespace Jammy.Plugins.Renderer
 			var io = ImGui.GetIO();
 			io.Fonts.AddFontDefault();
 			io.Fonts.Build();
-			io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out _);
+			io.Fonts.GetTexDataAsAlpha8(out IntPtr pixels, out int width, out int height, out _);
 
 			if (pixels == IntPtr.Zero || width <= 0 || height <= 0)
 				throw new NotImplementedException("ImGui doesn't support a font on this platform");
 
-			int rowBytes = width * 4;
+			int rowBytes = width ;
 			int length = rowBytes * height;
 
-			// Copy ImGui RGBA (unpremultiplied) into managed buffer (orig)
+			// Copy ImGui alpha into managed buffer (orig)
 			var orig = new byte[length];
 			Marshal.Copy(pixels, orig, 0, length);
 
 			byte[] conv = orig;
 
-			// Convert RGBA -> BGRA and premultiply alpha into a new buffer (conv)
-			conv = new byte[length];
-			for (int i = 0; i < length; i += 4)
-			{
-				byte r = orig[i + 0];
-				byte g = orig[i + 1];
-				byte b = orig[i + 2];
-				byte a = orig[i + 3];
-
-				// premultiply and reorder to BGRA
-				int rp = (r * a) / 255;
-				int gp = (g * a) / 255;
-				int bp = (b * a) / 255;
-
-				conv[i + 0] = (byte)bp;
-				conv[i + 1] = (byte)gp;
-				conv[i + 2] = (byte)rp;
-				conv[i + 3] = a;
-			}
-
 			//pin converted buffer and create SKBitmap -> SKImage (raster-backed)
 			handle = GCHandle.Alloc(conv, GCHandleType.Pinned);
 			IntPtr ptr = handle.AddrOfPinnedObject();
-			var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
+			var info = new SKImageInfo(width, height, SKColorType.Alpha8, SKAlphaType.Unpremul);
 
 			fontTexture = SKImage.FromPixels(info, ptr, rowBytes);
 
