@@ -31,7 +31,7 @@ namespace Jammy.Plugins
 	{
 		public static string lua = @"
 		function update()
-			imgui.Begin(""My Lua Window"")
+			imgui.Begin(""My Lua Window"", 64)
 
 			if imgui.Button(""Step"") then
 				jammy.Step()
@@ -50,13 +50,17 @@ namespace Jammy.Plugins
 			end
 
 			imgui.End()
+
+			//local x = jammy.GetRegs();
+			//print(string.format(""PC: %X"", x.PC));
+
 		end
 		";
 
 		public static string js = @"
 		function update()
 		{
-			imgui.Begin(""My JS Window"");
+			imgui.Begin(""My JS Window"", 64);
 
 			if (imgui.Button(""Step""))
 				jammy.Step();

@@ -2,6 +2,7 @@
 using Jammy.Plugins.Interface;
 using Microsoft.Extensions.Logging;
 using MoonSharp.Interpreter;
+using MoonSharp.Interpreter.Interop;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -19,6 +20,8 @@ namespace Jammy.Plugins.Lua
 		{
 			UserData.RegisterType(imguiApi.GetType());
 			UserData.RegisterType(debugger.GetType());
+			//Danger, Will Robinson!
+			UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
 			this.debugger = debugger;
 			this.logger = logger;
 		}
