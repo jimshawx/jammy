@@ -27,7 +27,7 @@ namespace Jammy.Plugins.Renderer
 		public ImGuiSkiaRenderer(float scale, ILogger logger)
 		{
 			imguiContext = ImGui.CreateContext();
-			ImGui.SetCurrentContext(imguiContext);
+			using var imgui = Lock();
 
 			ImGui.StyleColorsLight();
 			var io = ImGui.GetIO();
