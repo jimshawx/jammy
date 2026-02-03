@@ -1,6 +1,8 @@
 ﻿using Jammy.Plugins.Interface;
 using Jammy.Plugins.Renderer;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -38,7 +40,10 @@ namespace Jammy.Plugins.Windows
 
 			t = new Thread(() =>
 			{
-				var renderer = new ImGuiSkiaRenderer(logger);
+				using var g = Graphics.FromHwnd(IntPtr.Zero);
+				float scale = g.DpiX / 96.0f;
+
+				var renderer = new ImGuiSkiaRenderer(scale, logger);
 
 				form = new Form();
 				form.Width = 800;

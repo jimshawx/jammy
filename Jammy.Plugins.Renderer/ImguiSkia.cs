@@ -24,17 +24,17 @@ namespace Jammy.Plugins.Renderer
 		private readonly SKShader fontImage;
 		private readonly IntPtr imguiContext;
 
-		public ImGuiSkiaRenderer(ILogger logger)
+		public ImGuiSkiaRenderer(float scale, ILogger logger)
 		{
 			imguiContext = ImGui.CreateContext();
 			ImGui.SetCurrentContext(imguiContext);
 
-			ImGui.StyleColorsClassic();
-
+			ImGui.StyleColorsLight();
 			var io = ImGui.GetIO();
 			io.Fonts.AddFontDefault();
 			io.Fonts.Build();
 			io.Fonts.GetTexDataAsAlpha8(out IntPtr pixels, out int width, out int height, out _);
+			io.FontGlobalScale = scale;
 
 			if (pixels == IntPtr.Zero || width <= 0 || height <= 0)
 				throw new NotImplementedException("ImGui doesn't support a font on this platform");
@@ -77,8 +77,6 @@ namespace Jammy.Plugins.Renderer
 		{
 			if (drawData.CmdListsCount == 0)
 				return;
-
-			//drawData.FramebufferScale = new Vector2(2f, 2f);
 
 			canvas.Save();
 
