@@ -1,5 +1,6 @@
 ﻿using Jammy.Plugins.Interface;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 /*
@@ -24,6 +25,21 @@ namespace Jammy.Plugins
 
 			pluginWindowFactory.CreatePluginWindow(luaplugin);
 			pluginWindowFactory.CreatePluginWindow(jsplugin);
+
+			Directory.GetFiles("plugins", "*.lua").ToList().ForEach(f =>
+			{
+				var code = File.ReadAllText(f);
+				var plugin = luaEngine.NewPlugin(code);
+				pluginWindowFactory.CreatePluginWindow(plugin);
+			});
+
+			Directory.GetFiles("plugins", "*.js").ToList().ForEach(f =>
+			{
+				var code = File.ReadAllText(f);
+				var plugin = jsEngine.NewPlugin(code);
+				pluginWindowFactory.CreatePluginWindow(plugin);
+			});
+
 		}
 	}
 

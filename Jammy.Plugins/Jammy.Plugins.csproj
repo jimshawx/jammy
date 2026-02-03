@@ -5,6 +5,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="plugins\test.js" />
+    <None Remove="plugins\test.lua" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="plugins\test.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="plugins\test.lua">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Jammy.Plugins.Interface\Jammy.Plugins.Interface.csproj" />
     <ProjectReference Include="..\Jammy.Plugins.JavaScript\Jammy.Plugins.JavaScript.csproj" />
     <ProjectReference Include="..\Jammy.Plugins.Lua\Jammy.Plugins.Lua.csproj" />

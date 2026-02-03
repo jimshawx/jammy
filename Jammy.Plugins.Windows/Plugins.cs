@@ -60,9 +60,10 @@ namespace Jammy.Plugins.Windows
 
 				timer = new System.Windows.Forms.Timer { Interval = 100 };
 				timer.Tick += (_, __) => { sk.Invalidate(); };
-				timer.Start();
 
 				ss.Release();
+
+				timer.Start();
 
 				Application.Run(form);
 			});
