@@ -51,8 +51,8 @@ namespace Jammy.Plugins
 
 			imgui.End()
 
-			//local x = jammy.GetRegs();
-			//print(string.format(""PC: %X"", x.PC));
+			--local x = jammy.GetRegs();
+			--print(string.format(""PC: %X"", x.PC));
 
 		end
 		";
@@ -73,6 +73,9 @@ namespace Jammy.Plugins
 
 			if (imgui.Button(""Go""))
 				jammy.Go();
+
+			//imgui.ShowStyleEditor();
+			//imgui.ShowStyleSelector(""Style"");
 
 			imgui.End();
 
