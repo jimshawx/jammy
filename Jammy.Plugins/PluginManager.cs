@@ -1,4 +1,6 @@
 ﻿using Jammy.Plugins.Interface;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,11 +14,13 @@ namespace Jammy.Plugins
 	public class PluginManager : IPluginManager
 	{
 		private readonly IPluginWindowFactory pluginWindowFactory;
+		private readonly ILogger<PluginManager> logger;
 
-		public PluginManager(IPluginWindowFactory pluginWindowFactory, IEnumerable<IPluginEngine> pluginEngines)
+		public PluginManager(IPluginWindowFactory pluginWindowFactory, IEnumerable<IPluginEngine> pluginEngines,
+			ILogger<PluginManager> logger)
 		{
 			this.pluginWindowFactory = pluginWindowFactory;
-
+			this.logger = logger;
 			var luaEngine = pluginEngines.SingleOrDefault(e => e is Lua.LuaEngine);
 			var jsEngine = pluginEngines.SingleOrDefault(e => e is JavaScript.JavaScriptEngine);
 
@@ -28,16 +32,30 @@ namespace Jammy.Plugins
 
 			Directory.GetFiles("plugins", "*.lua").ToList().ForEach(f =>
 			{
-				var code = File.ReadAllText(f);
-				var plugin = luaEngine.NewPlugin(code);
-				pluginWindowFactory.CreatePluginWindow(plugin);
+				try 
+				{ 
+					var code = File.ReadAllText(f);
+					var plugin = luaEngine.NewPlugin(code);
+					pluginWindowFactory.CreatePluginWindow(plugin);
+				}
+				catch (Exception ex)
+				{
+					logger.LogTrace($"Can't load plugin {f}\n{ex}");
+				}
 			});
 
 			Directory.GetFiles("plugins", "*.js").ToList().ForEach(f =>
 			{
-				var code = File.ReadAllText(f);
-				var plugin = jsEngine.NewPlugin(code);
-				pluginWindowFactory.CreatePluginWindow(plugin);
+				try
+				{ 
+					var code = File.ReadAllText(f);
+					var plugin = jsEngine.NewPlugin(code);
+					pluginWindowFactory.CreatePluginWindow(plugin);
+				}
+				catch (Exception ex)
+				{
+					logger.LogTrace($"Can't load plugin {f}\n{ex}");
+				}
 			});
 
 		}
