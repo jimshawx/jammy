@@ -23,6 +23,7 @@ namespace Jammy.Plugins.Windows
 
 		public IPluginWindow CreatePluginWindow(IPlugin plugin)
 		{
+			if (plugin == null) return null;
 			return new WindowsPluginWindow(plugin, logger);
 		}
 	}

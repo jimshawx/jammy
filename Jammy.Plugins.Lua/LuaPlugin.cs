@@ -3,6 +3,7 @@ using Jammy.Plugins.Interface;
 using Microsoft.Extensions.Logging;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Interop;
+using System;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -32,28 +33,57 @@ namespace Jammy.Plugins.Lua
 			script.Globals["imgui"] = imguiApi;
 			script.Globals["print"] = (object o)=>logger.LogTrace($"{o?.ToString()}");
 			script.Globals["jammy"] = debugger;
-			script.DoString(code);
-			return new LuaPlugin(script);
+			try 
+			{ 
+				script.DoString(code);
+			}
+			catch (InterpreterException ex)
+			{
+				logger.LogError($"Lua Script Error:\n{ex}");
+				return null;
+			}
+			return new LuaPlugin(script, logger);
 		}
 	}
 
 	public class LuaPlugin : IPlugin
 	{
 		private Script script;
+		private readonly ILogger logger;
+		private bool scriptIsBroken = false;
 
-		public LuaPlugin(Script script)
+		public LuaPlugin(Script script, ILogger logger)
 		{
 			this.script = script;
-			var fn = script.Globals.Get("init");
-			if (fn.Type == DataType.Function)
-				script.Call(fn);
+			this.logger = logger;
+			ExecuteFn("init");
 		}
 
 		public void Render()
 		{
-			var fn = script.Globals.Get("update");
-			if (fn.Type == DataType.Function)
-				script.Call(fn);
+			ExecuteFn("update");
+		}
+
+		private void ExecuteFn(string fnName)
+		{
+			if (scriptIsBroken) return;
+
+			try
+			{ 
+				var fn = script.Globals.Get(fnName);
+				if (fn.Type == DataType.Function)
+					script.Call(fn);
+			}
+			catch (InterpreterException ex)
+			{
+				logger.LogError($"Lua Script Error in function {fnName}:\n{ex}");
+				scriptIsBroken = true;
+			}
+			catch (Exception ex)
+			{
+				logger.LogError($"Lua Script unknown exception\n{ex}");
+				scriptIsBroken = true;
+			}
 		}
 	}
 }

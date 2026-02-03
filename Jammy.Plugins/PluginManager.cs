@@ -16,10 +16,10 @@ namespace Jammy.Plugins
 		{
 			this.pluginWindowFactory = pluginWindowFactory;
 
-			var luaEngine = pluginEngines.FirstOrDefault(e => e is Lua.LuaEngine);
-			var luaplugin = luaEngine.NewPlugin(TestScript.lua);
+			var luaEngine = pluginEngines.SingleOrDefault(e => e is Lua.LuaEngine);
+			var jsEngine = pluginEngines.SingleOrDefault(e => e is JavaScript.JavaScriptEngine);
 
-			var jsEngine = pluginEngines.FirstOrDefault(e => e is JavaScript.JavaScriptEngine);
+			var luaplugin = luaEngine.NewPlugin(TestScript.lua);
 			var jsplugin = jsEngine.NewPlugin(TestScript.js);
 
 			pluginWindowFactory.CreatePluginWindow(luaplugin);

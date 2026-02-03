@@ -4,6 +4,7 @@ using Jint;
 using Jint.Native;
 using Jint.Native.Function;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
@@ -127,28 +128,58 @@ namespace Jammy.Plugins.JavaScript
 			engine.SetValue("imgui", imguiApi);
 			engine.SetValue("jammy", debugger);
 
-			engine.Execute(code);
-			return new JavaScriptPlugin(engine);
+			try 
+			{ 
+				engine.Execute(code);
+			}
+			catch (JintException ex)
+			{
+				logger.LogError($"JavaScript Error:\n{ex}");
+				return null;
+			}
+
+			return new JavaScriptPlugin(engine, logger);
 		}
 	}
 
 	public class JavaScriptPlugin : IPlugin
     {
 		private readonly Engine engine;
+		private readonly ILogger logger;
+		private bool scriptIsBroken = false;
 
-		public JavaScriptPlugin(Engine engine)
+		public JavaScriptPlugin(Engine engine, ILogger logger)
 		{
 			this.engine = engine;
-			var initFn = engine.GetValue("init");
-			if (initFn is ScriptFunction)
-				initFn.Call(JsValue.Undefined);
+			this.logger = logger;
+			ExecuteFn("init");
 		}
 
 		public void Render()
 		{
-			var updateFn = engine.GetValue("update");
-			if (updateFn is ScriptFunction)
-				updateFn.Call(JsValue.Undefined);
+			ExecuteFn("update");
+		}
+
+		private void ExecuteFn(string fnName)
+		{
+			if (scriptIsBroken) return;
+
+			try
+			{ 
+				var fn = engine.GetValue(fnName);
+				if (fn is ScriptFunction)
+					fn.Call(JsValue.Undefined);
+			}
+			catch (JintException ex)
+			{
+				logger.LogError($"JavaScript Error in function {fnName}:\n{ex}");
+				scriptIsBroken = true;
+			}
+			catch (Exception ex)
+			{
+				logger.LogError($"JavaScript unknown exception\n{ex}");
+				scriptIsBroken = true;
+			}
 		}
 	}
 }
