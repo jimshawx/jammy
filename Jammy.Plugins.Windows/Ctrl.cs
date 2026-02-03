@@ -18,7 +18,7 @@ namespace Jammy.Plugins.Windows
 	public class SkiaHostControl : Control
 	{
 		private readonly IPluginRenderer renderer;
-		private readonly IPlugin plugin;
+		private IPlugin plugin;
 		private readonly ILogger logger;
 		private SKImageInfo info;
 		private SKSurface surface;
@@ -98,7 +98,7 @@ namespace Jammy.Plugins.Windows
 
 			using var imgui = Lock();
 
-			canvas.Clear(SKColors.Black);
+			canvas.Clear(SKColors.Gray);
 
 			var io = ImGui.GetIO();
 			io.DisplaySize = new System.Numerics.Vector2(Width, Height);
@@ -127,6 +127,12 @@ namespace Jammy.Plugins.Windows
 			gdiBitmap.Dispose();
 			if (pixelHandle.IsAllocated)
 				pixelHandle.Free();
+		}
+
+		public void UpdatePlugin(IPlugin plugin)
+		{
+			using var imgui = Lock();
+			this.plugin = plugin;
 		}
 	}
 }

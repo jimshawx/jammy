@@ -33,6 +33,8 @@ namespace Jammy.Plugins.Windows
 		private System.Windows.Forms.Timer timer;
 		private readonly Thread t;
 		private Form form;
+		private SkiaHostControl skiaControl;
+		private ImGuiSkiaRenderer renderer;
 
 		public WindowsPluginWindow(IPlugin plugin, ILogger logger)
 		{
@@ -44,22 +46,22 @@ namespace Jammy.Plugins.Windows
 				using var g = Graphics.FromHwnd(IntPtr.Zero);
 				float scale = g.DpiX / 96.0f;
 
-				var renderer = new ImGuiSkiaRenderer(scale, logger);
+				renderer = new ImGuiSkiaRenderer(scale, logger);
 
 				form = new Form();
 				form.Width = 800;
 				form.Height = 600;
 				form.Text = $"{plugin.GetType().Name} Window";
 
-				var sk = new SkiaHostControl(renderer, plugin, logger);
-				ImGuiInput.SetImGuiInput(sk);
-				sk.Dock = DockStyle.Fill;
-				form.Controls.Add(sk);
+				skiaControl = new SkiaHostControl(renderer, plugin, logger);
+				ImGuiInput.SetImGuiInput(skiaControl);
+				skiaControl.Dock = DockStyle.Fill;
+				form.Controls.Add(skiaControl);
 
 				form.Show();
 
 				timer = new System.Windows.Forms.Timer { Interval = 100 };
-				timer.Tick += (_, __) => { sk.Invalidate(); };
+				timer.Tick += (_, __) => { skiaControl.Invalidate(); };
 
 				ss.Release();
 
@@ -70,6 +72,20 @@ namespace Jammy.Plugins.Windows
 			t.SetApartmentState(ApartmentState.STA);
 			t.Start();
 			ss.Wait();
+		}
+
+		public void UpdatePlugin(IPlugin plugin)
+		{
+			if (plugin == null) return;
+			skiaControl.UpdatePlugin(plugin);
+		}
+
+		public void Close()
+		{
+			timer.Stop();
+			form.Close();
+			form.Dispose();
+			renderer.Dispose();
 		}
 	}
 }

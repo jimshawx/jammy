@@ -15,6 +15,8 @@ namespace Jammy.Plugins.Interface
 
 	public interface IPluginWindow
 	{
+		void UpdatePlugin(IPlugin plugin);
+		void Close();
 	}
 
 	public interface IPluginWindowFactory

@@ -17,7 +17,7 @@ namespace Jammy.Plugins.Renderer
 		IDisposable Lock();
 	}
 
-	public class ImGuiSkiaRenderer : IPluginRenderer
+	public class ImGuiSkiaRenderer : IPluginRenderer, IDisposable
 	{
 		private readonly SKImage fontTexture;
 		private readonly GCHandle handle;
@@ -63,6 +63,18 @@ namespace Jammy.Plugins.Renderer
 							SKShaderTileMode.Clamp,
 							SKShaderTileMode.Clamp,
 							localMatrix);
+		}
+
+		public void Dispose()
+		{
+			using var imgui = Lock();
+
+			fontImage?.Dispose();
+			fontTexture?.Dispose();
+			if (handle.IsAllocated)
+				handle.Free();
+			if (imguiContext != IntPtr.Zero)
+				ImGui.DestroyContext(imguiContext);
 		}
 
 		private static readonly SemaphoreSlim renderSemaphore = new SemaphoreSlim(1, 1);

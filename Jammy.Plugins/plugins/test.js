@@ -8,5 +8,8 @@ function update()
 	if (imgui.Button("Go"))
 		jammy.Go();
 
+	var libs = jammy.GetLibraries();
+	imgui.Text(""+libs);
+
 	imgui.End();
 }
