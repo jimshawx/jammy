@@ -342,6 +342,7 @@ namespace Jammy.Plugins.X11
 		private SKCanvas canvas;
 
 		private IntPtr pixelPtr;
+		private IntPtr ximagePtr;
 
 		private void RecreateSurface()
 		{
@@ -349,10 +350,11 @@ namespace Jammy.Plugins.X11
 			int Height = (int)screenHeight;
 
 			// Dispose old resources
-			//if (ximage)
-			//	XDestroyImage(ref ximage);
+			if (ximagePtr != IntPtr.Zero)
+				XDestroyImage(ref ximage);
+			surface?.Dispose();
 
-			var ximagePtr = XCreateImage(xdisplay, IntPtr.Zero, 24, ZPixmap, 0, IntPtr.Zero, screenWidth, screenHeight, 32, 0);
+			ximagePtr = XCreateImage(xdisplay, IntPtr.Zero, 24, ZPixmap, 0, IntPtr.Zero, screenWidth, screenHeight, 32, 0);
 			ximage = Marshal.PtrToStructure<XImage>(ximagePtr);
 
 			// Create new Skia info
@@ -468,81 +470,103 @@ namespace Jammy.Plugins.X11
 				{
 					case KeyPress:
 						{
-							using var imgui = Lock();
-							ImGuiKey vk = 0;
-							KeySym ksym = XLookupKeysym(ref xevent.xkey, 0);
+							using (var imgui = Lock())
+							{
+								ImGuiKey vk = 0;
+								KeySym ksym = XLookupKeysym(ref xevent.xkey, 0);
 
-							var io = ImGui.GetIO();
+								var io = ImGui.GetIO();
 
-							//https://wiki.linuxquestions.org/wiki/List_of_keysyms
-							if ((ksym & 0xff00) == 0)
-								vk = keylook[ksym & 0xff];
-							else if ((ksym & 0xff00) == 0xff00)
-								vk = keylook2[ksym & 0xff];
+								//https://wiki.linuxquestions.org/wiki/List_of_keysyms
+								if ((ksym & 0xff00) == 0)
+									vk = keylook[ksym & 0xff];
+								else if ((ksym & 0xff00) == 0xff00)
+									vk = keylook2[ksym & 0xff];
 
-							io.AddKeyEvent(vk, true);
+								io.AddKeyEvent(vk, true);
 
-							//io.AddKeyEvent(ImGuiKey.ModCtrl, e.Control);
-							//io.AddKeyEvent(ImGuiKey.ModShift, e.Shift);
-							//io.AddKeyEvent(ImGuiKey.ModAlt, e.Alt);
+								//io.AddKeyEvent(ImGuiKey.ModCtrl, e.Control);
+								//io.AddKeyEvent(ImGuiKey.ModShift, e.Shift);
+								//io.AddKeyEvent(ImGuiKey.ModAlt, e.Alt);
 
-							Trace.WriteLine($"keydown {xevent.xkey.keycode} {ksym:X4} {vk}");
+
+								Trace.WriteLine($"keydown {xevent.xkey.keycode} {ksym:X4} {vk}");
+							}
 						}
 						break;
 					case KeyRelease:
 						{
-							using var imgui = Lock();
-							ImGuiKey vk = 0;
-							KeySym ksym = XLookupKeysym(ref xevent.xkey, 0);
+							using (var imgui = Lock())
+							{
+								ImGuiKey vk = 0;
+								KeySym ksym = XLookupKeysym(ref xevent.xkey, 0);
 
-							var io = ImGui.GetIO();
+								var io = ImGui.GetIO();
 
-							if ((ksym & 0xff00) == 0)
-								vk = keylook[ksym & 0xff];
-							else if ((ksym & 0xff00) == 0xff00)
-								vk = keylook2[ksym & 0xff];
+								if ((ksym & 0xff00) == 0)
+									vk = keylook[ksym & 0xff];
+								else if ((ksym & 0xff00) == 0xff00)
+									vk = keylook2[ksym & 0xff];
 
-							io.AddKeyEvent(vk, false);
+								io.AddKeyEvent(vk, false);
 
-							//io.AddKeyEvent(ImGuiKey.ModCtrl, e.Control);
-							//io.AddKeyEvent(ImGuiKey.ModShift, e.Shift);
-							//io.AddKeyEvent(ImGuiKey.ModAlt, e.Alt);
-							Trace.WriteLine($"keyup {xevent.xkey.keycode} {ksym:X4} {vk}");
+								//io.AddKeyEvent(ImGuiKey.ModCtrl, e.Control);
+								//io.AddKeyEvent(ImGuiKey.ModShift, e.Shift);
+								//io.AddKeyEvent(ImGuiKey.ModAlt, e.Alt);
+								Trace.WriteLine($"keyup {xevent.xkey.keycode} {ksym:X4} {vk}");
+							}
 						}
 						break;
 					case ButtonPress:
 						{
-							using var imgui = Lock();
-							if ((xevent.xbutton.button & 0xff) == 1)
-								ImGui.GetIO().AddMouseButtonEvent(0, true);
-							if ((xevent.xbutton.button & 0xff) == 3)
-								ImGui.GetIO().AddMouseButtonEvent(1, true);
-							if ((xevent.xbutton.button & 0xff) == 2)
-								ImGui.GetIO().AddMouseButtonEvent(2, true);
+							using (var imgui = Lock())
+							{
+								if ((xevent.xbutton.button & 0xff) == 1)
+									ImGui.GetIO().AddMouseButtonEvent(0, true);
+								if ((xevent.xbutton.button & 0xff) == 3)
+									ImGui.GetIO().AddMouseButtonEvent(1, true);
+								if ((xevent.xbutton.button & 0xff) == 2)
+									ImGui.GetIO().AddMouseButtonEvent(2, true);
+							}
 						}
 						break;
 					case ButtonRelease:
 						{
-							using var imgui = Lock();
-							if ((xevent.xbutton.button & 0xff) == 1)
-								ImGui.GetIO().AddMouseButtonEvent(0, false);
-							if ((xevent.xbutton.button & 0xff) == 3)
-								ImGui.GetIO().AddMouseButtonEvent(1, false);
-							if ((xevent.xbutton.button & 0xff) == 2)
-								ImGui.GetIO().AddMouseButtonEvent(2, false);
+							using (var imgui = Lock())
+							{
+								if ((xevent.xbutton.button & 0xff) == 1)
+									ImGui.GetIO().AddMouseButtonEvent(0, false);
+								if ((xevent.xbutton.button & 0xff) == 3)
+									ImGui.GetIO().AddMouseButtonEvent(1, false);
+								if ((xevent.xbutton.button & 0xff) == 2)
+									ImGui.GetIO().AddMouseButtonEvent(2, false);
+							}
 						}
 						break;
 					case MotionNotify:
 						{
-							using var imgui = Lock();
-							ImGui.GetIO().AddMousePosEvent(xevent.xmotion.x, xevent.xmotion.y);
+							using (var imgui = Lock())
+							{
+								ImGui.GetIO().AddMousePosEvent(xevent.xmotion.x, xevent.xmotion.y);
+							}
 						}
 						break;
 					case ConfigureNotify:
 						{
 							XConfigureEvent xce = xevent.xconfigure;
-							using var imgui = Lock();
-							Trace.WriteLine($"configurenotify {xce.width} {xce.height}");
+
+							if (screenWidth == (uint)xce.width && screenHeight == (uint)xce.height)
+								break;
+
+							Trace.WriteLine($"Resize from {screenWidth}x{screenHeight} to {xce.width}x{xce.height}");
+
+							using (var imgui = Lock())
+							{
+								screenWidth = (uint)xce.width;
+								screenHeight = (uint)xce.height;
+								//RecreateSurface();
+								Trace.WriteLine($"configurenotify {xce.width} {xce.height}");
+							}
 						}
 						break;
 					default:
