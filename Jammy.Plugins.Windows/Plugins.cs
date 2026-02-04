@@ -82,10 +82,10 @@ namespace Jammy.Plugins.Windows
 
 		public void Close()
 		{
-			timer.Stop();
-			form.Close();
-			form.Dispose();
-			renderer.Dispose();
+			timer?.Stop();
+			form?.Close();
+			form?.Dispose();
+			renderer?.Dispose();
 		}
 	}
 }

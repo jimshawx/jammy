@@ -47,7 +47,10 @@ namespace Jammy.Plugins
 
 			pluginWindowFactory.CreatePluginWindow(luaplugin);
 			pluginWindowFactory.CreatePluginWindow(jsplugin);
+		}
 
+		public void Start()
+		{
 			Directory.GetFiles("plugins", "*.lua").ToList().ForEach(f =>
 			{
 				try 
@@ -113,6 +116,12 @@ namespace Jammy.Plugins
 				plugin.Window.UpdatePlugin(luaEngine.NewPlugin(code));
 			else if (plugin.Type == PluginType.Js)
 				plugin.Window.UpdatePlugin(jsEngine.NewPlugin(code));
+		}
+
+		public void ReloadAllPlugins()
+		{
+			foreach (var plugin in activePlugins)
+				ReloadPlugin(plugin.Name);
 		}
 	}
 

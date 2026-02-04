@@ -123,6 +123,8 @@ namespace Jammy.Main
 
 			emulation.Start();
 
+			pluginManager.Start();
+
 			FetchUI(FetchUIFlags.All);
 			UpdateDisassembly();
 			UpdateDisplay();
@@ -229,8 +231,8 @@ namespace Jammy.Main
 
 			var debug = debugger.Analyse();
 			instructionAnalysisDatabase.Add(debug);
-			logger.LogTrace($"{string.Join(" ", debug.EffectiveAddresses.Select(x => $"{x.Ea:X8}"))}"); 
-			
+			logger.LogTrace($"{string.Join(" ", debug.EffectiveAddresses.Select(x => $"{x.Ea:X8}"))}");
+
 			UI.UI.IsDirty = false;
 		}
 
@@ -249,7 +251,7 @@ namespace Jammy.Main
 			var allocs = debugger.GetAllocations();
 
 			var sb = new StringBuilder();
-			foreach (var alloc in allocs.Allocations.OrderBy(x=>x.Address))
+			foreach (var alloc in allocs.Allocations.OrderBy(x => x.Address))
 				sb.AppendLine($"{alloc.Address:X8} {alloc.Size,8} {alloc.Type}");
 
 			txtAllocations.Text = sb.ToString();
@@ -403,7 +405,7 @@ namespace Jammy.Main
 			txtDisassembly.DeselectAll();
 
 			//disassemblyView = disassembly.DisassemblyView(pc, 10, 100, disassemblyOptions);
-			int line = disassemblyView.GetAddressLine(pc & (uint)((1<<settings.AddressBits)-1));
+			int line = disassemblyView.GetAddressLine(pc & (uint)((1 << settings.AddressBits) - 1));
 
 			//only need to do this is disassembly is actually updated
 			//txtDisassembly.Text = disassemblyView.Text;
@@ -787,7 +789,7 @@ namespace Jammy.Main
 			var types = AmigaTypes.AmigaType.GetAmigaTypes();
 			cbTypes.Items.Clear();
 			cbTypes.Items.Add("(None)");
-			cbTypes.Items.AddRange(types.Keys.OrderBy(x=>x).ToArray());
+			cbTypes.Items.AddRange(types.Keys.OrderBy(x => x).ToArray());
 			cbTypes.SelectedIndex = 0;
 		}
 
@@ -1381,6 +1383,11 @@ namespace Jammy.Main
 			Amiga.LockEmulation();
 			debugger.GenerateDisassemblies();
 			Amiga.UnlockEmulation();
+		}
+
+		private void btnPluginReload_Click(object sender, EventArgs e)
+		{
+			pluginManager.ReloadAllPlugins();
 		}
 	}
 

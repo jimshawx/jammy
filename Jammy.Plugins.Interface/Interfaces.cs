@@ -11,6 +11,9 @@ namespace Jammy.Plugins.Interface
 
 	public interface IPluginManager
 	{
+		void Start();
+		void ReloadPlugin(string name);
+		void ReloadAllPlugins();
 	}
 
 	public interface IPluginWindow

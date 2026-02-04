@@ -97,6 +97,8 @@ namespace Jammy.Main
 			txtVectors = new System.Windows.Forms.RichTextBox();
 			tabLibraries = new System.Windows.Forms.TabPage();
 			txtLibraries = new System.Windows.Forms.RichTextBox();
+			tabAllocations = new System.Windows.Forms.TabPage();
+			txtAllocations = new System.Windows.Forms.RichTextBox();
 			lbIntvec = new System.Windows.Forms.ListBox();
 			btnReadyDisk = new System.Windows.Forms.Button();
 			tbCommand = new System.Windows.Forms.TextBox();
@@ -106,8 +108,7 @@ namespace Jammy.Main
 			btnDMAExplorer = new System.Windows.Forms.Button();
 			tbClock = new System.Windows.Forms.TextBox();
 			btnGenDisassemblies = new System.Windows.Forms.Button();
-			tabAllocations = new System.Windows.Forms.TabPage();
-			txtAllocations = new System.Windows.Forms.RichTextBox();
+			btnPluginReload = new System.Windows.Forms.Button();
 			menuDisassembly.SuspendLayout();
 			menuMemory.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -260,7 +261,7 @@ namespace Jammy.Main
 			txtMemory.Margin = new System.Windows.Forms.Padding(6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(1390, 577);
+			txtMemory.Size = new System.Drawing.Size(1390, 572);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "00000160 0000000000000000 0000000000000000 0000000000000000 0000000000000000   ................................";
 			txtMemory.WordWrap = false;
@@ -858,6 +859,30 @@ namespace Jammy.Main
 			txtLibraries.Text = "";
 			txtLibraries.WordWrap = false;
 			// 
+			// tabAllocations
+			// 
+			tabAllocations.Controls.Add(txtAllocations);
+			tabAllocations.Location = new System.Drawing.Point(8, 39);
+			tabAllocations.Name = "tabAllocations";
+			tabAllocations.Size = new System.Drawing.Size(558, 948);
+			tabAllocations.TabIndex = 4;
+			tabAllocations.Text = "Allocations";
+			tabAllocations.UseVisualStyleBackColor = true;
+			// 
+			// txtAllocations
+			// 
+			txtAllocations.BackColor = System.Drawing.SystemColors.Window;
+			txtAllocations.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			txtAllocations.DetectUrls = false;
+			txtAllocations.Dock = System.Windows.Forms.DockStyle.Fill;
+			txtAllocations.Location = new System.Drawing.Point(0, 0);
+			txtAllocations.Name = "txtAllocations";
+			txtAllocations.ReadOnly = true;
+			txtAllocations.Size = new System.Drawing.Size(558, 948);
+			txtAllocations.TabIndex = 1;
+			txtAllocations.Text = "";
+			txtAllocations.WordWrap = false;
+			// 
 			// lbIntvec
 			// 
 			lbIntvec.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -965,35 +990,23 @@ namespace Jammy.Main
 			btnGenDisassemblies.UseVisualStyleBackColor = true;
 			btnGenDisassemblies.Click += btnGenDisassemblies_Click;
 			// 
-			// tabAllocations
+			// btnPluginReload
 			// 
-			tabAllocations.Controls.Add(txtAllocations);
-			tabAllocations.Location = new System.Drawing.Point(8, 39);
-			tabAllocations.Name = "tabAllocations";
-			tabAllocations.Size = new System.Drawing.Size(558, 948);
-			tabAllocations.TabIndex = 4;
-			tabAllocations.Text = "Allocations";
-			tabAllocations.UseVisualStyleBackColor = true;
-			// 
-			// txtAllocations
-			// 
-			txtAllocations.BackColor = System.Drawing.SystemColors.Window;
-			txtAllocations.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			txtAllocations.DetectUrls = false;
-			txtAllocations.Dock = System.Windows.Forms.DockStyle.Fill;
-			txtAllocations.Location = new System.Drawing.Point(0, 0);
-			txtAllocations.Name = "txtAllocations";
-			txtAllocations.ReadOnly = true;
-			txtAllocations.Size = new System.Drawing.Size(558, 948);
-			txtAllocations.TabIndex = 1;
-			txtAllocations.Text = "";
-			txtAllocations.WordWrap = false;
+			btnPluginReload.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			btnPluginReload.Location = new System.Drawing.Point(2646, 1143);
+			btnPluginReload.Name = "btnPluginReload";
+			btnPluginReload.Size = new System.Drawing.Size(61, 46);
+			btnPluginReload.TabIndex = 58;
+			btnPluginReload.Text = "Reload Plugins";
+			btnPluginReload.UseVisualStyleBackColor = true;
+			btnPluginReload.Click += btnPluginReload_Click;
 			// 
 			// Jammy
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(2710, 1291);
+			Controls.Add(btnPluginReload);
 			Controls.Add(btnGenDisassemblies);
 			Controls.Add(tbClock);
 			Controls.Add(btnDMAExplorer);
@@ -1136,6 +1149,7 @@ namespace Jammy.Main
 		private System.Windows.Forms.RichTextBox txtLibraries;
 		private System.Windows.Forms.TabPage tabAllocations;
 		private System.Windows.Forms.RichTextBox txtAllocations;
+		private System.Windows.Forms.Button btnPluginReload;
 	}
 }
 
