@@ -366,8 +366,9 @@ namespace Jammy.Plugins.X11
 			//	pixelPtr
 			//);
 
-			screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
-			ximage.data = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
+			//screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
+			//ximage.data = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
+			ximage.data = pixelPtr;
 		}
 
 		public IDisposable Lock()
