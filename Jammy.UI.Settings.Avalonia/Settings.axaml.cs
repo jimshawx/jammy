@@ -380,6 +380,7 @@ namespace Jammy.UI.Settings.Avalonia
 
 			//Debugging
 			cbDebugging.IsChecked = currentSettings.Debugger.IsEnabled();
+			cbTrace.IsChecked = currentSettings.Tracer.IsEnabled();
 
 			//Blitter
 			rbImmediate.IsChecked = currentSettings.BlitterMode == BlitterMode.Immediate;
@@ -440,7 +441,7 @@ namespace Jammy.UI.Settings.Avalonia
 
 			//Debugging
 			currentSettings.Debugger = Default(cbDebugging.IsChecked) ? Feature.Enabled : Feature.Disabled;
-			currentSettings.Tracer = Feature.Disabled;
+			currentSettings.Tracer = Default(cbTrace.IsChecked) ? Feature.Enabled : Feature.Disabled;
 
 			//Blitter
 			currentSettings.BlitterMode = Default(rbImmediate.IsChecked) ? BlitterMode.Immediate : BlitterMode.Synchronous;

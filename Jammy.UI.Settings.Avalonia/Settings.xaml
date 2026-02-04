@@ -194,6 +194,7 @@
 				  <StackPanel Orientation="Horizontal">
 					<CheckBox Name="cbAudio" Margin="4 0" Foreground="#0078d7">Audio</CheckBox>
 					<CheckBox Name="cbDebugging" Margin="4 0" Foreground="#0078d7">Debugging</CheckBox>
+					<CheckBox Name="cbTrace" Margin="4 0" Foreground="#0078d7">Trace</CheckBox>
 				  </StackPanel>
 				</StackPanel>
 			  </Panel>
