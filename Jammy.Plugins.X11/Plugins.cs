@@ -4,12 +4,14 @@ using Jammy.Plugins.Interface;
 using Jammy.Plugins.Renderer;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
+using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using KeySym = ushort;
-using VK = ImGuiNET.ImGuiKey;
 
 /*
-	Copyright 2020-2024 James Shaw. All Rights Reserved.
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Plugins.X11
@@ -205,6 +207,7 @@ namespace Jammy.Plugins.X11
 			[FieldOffset(0)] public XKeyEvent xkey;
 			[FieldOffset(0)] public XButtonEvent xbutton;
 			[FieldOffset(0)] public XMotionEvent xmotion;
+			[FieldOffset(0)] public XConfigureEvent xconfigure;
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -261,17 +264,36 @@ namespace Jammy.Plugins.X11
 			public bool same_screen;
 		}
 
+		[StructLayout(LayoutKind.Sequential)]
+		private struct XConfigureEvent
+		{
+			public int type;               // Event type (ConfigureNotify)
+			public IntPtr serial;   // Last request processed by the server
+			public bool send_event;        // True if sent by SendEvent
+			public IntPtr display;       // Display the event was read from
+			public IntPtr @event;           // Window whose size/position changed
+			public IntPtr window;          // Same as 'event' for top-level windows
+			public int x, y;               // New window position (relative to parent)
+			public int width, height;      // New window size
+			public int border_width;       // New border width
+			public IntPtr above;           // Window above this one in stacking order
+			public bool override_redirect; // True if override-redirect is set
+		}
+
 		private const int KeyPress = 2;
 		private const int KeyRelease = 3;
 		private const int ButtonPress = 4;
 		private const int ButtonRelease = 5;
 		private const int MotionNotify = 6;
+		private const int ConfigureNotify = 22;
 
 		private const long KeyPressMask = 1 << 0;
 		private const long KeyReleaseMask = 1 << 1;
 		private const long ButtonPressMask = 1 << 2;
 		private const long ButtonReleaseMask = 1 << 3;
 		private const long PointerMotionMask = 1 << 6;
+		private const long StructureNotifyMask = 1 << 17;
+
 		private IPlugin plugin;
 		private readonly ILogger logger;
 
@@ -286,7 +308,8 @@ namespace Jammy.Plugins.X11
 			this.plugin = plugin;
 			this.logger = logger;
 
-			float scale = 2.0f;
+			//X is doing its own scaling on my system
+			float scale = 1.0f;
 
 			renderer = new ImGuiSkiaRenderer(scale, logger);
 
@@ -294,7 +317,7 @@ namespace Jammy.Plugins.X11
 			var rootWindow = XRootWindow(xdisplay, XDefaultScreen(xdisplay));
 			xwindow = XCreateSimpleWindow(xdisplay, rootWindow, 10, 10, screenWidth, screenHeight, 1, 0, 0xFFFFFF);
 			XStoreName(xdisplay, xwindow, $"{plugin.GetType().Name} Window");
-			XSelectInput(xdisplay, xwindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+			XSelectInput(xdisplay, xwindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | StructureNotifyMask);
 
 			gc = XCreateGC(xdisplay, xwindow, 0, IntPtr.Zero);
 
@@ -318,8 +341,6 @@ namespace Jammy.Plugins.X11
 		private SKSurface surface;
 		private SKCanvas canvas;
 
-		private byte[] pixelBuffer;
-		private GCHandle pixelHandle;
 		private IntPtr pixelPtr;
 
 		private void RecreateSurface()
@@ -334,40 +355,22 @@ namespace Jammy.Plugins.X11
 			var ximagePtr = XCreateImage(xdisplay, IntPtr.Zero, 24, ZPixmap, 0, IntPtr.Zero, screenWidth, screenHeight, 32, 0);
 			ximage = Marshal.PtrToStructure<XImage>(ximagePtr);
 
-			screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
-			ximage.data = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
-
 			// Create new Skia info
 			info = new SKImageInfo(
 				Width,
 				Height,
-				SKColorType.Bgra8888, // IMPORTANT: matches GDI+ pixel format
+				SKColorType.Bgra8888, // IMPORTANT: matches XImage ZPixmap pixel format
 				SKAlphaType.Premul
 			);
 
-			// Allocate pixel buffer
-			int size = info.BytesSize;
-			pixelBuffer = new byte[size];
+			screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
+			pixelPtr = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
 
-			//// Pin buffer
-			pixelHandle = GCHandle.Alloc(pixelBuffer, GCHandleType.Pinned);
-			pixelPtr = pixelHandle.AddrOfPinnedObject();
-
-			//// Create Skia surface using pinned memory
+			// Create Skia surface using pinned memory
 			surface = SKSurface.Create(info, pixelPtr, info.RowBytes);
 			canvas = surface.Canvas;
 
-			//// Create GDI+ bitmap that wraps the same memory
-			//gdiBitmap = new Bitmap(
-			//	info.Width,
-			//	info.Height,
-			//	info.RowBytes,
-			//	PixelFormat.Format32bppPArgb,
-			//	pixelPtr
-			//);
-
-			//screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
-			//ximage.data = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
+			// Create XImage that wraps the same memory
 			ximage.data = pixelPtr;
 		}
 
@@ -402,9 +405,7 @@ namespace Jammy.Plugins.X11
 			// after drawing test quad (or renderer.Render)
 			surface.Flush();
 
-			// Blit directly — no PNG, no encoding, no decoding
-			//e.Graphics.DrawImage(gdiBitmap, 0, 0);
-
+			// Blit
 			XPutImage(xdisplay, xwindow, gc, ref ximage, 0, 0, 0, 0, screenWidth, screenHeight);
 			XFlush(xdisplay);
 
@@ -413,7 +414,6 @@ namespace Jammy.Plugins.X11
 		public void UpdatePlugin(IPlugin plugin)
 		{
 			if (plugin == null) return;
-			//skiaControl.UpdatePlugin(plugin);
 			this.plugin = plugin;
 		}
 
@@ -466,11 +466,10 @@ namespace Jammy.Plugins.X11
 
 				switch (xevent.type)
 				{
-					/*
 					case KeyPress:
 						{
 							using var imgui = Lock();
-							VK vk = 0;
+							ImGuiKey vk = 0;
 							KeySym ksym = XLookupKeysym(ref xevent.xkey, 0);
 
 							var io = ImGui.GetIO();
@@ -487,13 +486,13 @@ namespace Jammy.Plugins.X11
 							//io.AddKeyEvent(ImGuiKey.ModShift, e.Shift);
 							//io.AddKeyEvent(ImGuiKey.ModAlt, e.Alt);
 
-							Console.WriteLine($"keydown {xevent.xkey.keycode} {ksym:X4} {vk}");
+							Trace.WriteLine($"keydown {xevent.xkey.keycode} {ksym:X4} {vk}");
 						}
 						break;
 					case KeyRelease:
 						{
 							using var imgui = Lock();
-							VK vk = 0;
+							ImGuiKey vk = 0;
 							KeySym ksym = XLookupKeysym(ref xevent.xkey, 0);
 
 							var io = ImGui.GetIO();
@@ -508,11 +507,9 @@ namespace Jammy.Plugins.X11
 							//io.AddKeyEvent(ImGuiKey.ModCtrl, e.Control);
 							//io.AddKeyEvent(ImGuiKey.ModShift, e.Shift);
 							//io.AddKeyEvent(ImGuiKey.ModAlt, e.Alt);
-							Console.WriteLine($"keyup {xevent.xkey.keycode} {ksym:X4} {vk}");
-
+							Trace.WriteLine($"keyup {xevent.xkey.keycode} {ksym:X4} {vk}");
 						}
 						break;
-					*/
 					case ButtonPress:
 						{
 							using var imgui = Lock();
@@ -541,6 +538,13 @@ namespace Jammy.Plugins.X11
 							ImGui.GetIO().AddMousePosEvent(xevent.xmotion.x, xevent.xmotion.y);
 						}
 						break;
+					case ConfigureNotify:
+						{
+							XConfigureEvent xce = xevent.xconfigure;
+							using var imgui = Lock();
+							Trace.WriteLine($"configurenotify {xce.width} {xce.height}");
+						}
+						break;
 					default:
 						Console.WriteLine("Unhandled XEvent type: " + xevent.type);
 						break;
@@ -548,9 +552,7 @@ namespace Jammy.Plugins.X11
 			}
 		}
 
-		/*
-
-		private readonly VK[] keylook =
+		private readonly ImGuiKey[] keylook =
 		[
 		 0,
 		 0,
@@ -584,39 +586,39 @@ namespace Jammy.Plugins.X11
 		 0,
 		 0,
 		 0,
-		 VK.VK_SPACE, //0x20
-		(VK)'1',(VK)'2',(VK)'3',(VK)'4',(VK)'5',(VK)'6',VK.VK_OEM_7,(VK)'8',(VK)'9',(VK)'0',
+		 ImGuiKey.Space, //0x20
+		ImGuiKey._1,ImGuiKey._2,ImGuiKey._3,ImGuiKey._4,ImGuiKey._5,ImGuiKey._6,ImGuiKey._7,ImGuiKey._8,ImGuiKey._9,ImGuiKey._0,
 		 0,
-		 VK.VK_OEM_COMMA,//VK.VK_PLUS,
-		 VK.VK_OEM_MINUS,//VK.VK_LESS_THAN,
-		 VK.VK_OEM_PERIOD,//VK.VK_GREATER_THAN,
-		 VK.VK_OEM_2,//VK.VK_QUESTION_MARK,
-		(VK)'0', //0x30
-		(VK)'1', (VK)'2', (VK)'3', (VK)'4', (VK)'5', (VK)'6',(VK) '7',(VK) '8', (VK)'9',
-		 0,//VK.VK_SEMI_COLON,
-		 VK.VK_OEM_1,//VK.VK_SEMI_COLON,
-		 0,//VK.VK_LESS_THAN,
-		 VK.VK_OEM_PLUS,//VK.VK_GREATER_THAN,
-		 0,//VK.VK_QUESTION_MARK,
-		 0,//VK.VK_SINGLE_QUOTE,
-		 0,//VK.VK_SINGLE_QUOTE,//0x40
-		(VK)'A',(VK)'B',(VK)'C',(VK)'D',(VK)'E',(VK)'F',(VK)'G',(VK)'H',(VK)'I',(VK)'J',(VK)'K',(VK)'L',(VK)'M',
-		(VK)'N',(VK)'O',(VK)'P',(VK)'Q',(VK)'R',(VK)'S',(VK)'T',(VK)'U',(VK)'V',(VK)'W',(VK)'X',(VK)'Y',(VK)'Z',
-		 VK.VK_OEM_4,//VK.VK_OPEN_SQR_BRACKET,
-		 VK.VK_OEM_5,//VK.VK_RSX,
-		 VK.VK_OEM_6,//VK.VK_CLOSE_SQR_BRACKET,
-		0,// VK.VK_SQUIGLE,
-		 0,//VK.VK_MINUS,
-		 VK.VK_OEM_3,//VK.VK_SQUIGLE,//0x60
-		(VK)'A',(VK)'B',(VK)'C',(VK)'D',(VK)'E',(VK)'F',(VK)'G',(VK)'H',(VK)'I',(VK)'J',(VK)'K',(VK)'L',(VK)'M',
-		(VK)'N',(VK)'O',(VK)'P',(VK)'Q',(VK)'R',(VK)'S',(VK)'T',(VK)'U',(VK)'V',(VK)'W',(VK)'X',(VK)'Y',(VK)'Z',
-		0,// VK.VK_OPEN_SQR_BRACKET,
-		 0,//VK.VK_RSX,
-		0,// VK.VK_CLOSE_SQR_BRACKET,
-		 0,//VK.VK_SQUIGLE,
+		 ImGuiKey.Comma,//ImGuiKey.PLUS,
+		 ImGuiKey.Minus,//ImGuiKey.LESS_THAN,
+		 ImGuiKey.Period,//ImGuiKey.GREATER_THAN,
+		 ImGuiKey.Slash,//ImGuiKey.QUESTION_MARK,
+		ImGuiKey._0, //0x30
+		ImGuiKey._1, ImGuiKey._2, ImGuiKey._3, ImGuiKey._4, ImGuiKey._5, ImGuiKey._6,ImGuiKey._7,ImGuiKey._8, ImGuiKey._9,
+		 0,//ImGuiKey.SEMI_COLON,
+		 ImGuiKey.Semicolon,//ImGuiKey.SEMI_COLON,
+		 0,//ImGuiKey.LESS_THAN,
+		 ImGuiKey.Equal,//ImGuiKey.GREATER_THAN,
+		 0,//ImGuiKey.QUESTION_MARK,
+		 0,//ImGuiKey.SINGLE_QUOTE,
+		 0,//ImGuiKey.SINGLE_QUOTE,//0x40
+		ImGuiKey.A,ImGuiKey.B,ImGuiKey.C,ImGuiKey.D,ImGuiKey.E,ImGuiKey.F,ImGuiKey.G,ImGuiKey.H,ImGuiKey.I,ImGuiKey.J,ImGuiKey.K,ImGuiKey.L,ImGuiKey.M,
+		ImGuiKey.N,ImGuiKey.O,ImGuiKey.P,ImGuiKey.Q,ImGuiKey.R,ImGuiKey.S,ImGuiKey.T,ImGuiKey.U,ImGuiKey.V,ImGuiKey.W,ImGuiKey.X,ImGuiKey.Y,ImGuiKey.Z,
+		 ImGuiKey.LeftBracket,//ImGuiKey.OPEN_SQR_BRACKET,
+		 0,//ImGuiKey.RSX,
+		 ImGuiKey.RightBracket,//ImGuiKey.CLOSE_SQR_BRACKET,
+		0,// ImGuiKey.SQUIGLE,
+		0,//ImGuiKey.MINUS,
+		0,//ImGuiKey.SQUIGLE,//0x60
+		ImGuiKey.A,ImGuiKey.B,ImGuiKey.C,ImGuiKey.D,ImGuiKey.E,ImGuiKey.F,ImGuiKey.G,ImGuiKey.H,ImGuiKey.I,ImGuiKey.J,ImGuiKey.K,ImGuiKey.L,ImGuiKey.M,
+		ImGuiKey.N,ImGuiKey.O,ImGuiKey.P,ImGuiKey.Q,ImGuiKey.R,ImGuiKey.S,ImGuiKey.T,ImGuiKey.U,ImGuiKey.V,ImGuiKey.W,ImGuiKey.X,ImGuiKey.Y,ImGuiKey.Z,
+		0,// ImGuiKey.OPEN_SQR_BRACKET,
+		 0,//ImGuiKey.RSX,
+		0,// ImGuiKey.CLOSE_SQR_BRACKET,
+		 0,//ImGuiKey.SQUIGLE,
 		];
 
-		VK[] keylook2 =
+		ImGuiKey[] keylook2 =
 		[
 		0,
 		0,
@@ -626,12 +628,12 @@ namespace Jammy.Plugins.X11
 		0,
 		0,
 		0,
-		VK.VK_BACK,//0x8
-		VK.VK_TAB,
+		ImGuiKey.Backspace,//0x8
+		ImGuiKey.Tab,
 		0,
 		0,
 		0,
-		VK.VK_RETURN,//0xd
+		ImGuiKey.Enter,//0xd
 		0,
 		0,
 		0,//0x10
@@ -639,7 +641,7 @@ namespace Jammy.Plugins.X11
 		0,
 		0,//pause key
 		0,//scroll lock
-		0,//VK.VK_SYSRQ,//0x15
+		0,//ImGuiKey.SYSRQ,//0x15
 		0,
 		0,
 		0,
@@ -698,14 +700,14 @@ namespace Jammy.Plugins.X11
 		0,
 		0,
 		0,
-		VK.VK_HOME,//0x50
-		VK.VK_LEFT,
-		VK.VK_UP,
-		VK.VK_RIGHT,
-		VK.VK_DOWN,
-		VK.VK_PRIOR,
-		VK.VK_NEXT,
-		VK.VK_END,//0x57
+		ImGuiKey.Home,//0x50
+		ImGuiKey.LeftArrow,
+		ImGuiKey.UpArrow,
+		ImGuiKey.RightArrow,
+		ImGuiKey.DownArrow,
+		ImGuiKey.PageUp,
+		ImGuiKey.PageDown,
+		ImGuiKey.End,//0x57
 		0,
 		0,
 		0,
@@ -759,7 +761,7 @@ namespace Jammy.Plugins.X11
 		0,
 		0,
 		0,
-		0,//VK.VK_KEYPAD_ENTER,
+		0,//ImGuiKey.KEYPAD_ENTER,
 		0,
 		0,
 		0,//0x90
@@ -789,37 +791,37 @@ namespace Jammy.Plugins.X11
 		0,
 		0,
 		0,//keypad times
-		0,//VK.VK_KEYPAD_PLUS,
+		0,//ImGuiKey.KEYPAD_PLUS,
 		0,
-		0,//VK.VK_KEYPAD_MINUS,
-		0,//VK.VK_KEYPAD_FULL_STOP,
+		0,//ImGuiKey.KEYPAD_MINUS,
+		0,//ImGuiKey.KEYPAD_FULL_STOP,
 		0,//keypad divide
-		VK.VK_NUMPAD0,//0xb0
-		VK.VK_NUMPAD1,
-		VK.VK_NUMPAD2,
-		VK.VK_NUMPAD3,
-		VK.VK_NUMPAD4,
-		VK.VK_NUMPAD5,
-		VK.VK_NUMPAD6,
-		VK.VK_NUMPAD7,
-		VK.VK_NUMPAD8,
-		VK.VK_NUMPAD9,
+		ImGuiKey.Keypad0,//0xb0
+		ImGuiKey.Keypad1,
+		ImGuiKey.Keypad2,
+		ImGuiKey.Keypad3,
+		ImGuiKey.Keypad4,
+		ImGuiKey.Keypad5,
+		ImGuiKey.Keypad6,
+		ImGuiKey.Keypad7,
+		ImGuiKey.Keypad8,
+		ImGuiKey.Keypad9,
 		0,
 		0,
 		0,
 		0,
-		VK.VK_F1,
-		VK.VK_F2,
-		VK.VK_F3,//0xc0
-		VK.VK_F4,
-		VK.VK_F5,
-		VK.VK_F6,
-		VK.VK_F7,
-		VK.VK_F8,
-		VK.VK_F9,
-		VK.VK_F10,
-		VK.VK_F11,
-		VK.VK_F12,
+		ImGuiKey.F1,
+		ImGuiKey.F2,
+		ImGuiKey.F3,//0xc0
+		ImGuiKey.F4,
+		ImGuiKey.F5,
+		ImGuiKey.F6,
+		ImGuiKey.F7,
+		ImGuiKey.F8,
+		ImGuiKey.F9,
+		ImGuiKey.F10,
+		ImGuiKey.F11,
+		ImGuiKey.F12,
 		0,
 		0,
 		0,
@@ -843,16 +845,16 @@ namespace Jammy.Plugins.X11
 		0,
 		0,
 		0,//0xe0
-		VK.VK_LSHIFT,
-		VK.VK_RSHIFT,
-		VK.VK_LCONTROL,
-		VK.VK_RCONTROL,
-		VK.VK_CAPITAL,
+		ImGuiKey.LeftShift,
+		ImGuiKey.RightShift,
+		ImGuiKey.LeftCtrl,
+		ImGuiKey.RightCtrl,
+		ImGuiKey.CapsLock,
 		0,
 		0,
 		0,
-		0,//VK.VK_LEFT_ALT,
-		0,//VK.VK_RIGHT_ALT,
+		0,//ImGuiKey.LEFT_ALT,
+		0,//ImGuiKey.RIGHT_ALT,
 		0,
 		0,
 		0,
@@ -875,8 +877,6 @@ namespace Jammy.Plugins.X11
 		0,
 		0
 		];
-	
-		*/
 	}
 }
 
