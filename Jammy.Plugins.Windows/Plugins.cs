@@ -49,8 +49,8 @@ namespace Jammy.Plugins.Windows
 				renderer = new ImGuiSkiaRenderer(scale, logger);
 
 				form = new Form();
-				form.Width = 800;
-				form.Height = 600;
+				form.Width = (int)(800 * scale);
+				form.Height = (int)(600 * scale);
 				form.Text = $"{plugin.GetType().Name} Window";
 
 				skiaControl = new SkiaHostControl(renderer, plugin, logger);

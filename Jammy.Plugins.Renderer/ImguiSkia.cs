@@ -31,6 +31,7 @@ namespace Jammy.Plugins.Renderer
 
 			ImGui.StyleColorsLight();
 			var io = ImGui.GetIO();
+			io.ConfigErrorRecoveryEnableAssert = false;
 			io.Fonts.AddFontDefault();
 			io.Fonts.Build();
 			io.Fonts.GetTexDataAsAlpha8(out IntPtr pixels, out int width, out int height, out _);

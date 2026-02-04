@@ -51,6 +51,8 @@ namespace Jammy.Interface
 		void StepOut();
 		void Stop();
 		void Go();
+		void LockEmulation();
+		void UnlockEmulation();
 	}
 
 	public interface ICPUAnalyser

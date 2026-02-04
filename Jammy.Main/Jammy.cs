@@ -123,13 +123,13 @@ namespace Jammy.Main
 
 			emulation.Start();
 
-			pluginManager.Start();
-
 			FetchUI(FetchUIFlags.All);
 			UpdateDisassembly();
 			UpdateDisplay();
 
 			InitUIRefreshThread();
+
+			pluginManager.Start();
 		}
 
 		private CancellationTokenSource uiUpdateTokenSource;

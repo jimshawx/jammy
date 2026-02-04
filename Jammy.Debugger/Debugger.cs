@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -539,6 +540,16 @@ namespace Jammy.Debugger
 		public void Go()
 		{
 			Amiga.SetEmulationMode(EmulationMode.Running);
+		}
+
+		public void LockEmulation()
+		{
+			Amiga.LockEmulation();
+		}
+
+		public void UnlockEmulation()
+		{
+			Amiga.UnlockEmulation();
 		}
 	}
 }
