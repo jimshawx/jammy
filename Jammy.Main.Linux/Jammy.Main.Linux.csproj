@@ -16,6 +16,11 @@
     <ProjectReference Include="..\Jammy.Extensions\Jammy.Extensions.csproj" />
     <ProjectReference Include="..\Jammy.Interface\Jammy.Interface.csproj" />
     <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />
+    <ProjectReference Include="..\Jammy.Plugins.Interface\Jammy.Plugins.Interface.csproj" />
+    <ProjectReference Include="..\Jammy.Plugins.JavaScript\Jammy.Plugins.JavaScript.csproj" />
+    <ProjectReference Include="..\Jammy.Plugins.Lua\Jammy.Plugins.Lua.csproj" />
+    <ProjectReference Include="..\Jammy.Plugins.X11\Jammy.Plugins.X11.csproj" />
+    <ProjectReference Include="..\Jammy.Plugins\Jammy.Plugins.csproj" />
     <ProjectReference Include="..\Jammy.UI.Settings.Avalonia\Jammy.UI.Settings.Avalonia.csproj" />
     <ProjectReference Include="..\Jammy.UI\Jammy.UI.csproj" />
     <ProjectReference Include="..\Jammy.Types\Jammy.Types.csproj" />

@@ -37,6 +37,11 @@ using Jammy.Disassembler.TypeMapper;
 using Jammy.Interface;
 using Jammy.NativeOverlay;
 using Jammy.NativeOverlay.Overlays;
+using Jammy.Plugins;
+using Jammy.Plugins.Interface;
+using Jammy.Plugins.JavaScript;
+using Jammy.Plugins.Lua;
+using Jammy.Plugins.X11;
 using Jammy.UI.Settings.Avalonia;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -157,8 +162,8 @@ public class Program
 			//.AddSingleton<IEmulationWindow, Core.EmulationWindow.DIB.EmulationWindow>()
 			//.AddSingleton<IEmulationWindow, Core.EmulationWindow.Window.EmulationWindow>()
 
-			//.AddSingleton<IEmulationWindow, Core.EmulationWindow.X.EmulationWindow>()
-			.AddSingleton<IEmulationWindow, Core.EmulationWindow.Wayland.EmulationWindow>()
+			.AddSingleton<IEmulationWindow, Core.EmulationWindow.X.EmulationWindow>()
+			//.AddSingleton<IEmulationWindow, Core.EmulationWindow.Wayland.EmulationWindow>()
 
 			.AddSingleton<IEmulation, Emulation>()
 			.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
@@ -179,7 +184,9 @@ public class Program
 			.AddSingleton<ILVOInterceptorAction, CloseLogger>()
 			//.AddSingleton<ILVOInterceptorAction, LoadSegLogger>()
 			//.AddSingleton<ILVOInterceptorAction, InternalLoadSegLogger>()
-			//.AddSingleton<ILVOInterceptorAction, AllocMemLogger>()
+			.AddSingleton<ILVOInterceptorAction, AllocMemLogger>()
+			.AddSingleton<ILVOInterceptorAction, FreeMemLogger>()
+			.AddSingleton<IAllocatedMemoryTracker, AllocatedMemoryTracker>()
 			.AddSingleton<ILVOInterceptorAction, OpenLibraryLogger>()
 			//.AddSingleton<ILVOInterceptorAction, OldOpenLibraryLogger>()
 			//.AddSingleton<ILVOInterceptorAction, OpenResourceLogger>()
@@ -298,6 +305,12 @@ public class Program
 		services.AddSingleton<IDatabaseDao, DatabaseDao>();
 		services.AddSingleton<IHeaderDao, HeaderDao>();
 		services.AddSingleton<IMemTypeDao, MemTypeDao>();
+
+		//plugins
+		services.AddSingleton<IPluginWindowFactory, X11PluginWindowFactory>();
+		services.AddSingleton<IPluginManager, PluginManager>();
+		services.AddSingleton<IPluginEngine, LuaEngine>();
+		services.AddSingleton<IPluginEngine, JavaScriptEngine>();
 
 		var serviceProvider = services.BuildServiceProvider();
 

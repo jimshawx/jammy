@@ -11,6 +11,7 @@ using Jammy.Core.Types.Types;
 using Jammy.Debugger;
 using Jammy.Disassembler;
 using Jammy.Interface;
+using Jammy.Plugins.Interface;
 using Jammy.Types;
 using Jammy.Types.Options;
 using Microsoft.Extensions.Logging;
@@ -36,7 +37,7 @@ namespace Jammy.Main.Linux
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
 		private readonly IDisassemblyRanges disassemblyRanges;
-
+		private readonly IPluginManager pluginManager;
 		private readonly List<AddressRange> memoryDumpRanges = new List<AddressRange>
 				{
 					new AddressRange(0x000000, 0x10000),
@@ -54,7 +55,7 @@ namespace Jammy.Main.Linux
 			IFlowAnalyser flowAnalyser, /*IGraph graph,*/ IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
 			IChipRAM chipRAM, /*ILogger<GfxScan> gfxLogger,*/ /*ILogger<StringScan> stringLogger,*/ IMemoryMapper memoryMapper,
 			/*ILogger<DMAExplorer> dmaLogger,*/ IInstructionAnalysisDatabase instructionAnalysisDatabase,
-			IDisassemblyRanges disassemblyRanges,
+			IDisassemblyRanges disassemblyRanges, IPluginManager pluginManager,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options) : this()
 		{
 			this.emulation = emulation;
@@ -67,7 +68,7 @@ namespace Jammy.Main.Linux
 			//this.graph = graph;
 			this.logger = logger;
 			this.disassemblyRanges = disassemblyRanges;
-
+			this.pluginManager = pluginManager;
 			var renderer = ((IRenderRoot)this).Renderer;
 			logger.LogTrace($"Using Avalonia Renderer: {renderer.GetType().FullName}");
 
@@ -101,6 +102,7 @@ namespace Jammy.Main.Linux
 			UpdateDisplay();
 
 			//InitUIRefreshThread();
+			pluginManager.Start();
 		}
 
 		//private CancellationTokenSource uiUpdateTokenSource;
