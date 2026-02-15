@@ -49,6 +49,7 @@
     <ProjectReference Include="..\Jammy.Plugins.Lua\Jammy.Plugins.Lua.csproj" />
     <ProjectReference Include="..\Jammy.Plugins.Windows\Jammy.Plugins.Windows.csproj" />
     <ProjectReference Include="..\Jammy.Plugins\Jammy.Plugins.csproj" />
+    <ProjectReference Include="..\Jammy.WebAPI\Jammy.WebAPI.csproj" />
     <ProjectReference Include="..\Parky.FormToAvalonia\Parky.FormToAvalonia.csproj" />
     <ProjectReference Include="..\Parky.Logging.DebugAsyncRTF\Parky.Logging.DebugAsyncRTF.csproj" />
     <ProjectReference Include="..\Parky.Logging.DebugAsync\Parky.Logging.DebugAsync.csproj" />

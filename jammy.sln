@@ -111,6 +111,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Plugins.Interface", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Plugins.X11", "Jammy.Plugins.X11\Jammy.Plugins.X11.csproj", "{0F3DDD4F-60AB-4CBB-91F9-2B880B5853EA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.WebAPI", "Jammy.WebAPI\Jammy.WebAPI.csproj", "{DD017A73-35F2-4DA8-9414-D2E4380D53D6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -333,6 +335,10 @@ Global
 		{0F3DDD4F-60AB-4CBB-91F9-2B880B5853EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F3DDD4F-60AB-4CBB-91F9-2B880B5853EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F3DDD4F-60AB-4CBB-91F9-2B880B5853EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD017A73-35F2-4DA8-9414-D2E4380D53D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD017A73-35F2-4DA8-9414-D2E4380D53D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD017A73-35F2-4DA8-9414-D2E4380D53D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD017A73-35F2-4DA8-9414-D2E4380D53D6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

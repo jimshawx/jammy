@@ -42,6 +42,7 @@ using Jammy.Plugins.JavaScript;
 using Jammy.Plugins.Lua;
 using Jammy.Plugins.Windows;
 using Jammy.UI.Settings;
+using Jammy.WebAPI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -317,6 +318,9 @@ namespace Jammy.Main
 			services.AddSingleton<IPluginEngine, Plugins.JavaScript.Jint.JavaScriptEngine>();
 			//services.AddSingleton<IPluginEngine, Plugins.JavaScript.ClearScript.JavaScriptEngine>();
 
+			//webservices
+			services.AddSingleton<IWebServer, WebServer>();
+
 			var serviceProvider = services.BuildServiceProvider();
 
 			//ensure the default database exists
@@ -369,6 +373,9 @@ namespace Jammy.Main
 
 			//hack to start IPF
 			var ipf = serviceProvider.GetRequiredService<IIPF>();
+
+			//hack to start webserver
+			var web = serviceProvider.GetRequiredService<IWebServer>();
 
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");
