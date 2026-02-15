@@ -49,6 +49,7 @@ using Parky.Logging;
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 using System.Windows.Forms;
 
@@ -313,7 +314,8 @@ namespace Jammy.Main
 			services.AddSingleton<IPluginWindowFactory, WindowsPluginWindowFactory>();
 			services.AddSingleton<IPluginManager, PluginManager>();
 			services.AddSingleton<IPluginEngine, LuaEngine>();
-			services.AddSingleton<IPluginEngine, JavaScriptEngine>();
+			services.AddSingleton<IPluginEngine, Plugins.JavaScript.Jint.JavaScriptEngine>();
+			//services.AddSingleton<IPluginEngine, Plugins.JavaScript.ClearScript.JavaScriptEngine>();
 
 			var serviceProvider = services.BuildServiceProvider();
 

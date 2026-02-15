@@ -39,7 +39,7 @@ using Jammy.NativeOverlay;
 using Jammy.NativeOverlay.Overlays;
 using Jammy.Plugins;
 using Jammy.Plugins.Interface;
-using Jammy.Plugins.JavaScript;
+using Jammy.Plugins.JavaScript.Jint;
 using Jammy.Plugins.Lua;
 using Jammy.Plugins.X11;
 using Jammy.UI.Settings.Avalonia;

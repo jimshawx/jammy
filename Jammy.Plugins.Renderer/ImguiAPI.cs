@@ -91,7 +91,7 @@ public static class ImGuiAPI
 			   ?? throw new InvalidOperationException("Failed to instantiate wrapper");
 	}
 
-	private static void EmitDirectWrapper(
+	private static void EmitDirectWrapper0(
 		TypeBuilder typeBuilder,
 		MethodInfo targetMethod,
 		ParameterInfo[] parameters)
@@ -115,6 +115,169 @@ public static class ImGuiAPI
 		il.Emit(OpCodes.Call, targetMethod);
 		il.Emit(OpCodes.Ret);
 	}
+	private static void EmitDirectWrapper(
+	TypeBuilder typeBuilder,
+	MethodInfo targetMethod,
+	ParameterInfo[] parameters)
+	{
+		// Replace string parameters with object in the wrapper signature
+		var wrapperParamTypes = parameters
+			.Select(p => p.ParameterType == typeof(string) ? typeof(object) : p.ParameterType)
+			.ToArray();
+
+		var mb = typeBuilder.DefineMethod(
+			targetMethod.Name,
+			MethodAttributes.Public,
+			targetMethod.ReturnType,
+			wrapperParamTypes);
+
+		for (int i = 0; i < parameters.Length; i++)
+			mb.DefineParameter(i + 1, ParameterAttributes.None, parameters[i].Name);
+
+		var il = mb.GetILGenerator();
+
+		for (int i = 0; i < parameters.Length; i++)
+		{
+			var originalType = parameters[i].ParameterType;
+
+			// Load argument
+			il.Emit(OpCodes.Ldarg_S, (byte)(i + 1));
+
+			if (originalType == typeof(string))
+			{
+				// Convert object → string via ToString()
+				var toString = typeof(object).GetMethod(nameof(ToString));
+				il.Emit(OpCodes.Callvirt, toString);
+			}
+		}
+
+		il.Emit(OpCodes.Call, targetMethod);
+		il.Emit(OpCodes.Ret);
+	}
+	private static void EmitDirectWrapper2(
+	TypeBuilder typeBuilder,
+	MethodInfo targetMethod,
+	ParameterInfo[] parameters)
+	{
+		// Replace string → object, int → double
+		var wrapperParamTypes = parameters
+			.Select(p =>
+				p.ParameterType == typeof(string) ? typeof(object) :
+				p.ParameterType == typeof(int) ? typeof(double) :
+				p.ParameterType)
+			.ToArray();
+
+		var mb = typeBuilder.DefineMethod(
+			targetMethod.Name,
+			MethodAttributes.Public,
+			targetMethod.ReturnType,
+			wrapperParamTypes);
+
+		for (int i = 0; i < parameters.Length; i++)
+			mb.DefineParameter(i + 1, ParameterAttributes.None, parameters[i].Name);
+
+		var il = mb.GetILGenerator();
+
+		for (int i = 0; i < parameters.Length; i++)
+		{
+			var originalType = parameters[i].ParameterType;
+
+			// Load wrapper argument
+			il.Emit(OpCodes.Ldarg_S, (byte)(i + 1));
+
+			if (originalType == typeof(string))
+			{
+				// object → string via ToString()
+				var toString = typeof(object).GetMethod(nameof(ToString));
+				il.Emit(OpCodes.Callvirt, toString);
+			}
+			else if (originalType == typeof(int))
+			{
+				// wrapper param is double → convert to int32
+				il.Emit(OpCodes.Conv_I4);
+			}
+		}
+
+		il.Emit(OpCodes.Call, targetMethod);
+		il.Emit(OpCodes.Ret);
+	}
+	private static void EmitDirectWrapper3(
+	TypeBuilder typeBuilder,
+	MethodInfo targetMethod,
+	ParameterInfo[] parameters)
+	{
+		// Replace string → object, int → double, enum → double
+		var wrapperParamTypes = parameters
+			.Select(p =>
+				p.ParameterType == typeof(string) ? typeof(object) :
+				p.ParameterType == typeof(int) ? typeof(double) :
+				p.ParameterType.IsEnum ? typeof(double) :
+				p.ParameterType)
+			.ToArray();
+
+		var mb = typeBuilder.DefineMethod(
+			targetMethod.Name,
+			MethodAttributes.Public,
+			targetMethod.ReturnType,
+			wrapperParamTypes);
+
+		for (int i = 0; i < parameters.Length; i++)
+			mb.DefineParameter(i + 1, ParameterAttributes.None, parameters[i].Name);
+
+		var il = mb.GetILGenerator();
+
+		for (int i = 0; i < parameters.Length; i++)
+		{
+			var originalType = parameters[i].ParameterType;
+
+			// Load wrapper argument
+			il.Emit(OpCodes.Ldarg_S, (byte)(i + 1));
+
+			if (originalType == typeof(string))
+			{
+				// object → string via ToString()
+				var toString = typeof(object).GetMethod(nameof(ToString));
+				il.Emit(OpCodes.Callvirt, toString);
+			}
+			else if (originalType == typeof(int))
+			{
+				// wrapper param is double → convert to int32
+				il.Emit(OpCodes.Conv_I4);
+			}
+			else if (originalType.IsEnum)
+			{
+				// wrapper param is double → convert to enum's underlying type
+				var underlying = Enum.GetUnderlyingType(originalType);
+
+				// Convert double → underlying integer
+				if (underlying == typeof(int))
+					il.Emit(OpCodes.Conv_I4);
+				else if (underlying == typeof(uint))
+					il.Emit(OpCodes.Conv_U4);
+				else if (underlying == typeof(short))
+					il.Emit(OpCodes.Conv_I2);
+				else if (underlying == typeof(ushort))
+					il.Emit(OpCodes.Conv_U2);
+				else if (underlying == typeof(byte))
+					il.Emit(OpCodes.Conv_U1);
+				else if (underlying == typeof(sbyte))
+					il.Emit(OpCodes.Conv_I1);
+				else if (underlying == typeof(long))
+					il.Emit(OpCodes.Conv_I8);
+				else if (underlying == typeof(ulong))
+					il.Emit(OpCodes.Conv_U8);
+				else
+					throw new NotSupportedException($"Unsupported enum underlying type: {underlying}");
+
+				// Now treat the integer as the enum
+				il.Emit(OpCodes.Conv_I4); // IL requires the correct stack type
+			}
+		}
+
+		il.Emit(OpCodes.Call, targetMethod);
+		il.Emit(OpCodes.Ret);
+	}
+
 
 	/// <summary>
 	/// For methods with exactly one ref/out parameter:

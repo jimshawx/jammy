@@ -1,4 +1,5 @@
-﻿using Jammy.Interface;
+﻿using DbUp.Engine;
+using Jammy.Interface;
 using Jammy.Plugins.Interface;
 using Microsoft.Extensions.Logging;
 using MoonSharp.Interpreter;
@@ -19,20 +20,98 @@ namespace Jammy.Plugins.Lua
 
 		public LuaEngine(IDebugger debugger, ILogger<LuaEngine> logger)
 		{
-			UserData.RegisterType(imguiApi.GetType());
+			var asm = typeof(ImGuiNET.ImGui).Assembly; // or any type from ImGui.NET
+			UserData.RegisterAssembly(asm);
+
+			//UserData.RegisterType(typeof(ImGuiNET.ImGuiListClipper));
+
+
+			// ImGuiListClipper
+			UserData.RegisterType(typeof(ImGuiNET.ImGuiListClipper));
+			
+
+			// ImDrawListPtr
+			UserData.RegisterType(typeof(ImGuiNET.ImDrawListPtr));
+			
+
+			// ImDrawDataPtr
+			UserData.RegisterType(typeof(ImGuiNET.ImDrawDataPtr));
+			
+
+			// ImGuiIOPtr
+			UserData.RegisterType(typeof(ImGuiNET.ImGuiIOPtr));
+			
+
+			// ImGuiStylePtr
+			UserData.RegisterType(typeof(ImGuiNET.ImGuiStylePtr));
+			
+
+			// ImFontPtr
+			UserData.RegisterType(typeof(ImGuiNET.ImFontPtr));
+			
+
+			// ImFontAtlasPtr
+			UserData.RegisterType(typeof(ImGuiNET.ImFontAtlasPtr));
+			
+
+			// ImGuiViewportPtr
+			UserData.RegisterType(typeof(ImGuiNET.ImGuiViewportPtr));
+			
+
+
+
+			UserData.RegisterType(typeof(ImGuiNET.ImGui));
+			//UserData.RegisterType(imguiApi.GetType());
 			UserData.RegisterType(debugger.GetType());
-			//Danger, Will Robinson!
-			UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
+			UserData.RegisterType<System.Numerics.Vector2>();
+
+
+													   //Danger, Will Robinson!
+			//UserData.RegistrationPolicy = InteropRegistrationPolicy.Automatic;
 			this.debugger = debugger;
 			this.logger = logger;
+		}
+
+		public bool SupportsExtension(string ext)
+		{
+			return ext == ".lua";
 		}
 
 		public IPlugin NewPlugin(string code)
 		{
 			var script = new Script();
-			script.Globals["imgui"] = imguiApi;
+
+			script.Globals["ImGuiListClipper"] =
+				(Func<ImGuiNET.ImGuiListClipper>)(() => new ImGuiNET.ImGuiListClipper());
+
+			//script.Globals["ImGuiListClipper"] = DynValue.NewCallback((ctx, args) => DynValue.NewUserData(UserData.Create(new ImGuiNET.ImGuiListClipper())));
+			script.Globals["ImGuiListClipper"] = DynValue.NewCallback(new CallbackFunction((ctx, args) => DynValue.FromObject(script, new ImGuiNET.ImGuiListClipper())));
+			script.Globals["ImDrawListPtr"] =
+				(Func<ImGuiNET.ImDrawListPtr>)(() => new ImGuiNET.ImDrawListPtr());
+			script.Globals["ImDrawDataPtr"] =
+				(Func<ImGuiNET.ImDrawDataPtr>)(() => new ImGuiNET.ImDrawDataPtr());
+			script.Globals["ImGuiIOPtr"] =
+				(Func<ImGuiNET.ImGuiIOPtr>)(() => new ImGuiNET.ImGuiIOPtr());
+			script.Globals["ImGuiStylePtr"] =
+				(Func<ImGuiNET.ImGuiStylePtr>)(() => new ImGuiNET.ImGuiStylePtr());
+			script.Globals["ImFontPtr"] =
+				(Func<ImGuiNET.ImFontPtr>)(() => new ImGuiNET.ImFontPtr());
+			script.Globals["ImFontAtlasPtr"] =
+				(Func<ImGuiNET.ImFontAtlasPtr>)(() => new ImGuiNET.ImFontAtlasPtr());
+			script.Globals["ImGuiViewportPtr"] =
+				(Func<ImGuiNET.ImGuiViewportPtr>)(() => new ImGuiNET.ImGuiViewportPtr());
+
+			//script.Globals["imgui"] = imguiApi;
+			script.Globals["ImGui"] = UserData.CreateStatic(typeof(ImGuiNET.ImGui));
+			//script.Globals["ImGuiListClipper"] = typeof(ImGuiNET.ImGuiListClipper);
+
+
+			script.Globals["Vec2"] = typeof(System.Numerics.Vector2);
 			script.Globals["print"] = (object o)=>logger.LogTrace($"{o?.ToString()}");
 			script.Globals["jammy"] = debugger;
+
+			logger.LogTrace("ImGuiListClipper global is: " + script.Globals["ImGuiListClipper"]);
+
 			try 
 			{ 
 				script.DoString(code);

@@ -352,6 +352,13 @@ namespace Jammy.Debugger
 			return new MemoryDump(memory.GetBulkRanges());
 		}
 
+		public MemoryContent GetMemoryContent()
+		{
+			var r = new MemoryContent();
+			r.Contents.AddRange(memory.GetBulkRanges());
+			return r;
+		}
+
 		public uint Read32(uint address)
 		{
 			return memory.UnsafeRead32(address);

@@ -1,4 +1,5 @@
 ﻿using Jammy.Plugins.Interface;
+using Jammy.Plugins.JavaScript.Jint;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -39,8 +40,8 @@ namespace Jammy.Plugins
 		{
 			this.pluginWindowFactory = pluginWindowFactory;
 			this.logger = logger;
-			luaEngine = pluginEngines.SingleOrDefault(e => e is Lua.LuaEngine);
-			jsEngine = pluginEngines.SingleOrDefault(e => e is JavaScript.JavaScriptEngine);
+			luaEngine = pluginEngines.SingleOrDefault(e => e.SupportsExtension(".lua"));
+			jsEngine = pluginEngines.SingleOrDefault(e => e.SupportsExtension(".js"));
 		}
 
 		public void Start()

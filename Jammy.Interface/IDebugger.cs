@@ -53,6 +53,7 @@ namespace Jammy.Interface
 		void Go();
 		void LockEmulation();
 		void UnlockEmulation();
+		MemoryContent GetMemoryContent();
 	}
 
 	public interface ICPUAnalyser

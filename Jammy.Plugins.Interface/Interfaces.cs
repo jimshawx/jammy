@@ -30,5 +30,6 @@ namespace Jammy.Plugins.Interface
 	public interface IPluginEngine
 	{
 		IPlugin NewPlugin(string code);
+		bool SupportsExtension(string ext);
 	}
 }

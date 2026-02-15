@@ -1,13 +1,10 @@
-﻿using Jammy.Interface;
-using Jammy.Plugins.Interface;
-using Jint;
-using Jint.Native;
-using Jint.Native.Function;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using System.Text;
+using System.Xml;
+using System.Xml.Serialization;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -18,39 +15,56 @@ namespace Jammy.Plugins.JavaScript
 	public class JsConsole
 	{
 		private readonly ILogger logger;
+		private readonly Dictionary<object, int> counts = new Dictionary<object, int>();
+		private readonly Dictionary<object, Stopwatch> timers = new Dictionary<object, Stopwatch>();
 
 		public JsConsole(ILogger logger)
 		{
 			this.logger = logger;
 		}
 
-		public void log(object o) => logger.LogTrace($"{o?.ToString()}");
-
-		public void assert() { }
+		public void assert(object o, object m) { }
 		//Log an error message to console if the first argument is false.
 
 		public void clear() { }
 		//Clear the console
 
-		public void count() { }
+		public void count(object l) { if (!counts.ContainsKey(l)) counts.Add(l,0); counts[l]++; }
 		//Log the number of times this line has been called with the given label.
 
-		public void countReset() { }
+		public void countReset(object l) { counts[l] = 0;}
 		//Resets the value of the counter with the given label.
 
-		public void debug() { }
+		public void debug(object o) => logger.LogTrace(o?.ToString());
 		//Outputs a message to the console with the debug log level.
 
 		public void dir() { }
 		//Displays an interactive listing of the properties of a specified JavaScript object. This listing lets you use disclosure triangles to examine the contents of child objects.
 
-		public void dirxml() { }
+		public void dirxml(object o)
+		{
+			try { 
+				var xml = new XmlSerializer(o.GetType());
+				var sb = new StringBuilder();
+				using var t = XmlWriter.Create(sb, new XmlWriterSettings {Indent  = true });
+				xml.Serialize(t, o);
+				logger.LogTrace(sb.ToString());
+				Trace.WriteLine(sb.ToString());
+			} catch { }
+
+			try { 
+				string json = JsonConvert.SerializeObject(o, Newtonsoft.Json.Formatting.Indented);
+				logger.LogTrace(json);
+				Trace.WriteLine(json);
+			} catch { }
+		}
+
 		//Displays an XML/HTML Element representation of the specified object if possible or the JavaScript Object view if it is not possible.
 
-		public void error() { }
+		public void error(object o) => logger.LogTrace(o?.ToString());
 		//Outputs a message to the console with the error log level.
 
-		public void exception() { } //Non-standard Deprecated
+		public void exception(object o) { error(o); } //Non-standard Deprecated
 		//An alias for public void error().
 
 		public void group() { }
@@ -62,10 +76,10 @@ namespace Jammy.Plugins.JavaScript
 		public void groupEnd() { }
 		//Exits the current inline group.
 
-		public void info() { }
+		public void info(object o) => logger.LogTrace(o?.ToString());
 		//Outputs a message to the console with the info log level.
 
-		public void log() { }
+		public void log(object o) => logger.LogTrace(o?.ToString());
 		//Outputs a message to the public void 
 
 		public void profile() { } //Non-standard
@@ -77,13 +91,13 @@ namespace Jammy.Plugins.JavaScript
 		public void table() { }
 		//Displays tabular data as a table.
 
-		public void time() { }
+		public void time(object o) { timers[o] = new Stopwatch(); timers[o].Start(); }
 		//Starts a timer with a name specified as an input parameter.Up to 10,000 simultaneous timers can run on a given page.
 
-		public void timeEnd() { }
+		public void timeEnd(object o) { if (!timers.ContainsKey(o)) { warn("Timer '"+o?.ToString() + "' does not exist"); return; } timers[o].Stop(); log(timers[o].ElapsedMilliseconds); }
 		//Stops the specified timer and logs the elapsed time in milliseconds since it started.
 
-		public void timeLog() { }
+		public void timeLog(object o) { if (!timers.ContainsKey(o)) { warn("Timer '" + o?.ToString() + "' does not exist"); return; } log(timers[o].ElapsedMilliseconds); }
 		//Logs the value of the specified timer to the public void 
 
 		public void timeStamp() { } //Non-standard
@@ -92,94 +106,7 @@ namespace Jammy.Plugins.JavaScript
 		public void trace() { }
 		//Outputs a stack trace.
 
-		public void warn() { }
+		public void warn(object o) => logger.LogTrace(o?.ToString());
 		//Outputs a message to the console with the warning log level.
-	}
-
-	public class JavaScriptEngine : IPluginEngine
-	{
-		private readonly IDebugger debugger;
-		private readonly ILogger<JavaScriptEngine> logger;
-		private static object imguiApi = ImGuiAPI.Instance;
-
-		public JavaScriptEngine(IDebugger debugger, ILogger<JavaScriptEngine> logger)
-		{
-			this.debugger = debugger;
-			this.logger = logger;
-
-			//log the methods we are proxying
-			var sb = new StringBuilder();
-			foreach (var m in imguiApi.GetType().GetMethods(
-					BindingFlags.Public |
-					BindingFlags.Instance |
-					BindingFlags.DeclaredOnly))
-			{
-				sb.AppendLine(m.ToString());
-			}
-			Trace.Write(sb.ToString());
-		}
-
-		public IPlugin NewPlugin(string code)
-		{
-			var engine = new Engine(cfg => cfg.AllowClr());
-
-			engine.SetValue("console", new JsConsole(logger));
-
-			engine.SetValue("imgui", imguiApi);
-			engine.SetValue("jammy", debugger);
-
-			try 
-			{ 
-				engine.Execute(code);
-			}
-			catch (JintException ex)
-			{
-				logger.LogError($"JavaScript Error:\n{ex}");
-				return null;
-			}
-
-			return new JavaScriptPlugin(engine, logger);
-		}
-	}
-
-	public class JavaScriptPlugin : IPlugin
-    {
-		private readonly Engine engine;
-		private readonly ILogger logger;
-		private bool scriptIsBroken = false;
-
-		public JavaScriptPlugin(Engine engine, ILogger logger)
-		{
-			this.engine = engine;
-			this.logger = logger;
-			ExecuteFn("init");
-		}
-
-		public void Render()
-		{
-			ExecuteFn("update");
-		}
-
-		private void ExecuteFn(string fnName)
-		{
-			if (scriptIsBroken) return;
-
-			try
-			{ 
-				var fn = engine.GetValue(fnName);
-				if (fn is ScriptFunction)
-					fn.Call(JsValue.Undefined);
-			}
-			catch (JintException ex)
-			{
-				logger.LogError($"JavaScript Error in function {fnName}:\n{ex}");
-				scriptIsBroken = true;
-			}
-			catch (Exception ex)
-			{
-				logger.LogError($"JavaScript unknown exception\n{ex}");
-				scriptIsBroken = true;
-			}
-		}
 	}
 }

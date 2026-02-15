@@ -6,7 +6,11 @@
 
   <ItemGroup>
     <PackageReference Include="Jint" Version="4.5.0" />
+    <PackageReference Include="Microsoft.ClearScript" Version="7.5.0" />
+    <PackageReference Include="Microsoft.ClearScript.V8.Native.linux-x64" Version="7.5.0" />
+    <PackageReference Include="Microsoft.ClearScript.V8.Native.win-x64" Version="7.5.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
   <ItemGroup>
