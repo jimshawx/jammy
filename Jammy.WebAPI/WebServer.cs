@@ -84,12 +84,9 @@ namespace Jammy.WebAPI
 			{
 				context = httpListener.EndGetContext(ar);
 			}
-			catch (ObjectDisposedException)
+			catch (Exception ex)
 			{
-				return;
-			}
-			catch (HttpListenerException)
-			{
+				logger.LogTrace($"EndGetContext crashed {ex}");
 				return;
 			}
 

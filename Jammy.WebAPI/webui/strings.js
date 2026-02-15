@@ -1,57 +1,74 @@
-$(document).ready(function () {
-	$(".t").click(function () {
-		$("h2").text("Hello from jQuery!");
-	});
-
-	$('.s').click(function () {
+$(document).ready(function()
+{
+	$('.s').click(function()
+	{
 		$.ajax({
 			url: "http://localhost:8080/jammy/debugger/memory",
 			type: 'GET',
 			dataType: 'json',
-			success: function (res) {
-
-				//console.log(res);
-				//var q = JSON.parse(res);
+			success: function(res)
+			{
 				$('.u').text(GetStrings(res.Contents));
 			},
-			error: function (xhr, status, error) {
+			error: function(xhr, status, error)
+			{
 				console.log('' + xhr + ' ' + status + ' ' + error);
 			}
 		});
 	});
 });
 
-function GetStrings(ram) {
+function IsString(b)
+{
+	return b >= 32 && b < 128;
+}
 
+var minW = 4;
+
+function GetStrings(ram)
+{
 	var startI;
 	var sb = []
-	for (k = 0; k < ram.length; k++) {
+	for (k = 0; k < ram.length; k++)
+	{
 		startI = -1;
 		var mem = ram[k].Memory;
-		for (i = 0; i < ram[k].length; i++) {
+		mem = base64ToCharArray(mem);
+		for (i = 0; i < mem.length; i++)
+		{
 			var isPrint = IsString(mem[i]);
-			if (isPrint && startI == -1) {
+			if (isPrint && startI == -1)
+			{
 				startI = i;
 			}
-			else if (!isPrint && startI != -1) {
+			else if (!isPrint && startI != -1)
+			{
 				var len = i - startI;
-				if (len >= minW) {
+				if (len >= minW)
+				{
 					sb.push(slice(mem, startI, len));
 				}
 				startI = -1;
 			}
 		}
 	}
-	return sb.map(x => { return String.fromCharCode(...x); });//.join("\n");
+	return sb.map(x => { return String.fromCharCode(...x); }).join("\n");
 }
 
-function slice(arr, offset, length) {
+function base64ToCharArray(base64)
+{
+	return Uint8Array.fromBase64(base64);
+}
+
+function slice(arr, offset, length)
+{
 	ll = arr.Length;
 	return {
 		length,
 		offset,
 		ll,
-		[Symbol.iterator]() {
+		[Symbol.iterator]()
+		{
 			let i = 0;
 			return {
 				next: () => ({
