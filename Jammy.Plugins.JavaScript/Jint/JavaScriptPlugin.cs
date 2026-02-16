@@ -29,15 +29,15 @@ namespace Jammy.Plugins.JavaScript.Jint
 			this.logger = logger;
 
 			//log the methods we are proxying
-			var sb = new StringBuilder();
-			foreach (var m in imguiApi.GetType().GetMethods(
-					BindingFlags.Public |
-					BindingFlags.Instance |
-					BindingFlags.DeclaredOnly))
-			{
-				sb.AppendLine(m.ToString());
-			}
-			Trace.Write(sb.ToString());
+			//var sb = new StringBuilder();
+			//foreach (var m in imguiApi.GetType().GetMethods(
+			//		BindingFlags.Public |
+			//		BindingFlags.Instance |
+			//		BindingFlags.DeclaredOnly))
+			//{
+			//	sb.AppendLine(m.ToString());
+			//}
+			//Trace.Write(sb.ToString());
 		}
 
 		public bool SupportsExtension(string ext)
