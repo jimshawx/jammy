@@ -49,6 +49,19 @@ namespace Jammy.WebAPI
 			return mem;
 		}
 
+		[UrlAction("POST", "emucontrol")]
+		public void EmuControl(string command)
+		{
+			if (command == "go")
+				debugger.Go();
+			else if (command == "stop")
+				debugger.Stop();
+			else if (command == "step")
+				debugger.Step();
+			else if (command == "stepout")
+				debugger.StepOut();
+		}
+
 		[UrlAction("PUT","testput")]
 		public void TestPut(string s)
 		{

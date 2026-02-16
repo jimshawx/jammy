@@ -1,6 +1,6 @@
-$(document).ready(function()
+$(() =>
 {
-	$('.s').click(function()
+	$('#strings').on("click", function()
 	{
 		$.ajax({
 			url: "http://localhost:8080/jammy/debugger/memory",
@@ -8,7 +8,7 @@ $(document).ready(function()
 			dataType: 'json',
 			success: function(res)
 			{
-				$('.u').text(GetStrings(res.Contents));
+				$('#stringtext').text(GetStrings(res.Contents));
 			},
 			error: function(xhr, status, error)
 			{
@@ -16,6 +16,22 @@ $(document).ready(function()
 			}
 		});
 	});
+
+	$('.action').on("click", function()
+	{
+		var action = $(this).data('action');
+		$.ajax({
+			url: "http://localhost:8080/jammy/debugger/emuControl?_1=0",
+			type: 'POST',
+			data: action,
+			contentType: "text/plain",
+			error: function(xhr, status, error)
+			{
+				console.log('' + xhr + ' ' + status + ' ' + error);
+			}
+		});
+	});
+
 });
 
 function IsString(b)
