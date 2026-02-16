@@ -43,6 +43,7 @@ using Jammy.Plugins.JavaScript.Jint;
 using Jammy.Plugins.Lua;
 using Jammy.Plugins.X11;
 using Jammy.UI.Settings.Avalonia;
+using Jammy.WebAPI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -311,6 +312,9 @@ public class Program
 		services.AddSingleton<IPluginManager, PluginManager>();
 		services.AddSingleton<IPluginEngine, LuaEngine>();
 		services.AddSingleton<IPluginEngine, JavaScriptEngine>();
+
+		//webservices
+		services.AddSingleton<IWebServer, WebServer>();
 
 		var serviceProvider = services.BuildServiceProvider();
 

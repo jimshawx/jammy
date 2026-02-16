@@ -1,5 +1,4 @@
-﻿using Jammy.Interface;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -11,7 +10,6 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Web;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -21,21 +19,33 @@ namespace Jammy.WebAPI
 {
 	public interface IWebServer
 	{
+		void Start();
 	}
 
 	public class WebServer : IWebServer
 	{
 		private readonly ILogger<WebServer> logger;
+		private readonly IServiceProvider serviceProvider;
 		private readonly HttpListener httpListener;
 		private readonly Dictionary<string, Func<object>> getActions = new Dictionary<string, Func<object>>();
 		private readonly Dictionary<string, Action<object>> putActions = new Dictionary<string, Action<object>>();
-		private const string rootUrl = "jammy";
 		private readonly JsonSerializer serializer = new JsonSerializer();
+
+		private const string rootUrl = "jammy";
 
 		public WebServer(ILogger<WebServer> logger, IServiceProvider serviceProvider)
 		{
 			this.logger = logger;
+			this.serviceProvider = serviceProvider;
 
+			//netsh http add urlacl url=http://+:8080/ user=Everyone
+
+			httpListener = new HttpListener();
+			httpListener.Prefixes.Add("http://+:8080/");
+		}
+
+		public void Start()
+		{ 
 			ThreadPool.GetMaxThreads(out var workerThreads, out var completionPortThreads);
 			logger.LogTrace($"ThreadPool size {workerThreads} {completionPortThreads}");
 
@@ -44,15 +54,14 @@ namespace Jammy.WebAPI
 			var matchingClasses = assembly
 				.GetTypes()
 				.Where(t => t.IsClass)
-				.Where(t => t.GetCustomAttributes(typeof(UrlPathAttribute), inherit: true).Any())
-				.ToList();
+				.Where(t => t.GetCustomAttributes(typeof(UrlPathAttribute), inherit: true).Any());
+
 			foreach (var clas in matchingClasses)
 			{
 				var path = clas.GetCustomAttribute<UrlPathAttribute>();
 				var methods = clas
 					.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
-					.Where(m => m.GetCustomAttributes(typeof(UrlActionAttribute), false).Any())
-					.ToList();
+					.Where(m => m.GetCustomAttributes(typeof(UrlActionAttribute), false).Any());
 
 				var instance = ActivatorUtilities.CreateInstance(serviceProvider, clas);
 				foreach (var method in methods)
@@ -69,12 +78,7 @@ namespace Jammy.WebAPI
 				}
 			}
 
-			//netsh http add urlacl url=http://+:8080/ user=Everyone
-
-			httpListener = new HttpListener();
-			httpListener.Prefixes.Add("http://+:8080/");
 			httpListener.Start();
-
 			httpListener.BeginGetContext(ListenerCallback, null);
 		}
 
@@ -97,7 +101,7 @@ namespace Jammy.WebAPI
 			ThreadPool.QueueUserWorkItem(_ => ProcessRequest(context, logger));
 		}
 
-		private void ProcessRequest(HttpListenerContext context, ILogger logger)
+		private bool ProcessRequest(HttpListenerContext context, ILogger logger)
 		{
 			try
 			{
@@ -112,7 +116,7 @@ namespace Jammy.WebAPI
 				if (context.Request.HttpMethod == "GET")
 				{
 					var action = getActions.GetValueOrDefault(SanitizePath(context.Request.Url));
-					if (action == null) { Response(context.Response, 404); return; }
+					if (action == null) return Response(context.Response, 404);
 
 					using var streamWriter = new StreamWriter(context.Response.OutputStream, Encoding.UTF8);
 					using (var jsonWriter = new JsonTextWriter(streamWriter))
@@ -120,47 +124,41 @@ namespace Jammy.WebAPI
 						serializer.Serialize(jsonWriter, action());
 					}
 					context.Response.ContentType = "application/json";
-					Response(context.Response, 200);
-					return;
+					return Response(context.Response, 200);
 				}
 				else if (context.Request.HttpMethod == "PUT" || context.Request.HttpMethod == "POST")
 				{
 					var action = putActions.GetValueOrDefault(SanitizePath(context.Request.Url));
-					if (action == null) { Response(context.Response, 404); return; }
+					if (action == null) return Response(context.Response, 404);
 
 					using var streamReader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
 					
 					switch (SanitizeContentType(context.Request.ContentType)) 
 					{ 
 						case "json":
+							using (var jsonReader = new JsonTextReader(streamReader))
 							{ 
-							using var jsonReader = new JsonTextReader(streamReader);
-							dynamic request = serializer.Deserialize(jsonReader);
-							action(request);
+								object request = serializer.Deserialize(jsonReader);
+								action(request);
 							}
-							Response(context.Response, 200);
-							return;
+							return Response(context.Response, 200);
 
 						case "plain":
 							var text  = streamReader.ReadToEnd();
 							action(text);
-							Response(context.Response, 200);
-							return;
+							return Response(context.Response, 200);
 
 						default:
-							Response(context.Response, 415);
-							return;
+							return Response(context.Response, 415);
 					}
 				}
 				else if (context.Request.HttpMethod == "OPTIONS") 
 				{
-					Response(context.Response, 200);
-					return;
+					return Response(context.Response, 200);
 				}
 				else
 				{
-					Response(context.Response, 400);
-					return;
+					return Response(context.Response, 400);
 				}
 				throw new UnreachableException();
 			}
@@ -169,16 +167,16 @@ namespace Jammy.WebAPI
 				context.Response.ContentType = "text/plain";
 				var responseString = ex.ToString();
 				context.Response.OutputStream.Write(Encoding.UTF8.GetBytes(responseString, 0, responseString.Length));
-				Response(context.Response, 500);
-				return;
+				return Response(context.Response, 500);
 			}
 			throw new UnreachableException();
 		}
 
-		private void Response(HttpListenerResponse response, int statusCode)
+		private bool Response(HttpListenerResponse response, int statusCode)
 		{
 			response.StatusCode = statusCode;
 			response.Close();
+			return true;
 		}
 
 		private string SanitizeContentType(string contentType)

@@ -374,9 +374,6 @@ namespace Jammy.Main
 			//hack to start IPF
 			var ipf = serviceProvider.GetRequiredService<IIPF>();
 
-			//hack to start webserver
-			var web = serviceProvider.GetRequiredService<IWebServer>();
-
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");
 

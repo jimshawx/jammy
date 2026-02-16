@@ -15,6 +15,7 @@ using Jammy.Main.Dialogs;
 using Jammy.Plugins.Interface;
 using Jammy.Types;
 using Jammy.Types.Options;
+using Jammy.WebAPI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -70,7 +71,7 @@ namespace Jammy.Main
 			IFlowAnalyser flowAnalyser, IGraph graph, IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
 			IChipRAM chipRAM, ILogger<GfxScan> gfxLogger, ILogger<StringScan> stringLogger, IMemoryMapper memoryMapper,
 			ILogger<DMAExplorer> dmaLogger, IInstructionAnalysisDatabase instructionAnalysisDatabase,
-			IDisassemblyRanges disassemblyRanges, IPluginManager pluginManager,
+			IDisassemblyRanges disassemblyRanges, IPluginManager pluginManager, IWebServer webServer,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -130,6 +131,7 @@ namespace Jammy.Main
 			InitUIRefreshThread();
 
 			//pluginManager.Start();
+			webServer.Start();
 		}
 
 		private CancellationTokenSource uiUpdateTokenSource;

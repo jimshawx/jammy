@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />
     <ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
     <ProjectReference Include="..\Jammy.Core.IO.Linux\Jammy.Core.IO.Linux.csproj" />
+    <ProjectReference Include="..\Jammy.WebAPI\Jammy.WebAPI.csproj" />
     <ProjectReference Include="..\Parky.Logging.TerminalAsync\Parky.Logging.TerminalAsync.csproj" />
   </ItemGroup>
 <ItemGroup>
