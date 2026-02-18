@@ -5,6 +5,7 @@ using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Types;
 using Jammy.Types.Debugger;
+using System;
 
 /*
 	Copyright 2020-2025 James Shaw. All Rights Reserved.
@@ -37,7 +38,8 @@ namespace Jammy.Interface
 		void IDEACK();
 		void ClearBBUSY();
 		uint Read32(uint address);
-		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, Size size = Size.Long);
+		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute,
+			int counter = 0, Size size = Size.Long, Func<Breakpoint, bool> callback = null);
 		void RemoveBreakpoint(uint address);
 		void DumpBreakpoints();
 		ClockInfo GetChipClock();

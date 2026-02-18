@@ -1,10 +1,14 @@
-﻿using Jammy.Interface;
+﻿using Jammy.Core.Types.Types.Breakpoints;
+using Jammy.Interface;
 using Jammy.Plugins.Interface;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
+using System.Reflection;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -33,8 +37,8 @@ namespace Jammy.Plugins.JavaScript.ClearScript
 			var engine = new V8ScriptEngine();
 
 			engine.AddHostObject("console", new JsConsole(logger));
-
-			engine.AddHostObject("jammy", debugger);
+			engine.AddHostObject("createCallback", CreateCallback);
+			engine.AddHostObject("jammy", WrapperFactory.CreateWrapper(debugger));
 			engine.AllowReflection = true;
 
 			try
@@ -48,6 +52,20 @@ namespace Jammy.Plugins.JavaScript.ClearScript
 			}
 
 			return new JavaScriptPlugin(engine, logger);
+		}
+
+		public Func<Breakpoint, bool> CreateCallback(object func)
+		{
+			if (func is ScriptObject scriptFunc)
+			{
+				return (arg) =>
+				{
+					var result = scriptFunc.Invoke(false, arg);
+					return Convert.ToBoolean(result);
+				};
+			}
+
+			throw new ArgumentException("Argument must be a JavaScript function");
 		}
 	}
 

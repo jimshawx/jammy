@@ -325,9 +325,10 @@ namespace Jammy.Debugger
 			breakpoints.ToggleBreakpoint(pc);
 		}
 
-		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, Size size = Size.Long)
+		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0,
+			Size size = Size.Long, Func<Breakpoint, bool> callback = null)
 		{
-			breakpoints.AddBreakpoint(address,type,counter,size);
+			breakpoints.AddBreakpoint(address,type,counter,size, callback: callback);
 		}
 
 		public void RemoveBreakpoint(uint address)

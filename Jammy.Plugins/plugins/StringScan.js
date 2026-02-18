@@ -4,6 +4,16 @@ var minW = 4;
 function init() {
 	//strings = GetStrings();
 	console.log("init js");
+
+	var fn = createCallback(breakpointFn);
+	jammy.AddBreakpoint(0xFC0F90, 0, 0, 2, fn);
+	//jammy.AddBreakpoint(0xFC0F90, 0, 0, 2);
+}
+
+function breakpointFn(bp)
+{
+	console.log('hit ' + bp.Address);
+	return true;
 }
 
 function update() {

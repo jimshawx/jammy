@@ -1,4 +1,6 @@
-﻿/*
+﻿using System;
+
+/*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
@@ -26,5 +28,7 @@ namespace Jammy.Core.Types.Types.Breakpoints
 		public Size Size { get; set; }
 
 		public ulong? Value { get; set; }
+
+		public Func<Breakpoint, bool> Callback { get; set; } = null;
 	}
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
@@ -21,9 +22,11 @@ namespace Jammy.Core
 			this.logger = logger;
 		}
 
-		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, Size size = Size.Word, ulong? value = null)
+		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0,
+			Size size = Size.Word, ulong? value = null, Func<Breakpoint, bool> callback = null)
 		{
-			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter, CounterReset = counter, Size = size, Value = value };
+			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter,
+				CounterReset = counter, Size = size, Value = value, Callback = callback };
 		}
 
 		public void RemoveBreakpoint(uint address)
@@ -35,21 +38,24 @@ namespace Jammy.Core
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
-					SignalBreakpoint(insaddr);
+					if (bp.Callback != null || bp.Callback(bp))
+						SignalBreakpoint(insaddr);
 		}
 
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-					SignalBreakpoint(insaddr);
+					if (bp.Callback != null || bp.Callback(bp))
+						SignalBreakpoint(insaddr);
 		}
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-					SignalBreakpoint(insaddr);
+					if (bp.Callback != null || bp.Callback(bp))
+						SignalBreakpoint(insaddr);
 		}
 
 		private bool Matches(Breakpoint bp, ulong value, Size size)
@@ -62,6 +68,9 @@ namespace Jammy.Core
 		{
 			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
 			{
+				if (bp.Callback != null && !bp.Callback(bp))
+					return false;
+
 				if (bp.Type == BreakpointType.Execute)
 					return bp.Active;
 

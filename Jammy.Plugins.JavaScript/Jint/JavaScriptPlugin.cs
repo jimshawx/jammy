@@ -28,12 +28,14 @@ namespace Jammy.Plugins.JavaScript.Jint
 			return ext == ".js";
 		}
 
+		private Engine engine = null;
 		public IPlugin NewPlugin(string code)
 		{
-			var engine = new Engine(cfg => cfg.AllowClr());
+			engine = new Engine(cfg => cfg.AllowClr());
 
 			engine.SetValue("console", new JsConsole(logger));
 			engine.SetValue("jammy", debugger);
+			engine.SetValue("createCallback", CreateCallback);
 
 			try 
 			{ 
@@ -46,6 +48,37 @@ namespace Jammy.Plugins.JavaScript.Jint
 			}
 
 			return new JavaScriptPlugin(engine, logger);
+		}
+
+		public Func<object, bool> CreateCallback(object func)
+		{
+			return JintCallback.Wrap<object, bool>(engine, func);
+		}
+	}
+
+	public static class JintCallback
+	{
+		public static Func<T, TResult> Wrap<T, TResult>(
+			Engine engine,
+			object jsFuncObj)
+		{
+			var jsFunc = jsFuncObj as Func<JsValue, JsValue[], JsValue>;
+			if (jsFunc == null)
+				throw new ArgumentException("Value is not a JS function", nameof(jsFuncObj));
+
+			return arg =>
+			{
+				var jsArg = JsValue.FromObject(engine, arg);
+
+				var result = jsFunc(
+					JsValue.Undefined,      // thisArg
+					[jsArg]					// arguments[]
+				);
+
+				return result.ToObject() is TResult typed
+					? typed
+					: (TResult)Convert.ChangeType(result.ToObject(), typeof(TResult));
+			};
 		}
 	}
 
