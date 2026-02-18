@@ -5,9 +5,9 @@ function init() {
 	//strings = GetStrings();
 	console.log("init js");
 
-	var fn = createCallback(breakpointFn);
-	jammy.AddBreakpoint(0xFC0F90, 0, 0, 2, fn);
+	//jammy.AddBreakpoint(0xFC0F90, 0, 0, 2, fn);
 	//jammy.AddBreakpoint(0xFC0F90, 0, 0, 2);
+	jammy.AddBreakpoint(0xFC0F90, 0, 0, 2, breakpointFn);
 }
 
 function breakpointFn(bp)

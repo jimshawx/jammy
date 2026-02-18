@@ -37,8 +37,8 @@ namespace Jammy.Plugins.JavaScript.ClearScript
 			var engine = new V8ScriptEngine();
 
 			engine.AddHostObject("console", new JsConsole(logger));
-			engine.AddHostObject("createCallback", CreateCallback);
-			engine.AddHostObject("jammy", WrapperFactory.CreateWrapper(debugger));
+			//engine.AddHostObject("createCallback", CreateCallback);
+			engine.AddHostObject("jammy", WrapperFactory.CreateWrapper(debugger, new ClearScriptAdapter()));
 			engine.AllowReflection = true;
 
 			try
@@ -54,19 +54,19 @@ namespace Jammy.Plugins.JavaScript.ClearScript
 			return new JavaScriptPlugin(engine, logger);
 		}
 
-		public Func<Breakpoint, bool> CreateCallback(object func)
-		{
-			if (func is ScriptObject scriptFunc)
-			{
-				return (arg) =>
-				{
-					var result = scriptFunc.Invoke(false, arg);
-					return Convert.ToBoolean(result);
-				};
-			}
+		//public Func<Breakpoint, bool> CreateCallback(object func)
+		//{
+		//	if (func is ScriptObject scriptFunc)
+		//	{
+		//		return (arg) =>
+		//		{
+		//			var result = scriptFunc.Invoke(false, arg);
+		//			return Convert.ToBoolean(result);
+		//		};
+		//	}
 
-			throw new ArgumentException("Argument must be a JavaScript function");
-		}
+		//	throw new ArgumentException("Argument must be a JavaScript function");
+		//}
 	}
 
 	public class JavaScriptPlugin : IPlugin

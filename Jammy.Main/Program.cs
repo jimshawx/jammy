@@ -313,8 +313,8 @@ namespace Jammy.Main
 			//plugins
 			services.AddSingleton<IPluginManager, PluginManager>();
 			services.AddSingleton<IPluginEngine, LuaEngine>();
-			//services.AddSingleton<IPluginEngine, Plugins.JavaScript.Jint.JavaScriptEngine>();
-			services.AddSingleton<IPluginEngine, Plugins.JavaScript.ClearScript.JavaScriptEngine>();
+			services.AddSingleton<IPluginEngine, Plugins.JavaScript.Jint.JavaScriptEngine>();
+			//services.AddSingleton<IPluginEngine, Plugins.JavaScript.ClearScript.JavaScriptEngine>();
 
 			//webservices
 			services.AddSingleton<IWebServer, WebServer>();
