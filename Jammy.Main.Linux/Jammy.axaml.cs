@@ -104,7 +104,8 @@ namespace Jammy.Main.Linux
 			UpdateDisplay();
 
 			//InitUIRefreshThread();
-			//pluginManager.Start();
+			
+			pluginManager.Start();
 			webServer.Start();
 		}
 

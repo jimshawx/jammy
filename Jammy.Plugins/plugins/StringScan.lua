@@ -2,7 +2,6 @@
 minW = 4
 
 function init()
-    -- strings = GetStrings()
 	for k,v in pairs(_G) do
     print(k .. " " .. type(v))
 end
@@ -10,44 +9,9 @@ end
 end
 
 function update()
-    ImGui.Begin("Strings", 64)
-
-    if ImGui.Button("Scan") then
-        strings = GetStrings()
-    end
-
-    showLargeTextWindow(strings)
-
-    ImGui.End()
+	--print("update lua")
 end
 
-function showLargeTextWindow(logLines)
-    -- Scrollable child region with horizontal scrollbar
-    ImGui.BeginChild(
-        "StringsX",
-        Vec2(0, 0),
-        false,
-        2048 -- ImGuiWindowFlags.HorizontalScrollbar
-    )
-
-    -- Disable wrapping
-    ImGui.PushTextWrapPos(3.4e38)
-
-    -- ListClipper
-    local clipper = ImGuiListClipper()
-    clipper:Begin(#logLines)
-
-    while clipper:Step() do
-        for i = clipper.DisplayStart, clipper.DisplayEnd - 1 do
-            ImGui.TextUnformatted(logLines[i + 1]) -- Lua is 1‑indexed
-        end
-    end
-
-    clipper:End()
-
-    ImGui.PopTextWrapPos()
-    ImGui.EndChild()
-end
 
 function IsString(b)
     return b >= 32 and b < 128

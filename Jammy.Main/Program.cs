@@ -38,9 +38,7 @@ using Jammy.NativeOverlay;
 using Jammy.NativeOverlay.Overlays;
 using Jammy.Plugins;
 using Jammy.Plugins.Interface;
-using Jammy.Plugins.JavaScript;
 using Jammy.Plugins.Lua;
-using Jammy.Plugins.Windows;
 using Jammy.UI.Settings;
 using Jammy.WebAPI;
 using Microsoft.Extensions.Configuration;
@@ -50,7 +48,6 @@ using Parky.Logging;
 using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 using System.Windows.Forms;
 
@@ -314,7 +311,6 @@ namespace Jammy.Main
 			services.AddSingleton<IMemTypeDao, MemTypeDao>();
 
 			//plugins
-			services.AddSingleton<IPluginWindowFactory, WindowsPluginWindowFactory>();
 			services.AddSingleton<IPluginManager, PluginManager>();
 			services.AddSingleton<IPluginEngine, LuaEngine>();
 			services.AddSingleton<IPluginEngine, Plugins.JavaScript.Jint.JavaScriptEngine>();

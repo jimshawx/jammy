@@ -1,10 +1,10 @@
 ﻿using Jammy.Plugins.Interface;
-using Jammy.Plugins.JavaScript.Jint;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -24,21 +24,19 @@ namespace Jammy.Plugins
 		{
 			public string Name { get; set; }
 			public string File { get; set; }
-			public IPluginWindow Window { get; set; }
+			public IPlugin Script { get; set; }
 			public PluginType Type { get; set; }
 		}
 
-		private readonly IPluginWindowFactory pluginWindowFactory;
 		private readonly ILogger<PluginManager> logger;
 		private readonly IPluginEngine luaEngine;
 		private readonly IPluginEngine jsEngine;
 
 		private readonly List<Plugin> activePlugins = new List<Plugin>();
 
-		public PluginManager(IPluginWindowFactory pluginWindowFactory, IEnumerable<IPluginEngine> pluginEngines,
+		public PluginManager(IEnumerable<IPluginEngine> pluginEngines,
 			ILogger<PluginManager> logger)
 		{
-			this.pluginWindowFactory = pluginWindowFactory;
 			this.logger = logger;
 			luaEngine = pluginEngines.SingleOrDefault(e => e.SupportsExtension(".lua"));
 			jsEngine = pluginEngines.SingleOrDefault(e => e.SupportsExtension(".js"));
@@ -56,7 +54,7 @@ namespace Jammy.Plugins
 					{ 
 						File = f,
 						Name = Path.GetFileName(f),
-						Window = pluginWindowFactory.CreatePluginWindow(plugin),
+						Script = plugin,
 						Type = PluginType.Lua
 					});
 				}
@@ -76,7 +74,7 @@ namespace Jammy.Plugins
 					{
 						File = f,
 						Name = Path.GetFileName(f),
-						Window = pluginWindowFactory.CreatePluginWindow(plugin),
+						Script = plugin,
 						Type = PluginType.Js
 					});
 				}
@@ -85,6 +83,19 @@ namespace Jammy.Plugins
 					logger.LogTrace($"Can't load plugin {f}\n{ex}");
 				}
 			});
+
+			var t = new Thread(RunAllPlugins);
+			t.Start();
+		}
+
+		private void RunAllPlugins()
+		{
+			while (true)
+			{
+				foreach (var plugin in activePlugins)
+					plugin.Script.Update();
+				Thread.Sleep(16);
+			}
 		}
 
 		public void ReloadPlugin(string name)
@@ -108,9 +119,9 @@ namespace Jammy.Plugins
 			}
 
 			if (plugin.Type == PluginType.Lua)
-				plugin.Window.UpdatePlugin(luaEngine.NewPlugin(code));
+				plugin.Script = luaEngine.NewPlugin(code);
 			else if (plugin.Type == PluginType.Js)
-				plugin.Window.UpdatePlugin(jsEngine.NewPlugin(code));
+				plugin.Script = jsEngine.NewPlugin(code);
 		}
 
 		public void ReloadAllPlugins()

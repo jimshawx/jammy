@@ -6,7 +6,7 @@ namespace Jammy.Plugins.Interface
 {
 	public interface IPlugin
 	{
-		void Render();
+		void Update();
 	}
 
 	public interface IPluginManager
@@ -14,17 +14,6 @@ namespace Jammy.Plugins.Interface
 		void Start();
 		void ReloadPlugin(string name);
 		void ReloadAllPlugins();
-	}
-
-	public interface IPluginWindow
-	{
-		void UpdatePlugin(IPlugin plugin);
-		void Close();
-	}
-
-	public interface IPluginWindowFactory
-	{
-		IPluginWindow CreatePluginWindow(IPlugin plugin);
 	}
 
 	public interface IPluginEngine

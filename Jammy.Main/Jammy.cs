@@ -132,7 +132,7 @@ namespace Jammy.Main
 
 			InitUIRefreshThread();
 
-			//pluginManager.Start();
+			pluginManager.Start();
 			webServer.Start();
 		}
 

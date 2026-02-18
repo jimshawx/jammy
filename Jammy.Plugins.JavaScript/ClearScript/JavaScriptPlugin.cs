@@ -5,10 +5,6 @@ using Microsoft.ClearScript.V8;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Numerics;
-using System.Reflection;
-using System.Text;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -20,23 +16,11 @@ namespace Jammy.Plugins.JavaScript.ClearScript
 	{
 		private readonly IDebugger debugger;
 		private readonly ILogger<JavaScriptEngine> logger;
-		private static object imguiApi = ImGuiAPI.Instance;
 
 		public JavaScriptEngine(IDebugger debugger, ILogger<JavaScriptEngine> logger)
 		{
 			this.debugger = debugger;
 			this.logger = logger;
-
-			//log the methods we are proxying
-			//var sb = new StringBuilder();
-			//foreach (var m in imguiApi.GetType().GetMethods(
-			//		BindingFlags.Public |
-			//		BindingFlags.Instance |
-			//		BindingFlags.DeclaredOnly))
-			//{
-			//	sb.AppendLine(m.ToString());
-			//}
-			//Trace.Write(sb.ToString());
 		}
 
 		public bool SupportsExtension(string ext)
@@ -50,9 +34,7 @@ namespace Jammy.Plugins.JavaScript.ClearScript
 
 			engine.AddHostObject("console", new JsConsole(logger));
 
-			engine.AddHostObject("imgui", imguiApi);
 			engine.AddHostObject("jammy", debugger);
-			engine.AddHostType("Vec2", typeof(Vector2));
 			engine.AllowReflection = true;
 
 			try
@@ -80,11 +62,11 @@ namespace Jammy.Plugins.JavaScript.ClearScript
 		{
 			this.engine = engine;
 			this.logger = logger;
-			//foreach (var property in )
+
 			ExecuteFn("init");
 		}
 
-		public void Render()
+		public void Update()
 		{
 			ExecuteFn("update");
 		}

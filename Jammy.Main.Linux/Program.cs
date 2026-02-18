@@ -1,7 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Logging;
 using Avalonia.Styling;
 using Avalonia.Themes.Simple;
 using Jammy.Core;
@@ -22,7 +21,6 @@ using Jammy.Core.IO.Linux;
 using Jammy.Core.Memory;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
-using Jammy.Database;
 using Jammy.Database.CommentDao;
 using Jammy.Database.Core;
 using Jammy.Database.DatabaseDao;
@@ -41,7 +39,6 @@ using Jammy.Plugins;
 using Jammy.Plugins.Interface;
 using Jammy.Plugins.JavaScript.Jint;
 using Jammy.Plugins.Lua;
-using Jammy.Plugins.X11;
 using Jammy.UI.Settings.Avalonia;
 using Jammy.WebAPI;
 using Microsoft.Extensions.Configuration;
@@ -310,7 +307,6 @@ public class Program
 		services.AddSingleton<IMemTypeDao, MemTypeDao>();
 
 		//plugins
-		services.AddSingleton<IPluginWindowFactory, X11PluginWindowFactory>();
 		services.AddSingleton<IPluginManager, PluginManager>();
 		services.AddSingleton<IPluginEngine, LuaEngine>();
 		services.AddSingleton<IPluginEngine, JavaScriptEngine>();

@@ -3,52 +3,11 @@ var minW = 4;
 
 function init() {
 	//strings = GetStrings();
+	console.log("init js");
 }
 
 function update() {
-	imgui.Begin("Strings", 64);
-	if (imgui.Button("Scan")) {
-		strings = GetStrings();
-	}
-
-	//imgui.TextUnformatted(strings);
-	showLargeTextWindow(strings);
-	imgui.End();
-}
-
-function showLargeTextWindow(logLines) {
-	//imgui.Begin("Large Text Viewer");
-
-
-
-
-	// Scrollable child region with horizontal scrollbar enabled
-	imgui.BeginChild(
-		"StringsX",
-		new Vec2(0,0),
-		//{ x: 0, y: 0 }, // Fill available space
-		//true,                 // Border
-		0,
-		2048//imgui.WindowFlags.HorizontalScrollbar
-	);
-
-	// Ensure no wrapping so horizontal scroll works
-	imgui.PushTextWrapPos(3.4e38);//imgui.FLT_MAX);
-
-	// Use ListClipper to only render visible lines
-	const clipper = new imgui.ListClipper();
-	clipper.Begin(logLines.length);
-
-	while (clipper.Step()) {
-		for (let i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-			imgui.TextUnformatted(logLines[i]);
-		}
-	}
-	clipper.End();
-
-	imgui.PopTextWrapPos();
-	imgui.EndChild();
-	//imgui.End();
+	//console.log("update js");
 }
 
 function IsString(b) {

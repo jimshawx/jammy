@@ -3,13 +3,8 @@ using Jammy.Plugins.Interface;
 using Jint;
 using Jint.Native;
 using Jint.Native.Function;
-using Jint.Runtime.Interop;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Diagnostics;
-using System.Reflection;
-using System.Text;
-using System.Numerics;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -21,23 +16,11 @@ namespace Jammy.Plugins.JavaScript.Jint
 	{
 		private readonly IDebugger debugger;
 		private readonly ILogger<JavaScriptEngine> logger;
-		private static object imguiApi = ImGuiAPI.Instance;
 
 		public JavaScriptEngine(IDebugger debugger, ILogger<JavaScriptEngine> logger)
 		{
 			this.debugger = debugger;
 			this.logger = logger;
-
-			//log the methods we are proxying
-			//var sb = new StringBuilder();
-			//foreach (var m in imguiApi.GetType().GetMethods(
-			//		BindingFlags.Public |
-			//		BindingFlags.Instance |
-			//		BindingFlags.DeclaredOnly))
-			//{
-			//	sb.AppendLine(m.ToString());
-			//}
-			//Trace.Write(sb.ToString());
 		}
 
 		public bool SupportsExtension(string ext)
@@ -50,11 +33,7 @@ namespace Jammy.Plugins.JavaScript.Jint
 			var engine = new Engine(cfg => cfg.AllowClr());
 
 			engine.SetValue("console", new JsConsole(logger));
-
-			engine.SetValue("imgui", imguiApi);
 			engine.SetValue("jammy", debugger);
-
-			engine.SetValue("Vec2", TypeReference.CreateTypeReference(engine, typeof(Vector2)));
 
 			try 
 			{ 
@@ -83,7 +62,7 @@ namespace Jammy.Plugins.JavaScript.Jint
 			ExecuteFn("init");
 		}
 
-		public void Render()
+		public void Update()
 		{
 			ExecuteFn("update");
 		}
