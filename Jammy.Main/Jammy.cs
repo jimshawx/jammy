@@ -54,24 +54,19 @@ namespace Jammy.Main
 		private readonly IInstructionAnalysisDatabase instructionAnalysisDatabase;
 		private readonly IDisassemblyRanges disassemblyRanges;
 		private readonly IPluginManager pluginManager;
+		private readonly IDebugCommand debugCommand;
+		private readonly IMemoryDumpRanges memoryDumpRanges;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 		private readonly DisassemblyOptions disassemblyOptions;
-
-		private readonly List<AddressRange> memoryDumpRanges = new List<AddressRange>
-		{
-			new AddressRange(0x000000, 0x10000),
-			new AddressRange(0xc00000, 0x10000),
-			new AddressRange(0xf80000, 0x40000),
-			new AddressRange(0xfc0000, 0x40000)
-		};
 
 		public Jammy(IEmulation emulation, IDisassembly disassembly, IDebugger debugger, IAnalysis analysis,
 			IFlowAnalyser flowAnalyser, IGraph graph, IChipsetDebugger chipsetDebugger, IObjectMapper objectMapper,
 			IChipRAM chipRAM, ILogger<GfxScan> gfxLogger, ILogger<StringScan> stringLogger, IMemoryMapper memoryMapper,
 			ILogger<DMAExplorer> dmaLogger, IInstructionAnalysisDatabase instructionAnalysisDatabase,
 			IDisassemblyRanges disassemblyRanges, IPluginManager pluginManager, IWebServer webServer,
+			IDebugCommand debugCommand, IMemoryDumpRanges memoryDumpRanges,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -92,6 +87,8 @@ namespace Jammy.Main
 			this.instructionAnalysisDatabase = instructionAnalysisDatabase;
 			this.disassemblyRanges = disassemblyRanges;
 			this.pluginManager = pluginManager;
+			this.debugCommand = debugCommand;
+			this.memoryDumpRanges = memoryDumpRanges;
 			this.memoryMapper = memoryMapper;
 			this.logger = logger;
 
@@ -121,6 +118,11 @@ namespace Jammy.Main
 			//hack - disassemble the cd32 extension rom
 			if (settings.KickStart.EndsWith("amiga-os-310-cd32.rom"))
 				disassemblyRanges.Add(new AddressRange(0xe00000, 0x80000));
+
+			memoryDumpRanges.Add(new AddressRange(0x000000, 0x10000));
+			memoryDumpRanges.Add(new AddressRange(0xc00000, 0x10000));
+			memoryDumpRanges.Add(new AddressRange(0xf80000, 0x40000));
+			memoryDumpRanges.Add(new AddressRange(0xfc0000, 0x40000));
 
 			emulation.Start();
 
@@ -1219,149 +1221,9 @@ namespace Jammy.Main
 
 		private void ProcessCommand(string cmd)
 		{
-			string[] parm = cmd.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-			if (parm.Length == 0)
-				return;
-
-			uint A(int i) { string s = P(i); return uint.Parse(s, NumberStyles.HexNumber); }
-			uint AD(int i, uint def) { string s = P(i); return string.IsNullOrEmpty(s) ? def : uint.Parse(s, NumberStyles.HexNumber); }
-			uint? N(int i) { string s = P(i); return string.IsNullOrWhiteSpace(s) ? null : A(i); }
-			Core.Types.Types.Size? S(int i)
-			{
-				string s = P(i);
-				if (s.Length != 1) return null;
-				if (char.ToLower(s[0]) == 'b') return Core.Types.Types.Size.Byte;
-				if (char.ToLower(s[0]) == 'w') return Core.Types.Types.Size.Word;
-				if (char.ToLower(s[0]) == 'l') return Core.Types.Types.Size.Long;
-				return null;
-			}
-			string P(int i) { return (i < parm.Length) ? parm[i] : string.Empty; }
-			string R(int i) { return (i < parm.Length) ? string.Join(' ', parm[i..]) : string.Empty; }
-			MemType? M(int i)
-			{
-				string s = P(i);
-				if (s.Length != 1) return null;
-				if (char.ToLower(s[0]) == 'c') return MemType.Code;
-				if (char.ToLower(s[0]) == 'b') return MemType.Byte;
-				if (char.ToLower(s[0]) == 'w') return MemType.Word;
-				if (char.ToLower(s[0]) == 'l') return MemType.Long;
-				if (char.ToLower(s[0]) == 's') return MemType.Str;
-				if (char.ToLower(s[0]) == 'u') return MemType.Unknown;
-				return null;
-			}
-
-			Amiga.LockEmulation();
-			bool refresh = false;
-			var regs = debugger.GetRegs();
-
-			try
-			{
-				switch (P(0))
-				{
-					case "b":
-						debugger.AddBreakpoint(AD(1, regs.PC));
-						break;
-
-					case "bw":
-						debugger.AddBreakpoint(A(1), BreakpointType.Write, 0, S(2) ?? Core.Types.Types.Size.Word);
-						break;
-					case "br":
-						debugger.AddBreakpoint(A(1), BreakpointType.Read, 0, S(2) ?? Core.Types.Types.Size.Word);
-						break;
-					case "brw":
-						debugger.AddBreakpoint(A(1), BreakpointType.ReadOrWrite, 0, S(2) ?? Core.Types.Types.Size.Word);
-						break;
-					case "bl":
-						debugger.DumpBreakpoints();
-						break;
-
-					case "bc":
-						debugger.RemoveBreakpoint(AD(1, regs.PC));
-						break;
-
-					case "t":
-						debugger.ToggleBreakpoint(AD(1, regs.PC));
-						break;
-
-					case "d":
-						disassemblyRanges.Add(new AddressRange(A(1), N(2) ?? 0x1000));
-						refresh = true;
-						break;
-
-					case "m":
-						memoryDumpRanges.Add(new AddressRange(A(1), N(2) ?? 0x1000));
-						refresh = true;
-						break;
-
-					case "w":
-						debugger.DebugWrite(A(1), N(2) ?? 0, S(3) ?? Core.Types.Types.Size.Word);
-						break;
-
-					case "r":
-						uint v = debugger.DebugRead(A(1), S(2) ?? Core.Types.Types.Size.Word);
-						logger.LogTrace($"{v:X8} ({v})");
-						break;
-
-					case "a":
-						for (uint i = 0; i < (N(3) ?? 1); i++)
-							analysis.SetMemType(A(1) + i, M(2) ?? MemType.Code);
-						refresh = true;
-						break;
-
-					case "c":
-						analysis.AddComment(A(1), R(2));
-						refresh = true;
-						break;
-
-					case "h":
-						analysis.AddHeader(A(1), $"\t{R(2)}");
-						refresh = true;
-						break;
-
-					case "g":
-						Amiga.SetEmulationMode(EmulationMode.Running, true);
-						break;
-					case "so":
-						Amiga.SetEmulationMode(EmulationMode.StepOut, true);
-						break;
-					case "s":
-						Amiga.SetEmulationMode(EmulationMode.Step, true);
-						break;
-					case "x":
-						Amiga.SetEmulationMode(EmulationMode.Stopped, true);
-						break;
-
-					case "?":
-						logger.LogTrace("b address - breakpoint on execute at address");
-						logger.LogTrace("bw address [size(W)] - breakpoint on write at address");
-						logger.LogTrace("br address [size(W)] - breakpoint on read at address");
-						logger.LogTrace("brw address [size(W)] - breakpoint on read/write at address");
-						logger.LogTrace("bc address - remove breakpoint at address");
-						logger.LogTrace("t address - toggle breakpoint at address");
-						logger.LogTrace("bl - list all breakpoints");
-						logger.LogTrace("d address [length(1000h)] - add an address range to the debugger");
-						logger.LogTrace("m address [length(1000h)] - add an address range to the memory dump");
-						logger.LogTrace("w address [value(0)] [size(W)] - write a value to memory");
-						logger.LogTrace("r address [size(W)] - read a value from memory");
-						logger.LogTrace("a address [type(C)] [length(1)] - set memory type C,B,W,L,S,U");
-						logger.LogTrace("c address text - add a comment");
-						logger.LogTrace("h address text - add a header");
-						logger.LogTrace("g - emulation Go");
-						logger.LogTrace("s - emulation Step");
-						logger.LogTrace("so - emulation Step Out");
-						logger.LogTrace("x - emulation Stop");
-						break;
-				}
-				AddHistory(cmd);
-			}
-			catch
-			{
-				logger.LogTrace($"Can't execute \"{cmd}\"");
-			}
-
-			Amiga.UnlockEmulation();
-			if (refresh)
+			if (debugCommand.ProcessCommand(cmd))
 				UpdateDisassembly();
+			AddHistory(cmd);
 		}
 
 		private void btnAnalyseFlow_Click(object sender, EventArgs e)

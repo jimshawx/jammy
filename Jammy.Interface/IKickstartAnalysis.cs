@@ -15,6 +15,6 @@ namespace Jammy.Interface
 		uint GetChecksum();
 		uint GetCRC();
 		byte[] GetSHA1();
-		void GenerateDisassemblies();
+		void GenerateDisassemblies(IMemoryDump memoryDump);
 	}
 }

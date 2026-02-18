@@ -5,7 +5,6 @@ using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Types;
 using Jammy.Types.Debugger;
-using System.Collections.Generic;
 
 /*
 	Copyright 2020-2025 James Shaw. All Rights Reserved.
@@ -59,5 +58,10 @@ namespace Jammy.Interface
 	public interface ICPUAnalyser
 	{
 		public EAAnalysis Analyse(Regs regs);
+	}
+
+	public interface IDebugCommand
+	{
+		bool ProcessCommand(string cmd);
 	}
 }

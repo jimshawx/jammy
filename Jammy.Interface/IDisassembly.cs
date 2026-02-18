@@ -11,6 +11,10 @@ namespace Jammy.Interface
 	{
 	}
 
+	public interface IMemoryDumpRanges : IAddressRanges
+	{
+	}
+
 	public interface IDisassembly
 	{
 		string DisassembleTxt(IDisassemblyRanges disassemblyRanges, DisassemblyOptions options);

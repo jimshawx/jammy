@@ -1351,9 +1351,9 @@ namespace Jammy.Disassembler.Analysers
 				analysed.Add(library);
 		}
 
-		public void GenerateDisassemblies()
+		public void GenerateDisassemblies(IMemoryDump memoryDump)
 		{
-			kickstartAnalysis.GenerateDisassemblies();
+			kickstartAnalysis.GenerateDisassemblies(memoryDump);
 		}
 	}
 }

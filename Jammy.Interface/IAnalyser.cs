@@ -18,6 +18,6 @@ namespace Jammy.Interface
 		void AnalyseLibraryBase(string library, uint address);
 		void UpdateAnalysis();
 		void ClearSomeAnalysis();
-		void GenerateDisassemblies();
+		void GenerateDisassemblies(IMemoryDump memoryDump);
 	}
 }

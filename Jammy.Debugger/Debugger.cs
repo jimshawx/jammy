@@ -489,7 +489,8 @@ namespace Jammy.Debugger
 
 		public void GenerateDisassemblies()
 		{
-			analyser.GenerateDisassemblies();	
+			var memoryDump = new MemoryDump(memory.GetBulkRanges());
+			analyser.GenerateDisassemblies(memoryDump);	
 		}
 
 		public Vectors GetVectors()

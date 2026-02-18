@@ -1,13 +1,17 @@
-﻿using Jammy.Interface;
+﻿using Jammy.Core.Types;
+using Jammy.Interface;
+using Jammy.Types;
 using Jammy.Types.Debugger;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Diagnostics;
-using System.Net.Http;
+
+/*
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
+*/
 
 namespace Jammy.WebAPI
 {
-	public class UrlPathAttribute: Attribute
+	public class UrlPathAttribute : Attribute
 	{
 		public UrlPathAttribute(string path)
 		{
@@ -32,11 +36,14 @@ namespace Jammy.WebAPI
 	public class DebuggerHandlers
 	{
 		private readonly IDebugger debugger;
+		private readonly IDebugCommand debugCommand;
 		private readonly ILogger<DebuggerHandlers> logger;
 
-		public DebuggerHandlers(IDebugger debugger, ILogger<DebuggerHandlers> logger)
+		public DebuggerHandlers(IDebugger debugger, IDebugCommand debugCommand,
+			ILogger<DebuggerHandlers> logger)
 		{
 			this.debugger = debugger;
+			this.debugCommand = debugCommand;
 			this.logger = logger;
 		}
 
@@ -62,16 +69,52 @@ namespace Jammy.WebAPI
 				debugger.StepOut();
 		}
 
-		[UrlAction("PUT","testput")]
-		public void TestPut(string s)
+		[UrlAction("GET", "clock")]
+		public ClockInfo GetClockInfo()
 		{
-			Trace.WriteLine($"Test called with {s}", s);
+			return debugger.GetChipClock();
 		}
 
-		[UrlAction("GET", "testget")]
-		public string TestGet()
+		[UrlAction("GET", "vectors")]
+		public Vectors GetVectors()
 		{
-			return "Hello";
+			return debugger.GetVectors();
+		}
+
+		[UrlAction("GET", "libraries")]
+		public Libraries GetLibraries()
+		{
+			return debugger.GetLibraries();
+		}
+
+		[UrlAction("GET", "allocations")]
+		public MemoryAllocations GetAllocations()
+		{
+			return debugger.GetAllocations();
+		}
+
+		[UrlAction("GET", "chipregs")]
+		public ChipState GetChipRegs()
+		{
+			return debugger.GetChipRegs();
+		}
+
+		[UrlAction("GET", "copper")]
+		public string GetCopperDisassembly()
+		{
+			return debugger.GetCopperDisassembly();
+		}
+
+		[UrlAction("GET", "regs")]
+		public Regs GetRegs()
+		{
+			return debugger.GetRegs();
+		}
+
+		[UrlAction("POST", "command")]
+		public void RunCommand(string command)
+		{
+			debugCommand.ProcessCommand(command);
 		}
 	}
 }

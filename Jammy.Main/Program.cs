@@ -144,6 +144,8 @@ namespace Jammy.Main
 				.AddSingleton<IDiskAnalysis, DiskAnalysis>()
 				.AddSingleton<ILabeller, Labeller>()
 				.AddSingleton<IDisassemblyRanges, DisassemblyRanges>()
+				.AddSingleton<IMemoryDumpRanges, MemoryDumpRanges>()
+				.AddSingleton<IDebugCommand, DebugCommand>()
 				.AddSingleton<IDisassembly, Disassembly>()
 				.AddSingleton<IDisassembler, Disassembler.Disassembler>()
 				.AddSingleton<IEADatabase, EADatabase>()

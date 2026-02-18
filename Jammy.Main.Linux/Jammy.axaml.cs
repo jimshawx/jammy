@@ -39,13 +39,7 @@ namespace Jammy.Main.Linux
 		private readonly DisassemblyOptions disassemblyOptions;
 		private readonly IDisassemblyRanges disassemblyRanges;
 		private readonly IPluginManager pluginManager;
-		private readonly List<AddressRange> memoryDumpRanges = new List<AddressRange>
-				{
-					new AddressRange(0x000000, 0x10000),
-					new AddressRange(0xc00000, 0x10000),
-					new AddressRange(0xf80000, 0x40000),
-					new AddressRange(0xfc0000, 0x40000)
-				};
+		private readonly IMemoryDumpRanges memoryDumpRanges;
 
 		public Jammy()
 		{
@@ -57,6 +51,7 @@ namespace Jammy.Main.Linux
 			IChipRAM chipRAM, /*ILogger<GfxScan> gfxLogger,*/ /*ILogger<StringScan> stringLogger,*/ IMemoryMapper memoryMapper,
 			/*ILogger<DMAExplorer> dmaLogger,*/ IInstructionAnalysisDatabase instructionAnalysisDatabase,
 			IDisassemblyRanges disassemblyRanges, IPluginManager pluginManager, IWebServer webServer,
+			IMemoryDumpRanges memoryDumpRanges,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options) : this()
 		{
 			this.emulation = emulation;
@@ -69,6 +64,7 @@ namespace Jammy.Main.Linux
 			//this.graph = graph;
 			this.logger = logger;
 			this.disassemblyRanges = disassemblyRanges;
+			this.memoryDumpRanges = memoryDumpRanges;
 			this.pluginManager = pluginManager;
 			var renderer = ((IRenderRoot)this).Renderer;
 			logger.LogTrace($"Using Avalonia Renderer: {renderer.GetType().FullName}");
@@ -95,6 +91,11 @@ namespace Jammy.Main.Linux
 			//hack - disassemble the cd32 extension rom
 			if (settings.KickStart.EndsWith("amiga-os-310-cd32.rom"))
 				disassemblyRanges.Add(new AddressRange(0xe00000, 0x80000));
+
+			memoryDumpRanges.Add(new AddressRange(0x000000, 0x10000));
+			memoryDumpRanges.Add(new AddressRange(0xc00000, 0x10000));
+			memoryDumpRanges.Add(new AddressRange(0xf80000, 0x40000));
+			memoryDumpRanges.Add(new AddressRange(0xfc0000, 0x40000));
 
 			emulation.Start();
 

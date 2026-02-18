@@ -261,15 +261,11 @@ namespace Jammy.Disassembler
 			var resident = GetRomTags();
 			foreach (var rt in resident)
 				logger.LogTrace($"{rt.MatchTag:X8} {rt.Name} {rt.Flags} v:{rt.Version} {rt.Type} pri:{rt.Pri} init:{rt.Init:X8} {rt.IdString}");
-
-			if (settings.Disassemblies.IsEnabled())
-				GenerateDisassemblies();
 		}
 
-		public void GenerateDisassemblies()
+		public void GenerateDisassemblies(IMemoryDump memoryDump)
 		{
 			var resident = GetRomTags();
-			var memoryDump = new MemoryDump(memory.GetBulkRanges());
 			Disassemble(resident, memoryDump);
 		}
 	}

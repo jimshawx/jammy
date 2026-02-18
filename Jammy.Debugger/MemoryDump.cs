@@ -3,21 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Jammy.Core.Types.Types;
+using Jammy.Interface;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Types.Debugger
+namespace Jammy.Debugger
 {
-	public interface IMemoryDump
-	{
-		int AddressToLine(uint address);
-		string GetString(List<AddressRange> rng);
-		string GetString(uint start, ulong length);
-		void ClearMapping();
-	}
-
 	public class MemoryDump : IMemoryDump
 	{
 		private readonly Dictionary<uint, int> addressToLine = new Dictionary<uint, int>();
@@ -154,6 +147,11 @@ namespace Jammy.Types.Debugger
 			{
 				new AddressRange (start, length),
 			});
+		}
+
+		public string GetString(IMemoryDumpRanges rng)
+		{
+			return AllBlocksToString(rng.GetRanges());
 		}
 	}
 }

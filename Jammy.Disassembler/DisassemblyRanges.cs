@@ -10,4 +10,8 @@ namespace Jammy.Disassembler
 	public class DisassemblyRanges : AddressRanges, IDisassemblyRanges
 	{
 	}
+
+	public class MemoryDumpRanges : AddressRanges, IMemoryDumpRanges
+	{
+	}
 }
