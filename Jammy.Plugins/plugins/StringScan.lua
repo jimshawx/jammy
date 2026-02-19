@@ -2,10 +2,9 @@
 minW = 4
 
 function init()
-	for k,v in pairs(_G) do
-    print(k .. " " .. type(v))
-end
-
+--	for k,v in pairs(_G) do
+--		print(k .. " " .. type(v))
+--	end
 end
 
 function update()
