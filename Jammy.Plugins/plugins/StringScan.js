@@ -8,6 +8,10 @@ function init() {
 	//jammy.AddBreakpoint(0xFC0F90, 0, 0, 2, fn);
 	//jammy.AddBreakpoint(0xFC0F90, 0, 0, 2);
 	jammy.AddBreakpoint(0xFC0F90, 0, 0, 2, breakpointFn);
+	strings = GetStrings();
+	console.log("#strings " + strings.length);
+	for (var i = 0; i < strings.length; i++)
+		console.log(strings[i]);
 }
 
 function breakpointFn(bp)
@@ -25,9 +29,9 @@ function IsString(b) {
 }
 
 function GetStrings() {
-	jammy.LockEmulation();
+	//jammy.LockEmulation();
 	ram = jammy.GetMemoryContent().Contents;
-	jammy.UnlockEmulation();
+	//jammy.UnlockEmulation();
 
 	var startI;
 	var sb = []
