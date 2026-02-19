@@ -1,14 +1,11 @@
-﻿using Jammy.Core.Types.Types.Breakpoints;
-using Jammy.Interface;
+﻿using Jammy.Interface;
 using Jammy.Plugins.Interface;
+using Jammy.Plugins.JavaScript.APIWrapper;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using System.Reflection;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.

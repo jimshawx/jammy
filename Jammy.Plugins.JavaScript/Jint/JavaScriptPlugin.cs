@@ -1,6 +1,6 @@
 ﻿using Jammy.Interface;
 using Jammy.Plugins.Interface;
-using Jammy.Plugins.JavaScript.ClearScript;
+using Jammy.Plugins.JavaScript.APIWrapper;
 using Jint;
 using Jint.Native;
 using Jint.Native.Function;
