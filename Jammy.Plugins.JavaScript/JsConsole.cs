@@ -54,7 +54,7 @@ namespace Jammy.Plugins.JavaScript
 		public void count(object l) { counts.TryAdd(l, 0); counts[l]++; }
 		//Log the number of times this line has been called with the given label.
 
-		public void countReset(object l) { counts[l] = 0;}
+		public void countReset(object l) { if (!counts.ContainsKey(l)) { warn("Count for '" + l?.ToString() + "' does not exist"); return; }; counts[l] = 0;}
 		//Resets the value of the counter with the given label.
 
 		public void debug(params object[] o) => Log("DEBUG", o);
@@ -121,10 +121,10 @@ namespace Jammy.Plugins.JavaScript
 		public void time(object o) { timers[o] = new Stopwatch(); timers[o].Start(); }
 		//Starts a timer with a name specified as an input parameter.Up to 10,000 simultaneous timers can run on a given page.
 
-		public void timeEnd(object o) { if (!timers.TryGetValue(o, out Stopwatch value)) { warn("Timer '"+o?.ToString() + "' does not exist"); return; } value.Stop(); log(value.ElapsedMilliseconds); }
+		public void timeEnd(object o) { if (!timers.TryGetValue(o, out Stopwatch value)) { warn("Timer '"+o?.ToString() + "' does not exist"); return; } value.Stop(); log($"{o} {value.ElapsedMilliseconds}ms - timer ended"); timers.Remove(o); }
 		//Stops the specified timer and logs the elapsed time in milliseconds since it started.
 
-		public void timeLog(object o) { if (!timers.TryGetValue(o, out Stopwatch value)) { warn("Timer '" + o?.ToString() + "' does not exist"); return; } log(value.ElapsedMilliseconds); }
+		public void timeLog(object o) { if (!timers.TryGetValue(o, out Stopwatch value)) { warn("Timer '" + o?.ToString() + "' does not exist"); return; } log($"{o}: {value.ElapsedMilliseconds}ms"); }
 		//Logs the value of the specified timer to the public void 
 
 		public void timeStamp() { } //Non-standard
