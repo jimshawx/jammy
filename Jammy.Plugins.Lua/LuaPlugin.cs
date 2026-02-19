@@ -32,7 +32,7 @@ namespace Jammy.Plugins.Lua
 		{
 			var script = new Script();
 
-			script.Globals["print"] = (object o)=>logger.LogTrace($"{o?.ToString()}");
+			script.Globals["print"] = (params object[] o)=>logger.LogTrace($"{string.Join(' ', o)}");
 			script.Globals["jammy"] = debugger;
 
 			try 
