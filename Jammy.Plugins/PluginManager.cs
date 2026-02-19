@@ -1,4 +1,5 @@
-﻿using Jammy.Plugins.Interface;
+﻿using Jammy.Interface;
+using Jammy.Plugins.Interface;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -28,15 +29,17 @@ namespace Jammy.Plugins
 			public PluginType Type { get; set; }
 		}
 
+		private readonly IDebugger debugger;
 		private readonly ILogger<PluginManager> logger;
 		private readonly IPluginEngine luaEngine;
 		private readonly IPluginEngine jsEngine;
 
 		private readonly List<Plugin> activePlugins = new List<Plugin>();
 
-		public PluginManager(IEnumerable<IPluginEngine> pluginEngines,
+		public PluginManager(IEnumerable<IPluginEngine> pluginEngines, IDebugger debugger,
 			ILogger<PluginManager> logger)
 		{
+			this.debugger = debugger;
 			this.logger = logger;
 			luaEngine = pluginEngines.SingleOrDefault(e => e.SupportsExtension(".lua"));
 			jsEngine = pluginEngines.SingleOrDefault(e => e.SupportsExtension(".js"));
@@ -44,6 +47,8 @@ namespace Jammy.Plugins
 
 		public void Start()
 		{
+			debugger.LockEmulation();
+
 			Directory.GetFiles("plugins", "*.lua").ToList().ForEach(f =>
 			{
 				try 
@@ -83,6 +88,8 @@ namespace Jammy.Plugins
 					logger.LogTrace($"Can't load plugin {f}\n{ex}");
 				}
 			});
+
+			debugger.UnlockEmulation();
 
 			var t = new Thread(RunAllPlugins);
 			t.Start();
