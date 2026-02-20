@@ -47,8 +47,11 @@ namespace Parky.Configuration.WritableJson
 
 			key = key.Replace(':', '.');
 
+			var fileInfo = Source.FileProvider.GetFileInfo(Source.Path);
+
 			JToken tokens;
-			using (var file = File.OpenText(Source.Path))
+			using (var read = fileInfo.CreateReadStream())
+			using (var file = new StreamReader(read))
 			using (var reader = new JsonTextReader(file))
 			{
 				tokens = JToken.ReadFrom(reader);
@@ -68,7 +71,7 @@ namespace Parky.Configuration.WritableJson
 				}
 			}
 
-			using (var file = File.CreateText(Source.Path))
+			using (var file = File.CreateText(fileInfo.PhysicalPath))
 			using (var jw = new JsonTextWriter(file))
 			{
 				jw.Formatting = Formatting.Indented;
