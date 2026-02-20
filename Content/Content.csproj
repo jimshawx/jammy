@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<None Include="$(SolutionDir)plugins\**\*" Link="plugins\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<None Include="$(SolutionDir)webui\**\*" Link="webui\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<None Include="$(SolutionDir)games\**\*" Link="games\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<None Include="$(SolutionDir)roms\**\*" Link="roms\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  
+</Project>
