@@ -4,6 +4,7 @@
 **/bin
 /*.rom
 /*.adf
+*.db
 
 /uaeunp.exe
 /uaeunp.txt

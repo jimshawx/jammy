@@ -76,7 +76,7 @@ namespace Jammy.Main
 				.Build();
 
 			var emuConfig = new ConfigurationBuilder()
-				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.SetBasePath(Environment.CurrentDirectory)
 				.AddJsonFile("emulationSettings.json", false)
 				.Build();
 

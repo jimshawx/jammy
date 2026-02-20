@@ -21,5 +21,9 @@
   <ItemGroup>
 	<None Include="$(SolutionDir)roms\**\*" Link="roms\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\emulationSettings.json" Link="emulationSettings.json" />
+  </ItemGroup>
   
 </Project>
