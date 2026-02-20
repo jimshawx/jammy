@@ -1,7 +1,8 @@
 {
   "profiles": {
     "Jammy.Main.Linux": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "workingDirectory": "$(SolutionDir)"
     },
     "WSL": {
       "commandName": "WSL2",

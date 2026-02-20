@@ -1,15 +1,16 @@
 {
   "profiles": {
-	"Jammy": {
-	  "commandName": "Project",
-	  "nativeDebugging": true
-	}
+    "Jammy": {
+      "commandName": "Project",
+      "workingDirectory": "$(SolutionDir)",
+      "nativeDebugging": true
+    }
   },
   "Logging": {
-	"LogLevel": {
-	  "Default": "Trace",
-	  "Microsoft": "Warning",
-	  "Microsoft.Hosting.Lifetime": "Information"
-	}
+    "LogLevel": {
+      "Default": "Trace",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
   }
 }
