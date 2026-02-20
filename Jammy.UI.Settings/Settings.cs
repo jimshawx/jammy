@@ -461,7 +461,7 @@ namespace Jammy.UI.Settings
 			//Get the Kickstart CRC for identification
 			try
 			{
-				var rom = File.ReadAllBytes(currentSettings.KickStart);
+				var rom = File.ReadAllBytes(Path.Combine("roms", currentSettings.KickStart));
 				var c = rom.Skip(rom.Length - 24).Take(4).Select(x => (uint)x).ToArray();
 				uint crc = c[3] | (c[2] << 8) | (c[1] << 16) | (c[0] << 24);
 				currentSettings.KickStartDisassembly = $"{crc:X8}";
