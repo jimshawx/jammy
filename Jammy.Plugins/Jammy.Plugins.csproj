@@ -4,27 +4,6 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="plugins\StringScan.js" />
-    <None Remove="plugins\StringScan.lua" />
-    <None Remove="plugins\test.js" />
-    <None Remove="plugins\test.lua" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="plugins\StringScan.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="plugins\StringScan.lua">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="plugins\test.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="plugins\test.lua">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Plugins.Interface\Jammy.Plugins.Interface.csproj" />
