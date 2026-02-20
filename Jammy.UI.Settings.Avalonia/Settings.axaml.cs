@@ -11,7 +11,7 @@ namespace Jammy.UI.Settings.Avalonia
 {
 	public partial class Settings : Window
 	{
-		private string configPath = "../../../../config";
+		private string configPath = "config";
 
 		public Settings()
 		{
@@ -580,7 +580,7 @@ namespace Jammy.UI.Settings.Avalonia
 					break;
 
 				default:
-					string path = Path.Combine("../../../../config", StringFromSelection(cbQuickStart.SelectedItem));
+					string path = Path.Combine("config", StringFromSelection(cbQuickStart.SelectedItem));
 					path = Path.ChangeExtension(path, "cfg");
 					LoadConfig(path);
 					btnSaveConfig.IsEnabled = true;

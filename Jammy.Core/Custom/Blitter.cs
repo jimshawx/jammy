@@ -1310,7 +1310,7 @@ namespace Jammy.Core.Custom
 			};
 
 			if (counter == 0)
-				filename = Path.Combine("../../../../blits/", $"blitter-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.txt");
+				filename = Path.Combine("blits/", $"blitter-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.txt");
 
 			if (counter < 1000)
 				File.AppendAllLines(filename, b);

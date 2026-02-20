@@ -24,7 +24,7 @@ namespace Jammy.Core.Floppy
 			this.logger = logger;
 		}
 
-		private const string floppyPath = "../../../../games/";
+		private const string floppyPath = "games/";
 
 		public IDisk DiskRead(string adfFileName)
 		{

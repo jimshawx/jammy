@@ -542,7 +542,7 @@ namespace Jammy.Core.Custom
 		{
 			string csb = DisassembleCopperList(copPC);
 			logger.LogTrace(csb);
-			File.WriteAllText($"../../../../copper{DateTime.Now:yyyyMMdd-HHmmss}.txt", csb);
+			File.WriteAllText($"copper{DateTime.Now:yyyyMMdd-HHmmss}.txt", csb);
 		}
 
 		private bool copperDumping;
@@ -554,7 +554,7 @@ namespace Jammy.Core.Custom
 		private void CopperDump()
 		{
 			//var c = memory.ToBmp(1280);
-			//File.WriteAllBytes($"../../../../blits/chip-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.bmp", c.ToArray());
+			//File.WriteAllBytes($"blits/chip-{DateTime.Now:yyyy-MM-dd-HHmmss-fff}.bmp", c.ToArray());
 		}
 
 		public string GetDisassembly()

@@ -39,7 +39,7 @@ namespace Jammy.Core.Memory
 			name = Path.GetFileName(settings.Value.KickStart);
 
 			path = path.Replace(".", "-ext.");
-			string fullName = Path.Combine("../../../../roms", path);
+			string fullName = Path.Combine("roms", path);
 
 			try
 			{

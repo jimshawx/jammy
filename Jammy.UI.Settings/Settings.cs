@@ -18,7 +18,7 @@ namespace Jammy.UI.Settings
 {
 	public partial class Settings : Form
 	{
-		private string configPath = "../../../../config";
+		private string configPath = "config";
 		private readonly IConfigurationRoot appConfig;
 
 		public Settings()
@@ -616,7 +616,7 @@ namespace Jammy.UI.Settings
 					break;
 
 				default:
-					string path = Path.Combine("../../../../config", (string)cbQuickStart.SelectedItem);
+					string path = Path.Combine("config", (string)cbQuickStart.SelectedItem);
 					path = Path.ChangeExtension(path, "cfg");
 					LoadConfig(path);
 					btnSaveConfig.Enabled = true;

@@ -45,7 +45,7 @@ namespace Jammy.Core.Memory
 			path = settings.Value.KickStart;
 			name = Path.GetFileName(settings.Value.KickStart);
 
-			string fullName = Path.Combine("../../../../roms", path);
+			string fullName = Path.Combine("roms", path);
 
 			try
 			{

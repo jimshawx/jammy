@@ -40,7 +40,7 @@ namespace Jammy.Disassembler
 		{
 			var state = new ExtractState
 			{
-				hd = File.ReadAllBytes(Path.Combine("../../../../games/", disk)),
+				hd = File.ReadAllBytes(Path.Combine("games/", disk)),
 				BlockOffset = 0,
 				BlockSize = 512,
 			};
@@ -74,7 +74,7 @@ namespace Jammy.Disassembler
 		{
 			var state = new ExtractState
 			{
-				hd = File.ReadAllBytes(Path.Combine("../../../../", disk))
+				hd = File.ReadAllBytes(disk)
 			};
 
 			var amigaDisk = new AmigaRigidDisk();

@@ -367,14 +367,14 @@ namespace Jammy.Core
 			{ 
 				kickstart.SetMirror(false);
 				//Desert Dream
-				//persistenceManager.Load("../../state-2024-11-01-20-00-00.json");
-				//persistenceManager.Load("../../state-2024-11-02-18-22-56.json");
+				//persistenceManager.Load("state-2024-11-01-20-00-00.json");
+				//persistenceManager.Load("state-2024-11-02-18-22-56.json");
 				//Mental Hangover
-				//persistenceManager.Load("../../state-2024-11-02-19-11-53.json");
+				//persistenceManager.Load("state-2024-11-02-19-11-53.json");
 				//Blitter Miracle
-				persistenceManager.Load("../../state-2025-02-12-12-23-09.json");
+				persistenceManager.Load("state-2025-02-12-12-23-09.json");
 				//Pinball Fantasies
-				//persistenceManager.Load("../../state-2024-11-04-22-05-32.json");
+				//persistenceManager.Load("state-2024-11-04-22-05-32.json");
 			}
 
 			uint stepOutSp = 0xffffffff;
