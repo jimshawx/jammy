@@ -28,7 +28,7 @@ namespace Jammy.Core.CDROM
 		{
 			try
 			{ 
-				cddata = File.ReadAllBytes("c:/source/jammy/games/Ryder Cup by Johnnie Walker, The (1993)(Ocean)[!].iso");
+				cddata = File.ReadAllBytes("games/Ryder Cup by Johnnie Walker, The (1993)(Ocean)[!].iso");
 			}
 			catch
 			{
