@@ -87,6 +87,9 @@ public class Program
 
 	static void Main(string[] args)
 	{
+		var wd = Environment.GetEnvironmentVariable("JAMMY_WORKING_DIR");
+		if (!string.IsNullOrWhiteSpace(wd)) Directory.SetCurrentDirectory(wd);
+
 		BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 	}
 

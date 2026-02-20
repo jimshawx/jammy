@@ -1,12 +1,15 @@
 {
-  "profiles": {
-    "Jammy.Main.Linux": {
-      "commandName": "Project",
-      "workingDirectory": "$(SolutionDir)"
-    },
-    "WSL": {
-      "commandName": "WSL2",
-      "distributionName": ""
-    }
-  }
+	"profiles": {
+		"Jammy.Main.Linux": {
+			"commandName": "Project",
+			"workingDirectory": "$(SolutionDir)"
+		},
+		"WSL": {
+			"commandName": "WSL2",
+			"distributionName": "",
+			"environmentVariables": {
+				"JAMMY_WORKING_DIR": "/mnt/c/source/jammy"
+			}
+		}
+	}
 }

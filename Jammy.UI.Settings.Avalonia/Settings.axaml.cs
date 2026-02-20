@@ -3,15 +3,22 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Jammy.Core.Types;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Parky.Configuration.WritableJson;
 using System.Web;
+
+/*
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
+*/
 
 namespace Jammy.UI.Settings.Avalonia
 {
 	public partial class Settings : Window
 	{
 		private string configPath = "config";
+		private readonly IConfigurationRoot appConfig;
 
 		public Settings()
 		{
@@ -29,6 +36,11 @@ namespace Jammy.UI.Settings.Avalonia
 				};
 				return s;
 			};
+
+			appConfig = new ConfigurationBuilder()
+				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.AddWritableJsonFile("appSettings.json", false)
+				.Build();
 
 			//Quickstart
 			cbQuickStart.SelectedIndex = 0;
@@ -96,81 +108,101 @@ namespace Jammy.UI.Settings.Avalonia
 		{
 		}
 
-		private void btnDF0Pick_Click(object sender, RoutedEventArgs e)
+		private async void btnDF0Pick_Click(object sender, RoutedEventArgs e)
 		{
-			StorageProvider.OpenFilePickerAsync(
+			await StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions {
 					SuggestedFileName = txtDF0.Text,
+					SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(appConfig["Application:Directories:GamePath"]),
 					FileTypeFilter = new List<FilePickerFileType>{new FilePickerFileType("ADF Files") { Patterns = new []{"*.adf", "*.zip", "*.adz", "*.rp9", "*.dms", "*.ipf" } } }
 				}).ContinueWith((t) => {
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
 					{
-						Dispatcher.UIThread.Invoke(() => txtDF0.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+						Dispatcher.UIThread.Invoke(() => {
+							txtDF0.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(txtDF0.Text);
+						});
 					}
 				});
 		}
 
-		private void btnDF1Pick_Click(object sender, RoutedEventArgs e)
+		private async void btnDF1Pick_Click(object sender, RoutedEventArgs e)
 		{
-			StorageProvider.OpenFilePickerAsync(
+			await StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtDF1.Text,
+					SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(appConfig["Application:Directories:GamePath"]),
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9", "*.dms", "*.ipf" } } }
 				}).ContinueWith((t)=>{
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
 					{
-						Dispatcher.UIThread.Invoke(() => txtDF1.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+						Dispatcher.UIThread.Invoke(() => {
+							txtDF1.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(txtDF1.Text);
+						});
 					}
 				});
 		}
 
-		private void btnDF2Pick_Click(object sender, RoutedEventArgs e)
+		private async void btnDF2Pick_Click(object sender, RoutedEventArgs e)
 		{
-			var openFileDialog1 = StorageProvider.OpenFilePickerAsync(
+			await StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtDF2.Text,
+					SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(appConfig["Application:Directories:GamePath"]),
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9", "*.dms", "*.ipf" } } }
 				}).ContinueWith((t) => {
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
 					{
-						Dispatcher.UIThread.Invoke(() => txtDF2.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+						Dispatcher.UIThread.Invoke(() => {
+							txtDF2.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(txtDF2.Text);
+						});
 					}
 				});
 		}
 
-		private void btnDF3Pick_Click(object sender, RoutedEventArgs e)
+		private async void btnDF3Pick_Click(object sender, RoutedEventArgs e)
 		{
-			var openFileDialog1 = StorageProvider.OpenFilePickerAsync(
+			await StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtDF3.Text,
+					SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(appConfig["Application:Directories:GamePath"]),
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ADF Files") { Patterns = new[] { "*.adf", "*.zip", "*.adz", "*.rp9", "*.dms", "*.ipf" } } }
 				}).ContinueWith((t) => {
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
 					{ 
-						Dispatcher.UIThread.Invoke(() => txtDF3.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+						Dispatcher.UIThread.Invoke(() => {
+							txtDF3.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(txtDF3.Text);
+						});
 					}
 				});
 		}
 
-		private void btnROMPick_Click(object sender, RoutedEventArgs e)
+		private async void btnROMPick_Click(object sender, RoutedEventArgs e)
 		{
-			var openFileDialog1 = StorageProvider.OpenFilePickerAsync(
+			await StorageProvider.OpenFilePickerAsync(
 				new FilePickerOpenOptions
 				{
 					SuggestedFileName = txtKickstart.Text,
+					SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(appConfig["Application:Directories:ROMPath"]),
 					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("ROM Files") { Patterns = new[] {"*.rom"} } }
 				}).ContinueWith((t) => {
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
 					{
-						Dispatcher.UIThread.Invoke(() => txtKickstart.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath));
+						Dispatcher.UIThread.Invoke(() => {
+							txtKickstart.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							appConfig["Application:Directories:ROMPath"] = Path.GetDirectoryName(txtKickstart.Text);
+						});
 					}
 				});
 		}
