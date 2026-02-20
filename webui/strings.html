@@ -3,15 +3,21 @@
 	<head>
 		<script src="jquery-4.0.0.min.js"></script>
 		<script src="strings.js"></script>
+		<link rel="stylesheet" href="style.css">
 	</head>
 
 	<body>
-		<div><button type="button" class="action" data-action="go">Go</button><br />
-			 <button type="button" class="action" data-action="stop">Stop</button><br />
-			 <button type="button" class="action" data-action="step">Step</button><br />
-			 <button type="button" class="action" data-action="stepout">Step Out</button>
+		<div class="actions" style="padding-bottom: 10px;">
+			<button type="button" class="action" data-action="go">Go</button>
+			<button type="button" class="action" data-action="stop">Stop</button>
+			<button type="button" class="action" data-action="step">Step</button>
+			<button type="button" class="action" data-action="stepout">Step Out</button>
 		</div>
-		<button id="strings" type="button">String Scan</button>
-		<div id="stringtext" style="white-space: pre-line; overflow-y: auto; overflow-x: hidden; max-width: 30vw; height: 100vh; width: max-content;"></div>
+		<div class="actions">
+			<button id="strings" class="action" type="button">String Scan</button>
+		</div>
+		<div style="white-space: pre-line; overflow-y: auto; overflow-x: hidden; max-width: 30vw; flex: 1; width: max-content; -border: 1px solid red;">
+			<code id="stringtext"></code>
+		</div>
 	</body>
 </html>
