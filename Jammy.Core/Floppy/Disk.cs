@@ -24,12 +24,11 @@ namespace Jammy.Core.Floppy
 			this.logger = logger;
 		}
 
-		private const string floppyPath = "games/";
+		private const string floppyPath = "games";
 
 		public IDisk DiskRead(string adfFileName)
 		{
-			if (!adfFileName.StartsWith(floppyPath))
-				adfFileName = Path.Combine(floppyPath, adfFileName);
+			adfFileName = Path.Combine(floppyPath, adfFileName);
 
 			if (!File.Exists(adfFileName))
 				return null;
