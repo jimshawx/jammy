@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
     <ProjectReference Include="..\Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj" />
+    <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />
   </ItemGroup>
 
 </Project>

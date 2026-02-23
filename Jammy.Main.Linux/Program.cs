@@ -167,6 +167,7 @@ public class Program
 			//.AddSingleton<IEmulationWindow, Core.EmulationWindow.Wayland.EmulationWindow>()
 
 			.AddSingleton<IEmulation, Emulation>()
+			.AddSingleton<IDriveLights, DriveLights>()
 			.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 			.AddSingleton<IDiskAnalysis, DiskAnalysis>()
 			.AddSingleton<ILabeller, Labeller>()

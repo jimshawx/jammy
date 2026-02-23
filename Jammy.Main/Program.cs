@@ -137,6 +137,7 @@ namespace Jammy.Main
 				//.AddSingleton<IEmulationWindow, Core.EmulationWindow.DIB.EmulationWindow>()
 				//.AddSingleton<IEmulationWindow, Core.EmulationWindow.Window.EmulationWindow>()
 				.AddSingleton<IEmulation, Emulation>()
+				.AddSingleton<IDriveLights, DriveLights>()
 				.AddSingleton<IKickstartAnalysis, KickstartAnalysis>()
 				.AddSingleton<IDiskAnalysis, DiskAnalysis>()
 				.AddSingleton<ILabeller, Labeller>()

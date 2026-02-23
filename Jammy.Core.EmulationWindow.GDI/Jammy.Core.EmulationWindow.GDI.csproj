@@ -6,6 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
     <ProjectReference Include="..\Jammy.Core.IO.Windows\Jammy.Core.IO.Windows.csproj" />
+    <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.3" />

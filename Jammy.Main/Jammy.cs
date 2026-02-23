@@ -56,6 +56,7 @@ namespace Jammy.Main
 		private readonly IPluginManager pluginManager;
 		private readonly IDebugCommand debugCommand;
 		private readonly IMemoryDumpRanges memoryDumpRanges;
+		private readonly IDriveLights driveLights;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
@@ -66,7 +67,7 @@ namespace Jammy.Main
 			IChipRAM chipRAM, ILogger<GfxScan> gfxLogger, ILogger<StringScan> stringLogger, IMemoryMapper memoryMapper,
 			ILogger<DMAExplorer> dmaLogger, IInstructionAnalysisDatabase instructionAnalysisDatabase,
 			IDisassemblyRanges disassemblyRanges, IPluginManager pluginManager, IWebServer webServer,
-			IDebugCommand debugCommand, IMemoryDumpRanges memoryDumpRanges,
+			IDebugCommand debugCommand, IMemoryDumpRanges memoryDumpRanges, IDriveLights driveLights,
 			ILogger<Jammy> logger, IOptions<EmulationSettings> options)
 		{
 			if (this.Handle == IntPtr.Zero)
@@ -89,6 +90,7 @@ namespace Jammy.Main
 			this.pluginManager = pluginManager;
 			this.debugCommand = debugCommand;
 			this.memoryDumpRanges = memoryDumpRanges;
+			this.driveLights = driveLights;
 			this.memoryMapper = memoryMapper;
 			this.logger = logger;
 
@@ -527,13 +529,13 @@ namespace Jammy.Main
 
 		private void UpdatePowerLight()
 		{
-			bool power = UI.UI.PowerLight;
+			bool power = driveLights.PowerLight;
 			picPower.BackColor = power ? Color.Red : Color.DarkRed;
 		}
 
 		private void UpdateDiskLight()
 		{
-			bool disk = global::Jammy.UI.UI.DiskLight;
+			bool disk = driveLights.DiskLight;
 			picDisk.BackColor = disk ? Color.LightGreen : Color.DarkGreen;
 		}
 

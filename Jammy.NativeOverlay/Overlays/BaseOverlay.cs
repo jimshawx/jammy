@@ -26,18 +26,10 @@ namespace Jammy.NativeOverlay.Overlays
 		public int screenHeight => nativeOverlay.SCREEN_HEIGHT;
 	}
 
-	public interface IDiskLightOverlay : IOverlayRenderer
-	{
-		bool PowerLight { set; }
-		bool DiskLight { set; }
-	}
+	public interface IDiskLightOverlay : IOverlayRenderer {}
 
-	public interface ITicksOverlay : IOverlayRenderer
-	{
-	}
+	public interface ITicksOverlay : IOverlayRenderer {}
 
-	public interface ICpuUsageOverlay : IOverlayRenderer
-	{
-	}
+	public interface ICpuUsageOverlay : IOverlayRenderer {}
 
 }
