@@ -28,6 +28,9 @@ jobs:
       # Publish Windows binary
       - name: Publish Windows binary
         run: dotnet publish -c Release -r win-x64 -o out/win --self-contained true
+      - name: Publish Windows binary
+        run: dotnet publish -c Release -r win-x64 -o out/win --self-contained true /p:EnableWindowsTargeting=true
+
 
       # Publish Linux binary
       - name: Publish Linux binary
