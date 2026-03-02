@@ -1,0 +1,48 @@
+name: Weekly Multi-Platform Build
+
+on:
+  schedule:
+    - cron: '0 0 * * MON'   # every Monday at 00:00 UTC
+  workflow_dispatch:        # allows manual triggering
+
+jobs:
+  build:
+    #runs-on: windows-latest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build project
+        run: dotnet build --configuration Release --no-restore
+
+      # Publish Windows binary
+      - name: Publish Windows binary
+        run: dotnet publish -c Release -r win-x64 -o out/win --self-contained true
+
+      # Publish Linux binary
+      - name: Publish Linux binary
+        run: dotnet publish -c Release -r linux-x64 -o out/linux --self-contained true
+
+      # Upload Windows artifact
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jammy-0.0.1-windows.zip
+          path: out/win/
+
+      # Upload Linux artifact
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jammy-0.0.1-linux.zip
+          path: out/linux/
