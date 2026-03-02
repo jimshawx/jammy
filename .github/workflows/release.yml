@@ -13,11 +13,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Download assets from the latest-build draft release
-      - name: Download latest-build assets
+      - name: Get release ID for latest-build
+        id: get_release
+        run: |
+          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/releases \
+            | jq '.[] | select(.tag_name=="latest-build") | .id')
+          echo "release_id=$RELEASE_ID" >> $GITHUB_OUTPUT
+
+      - name: Download draft release assets
         uses: robinraju/release-downloader@v1.8
         with:
-          tag: latest-build
+          releaseId: ${{ steps.get_release.outputs.release_id }}
           fileName: "*"
           out-file-path: ./downloads
           token: ${{ secrets.GITHUB_TOKEN }}
