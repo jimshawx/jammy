@@ -13,8 +13,8 @@ jobs:
       # Assume your build workflow uploaded these fixed-name zips
       - name: Rename files with run number
         run: |
-          cp Jammy-0.0.1-windows.zip Jammy-${{ github.run_number }}-windows.zip
-          cp Jammy-0.0.1-linux.zip Jammy-${{ github.run_number }}-linux.zip
+          mv Jammy-0.0.1-windows.zip Jammy-${{ github.run_number }}-windows.zip
+          mv Jammy-0.0.1-linux.zip Jammy-${{ github.run_number }}-linux.zip
 
       - name: Create Windows Release
         uses: softprops/action-gh-release@v2
