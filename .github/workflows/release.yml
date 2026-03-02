@@ -19,7 +19,7 @@ jobs:
         with:
           tag: latest-build
           fileName: "*"
-          outDir: ./downloads
+          out-file-path: ./downloads
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Rename files with run number
