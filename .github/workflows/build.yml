@@ -3,12 +3,11 @@ name: Weekly Multi-Platform Build
 on:
   schedule:
     - cron: '0 0 * * MON'   # every Monday at 00:00 UTC
-  workflow_dispatch:        # allows manual triggering
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
-    #runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -22,27 +21,35 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build project
+      - name: Build all projects
         run: dotnet build --configuration Release --no-restore
 
-      # Publish Windows binary
+      # Publish Windows binary (Jammy.Main)
       - name: Publish Windows binary
-        run: dotnet publish -c Release -r win-x64 -o out/win --self-contained true /p:EnableWindowsTargeting=true
+        run: dotnet publish Jammy.Main -c Release -r win-x64 -o out/win --self-contained true /p:EnableWindowsTargeting=true
 
-      # Publish Linux binary
-      - name: Publish Linux binary
-        run: dotnet publish -c Release -r linux-x64 -o out/linux --self-contained true
+      # Zip Windows binary
+      - name: Zip Windows binary
+        run: zip -r Jammy-0.0.1-windows.zip out/win/
 
       # Upload Windows artifact
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Jammy-0.0.1-windows.zip
-          path: out/win/
+          name: Jammy-0.0.1-windows
+          path: Jammy-0.0.1-windows.zip
+
+      # Publish Linux binary (Jammy.Main.Linux)
+      - name: Publish Linux binary
+        run: dotnet publish Jammy.Main.Linux -c Release -r linux-x64 -o out/linux --self-contained true
+
+      # Zip Linux binary
+      - name: Zip Linux binary
+        run: zip -r Jammy-0.0.1-linux.zip out/linux/
 
       # Upload Linux artifact
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Jammy-0.0.1-linux.zip
-          path: out/linux/
+          name: Jammy-0.0.1-linux
+          path: Jammy-0.0.1-linux.zip
