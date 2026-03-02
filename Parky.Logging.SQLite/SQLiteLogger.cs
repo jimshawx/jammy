@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -24,12 +24,12 @@ namespace Parky.Logging
 	public class SQLiteLogger : ILogger
 	{
 		private readonly string name;
-		private readonly SQLiteConnection connection;
+		private readonly SqliteConnection connection;
 
 		public SQLiteLogger(string name)
 		{
 			this.name = name;
-			connection = new SQLiteConnection("Data Source=errorlog.db");
+			connection = new SqliteConnection("Data Source=errorlog.db");
 			connection.Open();
 		}
 
@@ -61,7 +61,7 @@ namespace Parky.Logging
 			if (exception != null)
 				message += Environment.NewLine + Environment.NewLine + exception;
 
-			var cmd = new SQLiteCommand("insert into errorlog (message, name, loglevel) values (:message, :name, :loglevel)", connection);
+			var cmd = new SqliteCommand("insert into errorlog (message, name, loglevel) values (:message, :name, :loglevel)", connection);
 			cmd.Parameters.AddWithValue("message", message);
 			cmd.Parameters.AddWithValue("name", name);
 			cmd.Parameters.AddWithValue("loglevel", logLevel);
@@ -76,9 +76,9 @@ namespace Parky.Logging
 		
 		public SQLiteLoggerProvider()
 		{
-			var connection = new SQLiteConnection("Data Source=errorlog.db");
+			var connection = new SqliteConnection("Data Source=errorlog.db");
 			connection.Open();
-			var cmd = new SQLiteCommand("drop table if exists errorlog; create table errorlog (id integer primary key autoincrement, message text not null, name text, loglevel int not null)", connection);
+			var cmd = new SqliteCommand("drop table if exists errorlog; create table errorlog (id integer primary key autoincrement, message text not null, name text, loglevel int not null)", connection);
 			cmd.ExecuteScalar();
 			connection.Close();
 
@@ -102,16 +102,16 @@ namespace Parky.Logging
 
 	public class SQLiteLoggerReader : ISQLiteLoggerReader, IDisposable
 	{
-		private readonly SQLiteConnection connection;
+		private readonly SqliteConnection connection;
 		private uint counter = 0;
 		private readonly Thread thread;
 		private bool quit;
 
 		public SQLiteLoggerReader()
 		{
-			connection = new SQLiteConnection("Data Source=errorlog.db;Read Only=True");
+			connection = new SqliteConnection("Data Source=errorlog.db;Read Only=True");
 			connection.Open();
-			var cmd = new SQLiteCommand("select max(id) from errorlog", connection);
+			var cmd = new SqliteCommand("select max(id) from errorlog", connection);
 			var cnt = cmd.ExecuteScalar();
 			if (cnt != DBNull.Value)
 				counter = Convert.ToUInt32(cnt);
@@ -133,7 +133,7 @@ namespace Parky.Logging
 			int backoff = 1;
 			while (!quit)
 			{
-				var cmd = new SQLiteCommand("select * from errorlog where id > :counter order by id asc", connection);
+				var cmd = new SqliteCommand("select * from errorlog where id > :counter order by id asc", connection);
 				cmd.Parameters.AddWithValue("counter", counter);
 				var rv = cmd.ExecuteReader();
 				var messages = new List<DbMessage>();
