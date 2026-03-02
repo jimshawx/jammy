@@ -33,7 +33,7 @@ jobs:
 
       # Zip Windows binary
       - name: Zip Windows binary
-        run: zip -r Jammy-0.0.1-windows.zip out/win/
+        run: Compress-Archive -Path out/win/* -DestinationPath Jammy-0.0.1-windows.zip
 
       # Upload Windows artifact
       - name: Upload Windows artifact
@@ -48,7 +48,7 @@ jobs:
 
       # Zip Linux binary
       - name: Zip Linux binary
-        run: zip -r Jammy-0.0.1-linux.zip out/linux/
+        run: Compress-Archive -Path out/linux/* -DestinationPath Jammy-0.0.1-linux.zip
 
       # Upload Linux artifact
       - name: Upload Linux artifact
