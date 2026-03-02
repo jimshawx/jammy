@@ -21,8 +21,11 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build all projects
-        run: dotnet build --configuration Release --no-restore
+      - name: Build Windows
+        run: dotnet build Jammy.Main --configuration Release --no-restore
+
+      - name: Build Linux
+        run: dotnet build Jammy.Main.Linux --configuration Release --no-restore
 
       # Publish Windows binary (Jammy.Main)
       - name: Publish Windows binary
