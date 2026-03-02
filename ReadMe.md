@@ -1,4 +1,7 @@
-# Jammy
+# Jammy - an Amiga emulator written in C#
+
+
+[Jammy Releases](https://github.com/jimshawx/jammy/releases)
 
 ## Jim's Amiga Emulator
 
@@ -27,8 +30,13 @@ So here is my humble attempt at an Amiga emulation.
   * VT100 Serial terminal
 
 * There's a debugger and disassembler of sorts
+* There's a Javascript and Lua API to enable smart code to run on breakpoints
+* There's a web API so you can write your own UIs
 * There's some automated code analysis to produce good disassemblies
+* The disassemblies can be stored in a Sqlite database
 * There's a Linux version!
+* There's now a packaged release to try
+* Completely new emulation not based on WinUAE
 * It's free! (MIT License)
 
 ### The not so good stuff
@@ -41,6 +49,8 @@ So here is my humble attempt at an Amiga emulation.
 * There's a broken IPF floppy disk reader
 * The Linux version is missing the debugging UIs
 * There's no ARM build
+* The Javascript, Lua and web APIs need more work
+* The database needs more work
 
 The C# 68000 is slightly faster than the C Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
 In an effort to fix this, I have ported Musashi and the Musashi CPU generator to C#, and it is significantly faster now.
