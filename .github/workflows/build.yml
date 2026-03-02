@@ -56,3 +56,16 @@ jobs:
         with:
           name: Jammy-0.0.1-linux
           path: Jammy-0.0.1-linux.zip
+
+      - name: Upload to draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-build
+          name: Latest Build (Draft)
+          draft: true
+          prerelease: true
+          files: |
+            Jammy-0.0.1-windows.zip
+            Jammy-0.0.1-linux.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
