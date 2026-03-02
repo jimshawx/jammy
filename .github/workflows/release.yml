@@ -3,6 +3,9 @@ name: Manual Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -10,18 +13,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Assume your build workflow uploaded these fixed-name zips
+      # Download assets from the latest-build draft release
+      - name: Download latest-build assets
+        uses: robinraju/release-downloader@v1.8
+        with:
+          tag: latest-build
+          fileName: "*"
+          outDir: ./downloads
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Rename files with run number
         run: |
-          mv Jammy-0.0.1-windows.zip Jammy-${{ github.run_number }}-windows.zip
-          mv Jammy-0.0.1-linux.zip Jammy-${{ github.run_number }}-linux.zip
+          mv ./downloads/Jammy-0.0.1-windows.zip ./downloads/Jammy-${{ github.run_number }}-windows.zip
+          mv ./downloads/Jammy-0.0.1-linux.zip ./downloads/Jammy-${{ github.run_number }}-linux.zip
 
       - name: Create Windows Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: windows-${{ github.run_number }}
           name: Jammy Windows Release ${{ github.run_number }}
-          files: Jammy-${{ github.run_number }}-windows.zip
+          files: ./downloads/Jammy-${{ github.run_number }}-windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -30,6 +41,6 @@ jobs:
         with:
           tag_name: linux-${{ github.run_number }}
           name: Jammy Linux Release ${{ github.run_number }}
-          files: Jammy-${{ github.run_number }}-linux.zip
+          files: ./downloads/Jammy-${{ github.run_number }}-linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
