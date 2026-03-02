@@ -7,24 +7,21 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Download Windows artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: Jammy-windows
-          path: ./artifacts
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Download Linux artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: Jammy-linux
-          path: ./artifacts
+      # Assume your build workflow uploaded these fixed-name zips
+      - name: Rename files with run number
+        run: |
+          cp Jammy-0.0.1-windows.zip Jammy-${{ github.run_number }}-windows.zip
+          cp Jammy-0.0.1-linux.zip Jammy-${{ github.run_number }}-linux.zip
 
       - name: Create Windows Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: windows-${{ github.run_number }}
           name: Jammy Windows Release ${{ github.run_number }}
-          files: ./artifacts/Jammy-0.0.1-windows.zip
+          files: Jammy-${{ github.run_number }}-windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -33,6 +30,6 @@ jobs:
         with:
           tag_name: linux-${{ github.run_number }}
           name: Jammy Linux Release ${{ github.run_number }}
-          files: ./artifacts/Jammy-0.0.1-linux.zip
+          files: Jammy-${{ github.run_number }}-linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
