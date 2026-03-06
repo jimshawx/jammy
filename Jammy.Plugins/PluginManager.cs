@@ -47,6 +47,9 @@ namespace Jammy.Plugins
 
 		public void Start()
 		{
+			if (!Path.Exists("plugins"))
+				return;
+
 			debugger.LockEmulation();
 
 			Directory.GetFiles("plugins", "*.lua").ToList().ForEach(f =>
