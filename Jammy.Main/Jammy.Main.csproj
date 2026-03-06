@@ -48,6 +48,7 @@
     <ProjectReference Include="..\Jammy.Graph\Jammy.Graph.csproj" />
     <ProjectReference Include="..\Jammy.NativeOverlay\Jammy.NativeOverlay.csproj" />
     <ProjectReference Include="..\Jammy.Plugins.Interface\Jammy.Plugins.Interface.csproj" />
+    <ProjectReference Include="..\Jammy.Plugins.JavaScript.Jint\Jammy.Plugins.JavaScript.Jint.csproj" />
     <ProjectReference Include="..\Jammy.Plugins.JavaScript\Jammy.Plugins.JavaScript.csproj" />
     <ProjectReference Include="..\Jammy.Plugins.Lua\Jammy.Plugins.Lua.csproj" />
     <ProjectReference Include="..\Jammy.Plugins\Jammy.Plugins.csproj" />

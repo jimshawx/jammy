@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<PackageReference Include="Microsoft.ClearScript" Version="7.5.0" />
+	<PackageReference Include="Microsoft.ClearScript.V8.Native.linux-x64" Version="7.5.0" />
+	<PackageReference Include="Microsoft.ClearScript.V8.Native.win-x64" Version="7.5.0" />
+	<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<ProjectReference Include="..\Jammy.Debugger\Jammy.Debugger.csproj" />
+	<ProjectReference Include="..\Jammy.Plugins.Interface\Jammy.Plugins.Interface.csproj" />
+	<ProjectReference Include="..\Jammy.Plugins.JavaScript\Jammy.Plugins.JavaScript.csproj" />
+  </ItemGroup>
+  
+</Project>

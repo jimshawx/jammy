@@ -4,9 +4,9 @@
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Plugins.JavaScript.APIWrapper
+namespace Jammy.Plugins.JavaScript.ClearScript.APIWrapper
 {
-	internal sealed class JsCallbackClosure
+	public sealed class JsCallbackClosure
 	{
 		private readonly Func<object[], object> _invoker;
 

@@ -1,4 +1,4 @@
-﻿using Jammy.Plugins.JavaScript.APIWrapper;
+﻿using Jammy.Plugins.JavaScript.Jint.APIWrapper;
 using Jint;
 using Jint.Native;
 using Jint.Native.Function;

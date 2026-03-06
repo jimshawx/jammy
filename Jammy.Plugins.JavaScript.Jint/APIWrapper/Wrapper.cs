@@ -1,4 +1,4 @@
-﻿using Microsoft.ClearScript;
+﻿using Jint.Native;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -8,7 +8,7 @@ using System.Reflection.Emit;
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Plugins.JavaScript.APIWrapper
+namespace Jammy.Plugins.JavaScript.Jint.APIWrapper
 {
 	public interface IJsEngineAdapter
 	{
@@ -179,7 +179,7 @@ namespace Jammy.Plugins.JavaScript.APIWrapper
 			{
 				var p = parameters[i];
 
-				if (i < jsArgs.Length && jsArgs[i] != null && jsArgs[i] != Undefined.Value)
+				if (i < jsArgs.Length && jsArgs[i] != null && jsArgs[i] != JsValue.Undefined)
 				{
 					finalArgs[i] = ConvertArg(jsArgs[i], p.ParameterType, adapter);
 				}
@@ -200,7 +200,7 @@ namespace Jammy.Plugins.JavaScript.APIWrapper
 
 		private static object ConvertArg(object value, Type targetType, IJsEngineAdapter adapter)
 		{
-			if (value == null || value == Undefined.Value)
+			if (value == null || value == JsValue.Undefined)
 				return null;
 
 			// Already assignable?

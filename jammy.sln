@@ -109,6 +109,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.WebAPI", "Jammy.WebAP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Content", "Content\Content.csproj", "{06CCEB72-82A0-4207-8502-DF1AC4D920F2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Plugins.JavaScript.Jint", "Jammy.Plugins.JavaScript.Jint\Jammy.Plugins.JavaScript.Jint.csproj", "{0FF1CD25-3A42-4787-817C-51669999DD46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jammy.Plugins.JavaScript.ClearScript", "Jammy.Plugins.JavaScript.ClearScript\Jammy.Plugins.JavaScript.ClearScript.csproj", "{27BC6BF2-451A-411A-BC4C-0B90D201AAAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -327,6 +331,14 @@ Global
 		{06CCEB72-82A0-4207-8502-DF1AC4D920F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06CCEB72-82A0-4207-8502-DF1AC4D920F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06CCEB72-82A0-4207-8502-DF1AC4D920F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FF1CD25-3A42-4787-817C-51669999DD46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FF1CD25-3A42-4787-817C-51669999DD46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FF1CD25-3A42-4787-817C-51669999DD46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FF1CD25-3A42-4787-817C-51669999DD46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27BC6BF2-451A-411A-BC4C-0B90D201AAAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27BC6BF2-451A-411A-BC4C-0B90D201AAAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27BC6BF2-451A-411A-BC4C-0B90D201AAAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27BC6BF2-451A-411A-BC4C-0B90D201AAAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

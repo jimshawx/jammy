@@ -1,6 +1,6 @@
 ﻿using Jammy.Interface;
 using Jammy.Plugins.Interface;
-using Jammy.Plugins.JavaScript.APIWrapper;
+using Jammy.Plugins.JavaScript.ClearScript.APIWrapper;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using Microsoft.Extensions.Logging;

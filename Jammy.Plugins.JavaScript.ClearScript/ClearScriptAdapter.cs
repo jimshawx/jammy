@@ -1,4 +1,4 @@
-﻿using Jammy.Plugins.JavaScript.APIWrapper;
+﻿using Jammy.Plugins.JavaScript.ClearScript.APIWrapper;
 using Microsoft.ClearScript;
 using System;
 using System.Linq;
