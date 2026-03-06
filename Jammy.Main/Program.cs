@@ -94,6 +94,7 @@ namespace Jammy.Main
 					x.AddDebugAsync();
 					//x.AddDebugAsyncRTF();
 					//x.AddOutputDebugString();
+					x.AddLogFile();
 				})
 				.AddSingleton<IAmiga, Amiga>()
 				.AddSingleton<IBattClock, BattClock>()

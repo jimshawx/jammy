@@ -120,6 +120,7 @@ public class Program
 				//x.AddDebugAsyncRTF();
 				//x.AddOutputDebugString();
 				x.AddTerminalAsync();
+				x.AddLogFile();
 			})
 			.AddSingleton<IAmiga, Amiga>()
 			.AddSingleton<IBattClock, BattClock>()
