@@ -386,7 +386,7 @@ namespace Jammy.Core
 				{
 					if (takeASnapshot)
 					{
-						persistenceManager.Save($"../../state-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.json");
+						persistenceManager.Save($"state-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.json");
 						takeASnapshot = false;
 						logger.LogTrace("Snapshot Recorded!");
 					}
