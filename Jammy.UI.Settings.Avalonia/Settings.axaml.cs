@@ -86,17 +86,18 @@ namespace Jammy.UI.Settings.Avalonia
 
 			if (StringFromSelection(cbSku.SelectedItem) == "MC68000" ||
 				StringFromSelection(cbSku.SelectedItem) == "MC68EC020" ||
-				StringFromSelection(cbSku.SelectedItem) == "MC68030")
+				StringFromSelection(cbSku.SelectedItem) == "MC68030" ||
+				StringFromSelection(cbSku.SelectedItem) == "MC68040")
 			{
-				rbMusashi.IsEnabled = true;
+				rbMusashiCS.IsEnabled = true;
 			}
 			else
 			{
-				rbMusashi.IsChecked = false;
-				rbMusashi.IsEnabled = false;
+				rbMusashiCS.IsChecked = false;
+				rbMusashiCS.IsEnabled = false;
 			}
 
-			if (!Default(rbMusashi.IsChecked) && !Default(rbNative.IsChecked))
+			if (!Default(rbNative.IsChecked))
 				rbMusashiCS.IsChecked = true;
 		}
 
@@ -343,14 +344,14 @@ namespace Jammy.UI.Settings.Avalonia
 
 			//CPU
 			cbSku.SelectedItem = SelectionFromString(cbSku.Items, currentSettings.Sku.ToString());
-			rbMusashi.IsChecked = currentSettings.CPU == CPUType.Musashi;
 			rbNative.IsChecked = currentSettings.CPU == CPUType.Native;
 			rbMusashiCS.IsChecked = currentSettings.CPU == CPUType.MusashiCSharp;
 
 			rbNative.IsEnabled = currentSettings.Sku == CPUSku.MC68000;
-			rbMusashi.IsEnabled = currentSettings.Sku == CPUSku.MC68000 ||
+			rbMusashiCS.IsEnabled = currentSettings.Sku == CPUSku.MC68000 ||
 								currentSettings.Sku == CPUSku.MC68EC020 ||
-								currentSettings.Sku == CPUSku.MC68030;
+								currentSettings.Sku == CPUSku.MC68030 ||
+								currentSettings.Sku == CPUSku.MC68040;
 
 			//Chipset
 			cbChipset.SelectedItem = SelectionFromString(cbChipset.Items, currentSettings.ChipSet.ToString());
@@ -421,7 +422,7 @@ namespace Jammy.UI.Settings.Avalonia
 
 			//CPU
 			currentSettings.Sku = Enum.Parse<CPUSku>(StringFromSelection(cbSku.SelectedItem));
-			currentSettings.CPU = Default(rbMusashi.IsChecked) ? CPUType.Musashi : (Default(rbMusashiCS.IsChecked) ? CPUType.MusashiCSharp : CPUType.Native);
+			currentSettings.CPU = Default(rbMusashiCS.IsChecked) ? CPUType.MusashiCSharp : CPUType.Native;
 			currentSettings.AddressBits = (currentSettings.Sku == CPUSku.MC68030
 										|| currentSettings.Sku == CPUSku.MC68040) ? 32 : 24;
 
