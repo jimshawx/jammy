@@ -68,6 +68,8 @@ public class JammyApplication : Application
 			desktop.MainWindow = new Settings();
 			desktop.MainWindow.Closed += (s, e) => 
 			{
+				if (!((Settings)desktop.MainWindow).ConfigOK)
+					return;
 				desktop.MainWindow = Program.AppMain();
 				desktop.MainWindow.Show();
 			};
