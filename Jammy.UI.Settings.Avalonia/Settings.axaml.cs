@@ -42,8 +42,8 @@ namespace Jammy.UI.Settings.Avalonia
 				.AddWritableJsonFile("appSettings.json", false)
 				.Build();
 
-			//Quickstart
-			cbQuickStart.SelectedIndex = 0;
+			//bind in the default settings
+			BindSettings();
 
 			//ActiveControl = btnQuickStart;
 			//CancelButton = btnExit;
@@ -57,11 +57,7 @@ namespace Jammy.UI.Settings.Avalonia
 			catch { }
 			foreach (var item in cfgs.Select(Path.GetFileNameWithoutExtension).OrderBy(x => x).Cast<object>())
 			cbQuickStart.Items.Add(item);
-
-			//bind in the default settings
-			BindSettings();
-
-			LoadConfig("emulationSettings.json");
+			cbQuickStart.SelectedIndex = 0;//this will trigger current settings to load
 		}
 
 		private bool Default(bool? value) { return value??false; }
@@ -296,7 +292,7 @@ namespace Jammy.UI.Settings.Avalonia
 
 		private void UpdateCurrentSettingFilename(string fileName)
 		{
-			if (cbQuickStart.SelectedIndex > 6)
+			if (cbQuickStart.SelectedIndex > 6 || cbQuickStart.SelectedIndex == 0)
 			{
 				currentSettingsFile = fileName;
 				btnSaveConfig.IsEnabled = true;
@@ -493,7 +489,7 @@ namespace Jammy.UI.Settings.Avalonia
 			public EmulationSettings Settings { get; set; }
 		}
 
-		private void cbQuickStart_SelectedValueChanged(object sender, EventArgs e)
+		private void cbQuickStart_SelectedValueChanged(object sender, SelectionChangedEventArgs e)
 		{
 			SetQuickStart();
 		}
@@ -512,7 +508,7 @@ namespace Jammy.UI.Settings.Avalonia
 			{
 				case 0:
 					LoadConfig("emulationSettings.json");
-					btnSaveConfig.IsEnabled = false;
+					btnSaveConfig.IsEnabled = true;
 					break;
 
 				case 1:
