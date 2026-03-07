@@ -39,8 +39,6 @@ jobs:
         run: |
           Copy-Item -Path "games" -Destination "out/win/games" -Recurse
           Copy-Item -Path "roms" -Destination "out/win/roms" -Recurse
-          Copy-Item -Path "plugins" -Destination "out/win/plugins" -Recurse
-          Copy-Item -Path "config" -Destination "out/win/config" -Recurse
           Compress-Archive -Path out/win/* -DestinationPath Jammy-windows.zip
 
       # Upload Windows artifact
@@ -59,8 +57,6 @@ jobs:
         run: |
           Copy-Item -Path "games" -Destination "out/linux/games" -Recurse
           Copy-Item -Path "roms" -Destination "out/linux/roms" -Recurse
-          Copy-Item -Path "plugins" -Destination "out/linux/plugins" -Recurse
-          Copy-Item -Path "config" -Destination "out/linux/config" -Recurse
           Compress-Archive -Path out/linux/* -DestinationPath Jammy-linux.zip
 
       # Upload Linux artifact
