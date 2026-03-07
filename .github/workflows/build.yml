@@ -36,14 +36,14 @@ jobs:
 
       # Zip Windows binary
       - name: Zip Windows binary
-        run: Compress-Archive -Path out/win/* -DestinationPath Jammy-0.0.1-windows.zip
+        run: Compress-Archive -Path out/win/* -DestinationPath Jammy-windows.zip
 
       # Upload Windows artifact
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Jammy-0.0.1-windows
-          path: Jammy-0.0.1-windows.zip
+          name: Jammy-windows
+          path: Jammy-windows.zip
 
       # Publish Linux binary (Jammy.Main.Linux)
       - name: Publish Linux binary
@@ -51,14 +51,14 @@ jobs:
 
       # Zip Linux binary
       - name: Zip Linux binary
-        run: Compress-Archive -Path out/linux/* -DestinationPath Jammy-0.0.1-linux.zip
+        run: Compress-Archive -Path out/linux/* -DestinationPath Jammy-linux.zip
 
       # Upload Linux artifact
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Jammy-0.0.1-linux
-          path: Jammy-0.0.1-linux.zip
+          name: Jammy-linux
+          path: Jammy-linux.zip
 
       - name: Upload to draft release
         uses: softprops/action-gh-release@v2
@@ -68,7 +68,7 @@ jobs:
           draft: true
           prerelease: true
           files: |
-            Jammy-0.0.1-windows.zip
-            Jammy-0.0.1-linux.zip
+            Jammy-windows.zip
+            Jammy-linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

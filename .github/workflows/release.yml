@@ -31,15 +31,15 @@ jobs:
 
       - name: Rename files with run number
         run: |
-          mv ./downloads/Jammy-0.0.1-windows.zip ./downloads/Jammy-${{ github.run_number }}-windows.zip
-          mv ./downloads/Jammy-0.0.1-linux.zip ./downloads/Jammy-${{ github.run_number }}-linux.zip
+          mv ./downloads/Jammy-windows.zip ./downloads/Jammy-0.0.${{ github.run_number }}-alpha-windows-x64.zip
+          mv ./downloads/Jammy-linux.zip ./downloads/Jammy-0.0.${{ github.run_number }}-alpha-linux-x64.zip
 
       - name: Create Windows Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: windows-${{ github.run_number }}
-          name: Jammy Windows Release ${{ github.run_number }}
-          files: ./downloads/Jammy-${{ github.run_number }}-windows.zip
+          name: Jammy Windows Alpha Release 0.0.${{ github.run_number }}
+          files: ./downloads/Jammy-0.0.${{ github.run_number }}-alpha-windows-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -47,7 +47,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: linux-${{ github.run_number }}
-          name: Jammy Linux Release ${{ github.run_number }}
-          files: ./downloads/Jammy-${{ github.run_number }}-linux.zip
+          name: Jammy Linux Alpha Release 0.0.${{ github.run_number }}
+          files: ./downloads/Jammy-0.0.${{ github.run_number }}-alpha-linux-x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
