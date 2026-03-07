@@ -7,7 +7,7 @@ function init() {
 
 	//jammy.AddBreakpoint(0xFC0F90, 0, 0, 2, fn);
 	//jammy.AddBreakpoint(0xFC0F90, 0, 0, 2);
-	jammy.AddBreakpoint(0xFC0F90, 0, 0, 2, breakpointFn);
+	//jammy.AddBreakpoint(0xFC0F90, 0, 0, 2, breakpointFn);
 	strings = GetStrings();
 	console.log("#strings " + strings.length);
 	//for (var i = 0; i < strings.length; i++)
