@@ -266,6 +266,83 @@ namespace Jammy.UI.Settings.Avalonia
 			if (Default(rbNative.IsChecked)) cbSku.SelectedIndex = 0;
 		}
 
+		private void btnDF0Eject_Click(object sender, RoutedEventArgs e)
+		{
+			txtDF0.Text = string.Empty;
+		}
+
+		private void btnDF1Eject_Click(object sender, RoutedEventArgs e)
+		{
+			txtDF1.Text = string.Empty;
+		}
+
+		private void btnDF2Eject_Click(object sender, RoutedEventArgs e)
+		{
+			txtDF2.Text = string.Empty;
+		}
+
+		private void btnDF3Eject_Click(object sender, RoutedEventArgs e)
+		{
+			txtDF3.Text = string.Empty;
+		}
+
+		private async void btnDH0Pick_Click(object sender, RoutedEventArgs e)
+		{
+			await StorageProvider.OpenFilePickerAsync(
+				new FilePickerOpenOptions
+				{
+					SuggestedFileName = txtDH0.Text,
+					SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(appConfig["Application:Directories:HDPath"]),
+					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("HDF Files") { Patterns = new[] { "*.hdf" } } }
+				}).ContinueWith((t) => {
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => {
+							txtDH0.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							appConfig["Application:Directories:HDPath"] = Path.GetDirectoryName(txtDH0.Text);
+						});
+					}
+				});
+		}
+
+		private async void btnDH1Pick_Click(object sender, RoutedEventArgs e)
+		{
+			await StorageProvider.OpenFilePickerAsync(
+				new FilePickerOpenOptions
+				{
+					SuggestedFileName = txtDH1.Text,
+					SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(appConfig["Application:Directories:HDPath"]),
+					FileTypeFilter = new List<FilePickerFileType> { new FilePickerFileType("HDF Files") { Patterns = new[] { "*.hdf" } } }
+				}).ContinueWith((t) => {
+					var openFileDialog1 = t.Result;
+					if (openFileDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => {
+							txtDH1.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							appConfig["Application:Directories:HDPath"] = Path.GetDirectoryName(txtDH1.Text);
+						});
+					}
+				});
+		}
+
+		private void btnDH0Eject_Click(object sender, RoutedEventArgs e)
+		{
+			txtDH0.Text = string.Empty;
+		}
+
+		private void btnDH1Eject_Click(object sender, RoutedEventArgs e)
+		{
+			txtDH1.Text = string.Empty;
+		}
+
+		private void nudHardDiskCount_ValueChanged(object sender, NumericUpDownValueChangedEventArgs e)
+		{
+			int f = (int)nudHardDiskCount.Value;
+			txtDH0.IsEnabled = btnDH0Pick.IsEnabled = f > 0;
+			txtDH1.IsEnabled = btnDH1Pick.IsEnabled = f > 1;
+		}
+
 		private EmulationSettings currentSettings = DefaultSettings();
 
 		private string currentSettingsFile = "";
@@ -400,6 +477,8 @@ namespace Jammy.UI.Settings.Avalonia
 			//Hard Disk
 			cbDiskController.SelectedItem = SelectionFromString(cbDiskController.Items, currentSettings.DiskController.ToString());
 			nudHardDiskCount.Value = currentSettings.HardDiskCount;
+			txtDH0.IsEnabled = btnDH0Pick.IsEnabled = nudHardDiskCount.Value > 0;
+			txtDH1.IsEnabled = btnDH1Pick.IsEnabled = nudHardDiskCount.Value > 1;
 
 			//Kickstart
 			txtKickstart.Text = currentSettings.KickStart;
@@ -414,6 +493,9 @@ namespace Jammy.UI.Settings.Avalonia
 			//Blitter
 			rbImmediate.IsChecked = currentSettings.BlitterMode == BlitterMode.Immediate;
 			rbSynchronous.IsChecked = currentSettings.BlitterMode == BlitterMode.Synchronous;
+
+			//Floppy Speed
+			rbFloppyAccurate.IsChecked = currentSettings.FloppySpeed == FloppySpeed.CycleExact;
 		}
 
 		private void UnbindSettings()
@@ -448,6 +530,8 @@ namespace Jammy.UI.Settings.Avalonia
 			//Hard Disk
 			currentSettings.DiskController = Enum.Parse<DiskController>(StringFromSelection(cbDiskController.SelectedItem));
 			currentSettings.HardDiskCount = (int)nudHardDiskCount.Value;
+			currentSettings.DH0 = txtDH0.Text;
+			currentSettings.DH1 = txtDH1.Text;
 
 			//Kickstart
 			currentSettings.KickStart = txtKickstart.Text;
@@ -476,7 +560,7 @@ namespace Jammy.UI.Settings.Avalonia
 			currentSettings.BlitterMode = Default(rbImmediate.IsChecked) ? BlitterMode.Immediate : BlitterMode.Synchronous;
 
 			//Floppy Speed
-			currentSettings.FloppySpeed = FloppySpeed.Immediate;
+			currentSettings.FloppySpeed = Default(rbFloppyAccurate.IsChecked) ? FloppySpeed.CycleExact : FloppySpeed.Immediate;
 		}
 
 		private static EmulationSettings DefaultSettings()
