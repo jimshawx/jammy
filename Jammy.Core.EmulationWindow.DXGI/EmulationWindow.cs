@@ -147,7 +147,14 @@ namespace Jammy.Core.EmulationWindow.DX
 				screenHeight = height;
 				emulation.ClientSize = new Size(screenWidth, screenHeight);
 
-				DXGI.CreateDXGIFactory2<IDXGIFactory2>(true, out var factory);
+
+#if DEBUG
+				const bool useDebug = true;
+#else
+				const bool useDebug = false;
+#endif
+
+				DXGI.CreateDXGIFactory2<IDXGIFactory2>(useDebug, out var factory);
 				if (factory == null)
 					throw new ApplicationException();
 
