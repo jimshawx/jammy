@@ -182,6 +182,7 @@ namespace Jammy.Main.Linux
 
 			//add in an area of code disassembly around the current PC
 			var regs = debugger.GetRegs();
+			disassemblyRanges.Clear();//for now - the full disassembly is far too large for Avalonia
 			disassemblyRanges.Add(new AddressRange(regs.PC - 0x100, 0x1000));
 
 			disassembly.Clear();
