@@ -45,8 +45,10 @@ namespace Jammy.UI.Settings
 				.AddWritableJsonFile("appSettings.json", false)
 				.Build();
 
+			//bind in the default settings
+			BindSettings();
+
 			//Quickstart
-			cbQuickStart.SelectedIndex = 0;
 			ActiveControl = btnQuickStart;
 			CancelButton = btnExit;
 			AcceptButton = btnGo;
@@ -58,11 +60,7 @@ namespace Jammy.UI.Settings
 			}
 			catch { }
 			cbQuickStart.Items.AddRange(cfgs.Select(Path.GetFileNameWithoutExtension).OrderBy(x => x).Cast<object>().ToArray());
-
-			//bind in the default settings
-			BindSettings();
-
-			LoadConfig("emulationSettings.json");
+			cbQuickStart.SelectedIndex = 0;//this will trigger current settings to load
 		}
 
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -296,7 +294,8 @@ namespace Jammy.UI.Settings
 
 		private void UpdateCurrentSettingFilename(string fileName)
 		{
-			if (cbQuickStart.SelectedIndex > 6)
+			//6 is the number of hard-coded items in SetQuickStart
+			if (cbQuickStart.SelectedIndex > 6 || cbQuickStart.SelectedIndex == 0)
 			{
 				currentSettingsFile = fileName;
 				btnSaveConfig.Enabled = true;
@@ -516,7 +515,7 @@ namespace Jammy.UI.Settings
 			{
 				case 0:
 					LoadConfig("emulationSettings.json");
-					btnSaveConfig.Enabled = false;
+					btnSaveConfig.Enabled = true;
 					break;
 
 				case 1:
