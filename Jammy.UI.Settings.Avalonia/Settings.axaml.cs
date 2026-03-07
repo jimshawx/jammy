@@ -479,6 +479,8 @@ namespace Jammy.UI.Settings.Avalonia
 			nudHardDiskCount.Value = currentSettings.HardDiskCount;
 			txtDH0.IsEnabled = btnDH0Pick.IsEnabled = nudHardDiskCount.Value > 0;
 			txtDH1.IsEnabled = btnDH1Pick.IsEnabled = nudHardDiskCount.Value > 1;
+			txtDH0.Text = currentSettings.DH0;
+			txtDH1.Text = currentSettings.DH1;
 
 			//Kickstart
 			txtKickstart.Text = currentSettings.KickStart;
