@@ -92,7 +92,7 @@ namespace Jammy.Core.IDE
 				bytes = new FileInfo(fileName).Length;
 			}
 
-			diskMap = MemoryMappedFile.CreateFromFile(fileName, FileMode.OpenOrCreate, Path.GetFileNameWithoutExtension(diskFileName), bytes, MemoryMappedFileAccess.ReadWrite);
+			diskMap = MemoryMappedFile.CreateFromFile(fileName, FileMode.OpenOrCreate, null, bytes, MemoryMappedFileAccess.ReadWrite);
 			diskAccessor = diskMap.CreateViewAccessor(0, bytes);
 
 			Swab();
