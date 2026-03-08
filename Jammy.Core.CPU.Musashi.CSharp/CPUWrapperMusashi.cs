@@ -74,7 +74,7 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 			uint pc = M68KCPU.m68k_get_reg(null, M68KCPU.m68k_register_t.M68K_REG_PC);
 			M68KCPU.SetInstructionStartPC(pc);
 
-			breakpoints.CheckBreakpoints(pc);
+			breakpoints.ExecutionBreakpoint(pc);
 		}
 
 		public uint GetCycles()

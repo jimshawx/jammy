@@ -10,10 +10,10 @@ namespace Jammy.Core.Interface.Interfaces
 {
 	public interface IBreakpointCollection : IMemoryInterceptor
 	{
-		bool IsBreakpoint(uint pc);
+		bool IsBreakpoint(uint address);
 		//cpu interface
-		void SignalBreakpoint(uint address);
-		bool CheckBreakpoints(uint address);
+		void MemoryBreakpoint(Breakpoint bp, uint address);
+		bool ExecutionBreakpoint(uint pc);
 
 		//machine interface
 		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, 

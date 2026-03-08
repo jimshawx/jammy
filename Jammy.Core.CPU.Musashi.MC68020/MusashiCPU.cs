@@ -161,7 +161,7 @@ namespace Jammy.Core.CPU.Musashi.MC68020
 
 			instructionStartPC = pc;
 
-			breakpoints.CheckBreakpoints(pc);
+			breakpoints.ExecutionBreakpoint(pc);
 		}
 
 		public void Reset()

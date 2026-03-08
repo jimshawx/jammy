@@ -26,7 +26,7 @@ namespace Jammy.Core
 			Size size = Size.Word, ulong? value = null, Func<Breakpoint, bool> callback = null)
 		{
 			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter,
-				CounterReset = counter, Size = size, Value = value, Callback = callback };
+				CounterReset = counter, Size = size, Value = value, BreakpointHit = callback };
 		}
 
 		public void RemoveBreakpoint(uint address)
@@ -38,24 +38,21 @@ namespace Jammy.Core
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
-					if (bp.Callback != null || bp.Callback(bp))
-						SignalBreakpoint(insaddr);
+					MemoryBreakpoint(bp,insaddr);
 		}
 
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-					if (bp.Callback != null || bp.Callback(bp))
-						SignalBreakpoint(insaddr);
+					MemoryBreakpoint(bp, insaddr);
 		}
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-					if (bp.Callback != null || bp.Callback(bp))
-						SignalBreakpoint(insaddr);
+					MemoryBreakpoint(bp, insaddr);
 		}
 
 		private bool Matches(Breakpoint bp, ulong value, Size size)
@@ -64,42 +61,40 @@ namespace Jammy.Core
 			       && bp.Size == size;
 		}
 
-		public bool IsBreakpoint(uint pc)
+		private bool ShouldBreakpointTrigger(uint pc, Breakpoint bp)
 		{
-			if (breakpoints.TryGetValue(pc, out Breakpoint bp))
+			//does it have a function to call when hit? if so, call it
+			if (bp.BreakpointHit != null)
 			{
-				if (bp.Callback != null && !bp.Callback(bp))
-					return false;
+				//returns true if we are to stop
+				return bp.BreakpointHit(bp);
+			}
 
-				if (bp.Type == BreakpointType.Execute)
-					return bp.Active;
+			if (bp.Type == BreakpointType.Execute)
+				return bp.Active;
 
-				if (bp.Type == BreakpointType.Counter)
+			if (bp.Type == BreakpointType.Counter)
+			{
+				if (bp.Active)
 				{
-					if (bp.Active)
+					bp.Counter--;
+					if (bp.Counter == 0)
 					{
-						bp.Counter--;
-						if (bp.Counter == 0)
-						{
-							bp.Counter = bp.CounterReset;
-							return true;
-						}
+						bp.Counter = bp.CounterReset;
+						return true;
 					}
 				}
-
-				if (bp.Type == BreakpointType.OneShot)
-					breakpoints.Remove(pc);
-
-				if (bp.Type == BreakpointType.Write)
-					return false;
-				if (bp.Type == BreakpointType.Read)
-					return false;
-				if (bp.Type == BreakpointType.ReadOrWrite)
-					return false;
-
-				return bp.Active;
+				return false;
 			}
-			return false;
+
+			if (bp.Type == BreakpointType.OneShot)
+			{
+				if (!bp.Active) return false;
+				bp.Active = false;
+				return true;
+			}
+
+			return bp.Active;
 		}
 
 		public void ToggleBreakpoint(uint pc)
@@ -110,35 +105,50 @@ namespace Jammy.Core
 				AddBreakpoint(pc);
 		}
 
-		public void SignalBreakpoint(uint address)
+		//here is where memory reads/writes/fetches call to signal a breakpoint
+		public void MemoryBreakpoint(Breakpoint bp, uint address)
 		{
-			Breakpoint(address);
+			Breakpoint(bp, address);
 		}
 
-		public bool CheckBreakpoints(uint address)
+		//here is where the CPUs call at the end of an instruction to check for a breakpoint at new pc
+		public bool ExecutionBreakpoint(uint pc)
 		{
-			if (IsBreakpoint(address))
+			if (breakpoints.TryGetValue(pc, out var bp))
 			{
-				Breakpoint(address);
+				Breakpoint(bp, pc);
 				return true;
 			}
 
 			return false;
 		}
 
-		private bool breakpointHit;
+		private Breakpoint breakpointHit = null;
 
+		//here is where emulation loop checks whether a breakpoint was hit and resets the hit
+		//we are between instructions so emulation state is consistent
 		public bool BreakpointHit()
 		{
-			bool hit = breakpointHit;
-			breakpointHit = false;
-			return hit;
+			if (breakpointHit == null) return false;
+
+			var bp = breakpointHit;
+			breakpointHit = null;
+
+			return ShouldBreakpointTrigger(bp.Address, bp);
 		}
 
-		private void Breakpoint(uint pc)
+		//signal a breakpoint (bp) hit
+		private void Breakpoint(Breakpoint bp, uint pc)
 		{
-			logger.LogTrace($"Breakpoint @{pc:X8}");
-			breakpointHit = true;
+			logger.LogTrace($"Breakpoint @{pc:X8} {bp.Type}");
+			//nb. there could be multiple breakpoints on the same instruction, read/write/execute
+			breakpointHit = bp;
+		}
+
+		//is there any breakpoint here? currently only used by the disassembler
+		public bool IsBreakpoint(uint address)
+		{
+			return breakpoints.ContainsKey(address);
 		}
 
 		public void DumpBreakpoints()

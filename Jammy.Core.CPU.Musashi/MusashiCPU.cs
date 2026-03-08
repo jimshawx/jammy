@@ -159,7 +159,7 @@ namespace Jammy.Core.CPU.Musashi
 
 			instructionStartPC = pc;
 
-			breakpoints.CheckBreakpoints(pc);
+			breakpoints.ExecutionBreakpoint(pc);
 		}
 
 		public void Reset()

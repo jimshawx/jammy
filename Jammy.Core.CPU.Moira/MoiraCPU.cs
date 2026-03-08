@@ -121,7 +121,7 @@ namespace Jammy.Core.CPU.Moira
 
 			instructionStartPC = pc;
 
-			breakpoints.CheckBreakpoints(pc);
+			breakpoints.ExecutionBreakpoint(pc);
 		}
 
 		public void Reset()
