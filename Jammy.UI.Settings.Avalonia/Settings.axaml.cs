@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Parky.Configuration.WritableJson;
+using System.Globalization;
 using System.Web;
 
 /*
@@ -391,7 +392,7 @@ namespace Jammy.UI.Settings.Avalonia
 		private string DecodeZorro3(string s)
 		{
 			if (string.IsNullOrEmpty(s)) return "0";
-			return string.Join('+', s.Split(',').Select(x => ((int)Convert.ToSingle(x)).ToString()));
+			return string.Join('+', s.Split(',').Select(x => ((int)Convert.ToSingle(x, CultureInfo.InvariantCulture)).ToString()));
 		}
 
 		private string EncodeZorro2(string s)
@@ -403,7 +404,7 @@ namespace Jammy.UI.Settings.Avalonia
 		private string DecodeZorro2(string s)
 		{
 			if (string.IsNullOrEmpty(s)) return "0";
-			return string.Join('+', s.Split(',').Select(x => Convert.ToSingle(x).ToString("0.0;0.0;0")));
+			return string.Join('+', s.Split(',').Select(x => Convert.ToSingle(x, CultureInfo.InvariantCulture).ToString("0.0;0.0;0", CultureInfo.InvariantCulture)));
 		}
 
 		private ComboBoxItem SelectionFromString(ItemCollection items, string item)
@@ -457,10 +458,10 @@ namespace Jammy.UI.Settings.Avalonia
 			currentSettings.CPUFrequency = 7093790;
 
 			//Memory
-			dudChipRAM.SelectedItem = SelectionFromString(dudChipRAM.Items, currentSettings.ChipMemory.ToString("0.0;0.0;0"));
+			dudChipRAM.SelectedItem = SelectionFromString(dudChipRAM.Items, currentSettings.ChipMemory.ToString("0.0;0.0;0", CultureInfo.InvariantCulture));
 			dudCPUSlot.SelectedItem = SelectionFromString(dudCPUSlot.Items, currentSettings.CPUSlotMemory.ToString());
 			dudMotherboard.SelectedItem = SelectionFromString(dudMotherboard.Items, currentSettings.MotherboardMemory.ToString());
-			dudTrapdoor.SelectedItem = SelectionFromString(dudTrapdoor.Items, currentSettings.TrapdoorMemory.ToString("0.0;0.0;0"));
+			dudTrapdoor.SelectedItem = SelectionFromString(dudTrapdoor.Items, currentSettings.TrapdoorMemory.ToString("0.0;0.0;0", CultureInfo.InvariantCulture));
 			dudZ2.SelectedItem = SelectionFromString(dudZ2.Items, DecodeZorro2(currentSettings.ZorroIIMemory));
 			dudZ3.SelectedItem = SelectionFromString(dudZ3.Items, DecodeZorro3(currentSettings.ZorroIIIMemory));
 
@@ -515,10 +516,10 @@ namespace Jammy.UI.Settings.Avalonia
 			currentSettings.VideoFormat = Default(rbNTSC.IsChecked) ? VideoFormat.NTSC : VideoFormat.PAL;
 
 			//Memory
-			currentSettings.ChipMemory = Convert.ToSingle(StringFromSelection(dudChipRAM.SelectedItem));
-			currentSettings.CPUSlotMemory = Convert.ToSingle(StringFromSelection(dudCPUSlot.SelectedItem));
-			currentSettings.MotherboardMemory = Convert.ToSingle(StringFromSelection(dudMotherboard.SelectedItem));
-			currentSettings.TrapdoorMemory = Convert.ToSingle(StringFromSelection(dudTrapdoor.SelectedItem));
+			currentSettings.ChipMemory = Convert.ToSingle(StringFromSelection(dudChipRAM.SelectedItem), CultureInfo.InvariantCulture);
+			currentSettings.CPUSlotMemory = Convert.ToSingle(StringFromSelection(dudCPUSlot.SelectedItem), CultureInfo.InvariantCulture);
+			currentSettings.MotherboardMemory = Convert.ToSingle(StringFromSelection(dudMotherboard.SelectedItem), CultureInfo.InvariantCulture);
+			currentSettings.TrapdoorMemory = Convert.ToSingle(StringFromSelection(dudTrapdoor.SelectedItem), CultureInfo.InvariantCulture);
 			currentSettings.ZorroIIMemory = EncodeZorro2(StringFromSelection(dudZ2.SelectedItem));
 			currentSettings.ZorroIIIMemory = EncodeZorro3(StringFromSelection(dudZ3.SelectedItem));
 

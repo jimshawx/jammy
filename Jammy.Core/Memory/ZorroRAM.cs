@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
@@ -90,7 +91,7 @@ namespace Jammy.Core.Memory
 			{
 				var expansions = settings.Value.ZorroIIMemory
 					.Split(',', StringSplitOptions.RemoveEmptyEntries)
-					.Select(Convert.ToSingle);
+					.Select(x=>Convert.ToSingle(x,CultureInfo.InvariantCulture));
 
 				foreach (var v in expansions.Where(x =>x != 0.0))
 					((IZorro)zorro2).AddConfiguration(new ZorroConfiguration
@@ -105,7 +106,7 @@ namespace Jammy.Core.Memory
 			{
 				var expansions = settings.Value.ZorroIIIMemory
 					.Split(',', StringSplitOptions.RemoveEmptyEntries)
-					.Select(Convert.ToSingle);
+					.Select(x => Convert.ToSingle(x,CultureInfo.InvariantCulture));
 
 				foreach (var v in expansions.Where(x => x != 0.0))
 					((IZorro)zorro3).AddConfiguration(new ZorroConfiguration

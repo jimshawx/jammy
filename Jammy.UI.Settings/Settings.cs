@@ -5,6 +5,7 @@ using Newtonsoft.Json.Converters;
 using Parky.Configuration.WritableJson;
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -316,7 +317,7 @@ namespace Jammy.UI.Settings
 		private string DecodeZorro3(string s)
 		{
 			if (string.IsNullOrEmpty(s)) return "0";
-			return string.Join('+', s.Split(',').Select(x => ((int)Convert.ToSingle(x)).ToString()));
+			return string.Join('+', s.Split(',').Select(x => ((int)Convert.ToSingle(x, CultureInfo.InvariantCulture)).ToString()));
 		}
 
 		private string EncodeZorro2(string s)
@@ -328,7 +329,7 @@ namespace Jammy.UI.Settings
 		private string DecodeZorro2(string s)
 		{
 			if (string.IsNullOrEmpty(s)) return "0";
-			return string.Join('+', s.Split(',').Select(x => Convert.ToSingle(x).ToString("0.0;0.0;0")));
+			return string.Join('+', s.Split(',').Select(x => Convert.ToSingle(x, CultureInfo.InvariantCulture).ToString("0.0;0.0;0", CultureInfo.InvariantCulture)));
 		}
 
 		private void BindSettings()
@@ -376,10 +377,10 @@ namespace Jammy.UI.Settings
 			currentSettings.CPUFrequency = 7093790;
 
 			//Memory
-			dudChipRAM.SelectedItem = currentSettings.ChipMemory.ToString("0.0;0.0;0");
+			dudChipRAM.SelectedItem = currentSettings.ChipMemory.ToString("0.0;0.0;0", CultureInfo.InvariantCulture);
 			dudCPUSlot.SelectedItem = currentSettings.CPUSlotMemory.ToString();
 			dudMotherboard.SelectedItem = currentSettings.MotherboardMemory.ToString();
-			dudTrapdoor.SelectedItem = currentSettings.TrapdoorMemory.ToString("0.0;0.0;0");
+			dudTrapdoor.SelectedItem = currentSettings.TrapdoorMemory.ToString("0.0;0.0;0", CultureInfo.InvariantCulture);
 			dudZ2.SelectedItem = DecodeZorro2(currentSettings.ZorroIIMemory);
 			dudZ3.SelectedItem = DecodeZorro3(currentSettings.ZorroIIIMemory);
 
@@ -434,10 +435,10 @@ namespace Jammy.UI.Settings
 			currentSettings.VideoFormat = rbNTSC.Checked ? VideoFormat.NTSC : VideoFormat.PAL;
 
 			//Memory
-			currentSettings.ChipMemory = Convert.ToSingle(dudChipRAM.SelectedItem);
-			currentSettings.CPUSlotMemory = Convert.ToSingle(dudCPUSlot.SelectedItem);
-			currentSettings.MotherboardMemory = Convert.ToSingle(dudMotherboard.SelectedItem);
-			currentSettings.TrapdoorMemory = Convert.ToSingle(dudTrapdoor.SelectedItem);
+			currentSettings.ChipMemory = Convert.ToSingle(dudChipRAM.SelectedItem, CultureInfo.InvariantCulture);
+			currentSettings.CPUSlotMemory = Convert.ToSingle(dudCPUSlot.SelectedItem, CultureInfo.InvariantCulture);
+			currentSettings.MotherboardMemory = Convert.ToSingle(dudMotherboard.SelectedItem, CultureInfo.InvariantCulture);
+			currentSettings.TrapdoorMemory = Convert.ToSingle(dudTrapdoor.SelectedItem, CultureInfo.InvariantCulture);
 			currentSettings.ZorroIIMemory = EncodeZorro2((string)dudZ2.SelectedItem);
 			currentSettings.ZorroIIIMemory = EncodeZorro3((string)dudZ3.SelectedItem);
 
