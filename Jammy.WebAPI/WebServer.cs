@@ -78,8 +78,17 @@ namespace Jammy.WebAPI
 				}
 			}
 
-			httpListener.Start();
-			httpListener.BeginGetContext(ListenerCallback, null);
+			try
+			{ 
+				httpListener.Start();
+				httpListener.BeginGetContext(ListenerCallback, null);
+			}
+			catch (HttpListenerException)
+			{
+				logger.LogTrace("It was not possible to start the webserver on port 8080");
+				logger.LogTrace("Run this command as administrator to enable the webserver to start:");
+				logger.LogTrace("\tnetsh http add urlacl url=http://+:8080/ user=Everyone");
+			}
 		}
 
 		private void ListenerCallback(IAsyncResult ar)
