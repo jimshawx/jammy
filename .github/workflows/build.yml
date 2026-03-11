@@ -43,7 +43,7 @@ jobs:
 
       # Upload Windows artifact
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Jammy-windows
           path: Jammy-windows.zip
@@ -62,7 +62,7 @@ jobs:
 
       # Upload Linux artifact
       - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Jammy-linux
           path: Jammy-linux.tar.gz
