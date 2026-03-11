@@ -40,6 +40,9 @@
     </Content>
   </ItemGroup>
   <PropertyGroup>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>WinExe</OutputType>
