@@ -57,14 +57,15 @@ jobs:
         run: |
           Copy-Item -Path "games" -Destination "out/linux/games" -Recurse
           Copy-Item -Path "roms" -Destination "out/linux/roms" -Recurse
-          Compress-Archive -Path out/linux/* -DestinationPath Jammy-linux.zip
+          #Compress-Archive -Path out/linux/* -DestinationPath Jammy-linux.zip
+          tar -czf Jammy-linux.tar.gz -C out/linux .
 
       # Upload Linux artifact
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: Jammy-linux
-          path: Jammy-linux.zip
+          path: Jammy-linux.tar.gz
 
       - name: Upload to draft release
         uses: softprops/action-gh-release@v2
@@ -75,6 +76,6 @@ jobs:
           prerelease: true
           files: |
             Jammy-windows.zip
-            Jammy-linux.zip
+            Jammy-linux.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
