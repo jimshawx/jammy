@@ -3,7 +3,7 @@ $(() =>
 	$('#strings').on("click", function()
 	{
 		$.ajax({
-			url: "http://localhost:8080/jammy/debugger/memory",
+			url: "http://localhost:8080/v1/jammy/debugger/memory",
 			type: 'GET',
 			dataType: 'json',
 			success: function(res)
