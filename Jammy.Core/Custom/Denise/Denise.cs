@@ -44,12 +44,13 @@ public class Denise : IDenise
 		NoEHB = 1 << 9,
 		PF2PRI = 1 << 6
 	}
-	private const int FIRST_DMA = 0;//0x18*2;
-	private const int RIGHT_BORDER = 0x18;//cosmetic
+	private const int FIRST_DMA = 0x18*2*2-8;
+	private const int RIGHT_BORDER = 0x18*3;//cosmetic
+	private const int TOP_BORDER = 0;
 
 	public const int DMA_WIDTH = 227;// Agnus.DMA_END - Agnus.DMA_START;
 	private const int SCREEN_WIDTH = (DMA_WIDTH-FIRST_DMA+RIGHT_BORDER) * 4; //227 (E3) * 4;
-	private const int SCREEN_HEIGHT = 313 * 2; //x2 for scan double
+	private const int SCREEN_HEIGHT = (313 * 2) - TOP_BORDER; //x2 for scan double
 	private int[] screen;
 
 	public Denise(IBpldatPix bpldatPix, IChipsetClock clock, IChipsetDebugger debugger, IEmulationWindow emulationWindow, INativeOverlay nativeOverlay,
@@ -1000,8 +1001,9 @@ end loop
 
 	private void RunDeniseTick(int d, int p)
 	{
-		//if (clock.DeniseHorizontalPos < FIRST_DMA)
-		//	return;
+		if (clock.DeniseHorizontalPos < FIRST_DMA) return;
+		//if (clock.VerticalPos < TOP_BORDER) return;
+
 		uint col;
 
 		if (blankingStatus == Blanking.None)
@@ -1039,9 +1041,9 @@ end loop
 			//output colour 0 pixels
 			col = lastcol = truecolour[0];
 
-			bool stipple = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0;
-			if (stipple && (blankingStatus & Blanking.HorizontalBlank) != 0) col |= 0xff0000;
-			if (stipple && (blankingStatus & Blanking.VerticalBlank) != 0) col |= 0x0000ff;
+			//bool stipple = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0;
+			//if (stipple && (blankingStatus & Blanking.HorizontalBlank) != 0) col |= 0xff0000;
+			//if (stipple && (blankingStatus & Blanking.VerticalBlank) != 0) col |= 0x0000ff;
 		}
 
 		//horizontal pixel double
