@@ -23,13 +23,17 @@ namespace Jammy.WebAPI
 
 	public class UrlActionAttribute : Attribute
 	{
-		public UrlActionAttribute(string action, string path)
+		public UrlActionAttribute(string action, string path, string summary = null, string version = "1")
 		{
 			Action = action;
 			Path = path;
+			Summary = summary;
+			Ver = "v"+version;
 		}
 		public string Action { get; }
 		public string Path { get; }
+		public string Summary { get; }
+		public string Ver { get; }
 	}
 
 	[UrlPath("debugger")]
@@ -47,7 +51,7 @@ namespace Jammy.WebAPI
 			this.logger = logger;
 		}
 
-		[UrlAction("GET", "memory")]
+		[UrlAction("GET", "memory", "Get memory contents")]
 		public MemoryContent GetMemoryContent()
 		{
 			debugger.LockEmulation();
@@ -56,7 +60,7 @@ namespace Jammy.WebAPI
 			return mem;
 		}
 
-		[UrlAction("POST", "emucontrol")]
+		[UrlAction("POST", "emucontrol", "Set the emulation state go/stop/step/stepout")]
 		public void EmuControl(string command)
 		{
 			if (command == "go")
@@ -69,49 +73,49 @@ namespace Jammy.WebAPI
 				debugger.StepOut();
 		}
 
-		[UrlAction("GET", "clock")]
+		[UrlAction("GET", "clock", "Get the clock")]
 		public ClockInfo GetClockInfo()
 		{
 			return debugger.GetChipClock();
 		}
 
-		[UrlAction("GET", "vectors")]
+		[UrlAction("GET", "vectors", "Get the exception vectors")]
 		public Vectors GetVectors()
 		{
 			return debugger.GetVectors();
 		}
 
-		[UrlAction("GET", "libraries")]
+		[UrlAction("GET", "libraries", "Get the libraries that have been loaded")]
 		public Libraries GetLibraries()
 		{
 			return debugger.GetLibraries();
 		}
 
-		[UrlAction("GET", "allocations")]
+		[UrlAction("GET", "allocations", "Get the memory allocations")]
 		public MemoryAllocations GetAllocations()
 		{
 			return debugger.GetAllocations();
 		}
 
-		[UrlAction("GET", "chipregs")]
+		[UrlAction("GET", "chipregs", "Get the current chip register values")]
 		public ChipState GetChipRegs()
 		{
 			return debugger.GetChipRegs();
 		}
 
-		[UrlAction("GET", "copper")]
+		[UrlAction("GET", "copper", "Get a disassembly of the current copper list")]
 		public string GetCopperDisassembly()
 		{
 			return debugger.GetCopperDisassembly();
 		}
 
-		[UrlAction("GET", "regs")]
+		[UrlAction("GET", "regs", "Get the CPU registers")]
 		public Regs GetRegs()
 		{
 			return debugger.GetRegs();
 		}
 
-		[UrlAction("POST", "command")]
+		[UrlAction("POST", "command", "Run a command")]
 		public void RunCommand(string command)
 		{
 			debugCommand.ProcessCommand(command);

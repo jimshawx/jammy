@@ -68,7 +68,7 @@ namespace Jammy.WebAPI
 				{
 					var action = method.GetCustomAttribute<UrlActionAttribute>();
 
-					string fullPath = $"/{rootUrl}/{path.Path}/{action.Path}";
+					string fullPath = $"/{rootUrl}/{path.Path}/{action.Ver}/{action.Path}";
 					logger.LogTrace(fullPath);
 
 					if (action.Action == "GET")
@@ -124,6 +124,16 @@ namespace Jammy.WebAPI
 
 				if (context.Request.HttpMethod == "GET")
 				{
+					if (context.Request.Url.AbsolutePath == "/openapi.json")
+					{
+						using (var writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
+						{ 
+							writer.Write(Documentation.Json);
+						}
+						context.Response.ContentType = "application/json";
+						return Response(context.Response, 200);
+					}
+
 					var action = getActions.GetValueOrDefault(SanitizePath(context.Request.Url));
 					if (action == null) return Response(context.Response, 404);
 
