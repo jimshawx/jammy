@@ -6,6 +6,10 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Linq;
 
+/*
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
+*/
+
 namespace Jammy.Debugger
 {
 	public interface IFlowAnalyser
