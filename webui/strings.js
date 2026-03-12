@@ -21,7 +21,7 @@ $(() =>
 	{
 		var action = $(this).data('action');
 		$.ajax({
-			url: "http://localhost:8080/jammy/debugger/emuControl?_1=0",
+			url: "http://localhost:8080/v1/jammy/debugger/emuControl?_1=0",
 			type: 'POST',
 			data: action,
 			contentType: "text/plain",

@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
+using Newtonsoft.Json.Schema.Generation;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -32,6 +35,7 @@ namespace Jammy.WebAPI
 		private readonly JsonSerializer serializer = new JsonSerializer();
 
 		private const string rootUrl = "jammy";
+		private string openApiJson = "{}";
 
 		public WebServer(ILogger<WebServer> logger, IServiceProvider serviceProvider)
 		{
@@ -56,6 +60,9 @@ namespace Jammy.WebAPI
 				.Where(t => t.IsClass)
 				.Where(t => t.GetCustomAttributes(typeof(UrlPathAttribute), inherit: true).Any());
 
+			var openApiPaths = new Dictionary<string, object>();
+			var generator = new JSchemaGenerator();
+
 			foreach (var clas in matchingClasses)
 			{
 				var path = clas.GetCustomAttribute<UrlPathAttribute>();
@@ -68,15 +75,58 @@ namespace Jammy.WebAPI
 				{
 					var action = method.GetCustomAttribute<UrlActionAttribute>();
 
-					string fullPath = $"/{rootUrl}/{path.Path}/{action.Ver}/{action.Path}";
+					string fullPath = $"/{action.Ver}/{rootUrl}/{path.Path}/{action.Path}";
 					logger.LogTrace(fullPath);
 
+					//add the actions to the verb handlers
 					if (action.Action == "GET")
 						getActions.Add(fullPath, () => method.Invoke(instance, null));
 					else if (action.Action == "PUT" || action.Action == "POST")
 						putActions.Add(fullPath, (o) => method.Invoke(instance, [o]));
+
+					//add the actions to OpenAPI
+					if (!openApiPaths.ContainsKey(fullPath))
+						openApiPaths[fullPath] = new Dictionary<string, object>();
+
+					Type returnType = method.ReturnParameter?.ParameterType ?? typeof(void);
+
+					var response = new Dictionary<string, object>
+					{
+						["description"] = "Success"
+					};
+
+					if (returnType != typeof(void))
+					{
+						JSchema schema = generator.Generate(returnType);
+						var schemaDict = JObject.Parse(schema.ToString());
+
+						response["content"] = new Dictionary<string, object>
+						{
+							["application/json"] = new Dictionary<string, object>
+							{
+								["schema"] = schemaDict
+							}
+						};
+					}
+
+					((Dictionary<string, object>)openApiPaths[fullPath])
+						[action.Action.ToLower()] = new Dictionary<string, object>
+						{
+							["summary"] = action.Summary,
+							["responses"] = new Dictionary<string, object> { ["200"] = response }
+						};
 				}
 			}
+
+			var openApiDoc = new
+			{
+				openapi = "3.0.1",
+				info = new { title = "Jammy API", version = "1.0.0" },
+				paths = openApiPaths,
+				servers = new [ ] { new { url = "http://localhost:8080"} }
+			};
+
+			openApiJson = JsonConvert.SerializeObject(openApiDoc, Formatting.Indented);
 
 			try
 			{ 
@@ -128,7 +178,7 @@ namespace Jammy.WebAPI
 					{
 						using (var writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
 						{ 
-							writer.Write(Documentation.Json);
+							writer.Write(openApiJson);
 						}
 						context.Response.ContentType = "application/json";
 						return Response(context.Response, 200);
