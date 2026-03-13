@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
 using System;
 using System.Collections.Generic;
@@ -13,6 +12,7 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -75,7 +75,7 @@ namespace Jammy.WebAPI
 				{
 					var action = method.GetCustomAttribute<UrlActionAttribute>();
 
-					string fullPath = $"/{action.Ver}/{rootUrl}/{path.Path}/{action.Path}";
+					string fullPath = $"/v{action.Ver}/{rootUrl}/{path.Path}/{action.Path}";
 					logger.LogTrace(fullPath);
 
 					//add the actions to the verb handlers
@@ -85,36 +85,7 @@ namespace Jammy.WebAPI
 						putActions.Add(fullPath, (o) => method.Invoke(instance, [o]));
 
 					//add the actions to OpenAPI
-					if (!openApiPaths.ContainsKey(fullPath))
-						openApiPaths[fullPath] = new Dictionary<string, object>();
-
-					Type returnType = method.ReturnParameter?.ParameterType ?? typeof(void);
-
-					var response = new Dictionary<string, object>
-					{
-						["description"] = "Success"
-					};
-
-					if (returnType != typeof(void))
-					{
-						JSchema schema = generator.Generate(returnType);
-						var schemaDict = JObject.Parse(schema.ToString());
-
-						response["content"] = new Dictionary<string, object>
-						{
-							["application/json"] = new Dictionary<string, object>
-							{
-								["schema"] = schemaDict
-							}
-						};
-					}
-
-					((Dictionary<string, object>)openApiPaths[fullPath])
-						[action.Action.ToLower()] = new Dictionary<string, object>
-						{
-							["summary"] = action.Summary,
-							["responses"] = new Dictionary<string, object> { ["200"] = response }
-						};
+					AddToOpenAPI(openApiPaths, generator, method, action, fullPath);
 				}
 			}
 
@@ -131,7 +102,7 @@ namespace Jammy.WebAPI
 			try
 			{ 
 				httpListener.Start();
-				httpListener.BeginGetContext(ListenerCallback, null);
+				_ = Task.Run(StartListeningAsync);
 			}
 			catch (HttpListenerException)
 			{
@@ -141,102 +112,131 @@ namespace Jammy.WebAPI
 			}
 		}
 
-		private void ListenerCallback(IAsyncResult ar)
+		private static void AddToOpenAPI(Dictionary<string, object> openApiPaths, JSchemaGenerator generator, MethodInfo method, UrlActionAttribute action, string fullPath)
 		{
-			if (!httpListener.IsListening) return;
+			if (!openApiPaths.TryGetValue(fullPath, out var pathNode))
+				openApiPaths[fullPath] = pathNode = new Dictionary<string, object>();
 
-			HttpListenerContext context = null;
-			try
+			((Dictionary<string, object>)pathNode)[action.Action.ToLower()] = new Dictionary<string, object>
 			{
-				context = httpListener.EndGetContext(ar);
-			}
-			catch (Exception ex)
-			{
-				logger.LogTrace($"EndGetContext crashed {ex}");
-				return;
-			}
+				["summary"] = action.Summary,
+				["responses"] = new Dictionary<string, object>
+				{
+					["200"] = new Dictionary<string, object> { ["description"] = "Success" }
+				}
+			};
 
-			httpListener.BeginGetContext(ListenerCallback, null);
-			ThreadPool.QueueUserWorkItem(_ => ProcessRequest(context, logger));
+			if (method.ReturnType != typeof(void))
+			{
+				((dynamic)pathNode)[action.Action.ToLower()]["responses"]["200"]["content"] = new Dictionary<string, object>
+				{
+					["application/json"] = new Dictionary<string, object>
+					{
+						["schema"] = JObject.FromObject(generator.Generate(method.ReturnType))
+					}
+				};
+			}
+		}
+
+		private async Task StartListeningAsync()
+		{
+			while (httpListener.IsListening)
+			{
+				try
+				{
+					var context = await httpListener.GetContextAsync();
+					_ = Task.Run(() => ProcessRequest(context, logger));
+				}
+				catch (Exception ex)
+				{
+					logger.LogTrace($"Listener loop interrupted: {ex}");
+				}
+			}
 		}
 
 		private bool ProcessRequest(HttpListenerContext context, ILogger logger)
 		{
+			var req = context.Request;
+			var res = context.Response;
+
 			try
 			{
 				//CORS
-				context.Response.AddHeader("Access-Control-Allow-Origin", "*");
-				context.Response.AddHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS");
-				context.Response.AddHeader("Access-Control-Allow-Headers", "Content-Type");
+				res.AddHeader("Access-Control-Allow-Origin", "*");
+				res.AddHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS");
+				res.AddHeader("Access-Control-Allow-Headers", "Content-Type");
 
 				//cache control
-				context.Response.AddHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+				res.AddHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 
-				if (context.Request.HttpMethod == "GET")
+				switch (req.HttpMethod)
 				{
-					if (context.Request.Url.AbsolutePath == "/openapi.json")
-					{
-						using (var writer = new StreamWriter(context.Response.OutputStream, Encoding.UTF8))
-						{ 
-							writer.Write(openApiJson);
-						}
-						context.Response.ContentType = "application/json";
-						return Response(context.Response, 200);
-					}
-
-					var action = getActions.GetValueOrDefault(SanitizePath(context.Request.Url));
-					if (action == null) return Response(context.Response, 404);
-
-					using var streamWriter = new StreamWriter(context.Response.OutputStream, Encoding.UTF8);
-					using (var jsonWriter = new JsonTextWriter(streamWriter))
-					{
-						serializer.Serialize(jsonWriter, action());
-					}
-					context.Response.ContentType = "application/json";
-					return Response(context.Response, 200);
-				}
-				else if (context.Request.HttpMethod == "PUT" || context.Request.HttpMethod == "POST")
-				{
-					var action = putActions.GetValueOrDefault(SanitizePath(context.Request.Url));
-					if (action == null) return Response(context.Response, 404);
-
-					using var streamReader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
-					
-					switch (SanitizeContentType(context.Request.ContentType)) 
-					{ 
-						case "json":
-							using (var jsonReader = new JsonTextReader(streamReader))
-							{ 
-								object request = serializer.Deserialize(jsonReader);
-								action(request);
+					case "GET":
+						{
+							if (req.Url.AbsolutePath == "/openapi.json")
+							{
+								res.ContentType = "application/json";
+								using (var writer = new StreamWriter(res.OutputStream, Encoding.UTF8))
+								{
+									writer.Write(openApiJson);
+								}
+								return Response(res, 200);
 							}
-							return Response(context.Response, 200);
 
-						case "plain":
-							var text  = streamReader.ReadToEnd();
-							action(text);
-							return Response(context.Response, 200);
+							var action = getActions.GetValueOrDefault(SanitizePath(req.Url));
+							if (action == null) return Response(res, 404);
 
-						default:
-							return Response(context.Response, 415);
-					}
-				}
-				else if (context.Request.HttpMethod == "OPTIONS") 
-				{
-					return Response(context.Response, 200);
-				}
-				else
-				{
-					return Response(context.Response, 400);
+							res.ContentType = "application/json";
+							using var streamWriter = new StreamWriter(res.OutputStream, Encoding.UTF8);
+							using (var jsonWriter = new JsonTextWriter(streamWriter))
+							{
+								serializer.Serialize(jsonWriter, action());
+							}
+							return Response(res, 200);
+						}
+
+					case "PUT":
+					case "POST":
+						{
+							var action = putActions.GetValueOrDefault(SanitizePath(req.Url));
+							if (action == null) return Response(res, 404);
+
+							using var streamReader = new StreamReader(req.InputStream, req.ContentEncoding);
+
+							switch (SanitizeContentType(req.ContentType))
+							{
+								case "json":
+									using (var jsonReader = new JsonTextReader(streamReader))
+									{
+										object request = serializer.Deserialize(jsonReader);
+										action(request);
+									}
+									return Response(res, 200);
+
+								case "plain":
+									var text = streamReader.ReadToEnd();
+									action(text);
+									return Response(res, 200);
+
+								default:
+									return Response(res, 415);
+							}
+						}
+
+					case "OPTIONS":
+						return Response(res, 200);
+					default:
+						return Response(res, 400);
 				}
 				throw new UnreachableException();
 			}
 			catch (Exception ex)
 			{
-				context.Response.ContentType = "text/plain";
-				var responseString = ex.ToString();
-				context.Response.OutputStream.Write(Encoding.UTF8.GetBytes(responseString, 0, responseString.Length));
-				return Response(context.Response, 500);
+				logger.LogTrace($"Request crashed: {ex}");
+				res.ContentType = "text/plain";
+				var bytes = Encoding.UTF8.GetBytes("Guru Meditation - check the log for stack trace");
+				res.OutputStream.Write(bytes, 0, bytes.Length);
+				return Response(res, 500);
 			}
 			throw new UnreachableException();
 		}
@@ -251,12 +251,15 @@ namespace Jammy.WebAPI
 		private string SanitizeContentType(string contentType)
 		{
 			if (string.IsNullOrWhiteSpace(contentType)) return "plain";
-			
-			contentType = contentType.ToLower();
 
-			var bits = contentType.Split('/',3,StringSplitOptions.TrimEntries|StringSplitOptions.RemoveEmptyEntries);
-			if (bits.Length == 0) return "plain";//no contentType, assume text
+			// Grab everything before the semicolon (if there is one)
+			var mimeType = contentType.Split(';')[0].Trim().ToLower();
+
+			var bits = mimeType.Split('/', 3, StringSplitOptions.RemoveEmptyEntries);
+			if (bits.Length < 2) return "plain";
+
 			if (bits[0] != "application" && bits[0] != "text") return "unknown";
+
 			return bits[1];
 		}
 

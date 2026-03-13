@@ -23,17 +23,17 @@ namespace Jammy.WebAPI
 
 	public class UrlActionAttribute : Attribute
 	{
-		public UrlActionAttribute(string action, string path, string summary = null, string version = "1")
+		public UrlActionAttribute(string action, string path, string summary = null, uint version = 1)
 		{
 			Action = action;
 			Path = path;
 			Summary = summary;
-			Ver = "v"+version;
+			Ver = version;
 		}
 		public string Action { get; }
 		public string Path { get; }
 		public string Summary { get; }
-		public string Ver { get; }
+		public uint Ver { get; }
 	}
 
 	[UrlPath("debugger")]
