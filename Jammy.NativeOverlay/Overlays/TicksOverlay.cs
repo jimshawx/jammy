@@ -52,6 +52,7 @@ namespace Jammy.NativeOverlay.Overlays
 					for (int y = 0; y < 3 * ss; y++)
 						screen[so + i + (4 * ss + y) * screenWidth] = 0x0000ff;
 				}
+				nativeOverlay.TextScale(2);
 				nativeOverlay.WriteText(20 + (int)fps * ss + 4, 10, 0xffffff, $"{(int)fps}");
 				nativeOverlay.WriteText(20 + (int)avefps * ss + 4, 10 + 4 * ss, 0xffffff, $"{(int)avefps}");
 			}

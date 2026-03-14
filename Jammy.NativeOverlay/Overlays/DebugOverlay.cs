@@ -49,8 +49,14 @@ namespace Jammy.NativeOverlay.Overlays
 		private void DebugText()
 		{
 			string regmsg = chipsetDebugger.GetOverlayText();
-			nativeOverlay.TextScale(1);
-			nativeOverlay.WriteText(0, 80, 0xffffff, regmsg.ToString());
+			nativeOverlay.TextScale(2);
+			const int bg = 0xffffff;
+			const int fg = 0x000000;
+			nativeOverlay.WriteText(0, 81, bg, regmsg);
+			nativeOverlay.WriteText(2, 81, bg, regmsg);
+			nativeOverlay.WriteText(1, 80, bg, regmsg);
+			nativeOverlay.WriteText(1, 82, bg, regmsg);
+			nativeOverlay.WriteText(1, 81, fg, regmsg);
 		}
 
 		private void DebugLocation()
