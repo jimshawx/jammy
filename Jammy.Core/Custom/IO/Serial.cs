@@ -182,10 +182,9 @@ namespace Jammy.Core.Custom.IO
 		private readonly StringBuilder serout = new StringBuilder();
 		private readonly ConcurrentQueue<byte> serin = new ConcurrentQueue<byte>();
 
-		public EmulationConsole(IEmulationWindow emulationWindow, ILogger<EmulationConsole> logger)
+		public EmulationConsole(ILogger<EmulationConsole> logger)
 		{
 			this.logger = logger;
-			emulationWindow.SetKeyHandlers(DebugKeyDown, DebugKeyUp);
 		}
 
 		public void DebugKeyDown(int key) { serin.Enqueue((byte)key); }
