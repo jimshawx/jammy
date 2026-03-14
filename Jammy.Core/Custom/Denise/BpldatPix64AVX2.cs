@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Linq;
 
 /*
@@ -21,6 +22,7 @@ namespace Jammy.Core.Custom.Denise
 		public void Clear()
 		{
 			bp.Clear();
+			Array.Clear(stashBits);
 		}
 
 		public uint GetPixel(int planes)
