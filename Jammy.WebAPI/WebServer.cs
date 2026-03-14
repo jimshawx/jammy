@@ -58,14 +58,14 @@ namespace Jammy.WebAPI
 			var matchingClasses = assembly
 				.GetTypes()
 				.Where(t => t.IsClass)
-				.Where(t => t.GetCustomAttributes(typeof(UrlPathAttribute), inherit: true).Any());
+				.Where(t => t.GetCustomAttributes(typeof(UrlPathAttributes), inherit: true).Any());
 
 			var openApiPaths = new Dictionary<string, object>();
 			var generator = new JSchemaGenerator();
 
 			foreach (var clas in matchingClasses)
 			{
-				var path = clas.GetCustomAttribute<UrlPathAttribute>();
+				var path = clas.GetCustomAttribute<UrlPathAttributes>();
 				var methods = clas
 					.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
 					.Where(m => m.GetCustomAttributes(typeof(UrlActionAttribute), false).Any());
