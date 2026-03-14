@@ -1,4 +1,4 @@
-﻿using Jammy.Core.Debug;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;

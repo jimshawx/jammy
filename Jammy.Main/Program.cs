@@ -185,7 +185,9 @@ namespace Jammy.Main
 				.AddSingleton<IOverlayRenderer>(x => x.GetRequiredService<DiskLightOverlay>())
 				.AddSingleton<IOverlayRenderer, TicksOverlay>()
 				//.AddSingleton<IOverlayRenderer, CpuUsageOverlay>()
+				.AddSingleton<IOverlayRenderer, DebugOverlay>()
 				.AddSingleton<IChipsetDebugger, ChipsetDebugger>()
+				.AddSingleton<IDebugKeyboard, DebugKeyboard>()
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 				.AddSingleton<Jammy>()
 				.AddSingleton<IGraph, Graph.Graph>()
@@ -373,6 +375,9 @@ namespace Jammy.Main
 
 			//hack to start IPF
 			var ipf = serviceProvider.GetRequiredService<IIPF>();
+
+			//hack to start debug keyboard
+			var _ = serviceProvider.GetRequiredService<IDebugKeyboard>();
 
 			var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 			logger.LogTrace("Application Starting Up!");

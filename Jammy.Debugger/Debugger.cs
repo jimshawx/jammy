@@ -1,5 +1,6 @@
 ﻿using Jammy.AmigaTypes;
 using Jammy.Core;
+using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
@@ -51,7 +52,8 @@ namespace Jammy.Debugger
 			IBreakpointCollection breakpoints, IKickstartROM kickstart, ICopper copper, IChipsetClock clock,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser,
 			ICPUAnalyser cpuAnalyser, IAllocatedMemoryTracker allocatedMemoryTracker,
-			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases)
+			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases,
+			IChipsetDebugger chipsetDebugger)
 		{
 			this.breakpoints = breakpoints;
 			this.kickstart = kickstart;

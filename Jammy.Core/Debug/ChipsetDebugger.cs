@@ -3,59 +3,32 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
-using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
 using System.Text;
 
-namespace Jammy.Core.Debug;
+/*
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
+*/
 
-public interface IChipsetDebugger : IEmulate
-{
-	char[] fetch { get; }
-	char[] write { get; }
-	int dbugLine { get; }
-	byte bitplaneMask { get; }
-	byte bitplaneMod { get; }
-	bool dbug { get; set; }
-	int dma { get; set; }
-	int ddfSHack { get; }
-	int ddfEHack { get; }
-	int diwSHack { get; }
-	int diwEHack { get; }
-	int ddfStrtFix { get; set; }
-	int ddfStopFix { get; set; }
-	int bplDelayHack { get; set; }
-	void SetDMAActivity(DMAActivity activity);
-	DMAEntry[] GetDMASummary();
-	void Init(IChips chips);
-	void SetColor(int index, uint rgb);
-}
+namespace Jammy.Core.Debug;
 
 public class ChipsetDebugger : IChipsetDebugger
 {
 	private readonly IChipsetClock clock;
 	private IDebugChipsetRead chipRegs;
-	private readonly INativeOverlay overlay;
 	private readonly EmulationSettings settings;
-	private readonly IEmulationWindow window;
 	private readonly ILogger<ChipsetDebugger> logger;
-	private int[] screen;
 
-	public ChipsetDebugger(IChipsetClock clock, INativeOverlay overlay,
-		IEmulationWindow emulationWindow, IOptions<EmulationSettings> settings, ILogger<ChipsetDebugger> logger)
+	public ChipsetDebugger(IChipsetClock clock,
+		IOptions<EmulationSettings> settings, ILogger<ChipsetDebugger> logger)
 	{
 		this.clock = clock;
-		this.overlay = overlay;
 		this.settings = settings.Value;
 		this.logger = logger;
 		logger.LogTrace("Press F9 to enable Chipset Debugger");
-		this.window = emulationWindow;
-
-		emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
-		screen = emulationWindow.GetFramebuffer();
 	}
 
 	public void Init(IChips chips)
@@ -74,6 +47,8 @@ public class ChipsetDebugger : IChipsetDebugger
 	{
 		var clockState = clock.ClockState;
 
+		if ((clockState & ChipsetClockState.StartOfFrame) != 0)
+			StartOfFrame();
 		if ((clockState & ChipsetClockState.StartOfLine) != 0)
 			StartOfLine();
 		if ((clockState & ChipsetClockState.EndOfLine)!=0)
@@ -99,12 +74,21 @@ public class ChipsetDebugger : IChipsetDebugger
 		}
 	}
 
+	private void StartOfFrame()
+	{
+		overlayText = string.Empty;
+		Array.Clear(debugcolours);
+	}
+
+	private string overlayText = string.Empty;
+
+	public string GetOverlayText() => overlayText;
+
 	private void EndOfFrame()
 	{
 		if (dbugLine != -1 && regmsg.Length != 0)
 		{
-			overlay.TextScale(1);
-			overlay.WriteText(0, 80, 0xffffff, regmsg.ToString());
+			overlayText = regmsg.ToString();
 			DebugLocation();
 		}
 	}
@@ -376,46 +360,23 @@ public class ChipsetDebugger : IChipsetDebugger
 		truecolour[index] = rgb;
 	}
 
+	private readonly uint[] debugcolours = new uint[256];
 	private void DebugPalette()
 	{
-		int sx = 256;
-		int sy = 5;
-
-		screen = screen??window.GetFramebuffer();
-
-		int box = 5;
-		for (int y = 0; y < 4; y++)
-		{
-			for (int x = 0; x < 64; x++)
-			{
-				for (int p = 0; p < box; p++)
-				{
-					for (int q = 0; q < box; q++)
-					{
-						screen[sx + x * box + q + (sy + (y * box) + p) * overlay.SCREEN_WIDTH] = (int)truecolour[x + y * 64];
-					}
-				}
-			}
-		}
+		Array.Copy(truecolour, debugcolours, truecolour.Length);
 	}
+	public uint[] GetDebugPalette() { return debugcolours; }
 
+	private void DebugLocation() { }
+	public int GetDebugLocation() { return dbugLine; }
 
-	private void DebugLocation()
-	{
-		if (dbugLine < 0) return;
-		if (dbugLine >= overlay.SCREEN_HEIGHT / 2) return;
-		screen = screen ?? window.GetFramebuffer();
-		for (int x = 0; x < overlay.SCREEN_WIDTH; x += 4)
-			screen[x + dbugLine * overlay.SCREEN_WIDTH * 2] ^= 0xffffff;
-	}
-
-	private void dbug_Keyup(int obj)
+	public void dbug_Keyup(int obj)
 	{
 	}
 
 	private bool keys = false;
 
-	private void dbug_Keydown(int obj)
+	public void dbug_Keydown(int obj)
 	{
 		if (obj == (int)VK.VK_F9)
 		{

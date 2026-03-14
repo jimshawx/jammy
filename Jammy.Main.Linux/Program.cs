@@ -210,7 +210,9 @@ public class Program
 			.AddSingleton<IOverlayRenderer>(x => x.GetRequiredService<DiskLightOverlay>())
 			.AddSingleton<IOverlayRenderer, TicksOverlay>()
 			//.AddSingleton<IOverlayRenderer, CpuUsageOverlay>()
+			.AddSingleton<IOverlayRenderer, DebugOverlay>()
 			.AddSingleton<IChipsetDebugger, ChipsetDebugger>()
+			.AddSingleton<IDebugKeyboard, DebugKeyboard>()
 			.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Amiga"))
 			.AddSingleton<Jammy>()
 			//.AddSingleton<IGraph, Graph.Graph>()
@@ -351,6 +353,9 @@ public class Program
 		serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 		serviceProvider.GetRequiredService<ICopper>().Init(dma);
 		serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab, chipRAM);
+
+		//hack to start debug keyboard
+		var _ = serviceProvider.GetRequiredService<IDebugKeyboard>();
 
 		var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 		logger.LogTrace("Application Starting Up!");
