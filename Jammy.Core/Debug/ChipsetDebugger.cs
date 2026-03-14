@@ -119,6 +119,7 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 
 	public char[] fetch { get; }= new char[256];
 	public char[] write { get; }= new char[256];
+	public char[] activity { get; } = new char[256];
 	public int dma { get; set; }
 	public int dbugLine { get; private set; } = -1;
 	public bool dbug { get; set; } = false;
@@ -257,7 +258,12 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 		tsb.Length = 0;
 		for (int i = 0; i < 256; i++)
 			tsb.Append(slot[i]);
-		sb.Append(Split(tsb));
+		sb.AppendLine(Split(tsb));
+
+		tsb.Length = 0;
+		for (int i = 0; i < 256; i++)
+			tsb.Append(activity[i]);
+		sb.AppendLine(Split(tsb));
 
 		return sb.ToString();
 	}

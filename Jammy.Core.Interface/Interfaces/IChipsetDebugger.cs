@@ -10,6 +10,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		char[] fetch { get; }
 		char[] write { get; }
+		char[] activity { get; }
 		int dbugLine { get; }
 		byte bitplaneMask { get; }
 		byte bitplaneMod { get; }

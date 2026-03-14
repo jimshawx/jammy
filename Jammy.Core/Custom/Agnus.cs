@@ -1,5 +1,4 @@
-﻿using Jammy.Core.Debug;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
@@ -185,6 +184,7 @@ public class Agnus : IAgnus
 		{
 			debugger.fetch[clock.HorizontalPos] = '-';
 			debugger.write[clock.HorizontalPos] = '-';
+			debugger.activity[clock.HorizontalPos] = '-';
 		}
 		//debugging
 
@@ -251,20 +251,25 @@ public class Agnus : IAgnus
 		}
 		//else if ((clock.HorizontalPos == ddfstopfix + debugger.ddfEHack) && lineState == DMALineState.Fetching)
 		//{
+		//	debugger.activity[clock.HorizontalPos] = 'C';
 		//	lineState = DMALineState.LineComplete;
 		//	EndAgnusLine();
 		//}
 		else if ((clock.HorizontalPos >= ddfstop + debugger.ddfEHack && ((fetchCount & 7) == 0) || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
 		{
 			//if we've passed ddfstop and we've fetched all the planes, then fetch one more lot of planes
+			debugger.activity[clock.HorizontalPos] = 'S';
 			lineState = DMALineState.LastBitplaneFetch;
-			lastFetchCount = 8;
+			lastFetchCount = (fmode&3) == 0 ? 8 : (fmode&3)==3 ? 32 : 16;
 		}
 		else if (lineState == DMALineState.LastBitplaneFetch)
 		{
+			//either we will hit the last chance to fetch another block, or we'll hit the end of the scanline
+			//which means the modulos need to be added now todo: when does the Amiga add the modulos?
 			lastFetchCount--;
-			if (lastFetchCount == 0)
+			if (lastFetchCount == 0 || (clock.ClockState& ChipsetClockState.EndOfLine) != 0)
 			{
+				debugger.activity[clock.HorizontalPos] = 'C';
 				lineState = DMALineState.LineComplete;
 
 				//if (clock.HorizontalPos != ddfstopfix)
@@ -382,7 +387,7 @@ public class Agnus : IAgnus
 					debugger.write[h] = '.';
 				}
 
-				debugger.fetch[h] = Convert.ToChar(plane + 48 + 1);
+				debugger.fetch[h] = debugger.activity[h] = Convert.ToChar(plane + 48 + 1);
 			}
 			//debugging
 
@@ -397,8 +402,6 @@ public class Agnus : IAgnus
 		}
 		return false;
 	}
-
-
 
 	private void DebugSprite(uint s)
 	{
@@ -442,6 +445,7 @@ public class Agnus : IAgnus
 				bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
 			}
 			lineState = DMALineState.LineTerminated;
+			debugger.activity[clock.HorizontalPos] = 'M';
 		}
 	}
 
