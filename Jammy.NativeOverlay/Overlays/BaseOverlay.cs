@@ -9,18 +9,24 @@ namespace Jammy.NativeOverlay.Overlays
 	public interface IOverlayRenderer
 	{
 		void Render();
+		void SetNativeOverlay(INativeOverlay nativeOverlay);
 	}
 
 	public class BaseOverlay
 	{
-		protected readonly INativeOverlay nativeOverlay;
+		protected INativeOverlay nativeOverlay;
 		protected readonly ILogger logger;
 
-		public BaseOverlay(INativeOverlay nativeOverlay, ILogger logger)
+		public BaseOverlay(ILogger logger)
 		{
-			this.nativeOverlay = nativeOverlay;
 			this.logger = logger;
 		}
+
+		public void SetNativeOverlay(INativeOverlay nativeOverlay)
+		{
+			this.nativeOverlay = nativeOverlay;
+		}
+
 		public int[] screen => nativeOverlay.Screen;
 		public int screenWidth => nativeOverlay.SCREEN_WIDTH;
 		public int screenHeight => nativeOverlay.SCREEN_HEIGHT;

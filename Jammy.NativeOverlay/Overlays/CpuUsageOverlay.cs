@@ -10,7 +10,7 @@ namespace Jammy.NativeOverlay.Overlays
 	public class CpuUsageOverlay : BaseOverlay, ICpuUsageOverlay
 	{
 		private readonly Thread tid;
-		public CpuUsageOverlay(INativeOverlay nativeOverlay, ILogger<CpuUsageOverlay> logger) : base(nativeOverlay, logger)
+		public CpuUsageOverlay(ILogger<CpuUsageOverlay> logger) : base(logger)
 		{
 			tid = new Thread(SnapshotCpuUsage);
 			tid.Start();

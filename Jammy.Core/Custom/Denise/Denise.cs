@@ -1,10 +1,8 @@
-﻿using Jammy.Core.Debug;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
-using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -53,7 +51,7 @@ public class Denise : IDenise
 	private const int SCREEN_HEIGHT = (313 * 2) - TOP_BORDER; //x2 for scan double
 	private int[] screen;
 
-	public Denise(IBpldatPix bpldatPix, IChipsetClock clock, IChipsetDebugger debugger, IEmulationWindow emulationWindow, INativeOverlay nativeOverlay,
+	public Denise(IBpldatPix bpldatPix, IChipsetClock clock, IChipsetDebugger debugger, IEmulationWindow emulationWindow,
 		IOptions<EmulationSettings> settings, ILogger<Denise> logger)
 	{
 		this.bpldatPix = bpldatPix;
@@ -69,7 +67,6 @@ public class Denise : IDenise
 
 		emulationWindow.SetPicture(SCREEN_WIDTH, SCREEN_HEIGHT);
 		screen = emulationWindow.GetFramebuffer();
-		nativeOverlay.Init(screen, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 		RunVerticalBlankStart();
 	}

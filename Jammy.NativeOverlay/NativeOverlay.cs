@@ -6,6 +6,7 @@ namespace Jammy.NativeOverlay
 {
 	public interface INativeOverlay
 	{
+		void Render();
 		void Init(int[] screen, int screenWidth, int screenHeight);
 		void WriteText(int x, int y, int colour, string txt);
 		void TextScale(int s);
@@ -16,6 +17,13 @@ namespace Jammy.NativeOverlay
 
 	public partial class NativeOverlay : INativeOverlay
 	{
+		private readonly IOverlayCollection overlayCollection;
+
+		public NativeOverlay(IOverlayCollection overlayCollection)
+		{
+			this.overlayCollection = overlayCollection;
+		}
+
 		private int[] screen;
 		private int width;
 		private int height;
@@ -25,6 +33,7 @@ namespace Jammy.NativeOverlay
 			this.screen = screen;
 			this.width = width;
 			this.height = height;
+			overlayCollection.SetNativeOverlay(this);
 		}
 
 		public int SCREEN_WIDTH => width;
@@ -32,6 +41,11 @@ namespace Jammy.NativeOverlay
 		public int[] Screen => screen;
 
 		private int sx = 2, sy = 2;
+
+		public void Render()
+		{
+			overlayCollection.Render();
+		}
 
 		public void TextScale(int s)
 		{

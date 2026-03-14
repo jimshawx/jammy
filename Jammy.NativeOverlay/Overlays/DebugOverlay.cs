@@ -11,8 +11,7 @@ namespace Jammy.NativeOverlay.Overlays
 	{
 		private readonly IChipsetDebugger chipsetDebugger;
 
-		public DebugOverlay(INativeOverlay nativeOverlay,
-			IChipsetDebugger chipsetDebugger, ILogger<DebugOverlay> logger) : base(nativeOverlay, logger)
+		public DebugOverlay(IChipsetDebugger chipsetDebugger, ILogger<DebugOverlay> logger) : base(logger)
 		{
 			this.chipsetDebugger = chipsetDebugger;
 		}

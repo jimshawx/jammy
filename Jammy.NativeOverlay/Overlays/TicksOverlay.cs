@@ -8,7 +8,7 @@ namespace Jammy.NativeOverlay.Overlays
 {
 	public class TicksOverlay : BaseOverlay, ITicksOverlay
 	{
-		public TicksOverlay(INativeOverlay nativeOverlay, ILogger<TicksOverlay> logger) : base(nativeOverlay, logger)
+		public TicksOverlay(ILogger<TicksOverlay> logger) : base(logger)
 		{
 		}
 

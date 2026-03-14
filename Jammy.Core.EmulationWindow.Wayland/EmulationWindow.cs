@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
+using System.Threading;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
@@ -44,9 +46,9 @@ namespace Jammy.Core.EmulationWindow.Wayland
 
 		private IntPtr _native;
 
-		public EmulationWindow(IOverlayCollection overlayCollection, ILogger<EmulationWindow> logger)
+		public EmulationWindow(INativeOverlay nativeOverlay, ILogger<EmulationWindow> logger)
 		{
-			this.overlayCollection = overlayCollection;
+			this.nativeOverlay = nativeOverlay;
 			this.logger = logger;
 		}
 
@@ -60,7 +62,7 @@ namespace Jammy.Core.EmulationWindow.Wayland
 		}
 
 		private int[] screen;
-		private IOverlayCollection overlayCollection;
+		private readonly INativeOverlay nativeOverlay;
 		private readonly ILogger<EmulationWindow> logger;
 		private uint screenWidth;
 		private uint screenHeight;
@@ -100,6 +102,7 @@ namespace Jammy.Core.EmulationWindow.Wayland
 			displayHz = 60;
 
 			screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
+			nativeOverlay.Init(screen, width, height);
 
 			var t = new Thread(WaitEvents);
 			t.Start();

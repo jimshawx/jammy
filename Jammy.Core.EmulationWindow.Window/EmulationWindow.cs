@@ -427,14 +427,14 @@ namespace Jammy.Core.EmulationWindow.Window
 			public int dmDisplayFrequency;
 		}
 
-		private readonly IOverlayCollection overlayCollection;
+		private readonly INativeOverlay nativeOverlay;
 		private readonly ILogger logger;
 		// Form emulation;
 		private int[] screen;
 
-		public EmulationWindow(IOverlayCollection overlayCollection, ILogger<EmulationWindow> logger)
+		public EmulationWindow(INativeOverlay nativeOverlay, ILogger<EmulationWindow> logger)
 		{
-			this.overlayCollection = overlayCollection;
+			this.nativeOverlay = nativeOverlay;
 			this.logger = logger;
 
 			var ss = new SemaphoreSlim(1);
@@ -550,6 +550,7 @@ namespace Jammy.Core.EmulationWindow.Window
 			displayHz = dm.dmDisplayFrequency;
 
 			screen = new int[width * height];
+			nativeOverlay.Init(screen, width, height);
 
 			screenWidth = width;
 			screenHeight = height;
@@ -577,7 +578,7 @@ namespace Jammy.Core.EmulationWindow.Window
 
 		public void Blit(int[] screen)
 		{
-			overlayCollection.Render();
+			nativeOverlay.Render();
 
 			//var hdc = GetDC(hWnd);
 			SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight,

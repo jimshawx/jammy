@@ -20,14 +20,14 @@ namespace Jammy.Core.EmulationWindow.GDI
 		[DllImport("user32.dll")]
 		private static extern short GetAsyncKeyState(int key);
 
-		private readonly IOverlayCollection overlayCollection;
+		private readonly INativeOverlay nativeOverlay;
 		private readonly ILogger logger;
 		private Form emulation;
 		private int[] screen; 
 
-		public EmulationWindow(IOverlayCollection overlayCollection, ILogger<EmulationWindow> logger)
+		public EmulationWindow(INativeOverlay nativeOverlay, ILogger<EmulationWindow> logger)
 		{
-			this.overlayCollection = overlayCollection;
+			this.nativeOverlay = nativeOverlay;
 			this.logger = logger;
 
 			var ss = new SemaphoreSlim(1);
@@ -132,6 +132,7 @@ namespace Jammy.Core.EmulationWindow.GDI
 			if (emulation.IsDisposed) return;
 
 			screen = new int[width * height];
+			nativeOverlay.Init(screen, width, height);
 
 			emulation.Invoke((Action)delegate
 			{
@@ -157,7 +158,7 @@ namespace Jammy.Core.EmulationWindow.GDI
 		{
 			if (emulation.IsDisposed) return;
 
-			overlayCollection.Render();
+			nativeOverlay.Render();
 
 			emulation.Invoke((Action)delegate
 			{

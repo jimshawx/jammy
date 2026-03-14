@@ -11,6 +11,7 @@ namespace Jammy.NativeOverlay
 		void Render();
 		void Add(IOverlayRenderer renderer);
 		void Remove(IOverlayRenderer renderer);
+		void SetNativeOverlay(INativeOverlay nativeOverlay);
 	}
 
 	public class OverlayCollection : IOverlayCollection
@@ -36,6 +37,12 @@ namespace Jammy.NativeOverlay
 		public void Remove(IOverlayRenderer renderer)
 		{
 			overlays.Remove(renderer);
+		}
+
+		public void SetNativeOverlay(INativeOverlay nativeOverlay)
+		{
+			foreach (var overlay in overlays)
+				overlay.SetNativeOverlay(nativeOverlay);
 		}
 	}
 }

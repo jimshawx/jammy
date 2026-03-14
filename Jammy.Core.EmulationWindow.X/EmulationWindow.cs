@@ -254,14 +254,14 @@ namespace Jammy.Core.EmulationWindow.X
 		private const long ButtonReleaseMask = 1 << 3;
 		private const long PointerMotionMask = 1 << 6;
 
-		private readonly IOverlayCollection overlayCollection;
+		private readonly INativeOverlay nativeOverlay;
 		private readonly ILogger logger;
 
 		private int[] screen;
 
-		public EmulationWindow(IOverlayCollection overlayCollection, ILogger<EmulationWindow> logger)
+		public EmulationWindow(INativeOverlay nativeOverlay, ILogger<EmulationWindow> logger)
 		{
-			this.overlayCollection = overlayCollection;
+			this.nativeOverlay = nativeOverlay;
 			this.logger = logger;
 		}
 
@@ -275,7 +275,7 @@ namespace Jammy.Core.EmulationWindow.X
 
 		public void Blit(int[] screen)
 		{
-			overlayCollection.Render();
+			nativeOverlay.Render();
 
 			XPutImage(xdisplay, xwindow, gc, ref ximage, 0, 0, 0, 0, screenWidth, screenHeight);
 			XFlush(xdisplay);
@@ -349,6 +349,7 @@ namespace Jammy.Core.EmulationWindow.X
 
 			screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
 			ximage.data = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
+			nativeOverlay.Init(screen, width, height);
 
 			var t = new Thread(XEventHandler);
 			t.Start();

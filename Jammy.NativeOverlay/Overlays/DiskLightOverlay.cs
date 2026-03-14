@@ -11,8 +11,8 @@ namespace Jammy.NativeOverlay.Overlays
 	{
 		private readonly IDriveLights driveLights;
 
-		public DiskLightOverlay(INativeOverlay nativeOverlay, IDriveLights driveLights,
-			ILogger<DiskLightOverlay> logger) : base(nativeOverlay, logger)
+		public DiskLightOverlay(IDriveLights driveLights,
+			ILogger<DiskLightOverlay> logger) : base(logger)
 		{
 			this.driveLights = driveLights;
 		}

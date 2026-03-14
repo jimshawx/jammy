@@ -22,7 +22,7 @@ namespace Jammy.Core.EmulationWindow.DX
 		[DllImport("user32.dll")]
 		private static extern short GetAsyncKeyState(int key);
 
-		private readonly IOverlayCollection overlayCollection;
+		private readonly INativeOverlay nativeOverlay;
 		private readonly ILogger logger;
 		private Form emulation;
 
@@ -35,9 +35,9 @@ namespace Jammy.Core.EmulationWindow.DX
 		private ID3D11Texture2D backBuffer;
 		private int[] screen;
 
-		public EmulationWindow(IOverlayCollection overlayCollection, ILogger<EmulationWindow> logger)
+		public EmulationWindow(INativeOverlay nativeOverlay, ILogger<EmulationWindow> logger)
 		{
-			this.overlayCollection = overlayCollection;
+			this.nativeOverlay = nativeOverlay;
 			this.logger = logger;
 
 			var ss = new SemaphoreSlim(1);
@@ -173,6 +173,7 @@ namespace Jammy.Core.EmulationWindow.DX
 					throw new ApplicationException();
 
 				screen = new int[screenWidth * screenHeight];
+				nativeOverlay.Init(screen, screenWidth, screenHeight);
 
 				var swapDesc = new SwapChainDescription1
 				{
@@ -221,7 +222,7 @@ namespace Jammy.Core.EmulationWindow.DX
 		{
 			if (emulation.IsDisposed) return;
 
-			overlayCollection.Render();
+			nativeOverlay.Render();
 
 			emulation.Invoke((Action)delegate
 			{
