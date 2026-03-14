@@ -176,7 +176,7 @@ namespace Jammy.Core.Custom.IO
 		public void Reset() { }
 	}
 
-	public class EmulationConsole : ISerialConsole
+	public class EmulationConsole : ISerialConsole, IDebugKeys
 	{
 		private readonly ILogger logger;
 		private readonly StringBuilder serout = new StringBuilder();
@@ -185,11 +185,11 @@ namespace Jammy.Core.Custom.IO
 		public EmulationConsole(IEmulationWindow emulationWindow, ILogger<EmulationConsole> logger)
 		{
 			this.logger = logger;
-			emulationWindow.SetKeyHandlers(AddKeyDown, AddKeyUp);
+			emulationWindow.SetKeyHandlers(DebugKeyDown, DebugKeyUp);
 		}
 
-		private void AddKeyDown(int key) { serin.Enqueue((byte)key); }
-		private void AddKeyUp(int key) { }
+		public void DebugKeyDown(int key) { serin.Enqueue((byte)key); }
+		public void DebugKeyUp(int key) { }
 
 		public int ReadChar()
 		{

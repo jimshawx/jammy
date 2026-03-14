@@ -1,5 +1,4 @@
-﻿using Jammy.Core.Debug;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
@@ -8,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime;
-using System.Runtime.CompilerServices;
 using System.Threading;
 
 /*
@@ -17,7 +15,7 @@ using System.Threading;
 
 namespace Jammy.Core
 {
-	public class Amiga : IAmiga
+	public class Amiga : IAmiga, IDebugKeys
 	{
 		private readonly ICPU cpu;
 		private readonly IBlitter blitter;
@@ -30,7 +28,6 @@ namespace Jammy.Core
 		private readonly IBreakpointCollection breakpointCollection;
 		private readonly IPersistenceManager persistenceManager;
 		private readonly IKickstartROM kickstart;
-		private readonly IEmulationWindow emulationWindow;
 		private readonly ILogger logger;
 		private readonly IDebugMemoryMapper memoryMapper;
 
@@ -50,7 +47,7 @@ namespace Jammy.Core
 			IAkiko akiko,
 			IPSUClock psuClock, ICPUClock cpuClock, IChipsetDebugger debugger,
 			IBreakpointCollection breakpointCollection, IPersistenceManager statePersister,
-			IKickstartROM kickstart, IEmulationWindow emulationWindow, ILogger<Amiga> logger)
+			IKickstartROM kickstart, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
 			this.cpu = cpu;
@@ -64,7 +61,6 @@ namespace Jammy.Core
 			this.breakpointCollection = breakpointCollection;
 			this.persistenceManager = statePersister;
 			this.kickstart = kickstart;
-			this.emulationWindow = emulationWindow;
 			this.logger = logger;
 
 			//fulfil the circular dependencies
@@ -83,8 +79,6 @@ namespace Jammy.Core
 			}
 
 			cpu.Initialise();
-
-			emulationWindow.SetKeyHandlers(AmigaKeydown, AmigaKeyup);
 
 			//all the emulators and resetters
 			emulations.Add(diskDrives);
@@ -138,12 +132,12 @@ namespace Jammy.Core
 		}
 
 		private bool takeASnapshot = false;
-		private void AmigaKeyup(int key)
+		public void DebugKeyUp(int key)
 		{
 			if ((VK)key == VK.VK_F11) takeASnapshot = true;
 		}
 
-		private void AmigaKeydown(int obj) { }
+		public void DebugKeyDown(int obj) { }
 
 		public void Reset()
 		{

@@ -29,9 +29,13 @@ namespace Jammy.Core.Interface.Interfaces
 		int GetDebugLocation();
 		uint[] GetDebugPalette();
 		string GetOverlayText();
-		void dbug_Keyup(int obj);
-		void dbug_Keydown(int obj);
 	}
 
 	public interface IDebugKeyboard { }
+
+	public interface IDebugKeys
+	{
+		void DebugKeyUp(int obj);
+		void DebugKeyDown(int obj);
+	}
 }

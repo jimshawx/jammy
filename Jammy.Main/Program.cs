@@ -303,7 +303,13 @@ namespace Jammy.Main
 				x.ImplementationType.GetInterfaces().Contains(typeof(IStatePersister))).ToList();
 			foreach (var x in types)
 				services.AddSingleton(y => (IStatePersister)y.GetRequiredService(x.ServiceType));
-			
+
+			//set up the list of IDebugKeys
+			var keys = services.Where(x => x.ImplementationType != null &&
+				x.ImplementationType.GetInterfaces().Contains(typeof(IDebugKeys))).ToList();
+			foreach (var x in keys)
+				services.AddSingleton(y => (IDebugKeys)y.GetRequiredService(x.ServiceType));
+
 			//set up the database access
 			services.AddSingleton<IDatabaseConnection>(x => new DatabaseConnection("testing.db"));
 			services.AddSingleton<IUpgradeDatabase, UpgradeDatabase>();

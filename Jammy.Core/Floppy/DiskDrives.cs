@@ -38,7 +38,7 @@ namespace Jammy.Core.Floppy
 		MASK = DSKCHANGE|DSKPROT|DSKTRACK0|DSKRDY
 	}
 
-	public class DiskDrives : IDiskDrives
+	public class DiskDrives : IDiskDrives, IDebugKeys
 	{
 		//300rpm = 5Hz = 0.2s = @7.09MHz, that's 1_418_000
 		private const int INDEX_INTERRUPT_RATE = 1_418_000/2;//these should be chipset clocks
@@ -60,14 +60,14 @@ namespace Jammy.Core.Floppy
 		private int diskInterruptPending = -1;
 
 		private bool verbose = false;
-		private void dbug_Keyup(int obj) { }
-		private void dbug_Keydown(int obj)
+		public void DebugKeyUp(int obj) { }
+		public void DebugKeyDown(int obj)
 		{
 			if (obj == (int)VK.VK_F3)
 				verbose ^= true;
 		}
 
-		public DiskDrives(IInterrupt interrupt, IEmulationWindow emulationWindow, IDriveLights driveLights,
+		public DiskDrives(IInterrupt interrupt, IDriveLights driveLights,
 			IDiskLoader diskLoader, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
 		{
 			this.interrupt = interrupt;
@@ -75,8 +75,6 @@ namespace Jammy.Core.Floppy
 			this.diskLoader = diskLoader;
 			this.logger = logger;
 			this.settings = settings.Value;
-
-			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 
 			//http://amigamuseum.emu-france.info/Fichiers/ADF/-%20Workbench/
 			var disks = new IDisk[4];

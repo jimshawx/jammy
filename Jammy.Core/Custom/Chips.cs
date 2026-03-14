@@ -17,7 +17,7 @@ using System.Linq;
 
 namespace Jammy.Core.Custom
 {
-	public class Chips : IChips
+	public class Chips : IChips, IDebugKeys
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IDiskDrives diskDrives;
@@ -34,7 +34,7 @@ namespace Jammy.Core.Custom
 		private IAudio audio;
 
 		public Chips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, ISerial serial,
-			IOptions<EmulationSettings> settings, IEmulationWindow emulationWindow, ILogger<Chips> logger)
+			IOptions<EmulationSettings> settings, ILogger<Chips> logger)
 		{
 			this.interrupt = interrupt;
 			this.diskDrives = diskDrives;
@@ -42,13 +42,11 @@ namespace Jammy.Core.Custom
 			this.serial = serial;
 			this.settings = settings.Value;
 			this.logger = logger;
-
-			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 		}
 
 		private bool blitterDebugging = false;
 		private bool blitterDumping = false;
-		private void dbug_Keydown(int obj)
+		public void DebugKeyDown(int obj)
 		{
 			if (obj == (int)VK.VK_F2)
 			{
@@ -65,7 +63,7 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-		private void dbug_Keyup(int obj){}
+		public void DebugKeyUp(int obj){}
 
 		public void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise, IDMA dma)
 		{

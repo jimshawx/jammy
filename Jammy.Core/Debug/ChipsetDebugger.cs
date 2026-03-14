@@ -15,7 +15,7 @@ using System.Text;
 
 namespace Jammy.Core.Debug;
 
-public class ChipsetDebugger : IChipsetDebugger
+public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 {
 	private readonly IChipsetClock clock;
 	private IDebugChipsetRead chipRegs;
@@ -370,13 +370,13 @@ public class ChipsetDebugger : IChipsetDebugger
 	private void DebugLocation() { }
 	public int GetDebugLocation() { return dbugLine; }
 
-	public void dbug_Keyup(int obj)
+	public void DebugKeyUp(int obj)
 	{
 	}
 
 	private bool keys = false;
 
-	public void dbug_Keydown(int obj)
+	public void DebugKeyDown(int obj)
 	{
 		if (obj == (int)VK.VK_F9)
 		{

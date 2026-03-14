@@ -156,7 +156,7 @@ using System.Text;
 
 namespace Jammy.Core.Custom
 {
-	public class Akiko : IAkiko
+	public class Akiko : IAkiko, IDebugKeys
 	{
 		[Flags]
 		private enum INTREQ : uint
@@ -256,21 +256,19 @@ namespace Jammy.Core.Custom
 		private IMemoryMapper memory;
 		private readonly ILogger logger;
 
-		public Akiko(ICDDrive cddrive, IEmulationWindow emulationWindow, IOptions<EmulationSettings> settings, ILogger<Akiko> logger)
+		public Akiko(ICDDrive cddrive, IOptions<EmulationSettings> settings, ILogger<Akiko> logger)
 		{
 			this.settings = settings.Value;
 			this.cddrive = cddrive;
 			
 			this.logger = logger;
-
-			emulationWindow.SetKeyHandlers(dbug_Keydown, dbug_Keyup);
 		}
-		private void dbug_Keyup(int obj)
+		public void DebugKeyUp(int obj)
 		{
 		}
 
 		private byte ismedia = 0x00;
-		private void dbug_Keydown(int obj)
+		public void DebugKeyDown(int obj)
 		{
 			if (obj == (int)'C')
 			{
