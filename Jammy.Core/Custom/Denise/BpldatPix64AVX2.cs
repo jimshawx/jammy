@@ -22,7 +22,7 @@ namespace Jammy.Core.Custom.Denise
 		public void Clear()
 		{
 			bp.Clear();
-			Array.Clear(stashBits);
+			stashShift = -1;
 		}
 
 		public uint GetPixel(int planes)

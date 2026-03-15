@@ -313,5 +313,76 @@ namespace Jammy.Tests
 			ClassicAssert.IsTrue(s0 == s1);
 		}
 
+		[Test]
+		public void TestD()
+		{
+			var p0 = new BpldatPix64();
+
+			p0.SetPixelBitMask(63);
+
+			for (int i = 0; i < 8; i++)
+				bpldat[i] = (ulong)r.NextInt64();
+
+			p0.WriteBitplanes(ref bpldat, 0, 0);
+
+			p0.Clear();
+
+			for (int i = 0; i < 64; i++)
+				ClassicAssert.AreEqual(p0.GetPixel(8), 0);
+		}
+
+		[Test]
+		public void TestE()
+		{
+			var p0 = new BpldatPix64AVX2();
+
+			p0.SetPixelBitMask(63);
+
+			for (int i = 0; i < 8; i++)
+				bpldat[i] = (ulong)r.NextInt64();
+
+			p0.WriteBitplanes(ref bpldat, 0, 0);
+
+			p0.Clear();
+
+			for (int i = 0; i < 64; i++)
+				ClassicAssert.AreEqual(p0.GetPixel(8), 0);
+		}
+
+		[Test]
+		public void TestF()
+		{
+			var p0 = new BpldatPix32();
+
+			p0.SetPixelBitMask(15);
+
+			for (int i = 0; i < 8; i++)
+				bpldat[i] = (ulong)r.NextInt64();
+
+			p0.WriteBitplanes(ref bpldat, 0, 0);
+
+			p0.Clear();
+
+			for (int i = 0; i < 16; i++)
+				ClassicAssert.AreEqual(p0.GetPixel(8), 0);
+		}
+
+		[Test]
+		public void TestG()
+		{
+			var p0 = new BpldatPix32AVX2();
+
+			p0.SetPixelBitMask(15);
+
+			for (int i = 0; i < 8; i++)
+				bpldat[i] = (ulong)r.NextInt64();
+
+			p0.WriteBitplanes(ref bpldat, 0, 0);
+
+			p0.Clear();
+
+			for (int i = 0; i < 16; i++)
+				ClassicAssert.AreEqual(p0.GetPixel(8), 0);
+		}
 	}
 }
