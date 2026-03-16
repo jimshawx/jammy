@@ -372,6 +372,11 @@ namespace Jammy.Debugger
 			return cpu.GetRegs();
 		}
 
+		public void SetRegs(Regs regs)
+		{
+			cpu.SetRegs(regs);
+		}
+
 		public void SetPC(uint pc)
 		{
 			cpu.SetPC(pc);

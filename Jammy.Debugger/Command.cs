@@ -41,13 +41,13 @@ namespace Jammy.Debugger
 			uint A(int i) { string s = P(i); return uint.Parse(s, NumberStyles.HexNumber); }
 			uint AD(int i, uint def) { string s = P(i); return string.IsNullOrEmpty(s) ? def : uint.Parse(s, NumberStyles.HexNumber); }
 			uint? N(int i) { string s = P(i); return string.IsNullOrWhiteSpace(s) ? null : A(i); }
-			Core.Types.Types.Size? S(int i)
+			Size? S(int i)
 			{
 				string s = P(i);
 				if (s.Length != 1) return null;
-				if (char.ToLower(s[0]) == 'b') return Core.Types.Types.Size.Byte;
-				if (char.ToLower(s[0]) == 'w') return Core.Types.Types.Size.Word;
-				if (char.ToLower(s[0]) == 'l') return Core.Types.Types.Size.Long;
+				if (char.ToLower(s[0]) == 'b') return Size.Byte;
+				if (char.ToLower(s[0]) == 'w') return Size.Word;
+				if (char.ToLower(s[0]) == 'l') return Size.Long;
 				return null;
 			}
 			string P(int i) { return (i < parm.Length) ? parm[i] : string.Empty; }
@@ -78,13 +78,13 @@ namespace Jammy.Debugger
 						break;
 
 					case "bw":
-						debugger.AddBreakpoint(A(1), BreakpointType.Write, 0, S(2) ?? Core.Types.Types.Size.Word);
+						debugger.AddBreakpoint(A(1), BreakpointType.Write, 0, S(2) ?? Size.Word);
 						break;
 					case "br":
-						debugger.AddBreakpoint(A(1), BreakpointType.Read, 0, S(2) ?? Core.Types.Types.Size.Word);
+						debugger.AddBreakpoint(A(1), BreakpointType.Read, 0, S(2) ?? Size.Word);
 						break;
 					case "brw":
-						debugger.AddBreakpoint(A(1), BreakpointType.ReadOrWrite, 0, S(2) ?? Core.Types.Types.Size.Word);
+						debugger.AddBreakpoint(A(1), BreakpointType.ReadOrWrite, 0, S(2) ?? Size.Word);
 						break;
 					case "bl":
 						debugger.DumpBreakpoints();
@@ -109,11 +109,11 @@ namespace Jammy.Debugger
 						break;
 
 					case "w":
-						debugger.DebugWrite(A(1), N(2) ?? 0, S(3) ?? Core.Types.Types.Size.Word);
+						debugger.DebugWrite(A(1), N(2) ?? 0, S(3) ?? Size.Word);
 						break;
 
 					case "r":
-						uint v = debugger.DebugRead(A(1), S(2) ?? Core.Types.Types.Size.Word);
+						uint v = debugger.DebugRead(A(1), S(2) ?? Size.Word);
 						logger.LogTrace($"{v:X8} ({v})");
 						break;
 
@@ -146,6 +146,32 @@ namespace Jammy.Debugger
 						Amiga.SetEmulationMode(EmulationMode.Stopped, true);
 						break;
 
+					case "reg":
+						string reg = P(1).ToUpperInvariant();
+						uint val = AD(2,0);
+						if (reg =="A0") regs.A[0] = val;
+						else if (reg == "A1") regs.A[1] = val;
+						else if (reg == "A2") regs.A[2] = val;
+						else if (reg == "A3") regs.A[3] = val;
+						else if (reg == "A4") regs.A[4] = val;
+						else if (reg == "A5") regs.A[5] = val;
+						else if (reg == "A6") regs.A[6] = val;
+						else if (reg == "A7") regs.A[7] = val;
+						else if (reg == "D0") regs.D[0] = val;
+						else if (reg == "D1") regs.D[1] = val;
+						else if (reg == "D2") regs.D[2] = val;
+						else if (reg == "D3") regs.D[3] = val;
+						else if (reg == "D4") regs.D[4] = val;
+						else if (reg == "D5") regs.D[5] = val;
+						else if (reg == "D6") regs.D[6] = val;
+						else if (reg == "D7") regs.D[7] = val;
+						else if (reg == "PC") regs.PC = val;
+						else if (reg == "SP") regs.SP = val;
+						else if (reg == "SSP") regs.SSP = val;
+						else if (reg == "SR") regs.SR = (ushort)val;
+						debugger.SetRegs(regs);
+						break;
+
 					case "?":
 						logger.LogTrace("b address - breakpoint on execute at address");
 						logger.LogTrace("bw address [size(W)] - breakpoint on write at address");
@@ -165,6 +191,7 @@ namespace Jammy.Debugger
 						logger.LogTrace("s - emulation Step");
 						logger.LogTrace("so - emulation Step Out");
 						logger.LogTrace("x - emulation Stop");
+						logger.LogTrace("reg regname [value(0)] - set a register");
 						break;
 				}
 				//AddHistory(cmd);

@@ -21,6 +21,7 @@ namespace Jammy.Interface
 		string GetCopperDisassembly();
 		ushort GetInterruptLevel();
 		Regs GetRegs();
+		void SetRegs(Regs regs);
 		void BreakAtNextPC();
 		void SetPC(uint pc);
 		uint FindMemoryText(string txt);
