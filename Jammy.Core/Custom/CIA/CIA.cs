@@ -73,6 +73,9 @@ namespace Jammy.Core.Custom.CIA
 		[Persist]
 		private bool todLatched;
 
+		[Persist]
+		private int outputShift;
+
 		public virtual void Emulate()
 		{
 			//timer A running
@@ -84,6 +87,13 @@ namespace Jammy.Core.Custom.CIA
 				if (timerA == 0xffff)
 				{
 					AssertICR(ICRB.TIMERA);
+
+					if ((regs[CIA.CRA] & (uint)CR.CRA_SPMODE) != 0)
+					{
+						outputShift--;
+						if (outputShift == 0)
+							AssertICR(ICRB.SERIAL);
+					}
 
 					//one shot mode?
 					if ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0)
@@ -362,6 +372,11 @@ namespace Jammy.Core.Custom.CIA
 					}
 					//CheckTODAlarm();
 					//todStopped = true;//todo: is the TOD stopped when writing the alarm?
+					break;
+
+				case CIA.SDR:
+					regs[reg] = (byte)value;
+					outputShift = 8;
 					break;
 
 				default:
