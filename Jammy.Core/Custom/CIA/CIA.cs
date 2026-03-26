@@ -88,8 +88,10 @@ namespace Jammy.Core.Custom.CIA
 				{
 					AssertICR(ICRB.TIMERA);
 
+					//SPMODE == 1, when Timer A underflows, the shift register is clocked out 1 bit
 					if ((regs[CIA.CRA] & (uint)CR.CRA_SPMODE) != 0)
 					{
+						regs[CIA.SDR] <<= 1;
 						outputShift--;
 						if (outputShift == 0)
 							AssertICR(ICRB.SERIAL);
