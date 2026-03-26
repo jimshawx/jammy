@@ -250,7 +250,7 @@ namespace Jammy.Main.Linux
 				lbCustom.Items.Add("INTENA W:DFF09A R:DFF01C");
 				lbCustom.Items.Add("INTREQ W:DFF09C R:DFF01E");
 				lbCustom.Items.Add("        ENA REQ");
-				string[] names = new String[16] { "NMI", "INTEN", "EXTEN", "DSKSYNC", "RBF", "AUD3", "AUD2", "AUD1", "AUD0", "BLIT", "VERTB", "COPPER", "PORTS", "SOFTINT", "DSKBLK", "TBE" };
+				string[] names = new String[16] { "NMI", "INTEN", "EXTER", "DSKSYNC", "RBF", "AUD3", "AUD2", "AUD1", "AUD0", "BLIT", "VERTB", "COPPER", "PORTS", "SOFTINT", "DSKBLK", "TBE" };
 				for (int i = 0; i < 16; i++)
 				{
 					int bit = 1 << (i ^ 15);
