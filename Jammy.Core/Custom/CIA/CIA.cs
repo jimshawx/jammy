@@ -152,7 +152,7 @@ namespace Jammy.Core.Custom.CIA
 		private void AssertInterrupt()
 		{
 			//if there are any unmasked bits in ICRR then the Paula INTREQ will be set, otherwise it'll be cleared
-			interrupt.AssertInterrupt(interruptLevel, (icrr & regs[CIA.ICR]) != 0);
+			interrupt.AssertInterrupt(interruptLevel, (icrr & regs[CIA.ICR] & 0x7f) != 0);
 		}
 
 		public virtual void Reset()
