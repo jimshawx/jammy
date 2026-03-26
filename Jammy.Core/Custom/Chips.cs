@@ -261,6 +261,7 @@ namespace Jammy.Core.Custom
 				case ChipRegs.DMACONR:
 					break;
 				case ChipRegs.INTENA:
+					//if ((value & 0x2000) != 0) logger.LogTrace($"INTENA {value:X4} @ {insaddr:X8}");
 					{
 						ushort prevIntena = intena;
 

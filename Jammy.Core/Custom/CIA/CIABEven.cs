@@ -2,6 +2,7 @@
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -113,8 +114,13 @@ namespace Jammy.Core.Custom.CIA
 				//return;
 			}
 
-			//logger.LogTrace($"CIAB Write {address:X8} {debug[reg].Item1} {value:X8} {value} {Convert.ToString(value, 2).PadLeft(8, '0')}");
+			//if (reg == ICR && (value&3)!=0)
+			//	logger.LogTrace($"CIAB ICR Write @ {insaddr:X8} {value:X8} {value.ToBin(8)}");
+
 			base.Write(reg, value);
+
+			//if (reg == ICR && (value & 3) != 0)
+			//	logger.LogTrace($"CIAB ICR Write @ {insaddr:X8} {regs[CIA.ICR]:X8} {regs[CIA.ICR].ToBin(8)}");
 		}
 
 		public static List<string> GetCribSheet()

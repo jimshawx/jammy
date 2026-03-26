@@ -145,6 +145,24 @@ namespace Jammy.Debugger
 				//AddBreakpoint(0x726);//Hammerfist decryption block end eori.w #$2000,sr
 				//AddBreakpoint(0x784);//Hammerfist decryption block end andi.w #$F8FF,sr
 				//AddBreakpoint(0x7ac);//Hammerfist decryption block end bra.w #$05FE - manual jump to Trace vector
+
+				//debugging OrbitalMissionDEMO.adf
+				//AddBreakpoint(0x1844A);
+				//AddBreakpoint(0x17A34);
+				//AddBreakpoint(0x183FE);
+				//AddBreakpoint(0x17f96);
+				//AddBreakpoint(0x17f94, type: BreakpointType.Write, size: Size.Long);
+				//AddBreakpoint(0x17f96, type: BreakpointType.Write, size: Size.Long);
+				//AddBreakpoint(0x17f96, type : BreakpointType.Write, size: Size.Word);
+				//AddBreakpoint(0x17f96, type: BreakpointType.Write, size: Size.Byte);
+				//AddBreakpoint(0x17f97, type: BreakpointType.Write, size: Size.Byte);
+				////AddBreakpoint(0x17e68);
+				////AddBreakpoint(0x017A3C);
+				////AddBreakpoint(0xFC2FA8);
+				////AddBreakpoint(0x179f2);
+				//AddBreakpoint(0x18022);
+				//AddBreakpoint(0x1802a);
+				//AddBreakpoint(0x183fe);
 				return;
 			}
 
