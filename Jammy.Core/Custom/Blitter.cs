@@ -306,10 +306,10 @@ namespace Jammy.Core.Custom
 			return false;
 		}
 
-		private void DelayedWriteImmediate()
+		private void DelayedWriteImmediate(uint insaddr)
 		{
 			if (writecache.Address == NO_WRITECACHE) return;
-			chipRam.ImmediateWrite(0, writecache.Address, writecache.Value, Size.Word);
+			chipRam.ImmediateWrite(insaddr, writecache.Address, writecache.Value, Size.Word);
 		}
 
 		private bool DelayedWrite(uint address, ushort value)
@@ -320,9 +320,9 @@ namespace Jammy.Core.Custom
 			return x;
 		}
 
-		private void DelayedWriteImmediate(uint address, ushort value)
+		private void DelayedWriteImmediate(uint insaddr, uint address, ushort value)
 		{
-			DelayedWriteImmediate();
+			DelayedWriteImmediate(insaddr);
 			writecache.Address = address;
 			writecache.Value = value;
 		}
@@ -344,7 +344,7 @@ namespace Jammy.Core.Custom
 				logger.LogTrace($"DMAEN is off! @{insaddr:X8}");
 
 			if (settings.BlitterMode == BlitterMode.Immediate)
-				BlitImmediate(blitWidth, blitHeight);
+				BlitImmediate(insaddr, blitWidth, blitHeight);
 			else
 				BeginBlit();
 		}
@@ -1106,7 +1106,7 @@ namespace Jammy.Core.Custom
 			interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 		}
 
-		private void BlitImmediate(uint width, uint height)
+		private void BlitImmediate(uint insaddr, uint width, uint height)
 		{
 			uint mode = (bltcon1 >> 3) & 3;
 			int ashift = (int)(bltcon0 >> 12);
@@ -1128,7 +1128,7 @@ namespace Jammy.Core.Custom
 				for (uint w = 0; w < width; w++)
 				{
 					if ((bltcon0 & (1u << 11)) != 0)
-						bltadat = chipRam.ImmediateRead(0, bltapt, Size.Word);
+						bltadat = chipRam.ImmediateRead(insaddr, bltapt, Size.Word);
 
 					s_bltadat = bltadat;
 
@@ -1151,7 +1151,7 @@ namespace Jammy.Core.Custom
 					}
 
 					if ((bltcon0 & (1u << 10)) != 0) 
-						bltbdat = chipRam.ImmediateRead(0, bltbpt, Size.Word);
+						bltbdat = chipRam.ImmediateRead(insaddr, bltbpt, Size.Word);
 
 					s_bltbdat = bltbdat;
 
@@ -1171,7 +1171,7 @@ namespace Jammy.Core.Custom
 					}
 
 					if ((bltcon0 & (1u << 9)) != 0)
-						bltcdat = chipRam.ImmediateRead(0, bltcpt, Size.Word);
+						bltcdat = chipRam.ImmediateRead(insaddr, bltcpt, Size.Word);
 
 					bltddat = 0;
 					if ((bltcon0 & 0x01) != 0) bltddat |= ~s_bltadat & ~s_bltbdat & ~bltcdat & 0xffff;
@@ -1188,7 +1188,7 @@ namespace Jammy.Core.Custom
 					bltzero |= bltddat;
 
 					if (((bltcon0 & (1u << 8)) != 0) && ((bltcon1 & (1u << 7)) == 0))
-						DelayedWriteImmediate(bltdpt, (ushort)bltddat);
+						DelayedWriteImmediate(insaddr, bltdpt, (ushort)bltddat);
 
 					if ((bltcon1 & (1u << 1)) != 0)
 					{
@@ -1224,7 +1224,7 @@ namespace Jammy.Core.Custom
 				bltcon1 &= ~(1u << 2);
 				bltcon1 |= fci;
 			}
-			DelayedWriteImmediate();
+			DelayedWriteImmediate(insaddr);
 
 			//clear BZERO if necessary and disable BBUSY in DMACON
 			ushort dmacon = 1 << 14;
