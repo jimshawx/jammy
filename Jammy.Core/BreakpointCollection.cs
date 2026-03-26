@@ -105,6 +105,13 @@ namespace Jammy.Core
 				AddBreakpoint(pc);
 		}
 
+		private bool IsExecutable(Breakpoint bp)
+		{
+			return bp.Type == BreakpointType.Execute ||
+				bp.Type == BreakpointType.OneShot ||
+				bp.Type == BreakpointType.Counter;
+		}
+
 		//here is where memory reads/writes/fetches call to signal a breakpoint
 		public void MemoryBreakpoint(Breakpoint bp, uint address)
 		{
@@ -114,7 +121,7 @@ namespace Jammy.Core
 		//here is where the CPUs call at the end of an instruction to check for a breakpoint at new pc
 		public bool ExecutionBreakpoint(uint pc)
 		{
-			if (breakpoints.TryGetValue(pc, out var bp))
+			if (breakpoints.TryGetValue(pc, out var bp) && IsExecutable(bp))
 			{
 				Breakpoint(bp, pc);
 				return true;
