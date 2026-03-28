@@ -193,6 +193,7 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 		{
 			diwstrtv |= (diwhigh & 0b111) << 8;
 
+			//it seems diwhigh is ignored if the bits are 0
 			if ((diwhigh & 0b111_00000000) != 0)
 			{ 
 				diwstopv &= 0xff;
