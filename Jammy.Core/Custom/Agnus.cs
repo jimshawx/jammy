@@ -597,13 +597,11 @@ public class Agnus : IAgnus
 
 	private void UpdateDIWSTRT()
 	{
-		//diwstrth = diwstrt & 0xff;
 		diwstrtv = diwstrt >> 8;
 	}
 
 	private void UpdateDIWSTOP()
 	{
-		//diwstoph = (diwstop & 0xff) | 0x100;
 		diwstopv = (diwstop >> 8) | (((diwstop & 0x8000) >> 7) ^ 0x100);
 	}
 
@@ -612,15 +610,14 @@ public class Agnus : IAgnus
 		//if diwhigh is written, the 'magic' bits are overwritten
 		if (diwhigh != 0)
 		{
-			//diwstrth |= (diwhigh & 0b1_00000) << 3;
 			diwstrtv |= (diwhigh & 0b111) << 8;
 
-			//diwstoph &= 0xff;
-			//diwstoph |= (diwhigh & 0b1_00000_00000000) >> 5;
-			diwstopv &= 0xff;
-			diwstopv |= (diwhigh & 0b111_00000000);
-
-			//todo: there are also an extra two bottom bits for strth/stoph
+			//it seems diwhigh is ignored if the bits are 0
+			if ((diwhigh & 0b111_00000000) != 0)
+			{ 
+				diwstopv &= 0xff;
+				diwstopv |= (diwhigh & 0b111_00000000);
+			}
 		}
 	}
 
