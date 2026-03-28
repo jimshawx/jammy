@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Jammy.Core.Debug;
 using Newtonsoft.Json.Linq;
 using Jammy.Core.Persistence;
 
@@ -83,13 +82,28 @@ namespace Jammy.Core.Custom
 
 		public void Emulate()
 		{
-			if ((clock.ClockState & ChipsetClockState.EndOfFrame)!=0)
+			if ((clock.ClockState & ChipsetClockState.EndOfFrame) != 0)
+			{ 
 				copjmp1 = 1;
+				status = CopperStatus.Retrace;
+			}
 
 			if (copjmp1 != 0 || copjmp2 != 0)
 			{
 				//logger.LogTrace($"JUMP {clock} {copjmp1} {copjmp2}");
-				status = CopperStatus.Retrace;
+				//status = CopperStatus.Retrace;
+
+				if (status != CopperStatus.Retrace)
+				{
+					if (copjmp1 != 0)
+						copPC = cop1lc;
+					if (copjmp2 != 0)
+						copPC = cop2lc;
+					DebugCOPPC(copPC);
+					status = CopperStatus.RunningWord1;
+					copjmp1 = copjmp2 = 0;
+				}
+
 				CopperInstruction();
 				return;
 			}
@@ -210,7 +224,7 @@ namespace Jammy.Core.Custom
 							if (IllegalCopperInstruction(reg))
 							{
 								status = CopperStatus.Stopped;
-								DebugCOPStopped(reg);
+								DebugCOPStopped(reg, copPC);
 							}
 							else
 							{
@@ -403,8 +417,8 @@ namespace Jammy.Core.Custom
 			if (copptr != lastcopptr[idx])
 			{
 				logger.LogTrace($"{reg} {insaddr:X8} {copptr:X6} {clock.TimeStamp()}");
-				if (reg.EndsWith('L'))
-					logger.LogTrace(DisassembleCopperList(copptr));
+				//if (reg.EndsWith('L'))
+				//	logger.LogTrace(DisassembleCopperList(copptr));
 				lastcopptr[idx] = copptr;
 			}
 		}
@@ -418,7 +432,7 @@ namespace Jammy.Core.Custom
 			{
 				logger.LogTrace($"{rw} {reg} {insaddr:X8} {copptr:X6} {clock.TimeStamp()}");
 				lastjmp[idx] = copptr;
-				logger.LogTrace(DisassembleCopperList(copptr));
+				//logger.LogTrace(DisassembleCopperList(copptr));
 			}
 			//copPC = copptr;
 			//status = CopperStatus.RunningWord1;
@@ -434,14 +448,14 @@ namespace Jammy.Core.Custom
 			if (pc != lastcoppc[idx])
 			{
 				logger.LogTrace($"N {copjmp1}{copjmp2} {pc:X6} {cop1lc:X6} {cop2lc:X6} {clock.TimeStamp()}");
-				logger.LogTrace(DisassembleCopperList(pc));
+				//logger.LogTrace(DisassembleCopperList(pc));
 				lastcoppc[idx] = pc;
 			}
 		}
 
-		private void DebugCOPStopped(uint reg)
+		private void DebugCOPStopped(uint reg, uint copaddr)
 		{
-			logger.LogTrace($"Copper Stopped dff{reg:x3} {ChipRegs.Name(0xdff000+reg)}");
+			logger.LogTrace($"Copper Stopped dff{reg:x3} {ChipRegs.Name(0xdff000+reg)} @ {copaddr:X6}");
 		}
 
 		public void Write(uint insaddr, uint address, ushort value)
@@ -471,6 +485,9 @@ namespace Jammy.Core.Custom
 
 			var skipTaken = new HashSet<uint>();
 
+			uint cop1ptr = custom.DebugChipsetRead(ChipRegs.COP1LCH, Size.Long);//COP1LC
+			uint cop2ptr = custom.DebugChipsetRead(ChipRegs.COP2LCH, Size.Long);//COP2LC
+
 			int counter = MAX_COPPER_ENTRIES;
 			while (counter-- > 0)
 			{
@@ -490,9 +507,17 @@ namespace Jammy.Core.Custom
 					csb.AppendLine($"{copPC - 4:X6} MOVE {ins:X4} {data:X4} {ChipRegs.Name(ChipRegs.ChipBase + reg)}({reg:X3}),{data:X4}");
 
 					if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP1)
-						copPC = custom.DebugChipsetRead(ChipRegs.COP1LCH, Size.Long);//COP1LC
+						copPC = cop1ptr;
 					else if (ChipRegs.ChipBase + reg == ChipRegs.COPJMP2)
-						copPC = custom.DebugChipsetRead(ChipRegs.COP2LCH, Size.Long);//COP2LC
+						copPC = cop2ptr;
+					else if (ChipRegs.ChipBase + reg == ChipRegs.COP1LCL)
+					{ cop1ptr &= 0xffff0000; cop1ptr |= data; }
+					else if (ChipRegs.ChipBase + reg == ChipRegs.COP1LCH)
+					{ cop1ptr &= 0x0000ffff; cop1ptr |= ((uint)data)<<16; }
+					else if (ChipRegs.ChipBase + reg == ChipRegs.COP2LCL)
+					{ cop2ptr &= 0xffff0000; cop2ptr |= data; }
+					else if (ChipRegs.ChipBase + reg == ChipRegs.COP2LCH)
+					{ cop2ptr &= 0x0000ffff; cop2ptr |= ((uint)data) << 16; }
 				}
 				else if ((ins & 0x0001) == 1)
 				{
