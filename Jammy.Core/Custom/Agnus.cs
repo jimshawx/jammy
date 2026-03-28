@@ -236,6 +236,9 @@ public class Agnus : IAgnus
 		if ((blanking & Blanking.OutsideDisplayWindow) == Blanking.OutsideDisplayWindow)
 			goto noBitplaneDMA;
 
+		if (!dma.IsDMAEnabled(DMA.BPLEN))
+			goto noBitplaneDMA;
+
 		//debugging
 		if (clock.VerticalPos == debugger.dbugLine)
 			debugger.write[clock.HorizontalPos] = debugger.fetch[clock.HorizontalPos] = ':';
