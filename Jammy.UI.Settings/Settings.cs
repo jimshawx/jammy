@@ -527,6 +527,7 @@ namespace Jammy.UI.Settings
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.DF0 = "workbench1.3.adf";
 					currentSettings.FloppyCount = 1;
+					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick13.rom";
 					BindSettings();
 					btnSaveConfig.Enabled = false;
@@ -541,6 +542,7 @@ namespace Jammy.UI.Settings
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.DF0 = "workbench2.04.adf";
 					currentSettings.FloppyCount = 1;
+					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick204.rom";
 					BindSettings();
 					btnSaveConfig.Enabled = false;
@@ -555,8 +557,9 @@ namespace Jammy.UI.Settings
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.DF0 = "workbench2.04.adf";
 					currentSettings.FloppyCount = 1;
+					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick205.rom";
-					currentSettings.HardDiskCount = 2;
+					currentSettings.HardDiskCount = 0;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
@@ -572,8 +575,9 @@ namespace Jammy.UI.Settings
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.DF0 = "workbench3.1.adf";
 					currentSettings.FloppyCount = 1;
+					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick31_a1200.rom";
-					currentSettings.HardDiskCount = 2;
+					currentSettings.HardDiskCount = 0;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
@@ -591,7 +595,9 @@ namespace Jammy.UI.Settings
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.DF0 = "workbench3.1.adf";
 					currentSettings.FloppyCount = 1;
+					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick31_a3000.rom";
+					currentSettings.HardDiskCount = 0;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
@@ -609,8 +615,9 @@ namespace Jammy.UI.Settings
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.DF0 = "workbench3.1.adf";
 					currentSettings.FloppyCount = 1;
+					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick31_a4000.rom";
-					currentSettings.HardDiskCount = 2;
+					currentSettings.HardDiskCount = 0;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
