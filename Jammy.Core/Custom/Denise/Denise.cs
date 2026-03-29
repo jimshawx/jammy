@@ -88,6 +88,9 @@ public class Denise : IDenise
 	[Persist]
 	private int dptr = 0;
 
+	[Persist]
+	private bool insideDIWH;
+
 	private Func<uint, uint> pixelAction = (uint pix) => { return 0; };
 
 	public void Emulate()
@@ -893,6 +896,8 @@ end loop
 		dptr = (int)(clock.VerticalPos * SCREEN_WIDTH * 2);
 		lineStart = dptr;
 
+		insideDIWH = false;
+
 		FirstPixel();
 	}
 
@@ -1005,9 +1010,14 @@ end loop
 
 		if (blankingStatus == Blanking.None)
 		{
+			if (clock.DeniseHorizontalPos+d == diwstrth + debugger.diwSHack)
+				insideDIWH = true;
+			else if (clock.DeniseHorizontalPos+d == diwstoph + debugger.diwEHack)
+				insideDIWH = false;
+
 			//is it the visible area horizontally?
-			//when h >= diwstrt, bits are read out of the bitplane data, turned into pixels and output
-			if (clock.DeniseHorizontalPos+d >= diwstrth + debugger.diwSHack && clock.DeniseHorizontalPos+d <= diwstoph + debugger.diwEHack)
+			//if so, bits are read out of the bitplane data, turned into pixels and output
+			if (insideDIWH)
 			{
 				uint pix = bpldatPix.GetPixel(planes);
 
