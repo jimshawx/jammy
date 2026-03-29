@@ -176,6 +176,8 @@ public class Agnus : IAgnus
 	private int lastFetchCount;
 	[Persist]
 	private uint plane;
+	[Persist]
+	private bool insideDIWV;
 
 	private void RunAgnusTick()
 	{
@@ -221,7 +223,14 @@ public class Agnus : IAgnus
 			blanking |= Blanking.VerticalBlank;
 
 		//is it the visible area, vertically?
-		if (clock.VerticalPos < diwstrtv || clock.VerticalPos >= diwstopv)
+		//if (clock.VerticalPos < diwstrtv || clock.VerticalPos >= diwstopv)
+		//	blanking |= Blanking.OutsideDisplayWindow;
+		//it's not a greater than or less than check, it an transition from outside<->inside
+		if (clock.VerticalPos == diwstrtv)
+			insideDIWV = true;
+		else if (clock.VerticalPos == diwstopv)
+			insideDIWV = false;
+		if (!insideDIWV)
 			blanking |= Blanking.OutsideDisplayWindow;
 
 		//HRM 89 p18
@@ -615,12 +624,8 @@ public class Agnus : IAgnus
 		{
 			diwstrtv |= (diwhigh & 0b111) << 8;
 
-			//it seems diwhigh is ignored if the bits are 0
-			if ((diwhigh & 0b111_00000000) != 0)
-			{ 
-				diwstopv &= 0xff;
-				diwstopv |= (diwhigh & 0b111_00000000);
-			}
+			diwstopv &= 0xff;
+			diwstopv |= (diwhigh & 0b111_00000000);
 		}
 	}
 

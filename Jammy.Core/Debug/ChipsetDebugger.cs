@@ -193,12 +193,8 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 		{
 			diwstrtv |= (diwhigh & 0b111) << 8;
 
-			//it seems diwhigh is ignored if the bits are 0
-			if ((diwhigh & 0b111_00000000) != 0)
-			{ 
-				diwstopv &= 0xff;
-				diwstopv |= (diwhigh & 0b111_00000000);
-			}
+			diwstopv &= 0xff;
+			diwstopv |= (diwhigh & 0b111_00000000);
 		}
 
 		//horizontal window
@@ -225,7 +221,7 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 
 		sb.AppendLine($"LINE {dbugLine}");
 		sb.AppendLine(($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfStrtFix:X4}{ddfSHack:+#0;-#0} {ddfStopFix:X4}{ddfEHack:+#0;-#0} FMODE {fmode:X4}"));
-		sb.AppendLine(($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({diwstopv - diwstrtv}) H:{diwstrth}{diwSHack:+#0;-#0}->{diwstoph}{diwEHack:+#0;-#0}({diwstoph - diwstrth}/16={(diwstoph - diwstrth) / 16}) BD={bplDelayHack}"));
+		sb.AppendLine(($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({(int)(diwstopv - diwstrtv)}) H:{diwstrth}{diwSHack:+#0;-#0}->{diwstoph}{diwEHack:+#0;-#0}({diwstoph - diwstrth}/16={(diwstoph - diwstrth) / 16}) BD={bplDelayHack}"));
 		sb.AppendLine($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
 		sb.AppendLine($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()}");
 		sb.AppendLine($"BCN 3:{bplcon3:X4} {Bplcon3()} 4:{bplcon4:X4} {Bplcon4()}");
