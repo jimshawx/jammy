@@ -620,13 +620,10 @@ public class Agnus : IAgnus
 	private void UpdateDIWHIGH()
 	{
 		//if diwhigh is written, the 'magic' bits are overwritten
-		if (diwhigh != 0)
-		{
-			diwstrtv |= (diwhigh & 0b111) << 8;
+		diwstrtv |= (diwhigh & 0b111) << 8;
 
-			diwstopv &= 0xff;
-			diwstopv |= (diwhigh & 0b111_00000000);
-		}
+		diwstopv &= 0xff;
+		diwstopv |= (diwhigh & 0b111_00000000);
 	}
 
 	private void UpdateDDF()

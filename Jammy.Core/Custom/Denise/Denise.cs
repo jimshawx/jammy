@@ -990,15 +990,12 @@ end loop
 	private void UpdateDIWHIGH()
 	{
 		//if diwhigh is written, the 'magic' bits are overwritten
-		if (diwhigh != 0)
-		{
-			diwstrth |= (diwhigh & 0b1_00000) << 3;
+		diwstrth |= (diwhigh & 0b1_00000) << 3;
 
-			diwstoph &= 0xff;
-			diwstoph |= (diwhigh & 0b1_00000_00000000) >> 5;
+		diwstoph &= 0xff;
+		diwstoph |= (diwhigh & 0b1_00000_00000000) >> 5;
 
-			//todo: there are also an extra two bottom bits for strth/stoph
-		}
+		//todo: there are also an extra two bottom bits for strth/stoph
 	}
 
 	private void RunDeniseTick(int d, int p)
