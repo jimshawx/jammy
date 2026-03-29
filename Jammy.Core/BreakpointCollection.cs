@@ -90,7 +90,8 @@ namespace Jammy.Core
 			if (bp.Type == BreakpointType.OneShot)
 			{
 				if (!bp.Active) return false;
-				bp.Active = false;
+				//bp.Active = false;
+				breakpoints.Remove(bp.Address);
 				return true;
 			}
 
