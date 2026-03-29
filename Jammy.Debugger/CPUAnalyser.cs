@@ -3071,7 +3071,7 @@ namespace Jammy.Debugger
 			"Reserved",
 			"Reserved",
 			"Format Error (MC68010)",
-			"Unitialized Interrupt Vector",
+			"Uninitialized Interrupt Vector",
 			};
 
 		void internalTrap(uint vector)
