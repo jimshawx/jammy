@@ -60,7 +60,8 @@ namespace Jammy.Core.IO.Windows
 			{
 				joystickTime -= 1000;
 
-				if (((GetAsyncKeyState((int)VK.VK_SPACE)&0x8000)!=0) || ((GetAsyncKeyState((int)'Z') & 0x8000) != 0))
+				//if (((GetAsyncKeyState((int)VK.VK_SPACE)&0x8000)!=0) || ((GetAsyncKeyState((int)'Z') & 0x8000) != 0))
+				if ((GetAsyncKeyState((int)'Z') & 0x8000) != 0)
 					pra &= ~(1u << 7);
 				else
 					pra |= (1u << 7);
@@ -100,10 +101,10 @@ namespace Jammy.Core.IO.Windows
 				//left, up is -ve
 
 				var mouse = Cursor.Position;
-
-				bool rmouse = (Control.MouseButtons & MouseButtons.Right) != 0;
-				bool mmouse = (Control.MouseButtons & MouseButtons.Middle) != 0;
-				bool lmouse = (Control.MouseButtons & MouseButtons.Left) != 0;
+				var buttons = Control.MouseButtons;
+				bool rmouse = (buttons & MouseButtons.Right) != 0;
+				bool mmouse = (buttons & MouseButtons.Middle) != 0;
+				bool lmouse = (buttons & MouseButtons.Left) != 0;
 
 				if (lmouse)
 					pra &= ~(1u << 6);
