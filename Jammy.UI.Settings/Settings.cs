@@ -79,12 +79,20 @@ namespace Jammy.UI.Settings
 			if ((string)cbSku.SelectedItem == "MC68000")
 			{
 				rbNative.Enabled = true;
-				rbMoira.Enabled = true;
 			}
 			else
 			{
 				rbNative.Checked = false;
 				rbNative.Enabled = false;
+			}
+
+			if ((string)cbSku.SelectedItem == "MC68000" ||
+				(string)cbSku.SelectedItem == "MC68EC020")
+			{
+				rbMoira.Enabled = true;
+			}
+			else
+			{
 				rbMoira.Checked = false;
 				rbMoira.Enabled = false;
 			}
@@ -208,7 +216,7 @@ namespace Jammy.UI.Settings
 
 		private void rbMoira_CheckedChanged(object sender, EventArgs e)
 		{
-			if (rbMoira.Checked) cbSku.SelectedIndex = 0;
+			if (rbMoira.Checked && cbSku.SelectedIndex > 1) cbSku.SelectedIndex = 0;
 		}
 
 		private void btnDF0Eject_Click(object sender, EventArgs e)
@@ -348,7 +356,8 @@ namespace Jammy.UI.Settings
 								currentSettings.Sku == CPUSku.MC68EC020 ||
 								currentSettings.Sku == CPUSku.MC68030 ||
 								currentSettings.Sku == CPUSku.MC68040;
-			rbMoira.Enabled = currentSettings.Sku == CPUSku.MC68000;
+			rbMoira.Enabled = currentSettings.Sku == CPUSku.MC68000 ||
+								currentSettings.Sku == CPUSku.MC68EC020;
 
 			//Chipset
 			cbChipset.SelectedItem = currentSettings.ChipSet.ToString();

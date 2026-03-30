@@ -23,7 +23,7 @@ namespace Jammy.Core.CPU.Moira
 		private readonly EmulationSettings settings;
 
 		[DllImport("Moira.dll")]
-		static extern void Moira_init(IntPtr r16, IntPtr r8, IntPtr w16, IntPtr w8, IntPtr sync);
+		static extern void Moira_init(int model, IntPtr r16, IntPtr r8, IntPtr w16, IntPtr w8, IntPtr sync);
 
 		[DllImport("Moira.dll")]
 		static extern uint Moira_execute(ref int cycles);
@@ -58,7 +58,10 @@ namespace Jammy.Core.CPU.Moira
 			this.logger = logger;
 			this.settings = settings.Value;
 
-			logger.LogTrace("Starting Moira C 68000 CPU");
+			if (settings.Value.Sku == CPUSku.MC68000)
+				logger.LogTrace("Starting Moira C++ 68000 CPU");
+			else
+				logger.LogTrace("Starting Moira C++ 68EC020 CPU");
 
 			r16 = new Moira_Reader(Moira_read16);
 			r8 = new Moira_Reader(Moira_read8);
@@ -67,9 +70,24 @@ namespace Jammy.Core.CPU.Moira
 			sync = new Moira_Sync(Moira_sync);
 		}
 
+		private enum Model : int
+		{
+			M68000,                 // Cycle-exact emulation
+			M68010,                 // Cycle-exact emulation
+			M68EC020,               // Non-cycle exaxt emulation
+			M68020,                 // Non-cycle exaxt emulation
+			M68EC030,               // Disassembler only
+			M68030,                 // Disassembler only
+			M68EC040,               // Disassembler only
+			M68LC040,               // Disassembler only
+			M68040                  // Disassembler only
+		};
+
 		public void Initialise()
 		{
+			var model = settings.Sku == CPUSku.MC68000 ? Model.M68000 : Model.M68EC020;
 			Moira_init(
+				(int)model,
 				Marshal.GetFunctionPointerForDelegate(r16),
 				Marshal.GetFunctionPointerForDelegate(r8),
 				Marshal.GetFunctionPointerForDelegate(w16),
