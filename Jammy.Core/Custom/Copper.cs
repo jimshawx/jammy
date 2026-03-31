@@ -313,16 +313,16 @@ namespace Jammy.Core.Custom
 							//logger.LogTrace($"AWOKE @{clock}");
 
 							//n ticks later
-							waitTimer = 1;
-							status = CopperStatus.WakingUp;
+							//waitTimer = 1;
+							//status = CopperStatus.WakingUp;
 
 							//0 ticks delay
 							//status = CopperStatus.RunningWord1;
 
 							//one tick sooner
-							//memory.Read(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
-							//copPC += 2;
-							//status = CopperStatus.RunningWord2;
+							memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+							copPC += 2;
+							status = CopperStatus.RunningWord2;
 
 							if (ins == 0xffff && data == 0xfffe)
 							{
