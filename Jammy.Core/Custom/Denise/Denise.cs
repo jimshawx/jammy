@@ -1221,44 +1221,44 @@ end loop
 			case ChipRegs.BPL8DAT: bpldat[7] = value; DebugBPL(7, value); break;
 
 			case ChipRegs.SPR0POS: sprpos[0] = value; break;
-			case ChipRegs.SPR0CTL: sprpos[1] = value; break;
+			case ChipRegs.SPR0CTL: sprctl[0] = value; break;
 			case ChipRegs.SPR0DATA: sprdata[0] = value; break;
 			case ChipRegs.SPR0DATB: sprdatb[0] = value; ArmSprite(0); break;
 
-			case ChipRegs.SPR1POS: sprpos[0] = value; break;
-			case ChipRegs.SPR1CTL: sprpos[1] = value; break;
-			case ChipRegs.SPR1DATA: sprdata[0] = value; break;
-			case ChipRegs.SPR1DATB: sprdatb[0] = value; ArmSprite(1); break;
+			case ChipRegs.SPR1POS: sprpos[1] = value; break;
+			case ChipRegs.SPR1CTL: sprctl[1] = value; break;
+			case ChipRegs.SPR1DATA: sprdata[1] = value; break;
+			case ChipRegs.SPR1DATB: sprdatb[1] = value; ArmSprite(1); break;
 
-			case ChipRegs.SPR2POS: sprpos[0] = value; break;
-			case ChipRegs.SPR2CTL: sprpos[1] = value; break;
-			case ChipRegs.SPR2DATA: sprdata[0] = value; break;
-			case ChipRegs.SPR2DATB: sprdatb[0] = value; ArmSprite(2); break;
+			case ChipRegs.SPR2POS: sprpos[2] = value; break;
+			case ChipRegs.SPR2CTL: sprctl[2] = value; break;
+			case ChipRegs.SPR2DATA: sprdata[2] = value; break;
+			case ChipRegs.SPR2DATB: sprdatb[2] = value; ArmSprite(2); break;
 
-			case ChipRegs.SPR3POS: sprpos[0] = value; break;
-			case ChipRegs.SPR3CTL: sprpos[1] = value; break;
-			case ChipRegs.SPR3DATA: sprdata[0] = value; break;
-			case ChipRegs.SPR3DATB: sprdatb[0] = value; ArmSprite(3); break;
+			case ChipRegs.SPR3POS: sprpos[3] = value; break;
+			case ChipRegs.SPR3CTL: sprctl[3] = value; break;
+			case ChipRegs.SPR3DATA: sprdata[3] = value; break;
+			case ChipRegs.SPR3DATB: sprdatb[3] = value; ArmSprite(3); break;
 
-			case ChipRegs.SPR4POS: sprpos[0] = value; break;
-			case ChipRegs.SPR4CTL: sprpos[1] = value; break;
-			case ChipRegs.SPR4DATA: sprdata[0] = value; break;
-			case ChipRegs.SPR4DATB: sprdatb[0] = value; ArmSprite(4); break;
+			case ChipRegs.SPR4POS: sprpos[4] = value; break;
+			case ChipRegs.SPR4CTL: sprctl[4] = value; break;
+			case ChipRegs.SPR4DATA: sprdata[4] = value; break;
+			case ChipRegs.SPR4DATB: sprdatb[4] = value; ArmSprite(4); break;
 
-			case ChipRegs.SPR5POS: sprpos[0] = value; break;
-			case ChipRegs.SPR5CTL: sprpos[1] = value; break;
-			case ChipRegs.SPR5DATA: sprdata[0] = value; break;
-			case ChipRegs.SPR5DATB: sprdatb[0] = value; ArmSprite(5); break;
+			case ChipRegs.SPR5POS: sprpos[5] = value; break;
+			case ChipRegs.SPR5CTL: sprctl[5] = value; break;
+			case ChipRegs.SPR5DATA: sprdata[5] = value; break;
+			case ChipRegs.SPR5DATB: sprdatb[5] = value; ArmSprite(5); break;
 
-			case ChipRegs.SPR6POS: sprpos[0] = value; break;
-			case ChipRegs.SPR6CTL: sprpos[1] = value; break;
-			case ChipRegs.SPR6DATA: sprdata[0] = value; break;
-			case ChipRegs.SPR6DATB: sprdatb[0] = value; ArmSprite(6); break;
+			case ChipRegs.SPR6POS: sprpos[6] = value; break;
+			case ChipRegs.SPR6CTL: sprctl[6] = value; break;
+			case ChipRegs.SPR6DATA: sprdata[6] = value; break;
+			case ChipRegs.SPR6DATB: sprdatb[6] = value; ArmSprite(6); break;
 
-			case ChipRegs.SPR7POS: sprpos[0] = value; break;
-			case ChipRegs.SPR7CTL: sprpos[1] = value; break;
-			case ChipRegs.SPR7DATA: sprdata[0] = value; break;
-			case ChipRegs.SPR7DATB: sprdatb[0] = value; ArmSprite(7); break;
+			case ChipRegs.SPR7POS: sprpos[7] = value; break;
+			case ChipRegs.SPR7CTL: sprctl[7] = value; break;
+			case ChipRegs.SPR7DATA: sprdata[7] = value; break;
+			case ChipRegs.SPR7DATB: sprdatb[7] = value; ArmSprite(7); break;
 
 			case ChipRegs.BPLCON0: bplcon0 = value; UpdateBPLCON0(); break;
 			case ChipRegs.BPLCON1: bplcon1 = value; DebugBPLCON1(); break;
@@ -1325,23 +1325,22 @@ end loop
 			case ChipRegs.BPL8DAT: bpldat[7] = value; break;
 
 			case ChipRegs.SPR0DATA: sprdata[0] = value; break;
-			case ChipRegs.SPR0DATB: sprdatb[0] = value; break;
+			case ChipRegs.SPR0DATB: sprdatb[0] = value; ArmSprite(0); break;
 			case ChipRegs.SPR1DATA: sprdata[1] = value; break;
-			case ChipRegs.SPR1DATB: sprdatb[1] = value; break;
+			case ChipRegs.SPR1DATB: sprdatb[1] = value; ArmSprite(1); break;
 			case ChipRegs.SPR2DATA: sprdata[2] = value; break;
-			case ChipRegs.SPR2DATB: sprdatb[2] = value; break;
+			case ChipRegs.SPR2DATB: sprdatb[2] = value; ArmSprite(2); break;
 			case ChipRegs.SPR3DATA: sprdata[3] = value; break;
-			case ChipRegs.SPR3DATB: sprdatb[3] = value; break;
+			case ChipRegs.SPR3DATB: sprdatb[3] = value; ArmSprite(3); break;
 			case ChipRegs.SPR4DATA: sprdata[4] = value; break;
-			case ChipRegs.SPR4DATB: sprdatb[4] = value; break;
+			case ChipRegs.SPR4DATB: sprdatb[4] = value; ArmSprite(4); break;
 			case ChipRegs.SPR5DATA: sprdata[5] = value; break;
-			case ChipRegs.SPR5DATB: sprdatb[5] = value; break;
+			case ChipRegs.SPR5DATB: sprdatb[5] = value; ArmSprite(5); break;
 			case ChipRegs.SPR6DATA: sprdata[6] = value; break;
-			case ChipRegs.SPR6DATB: sprdatb[6] = value; break;
+			case ChipRegs.SPR6DATB: sprdatb[6] = value; ArmSprite(6); break;
 			case ChipRegs.SPR7DATA: sprdata[7] = value; break;
-			case ChipRegs.SPR7DATB:
-				sprdatb[7] = value; break;
-				;
+			case ChipRegs.SPR7DATB: sprdatb[7] = value; ArmSprite(7); break;
+
 			default:
 				throw new NotImplementedException();
 		}
