@@ -43,7 +43,7 @@ public class Denise : IDenise
 		NoEHB = 1 << 9,
 		PF2PRI = 1 << 6
 	}
-	private const int FIRST_DMA = 0x18*2*2-8;
+	private const int FIRST_DMA = 0x18*2*2-8-8;
 	private const int RIGHT_BORDER = 0x18*3;//cosmetic
 	private const int TOP_BORDER = 0;
 
@@ -1046,7 +1046,7 @@ end loop
 
 	private void RunDeniseTick(int d, int p)
 	{
-		if (clock.DeniseHorizontalPos < FIRST_DMA) return;
+		//if (clock.DeniseHorizontalPos < FIRST_DMA) return;
 		//if (clock.VerticalPos < TOP_BORDER) return;
 
 		UpdateSprites(d);
@@ -1058,16 +1058,20 @@ end loop
 			if (clock.DeniseHorizontalPos+d == diwstrth + debugger.diwSHack)
 			{ 
 				insideDIWH = true;
+				if (clock.DeniseHorizontalPos < FIRST_DMA)
+					logger.LogTrace($"FIRST_DMA is too soon for this code {clock.DeniseHorizontalPos} < {FIRST_DMA}");
 			}
 			else if (clock.DeniseHorizontalPos+d == diwstoph + debugger.diwEHack)
 			{
 				insideDIWH = false;
 				scanlineIsOpen = false;
 			}
+		
+			if (clock.DeniseHorizontalPos < FIRST_DMA) return;
 
-			//is it the visible area horizontally?
-			//if so, bits are read out of the bitplane data, turned into pixels and output
-			if (insideDIWH && scanlineIsOpen)
+		//is it the visible area horizontally?
+		//if so, bits are read out of the bitplane data, turned into pixels and output
+		if (insideDIWH && scanlineIsOpen)
 			{
 				uint pix = bpldatPix.GetPixel(planes);
 
