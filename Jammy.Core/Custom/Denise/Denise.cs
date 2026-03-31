@@ -172,14 +172,6 @@ public class Denise : IDenise
 		//DebugLocation();
 	}
 
-	//[Persist]
-	//private Blanking blankingStatus;
-
-	//public void SetBlankingStatus(Blanking blanking)
-	//{
-	//	blankingStatus = blanking;
-	//}
-
 	[Persist]
 	private int scrollhack = 0;
 
@@ -1046,66 +1038,50 @@ end loop
 
 	private void RunDeniseTick(int d, int p)
 	{
-		//if (clock.DeniseHorizontalPos < FIRST_DMA) return;
-		//if (clock.VerticalPos < TOP_BORDER) return;
+		uint col;
 
 		UpdateSprites(d);
 
-		uint col;
-
-		//if (blankingStatus == Blanking.None)
-		//{
-			if (clock.DeniseHorizontalPos+d == diwstrth + debugger.diwSHack)
-			{ 
-				insideDIWH = true;
-				if (clock.DeniseHorizontalPos < FIRST_DMA)
-					logger.LogTrace($"FIRST_DMA is too soon for this code {clock.DeniseHorizontalPos} < {FIRST_DMA}");
-			}
-			else if (clock.DeniseHorizontalPos+d == diwstoph + debugger.diwEHack)
-			{
-				insideDIWH = false;
-				scanlineIsOpen = false;
-			}
+		if (clock.DeniseHorizontalPos+d == diwstrth + debugger.diwSHack)
+		{ 
+			insideDIWH = true;
+			if (clock.DeniseHorizontalPos < FIRST_DMA)
+				logger.LogTrace($"FIRST_DMA is too soon for this code {clock.DeniseHorizontalPos} < {FIRST_DMA}");
+		}
+		else if (clock.DeniseHorizontalPos+d == diwstoph + debugger.diwEHack)
+		{
+			insideDIWH = false;
+			scanlineIsOpen = false;
+		}
 		
-			if (clock.DeniseHorizontalPos < FIRST_DMA) return;
+		if (clock.DeniseHorizontalPos < FIRST_DMA) return;
 
 		//is it the visible area horizontally?
 		//if so, bits are read out of the bitplane data, turned into pixels and output
 		if (insideDIWH && scanlineIsOpen)
-			{
-				uint pix = bpldatPix.GetPixel(planes);
+		{
+			uint pix = bpldatPix.GetPixel(planes);
 
-				col = pixelAction(pix);
+			col = pixelAction(pix);
 
-				//remember the last colour for HAM modes
-				lastcol = col;
+			//remember the last colour for HAM modes
+			lastcol = col;
 
-				DoSprites(ref col, (byte)pix, p);
-			}
-			else
-			{
-				int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
+			DoSprites(ref col, (byte)pix, p);
+		}
+		else
+		{
+			//	//outside display window
+			int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
 
-				bpldatPix.NextPixel();
-				if ((p & m) == m)
-					for (int s = 0; s < 8; s++)
-						spriteMask[s] >>= 1;
+			bpldatPix.NextPixel();
+			if ((p & m) == m)
+				for (int s = 0; s < 8; s++)
+					spriteMask[s] >>= 1;
 
-				//output colour 0 pixels
-				col = lastcol = truecolour[0];
-			}
-		//}
-		//else
-		//{
-		//	//outside display window
-
-		//	//output colour 0 pixels
-		//	col = lastcol = truecolour[0];
-
-		//	//bool stipple = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0;
-		//	//if (stipple && (blankingStatus & Blanking.HorizontalBlank) != 0) col |= 0xff0000;
-		//	//if (stipple && (blankingStatus & Blanking.VerticalBlank) != 0) col |= 0x0000ff;
-		//}
+			//output colour 0 pixels
+			col = lastcol = truecolour[0];
+		}
 
 		//horizontal pixel double
 		//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
@@ -1362,7 +1338,6 @@ end loop
 	private void EndDeniseLine()
 	{
 		//cosmetics, draw some right border
-		//blankingStatus = Blanking.OutsideDisplayWindow;
 		for (int i = 0; i < RIGHT_BORDER; i++)
 		{
 			for (int p = 0; p < pixelLoop; p++)
