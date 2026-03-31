@@ -110,39 +110,39 @@ public class Denise : IDenise
 		//}
 		if (pixelLoop == 2)
 		{
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(0,0);
 			ClockBuffer();
 			RunDeniseTick(1,1);
 		}
 		else if (pixelLoop == 4)
 		{
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(0,0);
 			ClockBuffer();
 			RunDeniseTick(0,1);
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(1,2);
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(1,3);
 		}
 		else if (pixelLoop == 8)
 		{
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(0,0);
 			ClockBuffer();
 			RunDeniseTick(0,1);
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(0,2);
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(0,3);
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(1,4);
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(1,5);
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(1,6);
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(1,7);
 		}
 
@@ -210,20 +210,20 @@ public class Denise : IDenise
 	public void WriteBitplanes(ulong[] bpldat)
 	{
 		//scrolling
-		int even = bplcon1 & 0xf;
-		int odd = bplcon1 >> 4 & 0xf;
+		//int even = bplcon1 & 0xf;
+		//int odd = bplcon1 >> 4 & 0xf;
 
-		ApplyDDFSTRTScrollHack(ref even, ref odd);
+		//ApplyDDFSTRTScrollHack(ref even, ref odd);
 
-		if (bufferDelayBase + debugger.bplDelayHack == 0)
-			bpldatPix.WriteBitplanes(ref bpldat, even, odd);
-		else
+		//if (bufferDelayBase + debugger.bplDelayHack == 0)
+		//	bpldatPix.WriteBitplanes(ref bpldat, even, odd);
+		//else
 			Buffer(bpldat);
 	}
 
 	private ulong[] buffered = new ulong[8];
 	private int bufferDelay = 0;
-	private const int bufferDelayBase = 0;
+	private const int bufferDelayBase = 1;
 
 	private void Buffer(ulong[] bpldat)
 	{
