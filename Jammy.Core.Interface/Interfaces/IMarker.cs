@@ -1,7 +1,5 @@
 ﻿using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
-using System;
-using System.Collections.Generic;
 using System.IO;
 
 /*
@@ -233,6 +231,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	{
+		void WriteWide(uint address, ulong value); 
 		void SetBlankingStatus(Blanking blanking);
 		void SetDDFSTRTScrollHack(uint ddfstrt);
 		void WriteBitplanes(ulong[] planes);
@@ -256,8 +255,6 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IAgnus : IEmulate, /*IMemoryMappedDevice,*/ IRequiresDMA, /*IDebuggableMemory,*/ ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead, IStatePersister, IPersistableRAM
 	{
-		void WriteWide(uint address, ulong value);
-		void UpdateSprites();
 		void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
 				out ulong trapReads, out ulong trapWrites,
 				out ulong customReads, out ulong customWrites,

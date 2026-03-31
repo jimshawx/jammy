@@ -306,7 +306,22 @@ namespace Jammy.Core.Custom
 				case >= ChipRegs.BPL1PTH and <= ChipRegs.BPL8PTL:
 				case ChipRegs.BPL1MOD:
 				case ChipRegs.BPL2MOD:
-				case >= ChipRegs.BPL1DAT and <= ChipRegs.SPR7DATB:
+				case ChipRegs.SPR0PTL:
+				case ChipRegs.SPR0PTH:
+				case ChipRegs.SPR1PTL:
+				case ChipRegs.SPR1PTH:
+				case ChipRegs.SPR2PTL:
+				case ChipRegs.SPR2PTH:
+				case ChipRegs.SPR3PTL:
+				case ChipRegs.SPR3PTH:
+				case ChipRegs.SPR4PTL:
+				case ChipRegs.SPR4PTH:
+				case ChipRegs.SPR5PTL:
+				case ChipRegs.SPR5PTH:
+				case ChipRegs.SPR6PTL:
+				case ChipRegs.SPR6PTH:
+				case ChipRegs.SPR7PTL:
+				case ChipRegs.SPR7PTH:
 				case ChipRegs.VPOSW:
 				case ChipRegs.VHPOSW:
 				case ChipRegs.VTOTAL:
@@ -323,6 +338,22 @@ namespace Jammy.Core.Custom
 				case ChipRegs.BEAMCON0:
 					agnus.Write(insaddr, address, (ushort)value);
 					break;
+				case ChipRegs.SPR0CTL:
+				case ChipRegs.SPR0POS:
+				case ChipRegs.SPR1CTL:
+				case ChipRegs.SPR1POS:
+				case ChipRegs.SPR2CTL:
+				case ChipRegs.SPR2POS:
+				case ChipRegs.SPR3CTL:
+				case ChipRegs.SPR3POS:
+				case ChipRegs.SPR4CTL:
+				case ChipRegs.SPR4POS:
+				case ChipRegs.SPR5CTL:
+				case ChipRegs.SPR5POS:
+				case ChipRegs.SPR6CTL:
+				case ChipRegs.SPR6POS:
+				case ChipRegs.SPR7CTL:
+				case ChipRegs.SPR7POS:
 				case ChipRegs.DIWSTRT:
 				case ChipRegs.DIWSTOP:
 				case ChipRegs.DIWHIGH:
@@ -331,6 +362,30 @@ namespace Jammy.Core.Custom
 					agnus.Write(insaddr, address, (ushort)value);
 					denise.Write(insaddr, address, (ushort)value);
 					break;
+				case ChipRegs.SPR0DATA:
+				case ChipRegs.SPR0DATB:
+				case ChipRegs.SPR1DATA:
+				case ChipRegs.SPR1DATB:
+				case ChipRegs.SPR2DATA:
+				case ChipRegs.SPR2DATB:
+				case ChipRegs.SPR3DATA:
+				case ChipRegs.SPR3DATB:
+				case ChipRegs.SPR4DATA:
+				case ChipRegs.SPR4DATB:
+				case ChipRegs.SPR5DATA:
+				case ChipRegs.SPR5DATB:
+				case ChipRegs.SPR6DATA:
+				case ChipRegs.SPR6DATB:
+				case ChipRegs.SPR7DATA:
+				case ChipRegs.SPR7DATB:
+				case ChipRegs.BPL1DAT:
+				case ChipRegs.BPL2DAT:
+				case ChipRegs.BPL3DAT:
+				case ChipRegs.BPL4DAT:
+				case ChipRegs.BPL5DAT:
+				case ChipRegs.BPL6DAT:
+				case ChipRegs.BPL7DAT:
+				case ChipRegs.BPL8DAT:
 				case ChipRegs.BPLCON1:
 				case ChipRegs.BPLCON2:
 				case ChipRegs.BPLCON3:
@@ -399,7 +454,7 @@ namespace Jammy.Core.Custom
 
 			if ((address >= ChipRegs.BPL1DAT && address <= ChipRegs.BPL8DAT) ||
 				(address >= ChipRegs.SPR0POS && address <= ChipRegs.SPR7DATB))
-				agnus.WriteWide(address, value);
+				denise.WriteWide(address, value);
 		}
 
 		public uint ImmediateRead(uint insaddr, uint address, Size size)
@@ -433,9 +488,26 @@ namespace Jammy.Core.Custom
 					return intreq;
 				case >= ChipRegs.DDFSTRT and <= ChipRegs.DDFSTOP:
 				case >= ChipRegs.BPL1PTH and <= ChipRegs.BPL8PTL:
+
+				case ChipRegs.SPR0PTL:
+				case ChipRegs.SPR0PTH:
+				case ChipRegs.SPR1PTL:
+				case ChipRegs.SPR1PTH:
+				case ChipRegs.SPR2PTL:
+				case ChipRegs.SPR2PTH:
+				case ChipRegs.SPR3PTL:
+				case ChipRegs.SPR3PTH:
+				case ChipRegs.SPR4PTL:
+				case ChipRegs.SPR4PTH:
+				case ChipRegs.SPR5PTL:
+				case ChipRegs.SPR5PTH:
+				case ChipRegs.SPR6PTL:
+				case ChipRegs.SPR6PTH:
+				case ChipRegs.SPR7PTL:
+				case ChipRegs.SPR7PTH:
+
 				case ChipRegs.BPL1MOD:
 				case ChipRegs.BPL2MOD:
-				case >= ChipRegs.BPL1DAT and <= ChipRegs.SPR7DATB:
 				case ChipRegs.VPOSR:
 				case ChipRegs.VHPOSR:
 				case ChipRegs.VPOSW:
@@ -458,6 +530,7 @@ namespace Jammy.Core.Custom
 				case ChipRegs.BPLCON0:
 				case ChipRegs.FMODE: return agnus.DebugChipsetRead(address, size);
 
+				case >= ChipRegs.BPL1DAT and <= ChipRegs.SPR7DATB:
 				case ChipRegs.BPLCON1:
 				case ChipRegs.BPLCON2:
 				case ChipRegs.BPLCON3:

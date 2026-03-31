@@ -3,6 +3,7 @@ using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -248,6 +249,43 @@ public class Denise : IDenise
 		}
 	}
 
+	private void DebugSprite(uint s)
+	{
+		string MergeBP(ulong sprdata, ulong sprdatb)
+		{
+			ulong a = ulong.Parse(sprdata.ToBin());
+			ulong b = ulong.Parse(sprdata.ToBin());
+			return (a + b * 2).ToString().PadLeft(16, '0');
+		}
+
+		logger.LogTrace($"SPR{s} {clock} {MergeBP(sprdata[s], sprdatb[s])} h:{sprpos[s] & 0xff,3} v:{sprpos[s] >> 8,3} {sprctl[s].ToBin()}");
+	}
+
+	private int HStart(uint s)
+	{
+		int hstart = (sprpos[s] & 0xff) << 1;
+		hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
+		return hstart;
+	}
+
+	private void UpdateSprites(int d)
+	{
+		//if the sprite horiz position matches, clock the sprite data in
+		for (uint s = 0; s < 8; s++)
+		{
+			if (spriteArmed[s] == SpriteState.Armed)
+			{
+				int hstart = HStart(s);
+
+				if (clock.DeniseHorizontalPos+d == hstart)
+				{
+					//DebugSprite(s);
+					WriteSprite(s, sprdata, sprdatb, sprctl);
+				}
+			}
+		}
+	}
+
 	public void WriteSprite(uint s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl)
 	{
 		sprdatapix[s] = sprdata[s];
@@ -274,13 +312,14 @@ public class Denise : IDenise
 	private void FirstPixel()
 	{
 		//clear sprites from wrapping from the right
-		for (int s = 0; s < 8; s++)
+		for (int s = 0; s < 8; s++) 
+		{ 
 			spriteMask[s] = 0;
+			spriteArmed[s] = SpriteState.Idle;
+		}
 
 		bpldatPix.Clear();
 	}
-
-	
 
 	//(x&(1<<0))*1 + x&(1<<2)*2 + x&(1<<4)*4 + x&(1<<6) *8
 	//00000 -> 0  01000 -> 0  10000 -> 4  11000 -> 4
@@ -777,7 +816,10 @@ nospritebits:
 		if (shift!=0)
 		{
 			for (int s = 0; s < 8; s++)
+			{ 
 				spriteMask[s] >>= shift;
+				if (spriteMask[s] == 0) spriteArmed[s] = SpriteState.Idle;
+			}
 		}
 	}
 
@@ -1003,6 +1045,8 @@ end loop
 		if (clock.DeniseHorizontalPos < FIRST_DMA) return;
 		//if (clock.VerticalPos < TOP_BORDER) return;
 
+		UpdateSprites(d);
+
 		uint col;
 
 		if (blankingStatus == Blanking.None)
@@ -1081,15 +1125,11 @@ end loop
 	private ushort bplcon2;
 	private ushort bplcon3;
 	private ushort bplcon4;
-	//private readonly ushort[] sprpos = new ushort[8];
-	private readonly ushort[] sprctl = new ushort[8];
-	//private readonly ushort[] sprdata = new ushort[8];
-	//private readonly ushort[] sprdatb = new ushort[8];
 	private ushort clxdat;
 	private ushort clxcon;
 	private ushort clxcon2;
 
-	////ECS/AGA
+	//ECS/AGA
 	//private ushort vbstrt;
 	//private ushort vbstop;
 	//private ushort vsstop;
@@ -1098,6 +1138,13 @@ end loop
 	//private ushort vtotal;
 	private ushort fmode;
 	//private ushort beamcon0;
+
+	private ulong[] bpldat = new ulong[8];
+
+	private ushort[] sprpos = new ushort[8];
+	private ushort[] sprctl = new ushort[8];
+	private ulong[] sprdata = new ulong[8];
+	private ulong[] sprdatb = new ulong[8];
 
 	[Persist]
 	private readonly ushort[] colour = new ushort[256];
@@ -1131,10 +1178,78 @@ end loop
 		//logger.LogTrace($"BPLCON1 {clock} {bplcon1:X4} {bplcon1&0xf} {(bplcon1>>4)&0xf}");
 	}
 
+	private void DebugBPL(int plane, ushort value)
+	{
+		//logger.LogTrace($"BPL{plane + 1}DAT {clock} {value:X4}");
+	}
+
+	private enum SpriteState
+	{
+		Idle = 0,
+		Armed
+	}
+
+	[Persist]
+	private readonly SpriteState[] spriteArmed = new SpriteState[8];
+
+	private void ArmSprite(int s)
+	{
+		spriteArmed[s] = SpriteState.Armed;
+	}
+
 	public void Write(uint insaddr, uint address, ushort value)
 	{
 		switch (address)
 		{
+			case ChipRegs.BPL1DAT: bpldat[0] = value; DebugBPL(0, value); WriteBitplanes(bpldat); break;
+			case ChipRegs.BPL2DAT: bpldat[1] = value; DebugBPL(1, value); break;
+			case ChipRegs.BPL3DAT: bpldat[2] = value; DebugBPL(2, value); break;
+			case ChipRegs.BPL4DAT: bpldat[3] = value; DebugBPL(3, value); break;
+			case ChipRegs.BPL5DAT: bpldat[4] = value; DebugBPL(4, value); break;
+			case ChipRegs.BPL6DAT: bpldat[5] = value; DebugBPL(5, value); break;
+			case ChipRegs.BPL7DAT: bpldat[6] = value; DebugBPL(6, value); break;
+			case ChipRegs.BPL8DAT: bpldat[7] = value; DebugBPL(7, value); break;
+
+			case ChipRegs.SPR0POS: sprpos[0] = value; break;
+			case ChipRegs.SPR0CTL: sprpos[1] = value; break;
+			case ChipRegs.SPR0DATA: sprdata[0] = value; break;
+			case ChipRegs.SPR0DATB: sprdatb[0] = value; ArmSprite(0); break;
+
+			case ChipRegs.SPR1POS: sprpos[0] = value; break;
+			case ChipRegs.SPR1CTL: sprpos[1] = value; break;
+			case ChipRegs.SPR1DATA: sprdata[0] = value; break;
+			case ChipRegs.SPR1DATB: sprdatb[0] = value; ArmSprite(1); break;
+
+			case ChipRegs.SPR2POS: sprpos[0] = value; break;
+			case ChipRegs.SPR2CTL: sprpos[1] = value; break;
+			case ChipRegs.SPR2DATA: sprdata[0] = value; break;
+			case ChipRegs.SPR2DATB: sprdatb[0] = value; ArmSprite(2); break;
+
+			case ChipRegs.SPR3POS: sprpos[0] = value; break;
+			case ChipRegs.SPR3CTL: sprpos[1] = value; break;
+			case ChipRegs.SPR3DATA: sprdata[0] = value; break;
+			case ChipRegs.SPR3DATB: sprdatb[0] = value; ArmSprite(3); break;
+
+			case ChipRegs.SPR4POS: sprpos[0] = value; break;
+			case ChipRegs.SPR4CTL: sprpos[1] = value; break;
+			case ChipRegs.SPR4DATA: sprdata[0] = value; break;
+			case ChipRegs.SPR4DATB: sprdatb[0] = value; ArmSprite(4); break;
+
+			case ChipRegs.SPR5POS: sprpos[0] = value; break;
+			case ChipRegs.SPR5CTL: sprpos[1] = value; break;
+			case ChipRegs.SPR5DATA: sprdata[0] = value; break;
+			case ChipRegs.SPR5DATB: sprdatb[0] = value; ArmSprite(5); break;
+
+			case ChipRegs.SPR6POS: sprpos[0] = value; break;
+			case ChipRegs.SPR6CTL: sprpos[1] = value; break;
+			case ChipRegs.SPR6DATA: sprdata[0] = value; break;
+			case ChipRegs.SPR6DATB: sprdatb[0] = value; ArmSprite(6); break;
+
+			case ChipRegs.SPR7POS: sprpos[0] = value; break;
+			case ChipRegs.SPR7CTL: sprpos[1] = value; break;
+			case ChipRegs.SPR7DATA: sprdata[0] = value; break;
+			case ChipRegs.SPR7DATB: sprdatb[0] = value; ArmSprite(7); break;
+
 			case ChipRegs.BPLCON0: bplcon0 = value; UpdateBPLCON0(); break;
 			case ChipRegs.BPLCON1: bplcon1 = value; DebugBPLCON1(); break;
 			case ChipRegs.BPLCON2: bplcon2 = value; UpdateBPLCON2(); break;
@@ -1186,6 +1301,42 @@ end loop
 		}
 	}
 
+	public void WriteWide(uint address, ulong value)
+	{
+		switch (address)
+		{
+			case ChipRegs.BPL1DAT: bpldat[0] = value; WriteBitplanes(bpldat); break;
+			case ChipRegs.BPL2DAT: bpldat[1] = value; break;
+			case ChipRegs.BPL3DAT: bpldat[2] = value; break;
+			case ChipRegs.BPL4DAT: bpldat[3] = value; break;
+			case ChipRegs.BPL5DAT: bpldat[4] = value; break;
+			case ChipRegs.BPL6DAT: bpldat[5] = value; break;
+			case ChipRegs.BPL7DAT: bpldat[6] = value; break;
+			case ChipRegs.BPL8DAT: bpldat[7] = value; break;
+
+			case ChipRegs.SPR0DATA: sprdata[0] = value; break;
+			case ChipRegs.SPR0DATB: sprdatb[0] = value; break;
+			case ChipRegs.SPR1DATA: sprdata[1] = value; break;
+			case ChipRegs.SPR1DATB: sprdatb[1] = value; break;
+			case ChipRegs.SPR2DATA: sprdata[2] = value; break;
+			case ChipRegs.SPR2DATB: sprdatb[2] = value; break;
+			case ChipRegs.SPR3DATA: sprdata[3] = value; break;
+			case ChipRegs.SPR3DATB: sprdatb[3] = value; break;
+			case ChipRegs.SPR4DATA: sprdata[4] = value; break;
+			case ChipRegs.SPR4DATB: sprdatb[4] = value; break;
+			case ChipRegs.SPR5DATA: sprdata[5] = value; break;
+			case ChipRegs.SPR5DATB: sprdatb[5] = value; break;
+			case ChipRegs.SPR6DATA: sprdata[6] = value; break;
+			case ChipRegs.SPR6DATB: sprdatb[6] = value; break;
+			case ChipRegs.SPR7DATA: sprdata[7] = value; break;
+			case ChipRegs.SPR7DATB:
+				sprdatb[7] = value; break;
+				;
+			default:
+				throw new NotImplementedException();
+		}
+	}
+
 	private uint Explode(ushort c)
 	{
 		return (uint)((c & 0xf) << 4 | (c & 0xf0) << 8 | (c & 0xf00) << 12);
@@ -1224,6 +1375,55 @@ end loop
 		uint value = 0;
 		switch (address)
 		{
+			case ChipRegs.BPL1DAT: value = (ushort)bpldat[0]; break;
+			case ChipRegs.BPL2DAT: value = (ushort)bpldat[1]; break;
+			case ChipRegs.BPL3DAT: value = (ushort)bpldat[2]; break;
+			case ChipRegs.BPL4DAT: value = (ushort)bpldat[3]; break;
+			case ChipRegs.BPL5DAT: value = (ushort)bpldat[4]; break;
+			case ChipRegs.BPL6DAT: value = (ushort)bpldat[5]; break;
+			case ChipRegs.BPL7DAT: value = (ushort)bpldat[6]; break;
+			case ChipRegs.BPL8DAT: value = (ushort)bpldat[7]; break;
+
+			case ChipRegs.SPR0POS: value = sprpos[1]; break;
+			case ChipRegs.SPR0CTL: value = sprctl[1]; break;
+			case ChipRegs.SPR0DATA: value = (ushort)sprdata[0]; break;
+			case ChipRegs.SPR0DATB: value = (ushort)sprdatb[0]; break;
+
+			case ChipRegs.SPR1POS: value = sprpos[1]; break;
+			case ChipRegs.SPR1CTL: value = sprctl[1]; break;
+			case ChipRegs.SPR1DATA: value = (ushort)sprdata[1]; break;
+			case ChipRegs.SPR1DATB: value = (ushort)sprdatb[1]; break;
+
+			case ChipRegs.SPR2POS: value = sprpos[1]; break;
+			case ChipRegs.SPR2CTL: value = sprctl[1]; break;
+			case ChipRegs.SPR2DATA: value = (ushort)sprdata[2]; break;
+			case ChipRegs.SPR2DATB: value = (ushort)sprdatb[2]; break;
+
+			case ChipRegs.SPR3POS: value = sprpos[1]; break;
+			case ChipRegs.SPR3CTL: value = sprctl[1]; break;
+			case ChipRegs.SPR3DATA: value = (ushort)sprdata[3]; break;
+			case ChipRegs.SPR3DATB: value = (ushort)sprdatb[3]; break;
+
+			case ChipRegs.SPR4POS: value = sprpos[1]; break;
+			case ChipRegs.SPR4CTL: value = sprctl[1]; break;
+			case ChipRegs.SPR4DATA: value = (ushort)sprdata[4]; break;
+			case ChipRegs.SPR4DATB: value = (ushort)sprdatb[4]; break;
+
+			case ChipRegs.SPR5POS: value = sprpos[1]; break;
+			case ChipRegs.SPR5CTL: value = sprctl[1]; break;
+			case ChipRegs.SPR5DATA: value = (ushort)sprdata[5]; break;
+			case ChipRegs.SPR5DATB: value = (ushort)sprdatb[5]; break;
+
+			case ChipRegs.SPR6POS: value = sprpos[1]; break;
+			case ChipRegs.SPR6CTL: value = sprctl[1]; break;
+			case ChipRegs.SPR6DATA: value = (ushort)sprdata[6]; break;
+			case ChipRegs.SPR6DATB: value = (ushort)sprdatb[6]; break;
+
+			case ChipRegs.SPR7POS: value = sprpos[1]; break;
+			case ChipRegs.SPR7CTL: value = sprctl[1]; break;
+			case ChipRegs.SPR7DATA: value = (ushort)sprdata[7]; break;
+			case ChipRegs.SPR7DATB: value = (ushort)sprdatb[7]; break;
+
 			case ChipRegs.BPLCON0: value = bplcon0; break;
 			case ChipRegs.BPLCON1: value = bplcon1; break;
 			case ChipRegs.BPLCON2: value = bplcon2; break;
