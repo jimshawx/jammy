@@ -232,10 +232,9 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	{
 		void WriteWide(uint address, ulong value); 
-		void SetBlankingStatus(Blanking blanking);
 		void SetDDFSTRTScrollHack(uint ddfstrt);
-		void WriteBitplanes(ulong[] planes);
-		void WriteSprite(uint s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl);
+		//void WriteBitplanes(ulong[] planes);
+		//void WriteSprite(uint s, ulong[] sprdata, ulong[] sprdatb, ushort[] sprctl);
 		public uint[] DebugGetPalette();
 	}
 

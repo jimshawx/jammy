@@ -172,13 +172,13 @@ public class Denise : IDenise
 		//DebugLocation();
 	}
 
-	[Persist]
-	private Blanking blankingStatus;
+	//[Persist]
+	//private Blanking blankingStatus;
 
-	public void SetBlankingStatus(Blanking blanking)
-	{
-		blankingStatus = blanking;
-	}
+	//public void SetBlankingStatus(Blanking blanking)
+	//{
+	//	blankingStatus = blanking;
+	//}
 
 	[Persist]
 	private int scrollhack = 0;
@@ -220,6 +220,7 @@ public class Denise : IDenise
 		//	bpldatPix.WriteBitplanes(ref bpldat, even, odd);
 		//else
 			Buffer(bpldat);
+		scanlineIsOpen = true;
 	}
 
 	private ulong[] buffered = new ulong[8];
@@ -309,6 +310,9 @@ public class Denise : IDenise
 		}
 	}
 
+	[Persist]
+	private bool scanlineIsOpen;
+
 	private void FirstPixel()
 	{
 		//clear sprites from wrapping from the right
@@ -319,6 +323,7 @@ public class Denise : IDenise
 		}
 
 		bpldatPix.Clear();
+		scanlineIsOpen = false;
 	}
 
 	//(x&(1<<0))*1 + x&(1<<2)*2 + x&(1<<4)*4 + x&(1<<6) *8
@@ -1049,16 +1054,21 @@ end loop
 
 		uint col;
 
-		if (blankingStatus == Blanking.None)
-		{
+		//if (blankingStatus == Blanking.None)
+		//{
 			if (clock.DeniseHorizontalPos+d == diwstrth + debugger.diwSHack)
+			{ 
 				insideDIWH = true;
+			}
 			else if (clock.DeniseHorizontalPos+d == diwstoph + debugger.diwEHack)
+			{
 				insideDIWH = false;
+				scanlineIsOpen = false;
+			}
 
 			//is it the visible area horizontally?
 			//if so, bits are read out of the bitplane data, turned into pixels and output
-			if (insideDIWH)
+			if (insideDIWH && scanlineIsOpen)
 			{
 				uint pix = bpldatPix.GetPixel(planes);
 
@@ -1081,18 +1091,18 @@ end loop
 				//output colour 0 pixels
 				col = lastcol = truecolour[0];
 			}
-		}
-		else
-		{
-			//outside display window
+		//}
+		//else
+		//{
+		//	//outside display window
 
-			//output colour 0 pixels
-			col = lastcol = truecolour[0];
+		//	//output colour 0 pixels
+		//	col = lastcol = truecolour[0];
 
-			//bool stipple = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0;
-			//if (stipple && (blankingStatus & Blanking.HorizontalBlank) != 0) col |= 0xff0000;
-			//if (stipple && (blankingStatus & Blanking.VerticalBlank) != 0) col |= 0x0000ff;
-		}
+		//	//bool stipple = ((clock.HorizontalPos ^ clock.VerticalPos) & 1) != 0;
+		//	//if (stipple && (blankingStatus & Blanking.HorizontalBlank) != 0) col |= 0xff0000;
+		//	//if (stipple && (blankingStatus & Blanking.VerticalBlank) != 0) col |= 0x0000ff;
+		//}
 
 		//horizontal pixel double
 		//duplicate the pixel 4 times in low res, 2x in hires and 1x in shres
@@ -1345,7 +1355,7 @@ end loop
 	private void EndDeniseLine()
 	{
 		//cosmetics, draw some right border
-		blankingStatus = Blanking.OutsideDisplayWindow;
+		//blankingStatus = Blanking.OutsideDisplayWindow;
 		for (int i = 0; i < RIGHT_BORDER; i++)
 		{
 			for (int p = 0; p < pixelLoop; p++)

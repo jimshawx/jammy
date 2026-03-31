@@ -215,11 +215,11 @@ public class Agnus : IAgnus
 			return;
 		}
 
-		var blanking = Blanking.None;
+		//var blanking = Blanking.None;
 
 		//is it in the vertical blanking zone (should swap to using some of the ECS registers)
-		if (clock.VerticalPos >= 0 && clock.VerticalPos <= 0x19)
-			blanking |= Blanking.VerticalBlank;
+		//if (clock.VerticalPos >= 0 && clock.VerticalPos <= 0x19)
+		//	blanking |= Blanking.VerticalBlank;
 
 		//is it the visible area, vertically?
 		//if (clock.VerticalPos < diwstrtv || clock.VerticalPos >= diwstopv)
@@ -229,20 +229,24 @@ public class Agnus : IAgnus
 			insideDIWV = true;
 		else if (clock.VerticalPos == diwstopv)
 			insideDIWV = false;
+
 		if (!insideDIWV)
-			blanking |= Blanking.OutsideDisplayWindow;
-
-		//HRM 89 p18
-		//Horizontal blanking falls in the range of $0F to $35.
-		//hack, anything more than 0x30 breaks the left-hand border for many games/demos
-		if (clock.HorizontalPos >= 0x0f && clock.HorizontalPos < 0x30)
-			blanking |= Blanking.HorizontalBlank;
-
-		//tell Denise the blanking status and whether to start processing pixel data
-		denise.SetBlankingStatus(blanking);
-
-		if ((blanking & Blanking.OutsideDisplayWindow) == Blanking.OutsideDisplayWindow)
+		{ 
+			//blanking |= Blanking.OutsideDisplayWindow;
 			goto noBitplaneDMA;
+		}
+
+		////HRM 89 p18
+		////Horizontal blanking falls in the range of $0F to $35.
+		////hack, anything more than 0x30 breaks the left-hand border for many games/demos
+		//if (clock.HorizontalPos >= 0x0f && clock.HorizontalPos < 0x30)
+		//	blanking |= Blanking.HorizontalBlank;
+
+		////tell Denise the blanking status and whether to start processing pixel data
+		//denise.SetBlankingStatus(blanking);
+
+		//if ((blanking & Blanking.OutsideDisplayWindow) == Blanking.OutsideDisplayWindow)
+		//goto noBitplaneDMA;
 
 		if (!dma.IsDMAEnabled(DMA.BPLEN))
 			goto noBitplaneDMA;
