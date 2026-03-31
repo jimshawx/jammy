@@ -45,6 +45,8 @@ public class ChipsetClock : IChipsetClock
 
 	public ChipsetClockState ClockState { get; private set; }
 
+	private const uint DENISE_HORZ_OFFSET = 0;//2;
+
 	public void Emulate()
 	{
 		ClockState = 0;
@@ -69,7 +71,7 @@ public class ChipsetClock : IChipsetClock
 		if ((ClockState & ChipsetClockState.EndOfLine) != 0)
 		{ 
 			HorizontalPos = 0;
-			DeniseHorizontalPos = 2;
+			DeniseHorizontalPos = DENISE_HORZ_OFFSET;
 			VerticalPos++;
 		}
 		else
@@ -94,7 +96,7 @@ public class ChipsetClock : IChipsetClock
 	public void Reset()
 	{
 		HorizontalPos = 0;
-		DeniseHorizontalPos = 2;
+		DeniseHorizontalPos = DENISE_HORZ_OFFSET;
 		VerticalPos = 0;
 	}
 
