@@ -81,6 +81,8 @@ namespace Jammy.Debugger
 
 			if (string.IsNullOrEmpty(settings.Value.KickStartDisassembly)) return;
 			
+			//AddBreakpoint(0x030F24);
+
 			if (settings.Value.KickStartDisassembly.StartsWith("87BA7A3E"))//3.1 A1200
 			{
 				//AddBreakpoint(0xFBF3EA);//RAMLIB dev/lib not found, call LoadSeg
