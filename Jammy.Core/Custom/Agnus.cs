@@ -60,7 +60,7 @@ public class Agnus : IAgnus
 {
 	private readonly IChipsetClock clock;
 	private IDMA dma;
-	private readonly IDenise denise;
+	//private readonly IDenise denise;
 	private readonly IInterrupt interrupt;
 	private readonly IDiskDrives diskDrives;
 
@@ -79,13 +79,13 @@ public class Agnus : IAgnus
 
 	public const int DMA_HARD_STOP = 0xD8;
 
-	public Agnus(IChipsetClock clock, IDenise denise, IInterrupt interrupt,
+	public Agnus(IChipsetClock clock, /*IDenise denise,*/ IInterrupt interrupt,
 		IDiskDrives diskDrives,
 		/*IChips custom,*/ IChipsetDebugger debugger,
 		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
 	{
 		this.clock = clock;
-		this.denise = denise;
+		//this.denise = denise;
 		this.interrupt = interrupt;
 		this.diskDrives = diskDrives;
 		//chipRam = chipRAM;
@@ -832,7 +832,7 @@ public class Agnus : IAgnus
 				ddfstrt = (ushort)(value & (settings.ChipSet == ChipSet.OCS ? 0xfc : 0xfe));
 				//causes modulo not to be added, even if there was fetching on the line before this is written
 				//lineState = DMALineState.LineTerminated;
-				denise.SetDDFSTRTScrollHack(ddfstrt);
+				//denise.SetDDFSTRTScrollHack(ddfstrt);//unclear how this works, so remove it for now.
 				UpdateDDF();
 				break;
 			case ChipRegs.DDFSTOP:
