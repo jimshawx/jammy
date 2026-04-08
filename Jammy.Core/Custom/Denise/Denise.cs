@@ -1045,7 +1045,7 @@ end loop
 		if (clock.DeniseHorizontalPos+d == diwstrth + debugger.diwSHack)
 		{ 
 			insideDIWH = true;
-			if (clock.DeniseHorizontalPos < FIRST_DMA)
+			if (clock.DeniseHorizontalPos < FIRST_DMA && clock.DeniseHorizontalPos != 0)
 				logger.LogTrace($"FIRST_DMA is too soon for this code {clock.DeniseHorizontalPos} < {FIRST_DMA}");
 		}
 		else if (clock.DeniseHorizontalPos+d == diwstoph + debugger.diwEHack)
