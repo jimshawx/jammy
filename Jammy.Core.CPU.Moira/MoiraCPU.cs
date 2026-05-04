@@ -258,7 +258,7 @@ namespace Jammy.Core.CPU.Moira
 
 		private void Moira_sync(int cycles)
 		{
-			syncChipset(cycles>>1);
+			syncChipset(cycles);
 		}
 		public void SetSync(Action<int> syncChipset)
 		{

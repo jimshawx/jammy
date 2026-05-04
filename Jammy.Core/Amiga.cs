@@ -132,9 +132,11 @@ namespace Jammy.Core
 		}
 
 		private bool takeASnapshot = false;
+		private bool logit = false;
 		public void DebugKeyUp(int key)
 		{
 			if ((VK)key == VK.VK_F11) takeASnapshot = true;
+			if ((VK)key == VK.VK_F10) logit = true;
 		}
 
 		public void DebugKeyDown(int obj) { }
@@ -169,21 +171,52 @@ namespace Jammy.Core
 			return dma.LastRead;
 		}
 
-		//this is run by Agnus immediately after the CPU has done a Chip RAM read/write
+		//this is run by Agnus immediately after the CPU has initiated a Chip RAM read/write
 		//when the emulation is in cycle-exact mode - the CPU read/write may have to wait for a DMA slot
 		private ushort RunChipsetEmulationForRAM()
 		{
+			return RunChipsetEmulationForRAM1();
+			//return RunChipsetEmulationForRAM2();
+		}
+
+		private ushort RunChipsetEmulationForRAM1()
+		{
+			//if (dma.LastDMASlotWasUsedByChipset())
+			//	logger.LogTrace("FIRST SLOT");
+
+			if (logit) logger.LogTrace($"ENTR {clock}");
+
 			//keep executing chipset DMA slots and emulating the chipset
-			//until the chipset doesn't want any more DMA slots
+			//until the chipset doesn't want any more DMA slots, and we can only use even slots for CPU
 			while (dma.LastDMASlotWasUsedByChipset())
 			{
-				clock.UpdateClock();
-				clock.Emulate();
+				clock.UpdateClock();//ticks the clock
+				clock.Emulate();//sets some clock state
 				RunAllEmulations();
-				dma.TriggerHighestPriorityDMA();
+				var slot = dma.TriggerHighestPriorityDMA();
+				if (logit && slot != null) logger.LogTrace($"DMA! {clock} {slot.Type} {slot.Priority}");
+				if (logit && slot == null) logger.LogTrace($"NULL {clock} null");
 			}
-			//execute the CPU slot
-			dma.ExecuteCPUDMASlot();
+
+			if (logit) logger.LogTrace($"CPU  {clock}");
+
+			//execute the CPU slot (we don't care about the alignment of the slot
+			dma.ExecuteCPUDMASlotDontCareAlign();
+
+			if (dma.LastDMASlotWasUsedByChipset())
+				logger.LogTrace("LAST SLOT");
+
+			return dma.LastRead;
+		}
+
+		private ushort RunChipsetEmulationForRAM2()
+		{
+			if (logit) logger.LogTrace($"CPU  {clock}");
+
+			//execute the CPU slot (we don't care about the alignment of the slot
+			//because as 
+			dma.ExecuteCPUDMASlotDontCareAlign();
+
 			return dma.LastRead;
 		}
 
@@ -191,13 +224,57 @@ namespace Jammy.Core
 		//when the emulation is in cycle-exact mode
 		private void RunChipsetEmulationForCPU(int count)
 		{
-			for (int i = 0; i < count; i++)
+			RunChipsetEmulationForCPU1(count);
+			//RunChipsetEmulationForCPU2(count);
+		}
+
+		private void RunChipsetEmulationForCPU1(int count)
+		{
+			for (int i = 0; i < count / 2; i++)
 			{
+				if (logit) logger.LogTrace($"SYNC {clock} {count}");
+
 				clock.UpdateClock();
 				clock.Emulate();
 				RunAllEmulations();
 				dma.TriggerHighestPriorityDMA();
 			}
+			//dma.ClearSlot();
+		}
+
+		public void RunChipsetEmulationForCPU2(int count)
+		{
+			int ccks_remaining = count / 2;
+
+			while (ccks_remaining > 0)
+			{
+				if (logit) logger.LogTrace($"SYNC {clock} {count}");
+
+				// 1. THE STOLEN SLOT (The Slip)
+				// If it's a CPU slot but Agnus has it, we tick the motherboard 
+				// to move to the next cycle, but we DO NOT decrement ccks_remaining.
+				if ((clock.HorizontalPos & 1) == 0 && dma.LastSlotWasStolen())
+				{
+					if (logit) logger.LogTrace($"STOLE {clock} {count}");
+
+					clock.UpdateClock();
+					clock.Emulate();
+					RunAllEmulations();
+					dma.TriggerHighestPriorityDMA();
+					// The CPU is still waiting for its 'opening'.
+					continue;
+				}
+
+				// 2. THE VALID SLOT
+				// Either an Odd slot (natural progress) or a free (wasted) Even slot.
+				clock.UpdateClock();
+				clock.Emulate();
+				RunAllEmulations();
+				dma.TriggerHighestPriorityDMA();
+
+				ccks_remaining--;
+			}
+			//dma.ClearSlot();
 		}
 
 		private bool cycleExact { get { return cpu is IMoiraCPU; } }

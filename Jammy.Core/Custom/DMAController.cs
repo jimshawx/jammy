@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
@@ -67,12 +66,14 @@ public class DMAController : IDMA
 	}
 
 	private int blitHogCount = 0;
+	private bool slotStolen = false;
 
-	public void TriggerHighestPriorityDMA()
+	public DMAActivity TriggerHighestPriorityDMA()
 	{
 		//var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
 
 		DMAActivity slotTaken = null;
+		slotStolen = false;
 
 		//check if ANY DMA is enabled
 		if (((DMA)dmacon & DMA.DMAEN) == DMA.DMAEN)
@@ -91,30 +92,48 @@ public class DMAController : IDMA
 					//check this DMA channel is enabled and the DMA slot hasn't been taken
 					slotTaken = activities[i];
 
-					if ((DMASource)i == DMASource.Copper)
+					var src = (DMASource)i;
+					switch (src)
 					{
-						//copper can only use odd-numbered slots
-						if ((chipsetClock.HorizontalPos & 1)!=0)
-							slotTaken = null;
-					}
-
-					if ((DMASource)i == DMASource.Blitter)
-					{
-						if (blitHog)
-						{
-							blitHogCount = 0;
-						}
-						else
-						{
-
-							blitHogCount++;
-							if (blitHogCount > 3)
-							{
+						case DMASource.Copper:
+							//copper can only use odd-numbered slots
+							
+							//if it's even, it can't be used
+							if ((chipsetClock.HorizontalPos & 1) == 0)
 								slotTaken = null;
+							break;
+
+						case DMASource.Blitter:
+							if (blitHog)
+							{
 								blitHogCount = 0;
 							}
-						}
+							else
+							{
+								blitHogCount++;
+								if (blitHogCount > 3)
+								{
+									slotTaken = null;
+									blitHogCount = 0;
+								}
+							}
+							//todo: set slotStolen in here somewhere
+							break;
 
+						case DMASource.Agnus:
+							//Agnus can only use odd-numbered slots EXCEPT when it's doing bitplane DMA
+							//that requires even slots too (e.g. low-res > 4bpp, hi-res > 2bpp, sh-res)
+
+							//if it's even, it can't be used
+							if ((chipsetClock.HorizontalPos & 1) == 0)
+							{
+								//EXCEPT when BR is set and it's bitplane DMA
+								if (!slotTaken.BR || slotTaken.Priority != DMA.BPLEN)
+									slotTaken = null;
+
+								slotStolen = slotTaken != null;
+							}
+							break;
 					}
 				}
 				if (slotTaken != null)
@@ -138,11 +157,12 @@ public class DMAController : IDMA
 		if (slotTaken == null)
 		{
 			debugger.SetDMAActivity(null);
-			return;
+			return null;
 		}
 
 		//DMA required, execute the transaction
 		ExecuteDMATransfer(slotTaken);
+		return slotTaken;
 	}
 
 	private DMAActivity lastDMASlot = null;
@@ -151,10 +171,31 @@ public class DMAController : IDMA
 		return lastDMASlot != null;
 	}
 
+	public bool LastSlotWasStolen()
+	{
+		return slotStolen;
+	}
+
+	public void ClearSlot()
+	{
+		lastDMASlot = null;
+	}
+
 	public void ExecuteCPUDMASlot()
 	{
+		if ((chipsetClock.HorizontalPos&1)==1)
+			logger.LogTrace("CPU can't use odd slots");
+
 		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
-		lastDMASlot = activities[(int)DMASource.CPU];
+		//lastDMASlot = activities[(int)DMASource.CPU];
+		lastDMASlot = null;
+	}
+
+	public void ExecuteCPUDMASlotDontCareAlign()
+	{
+		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
+		//lastDMASlot = activities[(int)DMASource.CPU];
+		lastDMASlot = null;
 	}
 
 	public bool IsWaitingForDMA(DMASource source)
@@ -282,6 +323,7 @@ public class DMAController : IDMA
 		return ((DMA)dmacon & mask) == mask;
 	}
 
+	//used when the chipset wants to read from chip memory into a chip register
 	public void ReadReg(DMASource source, uint address, DMA priority, Size size, uint chipReg)
 	{
 		var activity = activities[(int)source];
@@ -290,8 +332,13 @@ public class DMAController : IDMA
 		activity.Priority = priority;
 		activity.Size = size;
 		activity.ChipReg = chipReg;
+
+		//this (chipsetClock.HorizontalPos&1) is currently 1 for the first 4 planes, then 0 for the >5th one
+		//so when it's 0, we want a special case
+		activity.BR = (chipsetClock.HorizontalPos&1)==0 && priority == DMA.BPLEN;
 	}
 
+	//used when chipset itself wants to write to chip memory
 	public void WriteChip(DMASource source, uint address, DMA priority, ushort value, Size size)
 	{
 		var activity = activities[(int)source];
@@ -302,6 +349,7 @@ public class DMAController : IDMA
 		activity.Size = size;
 	}
 
+	//used when the CPU wants to read from chip memory or chip register
 	public void ReadCPU(CPUTarget target, uint address, Size size)
 	{
 		var activity = activities[(int)DMASource.CPU];
@@ -312,6 +360,7 @@ public class DMAController : IDMA
 		activity.Priority = DMA.DMAEN;
 	}
 
+	//used when the CPU wants to write to chip memory or chip register
 	public void WriteCPU(CPUTarget target, uint address, ushort value, Size size)
 	{
 		var activity = activities[(int)DMASource.CPU];
