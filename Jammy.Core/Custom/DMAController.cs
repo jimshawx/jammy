@@ -92,10 +92,10 @@ public class DMAController : IDMA
 					switch (src)
 					{
 						case DMASource.Copper:
-							//copper can only use odd-numbered slots
+							//copper can only use even-numbered slots
 							
-							//if it's even, it can't be used
-							if ((chipsetClock.HorizontalPos & 1) == 0)
+							//if it's odd, it can't be used
+							if ((chipsetClock.HorizontalPos & 1) == 1)
 								slotTaken = null;
 							break;
 

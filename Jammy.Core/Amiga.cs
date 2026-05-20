@@ -26,6 +26,7 @@ namespace Jammy.Core
 		private readonly IChipsetClock clock;
 		private readonly IDMA dma;
 		private readonly ICPUClock cpuClock;
+		private readonly IChipsetDebugger debugger;
 		private readonly IBreakpointCollection breakpointCollection;
 		private readonly IPersistenceManager persistenceManager;
 		private readonly IKickstartROM kickstart;
@@ -59,6 +60,7 @@ namespace Jammy.Core
 			this.clock = clock;
 			this.dma = dma;
 			this.cpuClock = cpuClock;
+			this.debugger = debugger;
 			this.breakpointCollection = breakpointCollection;
 			this.persistenceManager = statePersister;
 			this.kickstart = kickstart;
@@ -180,7 +182,7 @@ namespace Jammy.Core
 		//the CPU used a chip RAM slot
 		private ushort RunChipsetEmulationForRAM()
 		{
-			if (logit)
+			if (logit && clock.VerticalPos == debugger.dbugLine)
 			{
 				cpu.GetRegs(regs);
 				logger.LogTrace($"CPU  {clock} {regs.PC:X8}");
@@ -205,12 +207,12 @@ namespace Jammy.Core
 			{
 				cpu.GetRegs(regs);
 				
-				if (logit) logger.LogTrace($"SYNC {clock} {count} {regs.PC:X8}");
+				if (logit && clock.VerticalPos == debugger.dbugLine) logger.LogTrace($"SYNC {clock} {count} {regs.PC:X8}");
 
 				//if DMA used this slot, then the CPU has to wait
 				if (dma.LastDMASlotWasUsedByChipset() && clock.HorizontalPos == stealingCycles)
 				{
-					if (logit) logger.LogTrace($"STOLE {clock} {count}");
+					if (logit && clock.VerticalPos == debugger.dbugLine) logger.LogTrace($"STOLE {clock} {count}");
 
 					clock.Emulate();
 					RunAllEmulations();
