@@ -1,11 +1,12 @@
-﻿using System;
-using System.Linq;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Diagnostics;
+using System.Linq;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -140,6 +141,13 @@ public class DMAController : IDMA
 					break;
 			}
 		}
+		else
+		{
+			//it could still be memory refresh, even if DMA is disabled : Source = Agnus, Priority = DMAEN
+			var agnusActivity = activities[(int)DMASource.Agnus];
+			if (agnusActivity.Type == DMAActivityType.Consume && agnusActivity.Priority == (DMA)DMA.DMAEN)
+				slotTaken = agnusActivity;
+		}
 
 		lastDMASlot = slotTaken;
 
@@ -187,7 +195,7 @@ public class DMAController : IDMA
 			logger.LogTrace("CPU can't use odd slots");
 
 		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
-		//lastDMASlot = activities[(int)DMASource.CPU];
+		lastDMASlot = activities[(int)DMASource.CPU];
 		lastDMASlot = null;
 	}
 
@@ -195,7 +203,7 @@ public class DMAController : IDMA
 	{
 		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
 		//lastDMASlot = activities[(int)DMASource.CPU];
-		lastDMASlot = null;
+		//lastDMASlot = null;
 	}
 
 	public bool IsWaitingForDMA(DMASource source)
@@ -276,8 +284,10 @@ public class DMAController : IDMA
 				throw new ArgumentOutOfRangeException(nameof(activity.Type));
 		}
 		debugger.SetDMAActivity(activity);
+		if (logit) logger.LogTrace($"DMA  {chipsetClock} {activity.Type} {activity.Address:X8} {activity.ChipReg:X8}");
 		Consume(activity);
 	}
+	bool logit = false;
 
 	//requires to be the highest priority DMA, but does not eat the memory cycle (CPU can still have it)
 	public void NeedsDMA(DMASource source, DMA priority)

@@ -45,7 +45,7 @@ public class ChipsetClock : IChipsetClock
 
 	public ChipsetClockState ClockState { get; private set; }
 
-	private const uint DENISE_HORZ_OFFSET = 0;//2;
+	private const uint DENISE_HORZ_OFFSET = 2;
 
 	public void Emulate()
 	{
@@ -120,11 +120,11 @@ public class ChipsetClock : IChipsetClock
 
 	public string TimeStamp()
 	{
-		return $"v:{VerticalPos} h:{HorizontalPos} t:{Tick} f:{FrameCount}";
+		return $"v:{VerticalPos} h:{HorizontalPos} ({HorizontalPos:X2}) t:{Tick} f:{FrameCount}";
 	}
 
 	public override string ToString()
 	{
-		return $"[v:{VerticalPos,3} h:{HorizontalPos,3} dh:{DeniseHorizontalPos,3}]";
+		return $"[v:{VerticalPos,3} h:{HorizontalPos,3} ({HorizontalPos:X2}) dh:{DeniseHorizontalPos,3}]";
 	}
 }

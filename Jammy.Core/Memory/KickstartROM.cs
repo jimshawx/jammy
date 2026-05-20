@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.Memory
 {
-	public class KickstartROM : ContendedMemory, IKickstartROM
+	public class KickstartROM : Memory, IKickstartROM
 	{
 		private readonly IMemoryManager memoryManager;
 		private readonly ILogger logger;
@@ -23,9 +23,9 @@ namespace Jammy.Core.Memory
 
 		private readonly MemoryRange mirrorRange;
 
-		protected override CPUTarget target => CPUTarget.KickROM;
+		//protected override CPUTarget target => CPUTarget.KickROM;
 
-		public KickstartROM(IDMA dma, IMemoryManager memoryManager, IOptions<EmulationSettings> settings, ILogger<KickstartROM> logger) : base(dma)
+		public KickstartROM(IDMA dma, IMemoryManager memoryManager, IOptions<EmulationSettings> settings, ILogger<KickstartROM> logger)// : base(dma)
 		{
 			this.memoryManager = memoryManager;
 			this.logger = logger;

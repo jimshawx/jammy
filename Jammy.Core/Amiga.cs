@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
+using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -175,8 +176,8 @@ namespace Jammy.Core
 		//when the emulation is in cycle-exact mode - the CPU read/write may have to wait for a DMA slot
 		private ushort RunChipsetEmulationForRAM()
 		{
-			return RunChipsetEmulationForRAM1();
-			//return RunChipsetEmulationForRAM2();
+			//return RunChipsetEmulationForRAM1();
+			return RunChipsetEmulationForRAM2();
 		}
 
 		private ushort RunChipsetEmulationForRAM1()
@@ -209,10 +210,15 @@ namespace Jammy.Core
 			return dma.LastRead;
 		}
 
+		private int stealingCycles = -1;
+
 		private ushort RunChipsetEmulationForRAM2()
 		{
-			if (logit) logger.LogTrace($"CPU  {clock}");
+			cpu.GetRegs(regs);
 
+			if (logit) logger.LogTrace($"CPU  {clock} {regs.PC:X8}");
+
+			stealingCycles = (int)clock.HorizontalPos;
 			//execute the CPU slot (we don't care about the alignment of the slot
 			//because as 
 			dma.ExecuteCPUDMASlotDontCareAlign();
@@ -224,8 +230,8 @@ namespace Jammy.Core
 		//when the emulation is in cycle-exact mode
 		private void RunChipsetEmulationForCPU(int count)
 		{
-			RunChipsetEmulationForCPU1(count);
-			//RunChipsetEmulationForCPU2(count);
+			//RunChipsetEmulationForCPU1(count);
+			RunChipsetEmulationForCPU2(count);
 		}
 
 		private void RunChipsetEmulationForCPU1(int count)
@@ -242,37 +248,49 @@ namespace Jammy.Core
 			//dma.ClearSlot();
 		}
 
+		Regs regs = new Regs();
 		public void RunChipsetEmulationForCPU2(int count)
 		{
-			int ccks_remaining = count / 2;
+			int ticks = count / 2;
 
-			while (ccks_remaining > 0)
+			int waitSlots = 0;
+			while (ticks > 0)
 			{
-				if (logit) logger.LogTrace($"SYNC {clock} {count}");
+				cpu.GetRegs(regs);
+				
+				if (logit) logger.LogTrace($"SYNC {clock} {count} {regs.PC:X8}");
 
-				// 1. THE STOLEN SLOT (The Slip)
-				// If it's a CPU slot but Agnus has it, we tick the motherboard 
-				// to move to the next cycle, but we DO NOT decrement ccks_remaining.
-				if ((clock.HorizontalPos & 1) == 0 && dma.LastSlotWasStolen())
+				// if it's a CPU slot but Agnus stole it, the CPU cannot use it
+				//if (dma.LastSlotWasStolen())
+				if (dma.LastDMASlotWasUsedByChipset() && clock.HorizontalPos == stealingCycles)
 				{
 					if (logit) logger.LogTrace($"STOLE {clock} {count}");
 
-					clock.UpdateClock();
 					clock.Emulate();
 					RunAllEmulations();
 					dma.TriggerHighestPriorityDMA();
-					// The CPU is still waiting for its 'opening'.
+					clock.UpdateClock();
+					stealingCycles++;
+					agnus.HPos();
+
+					waitSlots++;
+					if (waitSlots > 8)
+					{
+						logger.LogTrace("Waited 8 slots");
+						goto finish;
+					}
 					continue;
 				}
+finish:
+				// either an odd slot or a wasted even slot
+				stealingCycles = -1;
+				agnus.HPos();
 
-				// 2. THE VALID SLOT
-				// Either an Odd slot (natural progress) or a free (wasted) Even slot.
-				clock.UpdateClock();
 				clock.Emulate();
 				RunAllEmulations();
 				dma.TriggerHighestPriorityDMA();
-
-				ccks_remaining--;
+				clock.UpdateClock();
+				ticks--;
 			}
 			//dma.ClearSlot();
 		}

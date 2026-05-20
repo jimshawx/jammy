@@ -15,7 +15,7 @@ namespace Jammy.Types.Debugger
 
 		public override string ToString()
 		{
-			return $"v:{VerticalPos} h:{HorizontalPos} t:{Tick} {State}";
+			return $"v:{VerticalPos} h:{HorizontalPos} ({HorizontalPos:X2}) t:{Tick} {State}";
 		}
 	}
 }

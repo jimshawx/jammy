@@ -80,7 +80,16 @@ namespace Jammy.Debugger
 				(memory as IMemoryMapper).AddMemoryIntercept(this);
 
 			if (string.IsNullOrEmpty(settings.Value.KickStartDisassembly)) return;
-			
+
+			//cpubltro
+			//AddBreakpoint(0xF8020C);
+			//AddBreakpoint(0xF80260);
+			//AddBreakpoint(0xF80292);
+			//AddBreakpoint(0xF802C6);
+			//AddBreakpoint(0xF802FA);
+			//AddBreakpoint(0xF8032E);
+
+			//
 			//AddBreakpoint(0x030F24);
 
 			if (settings.Value.KickStartDisassembly.StartsWith("87BA7A3E"))//3.1 A1200
@@ -467,9 +476,9 @@ namespace Jammy.Debugger
 		public ChipState GetChipRegs()
 		{
 			var regs = new ChipState();
-			regs.dmacon = (ushort)custom.Read(0, ChipRegs.DMACONR, Size.Word);
-			regs.intreq = (ushort)custom.Read(0, ChipRegs.INTREQR, Size.Word);
-			regs.intena = (ushort)custom.Read(0, ChipRegs.INTENAR, Size.Word);
+			regs.dmacon = (ushort)custom.DebugChipsetRead(ChipRegs.DMACONR, Size.Word);
+			regs.intreq = (ushort)custom.DebugChipsetRead(ChipRegs.INTREQR, Size.Word);
+			regs.intena = (ushort)custom.DebugChipsetRead(ChipRegs.INTENAR, Size.Word);
 			return regs;
 		}
 

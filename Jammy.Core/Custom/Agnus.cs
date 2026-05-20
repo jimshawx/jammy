@@ -82,7 +82,7 @@ public class Agnus : IAgnus
 	public Agnus(IChipsetClock clock, /*IDenise denise,*/ IInterrupt interrupt,
 		IDiskDrives diskDrives,
 		/*IChips custom,*/ IChipsetDebugger debugger,
-		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
+		IOptions<EmulationSettings> settings, ILogger<Agnus> logger, IDMA dma)
 	{
 		this.clock = clock;
 		//this.denise = denise;
@@ -192,25 +192,26 @@ public class Agnus : IAgnus
 		//start by saying there's no DMA required, later code will overwrite it
 		dma.NoDMA(DMASource.Agnus);
 
-		if (clock.HorizontalPos < 0x18)
+		if (clock.HorizontalPos <= 0x18)
 		{
-			if ((clock.HorizontalPos & 1) == 0)
+			if ((clock.HorizontalPos & 1) == 1)
 				return;
 
 			switch (clock.HorizontalPos)
 			{
-				case 1: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 3: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 5: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+				case 0: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+				case 2: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+				case 4: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+				case 6: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
 				case 7: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
-				case 9: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
-				case 0xB: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
-				case 0xD: if (dma.IsDMAEnabled(DMA.AUD0EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD0EN); break;//actually Audio 0 DMA
-				case 0xF: if (dma.IsDMAEnabled(DMA.AUD1EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
-				case 0x11: if (dma.IsDMAEnabled(DMA.AUD2EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
-				case 0x13: if (dma.IsDMAEnabled(DMA.AUD3EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
-				case 0x15: RunSpriteDMA(0); break;
-				case 0x17: RunSpriteDMA(1); break;
+				case 0xA: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
+				case 0xC: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
+				case 0xE: if (dma.IsDMAEnabled(DMA.AUD0EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD0EN); break;//actually Audio 0 DMA
+				case 0x10: if (dma.IsDMAEnabled(DMA.AUD1EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
+				case 0x12: if (dma.IsDMAEnabled(DMA.AUD2EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
+				case 0x14: if (dma.IsDMAEnabled(DMA.AUD3EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
+				case 0x16: RunSpriteDMA(0); break;
+				case 0x18: RunSpriteDMA(1); break;
 			}
 			return;
 		}
@@ -296,7 +297,6 @@ public class Agnus : IAgnus
 
 		if (lineState == DMALineState.Fetching || lineState == DMALineState.LastBitplaneFetch)
 		{
-
 			bool fetched = false;
 			if (dma.IsDMAEnabled(DMA.BPLEN))
 				fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
@@ -309,9 +309,9 @@ public class Agnus : IAgnus
 
 		//can we use the non-bitplane DMA for something else?
 
-		if (clock.HorizontalPos < 0x34)
+		if (clock.HorizontalPos <= 0x34)
 		{
-			if ((clock.HorizontalPos & 1) == 0)
+			if ((clock.HorizontalPos & 1) == 1)
 				return;
 
 			//switch (clock.HorizontalPos)
@@ -331,11 +331,12 @@ public class Agnus : IAgnus
 			//	case 0x31: RunSpriteDMA(14); break;
 			//	case 0x33: RunSpriteDMA(15); break;
 			//}
-			uint spriteSlot = (clock.HorizontalPos - 0x15) / 2;
+			uint spriteSlot = (clock.HorizontalPos - (0x1A-4)) / 2;
 			RunSpriteDMA(spriteSlot);
 		}
-		if (clock.HorizontalPos == 0xE1)
-			dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN);
+		//4th DMA slot
+		//if (clock.HorizontalPos == 0xE1)
+		//	dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN);
 	}
 
 	private readonly uint SPRITE_DMA_START_LINE;
@@ -773,8 +774,9 @@ public class Agnus : IAgnus
 
 			case ChipRegs.VHPOSR:
 				int h = (int)clock.HorizontalPos;
-				h -= 2;
+				h += 4;//cpubltro
 				if (h < 0) h += 227;
+				h %= 228;
 				value = (ushort)((clock.VerticalPos << 8) | ((uint)h & 0x00ff));
 				//logger.LogTrace($"VHPOSR {clock} {value:X4} @ {insaddr:X6}");
 				vhpos = value;
@@ -782,6 +784,12 @@ public class Agnus : IAgnus
 		}
 
 		return value;
+	}
+	int hhpos = 0;
+	public void HPos()
+	{
+		hhpos++;
+		hhpos %= 228;
 	}
 
 	private void UpdateSpriteControl(int s)

@@ -259,6 +259,7 @@ namespace Jammy.Core.Interface.Interfaces
 				out ulong customReads, out ulong customWrites,
 				out ulong kickReads);
 		void Bookmark();
+		void HPos();
 	}
 
 	public interface IChipsetClock : IEmulate, IStatePersister
