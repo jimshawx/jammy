@@ -64,7 +64,7 @@ namespace Jammy.Core
 		{
 			uint mask = (1u << (int)intreq);
 			if (asserted) mask |= 0x8000;
-			custom.Write(0, ChipRegs.INTREQ, mask, Size.Word);
+			custom.ImmediateWrite(0, ChipRegs.INTREQ, mask, Size.Word);
 		}
 
 		public void SetPaulaInterruptLevel(uint intreq, uint intena)
