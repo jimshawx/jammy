@@ -785,12 +785,6 @@ public class Agnus : IAgnus
 
 		return value;
 	}
-	int hhpos = 0;
-	public void HPos()
-	{
-		hhpos++;
-		hhpos %= 228;
-	}
 
 	private void UpdateSpriteControl(int s)
 	{

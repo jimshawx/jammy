@@ -172,84 +172,31 @@ namespace Jammy.Core
 			return dma.LastRead;
 		}
 
-		//this is run by Agnus immediately after the CPU has initiated a Chip RAM read/write
-		//when the emulation is in cycle-exact mode - the CPU read/write may have to wait for a DMA slot
-		private ushort RunChipsetEmulationForRAM()
-		{
-			//return RunChipsetEmulationForRAM1();
-			return RunChipsetEmulationForRAM2();
-		}
-
-		private ushort RunChipsetEmulationForRAM1()
-		{
-			//if (dma.LastDMASlotWasUsedByChipset())
-			//	logger.LogTrace("FIRST SLOT");
-
-			if (logit) logger.LogTrace($"ENTR {clock}");
-
-			//keep executing chipset DMA slots and emulating the chipset
-			//until the chipset doesn't want any more DMA slots, and we can only use even slots for CPU
-			while (dma.LastDMASlotWasUsedByChipset())
-			{
-				clock.UpdateClock();//ticks the clock
-				clock.Emulate();//sets some clock state
-				RunAllEmulations();
-				var slot = dma.TriggerHighestPriorityDMA();
-				if (logit && slot != null) logger.LogTrace($"DMA! {clock} {slot.Type} {slot.Priority}");
-				if (logit && slot == null) logger.LogTrace($"NULL {clock} null");
-			}
-
-			if (logit) logger.LogTrace($"CPU  {clock}");
-
-			//execute the CPU slot (we don't care about the alignment of the slot
-			dma.ExecuteCPUDMASlotDontCareAlign();
-
-			if (dma.LastDMASlotWasUsedByChipset())
-				logger.LogTrace("LAST SLOT");
-
-			return dma.LastRead;
-		}
-
+		private Regs regs = new Regs();
 		private int stealingCycles = -1;
 
-		private ushort RunChipsetEmulationForRAM2()
+		//this is run by Agnus immediately after the CPU has initiated a Chip RAM read/write
+		//when the emulation is in cycle-exact mode - the read occurs immediately, but we flag the fact that 
+		//the CPU used a chip RAM slot
+		private ushort RunChipsetEmulationForRAM()
 		{
-			cpu.GetRegs(regs);
+			if (logit)
+			{
+				cpu.GetRegs(regs);
+				logger.LogTrace($"CPU  {clock} {regs.PC:X8}");
+			}
 
-			if (logit) logger.LogTrace($"CPU  {clock} {regs.PC:X8}");
-
+			//flag we are using a slot at HPOS
 			stealingCycles = (int)clock.HorizontalPos;
-			//execute the CPU slot (we don't care about the alignment of the slot
-			//because as 
 			dma.ExecuteCPUDMASlotDontCareAlign();
 
 			return dma.LastRead;
 		}
 
-		//this is run by the CPU each time it needs to run the chipset emulation
-		//when the emulation is in cycle-exact mode
+		//this is run by the CPU each time it needs to run the chipset emulation (during a CPU instruction)
+		//when the emulation is in cycle-exact mode, if the CPU wanted a slot but the chipset
+		//takes it, it will iterate additional times until a slot is available
 		private void RunChipsetEmulationForCPU(int count)
-		{
-			//RunChipsetEmulationForCPU1(count);
-			RunChipsetEmulationForCPU2(count);
-		}
-
-		private void RunChipsetEmulationForCPU1(int count)
-		{
-			for (int i = 0; i < count / 2; i++)
-			{
-				if (logit) logger.LogTrace($"SYNC {clock} {count}");
-
-				clock.UpdateClock();
-				clock.Emulate();
-				RunAllEmulations();
-				dma.TriggerHighestPriorityDMA();
-			}
-			//dma.ClearSlot();
-		}
-
-		Regs regs = new Regs();
-		public void RunChipsetEmulationForCPU2(int count)
 		{
 			int ticks = count / 2;
 
@@ -260,8 +207,7 @@ namespace Jammy.Core
 				
 				if (logit) logger.LogTrace($"SYNC {clock} {count} {regs.PC:X8}");
 
-				// if it's a CPU slot but Agnus stole it, the CPU cannot use it
-				//if (dma.LastSlotWasStolen())
+				//if DMA used this slot, then the CPU has to wait
 				if (dma.LastDMASlotWasUsedByChipset() && clock.HorizontalPos == stealingCycles)
 				{
 					if (logit) logger.LogTrace($"STOLE {clock} {count}");
@@ -271,8 +217,8 @@ namespace Jammy.Core
 					dma.TriggerHighestPriorityDMA();
 					clock.UpdateClock();
 					stealingCycles++;
-					agnus.HPos();
 
+					//just in case something goes wrong, we'll get a debug message after 8 slots
 					waitSlots++;
 					if (waitSlots > 8)
 					{
@@ -284,7 +230,6 @@ namespace Jammy.Core
 finish:
 				// either an odd slot or a wasted even slot
 				stealingCycles = -1;
-				agnus.HPos();
 
 				clock.Emulate();
 				RunAllEmulations();
@@ -292,7 +237,6 @@ finish:
 				clock.UpdateClock();
 				ticks--;
 			}
-			//dma.ClearSlot();
 		}
 
 		private bool cycleExact { get { return cpu is IMoiraCPU; } }
