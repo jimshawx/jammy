@@ -455,12 +455,12 @@ namespace Jammy.Debugger
 
 		public void INTENA(uint irq)
 		{
-			custom.Write(0, ChipRegs.INTENA, 0x8000 + (uint)(1 << (int)irq), Size.Word);
+			custom.ImmediateWrite(0, ChipRegs.INTENA, 0x8000 + (uint)(1 << (int)irq), Size.Word);
 		}
 
 		public void INTDIS(uint irq)
 		{
-			custom.Write(0, ChipRegs.INTENA, (uint)(1 << (int)irq), Size.Word);
+			custom.ImmediateWrite(0, ChipRegs.INTENA, (uint)(1 << (int)irq), Size.Word);
 		}
 
 		public void IDEACK()
@@ -470,7 +470,8 @@ namespace Jammy.Debugger
 
 		public void ClearBBUSY()
 		{
-			custom.Write(0, ChipRegs.DMACON, 1<<14, Size.Word);
+			//todo: this won't clear BBUSY via this code path (BBUSY isn't writable by CPU)
+			custom.ImmediateWrite(0, ChipRegs.DMACON, 1<<14, Size.Word);
 		}
 
 		public ChipState GetChipRegs()
