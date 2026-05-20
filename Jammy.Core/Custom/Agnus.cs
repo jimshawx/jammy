@@ -1,7 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
-using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -59,13 +58,10 @@ namespace Jammy.Core.Custom;
 public class Agnus : IAgnus
 {
 	private readonly IChipsetClock clock;
-	private IDMA dma;
-	//private readonly IDenise denise;
+	private readonly IDMA dma;
 	private readonly IInterrupt interrupt;
 	private readonly IDiskDrives diskDrives;
 
-	//private readonly IChipRAM chipRam;
-	//private readonly IChips custom;
 	private readonly IChipsetDebugger debugger;
 	private readonly EmulationSettings settings;
 	private readonly ILogger<Agnus> logger;
@@ -80,18 +76,14 @@ public class Agnus : IAgnus
 	public const int DMA_HARD_STOP = 0xD8;
 
 	public Agnus(IChipsetClock clock, /*IDenise denise,*/ IInterrupt interrupt,
-		IDiskDrives diskDrives,
+		IDiskDrives diskDrives, IDMA dma,
 		/*IChips custom,*/ IChipsetDebugger debugger,
-		IOptions<EmulationSettings> settings, ILogger<Agnus> logger, IDMA dma)
+		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
 	{
 		this.clock = clock;
-		//this.denise = denise;
 		this.interrupt = interrupt;
 		this.diskDrives = diskDrives;
-		//chipRam = chipRAM;
-		//trapdoorRam = trapdoorRAM;
-		//this.kickstartROM = kickstartROM;
-		//this.custom = custom;
+		this.dma = dma;
 		this.debugger = debugger;
 		this.settings = settings.Value;
 		this.logger = logger;
@@ -128,22 +120,9 @@ public class Agnus : IAgnus
 			fetchCount = 0;
 		}
 		RunAgnusTick();
-		//UpdateSprites();
-
-		//if ((clockState & ChipsetClockState.EndOfLine)!=0)
-		//{
-		//	EndAgnusLine();
-		//}
 
 		if ((clockState & ChipsetClockState.EndOfFrame)!=0)
 			interrupt.AssertInterrupt(Types.Interrupt.VERTB);
-
-		//clock.Ack();
-	}
-
-	public void Init(IDMA dma)
-	{
-		this.dma = dma;
 	}
 
 	private enum DMALineState
@@ -308,35 +287,14 @@ public class Agnus : IAgnus
 	noBitplaneDMA:
 
 		//can we use the non-bitplane DMA for something else?
-
 		if (clock.HorizontalPos <= 0x34)
 		{
 			if ((clock.HorizontalPos & 1) == 1)
 				return;
 
-			//switch (clock.HorizontalPos)
-			//{
-			//	case 0x19: RunSpriteDMA(2); break;
-			//	case 0x1B: RunSpriteDMA(3); break;
-			//	case 0x1D: RunSpriteDMA(4); break;
-			//	case 0x1F: RunSpriteDMA(5); break;
-			//	case 0x21: RunSpriteDMA(6); break;
-			//	case 0x23: RunSpriteDMA(7); break;
-			//	case 0x25: RunSpriteDMA(8); break;
-			//	case 0x27: RunSpriteDMA(9); break;
-			//	case 0x29: RunSpriteDMA(10); break;
-			//	case 0x2B: RunSpriteDMA(11); break;
-			//	case 0x2D: RunSpriteDMA(12); break;
-			//	case 0x2F: RunSpriteDMA(13); break;
-			//	case 0x31: RunSpriteDMA(14); break;
-			//	case 0x33: RunSpriteDMA(15); break;
-			//}
 			uint spriteSlot = (clock.HorizontalPos - (0x1A-4)) / 2;
 			RunSpriteDMA(spriteSlot);
 		}
-		//4th DMA slot
-		//if (clock.HorizontalPos == 0xE1)
-		//	dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN);
 	}
 
 	private readonly uint SPRITE_DMA_START_LINE;
@@ -969,13 +927,6 @@ public class Agnus : IAgnus
 		return v;
 	}
 
-	//public uint ReadX(uint insaddr, uint address, Size size)
-	//{
-	//		chipsetReads++;
-	//		if (size == Size.Long) chipsetReads++;
-	//		return custom.Read(insaddr, address, size);
-	//}
-
 	public void Write(uint insaddr, uint address, uint value, Size size)
 	{
 		ulong writes = (size == Size.Long) ? 2U : 1U;
@@ -993,14 +944,6 @@ public class Agnus : IAgnus
 		dma.WriteCPU(CPUTarget.ChipReg, address, (ushort)value, size);
 		dma.ChipsetSync();
 	}
-
-	//public void WriteX(uint insaddr, uint address, uint value, Size size)
-	//{
-	//		chipsetWrites++;
-	//		if (size == Size.Long) chipsetWrites++;
-	//		custom.Write(insaddr, address, value, size);
-	//		return;
-	//}
 
 	public List<BulkMemoryRange> ReadBulk()
 	{
