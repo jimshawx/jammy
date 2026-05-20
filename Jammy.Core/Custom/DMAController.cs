@@ -5,7 +5,6 @@ using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Diagnostics;
 using System.Linq;
 
 /*
@@ -67,14 +66,10 @@ public class DMAController : IDMA
 	}
 
 	private int blitHogCount = 0;
-	private bool slotStolen = false;
 
 	public DMAActivity TriggerHighestPriorityDMA()
 	{
-		//var dmacon = (DMA)custom.Read(0, ChipRegs.DMACONR, Size.Word);
-
 		DMAActivity slotTaken = null;
-		slotStolen = false;
 
 		//check if ANY DMA is enabled
 		if (((DMA)dmacon & DMA.DMAEN) == DMA.DMAEN)
@@ -118,7 +113,6 @@ public class DMAController : IDMA
 									blitHogCount = 0;
 								}
 							}
-							//todo: set slotStolen in here somewhere
 							break;
 
 						case DMASource.Agnus:
@@ -131,8 +125,6 @@ public class DMAController : IDMA
 								//EXCEPT when BR is set and it's bitplane DMA
 								if (!slotTaken.BR || slotTaken.Priority != DMA.BPLEN)
 									slotTaken = null;
-
-								slotStolen = slotTaken != null;
 							}
 							break;
 					}
@@ -151,17 +143,6 @@ public class DMAController : IDMA
 
 		lastDMASlot = slotTaken;
 
-		////cpu can only use even-numbered slots
-		//if (slotTaken == null && 
-		//	(activities[(int)DMASource.CPU].Type == DMAActivityType.CPU 
-		//	|| activities[(int)DMASource.CPU].Type == DMAActivityType.ReadCPU
-		//	|| activities[(int)DMASource.CPU].Type == DMAActivityType.WriteCPU ) 
-		//	/*&& (chipsetClock.HorizontalPos & 1) == 0*/)
-		//{
-		//	//CPU memory access required
-		//	slotTaken = activities[(int)DMASource.CPU];
-		//}
-
 		if (slotTaken == null)
 		{
 			debugger.SetDMAActivity(null);
@@ -179,11 +160,6 @@ public class DMAController : IDMA
 		return lastDMASlot != null;
 	}
 
-	public bool LastSlotWasStolen()
-	{
-		return slotStolen;
-	}
-
 	public void ClearSlot()
 	{
 		lastDMASlot = null;
@@ -191,19 +167,7 @@ public class DMAController : IDMA
 
 	public void ExecuteCPUDMASlot()
 	{
-		if ((chipsetClock.HorizontalPos&1)==1)
-			logger.LogTrace("CPU can't use odd slots");
-
 		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
-		lastDMASlot = activities[(int)DMASource.CPU];
-		lastDMASlot = null;
-	}
-
-	public void ExecuteCPUDMASlotDontCareAlign()
-	{
-		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
-		//lastDMASlot = activities[(int)DMASource.CPU];
-		//lastDMASlot = null;
 	}
 
 	public bool IsWaitingForDMA(DMASource source)
@@ -404,9 +368,9 @@ public class DMAController : IDMA
 				dmacon &= (ushort)(~value | 0x6000); //can't clear BBUSY or BZERO
 
 			//if ((dmacon & (int)DMA.COPEN) != (p & (int)DMA.COPEN))
-			//	logger.LogTrace($"COPEN {((dmacon & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock.TimeStamp()}");
+			//	logger.LogTrace($"COPEN {((dmacon & (int)DMA.COPEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock}");
 			//if ((dmacon & (int)DMA.BLTEN) != (p & (int)DMA.BLTEN))
-			//	logger.LogTrace($"BLTEN {((dmacon & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock.TimeStamp()}");
+			//	logger.LogTrace($"BLTEN {((dmacon & (int)DMA.BLTEN) != 0 ? "on" : "off")} @{insaddr:X8} {chipsetClock}");
 
 			audio.WriteDMACON((ushort)(dmacon & 0x7fff));
 		}

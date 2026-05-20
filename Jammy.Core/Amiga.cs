@@ -188,7 +188,7 @@ namespace Jammy.Core
 
 			//flag we are using a slot at HPOS
 			stealingCycles = (int)clock.HorizontalPos;
-			dma.ExecuteCPUDMASlotDontCareAlign();
+			dma.ExecuteCPUDMASlot();
 
 			return dma.LastRead;
 		}
