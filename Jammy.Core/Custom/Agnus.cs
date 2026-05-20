@@ -775,8 +775,8 @@ public class Agnus : IAgnus
 			case ChipRegs.VHPOSR:
 				int h = (int)clock.HorizontalPos;
 				h += 4;//cpubltro
-				if (h < 0) h += 227;
-				h %= 228;
+				h %= (int)clock.DisplayHorizontal;
+				if (h < 0) h += (int)clock.DisplayHorizontal;
 				value = (ushort)((clock.VerticalPos << 8) | ((uint)h & 0x00ff));
 				//logger.LogTrace($"VHPOSR {clock} {value:X4} @ {insaddr:X6}");
 				vhpos = value;

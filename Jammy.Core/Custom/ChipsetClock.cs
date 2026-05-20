@@ -15,14 +15,14 @@ namespace Jammy.Core.Custom;
 public class ChipsetClock : IChipsetClock
 {
 	private readonly ILogger logger;
-	private readonly uint displayScanlines;
-	private readonly uint displayHorizontal;
+	public uint DisplayScanlines { get; private set; }
+	public uint DisplayHorizontal { get; private set; }
 
 	public ChipsetClock(IOptions<EmulationSettings> settings, ILogger<ChipsetClock> logger)
 	{
 		this.logger = logger;
-		displayScanlines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
-		displayHorizontal = settings.Value.VideoFormat == VideoFormat.NTSC ? 228u : 227u;
+		DisplayScanlines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
+		DisplayHorizontal = settings.Value.VideoFormat == VideoFormat.NTSC ? 228u : 227u;
 
 		//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
 		//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
@@ -59,10 +59,11 @@ public class ChipsetClock : IChipsetClock
 		if (HorizontalPos == 0 && VerticalPos == 0)
 			ClockState |= ChipsetClockState.StartOfFrame;
 
-		if (HorizontalPos == displayHorizontal-1)
+		//todo: NTSC
+		if (HorizontalPos == DisplayHorizontal-1)
 			ClockState |= ChipsetClockState.EndOfLine;
 
-		if (HorizontalPos == displayHorizontal-1 && VerticalPos == displayScanlines + LongFrame() - 1)
+		if (HorizontalPos == DisplayHorizontal-1 && VerticalPos == DisplayScanlines + LongFrame() - 1)
 			ClockState |= ChipsetClockState.EndOfFrame;
 	}
 

@@ -264,6 +264,9 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IChipsetClock : IEmulate, IStatePersister
 	{
+		uint DisplayScanlines { get; }
+		uint DisplayHorizontal { get; }
+
 		uint HorizontalPos { get; }
 		uint DeniseHorizontalPos { get; }
 		uint CopperHorizontalPos { get; }
