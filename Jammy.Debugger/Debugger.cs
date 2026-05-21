@@ -43,6 +43,7 @@ namespace Jammy.Debugger
 		private readonly IAnalyser analyser;
 		private readonly ICPUAnalyser cpuAnalyser;
 		private readonly IAllocatedMemoryTracker allocatedMemoryTracker;
+		private readonly IDMA dma;
 		private readonly ILVOInterceptors interceptors;
 		private readonly IReturnValueSnagger returnValueSnagger;
 		private readonly ILibraryBases libraryBases;
@@ -51,7 +52,7 @@ namespace Jammy.Debugger
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
 			IBreakpointCollection breakpoints, IKickstartROM kickstart, ICopper copper, IChipsetClock clock,
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser,
-			ICPUAnalyser cpuAnalyser, IAllocatedMemoryTracker allocatedMemoryTracker,
+			ICPUAnalyser cpuAnalyser, IAllocatedMemoryTracker allocatedMemoryTracker, IDMA dma,
 			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases,
 			IChipsetDebugger chipsetDebugger)
 		{
@@ -64,6 +65,7 @@ namespace Jammy.Debugger
 			this.analyser = analyser;
 			this.cpuAnalyser = cpuAnalyser;
 			this.allocatedMemoryTracker = allocatedMemoryTracker;
+			this.dma = dma;
 			this.memory = memory;
 			this.cpu = cpu;
 			this.custom = custom;
@@ -470,8 +472,7 @@ namespace Jammy.Debugger
 
 		public void ClearBBUSY()
 		{
-			//todo: this won't clear BBUSY via this code path (BBUSY isn't writable by CPU)
-			custom.ImmediateWrite(0, ChipRegs.DMACON, 1<<14, Size.Word);
+			dma.WriteDMACON(1<<14);
 		}
 
 		public ChipState GetChipRegs()
