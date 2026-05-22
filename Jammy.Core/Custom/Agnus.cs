@@ -171,62 +171,40 @@ public class Agnus : IAgnus
 		//start by saying there's no DMA required, later code will overwrite it
 		dma.NoDMA(DMASource.Agnus);
 
-		if (clock.HorizontalPos <= 0x18)
-		{
-			if ((clock.HorizontalPos & 1) == 1)
-				return;
+		const int DMA_START = 1;
 
-			switch (clock.HorizontalPos)
-			{
-				case 0: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 2: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 4: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 6: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-				case 7: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
-				case 0xA: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
-				case 0xC: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
-				case 0xE: if (dma.IsDMAEnabled(DMA.AUD0EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD0EN); break;//actually Audio 0 DMA
-				case 0x10: if (dma.IsDMAEnabled(DMA.AUD1EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
-				case 0x12: if (dma.IsDMAEnabled(DMA.AUD2EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
-				case 0x14: if (dma.IsDMAEnabled(DMA.AUD3EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
-				case 0x16: RunSpriteDMA(0); break;
-				case 0x18: RunSpriteDMA(1); break;
-			}
-			return;
+		switch (clock.HorizontalPos)
+		{
+			case DMA_START + 0x00: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+			case DMA_START + 0x02: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+			case DMA_START + 0x04: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+			//case DMA_START + 0x06: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;//todo: problematic, there's only room for 3 slots when DMA_START != 0
+			case DMA_START + 0x06: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
+			case DMA_START + 0x08: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
+			case DMA_START + 0x0A: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
+			case DMA_START + 0x0C: if (dma.IsDMAEnabled(DMA.AUD0EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD0EN); break;//actually Audio 0 DMA
+			case DMA_START + 0x0E: if (dma.IsDMAEnabled(DMA.AUD1EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
+			case DMA_START + 0x10: if (dma.IsDMAEnabled(DMA.AUD2EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
+			case DMA_START + 0x12: if (dma.IsDMAEnabled(DMA.AUD3EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
+			case DMA_START + 0x14: RunSpriteDMA(0); break;
+			case DMA_START + 0x16: RunSpriteDMA(1); break;
+			case <= DMA_START + 0x16: return;
 		}
 
-		//var blanking = Blanking.None;
-
-		//is it in the vertical blanking zone (should swap to using some of the ECS registers)
-		//if (clock.VerticalPos >= 0 && clock.VerticalPos <= 0x19)
-		//	blanking |= Blanking.VerticalBlank;
-
-		//is it the visible area, vertically?
-		//if (clock.VerticalPos < diwstrtv || clock.VerticalPos >= diwstopv)
-		//	blanking |= Blanking.OutsideDisplayWindow;
-		//it's not a greater than or less than check, it an transition from outside<->inside
+		//are we inside the display window vertically?
 		if (clock.VerticalPos == diwstrtv)
 			insideDIWV = true;
 		else if (clock.VerticalPos == diwstopv)
 			insideDIWV = false;
 
 		if (!insideDIWV)
-		{ 
-			//blanking |= Blanking.OutsideDisplayWindow;
 			goto noBitplaneDMA;
-		}
 
 		////HRM 89 p18
 		////Horizontal blanking falls in the range of $0F to $35.
 		////hack, anything more than 0x30 breaks the left-hand border for many games/demos
 		//if (clock.HorizontalPos >= 0x0f && clock.HorizontalPos < 0x30)
 		//	blanking |= Blanking.HorizontalBlank;
-
-		////tell Denise the blanking status and whether to start processing pixel data
-		//denise.SetBlankingStatus(blanking);
-
-		//if ((blanking & Blanking.OutsideDisplayWindow) == Blanking.OutsideDisplayWindow)
-		//goto noBitplaneDMA;
 
 		if (!dma.IsDMAEnabled(DMA.BPLEN))
 			goto noBitplaneDMA;
@@ -239,6 +217,7 @@ public class Agnus : IAgnus
 		//is it time to do bitplane DMA?
 		//when h >= ddfstrt, bitplanes are fetching. one plane per cycle, until all the planes are fetched
 		//bitplane DMA is ON
+		//bitplane DMA can be on odd and even slots
 
 		if (clock.HorizontalPos == ddfstrt + debugger.ddfSHack && lineState == DMALineState.LineStart)
 		{
@@ -277,8 +256,7 @@ public class Agnus : IAgnus
 		if (lineState == DMALineState.Fetching || lineState == DMALineState.LastBitplaneFetch)
 		{
 			bool fetched = false;
-			if (dma.IsDMAEnabled(DMA.BPLEN))
-				fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
+			fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
 			fetchCount++;
 			if (fetched)
 				return;
@@ -286,14 +264,25 @@ public class Agnus : IAgnus
 
 	noBitplaneDMA:
 
-		//can we use the non-bitplane DMA for something else?
-		if (clock.HorizontalPos <= 0x34)
+		//Agnus didn't use the current slot for bitplane DMA
+		//so if it's a sprite slot we can do sprite DMA instead
+		switch (clock.HorizontalPos)
 		{
-			if ((clock.HorizontalPos & 1) == 1)
-				return;
-
-			uint spriteSlot = (clock.HorizontalPos - (0x1A-4)) / 2;
-			RunSpriteDMA(spriteSlot);
+			case DMA_START + 0x18: RunSpriteDMA(2); break;
+			case DMA_START + 0x1A: RunSpriteDMA(3); break;
+			case DMA_START + 0x1C: RunSpriteDMA(4); break;
+			case DMA_START + 0x1E: RunSpriteDMA(5); break;
+			case DMA_START + 0x20: RunSpriteDMA(6); break;
+			case DMA_START + 0x22: RunSpriteDMA(7); break;
+			case DMA_START + 0x24: RunSpriteDMA(8); break;
+			case DMA_START + 0x26: RunSpriteDMA(9); break;
+			case DMA_START + 0x28: RunSpriteDMA(10); break;
+			case DMA_START + 0x2A: RunSpriteDMA(11); break;
+			case DMA_START + 0x2C: RunSpriteDMA(12); break;
+			case DMA_START + 0x2E: RunSpriteDMA(13); break;
+			case DMA_START + 0x30: RunSpriteDMA(14); break;
+			case DMA_START + 0x32: RunSpriteDMA(15); break;
+			case 226: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;//todo: problematic
 		}
 	}
 

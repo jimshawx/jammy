@@ -92,10 +92,7 @@ public class DMAController : IDMA
 					switch (src)
 					{
 						case DMASource.Copper:
-							//copper can only use even-numbered slots
-							
-							//if it's odd, it can't be used
-							if ((chipsetClock.HorizontalPos & 1) == 1)
+							if (!chipsetClock.IsCopperSlot())
 								slotTaken = null;
 							break;
 
@@ -119,13 +116,22 @@ public class DMAController : IDMA
 							//Agnus can only use odd-numbered slots EXCEPT when it's doing bitplane DMA
 							//that requires even slots too (e.g. low-res > 4bpp, hi-res > 2bpp, sh-res)
 
-							//if it's even, it can't be used
-							if ((chipsetClock.HorizontalPos & 1) == 0)
-							{
-								//EXCEPT when BR is set and it's bitplane DMA
-								if (!slotTaken.BR || slotTaken.Priority != DMA.BPLEN)
-									slotTaken = null;
-							}
+							////if it's even, it can't be used
+							//if (chipsetClock.IsOddSlot())
+							//{
+							//	//EXCEPT when BR is set and it's bitplane DMA
+							//	if (!slotTaken.BR || slotTaken.Priority != DMA.BPLEN)
+							//		slotTaken = null;
+							//}
+
+							//bitplane DMA always works
+							if (slotTaken.Priority == DMA.BPLEN)
+								break;
+
+							//other DMA only works on even slots
+							if (!chipsetClock.IsAgnusSlot())
+								slotTaken = null;
+
 							break;
 					}
 				}
@@ -278,7 +284,7 @@ public class DMAController : IDMA
 		for (int i = 0; i < activities.Length; i++)
 		{
 			//don't run the copper TOO fast
-			if ((DMASource)i == DMASource.Copper && (chipsetClock.HorizontalPos & 1) != 0)
+			if ((DMASource)i == DMASource.Copper && !chipsetClock.IsCopperSlot())
 				continue;
 			ExecuteDMATransfer(activities[i]);
 		}
@@ -354,6 +360,7 @@ public class DMAController : IDMA
 		return 0;
 	}
 
+	[Persist]
 	private ushort dmacon;
 
 	public void Write(uint insaddr, uint address, ushort value)

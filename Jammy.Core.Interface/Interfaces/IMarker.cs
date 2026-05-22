@@ -278,6 +278,8 @@ namespace Jammy.Core.Interface.Interfaces
 
 		string TimeStamp();
 		void SetClock(uint v, uint h);
+		bool IsAgnusSlot();
+		bool IsCopperSlot();
 	}
 
 	public interface IPSUClock : IEmulate

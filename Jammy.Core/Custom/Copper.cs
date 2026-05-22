@@ -111,13 +111,7 @@ namespace Jammy.Core.Custom
 			if (memory.IsWaitingForDMA(DMASource.Copper))
 				return;
 
-			//copper instruction every odd clock (and copper DMA is on)
-			//if ((clock.CopperHorizontalPos & 1) != 0)
-			{ 
-				CopperInstruction();
-			}
-			//if (status == CopperStatus.Waiting && data != 0xfffe)
-			//	logger.LogTrace($"Hit VBL while still waiting for {data:X2}");
+			CopperInstruction();
 
 			if (debugger.dbug)
 			{

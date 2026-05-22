@@ -106,6 +106,16 @@ public class ChipsetClock : IChipsetClock
 		return FrameCount&1;
 	}
 
+	public bool IsAgnusSlot() 
+	{
+		return (HorizontalPos & 1) == 1;
+	}
+
+	public bool IsCopperSlot()
+	{
+		return (HorizontalPos & 1) == 0;
+	}
+
 	public void Save(JArray obj)
 	{
 		var jo = PersistenceManager.ToJObject(this, "chipclock");
