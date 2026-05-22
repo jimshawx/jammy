@@ -356,7 +356,6 @@ public class Program
 		chipsetDebugger.Init(chips);
 
 		var ciab = serviceProvider.GetRequiredService<ICIABEven>();
-		serviceProvider.GetRequiredService<IAgnus>().Init(dma);
 		serviceProvider.GetRequiredService<ICopper>().Init(dma);
 		serviceProvider.GetRequiredService<IDiskDrives>().Init(dma, ciab, chipRAM);
 
