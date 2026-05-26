@@ -357,7 +357,7 @@ public class Denise : IDenise
 		int bp = planes;
 
 		//BPLAM is set
-		if ((bplcon4 >> 8) != 0) return CopperBitplaneConvertOther;
+		if (settings.ChipSet == ChipSet.AGA &&(bplcon4 >> 8) != 0) return CopperBitplaneConvertOther;
 
 		//SPRPRI2>=5 and SPF or SPRPRI1/2>=5 and DPF (weird sprite priority hacks)
 		if (settings.ChipSet != ChipSet.AGA && ((bplcon0 & (uint)BPLCON0.HAM) == 0))
