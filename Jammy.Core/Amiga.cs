@@ -224,8 +224,8 @@ namespace Jammy.Core
 					waitSlots++;
 					if (waitSlots > 8)
 					{
-						logger.LogTrace("Waited 8 slots");
-						goto finish;
+						//logger.LogTrace("Waited 8 slots");
+						//goto finish;
 					}
 					continue;
 				}

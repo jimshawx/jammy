@@ -1,14 +1,15 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Newtonsoft.Json.Linq;
-using Jammy.Core.Persistence;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -16,10 +17,10 @@ using Jammy.Core.Persistence;
 
 namespace Jammy.Core.Custom
 {
-	public class Copper : ICopper
+	public class Copper : ICopper, IDebugKeys
 	{
 		private readonly IChipsetClock clock;
-		private IDMA memory;
+		private IDMA dma;
 		private readonly IChips custom;
 		private readonly IChipsetDebugger debugger;
 
@@ -71,7 +72,7 @@ namespace Jammy.Core.Custom
 		//HRM 3rd Ed, PP24
 		public void Init(IDMA dma)
 		{
-			memory = dma;
+			this.dma = dma;
 		}
 
 		public void Reset()
@@ -87,6 +88,9 @@ namespace Jammy.Core.Custom
 				copjmp1 = 1;
 				status = CopperStatus.Retrace;
 			}
+
+			//todo: necessary? copper can't match or move on an odd cycle anyway, so is this just an optimisation?
+			if (!clock.IsCopperSlot()) return;
 
 			if (copjmp1 != 0 || copjmp2 != 0)
 			{
@@ -108,7 +112,7 @@ namespace Jammy.Core.Custom
 				return;
 			}
 
-			if (memory.IsWaitingForDMA(DMASource.Copper))
+			if (dma.IsWaitingForDMA(DMASource.Copper))
 				return;
 
 			CopperInstruction();
@@ -122,9 +126,9 @@ namespace Jammy.Core.Custom
 
 		private void CopperNextFrame()
 		{
-			memory.ClearWaitingForDMA(DMASource.Copper);
+			dma.ClearWaitingForDMA(DMASource.Copper);
 
-			memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+			dma.NeedsDMA(DMASource.Copper, DMA.COPEN);
 
 			//todo: there's some weirdness when both are set, the registers get ORd together, can't see how that could be useful
 			if (copjmp1 != 0)
@@ -192,21 +196,24 @@ namespace Jammy.Core.Custom
 			}
 		}
 
+
+		private int dbug_timing = 3;
+
 		private void CopperInstruction()
 		{
 			switch (status)
 			{
 				case CopperStatus.RunningWord1:
-					if (!memory.IsDMAEnabled(DMA.COPEN)) return;
+					if (!dma.IsDMAEnabled(DMA.COPEN)) return;
 
 					status = CopperStatus.RunningWord2;
-					memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+					dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 					copPC += 2;
 					break;
 
 				case CopperStatus.RunningWord2:
 					{
-						if (!memory.IsDMAEnabled(DMA.COPEN)) return;
+						//if (!dma.IsDMAEnabled(DMA.COPEN)) return;
 
 						ins = copins;
 
@@ -225,20 +232,19 @@ namespace Jammy.Core.Custom
 								status = CopperStatus.RunningWord1;
 								//if this is being skipped, write to COPINS instead of the specified register
 								uint regAddress = nextMOVEisNOOP ? ChipRegs.COPINS : ChipRegs.ChipBase + reg;
-								nextMOVEisNOOP = false;
-								memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
+								dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, regAddress);
 								//logger.LogTrace($"{regAddress:X6} {ChipRegs.Name(regAddress)}");
 								copPC += 2;
 							}
 						}
 						else
 						{
-							//todo: should we do the NOOP thing here too?
 							status = CopperStatus.FetchWait;
-							memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+							dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 							copPC += 2;
 						}
-
+						//only MOVE is skipped, SKIP and WAIT execute normally
+						nextMOVEisNOOP = false;
 						break;
 					}
 
@@ -268,7 +274,9 @@ namespace Jammy.Core.Custom
 						}
 						else
 						{
-							status = CopperStatus.RunningWord1;
+							//status = CopperStatus.RunningWord1;
+							status = CopperStatus.WakingUp;
+							waitTimer = 0;
 
 							//SKIP
 							uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
@@ -278,6 +286,7 @@ namespace Jammy.Core.Custom
 								//logger.LogTrace($"RUN  {h},{currentLine} {coppos:X4} {waitPos:X4}");
 								//todo: this isn't what happens, the next instruction is fetched, but ignored
 								//https://eab.abime.net/showpost.php?p=206242&postcount=1
+								//https://eab.abime.net/showthread.php?t=100408
 
 								//copPC += 4;
 								nextMOVEisNOOP = true;
@@ -294,7 +303,7 @@ namespace Jammy.Core.Custom
 						//memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 
 						//If blitter-busy bit is set the comparisons will fail.
-						if (waitBlit == 0 && (memory.ReadDMACON() & (1 << 14)) != 0)
+						if (waitBlit == 0 && (dma.ReadDMACON() & (1 << 14)) != 0)
 						{
 							logger.LogTrace("WAIT delayed due to blitter running");
 							return;
@@ -306,17 +315,29 @@ namespace Jammy.Core.Custom
 						{
 							//logger.LogTrace($"AWOKE @{clock}");
 
-							//n ticks later
-							//waitTimer = 1;
-							//status = CopperStatus.WakingUp;
-
-							//0 ticks delay
-							//status = CopperStatus.RunningWord1;
-
-							//one tick sooner
-							memory.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
-							copPC += 2;
-							status = CopperStatus.RunningWord2;
+							switch (dbug_timing)
+							{
+								case 0:
+									//n ticks later
+									waitTimer = 2;
+									status = CopperStatus.WakingUp;
+									break;
+								case 1:
+									//n ticks later
+									waitTimer = 1;
+									status = CopperStatus.WakingUp;
+									break;
+								case 2:
+									//0 ticks delay
+									status = CopperStatus.RunningWord1;
+									break;
+								case 3:
+									//one tick sooner
+									dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+									copPC += 2;
+									status = CopperStatus.RunningWord2;
+									break;
+							}
 
 							if (ins == 0xffff && data == 0xfffe)
 							{
@@ -330,7 +351,7 @@ namespace Jammy.Core.Custom
 
 				case CopperStatus.WakingUp:
 					//burn a cycle after waking up
-					memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
+					dma.NeedsDMA(DMASource.Copper, DMA.COPEN);
 					waitTimer--;
 					if (waitTimer <= 0)
 						status = CopperStatus.RunningWord1;
@@ -362,7 +383,6 @@ namespace Jammy.Core.Custom
 
 		private bool CopperCompare(uint coppos, uint waitPos)
 		{
-			//if ((clock.CopperHorizontalPos&1)==0) return false;
 			return coppos >= waitPos;
 		}
 
@@ -485,10 +505,10 @@ namespace Jammy.Core.Custom
 			int counter = MAX_COPPER_ENTRIES;
 			while (counter-- > 0)
 			{
-				ushort ins = (ushort)memory.DebugRead(copPC, Size.Word);
+				ushort ins = (ushort)dma.DebugRead(copPC, Size.Word);
 				copPC += 2;
 
-				ushort data = (ushort)memory.DebugRead(copPC, Size.Word);
+				ushort data = (ushort)dma.DebugRead(copPC, Size.Word);
 				copPC += 2;
 
 				//csb.AppendLine($"{copPC - 4:X8} {ins:X4},{data:X4} ");
@@ -592,6 +612,17 @@ namespace Jammy.Core.Custom
 			if (!PersistenceManager.Is(obj, "copper")) return;
 
 			PersistenceManager.FromJObject(this, obj);
+		}
+
+		public void DebugKeyUp(int obj)
+		{
+			
+		}
+
+		public void DebugKeyDown(int obj)
+		{
+			if (obj == 'T')
+				dbug_timing = (dbug_timing + 1) % 4;
 		}
 	}
 }
