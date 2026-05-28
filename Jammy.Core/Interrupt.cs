@@ -40,8 +40,12 @@ namespace Jammy.Core
 			paulaInterruptLevel = 0;
 		}
 
+		//todo:
 		//delay interrupt by N cpu instructions (Blitter Miracle wants this > 1)
-		private const int PAULA_INTERRUPT_LATENCY = 1;
+		//it's certainly true that raising an interrupt can be slow, but clearing the interrupt
+		//can't be delayed because it could then still be raised when the ensuing rte is executed and the 
+		//ISR would be retriggered
+		private const int PAULA_INTERRUPT_LATENCY = 0;
 
 		public void Emulate()
 		{
