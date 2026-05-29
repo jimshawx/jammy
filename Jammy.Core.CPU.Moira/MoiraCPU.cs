@@ -5,6 +5,7 @@ using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 /*
@@ -22,8 +23,16 @@ namespace Jammy.Core.CPU.Moira
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 
-		[DllImport("Moira.dll")]
-		static extern void Moira_init(int model, IntPtr r16, IntPtr r8, IntPtr w16, IntPtr w8, IntPtr sync);
+		[DllImport("moira.dll", CallingConvention = CallingConvention.Cdecl)]
+		private static extern unsafe void Moira_init(
+			IntPtr ctx,
+			int model,
+			delegate* unmanaged[Cdecl]<IntPtr, uint, uint> r16,
+			delegate* unmanaged[Cdecl]<IntPtr, uint, uint> r8,
+			delegate* unmanaged[Cdecl]<IntPtr, uint, uint, void> w16,
+			delegate* unmanaged[Cdecl]<IntPtr, uint, uint, void> w8,
+			delegate* unmanaged[Cdecl]<IntPtr, int, void> sync
+		);
 
 		[DllImport("Moira.dll")]
 		static extern uint Moira_execute(ref int cycles);
@@ -39,12 +48,6 @@ namespace Jammy.Core.CPU.Moira
 
 		[DllImport("Moira.dll")]
 		static extern void Moira_set_irq(uint levels);
-
-		private Moira_Reader r16;
-		private Moira_Reader r8;
-		private Moira_Writer w16;
-		private Moira_Writer w8;
-		private Moira_Sync sync;
 
 		public MoiraCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
 			IBreakpointCollection breakpoints, ITracer tracer,
@@ -62,12 +65,6 @@ namespace Jammy.Core.CPU.Moira
 				logger.LogTrace("Starting Moira C++ 68000 CPU");
 			else
 				logger.LogTrace("Starting Moira C++ 68EC020 CPU");
-
-			r16 = new Moira_Reader(Moira_read16);
-			r8 = new Moira_Reader(Moira_read8);
-			w16 = new Moira_Writer(Moira_write16);
-			w8 = new Moira_Writer(Moira_write8);
-			sync = new Moira_Sync(Moira_sync);
 		}
 
 		private enum Model : int
@@ -83,16 +80,21 @@ namespace Jammy.Core.CPU.Moira
 			M68040                  // Disassembler only
 		};
 
-		public void Initialise()
+		public unsafe void Initialise()
 		{
 			var model = settings.Sku == CPUSku.MC68000 ? Model.M68000 : Model.M68EC020;
+
+			var handle = GCHandle.Alloc(this, GCHandleType.Normal);
+			IntPtr contextPtr = GCHandle.ToIntPtr(handle);
+
 			Moira_init(
+				contextPtr,
 				(int)model,
-				Marshal.GetFunctionPointerForDelegate(r16),
-				Marshal.GetFunctionPointerForDelegate(r8),
-				Marshal.GetFunctionPointerForDelegate(w16),
-				Marshal.GetFunctionPointerForDelegate(w8),
-				Marshal.GetFunctionPointerForDelegate(sync)
+				&Moira_read16_thunk,
+				&Moira_read8_thunk,
+				&Moira_write16_thunk,
+				&Moira_write8_thunk,
+				&Moira_sync_thunk
 			);
 		}
 
@@ -222,10 +224,43 @@ namespace Jammy.Core.CPU.Moira
 			Moira_set_pc(pc);
 		}
 
-		private delegate uint Moira_Reader(uint address);
-		private delegate void Moira_Writer(uint address, uint value);
-		private delegate void Moira_Sync(int cycles);
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static MoiraCPU FromIntPtr(IntPtr context)
+		{
+			return Unsafe.As<MoiraCPU>(GCHandle.FromIntPtr(context).Target);
+		}
 
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+		private static uint Moira_read16_thunk(IntPtr context, uint address)
+		{
+			return FromIntPtr(context).Moira_read16(address);
+		}
+
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+		private static uint Moira_read8_thunk(IntPtr context, uint address)
+		{
+			return FromIntPtr(context).Moira_read8(address);
+		}
+
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+		private static void Moira_write16_thunk(IntPtr context, uint address, uint value)
+		{
+			FromIntPtr(context).Moira_write16(address, value);
+		}
+
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+		private static void Moira_write8_thunk(IntPtr context, uint address, uint value)
+		{
+			FromIntPtr(context).Moira_write8(address, value);
+		}
+
+		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+		private static void Moira_sync_thunk(IntPtr context, int cycles)
+		{
+			FromIntPtr(context).Moira_sync(cycles);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private uint Moira_read16(uint address)
 		{
 			//word read at instruction address is instruction fetch
@@ -237,16 +272,22 @@ namespace Jammy.Core.CPU.Moira
 			uint n = memoryMapper.Read(instructionStartPC, address, Size.Word);
 			return n;
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private uint Moira_read8(uint address)
 		{
 			return memoryMapper.Read(instructionStartPC, address, Size.Byte);
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void Moira_write16(uint address, uint value)
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Word);
 			if (settings.Tracer.IsEnabled())
 				tracer.Flush(address);
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void Moira_write8(uint address, uint value)
 		{
 			memoryMapper.Write(instructionStartPC, address, value, Size.Byte);
@@ -256,14 +297,17 @@ namespace Jammy.Core.CPU.Moira
 
 		private Action<int> syncChipset = NullSync;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void Moira_sync(int cycles)
 		{
 			syncChipset(cycles);
 		}
+
 		public void SetSync(Action<int> syncChipset)
 		{
 			this.syncChipset = syncChipset;
 		}
+
 		private static void NullSync(int _) {}
 
 		public void Save(JArray obj)
