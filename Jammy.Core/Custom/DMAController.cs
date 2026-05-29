@@ -195,6 +195,7 @@ public class DMAController : IDMA
 	private void Consume(DMAActivity activity)
 	{
 		activity.Type = DMAActivityType.None;
+		#if DEBUG
 		//todo: debugging, remove
 		activity.Address = 0;
 		activity.Value = 0;
@@ -202,6 +203,7 @@ public class DMAController : IDMA
 		activity.Priority = 0;
 		activity.ChipReg = 0;
 		activity.Target = CPUTarget.None;
+		#endif
 	}
 
 	public ushort LastRead { get; private set; }
