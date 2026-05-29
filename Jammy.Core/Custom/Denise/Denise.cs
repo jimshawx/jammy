@@ -10,6 +10,9 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -589,9 +592,19 @@ public class Denise : IDenise
 		return col;
 	}
 
-	private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool IsVis(int sp, uint sprpri)
+	{
+		//either the spritebank is in front of the playfield, or the playfield is transparent
+		int bank = sp >> 1;
+		return bank < sprpri;// || pix == 0;//in DPF, pix is not representative of the actual playfield pixel
+	}
+
+	//private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private void DoSprites(ref uint col, byte pix, int p)
 	{
+		Span<uint> bits = stackalloc uint[8];
+
 		uint active = 0;
 		uint attached = 0;
 
@@ -672,14 +685,6 @@ public class Denise : IDenise
 		else
 			if (pix == 0) sprpri = 4;//show them all
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		bool IsVis() 
-		{
-			//either the spritebank is in front of the playfield, or the playfield is transparent
-			int bank = sp>>1;
-			return bank < sprpri;// || pix == 0;//in DPF, pix is not representative of the actual playfield pixel
-		}
-
 		while (sp >= 0)
 		{
 			//if first, or both are attached (check the attached bit on the odd sprite)
@@ -692,7 +697,7 @@ public class Denise : IDenise
 				if ((active & 1) != 0) scol |= bits[sp];
 				if ((active & 2) != 0) scol |= bits[sp-1];
 
-				if (scol != 0 && IsVis())
+				if (scol != 0 && IsVis(sp, sprpri))
 				{
 					col = truecolour[scol + bankEven];
 				}
@@ -706,7 +711,7 @@ public class Denise : IDenise
 				scol = 0;
 				if ((active & 1) != 0) scol |= bits[sp];
 
-				if (scol != 0 && IsVis())
+				if (scol != 0 && IsVis(sp, sprpri))
 				{ 
 					col = truecolour[4 * (sp >> 1) + scol + bankOdd];
 				}
@@ -719,7 +724,7 @@ public class Denise : IDenise
 				scol = 0;
 				if ((active & 1) != 0) scol |= bits[sp];
 
-				if (scol != 0 && IsVis())
+				if (scol != 0 && IsVis(sp, sprpri))
 				{
 					col = truecolour[4 * (sp >> 1) + scol + bankEven];
 				}
@@ -810,13 +815,31 @@ nospritebits:
 			}
 		}
 
-		if (shift!=0)
-		{
-			for (int s = 0; s < 8; s++)
-			{ 
-				spriteMask[s] >>= shift;
-			}
+		if (shift == 0) return;
+
+		//for (int s = 0; s < 8; s++)
+		//{
+		//	spriteMask[s] >>= shift;
+		//}
+
+		if (Avx2.IsSupported)
+		{ 
+			ref ulong maskRef = ref MemoryMarshal.GetArrayDataReference(spriteMask);
+			Vector256.ShiftRightLogical(Vector256.LoadUnsafe(ref maskRef), shift).StoreUnsafe(ref maskRef);
+			Vector256.ShiftRightLogical(Vector256.LoadUnsafe(ref maskRef, 4), shift).StoreUnsafe(ref maskRef, 4);
+			return;
 		}
+
+		Span<ulong> mask = spriteMask;
+		if (mask.Length < 8) return;
+		mask[0] >>= shift;
+		mask[1] >>= shift;
+		mask[2] >>= shift;
+		mask[3] >>= shift;
+		mask[4] >>= shift;
+		mask[5] >>= shift;
+		mask[6] >>= shift;
+		mask[7] >>= shift;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
