@@ -3,6 +3,7 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Numerics;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -81,14 +82,16 @@ namespace Jammy.Core
 			intreq &= intena;
 			if (intreq == 0) return;
 
-			for (int i = (int)Types.Interrupt.EXTER; i >= 0; i--)
-			{
-				if ((intreq & (1u << i)) != 0)
-				{
-					paulaInterruptLevel = CPUPriority((uint)i);
-					break;
-				}
-			}
+			//for (int i = (int)Types.Interrupt.EXTER; i >= 0; i--)
+			//{
+			//	if ((intreq & (1u << i)) != 0)
+			//	{
+			//		paulaInterruptLevel = CPUPriority((uint)i);
+			//		break;
+			//	}
+			//}
+			//same result but faster
+			paulaInterruptLevel = CPUPriority((uint)BitOperations.Log2(intreq));
 		}
 
 		public void SetGayleInterruptLevel(uint level)
