@@ -1,6 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Linq;
 
 /*
@@ -11,7 +10,7 @@ namespace Jammy.Core.Custom.Denise
 {
 	public class BpldatPix64AVX2 : IBpldatPix
 	{
-		private readonly IBpldatPix bp = new BpldatPix32AVX2();
+		private readonly IBpldatPix bp = new BpldatPix32AVX2V2();
 
 		private readonly ulong[] stashBits = new ulong[8];
 		private int even, odd;
