@@ -528,6 +528,7 @@ namespace Jammy.Core.Custom
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			try { 
 			if (address >= 0xb80000)
 				logger.LogTrace($"W {regNames[address&63],-18} {address:X8} {size} {value:X8} {value.ToBin()} @{insaddr:X8}");
 
@@ -626,6 +627,11 @@ namespace Jammy.Core.Custom
 							break;
 					}
 					break;
+			}
+			}
+			catch (Exception ex)
+			{
+				logger.LogTrace($"Akiko threw exception {ex}");
 			}
 		}
 
