@@ -202,7 +202,7 @@ namespace Jammy.Core
 		{
 			int ticks = count / 2;
 
-			int waitSlots = 0;
+			//int waitSlots = 0;
 			while (ticks > 0)
 			{
 				cpu.GetRegs(regs);
@@ -210,6 +210,7 @@ namespace Jammy.Core
 				if (logit && clock.VerticalPos == debugger.dbugLine) logger.LogTrace($"SYNC {clock} {count} {regs.PC:X8}");
 
 				//if DMA used this slot, then the CPU has to wait
+				//todo: we actually already loaded the value though in RunChipsetEmulationForRAM
 				if (dma.LastDMASlotWasUsedByChipset() && clock.HorizontalPos == stealingCycles)
 				{
 					if (logit && clock.VerticalPos == debugger.dbugLine) logger.LogTrace($"STOLE {clock} {count}");
@@ -219,17 +220,18 @@ namespace Jammy.Core
 					dma.TriggerHighestPriorityDMA();
 					clock.UpdateClock();
 					stealingCycles++;
+					//todo: probalby need a mod horizontal slots here
 
 					//just in case something goes wrong, we'll get a debug message after 8 slots
-					waitSlots++;
-					if (waitSlots > 8)
-					{
-						//logger.LogTrace("Waited 8 slots");
-						//goto finish;
-					}
+					//waitSlots++;
+					//if (waitSlots > 8)
+					//{
+					//	//logger.LogTrace("Waited 8 slots");
+					//	//goto finish;
+					//}
 					continue;
 				}
-finish:
+//finish:
 				// either an odd slot or a wasted even slot
 				stealingCycles = -1;
 
