@@ -174,7 +174,7 @@ namespace Jammy.Core
 			return dma.LastRead;
 		}
 
-		private Regs regs = new Regs();
+		private Regs logitRegs = new Regs();
 		private int stealingCycles = -1;
 
 		//this is run by Agnus immediately after the CPU has initiated a Chip RAM read/write
@@ -184,8 +184,8 @@ namespace Jammy.Core
 		{
 			if (logit && clock.VerticalPos == debugger.dbugLine)
 			{
-				cpu.GetRegs(regs);
-				logger.LogTrace($"CPU  {clock} {regs.PC:X8}");
+				cpu.GetRegs(logitRegs);
+				logger.LogTrace($"CPU  {clock} {logitRegs.PC:X8}");
 			}
 
 			//flag we are using a slot at HPOS
@@ -205,9 +205,12 @@ namespace Jammy.Core
 			//int waitSlots = 0;
 			while (ticks > 0)
 			{
-				cpu.GetRegs(regs);
 				
-				if (logit && clock.VerticalPos == debugger.dbugLine) logger.LogTrace($"SYNC {clock} {count} {regs.PC:X8}");
+				if (logit && clock.VerticalPos == debugger.dbugLine)
+				{
+					cpu.GetRegs(logitRegs);
+					logger.LogTrace($"SYNC {clock} {count} {logitRegs.PC:X8}");
+				}
 
 				//if DMA used this slot, then the CPU has to wait
 				//todo: we actually already loaded the value though in RunChipsetEmulationForRAM
