@@ -728,6 +728,10 @@ public class Agnus : IAgnus
 				//logger.LogTrace($"VHPOSR {clock} {value:X4} @ {insaddr:X6}");
 				vhpos = value;
 				break;
+
+			case ChipRegs.HHPOSR:
+				logger.LogTrace("Agnus Read from HHPOSR - unhandled");
+				break;
 		}
 
 		return value;

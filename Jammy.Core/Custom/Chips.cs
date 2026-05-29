@@ -166,6 +166,7 @@ namespace Jammy.Core.Custom
 			{
 				case ChipRegs.VPOSR:
 				case ChipRegs.VHPOSR:
+				case ChipRegs.HHPOSR:
 					return agnus.Read(insaddr, address);
 				case ChipRegs.CLXDAT:
 				case ChipRegs.STREQU:
