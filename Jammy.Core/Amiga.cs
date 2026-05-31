@@ -134,11 +134,10 @@ namespace Jammy.Core
 			nonEmulationCompleteEvent = new AutoResetEvent(false);
 		}
 
-		private bool takeASnapshot = false;
 		private bool logit = false;
 		public void DebugKeyUp(int key)
 		{
-			if ((VK)key == VK.VK_F11) takeASnapshot = true;
+			if ((VK)key == VK.VK_F11) if (emulationMode == EmulationMode.Running) SetEmulationMode(EmulationMode.Snapshot);
 			if ((VK)key == VK.VK_F10) logit = true;
 		}
 
@@ -424,13 +423,6 @@ namespace Jammy.Core
 			{
 				while (!requestExitEmulationMode)
 				{
-					if (takeASnapshot)
-					{
-						persistenceManager.Save($"state-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.json");
-						takeASnapshot = false;
-						logger.LogTrace("Snapshot Recorded!");
-					}
-
 					switch (emulationMode)
 					{
 						case EmulationMode.Running:
@@ -455,7 +447,16 @@ namespace Jammy.Core
 							RunEmulations();
 							emulationHasRun = true;
 							if (stopping)
+							{ 
 								emulationMode = EmulationMode.Stopped;
+								stepOutSp = 0xffffffff;
+							}
+							break;
+
+						case EmulationMode.Snapshot:
+							persistenceManager.Save($"state-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.json");
+							logger.LogTrace("Snapshot Recorded!");
+							emulationMode = EmulationMode.Running;
 							break;
 
 						default:

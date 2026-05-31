@@ -10,6 +10,7 @@ namespace Jammy.Core.Types.Types
 		Step,
 		Running,
 		Exit,
-		StepOut
+		StepOut,
+		Snapshot
 	}
 }
