@@ -19,6 +19,7 @@ namespace Jammy.Core.Audio.Windows
 		private readonly IChipsetClock clock;
 		private readonly IContendedMemoryMappedDevice memory;
 		private readonly IInterrupt interrupt;
+		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 		private readonly uint[] intr = { Interrupt.AUD0, Interrupt.AUD1, Interrupt.AUD2, Interrupt.AUD3 };
 		private readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
@@ -29,9 +30,11 @@ namespace Jammy.Core.Audio.Windows
 			this.clock = clock;
 			this.memory = (IContendedMemoryMappedDevice)memory;
 			this.interrupt = interrupt;
+			this.settings = settings.Value;
 			this.logger = logger;
 
 			InitMixer();
+			InitLowPassFilter();
 		}
 
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
@@ -393,6 +396,15 @@ namespace Jammy.Core.Audio.Windows
 			public byte[] xaudioCBuffer { get; set; }
 			public int xaudioCIndex { get; set; }
 			public int currentBuffer { get; set; }
+
+			//low-pass filter
+			public double i1 { get; set; }
+			public double i2 { get; set; }
+			public double o1 { get; set; }
+			public double o2 { get; set; }
+
+			//hardware filter
+			public double y1 { get; set; }
 		}
 
 		private readonly AmigaChannel[] channels = new[] { new AmigaChannel(), new AmigaChannel(), new AmigaChannel(), new AmigaChannel() };
@@ -400,6 +412,10 @@ namespace Jammy.Core.Audio.Windows
 		private const int SAMPLE_RATE = 31200;
 		private const int SAMPLE_SIZE = 2;//1 for 8bit, 2 for 16bit
 		private const int BUFFER_SIZE = 3120*SAMPLE_SIZE;
+
+		private const double LOW_PASS_FILTER_FREQUENCY = 3275.0;   // LED filter A500/A1200
+		private const double A500_FIXED_FILTER_FREQUENCY = 4900.0; // Hardware filter A500
+		private const double A1200_FIXED_FILTER_FREQUENCY = 28867.0; // Hardware filter A1200
 
 		private void InitMixer()
 		{
@@ -493,7 +509,7 @@ namespace Jammy.Core.Audio.Windows
 						} while (channels[i].xaudioVoice.State.BuffersQueued >= 2);
 					}
 
-					//LowPassFilter(i);
+					LowPassFilter(i);
 
 					Marshal.Copy(channels[i].xaudioCBuffer, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, channels[i].xaudioCBuffer.Length);
 					channels[i].xaudioCIndex = 0;
@@ -504,48 +520,76 @@ namespace Jammy.Core.Audio.Windows
 			}
 		}
 
+		private bool filter = false;
+		private bool raw = false;
+
+		private double a1, a2, a3, b1, b2;
+		private double a0;
+
+		private void InitLowPassFilter()
+		{
+			//low-pass filter A500/A1200
+			{
+			double sr = SAMPLE_RATE;
+			double f = LOW_PASS_FILTER_FREQUENCY;
+			double r = Math.Sqrt(2.0);
+			double c = 1.0 / Math.Tan(Math.PI * f / sr);
+
+			a1 = 1.0 / (1.0 + r * c + c * c);
+			a2 = 2.0 * a1;
+			a3 = a1;
+			b1 = 2.0 * (1.0 - c * c) * a1;
+			b2 = (1.0 - r * c + c * c) * a1;
+			}
+
+			//hardware filter A500/1200
+			{
+			double f = settings.ChipSet == ChipSet.AGA ? A1200_FIXED_FILTER_FREQUENCY : A500_FIXED_FILTER_FREQUENCY;
+			double dt = 1.0 / SAMPLE_RATE;
+			double rc = 1.0 / (2.0 * Math.PI * f);
+			a0 = dt / (rc + dt);
+			}
+		}
+
 		private void LowPassFilter(int i)
 		{
+			if (raw) return;
+
 			if (SAMPLE_SIZE == 2)
 			{
-				double o2, o1;
-				double i0, i1, i2;
+				double o1 = channels[i].o1;
+				double o2 = channels[i].o2;
+				double i1 = channels[i].i1;
+				double i2 = channels[i].i2;
 
-				o2 = o1 = 0.0;
-				i2 = i1 = 0.0;
-
-				//double sr = 3546895.0;
-				double sr = SAMPLE_RATE;
-				double r = Math.Sqrt(2.0);
-				//double f = 3275.0;
-				double f = 32000.0;
-				double c = 1.0 / Math.Tan(Math.PI * f / sr);
-				double a1, a2, a3;
-				double b1, b2;
-
-				a1 = 1.0 / (1.0 + r * c + c * c);
-				a2 = 2.0 * a1;
-				a3 = a1;
-				b1 = 2.0 * (1.0 - c * c) * a1;
-				b2 = (1.0 - r * c + c * c) * a1;
-
-				double[] outputs = new double[channels[i].xaudioCBuffer.Length / 2];
 				for (int s = 0; s < channels[i].xaudioCBuffer.Length; s += 2)
 				{
-					i0 = (channels[i].xaudioCBuffer[s] + (channels[i].xaudioCBuffer[s+1] << 8)) / 32768.0f;
+					double i0 = ((short)(channels[i].xaudioCBuffer[s] | (channels[i].xaudioCBuffer[s+1] << 8))) / 32768.0f;
 
-					outputs[s / 2] = a1 * i0 + a2 * i1 + a3 * i2 - b1 * o1 - b2 * o2;
-					o2 = o1;
-					i2 = i1;
-					i1 = i0;
+					//hardware filter
+					double output = i0 * a0 + channels[i].y1 * (1.0 - a0);
+					channels[i].y1 = output;
+
+					//low-pass filter
+					if (filter)
+					{ 
+						double noutput = a1 * output + a2 * i1 + a3 * i2 - b1 * o1 - b2 * o2;
+						o2 = o1;
+						o1 = noutput;
+						i2 = i1;
+						i1 = output;
+						output = noutput;
+					}
+
+					short v = (short)Math.Clamp(output * 32768.0, -32768.0, 32767.0);
+					channels[i].xaudioCBuffer[s] = (byte)v;
+					channels[i].xaudioCBuffer[s+1] = (byte)(v>>8);
 				}
 
-				for (int s = 0; s < outputs.Length; s++)
-				{
-					short v = (short)Math.Clamp(outputs[s]*32768.0, -32768.0, 32767.0);
-					channels[i].xaudioCBuffer[s * 2] = (byte)v;
-					channels[i].xaudioCBuffer[s * 2+1] = (byte)(v>>8);
-				}
+				channels[i].o1 = o1;
+				channels[i].o2 = o2;
+				channels[i].i1 = i1;
+				channels[i].i2 = i2;
 			}
 		}
 
