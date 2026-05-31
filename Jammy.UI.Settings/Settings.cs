@@ -519,7 +519,7 @@ namespace Jammy.UI.Settings
 			A600, 1MB, ECS, KS2.05
 			A1200, 2MB, AGA, KS3.1
 			A3000, 1MB+256MB, ECS, KS3.1
-			A4000, 2MB+16MB+128MB, AGA, KS3.1
+			A4000, 2MB+16MB+256MB, AGA, KS3.1
 			*/
 			switch (cbQuickStart.SelectedIndex)
 			{
@@ -528,20 +528,25 @@ namespace Jammy.UI.Settings
 					btnSaveConfig.Enabled = true;
 					break;
 
+				//A500
 				case 1:
 					currentSettings = new EmulationSettings();
 					currentSettings.ChipMemory = 0.5f;
 					currentSettings.AddressBits = 24;
 					currentSettings.TrapdoorMemory = 0.5f;
+					currentSettings.ChipSet = ChipSet.OCS;
 					currentSettings.Audio = AudioDriver.XAudio2;
-					currentSettings.DF0 = "workbench1.3.adf";
 					currentSettings.FloppyCount = 1;
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick13.rom";
+					currentSettings.CPU = CPUType.Moira;
+					currentSettings.Sku = CPUSku.MC68000;
+					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
 
+				//A500+
 				case 2:
 					currentSettings = new EmulationSettings();
 					currentSettings.ChipMemory = 1.0f;
@@ -549,14 +554,17 @@ namespace Jammy.UI.Settings
 					currentSettings.TrapdoorMemory = 1.0f;
 					currentSettings.ChipSet = ChipSet.ECS;
 					currentSettings.Audio = AudioDriver.XAudio2;
-					currentSettings.DF0 = "workbench2.04.adf";
 					currentSettings.FloppyCount = 1;
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick204.rom";
+					currentSettings.CPU = CPUType.Moira;
+					currentSettings.Sku = CPUSku.MC68000;
+					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
 
+				//A600
 				case 3:
 					currentSettings = new EmulationSettings();
 					currentSettings.ChipMemory = 1.0f;
@@ -564,33 +572,37 @@ namespace Jammy.UI.Settings
 					currentSettings.ChipSet = ChipSet.ECS;
 					currentSettings.DiskController = DiskController.A600_A1200;
 					currentSettings.Audio = AudioDriver.XAudio2;
-					currentSettings.DF0 = "workbench2.04.adf";
 					currentSettings.FloppyCount = 1;
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick205.rom";
 					currentSettings.HardDiskCount = 0;
+					currentSettings.CPU = CPUType.Moira;
+					currentSettings.Sku = CPUSku.MC68000;
+					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
 
+				//A1200
 				case 4:
 					currentSettings = new EmulationSettings();
-					currentSettings.CPU = CPUType.Musashi;
-					currentSettings.Sku = CPUSku.MC68EC020;
 					currentSettings.ChipMemory = 2.0f;
 					currentSettings.AddressBits = 24;
 					currentSettings.ChipSet = ChipSet.AGA;
 					currentSettings.DiskController = DiskController.A600_A1200;
 					currentSettings.Audio = AudioDriver.XAudio2;
-					currentSettings.DF0 = "workbench3.1.adf";
 					currentSettings.FloppyCount = 1;
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick31_a1200.rom";
 					currentSettings.HardDiskCount = 0;
+					currentSettings.CPU = CPUType.Moira;
+					currentSettings.Sku = CPUSku.MC68EC020;
+					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
 
+				//A3000
 				case 5:
 					currentSettings = new EmulationSettings();
 					currentSettings.CPU = CPUType.Musashi;
@@ -602,15 +614,16 @@ namespace Jammy.UI.Settings
 					currentSettings.ChipSet = ChipSet.ECS;
 					currentSettings.DiskController = DiskController.A3000;
 					currentSettings.Audio = AudioDriver.XAudio2;
-					currentSettings.DF0 = "workbench3.1.adf";
 					currentSettings.FloppyCount = 1;
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick31_a3000.rom";
 					currentSettings.HardDiskCount = 0;
+					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
 
+				//A4000
 				case 6:
 					currentSettings = new EmulationSettings();
 					currentSettings.CPU = CPUType.Musashi;
@@ -622,11 +635,11 @@ namespace Jammy.UI.Settings
 					currentSettings.ChipSet = ChipSet.AGA;
 					currentSettings.DiskController = DiskController.A4000;
 					currentSettings.Audio = AudioDriver.XAudio2;
-					currentSettings.DF0 = "workbench3.1.adf";
 					currentSettings.FloppyCount = 1;
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick31_a4000.rom";
 					currentSettings.HardDiskCount = 0;
+					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();
 					btnSaveConfig.Enabled = false;
 					break;
