@@ -5,8 +5,6 @@ using Jammy.Core.CPU.CSharp;
 using Jammy.Core.CPU.Moira;
 using Jammy.Core.CPU.Musashi;
 using Jammy.Core.CPU.Musashi.CSharp;
-using Jammy.Core.CPU.Musashi.MC68020;
-using Jammy.Core.CPU.Musashi.MC68030;
 using Jammy.Core.Custom;
 using Jammy.Core.Custom.Audio;
 using Jammy.Core.Custom.CIA;

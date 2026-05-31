@@ -14,15 +14,63 @@ using Newtonsoft.Json.Linq;
 
 namespace Jammy.Core.CPU.Musashi
 {
-	public class MusashiCPU : ICPU, IMusashiCPU, IStatePersister
+	public enum MusashiCPUType
+	{
+		M68K_CPU_TYPE_INVALID,
+		M68K_CPU_TYPE_68000,
+		M68K_CPU_TYPE_68010,
+		M68K_CPU_TYPE_68EC020,
+		M68K_CPU_TYPE_68020,
+		M68K_CPU_TYPE_68EC030,
+		M68K_CPU_TYPE_68030,
+		M68K_CPU_TYPE_68EC040,
+		M68K_CPU_TYPE_68LC040,
+		M68K_CPU_TYPE_68040,
+		M68K_CPU_TYPE_SCC68070
+	};
+
+	public class MusashiCPU : MusashiCPUInternal
+	{	
+		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ITracer tracer, ILogger<MusashiCPU> logger) :
+			base(MusashiCPUType.M68K_CPU_TYPE_68000, interrupt, memoryMapper, breakpoints, tracer, logger)
+		{
+		}
+	}
+
+	public class Musashi68EC020CPU : MusashiCPUInternal
+	{
+		public Musashi68EC020CPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ITracer tracer, ILogger<MusashiCPU> logger) :
+			base(MusashiCPUType.M68K_CPU_TYPE_68EC020, interrupt, memoryMapper, breakpoints, tracer, logger)
+		{
+		}
+	}
+
+	public class Musashi68030CPU : MusashiCPUInternal
+	{
+		public Musashi68030CPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ITracer tracer, ILogger<MusashiCPU> logger) :
+			base(MusashiCPUType.M68K_CPU_TYPE_68030, interrupt, memoryMapper, breakpoints, tracer, logger)
+		{
+		}
+	}
+
+	public class Musashi68040CPU : MusashiCPUInternal
+	{
+		public Musashi68040CPU(IInterrupt interrupt, IMemoryMapper memoryMapper, IBreakpointCollection breakpoints, ITracer tracer, ILogger<MusashiCPU> logger) :
+			base(MusashiCPUType.M68K_CPU_TYPE_68040, interrupt, memoryMapper, breakpoints, tracer, logger)
+		{
+		}
+	}
+
+	public class MusashiCPUInternal : ICPU, IMusashiCPU, IStatePersister
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IMemoryMapper memoryMapper;
 		private readonly IBreakpointCollection breakpoints;
 		private readonly ITracer tracer;
+		private readonly MusashiCPUType cpuType;
 
 		[DllImport("Musashi.dll")]
-		static extern void Musashi_init(IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
+		static extern void Musashi_init(uint cputype, IntPtr r32, IntPtr r16, IntPtr r8, IntPtr w32, IntPtr w16, IntPtr w8);
 
 		[DllImport("Musashi.dll")]
 		static extern uint Musashi_execute(ref int cycles);
@@ -39,7 +87,6 @@ namespace Jammy.Core.CPU.Musashi
 		[DllImport("Musashi.dll")]
 		static extern void Musashi_set_irq(uint levels);
 
-
 		private Musashi_Reader r32;
 		private Musashi_Reader r16;
 		private Musashi_Reader r8;
@@ -47,15 +94,16 @@ namespace Jammy.Core.CPU.Musashi
 		private Musashi_Writer w16;
 		private Musashi_Writer w8;
 
-		public MusashiCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
+		public MusashiCPUInternal(MusashiCPUType cpuType, IInterrupt interrupt, IMemoryMapper memoryMapper,
 			IBreakpointCollection breakpoints, ITracer tracer, ILogger<MusashiCPU> logger)
 		{
+			this.cpuType = cpuType;
 			this.interrupt = interrupt;
 			this.memoryMapper = memoryMapper;
 			this.breakpoints = breakpoints;
 			this.tracer = tracer;
 
-			logger.LogTrace("Starting Musashi C 68000 CPU");
+			logger.LogTrace($"Starting Musashi C {cpuType.ToString().Substring(14)} CPU");
 
 			r32 = new Musashi_Reader(Musashi_read32);
 			r16 = new Musashi_Reader(Musashi_read16);
@@ -68,6 +116,7 @@ namespace Jammy.Core.CPU.Musashi
 		public void Initialise()
 		{
 			Musashi_init(
+				(uint)cpuType,
 				Marshal.GetFunctionPointerForDelegate(r32),
 				Marshal.GetFunctionPointerForDelegate(r16),
 				Marshal.GetFunctionPointerForDelegate(r8),
