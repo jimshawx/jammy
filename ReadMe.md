@@ -1,6 +1,7 @@
 # Jammy - an Amiga emulator written in C#
 
 
+
 [Jammy Releases](https://github.com/jimshawx/jammy/releases)
 
 ## Jim's Amiga Emulator
@@ -28,12 +29,12 @@ So here is my humble attempt at an Amiga emulation.
   * All kinds of RAM expansions (Chip, Trapdoor, CPU slot, Zorro II/III)
   * Battery-backed clock
   * VT100 Serial terminal
-
 * There's a debugger and disassembler of sorts
 * There's a Javascript and Lua API to enable smart code to run on breakpoints
 * There's a web API so you can write your own UIs
 * There's some automated code analysis to produce good disassemblies
 * The disassemblies can be stored in a Sqlite database
+* If you have a CPU which supports AVX2 your experience will be significantly improved
 * There's a Linux version!
 * There's now a packaged release to try
 * Completely new emulation not based on WinUAE
@@ -41,7 +42,7 @@ So here is my humble attempt at an Amiga emulation.
 
 ### The not so good stuff
 
-* There are lot of problems with DMA timing
+* There are still quitw a lot of problems with DMA timing
 * More efforts need to be made to get closer to cycle exact
 * CD32 CDROM and NVRAM not working
 * Emulation of CPUs running faster than the standard 7MHz is poor
@@ -57,7 +58,7 @@ In an effort to fix this, I have ported Musashi and the Musashi CPU generator to
 
 The C and C# Musashi 68030/040 options support the 68881 and MMU instructions.
 
-The audio is pretty good, if you run with it switched on it will lock the emulation performance down so the sample rate is exact. With it switched off, everything is still emulated but there's no sound output. If the emulation is too slow, the audio will be choppy. There's some high-frequency hiss I'd like to get rid of.
+The audio is pretty good, if you run with it switched on it will lock the emulation performance down so the sample rate is exact. With it switched off, everything is still emulated but there's no sound output. If the emulation is too slow, the audio will be choppy.
 
 It's been a lot of fun writing this. In almost all cases I have worked from publicly available documents - the Hardware Reference Manual, online bits and pieces about future Amigas, the ATA mode 0 spec, the datasheets for the 68K series and the CIAs and clock chips. I don't have a real Amiga to hand, the trusty A500 my gran bought me in 1989 is trapped in storage somewhere in Australia. I booted it up a couple of years ago and it was still working then.
 
@@ -68,6 +69,8 @@ Also thanks to Petter Schau, Torsten Enderling and all the others for [WinFellow
 Thanks to Karl Stenerud for the amazing [Musashi](https://github.com/kstenerud/Musashi) CPU emulation package.
 Thanks to Dirk W. Hoffmann for the superb [Moira](https://dirkwhoffmann.github.io/Moira/) CPU emulation package, and the incredibly useful [vAmiga Test Suite](https://github.com/dirkwhoffmann/vAmigaTS).
 Thanks to Heikki Orsila and Andre Rodrigues de la Rocha for [xDMS](https://gitlab.com/heikkiorsila/xdms).
+
+Thanks to everyone who has downloaded the releases to give them a try.
 
 Contributions, PRs and comments welcome!
 
