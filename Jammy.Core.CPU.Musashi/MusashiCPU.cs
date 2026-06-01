@@ -133,6 +133,10 @@ namespace Jammy.Core.CPU.Musashi
 			ushort interruptLevel = interrupt.GetInterruptLevel();
 			Musashi_set_irq(interruptLevel);
 		}
+		
+		//tracer
+		private readonly Regs traceRegs = new Regs();
+		//tracer
 
 		private uint instructionStartPC = 0;
 		private int cycles=0;
@@ -146,67 +150,24 @@ namespace Jammy.Core.CPU.Musashi
 		{
 			CheckInterrupt();
 
-			/*
-
 			//tracer
-			var regs = GetRegs();
-			tracer.TraceAsm(regs.PC, regs);
-			ushort ins = (ushort)memoryMapper.Read(0, regs.PC, Size.Word);
-			//bsr, bra, jmp, jsr, rts, rte
-			uint ipc = regs.PC; regs.PC += 2;
+			ushort ins = 0;
+			uint ipc = 0;
+			if (settings.Tracer.IsEnabled())
+			{
+				GetRegs(traceRegs);
+				tracer.TraceAsm(traceRegs);
+				ins = ((IDebugMemoryMapper)memoryMapper).UnsafeRead16(traceRegs.PC);
+				ipc = traceRegs.PC; traceRegs.PC += 2;
+			}
 			//tracer
-
-			*/
 
 			uint pc = Musashi_execute(ref cycles);
 
-			/*
-
 			//tracer
-			if ((ins & 0xff00) == 0x6100)
-			{
-				uint disp = (uint)(sbyte)ins & 0xff;
-				if (disp == 0) { regs.PC += 2; }
-				else if (disp == 0xff) { regs.PC += 4; }
-
-				tracer.Trace("bsr", ipc, regs); //bsr
-				tracer.Trace(pc); //bsr
-			}
-			else if ((ins & 0xf000) == 0x6000)
-			{
-				uint inssize = 2;
-				uint disp = (uint)(sbyte)ins & 0xff;
-				if (disp == 0) { inssize += 2; regs.PC += 2; }
-				else if (disp == 0xff) { inssize+=4; regs.PC += 4;}
-				if (pc != ipc+inssize)
-				{
-					tracer.Trace("bra", ipc, regs); //bcc
-					tracer.Trace(pc); //bsr
-				}
-			}
-			else if ((ins & 0xffc0) == 0x4e80)
-			{
-				tracer.Trace("jsr", ipc, regs);//jsr
-				tracer.Trace(pc); //bsr
-			}
-			else if ((ins & 0xffc0) == 0x4ec0)
-			{
-				tracer.Trace("jmp", ipc, regs);//jmp
-				tracer.Trace(pc); //bsr
-			}
-			else if (ins == 0x4e75)
-			{
-				tracer.Trace("rts", ipc, regs);//rts
-				tracer.Trace(pc); //bsr
-			}
-			else if (ins == 0x4e73)
-			{
-				tracer.Trace("rte", ipc, regs);//rte
-				tracer.Trace(pc); //bsr
-			}
+			if (settings.Tracer.IsEnabled())
+				tracer.TracePost(traceRegs, pc, ipc, ins);
 			//tracer
-			
-			*/
 
 			instructionStartPC = pc;
 
