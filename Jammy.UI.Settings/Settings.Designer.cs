@@ -89,13 +89,13 @@ namespace Jammy.UI.Settings
 			btnSaveAsConfig = new System.Windows.Forms.Button();
 			btnSaveConfig = new System.Windows.Forms.Button();
 			panel6 = new System.Windows.Forms.Panel();
-			groupBox8 = new System.Windows.Forms.GroupBox();
-			rbSynchronous = new System.Windows.Forms.RadioButton();
-			rbImmediate = new System.Windows.Forms.RadioButton();
 			groupBox6 = new System.Windows.Forms.GroupBox();
 			cbTrace = new System.Windows.Forms.CheckBox();
 			cbDebugging = new System.Windows.Forms.CheckBox();
 			cbAudio = new System.Windows.Forms.CheckBox();
+			groupBox8 = new System.Windows.Forms.GroupBox();
+			rbSynchronous = new System.Windows.Forms.RadioButton();
+			rbImmediate = new System.Windows.Forms.RadioButton();
 			panel7 = new System.Windows.Forms.Panel();
 			groupBox7 = new System.Windows.Forms.GroupBox();
 			btnDH1Eject = new System.Windows.Forms.Button();
@@ -119,8 +119,8 @@ namespace Jammy.UI.Settings
 			groupBox4.SuspendLayout();
 			panel5.SuspendLayout();
 			panel6.SuspendLayout();
-			groupBox8.SuspendLayout();
 			groupBox6.SuspendLayout();
+			groupBox8.SuspendLayout();
 			panel7.SuspendLayout();
 			groupBox7.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)nudHardDiskCount).BeginInit();
@@ -168,7 +168,6 @@ namespace Jammy.UI.Settings
 			rbNative.Name = "rbNative";
 			rbNative.Size = new System.Drawing.Size(114, 36);
 			rbNative.TabIndex = 4;
-			rbNative.TabStop = true;
 			rbNative.Text = "Native";
 			rbNative.UseVisualStyleBackColor = true;
 			rbNative.CheckedChanged += rbNative_CheckedChanged;
@@ -181,7 +180,6 @@ namespace Jammy.UI.Settings
 			rbMusashi.Name = "rbMusashi";
 			rbMusashi.Size = new System.Drawing.Size(133, 36);
 			rbMusashi.TabIndex = 5;
-			rbMusashi.TabStop = true;
 			rbMusashi.Text = "Musashi";
 			rbMusashi.UseVisualStyleBackColor = true;
 			// 
@@ -220,13 +218,13 @@ namespace Jammy.UI.Settings
 			rbMusashiCS.Name = "rbMusashiCS";
 			rbMusashiCS.Size = new System.Drawing.Size(169, 36);
 			rbMusashiCS.TabIndex = 6;
-			rbMusashiCS.TabStop = true;
 			rbMusashiCS.Text = "Musashi C#";
 			rbMusashiCS.UseVisualStyleBackColor = true;
 			// 
 			// rbMoira
 			// 
 			rbMoira.AutoSize = true;
+			rbMoira.Checked = true;
 			rbMoira.Location = new System.Drawing.Point(247, 153);
 			rbMoira.Margin = new System.Windows.Forms.Padding(6);
 			rbMoira.Name = "rbMoira";
@@ -265,6 +263,7 @@ namespace Jammy.UI.Settings
 			// rbPAL
 			// 
 			rbPAL.AutoSize = true;
+			rbPAL.Checked = true;
 			rbPAL.Location = new System.Drawing.Point(264, 28);
 			rbPAL.Margin = new System.Windows.Forms.Padding(6);
 			rbPAL.Name = "rbPAL";
@@ -282,7 +281,6 @@ namespace Jammy.UI.Settings
 			rbNTSC.Name = "rbNTSC";
 			rbNTSC.Size = new System.Drawing.Size(104, 36);
 			rbNTSC.TabIndex = 5;
-			rbNTSC.TabStop = true;
 			rbNTSC.Text = "NTSC";
 			rbNTSC.UseVisualStyleBackColor = true;
 			// 
@@ -792,41 +790,6 @@ namespace Jammy.UI.Settings
 			panel6.Size = new System.Drawing.Size(419, 111);
 			panel6.TabIndex = 22;
 			// 
-			// groupBox8
-			// 
-			groupBox8.Controls.Add(rbSynchronous);
-			groupBox8.Controls.Add(rbImmediate);
-			groupBox8.Dock = System.Windows.Forms.DockStyle.Fill;
-			groupBox8.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox8.Location = new System.Drawing.Point(0, 0);
-			groupBox8.Name = "groupBox8";
-			groupBox8.Size = new System.Drawing.Size(376, 111);
-			groupBox8.TabIndex = 1;
-			groupBox8.TabStop = false;
-			groupBox8.Text = "Blitter";
-			// 
-			// rbSynchronous
-			// 
-			rbSynchronous.AutoSize = true;
-			rbSynchronous.Checked = true;
-			rbSynchronous.Location = new System.Drawing.Point(186, 43);
-			rbSynchronous.Name = "rbSynchronous";
-			rbSynchronous.Size = new System.Drawing.Size(182, 36);
-			rbSynchronous.TabIndex = 1;
-			rbSynchronous.TabStop = true;
-			rbSynchronous.Text = "Synchronous";
-			rbSynchronous.UseVisualStyleBackColor = true;
-			// 
-			// rbImmediate
-			// 
-			rbImmediate.AutoSize = true;
-			rbImmediate.Location = new System.Drawing.Point(21, 43);
-			rbImmediate.Name = "rbImmediate";
-			rbImmediate.Size = new System.Drawing.Size(159, 36);
-			rbImmediate.TabIndex = 0;
-			rbImmediate.Text = "Immediate";
-			rbImmediate.UseVisualStyleBackColor = true;
-			// 
 			// groupBox6
 			// 
 			groupBox6.Controls.Add(cbTrace);
@@ -874,6 +837,41 @@ namespace Jammy.UI.Settings
 			cbAudio.TabIndex = 0;
 			cbAudio.Text = "Audio";
 			cbAudio.UseVisualStyleBackColor = true;
+			// 
+			// groupBox8
+			// 
+			groupBox8.Controls.Add(rbSynchronous);
+			groupBox8.Controls.Add(rbImmediate);
+			groupBox8.Dock = System.Windows.Forms.DockStyle.Fill;
+			groupBox8.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox8.Location = new System.Drawing.Point(0, 0);
+			groupBox8.Name = "groupBox8";
+			groupBox8.Size = new System.Drawing.Size(376, 111);
+			groupBox8.TabIndex = 1;
+			groupBox8.TabStop = false;
+			groupBox8.Text = "Blitter";
+			// 
+			// rbSynchronous
+			// 
+			rbSynchronous.AutoSize = true;
+			rbSynchronous.Location = new System.Drawing.Point(186, 43);
+			rbSynchronous.Name = "rbSynchronous";
+			rbSynchronous.Size = new System.Drawing.Size(182, 36);
+			rbSynchronous.TabIndex = 1;
+			rbSynchronous.Text = "Synchronous";
+			rbSynchronous.UseVisualStyleBackColor = true;
+			// 
+			// rbImmediate
+			// 
+			rbImmediate.AutoSize = true;
+			rbImmediate.Checked = true;
+			rbImmediate.Location = new System.Drawing.Point(21, 43);
+			rbImmediate.Name = "rbImmediate";
+			rbImmediate.Size = new System.Drawing.Size(159, 36);
+			rbImmediate.TabIndex = 0;
+			rbImmediate.TabStop = true;
+			rbImmediate.Text = "Immediate";
+			rbImmediate.UseVisualStyleBackColor = true;
 			// 
 			// panel7
 			// 
@@ -1037,10 +1035,10 @@ namespace Jammy.UI.Settings
 			groupBox4.PerformLayout();
 			panel5.ResumeLayout(false);
 			panel6.ResumeLayout(false);
-			groupBox8.ResumeLayout(false);
-			groupBox8.PerformLayout();
 			groupBox6.ResumeLayout(false);
 			groupBox6.PerformLayout();
+			groupBox8.ResumeLayout(false);
+			groupBox8.PerformLayout();
 			panel7.ResumeLayout(false);
 			groupBox7.ResumeLayout(false);
 			groupBox7.PerformLayout();
