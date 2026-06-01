@@ -45,7 +45,7 @@ public class ChipsetClock : IChipsetClock
 
 	public ChipsetClockState ClockState { get; private set; }
 
-	private const uint DENISE_HORZ_OFFSET = 2;
+	private const uint DENISE_HORZ_OFFSET = 0;
 
 	public void Emulate()
 	{
