@@ -32,7 +32,7 @@ jobs:
 
       # Publish Windows binary (Jammy.Main)
       - name: Publish Windows binary
-        run: dotnet publish Jammy.Main -c Release -r win-x64 -o out/win --self-contained true /p:EnableWindowsTargeting=true
+        run: dotnet publish Jammy.Main -c Release -r win-x64 -o out/win /p:EnableWindowsTargeting=true
 
       # Zip Windows binary
       - name: Zip Windows binary
@@ -50,7 +50,7 @@ jobs:
 
       # Publish Linux binary (Jammy.Main.Linux)
       - name: Publish Linux binary
-        run: dotnet publish Jammy.Main.Linux -c Release -r linux-x64 -o out/linux --self-contained true
+        run: dotnet publish Jammy.Main.Linux -c Release -r linux-x64 -o out/linux
 
       # Zip Linux binary
       - name: Zip Linux binary
