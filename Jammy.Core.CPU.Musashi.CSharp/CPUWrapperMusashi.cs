@@ -58,21 +58,38 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 			ushort interruptLevel = interrupt.GetInterruptLevel();
 			M68KCPU.m68k_set_irq(interruptLevel);
 		}
+		
+		//tracer
+		private readonly Regs traceRegs = new Regs();
+		//tracer
 
 		private int cycles=0;
 
-		private Regs tRegs = new();
 		public void Emulate()
 		{
 			CheckInterrupt();
 
+			//tracer
+			ushort ins = 0;
+			uint ipc = 0;
 			if (settings.Tracer.IsEnabled())
-				tracer.TraceAsm(GetRegs(tRegs));
+			{
+				GetRegs(traceRegs);
+				tracer.TraceAsm(traceRegs);
+				ins = ((IDebugMemoryMapper)memoryMapper).UnsafeRead16(traceRegs.PC);
+				ipc = traceRegs.PC; traceRegs.PC += 2;
+			}
+			//tracer
 
 			cycles = M68KCPU.m68k_execute(1);
 			
 			uint pc = M68KCPU.m68k_get_reg(null, M68KCPU.m68k_register_t.M68K_REG_PC);
 			M68KCPU.SetInstructionStartPC(pc);
+
+			//tracer
+			if (settings.Tracer.IsEnabled())
+				tracer.TracePost(traceRegs, pc, ipc, ins);
+			//tracer
 
 			breakpoints.ExecutionBreakpoint(pc);
 		}
