@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Jammy.Database.Types\Jammy.Database.Types.csproj" />
+    <ProjectReference Include="..\Jammy.Datebase.Interface\Jammy.Datebase.Interface.csproj" />
     <ProjectReference Include="..\Jammy.Types\Jammy.Types.csproj" />
   </ItemGroup>
 

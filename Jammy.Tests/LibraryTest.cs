@@ -1,27 +1,29 @@
-﻿using System;
-using System.IO;
-using Jammy.Core;
+﻿using Jammy.Core;
+using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Memory;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Types;
+using Jammy.Database.Types;
+using Jammy.Datebase.Interface;
 using Jammy.Debugger;
 using Jammy.Disassembler;
+using Jammy.Disassembler.Analysers;
+using Jammy.Disassembler.TypeMapper;
+using Jammy.Extensions.Extensions;
+using Jammy.Interface;
+using Jammy.Types.Kickstart;
+using Jammy.Types.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework;
-using Jammy.Interface;
-using Jammy.Extensions.Extensions;
-using System.Linq;
-using Jammy.Core.Types.Types;
-using System.Collections.Generic;
-using Jammy.Types.Kickstart;
-using NUnit.Framework.Legacy;
-using Jammy.Core.CPU.Musashi.CSharp;
-using Jammy.Disassembler.Analysers;
-using Jammy.Core.Memory;
-using Jammy.Types.Options;
 using Moq;
-using Jammy.Disassembler.TypeMapper;
+using NUnit.Framework;
+using NUnit.Framework.Legacy;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -44,7 +46,7 @@ namespace Jammy.Tests
 		public void LibraryTestInit()
 		{
 			var configuration = new ConfigurationBuilder()
-				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.SetBasePath(AppContext.BaseDirectory)
 				.AddJsonFile("appsettings.json", false)
 				.Build();
 
@@ -87,6 +89,11 @@ namespace Jammy.Tests
 				.AddSingleton<IExtendedKickstartROM, ExtendedKickstartROM>()
 				.AddSingleton<IObjectMapper, ObjectMapper>()
 				.AddSingleton<IMemoryManager, MemoryManager>()
+				.AddSingleton(x => new Mock<ILabelDao>().Setup(y => y.Search(It.IsAny<LabelSearch>()), () => []).Object)
+				.AddSingleton(x => new Mock<IHeaderDao>().Setup(y => y.Search(It.IsAny<HeaderSearch>()), () => []).Object)
+				.AddSingleton(x => new Mock<ICommentDao>().Setup(y => y.Search(It.IsAny<CommentSearch>()), () => []).Object)
+				.AddSingleton(x => new Mock<IDatabaseDao>().Setup(y => y.Search(It.IsAny<DatabaseSearch>()), () => []).Object)
+				.AddSingleton(x => new Mock<IMemTypeDao>().Setup(y => y.Search(It.IsAny<MemTypeSearch>()), () => []).Object)
 
 				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation030").Bind(o))
 				.BuildServiceProvider();
@@ -330,7 +337,7 @@ namespace Jammy.Tests
 			if (romTag == null)
 			{
 				var ranges = new DisassemblyRanges();
-				ranges.AddRange(new List<AddressRange> { new AddressRange(loadAddress, (ulong)librarySize) });
+				ranges.AddRange(new List<Core.Types.Types.AddressRange> { new Core.Types.Types.AddressRange(loadAddress, (ulong)librarySize) });
 				var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true });
 				logger.LogTrace(Environment.NewLine + dis);
 
@@ -377,7 +384,7 @@ namespace Jammy.Tests
 
 				//disassemble
 				var ranges = new DisassemblyRanges();
-				ranges.AddRange(new List<AddressRange> { new AddressRange(loadAddress, (ulong)(libraryBase - loadAddress)) });
+				ranges.AddRange(new List<Core.Types.Types.AddressRange> { new Core.Types.Types.AddressRange(loadAddress, (ulong)(libraryBase - loadAddress)) });
 				var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true });
 				logger.LogTrace(Environment.NewLine + dis);
 

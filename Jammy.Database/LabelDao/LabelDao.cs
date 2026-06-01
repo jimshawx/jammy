@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Jammy.Database.Core;
 using Jammy.Database.Types;
+using Jammy.Datebase.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
 
@@ -10,9 +11,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Database.LabelDao
 {
-	public interface ILabelDao : IDbDao<Label, LabelSearch>
-	{
-	}
 
 	public class LabelDao : BaseDbDao<Label, LabelSearch>, ILabelDao
 	{

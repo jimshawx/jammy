@@ -3,12 +3,15 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Database.Types;
+using Jammy.Datebase.Interface;
 using Jammy.Debugger;
 using Jammy.Disassembler;
 using Jammy.Disassembler.Analysers;
 using Jammy.Disassembler.TypeMapper;
 using Jammy.Extensions.Extensions;
 using Jammy.Interface;
+using Jammy.Types;
 using Jammy.Types.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,7 +43,7 @@ namespace Jammy.Tests
 		public void DisassemblerTestInit()
 		{
 			var configuration = new ConfigurationBuilder()
-				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.SetBasePath(AppContext.BaseDirectory)
 				.AddJsonFile("appsettings.json", false)
 				.Build();
 
@@ -76,6 +79,11 @@ namespace Jammy.Tests
 				.AddSingleton<IDebugMemoryMapper>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryMappedDevice>(x => x.GetRequiredService<TestMemory>())
 				.AddSingleton<IMemoryManager, MemoryManager>()
+				.AddSingleton(x => new Mock<ILabelDao>().Setup(y => y.Search(It.IsAny<LabelSearch>()), () => []).Object)
+				.AddSingleton(x => new Mock<IHeaderDao>().Setup(y => y.Search(It.IsAny<HeaderSearch>()), () => []).Object)
+				.AddSingleton(x => new Mock<ICommentDao>().Setup(y => y.Search(It.IsAny<CommentSearch>()), () => []).Object)
+				.AddSingleton(x => new Mock<IDatabaseDao>().Setup(y => y.Search(It.IsAny<DatabaseSearch>()), () => []).Object)
+				.AddSingleton(x => new Mock<IMemTypeDao>().Setup(y => y.Search(It.IsAny<MemTypeSearch>()), () => []).Object)
 				.Configure<EmulationSettings>(o => configuration.GetSection("DisassemblerTest").Bind(o))
 
 				.BuildServiceProvider();
@@ -99,7 +107,7 @@ namespace Jammy.Tests
 			int librarySize = LoadLibrary(0x10000, libName);
 
 			var ranges = new DisassemblyRanges();
-			ranges.AddRange(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) });
+			ranges.AddRange(new List<Core.Types.Types.AddressRange> { new Core.Types.Types.AddressRange(0x10000, (ulong)librarySize) });
 			var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true, IncludeBytes = true });
 			logger.LogTrace(Environment.NewLine + dis);
 
@@ -193,7 +201,7 @@ namespace Jammy.Tests
 			int librarySize = LoadLibrary(0x10000, libName);
 
 			var ranges = new DisassemblyRanges();
-			ranges.AddRange(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) });
+			ranges.AddRange(new List<Core.Types.Types.AddressRange> { new Core.Types.Types.AddressRange(0x10000, (ulong)librarySize) });
 			var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true, UpperCase = true});
 			logger.LogTrace(Environment.NewLine + dis);
 
@@ -208,7 +216,7 @@ namespace Jammy.Tests
 			int librarySize = LoadExe(0x10000, libName);
 
 			var ranges = new DisassemblyRanges();
-			ranges.AddRange(new List<AddressRange> { new AddressRange(0x10000, (ulong)librarySize) });
+			ranges.AddRange(new List<Core.Types.Types.AddressRange> { new Core.Types.Types.AddressRange(0x10000, (ulong)librarySize) });
 			var dis = disassembly.DisassembleTxt(ranges, new DisassemblyOptions { IncludeComments = true, UpperCase = true, IncludeBytes = true });
 			logger.LogTrace(Environment.NewLine + dis);
 

@@ -65,7 +65,7 @@ namespace Jammy.Tests
 			IServiceCollection serviceCollection;
 
 			var configuration = new ConfigurationBuilder()
-				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.SetBasePath(AppContext.BaseDirectory)
 				.AddJsonFile("appsettings.json", false)
 				.Build();
 
@@ -166,8 +166,8 @@ namespace Jammy.Tests
 			logger = serviceProvider.GetRequiredService<ILogger<CPUTest>>();
 
 			//which CPUs are we going to test?
-			cpu0 = (CPUTestRig)cpus[0];
-			cpu1 = (CPUTestRig)cpus[4];
+			cpu0 = (CPUTestRig)cpus[5];
+			cpu1 = (CPUTestRig)cpus[6];
 
 			cpu0.Initialise();
 			cpu1.Initialise();

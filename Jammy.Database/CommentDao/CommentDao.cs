@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Jammy.Database.Core;
 using Jammy.Database.Types;
+using Jammy.Datebase.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
 
@@ -10,10 +11,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Database.CommentDao
 {
-	public interface ICommentDao : IDbDao<Comment, CommentSearch>
-	{
-	}
-
 	public class CommentDao : BaseDbDao<Comment, CommentSearch>, ICommentDao
 	{
 		private const string tableName = "comment";

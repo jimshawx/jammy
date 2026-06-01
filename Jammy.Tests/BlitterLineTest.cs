@@ -122,7 +122,7 @@ namespace Jammy.Tests
 		public void CPUTestInit()
 		{
 			var configuration = new ConfigurationBuilder()
-				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.SetBasePath(AppContext.BaseDirectory)
 				.AddJsonFile("appsettings.json", false)
 				.Build();
 

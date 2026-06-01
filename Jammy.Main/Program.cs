@@ -25,6 +25,8 @@ using Jammy.Database.DatabaseDao;
 using Jammy.Database.HeaderDao;
 using Jammy.Database.LabelDao;
 using Jammy.Database.MemTypeDao;
+using Jammy.Database.Types;
+using Jammy.Datebase.Interface;
 using Jammy.Debugger;
 using Jammy.Debugger.Interceptors;
 using Jammy.Disassembler;

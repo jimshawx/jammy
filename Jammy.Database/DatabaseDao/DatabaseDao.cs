@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Jammy.Database.Core;
 using Jammy.Database.Types;
+using Jammy.Datebase.Interface;
 using Microsoft.Extensions.Logging;
 
 /*
@@ -9,9 +10,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Database.DatabaseDao
 {
-	public interface IDatabaseDao : IDao<Types.Database, DatabaseSearch>
-	{
-	}
 
 	public class DatabaseDao : BaseDao<Types.Database, DatabaseSearch>, IDatabaseDao
 	{

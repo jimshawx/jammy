@@ -1,10 +1,8 @@
-﻿using Jammy.Database.Types;
-
-/*
+﻿/*
 	Copyright 2026 James Shaw. All Rights Reserved.
 */
 
-namespace Jammy.Database.LabelDao
+namespace Jammy.Database.Types
 {
 	public class LabelSearch : DbSearch
 	{

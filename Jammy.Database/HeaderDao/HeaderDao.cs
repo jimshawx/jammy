@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Jammy.Database.Core;
 using Jammy.Database.Types;
+using Jammy.Datebase.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
 
@@ -10,9 +11,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Database.HeaderDao
 {
-	public interface IHeaderDao : IDbDao<Header, HeaderSearch>
-	{
-	}
 
 	public class HeaderDao : BaseDbDao<Header, HeaderSearch>, IHeaderDao
 	{

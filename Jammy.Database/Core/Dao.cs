@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Jammy.Database.Core;
+using Jammy.Datebase.Interface;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
@@ -9,21 +10,6 @@ using System.Data;
 
 namespace Jammy.Database.Types
 {
-	public interface IDao<T, U> where T : IBaseObject where U : ISearch
-	{
-		List<T> Search(U search);
-		void Save(T item);
-		void Save(List<T> items);
-		bool SaveOrUpdate(T item);
-		T Get(Guid id);
-		void Delete(T item);
-		void Delete(List<T> items);
-	}
-
-	public interface IDbDao<T, U> : IDao<T,U> where T : IBaseDbObject where U : IDbSearch
-	{
-	}
-
 	public abstract class BaseDao<T, U> : IDao<T, U> where T : IBaseObject, new() where U : ISearch
 	{
 		protected readonly IDataAccess dataAccess;

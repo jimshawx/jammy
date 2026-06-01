@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Jammy.Database.Core;
 using Jammy.Database.Types;
+using Jammy.Datebase.Interface;
 using Microsoft.Extensions.Logging;
 
 /*
@@ -9,9 +10,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Database.MemTypeDao
 {
-	public interface IMemTypeDao : IDbDao<MemTypeRange, MemTypeSearch>
-	{
-	}
 
 	public class MemTypeDao : BaseDbDao<MemTypeRange, MemTypeSearch>, IMemTypeDao
 	{

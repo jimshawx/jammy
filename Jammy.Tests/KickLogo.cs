@@ -27,7 +27,7 @@ namespace Jammy.Tests
 		public void TestLogo()
 		{
 			var configuration = new ConfigurationBuilder()
-				.SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+				.SetBasePath(AppContext.BaseDirectory)
 				.AddJsonFile("appsettings.json", false)
 				.Build();
 

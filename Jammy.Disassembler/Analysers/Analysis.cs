@@ -4,6 +4,8 @@ using Jammy.Database.DatabaseDao;
 using Jammy.Database.HeaderDao;
 using Jammy.Database.LabelDao;
 using Jammy.Database.MemTypeDao;
+using Jammy.Database.Types;
+using Jammy.Datebase.Interface;
 using Jammy.Interface;
 using Jammy.Types;
 using Microsoft.Extensions.Logging;
@@ -288,6 +290,11 @@ namespace Jammy.Disassembler.Analysers
 			logger.LogTrace("Deleting Analysis...");
 			
 			var database = databaseDao.Search(new DatabaseSearch { Name = "default" }).SingleOrDefault();
+			if (database == null)
+			{
+				logger.LogTrace("Complete - Empty database");
+				return;
+			}
 			
 			logger.LogTrace("...Comments");
 			var comments = commentDao.Search(new CommentSearch { DbId = database.Id });
