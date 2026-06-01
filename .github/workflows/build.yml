@@ -21,7 +21,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore Jammy.Main
 
       - name: Build Windows
         run: dotnet build Jammy.Main --configuration Release --no-restore
@@ -54,7 +54,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore Jammy.Main.Linux
 
       - name: Build Linux
         run: dotnet build Jammy.Main.Linux --configuration Release --no-restore
