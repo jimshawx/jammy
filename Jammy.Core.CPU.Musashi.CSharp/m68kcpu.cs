@@ -979,7 +979,9 @@ public static partial class M68KCPU
 		if (!Bool(CPU_STOPPED))
 		{
 			/* Return point if we had an address error */
-			m68ki_set_address_error_trap(); /* auto-disable (see m68kcpu.h) */
+			//m68ki_set_address_error_trap(); /* auto-disable (see m68kcpu.h) */
+			try
+			{ 
 
 			m68ki_check_bus_error_trap();
 
@@ -1017,6 +1019,11 @@ public static partial class M68KCPU
 
 			/* set previous PC to current PC for the next entry into the loop */
 			REG_PPC = REG_PC;
+			}
+			catch (MusashiAddressErrorException)
+			{
+				return m68ki_set_address_error_trap(CPU_STOPPED);
+			}
 		}
 		else
 			SET_CYCLES(0);

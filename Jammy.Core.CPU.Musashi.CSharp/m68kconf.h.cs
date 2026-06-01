@@ -175,7 +175,7 @@ public static partial class M68KCPU
 	 * access a word or longword at an odd address.
 	 * NOTE: This is only emulated properly for 68000 mode.
 	 */
-	const int M68K_EMULATE_ADDRESS_ERROR = OPT_OFF;
+	const int M68K_EMULATE_ADDRESS_ERROR = OPT_ON;
 
 
 	/* Turn ON to enable logging of illegal instruction calls.

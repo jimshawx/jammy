@@ -84,7 +84,7 @@ namespace Jammy.Tests
 			serviceCollection = GetBaseServices(configuration)
 				.AddSingleton<IMachineIdentifier>(x => new MachineIdentifer("Musashi68000"))
 				.AddSingleton<ICPU, MusashiCPU>()
-				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000NoPrefetch").Bind(o));
+				.Configure<EmulationSettings>(o => configuration.GetSection("Emulation000").Bind(o));
 			serviceProvider = serviceCollection.BuildServiceProvider();
 			cpus.Add(serviceProvider.GetRequiredService<ICPUTestRig>());
 
@@ -166,8 +166,8 @@ namespace Jammy.Tests
 			logger = serviceProvider.GetRequiredService<ILogger<CPUTest>>();
 
 			//which CPUs are we going to test?
-			cpu0 = (CPUTestRig)cpus[5];
-			cpu1 = (CPUTestRig)cpus[6];
+			cpu0 = (CPUTestRig)cpus[1];
+			cpu1 = (CPUTestRig)cpus[3];
 
 			cpu0.Initialise();
 			cpu1.Initialise();

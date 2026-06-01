@@ -708,9 +708,50 @@ public static partial class M68KCPU
 	//			m68ki_check_address_error(ADDR, WRITE_MODE, FC) \
 	//		}
 	//#else
-	static void m68ki_set_address_error_trap() { }
-	static void m68ki_check_address_error(uint ADDR, uint WRITE_MODE, uint FC) { }
-	static void m68ki_check_address_error_010_less(uint ADDR, uint WRITE_MODE, uint FC) { }
+	//static void m68ki_set_address_error_trap() { }
+	//static void m68ki_check_address_error(uint ADDR, uint WRITE_MODE, uint FC) { }
+	//static void m68ki_check_address_error_010_less(uint ADDR, uint WRITE_MODE, uint FC) { }
+
+	class MusashiAddressErrorException : Exception { }
+	static sint32 m68ki_set_address_error_trap(uint32 CPU_STOPPED)
+	{
+		m68ki_exception_address_error();
+
+		if (CPU_STOPPED != 0)
+		{
+			SET_CYCLES(0);
+			return m68ki_initial_cycles;
+		}
+		/* ensure we don't re-enter execution loop after an
+			address error if there's no more cycles remaining */
+		if (GET_CYCLES() <= 0)
+		{
+			/* return how many clocks we used */
+			return m68ki_initial_cycles - GET_CYCLES();
+		}
+
+		return 0;
+	}
+
+	static void m68ki_check_address_error(uint ADDR, uint WRITE_MODE, uint FC)
+	{
+		if (((ADDR) & 1) != 0)
+		{
+			m68ki_aerr_address = ADDR;
+			m68ki_aerr_write_mode = WRITE_MODE;
+			m68ki_aerr_fc = FC;
+			throw new MusashiAddressErrorException();
+		}
+	}
+
+	static void m68ki_check_address_error_010_less(uint ADDR, uint WRITE_MODE, uint FC)
+	{
+		if (CPU_TYPE_IS_010_LESS(CPU_TYPE))
+		{
+			m68ki_check_address_error(ADDR, WRITE_MODE, FC);
+		}
+	}
+
 	//#endif
 	/* M68K_ADDRESS_ERROR */
 
