@@ -47,6 +47,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>WinExe</OutputType>
 	<ApplicationIcon>amiga.ico</ApplicationIcon>
+	<PublishSingleFile>true</PublishSingleFile>
+	<PublishReadyToRun>true</PublishReadyToRun>
+	<SelfContained>false</SelfContained>
   </PropertyGroup>
 <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.14" />
