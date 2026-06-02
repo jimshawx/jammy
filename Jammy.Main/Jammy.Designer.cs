@@ -3,6 +3,8 @@
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 
+using System.Windows.Forms;
+
 namespace Jammy.Main
 {
 	partial class Jammy
@@ -297,12 +299,14 @@ namespace Jammy.Main
 			// splitContainer1.Panel1
 			// 
 			splitContainer1.Panel1.Controls.Add(txtDisassembly);
+			splitContainer1.Panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 			// 
 			// splitContainer1.Panel2
 			// 
 			splitContainer1.Panel2.Controls.Add(txtMemory);
-			splitContainer1.Size = new System.Drawing.Size(1403, 1282);
-			splitContainer1.SplitterDistance = 545;
+			splitContainer1.Panel2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			splitContainer1.Size = new System.Drawing.Size(1403, 1000);
+			splitContainer1.SplitterDistance = 200;
 			splitContainer1.SplitterWidth = 9;
 			splitContainer1.TabIndex = 7;
 			// 
@@ -746,13 +750,16 @@ namespace Jammy.Main
 			// splitContainer2.Panel1
 			// 
 			splitContainer2.Panel1.Controls.Add(splitContainer1);
+			splitContainer2.Panel1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+
 			// 
 			// splitContainer2.Panel2
 			// 
 			splitContainer2.Panel2.Controls.Add(tabControl1);
 			splitContainer2.Panel2.Controls.Add(lbIntvec);
-			splitContainer2.Size = new System.Drawing.Size(1998, 1288);
-			splitContainer2.SplitterDistance = 1409;
+			splitContainer2.Panel2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			splitContainer2.Size = new System.Drawing.Size(580, 980);
+			splitContainer2.SplitterDistance = 900;
 			splitContainer2.SplitterWidth = 9;
 			splitContainer2.TabIndex = 49;
 			// 
@@ -767,8 +774,9 @@ namespace Jammy.Main
 			tabControl1.Location = new System.Drawing.Point(3, 6);
 			tabControl1.Name = "tabControl1";
 			tabControl1.SelectedIndex = 0;
-			tabControl1.Size = new System.Drawing.Size(574, 995);
+			tabControl1.Size = new System.Drawing.Size(574, 700);
 			tabControl1.TabIndex = 28;
+			tabControl1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 			// 
 			// tabCopper
 			// 
@@ -982,6 +990,7 @@ namespace Jammy.Main
 			// 
 			// btnGenDisassemblies
 			// 
+			btnGenDisassemblies.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			btnGenDisassemblies.Location = new System.Drawing.Point(2613, 1204);
 			btnGenDisassemblies.Name = "btnGenDisassemblies";
 			btnGenDisassemblies.Size = new System.Drawing.Size(79, 46);
@@ -1005,6 +1014,7 @@ namespace Jammy.Main
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			AutoSize = true;
 			ClientSize = new System.Drawing.Size(2710, 1291);
 			Controls.Add(btnPluginReload);
 			Controls.Add(btnGenDisassemblies);
