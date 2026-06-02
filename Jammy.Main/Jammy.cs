@@ -270,8 +270,8 @@ namespace Jammy.Main
 
 			lbRegisters.Items.Clear();
 			lbRegisters.Items.AddRange(regs.Items().Cast<object>().ToArray());
-			lbRegisters.SizeListBox(2);
-
+			//lbRegisters.SizeListBox(2);
+			
 			lbCustom.Items.Clear();
 
 			{
@@ -363,7 +363,7 @@ namespace Jammy.Main
 				for (uint i = 0; i < 15; i++)
 					lbCallStack.Items.Add($"{debugger.Read32(ssp + i * 4):X8}");
 
-				lbCallStack.SizeListBox(2);
+				//lbCallStack.SizeListBox(2);
 			}
 
 			{
