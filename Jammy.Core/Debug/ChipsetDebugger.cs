@@ -111,10 +111,6 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 		else
 			slot[clock.HorizontalPos] = activity.ToString()[0];
 		dmadebug[clock.HorizontalPos, clock.VerticalPos] = activity;
-		//if (clock.Tick == lastTick && ((lastActivy == null ^ activity == null) || lastActivy != null && lastActivy.Type != DMAActivityType.None))
-		//	logger.LogTrace("overwrote DMA activity");
-		//lastTick = clock.Tick;
-		//lastActivy = activity;
 	}
 
 	public char[] fetch { get; }= new char[256];

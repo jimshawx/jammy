@@ -170,18 +170,27 @@ namespace Jammy.Main
 				for (int x = 0; x < NX; x++)
 				{
 					r.X = x*WW;
-					var d = dbg[x+y*NX];
+					ref var d = ref dbg[x+y*NX];
 					//e.Graphics.FillRectangle(dmacols[(int)d.Type], r);
-					if (d.Type == DMAActivityType.None)
-						e.Graphics.FillRectangle(black, r);
-					//else if (d.Type == DMAActivityType.Consume)
-					//	e.Graphics.FillRectangle(grey, r);
-					else if (d.Type == DMAActivityType.CPU || d.Type == DMAActivityType.ReadCPU)
-						e.Graphics.FillRectangle(red, r);
-					else if (d.Type == DMAActivityType.WriteCPU)
-						e.Graphics.FillRectangle(blue, r);
-					else
-						e.Graphics.FillRectangle(pricols[(int)Math.Log2((int)d.Priority)], r);
+					switch (d.Type)
+					{
+						case DMAActivityType.None:
+							e.Graphics.FillRectangle(black, r);
+							break;
+						//case DMAActivityType.Consume)
+						//	e.Graphics.FillRectangle(grey, r);
+						//  break;
+						case DMAActivityType.CPU:
+						case DMAActivityType.ReadCPU:
+							e.Graphics.FillRectangle(red, r);
+							break;
+						case DMAActivityType.WriteCPU:
+							e.Graphics.FillRectangle(blue, r);
+							break;
+						default:
+							e.Graphics.FillRectangle(pricols[(int)Math.Log2((int)d.Priority)], r);
+							break;
+					}
 				}
 			}
 			if (selectX < 0 || selectY < 0) return;

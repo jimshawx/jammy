@@ -125,7 +125,7 @@ namespace Jammy.Core.Types.Types
 				dbg.Target = value.Target;
 			}
 			get {
-				var d = dmadebug[i + j * 228];
+				ref var d = ref dmadebug[i + j * 228];
 				return new DMAActivity
 				{
 					Type = d.Type,
