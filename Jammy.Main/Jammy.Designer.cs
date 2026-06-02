@@ -839,7 +839,7 @@ namespace Jammy.Main
 			lbIntvec.Location = new System.Drawing.Point(11, 546);
 			lbIntvec.Margin = new Padding(2, 0, 2, 0);
 			lbIntvec.Name = "lbIntvec";
-			lbIntvec.Size = new System.Drawing.Size(480, 152);
+			lbIntvec.Size = new System.Drawing.Size(480, 177);
 			lbIntvec.TabIndex = 27;
 			lbIntvec.MouseDoubleClick += lbIntvec_MouseDoubleClick;
 			// 
