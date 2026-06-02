@@ -59,14 +59,6 @@ namespace Jammy.Main
 			picPower = new PictureBox();
 			picDisk = new PictureBox();
 			btnDisassemble = new Button();
-			radioButton10 = new RadioButton();
-			radioButton11 = new RadioButton();
-			radioButton12 = new RadioButton();
-			radioButton13 = new RadioButton();
-			radioButton14 = new RadioButton();
-			radioButton15 = new RadioButton();
-			radioButton16 = new RadioButton();
-			radioButton17 = new RadioButton();
 			addressFollowBox = new ComboBox();
 			txtCopper = new RichTextBox();
 			btnInsertDisk = new Button();
