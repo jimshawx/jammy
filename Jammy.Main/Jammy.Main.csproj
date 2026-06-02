@@ -6,7 +6,7 @@
     <ApplicationIcon>amiga.ico</ApplicationIcon>
 	<PublishSingleFile>true</PublishSingleFile>
 	<PublishReadyToRun>true</PublishReadyToRun>
-	<SelfContained>false</SelfContained>
+	<SelfContained>true</SelfContained>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
