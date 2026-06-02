@@ -828,7 +828,7 @@ namespace Jammy.Main
 			// btnGenDisassemblies
 			// 
 			btnGenDisassemblies.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnGenDisassemblies.Location = new System.Drawing.Point(622, 713);
+			btnGenDisassemblies.Location = new System.Drawing.Point(657, 713);
 			btnGenDisassemblies.Margin = new Padding(5, 6, 5, 6);
 			btnGenDisassemblies.Name = "btnGenDisassemblies";
 			btnGenDisassemblies.Size = new System.Drawing.Size(230, 48);
@@ -917,7 +917,7 @@ namespace Jammy.Main
 			// btnReadyDisk
 			// 
 			btnReadyDisk.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnReadyDisk.Location = new System.Drawing.Point(710, 816);
+			btnReadyDisk.Location = new System.Drawing.Point(814, 816);
 			btnReadyDisk.Margin = new Padding(11, 13, 11, 13);
 			btnReadyDisk.Name = "btnReadyDisk";
 			btnReadyDisk.Size = new System.Drawing.Size(150, 48);
@@ -928,7 +928,7 @@ namespace Jammy.Main
 			// 
 			// lbIntvec
 			// 
-			lbIntvec.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			lbIntvec.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 			lbIntvec.BorderStyle = BorderStyle.FixedSingle;
 			lbIntvec.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbIntvec.FormattingEnabled = true;
@@ -975,7 +975,7 @@ namespace Jammy.Main
 			tabExec.Margin = new Padding(3, 2, 3, 2);
 			tabExec.Name = "tabExec";
 			tabExec.Padding = new Padding(3, 2, 3, 2);
-			tabExec.Size = new System.Drawing.Size(579, 496);
+			tabExec.Size = new System.Drawing.Size(477, 496);
 			tabExec.TabIndex = 1;
 			tabExec.Text = "Object";
 			tabExec.UseVisualStyleBackColor = true;
@@ -991,7 +991,7 @@ namespace Jammy.Main
 			txtExecBase.Margin = new Padding(3, 2, 3, 2);
 			txtExecBase.Name = "txtExecBase";
 			txtExecBase.ReadOnly = true;
-			txtExecBase.Size = new System.Drawing.Size(573, 879);
+			txtExecBase.Size = new System.Drawing.Size(471, 879);
 			txtExecBase.TabIndex = 0;
 			txtExecBase.Text = "";
 			txtExecBase.WordWrap = false;
@@ -1003,7 +1003,7 @@ namespace Jammy.Main
 			tabVectors.Margin = new Padding(3, 2, 3, 2);
 			tabVectors.Name = "tabVectors";
 			tabVectors.Padding = new Padding(3, 2, 3, 2);
-			tabVectors.Size = new System.Drawing.Size(579, 496);
+			tabVectors.Size = new System.Drawing.Size(477, 496);
 			tabVectors.TabIndex = 2;
 			tabVectors.Text = "Vectors";
 			tabVectors.UseVisualStyleBackColor = true;
@@ -1019,7 +1019,7 @@ namespace Jammy.Main
 			txtVectors.Margin = new Padding(3, 2, 3, 2);
 			txtVectors.Name = "txtVectors";
 			txtVectors.ReadOnly = true;
-			txtVectors.Size = new System.Drawing.Size(573, 492);
+			txtVectors.Size = new System.Drawing.Size(471, 492);
 			txtVectors.TabIndex = 0;
 			txtVectors.Text = "";
 			txtVectors.WordWrap = false;
@@ -1031,7 +1031,7 @@ namespace Jammy.Main
 			tabLibraries.Margin = new Padding(3, 2, 3, 2);
 			tabLibraries.Name = "tabLibraries";
 			tabLibraries.Padding = new Padding(3, 2, 3, 2);
-			tabLibraries.Size = new System.Drawing.Size(579, 496);
+			tabLibraries.Size = new System.Drawing.Size(477, 496);
 			tabLibraries.TabIndex = 3;
 			tabLibraries.Text = "Libraries";
 			tabLibraries.UseVisualStyleBackColor = true;
@@ -1046,7 +1046,7 @@ namespace Jammy.Main
 			txtLibraries.Margin = new Padding(3, 2, 3, 2);
 			txtLibraries.Name = "txtLibraries";
 			txtLibraries.ReadOnly = true;
-			txtLibraries.Size = new System.Drawing.Size(573, 492);
+			txtLibraries.Size = new System.Drawing.Size(471, 492);
 			txtLibraries.TabIndex = 0;
 			txtLibraries.Text = "";
 			txtLibraries.WordWrap = false;
@@ -1057,7 +1057,7 @@ namespace Jammy.Main
 			tabAllocations.Location = new System.Drawing.Point(8, 39);
 			tabAllocations.Margin = new Padding(3, 2, 3, 2);
 			tabAllocations.Name = "tabAllocations";
-			tabAllocations.Size = new System.Drawing.Size(579, 496);
+			tabAllocations.Size = new System.Drawing.Size(477, 496);
 			tabAllocations.TabIndex = 4;
 			tabAllocations.Text = "Allocations";
 			tabAllocations.UseVisualStyleBackColor = true;
@@ -1072,7 +1072,7 @@ namespace Jammy.Main
 			txtAllocations.Margin = new Padding(3, 2, 3, 2);
 			txtAllocations.Name = "txtAllocations";
 			txtAllocations.ReadOnly = true;
-			txtAllocations.Size = new System.Drawing.Size(579, 496);
+			txtAllocations.Size = new System.Drawing.Size(477, 496);
 			txtAllocations.TabIndex = 1;
 			txtAllocations.Text = "";
 			txtAllocations.WordWrap = false;
