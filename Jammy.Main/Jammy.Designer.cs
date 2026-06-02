@@ -472,7 +472,7 @@ namespace Jammy.Main
 			txtCopper.BorderStyle = BorderStyle.FixedSingle;
 			txtCopper.DetectUrls = false;
 			txtCopper.Dock = DockStyle.Fill;
-			txtCopper.Font = new System.Drawing.Font("Cascadia Mono", 7.25F);
+			txtCopper.Font = new System.Drawing.Font("Cascadia Mono", 7.125F);
 			txtCopper.Location = new System.Drawing.Point(3, 2);
 			txtCopper.Margin = new Padding(3, 2, 3, 2);
 			txtCopper.Name = "txtCopper";
@@ -559,7 +559,7 @@ namespace Jammy.Main
 			cbTypes.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			cbTypes.FormattingEnabled = true;
 			cbTypes.Items.AddRange(new object[] { "(None)", "ExecBase", "timerequest", "Library", "Task", "KeyMapResource", "MsgPort", "Unit", "Resident" });
-			cbTypes.Location = new System.Drawing.Point(0, 0);
+			cbTypes.Location = new System.Drawing.Point(8, 10);
 			cbTypes.Margin = new Padding(5, 6, 5, 6);
 			cbTypes.Name = "cbTypes";
 			cbTypes.Size = new System.Drawing.Size(292, 33);
@@ -608,7 +608,7 @@ namespace Jammy.Main
 			// 
 			// lbCustom
 			// 
-			lbCustom.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			lbCustom.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 			lbCustom.BorderStyle = BorderStyle.FixedSingle;
 			lbCustom.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbCustom.FormattingEnabled = true;
@@ -928,7 +928,7 @@ namespace Jammy.Main
 			// 
 			// lbIntvec
 			// 
-			lbIntvec.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			lbIntvec.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 			lbIntvec.BorderStyle = BorderStyle.FixedSingle;
 			lbIntvec.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbIntvec.FormattingEnabled = true;
@@ -941,7 +941,7 @@ namespace Jammy.Main
 			// 
 			// tabControl1
 			// 
-			tabControl1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			tabControl1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 			tabControl1.Controls.Add(tabCopper);
 			tabControl1.Controls.Add(tabExec);
 			tabControl1.Controls.Add(tabVectors);
@@ -987,11 +987,11 @@ namespace Jammy.Main
 			txtExecBase.DetectUrls = false;
 			txtExecBase.Dock = DockStyle.Bottom;
 			txtExecBase.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-			txtExecBase.Location = new System.Drawing.Point(3, -385);
+			txtExecBase.Location = new System.Drawing.Point(3, 51);
 			txtExecBase.Margin = new Padding(3, 2, 3, 2);
 			txtExecBase.Name = "txtExecBase";
 			txtExecBase.ReadOnly = true;
-			txtExecBase.Size = new System.Drawing.Size(471, 879);
+			txtExecBase.Size = new System.Drawing.Size(471, 443);
 			txtExecBase.TabIndex = 0;
 			txtExecBase.Text = "";
 			txtExecBase.WordWrap = false;
