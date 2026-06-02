@@ -132,12 +132,12 @@ namespace Jammy.Main
 			lbRegisters.ColumnWidth = 85;
 			lbRegisters.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbRegisters.IntegralHeight = false;
-			lbRegisters.Location = new System.Drawing.Point(270, 6);
-			lbRegisters.Margin = new Padding(6, 6, 6, 6);
+			lbRegisters.Location = new System.Drawing.Point(502, 13);
+			lbRegisters.Margin = new Padding(11, 13, 11, 13);
 			lbRegisters.MultiColumn = true;
 			lbRegisters.Name = "lbRegisters";
 			lbRegisters.SelectionMode = SelectionMode.None;
-			lbRegisters.Size = new System.Drawing.Size(149, 190);
+			lbRegisters.Size = new System.Drawing.Size(275, 403);
 			lbRegisters.TabIndex = 0;
 			lbRegisters.MouseDoubleClick += lbRegisters_MouseDoubleClick;
 			// 
@@ -151,9 +151,10 @@ namespace Jammy.Main
 			txtDisassembly.Font = new System.Drawing.Font("Cascadia Mono", 7.25F);
 			txtDisassembly.HideSelection = false;
 			txtDisassembly.Location = new System.Drawing.Point(0, 0);
+			txtDisassembly.Margin = new Padding(6, 6, 6, 6);
 			txtDisassembly.Name = "txtDisassembly";
 			txtDisassembly.ReadOnly = true;
-			txtDisassembly.Size = new System.Drawing.Size(381, 267);
+			txtDisassembly.Size = new System.Drawing.Size(707, 569);
 			txtDisassembly.TabIndex = 1;
 			txtDisassembly.Text = "";
 			txtDisassembly.WordWrap = false;
@@ -163,46 +164,46 @@ namespace Jammy.Main
 			menuDisassembly.ImageScalingSize = new System.Drawing.Size(32, 32);
 			menuDisassembly.Items.AddRange(new ToolStripItem[] { toolStripBreakpoint, toolStripSkip, toolStripGoto, toolStripFind, toolStripFindNext });
 			menuDisassembly.Name = "menuDisassembly";
-			menuDisassembly.Size = new System.Drawing.Size(132, 114);
+			menuDisassembly.Size = new System.Drawing.Size(204, 194);
 			menuDisassembly.ItemClicked += menuDisassembly_ItemClicked;
 			// 
 			// toolStripBreakpoint
 			// 
 			toolStripBreakpoint.Name = "toolStripBreakpoint";
-			toolStripBreakpoint.Size = new System.Drawing.Size(131, 22);
+			toolStripBreakpoint.Size = new System.Drawing.Size(203, 38);
 			toolStripBreakpoint.Text = "Breakpoint";
 			// 
 			// toolStripSkip
 			// 
 			toolStripSkip.Name = "toolStripSkip";
-			toolStripSkip.Size = new System.Drawing.Size(131, 22);
+			toolStripSkip.Size = new System.Drawing.Size(203, 38);
 			toolStripSkip.Text = "Skip";
 			// 
 			// toolStripGoto
 			// 
 			toolStripGoto.Name = "toolStripGoto";
-			toolStripGoto.Size = new System.Drawing.Size(131, 22);
+			toolStripGoto.Size = new System.Drawing.Size(203, 38);
 			toolStripGoto.Text = "Go To...";
 			// 
 			// toolStripFind
 			// 
 			toolStripFind.Name = "toolStripFind";
-			toolStripFind.Size = new System.Drawing.Size(131, 22);
+			toolStripFind.Size = new System.Drawing.Size(203, 38);
 			toolStripFind.Text = "Find...";
 			// 
 			// toolStripFindNext
 			// 
 			toolStripFindNext.Name = "toolStripFindNext";
-			toolStripFindNext.Size = new System.Drawing.Size(131, 22);
+			toolStripFindNext.Size = new System.Drawing.Size(203, 38);
 			toolStripFindNext.Text = "Find Next";
 			// 
 			// btnStep
 			// 
 			btnStep.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnStep.Location = new System.Drawing.Point(270, 198);
-			btnStep.Margin = new Padding(6, 6, 6, 6);
+			btnStep.Location = new System.Drawing.Point(502, 422);
+			btnStep.Margin = new Padding(11, 13, 11, 13);
 			btnStep.Name = "btnStep";
-			btnStep.Size = new System.Drawing.Size(81, 22);
+			btnStep.Size = new System.Drawing.Size(150, 47);
 			btnStep.TabIndex = 2;
 			btnStep.Text = "Step";
 			btnStep.UseVisualStyleBackColor = true;
@@ -211,10 +212,10 @@ namespace Jammy.Main
 			// btnStop
 			// 
 			btnStop.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnStop.Location = new System.Drawing.Point(270, 224);
-			btnStop.Margin = new Padding(6, 6, 6, 6);
+			btnStop.Location = new System.Drawing.Point(502, 478);
+			btnStop.Margin = new Padding(11, 13, 11, 13);
 			btnStop.Name = "btnStop";
-			btnStop.Size = new System.Drawing.Size(81, 22);
+			btnStop.Size = new System.Drawing.Size(150, 47);
 			btnStop.TabIndex = 3;
 			btnStop.Text = "Stop";
 			btnStop.UseVisualStyleBackColor = true;
@@ -223,10 +224,10 @@ namespace Jammy.Main
 			// btnGo
 			// 
 			btnGo.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnGo.Location = new System.Drawing.Point(270, 250);
-			btnGo.Margin = new Padding(6, 6, 6, 6);
+			btnGo.Location = new System.Drawing.Point(502, 533);
+			btnGo.Margin = new Padding(11, 13, 11, 13);
 			btnGo.Name = "btnGo";
-			btnGo.Size = new System.Drawing.Size(81, 22);
+			btnGo.Size = new System.Drawing.Size(150, 47);
 			btnGo.TabIndex = 4;
 			btnGo.Text = "Go";
 			btnGo.UseVisualStyleBackColor = true;
@@ -235,10 +236,10 @@ namespace Jammy.Main
 			// btnReset
 			// 
 			btnReset.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnReset.Location = new System.Drawing.Point(270, 275);
-			btnReset.Margin = new Padding(6, 6, 6, 6);
+			btnReset.Location = new System.Drawing.Point(502, 587);
+			btnReset.Margin = new Padding(11, 13, 11, 13);
 			btnReset.Name = "btnReset";
-			btnReset.Size = new System.Drawing.Size(81, 22);
+			btnReset.Size = new System.Drawing.Size(150, 47);
 			btnReset.TabIndex = 5;
 			btnReset.Text = "Reset";
 			btnReset.UseVisualStyleBackColor = true;
@@ -253,9 +254,10 @@ namespace Jammy.Main
 			txtMemory.Dock = DockStyle.Fill;
 			txtMemory.Font = new System.Drawing.Font("Cascadia Mono", 7.25F);
 			txtMemory.Location = new System.Drawing.Point(0, 0);
+			txtMemory.Margin = new Padding(6, 6, 6, 6);
 			txtMemory.Name = "txtMemory";
 			txtMemory.ReadOnly = true;
-			txtMemory.Size = new System.Drawing.Size(381, 310);
+			txtMemory.Size = new System.Drawing.Size(707, 661);
 			txtMemory.TabIndex = 6;
 			txtMemory.Text = "00000160 0000000000000000 0000000000000000 0000000000000000 0000000000000000   ................................";
 			txtMemory.WordWrap = false;
@@ -265,19 +267,19 @@ namespace Jammy.Main
 			menuMemory.ImageScalingSize = new System.Drawing.Size(32, 32);
 			menuMemory.Items.AddRange(new ToolStripItem[] { menuMemoryGotoItem, menuMemoryFindItem });
 			menuMemory.Name = "menuMemory";
-			menuMemory.Size = new System.Drawing.Size(115, 48);
+			menuMemory.Size = new System.Drawing.Size(166, 80);
 			menuMemory.ItemClicked += menuMemory_ItemClicked;
 			// 
 			// menuMemoryGotoItem
 			// 
 			menuMemoryGotoItem.Name = "menuMemoryGotoItem";
-			menuMemoryGotoItem.Size = new System.Drawing.Size(114, 22);
+			menuMemoryGotoItem.Size = new System.Drawing.Size(165, 38);
 			menuMemoryGotoItem.Text = "Go To...";
 			// 
 			// menuMemoryFindItem
 			// 
 			menuMemoryFindItem.Name = "menuMemoryFindItem";
-			menuMemoryFindItem.Size = new System.Drawing.Size(114, 22);
+			menuMemoryFindItem.Size = new System.Drawing.Size(165, 38);
 			menuMemoryFindItem.Text = "Find...";
 			// 
 			// splitDisassembly
@@ -295,17 +297,18 @@ namespace Jammy.Main
 			// splitDisassembly.Panel2
 			// 
 			splitDisassembly.Panel2.Controls.Add(txtMemory);
-			splitDisassembly.Size = new System.Drawing.Size(381, 581);
-			splitDisassembly.SplitterDistance = 267;
+			splitDisassembly.Size = new System.Drawing.Size(707, 1239);
+			splitDisassembly.SplitterDistance = 569;
+			splitDisassembly.SplitterWidth = 9;
 			splitDisassembly.TabIndex = 7;
 			// 
 			// btnRefresh
 			// 
 			btnRefresh.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnRefresh.Location = new System.Drawing.Point(270, 334);
-			btnRefresh.Margin = new Padding(6, 6, 6, 6);
+			btnRefresh.Location = new System.Drawing.Point(502, 713);
+			btnRefresh.Margin = new Padding(11, 13, 11, 13);
 			btnRefresh.Name = "btnRefresh";
-			btnRefresh.Size = new System.Drawing.Size(81, 22);
+			btnRefresh.Size = new System.Drawing.Size(150, 47);
 			btnRefresh.TabIndex = 8;
 			btnRefresh.Text = "Refresh";
 			btnRefresh.UseVisualStyleBackColor = true;
@@ -314,10 +317,10 @@ namespace Jammy.Main
 			// btnStepOver
 			// 
 			btnStepOver.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnStepOver.Location = new System.Drawing.Point(355, 198);
-			btnStepOver.Margin = new Padding(6, 6, 6, 6);
+			btnStepOver.Location = new System.Drawing.Point(660, 422);
+			btnStepOver.Margin = new Padding(11, 13, 11, 13);
 			btnStepOver.Name = "btnStepOver";
-			btnStepOver.Size = new System.Drawing.Size(81, 22);
+			btnStepOver.Size = new System.Drawing.Size(150, 47);
 			btnStepOver.TabIndex = 9;
 			btnStepOver.Text = "Step Over";
 			btnStepOver.UseVisualStyleBackColor = true;
@@ -326,30 +329,30 @@ namespace Jammy.Main
 			// picPower
 			// 
 			picPower.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			picPower.Location = new System.Drawing.Point(357, 250);
-			picPower.Margin = new Padding(6, 6, 6, 6);
+			picPower.Location = new System.Drawing.Point(664, 533);
+			picPower.Margin = new Padding(11, 13, 11, 13);
 			picPower.Name = "picPower";
-			picPower.Size = new System.Drawing.Size(52, 10);
+			picPower.Size = new System.Drawing.Size(97, 21);
 			picPower.TabIndex = 10;
 			picPower.TabStop = false;
 			// 
 			// picDisk
 			// 
 			picDisk.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			picDisk.Location = new System.Drawing.Point(357, 269);
-			picDisk.Margin = new Padding(6, 6, 6, 6);
+			picDisk.Location = new System.Drawing.Point(664, 574);
+			picDisk.Margin = new Padding(11, 13, 11, 13);
 			picDisk.Name = "picDisk";
-			picDisk.Size = new System.Drawing.Size(52, 10);
+			picDisk.Size = new System.Drawing.Size(97, 21);
 			picDisk.TabIndex = 11;
 			picDisk.TabStop = false;
 			// 
 			// btnDisassemble
 			// 
 			btnDisassemble.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnDisassemble.Location = new System.Drawing.Point(355, 334);
-			btnDisassemble.Margin = new Padding(6, 6, 6, 6);
+			btnDisassemble.Location = new System.Drawing.Point(660, 713);
+			btnDisassemble.Margin = new Padding(11, 13, 11, 13);
 			btnDisassemble.Name = "btnDisassemble";
-			btnDisassemble.Size = new System.Drawing.Size(88, 22);
+			btnDisassemble.Size = new System.Drawing.Size(163, 47);
 			btnDisassemble.TabIndex = 12;
 			btnDisassemble.Text = "Disassemble";
 			btnDisassemble.UseVisualStyleBackColor = true;
@@ -360,10 +363,10 @@ namespace Jammy.Main
 			addressFollowBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			addressFollowBox.FormattingEnabled = true;
 			addressFollowBox.Items.AddRange(new object[] { "(None)", "A0", "A1", "A2", "A3", "A4", "A5", "A6", "SP", "SSP", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "PC" });
-			addressFollowBox.Location = new System.Drawing.Point(270, 360);
-			addressFollowBox.Margin = new Padding(6, 6, 6, 6);
+			addressFollowBox.Location = new System.Drawing.Point(502, 768);
+			addressFollowBox.Margin = new Padding(11, 13, 11, 13);
 			addressFollowBox.Name = "addressFollowBox";
-			addressFollowBox.Size = new System.Drawing.Size(141, 23);
+			addressFollowBox.Size = new System.Drawing.Size(258, 40);
 			addressFollowBox.TabIndex = 25;
 			addressFollowBox.SelectionChangeCommitted += addressFollowBox_SelectionChangeCommitted;
 			// 
@@ -374,11 +377,11 @@ namespace Jammy.Main
 			txtCopper.DetectUrls = false;
 			txtCopper.Dock = DockStyle.Fill;
 			txtCopper.Font = new System.Drawing.Font("Cascadia Mono", 7.125F);
-			txtCopper.Location = new System.Drawing.Point(2, 1);
-			txtCopper.Margin = new Padding(2, 1, 2, 1);
+			txtCopper.Location = new System.Drawing.Point(4, 2);
+			txtCopper.Margin = new Padding(4, 2, 4, 2);
 			txtCopper.Name = "txtCopper";
 			txtCopper.ReadOnly = true;
-			txtCopper.Size = new System.Drawing.Size(254, 228);
+			txtCopper.Size = new System.Drawing.Size(471, 493);
 			txtCopper.TabIndex = 26;
 			txtCopper.Text = "";
 			txtCopper.WordWrap = false;
@@ -386,10 +389,10 @@ namespace Jammy.Main
 			// btnInsertDisk
 			// 
 			btnInsertDisk.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnInsertDisk.Location = new System.Drawing.Point(270, 382);
-			btnInsertDisk.Margin = new Padding(6, 6, 6, 6);
+			btnInsertDisk.Location = new System.Drawing.Point(502, 815);
+			btnInsertDisk.Margin = new Padding(11, 13, 11, 13);
 			btnInsertDisk.Name = "btnInsertDisk";
-			btnInsertDisk.Size = new System.Drawing.Size(81, 22);
+			btnInsertDisk.Size = new System.Drawing.Size(150, 47);
 			btnInsertDisk.TabIndex = 27;
 			btnInsertDisk.Text = "Insert Disk";
 			btnInsertDisk.UseVisualStyleBackColor = true;
@@ -398,10 +401,10 @@ namespace Jammy.Main
 			// btnRemoveDisk
 			// 
 			btnRemoveDisk.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnRemoveDisk.Location = new System.Drawing.Point(355, 382);
-			btnRemoveDisk.Margin = new Padding(6, 6, 6, 6);
+			btnRemoveDisk.Location = new System.Drawing.Point(660, 815);
+			btnRemoveDisk.Margin = new Padding(11, 13, 11, 13);
 			btnRemoveDisk.Name = "btnRemoveDisk";
-			btnRemoveDisk.Size = new System.Drawing.Size(81, 22);
+			btnRemoveDisk.Size = new System.Drawing.Size(150, 47);
 			btnRemoveDisk.TabIndex = 28;
 			btnRemoveDisk.Text = "Remove Disk";
 			btnRemoveDisk.UseVisualStyleBackColor = true;
@@ -410,10 +413,10 @@ namespace Jammy.Main
 			// btnCIAInt
 			// 
 			btnCIAInt.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnCIAInt.Location = new System.Drawing.Point(270, 437);
-			btnCIAInt.Margin = new Padding(6, 6, 6, 6);
+			btnCIAInt.Location = new System.Drawing.Point(502, 932);
+			btnCIAInt.Margin = new Padding(11, 13, 11, 13);
 			btnCIAInt.Name = "btnCIAInt";
-			btnCIAInt.Size = new System.Drawing.Size(81, 22);
+			btnCIAInt.Size = new System.Drawing.Size(150, 47);
 			btnCIAInt.TabIndex = 29;
 			btnCIAInt.Text = "CIA Int";
 			btnCIAInt.UseVisualStyleBackColor = true;
@@ -422,10 +425,10 @@ namespace Jammy.Main
 			// btnIRQ
 			// 
 			btnIRQ.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnIRQ.Location = new System.Drawing.Point(270, 464);
-			btnIRQ.Margin = new Padding(6, 6, 6, 6);
+			btnIRQ.Location = new System.Drawing.Point(502, 990);
+			btnIRQ.Margin = new Padding(11, 13, 11, 13);
 			btnIRQ.Name = "btnIRQ";
-			btnIRQ.Size = new System.Drawing.Size(81, 22);
+			btnIRQ.Size = new System.Drawing.Size(150, 47);
 			btnIRQ.TabIndex = 31;
 			btnIRQ.Text = "IRQ";
 			btnIRQ.UseVisualStyleBackColor = true;
@@ -436,10 +439,10 @@ namespace Jammy.Main
 			cbIRQ.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			cbIRQ.FormattingEnabled = true;
 			cbIRQ.Items.AddRange(new object[] { "EXTER", "DSKSYNC", "AUD0", "AUD1", "AUD2", "AUD3", "BLIT", "VERTB", "COPPER", "PORTS", "DSKBLK", "SOFTINT" });
-			cbIRQ.Location = new System.Drawing.Point(355, 466);
-			cbIRQ.Margin = new Padding(6, 6, 6, 6);
+			cbIRQ.Location = new System.Drawing.Point(660, 994);
+			cbIRQ.Margin = new Padding(11, 13, 11, 13);
 			cbIRQ.Name = "cbIRQ";
-			cbIRQ.Size = new System.Drawing.Size(128, 23);
+			cbIRQ.Size = new System.Drawing.Size(234, 40);
 			cbIRQ.TabIndex = 32;
 			cbIRQ.Text = "BLIT";
 			// 
@@ -448,10 +451,10 @@ namespace Jammy.Main
 			cbCIA.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			cbCIA.FormattingEnabled = true;
 			cbCIA.Items.AddRange(new object[] { "TIMERA", "TIMERB", "TODALARM", "SERIAL", "FLAG" });
-			cbCIA.Location = new System.Drawing.Point(355, 439);
-			cbCIA.Margin = new Padding(6, 6, 6, 6);
+			cbCIA.Location = new System.Drawing.Point(660, 937);
+			cbCIA.Margin = new Padding(11, 13, 11, 13);
 			cbCIA.Name = "cbCIA";
-			cbCIA.Size = new System.Drawing.Size(128, 23);
+			cbCIA.Size = new System.Drawing.Size(234, 40);
 			cbCIA.TabIndex = 33;
 			cbCIA.Text = "TIMERA";
 			// 
@@ -460,9 +463,10 @@ namespace Jammy.Main
 			cbTypes.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			cbTypes.FormattingEnabled = true;
 			cbTypes.Items.AddRange(new object[] { "(None)", "ExecBase", "timerequest", "Library", "Task", "KeyMapResource", "MsgPort", "Unit", "Resident" });
-			cbTypes.Location = new System.Drawing.Point(4, 5);
+			cbTypes.Location = new System.Drawing.Point(7, 11);
+			cbTypes.Margin = new Padding(6, 6, 6, 6);
 			cbTypes.Name = "cbTypes";
-			cbTypes.Size = new System.Drawing.Size(159, 20);
+			cbTypes.Size = new System.Drawing.Size(292, 33);
 			cbTypes.TabIndex = 34;
 			cbTypes.SelectionChangeCommitted += cbTypes_SelectionChangeCommitted;
 			// 
@@ -473,22 +477,22 @@ namespace Jammy.Main
 			lbCallStack.ColumnWidth = 83;
 			lbCallStack.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbCallStack.IntegralHeight = false;
-			lbCallStack.Location = new System.Drawing.Point(424, 6);
-			lbCallStack.Margin = new Padding(6, 6, 6, 6);
+			lbCallStack.Location = new System.Drawing.Point(788, 13);
+			lbCallStack.Margin = new Padding(11, 13, 11, 13);
 			lbCallStack.MultiColumn = true;
 			lbCallStack.Name = "lbCallStack";
 			lbCallStack.SelectionMode = SelectionMode.None;
-			lbCallStack.Size = new System.Drawing.Size(149, 190);
+			lbCallStack.Size = new System.Drawing.Size(275, 403);
 			lbCallStack.TabIndex = 35;
 			lbCallStack.MouseDoubleClick += lbCallStack_MouseDoubleClick;
 			// 
 			// btnStepOut
 			// 
 			btnStepOut.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnStepOut.Location = new System.Drawing.Point(355, 224);
-			btnStepOut.Margin = new Padding(6, 6, 6, 6);
+			btnStepOut.Location = new System.Drawing.Point(660, 478);
+			btnStepOut.Margin = new Padding(11, 13, 11, 13);
 			btnStepOut.Name = "btnStepOut";
-			btnStepOut.Size = new System.Drawing.Size(81, 22);
+			btnStepOut.Size = new System.Drawing.Size(150, 47);
 			btnStepOut.TabIndex = 36;
 			btnStepOut.Text = "Step Out";
 			btnStepOut.UseVisualStyleBackColor = true;
@@ -497,10 +501,10 @@ namespace Jammy.Main
 			// btnINTENA
 			// 
 			btnINTENA.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnINTENA.Location = new System.Drawing.Point(270, 490);
-			btnINTENA.Margin = new Padding(6, 6, 6, 6);
+			btnINTENA.Location = new System.Drawing.Point(502, 1045);
+			btnINTENA.Margin = new Padding(11, 13, 11, 13);
 			btnINTENA.Name = "btnINTENA";
-			btnINTENA.Size = new System.Drawing.Size(37, 22);
+			btnINTENA.Size = new System.Drawing.Size(69, 47);
 			btnINTENA.TabIndex = 37;
 			btnINTENA.Text = "EN";
 			btnINTENA.UseVisualStyleBackColor = true;
@@ -512,19 +516,19 @@ namespace Jammy.Main
 			lbCustom.BorderStyle = BorderStyle.FixedSingle;
 			lbCustom.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbCustom.FormattingEnabled = true;
-			lbCustom.Location = new System.Drawing.Point(8, 342);
-			lbCustom.Margin = new Padding(6, 6, 6, 6);
+			lbCustom.Location = new System.Drawing.Point(15, 730);
+			lbCustom.Margin = new Padding(11, 13, 11, 13);
 			lbCustom.Name = "lbCustom";
-			lbCustom.Size = new System.Drawing.Size(257, 230);
+			lbCustom.Size = new System.Drawing.Size(477, 477);
 			lbCustom.TabIndex = 38;
 			// 
 			// btnDumpTrace
 			// 
 			btnDumpTrace.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnDumpTrace.Location = new System.Drawing.Point(355, 309);
-			btnDumpTrace.Margin = new Padding(6, 6, 6, 6);
+			btnDumpTrace.Location = new System.Drawing.Point(660, 659);
+			btnDumpTrace.Margin = new Padding(11, 13, 11, 13);
 			btnDumpTrace.Name = "btnDumpTrace";
-			btnDumpTrace.Size = new System.Drawing.Size(88, 22);
+			btnDumpTrace.Size = new System.Drawing.Size(163, 47);
 			btnDumpTrace.TabIndex = 39;
 			btnDumpTrace.Text = "Dump Trace";
 			btnDumpTrace.UseVisualStyleBackColor = true;
@@ -533,10 +537,10 @@ namespace Jammy.Main
 			// btnIDEACK
 			// 
 			btnIDEACK.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnIDEACK.Location = new System.Drawing.Point(437, 490);
-			btnIDEACK.Margin = new Padding(6, 6, 6, 6);
+			btnIDEACK.Location = new System.Drawing.Point(813, 1045);
+			btnIDEACK.Margin = new Padding(11, 13, 11, 13);
 			btnIDEACK.Name = "btnIDEACK";
-			btnIDEACK.Size = new System.Drawing.Size(81, 22);
+			btnIDEACK.Size = new System.Drawing.Size(150, 47);
 			btnIDEACK.TabIndex = 40;
 			btnIDEACK.Text = "IDEACK";
 			btnIDEACK.UseVisualStyleBackColor = true;
@@ -545,10 +549,10 @@ namespace Jammy.Main
 			// btnChange
 			// 
 			btnChange.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnChange.Location = new System.Drawing.Point(270, 408);
-			btnChange.Margin = new Padding(6, 6, 6, 6);
+			btnChange.Location = new System.Drawing.Point(502, 870);
+			btnChange.Margin = new Padding(11, 13, 11, 13);
 			btnChange.Name = "btnChange";
-			btnChange.Size = new System.Drawing.Size(81, 22);
+			btnChange.Size = new System.Drawing.Size(150, 47);
 			btnChange.TabIndex = 41;
 			btnChange.Text = "Change";
 			btnChange.UseVisualStyleBackColor = true;
@@ -559,10 +563,10 @@ namespace Jammy.Main
 			radioDF0.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			radioDF0.AutoSize = true;
 			radioDF0.Checked = true;
-			radioDF0.Location = new System.Drawing.Point(356, 414);
-			radioDF0.Margin = new Padding(6, 6, 6, 6);
+			radioDF0.Location = new System.Drawing.Point(661, 883);
+			radioDF0.Margin = new Padding(11, 13, 11, 13);
 			radioDF0.Name = "radioDF0";
-			radioDF0.Size = new System.Drawing.Size(14, 13);
+			radioDF0.Size = new System.Drawing.Size(27, 26);
 			radioDF0.TabIndex = 42;
 			radioDF0.TabStop = true;
 			radioDF0.UseVisualStyleBackColor = true;
@@ -572,10 +576,10 @@ namespace Jammy.Main
 			// 
 			radioDF1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			radioDF1.AutoSize = true;
-			radioDF1.Location = new System.Drawing.Point(372, 414);
-			radioDF1.Margin = new Padding(6, 6, 6, 6);
+			radioDF1.Location = new System.Drawing.Point(691, 883);
+			radioDF1.Margin = new Padding(11, 13, 11, 13);
 			radioDF1.Name = "radioDF1";
-			radioDF1.Size = new System.Drawing.Size(14, 13);
+			radioDF1.Size = new System.Drawing.Size(27, 26);
 			radioDF1.TabIndex = 43;
 			radioDF1.TabStop = true;
 			radioDF1.UseVisualStyleBackColor = true;
@@ -585,10 +589,10 @@ namespace Jammy.Main
 			// 
 			radioDF2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			radioDF2.AutoSize = true;
-			radioDF2.Location = new System.Drawing.Point(389, 414);
-			radioDF2.Margin = new Padding(6, 6, 6, 6);
+			radioDF2.Location = new System.Drawing.Point(722, 883);
+			radioDF2.Margin = new Padding(11, 13, 11, 13);
 			radioDF2.Name = "radioDF2";
-			radioDF2.Size = new System.Drawing.Size(14, 13);
+			radioDF2.Size = new System.Drawing.Size(27, 26);
 			radioDF2.TabIndex = 44;
 			radioDF2.TabStop = true;
 			radioDF2.UseVisualStyleBackColor = true;
@@ -598,10 +602,10 @@ namespace Jammy.Main
 			// 
 			radioDF3.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			radioDF3.AutoSize = true;
-			radioDF3.Location = new System.Drawing.Point(406, 414);
-			radioDF3.Margin = new Padding(6, 6, 6, 6);
+			radioDF3.Location = new System.Drawing.Point(754, 883);
+			radioDF3.Margin = new Padding(11, 13, 11, 13);
 			radioDF3.Name = "radioDF3";
-			radioDF3.Size = new System.Drawing.Size(14, 13);
+			radioDF3.Size = new System.Drawing.Size(27, 26);
 			radioDF3.TabIndex = 45;
 			radioDF3.TabStop = true;
 			radioDF3.UseVisualStyleBackColor = true;
@@ -610,10 +614,10 @@ namespace Jammy.Main
 			// btnGfxScan
 			// 
 			btnGfxScan.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnGfxScan.Location = new System.Drawing.Point(270, 518);
-			btnGfxScan.Margin = new Padding(6, 6, 6, 6);
+			btnGfxScan.Location = new System.Drawing.Point(502, 1105);
+			btnGfxScan.Margin = new Padding(11, 13, 11, 13);
 			btnGfxScan.Name = "btnGfxScan";
-			btnGfxScan.Size = new System.Drawing.Size(81, 22);
+			btnGfxScan.Size = new System.Drawing.Size(150, 47);
 			btnGfxScan.TabIndex = 46;
 			btnGfxScan.Text = "Gfx Scan";
 			btnGfxScan.UseVisualStyleBackColor = true;
@@ -622,10 +626,10 @@ namespace Jammy.Main
 			// btnClearBBUSY
 			// 
 			btnClearBBUSY.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnClearBBUSY.Location = new System.Drawing.Point(355, 490);
-			btnClearBBUSY.Margin = new Padding(6, 6, 6, 6);
+			btnClearBBUSY.Location = new System.Drawing.Point(660, 1045);
+			btnClearBBUSY.Margin = new Padding(11, 13, 11, 13);
 			btnClearBBUSY.Name = "btnClearBBUSY";
-			btnClearBBUSY.Size = new System.Drawing.Size(81, 22);
+			btnClearBBUSY.Size = new System.Drawing.Size(150, 47);
 			btnClearBBUSY.TabIndex = 47;
 			btnClearBBUSY.Text = "~BBUSY";
 			btnClearBBUSY.UseVisualStyleBackColor = true;
@@ -634,9 +638,10 @@ namespace Jammy.Main
 			// btnCribSheet
 			// 
 			btnCribSheet.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnCribSheet.Location = new System.Drawing.Point(496, 518);
+			btnCribSheet.Location = new System.Drawing.Point(922, 1105);
+			btnCribSheet.Margin = new Padding(6, 6, 6, 6);
 			btnCribSheet.Name = "btnCribSheet";
-			btnCribSheet.Size = new System.Drawing.Size(75, 22);
+			btnCribSheet.Size = new System.Drawing.Size(139, 47);
 			btnCribSheet.TabIndex = 48;
 			btnCribSheet.Text = "Crib Sheet";
 			btnCribSheet.UseVisualStyleBackColor = true;
@@ -646,7 +651,7 @@ namespace Jammy.Main
 			// 
 			splitContent.Dock = DockStyle.Fill;
 			splitContent.Location = new System.Drawing.Point(0, 0);
-			splitContent.Margin = new Padding(2, 1, 2, 1);
+			splitContent.Margin = new Padding(4, 2, 4, 2);
 			splitContent.Name = "splitContent";
 			// 
 			// splitContent.Panel1
@@ -656,9 +661,9 @@ namespace Jammy.Main
 			// splitContent.Panel2
 			// 
 			splitContent.Panel2.Controls.Add(pnlButtons);
-			splitContent.Size = new System.Drawing.Size(969, 581);
-			splitContent.SplitterDistance = 381;
-			splitContent.SplitterWidth = 5;
+			splitContent.Size = new System.Drawing.Size(1800, 1239);
+			splitContent.SplitterDistance = 707;
+			splitContent.SplitterWidth = 9;
 			splitContent.TabIndex = 49;
 			// 
 			// pnlButtons
@@ -707,16 +712,18 @@ namespace Jammy.Main
 			pnlButtons.Controls.Add(tabControl1);
 			pnlButtons.Dock = DockStyle.Fill;
 			pnlButtons.Location = new System.Drawing.Point(0, 0);
+			pnlButtons.Margin = new Padding(6, 6, 6, 6);
 			pnlButtons.Name = "pnlButtons";
-			pnlButtons.Size = new System.Drawing.Size(583, 581);
+			pnlButtons.Size = new System.Drawing.Size(1084, 1239);
 			pnlButtons.TabIndex = 0;
 			// 
 			// btnPluginReload
 			// 
 			btnPluginReload.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnPluginReload.Location = new System.Drawing.Point(469, 543);
+			btnPluginReload.Location = new System.Drawing.Point(872, 1158);
+			btnPluginReload.Margin = new Padding(6, 6, 6, 6);
 			btnPluginReload.Name = "btnPluginReload";
-			btnPluginReload.Size = new System.Drawing.Size(103, 22);
+			btnPluginReload.Size = new System.Drawing.Size(191, 47);
 			btnPluginReload.TabIndex = 58;
 			btnPluginReload.Text = "Reload Plugins";
 			btnPluginReload.UseVisualStyleBackColor = true;
@@ -725,9 +732,10 @@ namespace Jammy.Main
 			// btnGenDisassemblies
 			// 
 			btnGenDisassemblies.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnGenDisassemblies.Location = new System.Drawing.Point(355, 334);
+			btnGenDisassemblies.Location = new System.Drawing.Point(833, 713);
+			btnGenDisassemblies.Margin = new Padding(6, 6, 6, 6);
 			btnGenDisassemblies.Name = "btnGenDisassemblies";
-			btnGenDisassemblies.Size = new System.Drawing.Size(124, 22);
+			btnGenDisassemblies.Size = new System.Drawing.Size(230, 47);
 			btnGenDisassemblies.TabIndex = 57;
 			btnGenDisassemblies.Text = "Gen Disassemblies";
 			btnGenDisassemblies.UseVisualStyleBackColor = true;
@@ -739,19 +747,21 @@ namespace Jammy.Main
 			tbClock.BackColor = System.Drawing.SystemColors.Window;
 			tbClock.BorderStyle = BorderStyle.FixedSingle;
 			tbClock.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-			tbClock.Location = new System.Drawing.Point(357, 285);
+			tbClock.Location = new System.Drawing.Point(664, 608);
+			tbClock.Margin = new Padding(6, 6, 6, 6);
 			tbClock.Multiline = true;
 			tbClock.Name = "tbClock";
 			tbClock.ReadOnly = true;
-			tbClock.Size = new System.Drawing.Size(209, 21);
+			tbClock.Size = new System.Drawing.Size(386, 43);
 			tbClock.TabIndex = 56;
 			// 
 			// btnDMAExplorer
 			// 
 			btnDMAExplorer.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnDMAExplorer.Location = new System.Drawing.Point(437, 518);
+			btnDMAExplorer.Location = new System.Drawing.Point(813, 1105);
+			btnDMAExplorer.Margin = new Padding(6, 6, 6, 6);
 			btnDMAExplorer.Name = "btnDMAExplorer";
-			btnDMAExplorer.Size = new System.Drawing.Size(54, 22);
+			btnDMAExplorer.Size = new System.Drawing.Size(100, 47);
 			btnDMAExplorer.TabIndex = 55;
 			btnDMAExplorer.Text = "DMA Explorer";
 			btnDMAExplorer.UseVisualStyleBackColor = true;
@@ -760,10 +770,10 @@ namespace Jammy.Main
 			// btnAnalyseFlow
 			// 
 			btnAnalyseFlow.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnAnalyseFlow.Location = new System.Drawing.Point(270, 309);
-			btnAnalyseFlow.Margin = new Padding(6, 6, 6, 6);
+			btnAnalyseFlow.Location = new System.Drawing.Point(502, 659);
+			btnAnalyseFlow.Margin = new Padding(11, 13, 11, 13);
 			btnAnalyseFlow.Name = "btnAnalyseFlow";
-			btnAnalyseFlow.Size = new System.Drawing.Size(81, 22);
+			btnAnalyseFlow.Size = new System.Drawing.Size(150, 47);
 			btnAnalyseFlow.TabIndex = 54;
 			btnAnalyseFlow.Text = "Analyse";
 			btnAnalyseFlow.UseVisualStyleBackColor = true;
@@ -772,10 +782,10 @@ namespace Jammy.Main
 			// btnStringScan
 			// 
 			btnStringScan.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnStringScan.Location = new System.Drawing.Point(355, 518);
-			btnStringScan.Margin = new Padding(6, 6, 6, 6);
+			btnStringScan.Location = new System.Drawing.Point(660, 1105);
+			btnStringScan.Margin = new Padding(11, 13, 11, 13);
 			btnStringScan.Name = "btnStringScan";
-			btnStringScan.Size = new System.Drawing.Size(81, 22);
+			btnStringScan.Size = new System.Drawing.Size(150, 47);
 			btnStringScan.TabIndex = 53;
 			btnStringScan.Text = "String Scan";
 			btnStringScan.UseVisualStyleBackColor = true;
@@ -784,10 +794,10 @@ namespace Jammy.Main
 			// btnINTDIS
 			// 
 			btnINTDIS.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnINTDIS.Location = new System.Drawing.Point(314, 490);
-			btnINTDIS.Margin = new Padding(6, 6, 6, 6);
+			btnINTDIS.Location = new System.Drawing.Point(584, 1045);
+			btnINTDIS.Margin = new Padding(11, 13, 11, 13);
 			btnINTDIS.Name = "btnINTDIS";
-			btnINTDIS.Size = new System.Drawing.Size(37, 22);
+			btnINTDIS.Size = new System.Drawing.Size(69, 47);
 			btnINTDIS.TabIndex = 52;
 			btnINTDIS.Text = "~EN";
 			btnINTDIS.UseVisualStyleBackColor = true;
@@ -800,20 +810,21 @@ namespace Jammy.Main
 			tbCommand.BorderStyle = BorderStyle.FixedSingle;
 			tbCommand.CausesValidation = false;
 			tbCommand.ForeColor = System.Drawing.SystemColors.Window;
-			tbCommand.Location = new System.Drawing.Point(270, 546);
+			tbCommand.Location = new System.Drawing.Point(502, 1165);
+			tbCommand.Margin = new Padding(6, 6, 6, 6);
 			tbCommand.Name = "tbCommand";
 			tbCommand.PlaceholderText = ">";
-			tbCommand.Size = new System.Drawing.Size(195, 23);
+			tbCommand.Size = new System.Drawing.Size(360, 39);
 			tbCommand.TabIndex = 51;
 			tbCommand.KeyDown += tbCommand_KeyDown;
 			// 
 			// btnReadyDisk
 			// 
 			btnReadyDisk.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			btnReadyDisk.Location = new System.Drawing.Point(439, 382);
-			btnReadyDisk.Margin = new Padding(6, 6, 6, 6);
+			btnReadyDisk.Location = new System.Drawing.Point(816, 815);
+			btnReadyDisk.Margin = new Padding(11, 13, 11, 13);
 			btnReadyDisk.Name = "btnReadyDisk";
-			btnReadyDisk.Size = new System.Drawing.Size(81, 22);
+			btnReadyDisk.Size = new System.Drawing.Size(150, 47);
 			btnReadyDisk.TabIndex = 50;
 			btnReadyDisk.Text = "Ready";
 			btnReadyDisk.UseVisualStyleBackColor = true;
@@ -825,10 +836,10 @@ namespace Jammy.Main
 			lbIntvec.BorderStyle = BorderStyle.FixedSingle;
 			lbIntvec.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbIntvec.FormattingEnabled = true;
-			lbIntvec.Location = new System.Drawing.Point(6, 256);
-			lbIntvec.Margin = new Padding(1, 0, 1, 0);
+			lbIntvec.Location = new System.Drawing.Point(11, 546);
+			lbIntvec.Margin = new Padding(2, 0, 2, 0);
 			lbIntvec.Name = "lbIntvec";
-			lbIntvec.Size = new System.Drawing.Size(259, 74);
+			lbIntvec.Size = new System.Drawing.Size(480, 152);
 			lbIntvec.TabIndex = 27;
 			lbIntvec.MouseDoubleClick += lbIntvec_MouseDoubleClick;
 			// 
@@ -841,21 +852,21 @@ namespace Jammy.Main
 			tabControl1.Controls.Add(tabLibraries);
 			tabControl1.Controls.Add(tabAllocations);
 			tabControl1.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-			tabControl1.Location = new System.Drawing.Point(2, 1);
-			tabControl1.Margin = new Padding(2, 1, 2, 1);
+			tabControl1.Location = new System.Drawing.Point(4, 2);
+			tabControl1.Margin = new Padding(4, 2, 4, 2);
 			tabControl1.Name = "tabControl1";
 			tabControl1.SelectedIndex = 0;
-			tabControl1.Size = new System.Drawing.Size(266, 255);
+			tabControl1.Size = new System.Drawing.Size(495, 544);
 			tabControl1.TabIndex = 28;
 			// 
 			// tabCopper
 			// 
 			tabCopper.Controls.Add(txtCopper);
-			tabCopper.Location = new System.Drawing.Point(4, 21);
-			tabCopper.Margin = new Padding(2, 1, 2, 1);
+			tabCopper.Location = new System.Drawing.Point(8, 39);
+			tabCopper.Margin = new Padding(4, 2, 4, 2);
 			tabCopper.Name = "tabCopper";
-			tabCopper.Padding = new Padding(2, 1, 2, 1);
-			tabCopper.Size = new System.Drawing.Size(258, 230);
+			tabCopper.Padding = new Padding(4, 2, 4, 2);
+			tabCopper.Size = new System.Drawing.Size(479, 497);
 			tabCopper.TabIndex = 0;
 			tabCopper.Text = "Copper";
 			tabCopper.UseVisualStyleBackColor = true;
@@ -864,11 +875,11 @@ namespace Jammy.Main
 			// 
 			tabExec.Controls.Add(txtExecBase);
 			tabExec.Controls.Add(cbTypes);
-			tabExec.Location = new System.Drawing.Point(4, 21);
-			tabExec.Margin = new Padding(2, 1, 2, 1);
+			tabExec.Location = new System.Drawing.Point(8, 39);
+			tabExec.Margin = new Padding(4, 2, 4, 2);
 			tabExec.Name = "tabExec";
-			tabExec.Padding = new Padding(2, 1, 2, 1);
-			tabExec.Size = new System.Drawing.Size(257, 230);
+			tabExec.Padding = new Padding(4, 2, 4, 2);
+			tabExec.Size = new System.Drawing.Size(478, 497);
 			tabExec.TabIndex = 1;
 			tabExec.Text = "Object";
 			tabExec.UseVisualStyleBackColor = true;
@@ -880,11 +891,11 @@ namespace Jammy.Main
 			txtExecBase.DetectUrls = false;
 			txtExecBase.Dock = DockStyle.Bottom;
 			txtExecBase.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-			txtExecBase.Location = new System.Drawing.Point(2, 19);
-			txtExecBase.Margin = new Padding(2, 1, 2, 1);
+			txtExecBase.Location = new System.Drawing.Point(4, 52);
+			txtExecBase.Margin = new Padding(4, 2, 4, 2);
 			txtExecBase.Name = "txtExecBase";
 			txtExecBase.ReadOnly = true;
-			txtExecBase.Size = new System.Drawing.Size(253, 210);
+			txtExecBase.Size = new System.Drawing.Size(470, 443);
 			txtExecBase.TabIndex = 0;
 			txtExecBase.Text = "";
 			txtExecBase.WordWrap = false;
@@ -892,11 +903,11 @@ namespace Jammy.Main
 			// tabVectors
 			// 
 			tabVectors.Controls.Add(txtVectors);
-			tabVectors.Location = new System.Drawing.Point(4, 21);
-			tabVectors.Margin = new Padding(2, 1, 2, 1);
+			tabVectors.Location = new System.Drawing.Point(8, 39);
+			tabVectors.Margin = new Padding(4, 2, 4, 2);
 			tabVectors.Name = "tabVectors";
-			tabVectors.Padding = new Padding(2, 1, 2, 1);
-			tabVectors.Size = new System.Drawing.Size(257, 230);
+			tabVectors.Padding = new Padding(4, 2, 4, 2);
+			tabVectors.Size = new System.Drawing.Size(478, 497);
 			tabVectors.TabIndex = 2;
 			tabVectors.Text = "Vectors";
 			tabVectors.UseVisualStyleBackColor = true;
@@ -908,11 +919,11 @@ namespace Jammy.Main
 			txtVectors.DetectUrls = false;
 			txtVectors.Dock = DockStyle.Fill;
 			txtVectors.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-			txtVectors.Location = new System.Drawing.Point(2, 1);
-			txtVectors.Margin = new Padding(2, 1, 2, 1);
+			txtVectors.Location = new System.Drawing.Point(4, 2);
+			txtVectors.Margin = new Padding(4, 2, 4, 2);
 			txtVectors.Name = "txtVectors";
 			txtVectors.ReadOnly = true;
-			txtVectors.Size = new System.Drawing.Size(253, 228);
+			txtVectors.Size = new System.Drawing.Size(470, 493);
 			txtVectors.TabIndex = 0;
 			txtVectors.Text = "";
 			txtVectors.WordWrap = false;
@@ -920,11 +931,11 @@ namespace Jammy.Main
 			// tabLibraries
 			// 
 			tabLibraries.Controls.Add(txtLibraries);
-			tabLibraries.Location = new System.Drawing.Point(4, 21);
-			tabLibraries.Margin = new Padding(2, 1, 2, 1);
+			tabLibraries.Location = new System.Drawing.Point(8, 39);
+			tabLibraries.Margin = new Padding(4, 2, 4, 2);
 			tabLibraries.Name = "tabLibraries";
-			tabLibraries.Padding = new Padding(2, 1, 2, 1);
-			tabLibraries.Size = new System.Drawing.Size(257, 230);
+			tabLibraries.Padding = new Padding(4, 2, 4, 2);
+			tabLibraries.Size = new System.Drawing.Size(478, 497);
 			tabLibraries.TabIndex = 3;
 			tabLibraries.Text = "Libraries";
 			tabLibraries.UseVisualStyleBackColor = true;
@@ -935,11 +946,11 @@ namespace Jammy.Main
 			txtLibraries.BorderStyle = BorderStyle.FixedSingle;
 			txtLibraries.DetectUrls = false;
 			txtLibraries.Dock = DockStyle.Fill;
-			txtLibraries.Location = new System.Drawing.Point(2, 1);
-			txtLibraries.Margin = new Padding(2, 1, 2, 1);
+			txtLibraries.Location = new System.Drawing.Point(4, 2);
+			txtLibraries.Margin = new Padding(4, 2, 4, 2);
 			txtLibraries.Name = "txtLibraries";
 			txtLibraries.ReadOnly = true;
-			txtLibraries.Size = new System.Drawing.Size(253, 228);
+			txtLibraries.Size = new System.Drawing.Size(470, 493);
 			txtLibraries.TabIndex = 0;
 			txtLibraries.Text = "";
 			txtLibraries.WordWrap = false;
@@ -947,10 +958,10 @@ namespace Jammy.Main
 			// tabAllocations
 			// 
 			tabAllocations.Controls.Add(txtAllocations);
-			tabAllocations.Location = new System.Drawing.Point(4, 21);
-			tabAllocations.Margin = new Padding(2, 1, 2, 1);
+			tabAllocations.Location = new System.Drawing.Point(8, 39);
+			tabAllocations.Margin = new Padding(4, 2, 4, 2);
 			tabAllocations.Name = "tabAllocations";
-			tabAllocations.Size = new System.Drawing.Size(257, 230);
+			tabAllocations.Size = new System.Drawing.Size(478, 497);
 			tabAllocations.TabIndex = 4;
 			tabAllocations.Text = "Allocations";
 			tabAllocations.UseVisualStyleBackColor = true;
@@ -962,21 +973,22 @@ namespace Jammy.Main
 			txtAllocations.DetectUrls = false;
 			txtAllocations.Dock = DockStyle.Fill;
 			txtAllocations.Location = new System.Drawing.Point(0, 0);
-			txtAllocations.Margin = new Padding(2, 1, 2, 1);
+			txtAllocations.Margin = new Padding(4, 2, 4, 2);
 			txtAllocations.Name = "txtAllocations";
 			txtAllocations.ReadOnly = true;
-			txtAllocations.Size = new System.Drawing.Size(257, 230);
+			txtAllocations.Size = new System.Drawing.Size(478, 497);
 			txtAllocations.TabIndex = 1;
 			txtAllocations.Text = "";
 			txtAllocations.WordWrap = false;
 			// 
 			// Jammy
 			// 
-			AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new System.Drawing.Size(969, 581);
+			ClientSize = new System.Drawing.Size(1800, 1239);
 			Controls.Add(splitContent);
 			Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+			Margin = new Padding(6, 6, 6, 6);
 			Name = "Jammy";
 			Text = "Jammy";
 			FormClosing += Form1_FormClosing;
