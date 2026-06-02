@@ -460,7 +460,7 @@ namespace Jammy.Main
 			// 
 			// cbTypes
 			// 
-			cbTypes.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			cbTypes.Anchor = AnchorStyles.Top | AnchorStyles.Left;
 			cbTypes.FormattingEnabled = true;
 			cbTypes.Items.AddRange(new object[] { "(None)", "ExecBase", "timerequest", "Library", "Task", "KeyMapResource", "MsgPort", "Unit", "Resident" });
 			cbTypes.Location = new System.Drawing.Point(7, 11);
