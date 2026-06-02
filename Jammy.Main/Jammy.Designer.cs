@@ -355,94 +355,6 @@ namespace Jammy.Main
 			btnDisassemble.UseVisualStyleBackColor = true;
 			btnDisassemble.Click += btnDisassemble_Click;
 			// 
-			// radioButton10
-			// 
-			radioButton10.AutoSize = true;
-			radioButton10.Location = new System.Drawing.Point(0, 0);
-			radioButton10.Name = "radioButton10";
-			radioButton10.Size = new System.Drawing.Size(100, 19);
-			radioButton10.TabIndex = 27;
-			radioButton10.TabStop = true;
-			radioButton10.Text = "radioButton10";
-			radioButton10.UseVisualStyleBackColor = true;
-			// 
-			// radioButton11
-			// 
-			radioButton11.AutoSize = true;
-			radioButton11.Location = new System.Drawing.Point(0, 0);
-			radioButton11.Name = "radioButton11";
-			radioButton11.Size = new System.Drawing.Size(100, 19);
-			radioButton11.TabIndex = 28;
-			radioButton11.TabStop = true;
-			radioButton11.Text = "radioButton11";
-			radioButton11.UseVisualStyleBackColor = true;
-			// 
-			// radioButton12
-			// 
-			radioButton12.AutoSize = true;
-			radioButton12.Location = new System.Drawing.Point(0, 0);
-			radioButton12.Name = "radioButton12";
-			radioButton12.Size = new System.Drawing.Size(100, 19);
-			radioButton12.TabIndex = 29;
-			radioButton12.TabStop = true;
-			radioButton12.Text = "radioButton12";
-			radioButton12.UseVisualStyleBackColor = true;
-			// 
-			// radioButton13
-			// 
-			radioButton13.AutoSize = true;
-			radioButton13.Location = new System.Drawing.Point(0, 0);
-			radioButton13.Name = "radioButton13";
-			radioButton13.Size = new System.Drawing.Size(100, 19);
-			radioButton13.TabIndex = 30;
-			radioButton13.TabStop = true;
-			radioButton13.Text = "radioButton13";
-			radioButton13.UseVisualStyleBackColor = true;
-			// 
-			// radioButton14
-			// 
-			radioButton14.AutoSize = true;
-			radioButton14.Location = new System.Drawing.Point(0, 0);
-			radioButton14.Name = "radioButton14";
-			radioButton14.Size = new System.Drawing.Size(100, 19);
-			radioButton14.TabIndex = 31;
-			radioButton14.TabStop = true;
-			radioButton14.Text = "radioButton14";
-			radioButton14.UseVisualStyleBackColor = true;
-			// 
-			// radioButton15
-			// 
-			radioButton15.AutoSize = true;
-			radioButton15.Location = new System.Drawing.Point(0, 0);
-			radioButton15.Name = "radioButton15";
-			radioButton15.Size = new System.Drawing.Size(100, 19);
-			radioButton15.TabIndex = 32;
-			radioButton15.TabStop = true;
-			radioButton15.Text = "radioButton15";
-			radioButton15.UseVisualStyleBackColor = true;
-			// 
-			// radioButton16
-			// 
-			radioButton16.AutoSize = true;
-			radioButton16.Location = new System.Drawing.Point(0, 0);
-			radioButton16.Name = "radioButton16";
-			radioButton16.Size = new System.Drawing.Size(100, 19);
-			radioButton16.TabIndex = 33;
-			radioButton16.TabStop = true;
-			radioButton16.Text = "radioButton16";
-			radioButton16.UseVisualStyleBackColor = true;
-			// 
-			// radioButton17
-			// 
-			radioButton17.AutoSize = true;
-			radioButton17.Location = new System.Drawing.Point(0, 0);
-			radioButton17.Name = "radioButton17";
-			radioButton17.Size = new System.Drawing.Size(100, 19);
-			radioButton17.TabIndex = 34;
-			radioButton17.TabStop = true;
-			radioButton17.Text = "radioButton17";
-			radioButton17.UseVisualStyleBackColor = true;
-			// 
 			// addressFollowBox
 			// 
 			addressFollowBox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -1106,14 +1018,6 @@ namespace Jammy.Main
 		private System.Windows.Forms.PictureBox picPower;
 		private System.Windows.Forms.PictureBox picDisk;
 		private System.Windows.Forms.Button btnDisassemble;
-		private System.Windows.Forms.RadioButton radioButton10;
-		private System.Windows.Forms.RadioButton radioButton11;
-		private System.Windows.Forms.RadioButton radioButton12;
-		private System.Windows.Forms.RadioButton radioButton13;
-		private System.Windows.Forms.RadioButton radioButton14;
-		private System.Windows.Forms.RadioButton radioButton15;
-		private System.Windows.Forms.RadioButton radioButton16;
-		private System.Windows.Forms.RadioButton radioButton17;
 		private System.Windows.Forms.ComboBox addressFollowBox;
 		private System.Windows.Forms.RichTextBox txtCopper;
 		private System.Windows.Forms.ContextMenuStrip menuDisassembly;
