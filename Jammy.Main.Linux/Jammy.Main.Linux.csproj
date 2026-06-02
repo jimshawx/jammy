@@ -49,7 +49,7 @@
 	<ApplicationIcon>amiga.ico</ApplicationIcon>
 	<PublishSingleFile>true</PublishSingleFile>
 	<PublishReadyToRun>true</PublishReadyToRun>
-	<SelfContained>false</SelfContained>
+	<SelfContained>true</SelfContained>
   </PropertyGroup>
 <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.14" />
