@@ -232,7 +232,10 @@ public class Agnus : IAgnus
 		else if ((clock.HorizontalPos >= ddfstop + debugger.ddfEHack && ((fetchCount & 7) == 0) || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
 		{
 			//if we've passed ddfstop and we've fetched all the planes, then fetch one more lot of planes
-			debugger.activity[clock.HorizontalPos] = 'S';
+			//debugging
+			if (clock.VerticalPos == debugger.dbugLine)
+				debugger.activity[clock.HorizontalPos] = 'S';
+			//debugging
 			lineState = DMALineState.LastBitplaneFetch;
 			lastFetchCount = (fmode&3) == 0 ? 8 : (fmode&3)==3 ? 32 : 16;
 		}
@@ -243,7 +246,10 @@ public class Agnus : IAgnus
 			lastFetchCount--;
 			if (lastFetchCount == 0 || (clock.ClockState& ChipsetClockState.EndOfLine) != 0)
 			{
-				debugger.activity[clock.HorizontalPos] = 'C';
+				//debugging
+				if (clock.VerticalPos == debugger.dbugLine)
+					debugger.activity[clock.HorizontalPos] = 'C';
+				//debugging
 				lineState = DMALineState.LineComplete;
 
 				//if (clock.HorizontalPos != ddfstopfix)
@@ -377,7 +383,10 @@ public class Agnus : IAgnus
 				bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
 			}
 			lineState = DMALineState.LineTerminated;
-			debugger.activity[clock.HorizontalPos] = 'M';
+			//debugging
+			if (clock.VerticalPos == debugger.dbugLine)
+				debugger.activity[clock.HorizontalPos] = 'M';
+			//debugging
 		}
 	}
 
