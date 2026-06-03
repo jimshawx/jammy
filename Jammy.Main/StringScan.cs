@@ -50,34 +50,105 @@ namespace Jammy.Main
 			ss.Wait();
 		}
 
-		private bool IsString(byte b)
+		private static readonly int[] charScore =
+		[
+			2,//space
+			-1,//!
+			-1,//"
+			-1,//#
+			-1,//$
+			-3,//%
+			-3,//&
+			-1,//'
+			-2,//(
+			-2,//)
+			-3,//*
+			-3,//+
+			-2,//,
+			-3,//-
+			-1,//.
+			-1,//forward slash
+			1,1,1,1,1,1,1,1,1,1,//0-9
+			-1,//:
+			-3,//;
+			-3,//<
+			-3,//=
+			-3,//>
+			-1,//?
+			-2,//@
+			2,2,2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,2,2, 2,2,2,2,2,2,//A-Z
+			-3,//[
+			-2,//backslash
+			-3,//]
+			-3,//^
+			-3,//_
+			-3,//`
+			2,2,2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2,2,2, 2,2,2,2,2,2,//a-z
+			-3,//{
+			-3,//|
+			-3,//},
+			-3,//~
+		];
+
+		private bool Filter(string s)
 		{
-			char c = (char)b;
-			return c>= ' ' && c < 128;
+			//return true if the string is to be filtered out
+
+			//Nu is a really common misinterpretation of a CPU instruction
+			//if it's prefixed by anything other than ' ', it's unlikely to be a string
+			int nu = s.IndexOf("Nu");
+			if (nu > 0 && s[nu-1] != ' ') return true;
+			//if it's at the start but not followed by a letter, it's unlikely to be a string
+			if (nu == 0 && s.Length > 2 && !char.IsAsciiLetter(s[nu+2])) return true;
+
+			//if it's whitespace, it's not a string
+			if (string.IsNullOrWhiteSpace(s)) return true;
+
+			//not filtered
+			return false;
+		}
+
+		private int CharScore(byte b)
+		{
+			int c = b;
+			c -= 32;
+			if (c < 0 || c >= charScore.Length) return 0;
+			return charScore[c];
 		}
 
 		private string GetStrings(List<BulkMemoryRange> ram, int minW)
 		{
 			long startI;
 			var sb = new StringBuilder();
+			int currentScore = 0;
 
 			foreach (var r in ram)
 			{
 				startI = -1;
 
-				for (uint i = 0; i < r.Length; i++)
+				for (uint i = 0; i <= r.Length; i++)
 				{
-					bool isPrint = IsString(r.Memory[i]);
-					if (isPrint && startI == -1)
+					//force a terminating null at the end of the buffer
+					int score = i == r.Length ? 0: CharScore(r.Memory[i]);
+					if (score != 0 && startI == -1)
 					{
 						startI = i;
+						currentScore = score;
 					}
-					else if (!isPrint && startI != -1)
+					else if (score == 0 && startI != -1)
 					{
 						long len = i-startI;
-						if (len >= minW)
-							sb.AppendLine(Encoding.ASCII.GetString(r.Memory.AsSpan((int)startI, (int)len)));
+						if (len >= minW && currentScore >= 0)
+						{
+							string s = Encoding.ASCII.GetString(r.Memory.AsSpan((int)startI, (int)len));
+							if (!Filter(s))
+								sb.AppendLine(s);
+						}
 						startI = -1;
+					}
+					else
+					{
+						currentScore += score;
 					}
 				}
 			}
