@@ -56,18 +56,26 @@ namespace Jammy.Core.Custom.Audio
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
 		public void Emulate()
 		{
-			if ((clock.ClockState & ChipsetClockState.EndOfLine) != 0)
+			for (int i = 0; i < 4; i++)
 			{
-				for (int i = 0; i < 4; i++)
-				{
-					if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
-					else if (ch[i].mode == AudioMode.Interrupt) PlayingIRQ(i);
-				}
-				AudioMix(ch);
+				if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
+				else if (ch[i].mode == AudioMode.Interrupt) PlayingIRQ(i);
 			}
+
+			//sample audper for hardware mix
+			//this would be 2 samples per line, 312 lines, 50 Hz = 31200Hz
+			if (clock.HorizontalPos == 0 || clock.HorizontalPos == 113)
+				AudioMix(ch);
 		}
 
-		private int rate = 100;
+		private const int rate = 1;
+
+		protected void Fetch(int channel)
+		{
+			//read the sample into live audXdat
+			ch[channel].auddat = (ushort)memory.ImmediateRead(0, ch[channel].working_audlc, Size.Word);
+			ch[channel].working_audlc += 2;
+		}
 
 		protected void PlayingDMA(int channel)
 		{
@@ -78,10 +86,19 @@ namespace Jammy.Core.Custom.Audio
 			ch[channel].working_audper -= rate;
 			if (ch[channel].working_audper <= 0)
 			{
-				//read the sample into live audXdat
-				ch[channel].auddat = (ushort)memory.ImmediateRead(0, ch[channel].working_audlc, Size.Word);
+				if (!ch[channel].secondByte)
+				{
+					ch[channel].auddat <<= 8;
+					ch[channel].secondByte = true;
+				}
+				else
+				{
+					Fetch(channel);
+					ch[channel].secondByte = false;
+				}
+
 				//update the pointers and reset the period
-				ch[channel].working_audlc += 2;
+
 				ch[channel].working_audlen--;
 				ch[channel].working_audper += ch[channel].audper;
 
@@ -193,6 +210,8 @@ namespace Jammy.Core.Custom.Audio
 
 			public AudioMode mode { get; set; }
 
+			public bool secondByte { get; set; }
+
 			public bool modulating_vp { get; set; }//false = modulating volume, true = modulating period
 			public bool modulate_toggle { get; set; }//false = modulate only volume or period, true = modulate both
 
@@ -288,11 +307,13 @@ namespace Jammy.Core.Custom.Audio
 			//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
 			for (int i = 0; i< 4; i++)
 			{
+				if (channels[i].audioBytes.Length <= channels[i].audioBytesIndex) continue;
+
 				ushort volume = (ushort)((ch[i].audvol & (1 << 6)) != 0 ? 64 : (ch[i].audvol & 0x3f));
 
 				//Amiga samples are two 8-bit signed values packed into a word, range -128 to +127
 				short s0 = (sbyte)(ch[i].auddat >> 8);
-				short s1 = (sbyte)ch[i].auddat;
+				//short s1 = (sbyte)ch[i].auddat;
 
 				if (SAMPLE_SIZE == 1)
 				{
@@ -300,10 +321,10 @@ namespace Jammy.Core.Custom.Audio
 					//(-128 * 64)>>6 = -128
 					//(+127 * 64)>>6 = +127;
 					s0 = (short) ((s0* volume) >> 6);
-					s1 = (short) ((s1* volume) >> 6);
+					//s1 = (short) ((s1* volume) >> 6);
 					//8-bit PCM is unsigned
 					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s0 + 128);
-					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s1 + 128);
+					//channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s1 + 128);
 #pragma warning restore CS0162 // Unreachable code detected
 				}
 				else
@@ -311,13 +332,13 @@ namespace Jammy.Core.Custom.Audio
 					//(-128 * 64)<<2 = -32768
 					//(+127 * 64)<<2 = +32767;
 					s0 = (short) ((s0* volume) << 2); s0 |= (short) ((s0 >> 14) & 3);
-					s1 = (short) ((s1* volume) << 2); s1 |= (short) ((s1 >> 14) & 3);
+					//s1 = (short) ((s1* volume) << 2); s1 |= (short) ((s1 >> 14) & 3);
 
 					//16-bit PCM is signed
 					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) s0;
 					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s0>>8);
-					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) s1;
-					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s1>>8);
+					//channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) s1;
+					//channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s1>>8);
 				}
 			}
 		}
