@@ -78,7 +78,7 @@ namespace Jammy.Core.Audio.Linux
 		private class AmigaChannel :IFilter
 		{
 			public byte[] audioBytes { get; set; }
-			public int xaudioCIndex { get; set; }
+			public int audioBytesIndex { get; set; }
 			public FilterChannel filter { get; } = new FilterChannel();
 		}
 
@@ -104,51 +104,17 @@ namespace Jammy.Core.Audio.Linux
 			for (int i = 0; i < 4; i++)
 			{
 				channels[i].audioBytes = new byte[BUFFER_SIZE];
-				channels[i].xaudioCIndex = 0;
+				channels[i].audioBytesIndex = 0;
 			}
 			mixBuffer = new byte[BUFFER_SIZE * 2];
 		}
 
 		private void AudioMix()
 		{
-			//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
-			for (int i = 0; i < 4; i++)
-			{
-				ushort volume = (ushort)((ch[i].audvol & (1 << 6)) != 0 ? 64 : (ch[i].audvol & 0x3f));
-
-				//Amiga samples are two 8-bit signed values packed into a word, range -128 to +127
-				short s0 = (sbyte)(ch[i].auddat >> 8);
-				short s1 = (sbyte)ch[i].auddat;
-
-				if (SAMPLE_SIZE == 1)
-				{
-#pragma warning disable CS0162 // Unreachable code detected
-					//(-128 * 64)>>6 = -128
-					//(+127 * 64)>>6 = +127;
-					s0 = (short)((s0 * volume) >> 6);
-					s1 = (short)((s1 * volume) >> 6);
-					//8-bit PCM is unsigned
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s0 + 128);
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s1 + 128);
-#pragma warning restore CS0162 // Unreachable code detected
-				}
-				else
-				{
-					//(-128 * 64)<<2 = -32768
-					//(+127 * 64)<<2 = +32767;
-					s0 = (short)((s0 * volume) << 2); s0 |= (short)((s0 >> 14) & 3);
-					s1 = (short)((s1 * volume) << 2); s1 |= (short)((s1 >> 14) & 3);
-
-					//16-bit PCM is signed
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)s0;
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s0>>8);
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)s1;
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s1>>8);
-				}
-			}
+			base.AudioMix(channels);
 			
-			//time to mix?
-			if (channels[0].xaudioCIndex == channels[0].audioBytes.Length)
+			//time to hardware mix?
+			if (channels[0].audioBytesIndex == channels[0].audioBytes.Length)
 			{
 				for (int i = 0; i < 4; i++)
 					LowPassFilter(channels[i]);
@@ -183,7 +149,7 @@ namespace Jammy.Core.Audio.Linux
 				}
 
 				for (int i = 0; i < 4; i++)
-					channels[i].xaudioCIndex = 0;
+					channels[i].audioBytesIndex = 0;
 			}
 		}
 	}

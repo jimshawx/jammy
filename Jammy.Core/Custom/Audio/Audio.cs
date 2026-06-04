@@ -278,6 +278,45 @@ namespace Jammy.Core.Custom.Audio
 			}
 		}
 
+		protected void AudioMix(IFilter[] channels)
+		{ 
+			//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
+			for (int i = 0; i< 4; i++)
+			{
+				ushort volume = (ushort)((ch[i].audvol & (1 << 6)) != 0 ? 64 : (ch[i].audvol & 0x3f));
+
+				//Amiga samples are two 8-bit signed values packed into a word, range -128 to +127
+				short s0 = (sbyte)(ch[i].auddat >> 8);
+				short s1 = (sbyte)ch[i].auddat;
+
+				if (SAMPLE_SIZE == 1)
+				{
+#pragma warning disable CS0162 // Unreachable code detected
+					//(-128 * 64)>>6 = -128
+					//(+127 * 64)>>6 = +127;
+					s0 = (short) ((s0* volume) >> 6);
+					s1 = (short) ((s1* volume) >> 6);
+					//8-bit PCM is unsigned
+					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s0 + 128);
+					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s1 + 128);
+#pragma warning restore CS0162 // Unreachable code detected
+				}
+				else
+				{
+					//(-128 * 64)<<2 = -32768
+					//(+127 * 64)<<2 = +32767;
+					s0 = (short) ((s0* volume) << 2); s0 |= (short) ((s0 >> 14) & 3);
+					s1 = (short) ((s1* volume) << 2); s1 |= (short) ((s1 >> 14) & 3);
+
+					//16-bit PCM is signed
+					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) s0;
+					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s0>>8);
+					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) s1;
+					channels[i].audioBytes[channels[i].audioBytesIndex++] = (byte) (s1>>8);
+				}
+			}
+		}
+
 		private ushort intreq = 0;
 
 		public void WriteINTREQ(ushort v)
@@ -458,8 +497,9 @@ namespace Jammy.Core.Custom.Audio
 
 		public interface IFilter
 		{
-			public byte[] audioBytes { get; }
-			public FilterChannel filter { get; }
+			byte[] audioBytes { get; }
+			int audioBytesIndex { get; set; }
+			FilterChannel filter { get; }
 		}
 
 		protected void LowPassFilter(IFilter channel)

@@ -58,16 +58,14 @@ namespace Jammy.Core.Audio.Windows
 			public IXAudio2SourceVoice xaudioVoice { get; set; }
 			public AudioBuffer[] xaudioBuffer { get; set; }
 			public byte[] audioBytes { get; set; }
-			public int xaudioCIndex { get; set; }
+			public int audioBytesIndex { get; set; }
 			public int currentBuffer { get; set; }
 			public FilterChannel filter { get; } = new FilterChannel();
 		}
 
 		private readonly AmigaChannel[] channels = new[] { new AmigaChannel(), new AmigaChannel(), new AmigaChannel(), new AmigaChannel() };
 
-
 		private const int BUFFER_SIZE = 3120*SAMPLE_SIZE;
-
 
 		private void InitMixer()
 		{
@@ -94,7 +92,7 @@ namespace Jammy.Core.Audio.Windows
 				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
 				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
 				channels[i].audioBytes = new byte[BUFFER_SIZE];
-				channels[i].xaudioCIndex = 0;
+				channels[i].audioBytesIndex = 0;
 				channels[i].currentBuffer = 0;
 
 				//panning 1,2 left   0,3 right
@@ -117,42 +115,12 @@ namespace Jammy.Core.Audio.Windows
 
 		private void AudioMix()
 		{
-			//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
+			base.AudioMix(channels);
+
+			//time to hardware mix?
 			for (int i = 0; i < 4; i++)
 			{
-				ushort volume = (ushort)((ch[i].audvol & (1 << 6)) != 0 ? 64 : (ch[i].audvol & 0x3f));
-
-				//Amiga samples are two 8-bit signed values packed into a word, range -128 to +127
-				short s0 = (sbyte)(ch[i].auddat >> 8);
-				short s1 = (sbyte)ch[i].auddat;
-
-				if (SAMPLE_SIZE == 1)
-				{
-#pragma warning disable CS0162 // Unreachable code detected
-					//(-128 * 64)>>6 = -128
-					//(+127 * 64)>>6 = +127;
-					s0 = (short)((s0 * volume) >> 6);
-					s1 = (short)((s1 * volume) >> 6);
-					//8-bit PCM is unsigned
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s0 + 128);
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s1 + 128);
-#pragma warning restore CS0162 // Unreachable code detected
-				}
-				else
-				{
-					//(-128 * 64)<<2 = -32768
-					//(+127 * 64)<<2 = +32767;
-					s0 = (short)((s0 * volume) << 2); s0 |= (short)((s0 >> 14) & 3);
-					s1 = (short)((s1 * volume) << 2); s1 |= (short)((s1 >> 14) & 3);
-
-					//16-bit PCM is signed
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)s0;
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s0>>8);
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)s1;
-					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s1>>8);
-				}
-
-				if (channels[i].xaudioCIndex == channels[i].audioBytes.Length)
+				if (channels[i].audioBytesIndex == channels[i].audioBytes.Length)
 				{
 					var state = channels[i].xaudioVoice.State;
 					if (state.BuffersQueued >= 2)
@@ -166,7 +134,7 @@ namespace Jammy.Core.Audio.Windows
 					LowPassFilter(channels[i]);
 
 					Marshal.Copy(channels[i].audioBytes, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, channels[i].audioBytes.Length);
-					channels[i].xaudioCIndex = 0;
+					channels[i].audioBytesIndex = 0;
 					channels[i].xaudioVoice.SubmitSourceBuffer(channels[i].xaudioBuffer[channels[i].currentBuffer], null);
 					channels[i].xaudioVoice.Start();
 					channels[i].currentBuffer ^= 1;
