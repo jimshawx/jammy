@@ -482,7 +482,7 @@ namespace Jammy.Main
 
 		private void btnReset_Click(object sender, EventArgs e)
 		{
-			Amiga.SetEmulationMode(EmulationMode.Stopped);
+			//Amiga.SetEmulationMode(EmulationMode.Stopped);
 
 			Amiga.LockEmulation();
 			emulation.Reset();

@@ -97,6 +97,7 @@ namespace Jammy.Core.Custom
 					lisaid = 0x00f8;//Lisa returns 0xF8, upper byte is 0 for A1200, non-zero for A4000
 					break;
 			}
+			intena = 0;
 		}
 
 		private readonly MemoryRange memoryRange = new MemoryRange(0xc00000, 0x200000);

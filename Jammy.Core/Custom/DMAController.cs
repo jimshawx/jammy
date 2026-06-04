@@ -51,6 +51,7 @@ public class DMAController : IDMA
 		{
 			activity.Type = DMAActivityType.None;
 		}
+		dmacon = 0;
 	}
 
 	private Func<ushort> chipsetSync = NullSync;
@@ -408,7 +409,7 @@ public class DMAController : IDMA
 
 	public uint DebugRead(uint address, Size size)
 	{
-		return memoryMapper.ImmediateRead(0, address, size);
+		return ((IDebugMemoryMapper)memoryMapper).UnsafeRead(address, size);
 	}
 
 	public void Save(JArray obj)

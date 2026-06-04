@@ -134,6 +134,16 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 
 		public void Reset()
 		{
+			var r = new Regs();
+			uint sp = memoryMapper.Read(0, 0, Size.Long);
+			uint pc = memoryMapper.Read(0, 4, Size.Long);
+
+			//supervisor mode
+			r.SR = 0x2704;
+			r.SSP = sp;
+			r.PC = pc;
+
+			SetRegs(r);
 		}
 
 		public void SetPC(uint pc)

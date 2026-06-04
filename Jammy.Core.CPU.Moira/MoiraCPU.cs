@@ -146,7 +146,16 @@ namespace Jammy.Core.CPU.Moira
 
 		public void Reset()
 		{
-			//Moira_set_pc(4);
+			var r = new Moira_regs();
+			uint sp = memoryMapper.Read(0, 0, Size.Long);
+			uint pc = memoryMapper.Read(0, 4, Size.Long);
+
+			//supervisor mode
+			r.sr = 0x2704;
+			r.ssp = sp;
+			r.pc = pc;
+
+			Moira_set_regs(r);
 		}
 
 		public Regs GetRegs()
