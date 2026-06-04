@@ -90,6 +90,7 @@ namespace Jammy.Core.Custom.Audio
 				{
 					ch[channel].auddat <<= 8;
 					ch[channel].secondByte = true;
+					return;
 				}
 				else
 				{
