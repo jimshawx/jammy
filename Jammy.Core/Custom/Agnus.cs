@@ -100,6 +100,7 @@ public class Agnus : IAgnus
 		spriteSize = Size.Word;
 
 		lineState = DMALineState.LineStart;
+		bplcon0 = 0;
 	}
 
 

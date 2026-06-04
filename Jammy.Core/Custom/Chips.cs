@@ -98,6 +98,7 @@ namespace Jammy.Core.Custom
 					break;
 			}
 			intena = 0;
+			intreq = 0;
 		}
 
 		private readonly MemoryRange memoryRange = new MemoryRange(0xc00000, 0x200000);

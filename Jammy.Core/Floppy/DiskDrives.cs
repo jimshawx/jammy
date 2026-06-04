@@ -201,6 +201,8 @@ namespace Jammy.Core.Floppy
 			}
 			diskInterruptPending = -1;
 			runningDMA = false;
+			adkcon = 0;
+			upcomingDiskDMA = -1;
 		}
 
 		public ushort Read(uint insaddr, uint address)
