@@ -1,4 +1,6 @@
-﻿/*
+﻿using System;
+
+/*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 

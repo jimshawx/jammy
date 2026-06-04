@@ -14,6 +14,8 @@ using int8 = sbyte;
 using int16 = short;
 using int32 = int;
 using int64 = long;
+using System.Linq;
+using System;
 
 public static partial class M68KCPU
 {

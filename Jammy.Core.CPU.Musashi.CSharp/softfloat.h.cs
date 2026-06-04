@@ -49,6 +49,7 @@ using bits64 = ulong;
 using bits32 = uint;
 using bits16 = ushort;
 using sbits64 = long;
+using System;
 
 public static partial class M68KCPU
 {

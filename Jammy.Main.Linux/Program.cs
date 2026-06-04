@@ -48,6 +48,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Parky.Logging;
 using ReactiveUI.Avalonia;
+using System;
+using System.IO;
+using System.Linq;
 using System.Runtime.Intrinsics.X86;
 
 /*

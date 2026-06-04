@@ -49,6 +49,7 @@ using uint32 = uint;
 using sint = int;
 using sint64 = long;
 using uint64 = ulong;
+using System;
 
 public static partial class M68KCPU
 {

@@ -36,6 +36,11 @@ global using CPTR = System.UInt32;
 
 global using PLANEPTR = System.UInt32;
 
+using System.Collections.Generic;
+using System;
+using System.Linq;
+using System.Threading;
+
 namespace Jammy.AmigaTypes;
 
 public static class AmigaType

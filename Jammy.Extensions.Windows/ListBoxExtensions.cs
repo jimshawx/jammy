@@ -1,4 +1,9 @@
-﻿/*
+﻿using System;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
+
+/*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
 */
 

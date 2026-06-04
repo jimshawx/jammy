@@ -6,6 +6,8 @@ using m68kcpu;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Linq;
 
 namespace Jammy.Core.CPU.Musashi.CSharp
 {

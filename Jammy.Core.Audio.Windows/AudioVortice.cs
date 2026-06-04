@@ -4,7 +4,9 @@ using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Vortice.Multimedia;
 using Vortice.XAudio2;
 
