@@ -159,7 +159,14 @@ public class Denise : IDenise
 
 	public void Reset()
 	{
+		bplcon0 = 0;
 		bplcon4 = 0x0011;//OSPRM/ESPRM both set to 1 (sprites use bank 1 for colours)
+		bplcon3 = 0;
+		bplcon4 = 0;
+		fmode = 0;
+		UpdateBPLCON0();
+		UpdateBPLCON4();
+		UpdateFMODE();
 	}
 
 	private void RunVerticalBlankStart()

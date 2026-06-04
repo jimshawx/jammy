@@ -101,6 +101,9 @@ public class Agnus : IAgnus
 
 		lineState = DMALineState.LineStart;
 		bplcon0 = 0;
+		fmode = 0;
+		UpdateBPLCON0();
+		UpdateFMODE();
 	}
 
 
