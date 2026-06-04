@@ -1,7 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
-using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
@@ -162,7 +161,6 @@ public class Denise : IDenise
 		bplcon0 = 0;
 		bplcon4 = 0x0011;//OSPRM/ESPRM both set to 1 (sprites use bank 1 for colours)
 		bplcon3 = 0;
-		bplcon4 = 0;
 		fmode = 0;
 		UpdateBPLCON0();
 		UpdateBPLCON4();
@@ -1143,7 +1141,7 @@ end loop
 	private ushort bplcon1;
 	private ushort bplcon2;
 	private ushort bplcon3;
-	private ushort bplcon4;
+	private ushort bplcon4 = 0x0011;
 	private ushort clxdat;
 	private ushort clxcon;
 	private ushort clxcon2;
