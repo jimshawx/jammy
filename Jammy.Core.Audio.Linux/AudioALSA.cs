@@ -75,16 +75,15 @@ namespace Jammy.Core.Audio.Linux
 			}
 		}
 
-		private class AmigaChannel
+		private class AmigaChannel :IFilter
 		{
-			public byte[] xaudioCBuffer { get; set; }
+			public byte[] audioBytes { get; set; }
 			public int xaudioCIndex { get; set; }
+			public FilterChannel filter { get; } = new FilterChannel();
 		}
 
 		private readonly AmigaChannel[] channels = new[] { new AmigaChannel(), new AmigaChannel(), new AmigaChannel(), new AmigaChannel() };
 
-		private const int SAMPLE_RATE = 31200;
-		private const int SAMPLE_SIZE = 2;//1 for 8bit, 2 for 16bit
 		private const int BUFFER_SIZE = 3120*SAMPLE_SIZE;
 		
 		private IntPtr pcmHandle;
@@ -104,7 +103,7 @@ namespace Jammy.Core.Audio.Linux
 
 			for (int i = 0; i < 4; i++)
 			{
-				channels[i].xaudioCBuffer = new byte[BUFFER_SIZE];
+				channels[i].audioBytes = new byte[BUFFER_SIZE];
 				channels[i].xaudioCIndex = 0;
 			}
 			mixBuffer = new byte[BUFFER_SIZE * 2];
@@ -129,8 +128,8 @@ namespace Jammy.Core.Audio.Linux
 					s0 = (short)((s0 * volume) >> 6);
 					s1 = (short)((s1 * volume) >> 6);
 					//8-bit PCM is unsigned
-					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s0 + 128);
-					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s1 + 128);
+					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s0 + 128);
+					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s1 + 128);
 #pragma warning restore CS0162 // Unreachable code detected
 				}
 				else
@@ -141,25 +140,25 @@ namespace Jammy.Core.Audio.Linux
 					s1 = (short)((s1 * volume) << 2); s1 |= (short)((s1 >> 14) & 3);
 
 					//16-bit PCM is signed
-					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)s0;
-					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s0>>8);
-					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)s1;
-					channels[i].xaudioCBuffer[channels[i].xaudioCIndex++] = (byte)(s1>>8);
+					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)s0;
+					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s0>>8);
+					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)s1;
+					channels[i].audioBytes[channels[i].xaudioCIndex++] = (byte)(s1>>8);
 				}
 			}
 			
 			//time to mix?
-			if (channels[0].xaudioCIndex == channels[0].xaudioCBuffer.Length)
+			if (channels[0].xaudioCIndex == channels[0].audioBytes.Length)
 			{
-				//for (int i = 0; i < 4; i++)
-				//	LowPassFilter(i);
+				for (int i = 0; i < 4; i++)
+					LowPassFilter(channels[i]);
 
-				for (int s = 0; s < channels[0].xaudioCBuffer.Length; s += 2)
+				for (int s = 0; s < channels[0].audioBytes.Length; s += 2)
 				{
-					int v0 = (int)(short)((ushort)channels[0].xaudioCBuffer[s] + (ushort)(channels[0].xaudioCBuffer[s + 1] << 8));
-					int v1 = (int)(short)((ushort)channels[1].xaudioCBuffer[s] + (ushort)(channels[1].xaudioCBuffer[s + 1] << 8));
-					int v2 = (int)(short)((ushort)channels[2].xaudioCBuffer[s] + (ushort)(channels[2].xaudioCBuffer[s + 1] << 8));
-					int v3 = (int)(short)((ushort)channels[3].xaudioCBuffer[s] + (ushort)(channels[3].xaudioCBuffer[s + 1] << 8));
+					int v0 = (int)(short)((ushort)channels[0].audioBytes[s] + (ushort)(channels[0].audioBytes[s + 1] << 8));
+					int v1 = (int)(short)((ushort)channels[1].audioBytes[s] + (ushort)(channels[1].audioBytes[s + 1] << 8));
+					int v2 = (int)(short)((ushort)channels[2].audioBytes[s] + (ushort)(channels[2].audioBytes[s + 1] << 8));
+					int v3 = (int)(short)((ushort)channels[3].audioBytes[s] + (ushort)(channels[3].audioBytes[s + 1] << 8));
 
 					int L = (v0 + v1) >> 1;
 					int R = (v2 + v3) >> 1;
@@ -185,51 +184,6 @@ namespace Jammy.Core.Audio.Linux
 
 				for (int i = 0; i < 4; i++)
 					channels[i].xaudioCIndex = 0;
-			}
-		}
-
-		private void LowPassFilter(int i)
-		{
-			if (SAMPLE_SIZE == 2)
-			{
-				double o2, o1;
-				double i0, i1, i2;
-
-				o2 = o1 = 0.0;
-				i2 = i1 = 0.0;
-
-				//double sr = 3546895.0;
-				double sr = SAMPLE_RATE;
-				double r = Math.Sqrt(2.0);
-				//double f = 3275.0;
-				double f = 32000.0;
-				double c = 1.0 / Math.Tan(Math.PI * f / sr);
-				double a1, a2, a3;
-				double b1, b2;
-
-				a1 = 1.0 / (1.0 + r * c + c * c);
-				a2 = 2.0 * a1;
-				a3 = a1;
-				b1 = 2.0 * (1.0 - c * c) * a1;
-				b2 = (1.0 - r * c + c * c) * a1;
-
-				double[] outputs = new double[channels[i].xaudioCBuffer.Length / 2];
-				for (int s = 0; s < channels[i].xaudioCBuffer.Length; s += 2)
-				{
-					i0 = (channels[i].xaudioCBuffer[s] + (channels[i].xaudioCBuffer[s+1] << 8)) / 32768.0f;
-
-					outputs[s / 2] = a1 * i0 + a2 * i1 + a3 * i2 - b1 * o1 - b2 * o2;
-					o2 = o1;
-					i2 = i1;
-					i1 = i0;
-				}
-
-				for (int s = 0; s < outputs.Length; s++)
-				{
-					short v = (short)Math.Clamp(outputs[s]*32768.0, -32768.0, 32767.0);
-					channels[i].xaudioCBuffer[s * 2] = (byte)v;
-					channels[i].xaudioCBuffer[s * 2+1] = (byte)(v>>8);
-				}
 			}
 		}
 	}

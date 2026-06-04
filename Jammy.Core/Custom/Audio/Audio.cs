@@ -4,6 +4,7 @@ using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using System;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -22,6 +23,13 @@ namespace Jammy.Core.Custom.Audio
 		protected readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
 		protected readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
+		private const double LOW_PASS_FILTER_FREQUENCY = 3275.0;   // LED filter A500/A1200
+		private const double A500_FIXED_FILTER_FREQUENCY = 4900.0; // Hardware filter A500
+		private const double A1200_FIXED_FILTER_FREQUENCY = 28867.0; // Hardware filter A1200
+
+		protected const int SAMPLE_RATE = 31200;
+		protected const int SAMPLE_SIZE = 2;//1 for 8bit, 2 for 16bit
+
 		public Audio(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<Audio> logger)
 		{
 			this.clock = clock;
@@ -29,6 +37,8 @@ namespace Jammy.Core.Custom.Audio
 			this.interrupt = interrupt;
 			this.settings = settings.Value;
 			this.logger = logger;
+
+			InitLowPassFilter();
 		}
 
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
@@ -400,6 +410,97 @@ namespace Jammy.Core.Custom.Audio
 				if (dc[i].audlc != ch[i].audlc) logger.LogTrace($"AUD{i}LC {dc[i].audlc:X8}->{ch[i].audlc:X8}");
 				//if (dc[i].auddat != ch[i].auddat) logger.LogTrace($"AUD{i}DAT {dc[i].auddat}->{ch[i].auddat}");
 				ch[i].CopyTo(dc[i]);
+			}
+		}
+
+		private bool filter = false;
+		private bool raw = false;
+
+		private double a1, a2, a3, b1, b2;
+		private double a0;
+
+		protected void InitLowPassFilter()
+		{
+			//low-pass filter A500/A1200
+			{
+				double sr = SAMPLE_RATE;
+				double f = LOW_PASS_FILTER_FREQUENCY;
+				double r = Math.Sqrt(2.0);
+				double c = 1.0 / Math.Tan(Math.PI * f / sr);
+
+				a1 = 1.0 / (1.0 + r * c + c * c);
+				a2 = 2.0 * a1;
+				a3 = a1;
+				b1 = 2.0 * (1.0 - c * c) * a1;
+				b2 = (1.0 - r * c + c * c) * a1;
+			}
+
+			//hardware filter A500/1200
+			{
+				double f = settings.ChipSet == ChipSet.AGA ? A1200_FIXED_FILTER_FREQUENCY : A500_FIXED_FILTER_FREQUENCY;
+				double dt = 1.0 / SAMPLE_RATE;
+				double rc = 1.0 / (2.0 * Math.PI * f);
+				a0 = dt / (rc + dt);
+			}
+		}
+
+		public class FilterChannel
+		{
+			//low-pass filter
+			public double i1 { get; set; }
+			public double i2 { get; set; }
+			public double o1 { get; set; }
+			public double o2 { get; set; }
+
+			//hardware filter
+			public double y1 { get; set; }
+		}
+
+		public interface IFilter
+		{
+			public byte[] audioBytes { get; }
+			public FilterChannel filter { get; }
+		}
+
+		protected void LowPassFilter(IFilter channel)
+		{
+			if (raw) return;
+
+			if (SAMPLE_SIZE == 2)
+			{
+				double o1 = channel.filter.o1;
+				double o2 = channel.filter.o2;
+				double i1 = channel.filter.i1;
+				double i2 = channel.filter.i2;
+
+				for (int s = 0; s < channel.audioBytes.Length; s += 2)
+				{
+					double i0 = ((short)(channel.audioBytes[s] | (channel.audioBytes[s + 1] << 8))) / 32768.0f;
+
+					//hardware filter
+					double output = i0 * a0 + channel.filter.y1 * (1.0 - a0);
+					channel.filter.y1 = output;
+
+					//low-pass filter
+					if (filter)
+					{
+						double noutput = a1 * output + a2 * i1 + a3 * i2 - b1 * o1 - b2 * o2;
+						o2 = o1;
+						o1 = noutput;
+						i2 = i1;
+						i1 = output;
+						output = noutput;
+					}
+
+					short v = (short)Math.Clamp(output * 32768.0, -32768.0, 32767.0);
+					channel.audioBytes[s] = (byte)v;
+					channel.audioBytes[s + 1] = (byte)(v >> 8);
+				}
+
+				channel.filter.o1 = o1;
+				channel.filter.o2 = o2;
+				channel.filter.i1 = i1;
+				channel.filter.i2 = i2;
 			}
 		}
 
