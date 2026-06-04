@@ -30,9 +30,11 @@ namespace Jammy.NativeOverlay.Overlays
 
 			if (dt > TimeSpan.Zero && dt.Milliseconds <= 1000)
 			{
-				int so = 20 + 10 * screenWidth;
+				const int xo = 20;
+				const int yo = 10;
+				int so = xo + yo * screenWidth;
 				int ss = 2;
-				var fps = 1000.0f / dt.Milliseconds;
+				var fps = Math.Min(screenWidth-xo, 1000.0f / Math.Max(1, dt.Milliseconds));
 				fpsarr[fpsarrpos++] = fps;
 				fpsarrpos &= fpsarr.Length - 1;
 				var avefps = fpsarr.Sum() / fpsarr.Length;
