@@ -72,6 +72,14 @@ namespace Jammy.Core.Custom.Audio
 
 		protected void Fetch(int channel)
 		{
+			//All DMA is off
+			if ((dmacon & (int)DMA.DMAEN) == 0)
+				return;
+
+			//channel DMA is off
+			if ((dmacon & chanbit[channel]) == 0)
+				return;
+
 			//read the sample into live audXdat
 			ch[channel].auddat = (ushort)memory.ImmediateRead(0, ch[channel].working_audlc, Size.Word);
 			ch[channel].working_audlc += 2;
@@ -79,14 +87,10 @@ namespace Jammy.Core.Custom.Audio
 
 		protected void PlayingDMA(int channel)
 		{
-			//All DMA is off
-			if ((dmacon & (int)DMA.DMAEN) == 0)
-				return;
-
 			ch[channel].working_audper -= rate;
 			if (ch[channel].working_audper <= 0)
 			{
-				if ((adkcon & (0x11 << channel)) == 0 || channel == 3)
+				if ((adkcon & (0x11 << channel)) == 0)
 				{ 
 					if (!ch[channel].secondByte)
 					{
