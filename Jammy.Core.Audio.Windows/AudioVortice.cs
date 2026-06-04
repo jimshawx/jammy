@@ -1,6 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
-using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Runtime.InteropServices;
@@ -23,47 +22,23 @@ namespace Jammy.Core.Audio.Windows
 			InitMixer();
 		}
 
-		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
-
-		//HRM p141
-		//NTSC 2 samples/ line * 262.5 lines/frame * 59.94 frames/ second= 31,469 samples/ sec
-		//PAL  2 samples/ line * 312 lines/frame * 50 frames/ second= 31,200 samples/ sec
-		//hardware says it's designed to do a max of 28867
-
-		//Thinking out loud:
-		//The audio hardware can DMA 1 word per channel (2 8bit samples) per scanline
-		//On PAL  there are 312 scanlines @ 50Hz, so the rate is 2*50*312Hz = 31.200KHz max
-		//On NTSC there are 262 scanlines @ 60Hz, so the rate is 2*60*262Hz = 31.440KHz max
-
-		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
 		public new void Emulate()
 		{
-			if ((clock.ClockState & ChipsetClockState.EndOfLine) != 0)
-			{
-				for (int i = 0; i < 4; i++)
-				{
-					if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
-					else if (ch[i].mode == AudioMode.Interrupt) PlayingIRQ(i);
-				}
-
-				AudioMix();
-			}
+			base.Emulate();
+			HardwareMix();
 		}
 
 		private IXAudio2 xaudio;
 		private IXAudio2MasteringVoice masteringVoice;
 
-		private class AmigaChannel : IFilter
+		private class VorticeChannel
 		{
 			public IXAudio2SourceVoice xaudioVoice { get; set; }
 			public AudioBuffer[] xaudioBuffer { get; set; }
-			public byte[] audioBytes { get; set; }
-			public int audioBytesIndex { get; set; }
 			public int currentBuffer { get; set; }
-			public FilterChannel filter { get; } = new FilterChannel();
 		}
 
-		private readonly AmigaChannel[] channels = new[] { new AmigaChannel(), new AmigaChannel(), new AmigaChannel(), new AmigaChannel() };
+		private readonly VorticeChannel[] channels = new[] { new VorticeChannel(), new VorticeChannel(), new VorticeChannel(), new VorticeChannel() };
 
 		private const int BUFFER_SIZE = 3120*SAMPLE_SIZE;
 
@@ -91,8 +66,8 @@ namespace Jammy.Core.Audio.Windows
 				channels[i].xaudioBuffer = new AudioBuffer[2];
 				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
 				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
-				channels[i].audioBytes = new byte[BUFFER_SIZE];
-				channels[i].audioBytesIndex = 0;
+				ch[i].audioBytes = new byte[BUFFER_SIZE];
+				ch[i].audioBytesIndex = 0;
 				channels[i].currentBuffer = 0;
 
 				//panning 1,2 left   0,3 right
@@ -113,14 +88,12 @@ namespace Jammy.Core.Audio.Windows
 			return Marshal.AllocHGlobal(size);
 		}
 
-		private void AudioMix()
+		private void HardwareMix()
 		{
-			base.AudioMix(channels);
-
 			//time to hardware mix?
 			for (int i = 0; i < 4; i++)
 			{
-				if (channels[i].audioBytesIndex == channels[i].audioBytes.Length)
+				if (ch[i].audioBytesIndex == ch[i].audioBytes.Length)
 				{
 					var state = channels[i].xaudioVoice.State;
 					if (state.BuffersQueued >= 2)
@@ -131,10 +104,10 @@ namespace Jammy.Core.Audio.Windows
 						} while (channels[i].xaudioVoice.State.BuffersQueued >= 2);
 					}
 
-					LowPassFilter(channels[i]);
+					LowPassFilter(ch[i]);
 
-					Marshal.Copy(channels[i].audioBytes, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, channels[i].audioBytes.Length);
-					channels[i].audioBytesIndex = 0;
+					Marshal.Copy(ch[i].audioBytes, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, ch[i].audioBytes.Length);
+					ch[i].audioBytesIndex = 0;
 					channels[i].xaudioVoice.SubmitSourceBuffer(channels[i].xaudioBuffer[channels[i].currentBuffer], null);
 					channels[i].xaudioVoice.Start();
 					channels[i].currentBuffer ^= 1;

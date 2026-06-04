@@ -48,41 +48,11 @@ namespace Jammy.Core.Audio.Linux
 			InitMixer();
 		}
 
-		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
-
-		//HRM p141
-		//NTSC 2 samples/ line * 262.5 lines/frame * 59.94 frames/ second= 31,469 samples/ sec
-		//PAL  2 samples/ line * 312 lines/frame * 50 frames/ second= 31,200 samples/ sec
-		//hardware says it's designed to do a max of 28867
-
-		//Thinking out loud:
-		//The audio hardware can DMA 1 word per channel (2 8bit samples) per scanline
-		//On PAL  there are 312 scanlines @ 50Hz, so the rate is 2*50*312Hz = 31.200KHz max
-		//On NTSC there are 262 scanlines @ 60Hz, so the rate is 2*60*262Hz = 31.440KHz max
-
-		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
 		public new void Emulate()
 		{
-			if ((clock.ClockState & ChipsetClockState.EndOfLine) != 0)
-			{
-				for (int i = 0; i < 4; i++)
-				{
-					if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
-					else if (ch[i].mode == AudioMode.Interrupt) PlayingIRQ(i);
-				}
-
-				AudioMix();
-			}
+			base.Emulate();
+			HardwareMix();
 		}
-
-		private class AmigaChannel :IFilter
-		{
-			public byte[] audioBytes { get; set; }
-			public int audioBytesIndex { get; set; }
-			public FilterChannel filter { get; } = new FilterChannel();
-		}
-
-		private readonly AmigaChannel[] channels = new[] { new AmigaChannel(), new AmigaChannel(), new AmigaChannel(), new AmigaChannel() };
 
 		private const int BUFFER_SIZE = 3120*SAMPLE_SIZE;
 		
@@ -103,28 +73,26 @@ namespace Jammy.Core.Audio.Linux
 
 			for (int i = 0; i < 4; i++)
 			{
-				channels[i].audioBytes = new byte[BUFFER_SIZE];
-				channels[i].audioBytesIndex = 0;
+				ch[i].audioBytes = new byte[BUFFER_SIZE];
+				ch[i].audioBytesIndex = 0;
 			}
 			mixBuffer = new byte[BUFFER_SIZE * 2];
 		}
 
-		private void AudioMix()
+		private void HardwareMix()
 		{
-			base.AudioMix(channels);
-			
 			//time to hardware mix?
-			if (channels[0].audioBytesIndex == channels[0].audioBytes.Length)
+			if (ch[0].audioBytesIndex == ch[0].audioBytes.Length)
 			{
 				for (int i = 0; i < 4; i++)
-					LowPassFilter(channels[i]);
+					LowPassFilter(ch[i]);
 
-				for (int s = 0; s < channels[0].audioBytes.Length; s += 2)
+				for (int s = 0; s < ch[0].audioBytes.Length; s += 2)
 				{
-					int v0 = (int)(short)((ushort)channels[0].audioBytes[s] + (ushort)(channels[0].audioBytes[s + 1] << 8));
-					int v1 = (int)(short)((ushort)channels[1].audioBytes[s] + (ushort)(channels[1].audioBytes[s + 1] << 8));
-					int v2 = (int)(short)((ushort)channels[2].audioBytes[s] + (ushort)(channels[2].audioBytes[s + 1] << 8));
-					int v3 = (int)(short)((ushort)channels[3].audioBytes[s] + (ushort)(channels[3].audioBytes[s + 1] << 8));
+					int v0 = (int)(short)((ushort)ch[0].audioBytes[s] + (ushort)(ch[0].audioBytes[s + 1] << 8));
+					int v1 = (int)(short)((ushort)ch[1].audioBytes[s] + (ushort)(ch[1].audioBytes[s + 1] << 8));
+					int v2 = (int)(short)((ushort)ch[2].audioBytes[s] + (ushort)(ch[2].audioBytes[s + 1] << 8));
+					int v3 = (int)(short)((ushort)ch[3].audioBytes[s] + (ushort)(ch[3].audioBytes[s + 1] << 8));
 
 					int L = (v0 + v1) >> 1;
 					int R = (v2 + v3) >> 1;
@@ -149,7 +117,7 @@ namespace Jammy.Core.Audio.Linux
 				}
 
 				for (int i = 0; i < 4; i++)
-					channels[i].audioBytesIndex = 0;
+					ch[i].audioBytesIndex = 0;
 			}
 		}
 	}

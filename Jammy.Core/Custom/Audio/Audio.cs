@@ -63,6 +63,7 @@ namespace Jammy.Core.Custom.Audio
 					if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
 					else if (ch[i].mode == AudioMode.Interrupt) PlayingIRQ(i);
 				}
+				AudioMix(ch);
 			}
 		}
 
@@ -178,7 +179,7 @@ namespace Jammy.Core.Custom.Audio
 			Interrupt
 		}
 
-		public class AudioChannel
+		public class AudioChannel : IFilter
 		{
 			public ushort audper { get; set; }
 			public ushort audvol { get; set; }
@@ -194,6 +195,10 @@ namespace Jammy.Core.Custom.Audio
 
 			public bool modulating_vp { get; set; }//false = modulating volume, true = modulating period
 			public bool modulate_toggle { get; set; }//false = modulate only volume or period, true = modulate both
+
+			public byte[] audioBytes { get; set; }
+			public int audioBytesIndex { get; set; }
+			public FilterChannel filter { get; } = new FilterChannel();
 
 			public void CopyTo(AudioChannel cp)
 			{
