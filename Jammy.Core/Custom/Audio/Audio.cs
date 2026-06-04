@@ -86,16 +86,25 @@ namespace Jammy.Core.Custom.Audio
 			ch[channel].working_audper -= rate;
 			if (ch[channel].working_audper <= 0)
 			{
-				if (!ch[channel].secondByte)
-				{
-					ch[channel].auddat <<= 8;
-					ch[channel].secondByte = true;
-					return;
+				if ((adkcon & (0x11 << channel)) == 0 || channel == 3)
+				{ 
+					if (!ch[channel].secondByte)
+					{
+						ch[channel].auddat <<= 8;
+						ch[channel].secondByte = true;
+						ch[channel].working_audper += ch[channel].audper;
+						return;
+					}
+					else
+					{
+						Fetch(channel);
+						ch[channel].secondByte = false;
+					}
 				}
 				else
 				{
-					Fetch(channel);
 					ch[channel].secondByte = false;
+					Fetch(channel);
 				}
 
 				//update the pointers and reset the period
