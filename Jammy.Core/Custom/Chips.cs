@@ -274,8 +274,8 @@ namespace Jammy.Core.Custom
 						else
 							intena &= (ushort)~value;
 
-						if (((prevIntena ^ intena) & 0x0020) != 0)
-							logger.LogTrace($"VERTB {((intena & 0x0020) != 0 ? "on" : "off")} @ {insaddr:X8}");
+						//if (((prevIntena ^ intena) & 0x0020) != 0)
+						//	logger.LogTrace($"VERTB {((intena & 0x0020) != 0 ? "on" : "off")} @ {insaddr:X8}");
 
 						audio.WriteINTENA((ushort)(intena & 0x7fff));
 

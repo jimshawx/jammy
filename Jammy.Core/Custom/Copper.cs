@@ -469,7 +469,7 @@ namespace Jammy.Core.Custom
 
 		private void DebugCOPStopped(uint reg, uint copaddr)
 		{
-			logger.LogTrace($"Copper Stopped dff{reg:x3} {ChipRegs.Name(0xdff000+reg)} @ {copaddr:X6}");
+			//logger.LogTrace($"Copper Stopped dff{reg:x3} {ChipRegs.Name(0xdff000+reg)} @ {copaddr:X6}");
 		}
 
 		public void Write(uint insaddr, uint address, ushort value)
