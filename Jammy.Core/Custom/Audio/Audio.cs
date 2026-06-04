@@ -13,19 +13,21 @@ namespace Jammy.Core.Custom.Audio
 {
 	public class Audio : IAudio
 	{
-		private readonly IChipsetClock clock;
-		private readonly IContendedMemoryMappedDevice memory;
-		private readonly IInterrupt interrupt;
-		private readonly ILogger logger;
-		private readonly uint[] intr = { Types.Interrupt.AUD0, Types.Interrupt.AUD1, Types.Interrupt.AUD2, Types.Interrupt.AUD3 };
-		private readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
-		private readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
+		protected readonly IChipsetClock clock;
+		protected readonly IContendedMemoryMappedDevice memory;
+		protected readonly IInterrupt interrupt;
+		protected readonly EmulationSettings settings;
+		protected readonly ILogger logger;
+		protected readonly uint[] intr = { Types.Interrupt.AUD0, Types.Interrupt.AUD1, Types.Interrupt.AUD2, Types.Interrupt.AUD3 };
+		protected readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
+		protected readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
 		public Audio(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<Audio> logger)
 		{
 			this.clock = clock;
 			this.memory = (IContendedMemoryMappedDevice)memory;
 			this.interrupt = interrupt;
+			this.settings = settings.Value;
 			this.logger = logger;
 		}
 
@@ -56,7 +58,7 @@ namespace Jammy.Core.Custom.Audio
 
 		private int rate = 100;
 
-		private void PlayingDMA(int channel)
+		protected void PlayingDMA(int channel)
 		{
 			//All DMA is off
 			if ((dmacon & (int)DMA.DMAEN) == 0)
@@ -110,7 +112,7 @@ namespace Jammy.Core.Custom.Audio
 			}
 		}
 
-		private void PlayingIRQ(int channel)
+		protected void PlayingIRQ(int channel)
 		{
 			int audper = ch[channel].working_audper;
 			audper -= rate;
