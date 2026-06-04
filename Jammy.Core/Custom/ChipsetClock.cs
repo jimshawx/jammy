@@ -99,6 +99,10 @@ public class ChipsetClock : IChipsetClock
 		HorizontalPos = 0;
 		DeniseHorizontalPos = DENISE_HORZ_OFFSET;
 		VerticalPos = 0;
+
+		//cosmetic
+		Tick = 0;
+		FrameCount = 0;
 	}
 
 	public uint LongFrame()

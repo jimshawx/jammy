@@ -5,6 +5,8 @@ using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -48,6 +50,9 @@ namespace Jammy.Core.CPU.Moira
 
 		[DllImport("Moira.dll")]
 		static extern void Moira_set_irq(uint levels);
+
+		[DllImport("Moira.dll")]
+		static extern void Moira_reset();
 
 		public MoiraCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,
 			IBreakpointCollection breakpoints, ITracer tracer,
@@ -146,16 +151,7 @@ namespace Jammy.Core.CPU.Moira
 
 		public void Reset()
 		{
-			var r = new Moira_regs();
-			uint sp = memoryMapper.Read(0, 0, Size.Long);
-			uint pc = memoryMapper.Read(0, 4, Size.Long);
-
-			//supervisor mode
-			r.sr = 0x2704;
-			r.ssp = sp;
-			r.pc = pc;
-
-			Moira_set_regs(r);
+			Moira_reset();
 		}
 
 		public Regs GetRegs()

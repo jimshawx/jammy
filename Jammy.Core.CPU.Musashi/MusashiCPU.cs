@@ -99,6 +99,9 @@ namespace Jammy.Core.CPU.Musashi
 		[DllImport("Musashi.dll")]
 		private static extern void Musashi_set_irq(uint levels);
 
+		[DllImport("Musashi.dll")]
+		private static extern void Musashi_pulse_reset();
+
 		public MusashiCPUInternal(MusashiCPUType cpuType, IInterrupt interrupt, IMemoryMapper memoryMapper,
 			IBreakpointCollection breakpoints, ITracer tracer, IOptions<EmulationSettings> settings, ILogger<MusashiCPU> logger)
 		{
@@ -176,16 +179,7 @@ namespace Jammy.Core.CPU.Musashi
 
 		public void Reset()
 		{
-			var r = new Musashi_regs();
-			uint sp = memoryMapper.Read(0, 0, Size.Long);
-			uint pc = memoryMapper.Read(0, 4, Size.Long);
-
-			//supervisor mode
-			r.sr = 0x2704;
-			r.ssp = sp;
-			r.pc = pc;
-
-			Musashi_set_regs(r);
+			Musashi_pulse_reset();
 		}
 
 		public Regs GetRegs()
