@@ -90,10 +90,12 @@ namespace Jammy.Core.Audio.Windows
 
 		private void HardwareMix()
 		{
+			if (ch[0].audioBytesIndex != ch[0].audioBytes.Length) return;
+
 			//time to hardware mix?
 			for (int i = 0; i < 4; i++)
 			{
-				if (ch[i].audioBytesIndex == ch[i].audioBytes.Length)
+				//if (ch[i].audioBytesIndex == ch[i].audioBytes.Length)
 				{
 					var state = channels[i].xaudioVoice.State;
 					if (state.BuffersQueued >= 2)
