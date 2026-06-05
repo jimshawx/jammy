@@ -94,7 +94,7 @@ namespace Jammy.Core.Custom.Audio
 				{ 
 					if (!ch[channel].secondByte)
 					{
-						ch[channel].auddat <<= 8;
+						ch[channel].auddat = ushort.RotateRight(ch[channel].auddat, 8);
 						ch[channel].secondByte = true;
 						ch[channel].working_audper += ch[channel].audper;
 						return;
@@ -107,8 +107,17 @@ namespace Jammy.Core.Custom.Audio
 				}
 				else
 				{
-					ch[channel].secondByte = false;
-					Fetch(channel);
+					if (!ch[channel].secondByte)
+					{
+						ch[channel].secondByte = true;
+						ch[channel].working_audper += ch[channel].audper;
+						return;
+					}
+					else
+					{
+						Fetch(channel);
+						ch[channel].secondByte = false;
+					}
 				}
 
 				//update the pointers and reset the period
