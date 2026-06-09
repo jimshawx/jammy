@@ -19,7 +19,7 @@ namespace Jammy.Core.Audio.Windows
 			IOptions<EmulationSettings> settings, ILogger<AudioVortice> logger) :
 			base(clock, memory, interrupt, dma, settings, logger)
 		{
-			InitMixer();
+			InitHardwareMixer();
 		}
 
 		public new void Emulate()
@@ -40,10 +40,8 @@ namespace Jammy.Core.Audio.Windows
 
 		private readonly VorticeChannel[] channels = new[] { new VorticeChannel(), new VorticeChannel(), new VorticeChannel(), new VorticeChannel() };
 
-		private new void InitMixer()
+		private new void InitHardwareMixer()
 		{
-			base.InitMixer();
-
 			xaudio = XAudio2.XAudio2Create(ProcessorSpecifier.DefaultProcessor);
 			masteringVoice = xaudio.CreateMasteringVoice();
 			var masteringChannelDetails = masteringVoice.VoiceDetails;

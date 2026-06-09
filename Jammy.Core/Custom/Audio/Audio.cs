@@ -31,7 +31,7 @@ namespace Jammy.Core.Custom.Audio
 
 		protected const int SAMPLE_RATE = 31200;
 		protected const int SAMPLE_SIZE = 2;//1 for 8bit, 2 for 16bit
-		private const int BUFFER_SIZE = 3120 * SAMPLE_SIZE;
+		protected const int BUFFER_SIZE = 3120 * SAMPLE_SIZE;
 
 		public Audio(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IDMA dma, IOptions<EmulationSettings> settings, ILogger<Audio> logger)
 		{
@@ -42,6 +42,7 @@ namespace Jammy.Core.Custom.Audio
 			this.settings = settings.Value;
 			this.logger = logger;
 
+			InitMixer();
 			InitLowPassFilter();
 		}
 
@@ -363,7 +364,7 @@ namespace Jammy.Core.Custom.Audio
 			}
 		}
 
-		protected void InitMixer()
+		private void InitMixer()
 		{
 			for (int i = 0; i < 4; i++)
 			{ 

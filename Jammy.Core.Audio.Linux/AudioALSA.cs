@@ -46,7 +46,7 @@ namespace Jammy.Core.Audio.Linux
 			IOptions<EmulationSettings> settings, ILogger<AudioALSA> logger):
 			base(clock, memory, interrupt, dma, settings, logger)
 		{
-			InitMixer();
+			InitHardwareMixer();
 		}
 
 		public new void Emulate()
@@ -58,10 +58,8 @@ namespace Jammy.Core.Audio.Linux
 		private IntPtr pcmHandle;
 		private byte[] mixBuffer;
 
-		private new void InitMixer()
+		private void InitHardwareMixer()
 		{
-			base.InitMixer();
-
 			int err = snd_pcm_open(out pcmHandle, "default", SND_PCM_STREAM_PLAYBACK, 0);
 
 			err = snd_pcm_set_params(pcmHandle,
