@@ -443,9 +443,12 @@ namespace Jammy.UI.Settings.Avalonia
 			//CPU
 			cbSku.SelectedItem = SelectionFromString(cbSku.Items, currentSettings.Sku.ToString());
 			rbNative.IsChecked = currentSettings.CPU == CPUType.Native;
+			rbMoira.IsChecked = currentSettings.CPU == CPUType.Moira;
 			rbMusashiCS.IsChecked = currentSettings.CPU == CPUType.MusashiCSharp;
 
 			rbNative.IsEnabled = currentSettings.Sku == CPUSku.MC68000;
+			rbMoira.IsEnabled = currentSettings.Sku == CPUSku.MC68000 ||
+								currentSettings.Sku == CPUSku.MC68EC020;
 			rbMusashiCS.IsEnabled = currentSettings.Sku == CPUSku.MC68000 ||
 								currentSettings.Sku == CPUSku.MC68EC020 ||
 								currentSettings.Sku == CPUSku.MC68030 ||
