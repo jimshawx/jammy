@@ -40,7 +40,7 @@ namespace Jammy.Core.Audio.Windows
 
 		private readonly VorticeChannel[] channels = new[] { new VorticeChannel(), new VorticeChannel(), new VorticeChannel(), new VorticeChannel() };
 
-		private new void InitHardwareMixer()
+		private void InitHardwareMixer()
 		{
 			xaudio = XAudio2.XAudio2Create(ProcessorSpecifier.DefaultProcessor);
 			masteringVoice = xaudio.CreateMasteringVoice();
