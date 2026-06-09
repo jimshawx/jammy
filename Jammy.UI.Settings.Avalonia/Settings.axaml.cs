@@ -113,7 +113,7 @@ namespace Jammy.UI.Settings.Avalonia
 				rbMusashiCS.IsEnabled = false;
 			}
 
-			if (!Default(rbNative.IsChecked))
+			if (!Default(rbNative.IsChecked) && !Default(rbMoira.IsChecked))
 				rbMusashiCS.IsChecked = true;
 		}
 
@@ -530,7 +530,7 @@ namespace Jammy.UI.Settings.Avalonia
 
 			//CPU
 			currentSettings.Sku = Enum.Parse<CPUSku>(StringFromSelection(cbSku.SelectedItem));
-			currentSettings.CPU = Default(rbMusashiCS.IsChecked) ? CPUType.MusashiCSharp : CPUType.Native;
+			currentSettings.CPU = Default(rbMusashiCS.IsChecked) ? CPUType.MusashiCSharp : ( Default(rbMoira.IsChecked) ? CPUType.Moira : CPUType.Native);
 			currentSettings.AddressBits = (currentSettings.Sku == CPUSku.MC68030
 										|| currentSettings.Sku == CPUSku.MC68040) ? 32 : 24;
 
