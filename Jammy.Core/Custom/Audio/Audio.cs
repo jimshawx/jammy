@@ -1,5 +1,4 @@
 ﻿using Jammy.Core.Interface.Interfaces;
-using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -32,6 +31,7 @@ namespace Jammy.Core.Custom.Audio
 
 		protected const int SAMPLE_RATE = 31200;
 		protected const int SAMPLE_SIZE = 2;//1 for 8bit, 2 for 16bit
+		private const int BUFFER_SIZE = 3120 * SAMPLE_SIZE;
 
 		public Audio(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IDMA dma, IOptions<EmulationSettings> settings, ILogger<Audio> logger)
 		{
@@ -80,7 +80,7 @@ namespace Jammy.Core.Custom.Audio
 			PlayingDMA(3);
 
 			//sample audper for hardware mix
-			//this would be 2 samples per line, 312 lines, 50 Hz = 31200Hz
+			//for PAL this would be 2 samples per line, 312 lines, 50 Hz = 31200Hz
 			if (clock.HorizontalPos == 0 || clock.HorizontalPos == 113)
 				AudioMix(ch);
 		}
@@ -301,7 +301,7 @@ namespace Jammy.Core.Custom.Audio
 			}
 		}
 
-		[Persist]
+		//[Persist]
 		private ushort dmacon = 0;
 
 		public void WriteDMACON(ushort v)
@@ -317,7 +317,7 @@ namespace Jammy.Core.Custom.Audio
 			//}
 		}
 
-		[Persist]
+		//[Persist]
 		private ushort adkcon = 0;
 
 		private ushort lastMod = 0;
@@ -363,10 +363,17 @@ namespace Jammy.Core.Custom.Audio
 			}
 		}
 
+		protected void InitMixer()
+		{
+			for (int i = 0; i < 4; i++)
+			{ 
+				ch[i].audioBytes = new byte[BUFFER_SIZE];
+				ch[i].audioBytesIndex = 0;
+			}
+		}
+
 		protected void AudioMix(IFilter[] channels)
 		{ 
-			return;
-
 			//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
 			for (int i = 0; i< 4; i++)
 			{

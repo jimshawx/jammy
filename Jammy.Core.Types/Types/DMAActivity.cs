@@ -28,6 +28,7 @@ namespace Jammy.Core.Types.Types
 		Agnus,
 		Copper,
 		Blitter,
+		Paula,
 
 		//needs to be last
 		CPU,

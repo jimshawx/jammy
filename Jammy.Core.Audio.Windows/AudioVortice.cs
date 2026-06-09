@@ -15,9 +15,9 @@ namespace Jammy.Core.Audio.Windows
 {
 	public class AudioVortice : Custom.Audio.Audio, IAudio
 	{
-		public AudioVortice(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt,
+		public AudioVortice(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IDMA dma,
 			IOptions<EmulationSettings> settings, ILogger<AudioVortice> logger) :
-			base(clock, memory, interrupt, settings, logger)
+			base(clock, memory, interrupt, dma, settings, logger)
 		{
 			InitMixer();
 		}
@@ -40,10 +40,10 @@ namespace Jammy.Core.Audio.Windows
 
 		private readonly VorticeChannel[] channels = new[] { new VorticeChannel(), new VorticeChannel(), new VorticeChannel(), new VorticeChannel() };
 
-		private const int BUFFER_SIZE = 3120*SAMPLE_SIZE;
-
-		private void InitMixer()
+		private new void InitMixer()
 		{
+			base.InitMixer();
+
 			xaudio = XAudio2.XAudio2Create(ProcessorSpecifier.DefaultProcessor);
 			masteringVoice = xaudio.CreateMasteringVoice();
 			var masteringChannelDetails = masteringVoice.VoiceDetails;
@@ -66,8 +66,6 @@ namespace Jammy.Core.Audio.Windows
 				channels[i].xaudioBuffer = new AudioBuffer[2];
 				channels[i].xaudioBuffer[0] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
 				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
-				ch[i].audioBytes = new byte[BUFFER_SIZE];
-				ch[i].audioBytesIndex = 0;
 				channels[i].currentBuffer = 0;
 
 				//panning 1,2 left   0,3 right
@@ -90,30 +88,27 @@ namespace Jammy.Core.Audio.Windows
 
 		private void HardwareMix()
 		{
+			//time to hardware mix?
 			if (ch[0].audioBytesIndex != ch[0].audioBytes.Length) return;
 
-			//time to hardware mix?
 			for (int i = 0; i < 4; i++)
 			{
-				//if (ch[i].audioBytesIndex == ch[i].audioBytes.Length)
+				var state = channels[i].xaudioVoice.State;
+				if (state.BuffersQueued >= 2)
 				{
-					var state = channels[i].xaudioVoice.State;
-					if (state.BuffersQueued >= 2)
+					do
 					{
-						do
-						{
-							Thread.Yield();
-						} while (channels[i].xaudioVoice.State.BuffersQueued >= 2);
-					}
-
-					LowPassFilter(ch[i]);
-
-					Marshal.Copy(ch[i].audioBytes, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, ch[i].audioBytes.Length);
-					ch[i].audioBytesIndex = 0;
-					channels[i].xaudioVoice.SubmitSourceBuffer(channels[i].xaudioBuffer[channels[i].currentBuffer], null);
-					channels[i].xaudioVoice.Start();
-					channels[i].currentBuffer ^= 1;
+						Thread.Yield();
+					} while (channels[i].xaudioVoice.State.BuffersQueued >= 2);
 				}
+
+				LowPassFilter(ch[i]);
+
+				Marshal.Copy(ch[i].audioBytes, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, ch[i].audioBytes.Length);
+				ch[i].audioBytesIndex = 0;
+				channels[i].xaudioVoice.SubmitSourceBuffer(channels[i].xaudioBuffer[channels[i].currentBuffer], null);
+				channels[i].xaudioVoice.Start();
+				channels[i].currentBuffer ^= 1;
 			}
 		}
 	}

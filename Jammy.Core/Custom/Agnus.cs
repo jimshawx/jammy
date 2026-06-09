@@ -186,10 +186,10 @@ public class Agnus : IAgnus
 			case DMA_START + 0x06: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
 			case DMA_START + 0x08: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
 			case DMA_START + 0x0A: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
-			case DMA_START + 0x0C: if (dma.IsDMAEnabled(DMA.AUD0EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD0EN); break;//actually Audio 0 DMA
-			case DMA_START + 0x0E: if (dma.IsDMAEnabled(DMA.AUD1EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
-			case DMA_START + 0x10: if (dma.IsDMAEnabled(DMA.AUD2EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
-			case DMA_START + 0x12: if (dma.IsDMAEnabled(DMA.AUD3EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
+			//case DMA_START + 0x0C: if (dma.IsDMAEnabled(DMA.AUD0EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD0EN); break;//actually Audio 0 DMA
+			//case DMA_START + 0x0E: if (dma.IsDMAEnabled(DMA.AUD1EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD1EN); break;//actually Audio 1 DMA
+			//case DMA_START + 0x10: if (dma.IsDMAEnabled(DMA.AUD2EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD2EN); break;//actually Audio 2 DMA
+			//case DMA_START + 0x12: if (dma.IsDMAEnabled(DMA.AUD3EN)) dma.NeedsDMA(DMASource.Agnus, DMA.AUD3EN); break;//actually Audio 3 DMA
 			case DMA_START + 0x14: RunSpriteDMA(0); break;
 			case DMA_START + 0x16: RunSpriteDMA(1); break;
 			case <= DMA_START + 0x16: return;

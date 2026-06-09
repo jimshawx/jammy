@@ -134,6 +134,10 @@ public class DMAController : IDMA
 								slotTaken = null;
 
 							break;
+
+						case DMASource.Paula:
+							//Paula DMA always works
+							break;
 					}
 				}
 				if (slotTaken != null)
