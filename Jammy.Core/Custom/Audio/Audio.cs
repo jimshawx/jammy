@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -7,7 +8,7 @@ using Newtonsoft.Json.Linq;
 using System;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Custom.Audio
@@ -17,10 +18,12 @@ namespace Jammy.Core.Custom.Audio
 		protected readonly IChipsetClock clock;
 		protected readonly IContendedMemoryMappedDevice memory;
 		protected readonly IInterrupt interrupt;
+		private readonly IDMA dma;
 		protected readonly EmulationSettings settings;
 		protected readonly ILogger logger;
 		protected readonly uint[] intr = { Types.Interrupt.AUD0, Types.Interrupt.AUD1, Types.Interrupt.AUD2, Types.Interrupt.AUD3 };
-		protected readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
+		//protected readonly ushort[] chanbit = { (ushort)DMA.AUD0EN, (ushort)DMA.AUD1EN, (ushort)DMA.AUD2EN, (ushort)DMA.AUD3EN };
+		protected readonly DMA[] chanbit = { DMA.AUD0EN, DMA.AUD1EN, DMA.AUD2EN, DMA.AUD3EN };
 		protected readonly AudioChannel[] ch = new AudioChannel[4] { new AudioChannel(), new AudioChannel(), new AudioChannel(), new AudioChannel()};
 
 		private const double LOW_PASS_FILTER_FREQUENCY = 3275.0;   // LED filter A500/A1200
@@ -30,11 +33,12 @@ namespace Jammy.Core.Custom.Audio
 		protected const int SAMPLE_RATE = 31200;
 		protected const int SAMPLE_SIZE = 2;//1 for 8bit, 2 for 16bit
 
-		public Audio(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IOptions<EmulationSettings> settings, ILogger<Audio> logger)
+		public Audio(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IDMA dma, IOptions<EmulationSettings> settings, ILogger<Audio> logger)
 		{
 			this.clock = clock;
 			this.memory = (IContendedMemoryMappedDevice)memory;
 			this.interrupt = interrupt;
+			this.dma = dma;
 			this.settings = settings.Value;
 			this.logger = logger;
 
@@ -56,11 +60,24 @@ namespace Jammy.Core.Custom.Audio
 		//audio frequency is CPUHz (7.14MHz) / 200, 35.7KHz
 		public void Emulate()
 		{
-			for (int i = 0; i < 4; i++)
+			const int DMA_START = 1;
+			switch (clock.HorizontalPos)
 			{
-				if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
-				else if (ch[i].mode == AudioMode.Interrupt) PlayingIRQ(i);
+				case DMA_START + 0x0C: if (ch[0].dma_pending) TriggerDMA(0, ChipRegs.AUD0DAT, DMA.AUD0EN); break;
+				case DMA_START + 0x0E: if (ch[1].dma_pending) TriggerDMA(1, ChipRegs.AUD1DAT, DMA.AUD1EN); break;
+				case DMA_START + 0x10: if (ch[2].dma_pending) TriggerDMA(2, ChipRegs.AUD2DAT, DMA.AUD2EN); break;
+				case DMA_START + 0x12: if (ch[3].dma_pending) TriggerDMA(3, ChipRegs.AUD3DAT, DMA.AUD3EN); break;
 			}
+
+			//for (int i = 0; i < 4; i++)
+			//{
+			//	if (ch[i].mode == AudioMode.DMA) PlayingDMA(i);
+			//	else if (ch[i].mode == AudioMode.Interrupt) PlayingIRQ(i);
+			//}
+			PlayingDMA(0);
+			PlayingDMA(1);
+			PlayingDMA(2);
+			PlayingDMA(3);
 
 			//sample audper for hardware mix
 			//this would be 2 samples per line, 312 lines, 50 Hz = 31200Hz
@@ -70,22 +87,35 @@ namespace Jammy.Core.Custom.Audio
 
 		private const int rate = 1;
 
-		protected void Fetch(int channel)
+		private void Fetch(int channel)
 		{
-			//All DMA is off
-			if ((dmacon & (int)DMA.DMAEN) == 0)
-				return;
+			//read the pending sample into live audXdat
+			ch[channel].working_auddat = ch[channel].auddat;
 
-			//channel DMA is off
-			if ((dmacon & chanbit[channel]) == 0)
-				return;
+			if (((DMA)dmacon & (DMA.DMAEN | chanbit[channel])) == (DMA.DMAEN | chanbit[channel]))
+			{
+				//DMA is on, schedule a DMA fetch
+				ch[channel].dma_pending = true;
+			}
+			else
+			{
+				//DMA is off, trigger an interrupt
+				interrupt.AssertInterrupt(intr[channel]);
+			}
 
-			//read the sample into live audXdat
-			ch[channel].auddat = (ushort)memory.ImmediateRead(0, ch[channel].working_audlc, Size.Word);
-			ch[channel].working_audlc += 2;
+			//immediately read a new AUDxDAT
+			//ch[channel].auddat = (ushort)memory.ImmediateRead(0, ch[channel].working_audlc, Size.Word);
+			//ch[channel].working_audlc += 2;
 		}
 
-		protected void PlayingDMA(int channel)
+		private void TriggerDMA(int channel, uint reg, DMA dmabit)
+		{
+			dma.ReadReg(DMASource.Paula, ch[channel].working_audlc, dmabit, Size.Word, reg);
+			ch[channel].working_audlc += 2;
+			ch[channel].dma_pending = false;
+		}
+
+		private void PlayingDMA(int channel)
 		{
 			ch[channel].working_audper -= rate;
 			if (ch[channel].working_audper <= 0)
@@ -94,7 +124,7 @@ namespace Jammy.Core.Custom.Audio
 				{ 
 					if (!ch[channel].secondByte)
 					{
-						ch[channel].auddat = ushort.RotateRight(ch[channel].auddat, 8);
+						ch[channel].working_auddat = ushort.RotateRight(ch[channel].working_auddat, 8);
 						ch[channel].secondByte = true;
 						ch[channel].working_audper += ch[channel].audper;
 						return;
@@ -131,12 +161,12 @@ namespace Jammy.Core.Custom.Audio
 					if (channel != 3)
 					{
 						if (ch[channel].modulating_vp)
-							ch[channel + 1].working_audper = ch[channel].auddat;
+							ch[channel + 1].working_audper = ch[channel].working_auddat;
 						else
-							ch[channel + 1].audvol = MapAudvol(ch[channel].auddat);
+							ch[channel + 1].audvol = MapAudvol(ch[channel].working_auddat);
 					}
 					ch[channel].modulating_vp ^= ch[channel].modulate_toggle;
-					ch[channel].auddat = 0;
+					ch[channel].working_auddat = 0;
 				}
 
 				//loop restart?
@@ -149,7 +179,7 @@ namespace Jammy.Core.Custom.Audio
 				}
 
 				//DMA has been turned off, what's the right thing to do now?
-				if ((dmacon & chanbit[channel]) == 0)
+				if (((DMA)dmacon & chanbit[channel]) == 0)
 				{
 					//todo: unsure asserting the interrupt is the right thing to do
 					//but there are games that do
@@ -157,47 +187,49 @@ namespace Jammy.Core.Custom.Audio
 					//channel period = 1, channel volume = 0
 					//channel DMA off
 					//wait for channel IRQ
-					ch[channel].mode = AudioMode.Idle;
+					//ch[channel].mode = AudioMode.Idle;
 					interrupt.AssertInterrupt(intr[channel]);
 				}
 			}
 		}
 
-		protected void PlayingIRQ(int channel)
-		{
-			int audper = ch[channel].working_audper;
-			audper -= rate;
-			ch[channel].working_audper -= (ushort)rate;
-			if (audper < 0)
-			{
-				//play the 2 bytes in audXdat, until we get here and the IRQ remains unacknowledged when period is out
-				if ((intreq & (1 << (int)intr[channel])) != 0)
-				{
-					ch[channel].mode = AudioMode.Idle;
-				}
-				else
-				{
-					ch[channel].working_audper = ch[channel].audper;
-					interrupt.AssertInterrupt(intr[channel]);
-				}
-			}
-		}
+		//protected void PlayingIRQ(int channel)
+		//{
+		//	int audper = ch[channel].working_audper;
+		//	audper -= rate;
+		//	ch[channel].working_audper -= (ushort)rate;
+		//	if (audper < 0)
+		//	{
+		//		//play the 2 bytes in audXdat, until we get here and the IRQ remains unacknowledged when period is out
+		//		if ((intreq & (1 << (int)intr[channel])) != 0)
+		//		{
+		//			ch[channel].mode = AudioMode.Idle;
+		//		}
+		//		else
+		//		{
+		//			ch[channel].working_audper = ch[channel].audper;
+		//			interrupt.AssertInterrupt(intr[channel]);
+		//		}
+		//	}
+		//}
 
-		private void ChannelDMAOn(int channel)
-		{
-			ch[channel].working_audper = ch[channel].audper;
-			ch[channel].working_audlen = ch[channel].audlen;
-			ch[channel].working_audlc = ch[channel].audlc;
+		//private void ChannelDMAOn(int channel)
+		//{
+		//	ch[channel].working_audper = ch[channel].audper;
+		//	ch[channel].working_audlen = ch[channel].audlen;
+		//	ch[channel].working_audlc = ch[channel].audlc;
 
-			ch[channel].mode = AudioMode.DMA;
-			interrupt.AssertInterrupt(intr[channel]);
-		}
+		//	ch[channel].mode = AudioMode.DMA;
+		//	interrupt.AssertInterrupt(intr[channel]);
+		//}
 
-		private void ChannelIRQOn(int channel)
-		{
-			ch[channel].mode = AudioMode.Interrupt;
-			interrupt.AssertInterrupt(intr[channel]);
-		}
+		//private void ChannelIRQOn(int channel)
+		//{
+		//	return;
+
+		//	ch[channel].mode = AudioMode.Interrupt;
+		//	interrupt.AssertInterrupt(intr[channel]);
+		//}
 		
 		public void Reset()
 		{
@@ -212,12 +244,12 @@ namespace Jammy.Core.Custom.Audio
 			lastMod = 0;
 		}
 
-		public enum AudioMode
-		{
-			Idle,
-			DMA,
-			Interrupt
-		}
+		//public enum AudioMode
+		//{
+		//	Idle,
+		//	DMA,
+		//	Interrupt
+		//}
 
 		public class AudioChannel : IFilter
 		{
@@ -227,16 +259,19 @@ namespace Jammy.Core.Custom.Audio
 			public ushort auddat { get; set; }
 			public uint audlc { get; set; }
 
-			public int working_audlen { get;set; }
 			public int working_audper { get; set; }
+			public int working_audlen { get;set; }
+			public ushort working_auddat { get; set; }
 			public uint working_audlc { get; set; }
 
-			public AudioMode mode { get; set; }
+			//public AudioMode mode { get; set; }
 
 			public bool secondByte { get; set; }
 
 			public bool modulating_vp { get; set; }//false = modulating volume, true = modulating period
 			public bool modulate_toggle { get; set; }//false = modulate only volume or period, true = modulate both
+
+			public bool dma_pending { get; set; }
 
 			public byte[] audioBytes { get; set; }
 			public int audioBytesIndex { get; set; }
@@ -247,7 +282,7 @@ namespace Jammy.Core.Custom.Audio
 				cp.audper = this.audper;
 				cp.audvol = this.audvol;
 				cp.audlen = this.audlen;
-				cp.auddat = this.auddat;
+				cp.working_auddat = this.working_auddat;
 				cp.audlc = this.audlc;
 			}
 
@@ -256,30 +291,33 @@ namespace Jammy.Core.Custom.Audio
 				audper = 0;
 				audvol = 0;
 				audlen = 0;
-				auddat = 0;
+				working_auddat = 0;
 				audlc = 0;
 				working_audper = 0;
 				working_audlc = 0;
 				working_audlen = 0;
-				mode = AudioMode.Idle;
+				dma_pending = false;
+				//mode = AudioMode.Idle;
 			}
 		}
 
+		[Persist]
 		private ushort dmacon = 0;
 
 		public void WriteDMACON(ushort v)
 		{
-			ushort lastdmacon = dmacon;
+			//DMA lastdmacon = (DMA)dmacon;
 			dmacon = v;
-			ushort dmaconchanges = (ushort)(dmacon ^ lastdmacon);
+			//DMA dmaconchanges = (DMA)dmacon ^ lastdmacon;
 
-			for (int i = 0; i < 4; i++)
-			{
-				if ((dmaconchanges & dmacon & chanbit[i]) != 0)
-					ChannelDMAOn(i);
-			}
+			//for (int i = 0; i < 4; i++)
+			//{
+			//	if ((dmaconchanges & (DMA)dmacon & chanbit[i]) != 0)
+			//		ChannelDMAOn(i);
+			//}
 		}
 
+		[Persist]
 		private ushort adkcon = 0;
 
 		private ushort lastMod = 0;
@@ -327,6 +365,8 @@ namespace Jammy.Core.Custom.Audio
 
 		protected void AudioMix(IFilter[] channels)
 		{ 
+			return;
+
 			//always mix in the audio, whether it's fetching from DMA or audXdat is being battered by the CPU
 			for (int i = 0; i< 4; i++)
 			{
@@ -335,7 +375,7 @@ namespace Jammy.Core.Custom.Audio
 				ushort volume = (ushort)((ch[i].audvol & (1 << 6)) != 0 ? 64 : (ch[i].audvol & 0x3f));
 
 				//Amiga samples are two 8-bit signed values packed into a word, range -128 to +127
-				short s0 = (sbyte)(ch[i].auddat >> 8);
+				short s0 = (sbyte)(ch[i].working_auddat >> 8);
 				//short s1 = (sbyte)ch[i].auddat;
 
 				if (SAMPLE_SIZE == 1)
@@ -408,28 +448,28 @@ namespace Jammy.Core.Custom.Audio
 				case ChipRegs.AUD0PER: ch[0].audper = value; break;
 				case ChipRegs.AUD0VOL: ch[0].audvol = MapAudvol(value); break;
 				case ChipRegs.AUD0LEN: ch[0].audlen = value; break;
-				case ChipRegs.AUD0DAT: ch[0].auddat = value; ChannelIRQOn(0); break;
+				case ChipRegs.AUD0DAT: ch[0].auddat = value; /*ChannelIRQOn(0);*/ break;
 				case ChipRegs.AUD0LCH: ch[0].audlc = (ch[0].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD0LCL: ch[0].audlc = ((ch[0].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
 
 				case ChipRegs.AUD1PER: ch[1].audper = value; break;
 				case ChipRegs.AUD1VOL: ch[1].audvol = MapAudvol(value); break;
 				case ChipRegs.AUD1LEN: ch[1].audlen = value; break;
-				case ChipRegs.AUD1DAT: ch[1].auddat = value; ChannelIRQOn(1); break;
+				case ChipRegs.AUD1DAT: ch[1].auddat = value; /*ChannelIRQOn(1);*/ break;
 				case ChipRegs.AUD1LCH: ch[1].audlc = (ch[1].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD1LCL: ch[1].audlc = ((ch[1].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
 
 				case ChipRegs.AUD2PER: ch[2].audper = value; break;
 				case ChipRegs.AUD2VOL: ch[2].audvol = MapAudvol(value); break;
 				case ChipRegs.AUD2LEN: ch[2].audlen = value; break;
-				case ChipRegs.AUD2DAT: ch[2].auddat = value; ChannelIRQOn(2); break;
+				case ChipRegs.AUD2DAT: ch[2].auddat = value; /*ChannelIRQOn(2);*/ break;
 				case ChipRegs.AUD2LCH: ch[2].audlc = (ch[2].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD2LCL: ch[2].audlc = ((ch[2].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
 
 				case ChipRegs.AUD3PER: ch[3].audper = value; break;
 				case ChipRegs.AUD3VOL: ch[3].audvol = MapAudvol(value); break;
 				case ChipRegs.AUD3LEN: ch[3].audlen = value; break;
-				case ChipRegs.AUD3DAT: ch[3].auddat = value; ChannelIRQOn(3); break;
+				case ChipRegs.AUD3DAT: ch[3].auddat = value; /*ChannelIRQOn(3);*/ break;
 				case ChipRegs.AUD3LCH: ch[3].audlc = (ch[3].audlc & 0x0000ffff) | ((uint)value << 16); break;
 				case ChipRegs.AUD3LCL: ch[3].audlc = ((ch[3].audlc & 0xffff0000) | (uint)(value & 0xfffe)); break;
 

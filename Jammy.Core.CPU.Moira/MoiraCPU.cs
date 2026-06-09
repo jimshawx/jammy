@@ -25,7 +25,7 @@ namespace Jammy.Core.CPU.Moira
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 
-		[DllImport("moira.dll", CallingConvention = CallingConvention.Cdecl)]
+		[DllImport("moira", CallingConvention = CallingConvention.Cdecl)]
 		private static extern unsafe void Moira_init(
 			IntPtr ctx,
 			int model,
@@ -36,22 +36,22 @@ namespace Jammy.Core.CPU.Moira
 			delegate* unmanaged[Cdecl]<IntPtr, int, void> sync
 		);
 
-		[DllImport("Moira.dll")]
+		[DllImport("moira")]
 		static extern uint Moira_execute(ref int cycles);
 
-		[DllImport("Moira.dll")]
+		[DllImport("moira")]
 		static extern void Moira_get_regs(Moira_regs regs);
 
-		[DllImport("Moira.dll")]
+		[DllImport("moira")]
 		static extern void Moira_set_regs(Moira_regs regs);
 
-		[DllImport("Moira.dll")]
+		[DllImport("moira")]
 		static extern void Moira_set_pc(uint pc);
 
-		[DllImport("Moira.dll")]
+		[DllImport("moira")]
 		static extern void Moira_set_irq(uint levels);
 
-		[DllImport("Moira.dll")]
+		[DllImport("moira")]
 		static extern void Moira_reset();
 
 		public MoiraCPU(IInterrupt interrupt, IMemoryMapper memoryMapper,

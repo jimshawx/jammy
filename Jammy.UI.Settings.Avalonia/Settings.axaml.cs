@@ -90,6 +90,17 @@ namespace Jammy.UI.Settings.Avalonia
 			}
 
 			if (StringFromSelection(cbSku.SelectedItem) == "MC68000" ||
+				StringFromSelection(cbSku.SelectedItem) == "MC68EC020")
+			{
+				rbMoira.IsEnabled = true;
+			}
+			else
+			{
+				rbMoira.IsChecked = false;
+				rbMoira.IsEnabled = false;
+			}
+
+			if (StringFromSelection(cbSku.SelectedItem) == "MC68000" ||
 				StringFromSelection(cbSku.SelectedItem) == "MC68EC020" ||
 				StringFromSelection(cbSku.SelectedItem) == "MC68030" ||
 				StringFromSelection(cbSku.SelectedItem) == "MC68040")
@@ -269,6 +280,11 @@ namespace Jammy.UI.Settings.Avalonia
 		private void rbNative_CheckedChanged(object sender, RoutedEventArgs e)
 		{
 			if (Default(rbNative.IsChecked)) cbSku.SelectedIndex = 0;
+		}
+		
+		private void rbMoira_CheckedChanged(object sender, RoutedEventArgs e)
+		{
+			if (Default(rbMoira.IsChecked) && cbSku.SelectedIndex > 2) cbSku.SelectedIndex = 0;
 		}
 
 		private void btnDF0Eject_Click(object sender, RoutedEventArgs e)
@@ -614,7 +630,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.FloppyCount = 1;
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick13.rom";
-					currentSettings.CPU = CPUType.MusashiCSharp;
+					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68000;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();
@@ -632,7 +648,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.FloppyCount = 1;
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick204.rom";
-					currentSettings.CPU = CPUType.MusashiCSharp;
+					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68000;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();
@@ -651,7 +667,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick205.rom";
 					currentSettings.HardDiskCount = 0;
-					currentSettings.CPU = CPUType.MusashiCSharp;
+					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68000;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();
@@ -670,7 +686,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.FloppySpeed = FloppySpeed.Immediate;
 					currentSettings.KickStart = "kick31_a1200.rom";
 					currentSettings.HardDiskCount = 0;
-					currentSettings.CPU = CPUType.MusashiCSharp;
+					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68EC020;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
 					BindSettings();

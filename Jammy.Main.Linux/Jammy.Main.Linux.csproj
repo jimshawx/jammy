@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Jammy.AmigaTypes\Jammy.AmigaTypes.csproj" />
     <ProjectReference Include="..\Jammy.Core.Audio.Linux\Jammy.Core.Audio.Linux.csproj" />
+    <ProjectReference Include="..\Jammy.Core.CPU.Moira\Jammy.Core.CPU.Moira.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj" />
     <ProjectReference Include="..\Jammy.Core.Persistence\Jammy.Core.Persistence.csproj" />
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
@@ -48,7 +49,6 @@
 	<ApplicationIcon>amiga.ico</ApplicationIcon>
 	<PublishSingleFile>true</PublishSingleFile>
 	<PublishReadyToRun>true</PublishReadyToRun>
-	<SelfContained>true</SelfContained>
   </PropertyGroup>
 <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.14" />

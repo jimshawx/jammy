@@ -41,6 +41,7 @@
 				<StackPanel Orientation="Vertical" Margin="8 0">
 				  <RadioButton Name="rbNative" Foreground="#0078d7" IsCheckedChanged="rbNative_CheckedChanged">Native</RadioButton>
 				  <RadioButton Name="rbMusashiCS" Foreground="#0078d7">Musashi C#</RadioButton>
+				  <RadioButton Name="rbMoira" Foreground="#0078d7" IsCheckedChanged="rbMoira_CheckedChanged">Moira</RadioButton>
 				</StackPanel>
 			  </StackPanel>
 			</StackPanel>

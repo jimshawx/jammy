@@ -7,6 +7,7 @@ using Jammy.Core;
 using Jammy.Core.Audio.Linux;
 using Jammy.Core.CDROM;
 using Jammy.Core.CPU.CSharp;
+using Jammy.Core.CPU.Moira;
 using Jammy.Core.CPU.Musashi.CSharp;
 using Jammy.Core.Custom;
 using Jammy.Core.Custom.Audio;
@@ -245,6 +246,10 @@ public class Program
 		if (settings.CPU == CPUType.Musashi || settings.CPU == CPUType.MusashiCSharp)
 		{
 			services.AddSingleton<ICPU, CPUWrapperMusashi>();
+		}
+		else if (settings.CPU == CPUType.Moira)
+		{
+			services.AddSingleton<ICPU, MoiraCPU>();
 		}
 		else
 		{

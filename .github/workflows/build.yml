@@ -27,7 +27,7 @@ jobs:
         run: dotnet build Jammy.Main --configuration Release --no-restore
 
       - name: Publish Windows binary
-        run: dotnet publish Jammy.Main -c Release -r win-x64 -o out/win /p:EnableWindowsTargeting=true /p:DebugType=None /p:DebugSymbols=false
+        run: dotnet publish Jammy.Main -c Release -r win-x64 -o out/win /p:EnableWindowsTargeting=true /p:DebugType=None /p:DebugSymbols=false --self-contained true
 
       - name: Zip Windows binary
         shell: powershell
@@ -60,7 +60,7 @@ jobs:
         run: dotnet build Jammy.Main.Linux --configuration Release --no-restore
 
       - name: Publish Linux binary
-        run: dotnet publish Jammy.Main.Linux -c Release -r linux-x64 -o out/linux /p:DebugType=None /p:DebugSymbols=false
+        run: dotnet publish Jammy.Main.Linux -c Release -r linux-x64 -o out/linux /p:DebugType=None /p:DebugSymbols=false --self-contained true
 
       - name: Zip Linux binary
         run: |
