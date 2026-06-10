@@ -150,7 +150,7 @@ namespace Jammy.Core.Custom.CIA
 		{
 			if (todTimer == todAlarm && (regs[CIA.ICR] & (uint)ICRB.TODALARM) != 0)
 			{
-				logger.LogTrace($"{cia}TOD ALARM {todTimer}");
+				//logger.LogTrace($"{cia}TOD ALARM {todTimer}");
 				AssertICR(ICRB.TODALARM);
 			}
 		}
