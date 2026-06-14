@@ -180,7 +180,7 @@ namespace Jammy.Core.Custom.Audio
 				}
 
 				//DMA has been turned off, what's the right thing to do now?
-				if (((DMA)dmacon & chanbit[channel]) == 0)
+				if (((DMA)dmacon & (DMA.DMAEN | chanbit[channel])) != (DMA.DMAEN | chanbit[channel]))
 				{
 					//todo: unsure asserting the interrupt is the right thing to do
 					//but there are games that do
@@ -214,15 +214,16 @@ namespace Jammy.Core.Custom.Audio
 		//	}
 		//}
 
-		//private void ChannelDMAOn(int channel)
-		//{
-		//	ch[channel].working_audper = ch[channel].audper;
-		//	ch[channel].working_audlen = ch[channel].audlen;
-		//	ch[channel].working_audlc = ch[channel].audlc;
+		private void ChannelDMAOn(int channel)
+		{
+			ch[channel].working_audper = ch[channel].audper;
+			ch[channel].working_audlen = ch[channel].audlen;
+			ch[channel].working_audlc = ch[channel].audlc;
+			ch[channel].working_auddat = ch[channel].auddat;
 
-		//	ch[channel].mode = AudioMode.DMA;
-		//	interrupt.AssertInterrupt(intr[channel]);
-		//}
+			//	ch[channel].mode = AudioMode.DMA;
+			//	interrupt.AssertInterrupt(intr[channel]);
+		}
 
 		//private void ChannelIRQOn(int channel)
 		//{
@@ -231,7 +232,7 @@ namespace Jammy.Core.Custom.Audio
 		//	ch[channel].mode = AudioMode.Interrupt;
 		//	interrupt.AssertInterrupt(intr[channel]);
 		//}
-		
+
 		public void Reset()
 		{
 			for (int i = 0; i < 4; i++)
@@ -307,15 +308,15 @@ namespace Jammy.Core.Custom.Audio
 
 		public void WriteDMACON(ushort v)
 		{
-			//DMA lastdmacon = (DMA)dmacon;
+			DMA lastdmacon = (DMA)dmacon;
 			dmacon = v;
-			//DMA dmaconchanges = (DMA)dmacon ^ lastdmacon;
+			DMA dmaconchanges = (DMA)dmacon ^ lastdmacon;
 
-			//for (int i = 0; i < 4; i++)
-			//{
-			//	if ((dmaconchanges & (DMA)dmacon & chanbit[i]) != 0)
-			//		ChannelDMAOn(i);
-			//}
+			for (int i = 0; i < 4; i++)
+			{
+				if ((dmaconchanges & (DMA)dmacon & chanbit[i]) != 0)
+					ChannelDMAOn(i);
+			}
 		}
 
 		//[Persist]
