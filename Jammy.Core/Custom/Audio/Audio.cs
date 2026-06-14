@@ -162,7 +162,7 @@ namespace Jammy.Core.Custom.Audio
 					if (channel != 3)
 					{
 						if (ch[channel].modulating_vp)
-							ch[channel + 1].working_audper = ch[channel].working_auddat;
+							ch[channel + 1].working_audper = ch[channel + 1].audper = ch[channel].working_auddat;
 						else
 							ch[channel + 1].audvol = MapAudvol(ch[channel].working_auddat);
 					}
