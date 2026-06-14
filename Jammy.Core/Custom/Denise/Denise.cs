@@ -183,6 +183,8 @@ public class Denise : IDenise
 	[Persist]
 	private int scrollhack = 0;
 
+	private int lastScrollHack = 0;
+
 	public void SetDDFSTRTScrollHack(uint ddfstrt)
 	{
 		scrollhack = 0;
@@ -200,12 +202,17 @@ public class Denise : IDenise
 			if ((ddfstrt&4)!=0) scrollhack = 8;
 			if ((ddfstrt&3)!=0) logger.LogTrace("DDFSTRT is unaligned");
 		}
+		if (scrollhack != lastScrollHack)
+		{ 
+			logger.LogTrace($"ScrollHack updated {scrollhack}");
+			lastScrollHack = scrollhack;
+		}
 	}
 
 	private void ApplyDDFSTRTScrollHack(ref int even, ref int odd)
 	{
-		even += scrollhack; even &= 0xf;
-		odd += scrollhack; odd &= 0xf;
+		//even += scrollhack; even &= 0xf;
+		//odd += scrollhack; odd &= 0xf;
 	}
 
 	public void WriteBitplanes(ulong[] bpldat)
@@ -242,6 +249,12 @@ public class Denise : IDenise
 				//scrolling
 				int even = bplcon1 & 0xf;
 				int odd = bplcon1 >> 4 & 0xf;
+
+				if (settings.ChipSet == ChipSet.AGA)
+				{
+					even += ((bplcon1 >> 10) & 3) << 4;
+					odd += ((bplcon1 >> 14) & 3) << 4;
+				}
 
 				ApplyDDFSTRTScrollHack(ref even, ref odd);
 
