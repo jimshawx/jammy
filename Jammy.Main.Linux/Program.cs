@@ -303,14 +303,14 @@ public class Program
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
 		{
 			if (Avx2.IsSupported)
-				services.AddSingleton<IBpldatPix, BpldatPix32AVX2>();
+				services.AddSingleton<IBpldatPix, BpldatPix32AVX2V2>();
 			else
 				services.AddSingleton<IBpldatPix, BpldatPix32>();
 		}
 		else
 		{
 			if (Avx2.IsSupported)
-				services.AddSingleton<IBpldatPix, BpldatPix64AVX2>();
+				services.AddSingleton<IBpldatPix, BpldatPix64AVX2V2>();
 			else
 				services.AddSingleton<IBpldatPix, BpldatPix64>();
 		}

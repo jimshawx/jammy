@@ -4,7 +4,6 @@ using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using System;
-using System.IO;
 
 /*
 	Copyright 2020-2025 James Shaw. All Rights Reserved.
@@ -201,9 +200,9 @@ namespace Jammy.Tests
 		public void Test9()
 		{
 			var p0 = new BpldatPix32();
-			var p1 = new BpldatPix32AVX2();
+			var p1 = new BpldatPix32AVX2V2();
 			var p2 = new BpldatPix64();
-			var p3 = new BpldatPix64AVX2();
+			var p3 = new BpldatPix64AVX2V2();
 
 			p0.SetPixelBitMask(31);
 			p1.SetPixelBitMask(31);
@@ -251,7 +250,7 @@ namespace Jammy.Tests
 		public void TestA()
 		{
 			var p0 = new BpldatPix32();
-			var p1 = new BpldatPix32AVX2();
+			var p1 = new BpldatPix32AVX2V2();
 			TestBpldatPix(p0, p1);
 		}
 
@@ -267,7 +266,7 @@ namespace Jammy.Tests
 		public void TestC()
 		{
 			var p0 = new BpldatPix32();
-			var p1 = new BpldatPix64AVX2();
+			var p1 = new BpldatPix64AVX2V2();
 			TestBpldatPix(p0, p1);
 		}
 
@@ -334,7 +333,7 @@ namespace Jammy.Tests
 		[Test]
 		public void TestE()
 		{
-			var p0 = new BpldatPix64AVX2();
+			var p0 = new BpldatPix64AVX2V2();
 
 			p0.SetPixelBitMask(63);
 
@@ -370,7 +369,7 @@ namespace Jammy.Tests
 		[Test]
 		public void TestG()
 		{
-			var p0 = new BpldatPix32AVX2();
+			var p0 = new BpldatPix32AVX2V2();
 
 			p0.SetPixelBitMask(15);
 
