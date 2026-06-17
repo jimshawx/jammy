@@ -16,7 +16,7 @@ namespace Jammy.Core.Custom.Denise
 {
 	public class BpldatPix32AVX2V2 : IBpldatPix
 	{
-		private int pixelMaskBit;
+		private const int pixelMaskBit = 15+16;
 		private Vector256<uint> bpldatpix = Vector256<uint>.Zero;
 
 		public void WriteBitplanes(ref ulong[] bpldat, int even, int odd)
@@ -44,7 +44,8 @@ namespace Jammy.Core.Custom.Denise
 
 		public void SetPixelBitMask(uint pixelBits)
 		{
-			pixelMaskBit = (int)(pixelBits + 16);
+			//pixelMaskBit = (int)(pixelBits + 16);
+			System.Diagnostics.Debug.Assert(pixelMaskBit == (int)(pixelBits + 16));
 		}
 
 		public void Clear()
@@ -88,7 +89,7 @@ namespace Jammy.Core.Custom.Denise
 		{
 			if (!PersistenceManager.Is(obj, "pixels")) return;
 
-			pixelMaskBit = int.Parse((string)obj.GetValue("pixelBitMask"));
+			//pixelMaskBit = int.Parse((string)obj.GetValue("pixelBitMask"));
 			var bpldatpix32 = new uint[8];
 			obj.GetValue("bpldatpix")
 					.Select(x => uint.Parse((string)x))
