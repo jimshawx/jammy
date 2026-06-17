@@ -189,6 +189,7 @@ public class Denise : IDenise
 	{
 		//scrollhack = lastScrollHack = 0;
 		//return;
+		scrollhack = 0;
 
 		if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 		{
@@ -225,7 +226,6 @@ public class Denise : IDenise
 		{
 			even &= 0xf; odd &= 0xf;
 		}
-
 	}
 
 	public void WriteBitplanes(ulong[] bpldat)
