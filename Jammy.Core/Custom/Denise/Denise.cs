@@ -187,8 +187,8 @@ public class Denise : IDenise
 
 	public void SetDDFSTRTScrollHack(uint ddfstrt)
 	{
-		scrollhack = lastScrollHack = 0;
-		return;
+		//scrollhack = lastScrollHack = 0;
+		//return;
 
 		if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
 		{
@@ -212,8 +212,6 @@ public class Denise : IDenise
 
 	private void ApplyDDFSTRTScrollHack(ref int even, ref int odd)
 	{
-		return;
-
 		even += scrollhack;// even &= 0xf;
 		odd += scrollhack;// odd &= 0xf;
 
