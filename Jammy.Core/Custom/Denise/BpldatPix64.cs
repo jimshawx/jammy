@@ -24,9 +24,9 @@ public class BpldatPix64 : IBpldatPix
 		for (int i = 0; i < 8; i++)
 		{
 			if ((i & 1) != 0)
-				Or(ref bpldatpix[i], bpldat[i], 16 - odd);
+				Or(ref bpldatpix[i], bpldat[i], 64 - odd);
 			else
-				Or(ref bpldatpix[i], bpldat[i], 16 - even);
+				Or(ref bpldatpix[i], bpldat[i], 64 - even);
 		}
 	}
 
@@ -43,7 +43,7 @@ public class BpldatPix64 : IBpldatPix
 
 	public void SetPixelBitMask(uint pixelBits)
 	{
-		pixelMaskBit = (int)(pixelBits + 16);
+		pixelMaskBit = (int)(pixelBits + 64);
 	}
 
 	public void Clear()
@@ -78,6 +78,12 @@ public class BpldatPix64 : IBpldatPix
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void Or(ref ValueTuple<ulong, ulong> bp, ulong bits, int shift)
 	{
+		if (shift == 64)
+		{ 
+			bp.Item1 |= bits;
+			return;
+		}
+
 		bp.Item1 |= bits >> 64 - shift;
 		bp.Item2 |= bits << shift;
 	}
