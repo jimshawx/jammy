@@ -216,7 +216,7 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 		var sb = GetDebugStringBuilder();
 
 		sb.AppendLine($"LINE {dbugLine}");
-		sb.AppendLine(($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfStrtFix:X4}{ddfSHack:+#0;-#0} {ddfStopFix:X4}{ddfEHack:+#0;-#0} FMODE {fmode:X4}"));
+		sb.AppendLine(($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfStrtFix:X4}{ddfSHack:+#0;-#0} {ddfStopFix:X4}{ddfEHack:+#0;-#0} FMODE {fmode:X4} B{(fmode&3):X1}S{((fmode>>2) & 3):X1}"));
 		sb.AppendLine(($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({(int)(diwstopv - diwstrtv)}) H:{diwstrth}{diwSHack:+#0;-#0}->{diwstoph}{diwEHack:+#0;-#0}({diwstoph - diwstrth}/16={(diwstoph - diwstrth) / 16}) BD={bplDelayHack}"));
 		sb.AppendLine($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
 		sb.AppendLine($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()}");
@@ -318,8 +318,20 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 	private string Bplcon1()
 	{
 		uint bplcon1 = chipRegs.DebugChipsetRead(ChipRegs.BPLCON1, Size.Word);
+		uint fmode = chipRegs.DebugChipsetRead(ChipRegs.FMODE, Size.Word);
 		uint pf0 = bplcon1 & 0xf;
 		uint pf1 = (bplcon1 >> 4) & 0xf;
+
+		if (settings.ChipSet == ChipSet.AGA)
+		{ 
+			pf0 |= ((bplcon1 >> 10) & 3) << 4;
+			pf1 |= ((bplcon1 >> 14) & 3) << 4;
+
+			if ((fmode & 3) == 0) { pf0 &= 0xf; pf1 &= 0xf; }
+			else if ((fmode & 3) == 3) { pf0 &= 0x3f; pf1 &= 0x3f; }
+			else { pf0 &= 0x1f; pf1 &= 0x1f; }
+		}
+
 		return $"SCR{pf0}:{pf1} ";
 	}
 
