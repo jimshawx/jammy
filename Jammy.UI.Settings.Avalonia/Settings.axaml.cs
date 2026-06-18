@@ -615,6 +615,7 @@ namespace Jammy.UI.Settings.Avalonia
 			A3000, 1MB+256MB, ECS, KS3.1
 			A4000, 2MB+16MB+256MB, AGA, KS3.1
 			*/
+			string[] disks = { currentSettings.DF0, currentSettings.DF1, currentSettings.DF2, currentSettings.DF3 };
 			switch (cbQuickStart.SelectedIndex)
 			{
 				case 0:
@@ -636,6 +637,10 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68000;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
+					currentSettings.DF0 = disks[0];
+					currentSettings.DF1 = disks[1];
+					currentSettings.DF2 = disks[2];
+					currentSettings.DF3 = disks[3];
 					BindSettings();
 					btnSaveConfig.IsEnabled = false;
 					break;
@@ -654,6 +659,10 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68000;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
+					currentSettings.DF0 = disks[0];
+					currentSettings.DF1 = disks[1];
+					currentSettings.DF2 = disks[2];
+					currentSettings.DF3 = disks[3];
 					BindSettings();
 					btnSaveConfig.IsEnabled = false;
 					break;
@@ -673,6 +682,10 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68000;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
+					currentSettings.DF0 = disks[0];
+					currentSettings.DF1 = disks[1];
+					currentSettings.DF2 = disks[2];
+					currentSettings.DF3 = disks[3];
 					BindSettings();
 					btnSaveConfig.IsEnabled = false;
 					break;
@@ -692,6 +705,10 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68EC020;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
+					currentSettings.DF0 = disks[0];
+					currentSettings.DF1 = disks[1];
+					currentSettings.DF2 = disks[2];
+					currentSettings.DF3 = disks[3];
 					BindSettings();
 					btnSaveConfig.IsEnabled = false;
 					break;
@@ -713,6 +730,10 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.KickStart = "kick31_a3000.rom";
 					currentSettings.HardDiskCount = 0;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
+					currentSettings.DF0 = disks[0];
+					currentSettings.DF1 = disks[1];
+					currentSettings.DF2 = disks[2];
+					currentSettings.DF3 = disks[3];
 					BindSettings();
 					btnSaveConfig.IsEnabled = false;
 					break;
@@ -734,6 +755,10 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.KickStart = "kick31_a4000.rom";
 					currentSettings.HardDiskCount = 0;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
+					currentSettings.DF0 = disks[0];
+					currentSettings.DF1 = disks[1];
+					currentSettings.DF2 = disks[2];
+					currentSettings.DF3 = disks[3];
 					BindSettings();
 					btnSaveConfig.IsEnabled = false;
 					break;
