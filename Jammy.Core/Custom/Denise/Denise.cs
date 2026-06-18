@@ -185,27 +185,54 @@ public class Denise : IDenise
 
 	private int lastScrollHack = 0;
 
-	public void SetDDFSTRTScrollHack(uint ddfstrt)
+	private void SetDDFSTRTScrollHack()
 	{
-		//scrollhack = lastScrollHack = 0;
-		//return;
-		scrollhack = 0;
-
-		if ((bplcon0 & (uint)BPLCON0.HiRes) != 0)
+		int shmask = 0;
+		if (settings.ChipSet == ChipSet.AGA)
 		{
-			if ((ddfstrt & 3) != 0) logger.LogTrace("DDFSTRT is unaligned (hi-res)");
-		}
-		else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0)
-		{
-			if ((ddfstrt & 1) != 0) logger.LogTrace("DDFSTRT is unaligned (super hi-res)");
+			if ((fmode & 3) == 3)//quadruple fetch
+			{
+				if ((bplcon0 & (1 << 15)) != 0)//high res
+					shmask = 32;
+				else if ((bplcon0 & (1 << 6)) != 0)//super high res
+					shmask = 16;
+				else
+					shmask = 64;//low res
+			}
+			else if ((fmode & 3) == 0)
+			{
+				if ((bplcon0 & (1 << 15)) != 0)//high res
+					shmask = 8;
+				else if ((bplcon0 & (1 << 6)) != 0)//super high res
+					shmask = 4;
+				else
+					shmask = 16;//low res
+			}
+			else//double fetch
+			{
+				if ((bplcon0 & (1 << 15)) != 0)//high res
+					shmask = 16;
+				else if ((bplcon0 & (1 << 6)) != 0)//super high res
+					shmask = 8;
+				else
+					shmask = 32;//low res
+			}
 		}
 		else
 		{
-			if ((ddfstrt&4)!=0) scrollhack = 8;
-			if ((ddfstrt&3)!=0) logger.LogTrace("DDFSTRT is unaligned");
+			if ((bplcon0 & (1 << 15)) != 0)//high res
+				shmask = 8;
+			else
+				shmask = 16;//low res
 		}
+		//shmask contains how many pixels are in each denise 'block'
+		//where are we in the block?
+		int blockNum = ((int)clock.DeniseHorizontalPos) / shmask;
+		int blockPos = ((int)clock.DeniseHorizontalPos) & (shmask - 1);
+
+		scrollhack = blockPos;
 		if (scrollhack != lastScrollHack)
-		{ 
+		{
 			logger.LogTrace($"ScrollHack updated {scrollhack}");
 			lastScrollHack = scrollhack;
 		}
@@ -240,6 +267,9 @@ public class Denise : IDenise
 		//	bpldatPix.WriteBitplanes(ref bpldat, even, odd);
 		//else
 			Buffer(bpldat);
+
+		SetDDFSTRTScrollHack();
+
 		scanlineIsOpen = true;
 	}
 
