@@ -230,7 +230,7 @@ public class Denise : IDenise
 		int blockNum = ((int)clock.DeniseHorizontalPos) / shmask;
 		int blockPos = ((int)clock.DeniseHorizontalPos) & (shmask - 1);
 
-		scrollhack = blockPos;
+		scrollhack = (shmask - blockPos) & (shmask - 1);
 		if (scrollhack != lastScrollHack)
 		{
 			logger.LogTrace($"ScrollHack updated {scrollhack}");
