@@ -86,7 +86,7 @@ namespace Jammy.Core.Custom.Audio
 				AudioMix(ch);
 		}
 
-		private const int rate = 1;
+		//private const int rate = 1;
 
 		private void Fetch(int channel)
 		{
@@ -118,8 +118,8 @@ namespace Jammy.Core.Custom.Audio
 
 		private void PlayingDMA(int channel)
 		{
-			ch[channel].working_audper -= rate;
-			if (ch[channel].working_audper <= 0)
+			ch[channel].working_audper--;
+			if (ch[channel].working_audper == 1)
 			{
 				if ((adkcon & (0x11 << channel)) == 0)
 				{ 
@@ -127,7 +127,7 @@ namespace Jammy.Core.Custom.Audio
 					{
 						ch[channel].working_auddat = ushort.RotateRight(ch[channel].working_auddat, 8);
 						ch[channel].secondByte = true;
-						ch[channel].working_audper += ch[channel].audper;
+						ch[channel].working_audper = ch[channel].audper;
 						return;
 					}
 					else
@@ -141,7 +141,7 @@ namespace Jammy.Core.Custom.Audio
 					if (!ch[channel].secondByte)
 					{
 						ch[channel].secondByte = true;
-						ch[channel].working_audper += ch[channel].audper;
+						ch[channel].working_audper = ch[channel].audper;
 						return;
 					}
 					else
@@ -179,18 +179,18 @@ namespace Jammy.Core.Custom.Audio
 					interrupt.AssertInterrupt(intr[channel]);
 				}
 
-				//DMA has been turned off, what's the right thing to do now?
-				if (((DMA)dmacon & (DMA.DMAEN | chanbit[channel])) != (DMA.DMAEN | chanbit[channel]))
-				{
-					//todo: unsure asserting the interrupt is the right thing to do
-					//but there are games that do
-					//interrupts off, clear channel interrupt
-					//channel period = 1, channel volume = 0
-					//channel DMA off
-					//wait for channel IRQ
-					//ch[channel].mode = AudioMode.Idle;
-					interrupt.AssertInterrupt(intr[channel]);
-				}
+				////DMA has been turned off, what's the right thing to do now?
+				//if (((DMA)dmacon & (DMA.DMAEN | chanbit[channel])) != (DMA.DMAEN | chanbit[channel]))
+				//{
+				//	//todo: unsure asserting the interrupt is the right thing to do
+				//	//but there are games that do
+				//	//interrupts off, clear channel interrupt
+				//	//channel period = 1, channel volume = 0
+				//	//channel DMA off
+				//	//wait for channel IRQ
+				//	//ch[channel].mode = AudioMode.Idle;
+				//	interrupt.AssertInterrupt(intr[channel]);
+				//}
 			}
 		}
 
@@ -261,7 +261,7 @@ namespace Jammy.Core.Custom.Audio
 			public ushort auddat { get; set; }
 			public uint audlc { get; set; }
 
-			public int working_audper { get; set; }
+			public ushort working_audper { get; set; }
 			public int working_audlen { get;set; }
 			public ushort working_auddat { get; set; }
 			public uint working_audlc { get; set; }
