@@ -31,7 +31,8 @@ namespace Jammy.Core.EmulationWindow.DX
 		private IDXGISwapChain1 swapchain;
 		private ID3D11Device device;
 		private ID3D11DeviceContext context;
-		private ID3D11Texture2D stagingTexture;
+		private ID3D11Texture2D[] stagingTextures;
+		private int currentStagingIndex = 0;
 		private ID3D11Texture2D backBuffer;
 		private int[] screen;
 
@@ -75,7 +76,8 @@ namespace Jammy.Core.EmulationWindow.DX
 		public void Dispose()
 		{
 			emulation.Close();
-			stagingTexture.Dispose();
+			for (int i = 0; i < stagingTextures.Length; i++ )
+				stagingTextures[i].Dispose();
 			backBuffer.Dispose();
 			swapchain.Dispose();
 			context.Dispose();
@@ -182,7 +184,7 @@ namespace Jammy.Core.EmulationWindow.DX
 					AlphaMode = AlphaMode.Ignore,
 					BufferCount = 3,
 					BufferUsage = Usage.RenderTargetOutput,
-					Flags = 0,
+					Flags = SwapChainFlags.AllowTearing,
 					Format = Format.B8G8R8A8_UNorm,
 					SampleDescription = new SampleDescription { Count = 1, Quality = 0 },
 					Scaling = Scaling.Stretch,
@@ -199,19 +201,23 @@ namespace Jammy.Core.EmulationWindow.DX
 
 				backBuffer = swapchain.GetBuffer<ID3D11Texture2D>(0);
 
-				stagingTexture = device.CreateTexture2D(new Texture2DDescription
-				{
-					Format = Format.B8G8R8A8_UNorm,
-					Width = (uint)screenWidth,
-					Height = (uint)screenHeight,
-					CPUAccessFlags = CpuAccessFlags.Write,
-					MipLevels = 1,
-					ArraySize = 1,
-					BindFlags = BindFlags.None,
-					MiscFlags = ResourceOptionFlags.None,
-					SampleDescription = new SampleDescription { Count = 1, Quality = 0 },
-					Usage = ResourceUsage.Staging
-				});
+				stagingTextures = new ID3D11Texture2D[1];
+				for (int i = 0; i < stagingTextures.Length; i++)
+				{ 
+					stagingTextures[i] = device.CreateTexture2D(new Texture2DDescription
+					{
+						Format = Format.B8G8R8A8_UNorm,
+						Width = (uint)screenWidth,
+						Height = (uint)screenHeight,
+						CPUAccessFlags = CpuAccessFlags.Write,
+						MipLevels = 1,
+						ArraySize = 1,
+						BindFlags = BindFlags.None,
+						MiscFlags = ResourceOptionFlags.None,
+						SampleDescription = new SampleDescription { Count = 1, Quality = 0 },
+						Usage = ResourceUsage.Staging
+					});
+				}
 
 				emulation.Show();
 			});
@@ -224,33 +230,32 @@ namespace Jammy.Core.EmulationWindow.DX
 
 			nativeOverlay.Render();
 
-			emulation.Invoke((Action)delegate
+			var currentStaging = stagingTextures[currentStagingIndex];
+			currentStagingIndex = (currentStagingIndex + 1) % stagingTextures.Length;
+
+			// Map the staging texture for writing
+			var dataBox = context.Map(currentStaging, 0, MapMode.Write, Vortice.Direct3D11.MapFlags.None);
+
+			int rowBytes = screenWidth * sizeof(int);
+			if (rowBytes == dataBox.RowPitch)
 			{
-				// Map the staging texture for writing
-				var dataBox = context.Map(stagingTexture, 0, MapMode.Write, Vortice.Direct3D11.MapFlags.None);
-
-				int rowBytes = screenWidth * sizeof(int);
-				if (rowBytes == dataBox.RowPitch)
+				//pitch == width, so only one memcpy required
+				Marshal.Copy(screen, 0, dataBox.DataPointer, screenWidth * screenHeight);
+			}
+			else
+			{
+				for (int y = 0; y < screenHeight; y++)
 				{
-					//pitch == width, so only one memcpy required
-					Marshal.Copy(screen, 0, dataBox.DataPointer, screenWidth * screenHeight);
+					IntPtr destRowPtr = IntPtr.Add(dataBox.DataPointer, y * (int)dataBox.RowPitch);
+					int srcOffset = y * screenWidth;
+					Marshal.Copy(screen, srcOffset, destRowPtr, screenWidth);
 				}
-				else
-				{
-					for (int y = 0; y < screenHeight; y++)
-					{
-						IntPtr destRowPtr = IntPtr.Add(dataBox.DataPointer, y * (int)dataBox.RowPitch);
-						int srcOffset = y * screenWidth;
-						Marshal.Copy(screen, srcOffset, destRowPtr, screenWidth);
-					}
-				}
-				context.Unmap(stagingTexture, 0);
+			}
+			context.Unmap(currentStaging, 0);
 
-				// Copy the staging texture to the back buffer
-				context.CopyResource(backBuffer, stagingTexture);
+			context.CopyResource(backBuffer, currentStaging);
 
-				swapchain.Present(0, 0);
-			});
+			swapchain.Present(0, PresentFlags.AllowTearing);
 		}
 
 		public Types.Types.Point RecentreMouse()
