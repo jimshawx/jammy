@@ -400,7 +400,7 @@ namespace Jammy.Core
 
 		public void Emulate()
 		{
-			//Thread.CurrentThread.Priority = ThreadPriority.Highest;
+			Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
 			if (loadSnapshot)
 			{ 
