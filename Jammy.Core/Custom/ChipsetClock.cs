@@ -30,8 +30,6 @@ public class ChipsetClock : IChipsetClock
 
 	[Persist]
 	public uint HorizontalPos { get; private set; }
-	[Persist]
-	public uint DeniseHorizontalPos { get; private set; }
 	public uint CopperHorizontalPos { get { return HorizontalPos; } }
 
 	[Persist]
@@ -44,8 +42,6 @@ public class ChipsetClock : IChipsetClock
 	public uint Tick { get; private set; }
 
 	public ChipsetClockState ClockState { get; private set; }
-
-	private const uint DENISE_HORZ_OFFSET = 2;
 
 	public void Emulate()
 	{
@@ -72,13 +68,11 @@ public class ChipsetClock : IChipsetClock
 		if ((ClockState & ChipsetClockState.EndOfLine) != 0)
 		{ 
 			HorizontalPos = 0;
-			DeniseHorizontalPos = DENISE_HORZ_OFFSET;
 			VerticalPos++;
 		}
 		else
 		{ 
 			HorizontalPos++;
-			DeniseHorizontalPos += 2;
 		}
 
 		if ((ClockState & ChipsetClockState.EndOfFrame) != 0)
@@ -97,7 +91,6 @@ public class ChipsetClock : IChipsetClock
 	public void Reset()
 	{
 		HorizontalPos = 0;
-		DeniseHorizontalPos = DENISE_HORZ_OFFSET;
 		VerticalPos = 0;
 
 		//cosmetic
@@ -140,6 +133,6 @@ public class ChipsetClock : IChipsetClock
 
 	public override string ToString()
 	{
-		return $"[v:{VerticalPos,3} h:{HorizontalPos,3} ({HorizontalPos:X2}) dh:{DeniseHorizontalPos,3}]";
+		return $"[v:{VerticalPos,3} h:{HorizontalPos,3} ({HorizontalPos:X2})]";
 	}
 }

@@ -54,6 +54,9 @@ public class Denise : IDenise
 	private const int SCREEN_HEIGHT = (313 * 2) - TOP_BORDER; //x2 for scan double
 	private int[] screen;
 
+	[Persist]
+	public uint DeniseHorizontalPos { get; set; }
+
 	public Denise(IBpldatPix bpldatPix, IChipsetClock clock, IChipsetDebugger debugger, IEmulationWindow emulationWindow,
 		IOptions<EmulationSettings> settings, ILogger<Denise> logger)
 	{
@@ -69,7 +72,6 @@ public class Denise : IDenise
 		ComputeDPFLookup();
 
 		emulationWindow.SetPicture(SCREEN_WIDTH, SCREEN_HEIGHT);
-		screen = emulationWindow.GetFramebuffer();
 
 		RunVerticalBlankStart();
 	}
@@ -114,39 +116,45 @@ public class Denise : IDenise
 		if (pixelLoop == 2)
 		{
 			//ClockBuffer();
-			RunDeniseTick(0,0);
+			RunDeniseTick(0);
+			DeniseHorizontalPos++;
 			ClockBuffer();
-			RunDeniseTick(1,1);
+			RunDeniseTick(1);
+			DeniseHorizontalPos++;
 		}
 		else if (pixelLoop == 4)
 		{
 			//ClockBuffer();
-			RunDeniseTick(0,0);
+			RunDeniseTick(0);
 			ClockBuffer();
-			RunDeniseTick(0,1);
+			RunDeniseTick(1);
 			//ClockBuffer();
-			RunDeniseTick(1,2);
+			DeniseHorizontalPos++;
+			RunDeniseTick(2);
 			//ClockBuffer();
-			RunDeniseTick(1,3);
+			RunDeniseTick(3);
+			DeniseHorizontalPos++;
 		}
 		else if (pixelLoop == 8)
 		{
 			//ClockBuffer();
-			RunDeniseTick(0,0);
+			RunDeniseTick(0);
 			ClockBuffer();
-			RunDeniseTick(0,1);
+			RunDeniseTick(1);
 			//ClockBuffer();
-			RunDeniseTick(0,2);
+			RunDeniseTick(2);
 			//ClockBuffer();
-			RunDeniseTick(0,3);
+			RunDeniseTick(3);
 			//ClockBuffer();
-			RunDeniseTick(1,4);
+			DeniseHorizontalPos++;
+			RunDeniseTick(4);
 			//ClockBuffer();
-			RunDeniseTick(1,5);
+			RunDeniseTick(5);
 			//ClockBuffer();
-			RunDeniseTick(1,6);
+			RunDeniseTick(6);
 			//ClockBuffer();
-			RunDeniseTick(1,7);
+			RunDeniseTick(7);
+			DeniseHorizontalPos++;
 		}
 
 		if ((clockState & ChipsetClockState.EndOfLine)!=0)
@@ -165,6 +173,13 @@ public class Denise : IDenise
 		UpdateBPLCON0();
 		UpdateBPLCON4();
 		UpdateFMODE();
+	}
+
+	//https://eab.abime.net/printthread.php?t=118970
+	//this should probably be written by Agnus writing to STREQU or something
+	public void Strobe()
+	{
+		DeniseHorizontalPos = 2;
 	}
 
 	private void RunVerticalBlankStart()
@@ -227,8 +242,8 @@ public class Denise : IDenise
 		}
 		//shmask contains how many pixels are in each denise 'block'
 		//where are we in the block?
-		int blockNum = ((int)clock.DeniseHorizontalPos) / shmask;
-		int blockPos = ((int)clock.DeniseHorizontalPos) & (shmask - 1);
+		int blockNum = ((int)DeniseHorizontalPos) / shmask;
+		int blockPos = ((int)DeniseHorizontalPos) & (shmask - 1);
 
 		scrollhack = (shmask - blockPos) & (shmask - 1);
 		if (scrollhack != lastScrollHack)
@@ -328,7 +343,7 @@ public class Denise : IDenise
 		return hstart;
 	}
 
-	private void UpdateSprites(int d)
+	private void UpdateSprites()
 	{
 		//if the sprite horiz position matches, clock the sprite data in
 		for (uint s = 0; s < 8; s++)
@@ -337,7 +352,7 @@ public class Denise : IDenise
 			{
 				int hstart = HStart(s);
 
-				if (clock.DeniseHorizontalPos+d == hstart)
+				if (DeniseHorizontalPos == hstart)
 				{
 					//DebugSprite(s);
 					WriteSprite(s, sprdata, sprdatb, sprctl);
@@ -1123,25 +1138,25 @@ end loop
 		//todo: there are also an extra two bottom bits for strth/stoph
 	}
 
-	private void RunDeniseTick(int d, int p)
+	private void RunDeniseTick(int p)
 	{
 		uint col;
 
-		UpdateSprites(d);
+		UpdateSprites();
 
-		if (clock.DeniseHorizontalPos+d == diwstrth + debugger.diwSHack)
+		if (DeniseHorizontalPos == diwstrth + debugger.diwSHack)
 		{ 
 			insideDIWH = true;
-			if (clock.DeniseHorizontalPos < FIRST_DMA && clock.DeniseHorizontalPos != 0)
-				logger.LogTrace($"FIRST_DMA is too soon for this code {clock.DeniseHorizontalPos} < {FIRST_DMA}");
+			//if (DeniseHorizontalPos < FIRST_DMA && DeniseHorizontalPos != 0)
+			//	logger.LogTrace($"FIRST_DMA is too soon for this code {DeniseHorizontalPos} < {FIRST_DMA}");
 		}
-		else if (clock.DeniseHorizontalPos+d == diwstoph + debugger.diwEHack)
+		else if (DeniseHorizontalPos == diwstoph + debugger.diwEHack)
 		{
 			insideDIWH = false;
 			scanlineIsOpen = false;
 		}
 		
-		if (clock.DeniseHorizontalPos < FIRST_DMA) return;
+		if (DeniseHorizontalPos < FIRST_DMA) return;
 
 		//is it the visible area horizontally?
 		//if so, bits are read out of the bitplane data, turned into pixels and output
@@ -1425,10 +1440,11 @@ end loop
 	private void EndDeniseLine()
 	{
 		//cosmetics, draw some right border
+		int q = 0;
 		for (int i = 0; i < RIGHT_BORDER; i++)
 		{
 			for (int p = 0; p < pixelLoop; p++)
-				RunDeniseTick(0,p);
+				RunDeniseTick(p);
 		}
 		//this should be a no-op
 		//System.Diagnostics.Debug.Assert(SCREEN_WIDTH - (dptr - lineStart) == 0);

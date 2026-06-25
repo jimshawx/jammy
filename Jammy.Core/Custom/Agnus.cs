@@ -59,6 +59,7 @@ public class Agnus : IAgnus
 {
 	private readonly IChipsetClock clock;
 	private readonly IDMA dma;
+	private readonly IDenise denise;
 	private readonly IInterrupt interrupt;
 	private readonly IDiskDrives diskDrives;
 
@@ -77,13 +78,15 @@ public class Agnus : IAgnus
 
 	public Agnus(IChipsetClock clock, IInterrupt interrupt,
 		IDiskDrives diskDrives, IDMA dma,
-		/*IChips custom,*/ IChipsetDebugger debugger,
+		IDenise denise,
+		IChipsetDebugger debugger,
 		IOptions<EmulationSettings> settings, ILogger<Agnus> logger)
 	{
 		this.clock = clock;
 		this.interrupt = interrupt;
 		this.diskDrives = diskDrives;
 		this.dma = dma;
+		this.denise = denise;
 		this.debugger = debugger;
 		this.settings = settings.Value;
 		this.logger = logger;
@@ -182,7 +185,7 @@ public class Agnus : IAgnus
 
 		switch (clock.HorizontalPos)
 		{
-			case DMA_START + 0x00: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+			case DMA_START + 0x00: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); denise.Strobe(); break;
 			case DMA_START + 0x02: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
 			case DMA_START + 0x04: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
 			//case DMA_START + 0x06: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;//todo: problematic, there's only room for 3 slots when DMA_START != 0

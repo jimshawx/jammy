@@ -232,7 +232,8 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IDenise : IEmulate, ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	{
 		void WriteWide(uint address, ulong value); 
-		public uint[] DebugGetPalette();
+		uint[] DebugGetPalette();
+		void Strobe();
 	}
 
 	public interface IBpldatPix : IStatePersister
@@ -264,7 +265,6 @@ namespace Jammy.Core.Interface.Interfaces
 		uint DisplayHorizontal { get; }
 
 		uint HorizontalPos { get; }
-		uint DeniseHorizontalPos { get; }
 		uint CopperHorizontalPos { get; }
 		uint VerticalPos { get; }
 		uint Tick { get; }
