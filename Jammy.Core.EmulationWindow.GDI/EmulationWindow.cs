@@ -132,7 +132,7 @@ namespace Jammy.Core.EmulationWindow.GDI
 			if (emulation.IsDisposed) return;
 
 			screen = new int[width * height];
-			nativeOverlay.Init(screen, width, height);
+			nativeOverlay.Init(width, height);
 
 			emulation.Invoke((Action)delegate
 			{
@@ -158,7 +158,7 @@ namespace Jammy.Core.EmulationWindow.GDI
 		{
 			if (emulation.IsDisposed) return;
 
-			nativeOverlay.Render();
+			nativeOverlay.Render(screen);
 
 			emulation.Invoke((Action)delegate
 			{

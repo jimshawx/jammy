@@ -73,7 +73,7 @@ namespace Jammy.NativeOverlay.Overlays
 
 		private const int CPU_SNAPSHOT_FREQUENCY = 500;
 
-		public void Render()
+		public void Render(int[] screen)
 		{
 			uint[] tmpCpuUsage;
 			lock (_lock)

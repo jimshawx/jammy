@@ -278,7 +278,7 @@ namespace Jammy.Core.EmulationWindow.X
 
 		public void Blit(int[] screen)
 		{
-			nativeOverlay.Render();
+			nativeOverlay.Render(screen);
 
 			XPutImage(xdisplay, xwindow, gc, ref ximage, 0, 0, 0, 0, screenWidth, screenHeight);
 			XFlush(xdisplay);
@@ -352,7 +352,7 @@ namespace Jammy.Core.EmulationWindow.X
 
 			screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
 			ximage.data = Marshal.UnsafeAddrOfPinnedArrayElement(screen, 0);
-			nativeOverlay.Init(screen, width, height);
+			nativeOverlay.Init(width, height);
 
 			var t = new Thread(XEventHandler);
 			t.Start();

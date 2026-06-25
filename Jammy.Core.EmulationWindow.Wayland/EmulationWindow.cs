@@ -102,7 +102,7 @@ namespace Jammy.Core.EmulationWindow.Wayland
 			displayHz = 60;
 
 			screen = GC.AllocateArray<int>((int)(screenWidth * screenHeight), true);
-			nativeOverlay.Init(screen, width, height);
+			nativeOverlay.Init(width, height);
 
 			var t = new Thread(WaitEvents);
 			t.Start();

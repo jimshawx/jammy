@@ -22,7 +22,7 @@ namespace Jammy.NativeOverlay.Overlays
 		private int fpsarrpos = 0;
 		private const int displayHz = 120;
 
-		public void Render()
+		public void Render(int[] screen)
 		{
 			var now = DateTime.Now;
 			TimeSpan dt = now - lastTick;
@@ -57,8 +57,8 @@ namespace Jammy.NativeOverlay.Overlays
 						screen[so + i + (4 * ss + y) * screenWidth] = 0x0000ff;
 				}
 				nativeOverlay.TextScale(2);
-				nativeOverlay.WriteText(20 + (int)fps * ss + 4, 10, 0xffffff, $"{(int)fps}");
-				nativeOverlay.WriteText(20 + (int)avefps * ss + 4, 10 + 4 * ss, 0xffffff, $"{(int)avefps}");
+				nativeOverlay.WriteText(screen, 20 + (int)fps * ss + 4, 10, 0xffffff, $"{(int)fps}");
+				nativeOverlay.WriteText(screen, 20 + (int)avefps * ss + 4, 10 + 4 * ss, 0xffffff, $"{(int)avefps}");
 			}
 		}
 	}

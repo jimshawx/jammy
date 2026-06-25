@@ -17,7 +17,7 @@ namespace Jammy.NativeOverlay.Overlays
 			this.driveLights = driveLights;
 		}
 
-		public void Render()
+		public void Render(int[] screen)
 		{
 			int sx = screenWidth - 100;
 			int sy = 20;

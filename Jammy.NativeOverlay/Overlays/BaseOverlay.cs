@@ -8,7 +8,7 @@ namespace Jammy.NativeOverlay.Overlays
 {
 	public interface IOverlayRenderer
 	{
-		void Render();
+		void Render(int[] screen);
 		void SetNativeOverlay(INativeOverlay nativeOverlay);
 	}
 
@@ -27,7 +27,6 @@ namespace Jammy.NativeOverlay.Overlays
 			this.nativeOverlay = nativeOverlay;
 		}
 
-		public int[] screen => nativeOverlay.Screen;
 		public int screenWidth => nativeOverlay.SCREEN_WIDTH;
 		public int screenHeight => nativeOverlay.SCREEN_HEIGHT;
 	}

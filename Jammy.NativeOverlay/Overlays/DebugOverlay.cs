@@ -16,14 +16,14 @@ namespace Jammy.NativeOverlay.Overlays
 			this.chipsetDebugger = chipsetDebugger;
 		}
 
-		public void Render()
+		public void Render(int[] screen)
 		{
-			DebugPalette();
-			DebugText();
-			DebugLocation();
+			DebugPalette(screen);
+			DebugText(screen);
+			DebugLocation(screen);
 		}
 
-		private void DebugPalette()
+		private void DebugPalette(int[] screen)
 		{
 			var truecolour = chipsetDebugger.GetDebugPalette();
 
@@ -46,20 +46,20 @@ namespace Jammy.NativeOverlay.Overlays
 			}
 		}
 
-		private void DebugText()
+		private void DebugText(int[] screen)
 		{
 			string regmsg = chipsetDebugger.GetOverlayText();
 			nativeOverlay.TextScale(2);
 			const int bg = 0xffffff;
 			const int fg = 0x000000;
-			nativeOverlay.WriteText(0, 81, bg, regmsg);
-			nativeOverlay.WriteText(2, 81, bg, regmsg);
-			nativeOverlay.WriteText(1, 80, bg, regmsg);
-			nativeOverlay.WriteText(1, 82, bg, regmsg);
-			nativeOverlay.WriteText(1, 81, fg, regmsg);
+			nativeOverlay.WriteText(screen, 0, 81, bg, regmsg);
+			nativeOverlay.WriteText(screen, 2, 81, bg, regmsg);
+			nativeOverlay.WriteText(screen, 1, 80, bg, regmsg);
+			nativeOverlay.WriteText(screen, 1, 82, bg, regmsg);
+			nativeOverlay.WriteText(screen, 1, 81, fg, regmsg);
 		}
 
-		private void DebugLocation()
+		private void DebugLocation(int[] screen)
 		{
 			int dbugLine = chipsetDebugger.GetDebugLocation();
 

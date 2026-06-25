@@ -8,11 +8,10 @@ namespace Jammy.NativeOverlay
 {
 	public interface INativeOverlay
 	{
-		void Render();
-		void Init(int[] screen, int screenWidth, int screenHeight);
-		void WriteText(int x, int y, int colour, string txt);
+		void Render(int[] screen);
+		void Init(int screenWidth, int screenHeight);
+		void WriteText(int[] screen, int x, int y, int colour, string txt);
 		void TextScale(int s);
-		int[] Screen {get;}
 		int SCREEN_WIDTH { get; }
 		int SCREEN_HEIGHT { get; }
 	}
@@ -26,13 +25,11 @@ namespace Jammy.NativeOverlay
 			this.overlayCollection = overlayCollection;
 		}
 
-		private int[] screen;
 		private int width;
 		private int height;
 		
-		public void Init(int[] screen, int width, int height)
+		public void Init(int width, int height)
 		{
-			this.screen = screen;
 			this.width = width;
 			this.height = height;
 			overlayCollection.SetNativeOverlay(this);
@@ -40,13 +37,12 @@ namespace Jammy.NativeOverlay
 
 		public int SCREEN_WIDTH => width;
 		public int SCREEN_HEIGHT => height;
-		public int[] Screen => screen;
 
 		private int sx = 2, sy = 2;
 
-		public void Render()
+		public void Render(int[] screen)
 		{
-			overlayCollection.Render();
+			overlayCollection.Render(screen);
 		}
 
 		public void TextScale(int s)
@@ -54,7 +50,7 @@ namespace Jammy.NativeOverlay
 			sx = sy = s;
 		}
 
-		public void WriteText(int x, int y, int colour, string txt)
+		public void WriteText(int[] screen, int x, int y, int colour, string txt)
 		{
 			bool skipUntilNewline = false;
 			int ox = x;

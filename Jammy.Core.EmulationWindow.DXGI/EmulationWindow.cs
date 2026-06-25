@@ -175,7 +175,7 @@ namespace Jammy.Core.EmulationWindow.DX
 					throw new ApplicationException();
 
 				screen = new int[screenWidth * screenHeight];
-				nativeOverlay.Init(screen, screenWidth, screenHeight);
+				nativeOverlay.Init(screenWidth, screenHeight);
 
 				var swapDesc = new SwapChainDescription1
 				{
@@ -228,7 +228,7 @@ namespace Jammy.Core.EmulationWindow.DX
 		{
 			if (emulation.IsDisposed) return;
 
-			nativeOverlay.Render();
+			nativeOverlay.Render(screen);
 
 			var currentStaging = stagingTextures[currentStagingIndex];
 			currentStagingIndex = (currentStagingIndex + 1) % stagingTextures.Length;

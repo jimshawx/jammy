@@ -554,7 +554,7 @@ namespace Jammy.Core.EmulationWindow.Window
 			displayHz = dm.dmDisplayFrequency;
 
 			screen = new int[width * height];
-			nativeOverlay.Init(screen, width, height);
+			nativeOverlay.Init(width, height);
 
 			screenWidth = width;
 			screenHeight = height;
@@ -582,7 +582,7 @@ namespace Jammy.Core.EmulationWindow.Window
 
 		public void Blit(int[] screen)
 		{
-			nativeOverlay.Render();
+			nativeOverlay.Render(screen);
 
 			//var hdc = GetDC(hWnd);
 			SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight,

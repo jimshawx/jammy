@@ -198,7 +198,7 @@ namespace Jammy.Core.EmulationWindow.DIB
 			displayHz = dm.dmDisplayFrequency;
 
 			screen = new int[width * height];
-			nativeOverlay.Init(screen, width, height);
+			nativeOverlay.Init(width, height);
 
 			lpbmi.biSize = 40;
 			lpbmi.biWidth = width;
@@ -291,7 +291,7 @@ namespace Jammy.Core.EmulationWindow.DIB
 		{
 			if (emulation.IsDisposed) return;
 
-			nativeOverlay.Render();
+			nativeOverlay.Render(screen);
 
 			var hdc = gfx.GetHdc();
 			SetDIBitsToDevice(hdc, 0, 0, (uint)screenWidth, (uint)screenHeight,

@@ -9,7 +9,7 @@ namespace Jammy.NativeOverlay
 {
 	public interface IOverlayCollection
 	{
-		void Render();
+		void Render(int[] screen);
 		void Add(IOverlayRenderer renderer);
 		void Remove(IOverlayRenderer renderer);
 		void SetNativeOverlay(INativeOverlay nativeOverlay);
@@ -24,10 +24,10 @@ namespace Jammy.NativeOverlay
 			this.overlays.AddRange(overlays);
 		}
 
-		public void Render()
+		public void Render(int[] screen)
 		{
 			foreach (var overlay in overlays)
-				overlay.Render();
+				overlay.Render(screen);
 		}
 
 		public void Add(IOverlayRenderer renderer)
