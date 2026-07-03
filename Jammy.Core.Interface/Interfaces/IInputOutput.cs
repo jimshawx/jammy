@@ -19,6 +19,8 @@ namespace Jammy.Core.Interface.Interfaces
 		public MouseButton MouseButtons { get; set; }
 		public int MouseX { get; set; }
 		public int MouseY { get; set; }
+		public int MouseDX { get; set; }
+		public int MouseDY { get; set; }
 	}
 
 	public interface IInputOutput

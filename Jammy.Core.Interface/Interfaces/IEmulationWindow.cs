@@ -3,7 +3,7 @@ using System;
 
 namespace Jammy.Core.Interface.Interfaces
 {
-	public interface IEmulationWindow
+	public interface IEmulationWindow : IInputOutput
 	{
 		bool IsCaptured { get; }
 		void SetPicture(int screenWidth, int screenHeight);

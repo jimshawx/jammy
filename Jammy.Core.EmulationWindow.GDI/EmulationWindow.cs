@@ -204,5 +204,40 @@ namespace Jammy.Core.EmulationWindow.GDI
 		{
 			return screen;
 		}
+
+		private readonly InputOutput io = new InputOutput();
+
+		private int oldMouseX, oldMouseY;
+
+		public InputOutput GetInputOutput()
+		{
+			var mouse = Cursor.Position;
+			var buttons = Control.MouseButtons;
+
+			io.MouseX = mouse.X;
+			io.MouseY = mouse.Y;
+
+			io.MouseDX = mouse.X - oldMouseX;
+			io.MouseDY = mouse.Y - oldMouseY;
+
+			io.MouseButtons = 0;
+			io.MouseButtons |= (buttons & MouseButtons.Left) != 0 ? InputOutput.MouseButton.MouseLeft : 0;
+			io.MouseButtons |= (buttons & MouseButtons.Right) != 0 ? InputOutput.MouseButton.MouseRight : 0;
+			io.MouseButtons |= (buttons & MouseButtons.Middle) != 0 ? InputOutput.MouseButton.MouseMiddle : 0;
+
+			if (IsCaptured)
+			{
+				var centre = RecentreMouse();
+				oldMouseX = centre.X;
+				oldMouseY = centre.Y;
+			}
+			else
+			{
+				oldMouseX = mouse.X;
+				oldMouseY = mouse.Y;
+			}
+
+			return io;
+		}
 	}
 }
