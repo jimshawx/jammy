@@ -21,6 +21,16 @@ namespace Jammy.Core.Interface.Interfaces
 		public int MouseY { get; set; }
 		public int MouseDX { get; set; }
 		public int MouseDY { get; set; }
+
+		public bool[] Keyboard = new bool[256];
+
+		public void Reset()
+		{
+			Array.Clear(Keyboard);
+			MouseDX = 0;
+			MouseDY = 0;
+			MouseButtons = 0;
+		}
 	}
 
 	public interface IInputOutput

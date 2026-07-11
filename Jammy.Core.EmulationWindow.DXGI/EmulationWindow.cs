@@ -3,6 +3,7 @@ using Jammy.Core.Types.Enums;
 using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -43,64 +44,95 @@ namespace Jammy.Core.EmulationWindow.DX
 		private Thread renderThread;
 		private CancellationTokenSource renderCts;
 
-		private static int mouseDX, mouseDY;
+		private int mouseDX, mouseDY;
 
 		public class AForm : Form
 		{
 			private readonly ILogger logger;
+			private readonly Action<Message> HandleRawMessage;
 
-			public AForm(ILogger logger)
+			public AForm(ILogger logger, Action<Message> rawMessageHandler)
 			{
 				this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
 				this.logger = logger;
+				this.HandleRawMessage = rawMessageHandler;
 			}
 
 			protected override void WndProc(ref Message m)
 			{
 				if (m.Msg == WM_INPUT)
-				{
-					uint dwSize = (uint)Marshal.SizeOf(typeof(RAWINPUT));
-					uint headerSize = (uint)Marshal.SizeOf(typeof(RAWINPUTHEADER));
+					HandleRawMessage(m);
 
-					uint result = GetRawInputData(m.LParam, RID_INPUT, out RAWINPUT raw, ref dwSize, headerSize);
-
-					if (result == dwSize)
-					{
-						switch (raw.header.dwType)
-						{
-							case RIM_TYPEMOUSE:
-								HandleRawMouse(raw.mouse);
-								break;
-
-							case RIM_TYPEKEYBOARD:
-								HandleRawKeyboard(raw.keyboard);
-								break;
-						}
-					}
-				}
 				base.WndProc(ref m);
 			}
+		}
 
-			private void HandleRawMouse(RAWMOUSE mouse)
+		private void HandleRawMessage(Message m)
+		{
+			uint dwSize = (uint)Marshal.SizeOf(typeof(RAWINPUT));
+			uint headerSize = (uint)Marshal.SizeOf(typeof(RAWINPUTHEADER));
+
+			int result = GetRawInputData(m.LParam, RID_INPUT, out RAWINPUT raw, ref dwSize, headerSize);
+
+			if (result == -1) return;
+
+			switch (raw.header.dwType)
 			{
-				// 0x01 = MOUSE_MOVE_RELATIVE
-				if ((mouse.usFlags & 0x01) == 0)
-				{
-					mouseDX += mouse.lLastX;
-					mouseDY += mouse.lLastY;
-				}
+				case RIM_TYPEMOUSE:
+					HandleRawMouse(raw.mouse);
+					break;
 
-				// todo: mouse.ulButtons has button clicks 
-				// RI_MOUSE_LEFT_BUTTON_DOWN = 0x0001 etc
+				case RIM_TYPEKEYBOARD:
+					HandleRawKeyboard(raw.keyboard);
+					break;
+			}
+		}
+
+		private void HandleRawMouse(RAWMOUSE mouse)
+		{
+			// 0x01 = MOUSE_MOVE_RELATIVE
+			if ((mouse.usFlags & 0x01) == 0)
+			{
+				mouseDX += mouse.lLastX;
+				mouseDY += mouse.lLastY;
 			}
 
-			private void HandleRawKeyboard(RAWKEYBOARD keyboard)
-			{
-				// 0 = Key Down, 1 = Key Up, 2 = E0 prefix (extended key)
-				bool isKeyDown = (keyboard.Flags & 0x01) == 0;
-				ushort vKey = keyboard.VKey;
-				logger.LogTrace($"key {vKey}");
-			}
+			if ((mouse.ulButtons & RI_MOUSE_LEFT_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseLeft;
+			else io.MouseButtons &= ~InputOutput.MouseButton.MouseLeft;
+
+			if ((mouse.ulButtons & RI_MOUSE_MIDDLE_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseMiddle;
+			else io.MouseButtons &= ~InputOutput.MouseButton.MouseMiddle					;
+
+			if ((mouse.ulButtons & RI_MOUSE_RIGHT_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseRight;
+			else io.MouseButtons &= ~InputOutput.MouseButton.MouseRight;
+		}
+
+		private const int RI_MOUSE_LEFT_BUTTON_DOWN = 0x0001 ;
+		private const int RI_MOUSE_MIDDLE_BUTTON_DOWN = 0x0010;
+		private const int RI_MOUSE_RIGHT_BUTTON_DOWN = 0x0004;
+
+		private const int KEYBOARD_OVERRUN_MAKE_CODE = 0xff;
+
+		private void HandleRawKeyboard(RAWKEYBOARD keyboard)
+		{
+			if (keyboard.MakeCode == KEYBOARD_OVERRUN_MAKE_CODE) return;
+			if (keyboard.VKey > 255) return;
+
+			logger.LogTrace($"key {keyboard.VKey} {keyboard.Flags:X4} {keyboard.MakeCode}");
+
+			//L/R shift, L/R ctrl, L/R alt
+			if (keyboard.VKey == (ushort)VK.VK_LSHIFT && (keyboard.Flags & 0x02) != 0)
+				keyboard.VKey = (ushort)VK.VK_RSHIFT;
+			if (keyboard.VKey == (ushort)VK.VK_CONTROL && (keyboard.Flags & 0x02) != 0)
+				keyboard.VKey = (ushort)VK.VK_RCONTROL;
+			if (keyboard.VKey == (ushort)VK.VK_MENU && (keyboard.Flags & 0x02) != 0)
+				keyboard.VKey = (ushort)VK.VK_RMENU;
+
+			// 0 = Key Down, 1 = Key Up, 2 = E0 prefix (extended key), 4 = E1 prefixs
+			io.Keyboard[keyboard.VKey] = (keyboard.Flags & 0x01) == 0;
+
+			var keyfn = ((keyboard.Flags & 1) != 0) ? keysUp : keysDown;
+			for (int i = 0; i < keysUp.Count; i++) keyfn[i](keyboard.VKey);
 		}
 
 		public EmulationWindow(INativeOverlay nativeOverlay, ILogger<EmulationWindow> logger)
@@ -112,7 +144,7 @@ namespace Jammy.Core.EmulationWindow.DX
 			ss.Wait();
 			var t = new Thread(() =>
 			{
-				emulation = new AForm(logger)
+				emulation = new AForm(logger, HandleRawMessage)
 				{
 					Name = "Emulation",
 					Text = "Jammy : Alt-Tab or Middle Mouse Click to detach mouse",
@@ -133,6 +165,7 @@ namespace Jammy.Core.EmulationWindow.DX
 				emulation.KeyPress += Emulation_KeyPress;
 				emulation.KeyDown += Emulation_KeyDown;
 				emulation.Deactivate += Emulation_Deactivate;
+				emulation.Activated += Emulation_Activated;
 				emulation.Show();
 
 				Application.Run(emulation);
@@ -207,6 +240,11 @@ namespace Jammy.Core.EmulationWindow.DX
 		private void Emulation_Deactivate(object sender, EventArgs e)
 		{
 			Release("Deactivate");
+		}
+
+		private void Emulation_Activated(object sender, EventArgs e)
+		{
+			io.Reset();
 		}
 
 		private void StopRenderThread()
@@ -470,10 +508,16 @@ namespace Jammy.Core.EmulationWindow.DX
 			return io;
 		}
 
+		private readonly List<Action<int>> keysDown = new List<Action<int>>();
+		private readonly List<Action<int>> keysUp = new List<Action<int>>();
+
 		public void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp)
 		{
-			emulation.KeyDown += (sender, e) => addKeyDown(e.KeyValue);
-			emulation.KeyUp += (sender, e) => addKeyUp(e.KeyValue);
+			//emulation.KeyDown += (sender, e) => addKeyDown(e.KeyValue);
+			//emulation.KeyUp += (sender, e) => addKeyUp(e.KeyValue);
+
+			keysDown.Add(addKeyDown);
+			keysUp.Add(addKeyUp);
 		}
 
 		public bool IsActive()
@@ -580,6 +624,6 @@ namespace Jammy.Core.EmulationWindow.DX
 		}
 
 		[DllImport("user32.dll")]
-		static extern uint GetRawInputData(IntPtr hRawInput, uint uiCommand, out RAWINPUT pData, ref uint pcbSize, uint cbSizeHeader);
+		static extern int GetRawInputData(IntPtr hRawInput, uint uiCommand, out RAWINPUT pData, ref uint pcbSize, uint cbSizeHeader);
 	}
 }
