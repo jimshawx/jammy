@@ -18,8 +18,8 @@ namespace Jammy.Core.IO.Windows
 		private readonly IInputOutput inputOutput;
 		private readonly ILogger logger;
 
-		[DllImport("user32.dll")]
-		private static extern short GetAsyncKeyState(int key);
+		//[DllImport("user32.dll")]
+		//private static extern short GetAsyncKeyState(int key);
 
 		private const uint PRAMASK = 0b1100_0000;
 
@@ -58,6 +58,7 @@ namespace Jammy.Core.IO.Windows
 			{
 				joystickTime -= 1000;
 
+				/*
 				//if (((GetAsyncKeyState((int)VK.VK_SPACE)&0x8000)!=0) || ((GetAsyncKeyState((int)'Z') & 0x8000) != 0))
 				if ((GetAsyncKeyState((int)'Z') & 0x8000) != 0)
 					pra &= ~(1u << 7);
@@ -68,6 +69,19 @@ namespace Jammy.Core.IO.Windows
 				bool d = ((GetAsyncKeyState((int)VK.VK_DOWN) & 0x8000) != 0);
 				bool l = ((GetAsyncKeyState((int)VK.VK_LEFT) & 0x8000) != 0);
 				bool r = ((GetAsyncKeyState((int)VK.VK_RIGHT) & 0x8000) != 0);
+				*/
+
+				var io = inputOutput.GetInputOutput();
+
+				if (io.Keyboard['Z'])
+					pra &= ~(1u << 7);
+				else
+					pra |= (1u << 7);
+
+				bool u = io.Keyboard[(int)VK.VK_UP];
+				bool d = io.Keyboard[(int)VK.VK_DOWN];
+				bool l = io.Keyboard[(int)VK.VK_LEFT];
+				bool r = io.Keyboard[(int)VK.VK_RIGHT];
 
 				joy1dat = 0;
 				if (u ^ l) joy1dat |= 1 << 8;
