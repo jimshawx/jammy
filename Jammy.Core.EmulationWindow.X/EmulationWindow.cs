@@ -493,12 +493,14 @@ namespace Jammy.Core.EmulationWindow.X
 
 		private void RunKeyDown(VK vk)
 		{
+			io.Keyboard[(int)vk] = true;
 			foreach (var k in keyhandlers)
 				if (k.Item1 != null) k.Item1((int)vk);
 		}
 
 		private void RunKeyUp(VK vk)
 		{
+			io.Keyboard[(int)vk] = false;
 			foreach (var k in keyhandlers)
 				if (k.Item2 != null) k.Item2((int)vk);
 		}
