@@ -392,7 +392,7 @@ namespace Jammy.Core.EmulationWindow.DX
 					Name = "JammyDXGIRenderThread",
 					Priority = ThreadPriority.Highest
 				};
-				renderThread.Start();
+				//renderThread.Start();
 			});
 		}
 
@@ -410,28 +410,8 @@ namespace Jammy.Core.EmulationWindow.DX
 				{
 					frontBufferArray = Interlocked.Exchange(ref readyBufferArray, frontBufferArray);
 
-					// Map and Copy
-					var dataBox = context.Map(stagingTexture, 0, MapMode.Write, Vortice.Direct3D11.MapFlags.None);
+					RenderFrame(frontBufferArray);
 
-					int rowBytes = screenWidth * sizeof(int);
-					if (rowBytes == dataBox.RowPitch)
-					{
-						Marshal.Copy(frontBufferArray, 0, dataBox.DataPointer, screenWidth * screenHeight);
-					}
-					else
-					{
-						for (int y = 0; y < screenHeight; y++)
-						{
-							IntPtr destRowPtr = IntPtr.Add(dataBox.DataPointer, y * (int)dataBox.RowPitch);
-							int srcOffset = y * screenWidth;
-							Marshal.Copy(frontBufferArray, srcOffset, destRowPtr, screenWidth);
-						}
-					}
-					context.Unmap(stagingTexture, 0);
-
-					// ... Map, Copy, Unmap ...
-					context.CopyResource(d3dBackBuffer, stagingTexture);
-					swapchain.Present(0, PresentFlags.AllowTearing);
 				}
 
 				// Calculate time spent processing this frame
@@ -452,56 +432,83 @@ namespace Jammy.Core.EmulationWindow.DX
 			}
 		}
 
+		private void RenderFrame(int[] frontBufferArray)
+		{
+			var dataBox = context.Map(stagingTexture, 0, MapMode.Write, Vortice.Direct3D11.MapFlags.None);
+
+			int rowBytes = screenWidth * sizeof(int);
+			if (rowBytes == dataBox.RowPitch)
+			{
+				Marshal.Copy(frontBufferArray, 0, dataBox.DataPointer, screenWidth * screenHeight);
+			}
+			else
+			{
+				for (int y = 0; y < screenHeight; y++)
+				{
+					IntPtr destRowPtr = IntPtr.Add(dataBox.DataPointer, y * (int)dataBox.RowPitch);
+					int srcOffset = y * screenWidth;
+					Marshal.Copy(frontBufferArray, srcOffset, destRowPtr, screenWidth);
+				}
+			}
+			context.Unmap(stagingTexture, 0);
+
+			context.CopyResource(d3dBackBuffer, stagingTexture);
+			swapchain.Present(0, PresentFlags.AllowTearing);
+		}
+
 		public void Blit(int[] screen)
 		{
 			if (emulation.IsDisposed) return;
 
 			nativeOverlay.Render(backBufferArray);
 
-			// Swap the finished frame into the mailbox
-			backBufferArray = Interlocked.Exchange(ref readyBufferArray, backBufferArray);
+			//// Swap the finished frame into the mailbox
+			//backBufferArray = Interlocked.Exchange(ref readyBufferArray, backBufferArray);
 
-			// Raise the dirty flag!
-			Interlocked.Exchange(ref newFrameWaiting, 1);
+			//// Raise the dirty flag!
+			//Interlocked.Exchange(ref newFrameWaiting, 1);
+			RenderFrame(screen);
 		}
 
 		// 0 = No new frame, 1 = New frame waiting
 		private int newFrameWaiting = 0;
 
+		private readonly Types.Types.Point p = new Types.Types.Point();
 		public Types.Types.Point RecentreMouse()
 		{
-			var centre = new Point(0, 0);
+			//var centre = new Point(0, 0);
 
-			if (!emulation.IsDisposed)
-			{
-				emulation.BeginInvoke((Action)delegate ()
-				{
-					var emuRect = emulation.RectangleToScreen(emulation.ClientRectangle);
-					centre = new Point(emuRect.X + emuRect.Width / 2, emuRect.Y + emuRect.Height / 2);
-					Cursor.Position = centre;
-				});
-			}
+			//if (!emulation.IsDisposed)
+			//{
+			//	emulation.BeginInvoke((Action)delegate ()
+			//	{
+			//		var emuRect = emulation.RectangleToScreen(emulation.ClientRectangle);
+			//		centre = new Point(emuRect.X + emuRect.Width / 2, emuRect.Y + emuRect.Height / 2);
+			//		Cursor.Position = centre;
+			//	});
+			//}
 
-			return new Types.Types.Point { X = centre.X, Y = centre.Y };
+			//return new Types.Types.Point { X = centre.X, Y = centre.Y };
+			return p;
 		}
 
 		private readonly InputOutput io = new InputOutput();
 
 		public InputOutput GetInputOutput()
 		{
-			var mouse = Cursor.Position;
-			var buttons = Control.MouseButtons;
+			//var mouse = Cursor.Position;
+			//var buttons = Control.MouseButtons;
 
-			io.MouseX = mouse.X;
-			io.MouseY = mouse.Y;
+			//io.MouseX = mouse.X;
+			//io.MouseY = mouse.Y;
 
 			io.MouseDX = mouseDX;
 			io.MouseDY = mouseDY;
 
-			io.MouseButtons = 0;
-			io.MouseButtons |= (buttons & MouseButtons.Left) != 0 ? InputOutput.MouseButton.MouseLeft : 0;
-			io.MouseButtons |= (buttons & MouseButtons.Right) != 0 ? InputOutput.MouseButton.MouseRight : 0;
-			io.MouseButtons |= (buttons & MouseButtons.Middle) != 0 ? InputOutput.MouseButton.MouseMiddle : 0;
+			//io.MouseButtons = 0;
+			//io.MouseButtons |= (buttons & MouseButtons.Left) != 0 ? InputOutput.MouseButton.MouseLeft : 0;
+			//io.MouseButtons |= (buttons & MouseButtons.Right) != 0 ? InputOutput.MouseButton.MouseRight : 0;
+			//io.MouseButtons |= (buttons & MouseButtons.Middle) != 0 ? InputOutput.MouseButton.MouseMiddle : 0;
 
 			mouseDX = mouseDY = 0;
 
