@@ -392,7 +392,7 @@ namespace Jammy.Core.EmulationWindow.DX
 					Name = "JammyDXGIRenderThread",
 					Priority = ThreadPriority.Highest
 				};
-				//renderThread.Start();
+				renderThread.Start();
 			});
 		}
 
@@ -460,14 +460,15 @@ namespace Jammy.Core.EmulationWindow.DX
 		{
 			if (emulation.IsDisposed) return;
 
-			nativeOverlay.Render(backBufferArray);
+			nativeOverlay.Render(screen);
 
-			//// Swap the finished frame into the mailbox
-			//backBufferArray = Interlocked.Exchange(ref readyBufferArray, backBufferArray);
+			// Swap the finished frame into the mailbox
+			backBufferArray = Interlocked.Exchange(ref readyBufferArray, backBufferArray);
 
-			//// Raise the dirty flag!
-			//Interlocked.Exchange(ref newFrameWaiting, 1);
-			RenderFrame(screen);
+			// Raise the dirty flag!
+			Interlocked.Exchange(ref newFrameWaiting, 1);
+			
+			//RenderFrame(screen);
 		}
 
 		// 0 = No new frame, 1 = New frame waiting

@@ -139,8 +139,8 @@ namespace Jammy.Core.IO.Windows
 				if (Math.Abs(dx) > 255 || Math.Abs(dy) > 255) logger.LogTrace($"mouse too fast {dx},{dy}");
 				//dx = dx + (dx >> 1);
 				//dy = dy + (dy >> 1);
-				dx >>= 1;
-				dy >>= 1;
+				//dx >>= 1;
+				//dy >>= 1;
 
 				sbyte x = (sbyte)(joy0dat & 0xff);
 				sbyte y = (sbyte)(joy0dat >> 8);
