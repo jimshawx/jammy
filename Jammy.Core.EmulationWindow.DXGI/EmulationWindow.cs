@@ -395,59 +395,41 @@ namespace Jammy.Core.EmulationWindow.DX
 				renderThread.Start();
 			});
 		}
+		
+		private readonly AutoResetEvent frameReadyEvent = new AutoResetEvent(false);
 
 		private void RenderLoop()
 		{
-			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-			long frameInterval = 1000 / displayHz;
-
 			while (!renderCts.Token.IsCancellationRequested)
 			{
-				long startTime = stopwatch.ElapsedMilliseconds;
-
-				// Only draw if there's a new frame waiting
-				if (Interlocked.Exchange(ref newFrameWaiting, 0) == 1)
+				if (frameReadyEvent.WaitOne(500))
 				{
-					frontBufferArray = Interlocked.Exchange(ref readyBufferArray, frontBufferArray);
+					if (Interlocked.Exchange(ref newFrameWaiting, 0) == 1)
+					{
+						frontBufferArray = Interlocked.Exchange(ref readyBufferArray, frontBufferArray);
 
-					RenderFrame(frontBufferArray);
-
-				}
-
-				// Calculate time spent processing this frame
-				long elapsed = stopwatch.ElapsedMilliseconds - startTime;
-				long sleepTime = frameInterval - elapsed;
-
-				// If we have time to kill, sleep efficiently
-				if (sleepTime > 2) // Never sleep for less than 2ms to avoid scheduler thrashing
-				{
-					Thread.Sleep((int)sleepTime);
-				}
-				else
-				{
-					// We are already running behind (or at max speed), 
-					// perform a quick yield to let the emulation core have the CPU
-					Thread.Yield();
+						RenderFrame(frontBufferArray);
+					}
 				}
 			}
 		}
 
-		private void RenderFrame(int[] frontBufferArray)
+		private void RenderFrame(int[] srcArray)
 		{
-			var dataBox = context.Map(stagingTexture, 0, MapMode.Write, Vortice.Direct3D11.MapFlags.None);
+			var src = context.Map(stagingTexture, 0, MapMode.Write, Vortice.Direct3D11.MapFlags.None);
 
 			int rowBytes = screenWidth * sizeof(int);
-			if (rowBytes == dataBox.RowPitch)
+			if (rowBytes == src.RowPitch)
 			{
-				Marshal.Copy(frontBufferArray, 0, dataBox.DataPointer, screenWidth * screenHeight);
+				Marshal.Copy(srcArray, 0, src.DataPointer, screenWidth * screenHeight);
 			}
 			else
 			{
 				for (int y = 0; y < screenHeight; y++)
 				{
-					IntPtr destRowPtr = IntPtr.Add(dataBox.DataPointer, y * (int)dataBox.RowPitch);
+					IntPtr destRowPtr = IntPtr.Add(src.DataPointer, y * (int)src.RowPitch);
 					int srcOffset = y * screenWidth;
-					Marshal.Copy(frontBufferArray, srcOffset, destRowPtr, screenWidth);
+					Marshal.Copy(srcArray, srcOffset, destRowPtr, screenWidth);
 				}
 			}
 			context.Unmap(stagingTexture, 0);
@@ -462,12 +444,12 @@ namespace Jammy.Core.EmulationWindow.DX
 
 			nativeOverlay.Render(screen);
 
-			// Swap the finished frame into the mailbox
+			//thread-based flip
 			backBufferArray = Interlocked.Exchange(ref readyBufferArray, backBufferArray);
-
-			// Raise the dirty flag!
 			Interlocked.Exchange(ref newFrameWaiting, 1);
-			
+			frameReadyEvent.Set();
+
+			//immediate flip
 			//RenderFrame(screen);
 		}
 
