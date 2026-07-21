@@ -14,4 +14,5 @@
 games/**
 roms/**
 /config
-/emulationSettings.json
+emulationSettings.json
+jammylog.txt
