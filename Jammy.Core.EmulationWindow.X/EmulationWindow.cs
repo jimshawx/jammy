@@ -4,8 +4,11 @@ using Jammy.NativeOverlay;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
+using static Jammy.Core.EmulationWindow.X.EmulationWindow;
 using KeySym = ushort;
 
 /*
@@ -19,7 +22,10 @@ namespace Jammy.Core.EmulationWindow.X
 		private const string X11Library = "libX11.so.6";
 
 		[DllImport(X11Library)]
-		private static extern IntPtr XOpenDisplay(IntPtr displayName);
+		private static extern IntPtr XOpenDisplay(string displayName);
+		
+		[DllImport(X11Library)]
+		private static extern IntPtr XServerVendor(IntPtr display);
 
 		[DllImport(X11Library)]
 		private static extern IntPtr XCreateSimpleWindow(IntPtr display, IntPtr rootWindow, int x, int y, uint width, uint height, uint borderWidth, ulong border, ulong background);
@@ -89,6 +95,104 @@ namespace Jammy.Core.EmulationWindow.X
 		[DllImport(X11Library)]
 		private static extern int XGetWindowAttributes(IntPtr display, IntPtr window, ref XWindowAttributes attr);
 
+		[DllImport(X11Library, CallingConvention = CallingConvention.Cdecl)]
+		public static extern bool XGetEventData(IntPtr display, ref XGenericEventCookie cookie);
+
+		[DllImport(X11Library, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void XFreeEventData(IntPtr display, ref XGenericEventCookie cookie);
+
+		[DllImport("libX11.so.6")]
+		public static extern int XGrabPointer(IntPtr display, IntPtr grab_window, bool owner_events,
+									  uint event_mask, int pointer_mode, int keyboard_mode,
+									  IntPtr confine_to, IntPtr cursor, IntPtr time);
+
+		[DllImport("libX11.so.6")]
+		public static extern int XUngrabPointer(IntPtr display, IntPtr time);
+
+		[DllImport("libX11.so.6")]
+		public static extern IntPtr XCreateBitmapFromData(IntPtr display, IntPtr drawable, byte[] data, int width, int height);
+
+		[DllImport("libX11.so.6")]
+		public static extern IntPtr XCreatePixmapCursor(IntPtr display, IntPtr source, IntPtr mask, ref XColor foreground_color, ref XColor background_color, int x, int y);
+
+		[DllImport("libX11.so.6")]
+		public static extern int XDefineCursor(IntPtr display, IntPtr window, IntPtr cursor);
+
+		[DllImport("libX11.so.6")]
+		public static extern int XFreePixmap(IntPtr display, IntPtr pixmap);
+
+		private const string XiLibrary = "libXi.so.6";
+
+		// --- libXi (XInput2) ---
+		[DllImport(XiLibrary, CallingConvention = CallingConvention.Cdecl)]
+		public static extern int XISelectEvents(IntPtr display, IntPtr window, ref XIEventMask masks, int num_masks);
+
+		[DllImport(XiLibrary, CallingConvention = CallingConvention.Cdecl)]
+		public static extern IntPtr XIQueryDevice(IntPtr display, int deviceid, out int ndevices_return);
+
+		[DllImport(XiLibrary, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void XIFreeDeviceInfo(IntPtr info);
+
+		[DllImport("libXi.so.6", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int XIGrabDevice(
+			IntPtr display,
+			int deviceid,
+			IntPtr grab_window,
+			IntPtr time,
+			IntPtr cursor,
+			int grab_mode,
+			int paired_device_mode,
+			bool owner_events,
+			ref XIEventMask mask
+		);
+		[DllImport("libXi.so.6", CallingConvention = CallingConvention.Cdecl)]
+		public static extern int XIUngrabDevice(IntPtr display, int deviceid, IntPtr time);
+
+		[DllImport("libXfixes.so.3", CallingConvention = CallingConvention.Cdecl)]
+		public static extern void XFixesHideCursor(IntPtr display, IntPtr window);
+
+		[DllImport("libXfixes.so.3", CallingConvention = CallingConvention.Cdecl)]
+		public static extern void XFixesShowCursor(IntPtr display, IntPtr window);
+
+		[DllImport("libXfixes.so.3")]
+		public static extern bool XFixesQueryExtension(IntPtr display, out int event_base, out int error_base);
+
+		// Equivalent to #define XIMaskLen(event) (((event) >> 3) + 1)
+		public static int XIMaskLen(int eventType)
+		{
+			return (eventType >> 3) + 1;
+		}
+
+		// Equivalent to #define XISetMask(mask, event) (mask)[(event) >> 3] |= (1 << ((event) & 7))
+		public static void XISetMask(byte[] mask, int eventType)
+		{
+			mask[eventType >> 3] |= (byte)(1 << (eventType & 7));
+		}
+
+		// Equivalent to #define XIMaskIsSet(mask, event) ((mask)[(event) >> 3] & (1 << ((event) & 7)))
+		public static bool XIMaskIsSet(byte[] mask, int eventType)
+		{
+			return (mask[eventType >> 3] & (1 << (eventType & 7))) != 0;
+		}
+
+		[DllImport("libXi.so.6")]
+		public static extern int XChangeDeviceProperty(
+			IntPtr display,
+			int deviceid,
+			IntPtr property,
+			IntPtr type,
+			int format,
+			int mode,
+			ref byte data,
+			int nelements
+		);
+
+
+		[DllImport("libX11.so.6")]
+		public static extern IntPtr XInternAtom(IntPtr display, string atom_name, bool only_if_exists);
+
+		//[DllImport("libXi.so.6")]
+		//public static extern int XIFreeDeviceInfo(IntPtr info);
 
 		[StructLayout(LayoutKind.Sequential)]
 		public struct Display
@@ -189,6 +293,7 @@ namespace Jammy.Core.EmulationWindow.X
 			[FieldOffset(0)] public XKeyEvent xkey;
 			[FieldOffset(0)] public XButtonEvent xbutton;
 			[FieldOffset(0)] public XMotionEvent xmotion;
+			[FieldOffset(0)] public XGenericEventCookie xcookie;
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -245,17 +350,208 @@ namespace Jammy.Core.EmulationWindow.X
 			public bool same_screen;
 		}
 
+		[StructLayout(LayoutKind.Sequential)]
+		public struct XColor
+		{
+			public IntPtr pixel;
+			public ushort red, green, blue;
+			public byte flags, pad;
+		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct XGenericEventCookie
+		{
+			public int type;            // Always GenericEvent (35)
+			public IntPtr serial;       // # of last request processed
+			public int send_event;      // true if from SendEvent request
+			public IntPtr display;      // Display the event was read from
+			public int extension;       // major opcode of extension that caused the event
+			public int evtype;          // actual event type (e.g., XI_RawMotion)
+			public uint cookie;         // unique event cookie
+			public IntPtr data;         // pointer to the actual XIRawEvent data
+		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct XIEventMask
+		{
+			public int deviceid;        // The device to listen to (usually 1 for XIAllMasterDevices)
+			public int mask_len;        // Length of the mask array in bytes
+			public IntPtr mask;         // Pointer to the unmanaged byte array mask
+		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct XIValuatorState
+		{
+			public int mask_len;        // Length of the bitmask in bytes
+			public IntPtr mask;         // Pointer to the bitmask array (indicates which axes updated)
+			public IntPtr values;       // Pointer to an array of double values for the updated axes
+		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct XIRawEvent
+		{
+			public int type;
+			public IntPtr serial;
+			public int send_event;
+			public IntPtr display;
+			public int extension;
+			public int evtype;
+			public IntPtr time;
+			public int deviceid;
+			public int sourceid;
+			public int detail;
+			public int flags;
+			public XIValuatorState valuators;
+			public IntPtr raw_values;   // Pointer to raw doubles (unaccelerated hardware values)
+		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct XIDeviceInfo
+		{
+			public int deviceid;
+			public IntPtr name;       // CRITICAL FIX: 'name' is here in C
+			public int use;
+			public int attachment;
+			public int enabled;
+			public int num_classes;
+			public IntPtr classes;
+		}
+
+		// The generic header that all XI class structs start with
+		[StructLayout(LayoutKind.Sequential)]
+		public struct XIAnyClassInfo
+		{
+			public int type;
+			public int sourceid;
+		}
+
+		// The specific class struct for movement axes (Valuators)
+		[StructLayout(LayoutKind.Sequential)]
+		public struct XIValuatorClassInfo
+		{
+			public int type;        // Inherited from AnyClassInfo
+			public int sourceid;    // Inherited from AnyClassInfo
+			public int number;      // Axis number (0 for X, 1 for Y)
+			public IntPtr label;    // Atom representing axis name
+			public double min;
+			public double max;
+			public double value;
+			public int resolution;
+			public int mode;        // XIModeRelative (0) or XIModeAbsolute (1)
+		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct XIEvent
+		{
+			public int type;
+			public int serial;
+			public bool send_event;
+			public IntPtr display;
+			public int extension;
+			public int evtype;
+			public uint cookie;
+			public IntPtr data;
+		}
+
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct XIDeviceEvent
+	{
+		public int type;
+		public IntPtr serial;        // unsigned long
+		public int send_event;       // Xlib 'Bool' is an int (32-bit), not a 1-byte bool
+		public IntPtr display;       // Display*
+		public int extension;
+		public int evtype;
+		public IntPtr time;          // Time is unsigned long
+		public int deviceid;
+		public int sourceid;
+		public int detail;
+		public IntPtr root;          // Window is unsigned long
+		public IntPtr @event;        // Window is unsigned long
+		public IntPtr child;         // Window is unsigned long
+		public double root_x;
+		public double root_y;
+		public double event_x;
+		public double event_y;
+		public int flags;
+		public XIButtonState buttons;
+		public XIValuatorState valuators;
+		public XIModifierState mods;
+		public XIGroupState group;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct XIButtonState
+	{
+		public int mask_len;
+		public IntPtr mask;
+	}
+
+	//[StructLayout(LayoutKind.Sequential)]
+	//public struct XIValuatorState
+	//{
+	//	public int mask_len;
+	//	public IntPtr mask;          // unsigned char*
+	//	public IntPtr values;        // double*
+	//}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct XIModifierState
+	{
+		public int base_mods;
+		public int latched_mods;
+		public int locked_mods;
+		public int effective_mods;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	public struct XIGroupState
+	{
+		public int base_group;
+		public int latched_group;
+		public int locked_group;
+		public int effective_group;
+	}
+
+	// These are required to maintain the struct alignment for XIDeviceEvent
+	//[StructLayout(LayoutKind.Sequential)]
+	//	public struct XIButtonState { public int mask_len; public IntPtr mask; }
+
+	//	[StructLayout(LayoutKind.Sequential)]
+	//	public struct XIModifierState { public int base_mods; public int latched_mods; public int locked_mods; public int base_group; public int latched_group; public int locked_group; }
+
 		private const int KeyPress = 2;
 		private const int KeyRelease = 3;
 		private const int ButtonPress = 4;
 		private const int ButtonRelease = 5;
 		private const int MotionNotify = 6;
+		private const int GenericEvent = 35;
+		private const int XI_RawMotion = 17;
+		private const int XI_Motion = 6;
+
+		private const int FocusIn = 9;
+		private const int FocusOut = 10;
 
 		private const long KeyPressMask = 1 << 0;
 		private const long KeyReleaseMask = 1 << 1;
 		private const long ButtonPressMask = 1 << 2;
 		private const long ButtonReleaseMask = 1 << 3;
 		private const long PointerMotionMask = 1 << 6;
+		private const long FocusChangeMask = 1L << 21;
+
+		// Device IDs
+		private const int XIAllDevices = 0;
+		private const int XIAllMasterDevices = 1;
+
+		// Class Types
+		private const int XIKeyClass = 0;
+		private const int XIButtonClass = 1;
+		private const int XIValuatorClass = 2; // This is the axis class we are looking for
+
+		// Device Modes
+		private const int XIModeRelative = 0; // Real hardware mouse
+		private const int XIModeAbsolute = 1; // WSL2 Virtual Tablet / Touchscreen
 
 		private readonly INativeOverlay nativeOverlay;
 		private readonly ILogger logger;
@@ -322,19 +618,113 @@ namespace Jammy.Core.EmulationWindow.X
 			public int bits_per_rgb;
 		}
 
+		//const uint ButtonPressMask = 1 << 2;
+		//const uint ButtonReleaseMask = 1 << 3;
+		//const uint PointerMotionMask = 1 << 6;
+		const int GrabModeAsync = 1;
+		IntPtr invisibleCursor;
+		XIEventMask mask;
+		private void BlankMouse()
+		{
+			
+			// Create a 1x1 array of zero (transparent)
+			byte[] emptyData = new byte[] { 0 };
+
+			// Create a blank pixmap on the root window
+			IntPtr blankPixmap = XCreateBitmapFromData(xdisplay, xwindow, emptyData, 1, 1);
+
+			XColor black = new XColor(); // Default 0 values are fine
+			invisibleCursor = XCreatePixmapCursor(xdisplay, blankPixmap, blankPixmap, ref black, ref black, 0, 0);
+
+			// Apply it to your window
+			XDefineCursor(xdisplay, xwindow, invisibleCursor);
+
+			// Cleanup the pixmap memory
+			//XFreePixmap(xdisplay, blankPixmap);
+			return;
+			
+			//XFixesHideCursor(xdisplay, xwindow);
+			//XFlush(xdisplay);
+		}
+
 		public void SetPicture(int width, int height)
 		{
-			xdisplay = XOpenDisplay(IntPtr.Zero);
+			//xdisplay = XOpenDisplay("192.168.148.240:0.0");
+			xdisplay = XOpenDisplay(null);
+
+			// Put this in SetPicture right after connecting to the display
+			XFixesQueryExtension(xdisplay, out int evBase, out int errBase);
+
+			logger.LogTrace($"Current Environment DISPLAY variable: {Environment.GetEnvironmentVariable("DISPLAY")}");
+
+			if (xdisplay != IntPtr.Zero)
+			{
+				IntPtr vendorPtr = XServerVendor(xdisplay);
+				string vendor = Marshal.PtrToStringAnsi(vendorPtr);
+				logger.LogTrace($"Connected to X Server Vendor: {vendor}");
+			}
+
 			var rootWindow = XRootWindow(xdisplay, XDefaultScreen(xdisplay));
 			xwindow = XCreateSimpleWindow(xdisplay, rootWindow, 10, 10, (uint)width, (uint)height, 1, 0, 0xFFFFFF);
 			XStoreName(xdisplay, xwindow, "Jammy : Alt-Tab or Middle Mouse Click to detach mouse");
-			XSelectInput(xdisplay, xwindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+			XSelectInput(xdisplay, xwindow, KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask | FocusChangeMask);
+
+			//IsRunningAbsoluteMouse(xdisplay);
+
+
+
+			//byte[] maskBytes = new byte[XIMaskLen(XI_Motion)];
+			//XISetMask(maskBytes, XI_Motion);
+			byte[] maskBytes = new byte[XIMaskLen(XI_RawMotion)];
+			XISetMask(maskBytes, XI_RawMotion);
+
+			mask = new XIEventMask();
+			mask.deviceid = XIAllDevices;
+			mask.mask_len = maskBytes.Length;
+			mask.mask = Marshal.AllocHGlobal(maskBytes.Length);
+
+			// Copy managed byte array to unmanaged memory
+			Marshal.Copy(maskBytes, 0, mask.mask, maskBytes.Length);
+
+			// Register with root window
+			//IntPtr rootWindow = XDefaultRootWindow(xdisplay);
+			XISelectEvents(xdisplay, rootWindow, ref mask, 1);
+
+			// Free the unmanaged memory after registering
+			//Marshal.FreeHGlobal(mask.mask);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 			gc = XCreateGC(xdisplay, xwindow, 0, IntPtr.Zero);
 
 			XMapWindow(xdisplay, xwindow);
 			XClearWindow(xdisplay, xwindow);
 			XFlush(xdisplay);
+
+			//ForceRelativeMode(xdisplay, 6);
+			BlankMouse();
 
 			screenWidth = (uint)width;
 			screenHeight = (uint)height;
@@ -394,7 +784,7 @@ namespace Jammy.Core.EmulationWindow.X
 							//io.Keyboard[ksym & 0xff] = 1;
 							//io.DebKeyboard[ksym & 0xff] = 1;
 						}
-						Console.WriteLine($"keydown {xevent.xkey.keycode} {ksym:X4} {vk}");
+						logger.LogTrace($"keydown {xevent.xkey.keycode} {ksym:X4} {vk}");
 
 						}
 						break;
@@ -417,7 +807,7 @@ namespace Jammy.Core.EmulationWindow.X
 							//io.DebKeyboard[ksym & 0xff] = 1;
 							RunKeyUp(vk);
 						}
-						Console.WriteLine($"keyup {xevent.xkey.keycode} {ksym:X4} {vk}");
+						logger.LogTrace($"keyup {xevent.xkey.keycode} {ksym:X4} {vk}");
 
 						}
 						break;
@@ -444,12 +834,301 @@ namespace Jammy.Core.EmulationWindow.X
 						io.MouseX = xevent.xmotion.x;
 						io.MouseY = xevent.xmotion.y;
 						break;
+					case FocusIn:
+						logger.LogTrace("focus in");
+						XWarpPointer(xdisplay, IntPtr.Zero, xwindow, 0, 0, 0, 0, (int)screenWidth / 2, (int)screenHeight / 2);
+
+						XFixesHideCursor(xdisplay, xwindow);
+						// Grab the pointer
+						var err = XGrabPointer(
+							xdisplay,
+							xwindow,
+							false,
+							(uint)(ButtonPressMask | ButtonReleaseMask | PointerMotionMask ),
+							GrabModeAsync,
+							GrabModeAsync,
+							xwindow, // Confine it to your window
+							invisibleCursor, // Use the invisible cursor we created
+							IntPtr.Zero // CurrentTime
+						);
+						if (err != 0) logger.LogTrace($"grab {err}");
+						XFlush(xdisplay);
+						break;;
+
+						////// Define the ID
+						////const int XI_RawMotion = 17;
+
+						////// 1. Calculate the required length ( (17 >> 3) + 1 = 3 )
+						////int maskLen = XIMaskLen(XI_RawMotion);
+
+						////// 2. Create the array
+						////byte[] maskBytes = new byte[maskLen];
+
+						////// 3. Set the bit for RawMotion
+						////XISetMask(maskBytes, XI_RawMotion);
+
+						////IntPtr grabMask = Marshal.AllocHGlobal(maskBytes.Length);
+						////Marshal.Copy(maskBytes, 0, grabMask, maskBytes.Length);
+						////break;
+
+						//int status = XIGrabDevice(
+						//		xdisplay,
+						//		2, // Master Pointer ID
+						//		xwindow,
+						//		IntPtr.Zero, // CurrentTime
+						//		IntPtr.Zero,//invisibleCursor,
+						//		1, // GrabModeAsync
+						//		1, // GrabModeAsync
+						//		false,
+						//		ref mask // PASS YOUR EXISTING MASK STRUCT HERE
+						//	);
+
+						////Marshal.FreeHGlobal(grabMask);
+						//logger.LogTrace($"grab {status}");
+						//break;
+					case FocusOut:
+						logger.LogTrace("focus out");
+						//break;
+
+						XUngrabPointer(xdisplay,IntPtr.Zero);
+						XFixesShowCursor(xdisplay, xwindow);
+						XFlush(xdisplay);
+						break;
+						//XIUngrabDevice(xdisplay, 2, IntPtr.Zero);
+						//break;
+
+					case GenericEvent:
+						// 1. Fetch the extended event data (the "cookie") from the X Server
+						if (XGetEventData(xdisplay, ref xevent.xcookie))
+						{
+							const int XI_RawMotion = 17;
+
+
+							//if (xevent.xcookie.evtype == XI_RawMotion)
+							//{
+							//	IntPtr basePtr = xevent.xcookie.data;
+
+							//	// Read the IDs to see where the event originated
+							//	int deviceId = Marshal.ReadInt32(basePtr, 48);
+							//	int sourceId = Marshal.ReadInt32(basePtr, 52);
+
+							//	IntPtr maskPtr = Marshal.ReadIntPtr(basePtr, 72);
+							//	IntPtr rawValuesPtr = Marshal.ReadIntPtr(basePtr, 88);
+
+							//	if (maskPtr != IntPtr.Zero && rawValuesPtr != IntPtr.Zero)
+							//	{
+							//		byte maskByte = Marshal.ReadByte(maskPtr);
+
+							//		int valIndex = 0;
+							//		double dx = 0, dy = 0;
+
+							//		if ((maskByte & (1 << 0)) != 0)
+							//		{
+							//			dx = Marshal.PtrToStructure<double>(IntPtr.Add(rawValuesPtr, valIndex * sizeof(double)));
+							//			valIndex++;
+							//		}
+							//		if ((maskByte & (1 << 1)) != 0)
+							//		{
+							//			dy = Marshal.PtrToStructure<double>(IntPtr.Add(rawValuesPtr, valIndex * sizeof(double)));
+							//		}
+
+							//		logger.LogTrace($"Device: {deviceId} | Source: {sourceId} | {dx}, {dy}");
+							//	}
+							//}
+							if (xevent.xcookie.evtype == XI_RawMotion)
+							{
+								//if (XGetEventData(xdisplay, ref xevent.xcookie))
+								{
+									XIRawEvent rawEvent = Marshal.PtrToStructure<XIRawEvent>(xevent.xcookie.data);
+
+									if (rawEvent.raw_values != IntPtr.Zero && rawEvent.valuators.mask != IntPtr.Zero)
+									{
+										// 1. Safely read the first byte of the mask
+										byte maskByte = Marshal.ReadByte(rawEvent.valuators.mask);
+
+										double dx = 0;
+										double dy = 0;
+										int valIndex = 0;
+
+										// 1-element buffer to safely marshal doubles out of memory
+										double[] tempBuffer = new double[1];
+
+										// Axis 0 = X
+										if ((maskByte & (1 << 0)) != 0)
+										{
+											Marshal.Copy(IntPtr.Add(rawEvent.raw_values, valIndex * 8), tempBuffer, 0, 1);
+											dx = tempBuffer[0];
+											valIndex++;
+										}
+
+										// Axis 1 = Y
+										if ((maskByte & (1 << 1)) != 0)
+										{
+											Marshal.Copy(IntPtr.Add(rawEvent.raw_values, valIndex * 8), tempBuffer, 0, 1);
+											dy = tempBuffer[0];
+										}
+
+										io.MouseDX = (int)dx;
+										io.MouseDY = (int)dy;
+										logger.LogTrace($"{dx},{dy}");
+									}
+
+									//XFreeEventData(xdisplay, ref xevent.xcookie);
+								}
+							}
+							else if (xevent.xcookie.evtype == XI_Motion)
+							{
+								XIEvent xiEvent = Marshal.PtrToStructure<XIEvent>(xevent.xcookie.data);
+
+								// This is the structure that contains the relative delta values
+								// when the server is in Relative Mode
+								XIDeviceEvent devEvent = Marshal.PtrToStructure<XIDeviceEvent>(xevent.xcookie.data);
+
+								// Ensure the valuators array actually contains data
+								if (devEvent.valuators.values != IntPtr.Zero)
+								{
+									// The mask determines which axes are present, but assuming a standard 
+									// relative motion event with both X and Y present:
+									double dx = Marshal.PtrToStructure<double>(devEvent.valuators.values);
+									double dy = Marshal.PtrToStructure<double>(IntPtr.Add(devEvent.valuators.values, sizeof(double)));
+
+									io.MouseDX = (int)dx;
+									io.MouseDY = (int)dy;
+								}
+
+							}
+
+							// 5. CRITICAL: Free the event data to prevent memory leaks!
+							XFreeEventData(xdisplay, ref xevent.xcookie);
+						}
+						break;
 					default:
 						Console.WriteLine("Unhandled XEvent type: " + xevent.type);
 						break;
 				}
 			}
 		}
+
+		private double GetRawDelta(XIRawEvent rawEvent, int axisIndex)
+		{
+			// 1. Copy the mask from unmanaged memory
+			byte[] mask = new byte[rawEvent.valuators.mask_len];
+			Marshal.Copy(rawEvent.valuators.mask, mask, 0, mask.Length);
+
+			// 2. Check if the specific axis (0 for X, 1 for Y) has updated in this event
+			if (!XIMaskIsSet(mask, axisIndex))
+			{
+				return 0.0;
+			}
+
+			// 3. If it did update, we need to find its index in the compressed double array.
+			// We count how many bits were set *before* our target axis.
+			int valueCount = 0;
+			for (int i = 0; i < axisIndex; i++)
+			{
+				if (XIMaskIsSet(mask, i))
+				{
+					valueCount++;
+				}
+			}
+
+			// 4. Read the double at the calculated offset from unmanaged memory
+			// raw_values is un-accelerated device data. values is accelerated screen data.
+			// Use raw_values for raw mouse input.
+			IntPtr ptr = IntPtr.Add(rawEvent.raw_values, valueCount * sizeof(double));
+			//IntPtr ptr = IntPtr.Add(rawEvent.valuators.values, valueCount * sizeof(double));
+
+			// Read and return the double
+			double[] result = new double[1];
+			Marshal.Copy(ptr, result, 0, 1);
+			return result[0];
+		}
+		// Atom types
+		public static readonly IntPtr XA_INTEGER = (IntPtr)19; // XA_INTEGER = 19
+
+		// Property modes
+		public const int PropModeReplace = 0;
+		public const int PropModePrepend = 1;
+		public const int PropModeAppend = 2;
+		private void ForceRelativeMode(IntPtr display, int deviceId)
+		{
+			// The atom for "Device Mode"
+			IntPtr modeAtom = XInternAtom(display, "Device Mode", false);
+
+			if (modeAtom == IntPtr.Zero)
+				modeAtom = XInternAtom(display, "Rel Mode", false);
+
+			IntPtr typeAtom = XInternAtom(display, "INTEGER", false);
+
+			// 0 = Absolute, 1 = Relative
+			byte mode = 1;
+
+			// Set the property on the device
+			XChangeDeviceProperty(
+				display,
+				deviceId,
+				modeAtom,
+				typeAtom,
+				8,
+				PropModeReplace,
+				ref mode,
+				1
+			);
+			XFlush(display);
+		}
+		//private bool IsRunningAbsoluteMouse(IntPtr xdisplay)
+		//{
+		//	// 1. Query the master devices
+		//	//IntPtr infoPtr = XIQueryDevice(xdisplay, XIAllMasterDevices, out int num_devices);
+		//	IntPtr infoPtr = XIQueryDevice(xdisplay, XIAllDevices, out int num_devices);
+
+		//	if (infoPtr == IntPtr.Zero)
+		//		return false;
+
+		//	bool requiresAbsoluteHack = false;
+		//	int infoSize = Marshal.SizeOf<XIDeviceInfo>();
+
+		//	// 2. XIQueryDevice returns a pointer to an array of XIDeviceInfo structs
+		//	for (int i = 0; i < num_devices; i++)
+		//	{
+		//		// Calculate the address of the current XIDeviceInfo struct
+		//		IntPtr currentDeviceInfoPtr = IntPtr.Add(infoPtr, i * infoSize);
+		//		XIDeviceInfo deviceInfo = Marshal.PtrToStructure<XIDeviceInfo>(currentDeviceInfoPtr);
+
+		//		string deviceName = "Unknown Device";
+		//		if (deviceInfo.name != IntPtr.Zero)
+		//			deviceName = Marshal.PtrToStringAnsi(deviceInfo.name);
+		//		logger.LogTrace($"{deviceName} {deviceInfo.deviceid}");
+
+		//		// 3. deviceInfo.classes is a pointer to an array of pointers (IntPtr[])
+		//		for (int c = 0; c < deviceInfo.num_classes; c++)
+		//		{
+		//			// Read the specific pointer at index c
+		//			IntPtr classPtr = Marshal.ReadIntPtr(deviceInfo.classes, c * IntPtr.Size);
+
+		//			// First, marshal just the header to see what type of class this is
+		//			XIAnyClassInfo anyClass = Marshal.PtrToStructure<XIAnyClassInfo>(classPtr);
+
+		//			// We only care about Valuators (Movement axes)
+		//			if (anyClass.type == XIValuatorClass)
+		//			{
+		//				// Re-marshal the same pointer into the full Valuator struct
+		//				XIValuatorClassInfo valuator = Marshal.PtrToStructure<XIValuatorClassInfo>(classPtr);
+
+		//				// If any axis on the master pointer reports as absolute, flag it
+		//				if (valuator.mode == XIModeAbsolute)
+		//				{
+		//					requiresAbsoluteHack = true;
+		//				}
+		//			}
+		//		}
+		//	}
+
+		//	// 4. Clean up the unmanaged memory allocated by libXi
+		//	XIFreeDeviceInfo(infoPtr);
+
+		//	return requiresAbsoluteHack;
+		//}
 
 		public Types.Types.Point RecentreMouse()
 		{
