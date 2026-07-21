@@ -128,7 +128,8 @@ namespace Parky.Logging
 				try
 				{
 					tmpFile = Environment.ExpandEnvironmentVariables(Path.Combine(tmpdir, fileName));
-					logfile = File.OpenWrite(tmpFile);
+					logfile = new FileStream(tmpFile, FileMode.Create, FileAccess.Write, FileShare.Read);
+					break;
 				}
 				catch { /* ignore and try next tmp location */ }
 			}
@@ -143,28 +144,47 @@ namespace Parky.Logging
 
 			int parentPid = Process.GetCurrentProcess().Id;
 
+			string tailCmd = $"tail --pid={parentPid} -f {tmpFile}";
+
 			(string cmd, string arg)[] terminals = [
-				("konsole", "--separate --geometry 120x32"),
-				("xfce4-terminal", "--geometry=120x32"),
-				("lxterminal", "--geometry=120x32"),
-				("gnome-terminal", "--geometry=120x32" ),
-				("xterm", "-bg black -fg white -geometry 120x32") ];
+				("konsole", $"--separate --geometry 120x32 -e bash -c \"{tailCmd}\""),
+				("xfce4-terminal", $"--geometry=120x32 -x bash -c \"{tailCmd}\""), // xfce4 uses -x
+				("lxterminal", $"--geometry=120x32 -e bash -c \"{tailCmd}\""),
+				("gnome-terminal", $"--geometry=120x32 -- bash -c \"{tailCmd}\""), // gnome uses --
+				("xterm", $"-bg black -fg white -geometry 120x32 -fn fixed -e bash -c \"{tailCmd}\"")
+			];
 			xterm = null;
 
 			foreach (var terminal in terminals)
-			{ 
+			{
+				var psi = new ProcessStartInfo
+				{
+					FileName = terminal.cmd,
+					Arguments = terminal.arg,
+					UseShellExecute = false
+				}; 
+				
 				try
 				{ 
-					var psi = new ProcessStartInfo
-					{
-						FileName = terminal.cmd,
-						Arguments = $"{terminal.arg} -e bash -c \"(while kill -0 {parentPid} 2>/dev/null; do sleep 1; done; kill $$) & tail -f {tmpFile}\"",
-						UseShellExecute = false
-					};
 					xterm = Process.Start(psi);
-					Trace.WriteLine($"Running {terminal.arg} terminal");
+					if (xterm == null)
+					{
+						Trace.WriteLine($"Failed trying to run {psi.Arguments}");
+						continue;
+					}
+					if (xterm.WaitForExit(100))
+					{
+						Trace.WriteLine($"Exited trying to run {psi.Arguments}");
+						continue;
+					}
+					Trace.WriteLine($"Running {terminal.cmd} {terminal.arg} terminal");
+					break;
 				}
-				catch { /* Ignore and try next terminal */ }
+				catch
+				{
+					/* Ignore and try next terminal */
+					Trace.WriteLine($"Crashed trying to run {psi.Arguments}");
+				}
 			}
 			if (xterm == null)
 				Trace.WriteLine($"Can't find a terminal, try 'tail -f {tmpFile}'");
