@@ -591,18 +591,6 @@ namespace Jammy.Core.EmulationWindow.Window
 			//ReleaseDC(hWnd, hdc);
 		}
 
-		public Types.Types.Point RecentreMouse()
-		{
-			//put the cursor back in the middle of the emulation window
-
-			int x = emuRect.left + (emuRect.right - emuRect.left)/2;
-			int y = emuRect.top + (emuRect.bottom - emuRect.top) / 2;
-
-			SetCursorPos(x, y);
-
-			return new Types.Types.Point { X = x, Y = y };
-		}
-
 		public void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp)
 		{
 			KeyDown += (sender, e) => addKeyDown(e.KeyValue);

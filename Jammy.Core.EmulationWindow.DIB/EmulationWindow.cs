@@ -300,21 +300,6 @@ namespace Jammy.Core.EmulationWindow.DIB
 			gfx.ReleaseHdc(hdc);
 		}
 
-		public Types.Types.Point RecentreMouse()
-		{
-			var centre = new Point(0, 0);
-
-			if (!emulation.IsDisposed)
-			{
-				//put the cursor back in the middle of the emulation window
-				var emuRect = ((OwnDCForm)emulation).ScreenRect;
-				centre = new Point(emuRect.X + emuRect.Width / 2, emuRect.Y + emuRect.Height / 2);
-				Cursor.Position = centre;
-			}
-
-			return new Types.Types.Point { X = centre.X, Y = centre.Y };
-		}
-
 		public void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp)
 		{
 			emulation.KeyDown += (sender, e) => addKeyDown(e.KeyValue);

@@ -456,25 +456,6 @@ namespace Jammy.Core.EmulationWindow.DX
 		// 0 = No new frame, 1 = New frame waiting
 		private int newFrameWaiting = 0;
 
-		private readonly Types.Types.Point p = new Types.Types.Point();
-		public Types.Types.Point RecentreMouse()
-		{
-			//var centre = new Point(0, 0);
-
-			//if (!emulation.IsDisposed)
-			//{
-			//	emulation.BeginInvoke((Action)delegate ()
-			//	{
-			//		var emuRect = emulation.RectangleToScreen(emulation.ClientRectangle);
-			//		centre = new Point(emuRect.X + emuRect.Width / 2, emuRect.Y + emuRect.Height / 2);
-			//		Cursor.Position = centre;
-			//	});
-			//}
-
-			//return new Types.Types.Point { X = centre.X, Y = centre.Y };
-			return p;
-		}
-
 		private readonly InputOutput io = new InputOutput();
 
 		public InputOutput GetInputOutput()

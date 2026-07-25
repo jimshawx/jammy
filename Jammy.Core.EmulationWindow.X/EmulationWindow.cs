@@ -842,12 +842,6 @@ namespace Jammy.Core.EmulationWindow.X
 		public const int PropModePrepend = 1;
 		public const int PropModeAppend = 2;
 
-		private readonly Types.Types.Point centre = new Types.Types.Point { X = 0, Y = 0 };
-		public Types.Types.Point RecentreMouse()
-		{
-			return centre;
-		}
-
 		private void CaptureMouse()
 		{
 			logger.LogTrace("Capture");

@@ -169,24 +169,6 @@ namespace Jammy.Core.EmulationWindow.GDI
 			});
 		}
 
-		public Types.Types.Point RecentreMouse()
-		{
-			var centre = new Point(0, 0);
-
-			if (!emulation.IsDisposed)
-			{
-				emulation.Invoke((Action)delegate()
-				{
-					//put the cursor back in the middle of the emulation window
-					var emuRect = emulation.RectangleToScreen(emulation.ClientRectangle);
-					centre = new Point(emuRect.X + emuRect.Width / 2, emuRect.Y + emuRect.Height / 2);
-					Cursor.Position = centre;
-				});
-			}
-
-			return new Types.Types.Point { X = centre.X, Y = centre.Y };
-		}
-
 		public void SetKeyHandlers(Action<int> addKeyDown, Action<int> addKeyUp)
 		{
 			emulation.KeyDown += (sender, e) => addKeyDown(e.KeyValue);
