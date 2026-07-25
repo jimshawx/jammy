@@ -33,8 +33,6 @@ namespace Jammy.Core.IO.Linux
 			this.logger = logger;
 		}
 
-		private int oldMouseX, oldMouseY;
-
 		private ulong mouseTime = 0;
 		private ulong joystickTime = 0;
 
@@ -96,7 +94,6 @@ namespace Jammy.Core.IO.Linux
 
 				var io = inputOutput.GetInputOutput();
 
-				var mouse = new { X = io.MouseX, Y = io.MouseY };
 				bool rmouse = (io.MouseButtons & InputOutput.MouseButton.MouseRight) != 0;
 				bool mmouse = (io.MouseButtons & InputOutput.MouseButton.MouseMiddle) != 0;
 				bool lmouse = (io.MouseButtons & InputOutput.MouseButton.MouseLeft) != 0;
@@ -116,37 +113,22 @@ namespace Jammy.Core.IO.Linux
 				else
 					potgo |= (1u << 8);
 
-				if (oldMouseX != -1)
-				{
-					int dx = mouse.X - oldMouseX;
-					int dy = mouse.Y - oldMouseY;
+				int dx = io.MouseDX;
+				int dy = io.MouseDY;
 
-					if (Math.Abs(dx) > 255 || Math.Abs(dy) > 255) logger.LogTrace($"mouse too fast {dx},{dy}");
-					//dx = dx + (dx >> 1);
-					//dy = dy + (dy >> 1);
-					dx >>= 1;
-					dy >>= 1;
+				if (Math.Abs(dx) > 255 || Math.Abs(dy) > 255) logger.LogTrace($"mouse too fast {dx},{dy}");
+				//dx = dx + (dx >> 1);
+				//dy = dy + (dy >> 1);
+				//dx >>= 1;
+				//dy >>= 1;
 
-					sbyte x = (sbyte)(joy0dat & 0xff);
-					sbyte y = (sbyte)(joy0dat >> 8);
+				sbyte x = (sbyte)(joy0dat & 0xff);
+				sbyte y = (sbyte)(joy0dat >> 8);
 
-					x += (sbyte)dx;
-					y += (sbyte)dy;
+				x += (sbyte)dx;
+				y += (sbyte)dy;
 
-					joy0dat = (uint)((y << 8) | (byte)x);
-				}
-
-				if (emulationWindow.IsCaptured)
-				{
-					var centre = emulationWindow.RecentreMouse();
-					oldMouseX = centre.X;
-					oldMouseY = centre.Y;
-				}
-				else
-				{
-					oldMouseX = mouse.X;
-					oldMouseY = mouse.Y;
-				}
+				joy0dat = (uint)((y << 8) | (byte)x);
 			}
 		}
 
@@ -154,7 +136,6 @@ namespace Jammy.Core.IO.Linux
 		{
 			joy0dat = 0;
 			joy1dat = 0;
-			oldMouseX = oldMouseY = -1;
 		}
 
 		public ushort Read(uint insaddr, uint address)
