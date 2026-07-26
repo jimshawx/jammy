@@ -672,9 +672,16 @@ namespace Jammy.Core.EmulationWindow.X
 		}
 
 		private readonly InputOutput io = new InputOutput();
+		private int mouseDX, mouseDY;
 
 		public InputOutput GetInputOutput()
 		{
+
+			io.MouseDX = mouseDX;
+			io.MouseDY = mouseDY;
+
+			mouseDX = mouseDY = 0;
+
 			return io;
 		}
 
@@ -821,8 +828,8 @@ namespace Jammy.Core.EmulationWindow.X
 										dy = tempBuffer[0];
 									}
 
-									io.MouseDX = (int)dx;
-									io.MouseDY = (int)dy;
+									mouseDX += (int)dx;
+									mouseDY += (int)dy;
 									//logger.LogTrace($"XI_RawMotion {dx},{dy}");
 								}
 							}
