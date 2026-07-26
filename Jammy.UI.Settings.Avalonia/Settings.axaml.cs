@@ -133,7 +133,7 @@ namespace Jammy.UI.Settings.Avalonia
 					if (openFileDialog1.Any())
 					{
 						Dispatcher.UIThread.Invoke(() => {
-							txtDF0.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							txtDF0.Text = openFileDialog1.First().Path.LocalPath;
 							appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(txtDF0.Text);
 						});
 					}
@@ -153,7 +153,7 @@ namespace Jammy.UI.Settings.Avalonia
 					if (openFileDialog1.Any())
 					{
 						Dispatcher.UIThread.Invoke(() => {
-							txtDF1.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							txtDF1.Text = openFileDialog1.First().Path.LocalPath;
 							appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(txtDF1.Text);
 						});
 					}
@@ -173,7 +173,7 @@ namespace Jammy.UI.Settings.Avalonia
 					if (openFileDialog1.Any())
 					{
 						Dispatcher.UIThread.Invoke(() => {
-							txtDF2.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							txtDF2.Text = openFileDialog1.First().Path.LocalPath;
 							appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(txtDF2.Text);
 						});
 					}
@@ -193,7 +193,7 @@ namespace Jammy.UI.Settings.Avalonia
 					if (openFileDialog1.Any())
 					{ 
 						Dispatcher.UIThread.Invoke(() => {
-							txtDF3.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							txtDF3.Text = openFileDialog1.First().Path.LocalPath;
 							appConfig["Application:Directories:GamePath"] = Path.GetDirectoryName(txtDF3.Text);
 						});
 					}
@@ -213,7 +213,7 @@ namespace Jammy.UI.Settings.Avalonia
 					if (openFileDialog1.Any())
 					{
 						Dispatcher.UIThread.Invoke(() => {
-							txtKickstart.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							txtKickstart.Text = openFileDialog1.First().Path.LocalPath;
 							appConfig["Application:Directories:ROMPath"] = Path.GetDirectoryName(txtKickstart.Text);
 						});
 					}
@@ -236,7 +236,7 @@ namespace Jammy.UI.Settings.Avalonia
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
 					{
-						Dispatcher.UIThread.Invoke(() => LoadConfig(HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath)));
+						Dispatcher.UIThread.Invoke(() => LoadConfig(openFileDialog1.First().Path.LocalPath));
 					}
 				});
 		}
@@ -257,7 +257,7 @@ namespace Jammy.UI.Settings.Avalonia
 					var openFileDialog1 = t.Result;
 					if (openFileDialog1.Any())
 					{
-						Dispatcher.UIThread.Invoke(() => SaveConfig(HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath)));
+						Dispatcher.UIThread.Invoke(() => SaveConfig(openFileDialog1.First().Path.LocalPath));
 					}
 				});
 		}
@@ -320,7 +320,7 @@ namespace Jammy.UI.Settings.Avalonia
 					if (openFileDialog1.Any())
 					{
 						Dispatcher.UIThread.Invoke(() => {
-							txtDH0.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							txtDH0.Text = openFileDialog1.First().Path.LocalPath;
 							appConfig["Application:Directories:HDPath"] = Path.GetDirectoryName(txtDH0.Text);
 						});
 					}
@@ -340,7 +340,7 @@ namespace Jammy.UI.Settings.Avalonia
 					if (openFileDialog1.Any())
 					{
 						Dispatcher.UIThread.Invoke(() => {
-							txtDH1.Text = HttpUtility.UrlDecode(openFileDialog1.First().Path.AbsolutePath);
+							txtDH1.Text = openFileDialog1.First().Path.LocalPath;
 							appConfig["Application:Directories:HDPath"] = Path.GetDirectoryName(txtDH1.Text);
 						});
 					}
