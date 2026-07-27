@@ -36,8 +36,8 @@ namespace Jammy.Core.IO.Windows
 		private bool l_shift = false;
 		private bool r_shift = false;
 
-		private int lastKey = -1;
-		private bool canRepeat = false;
+		//private int lastKey = -1;
+		//private bool canRepeat = false;
 
 		private void AddKeyDown(int key)
 		{
@@ -74,13 +74,13 @@ namespace Jammy.Core.IO.Windows
 				//	keyQueue.Enqueue(0x67);
 				//	break;
 				default:
-					if (key != lastKey || canRepeat)
+					//if (key != lastKey || canRepeat)
 					{
 						if (scanConvert.ContainsKey(key))
 						{
 							keyQueue.Enqueue(scanConvert[key]);
-							lastKey = key;
-							canRepeat = false;
+							//lastKey = key;
+							//canRepeat = false;
 						}
 					}
 					break;
@@ -124,7 +124,7 @@ namespace Jammy.Core.IO.Windows
 						keyQueue.Enqueue((byte)(scanConvert[key] | 0x80));
 					break;
 			}
-			lastKey = -1;
+			//lastKey = -1;
 		}
 
 		private enum KeyboardState
@@ -153,7 +153,7 @@ namespace Jammy.Core.IO.Windows
 				if (keyboardState == KeyboardState.Ready && !keyQueue.IsEmpty)
 				{
 					KeyInterrupt();
-					canRepeat = true;
+					//canRepeat = true;
 				}
 			}
 		}
@@ -164,8 +164,8 @@ namespace Jammy.Core.IO.Windows
 			keyboardState = KeyboardState.Ready;
 			l_alt = r_alt = false;
 			l_shift = r_shift = false;
-			canRepeat = false;
-			lastKey = -1;
+			//canRepeat = false;
+			//lastKey = -1;
 		}
 
 		public byte ReadKey()
