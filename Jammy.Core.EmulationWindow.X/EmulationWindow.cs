@@ -768,8 +768,8 @@ namespace Jammy.Core.EmulationWindow.X
 						break;
 
 					case MotionNotify:
-						io.MouseX = xevent.xmotion.x;
-						io.MouseY = xevent.xmotion.y;
+						//io.MouseX = xevent.xmotion.x;
+						//io.MouseY = xevent.xmotion.y;
 						break;
 
 					case FocusIn:

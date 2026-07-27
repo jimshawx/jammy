@@ -1,5 +1,6 @@
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
+using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using System;
@@ -68,6 +69,24 @@ namespace Jammy.Core.IO.Linux
 				//	if (d ^ r) joy1dat |= 1;
 				//	if (l) joy1dat |= 2 << 8;
 				//	if (r) joy1dat |= 2;
+
+				var io = inputOutput.GetInputOutput();
+
+				if (io.Keyboard['Z'])
+					pra &= ~(1u << 7);
+				else
+					pra |= (1u << 7);
+
+				bool u = io.Keyboard[(int)VK.VK_UP];
+				bool d = io.Keyboard[(int)VK.VK_DOWN];
+				bool l = io.Keyboard[(int)VK.VK_LEFT];
+				bool r = io.Keyboard[(int)VK.VK_RIGHT];
+
+				joy1dat = 0;
+				if (u ^ l) joy1dat |= 1 << 8;
+				if (d ^ r) joy1dat |= 1;
+				if (l) joy1dat |= 2 << 8;
+				if (r) joy1dat |= 2;
 			}
 		}
 
