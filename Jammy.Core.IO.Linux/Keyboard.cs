@@ -81,7 +81,6 @@ namespace Jammy.Core.IO.Linux
 							keyQueue.Enqueue(scanConvert[key]);
 							lastKey = key;
 							canRepeat = false;
-							keyboardState = KeyboardState.Ready;
 						}
 					}
 					break;
@@ -125,7 +124,6 @@ namespace Jammy.Core.IO.Linux
 						keyQueue.Enqueue((byte)(scanConvert[key] | 0x80));
 					break;
 			}
-			keyboardState = KeyboardState.Ready;
 			lastKey = -1;
 		}
 
@@ -170,10 +168,9 @@ namespace Jammy.Core.IO.Linux
 			lastKey = -1;
 		}
 
-		private byte sdr;
 		public byte ReadKey()
 		{
-			sdr = 0x00;
+			byte sdr = 0;
 			if (keyQueue.TryDequeue(out byte c))
 			{
 				//logger.LogTrace($"{Convert.ToString(c,2).PadLeft(8,'0')}");
