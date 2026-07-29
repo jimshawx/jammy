@@ -162,8 +162,9 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IZorro
 	{
-		void AddConfiguration(ZorroConfiguration configuration);
+		void AddConfiguration(ZorroConfiguration configuration, IExpansionROM expansion = null);
 	}
+
 	public interface IZorro2 : IMemoryMappedDevice { }
 	public interface IZorro3 : IMemoryMappedDevice { }
 

@@ -15,6 +15,7 @@ using Jammy.Core.Custom.CIA;
 using Jammy.Core.Custom.Denise;
 using Jammy.Core.Custom.IO;
 using Jammy.Core.Debug;
+using Jammy.Core.Expansion;
 using Jammy.Core.Floppy;
 using Jammy.Core.IDE;
 using Jammy.Core.Interface.Interfaces;
@@ -143,6 +144,7 @@ public class Program
 			.AddSingleton<ISerial, Serial>()
 			.AddSingleton<IZorro2, Zorro2>()
 			.AddSingleton<IZorro3, Zorro3>()
+			.AddSingleton<IExpansionROM, TestExpansion>()
 			.AddSingleton<IChipRAM, ChipRAM>()
 			.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()
 			.AddSingleton<IKickstartROM, KickstartROM>()

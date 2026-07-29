@@ -1,10 +1,11 @@
-﻿using System;
-using System.Globalization;
-using System.Linq;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.Memory
 {
-	internal static class RamExpansion
+	public static class ZorroExpansion
 	{
 		//Z2 RAM Expansion
 		public static byte[] BaseConfig_Z2 = new byte[]
@@ -85,7 +86,7 @@ namespace Jammy.Core.Memory
 
 	public class ZorroConfigurator : IZorroConfigurator
 	{
-		public ZorroConfigurator(IZorro2 zorro2, IZorro3 zorro3, IOptions<EmulationSettings> settings)
+		public ZorroConfigurator(IZorro2 zorro2, IZorro3 zorro3, IEnumerable<IExpansionROM> expansionRoms, IOptions<EmulationSettings> settings)
 		{
 			if (!string.IsNullOrEmpty(settings.Value.ZorroIIMemory))
 			{
@@ -96,7 +97,7 @@ namespace Jammy.Core.Memory
 				foreach (var v in expansions.Where(x =>x != 0.0))
 					((IZorro)zorro2).AddConfiguration(new ZorroConfiguration
 					{
-						Config = RamExpansion.ConfigForSize(RamExpansion.BaseConfig_Z2,v),
+						Config = ZorroExpansion.ConfigForSize(ZorroExpansion.BaseConfig_Z2,v),
 						Name = $"{v}MB ZII RAM Expansion",
 						Size = (uint)(v * 1024.0f * 1024.0f)
 					});
@@ -111,11 +112,14 @@ namespace Jammy.Core.Memory
 				foreach (var v in expansions.Where(x => x != 0.0))
 					((IZorro)zorro3).AddConfiguration(new ZorroConfiguration
 					{
-						Config = RamExpansion.ConfigForSize(RamExpansion.BaseConfig_Z3, v),
+						Config = ZorroExpansion.ConfigForSize(ZorroExpansion.BaseConfig_Z3, v),
 						Name = $"{v}MB ZIII RAM Expansion",
 						Size = (uint)(v * 1024.0f * 1024.0f)
 					});
 			}
+
+			foreach (var rom in expansionRoms)
+				((IZorro)zorro2).AddConfiguration(rom.GetConfiguration(), rom);
 		}
 	}
 

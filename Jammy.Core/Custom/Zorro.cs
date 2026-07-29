@@ -40,7 +40,7 @@ namespace Jammy.Core.Custom
 			if (index < 32 && configurations.Any())
 			{
 				var expansion = configurations[0];
-				byte v = expansion.Config[index];
+				byte v = expansion.Cfg.Config[index];
 				if (index != 0) v = (byte)~v;
 				if ((address & 2) == 0)
 					value = (byte)(v & 0xf0);
@@ -63,16 +63,16 @@ namespace Jammy.Core.Custom
 			address &= 0xffff;
 
 			if (address == 0x4A)
-				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 16;
+				configurations[0].Cfg.BaseAddress |= ((value & 0xf0) >> 4) << 16;
 			
 			if (address == 0x48)
-				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 20;
+				configurations[0].Cfg.BaseAddress |= ((value & 0xf0) >> 4) << 20;
 
 			if (address == 0x46)
-				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 24;
+				configurations[0].Cfg.BaseAddress |= ((value & 0xf0) >> 4) << 24;
 
 			if (address == 0x44)
-				configurations[0].BaseAddress |= ((value & 0xf0) >> 4) << 28;
+				configurations[0].Cfg.BaseAddress |= ((value & 0xf0) >> 4) << 28;
 
 			//writing here finishes the configuration (Zorro II)
 			if (address == 0x48)
@@ -112,7 +112,7 @@ namespace Jammy.Core.Custom
 			if (index < 32 && configurations.Any())
 			{
 				var expansion = configurations[0];
-				byte v = expansion.Config[index];
+				byte v = expansion.Cfg.Config[index];
 				if (index != 0) v = (byte)~v;
 				if ((address & 0x100) == 0)
 					value = (byte)(v & 0xf0);
@@ -138,14 +138,14 @@ namespace Jammy.Core.Custom
 			{
 				//writing here finishes the configuration (Zorro III)
 				if (size == Size.Word)
-					configurations[0].BaseAddress |= (value & 0xffff) << 16;
+					configurations[0].Cfg.BaseAddress |= (value & 0xffff) << 16;
 				else
-					configurations[0].BaseAddress |= (value & 0xff) <<  24;
+					configurations[0].Cfg.BaseAddress |= (value & 0xff) <<  24;
 				CompleteConfiguration();
 			}
 
 			if (address == 0x48)
-				configurations[0].BaseAddress |= (value & 0xff) << 16;
+				configurations[0].Cfg.BaseAddress |= (value & 0xff) << 16;
 
 			//shut up (OK then!)
 			if (address == 0x4C || address == 0x14C)
@@ -159,11 +159,17 @@ namespace Jammy.Core.Custom
 		protected ILogger logger;
 		protected MemoryRange mappedRange;
 
-		protected readonly List<ZorroConfiguration> configurations = new List<ZorroConfiguration>();
+		protected readonly List<ZorroCfg> configurations = new List<ZorroCfg>();
 
-		public void AddConfiguration(ZorroConfiguration zorroConfiguration)
+		protected class ZorroCfg
 		{
-			this.configurations.Add(zorroConfiguration);
+			public ZorroConfiguration Cfg;
+			public IExpansionROM Expansion;
+		}
+
+		public void AddConfiguration(ZorroConfiguration zorroConfiguration, IExpansionROM expansion = null)
+		{
+			this.configurations.Add(new ZorroCfg { Cfg = zorroConfiguration, Expansion = expansion });
 		}
 
 		public bool IsMapped(uint address)
@@ -178,26 +184,28 @@ namespace Jammy.Core.Custom
 
 		protected void CompleteConfiguration()
 		{
-			if (configurations[0].BaseAddress == 0)
+			if (configurations[0].Cfg.BaseAddress == 0)
 			{
-				logger.LogTrace($"{configurations[0].Name} failed to configure");
+				logger.LogTrace($"{configurations[0].Cfg.Name} failed to configure");
 			}
 			else
 			{
-				logger.LogTrace($"{configurations[0].Name} configured at {configurations[0].BaseAddress:X8}");
-				configurations[0].IsConfigured = true;
+				logger.LogTrace($"{configurations[0].Cfg.Name} configured at {configurations[0].Cfg.BaseAddress:X8}");
+				configurations[0].Cfg.IsConfigured = true;
 
-				if (configurations[0].Mapping == ZorroConfiguration.MappingType.MemoryMapped)
+				if (configurations[0].Cfg.Mapping == ZorroConfiguration.MappingType.MemoryMapped)
 					AddNewMemoryDevice(configurations[0]);
 			}
 
 			configurations.RemoveAt(0);
 		}
 
-		private void AddNewMemoryDevice(ZorroConfiguration configuration)
-		{
-			var zorroRAM = new ZorroRAM(configuration.BaseAddress, configuration.Size);
+		private void AddNewMemoryDevice(ZorroCfg configuration) 
+		{ 
+			var zorroRAM = new ZorroRAM(configuration.Cfg.BaseAddress, configuration.Cfg.Size); 
 			memoryManager.AddDevice(zorroRAM);
-		}
+			if (configuration.Expansion != null)
+				configuration.Expansion.PopulateROM(zorroRAM);
+ 		}
 	}
 }
