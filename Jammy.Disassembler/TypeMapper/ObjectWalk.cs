@@ -283,12 +283,10 @@ namespace Jammy.Disassembler.TypeMapper
 
 		private static void Dump(StringBuilder sb, WalkEntry we, int depth)
 		{
-			//for (int i = 0; i < depth; i++)
-			//	sb.Append(" ");
 			string pad = new(' ', depth);
 			string pad0 = new(' ', (depth>1)?2:0);
 
-			sb.Append($"{pad0}{we.Offset,4} {we.Size,3} {we.BaseOffset,4} {we.Type,-10} {we.ObjType.Name,-30} {pad} {we.Name,-20} {we.Value1,-10} {we.Value2,-10} {we.FullName}\n");
+			sb.Append($"{pad0}{we.Offset,4} {we.Size,3} {we.BaseOffset,4} {we.Type,-10} {we.ObjType?.Name,-30} {pad} {we.Name,-20} {we.Value1,-10} {we.Value2,-10} {we.FullName}\n");
 			foreach (var c in we.Children)
 				Dump(sb, c, depth+1);
 		}

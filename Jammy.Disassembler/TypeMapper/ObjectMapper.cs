@@ -75,7 +75,8 @@ namespace Jammy.Disassembler.TypeMapper
 							}
 							else
 							{
-								tp = null;
+								//tp = null;
+								//it's perhaps a pointer to a C string, but tp.Address is still useful
 							}
 							rv = tp;
 						}
