@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Jammy.AmigaTypes\Jammy.AmigaTypes.csproj" />
+    <ProjectReference Include="..\Jammy.Assembler\Jammy.Assembler.csproj" />
     <ProjectReference Include="..\Jammy.Core.Audio.Linux\Jammy.Core.Audio.Linux.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Moira\Jammy.Core.CPU.Moira.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Musashi.CSharp\Jammy.Core.CPU.Musashi.CSharp.csproj" />

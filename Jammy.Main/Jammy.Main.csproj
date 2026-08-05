@@ -29,6 +29,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Jammy.AmigaTypes\Jammy.AmigaTypes.csproj" />
+    <ProjectReference Include="..\Jammy.Assembler\Jammy.Assembler.csproj" />
     <ProjectReference Include="..\Jammy.Core.Audio.Windows\Jammy.Core.Audio.Windows.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.Moira\Jammy.Core.CPU.Moira.csproj" />

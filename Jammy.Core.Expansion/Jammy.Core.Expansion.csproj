@@ -8,8 +8,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Jammy.AmigaTypes\Jammy.AmigaTypes.csproj" />
+    <ProjectReference Include="..\Jammy.Assembler\Jammy.Assembler.csproj" />
     <ProjectReference Include="..\Jammy.Core.Interface\Jammy.Core.Interface.csproj" />
     <ProjectReference Include="..\Jammy.Core\Jammy.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="DosExpansion.s">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

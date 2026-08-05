@@ -1,22 +1,20 @@
 ﻿using Jammy.AmigaTypes;
 using Jammy.Core;
-using Jammy.Core.Debug;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Debugger.Interceptors;
+using Jammy.Disassembler.TypeMapper;
 using Jammy.Interface;
 using Jammy.Types;
 using Jammy.Types.Debugger;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -47,6 +45,7 @@ namespace Jammy.Debugger
 		private readonly ILVOInterceptors interceptors;
 		private readonly IReturnValueSnagger returnValueSnagger;
 		private readonly ILibraryBases libraryBases;
+		private readonly IObjectMapper objectMapper;
 
 		public Debugger(IDebugMemoryMapper memory, ICPU cpu, IChips custom,
 			IDiskDrives diskDrives, IInterrupt interrupt, ICIAAOdd ciaa, ICIABEven ciab, ILogger<Debugger> logger,
@@ -54,7 +53,7 @@ namespace Jammy.Debugger
 			IOptions<EmulationSettings> settings, IDisassembly disassembly, ITracer tracer, IAnalyser analyser,
 			ICPUAnalyser cpuAnalyser, IAllocatedMemoryTracker allocatedMemoryTracker, IDMA dma,
 			ILVOInterceptors interceptors, IReturnValueSnagger returnValueSnagger, ILibraryBases libraryBases,
-			IChipsetDebugger chipsetDebugger)
+			IObjectMapper objectMapper, IChipsetDebugger chipsetDebugger)
 		{
 			this.breakpoints = breakpoints;
 			this.kickstart = kickstart;
@@ -76,6 +75,7 @@ namespace Jammy.Debugger
 			this.logger = logger;
 			this.returnValueSnagger = returnValueSnagger;
 			this.libraryBases = libraryBases;
+			this.objectMapper = objectMapper;
 			this.interceptors = interceptors;
 
 			if (settings.Value.Debugger.IsEnabled())
@@ -93,6 +93,170 @@ namespace Jammy.Debugger
 
 			//
 			//AddBreakpoint(0x030F24);
+			
+			//AddBreakpoint(0xEA0040, BreakpointType.Read, 0, Size.Word, (x) => {
+			//	var regs = cpu.GetRegs();
+			//	logger.LogTrace($"copying to {regs.A[1]:X8}");
+			//	AddBreakpoint(regs.A[1]-4); return false;
+			//	});
+
+			//AddBreakpoint(0xEA0040, BreakpointType.Read, 0, Size.Long, (x) => {
+			//	var regs = cpu.GetRegs();
+			//	logger.LogTrace($"copying to {regs.A[1]:X8}");
+
+			//	for (uint z = regs.A[1] - 4; z < regs.A[1] - 4 + 0x80; z += 2)
+			//		AddBreakpoint(z, callback: (bp) => { logger.LogTrace($"bp {bp.Address:X8}"); return true; });
+
+			//	return false;
+			//});
+
+			AddBreakpoint(0x200150);
+			AddBreakpoint(0x00fffffe, callback: (bp) =>
+			{
+				var regs = cpu.GetRegs();
+
+				////packet is in d0
+				//var std = new StandardPacket();
+				//objectMapper.MapObject(std, regs.A[2]);
+
+				//dos packet is in A4
+				var pkt = new DosPacket();
+				objectMapper.MapObject(pkt, regs.A[4]);
+
+				//for (uint i = 0; i < 80; i += 4)
+				//	logger.LogTrace($"{regs.A[2] + i:X8} {memory.UnsafeRead32(regs.A[2] + i):X8}");
+
+				//for (uint i = 0; i < 80; i += 4)
+				//	logger.LogTrace($"{regs.A[4]+i:X8} {memory.UnsafeRead32(regs.A[4]+i):X8}");
+
+				logger.LogTrace($"Packet {pkt.dp_Type}");
+
+				const int ACTION_INHIBIT = 0x1f;
+				const int ACTION_HANDLER_INFO = 0x19;
+
+				const int ACTION_LOCATE_OBJECT = 0x8;
+				const int ACTION_EXAMINE_OBJECT = 0x17;
+
+				const int DOSTRUE = -1;
+				const int DOSFAIL = 0;
+
+				switch (pkt.dp_Type)
+				{
+					case ACTION_INHIBIT:
+						logger.LogTrace($"inhibit {pkt.dp_Arg1}");
+						pkt.dp_Res1 = DOSTRUE;
+						pkt.dp_Res2 = 0;
+						memory.UnsafeWrite32(regs.A[4] + 12, 0xffffffff);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						break;
+
+					case ACTION_HANDLER_INFO:
+
+						uint address = (uint)pkt.dp_Arg1<<2;//InfoData
+						/*
+						public class InfoData
+						{
+							public LONG id_NumSoftErrors { get; set; }
+							public LONG id_UnitNumber { get; set; }
+							public LONG id_DiskState { get; set; }
+							public LONG id_NumBlocks { get; set; }
+							public LONG id_NumBlocksUsed { get; set; }
+							public LONG id_BytesPerBlock { get; set; }
+							public LONG id_DiskType { get; set; }
+							public BPTR id_VolumeNode { get; set; }
+							public LONG id_InUse { get; set; }
+						}
+						*/
+						const uint ID_VALIDATED     =82;
+						const uint ID_NOT_REALLY_DOS = 0x4E444F53;	/* 'NDOS'  */
+
+						memory.UnsafeWrite32(address, 0); address += 4;
+						memory.UnsafeWrite32(address, 0); address += 4;
+						memory.UnsafeWrite32(address, 2); address += 4;//ID_VALIDATED); address += 4;
+						memory.UnsafeWrite32(address, 0x40000000); address += 4;//1GB
+						memory.UnsafeWrite32(address, 0); address += 4;//nothing used
+						memory.UnsafeWrite32(address, 512); address += 4;//512 byte blocks
+						memory.UnsafeWrite32(address, 0x4D594653); address += 4;//MYFS        0x4A414D4D); address += 4;//JAMM
+						memory.UnsafeWrite32(address, 0); address += 4;
+						memory.UnsafeWrite32(address, 0); address += 4;
+
+						var t = new InfoData();
+						t.id_NumSoftErrors = 0;
+						t.id_UnitNumber = 1;
+						t.id_DiskState = 2;
+						t.id_NumBlocks = 0x40000000/512;
+						t.id_NumBlocksUsed = 0;
+						t.id_BytesPerBlock = 512;
+						t.id_DiskType = 0x4D594653;
+						t.id_VolumeNode = 0;
+						t.id_InUse = 0;
+						var c = ObjectWalk.Walk(t);
+						logger.LogTrace(c);
+						var w = ObjectWalk.Walk2(t);
+
+
+						memory.UnsafeWrite32(regs.A[4] + 12, 0xffffffff);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						break;
+
+					case ACTION_LOCATE_OBJECT:;
+						Node reference;
+						if (pkt.dp_Arg1 != 0) 
+						{
+							var @lock = new FileLock();
+							objectMapper.MapObject(@lock, (uint)pkt.dp_Arg1<<2);
+							reference = new Node();//root node
+						}
+						else
+						{
+							reference = new Node();//root node
+						}
+						Node result_object;
+						uint name = (uint)pkt.dp_Arg2;
+						if (name != 0)
+						{
+							result_object = reference;// find(reference, name<<2);
+						}
+						else
+						{
+							var sb = new StringBuilder();
+							name<<=2;
+							for(;;) {
+								byte b = memory.UnsafeRead8(name++);
+								if (b==0) break;
+								sb.Append((char)b);
+							}
+							logger.LogTrace($"LOCATE {sb.ToString()}");
+							result_object = reference;
+						}
+						int mode = pkt.dp_Arg3;
+						logger.LogTrace($"mode {mode:X8}");
+						memory.UnsafeWrite32(regs.A[4] + 12, 0xffffffff);
+						memory.UnsafeWrite32(regs.A[4] + 16, 205);//file not found
+						break;
+
+					case ACTION_EXAMINE_OBJECT:
+						memory.UnsafeWrite32(regs.A[4] + 12, 0xffffffff);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						break;
+
+					case 0x8004e:
+						//send back unchanged
+						break;
+
+					default:
+						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						break;
+				}
+
+				//return back to emulation
+				regs.SR = memory.UnsafeRead16(regs.SSP); regs.SSP += 2;
+				regs.PC = memory.UnsafeRead32(regs.SSP); regs.SSP += 4;
+				cpu.SetRegs(regs);
+
+				return false;
+			});
 
 			if (settings.Value.KickStartDisassembly.StartsWith("87BA7A3E"))//3.1 A1200
 			{

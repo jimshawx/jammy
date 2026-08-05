@@ -34,6 +34,11 @@ namespace Jammy.Core
 			breakpoints.Remove(address);
 		}
 
+		public void RemoveBreakpoint(Breakpoint bp)
+		{
+			breakpoints.Remove(bp.Address);
+		}
+
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)

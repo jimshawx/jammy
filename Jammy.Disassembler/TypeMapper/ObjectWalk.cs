@@ -47,6 +47,15 @@ namespace Jammy.Disassembler.TypeMapper
 		public uint Size { get; set; }
 	}
 
+	public class LibValue
+	{
+		public string Name { get; set; }
+		public string ShortName { get; set; }
+		public uint Offset { get; set; }
+		public uint Size { get; set; }
+		public string Value { get; set; }
+	}
+
 	public class ObjectWalk
 	{
 		private static void Align(ref uint offset)
@@ -273,6 +282,15 @@ namespace Jammy.Disassembler.TypeMapper
 			return sb.ToString() + sb2.ToString();
 		}
 
+		public static List<LibValue> Walk2(object o)
+		{
+			var root = WalkObject(o);
+
+			var rv = new List<LibValue>();
+			DumpLeaves2(rv, root);
+			return rv;
+		}
+
 		public static List<LibOffset> GetLibraryOffsets(object o)
 		{
 			var root = WalkObject(o);
@@ -306,6 +324,24 @@ namespace Jammy.Disassembler.TypeMapper
 
 			foreach (var c in we.Children)
 				DumpLeaves(offs, c);
+		}
+
+		private static void DumpLeaves2(List<LibValue> offs, WalkEntry we)
+		{
+			if (we.Children.Count == 0)
+			{
+				offs.Add(new LibValue
+				{
+					Name = we.FullName,
+					ShortName = we.Name,
+					Size = we.Size,
+					Offset = we.BaseOffset,
+					Value = we.Value1
+				});
+			}
+
+			foreach (var c in we.Children)
+				DumpLeaves2(offs, c);
 		}
 
 		private static void WalkOffsets(WalkEntry we, uint baseOffset)

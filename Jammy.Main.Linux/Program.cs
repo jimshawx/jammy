@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Styling;
 using Avalonia.Themes.Simple;
+using Jammy.Assembler;
 using Jammy.Core;
 using Jammy.Core.Audio.Linux;
 using Jammy.Core.CDROM;
@@ -43,6 +44,7 @@ using Jammy.Plugins;
 using Jammy.Plugins.Interface;
 using Jammy.Plugins.JavaScript.Jint;
 using Jammy.Plugins.Lua;
+using Jammy.Types;
 using Jammy.UI.Settings.Avalonia;
 using Jammy.WebAPI;
 using Microsoft.Extensions.Configuration;
@@ -187,6 +189,7 @@ public class Program
 			.AddSingleton<IDebugCommand, DebugCommand>()
 			.AddSingleton<IDisassembly, Disassembly>()
 			.AddSingleton<IDisassembler, Disassembler.Disassembler>()
+			.AddSingleton<IAssembler, VAsm>()
 			.AddSingleton<IEADatabase, EADatabase>()
 			.AddSingleton<IInstructionAnalysisDatabase, InstructionAnalysisDatabase>()
 			.AddSingleton<IAnalysis, Analysis>()

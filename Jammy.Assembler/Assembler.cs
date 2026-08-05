@@ -4,7 +4,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+
+/*
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
+*/
 
 namespace Jammy.Assembler
 {
@@ -73,6 +78,7 @@ FTWOTOX 0010001
 	public interface IAssembler
 	{
 		Assembly Assemble(string s);
+		Assembly AssembleFile(string filename);
 	}
 
 	public class AssemblyMessage
@@ -96,6 +102,7 @@ FTWOTOX 0010001
 		public ushort[] Program;
 		public List<AssemblyMessage> Errors = new List<AssemblyMessage>();
 		public List<AssemblyMessage> Warnings = new List<AssemblyMessage>();
+		public List<AssemblyMessage> Messages = new List<AssemblyMessage>();
 		public bool HasErrors() { return Errors.Count > 0; }
 	}
 
@@ -124,6 +131,11 @@ FTWOTOX 0010001
 			{
 				return Errors.Count != 0;
 			}
+		}
+
+		public Assembly AssembleFile(string filename)
+		{
+			return Assemble(File.ReadAllText(filename, Encoding.UTF8));
 		}
 
 		public Assembly Assemble(string s)

@@ -19,6 +19,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, 
 			Size size = Size.Long, ulong? value = null, Func<Breakpoint, bool> callback = null);
 		void RemoveBreakpoint(uint address);
+		void RemoveBreakpoint(Breakpoint bp);
 		void ToggleBreakpoint(uint pc);
 		bool BreakpointHit();
 		void DumpBreakpoints();

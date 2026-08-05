@@ -1,3 +1,4 @@
+using Jammy.Assembler;
 using Jammy.Core;
 using Jammy.Core.Audio.Windows;
 using Jammy.Core.CDROM;
@@ -111,6 +112,7 @@ namespace Jammy.Main
 				.AddSingleton<IZorro2, Zorro2>()
 				.AddSingleton<IZorro3, Zorro3>()
 				.AddSingleton<IExpansionROM, TestExpansion>()
+				.AddSingleton<IExpansionROM, DosExpansion>()
 				.AddSingleton<IChipRAM, ChipRAM>()
 				.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()
 				.AddSingleton<IKickstartROM, KickstartROM>()
@@ -149,6 +151,7 @@ namespace Jammy.Main
 				.AddSingleton<IDebugCommand, DebugCommand>()
 				.AddSingleton<IDisassembly, Disassembly>()
 				.AddSingleton<IDisassembler, Disassembler.Disassembler>()
+				.AddSingleton<IAssembler, VAsm>()
 				.AddSingleton<IEADatabase, EADatabase>()
 				.AddSingleton<IInstructionAnalysisDatabase, InstructionAnalysisDatabase>()
 				.AddSingleton<IAnalysis, Analysis>()
