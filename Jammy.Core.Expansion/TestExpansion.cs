@@ -1,7 +1,6 @@
 ﻿using Jammy.Assembler;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
-using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 
@@ -14,11 +13,13 @@ namespace Jammy.Core.Expansion
 	public class TestExpansion : IExpansionROM
 	{
 		private readonly IAssembler assembler;
+		private readonly IZorroExpansionRegistry zorroExpansionRegistry;
 		private readonly ILogger<TestExpansion> logger;
 
-		public TestExpansion(IAssembler assembler, ILogger<TestExpansion> logger)
+		public TestExpansion(IAssembler assembler, IZorroExpansionRegistry zorroExpansionRegistry, ILogger<TestExpansion> logger)
 		{
 			this.assembler = assembler;
+			this.zorroExpansionRegistry = zorroExpansionRegistry;
 			this.logger = logger;
 		}
 
@@ -28,7 +29,7 @@ namespace Jammy.Core.Expansion
 			float v = 0.0625f;
 			var cfg = new ZorroConfiguration
 			{
-				Config = ZorroExpansion.ConfigForSize(ZorroExpansion.BaseConfig_Z2, v),
+				Config = ZorroExpansion.ConfigForSize(ZorroExpansion.BaseConfig_Z2, v, ZorroConfiguration.MakeSerial("TEST")),
 				Name = $"{v}MB ZII ROM Expansion",
 				Size = (uint)(v * 1024.0f * 1024.0f),
 			};
@@ -44,8 +45,10 @@ namespace Jammy.Core.Expansion
 			return cfg;
 		}
 
-		public void PopulateROM(IDebuggableMemory zorroRAM, uint baseAddress)
+		public void PopulateROM(IDebuggableMemory zorroRAM, ZorroConfiguration configuration)
 		{
+			zorroExpansionRegistry.RegisterExpansion(configuration);
+
 			const byte DAC_WORDWIDE = 0x80;
 			const byte DAC_NYBBLEWIDE = 0x00;
 			const byte DAC_BYTEWIDE = 0x40;
@@ -100,81 +103,17 @@ namespace Jammy.Core.Expansion
 		}
 	}
 
-	public class DosExpansion : IExpansionROM
+	public class TestExpansionDebugHandler : ZorroDebugHandler
 	{
-		//private readonly ICPU cpu;
-		private readonly IBreakpointCollection breakpoints;
-		private readonly IAssembler assembler;
-		private readonly ILogger<TestExpansion> logger;
-
-		public DosExpansion(/*ICPU cpu, */IBreakpointCollection breakpoints, IAssembler assembler, ILogger<TestExpansion> logger)
+		public TestExpansionDebugHandler(IZorroExpansionRegistry registry) : base(registry)
 		{
-			//this.cpu = cpu;
-			this.breakpoints = breakpoints;
-			this.assembler = assembler;
-			this.logger = logger;
+			registry.RegisterHandler(ZorroConfiguration.MakeSerial("TEST"), this);
 		}
 
-		public ZorroConfiguration GetConfiguration()
+		public override void Init(ZorroConfiguration configuration)
 		{
-			//add a 64KB Zorro II expansion with an autoboot ROM
-			float v = 0.0625f;
-			var cfg = new ZorroConfiguration
-			{
-				Config = ZorroExpansion.ConfigForSize(ZorroExpansion.BaseConfig_Z2, v),
-				Name = $"{v}MB ZII DOS ROM Expansion",
-				Size = (uint)(v * 1024.0f * 1024.0f),
-			};
-
-			//indicate there's an autoboot ROM, and not to link to free pool
-			cfg.Config[0] |= 0b00010000;
-			cfg.Config[0] &= 0b11011111;
-
-			//indicate there's a DiagArea
-			cfg.Config[0xA] = 0;
-			cfg.Config[0xB] = 0x40;
-
-			return cfg;
-		}
-
-		public void PopulateROM(IDebuggableMemory zorroRAM, uint baseAddress)
-		{
-			var r = assembler.AssembleFile("DosExpansion.s");
-			logger.LogTrace(r.ToString());
-
-			if (!r.HasErrors())
-			{
-				uint address = 0;
-				foreach (var w in r.Program)
-				{
-					zorroRAM.DebugWrite(address, w, Size.Word);
-					address += 2;
-				}
-			}
-			else
-			{
-				logger.LogTrace("Assembly Failed");
-				foreach (var e in r.Errors)
-					logger.LogTrace(e.Text);
-			}
-			breakpoints.AddBreakpoint(baseAddress+0x40, Types.Types.Breakpoints.BreakpointType.Read, size: Size.Word, callback: (bp) =>
-			{
-				breakpoints.RemoveBreakpoint(bp);
-				//var regs = cpu.GetRegs();
-				var regs = new Regs();
-				logger.LogTrace($"DiagArea W copied @ {regs.PC:X8}");
-
-				return false;
-			});
-			breakpoints.AddBreakpoint(baseAddress + 0x40, Types.Types.Breakpoints.BreakpointType.Read, size: Size.Long, callback: (bp) =>
-			{
-				breakpoints.RemoveBreakpoint(bp);
-				//var regs = cpu.GetRegs();
-				var regs = new Regs();
-				logger.LogTrace($"DiagArea L copied @ {regs.PC:X8}");
-
-				return false;
-			});
 		}
 	}
+
+	
 }

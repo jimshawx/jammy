@@ -9,6 +9,18 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IExpansionROM
 	{
 		ZorroConfiguration GetConfiguration();
-		void PopulateROM(IDebuggableMemory zorroRAM, uint baseAddress);
+		void PopulateROM(IDebuggableMemory zorroRAM, ZorroConfiguration configuration);
+	}
+
+	public interface IZorroExpansionRegistry
+	{
+		void RegisterExpansion(ZorroConfiguration configuration);
+		ZorroConfiguration GetExpansion(uint serial);
+		void RegisterHandler(uint ser, IZorroDebugHandler handler);
+	}
+
+	public interface IZorroDebugHandler
+	{
+		void Init(ZorroConfiguration configuration);
 	}
 }

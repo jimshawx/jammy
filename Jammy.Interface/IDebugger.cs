@@ -42,6 +42,7 @@ namespace Jammy.Interface
 		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute,
 			int counter = 0, Size size = Size.Long, Func<Breakpoint, bool> callback = null);
 		void RemoveBreakpoint(uint address);
+		void RemoveBreakpoint(Breakpoint bp);
 		void DumpBreakpoints();
 		ClockInfo GetChipClock();
 		void GenerateDisassemblies();

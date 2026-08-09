@@ -48,6 +48,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Parky.Logging;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Intrinsics.X86;
@@ -113,6 +114,9 @@ namespace Jammy.Main
 				.AddSingleton<IZorro3, Zorro3>()
 				.AddSingleton<IExpansionROM, TestExpansion>()
 				.AddSingleton<IExpansionROM, DosExpansion>()
+				.AddSingleton<IZorroDebugHandler, TestExpansionDebugHandler>()
+				.AddSingleton<IZorroDebugHandler, DosExpansionDebugHandler>()
+				.AddSingleton<IZorroExpansionRegistry, ZorroExpansionRegistry>()
 				.AddSingleton<IChipRAM, ChipRAM>()
 				.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()
 				.AddSingleton<IKickstartROM, KickstartROM>()
@@ -343,6 +347,9 @@ namespace Jammy.Main
 				.SingleOrDefault()?? new Database.Types.Database { Name = "default" };
 			databaseDao.SaveOrUpdate(database);
 
+			//Zorro expansion handlers
+			var __ = serviceProvider.GetRequiredService<IEnumerable<IZorroDebugHandler>>();
+
 			//var labelDao = serviceProvider.GetRequiredService<ILabelDao>();
 			//labelDao.Save(new Types.Label() { DbId = database.Id, Address = 1, Name = "Test Label 1" });
 			//labelDao.SaveOrUpdate(new Types.Label() { DbId = database.Id, Address = 2, Name = "Test Label 2" });
@@ -393,6 +400,7 @@ namespace Jammy.Main
 			logger.LogTrace("Application Starting Up!");
 
 			var form = serviceProvider.GetRequiredService<Jammy>();
+			
 			Application.Run(form);
 		}
 	}

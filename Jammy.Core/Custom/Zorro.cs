@@ -205,7 +205,7 @@ namespace Jammy.Core.Custom
 			var zorroRAM = new ZorroRAM(configuration.Cfg.BaseAddress, configuration.Cfg.Size); 
 			memoryManager.AddDevice(zorroRAM);
 			if (configuration.Expansion != null)
-				configuration.Expansion.PopulateROM(zorroRAM, configuration.Cfg.BaseAddress);
+				configuration.Expansion.PopulateROM(zorroRAM, configuration.Cfg);
  		}
 	}
 }

@@ -49,7 +49,7 @@ namespace Jammy.Core.Memory
 			0,0,0,0,0,0,0,0,0,0,0,0,//reserved
 		};
 
-		public static byte[] ConfigForSize(byte[] cfg, float size)
+		public static byte[] ConfigForSize(byte[] cfg, float size, uint serial = 0)
 		{
 			cfg = cfg.ToArray();
 			switch (size)
@@ -79,6 +79,11 @@ namespace Jammy.Core.Memory
 
 			//extended size for Z3 > 8MB
 			if ((cfg[0] >> 6) == 2 && size > 8.0f) cfg[2] |= 1 << 5;
+
+			cfg[6] = (byte)(serial >> 24);
+			cfg[7] = (byte)(serial >> 16);
+			cfg[8] = (byte)(serial >> 8);
+			cfg[9] = (byte)serial;
 
 			return cfg;
 		}

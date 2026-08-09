@@ -533,6 +533,11 @@ namespace Jammy.Debugger
 			breakpoints.RemoveBreakpoint(address);
 		}
 
+		public void RemoveBreakpoint(Breakpoint bp)
+		{
+			breakpoints.RemoveBreakpoint(bp);
+		}
+
 		public void BreakAtNextPC()
 		{
 			uint pc = cpu.GetRegs().PC;
