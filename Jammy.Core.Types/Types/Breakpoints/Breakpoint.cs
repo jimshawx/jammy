@@ -29,6 +29,13 @@ namespace Jammy.Core.Types.Types.Breakpoints
 
 		public ulong? Value { get; set; }
 
-		public Func<Breakpoint, bool> BreakpointHit { get; set; } = null;
+		public Func<BreakpointHitInfo, bool> BreakpointHit { get; set; } = null;
+	}
+
+	public class BreakpointHitInfo
+	{
+		public Breakpoint Bp;
+		public uint Address;
+		public Size Size;
 	}
 }

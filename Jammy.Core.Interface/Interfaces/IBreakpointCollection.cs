@@ -12,12 +12,12 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		bool IsBreakpoint(uint address);
 		//cpu interface
-		void MemoryBreakpoint(Breakpoint bp, uint address);
+		void MemoryBreakpoint(Breakpoint bp, uint address, Size size);
 		bool ExecutionBreakpoint(uint pc);
 
 		//machine interface
 		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0, 
-			Size? size = null, ulong? value = null, Func<Breakpoint, bool> callback = null);
+			Size? size = null, ulong? value = null, Func<BreakpointHitInfo, bool> callback = null);
 		void RemoveBreakpoint(uint address);
 		void RemoveBreakpoint(Breakpoint bp);
 		void ToggleBreakpoint(uint pc);

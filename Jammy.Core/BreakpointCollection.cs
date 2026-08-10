@@ -23,7 +23,7 @@ namespace Jammy.Core
 		}
 
 		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0,
-			Size? size = null, ulong? value = null, Func<Breakpoint, bool> callback = null)
+			Size? size = null, ulong? value = null, Func<BreakpointHitInfo, bool> callback = null)
 		{
 			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter,
 				CounterReset = counter, Size = size, Value = value, BreakpointHit = callback };
@@ -43,21 +43,21 @@ namespace Jammy.Core
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
-					MemoryBreakpoint(bp,insaddr);
+					MemoryBreakpoint(bp,insaddr, size);
 		}
 
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-					MemoryBreakpoint(bp, insaddr);
+					MemoryBreakpoint(bp, insaddr, size);
 		}
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-					MemoryBreakpoint(bp, insaddr);
+					MemoryBreakpoint(bp, insaddr, size);
 		}
 
 		private bool Matches(Breakpoint bp, ulong value, Size size)
@@ -66,13 +66,15 @@ namespace Jammy.Core
 			       && (!bp.Size.HasValue || bp.Size.Value == size);
 		}
 
-		private bool ShouldBreakpointTrigger(uint pc, Breakpoint bp)
+		private bool ShouldBreakpointTrigger(uint pc, BreakpointHitInfo bphi)
 		{
+			var bp = bphi.Bp;
+
 			//does it have a function to call when hit? if so, call it
 			if (bp.BreakpointHit != null)
 			{
 				//returns true if we are to stop
-				return bp.BreakpointHit(bp);
+				return bp.BreakpointHit(bphi);
 			}
 
 			if (bp.Type == BreakpointType.Execute)
@@ -119,9 +121,9 @@ namespace Jammy.Core
 		}
 
 		//here is where memory reads/writes/fetches call to signal a breakpoint
-		public void MemoryBreakpoint(Breakpoint bp, uint address)
+		public void MemoryBreakpoint(Breakpoint bp, uint address, Size size)
 		{
-			Breakpoint(bp, address);
+			Breakpoint(bp, address, size);
 		}
 
 		//here is where the CPUs call at the end of an instruction to check for a breakpoint at new pc
@@ -129,14 +131,17 @@ namespace Jammy.Core
 		{
 			if (breakpoints.TryGetValue(pc, out var bp) && IsExecutable(bp))
 			{
-				Breakpoint(bp, pc);
+				Breakpoint(bp, pc, Size.Word);
 				return true;
 			}
 
 			return false;
 		}
 
-		private Breakpoint breakpointHit = null;
+		//just one of these, reused to save allocating
+		private readonly BreakpointHitInfo hitbp = new BreakpointHitInfo();
+
+		private BreakpointHitInfo breakpointHit;
 
 		//here is where emulation loop checks whether a breakpoint was hit and resets the hit
 		//we are between instructions so emulation state is consistent
@@ -151,11 +156,21 @@ namespace Jammy.Core
 		}
 
 		//signal a breakpoint (bp) hit
-		private void Breakpoint(Breakpoint bp, uint pc)
+		private void Breakpoint(Breakpoint bp, uint pc, Size size)
 		{
 			logger.LogTrace($"Breakpoint @{pc:X8} {bp.Type}");
+
 			//nb. there could be multiple breakpoints on the same instruction, read/write/execute
-			breakpointHit = bp;
+			if (breakpointHit != null)
+			{
+				logger.LogTrace($"Multiple Breakpoints hit @{pc:X8} {bp.Type}");
+				return;
+			}
+
+			hitbp.Bp = bp;
+			hitbp.Address = pc;
+			hitbp.Size = size;
+			breakpointHit = hitbp;
 		}
 
 		//is there any breakpoint here? currently only used by the disassembler

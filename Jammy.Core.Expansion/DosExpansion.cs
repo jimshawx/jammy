@@ -108,22 +108,66 @@ namespace Jammy.Core.Expansion
 
 			debugger.AddBreakpoint(baseAddress + 0x40, BreakpointType.Read, size: Size.Long, callback: (bp) =>
 			{
-				debugger.RemoveBreakpoint(bp);
+				debugger.RemoveBreakpoint(bp.Bp);
 				var regs = debugger.GetRegs();
-				logger.LogTrace($"DiagArea L copied @ {regs.PC:X8} to {regs.A[1]-4:X8}");
+				logger.LogTrace($"DiagArea L copied @ {regs.PC:X8} to {regs.A[1] - 4:X8}");
 
 				//FC2FCC  22D8                move.l    (a0)+,(a1)+
 				//FC2FCE  51C9 FFFC           dbra d1,#$FC2FCC(pc)
 				//It's copying the code to A1
 
 				//break when it's executed at the new location
-				debugger.AddBreakpoint(regs.A[1]-4+14, callback: (bp2) =>
+				debugger.AddBreakpoint(regs.A[1] - 4 + 14, callback: (bp2) =>
 				{
-					debugger.RemoveBreakpoint(bp2);
+					debugger.RemoveBreakpoint(bp2.Bp);
 					//var regs2 = debugger.GetRegs();
 					//logger.LogTrace($"DiagArea W copied @ {regs2.PC:X8}");
 					return true;
 				});
+
+				// then it copies the whole block again to a correctly-sized allocation
+				// A0 is EA0040
+
+				//FC2FA8  48E7 7F3E           movem.l d1-d7 / a2 - a6,-(sp)
+				//FC2FAC  4CD8 7CFE movem.l(a0) +,d1 - d7 / a2 - a6
+				//FC2FB0  48D1 7CFE movem.l d1-d7 / a2 - a6,(a1)
+				//FC2FB4  7230                moveq     #48,d1
+				//FC2FB6  D3C1 adda.l d1, a1
+				//FC2FB8  9081                sub.l d1, d0
+				//FC2FBA B081                cmp.l     d1,d0
+				//FC2FBC  64EE bcc.s     #$FC2FAC
+				//FC2FBE  4CDF 7CFE movem.l(sp) +,d1 - d7 / a2 - a6
+
+				debugger.AddBreakpoint(baseAddress + 0x40, BreakpointType.Read, size: Size.Long, callback: (bp) =>
+				{
+					var regs2 = debugger.GetRegs();
+					logger.LogTrace("Copy DiagPoint");
+					return true;
+				});
+
+
+
+				return true;
+			});
+
+			debugger.AddBreakpoint(baseAddress + 0x40 + 14, BreakpointType.Read, size: Size.Long, callback: (bp) =>
+			{
+				debugger.RemoveBreakpoint(bp.Bp);
+				var regs = debugger.GetRegs();
+				logger.LogTrace($"DiagPoint copied @ {regs.PC:X8} to {regs.A[1] - 4:X8}");
+
+				//FC2FCC  22D8                move.l    (a0)+,(a1)+
+				//FC2FCE  51C9 FFFC           dbra d1,#$FC2FCC(pc)
+				//It's copying the code to A1
+
+				//break when it's executed at the new location
+				//debugger.AddBreakpoint(regs.A[1] - 4 + 14, callback: (bp2) =>
+				//{
+				//	debugger.RemoveBreakpoint(bp2);
+				//	//var regs2 = debugger.GetRegs();
+				//	//logger.LogTrace($"DiagArea W copied @ {regs2.PC:X8}");
+				//	return true;
+				//});
 
 				return true;
 			});

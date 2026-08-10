@@ -375,7 +375,7 @@ namespace Jammy.Debugger
 		}
 
 		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0,
-			Size? size = null, Func<Breakpoint, bool> callback = null)
+			Size? size = null, Func<BreakpointHitInfo, bool> callback = null)
 		{
 			breakpoints.AddBreakpoint(address,type,counter,size, callback: callback);
 		}
