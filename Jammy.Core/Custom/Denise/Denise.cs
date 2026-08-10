@@ -290,7 +290,7 @@ public class Denise : IDenise
 
 	private ulong[] buffered = new ulong[8];
 	private int bufferDelay = 0;
-	private const int bufferDelayBase = 1;
+	private const int bufferDelayBase = 2;
 
 	private void Buffer(ulong[] bpldat)
 	{

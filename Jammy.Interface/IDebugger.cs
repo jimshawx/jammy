@@ -40,7 +40,7 @@ namespace Jammy.Interface
 		void ClearBBUSY();
 		uint Read32(uint address);
 		void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute,
-			int counter = 0, Size size = Size.Long, Func<Breakpoint, bool> callback = null);
+			int counter = 0, Size? size = null, Func<Breakpoint, bool> callback = null);
 		void RemoveBreakpoint(uint address);
 		void RemoveBreakpoint(Breakpoint bp);
 		void DumpBreakpoints();

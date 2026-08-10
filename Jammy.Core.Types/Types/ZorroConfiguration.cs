@@ -49,5 +49,15 @@ namespace Jammy.Core.Types.Types
 				throw new ArgumentException("ser must be 4 characters");
 			return ((uint)ser[0] << 24) | ((uint)ser[1] << 16) | ((uint)ser[2] << 8) | (uint)ser[3];
 		}
+
+		public static string GetSerial(uint ser)
+		{
+			var serial = new char[4];
+			serial[0] = (char)(ser >> 24);
+			serial[1] = (char)((ser >> 16)&0xff);
+			serial[2] = (char)((ser >> 8)&0xff);
+			serial[3] = (char)(ser & 0xff);
+			return new string(serial);
+		}
 	}
 }

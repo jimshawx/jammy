@@ -25,7 +25,7 @@ namespace Jammy.Core.Types.Types.Breakpoints
 		public int CounterReset { get; set; }
 		public int Counter { get; set; }
 
-		public Size Size { get; set; }
+		public Size? Size { get; set; }
 
 		public ulong? Value { get; set; }
 

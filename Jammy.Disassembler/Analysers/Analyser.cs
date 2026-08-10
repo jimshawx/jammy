@@ -147,7 +147,7 @@ namespace Jammy.Disassembler.Analysers
 		{
 			try
 			{
-				string filename = "LVOs.i.txt";
+				string filename = Path.Combine(AppContext.BaseDirectory, "LVOs.i.txt");
 				using (var f = File.OpenText(filename))
 				{
 					string currentLib = string.Empty;
@@ -190,7 +190,7 @@ namespace Jammy.Disassembler.Analysers
 		{
 			try
 			{
-				string filename = "LVO_2.1.txt";
+				string filename = Path.Combine(AppContext.BaseDirectory, "LVO_2.1.txt");
 				using (var f = File.OpenText(filename))
 				{
 					string currentLib = string.Empty;

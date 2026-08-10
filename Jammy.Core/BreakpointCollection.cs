@@ -23,7 +23,7 @@ namespace Jammy.Core
 		}
 
 		public void AddBreakpoint(uint address, BreakpointType type = BreakpointType.Execute, int counter = 0,
-			Size size = Size.Word, ulong? value = null, Func<Breakpoint, bool> callback = null)
+			Size? size = null, ulong? value = null, Func<Breakpoint, bool> callback = null)
 		{
 			breakpoints[address] = new Breakpoint { Address = address, Active = true, Type = type, Counter = counter,
 				CounterReset = counter, Size = size, Value = value, BreakpointHit = callback };
@@ -63,7 +63,7 @@ namespace Jammy.Core
 		private bool Matches(Breakpoint bp, ulong value, Size size)
 		{
 			return (bp.Value == null || bp.Value == value) 
-			       && bp.Size == size;
+			       && (!bp.Size.HasValue || bp.Size.Value == size);
 		}
 
 		private bool ShouldBreakpointTrigger(uint pc, Breakpoint bp)
