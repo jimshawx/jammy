@@ -12,7 +12,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		bool IsBreakpoint(uint address);
 		//cpu interface
-		void MemoryBreakpoint(Breakpoint bp, uint address, Size size);
+		void MemoryBreakpoint(Breakpoint bp, uint pc, uint address, Size size);
 		bool ExecutionBreakpoint(uint pc);
 
 		//machine interface

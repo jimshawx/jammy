@@ -43,21 +43,21 @@ namespace Jammy.Core
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Write || bp.Type == BreakpointType.ReadOrWrite)
-					MemoryBreakpoint(bp,insaddr, size);
+					MemoryBreakpoint(bp, insaddr, address, size);
 		}
 
 		public void Read(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && Matches(bp, value, size) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-					MemoryBreakpoint(bp, insaddr, size);
+					MemoryBreakpoint(bp, insaddr, address, size);
 		}
 
 		public void Fetch(uint insaddr, uint address, uint value, Size size)
 		{
 			if (breakpoints.TryGetValue(address, out Breakpoint bp) && bp.Active)
 				if (bp.Type == BreakpointType.Read || bp.Type == BreakpointType.ReadOrWrite)
-					MemoryBreakpoint(bp, insaddr, size);
+					MemoryBreakpoint(bp, insaddr, address, size);
 		}
 
 		private bool Matches(Breakpoint bp, ulong value, Size size)
@@ -121,9 +121,9 @@ namespace Jammy.Core
 		}
 
 		//here is where memory reads/writes/fetches call to signal a breakpoint
-		public void MemoryBreakpoint(Breakpoint bp, uint address, Size size)
+		public void MemoryBreakpoint(Breakpoint bp, uint pc, uint address, Size size)
 		{
-			Breakpoint(bp, address, size);
+			Breakpoint(bp, pc, address, size);
 		}
 
 		//here is where the CPUs call at the end of an instruction to check for a breakpoint at new pc
@@ -131,7 +131,7 @@ namespace Jammy.Core
 		{
 			if (breakpoints.TryGetValue(pc, out var bp) && IsExecutable(bp))
 			{
-				Breakpoint(bp, pc, Size.Word);
+				Breakpoint(bp, pc, 0, Size.Word);
 				return true;
 			}
 
@@ -156,7 +156,7 @@ namespace Jammy.Core
 		}
 
 		//signal a breakpoint (bp) hit
-		private void Breakpoint(Breakpoint bp, uint pc, Size size)
+		private void Breakpoint(Breakpoint bp, uint pc, uint address, Size size)
 		{
 			logger.LogTrace($"Breakpoint @{pc:X8} {bp.Type}");
 
@@ -168,7 +168,8 @@ namespace Jammy.Core
 			}
 
 			hitbp.Bp = bp;
-			hitbp.Address = pc;
+			hitbp.PC = pc;
+			hitbp.Address = address;
 			hitbp.Size = size;
 			breakpointHit = hitbp;
 		}

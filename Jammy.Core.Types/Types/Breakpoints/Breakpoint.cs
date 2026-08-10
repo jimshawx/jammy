@@ -35,6 +35,7 @@ namespace Jammy.Core.Types.Types.Breakpoints
 	public class BreakpointHitInfo
 	{
 		public Breakpoint Bp;
+		public uint PC;
 		public uint Address;
 		public Size Size;
 	}
