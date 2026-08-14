@@ -98,18 +98,24 @@ namespace Jammy.Core.EmulationWindow.DX
 			}
 
 			if ((mouse.ulButtons & RI_MOUSE_LEFT_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseLeft;
-			else io.MouseButtons &= ~InputOutput.MouseButton.MouseLeft;
+			if ((mouse.ulButtons & RI_MOUSE_LEFT_BUTTON_UP) != 0) io.MouseButtons &= ~InputOutput.MouseButton.MouseLeft;
 
 			if ((mouse.ulButtons & RI_MOUSE_MIDDLE_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseMiddle;
-			else io.MouseButtons &= ~InputOutput.MouseButton.MouseMiddle					;
+			if ((mouse.ulButtons & RI_MOUSE_MIDDLE_BUTTON_UP) != 0) io.MouseButtons &= ~InputOutput.MouseButton.MouseMiddle					;
 
 			if ((mouse.ulButtons & RI_MOUSE_RIGHT_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseRight;
-			else io.MouseButtons &= ~InputOutput.MouseButton.MouseRight;
+			if ((mouse.ulButtons & RI_MOUSE_RIGHT_BUTTON_UP) != 0) io.MouseButtons &= ~InputOutput.MouseButton.MouseRight;
+
+			logger.LogTrace($"{io.MouseButtons} {mouse.usFlags}");
 		}
 
 		private const int RI_MOUSE_LEFT_BUTTON_DOWN = 0x0001 ;
 		private const int RI_MOUSE_MIDDLE_BUTTON_DOWN = 0x0010;
 		private const int RI_MOUSE_RIGHT_BUTTON_DOWN = 0x0004;
+
+		private const int RI_MOUSE_LEFT_BUTTON_UP = 0x0002;
+		private const int RI_MOUSE_RIGHT_BUTTON_UP = 0x0008;
+		private const int RI_MOUSE_MIDDLE_BUTTON_UP = 0x0020;
 
 		private const int KEYBOARD_OVERRUN_MAKE_CODE = 0xff;
 
@@ -118,7 +124,7 @@ namespace Jammy.Core.EmulationWindow.DX
 			if (keyboard.MakeCode == KEYBOARD_OVERRUN_MAKE_CODE) return;
 			if (keyboard.VKey > 255) return;
 
-			logger.LogTrace($"key {keyboard.VKey} {keyboard.Flags:X4} {keyboard.MakeCode}");
+			//logger.LogTrace($"key {keyboard.VKey} {keyboard.Flags:X4} {keyboard.MakeCode}");
 
 			//L/R shift, L/R ctrl, L/R alt
 			if (keyboard.VKey == (ushort)VK.VK_LSHIFT && (keyboard.Flags & 0x02) != 0)

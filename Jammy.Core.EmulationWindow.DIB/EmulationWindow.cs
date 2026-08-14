@@ -383,18 +383,22 @@ namespace Jammy.Core.EmulationWindow.DIB
 			}
 
 			if ((mouse.ulButtons & RI_MOUSE_LEFT_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseLeft;
-			else io.MouseButtons &= ~InputOutput.MouseButton.MouseLeft;
+			if ((mouse.ulButtons & RI_MOUSE_LEFT_BUTTON_UP) != 0) io.MouseButtons &= ~InputOutput.MouseButton.MouseLeft;
 
 			if ((mouse.ulButtons & RI_MOUSE_MIDDLE_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseMiddle;
-			else io.MouseButtons &= ~InputOutput.MouseButton.MouseMiddle;
+			if ((mouse.ulButtons & RI_MOUSE_MIDDLE_BUTTON_UP) != 0) io.MouseButtons &= ~InputOutput.MouseButton.MouseMiddle;
 
 			if ((mouse.ulButtons & RI_MOUSE_RIGHT_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseRight;
-			else io.MouseButtons &= ~InputOutput.MouseButton.MouseRight;
+			if ((mouse.ulButtons & RI_MOUSE_RIGHT_BUTTON_UP) != 0) io.MouseButtons &= ~InputOutput.MouseButton.MouseRight;
 		}
 
 		private const int RI_MOUSE_LEFT_BUTTON_DOWN = 0x0001;
 		private const int RI_MOUSE_MIDDLE_BUTTON_DOWN = 0x0010;
 		private const int RI_MOUSE_RIGHT_BUTTON_DOWN = 0x0004;
+
+		private const int RI_MOUSE_LEFT_BUTTON_UP = 0x0002;
+		private const int RI_MOUSE_RIGHT_BUTTON_UP = 0x0008;
+		private const int RI_MOUSE_MIDDLE_BUTTON_UP = 0x0020;
 
 		private const int KEYBOARD_OVERRUN_MAKE_CODE = 0xff;
 
