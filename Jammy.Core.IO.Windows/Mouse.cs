@@ -133,8 +133,8 @@ namespace Jammy.Core.IO.Windows
 				else
 					potgo |= (1u << 8);
 
-				int dx = io.MouseDX;
-				int dy = io.MouseDY;
+				int dx = (int)(io.MouseDX * 1.5f);
+				int dy = (int)(io.MouseDY * 1.5f);
 
 				if (Math.Abs(dx) > 255 || Math.Abs(dy) > 255) logger.LogTrace($"mouse too fast {dx},{dy}");
 				//dx = dx + (dx >> 1);
