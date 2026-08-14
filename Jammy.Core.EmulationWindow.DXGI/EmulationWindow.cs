@@ -105,8 +105,6 @@ namespace Jammy.Core.EmulationWindow.DX
 
 			if ((mouse.ulButtons & RI_MOUSE_RIGHT_BUTTON_DOWN) != 0) io.MouseButtons |= InputOutput.MouseButton.MouseRight;
 			if ((mouse.ulButtons & RI_MOUSE_RIGHT_BUTTON_UP) != 0) io.MouseButtons &= ~InputOutput.MouseButton.MouseRight;
-
-			logger.LogTrace($"{io.MouseButtons} {mouse.usFlags}");
 		}
 
 		private const int RI_MOUSE_LEFT_BUTTON_DOWN = 0x0001 ;
