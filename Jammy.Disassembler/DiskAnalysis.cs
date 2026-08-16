@@ -46,7 +46,7 @@ namespace Jammy.Disassembler
 			};
 
 			var id = new IdBlockEntry();
-			objectMapper.MapObject(id, state.hd, 0);
+			objectMapper.Deserialize(state.hd, 0, id);
 			if (ByteString(id.Id, 3) != "DOS")
 			{
 				logger.LogTrace($"{disk} isn't an ADF image");
@@ -59,11 +59,11 @@ namespace Jammy.Disassembler
 			amigaDisk.FileSystem = state.FileSystem;
 
 			var boot = new BootBlock();
-			objectMapper.MapObject(boot, state.hd, 0);
+			objectMapper.Deserialize(state.hd, 0, boot);
 			amigaDisk.BootblockCode = boot.BootblockCode.Concat(state.hd[512..1024]).ToArray();
 
 			var root = new RootBlock(); 
-			objectMapper.MapObject(root, state.hd, 880*512);
+			objectMapper.Deserialize(state.hd, 880 * 512, root);
 
 			amigaDisk.RootDirectory = ExtractRootBlock(root, state);
 
@@ -80,7 +80,7 @@ namespace Jammy.Disassembler
 			var amigaDisk = new AmigaRigidDisk();
 
 			var rdsk = new RigidDiskBlock();
-			objectMapper.MapObject(rdsk, state.hd, 0);
+			objectMapper.Deserialize(state.hd, 0, rdsk);
 			if (ByteString(rdsk.Id) != "RDSK")
 			{
 				logger.LogTrace($"{disk} isn't an RDSK image");
@@ -99,7 +99,7 @@ namespace Jammy.Disassembler
 			do
 			{
 				var part = new PartitionBlock();
-				objectMapper.MapObject(part, state.hd, next * 512);
+				objectMapper.Deserialize(state.hd, next * 512, part);
 
 				amigaDisk.Partitions.Add(ExtractPartition(part, state));
 
@@ -140,11 +140,11 @@ namespace Jammy.Disassembler
 			partition.FileSystem = state.FileSystem;
 
 			var root = new RootBlock();
-			string rootStr = objectMapper.MapObject(root, state.hd, rootKey);
+			string rootStr = objectMapper.Deserialize(state.hd, rootKey, root);
 			//logger.LogTrace(rootStr);
 
 			var id = new IdBlockEntry();
-			objectMapper.MapObject(id, state.hd, rootKey);
+			objectMapper.Deserialize(state.hd, rootKey, id);
 			//if (root.Chksum != id.BlockChecksum())
 			//	logger.LogTrace($"The root checksum is bad {root.Chksum:X8} {RootChecksum(id.BlockInts):X8}");
 
@@ -181,7 +181,7 @@ namespace Jammy.Disassembler
 			var entries = new List<IAmigaDirectoryEntry>();
 
 			var id = new IdBlockEntry();
-			objectMapper.MapObject(id, state.hd, ht);
+			objectMapper.Deserialize(state.hd, ht, id);
 
 			if (state.BlockAddress(id.Header_Key) != ht)
 				logger.LogTrace($"Block doesn't point at itself: {state.BlockAddress(id.Header_Key)} {ht}");
@@ -190,13 +190,13 @@ namespace Jammy.Disassembler
 			{
 				case HardDisk.ST_FILE:
 					var file = new FileHeaderBlock();
-					objectMapper.MapObject(file, state.hd, ht);
+					objectMapper.Deserialize(state.hd, ht, file);
 					entries.AddRange(ExtractFile(file, state));
 					break;
 
 				case HardDisk.ST_USERDIR:
 					var dir = new UserDirectoryBlock();
-					objectMapper.MapObject(dir, state.hd, ht);
+					objectMapper.Deserialize(state.hd, ht, dir);
 					entries.AddRange(ExtractDirectory(dir, state));
 					break;
 
@@ -257,7 +257,7 @@ namespace Jammy.Disassembler
 				if (next == 0) break;
 
 				var feb = new FileExtensionBlock();
-				objectMapper.MapObject(feb, state.hd, state.BlockAddress(next));
+				objectMapper.Deserialize(state.hd, state.BlockAddress(next), feb);
 
 				blocks = feb.Data_Blocks;
 				next = feb.Extension;
@@ -277,13 +277,13 @@ namespace Jammy.Disassembler
 				if (state.FileSystem == AmigaFileSystem.FFS)
 				{
 					var ffs = new FFSDataBlock();
-					objectMapper.MapObject(ffs, state.hd, state.BlockAddress(db));
+					objectMapper.Deserialize(state.hd, state.BlockAddress(db), ffs);
 					yield return ffs.Data;
 				}
 				else
 				{
 					var ofs = new OFSDataBlock();
-					objectMapper.MapObject(ofs, state.hd, state.BlockAddress(db));
+					objectMapper.Deserialize(state.hd, state.BlockAddress(db), ofs);
 					yield return ofs.Data;
 				}
 			}

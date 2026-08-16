@@ -183,10 +183,10 @@ namespace Jammy.Tests
 			Array.Copy(src1, 0, testmem, data1addr, src1.Length);
 
 			var s = new StandardPacket();
-			om.MapObject(s, testmem, data0addr);
+			om.Deserialize(testmem, data0addr, s);
 
 			var d = new DosPacket();
-			om.MapObject(d, testmem, data1addr);
+			om.Deserialize(testmem, data1addr, d);
 
 			//This is not necessarily true.
 			//The test case is from actual AmigaDOS.  In this case sp_Pkt DOES NOT necessarily
@@ -196,7 +196,7 @@ namespace Jammy.Tests
 
 			//copy from ln_Name inside sp_Msg, that is the correct place to look for DosPacket
 			var e = new DosPacket();
-			om.MapObject(e, testmem, s.sp_Msg.mn_Node.ln_Name.Address);
+			om.Deserialize(testmem, s.sp_Msg.mn_Node.ln_Name.Address, e);
 
 			Assert.AreEqual(e.dp_Type, d.dp_Type);
 		}

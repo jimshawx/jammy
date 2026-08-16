@@ -291,6 +291,16 @@ namespace Jammy.Disassembler.TypeMapper
 			return rv;
 		}
 
+		//turn an object into bytes
+		public static List<LibValue> Serialize(uint dst, object o)
+		{
+			var root = WalkObject(o);
+
+			var rv = new List<LibValue>();
+			DumpLeaves3(dst, rv, root);
+			return rv;
+		}
+
 		public static List<LibOffset> GetLibraryOffsets(object o)
 		{
 			var root = WalkObject(o);
@@ -342,6 +352,55 @@ namespace Jammy.Disassembler.TypeMapper
 
 			foreach (var c in we.Children)
 				DumpLeaves2(offs, c);
+		}
+
+		//the idea here is to write values from the object to dst
+		//if we hit a wrappedptr, and there's no object, just write the value
+		//if we hit a wrappedptr, and there's an object, we want to save it for later, write it at the end of
+		//dst, and write the address and not the value
+		private class Wrapped
+		{
+			public uint Pointer {  get; set;}
+			public object Obj { get; set; }
+		}
+
+		private static readonly List<Wrapped> wrapped = new List<Wrapped>();
+
+		private static void DumpLeaves3(uint dst, List<LibValue> offs, WalkEntry we)
+		{
+			wrapped.Add(new Wrapped { Pointer = dst, Obj = we.ObjType });
+			while (wrapped.Count > 0)
+			{
+				var wrap = wrapped[0];
+				dst = DumpLeaves4(wrap.Pointer, offs, wrap.Obj as WalkEntry);
+				wrapped.RemoveAt(0);
+			}
+		}
+
+		private static uint DumpLeaves4(uint dst, List<LibValue> offs, WalkEntry we)
+		{
+			if (we.ObjType is IWrappedPtr)
+			{
+				wrapped.Add(new Wrapped { Pointer = dst, Obj = we.ObjType });
+			}
+
+			if (we.Children.Count == 0)
+			{
+				offs.Add(new LibValue
+				{
+					Name = we.FullName,
+					ShortName = we.Name,
+					Size = we.Size,
+					Offset = we.BaseOffset,
+					Value = we.Value1
+				});
+				dst += we.Size;
+			}
+
+			foreach (var c in we.Children)
+				DumpLeaves4(dst,offs, c);
+
+			return dst;
 		}
 
 		private static void WalkOffsets(WalkEntry we, uint baseOffset)

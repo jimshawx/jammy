@@ -2,7 +2,7 @@
 {
 	public interface IObjectMapper
 	{
-		string MapObject(object tp, uint address);
-		string MapObject(object tp, byte[] b, uint address);
+		string Deserialize(uint address, object tp);
+		string Deserialize(byte[] b, uint address, object tp);
 	}
 }

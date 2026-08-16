@@ -13,7 +13,7 @@ using Jammy.AmigaTypes;
 
 namespace Jammy.Disassembler.TypeMapper
 {
-	public class BaseMapper
+	internal class BaseMapper
 	{
 		private readonly IDebugMemoryMapper memory;
 		private readonly IAmigaTypesMapper mapper;
@@ -215,12 +215,12 @@ namespace Jammy.Disassembler.TypeMapper
 			this.logger = logger;
 		}
 
-		public string MapObject(object tp, uint address)
+		public string Deserialize(uint address, object tp)
 		{
 			return new BaseMapper(debugMemoryMapper, logger).FromAddress(tp, address);
 		}
 
-		public string MapObject(object tp, byte[] b, uint address)
+		public string Deserialize(byte[] b, uint address, object tp)
 		{
 			var memory = new ByteArrayDebugMemoryMapper(b);
 			return new BaseMapper(memory, logger).FromAddress(tp, address);

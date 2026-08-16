@@ -4,7 +4,6 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
-using Jammy.Disassembler.TypeMapper;
 using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -88,6 +87,7 @@ namespace Jammy.Core.Expansion
 		private readonly IDebugMemoryMapper memory;
 		private readonly IAssembler assembler;
 		private ZorroConfiguration configuration;
+		private readonly string rootDir;
 
 		public DosExpansionDebugHandler(IDebugger debugger, IZorroExpansionRegistry registry,
 			IObjectMapper objectMapper, ICPU cpu, IDebugMemoryMapper memory, IAssembler assembler,
@@ -101,18 +101,78 @@ namespace Jammy.Core.Expansion
 			this.memory = memory;
 			this.assembler = assembler;
 			registry.RegisterHandler(DosExpansion.Serial, this);
+			this.rootDir = "hd";
 		}
 		bool volumeLinked = false;
 		uint myVolumeNodeBPTR = 0;
 
-		private class MyFileInfo
+		private class MyLockInfo
 		{
-			public string Name { get; set; }
+			public string FullPath { get; set; }
 			public uint Size { get; set; }
 			public uint LockKey { get; set; }
 		}
 
+		private class MyFileInfo
+		{
+			public Stream stream;
+		}
+
+		private class MyDirCache
+		{
+			public MyDirCache(string basePath, ILogger logger)
+			{ 
+				var dirs = Directory.GetDirectories(basePath);
+				var fils = Directory.GetFiles(basePath);
+
+				foreach (var d in dirs)
+				{ 
+					logger.LogTrace($"D {d}");
+					DirEntries.Add(new MyDirEntry { Name = MungeName(d), IsDirectory = true });
+				}
+				foreach (var f in fils)
+				{
+					logger.LogTrace($"F {f}");
+					DirEntries.Add(new MyDirEntry { Name = MungeName(f), IsDirectory = false, Size = FileLen(f) });
+				}
+			}
+
+			private uint FileLen(string p)
+			{
+				var f = new FileInfo(p);
+				return (uint)f.Length;
+			}
+
+			private string MungeName(string p)
+			{
+				p = Path.GetFileName(p);
+				p = p.Replace('\\', '/');
+				return p;
+			}	
+
+			public class MyDirEntry
+			{
+				public string Name { get; set; }
+				public bool IsDirectory { get; set; }
+				public uint Size { get; set; }
+			}
+
+			private readonly List<MyDirEntry> DirEntries = new List<MyDirEntry>();
+
+			public MyDirEntry Next()
+			{
+				if (DirEntries.Count == 0) return null;
+				var d = DirEntries[0];
+				DirEntries.RemoveAt(0);
+				return d;
+			}
+		}
+
+		private readonly Dictionary<uint, MyLockInfo> locks = new Dictionary<uint, MyLockInfo>();
+
 		private readonly Dictionary<uint, MyFileInfo> files = new Dictionary<uint, MyFileInfo>();
+
+		private readonly Dictionary<uint, MyDirCache> dircache = new Dictionary<uint, MyDirCache>();
 
 		public override void Init(ZorroConfiguration configuration)
 		{
@@ -221,15 +281,14 @@ namespace Jammy.Core.Expansion
 					memory.UnsafeWrite32(volMem + 32, 0x4D594653);
 					memory.UnsafeWrite32(volMem + 40, nameMem >> 2);
 
-					myVolumeNodeBPTR = volMem >> 2; // Save this to use in LOCATE_OBJECT!
+					myVolumeNodeBPTR = volMem >> 2;
 
-					// 3. THE ACTUAL INJECTION: Walk ExecBase->libList to find dos.library
+					// walk ExecBase->libList to find dos.library
 					uint execBase = memory.UnsafeRead32(4);
-					uint libListHead = execBase + 378; // Offset of libList.lh_Head in ExecBase
+					uint libListHead = execBase + 378; // libList.lh_Head
 					uint node = memory.UnsafeRead32(libListHead);
 					uint dosBase = 0;
 
-					// Walk the library linked list
 					while (memory.UnsafeRead32(node) != 0)
 					{
 						uint namePtr = memory.UnsafeRead32(node + 10); // ln_Name pointer
@@ -282,24 +341,17 @@ namespace Jammy.Core.Expansion
 					regs.SR = memory.UnsafeRead16(regs.SSP); regs.SSP += 2;
 					regs.PC = memory.UnsafeRead32(regs.SSP); regs.SSP += 4;
 					cpu.SetRegs(regs);
-
 					return false;
 				}
 
 				//dos packet is in A4
 				var pkt = new DosPacket();
-				objectMapper.MapObject(pkt, regs.A[4]);
+				objectMapper.Deserialize(regs.A[4], pkt);
 				uint typ = memory.UnsafeRead32(regs.A[4] + 8);
+
+				//sanity check the MapObject
 				if (typ != pkt.dp_Type)
-					logger.LogTrace($"MAPPING packet type mismatch {typ} {pkt.dp_Type}");
-
-				//for (uint i = 0; i < 80; i += 4)
-				//	logger.LogTrace($"{regs.A[2] + i:X8} {memory.UnsafeRead32(regs.A[2] + i):X8}");
-
-				//for (uint i = 0; i < 80; i += 4)
-				//	logger.LogTrace($"{regs.A[4]+i:X8} {memory.UnsafeRead32(regs.A[4]+i):X8}");
-
-				logger.LogTrace($"Packet {pkt.dp_Type}");
+					throw new ArgumentException($"MAPPING packet type mismatch {typ} {pkt.dp_Type}");
 
 				const int ACTION_INHIBIT = 0x1f;
 				const int ACTION_HANDLER_INFO = 0x19;
@@ -309,30 +361,46 @@ namespace Jammy.Core.Expansion
 				const int ACTION_LOCATE_OBJECT = 0x8;
 				const int ACTION_EXAMINE_OBJECT = 0x17;
 				const int ACTION_EXAMINE_NEXT = 0x18;
+				const int ACTION_INFO = 0x1A;
+				const int ACTION_PARENT = 29;
+
+				const int ACTION_READ = 'R';
+				const int ACTION_WRITE = 'W';
 
 				const int ACTION_FINDINPUT = 1005;
-				const int ACTION_END = 1007;
+				const int ACTION_FINDOUTPUT = 1006;
+				const int ACTION_FINDUPDATE = 1004;
 
-				const int DOSTRUE = -1;
+				const int ACTION_END = 1007;
+				const int ACTION_SEEK = 1008;
+
+				const uint DOSTRUE = 0xffffffff;
 				const int DOSFAIL = 0;
 
 				const int ERROR_NO_MORE_ENTRIES = 232;
 				const int ERROR_OBJECT_NOT_FOUND = 205;
 
+
+				const int ST_ROOT = 1;
+				const int ST_USERDIR = 2;
+				const int ST_SOFTLINK = 3;
+				const int ST_LINKDIR = 4;
+				const int ST_FILE = -3;
+				const int ST_LINKFILE = -4;
+
 				switch (pkt.dp_Type)
 				{
 					case ACTION_INHIBIT:
 						{
-							logger.LogTrace($"inhibit {pkt.dp_Arg1}");
-							pkt.dp_Res1 = DOSTRUE;
-							pkt.dp_Res2 = 0;
-							memory.UnsafeWrite32(regs.A[4] + 12, 0xffffffff);
+							logger.LogTrace($"ACTION_INHIBIT {pkt.dp_Arg1}");
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						}
 						break;
 
 					case ACTION_HANDLER_INFO://aka ACTION_DISK_INFO
 						{
+							logger.LogTrace($"ACTION_HANDLER_INFO");
 							uint address = (uint)pkt.dp_Arg1 << 2;//InfoData
 							/*
 							public class InfoData
@@ -348,94 +416,114 @@ namespace Jammy.Core.Expansion
 								public LONG id_InUse { get; set; }
 							}
 							*/
+
+							//the hard way
 							const uint ID_VALIDATED = 82;
 							const uint ID_NOT_REALLY_DOS = 0x4E444F53;  /* 'NDOS'  */
 
 							memory.UnsafeWrite32(address, 0); address += 4;
 							memory.UnsafeWrite32(address, 0); address += 4;
 							memory.UnsafeWrite32(address, 2); address += 4;//ID_VALIDATED); address += 4;
-							memory.UnsafeWrite32(address, 0x40000000); address += 4;//1GB
+							memory.UnsafeWrite32(address, 0x40000000/512); address += 4;//1GB
 							memory.UnsafeWrite32(address, 0); address += 4;//nothing used
 							memory.UnsafeWrite32(address, 512); address += 4;//512 byte blocks
 							memory.UnsafeWrite32(address, 0x4D594653); address += 4;//MYFS        0x4A414D4D); address += 4;//JAMM
 							memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
 							memory.UnsafeWrite32(address, 0); address += 4;
 
-							var t = new InfoData();
-							t.id_NumSoftErrors = 0;
-							t.id_UnitNumber = 1;
-							t.id_DiskState = 2;
-							t.id_NumBlocks = 0x40000000 / 512;
-							t.id_NumBlocksUsed = 0;
-							t.id_BytesPerBlock = 512;
-							t.id_DiskType = 0x4D594653;
-							t.id_VolumeNode = myVolumeNodeBPTR;
-							t.id_InUse = 0;
-							var c = ObjectWalk.Walk(t);
-							logger.LogTrace(c);
-							var w = ObjectWalk.Walk2(t);
+							////the easy way
+							//var t = new InfoData();
+							//t.id_NumSoftErrors = 0;
+							//t.id_UnitNumber = 0;
+							//t.id_DiskState = 2;
+							//t.id_NumBlocks = 0x40000000 / 512;
+							//t.id_NumBlocksUsed = 0;
+							//t.id_BytesPerBlock = 512;
+							//t.id_DiskType = 0x4D594653;
+							//t.id_VolumeNode = myVolumeNodeBPTR;
+							//t.id_InUse = 0;
+							//var c = ObjectWalk.Walk(t);
+							//logger.LogTrace(c);
+							//var w = ObjectWalk.Walk2(t);
 
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+							memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						}
+						break;
 
-							memory.UnsafeWrite32(regs.A[4] + 12, 0xffffffff);
+					case ACTION_INFO:
+						{
+							logger.LogTrace($"ACTION_INFO {pkt.dp_Arg1:X8} {pkt.dp_Arg2 << 2:X8}");
+
+							uint address = (uint)pkt.dp_Arg2 << 2;//InfoData
+							memory.UnsafeWrite32(address, 0); address += 4;
+							memory.UnsafeWrite32(address, 0); address += 4;
+							memory.UnsafeWrite32(address, 2); address += 4;//ID_VALIDATED); address += 4;
+							memory.UnsafeWrite32(address, 0x40000000 / 512); address += 4;//1GB
+							memory.UnsafeWrite32(address, 0); address += 4;//nothing used
+							memory.UnsafeWrite32(address, 512); address += 4;//512 byte blocks
+							memory.UnsafeWrite32(address, 0x4D594653); address += 4;//MYFS        0x4A414D4D); address += 4;//JAMM
+							memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
+							memory.UnsafeWrite32(address, 0); address += 4;
+
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						}
 						break;
 
 					case ACTION_LOCATE_OBJECT:
 						{
-							Node reference;
+							logger.LogTrace($"ACTION_LOCATE_OBJECT");
+							string pathName = string.Empty;
+
+							int mode = pkt.dp_Arg3;
+							if (mode == -2)
+								logger.LogTrace($"MODE SHARED_LOCK/ACCESS_READ");
+							else if (mode == -1)
+								logger.LogTrace("MODE EXCLUSIVE_LOCK/ACCESS_WRITE");
+							else
+							{ 
+								logger.LogTrace("MODE UNKNOWN => ACCESS_READ");
+								mode = -2;
+							}
+
 							if (pkt.dp_Arg1 != 0)
 							{
 								var @lock = new FileLock();
-								objectMapper.MapObject(@lock, (uint)pkt.dp_Arg1 << 2);
-								logger.LogTrace($"LOCATE FAILING {@lock.fl_Key:X8}");
-								reference = new Node();//root node
-							}
-							else
-							{
-								reference = new Node();//root node
+								objectMapper.Deserialize((uint)pkt.dp_Arg1 << 2, @lock);
+								logger.LogTrace($"LOCATE FAILING (parent) {@lock.fl_Key:X8}");
 							}
 
-							uint name = (uint)pkt.dp_Arg2;
-							if (name == 0)
+							uint namePtr = (uint)pkt.dp_Arg2<<2;
+							if (namePtr == 0)
 							{
 								logger.LogTrace($"LOCATE empty name");
 							}
 							else
 							{
-								var sb = new StringBuilder();
-								name <<= 2;
-								byte l = memory.UnsafeRead8(name++);
+								pathName = ReadDOSString(namePtr);;
 
+								//if (pathName != "" && pathName.ToUpper() != "MYDEV:" && pathName.ToUpper() != "MYDEV")
+								//{
+								//	logger.LogTrace($"LOCATE FAILING (path) {pathName}");
 
-								while (l-- != 0)
-								{
-									byte b = memory.UnsafeRead8(name++);
-									sb.Append((char)b);
-								}
+								//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								//	break;
+								//}
 
-								if (sb.ToString() != "" && sb.ToString().ToUpper() != "MYDEV:" && sb.ToString().ToUpper() != "MYDEV")
-								{
-									logger.LogTrace($"LOCATE FAILING {sb.ToString()}");
-
-									memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-									memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-									break;
-								}
-
-
-								logger.LogTrace($"LOCATE {sb.ToString()}");
-
+								logger.LogTrace($"LOCATE {pathName}");
 							}
-							uint mode = (uint)pkt.dp_Arg3;
-							logger.LogTrace($"MODE {mode:X8}");
 
 							uint mem = AllocMem(20, 1);
 							memory.UnsafeWrite32(mem, 0);
-							memory.UnsafeWrite32(mem + 4, 0);//0x12345678);
-							memory.UnsafeWrite32(mem + 8, mode);
+							memory.UnsafeWrite32(mem + 4, mem);
+							memory.UnsafeWrite32(mem + 8, (uint)mode);
 							memory.UnsafeWrite32(mem + 12, regs.A[3]);
-							memory.UnsafeWrite32(mem + 16, myVolumeNodeBPTR);//regs.A[5]);
+							memory.UnsafeWrite32(mem + 16, myVolumeNodeBPTR);
+
+							locks.Add(mem, new MyLockInfo { FullPath = pathName, Size = 0, LockKey = mem });
+							logger.LogTrace($"LOCATE lock {mem:X8}");
 
 							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -444,13 +532,87 @@ namespace Jammy.Core.Expansion
 
 					case ACTION_EXAMINE_OBJECT:
 						{
+							logger.LogTrace($"ACTION_EXAMINE_OBJECT {pkt.dp_Arg1<<2:X8}");
+
 							uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 							var lok = new FileLock();
-							objectMapper.MapObject(lok, lockPtr);
+							objectMapper.Deserialize(lockPtr, lok);
+
+							//logger.LogTrace($"{lok.fl_Link:X8}");
+							//logger.LogTrace($"{lok.fl_Key:X8}");
+							//logger.LogTrace($"{lok.fl_Access:X8}");
+							//logger.LogTrace($"{lok.fl_Task.Address:X8}");
+							//logger.LogTrace($"{lok.fl_Volume:X8}");
+
+							string basePath = "";
+							if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+							{
+								logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+							else
+							{
+								logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
+
+								//for root this is 'mydev:'
+
+								//so, i think we want to find the first colon, and replace that bit with rootDir
+
+								int t = parent.FullPath.IndexOf(':');
+								if (t != -1)
+								{
+									basePath = Path.Combine(rootDir, parent.FullPath.Substring(t+1));
+								}
+
+							}
+							logger.LogTrace($"PATH {basePath}");
+
+							if (basePath == "")
+							{
+								logger.LogTrace("NO PATH");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+
+							var dircach = new MyDirCache(basePath, logger);
+							//overwrite any existing entry
+							dircache[(uint)pkt.dp_Arg1 << 2] = dircach;
+
+							//var s = new FileInfoBlock();
+							/*
+							  0 public LONG fib_DiskKey { get; set; }
+							  4 public LONG fib_DirEntryType { get; set; }
+							    [AmigaArraySize(108)]
+							  8 public char[] fib_FileName { get; set; }
+							116 public LONG fib_Protection { get; set; }
+							120	public LONG fib_EntryType { get; set; }
+							124	public LONG fib_Size { get; set; }
+							128	public LONG fib_NumBlocks { get; set; }
+							132	public DateStamp fib_Date { get; set; }
+								[AmigaArraySize(80)]
+							144	public char[] fib_Comment { get; set; }
+								[AmigaArraySize(36)]
+							224	public char[] fib_Reserved { get; set; }
+							260
+							*/
+
+							var thing = new MyDirCache.MyDirEntry { Name = basePath, IsDirectory = true};
+							//if (thing == null)
+							//{
+							//	logger.LogTrace("NO MORE FILES");
+							//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+							//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							//	break;
+							//}
+							logger.LogTrace($"{thing.Name} {thing.Size} {(thing.IsDirectory?'D':'F')}");
+
 							uint fib = (uint)pkt.dp_Arg2 << 2;
-							memory.UnsafeWrite32(fib + 4, 2); // fib_DirEntryType = Directory
-							memory.UnsafeWrite32(fib + 120, 2); // fib_EntryType
-							memory.UnsafeWrite32(fib + 124, 0); // fib_Size = 0 for dirs
+							memory.UnsafeWrite32(fib + 4, (uint)(thing.IsDirectory? ST_USERDIR:ST_FILE));
+							memory.UnsafeWrite32(fib + 120, (uint)(thing.IsDirectory ? ST_USERDIR : ST_FILE));
+							memory.UnsafeWrite32(fib + 124, thing.IsDirectory? 0:thing.Size);
 
 							memory.UnsafeWrite32(fib, (uint)lok.fl_Key);
 							memory.UnsafeWrite32(fib + 116, 0);//rwed
@@ -459,72 +621,277 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(fib + 136, 0);     // Minutes
 							memory.UnsafeWrite32(fib + 140, 0);     // Ticks (1/50th of a sec)
 
-							//memory.UnsafeWrite8(fib + 8, 0);
+							uint s = fib+8;
+							memory.UnsafeWrite8(s++, (byte)thing.Name.Length);
+							for (int i = 0; i < thing.Name.Length; i++)
+								memory.UnsafeWrite8(s++, (byte)thing.Name[i]);
 
-							memory.UnsafeWrite8(fib + 8, (byte)'M');
-							memory.UnsafeWrite8(fib + 9, (byte)'Y');
-							memory.UnsafeWrite8(fib + 10, (byte)'D');
-							memory.UnsafeWrite8(fib + 11, (byte)'E');
-							memory.UnsafeWrite8(fib + 12, (byte)'V');
-							memory.UnsafeWrite8(fib + 13, 0);
-
-							memory.UnsafeWrite32(regs.A[4] + 12, 0xffffffff);
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						}
 						break;
 
 					case ACTION_EXAMINE_NEXT:
+						logger.LogTrace($"ACTION_EXAMINE_NEXT {pkt.dp_Arg1:X8}");
+						{ 
+						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+						var lok = new FileLock();
+						objectMapper.Deserialize(lockPtr, lok);
+
+						if (dircache.TryGetValue((uint)pkt.dp_Arg1 << 2, out var dircach2))
+						{
+							var thing = dircach2.Next();
+							if (thing == null)
+							{
+								logger.LogTrace("NO MORE FILES");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+								logger.LogTrace($"{thing.Name} {thing.Size} {(thing.IsDirectory ? 'D' : 'F')}");
+
+							uint fib = (uint)pkt.dp_Arg2 << 2;
+							memory.UnsafeWrite32(fib + 4, (uint)(thing.IsDirectory ? ST_USERDIR : ST_FILE));
+							memory.UnsafeWrite32(fib + 120, (uint)(thing.IsDirectory ? ST_USERDIR : ST_FILE));
+							memory.UnsafeWrite32(fib + 124, thing.IsDirectory ? 0 : thing.Size);
+
+							memory.UnsafeWrite32(fib, (uint)lok.fl_Key);
+							memory.UnsafeWrite32(fib + 116, 0);//rwed
+
+							memory.UnsafeWrite32(fib + 132, 10000); // Days since 1978
+							memory.UnsafeWrite32(fib + 136, 0);     // Minutes
+							memory.UnsafeWrite32(fib + 140, 0);     // Ticks (1/50th of a sec)
+
+							uint s = fib + 8;
+							memory.UnsafeWrite8(s++, (byte)thing.Name.Length);
+							for (int i = 0; i < thing.Name.Length; i++)
+								memory.UnsafeWrite8(s++, (byte)thing.Name[i]);
+
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+							memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							break;
+						}
+
+						logger.LogTrace($"dir cache not found {(uint)pkt.dp_Arg1 << 2:X8}");
 
 						//no more files
 						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_NO_MORE_ENTRIES);
+						}
 						break;
 
 					case ACTION_FREE_LOCK:
+						logger.LogTrace($"ACTION_FREE_LOCK {pkt.dp_Arg1<<2:X8}");
 						{
 							uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 							var lok = new FileLock();
-							objectMapper.MapObject(lok, lockPtr);
+							objectMapper.Deserialize(lockPtr, lok);
 
-							memory.UnsafeWrite32(regs.A[4] + 12, 0xffffffff);
+							FreeMem(lockPtr, 20);
+							locks.Remove(lockPtr);
+
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						}
 						break;
 
-
-					case ACTION_FINDINPUT:
+					case ACTION_PARENT:
+						logger.LogTrace($"ACTION_PARENT {pkt.dp_Arg1 << 2:X8}");
 						{
-							uint bstrAddr = (uint)pkt.dp_Arg2 << 2;
-							if (bstrAddr == 0)
+							uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+							var lok = new FileLock();
+							objectMapper.Deserialize(lockPtr, lok);
+
+							if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
 							{
-								logger.LogTrace("ACTION_FINDINPUT with empty filename");
+								logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+								//memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								//memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								//break;
 							}
-							else
-							{
-								byte length = memory.UnsafeRead8(bstrAddr);
-								var sb = new StringBuilder();
-								for (int i = 0; i < length; i++)
-									sb.Append((char)memory.UnsafeRead8(bstrAddr + 1 + (uint)i));
-								logger.LogTrace($"ACTION_FINDINPUT for file: {sb.ToString()}");
-							}
+
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 						}
 						break;
 
-					case ACTION_END:
-						memory.UnsafeWrite32(regs.A[4] + 12, 0xffffffff);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					case ACTION_FINDINPUT:
+					case ACTION_FINDOUTPUT:
+					case ACTION_FINDUPDATE:
+
+						if (pkt.dp_Type == ACTION_FINDINPUT) logger.LogTrace($"ACTION_FINDINPUT {pkt.dp_Arg2<<2:X8}");
+						if (pkt.dp_Type == ACTION_FINDOUTPUT) logger.LogTrace($"ACTION_FINDOUTPUT {pkt.dp_Arg2 << 2:X8}");
+						if (pkt.dp_Type == ACTION_FINDUPDATE) logger.LogTrace($"ACTION_FINDUPDATE {pkt.dp_Arg2 << 2:X8}");
+						{
+							//Arg1 points to a FileHandle
+							//Arg2 is the lock
+							//Arg3 is the filename
+
+							string basePath = "";
+
+							if (!locks.TryGetValue((uint)pkt.dp_Arg2<<2, out var parent))
+							{
+								logger.LogTrace($"parent lock not found {pkt.dp_Arg2<<2:X8}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+							else
+							{
+								logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
+
+								if (parent.FullPath == ":")
+								{
+									basePath = rootDir;
+								}
+							}
+
+							uint bstrAddr = (uint)pkt.dp_Arg3 << 2;
+							if (bstrAddr == 0)
+							{
+								logger.LogTrace("ACTION_FINDINPUT empty name");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+							else
+							{
+								string pathName = ReadDOSString(bstrAddr);
+								logger.LogTrace($"ACTION_FINDINPUT {pathName}");
+								basePath = Path.Combine(basePath, pathName);
+							}
+							logger.LogTrace($"Looking for {basePath}");
+							if (Path.Exists(basePath))
+							{
+								logger.LogTrace("FOUND");
+								//need to fill in FileHandle at Arg1
+								/*
+								var x = new FileHandle();
+								public MessagePtr fh_Link { get; set; }
+								public MsgPortPtr fh_Port { get; set; }
+								public MsgPortPtr fh_Type { get; set; }
+								public LONG fh_Buf { get; set; }
+								public LONG fh_Pos { get; set; }
+								public LONG fh_End { get; set; }
+								public LONG fh_Funcs { get; set; }
+								public LONG fh_Func2 { get; set; }
+								public LONG fh_Func3 { get; set; }
+								public LONG fh_Args { get; set; }
+								public LONG fh_Arg2 { get; set; }
+								*/
+
+								var f = new MyFileInfo();
+
+								FileAccess access = FileAccess.Read;
+								FileMode mode = FileMode.Open;
+								if (pkt.dp_Type == ACTION_FINDINPUT) { mode = FileMode.Open; access = FileAccess.Read; }
+								if (pkt.dp_Type == ACTION_FINDOUTPUT) { mode = FileMode.OpenOrCreate; access = FileAccess.ReadWrite; }
+								if (pkt.dp_Type == ACTION_FINDUPDATE) { mode = FileMode.Open; access = FileAccess.ReadWrite; }
+
+								f.stream = File.Open(basePath, mode, access, FileShare.Read);
+								uint id = UniqueFileId();
+								files.Add(id, f);
+
+								//set fh_Pos/fh_End = -1
+								uint address = (uint)pkt.dp_Arg1 << 2;
+								memory.UnsafeWrite32(address + 16, 0xffffffff);
+								memory.UnsafeWrite32(address + 20, 0xffffffff);
+								memory.UnsafeWrite32(address + 36, id);
+
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+								memory.UnsafeWrite32(regs.A[4] + 16, 0);
+								break;
+							}
+
+							logger.LogTrace("NOT FOUND");
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						}
 						break;
 
-					case >= 1008:
-						//send back unchanged
-						logger.LogTrace($"IGNORED {pkt.dp_Type} {pkt.dp_Type:X8} {pkt.dp_Type << 2:X8}");
+					case ACTION_READ:
+						{ 
+						logger.LogTrace($"ACTION_READ {pkt.dp_Arg1} {pkt.dp_Arg2:X8} {pkt.dp_Arg3}");
+						if (!files.TryGetValue((uint)pkt.dp_Arg1, out var file))
+						{
+							logger.LogTrace("CAN'T FIND FILE");
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							break;
+						}
+						logger.LogTrace("READ FILE");
+						var tmp = new byte[pkt.dp_Arg3];
+						uint r = (uint)file.stream.Read(tmp, 0, pkt.dp_Arg3);
+						for (uint i = 0; i < r; i++)
+							memory.UnsafeWrite8((uint)pkt.dp_Arg2+i, tmp[i]);
+						logger.LogTrace($"READ {r}");
+						memory.UnsafeWrite32(regs.A[4] + 12, r);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						}
+						break;
+
+					case ACTION_WRITE:
+						{ 
+						logger.LogTrace($"ACTION_WRITE {pkt.dp_Arg1} {pkt.dp_Arg2:X8} {pkt.dp_Arg3}");
+						if (!files.TryGetValue((uint)pkt.dp_Arg1, out var file))
+						{
+							logger.LogTrace("CAN'T FIND FILE");
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							break;
+						}
+
+						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						}
+						break;
+
+					case ACTION_SEEK:
+						{ 
+						logger.LogTrace($"ACTION_SEEK {pkt.dp_Arg1} {pkt.dp_Arg2} {pkt.dp_Arg3}");
+						if (!files.TryGetValue((uint)pkt.dp_Arg1, out var file))
+						{
+							logger.LogTrace("CAN'T FIND FILE");
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							break;
+						}
+
+						var origin = pkt.dp_Arg3 == -1 ? SeekOrigin.Begin :
+									(pkt.dp_Arg3 == 1 ? SeekOrigin.End: SeekOrigin.Current);
+
+						file.stream.Seek(pkt.dp_Arg2, origin);
+
+						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						}
+						break;
+
+					case ACTION_END:
+						{ 
+						logger.LogTrace($"ACTION_END {pkt.dp_Arg1}");
+						if (!files.TryGetValue((uint)pkt.dp_Arg1, out var file))
+						{
+							logger.LogTrace("CAN'T FIND FILE");
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							break;
+						}
+						file.stream.Close();
+						file.stream.Dispose();
+						files.Remove((uint)pkt.dp_Arg1);
+
+						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						}
+						break;
+
+					case >= 1100:
+						logger.LogTrace($"ACTION_IGNORED** {pkt.dp_Type} {pkt.dp_Type:X8} {pkt.dp_Type << 2:X8}");
 						break;
 
 					default:
-
-						logger.LogTrace($"UNHANDLED {pkt.dp_Type}");
+						logger.LogTrace($"ACTION_UNHANDLED** {pkt.dp_Type} {pkt.dp_Type:X8} {pkt.dp_Type << 2:X8}");
 
 						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 						memory.UnsafeWrite32(regs.A[4] + 16, 120);
@@ -540,28 +907,65 @@ namespace Jammy.Core.Expansion
 			});
 		}
 
+		private uint uniqueFileId = 1;
+		private uint UniqueFileId()
+		{
+			return uniqueFileId++;
+		}
+
 		private uint AllocMem(uint size, uint flags)
 		{
-			return CallExec(-198, size, flags);
+			//D0,D1
+			var regs = @$"
+							move.l  #{size},d0
+							move.l  #{flags},d1";
+
+			return CallExec(-198, regs);
+		}
+
+		private uint FreeMem(uint ptr, uint size)
+		{
+			//A1, D0
+			var regs = @$"
+							move.l  #{ptr},a1
+							move.l  #{size},d0";
+
+			return CallExec(-210, regs);
+		}
+
+		private string ReadDOSString(uint namePtr)
+		{
+			var sb = new StringBuilder();
+			byte l = memory.UnsafeRead8(namePtr++);
+
+			while (l-- != 0)
+			{
+				byte b = memory.UnsafeRead8(namePtr++);
+				sb.Append((char)b);
+			}
+			return sb.ToString();
 		}
 
 		//assuming this is extremely unsafe (interrupts, locks etc), but here we go
 		//we're inside a call to the expansion ROM from dos.library, and inside a trap handler, so it can't be that bad
-		private uint CallExec(int lvo, params uint[] p)
+		private uint CallExec(int lvo, string parms)
 		{
-			string asm = $@"
-				move.l #0,-(sp)
-				move.l  $4,a6
-
-				move.l  #{p[0]},d0
-				move.l  #{p[1]},d1
-
-				jmp {lvo}(a6)
+			string asm =
+				$@"
+					move.l #0,-(sp)
+					move.l  $4,a6
+				"
+					+ parms +
+				$@"
+					jmp {lvo}(a6)
 				";
 			var r = assembler.Assemble(asm);
 
 			//we know this space (copy of DiagArea) is unused after expansion.library is finished with it
-			uint i = configuration.BaseAddress; ;
+			uint i = configuration.BaseAddress;
+			if (r.Program == null || r.Program.Length > 0x20)
+				throw new ArgumentOutOfRangeException("Program too long");
+
 			foreach (var b in r.Program)
 			{
 				memory.UnsafeWrite16(i, b);

@@ -398,7 +398,7 @@ namespace Jammy.Main.Linux
 						object tp = Activator.CreateInstance(type);
 						if (tp != null)
 						{
-							txtExecBase.Text = objectMapper.MapObject(tp, address);
+							txtExecBase.Text = objectMapper.Deserialize(address, tp);
 						}
 					}
 				}

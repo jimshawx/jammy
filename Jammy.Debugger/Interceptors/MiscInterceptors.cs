@@ -276,7 +276,7 @@ namespace Jammy.Debugger.Interceptors
 			var regs = cpu.GetRegs(gregs);
 			logger.LogTrace($"@{pc:X8} {lvo.Name}() : {regs.A[1]:X8}");
 			object tp = new View();
-			string view = objectMapper.MapObject(tp, regs.A[1]);
+			string view = objectMapper.Deserialize(regs.A[1], tp);
 			logger.LogTrace(view);
 		}
 	}
