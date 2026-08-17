@@ -376,12 +376,15 @@ namespace Jammy.Core.Expansion
 				const int ACTION_HANDLER_INFO = 0x19;
 
 				const int ACTION_FREE_LOCK = 15;
+				const int ACTION_DELETE_OBJECT = 16;
+				const int ACTION_SET_PROTECT = 21;
 
 				const int ACTION_LOCATE_OBJECT = 0x8;
 				const int ACTION_EXAMINE_OBJECT = 0x17;
 				const int ACTION_EXAMINE_NEXT = 0x18;
 				const int ACTION_INFO = 0x1A;
 				const int ACTION_PARENT = 29;
+				const int ACTION_SET_DATE = 34;
 
 				const int ACTION_READ = 'R';
 				const int ACTION_WRITE = 'W';
@@ -624,9 +627,13 @@ namespace Jammy.Core.Expansion
 								break;
 							}
 
-							var dircach = new MyDirCache(basePath, logger);
-							//overwrite any existing entry
-							dircache[(uint)pkt.dp_Arg1 << 2] = dircach;
+							MyDirCache dircach= null;
+							if (Directory.Exists(MakeHostPath(basePath)))
+							{ 
+								dircach = new MyDirCache(basePath, logger);
+								//overwrite any existing entry
+								dircache[(uint)pkt.dp_Arg1 << 2] = dircach;
+							}
 
 							//var s = new FileInfoBlock();
 							/*
@@ -646,7 +653,7 @@ namespace Jammy.Core.Expansion
 							260
 							*/
 
-							var thing = new MyDirCache.MyDirEntry { Name = basePath, IsDirectory = true};
+							var thing = new MyDirCache.MyDirEntry { Name = basePath, IsDirectory = dircach!=null};
 							//if (thing == null)
 							//{
 							//	logger.LogTrace("NO MORE FILES");
@@ -662,6 +669,7 @@ namespace Jammy.Core.Expansion
 
 							if (parent.FullPath.EndsWith(':'))
 							{ 
+								logger.LogTrace("IS ROOT");
 								memory.UnsafeWrite32(fib + 4, ST_ROOT);
 								memory.UnsafeWrite32(fib + 120, ST_ROOT);
 							}
@@ -841,8 +849,42 @@ namespace Jammy.Core.Expansion
 								FileAccess access = FileAccess.Read;
 								FileMode mode = FileMode.Open;
 								if (pkt.dp_Type == ACTION_FINDINPUT) { mode = FileMode.Open; access = FileAccess.Read; }
-								if (pkt.dp_Type == ACTION_FINDOUTPUT) { mode = FileMode.OpenOrCreate; access = FileAccess.ReadWrite; }
-								if (pkt.dp_Type == ACTION_FINDUPDATE) { mode = FileMode.Open; access = FileAccess.ReadWrite; }
+								if (pkt.dp_Type == ACTION_FINDOUTPUT) { mode = FileMode.Create; access = FileAccess.ReadWrite; }
+								if (pkt.dp_Type == ACTION_FINDUPDATE) { mode = FileMode.OpenOrCreate; access = FileAccess.ReadWrite; }
+
+								try
+								{ 
+									f.stream = File.Open(basePath, mode, access, FileShare.Read);
+									uint id = UniqueFileId();
+									files.Add(id, f);
+
+									//set fh_Pos/fh_End = -1
+									uint address = (uint)pkt.dp_Arg1 << 2;
+									memory.UnsafeWrite32(address + 16, 0xffffffff);
+									memory.UnsafeWrite32(address + 20, 0xffffffff);
+									memory.UnsafeWrite32(address + 36, id);
+
+									memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+									memory.UnsafeWrite32(regs.A[4] + 16, 0);
+								}
+								catch (Exception ex)
+								{ 
+									logger.LogTrace($"Exception: {ex}");
+									memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+									memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								}
+								break;
+							}
+							else if (pkt.dp_Type == ACTION_FINDOUTPUT)
+							{
+								logger.LogTrace($"NEW {pkt.dp_Arg1<<2:X8}");
+								var f = new MyFileInfo();
+
+								FileAccess access = FileAccess.Read;
+								FileMode mode = FileMode.Open;
+								//if (pkt.dp_Type == ACTION_FINDINPUT) { mode = FileMode.Open; access = FileAccess.Read; }
+								if (pkt.dp_Type == ACTION_FINDOUTPUT) { mode = FileMode.Create; access = FileAccess.ReadWrite; }
+								//if (pkt.dp_Type == ACTION_FINDUPDATE) { mode = FileMode.Open; access = FileAccess.ReadWrite; }
 
 								f.stream = File.Open(basePath, mode, access, FileShare.Read);
 								uint id = UniqueFileId();
@@ -896,9 +938,13 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
 						}
+						var tmp = new byte[pkt.dp_Arg3];
+						for (uint i = 0; i < pkt.dp_Arg3; i++)
+							tmp[i] = memory.UnsafeRead8((uint)pkt.dp_Arg2 + i);
+						file.stream.Write(tmp, 0, pkt.dp_Arg3);
 
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						memory.UnsafeWrite32(regs.A[4] + 12, (uint)pkt.dp_Arg3);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						}
 						break;
 
@@ -940,6 +986,58 @@ namespace Jammy.Core.Expansion
 						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						}
+						break;
+
+					case ACTION_DELETE_OBJECT:
+						logger.LogTrace($"ACTION_DELETE_OBJECT {pkt.dp_Arg1 << 2:X8}");
+						{
+							string filename = "";
+
+							uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+							var lok = new FileLock();
+							objectMapper.Deserialize(lockPtr, lok);
+
+							if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+							{
+								logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+							else
+							{
+								logger.LogTrace($"DELETE {parent.FullPath}");
+
+								filename = Path.Combine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+								logger.LogTrace($"{filename}");
+								logger.LogTrace($"{MakeHostPath(filename)}");
+							}
+
+							try
+							{ 
+								File.Delete(MakeHostPath(filename));
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+								memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							}
+							catch (Exception ex)
+							{ 
+								logger.LogTrace($"Exception: {ex}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							}
+						}
+						break;
+
+					case ACTION_SET_PROTECT:
+						logger.LogTrace($"ACTION_SET_PROTECT");
+						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						break;
+
+					case ACTION_SET_DATE:
+						logger.LogTrace($"ACTION_SET_DATE");
+						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						break;
 
 					case >= 1100:
