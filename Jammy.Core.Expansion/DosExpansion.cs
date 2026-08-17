@@ -87,7 +87,7 @@ namespace Jammy.Core.Expansion
 		private readonly IDebugMemoryMapper memory;
 		private readonly IAssembler assembler;
 		private ZorroConfiguration configuration;
-		private readonly string rootDir;
+		private static readonly string rootDir = "hd";
 
 		public DosExpansionDebugHandler(IDebugger debugger, IZorroExpansionRegistry registry,
 			IObjectMapper objectMapper, ICPU cpu, IDebugMemoryMapper memory, IAssembler assembler,
@@ -101,7 +101,6 @@ namespace Jammy.Core.Expansion
 			this.memory = memory;
 			this.assembler = assembler;
 			registry.RegisterHandler(DosExpansion.Serial, this);
-			this.rootDir = "hd";
 		}
 		bool volumeLinked = false;
 		uint myVolumeNodeBPTR = 0;
@@ -118,10 +117,30 @@ namespace Jammy.Core.Expansion
 			public Stream stream;
 		}
 
+		private static string MakeHostPath(string basePath)
+		{
+			//the bit up to the first colon
+			int t = basePath.IndexOf(':');
+			if (t != -1)
+			{
+				basePath = basePath.Substring(t + 1);
+			}
+
+			if (basePath.StartsWith('\\'))
+				basePath = basePath.Substring(1);
+
+			basePath = Path.Combine(rootDir, basePath);
+			return basePath;
+		}
+
 		private class MyDirCache
 		{
 			public MyDirCache(string basePath, ILogger logger)
-			{ 
+			{
+				basePath = MakeHostPath(basePath);
+
+				logger.LogTrace($"DirCache {basePath}");
+
 				var dirs = Directory.GetDirectories(basePath);
 				var fils = Directory.GetFiles(basePath);
 
@@ -388,6 +407,10 @@ namespace Jammy.Core.Expansion
 				const int ST_FILE = -3;
 				const int ST_LINKFILE = -4;
 
+				const uint ID_VALIDATED = 82;
+				const uint ID_NOT_REALLY_DOS = 0x4E444F53;  /* 'NDOS'  */
+				const uint ID_DOS_DISK = ('D' << 24) | ('O' << 16) | ('S' << 8);
+
 				switch (pkt.dp_Type)
 				{
 					case ACTION_INHIBIT:
@@ -418,16 +441,15 @@ namespace Jammy.Core.Expansion
 							*/
 
 							//the hard way
-							const uint ID_VALIDATED = 82;
-							const uint ID_NOT_REALLY_DOS = 0x4E444F53;  /* 'NDOS'  */
+
 
 							memory.UnsafeWrite32(address, 0); address += 4;
 							memory.UnsafeWrite32(address, 0); address += 4;
-							memory.UnsafeWrite32(address, 2); address += 4;//ID_VALIDATED); address += 4;
+							memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;//ID_VALIDATED); address += 4;
 							memory.UnsafeWrite32(address, 0x40000000/512); address += 4;//1GB
 							memory.UnsafeWrite32(address, 0); address += 4;//nothing used
 							memory.UnsafeWrite32(address, 512); address += 4;//512 byte blocks
-							memory.UnsafeWrite32(address, 0x4D594653); address += 4;//MYFS        0x4A414D4D); address += 4;//JAMM
+							memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;//MYFS        0x4A414D4D);0x4D594653 address += 4;//JAMM
 							memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
 							memory.UnsafeWrite32(address, 0); address += 4;
 
@@ -458,11 +480,11 @@ namespace Jammy.Core.Expansion
 							uint address = (uint)pkt.dp_Arg2 << 2;//InfoData
 							memory.UnsafeWrite32(address, 0); address += 4;
 							memory.UnsafeWrite32(address, 0); address += 4;
-							memory.UnsafeWrite32(address, 2); address += 4;//ID_VALIDATED); address += 4;
+							memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;//ID_VALIDATED); address += 4;
 							memory.UnsafeWrite32(address, 0x40000000 / 512); address += 4;//1GB
 							memory.UnsafeWrite32(address, 0); address += 4;//nothing used
 							memory.UnsafeWrite32(address, 512); address += 4;//512 byte blocks
-							memory.UnsafeWrite32(address, 0x4D594653); address += 4;//MYFS        0x4A414D4D); address += 4;//JAMM
+							memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;//MYFS        0x4A414D4D); address += 4;//JAMM
 							memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
 							memory.UnsafeWrite32(address, 0); address += 4;
 
@@ -475,6 +497,7 @@ namespace Jammy.Core.Expansion
 						{
 							logger.LogTrace($"ACTION_LOCATE_OBJECT");
 							string pathName = string.Empty;
+							string parentPath = string.Empty;
 
 							int mode = pkt.dp_Arg3;
 							if (mode == -2)
@@ -492,6 +515,16 @@ namespace Jammy.Core.Expansion
 								var @lock = new FileLock();
 								objectMapper.Deserialize((uint)pkt.dp_Arg1 << 2, @lock);
 								logger.LogTrace($"LOCATE FAILING (parent) {@lock.fl_Key:X8}");
+
+								if (locks.TryGetValue((uint)@lock.fl_Key, out var ll))
+								{
+									logger.LogTrace($"FOUND {ll.FullPath}");
+									parentPath = ll.FullPath;
+								}
+								else
+								{
+									logger.LogTrace("FOUND NOTHING");
+								}
 							}
 
 							uint namePtr = (uint)pkt.dp_Arg2<<2;
@@ -511,8 +544,15 @@ namespace Jammy.Core.Expansion
 								//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 								//	break;
 								//}
+								logger.LogTrace($"LOCATE {parentPath} {pathName}");
 
-								logger.LogTrace($"LOCATE {pathName}");
+								//pathName = Path.Combine(parentPath, pathName);
+								//int t = pathName.IndexOf(':');
+								//if (t != -1)
+								//{
+								//	pathName = Path.Combine(rootDir, pathName.Substring(t + 1));
+								//	logger.LogTrace($"LOCATE FULL {pathName}");
+								//}
 							}
 
 							uint mem = AllocMem(20, 1);
@@ -522,7 +562,7 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(mem + 12, regs.A[3]);
 							memory.UnsafeWrite32(mem + 16, myVolumeNodeBPTR);
 
-							locks.Add(mem, new MyLockInfo { FullPath = pathName, Size = 0, LockKey = mem });
+							locks.Add(mem, new MyLockInfo { FullPath =  Path.Combine(parentPath, pathName), Size = 0, LockKey = mem });
 							logger.LogTrace($"LOCATE lock {mem:X8}");
 
 							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
@@ -560,18 +600,25 @@ namespace Jammy.Core.Expansion
 
 								//so, i think we want to find the first colon, and replace that bit with rootDir
 
-								int t = parent.FullPath.IndexOf(':');
-								if (t != -1)
-								{
-									basePath = Path.Combine(rootDir, parent.FullPath.Substring(t+1));
-								}
-
+								//int t = parent.FullPath.IndexOf(':');
+								//if (t != -1)
+								//{
+								//	basePath = Path.Combine(rootDir, parent.FullPath.Substring(t+1));
+								//}
+								basePath = parent.FullPath;
 							}
 							logger.LogTrace($"PATH {basePath}");
 
 							if (basePath == "")
 							{
 								logger.LogTrace("NO PATH");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+							if (!Path.Exists(MakeHostPath(basePath)))
+							{
+								logger.LogTrace($"NO PATH HOST {MakeHostPath(basePath)}");
 								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 								break;
@@ -612,6 +659,13 @@ namespace Jammy.Core.Expansion
 							uint fib = (uint)pkt.dp_Arg2 << 2;
 							memory.UnsafeWrite32(fib + 4, (uint)(thing.IsDirectory? ST_USERDIR:ST_FILE));
 							memory.UnsafeWrite32(fib + 120, (uint)(thing.IsDirectory ? ST_USERDIR : ST_FILE));
+
+							if (parent.FullPath.EndsWith(':'))
+							{ 
+								memory.UnsafeWrite32(fib + 4, ST_ROOT);
+								memory.UnsafeWrite32(fib + 120, ST_ROOT);
+							}
+
 							memory.UnsafeWrite32(fib + 124, thing.IsDirectory? 0:thing.Size);
 
 							memory.UnsafeWrite32(fib, (uint)lok.fl_Key);
@@ -632,7 +686,7 @@ namespace Jammy.Core.Expansion
 						break;
 
 					case ACTION_EXAMINE_NEXT:
-						logger.LogTrace($"ACTION_EXAMINE_NEXT {pkt.dp_Arg1:X8}");
+						logger.LogTrace($"ACTION_EXAMINE_NEXT {pkt.dp_Arg1<<2:X8}");
 						{ 
 						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 						var lok = new FileLock();
@@ -740,10 +794,11 @@ namespace Jammy.Core.Expansion
 							{
 								logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
 
-								if (parent.FullPath == ":")
-								{
-									basePath = rootDir;
-								}
+								//if (parent.FullPath == ":")
+								//{
+								//	basePath = rootDir;
+								//}
+								basePath = parent.FullPath;
 							}
 
 							uint bstrAddr = (uint)pkt.dp_Arg3 << 2;
@@ -760,6 +815,7 @@ namespace Jammy.Core.Expansion
 								logger.LogTrace($"ACTION_FINDINPUT {pathName}");
 								basePath = Path.Combine(basePath, pathName);
 							}
+							basePath = MakeHostPath(basePath);
 							logger.LogTrace($"Looking for {basePath}");
 							if (Path.Exists(basePath))
 							{
