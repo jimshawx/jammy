@@ -377,6 +377,7 @@ namespace Jammy.Core.Expansion
 
 				const int ACTION_FREE_LOCK = 15;
 				const int ACTION_DELETE_OBJECT = 16;
+				const int ACTION_RENAME_OBJECT = 17;
 				const int ACTION_SET_PROTECT = 21;
 
 				const int ACTION_LOCATE_OBJECT = 0x8;
@@ -1021,6 +1022,71 @@ namespace Jammy.Core.Expansion
 							}
 							catch (Exception ex)
 							{ 
+								logger.LogTrace($"Exception: {ex}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							}
+						}
+						break;
+
+					case ACTION_RENAME_OBJECT:
+						logger.LogTrace($"ACTION_RENAME_OBJECT {pkt.dp_Arg1 << 2:X8}");
+						{
+							string filename = "";
+							string dstFilename = "";
+
+							uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+							var lok = new FileLock();
+							objectMapper.Deserialize(lockPtr, lok);
+
+
+							uint lockDst = (uint)pkt.dp_Arg3 << 2;
+							var lokDst = new FileLock();
+							objectMapper.Deserialize(lockDst, lokDst);
+
+							if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+							{
+								logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+							else
+							{
+								logger.LogTrace($"RENAME FROM {parent.FullPath}");
+
+								filename = Path.Combine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+								logger.LogTrace($"{filename}");
+								logger.LogTrace($"{MakeHostPath(filename)}");
+							}
+
+							if (!locks.TryGetValue((uint)lokDst.fl_Key, out var parent2))
+							{
+								logger.LogTrace($"parent lock not found {lokDst.fl_Key:X8}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+							else
+							{
+								logger.LogTrace($"RENAME TO {parent2.FullPath}");
+
+								dstFilename = Path.Combine(parent2.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
+								logger.LogTrace($"{dstFilename}");
+								logger.LogTrace($"{MakeHostPath(dstFilename)}");
+							}
+
+							try
+							{
+								if (File.Exists(MakeHostPath(filename)))
+									File.Move(MakeHostPath(filename), MakeHostPath(dstFilename));
+								else if (Directory.Exists(MakeHostPath(filename)))
+									Directory.Move(MakeHostPath(filename), MakeHostPath(dstFilename));
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+								memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							}
+							catch (Exception ex)
+							{
 								logger.LogTrace($"Exception: {ex}");
 								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
