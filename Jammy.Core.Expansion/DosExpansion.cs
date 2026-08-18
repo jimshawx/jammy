@@ -7,6 +7,7 @@ using Jammy.Core.Types.Types;
 using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using System.Text;
+using DateTime = System.DateTime;
 
 /*
 	Copyright 2020-2026 James Shaw. All Rights Reserved.
@@ -147,12 +148,12 @@ namespace Jammy.Core.Expansion
 				foreach (var d in dirs)
 				{ 
 					logger.LogTrace($"D {d}");
-					DirEntries.Add(new MyDirEntry { Name = MungeName(d), IsDirectory = true });
+					DirEntries.Add(new MyDirEntry { Name = MungeName(d), IsDirectory = true, Stamp = DirDate(d) });
 				}
 				foreach (var f in fils)
 				{
 					logger.LogTrace($"F {f}");
-					DirEntries.Add(new MyDirEntry { Name = MungeName(f), IsDirectory = false, Size = FileLen(f) });
+					DirEntries.Add(new MyDirEntry { Name = MungeName(f), IsDirectory = false, Size = FileLen(f), Stamp = FileDate(f) });
 				}
 			}
 
@@ -160,6 +161,18 @@ namespace Jammy.Core.Expansion
 			{
 				var f = new FileInfo(p);
 				return (uint)f.Length;
+			}
+
+			private DateTime FileDate(string p)
+			{
+				var f = new FileInfo(p);
+				return f.CreationTimeUtc.AddYears(-40);
+			}
+
+			private DateTime DirDate(string p)
+			{
+				var f = new DirectoryInfo(p);
+				return f.CreationTimeUtc.AddYears(-40);
 			}
 
 			private string MungeName(string p)
@@ -174,6 +187,7 @@ namespace Jammy.Core.Expansion
 				public string Name { get; set; }
 				public bool IsDirectory { get; set; }
 				public uint Size { get; set; }
+				public DateTime Stamp { get; set; }
 			}
 
 			private readonly List<MyDirEntry> DirEntries = new List<MyDirEntry>();
@@ -184,6 +198,11 @@ namespace Jammy.Core.Expansion
 				var d = DirEntries[0];
 				DirEntries.RemoveAt(0);
 				return d;
+			}
+
+			public bool IsEmpty()
+			{
+				return DirEntries.Count == 0;
 			}
 		}
 
@@ -379,7 +398,9 @@ namespace Jammy.Core.Expansion
 				const int ACTION_FREE_LOCK = 15;
 				const int ACTION_DELETE_OBJECT = 16;
 				const int ACTION_RENAME_OBJECT = 17;
+				const int ACTION_COPY_DIR = 19;
 				const int ACTION_SET_PROTECT = 21;
+				const int ACTION_CREATE_DIR = 22;
 
 				const int ACTION_LOCATE_OBJECT = 0x8;
 				const int ACTION_EXAMINE_OBJECT = 0x17;
@@ -560,14 +581,53 @@ namespace Jammy.Core.Expansion
 								//}
 							}
 
+							if (Path.Exists(MakeHostPath(Path.Combine(parentPath, pathName))))
+							{ 
+								uint mem = AllocMem(20, 0x10001);
+								memory.UnsafeWrite32(mem, 0);
+								memory.UnsafeWrite32(mem + 4, mem);
+								memory.UnsafeWrite32(mem + 8, (uint)mode);
+								memory.UnsafeWrite32(mem + 12, regs.A[3]);
+								memory.UnsafeWrite32(mem + 16, myVolumeNodeBPTR);
+
+								locks.Add(mem, new MyLockInfo { FullPath =  Path.Combine(parentPath, pathName), Size = 0, LockKey = mem });
+								logger.LogTrace($"LOCATE lock {mem:X8}");
+
+								memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
+								memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							}
+							else
+							{
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+
+							}
+						}
+						break;
+
+					case ACTION_COPY_DIR:
+						{
+							logger.LogTrace($"ACTION_COPY_DIR (AKA COPY_LOCK)");
+
+							var lok = new FileLock();
+							objectMapper.Deserialize((uint)pkt.dp_Arg1 << 2, lok);
+
 							uint mem = AllocMem(20, 0x10001);
 							memory.UnsafeWrite32(mem, 0);
-							memory.UnsafeWrite32(mem + 4, mem);
-							memory.UnsafeWrite32(mem + 8, (uint)mode);
-							memory.UnsafeWrite32(mem + 12, regs.A[3]);
-							memory.UnsafeWrite32(mem + 16, myVolumeNodeBPTR);
+							memory.UnsafeWrite32(mem + 4, (uint)lok.fl_Key);
+							memory.UnsafeWrite32(mem + 8, (uint)lok.fl_Access);
+							memory.UnsafeWrite32(mem + 12, lok.fl_Task.Address);
+							memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
 
-							locks.Add(mem, new MyLockInfo { FullPath =  Path.Combine(parentPath, pathName), Size = 0, LockKey = mem });
+							if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+							{
+								logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+							
+							locks.Add(mem, new MyLockInfo { FullPath = parent.FullPath, Size = parent.Size, LockKey = mem });
 							logger.LogTrace($"LOCATE lock {mem:X8}");
 
 							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
@@ -681,14 +741,20 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(fib, (uint)lok.fl_Key);
 							memory.UnsafeWrite32(fib + 116, 0);//rwed
 
-							memory.UnsafeWrite32(fib + 132, 10000); // Days since 1978
-							memory.UnsafeWrite32(fib + 136, 0);     // Minutes
-							memory.UnsafeWrite32(fib + 140, 0);     // Ticks (1/50th of a sec)
+							int days, minutes, ticks;
+							DateTimeToAmiga(thing.Stamp, out days, out minutes, out ticks);
+
+							memory.UnsafeWrite32(fib + 132, (uint)days); // Days since 1978
+							memory.UnsafeWrite32(fib + 136, (uint)minutes);     // Minutes
+							memory.UnsafeWrite32(fib + 140, (uint)ticks);     // Ticks (1/50th of a sec)
 
 							uint s = fib+8;
 							memory.UnsafeWrite8(s++, (byte)Math.Min(107, thing.Name.Length));
 							for (int i = 0; i < Math.Min(107, thing.Name.Length); i++)
 								memory.UnsafeWrite8(s++, (byte)thing.Name[i]);
+
+							memory.UnsafeWrite32(fib + 144, 0);//no comment
+							memory.UnsafeWrite32(fib + 128, (thing.Size+511) / 512);
 
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -704,6 +770,14 @@ namespace Jammy.Core.Expansion
 
 						if (dircache.TryGetValue((uint)pkt.dp_Arg1 << 2, out var dircach2))
 						{
+							if (dircach2.IsEmpty())
+							{
+								logger.LogTrace("NO MORE");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_NO_MORE_ENTRIES);
+								break;
+							}
+
 							var thing = dircach2.Next();
 							if (thing == null)
 							{
@@ -712,7 +786,8 @@ namespace Jammy.Core.Expansion
 								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 								break;
 							}
-								logger.LogTrace($"{thing.Name} {thing.Size} {(thing.IsDirectory ? 'D' : 'F')}");
+
+							logger.LogTrace($"{thing.Name} {thing.Size} {(thing.IsDirectory ? 'D' : 'F')}");
 
 							uint fib = (uint)pkt.dp_Arg2 << 2;
 							memory.UnsafeWrite32(fib + 4, (uint)(thing.IsDirectory ? ST_USERDIR : ST_FILE));
@@ -722,14 +797,20 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(fib, (uint)lok.fl_Key);
 							memory.UnsafeWrite32(fib + 116, 0);//rwed
 
-							memory.UnsafeWrite32(fib + 132, 10000); // Days since 1978
-							memory.UnsafeWrite32(fib + 136, 0);     // Minutes
-							memory.UnsafeWrite32(fib + 140, 0);     // Ticks (1/50th of a sec)
+							int days, minutes, ticks;
+							DateTimeToAmiga(thing.Stamp, out days, out minutes, out ticks);
+
+							memory.UnsafeWrite32(fib + 132, (uint)days); // Days since 1978
+							memory.UnsafeWrite32(fib + 136, (uint)minutes);     // Minutes
+							memory.UnsafeWrite32(fib + 140, (uint)ticks);     // Ticks (1/50th of a sec)
 
 							uint s = fib + 8;
 							memory.UnsafeWrite8(s++, (byte)Math.Min(107, thing.Name.Length));
 							for (int i = 0; i < Math.Min(107, thing.Name.Length); i++)
 								memory.UnsafeWrite8(s++, (byte)thing.Name[i]);
+							
+							memory.UnsafeWrite32(fib + 144, 0);//no comment
+							memory.UnsafeWrite32(fib + 128, (thing.Size+511) / 512);
 
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -1030,6 +1111,57 @@ namespace Jammy.Core.Expansion
 						}
 						break;
 
+					case ACTION_CREATE_DIR:
+						logger.LogTrace($"ACTION_CREATE_DIR {pkt.dp_Arg1 << 2:X8}");
+						{
+							string filename = "";
+
+							uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+							var lok = new FileLock();
+							objectMapper.Deserialize(lockPtr, lok);
+
+							if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+							{
+								logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+							else
+							{
+								logger.LogTrace($"CREATE DIR {parent.FullPath}");
+
+								filename = Path.Combine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+								logger.LogTrace($"{filename}");
+								logger.LogTrace($"{MakeHostPath(filename)}");
+							}
+
+							try
+							{
+								Directory.CreateDirectory(MakeHostPath(filename));
+
+								uint mem = AllocMem(20, 0x10001);
+								memory.UnsafeWrite32(mem, 0);
+								memory.UnsafeWrite32(mem + 4, (uint)lok.fl_Key);
+								memory.UnsafeWrite32(mem + 8, (uint)lok.fl_Access);
+								memory.UnsafeWrite32(mem + 12, lok.fl_Task.Address);
+								memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
+
+								locks.Add(mem, new MyLockInfo { FullPath = filename, Size = 0, LockKey = mem });
+								logger.LogTrace($"LOCATE lock {mem:X8}");
+
+								memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
+								memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							}
+							catch (Exception ex)
+							{
+								logger.LogTrace($"Exception: {ex}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							}
+						}
+						break;
+
 					case ACTION_RENAME_OBJECT:
 						logger.LogTrace($"ACTION_RENAME_OBJECT {pkt.dp_Arg1 << 2:X8}");
 						{
@@ -1166,6 +1298,34 @@ namespace Jammy.Core.Expansion
 				sb.Append((char)b);
 			}
 			return sb.ToString();
+		}
+
+		// Amiga file date epoch January 1, 1978
+		private static readonly DateTime AmigaEpoch = new DateTime(1978, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+		//nb. 60 on NTSC
+		private const int TicksPerSecond = 50;
+
+		public static DateTime AmigaToDateTime(int days, int minute, int tick)
+		{
+			long totalSeconds = (days * 86400L) + (minute * 60L) + (tick / TicksPerSecond);
+			return AmigaEpoch.AddSeconds(totalSeconds);
+		}
+
+		public static void DateTimeToAmiga(DateTime dateTime, out int days, out int minute, out int tick)
+		{
+			DateTime utcDateTime = dateTime.ToUniversalTime();
+			TimeSpan span = utcDateTime - AmigaEpoch;
+
+			long totalSeconds = (long)span.TotalSeconds;
+			if (totalSeconds < 0) totalSeconds = 0;
+
+			days = (int)(totalSeconds / 86400);
+			long remainingSeconds = totalSeconds % 86400;
+			minute = (int)(remainingSeconds / 60);
+
+			long subMinuteSeconds = remainingSeconds % 60;
+			tick = (int)(subMinuteSeconds * TicksPerSecond);
 		}
 
 		//assuming this is extremely unsafe (interrupts, locks etc), but here we go
