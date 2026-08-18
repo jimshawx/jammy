@@ -110,7 +110,7 @@ ROM_Handler_Entry:
 	lea $dff000,a0
 	move.w #$0f0,$180(a0)
 
-	move.l	#$00fffffe,$80			;hack trap 0 vector
+	;move.l	#$00fffffe,$80			;hack trap 0 vector
 
     ; --- Find Process and built-in MsgPort ---
     suba.l  a1,a1                   ; A1 = NULL (find current task)
@@ -133,7 +133,8 @@ ROM_Handler_Entry:
     move.l  10(a2),a4               ; A4 = struct DosPacket 
 
 	; jump to C# handler
-    TRAP    #0
+    ;TRAP    #0
+	jsr		$00fffffe
 
     move.l  dp_Port(a4),a0          ; A0 = Where AmigaDOS wants the reply
     move.l  a2,a1                   ; A1 = The Exec Message

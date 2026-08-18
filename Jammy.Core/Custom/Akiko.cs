@@ -156,7 +156,7 @@ using System.Text;
 
 namespace Jammy.Core.Custom
 {
-	public class Akiko : IAkiko, IDebugKeys
+	public class Akiko : IAkiko//, IDebugKeys
 	{
 		[Flags]
 		private enum INTREQ : uint

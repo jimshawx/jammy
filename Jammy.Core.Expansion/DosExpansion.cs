@@ -277,14 +277,14 @@ namespace Jammy.Core.Expansion
 					volumeLinked = true;
 
 					// 1. Allocate the Volume Node
-					uint volMem = AllocMem(48, 1);
+					uint volMem = AllocMem(48, 0x10001);
 					memory.UnsafeWrite32(volMem + 0, 0);          // dol_Next
 					memory.UnsafeWrite32(volMem + 4, 2);          // dol_Type = DLT_VOLUME (2)
 					memory.UnsafeWrite32(volMem + 8, regs.A[3]);  // dol_Task = Your MsgPort
 					memory.UnsafeWrite32(volMem + 12, 0);         // dol_Lock = 0
 
 					// 2. Allocate the Name string separately and store it as a BPTR!
-					uint nameMem = AllocMem(8, 1);
+					uint nameMem = AllocMem(8, 0x10001);
 					memory.UnsafeWrite8(nameMem + 0, 5);         // BCPL Length
 					memory.UnsafeWrite8(nameMem + 1, (byte)'M');
 					memory.UnsafeWrite8(nameMem + 2, (byte)'Y');
@@ -357,8 +357,9 @@ namespace Jammy.Core.Expansion
 				{
 					logger.LogTrace($"LINK mismatch {link:X8} {regs.A[2]:X8}");
 					//return back to emulation
-					regs.SR = memory.UnsafeRead16(regs.SSP); regs.SSP += 2;
-					regs.PC = memory.UnsafeRead32(regs.SSP); regs.SSP += 4;
+					//regs.SR = memory.UnsafeRead16(regs.SSP); regs.SSP += 2;
+					//regs.PC = memory.UnsafeRead32(regs.SSP); regs.SSP += 4;
+					regs.PC = memory.UnsafeRead32(regs.SP); regs.SP += 4;
 					cpu.SetRegs(regs);
 					return false;
 				}
@@ -559,7 +560,7 @@ namespace Jammy.Core.Expansion
 								//}
 							}
 
-							uint mem = AllocMem(20, 1);
+							uint mem = AllocMem(20, 0x10001);
 							memory.UnsafeWrite32(mem, 0);
 							memory.UnsafeWrite32(mem + 4, mem);
 							memory.UnsafeWrite32(mem + 8, (uint)mode);
@@ -1119,8 +1120,9 @@ namespace Jammy.Core.Expansion
 				}
 
 				//return back to emulation
-				regs.SR = memory.UnsafeRead16(regs.SSP); regs.SSP += 2;
-				regs.PC = memory.UnsafeRead32(regs.SSP); regs.SSP += 4;
+				//regs.SR = memory.UnsafeRead16(regs.SSP); regs.SSP += 2;
+				//regs.PC = memory.UnsafeRead32(regs.SSP); regs.SSP += 4;
+				regs.PC = memory.UnsafeRead32(regs.SP); regs.SP += 4;
 				cpu.SetRegs(regs);
 
 				return false;
