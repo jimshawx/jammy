@@ -685,8 +685,8 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(fib + 140, 0);     // Ticks (1/50th of a sec)
 
 							uint s = fib+8;
-							memory.UnsafeWrite8(s++, (byte)thing.Name.Length);
-							for (int i = 0; i < thing.Name.Length; i++)
+							memory.UnsafeWrite8(s++, (byte)Math.Min(107, thing.Name.Length));
+							for (int i = 0; i < Math.Min(107, thing.Name.Length); i++)
 								memory.UnsafeWrite8(s++, (byte)thing.Name[i]);
 
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
@@ -726,8 +726,8 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(fib + 140, 0);     // Ticks (1/50th of a sec)
 
 							uint s = fib + 8;
-							memory.UnsafeWrite8(s++, (byte)thing.Name.Length);
-							for (int i = 0; i < thing.Name.Length; i++)
+							memory.UnsafeWrite8(s++, (byte)Math.Min(107, thing.Name.Length));
+							for (int i = 0; i < Math.Min(107, thing.Name.Length); i++)
 								memory.UnsafeWrite8(s++, (byte)thing.Name[i]);
 
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
