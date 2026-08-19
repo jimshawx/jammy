@@ -472,8 +472,8 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(address, 0); address += 4;
 							memory.UnsafeWrite32(address, 0); address += 4;
 							memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;//ID_VALIDATED); address += 4;
-							memory.UnsafeWrite32(address, 0x40000000/512); address += 4;//1GB
-							memory.UnsafeWrite32(address, 0); address += 4;//nothing used
+							memory.UnsafeWrite32(address, 0x40000000 / 512); address += 4;//1GB
+							memory.UnsafeWrite32(address, 0x20000000 / 512); address += 4;//half used
 							memory.UnsafeWrite32(address, 512); address += 4;//512 byte blocks
 							memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;//MYFS        0x4A414D4D);0x4D594653 address += 4;//JAMM
 							memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
@@ -508,7 +508,7 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(address, 0); address += 4;
 							memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;//ID_VALIDATED); address += 4;
 							memory.UnsafeWrite32(address, 0x40000000 / 512); address += 4;//1GB
-							memory.UnsafeWrite32(address, 0); address += 4;//nothing used
+							memory.UnsafeWrite32(address, 0x20000000 / 512); address += 4;//half used
 							memory.UnsafeWrite32(address, 512); address += 4;//512 byte blocks
 							memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;//MYFS        0x4A414D4D); address += 4;//JAMM
 							memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
@@ -561,24 +561,7 @@ namespace Jammy.Core.Expansion
 							else
 							{
 								pathName = ReadDOSString(namePtr);;
-
-								//if (pathName != "" && pathName.ToUpper() != "MYDEV:" && pathName.ToUpper() != "MYDEV")
-								//{
-								//	logger.LogTrace($"LOCATE FAILING (path) {pathName}");
-
-								//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-								//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-								//	break;
-								//}
 								logger.LogTrace($"LOCATE {parentPath} {pathName}");
-
-								//pathName = Path.Combine(parentPath, pathName);
-								//int t = pathName.IndexOf(':');
-								//if (t != -1)
-								//{
-								//	pathName = Path.Combine(rootDir, pathName.Substring(t + 1));
-								//	logger.LogTrace($"LOCATE FULL {pathName}");
-								//}
 							}
 
 							if (Path.Exists(MakeHostPath(Path.Combine(parentPath, pathName))))
@@ -660,16 +643,6 @@ namespace Jammy.Core.Expansion
 							else
 							{
 								logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
-
-								//for root this is 'mydev:'
-
-								//so, i think we want to find the first colon, and replace that bit with rootDir
-
-								//int t = parent.FullPath.IndexOf(':');
-								//if (t != -1)
-								//{
-								//	basePath = Path.Combine(rootDir, parent.FullPath.Substring(t+1));
-								//}
 								basePath = parent.FullPath;
 							}
 							logger.LogTrace($"PATH {basePath}");
@@ -716,13 +689,6 @@ namespace Jammy.Core.Expansion
 							*/
 
 							var thing = new MyDirCache.MyDirEntry { Name = basePath, IsDirectory = dircach!=null};
-							//if (thing == null)
-							//{
-							//	logger.LogTrace("NO MORE FILES");
-							//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							//	break;
-							//}
 							logger.LogTrace($"{thing.Name} {thing.Size} {(thing.IsDirectory?'D':'F')}");
 
 							uint fib = (uint)pkt.dp_Arg2 << 2;
@@ -884,11 +850,6 @@ namespace Jammy.Core.Expansion
 							else
 							{
 								logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
-
-								//if (parent.FullPath == ":")
-								//{
-								//	basePath = rootDir;
-								//}
 								basePath = parent.FullPath;
 							}
 
@@ -1309,12 +1270,12 @@ namespace Jammy.Core.Expansion
 		public static DateTime AmigaToDateTime(int days, int minute, int tick)
 		{
 			long totalSeconds = (days * 86400L) + (minute * 60L) + (tick / TicksPerSecond);
-			return AmigaEpoch.AddSeconds(totalSeconds);
+			return AmigaEpoch.AddSeconds(totalSeconds).ToLocalTime();
 		}
 
 		public static void DateTimeToAmiga(DateTime dateTime, out int days, out int minute, out int tick)
 		{
-			DateTime utcDateTime = dateTime.ToUniversalTime();
+			DateTime utcDateTime = dateTime.Kind == DateTimeKind.Utc ? dateTime : dateTime.ToUniversalTime();
 			TimeSpan span = utcDateTime - AmigaEpoch;
 
 			long totalSeconds = (long)span.TotalSeconds;
