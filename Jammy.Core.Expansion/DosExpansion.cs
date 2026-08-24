@@ -113,6 +113,13 @@ namespace Jammy.Core.Expansion
 			public uint Size { get; set; }
 			public uint LockKey { get; set; }
 			public MyLockInfo Parent { get; set; }
+			public bool Freed { get; set; }
+
+			public override string ToString()
+			{
+				return $"{LockKey:X8} {Size:X8} {FullPath} {(Freed?"FREE":"")}";
+			}
+			//public List<MyLockInfo> Children { get; } = new List<MyLockInfo>();
 		}
 
 		private class MyFileInfo
@@ -599,7 +606,8 @@ namespace Jammy.Core.Expansion
 								memory.UnsafeWrite32(mem + 12, regs.A[3]);
 								memory.UnsafeWrite32(mem + 16, myVolumeNodeBPTR);
 
-								locks.Add(mem, new MyLockInfo { FullPath =  Path.Combine(parentPath, pathName), Size = 0, LockKey = mem, Parent = parent });
+								locks.Add(mem, new MyLockInfo { FullPath = AmigaPathCombine(parentPath, pathName), Size = 0, LockKey = mem, Parent = parent });
+								WalkLocks();
 								logger.LogTrace($"LOCATE lock {mem:X8}");
 
 								memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
@@ -636,7 +644,9 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
 
 							locks.Add(mem, new MyLockInfo { FullPath = parent.FullPath, Size = parent.Size, LockKey = mem, Parent = parent });
-							logger.LogTrace($"LOCATE lock {mem:X8}");
+						WalkLocks();
+
+						logger.LogTrace($"LOCATE lock {mem:X8}");
 
 							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -713,12 +723,12 @@ namespace Jammy.Core.Expansion
 							260
 							*/
 
-							var thing = new MyDirCache.MyDirEntry { Name = basePath, IsDirectory = dircach!=null};
-							logger.LogTrace($"{thing.Name} {thing.Size} {(thing.IsDirectory?'D':'F')}");
+							var dirEntry = new MyDirCache.MyDirEntry { Name = basePath, IsDirectory = dircach!=null};
+							logger.LogTrace($"{dirEntry.Name} {dirEntry.Size} {(dirEntry.IsDirectory?'D':'F')}");
 
 							uint fib = (uint)pkt.dp_Arg2 << 2;
-							memory.UnsafeWrite32(fib + 4, (uint)(thing.IsDirectory? ST_USERDIR:ST_FILE));
-							memory.UnsafeWrite32(fib + 120, (uint)(thing.IsDirectory ? ST_USERDIR : ST_FILE));
+							memory.UnsafeWrite32(fib + 4, (uint)(dirEntry.IsDirectory? ST_USERDIR:ST_FILE));
+							memory.UnsafeWrite32(fib + 120, (uint)(dirEntry.IsDirectory ? ST_USERDIR : ST_FILE));
 
 							if (parent.FullPath.EndsWith(':'))
 							{ 
@@ -727,25 +737,28 @@ namespace Jammy.Core.Expansion
 								memory.UnsafeWrite32(fib + 120, ST_ROOT);
 							}
 
-							memory.UnsafeWrite32(fib + 124, thing.IsDirectory? 0:thing.Size);
+							memory.UnsafeWrite32(fib + 124, dirEntry.IsDirectory? 0:dirEntry.Size);
 
 							memory.UnsafeWrite32(fib, (uint)lok.fl_Key);
 							memory.UnsafeWrite32(fib + 116, 0);//rwed
 
 							int days, minutes, ticks;
-							DateTimeToAmiga(thing.Stamp, out days, out minutes, out ticks);
+							DateTimeToAmiga(dirEntry.Stamp, out days, out minutes, out ticks);
 
 							memory.UnsafeWrite32(fib + 132, (uint)days); // Days since 1978
 							memory.UnsafeWrite32(fib + 136, (uint)minutes);     // Minutes
 							memory.UnsafeWrite32(fib + 140, (uint)ticks);     // Ticks (1/50th of a sec)
 
 							uint s = fib+8;
-							memory.UnsafeWrite8(s++, (byte)Math.Min(107, thing.Name.Length));
-							for (int i = 0; i < Math.Min(107, thing.Name.Length); i++)
-								memory.UnsafeWrite8(s++, (byte)thing.Name[i]);
+							string name = dirEntry.Name;
+							int j = name.IndexOf(':');
+							if (j!=-1) name = name.Substring(j+1);
+							memory.UnsafeWrite8(s++, (byte)Math.Min(107, name.Length));
+							for (int i = 0; i < Math.Min(107, name.Length); i++)
+								memory.UnsafeWrite8(s++, (byte)name[i]);
 
 							memory.UnsafeWrite32(fib + 144, 0);//no comment
-							memory.UnsafeWrite32(fib + 128, (thing.Size+511) / 512);
+							memory.UnsafeWrite32(fib + 128, (dirEntry.Size+511) / 512);
 
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -823,8 +836,16 @@ namespace Jammy.Core.Expansion
 							var lok = new FileLock();
 							objectMapper.Deserialize(lockPtr, lok);
 
+						var @lock = locks[lockPtr];
+						logger.LogTrace($"FREE LOCK {@lock}");
+						if (@lock.Freed) logger.LogTrace($"DOUBLE FREE LOCK {@lock}");
 							FreeMem(lockPtr, 20);
-							locks.Remove(lockPtr);
+						locks.Remove(lockPtr);
+						//remove parent lock link
+						foreach (var l in locks.Values)
+							if (l.Parent == @lock) l.Parent = null;
+						WalkLocks();
+						//locks[lockPtr].Freed = true;
 
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -860,7 +881,9 @@ namespace Jammy.Core.Expansion
 									locks.Add(mem, new MyLockInfo { FullPath = child.Parent.Parent.FullPath, Size = 0, LockKey = mem, Parent = child.Parent.Parent });
 								else
 									locks.Add(mem, new MyLockInfo { FullPath = ":", Size = 0, LockKey = mem, Parent = null });
-								logger.LogTrace($"LOCATE lock {mem:X8}");
+							WalkLocks();
+
+							logger.LogTrace($"LOCATE lock {mem:X8}");
 
 								memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
 								memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -1138,7 +1161,7 @@ namespace Jammy.Core.Expansion
 							{
 								logger.LogTrace($"CREATE DIR {parent.FullPath}");
 
-								filename = Path.Combine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+								filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
 								logger.LogTrace($"{filename}");
 								logger.LogTrace($"{MakeHostPath(filename)}");
 							}
@@ -1155,7 +1178,9 @@ namespace Jammy.Core.Expansion
 								memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
 
 								locks.Add(mem, new MyLockInfo { FullPath = filename, Size = 0, LockKey = mem, Parent = parent });
-								logger.LogTrace($"LOCATE lock {mem:X8}");
+							WalkLocks();
+
+							logger.LogTrace($"LOCATE lock {mem:X8}");
 
 								memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
 								memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -1267,6 +1292,14 @@ namespace Jammy.Core.Expansion
 				return false;
 		}
 
+		private string AmigaPathCombine(string root, string fragment)
+		{
+			if (root == string.Empty) return fragment;
+			if (root.EndsWith(':'))
+				return root + fragment;
+			return root + '/' + fragment;
+		}
+
 		private string PathFromLock(int arg)
 		{
 			if (arg != 0)
@@ -1297,6 +1330,55 @@ namespace Jammy.Core.Expansion
 			memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 			memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 			return null;
+		}
+
+		private void WalkLocks()
+		{
+			logger.LogTrace($"WALK LOCKS {locks.Count}");
+			var childs = new Dictionary<MyLockInfo, List<MyLockInfo>>();
+
+			var children = new List<MyLockInfo>();
+			var orphans = locks.Values.ToList();
+
+			int maxloops = orphans.Count;
+
+			while (maxloops-- > 0)
+			{
+				children.AddRange(orphans);
+				orphans.Clear();
+			
+				foreach (var my in children)
+				{
+					if (my.Parent == null)
+					{
+						childs.Add(my, new List<MyLockInfo>());
+					}
+					else if (childs.TryGetValue(my.Parent, out var p))
+					{
+						p.Add(my);
+						childs.Add(my, new List<MyLockInfo>());
+					}
+					else
+					{
+						orphans.Add(my);
+					}
+				}
+				if (orphans.Count == 0) break;
+				children.Clear();
+			}
+
+			logger.LogTrace("LOCK TREE");
+			foreach (var root in childs.Where(x=>x.Key.Parent == null))
+				WalkLocks2(root, 0);
+			foreach (var orp in orphans)
+				logger.LogTrace($"ORPHAN {orp} Parent: {(orp.Parent!=null?orp.Parent:"")}");
+
+			void WalkLocks2(KeyValuePair<MyLockInfo, List<MyLockInfo>> kvp, int depth)
+			{
+				logger.LogTrace($"{new string(' ', depth*2)} {kvp.Key}");
+				foreach (var c in kvp.Value)
+					WalkLocks2(new KeyValuePair<MyLockInfo, List<MyLockInfo>>(c, childs[c]), depth+1);
+			}
 		}
 
 		private uint uniqueFileId = 1;
