@@ -127,39 +127,37 @@ namespace Jammy.Core.Expansion
 			public Stream stream;
 		}
 
-		private static string MakeHostPath(string basePath)
+		private static string MakeHostPath(string amigaPath)
 		{
 			//the bit up to the first colon
-			int t = basePath.IndexOf(':');
+			int t = amigaPath.IndexOf(':');
 			if (t != -1)
 			{
-				basePath = basePath.Substring(t + 1);
+				amigaPath = amigaPath.Substring(t + 1);
 			}
 
-			if (basePath.StartsWith('\\'))
-				basePath = basePath.Substring(1);
+			if (amigaPath.StartsWith('\\'))
+				amigaPath = amigaPath.Substring(1);
 
-			//need to do something here about special names and characters
-
-			//if (basePath == "..") basePath = "_..";
-			//if (basePath == ".") basePath = "_.";
-			//if (basePath.StartsWith('.') || basePath.StartsWith(' ')) basePath = "_" + basePath;
+			//have to eliminate '..' from Host path
+			amigaPath = amigaPath.Replace("..", "__");
 
 			////special file names on Windows
 			//string[] bad3 = {"CON", "PRN", "AUX", "NUL" };
 			//string[] bad4 = {"COM", "LPT" };
-			//if (bad3.Contains(basePath.ToUpper())) basePath = "_" + basePath;
-			//if (basePath.Length == 4 && bad4.Contains(basePath.Substring(0, 3).ToUpper()) && char.IsAsciiDigit(basePath[3])) basePath = "_" + basePath;
+			//if (bad3.Contains(amigaPath.ToUpper())) amigaPath = "_" + amigaPath;
+			//if (amigaPath.Length == 4 && bad4.Contains(amigaPath.Substring(0, 3).ToUpper()) && char.IsAsciiDigit(amigaPath[3])) amigaPath = "_" + amigaPath;
 
-			//char[] badChars = { '\\', /*'/',*/ '*', '?', '"', '<', '>', '|'/*, ':'*/};
-			//foreach (var c in badChars)
-			//{
-			//	if (basePath.Contains(c))
-			//		basePath = basePath.Replace(c, '_');
-			//}
+			char[] badChars = { '\\', '*', '?', '"', '<', '>', '|', ':' };
+			foreach (var c in badChars)
+			{
+				if (amigaPath.Contains(c))
+					amigaPath = amigaPath.Replace(c, '_');
+			}
 
-			basePath = Path.Combine(rootDir, basePath);
-			return basePath;
+			//finally attach the Host root path from the settings
+			amigaPath = Path.Combine(rootDir, amigaPath);
+			return amigaPath;
 		}
 
 		private class MyDirCache
@@ -624,9 +622,10 @@ namespace Jammy.Core.Expansion
 							if (searchPath.Contains("//"))
 								logger.LogTrace($"DON'T KNOW WHAT TO DO WITH {searchPath}");
 
-							logger.LogTrace($"SEARCH {searchPath}");
+							string hostPath = MakeHostPath(searchPath);
+							logger.LogTrace($"SEARCH {searchPath} {hostPath}");
 
-							if (Path.Exists(MakeHostPath(searchPath)))
+							if (Path.Exists(hostPath))
 							{ 
 								uint mem = AllocMem(20, 0x10001);
 								memory.UnsafeWrite32(mem, 0);
