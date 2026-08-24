@@ -127,6 +127,7 @@ namespace Jammy.Core.Expansion
 			public Stream stream;
 		}
 
+		//turn an Amiga path like df0:dir1/dir2 into a host path, like c:\source\jammy\hd\dir1\dir2
 		private static string MakeHostPath(string amigaPath)
 		{
 			//the bit up to the first colon
@@ -135,9 +136,6 @@ namespace Jammy.Core.Expansion
 			{
 				amigaPath = amigaPath.Substring(t + 1);
 			}
-
-			if (amigaPath.StartsWith('\\'))
-				amigaPath = amigaPath.Substring(1);
 
 			//have to eliminate '..' from Host path
 			amigaPath = amigaPath.Replace("..", "__");
@@ -157,6 +155,12 @@ namespace Jammy.Core.Expansion
 
 			//finally attach the Host root path from the settings
 			amigaPath = Path.Combine(rootDir, amigaPath);
+			return amigaPath;
+		}
+
+		private static string SanitiseAmigaPath(string amigaPath)
+		{
+			amigaPath = amigaPath.Replace('\\', '_');
 			return amigaPath;
 		}
 
@@ -592,6 +596,7 @@ namespace Jammy.Core.Expansion
 						else
 						{
 							pathName = ReadDOSString(namePtr);
+							pathName = SanitiseAmigaPath(pathName);
 							logger.LogTrace($"LOCATE {parentPath} {pathName}");
 						}
 
@@ -618,9 +623,23 @@ namespace Jammy.Core.Expansion
 
 						searchPath = AmigaPathCombine(parentPath, pathName);
 
-						//don't know what to do here, with // or /// etc inside the combined path
-						if (searchPath.Contains("//"))
-							logger.LogTrace($"DON'T KNOW WHAT TO DO WITH {searchPath}");
+						//what to do here, with // inside the combined path
+						//cd dir//dirsibling is definitely a thing
+						while (searchPath != null && searchPath.Contains("//"))
+						{
+							int i = searchPath.IndexOf("//");
+							string p0 = searchPath.Substring(0, i);
+							string p1 = searchPath.Substring(i + 1);
+							logger.LogTrace($"RELATIVE {searchPath} {p0} {p1}");
+							searchPath = AmigaParentPath(p0);
+							if (searchPath != null) searchPath += p1;
+						}
+						if (searchPath == null)
+						{
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							break;
+						}
 
 						string hostPath = MakeHostPath(searchPath);
 						logger.LogTrace($"SEARCH {searchPath} {hostPath}");
