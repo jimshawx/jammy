@@ -4,6 +4,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -352,8 +353,12 @@ namespace Jammy.Core.Expansion
 			//	return true;
 			//});
 
-			debugger.AddBreakpoint(0x00fffffe, callback: (bp) =>
-			{
+			debugger.AddBreakpoint(0x00fffffe, callback: (bp) => ProcessAmigaDOSAction(bp));
+
+		}
+
+		private bool ProcessAmigaDOSAction(BreakpointHitInfo bp)
+		{ 
 				var regs = cpu.GetRegs();
 
 				if (!volumeLinked)
@@ -841,6 +846,7 @@ namespace Jammy.Core.Expansion
 								break;
 							}
 
+							//at the root already?
 							if (child.Parent != null)
 							{ 
 								uint mem = AllocMem(20, 0x10001);
@@ -1259,7 +1265,6 @@ namespace Jammy.Core.Expansion
 				cpu.SetRegs(regs);
 
 				return false;
-			});
 		}
 
 		private string PathFromLock(int arg)
