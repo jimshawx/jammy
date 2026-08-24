@@ -1005,7 +1005,7 @@ namespace Jammy.Core.Expansion
 						{
 							string pathName = ReadDOSString(bstrAddr);
 							logger.LogTrace($"ACTION_FINDINPUT {pathName}");
-							basePath = Path.Combine(basePath, pathName);
+							basePath = AmigaPathCombine(basePath, pathName);
 						}
 						basePath = MakeHostPath(basePath);
 						logger.LogTrace($"Looking for {basePath}");
