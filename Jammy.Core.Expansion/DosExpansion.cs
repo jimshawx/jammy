@@ -136,6 +136,9 @@ namespace Jammy.Core.Expansion
 			{
 				amigaPath = amigaPath.Substring(t + 1);
 			}
+			
+			if (amigaPath.StartsWith('\\'))
+				amigaPath = amigaPath.Substring(1);
 
 			//have to eliminate '..' from Host path
 			amigaPath = amigaPath.Replace("..", "__");
