@@ -597,7 +597,36 @@ namespace Jammy.Core.Expansion
 								logger.LogTrace($"LOCATE {parentPath} {pathName}");
 							}
 
-							if (Path.Exists(MakeHostPath(Path.Combine(parentPath, pathName))))
+							string searchPath = null;
+
+							//SPECIAL CASE PATH NAMES '/' means go up one directory from parentPath
+							//SPECIAL CASE PATH NAMES '//' means go up two directories from parentPath (etc)
+							//SPECIAL CASE PATH NAMES ':' means relative to root directory
+
+							if (pathName.StartsWith(':') || pathName.ToUpper().StartsWith("MYDEV:"))
+								parentPath = string.Empty;
+
+							while (pathName.StartsWith('/') && parentPath != null)
+							{ 
+								parentPath = AmigaParentPath(parentPath);
+								pathName = pathName.Substring(1);
+							}
+							if (parentPath == null)
+							{
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
+
+							searchPath = AmigaPathCombine(parentPath, pathName);
+
+							//don't know what to do here, with // or /// etc inside the combined path
+							if (searchPath.Contains("//"))
+								logger.LogTrace($"DON'T KNOW WHAT TO DO WITH {searchPath}");
+
+							logger.LogTrace($"SEARCH {searchPath}");
+
+							if (Path.Exists(MakeHostPath(searchPath)))
 							{ 
 								uint mem = AllocMem(20, 0x10001);
 								memory.UnsafeWrite32(mem, 0);
@@ -606,7 +635,7 @@ namespace Jammy.Core.Expansion
 								memory.UnsafeWrite32(mem + 12, regs.A[3]);
 								memory.UnsafeWrite32(mem + 16, myVolumeNodeBPTR);
 
-								locks.Add(mem, new MyLockInfo { FullPath = AmigaPathCombine(parentPath, pathName), Size = 0, LockKey = mem, Parent = parent });
+								locks.Add(mem, new MyLockInfo { FullPath = searchPath, Size = 0, LockKey = mem, Parent = parent });
 								WalkLocks();
 								logger.LogTrace($"LOCATE lock {mem:X8}");
 
@@ -1297,7 +1326,22 @@ namespace Jammy.Core.Expansion
 			if (root == string.Empty) return fragment;
 			if (root.EndsWith(':'))
 				return root + fragment;
+			if (fragment == string.Empty) return root;
 			return root + '/' + fragment;
+		}
+
+		private string AmigaParentPath(string path)
+		{
+			int i;
+			i = path.LastIndexOf('/');
+			if (i != -1)
+				return path.Substring(0,i);
+			i = path.LastIndexOf(':');
+			if (i != -1)
+				return path.Substring(0, i+1);
+
+			logger.LogTrace($"DON'T KNOW WHAT THE PARENT PATH OF {path} is");
+			return null;
 		}
 
 		private string PathFromLock(int arg)
