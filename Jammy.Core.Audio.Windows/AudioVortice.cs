@@ -36,6 +36,7 @@ namespace Jammy.Core.Audio.Windows
 			public IXAudio2SourceVoice xaudioVoice { get; set; }
 			public AudioBuffer[] xaudioBuffer { get; set; }
 			public int currentBuffer { get; set; }
+			public AutoResetEvent bufferSync { get; set; }
 		}
 
 		private readonly VorticeChannel[] channels = new[] { new VorticeChannel(), new VorticeChannel(), new VorticeChannel(), new VorticeChannel() };
@@ -66,6 +67,10 @@ namespace Jammy.Core.Audio.Windows
 				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
 				channels[i].currentBuffer = 0;
 
+				//buffer synchronisation
+				channels[i].bufferSync = new AutoResetEvent(false);
+				channels[i].xaudioVoice.BufferEnd += (_) => { channels[i].bufferSync.Set(); };
+
 				//panning 1,2 left   0,3 right
 				var channelDetails = channels[i].xaudioVoice.VoiceDetails;
 				float[] outputMatrix = new float[channelDetails.InputChannels * masteringChannelDetails.InputChannels];
@@ -91,14 +96,8 @@ namespace Jammy.Core.Audio.Windows
 
 			for (int i = 0; i < 4; i++)
 			{
-				var state = channels[i].xaudioVoice.State;
-				if (state.BuffersQueued >= 2)
-				{
-					do
-					{
-						Thread.Yield();
-					} while (channels[i].xaudioVoice.State.BuffersQueued >= 2);
-				}
+				while (channels[i].xaudioVoice.State.BuffersQueued >= 2)
+					channels[i].bufferSync.WaitOne();
 
 				LowPassFilter(ch[i]);
 
