@@ -936,6 +936,27 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 							break;
 						}
+						logger.LogTrace($"NO PARENT {child.FullPath} {AmigaParentPath(child.FullPath)}");
+
+						string parentPath = AmigaParentPath(child.FullPath);
+						if (parentPath != null)
+						{ 
+							uint mem = AllocMem(20, 0x10001);
+							memory.UnsafeWrite32(mem, 0);
+							memory.UnsafeWrite32(mem + 4, mem);
+							memory.UnsafeWrite32(mem + 8, (uint)lok.fl_Access);
+							memory.UnsafeWrite32(mem + 12, lok.fl_Task.Address);
+							memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
+
+							locks.Add(mem, new MyLockInfo { FullPath = parentPath, Size = 0, LockKey = mem, Parent = null });
+							WalkLocks();
+
+							logger.LogTrace($"LOCATE NAME lock {mem:X8}");
+
+							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
+							memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							break;
+						}
 
 						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
@@ -1350,6 +1371,12 @@ namespace Jammy.Core.Expansion
 
 		private string AmigaParentPath(string path)
 		{
+			if (path.EndsWith(':'))
+			{
+				logger.LogTrace("PARENT OF ROOT");
+				return null;
+			}
+
 			int i;
 			i = path.LastIndexOf('/');
 			if (i != -1)
