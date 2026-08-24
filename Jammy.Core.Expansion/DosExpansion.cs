@@ -1192,7 +1192,7 @@ namespace Jammy.Core.Expansion
 						{
 							logger.LogTrace($"DELETE {parent.FullPath}");
 
-							filename = Path.Combine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+							filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
 							logger.LogTrace($"{filename}");
 							logger.LogTrace($"{MakeHostPath(filename)}");
 						}
@@ -1291,7 +1291,7 @@ namespace Jammy.Core.Expansion
 						{
 							logger.LogTrace($"RENAME FROM {parent.FullPath}");
 
-							filename = Path.Combine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+							filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
 							logger.LogTrace($"{filename}");
 							logger.LogTrace($"{MakeHostPath(filename)}");
 						}
@@ -1307,7 +1307,7 @@ namespace Jammy.Core.Expansion
 						{
 							logger.LogTrace($"RENAME TO {parent2.FullPath}");
 
-							dstFilename = Path.Combine(parent2.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
+							dstFilename = AmigaPathCombine(parent2.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
 							logger.LogTrace($"{dstFilename}");
 							logger.LogTrace($"{MakeHostPath(dstFilename)}");
 						}
