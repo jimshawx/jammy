@@ -315,6 +315,8 @@ namespace Jammy.Core.Expansion
 		private const int ACTION_ADD_NOTIFY = 4097;
 		private const int ACTION_REMOVE_NOTIFY = 4098;
 
+		private const int ACTION_MAXIMUM_VALUE = ACTION_IS_FILESYSTEM;
+
 		private const uint DOSTRUE = 0xffffffff;
 		private const int DOSFAIL = 0;
 
@@ -1558,7 +1560,7 @@ namespace Jammy.Core.Expansion
 					memory.UnsafeWrite32(regs.A[4] + 16, 0);
 					break;
 
-				case >= 1100:
+				case > ACTION_MAXIMUM_VALUE:
 
 					logger.LogTrace($"ACTION_IGNORED** {pkt.dp_Type} {pkt.dp_Type:X8} {pkt.dp_Type << 2:X8}");
 
