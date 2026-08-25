@@ -288,6 +288,8 @@ namespace Jammy.Core.Expansion
 
 		private const int ERROR_NO_MORE_ENTRIES = 232;
 		private const int ERROR_OBJECT_NOT_FOUND = 205;
+		private const int ERROR_OBJECT_IN_USE = 202;
+		private const int ERROR_DIRECTORY_NOT_EMPTY = 216;
 
 
 		private const int ST_ROOT = 1;
@@ -590,23 +592,27 @@ namespace Jammy.Core.Expansion
 							mode = -2;
 						}
 
-						MyLockInfo parent = null;
-						if (pkt.dp_Arg1 != 0)
-						{
-							var @lock = new FileLock();
-							objectMapper.Deserialize((uint)pkt.dp_Arg1 << 2, @lock);
-							logger.LogTrace($"LOCATE FAILING (parent) {@lock.fl_Key:X8}");
+						var parent = LockFromBPtr(regs, pkt.dp_Arg1);
+						if (parent != null)
+							parentPath = parent.FullPath;
+						
+						//MyLockInfo parent = null;
+						//if (pkt.dp_Arg1 != 0)
+						//{
+						//	var @lock = new FileLock();
+						//	objectMapper.Deserialize((uint)pkt.dp_Arg1 << 2, @lock);
+						//	logger.LogTrace($"LOCATE FAILING (parent) {@lock.fl_Key:X8}");
 
-							if (locks.TryGetValue((uint)@lock.fl_Key, out parent))
-							{
-								logger.LogTrace($"FOUND {parent.FullPath}");
-								parentPath = parent.FullPath;
-							}
-							else
-							{
-								logger.LogTrace("FOUND NOTHING");
-							}
-						}
+						//	if (locks.TryGetValue((uint)@lock.fl_Key, out parent))
+						//	{
+						//		logger.LogTrace($"FOUND {parent.FullPath}");
+						//		parentPath = parent.FullPath;
+						//	}
+						//	else
+						//	{
+						//		logger.LogTrace("FOUND NOTHING");
+						//	}
+						//}
 
 						uint namePtr = (uint)pkt.dp_Arg2 << 2;
 						if (namePtr == 0)
@@ -682,6 +688,8 @@ namespace Jammy.Core.Expansion
 							break;
 						}
 
+						logger.LogTrace($"PATH DOES NOT EXIST {hostPath}");
+
 						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 					}
@@ -692,15 +700,18 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"ACTION_COPY_DIR (AKA COPY_LOCK)");
 
 						var lok = new FileLock();
-						objectMapper.Deserialize((uint)pkt.dp_Arg1 << 2, lok);
+						//objectMapper.Deserialize((uint)pkt.dp_Arg1 << 2, lok);
 
-						if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						{
-							logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+						//{
+						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//	break;
+						//}
+						var parent = LockFromBPtr(regs, pkt.dp_Arg1, lok);
+						if (parent == null)
 							break;
-						}
 
 						//create a new lock, same place
 						uint mem = AllocMem(20, 0x10001);
@@ -724,9 +735,9 @@ namespace Jammy.Core.Expansion
 					{
 						logger.LogTrace($"ACTION_EXAMINE_OBJECT {pkt.dp_Arg1 << 2:X8}");
 
-						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 						var lok = new FileLock();
-						objectMapper.Deserialize(lockPtr, lok);
+						//objectMapper.Deserialize(lockPtr, lok);
 
 						//logger.LogTrace($"{lok.fl_Link:X8}");
 						//logger.LogTrace($"{lok.fl_Key:X8}");
@@ -735,13 +746,16 @@ namespace Jammy.Core.Expansion
 						//logger.LogTrace($"{lok.fl_Volume:X8}");
 
 						string basePath = "";
-						if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						{
-							logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+						//{
+						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//	break;
+						//}
+						var parent = LockFromBPtr(regs, pkt.dp_Arg1, lok);
+						if (parent == null)
 							break;
-						}
 						//else
 						//{
 						logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
@@ -812,9 +826,9 @@ namespace Jammy.Core.Expansion
 						int days, minutes, ticks;
 						DateTimeToAmiga(dirEntry.Stamp, out days, out minutes, out ticks);
 
-						memory.UnsafeWrite32(fib + 132, (uint)days); // Days since 1978
-						memory.UnsafeWrite32(fib + 136, (uint)minutes);     // Minutes
-						memory.UnsafeWrite32(fib + 140, (uint)ticks);     // Ticks (1/50th of a sec)
+						memory.UnsafeWrite32(fib + 132, (uint)days);
+						memory.UnsafeWrite32(fib + 136, (uint)minutes);
+						memory.UnsafeWrite32(fib + 140, (uint)ticks);
 
 						uint s = fib + 8;
 						string name = dirEntry.Name;
@@ -833,8 +847,9 @@ namespace Jammy.Core.Expansion
 					break;
 
 				case ACTION_EXAMINE_NEXT:
-					logger.LogTrace($"ACTION_EXAMINE_NEXT {pkt.dp_Arg1 << 2:X8}");
 					{
+						logger.LogTrace($"ACTION_EXAMINE_NEXT {pkt.dp_Arg1 << 2:X8}");
+
 						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 						var lok = new FileLock();
 						objectMapper.Deserialize(lockPtr, lok);
@@ -871,9 +886,9 @@ namespace Jammy.Core.Expansion
 							int days, minutes, ticks;
 							DateTimeToAmiga(thing.Stamp, out days, out minutes, out ticks);
 
-							memory.UnsafeWrite32(fib + 132, (uint)days); // Days since 1978
-							memory.UnsafeWrite32(fib + 136, (uint)minutes);     // Minutes
-							memory.UnsafeWrite32(fib + 140, (uint)ticks);     // Ticks (1/50th of a sec)
+							memory.UnsafeWrite32(fib + 132, (uint)days); 
+							memory.UnsafeWrite32(fib + 136, (uint)minutes);
+							memory.UnsafeWrite32(fib + 140, (uint)ticks);
 
 							uint s = fib + 8;
 							memory.UnsafeWrite8(s++, (byte)Math.Min(107, thing.Name.Length));
@@ -897,8 +912,9 @@ namespace Jammy.Core.Expansion
 					break;
 
 				case ACTION_FREE_LOCK:
-					logger.LogTrace($"ACTION_FREE_LOCK {pkt.dp_Arg1 << 2:X8}");
 					{
+						logger.LogTrace($"ACTION_FREE_LOCK {pkt.dp_Arg1 << 2:X8}");
+
 						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 						var lok = new FileLock();
 						objectMapper.Deserialize(lockPtr, lok);
@@ -920,19 +936,23 @@ namespace Jammy.Core.Expansion
 					break;
 
 				case ACTION_PARENT:
-					logger.LogTrace($"ACTION_PARENT {pkt.dp_Arg1 << 2:X8}");
 					{
-						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
-						var lok = new FileLock();
-						objectMapper.Deserialize(lockPtr, lok);
+						logger.LogTrace($"ACTION_PARENT {pkt.dp_Arg1 << 2:X8}");
 
-						if (!locks.TryGetValue((uint)lok.fl_Key, out var child))
-						{
-							logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+						var lok = new FileLock();
+						//objectMapper.Deserialize(lockPtr, lok);
+
+						//if (!locks.TryGetValue((uint)lok.fl_Key, out var child))
+						//{
+						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//	break;
+						//}
+						var child = LockFromBPtr(regs, pkt.dp_Arg1, lok);
+						if (child == null)
 							break;
-						}
 
 						/*
 						//at the root already?
@@ -988,27 +1008,30 @@ namespace Jammy.Core.Expansion
 				case ACTION_FINDINPUT:
 				case ACTION_FINDOUTPUT:
 				case ACTION_FINDUPDATE:
-
-					if (pkt.dp_Type == ACTION_FINDINPUT) logger.LogTrace($"ACTION_FINDINPUT {pkt.dp_Arg2 << 2:X8}");
-					if (pkt.dp_Type == ACTION_FINDOUTPUT) logger.LogTrace($"ACTION_FINDOUTPUT {pkt.dp_Arg2 << 2:X8}");
-					if (pkt.dp_Type == ACTION_FINDUPDATE) logger.LogTrace($"ACTION_FINDUPDATE {pkt.dp_Arg2 << 2:X8}");
 					{
+						if (pkt.dp_Type == ACTION_FINDINPUT) logger.LogTrace($"ACTION_FINDINPUT {pkt.dp_Arg2 << 2:X8}");
+						if (pkt.dp_Type == ACTION_FINDOUTPUT) logger.LogTrace($"ACTION_FINDOUTPUT {pkt.dp_Arg2 << 2:X8}");
+						if (pkt.dp_Type == ACTION_FINDUPDATE) logger.LogTrace($"ACTION_FINDUPDATE {pkt.dp_Arg2 << 2:X8}");
+
 						//Arg1 points to a FileHandle
 						//Arg2 is the lock
 						//Arg3 is the filename
 
 						string basePath = "";
 
-						var @lock = new FileLock();
-						objectMapper.Deserialize((uint)pkt.dp_Arg2 << 2, @lock);
+						//var @lock = new FileLock();
+						//objectMapper.Deserialize((uint)pkt.dp_Arg2 << 2, @lock);
 
-						if (!locks.TryGetValue((uint)@lock.fl_Key, out var parent))
-						{
-							logger.LogTrace($"parent lock not found {pkt.dp_Arg2 << 2:X8}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//if (!locks.TryGetValue((uint)@lock.fl_Key, out var parent))
+						//{
+						//	logger.LogTrace($"parent lock not found {pkt.dp_Arg2 << 2:X8}");
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//	break;
+						//}
+						var parent = LockFromBPtr(regs, pkt.dp_Arg2);
+						if (parent == null)
 							break;
-						}
 						//else
 						//{
 						logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
@@ -1196,21 +1219,25 @@ namespace Jammy.Core.Expansion
 					break;
 
 				case ACTION_DELETE_OBJECT:
-					logger.LogTrace($"ACTION_DELETE_OBJECT {pkt.dp_Arg1 << 2:X8}");
 					{
-						string filename = "";
+						logger.LogTrace($"ACTION_DELETE_OBJECT {pkt.dp_Arg1 << 2:X8}");
 
-						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
-						var lok = new FileLock();
-						objectMapper.Deserialize(lockPtr, lok);
+						string filename = string.Empty;
 
-						if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						{
-							logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+						//var lok = new FileLock();
+						//objectMapper.Deserialize(lockPtr, lok);
+
+						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+						//{
+						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//	break;
+						//}
+						var parent = LockFromBPtr(regs, pkt.dp_Arg1);
+						if (parent == null)
 							break;
-						}
 						//else
 						//{
 						logger.LogTrace($"DELETE {parent.FullPath}");
@@ -1222,7 +1249,39 @@ namespace Jammy.Core.Expansion
 
 						try
 						{
-							File.Delete(MakeHostPath(filename));
+							string hostPath = MakeHostPath(filename);
+							if (File.Exists(hostPath))
+							{
+								try
+								{ 
+									File.Delete(hostPath);
+								}
+								catch (IOException)
+								{
+									memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+									memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_IN_USE);
+									break;
+								}
+							}
+							else if (Directory.Exists(hostPath))
+							{
+								try
+								{ 
+									Directory.Delete(hostPath);
+								}
+								catch (IOException)
+								{
+									memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+									memory.UnsafeWrite32(regs.A[4] + 16, ERROR_DIRECTORY_NOT_EMPTY);
+									break;
+								}
+							}
+							else
+							{
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								break;
+							}
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						}
@@ -1236,21 +1295,25 @@ namespace Jammy.Core.Expansion
 					break;
 
 				case ACTION_CREATE_DIR:
-					logger.LogTrace($"ACTION_CREATE_DIR {pkt.dp_Arg1 << 2:X8}");
 					{
-						string filename = "";
+						logger.LogTrace($"ACTION_CREATE_DIR {pkt.dp_Arg1 << 2:X8}");
 
-						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+						string filename = string.Empty;
+
+						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 						var lok = new FileLock();
-						objectMapper.Deserialize(lockPtr, lok);
+						//objectMapper.Deserialize(lockPtr, lok);
 
-						if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						{
-							logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+						//{
+						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//	break;
+						//}
+						var parent = LockFromBPtr(regs, pkt.dp_Arg1, lok);
+						if (parent == null)
 							break;
-						}
 						//else
 						//{
 						logger.LogTrace($"CREATE DIR {parent.FullPath}");
@@ -1289,27 +1352,31 @@ namespace Jammy.Core.Expansion
 					break;
 
 				case ACTION_RENAME_OBJECT:
-					logger.LogTrace($"ACTION_RENAME_OBJECT {pkt.dp_Arg1 << 2:X8}");
 					{
-						string filename = "";
-						string dstFilename = "";
+						logger.LogTrace($"ACTION_RENAME_OBJECT {pkt.dp_Arg1 << 2:X8}");
 
-						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
-						var lok = new FileLock();
-						objectMapper.Deserialize(lockPtr, lok);
+						string filename = string.Empty;
+						string dstFilename = string.Empty;
+
+						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
+						//var lok = new FileLock();
+						//objectMapper.Deserialize(lockPtr, lok);
 
 
-						uint lockDst = (uint)pkt.dp_Arg3 << 2;
-						var lokDst = new FileLock();
-						objectMapper.Deserialize(lockDst, lokDst);
+						//uint lockDst = (uint)pkt.dp_Arg3 << 2;
+						//var lokDst = new FileLock();
+						//objectMapper.Deserialize(lockDst, lokDst);
 
-						if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						{
-							logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
+						//{
+						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//	break;
+						//}
+						var parent = LockFromBPtr(regs, pkt.dp_Arg1);
+						if (parent == null)
 							break;
-						}
 						//else
 						//{
 						logger.LogTrace($"RENAME FROM {parent.FullPath}");
@@ -1319,13 +1386,16 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"{MakeHostPath(filename)}");
 						//}
 
-						if (!locks.TryGetValue((uint)lokDst.fl_Key, out var parent2))
-						{
-							logger.LogTrace($"parent lock not found {lokDst.fl_Key:X8}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//if (!locks.TryGetValue((uint)lokDst.fl_Key, out var parent2))
+						//{
+						//	logger.LogTrace($"parent lock not found {lokDst.fl_Key:X8}");
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						//	break;
+						//}
+						var parent2 = LockFromBPtr(regs, pkt.dp_Arg3);
+						if (parent2 == null)
 							break;
-						}
 						//else
 						//{
 						logger.LogTrace($"RENAME TO {parent2.FullPath}");
@@ -1452,6 +1522,35 @@ namespace Jammy.Core.Expansion
 		//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 		//	return null;
 		//}
+
+		private MyLockInfo LockFromBPtr(Regs regs, int arg)
+		{
+			var @lock = new FileLock();
+			return LockFromBPtr(regs, arg, @lock);
+		}
+
+		private MyLockInfo LockFromBPtr(Regs regs, int arg, FileLock @lock)
+		{
+			if (arg == 0)
+			{
+				logger.LogTrace("Lock 0");
+
+				memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+				memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+				return null;
+			}
+
+			objectMapper.Deserialize((uint)arg << 2, @lock);
+
+			if (locks.TryGetValue((uint)@lock.fl_Key, out var parent))
+				return parent;
+
+			logger.LogTrace($"Lock not found {(uint)arg << 2:X8} {@lock.fl_Key:X8}");
+
+			memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+			memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+			return null;
+		}
 
 		//private void WalkLocks()
 		//{
@@ -1719,3 +1818,4 @@ ERROR_NO_DISK			  EQU  226
 ERROR_NO_MORE_ENTRIES		  EQU  232
 
 */
+
