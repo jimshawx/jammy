@@ -8,6 +8,16 @@ namespace Jammy.AmigaTypes
 {
 	public interface IWrappedPtr { }
 
+	public interface IWrappedBSTR
+	{
+		string BStr { get; set;}
+	}
+
+	public interface IWrappedSTRPTR
+	{
+		string Str { get; set; }
+	}
+
 	public interface IWrappedPtr<T> : IWrappedPtr
 	{
 		uint Address { get; set; }
@@ -23,6 +33,16 @@ namespace Jammy.AmigaTypes
 		{
 			return Wrapped.ToString();
 		}
+	}
+
+	public class WrappedBSTR : WrappedPtr<char>, IWrappedBSTR
+	{
+		public string BStr { get; set; }
+	}
+
+	public class WrappedSTRPTR : WrappedPtr<char>, IWrappedSTRPTR
+	{
+		public string Str { get; set; }
 	}
 
 	public class AmigaArraySize: Attribute

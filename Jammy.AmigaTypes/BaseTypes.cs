@@ -6,8 +6,8 @@ global using FunctionPtr = System.UInt32;
 global using voidPtr = System.UInt32;
 global using VOIDPtr = System.UInt32;
 
-global using STRPTR = string;
-global using BSTR = string;
+global using STRPTR = Jammy.AmigaTypes.WrappedSTRPTR;
+global using BSTR = Jammy.AmigaTypes.WrappedBSTR;
 
 global using IClass = System.UInt32;
 global using Object = System.UInt32;
