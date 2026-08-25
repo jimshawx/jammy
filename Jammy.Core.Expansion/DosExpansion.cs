@@ -999,7 +999,10 @@ namespace Jammy.Core.Expansion
 
 						string basePath = "";
 
-						if (!locks.TryGetValue((uint)pkt.dp_Arg2 << 2, out var parent))
+						var @lock = new FileLock();
+						objectMapper.Deserialize((uint)pkt.dp_Arg2 << 2, @lock);
+
+						if (!locks.TryGetValue((uint)@lock.fl_Key, out var parent))
 						{
 							logger.LogTrace($"parent lock not found {pkt.dp_Arg2 << 2:X8}");
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
