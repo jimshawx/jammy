@@ -256,41 +256,92 @@ namespace Jammy.Core.Expansion
 			//}
 		}
 
-		private const int ACTION_INHIBIT = 0x1f;
-		private const int ACTION_HANDLER_INFO = 0x19;
-
+		private const int ACTION_NIL = 0;
+		private const int ACTION_GET_BLOCK = 2;
+		private const int ACTION_SET_MAP = 4;
+		private const int ACTION_DIE = 5;
+		private const int ACTION_EVENT = 6;
+		private const int ACTION_CURRENT_VOLUME = 7;
+		private const int ACTION_LOCATE_OBJECT = 8;
+		private const int ACTION_RENAME_DISK = 9;
 		private const int ACTION_FREE_LOCK = 15;
 		private const int ACTION_DELETE_OBJECT = 16;
 		private const int ACTION_RENAME_OBJECT = 17;
+		private const int ACTION_MORE_CACHE = 18;
 		private const int ACTION_COPY_DIR = 19;
+		private const int ACTION_WAIT_CHAR = 20;
 		private const int ACTION_SET_PROTECT = 21;
 		private const int ACTION_CREATE_DIR = 22;
-
-		private const int ACTION_LOCATE_OBJECT = 0x8;
-		private const int ACTION_EXAMINE_OBJECT = 0x17;
-		private const int ACTION_EXAMINE_NEXT = 0x18;
-		private const int ACTION_INFO = 0x1A;
+		private const int ACTION_EXAMINE_OBJECT = 23;
+		private const int ACTION_EXAMINE_NEXT = 24;
+		private const int ACTION_DISK_INFO = 25;
+		private const int ACTION_INFO = 26;
+		private const int ACTION_FLUSH = 27;
+		private const int ACTION_SET_COMMENT = 28;
 		private const int ACTION_PARENT = 29;
+		private const int ACTION_TIMER = 30;
+		private const int ACTION_INHIBIT = 31;
+		private const int ACTION_DISK_TYPE = 32;
+		private const int ACTION_DISK_CHANGE = 33;
 		private const int ACTION_SET_DATE = 34;
-
-		private const int ACTION_READ = 'R';
-		private const int ACTION_WRITE = 'W';
-
+		private const int ACTION_SAME_LOCK = 40;
+		private const int ACTION_READ = 82;
+		private const int ACTION_WRITE = 87;
+		private const int ACTION_SCREEN_MODE = 994;
+		private const int ACTION_CHANGE_SIGNAL = 995;
+		private const int ACTION_READ_RETURN = 1001;
+		private const int ACTION_WRITE_RETURN = 1002;
+		private const int ACTION_FINDUPDATE = 1004;
 		private const int ACTION_FINDINPUT = 1005;
 		private const int ACTION_FINDOUTPUT = 1006;
-		private const int ACTION_FINDUPDATE = 1004;
-
 		private const int ACTION_END = 1007;
 		private const int ACTION_SEEK = 1008;
+		private const int ACTION_FORMAT = 1020;
+		private const int ACTION_MAKE_LINK = 1021;
+		private const int ACTION_SET_FILE_SIZE = 1022;
+		private const int ACTION_WRITE_PROTECT = 1023;
+		private const int ACTION_READ_LINK = 1024;
+		private const int ACTION_FH_FROM_LOCK = 1026;
+		private const int ACTION_IS_FILESYSTEM = 1027;
+		private const int ACTION_CHANGE_MODE = 1028;
+		private const int ACTION_COPY_DIR_FH = 1030;
+		private const int ACTION_PARENT_FH = 1031;
+		private const int ACTION_EXAMINE_ALL = 1033;
+		private const int ACTION_EXAMINE_FH = 1034;
+		private const int ACTION_LOCK_RECORD = 2008;
+		private const int ACTION_FREE_RECORD = 2009;
+		private const int ACTION_ADD_NOTIFY = 4097;
+		private const int ACTION_REMOVE_NOTIFY = 4098;
 
 		private const uint DOSTRUE = 0xffffffff;
 		private const int DOSFAIL = 0;
 
-		private const int ERROR_NO_MORE_ENTRIES = 232;
-		private const int ERROR_OBJECT_NOT_FOUND = 205;
+		private const int ERROR_NO_FREE_STORE = 103;
+		private const int ERROR_TASK_TABLE_FULL = 105;
+		private const int ERROR_LINE_TOO_LONG = 120;
+		private const int ERROR_FILE_NOT_OBJECT = 121;
+		private const int ERROR_INVALID_RESIDENT_LIBRARY = 122;
 		private const int ERROR_OBJECT_IN_USE = 202;
+		private const int ERROR_OBJECT_EXISTS = 203;
+		private const int ERROR_OBJECT_NOT_FOUND = 205;
+		private const int ERROR_ACTION_NOT_KNOWN = 209;
+		private const int ERROR_INVALID_COMPONENT_NAME = 210;
+		private const int ERROR_INVALID_LOCK = 211;
+		private const int ERROR_OBJECT_WRONG_TYPE = 212;
+		private const int ERROR_DISK_NOT_VALIDATED = 213;
+		private const int ERROR_DISK_WRITE_PROTECTED = 214;
+		private const int ERROR_RENAME_ACROSS_DEVICES = 215;
 		private const int ERROR_DIRECTORY_NOT_EMPTY = 216;
-
+		private const int ERROR_DEVICE_NOT_MOUNTED = 218;
+		private const int ERROR_SEEK_ERROR = 219;
+		private const int ERROR_COMMENT_TOO_BIG = 220;
+		private const int ERROR_DISK_FULL = 221;
+		private const int ERROR_DELETE_PROTECTED = 222;
+		private const int ERROR_WRITE_PROTECTED = 223;
+		private const int ERROR_READ_PROTECTED = 224;
+		private const int ERROR_NOT_A_DOS_DISK = 225;
+		private const int ERROR_NO_DISK = 226;
+		private const int ERROR_NO_MORE_ENTRIES = 232;
 
 		private const int ST_ROOT = 1;
 		private const int ST_USERDIR = 2;
@@ -503,9 +554,9 @@ namespace Jammy.Core.Expansion
 					}
 					break;
 
-				case ACTION_HANDLER_INFO://aka ACTION_DISK_INFO
+				case ACTION_DISK_INFO://aka ACTION_HANDLER_INFO
 					{
-						logger.LogTrace($"ACTION_HANDLER_INFO");
+						logger.LogTrace($"ACTION_DISK_INFO");
 						uint address = (uint)pkt.dp_Arg1 << 2;//InfoData
 						/*
 						public class InfoData
@@ -1715,107 +1766,3 @@ namespace Jammy.Core.Expansion
 		}
 	}
 }
-/*
-        0       0x0000  ACTION_NIL
-        1               <Reserved by Commodore>
-        2       0x0002  ACTION_GET_BLOCK
-        3               <Reserved by Commodore>
-        4       0x0004  ACTION_SET_MAP
-        5       0x0005  ACTION_DIE
-        6       0x0006  ACTION_EVENT
-        7       0x0007  ACTION_CURRENT_VOLUME
-        8       0x0008  ACTION_LOCATE_OBJECT
-        9       0x0009  ACTION_RENAME_DISK
-        10-14           <Reserved by Commodore>
-        15      0x000F  ACTION_FREE_LOCK
-        16      0x0010  ACTION_DELETE_OBJECT
-        17      0x0011  ACTION_RENAME_OBJECT
-        18      0x0012  ACTION_MORE_CACHE
-        19      0x0013  ACTION_COPY_DIR
-        20      0x0014  ACTION_WAIT_CHAR
-        21      0x0015  ACTION_SET_PROTECT
-        22      0x0016  ACTION_CREATE_DIR
-        23      0x0017  ACTION_EXAMINE_OBJECT
-        24      0x0018  ACTION_EXAMINE_NEXT
-        25      0x0019  ACTION_DISK_INFO
-        26      0x001A  ACTION_INFO
-        27      0x001B  ACTION_FLUSH
-        28      0x001C  ACTION_SET_COMMENT
-        29      0x001D  ACTION_PARENT
-        30      0x001E  ACTION_TIMER
-        31      0x001F  ACTION_INHIBIT
-        32      0x0020  ACTION_DISK_TYPE
-        33      0x0021  ACTION_DISK_CHANGE
-        34      0x0022  ACTION_SET_DATE
-        35-39           <Reserved by Commodore>
-        40      0x0028  ACTION_SAME_LOCK
-        41-81           <Reserved by Commodore>
-        82      0x0052  ACTION_READ
-        83-86           <Reserved by Commodore>
-        87      0x0057  ACTION_WRITE
-        88-993          <Reserved by Commodore>
-        994     0x03E2  ACTION_SCREEN_MODE
-        995     0x03E3  ACTION_CHANGE_SIGNAL
-        996-1000        <Reserved by Commodore>
-        1001    0x03E9  ACTION_READ_RETURN
-        1002    0x03EA  ACTION_WRITE_RETURN
-        1003            <Reserved by Commodore>
-        1004    0x03EC  ACTION_FINDUPDATE
-        1005    0x03ED  ACTION_FINDINPUT
-        1006    0x03EE  ACTION_FINDOUTPUT
-        1007    0x03EF  ACTION_END
-        1008    0x03F0  ACTION_SEEK
-        1009-1019       <Reserved by Commodore>
-        1020    0x03FC  ACTION_FORMAT
-        1021    0x03FD  ACTION_MAKE_LINK
-        1022    0x03FE  ACTION_SET_FILE_SIZE
-        1023    0x03FF  ACTION_WRITE_PROTECT
-        1024    0x0400  ACTION_READ_LINK
-        1025            <Reserved by Commodore>
-        1026    0x0402  ACTION_FH_FROM_LOCK
-        1027    0x0403  ACTION_IS_FILESYSTEM
-        1028    0x0404  ACTION_CHANGE_MODE
-        1029            <Reserved by Commodore>
-        1030    0x0406  ACTION_COPY_DIR_FH
-        1031    0x0407  ACTION_PARENT_FH
-        1032            <Reserved by Commodore>
-        1033    0x0409  ACTION_EXAMINE_ALL
-        1034    0x040A  ACTION_EXAMINE_FH
-        1035-2007       <Reserved by Commodore>
-        2008    0x07D8  ACTION_LOCK_RECORD
-        2009    0x07D9  ACTION_FREE_RECORD
-        2010-2049       <Reserved by Commodore>
-        2050-2999       <Reserved for 3rd Party Handlers>
-        4097    0x1001  ACTION_ADD_NOTIFY
-        4098    0x1002  ACTION_REMOVE_NOTIFY
-        4099-           <Reserved by Commodore for Future Expansion>
-
-ERROR_NO_FREE_STORE		  EQU  103
-ERROR_TASK_TABLE_FULL		  EQU  105
-ERROR_LINE_TOO_LONG		  EQU  120
-ERROR_FILE_NOT_OBJECT		  EQU  121
-ERROR_INVALID_RESIDENT_LIBRARY	  EQU  122
-ERROR_OBJECT_IN_USE		  EQU  202
-ERROR_OBJECT_EXISTS		  EQU  203
-ERROR_OBJECT_NOT_FOUND		  EQU  205
-ERROR_ACTION_NOT_KNOWN		  EQU  209
-ERROR_INVALID_COMPONENT_NAME	  EQU  210
-ERROR_INVALID_LOCK		  EQU  211
-ERROR_OBJECT_WRONG_TYPE		  EQU  212
-ERROR_DISK_NOT_VALIDATED	  EQU  213
-ERROR_DISK_WRITE_PROTECTED	  EQU  214
-ERROR_RENAME_ACROSS_DEVICES	  EQU  215
-ERROR_DIRECTORY_NOT_EMPTY	  EQU  216
-ERROR_DEVICE_NOT_MOUNTED	  EQU  218
-ERROR_SEEK_ERROR		  EQU  219
-ERROR_COMMENT_TOO_BIG		  EQU  220   
-ERROR_DISK_FULL			  EQU  221
-ERROR_DELETE_PROTECTED		  EQU  222
-ERROR_WRITE_PROTECTED		  EQU  223 
-ERROR_READ_PROTECTED		  EQU  224
-ERROR_NOT_A_DOS_DISK		  EQU  225
-ERROR_NO_DISK			  EQU  226
-ERROR_NO_MORE_ENTRIES		  EQU  232
-
-*/
-
