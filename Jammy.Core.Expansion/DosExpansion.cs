@@ -1048,7 +1048,7 @@ namespace Jammy.Core.Expansion
 							public LONG fh_Arg2 { get; set; }
 							*/
 
-							var f = new MyFileInfo();
+							var fi = new MyFileInfo();
 
 							FileAccess access = FileAccess.Read;
 							FileMode mode = FileMode.Open;
@@ -1058,9 +1058,9 @@ namespace Jammy.Core.Expansion
 
 							try
 							{
-								f.stream = File.Open(basePath, mode, access, FileShare.Read);
+								fi.stream = File.Open(basePath, mode, access, FileShare.Read);
 								uint id = UniqueFileId();
-								files.Add(id, f);
+								files.Add(id, fi);
 
 								//set fh_Pos/fh_End = -1
 								uint address = (uint)pkt.dp_Arg1 << 2;
@@ -1082,7 +1082,7 @@ namespace Jammy.Core.Expansion
 						else if (pkt.dp_Type == ACTION_FINDOUTPUT)
 						{
 							logger.LogTrace($"NEW {pkt.dp_Arg1 << 2:X8}");
-							var f = new MyFileInfo();
+							var fi = new MyFileInfo();
 
 							FileAccess access = FileAccess.ReadWrite;
 							FileMode mode = FileMode.Create;
@@ -1090,9 +1090,9 @@ namespace Jammy.Core.Expansion
 							//if (pkt.dp_Type == ACTION_FINDOUTPUT) { mode = FileMode.Create; access = FileAccess.ReadWrite; }
 							////if (pkt.dp_Type == ACTION_FINDUPDATE) { mode = FileMode.Open; access = FileAccess.ReadWrite; }
 
-							f.stream = File.Open(basePath, mode, access, FileShare.Read);
+							fi.stream = File.Open(basePath, mode, access, FileShare.Read);
 							uint id = UniqueFileId();
-							files.Add(id, f);
+							files.Add(id, fi);
 
 							//set fh_Pos/fh_End = -1
 							uint address = (uint)pkt.dp_Arg1 << 2;
@@ -1363,7 +1363,13 @@ namespace Jammy.Core.Expansion
 					break;
 
 				case >= 1100:
+
 					logger.LogTrace($"ACTION_IGNORED** {pkt.dp_Type} {pkt.dp_Type:X8} {pkt.dp_Type << 2:X8}");
+
+					//possible mapping for first message
+					//var f = new FileSysStartupMsg();
+					//objectMapper.Deserialize(regs.A[4], f);
+
 					break;
 
 				default:
@@ -1681,4 +1687,32 @@ namespace Jammy.Core.Expansion
         4097    0x1001  ACTION_ADD_NOTIFY
         4098    0x1002  ACTION_REMOVE_NOTIFY
         4099-           <Reserved by Commodore for Future Expansion>
+
+ERROR_NO_FREE_STORE		  EQU  103
+ERROR_TASK_TABLE_FULL		  EQU  105
+ERROR_LINE_TOO_LONG		  EQU  120
+ERROR_FILE_NOT_OBJECT		  EQU  121
+ERROR_INVALID_RESIDENT_LIBRARY	  EQU  122
+ERROR_OBJECT_IN_USE		  EQU  202
+ERROR_OBJECT_EXISTS		  EQU  203
+ERROR_OBJECT_NOT_FOUND		  EQU  205
+ERROR_ACTION_NOT_KNOWN		  EQU  209
+ERROR_INVALID_COMPONENT_NAME	  EQU  210
+ERROR_INVALID_LOCK		  EQU  211
+ERROR_OBJECT_WRONG_TYPE		  EQU  212
+ERROR_DISK_NOT_VALIDATED	  EQU  213
+ERROR_DISK_WRITE_PROTECTED	  EQU  214
+ERROR_RENAME_ACROSS_DEVICES	  EQU  215
+ERROR_DIRECTORY_NOT_EMPTY	  EQU  216
+ERROR_DEVICE_NOT_MOUNTED	  EQU  218
+ERROR_SEEK_ERROR		  EQU  219
+ERROR_COMMENT_TOO_BIG		  EQU  220   
+ERROR_DISK_FULL			  EQU  221
+ERROR_DELETE_PROTECTED		  EQU  222
+ERROR_WRITE_PROTECTED		  EQU  223 
+ERROR_READ_PROTECTED		  EQU  224
+ERROR_NOT_A_DOS_DISK		  EQU  225
+ERROR_NO_DISK			  EQU  226
+ERROR_NO_MORE_ENTRIES		  EQU  232
+
 */
