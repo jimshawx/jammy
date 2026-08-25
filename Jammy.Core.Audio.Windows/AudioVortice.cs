@@ -59,7 +59,7 @@ namespace Jammy.Core.Audio.Windows
 
 			for (int i = 0; i < 4; i++)
 			{
-				channels[i].xaudioVoice = xaudio.CreateSourceVoice(new WaveFormat(SAMPLE_RATE, 8*SAMPLE_SIZE, 1), VoiceFlags.None);
+				channels[i].xaudioVoice = xaudio.CreateSourceVoice(new WaveFormat(SAMPLE_RATE, 8*SAMPLE_SIZE, 1), VoiceFlags.None, enableCallbackEvents: true);
 				channels[i].xaudioVoice.Start();
 
 				channels[i].xaudioBuffer = new AudioBuffer[2];
@@ -69,7 +69,8 @@ namespace Jammy.Core.Audio.Windows
 
 				//buffer synchronisation
 				channels[i].bufferSync = new AutoResetEvent(false);
-				channels[i].xaudioVoice.BufferEnd += (_) => { channels[i].bufferSync.Set(); };
+				int channel = i;
+				channels[i].xaudioVoice.BufferEnd += (_) => { channels[channel].bufferSync.Set(); };
 
 				//panning 1,2 left   0,3 right
 				var channelDetails = channels[i].xaudioVoice.VoiceDetails;
