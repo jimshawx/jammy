@@ -104,8 +104,10 @@ namespace Jammy.Core.Expansion
 			this.assembler = assembler;
 			registry.RegisterHandler(DosExpansion.Serial, this);
 		}
-		bool volumeLinked = false;
-		uint myVolumeNodeBPTR = 0;
+
+		private bool volumeLinked = false;
+		private uint myVolumeNodeBPTR = 0;
+		private bool deviceIsDead = false;
 
 		private class MyLockInfo
 		{
@@ -530,6 +532,16 @@ namespace Jammy.Core.Expansion
 				//return back to emulation
 				//regs.SR = memory.UnsafeRead16(regs.SSP); regs.SSP += 2;
 				//regs.PC = memory.UnsafeRead32(regs.SSP); regs.SSP += 4;
+				regs.PC = memory.UnsafeRead32(regs.SP); regs.SP += 4;
+				cpu.SetRegs(regs);
+				return false;
+			}
+
+			if (deviceIsDead)
+			{
+				logger.LogTrace("DEAD DEVICE - RECEIVE MSG IGNORED");
+				memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+				memory.UnsafeWrite32(regs.A[4] + 16, 0);
 				regs.PC = memory.UnsafeRead32(regs.SP); regs.SP += 4;
 				cpu.SetRegs(regs);
 				return false;
@@ -1482,14 +1494,66 @@ namespace Jammy.Core.Expansion
 					}
 					break;
 
+				case ACTION_SAME_LOCK:
+					logger.LogTrace($"ACTION_SAME_LOCK");
+					var lock1 = LockFromBPtr(regs, pkt.dp_Arg1);
+					var lock2 = LockFromBPtr(regs, pkt.dp_Arg2);
+					if (lock1 == null || lock2 == null)
+					{
+						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						break;
+					}
+					if (lock1.FullPath.ToUpper() != lock2.FullPath.ToUpper())
+					{
+						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						break;
+					}
+					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+					memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					break;
+
 				case ACTION_SET_PROTECT:
 					logger.LogTrace($"ACTION_SET_PROTECT");
 					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 					memory.UnsafeWrite32(regs.A[4] + 16, 0);
 					break;
 
+				case ACTION_SET_COMMENT:
+					logger.LogTrace($"ACTION_SET_COMMENT");
+					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+					memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					break;
+
 				case ACTION_SET_DATE:
 					logger.LogTrace($"ACTION_SET_DATE");
+					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+					memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					break;
+
+				case ACTION_FLUSH:
+				case ACTION_MORE_CACHE:
+				case ACTION_IS_FILESYSTEM:
+					logger.LogTrace($"ACTION_FLUSH/ACTION_MORE_CACHE/ACTION_IS_FILESYSTEM");
+					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+					memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					break;
+
+				case ACTION_DIE:
+					logger.LogTrace($"ACTION_DIE");
+					//close all open files
+					foreach (var file in files.Values)
+					{
+						try
+						{ 
+							file.stream.Close();
+							file.stream.Dispose();
+						}
+						catch { /* ignore any errors */ }
+					}
+					files.Clear();
+					deviceIsDead = true;
 					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 					memory.UnsafeWrite32(regs.A[4] + 16, 0);
 					break;
@@ -1508,7 +1572,7 @@ namespace Jammy.Core.Expansion
 					logger.LogTrace($"ACTION_UNHANDLED** {pkt.dp_Type} {pkt.dp_Type:X8} {pkt.dp_Type << 2:X8}");
 
 					memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-					memory.UnsafeWrite32(regs.A[4] + 16, 120);
+					memory.UnsafeWrite32(regs.A[4] + 16, ERROR_ACTION_NOT_KNOWN);
 					break;
 			}
 
