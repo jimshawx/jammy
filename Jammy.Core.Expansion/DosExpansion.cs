@@ -137,8 +137,8 @@ namespace Jammy.Core.Expansion
 				amigaPath = amigaPath.Substring(t + 1);
 			}
 			
-			if (amigaPath.StartsWith('\\'))
-				amigaPath = amigaPath.Substring(1);
+			//if (amigaPath.StartsWith('\\'))
+			//	amigaPath = amigaPath.Substring(1);
 
 			//have to eliminate '..' from Host path
 			amigaPath = amigaPath.Replace("..", "__");
@@ -250,10 +250,10 @@ namespace Jammy.Core.Expansion
 				return d;
 			}
 
-			public bool IsEmpty()
-			{
-				return DirEntries.Count == 0;
-			}
+			//public bool IsEmpty()
+			//{
+			//	return DirEntries.Count == 0;
+			//}
 		}
 
 		private const int ACTION_INHIBIT = 0x1f;
@@ -742,11 +742,11 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
 						}
-						else
-						{
-							logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
-							basePath = parent.FullPath;
-						}
+						//else
+						//{
+						logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
+						basePath = parent.FullPath;
+						//}
 						logger.LogTrace($"PATH {basePath}");
 
 						if (basePath == "")
@@ -841,13 +841,13 @@ namespace Jammy.Core.Expansion
 
 						if (dircache.TryGetValue((uint)pkt.dp_Arg1 << 2, out var dircach2))
 						{
-							if (dircach2.IsEmpty())
-							{
-								logger.LogTrace("NO MORE");
-								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_NO_MORE_ENTRIES);
-								break;
-							}
+							//if (dircach2.IsEmpty())
+							//{
+							//	logger.LogTrace("NO MORE");
+							//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+							//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_NO_MORE_ENTRIES);
+							//	break;
+							//}
 
 							var thing = dircach2.Next();
 							if (thing == null)
@@ -1006,11 +1006,11 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
 						}
-						else
-						{
-							logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
-							basePath = parent.FullPath;
-						}
+						//else
+						//{
+						logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
+						basePath = parent.FullPath;
+						//}
 
 						uint bstrAddr = (uint)pkt.dp_Arg3 << 2;
 						if (bstrAddr == 0)
@@ -1020,12 +1020,13 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
 						}
-						else
-						{
-							string pathName = ReadDOSString(bstrAddr);
-							logger.LogTrace($"ACTION_FINDINPUT {pathName}");
-							basePath = AmigaPathCombine(basePath, pathName);
-						}
+						//else
+						//{
+						string pathName = ReadDOSString(bstrAddr);
+						logger.LogTrace($"ACTION_FINDINPUT {pathName}");
+						basePath = AmigaPathCombine(basePath, pathName);
+						//}
+
 						basePath = MakeHostPath(basePath);
 						logger.LogTrace($"Looking for {basePath}");
 						if (Path.Exists(basePath))
@@ -1083,11 +1084,11 @@ namespace Jammy.Core.Expansion
 							logger.LogTrace($"NEW {pkt.dp_Arg1 << 2:X8}");
 							var f = new MyFileInfo();
 
-							FileAccess access = FileAccess.Read;
-							FileMode mode = FileMode.Open;
-							//if (pkt.dp_Type == ACTION_FINDINPUT) { mode = FileMode.Open; access = FileAccess.Read; }
-							if (pkt.dp_Type == ACTION_FINDOUTPUT) { mode = FileMode.Create; access = FileAccess.ReadWrite; }
-							//if (pkt.dp_Type == ACTION_FINDUPDATE) { mode = FileMode.Open; access = FileAccess.ReadWrite; }
+							FileAccess access = FileAccess.ReadWrite;
+							FileMode mode = FileMode.Create;
+							////if (pkt.dp_Type == ACTION_FINDINPUT) { mode = FileMode.Open; access = FileAccess.Read; }
+							//if (pkt.dp_Type == ACTION_FINDOUTPUT) { mode = FileMode.Create; access = FileAccess.ReadWrite; }
+							////if (pkt.dp_Type == ACTION_FINDUPDATE) { mode = FileMode.Open; access = FileAccess.ReadWrite; }
 
 							f.stream = File.Open(basePath, mode, access, FileShare.Read);
 							uint id = UniqueFileId();
@@ -1207,14 +1208,14 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
 						}
-						else
-						{
-							logger.LogTrace($"DELETE {parent.FullPath}");
+						//else
+						//{
+						logger.LogTrace($"DELETE {parent.FullPath}");
 
-							filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
-							logger.LogTrace($"{filename}");
-							logger.LogTrace($"{MakeHostPath(filename)}");
-						}
+						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+						logger.LogTrace($"{filename}");
+						logger.LogTrace($"{MakeHostPath(filename)}");
+						//}
 
 						try
 						{
@@ -1247,14 +1248,14 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
 						}
-						else
-						{
-							logger.LogTrace($"CREATE DIR {parent.FullPath}");
+						//else
+						//{
+						logger.LogTrace($"CREATE DIR {parent.FullPath}");
 
-							filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
-							logger.LogTrace($"{filename}");
-							logger.LogTrace($"{MakeHostPath(filename)}");
-						}
+						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+						logger.LogTrace($"{filename}");
+						logger.LogTrace($"{MakeHostPath(filename)}");
+						//}
 
 						try
 						{
@@ -1306,14 +1307,14 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
 						}
-						else
-						{
-							logger.LogTrace($"RENAME FROM {parent.FullPath}");
+						//else
+						//{
+						logger.LogTrace($"RENAME FROM {parent.FullPath}");
 
-							filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
-							logger.LogTrace($"{filename}");
-							logger.LogTrace($"{MakeHostPath(filename)}");
-						}
+						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+						logger.LogTrace($"{filename}");
+						logger.LogTrace($"{MakeHostPath(filename)}");
+						//}
 
 						if (!locks.TryGetValue((uint)lokDst.fl_Key, out var parent2))
 						{
@@ -1322,14 +1323,14 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
 						}
-						else
-						{
-							logger.LogTrace($"RENAME TO {parent2.FullPath}");
+						//else
+						//{
+						logger.LogTrace($"RENAME TO {parent2.FullPath}");
 
-							dstFilename = AmigaPathCombine(parent2.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
-							logger.LogTrace($"{dstFilename}");
-							logger.LogTrace($"{MakeHostPath(dstFilename)}");
-						}
+						dstFilename = AmigaPathCombine(parent2.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
+						logger.LogTrace($"{dstFilename}");
+						logger.LogTrace($"{MakeHostPath(dstFilename)}");
+						//}
 
 						try
 						{
@@ -1407,7 +1408,7 @@ namespace Jammy.Core.Expansion
 			if (i != -1)
 				return path.Substring(0, i + 1);
 
-			logger.LogTrace($"DON'T KNOW WHAT THE PARENT PATH OF {path} is");
+			logger.LogTrace($"NO PARENT OF {path}");
 			return null;
 		}
 
