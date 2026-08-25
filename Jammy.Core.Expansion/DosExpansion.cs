@@ -1376,7 +1376,15 @@ namespace Jammy.Core.Expansion
 
 						try
 						{
-							Directory.CreateDirectory(MakeHostPath(filename));
+							string hostPath = MakeHostPath(filename);
+							if (Path.Exists(hostPath))
+							{
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_EXISTS);
+								break;
+							}
+
+							Directory.CreateDirectory(hostPath);
 
 							uint mem = AllocMem(20, 0x10001);
 							memory.UnsafeWrite32(mem, 0);
