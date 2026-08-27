@@ -105,9 +105,8 @@ namespace Jammy.Core.Expansion
 
 	public class TestExpansionDebugHandler : ZorroDebugHandler
 	{
-		public TestExpansionDebugHandler(IZorroExpansionRegistry registry) : base(registry)
+		public TestExpansionDebugHandler(IZorroExpansionRegistry registry) : base(registry, "TEST")
 		{
-			registry.RegisterHandler(ZorroConfiguration.MakeSerial("TEST"), this);
 		}
 
 		public override void Init(ZorroConfiguration configuration)

@@ -7,6 +7,7 @@ using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Interface;
 using Microsoft.Extensions.Logging;
+using System.Runtime.InteropServices;
 using System.Text;
 using DateTime = System.DateTime;
 
@@ -16,6 +17,8 @@ using DateTime = System.DateTime;
 
 namespace Jammy.Core.Expansion
 {
+	public interface IDosExpansion { }
+
 	public class DosExpansion : IExpansionROM
 	{
 		private readonly IZorroExpansionRegistry zorroExpansionRegistry;
@@ -23,13 +26,17 @@ namespace Jammy.Core.Expansion
 		private readonly IAssembler assembler;
 		private readonly ILogger<TestExpansion> logger;
 
-		public static readonly uint Serial = ZorroConfiguration.MakeSerial("JAM0");
+		//public static readonly uint Serial = ZorroConfiguration.MakeSerial("JAM0");
+		public readonly string serial;
+		private readonly string deviceName;
 
-		public DosExpansion(IZorroExpansionRegistry zorroExpansionRegistry, IAssembler assembler, ILogger<TestExpansion> logger)
+		public DosExpansion(IZorroExpansionRegistry zorroExpansionRegistry, IAssembler assembler, ILogger<TestExpansion> logger, string serial, string deviceName)
 		{
 			this.zorroExpansionRegistry = zorroExpansionRegistry;
 			this.assembler = assembler;
 			this.logger = logger;
+			this.serial = serial;
+			this.deviceName = deviceName;
 		}
 
 		public ZorroConfiguration GetConfiguration()
@@ -38,7 +45,7 @@ namespace Jammy.Core.Expansion
 			float v = 0.0625f;
 			var cfg = new ZorroConfiguration
 			{
-				Config = ZorroExpansion.ConfigForSize(ZorroExpansion.BaseConfig_Z2, v, Serial),
+				Config = ZorroExpansion.ConfigForSize(ZorroExpansion.BaseConfig_Z2, v, ZorroConfiguration.MakeSerial(serial)),
 				Name = $"{v}MB ZII DOS ROM Expansion",
 				Size = (uint)(v * 1024.0f * 1024.0f),
 			};
@@ -58,7 +65,13 @@ namespace Jammy.Core.Expansion
 		{
 			zorroExpansionRegistry.RegisterExpansion(configuration);
 
-			var r = assembler.AssembleFile("DosExpansion.s");
+			string asm = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "DosExpansion.s"), Encoding.UTF8);
+			asm = asm.Replace("MYDEV", deviceName);
+			int unitNo = deviceName[deviceName.Length-1] - '0';
+			asm = asm.Replace("$00fffffe", $"${0xfffffe-unitNo*2:X8}");
+
+			logger.LogTrace(asm);
+			var r = assembler.Assemble(asm);
 			logger.LogTrace(r.ToString());
 
 			if (!r.HasErrors())
@@ -83,26 +96,30 @@ namespace Jammy.Core.Expansion
 	{
 		private readonly IDebugger debugger;
 		private readonly ILogger<DosExpansionDebugHandler> logger;
-		private readonly IZorroExpansionRegistry registry;
+		private readonly string serial;
+		private readonly string deviceName;
 		private readonly IObjectMapper objectMapper;
 		private readonly ICPU cpu;
 		private readonly IDebugMemoryMapper memory;
 		private readonly IAssembler assembler;
 		private ZorroConfiguration configuration;
-		private static readonly string rootDir = "hd";
+		private readonly string rootDir;
+		private readonly uint unitNo;
 
 		public DosExpansionDebugHandler(IDebugger debugger, IZorroExpansionRegistry registry,
 			IObjectMapper objectMapper, ICPU cpu, IDebugMemoryMapper memory, IAssembler assembler,
-			ILogger<DosExpansionDebugHandler> logger) : base(registry)
+			ILogger<DosExpansionDebugHandler> logger, string serial, string deviceName, string rootDir, int unitNo) : base(registry, serial)
 		{
 			this.debugger = debugger;
 			this.logger = logger;
-			this.registry = registry;
+			this.serial = serial;
+			this.deviceName = deviceName.ToUpper();
 			this.objectMapper = objectMapper;
 			this.cpu = cpu;
 			this.memory = memory;
 			this.assembler = assembler;
-			registry.RegisterHandler(DosExpansion.Serial, this);
+			this.rootDir = rootDir;
+			this.unitNo = (uint)unitNo;
 		}
 
 		private bool volumeLinked = false;
@@ -130,7 +147,7 @@ namespace Jammy.Core.Expansion
 		}
 
 		//turn an Amiga path like df0:dir1/dir2 into a host path, like c:\source\jammy\hd\dir1\dir2
-		private static string MakeHostPath(string amigaPath)
+		private string MakeHostPath(string amigaPath)
 		{
 			//the bit up to the first colon
 			int t = amigaPath.IndexOf(':');
@@ -168,7 +185,7 @@ namespace Jammy.Core.Expansion
 			return amigaPath;
 		}
 
-		private static bool IsSandboxEscape(string combinedPath)
+		private bool IsSandboxEscape(string combinedPath)
 		{
 			string basePath = Path.GetFullPath(rootDir);
 
@@ -180,7 +197,7 @@ namespace Jammy.Core.Expansion
 			return resolvedPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase);
 		}
 
-		private static string SanitiseAmigaPath(string amigaPath)
+		private string SanitiseAmigaPath(string amigaPath)
 		{
 			amigaPath = amigaPath.Replace('\\', '_');
 			return amigaPath;
@@ -190,7 +207,7 @@ namespace Jammy.Core.Expansion
 		{
 			public MyDirCache(string basePath, ILogger logger)
 			{
-				basePath = MakeHostPath(basePath);
+				//basePath = MakeHostPath(basePath);
 
 				logger.LogTrace($"DirCache {basePath}");
 
@@ -369,7 +386,7 @@ namespace Jammy.Core.Expansion
 			uint baseAddress = configuration.BaseAddress;
 			this.configuration = configuration;
 
-			logger.LogTrace($"Configured {ZorroConfiguration.GetSerial(DosExpansion.Serial)} @ {baseAddress:X8}");
+			logger.LogTrace($"Configured {serial} @ {baseAddress:X8}");
 
 			// hard to track the execution of the code, much easier to use a trap which will end up at a fixed address
 
@@ -439,7 +456,7 @@ namespace Jammy.Core.Expansion
 			//	return true;
 			//});
 
-			debugger.AddBreakpoint(0x00fffffe, callback: (bp) => ProcessAmigaDOSAction(bp));
+			debugger.AddBreakpoint(0x00fffffe-unitNo*2, callback: (bp) => ProcessAmigaDOSAction(bp));
 
 		}
 
@@ -451,6 +468,33 @@ namespace Jammy.Core.Expansion
 			{
 				volumeLinked = true;
 
+				/*
+				struct DosList {
+					BPTR             dol_Next;      // +0  
+					LONG dol_Type;      // +4  
+
+					struct MsgPort * dol_Task;      // +8  
+					BPTR dol_Lock;      // +12 
+
+						union {
+						// --- DLT_DEVICE (Handler) fields would go here ---
+        
+						// --- DLT_VOLUME fields ---
+						struct {
+							struct DateStamp dol_VolumeDate; // +16 (Takes 12 bytes: Days, Mins, Ticks) 
+							BPTR dol_LockList;   // +28 
+							LONG dol_DiskType;   // +32 <-- Here is your MYFS / DOS0! 
+							LONG dol_pad3;       // +36 (Reserved/padding) 
+							BSTR dol_Name;       // +40 (The volume name BPTR) 
+						}
+						dol_volume;
+        
+						// --- DLT_ASSIGN fields would go here ---
+					}
+					dol_misc;
+				};
+				*/
+
 				// 1. Allocate the Volume Node
 				uint volMem = AllocMem(48, 0x10001);
 				memory.UnsafeWrite32(volMem + 0, 0);          // dol_Next
@@ -459,20 +503,25 @@ namespace Jammy.Core.Expansion
 				memory.UnsafeWrite32(volMem + 12, 0);         // dol_Lock = 0
 
 				// 2. Allocate the Name string separately and store it as a BPTR!
-				uint nameMem = AllocMem(8, 0x10001);
-				memory.UnsafeWrite8(nameMem + 0, 5);         // BCPL Length
-				memory.UnsafeWrite8(nameMem + 1, (byte)'M');
-				memory.UnsafeWrite8(nameMem + 2, (byte)'Y');
-				memory.UnsafeWrite8(nameMem + 3, (byte)'D');
-				memory.UnsafeWrite8(nameMem + 4, (byte)'E');
-				memory.UnsafeWrite8(nameMem + 5, (byte)'V');
+				//uint nameMem = AllocMem(8, 0x10001);
+				//memory.UnsafeWrite8(nameMem + 0, 5);         // BCPL Length
+				//memory.UnsafeWrite8(nameMem + 1, (byte)'M');
+				//memory.UnsafeWrite8(nameMem + 2, (byte)'Y');
+				//memory.UnsafeWrite8(nameMem + 3, (byte)'D');
+				//memory.UnsafeWrite8(nameMem + 4, (byte)'E');
+				//memory.UnsafeWrite8(nameMem + 5, (byte)'V');
+
+				uint nameMem = AllocMem((uint)deviceName.Length+1, 0x10001);
+				memory.UnsafeWrite8(nameMem + 0, (byte)deviceName.Length);         // BCPL Length
+				for (uint i = 0; i < deviceName.Length; i++)
+					memory.UnsafeWrite8(nameMem + i + 1, (byte)deviceName[(int)i]);
 
 				memory.UnsafeWrite32(volMem + 16, 0);
 				memory.UnsafeWrite32(volMem + 20, 0);
 				memory.UnsafeWrite32(volMem + 24, 0);
 
 				memory.UnsafeWrite32(volMem + 28, 0);
-				memory.UnsafeWrite32(volMem + 32, 0x4D594653);
+				memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);//0x4D594653);//MYFS (should be DOS0?)
 				memory.UnsafeWrite32(volMem + 40, nameMem >> 2);
 
 				myVolumeNodeBPTR = volMem >> 2;
@@ -513,7 +562,7 @@ namespace Jammy.Core.Expansion
 					memory.UnsafeWrite32(volMem + 0, headBPTR);             // ourNode->Next = oldHead
 					memory.UnsafeWrite32(dosInfo + 4, myVolumeNodeBPTR);    // Head = ourNode
 
-					logger.LogTrace("MYDEV Volume Node successfully injected into OS DosList!");
+					logger.LogTrace($"{deviceName} Volume Node successfully injected into OS DosList!");
 				}
 				else
 				{
@@ -591,7 +640,7 @@ namespace Jammy.Core.Expansion
 
 
 						memory.UnsafeWrite32(address, 0); address += 4;
-						memory.UnsafeWrite32(address, 0); address += 4;
+						memory.UnsafeWrite32(address, unitNo); address += 4;
 						memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;//ID_VALIDATED); address += 4;
 						memory.UnsafeWrite32(address, 0x40000000 / 512); address += 4;//1GB
 						memory.UnsafeWrite32(address, 0x20000000 / 512); address += 4;//half used
@@ -626,7 +675,7 @@ namespace Jammy.Core.Expansion
 
 						uint address = (uint)pkt.dp_Arg2 << 2;//InfoData
 						memory.UnsafeWrite32(address, 0); address += 4;
-						memory.UnsafeWrite32(address, 0); address += 4;
+						memory.UnsafeWrite32(address, unitNo); address += 4;
 						memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;//ID_VALIDATED); address += 4;
 						memory.UnsafeWrite32(address, 0x40000000 / 512); address += 4;//1GB
 						memory.UnsafeWrite32(address, 0x20000000 / 512); address += 4;//half used
@@ -697,7 +746,7 @@ namespace Jammy.Core.Expansion
 						//SPECIAL CASE PATH NAMES '//' means go up two directories from parentPath (etc)
 						//SPECIAL CASE PATH NAMES ':' means relative to root directory
 
-						if (pathName.StartsWith(':') || pathName.ToUpper().StartsWith("MYDEV:"))
+						if (pathName.StartsWith(':') || pathName.ToUpper().StartsWith($"{deviceName}:"))
 							parentPath = string.Empty;
 
 						while (pathName.StartsWith('/') && parentPath != null)
@@ -846,7 +895,7 @@ namespace Jammy.Core.Expansion
 						MyDirCache dircach = null;
 						if (Directory.Exists(MakeHostPath(basePath)))
 						{
-							dircach = new MyDirCache(basePath, logger);
+							dircach = new MyDirCache(MakeHostPath(basePath), logger);
 							//overwrite any existing entry
 							dircache[(uint)pkt.dp_Arg1 << 2] = dircach;
 						}

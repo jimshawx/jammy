@@ -32,11 +32,9 @@ namespace Jammy.Core.Expansion
 
 	public abstract class ZorroDebugHandler : IZorroDebugHandler
 	{
-		private readonly IZorroExpansionRegistry registry;
-
-		public ZorroDebugHandler(IZorroExpansionRegistry registry)
+		public ZorroDebugHandler(IZorroExpansionRegistry registry, string serial)
 		{
-			this.registry = registry;
+			registry.RegisterHandler(ZorroConfiguration.MakeSerial(serial), this);
 		}
 
 		public abstract void Init(ZorroConfiguration configuration);
