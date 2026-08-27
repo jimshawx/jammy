@@ -36,10 +36,10 @@ namespace Jammy.Core.Audio.Windows
 			public IXAudio2SourceVoice xaudioVoice { get; set; }
 			public AudioBuffer[] xaudioBuffer { get; set; }
 			public int currentBuffer { get; set; }
-			public AutoResetEvent bufferSync { get; set; }
 		}
 
 		private readonly VorticeChannel[] channels = new[] { new VorticeChannel(), new VorticeChannel(), new VorticeChannel(), new VorticeChannel() };
+		private readonly AutoResetEvent channelBufferSync = new AutoResetEvent(false);
 
 		private void InitHardwareMixer()
 		{
@@ -67,11 +67,6 @@ namespace Jammy.Core.Audio.Windows
 				channels[i].xaudioBuffer[1] = new AudioBuffer {AudioBytes = BUFFER_SIZE, AudioDataPointer = AllocateMemory(BUFFER_SIZE), PlayLength = BUFFER_SIZE/SAMPLE_SIZE};
 				channels[i].currentBuffer = 0;
 
-				//buffer synchronisation
-				channels[i].bufferSync = new AutoResetEvent(false);
-				int channel = i;
-				channels[i].xaudioVoice.BufferEnd += (_) => { channels[channel].bufferSync.Set(); };
-
 				//panning 1,2 left   0,3 right
 				var channelDetails = channels[i].xaudioVoice.VoiceDetails;
 				float[] outputMatrix = new float[channelDetails.InputChannels * masteringChannelDetails.InputChannels];
@@ -83,6 +78,9 @@ namespace Jammy.Core.Audio.Windows
 
 				channels[i].xaudioVoice.SetOutputMatrix(null, channelDetails.InputChannels, masteringChannelDetails.InputChannels, outputMatrix);
 			}
+
+			//buffer synchronisation
+			channels[0].xaudioVoice.BufferEnd += (_) => { channelBufferSync.Set(); };
 		}
 
 		private nint AllocateMemory(int size)
@@ -95,11 +93,12 @@ namespace Jammy.Core.Audio.Windows
 			//time to hardware mix?
 			if (ch[0].audioBytesIndex != ch[0].audioBytes.Length) return;
 
+			//sleep until there are not too many buffers queued
+			while (channels[0].xaudioVoice.State.BuffersQueued >= 2)
+				channelBufferSync.WaitOne();
+
 			for (int i = 0; i < 4; i++)
 			{
-				while (channels[i].xaudioVoice.State.BuffersQueued >= 2)
-					channels[i].bufferSync.WaitOne();
-
 				LowPassFilter(ch[i]);
 
 				Marshal.Copy(ch[i].audioBytes, 0, channels[i].xaudioBuffer[channels[i].currentBuffer].AudioDataPointer, ch[i].audioBytes.Length);
