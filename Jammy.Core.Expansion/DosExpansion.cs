@@ -96,7 +96,7 @@ namespace Jammy.Core.Expansion
 		private readonly IDebugger debugger;
 		private readonly ILogger<DosExpansionDebugHandler> logger;
 		private readonly string serial;
-		private readonly string volumeName;
+		private string volumeName;
 		private readonly IObjectMapper objectMapper;
 		private readonly ICPU cpu;
 		private readonly IDebugMemoryMapper memory;
@@ -1625,6 +1625,12 @@ namespace Jammy.Core.Expansion
 					{ 
 					logger.LogTrace($"ACTION_RENAME_DISK");
 					string name = ReadDOSString((uint)pkt.dp_Arg1<<2);
+					if (name.Length > 30)
+					{
+						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_INVALID_COMPONENT_NAME);
+						break;
+					}
 					uint nameMem = AllocMem((uint)name.Length+1, 0x10001);
 					memory.UnsafeWrite8(nameMem, (byte)name.Length);
 					for (int i = 0; i < name.Length; i++)
@@ -1632,10 +1638,13 @@ namespace Jammy.Core.Expansion
 
 					uint oldName = memory.UnsafeRead32((myVolumeNodeBPTR<<2)+40)<<2;
 					uint size = memory.UnsafeRead8(oldName);
-					memory.UnsafeWrite32((myVolumeNodeBPTR<<2)+40, nameMem);
+					memory.UnsafeWrite32((myVolumeNodeBPTR<<2)+40, nameMem>>2);
 
 					//todo: race condition
 					FreeMem(oldName, size);
+
+					//update this device's volume name
+					volumeName = name;
 
 					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 					memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -1915,6 +1924,8 @@ namespace Jammy.Core.Expansion
 				";
 			var r = assembler.Assemble(asm);
 
+			logger.LogTrace($"EXEC {lvo} {asm}");
+
 			//we know this space (copy of DiagArea) is unused after expansion.library is finished with it
 			uint i = configuration.BaseAddress;
 			if (r.Program == null || r.Program.Length > 0x20)
@@ -1942,6 +1953,8 @@ namespace Jammy.Core.Expansion
 			uint rv = regs.D[0];
 
 			cpu.SetRegs(saved);
+
+			logger.LogTrace("EXEC DONE");
 
 			return rv;
 		}
