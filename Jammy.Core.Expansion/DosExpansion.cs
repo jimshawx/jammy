@@ -501,9 +501,7 @@ namespace Jammy.Core.Expansion
 
 				// Device node
 				uint devNameMem = AllocMem((uint)serial.Length + 1, 0x10001);
-				memory.UnsafeWrite8(devNameMem, (byte)serial.Length);
-				for (int i = 0; i < serial.Length; i++)
-					memory.UnsafeWrite8(devNameMem + (uint)i + 1, (byte)serial[i]);
+				WriteDOSString(devNameMem, serial);
 
 				memory.UnsafeWrite32(devMem + 0, volMem>>2);          // dn_Next = Link to our Volume node!
 				memory.UnsafeWrite32(devMem + 4, 0);                // dn_Type = DLT_DEVICE (0)
@@ -519,9 +517,7 @@ namespace Jammy.Core.Expansion
 
 				// Volume node
 				uint volNameMem = AllocMem((uint)volumeName.Length + 1, 0x10001);
-				memory.UnsafeWrite8(volNameMem + 0, (byte)volumeName.Length);
-				for (uint i = 0; i < volumeName.Length; i++)
-					memory.UnsafeWrite8(volNameMem + i + 1, (byte)volumeName[(int)i]);
+				WriteDOSString(volNameMem, volumeName);
 
 				memory.UnsafeWrite32(volMem + 0, 0);          // dol_Next
 				memory.UnsafeWrite32(volMem + 4, 2);          // dol_Type = DLT_VOLUME (2)
@@ -545,13 +541,7 @@ namespace Jammy.Core.Expansion
 				while (memory.UnsafeRead32(node) != 0)
 				{
 					uint namePtr = memory.UnsafeRead32(node + 10); // ln_Name pointer
-					string libName = "";
-					uint p = namePtr;
-					while (memory.UnsafeRead8(p) != 0)
-					{
-						libName += (char)memory.UnsafeRead8(p++);
-					}
-
+					string libName = ReadCString(namePtr);
 					if (libName == "dos.library")
 					{
 						dosBase = node;
@@ -1632,9 +1622,7 @@ namespace Jammy.Core.Expansion
 						break;
 					}
 					uint nameMem = AllocMem((uint)name.Length+1, 0x10001);
-					memory.UnsafeWrite8(nameMem, (byte)name.Length);
-					for (int i = 0; i < name.Length; i++)
-						memory.UnsafeWrite8((uint)(nameMem+i+1), (byte)name[i]);
+					WriteDOSString(nameMem, name);
 
 					uint oldName = memory.UnsafeRead32((myVolumeNodeBPTR<<2)+40)<<2;
 					uint size = memory.UnsafeRead8(oldName);
@@ -1872,13 +1860,38 @@ namespace Jammy.Core.Expansion
 		{
 			var sb = new StringBuilder();
 			byte l = memory.UnsafeRead8(namePtr++);
-
 			while (l-- != 0)
 			{
 				byte b = memory.UnsafeRead8(namePtr++);
 				sb.Append((char)b);
 			}
 			return sb.ToString();
+		}
+
+		private string ReadCString(uint namePtr)
+		{
+			var sb = new StringBuilder();
+			for (;;)
+			{
+				byte b = memory.UnsafeRead8(namePtr++);
+				if (b == 0) break;
+				sb.Append((char)b);
+			}
+			return sb.ToString();
+		}
+
+		private void WriteDOSString(uint address, string str)
+		{
+			memory.UnsafeWrite8(address++, (byte)str.Length);
+			for (int i = 0; i < str.Length; i++)
+				memory.UnsafeWrite8(address++, (byte)str[i]);
+		}
+
+		private void WriteCString(uint address, string str)
+		{
+			for (int i = 0; i < str.Length; i++)
+				memory.UnsafeWrite8(address++, (byte)str[i]);
+			memory.UnsafeWrite8(address++, 0);
 		}
 
 		// Amiga file date epoch January 1, 1978
