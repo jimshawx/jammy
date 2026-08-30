@@ -7,7 +7,6 @@ using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Interface;
 using Microsoft.Extensions.Logging;
-using System.Runtime.InteropServices;
 using System.Text;
 using DateTime = System.DateTime;
 
@@ -28,15 +27,15 @@ namespace Jammy.Core.Expansion
 
 		//public static readonly uint Serial = ZorroConfiguration.MakeSerial("JAM0");
 		public readonly string serial;
-		private readonly string deviceName;
+		private readonly string volumeName;
 
-		public DosExpansion(IZorroExpansionRegistry zorroExpansionRegistry, IAssembler assembler, ILogger<TestExpansion> logger, string serial, string deviceName)
+		public DosExpansion(IZorroExpansionRegistry zorroExpansionRegistry, IAssembler assembler, ILogger<TestExpansion> logger, string serial, string volumeName)
 		{
 			this.zorroExpansionRegistry = zorroExpansionRegistry;
 			this.assembler = assembler;
 			this.logger = logger;
 			this.serial = serial;
-			this.deviceName = deviceName;
+			this.volumeName = volumeName;
 		}
 
 		public ZorroConfiguration GetConfiguration()
@@ -66,8 +65,8 @@ namespace Jammy.Core.Expansion
 			zorroExpansionRegistry.RegisterExpansion(configuration);
 
 			string asm = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "DosExpansion.s"), Encoding.UTF8);
-			asm = asm.Replace("MYDEV", deviceName);
-			int unitNo = deviceName[deviceName.Length-1] - '0';
+			asm = asm.Replace("MYDEV", volumeName);
+			int unitNo = volumeName[volumeName.Length-1] - '0';
 			asm = asm.Replace("$00fffffe", $"${0xfffffe-unitNo*2:X8}");
 
 			logger.LogTrace(asm);
@@ -97,7 +96,7 @@ namespace Jammy.Core.Expansion
 		private readonly IDebugger debugger;
 		private readonly ILogger<DosExpansionDebugHandler> logger;
 		private readonly string serial;
-		private readonly string deviceName;
+		private readonly string volumeName;
 		private readonly IObjectMapper objectMapper;
 		private readonly ICPU cpu;
 		private readonly IDebugMemoryMapper memory;
@@ -108,12 +107,12 @@ namespace Jammy.Core.Expansion
 
 		public DosExpansionDebugHandler(IDebugger debugger, IZorroExpansionRegistry registry,
 			IObjectMapper objectMapper, ICPU cpu, IDebugMemoryMapper memory, IAssembler assembler,
-			ILogger<DosExpansionDebugHandler> logger, string serial, string deviceName, string rootDir, int unitNo) : base(registry, serial)
+			ILogger<DosExpansionDebugHandler> logger, string serial, string volumeName, string rootDir, int unitNo) : base(registry, serial)
 		{
 			this.debugger = debugger;
 			this.logger = logger;
 			this.serial = serial;
-			this.deviceName = deviceName.ToUpper();
+			this.volumeName = volumeName.ToUpper();
 			this.objectMapper = objectMapper;
 			this.cpu = cpu;
 			this.memory = memory;
@@ -466,6 +465,8 @@ namespace Jammy.Core.Expansion
 
 			if (!volumeLinked)
 			{
+				LockDOSLists();
+
 				volumeLinked = true;
 
 				/*
@@ -495,34 +496,43 @@ namespace Jammy.Core.Expansion
 				};
 				*/
 
-				// 1. Allocate the Volume Node
+				uint devMem = AllocMem(48, 0x10001);
 				uint volMem = AllocMem(48, 0x10001);
+
+				// Device node
+				uint devNameMem = AllocMem((uint)serial.Length + 1, 0x10001);
+				memory.UnsafeWrite8(devNameMem, (byte)serial.Length);
+				for (int i = 0; i < serial.Length; i++)
+					memory.UnsafeWrite8(devNameMem + (uint)i + 1, (byte)serial[i]);
+
+				memory.UnsafeWrite32(devMem + 0, volMem>>2);          // dn_Next = Link to our Volume node!
+				memory.UnsafeWrite32(devMem + 4, 0);                // dn_Type = DLT_DEVICE (0)
+				memory.UnsafeWrite32(devMem + 8, regs.A[3]);        // dn_Task = MsgPort
+				memory.UnsafeWrite32(devMem + 12, 0);               // dn_Lock = 0
+				memory.UnsafeWrite32(devMem + 16, 0);               // dn_Handler
+				memory.UnsafeWrite32(devMem + 20, 0);               // dn_StackSize
+				memory.UnsafeWrite32(devMem + 24, 0);               // dn_Priority
+				memory.UnsafeWrite32(devMem + 28, 0);               // dn_Startup
+				memory.UnsafeWrite32(devMem + 32, 0);               // dn_SegList
+				memory.UnsafeWrite32(devMem + 36, 0);               // dn_GlobalVec
+				memory.UnsafeWrite32(devMem + 40, devNameMem >> 2); // dn_Name
+
+				// Volume node
+				uint volNameMem = AllocMem((uint)volumeName.Length + 1, 0x10001);
+				memory.UnsafeWrite8(volNameMem + 0, (byte)volumeName.Length);
+				for (uint i = 0; i < volumeName.Length; i++)
+					memory.UnsafeWrite8(volNameMem + i + 1, (byte)volumeName[(int)i]);
+
 				memory.UnsafeWrite32(volMem + 0, 0);          // dol_Next
 				memory.UnsafeWrite32(volMem + 4, 2);          // dol_Type = DLT_VOLUME (2)
 				memory.UnsafeWrite32(volMem + 8, regs.A[3]);  // dol_Task = Your MsgPort
 				memory.UnsafeWrite32(volMem + 12, 0);         // dol_Lock = 0
-
-				// 2. Allocate the Name string separately and store it as a BPTR!
-				//uint nameMem = AllocMem(8, 0x10001);
-				//memory.UnsafeWrite8(nameMem + 0, 5);         // BCPL Length
-				//memory.UnsafeWrite8(nameMem + 1, (byte)'M');
-				//memory.UnsafeWrite8(nameMem + 2, (byte)'Y');
-				//memory.UnsafeWrite8(nameMem + 3, (byte)'D');
-				//memory.UnsafeWrite8(nameMem + 4, (byte)'E');
-				//memory.UnsafeWrite8(nameMem + 5, (byte)'V');
-
-				uint nameMem = AllocMem((uint)deviceName.Length+1, 0x10001);
-				memory.UnsafeWrite8(nameMem + 0, (byte)deviceName.Length);         // BCPL Length
-				for (uint i = 0; i < deviceName.Length; i++)
-					memory.UnsafeWrite8(nameMem + i + 1, (byte)deviceName[(int)i]);
-
 				memory.UnsafeWrite32(volMem + 16, 0);
 				memory.UnsafeWrite32(volMem + 20, 0);
 				memory.UnsafeWrite32(volMem + 24, 0);
-
 				memory.UnsafeWrite32(volMem + 28, 0);
-				memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);//0x4D594653);//MYFS (should be DOS0?)
-				memory.UnsafeWrite32(volMem + 40, nameMem >> 2);
+				memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);//0x4D594653);//MYFS
+				memory.UnsafeWrite32(volMem + 40, volNameMem >> 2);
 
 				myVolumeNodeBPTR = volMem >> 2;
 
@@ -553,21 +563,23 @@ namespace Jammy.Core.Expansion
 				if (dosBase != 0)
 				{
 					uint rootNode = memory.UnsafeRead32(dosBase + 34);     // dos.library->dl_Root
-					uint dosInfo = memory.UnsafeRead32(rootNode + 24) << 2; // RootNode->rn_Info (Convert BPTR)
+					uint dosInfo = memory.UnsafeRead32(rootNode + 24) << 2; // RootNode->rn_Info
 
-					// Read the current head of the DosList
+					// DosList head
 					uint headBPTR = memory.UnsafeRead32(dosInfo + 4);       // DosInfo->di_DevInfo
 
-					// Prepend our VolumeNode to the linked list
-					memory.UnsafeWrite32(volMem + 0, headBPTR);             // ourNode->Next = oldHead
-					memory.UnsafeWrite32(dosInfo + 4, myVolumeNodeBPTR);    // Head = ourNode
+					// insert VolumeNode at list head
+					memory.UnsafeWrite32(volMem + 0, headBPTR);             // node->Next = oldHead
+					memory.UnsafeWrite32(dosInfo + 4, devMem>>2);    // Head = node
 
-					logger.LogTrace($"{deviceName} Volume Node successfully injected into OS DosList!");
+					logger.LogTrace($"{serial} {volumeName} Volume Node injected");
 				}
 				else
 				{
-					logger.LogTrace("FAILED to find dos.library!");
+					logger.LogTrace("FAILED to find dos.library");
 				}
+
+				UnlockDOSLists();
 			}
 
 			//nb. while it _is_ a StandardPacket, there's sometimes a gap between the two structures
@@ -746,7 +758,7 @@ namespace Jammy.Core.Expansion
 						//SPECIAL CASE PATH NAMES '//' means go up two directories from parentPath (etc)
 						//SPECIAL CASE PATH NAMES ':' means relative to root directory
 
-						if (pathName.StartsWith(':') || pathName.ToUpper().StartsWith($"{deviceName}:"))
+						if (pathName.StartsWith(':') || pathName.ToUpper().StartsWith($"{volumeName}:"))
 							parentPath = string.Empty;
 
 						while (pathName.StartsWith('/') && parentPath != null)
@@ -1609,6 +1621,27 @@ namespace Jammy.Core.Expansion
 					memory.UnsafeWrite32(regs.A[4] + 16, 0);
 					break;
 
+				case ACTION_RENAME_DISK:
+					{ 
+					logger.LogTrace($"ACTION_RENAME_DISK");
+					string name = ReadDOSString((uint)pkt.dp_Arg1<<2);
+					uint nameMem = AllocMem((uint)name.Length+1, 0x10001);
+					memory.UnsafeWrite8(nameMem, (byte)name.Length);
+					for (int i = 0; i < name.Length; i++)
+						memory.UnsafeWrite8((uint)(nameMem+i+1), (byte)name[i]);
+
+					uint oldName = memory.UnsafeRead32((myVolumeNodeBPTR<<2)+40)<<2;
+					uint size = memory.UnsafeRead8(oldName);
+					memory.UnsafeWrite32((myVolumeNodeBPTR<<2)+40, nameMem);
+
+					//todo: race condition
+					FreeMem(oldName, size);
+
+					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+					memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					}
+					break;
+
 				case > ACTION_MAXIMUM_VALUE:
 
 					logger.LogTrace($"ACTION_IGNORED** {pkt.dp_Type} {pkt.dp_Type:X8} {pkt.dp_Type << 2:X8}");
@@ -1779,6 +1812,31 @@ namespace Jammy.Core.Expansion
 		private uint UniqueFileId()
 		{
 			return uniqueFileId++;
+		}
+
+		private void LockDOSLists()
+		{
+			Forbid();
+		}
+
+		private void UnlockDOSLists()
+		{
+			Permit();
+		}
+
+		//todo: should examine DOS library version, if it's >= 36, this should be
+		//AttemptLockDosList() / LockDosList() LDF_WRITE
+		//MakeDosEntry()
+		//AddDosEntry()
+		//UnLockDosList()
+		private void Forbid()
+		{
+			CallExec(-132, string.Empty);
+		}
+
+		private void Permit()
+		{
+			CallExec(-138, string.Empty);
 		}
 
 		private uint AllocMem(uint size, uint flags)
