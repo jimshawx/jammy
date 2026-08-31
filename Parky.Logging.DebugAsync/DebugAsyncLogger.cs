@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -32,9 +32,9 @@ namespace Parky.Logging
 	public class DebugAsyncLogger : ILogger
 	{
 		private readonly string name;
-		private readonly ConcurrentQueue<DbMessage> messageQueue;
+		private readonly Channel<DbMessage> messageQueue;
 
-		public DebugAsyncLogger(string name, ConcurrentQueue<DbMessage> messageQueue)
+		public DebugAsyncLogger(string name, Channel<DbMessage> messageQueue)
 		{
 			this.name = name;
 			this.messageQueue = messageQueue;
@@ -68,7 +68,7 @@ namespace Parky.Logging
 			if (exception != null)
 				message += Environment.NewLine + Environment.NewLine + exception;
 
-			messageQueue.Enqueue(new DbMessage
+			messageQueue.Writer.TryWrite(new DbMessage
 			{
 				LogLevel = logLevel,
 				Message = message,
@@ -83,11 +83,11 @@ namespace Parky.Logging
 		private sealed class DebugAsyncLoggerInstance
 		{
 			public DebugAsyncConsoleLoggerReader Reader { get; private set; }
-			public ConcurrentQueue<DbMessage> MessageQueue { get; private set; }
+			public Channel<DbMessage> MessageQueue { get; private set; }
 
 			private DebugAsyncLoggerInstance()
 			{
-				MessageQueue = new ConcurrentQueue<DbMessage>();
+				MessageQueue = Channel.CreateUnbounded<DbMessage>(new UnboundedChannelOptions { SingleReader = true });
 				Reader = new DebugAsyncConsoleLoggerReader(MessageQueue);
 			}
 
@@ -130,10 +130,10 @@ namespace Parky.Logging
 		private readonly CancellationTokenSource cancellation;
 		private readonly Task readerTask;
 
-		public DebugAsyncConsoleLoggerReader(ConcurrentQueue<DbMessage> messageQueue)
+		public DebugAsyncConsoleLoggerReader(Channel<DbMessage> messageQueue)
 		{
 			cancellation = new CancellationTokenSource();
-			readerTask = new Task(() =>
+			readerTask = Task.Run(async () =>
 			{
 				bool consoleAllocated = true;
 				if (!AllocConsole())
@@ -157,37 +157,32 @@ namespace Parky.Logging
 				}
 
 				var writer = Console.Out;
-				int backoff = 1;
 				var sb = new StringBuilder();
 
-				while (!cancellation.IsCancellationRequested)
+				try
 				{
-					if (!messageQueue.IsEmpty)
+					while (await messageQueue.Reader.WaitToReadAsync(cancellation.Token))
 					{
 						sb.Clear();
-						while (messageQueue.TryDequeue(out DbMessage rv))
+						while (messageQueue.Reader.TryRead(out DbMessage rv))
 						{
 							sb.AppendLine($"{rv.Name}: {rv.LogLevel}: {rv.Message}");
 						}
 
 						writer.Write(sb.ToString());
-
-						backoff = 1;
-					}
-					else
-					{
-						backoff += backoff;
-						if (backoff > 500) backoff = 500;
-						Task.Delay(backoff, cancellation.Token).Wait();
 					}
 				}
+				catch (OperationCanceledException)
+				{
+					/* exit condition */
+				}
+				finally
+				{
+					if (consoleAllocated)
+						FreeConsole();
+				}
 
-				if (consoleAllocated)
-					FreeConsole();
-
-			}, cancellation.Token, TaskCreationOptions.LongRunning);
-
-			readerTask.Start();
+			}, cancellation.Token);
 		}
 
 		public void Dispose()
