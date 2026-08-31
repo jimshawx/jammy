@@ -174,6 +174,6 @@ DosPacket:
     DC.L    $00FFFFFF   ; [17] MaxTransfer 
     DC.L    $7FFFFFFE   ; [18] Mask 
     DC.L    0           ; [19] BootPri
-    DC.L    $4D594653   ; [20] DosType ("MYFS")
+    DC.L    $444F5300   ; [20] DosType ("DOS0")
 	
 ROM_End:

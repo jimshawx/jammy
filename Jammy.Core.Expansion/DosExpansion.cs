@@ -484,7 +484,7 @@ namespace Jammy.Core.Expansion
 						struct {
 							struct DateStamp dol_VolumeDate; // +16 (Takes 12 bytes: Days, Mins, Ticks) 
 							BPTR dol_LockList;   // +28 
-							LONG dol_DiskType;   // +32 <-- Here is your MYFS / DOS0! 
+							LONG dol_DiskType;   // +32 DOS0
 							LONG dol_pad3;       // +36 (Reserved/padding) 
 							BSTR dol_Name;       // +40 (The volume name BPTR) 
 						}
@@ -758,6 +758,7 @@ namespace Jammy.Core.Expansion
 						}
 						if (parentPath == null)
 						{
+							logger.LogTrace("NOT FOUND PARENT");
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
@@ -778,6 +779,7 @@ namespace Jammy.Core.Expansion
 						}
 						if (searchPath == null)
 						{
+							logger.LogTrace("NOT FOUND SEARCH");
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
@@ -1094,7 +1096,7 @@ namespace Jammy.Core.Expansion
 							break;
 						}
 						*/
-						logger.LogTrace($"NO PARENT {child.FullPath} {AmigaParentPath(child.FullPath)}");
+						logger.LogTrace($"PARENT {child.FullPath} {AmigaParentPath(child.FullPath)}");
 
 						string parentPath = AmigaParentPath(child.FullPath);
 						if (parentPath != null)
@@ -1116,8 +1118,10 @@ namespace Jammy.Core.Expansion
 							break;
 						}
 
+						logger.LogTrace($"NO PARENT OF {child.FullPath}");
+
 						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
 					}
 					break;
 
@@ -1639,6 +1643,12 @@ namespace Jammy.Core.Expansion
 					}
 					break;
 
+				case ACTION_NIL:
+					logger.LogTrace("ACTION_NIL");
+					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+					memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					break;
+
 				case > ACTION_MAXIMUM_VALUE:
 
 					logger.LogTrace($"ACTION_IGNORED** {pkt.dp_Type} {pkt.dp_Type:X8} {pkt.dp_Type << 2:X8}");
@@ -1937,7 +1947,7 @@ namespace Jammy.Core.Expansion
 				";
 			var r = assembler.Assemble(asm);
 
-			logger.LogTrace($"EXEC {lvo} {asm}");
+			logger.LogTrace($"EXEC {lvo}");
 
 			//we know this space (copy of DiagArea) is unused after expansion.library is finished with it
 			uint i = configuration.BaseAddress;
