@@ -129,7 +129,7 @@ namespace Jammy.Main
 			// 
 			lbRegisters.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			lbRegisters.BorderStyle = BorderStyle.FixedSingle;
-			lbRegisters.ColumnWidth = 85;
+			lbRegisters.ColumnWidth = 125;
 			lbRegisters.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbRegisters.IntegralHeight = false;
 			lbRegisters.Location = new System.Drawing.Point(569, 13);
@@ -473,7 +473,7 @@ namespace Jammy.Main
 			// 
 			lbCallStack.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			lbCallStack.BorderStyle = BorderStyle.FixedSingle;
-			lbCallStack.ColumnWidth = 83;
+			lbCallStack.ColumnWidth = 125;
 			lbCallStack.Font = new System.Drawing.Font("Cascadia Mono", 7.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
 			lbCallStack.IntegralHeight = false;
 			lbCallStack.Location = new System.Drawing.Point(855, 13);
