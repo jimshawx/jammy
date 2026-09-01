@@ -41,13 +41,13 @@ namespace Jammy.Core.Memory
 			if (size == Size.Long)
 			{
 				contendedWrites++;
-				dma.WriteCPU(target, address, (ushort)(value >> 16), Size.Word);
+				dma.WriteCPU(insaddr, target, address, (ushort)(value >> 16), Size.Word);
 				dma.ChipsetSync();
 				size = Size.Word;
 				address += 2;
 			}
 			contendedWrites++;
-			dma.WriteCPU(target, address, (ushort)value, size);
+			dma.WriteCPU(insaddr, target, address, (ushort)value, size);
 			dma.ChipsetSync();
 		}
 	}

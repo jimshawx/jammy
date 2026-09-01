@@ -946,13 +946,13 @@ public class Agnus : IAgnus
 
 		if (size == Size.Long)
 		{
-			dma.WriteCPU(CPUTarget.ChipReg, address, (ushort)(value>>16), Size.Word);
+			dma.WriteCPU(insaddr, CPUTarget.ChipReg, address, (ushort)(value >> 16), Size.Word);
 			dma.ChipsetSync();
 			size = Size.Word;
 			address += 2;
 		}
 
-		dma.WriteCPU(CPUTarget.ChipReg, address, (ushort)value, size);
+		dma.WriteCPU(insaddr, CPUTarget.ChipReg, address, (ushort)value, size);
 		dma.ChipsetSync();
 	}
 

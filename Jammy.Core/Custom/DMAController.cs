@@ -252,7 +252,7 @@ public class DMAController : IDMA
 				break;
 
 			case DMAActivityType.WriteCPU:
-				memoryMapper.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
+				memoryMapper.ImmediateWrite(activity.InsAddr, activity.Address, (uint)activity.Value, activity.Size);
 				break;
 
 			case DMAActivityType.None: break;
@@ -348,7 +348,7 @@ public class DMAController : IDMA
 	}
 
 	//used when the CPU wants to write to chip memory or chip register
-	public void WriteCPU(CPUTarget target, uint address, ushort value, Size size)
+	public void WriteCPU(uint insaddr, CPUTarget target, uint address, ushort value, Size size)
 	{
 		var activity = activities[(int)DMASource.CPU];
 		activity.Type = DMAActivityType.WriteCPU;
@@ -357,6 +357,7 @@ public class DMAController : IDMA
 		activity.Target = target;
 		activity.Value = value;
 		activity.Priority = DMA.DMAEN;
+		activity.InsAddr = insaddr;
 	}
 
 	public ushort Read(uint insaddr, uint address)
