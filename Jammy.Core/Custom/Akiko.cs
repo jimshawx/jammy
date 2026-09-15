@@ -383,6 +383,8 @@ namespace Jammy.Core.Custom
 
 		public bool IsMapped(uint address)
 		{
+			if (!settings.Akiko.IsEnabled())
+				return false;
 			return mappedRange.Contains(address);
 		}
 
@@ -393,6 +395,8 @@ namespace Jammy.Core.Custom
 
 		public List<MemoryRange> MappedRange()
 		{
+			if (!settings.Akiko.IsEnabled())
+				return new List<MemoryRange>();
 			return new List<MemoryRange> {mappedRange};
 		}
 
