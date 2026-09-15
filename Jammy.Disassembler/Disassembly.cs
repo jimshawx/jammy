@@ -236,6 +236,9 @@ namespace Jammy.Disassembler
 						{
 							foreach (var i in ia.EffectiveAddresses)
 							{
+								if (labeller.HasLabel(i.Ea))
+									asm += $" {labeller.LabelName(i.Ea)}";
+
 								var ea = eaDatabase.GetEAName(i.Ea);
 								if (ea != null && !asm.Contains(ea))
 									asm += $" {ea}";

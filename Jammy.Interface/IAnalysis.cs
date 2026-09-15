@@ -20,6 +20,7 @@ namespace Jammy.Interface
 		void AddHeader(uint address, List<string> hdr);
 		void ReplaceHeader(uint address, string hdr);
 		void ReplaceHeader(uint address, List<string> hdr);
+		void AddLabel(uint address, string label);
 		void SetMemType(uint address, MemType type);
 		void SetMemType(uint address, uint size, MemType type);
 		void AddLVO(string currentLib, LVO lvo);

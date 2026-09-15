@@ -133,6 +133,11 @@ namespace Jammy.Debugger
 						refresh = true;
 						break;
 
+					case "l":
+						analysis.AddLabel(A(1), R(2));
+						refresh = true;
+						break;
+
 					case "g":
 						Amiga.SetEmulationMode(EmulationMode.Running, true);
 						break;

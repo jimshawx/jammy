@@ -140,6 +140,11 @@ namespace Jammy.Disassembler.Analysers
 			headers[address].TextLines.AddRange(hdr);
 		}
 
+		public void AddLabel(uint address, string label)
+		{
+			labeller.AddLabel(address, label);
+		}
+
 		private MemType[] Ensure(uint address)
 		{
 			uint block = address >> MemTypeCollection.MEMTYPE_SHIFT;

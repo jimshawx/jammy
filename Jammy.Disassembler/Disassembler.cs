@@ -1,8 +1,6 @@
-﻿using Jammy.Core.Types;
-using Jammy.Core.Types.Types;
+﻿using Jammy.Core.Types.Types;
 using Jammy.Interface;
 using Jammy.Types;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Data;
