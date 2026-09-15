@@ -81,6 +81,14 @@ namespace Jammy.Debugger
 
 			if (string.IsNullOrEmpty(settings.Value.KickStartDisassembly)) return;
 
+			//magic pockets track loader
+			//AddBreakpoint(0x69A);
+			//AddBreakpoint(0x4CA);//40 block
+			//AddBreakpoint(0x43A);//block 1 (880?)
+			//AddBreakpoint(0x482);//block 2 (8ee0?)
+			//AddBreakpoint(0x494);//block 3 (8ee0?)
+			//AddBreakpoint(0x6D6);
+
 			//cpubltro
 			//AddBreakpoint(0xF8020C);
 			//AddBreakpoint(0xF80260);
@@ -91,7 +99,7 @@ namespace Jammy.Debugger
 
 			//
 			//AddBreakpoint(0x030F24);
-			
+
 			//AddBreakpoint(0xEA0040, BreakpointType.Read, 0, Size.Word, (x) => {
 			//	var regs = cpu.GetRegs();
 			//	logger.LogTrace($"copying to {regs.A[1]:X8}");
