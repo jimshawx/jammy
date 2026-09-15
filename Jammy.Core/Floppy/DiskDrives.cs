@@ -6,6 +6,8 @@ using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 /*
@@ -41,13 +43,14 @@ namespace Jammy.Core.Floppy
 	public class DiskDrives : IDiskDrives, IDebugKeys
 	{
 		//300rpm = 5Hz = 0.2s = @7.09MHz, that's 1_418_000
-		private const int INDEX_INTERRUPT_RATE = 1_418_000/2;//these should be chipset clocks
+		private const int INDEX_INTERRUPT_RATE = 1_418_759/2;//cpu tick rate / 200 (/ 2 because this is called per chipset clock tick)
 
-		private IContendedMemoryMappedDevice memory;
+		private IContendedMemoryMappedDevice chipRAM;
 		private ICIABEven ciab;
 
 		private readonly IInterrupt interrupt;
 		private readonly IDriveLights driveLights;
+		private readonly IChipsetClock clock;
 		private readonly IDiskLoader diskLoader;
 		private IDMA dma;
 		private readonly ILogger logger;
@@ -67,11 +70,12 @@ namespace Jammy.Core.Floppy
 				verbose ^= true;
 		}
 
-		public DiskDrives(IInterrupt interrupt, IDriveLights driveLights,
+		public DiskDrives(IInterrupt interrupt, IDriveLights driveLights, IChipsetClock clock,
 			IDiskLoader diskLoader, ILogger<DiskDrives> logger, IOptions<EmulationSettings> settings)
 		{
 			this.interrupt = interrupt;
 			this.driveLights = driveLights;
+			this.clock = clock;
 			this.diskLoader = diskLoader;
 			this.logger = logger;
 			this.settings = settings.Value;
@@ -89,7 +93,7 @@ namespace Jammy.Core.Floppy
 
 			trackCache = new TrackCache[4];
 			for (int i = 0; i < 4; i++)
-				trackCache[i] = new TrackCache(drive[i]);
+				trackCache[i] = new TrackCache(drive[i], logger);
 
 			drive[0].DSKSEL = PRB.DSKSEL0;
 			drive[1].DSKSEL = PRB.DSKSEL1;
@@ -118,7 +122,7 @@ namespace Jammy.Core.Floppy
 		{
 			this.dma = dma;
 			this.ciab = ciab;
-			this.memory = (IContendedMemoryMappedDevice)memory;
+			this.chipRAM = (IContendedMemoryMappedDevice)memory;
 		}
 
 		public enum DriveState
@@ -131,6 +135,8 @@ namespace Jammy.Core.Floppy
 		}
 
 		private const int stateCycles = 10;
+
+		private long trackStart;
 
 		public void Emulate()
 		{
@@ -147,16 +153,18 @@ namespace Jammy.Core.Floppy
 						drive[i].indexCounter--;
 						if (drive[i].indexCounter < 0)
 						{
-							if (verbose)
-								logger.LogTrace("FLG");
+							//if (verbose)
+								logger.LogTrace($"*** FLG {clock.Tick}");
 							drive[i].indexCounter += INDEX_INTERRUPT_RATE;
 							ciab.FlagInterrupt();
+							trackStart = clock.Tick;
 						}
 					}
 				}
 
 				if (drive[i].state != DriveState.Idle)
 				{
+					throw new UnreachableException();
 					drive[i].stateCounter--;
 					if (drive[i].stateCounter < 0)
 					{
@@ -257,15 +265,17 @@ namespace Jammy.Core.Floppy
 			private uint lastSide = uint.MaxValue;
 
 			private Drive drive;
+			private readonly ILogger logger;
 
-			public TrackCache(Drive drive)
+			public TrackCache(Drive drive, ILogger logger)
 			{
 				this.drive = drive;
+				this.logger = logger;
 			}
 
-			public void PrimeTrackData()
+			public void PrimeTrackData(bool force = false)
 			{
-				if (lastTrack != drive.track || lastSide != drive.side )
+				if (lastTrack != drive.track || lastSide != drive.side || force)
 				{
 					//buffer 2 revolutions worth of data
 					byte[] mfm0 = drive.disk.GetTrack(drive.track, drive.side);
@@ -281,7 +291,7 @@ namespace Jammy.Core.Floppy
 			public void ConsumeTrackData(uint words)
 			{
 				if (drive.track != lastTrack || drive.side != lastSide)
-					throw new ApplicationException("Track/Side changed during disk DMA");
+					logger.LogTrace($"Track/Side changed during disk DMA T:{lastTrack}->{drive.track} S:{lastSide}->{drive.side}");
 
 				mfmBuffer = mfmBuffer[(int)(words*2)..];
 
@@ -316,6 +326,8 @@ namespace Jammy.Core.Floppy
 		private int upcomingDiskDMA = -1;
 		private bool runningDMA = false;
 		private bool synced = false;
+		private uint lastTick = 0;
+		private uint dmaReqStart = 0;
 
 		public void Write(uint insaddr, uint address, ushort value)
 		{
@@ -325,9 +337,10 @@ namespace Jammy.Core.Floppy
 			{
 				case ChipRegs.DSKSYNC:
 					dsksync = value;
+					//logger.LogTrace($"DSKSYNC {dsksync:X4}");
 					break;
 				case ChipRegs.DSKPTH:
-					dskpt = (dskpt & 0x0000ffff) | ((uint) value << 16);
+					dskpt = (dskpt & 0x0000001f) | ((uint) value << 16);
 					break;
 				case ChipRegs.DSKPTL:
 					dskpt = (dskpt & 0xffff0000) | (uint)(value & 0xfffe);
@@ -397,7 +410,7 @@ namespace Jammy.Core.Floppy
 						return;
 					}
 
-					logger.LogTrace($"Reading DF{df} T: {drive[df].track} S: {drive[df].side} to {dskpt:X6} @{insaddr:X8} L: {dsklen&0x3fff:X4} ({dsklen & 0x3fff}) L/11: {(dsklen&0x3fff)/11}");
+					logger.LogTrace($"Reading DF{df} T: {drive[df].track} S: {drive[df].side} to {dskpt:X6} @{insaddr:X8} L: {dsklen&0x3fff:X4} ({dsklen & 0x3fff}) L/11: {(dsklen&0x3fff)/11} S:{(adkcon & (1u << 10)) == 0} {dsksync:X4}");
 
 					if (drive[df].track > 161)
 					{
@@ -410,8 +423,23 @@ namespace Jammy.Core.Floppy
 
 					synced = (adkcon & (1u << 10)) == 0;
 
-					trackCache[df].PrimeTrackData(); 
+					trackCache[df].PrimeTrackData(true);
+
+					//Not starting at the start of the track, we are starting where the current revolution is
+					//that's in drive[i].IndexCounter which is counting down from INDEX_INTERRUPT_RATE
+
+					long startInTrack = INDEX_INTERRUPT_RATE - drive[df].indexCounter;//a number between 0 and INDEX_INTERRUPT_RATE
 					
+					startInTrack -= 59000;
+					if (startInTrack < 0) startInTrack += INDEX_INTERRUPT_RATE;
+
+					long trackLen = drive[df].disk.GetTrack(drive[df].track, drive[df].side).Length;//should be 12688 bytes for DOS tracks
+					trackLen /= 2;//trackLen in WORDS
+					uint trackPos = (uint)((startInTrack * trackLen) / INDEX_INTERRUPT_RATE);
+					logger.LogTrace($"SKIPPING S{(synced?1:0)} {dsksync:X4} {trackPos} [{trackLen} {startInTrack} {INDEX_INTERRUPT_RATE} , {startInTrack / (float)INDEX_INTERRUPT_RATE:F2}] @ {clock} {clock.Tick} {clock.Tick-lastTick} {clock.Tick - trackStart}"); lastTick = clock.Tick;
+					dmaReqStart = clock.Tick;
+					trackCache[df].ConsumeTrackData(trackPos);
+
 					runningDMA = true;
 
 					//data transfer will start at the next disk DMA slot, slots 7,9,11
@@ -431,12 +459,12 @@ namespace Jammy.Core.Floppy
 			}
 		}
 
+		private List<Tuple<ushort, uint>> dmalog = new List<Tuple<ushort, uint>>();
 		private void DoImmediately()
 		{
-			if (!runningDMA)
-				return;
-
 			uint totalconsumed = 0;
+
+			dmalog.Clear();
 
 			while (dsklen != 0)
 			{
@@ -451,9 +479,12 @@ namespace Jammy.Core.Floppy
 						if (w != dsksync) continue;
 						interrupt.AssertInterrupt(Types.Interrupt.DSKSYNC);
 						synced = true;
+						continue;//don't copy the first DSKSYNC to the output
 					}
 
-					memory.ImmediateWrite(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
+					dmalog.Add(new Tuple<ushort, uint>(w, dskpt));
+
+					chipRAM.ImmediateWrite(0, dskpt, w, Size.Word); dskpt += 2; dsklen--;
 					if (dsklen == 0) break;
 				}
 
@@ -461,16 +492,28 @@ namespace Jammy.Core.Floppy
 				totalconsumed += dskconsumed;
 			}
 
+			if (dmalog.Count() >= 4)
+			{ 
+				var bytes = MFM.DecodeMfmOddEven(dmalog.Skip(1).Take(4).Select(x=>x.Item1).ToArray(), 2);
+				logger.LogTrace($"First 4 words: {string.Join(" ", bytes.Select(b => $"{b:X2}"))} {clock.Tick}");
+				//if (dmalog.Count() >= 29)
+				//{ 
+				//	var b2 = MFM.DecodeMfmOddEven(dmalog.Skip(1+28).Select(x => x.Item1).ToArray(), (dmalog.Count()-1-28)/2);
+				//	logger.LogTrace($"{(string.Join("", b2.Select(x=>(x<32||x>127)?".":$"{(char)x}")))})");
+				//}
+			}
+
 			runningDMA = false;
 
 			//now need to trigger DSKBLK interrupt to say we're all done
 
 			//wait for a couple of scanlines, then trigger the DSKBLK interrupt
-			diskInterruptPending = 227 * 2;
+			//diskInterruptPending = 227 * 2;
 
 			//wait until what would have been about the right amount of time, based on 3 words per scanline
-			//diskInterruptPending = (227 * (int)totalconsumed) / 3;
-
+			diskInterruptPending = (227 * (int)totalconsumed) / 3;
+			diskInterruptPending = (int)(diskInterruptPending * 2.0f);
+			
 			//wait until the next CCK
 			//diskInterruptPending = 0;
 
@@ -479,6 +522,7 @@ namespace Jammy.Core.Floppy
 			return;
 		}
 
+		//called from Agnus for each disk DMA slot
 		public void DoDMA()
 		{
 			if (dsklen == 0)
@@ -486,6 +530,12 @@ namespace Jammy.Core.Floppy
 
 			if (!runningDMA)
 				return;
+
+			if (SelectedDrive() == -1)
+			{
+				logger.LogTrace("DSKSEL = -1 during DMA, DMA frozen");
+				return;
+			}
 
 			if (settings.FloppySpeed == FloppySpeed.Immediate)
 			{ 
@@ -499,6 +549,8 @@ namespace Jammy.Core.Floppy
 				if (word != dsksync) return;
 				synced = true;
 				interrupt.AssertInterrupt(Types.Interrupt.DSKSYNC);
+				//logger.LogTrace($"SYNC {dsksync:X4} {clock.Tick} {clock.Tick-dmaReqStart}");
+				return;//don't copy the first DSKSYNC to the output
 			}
 			dma.WriteChip(DMASource.Agnus, dskpt, DMA.DSKEN, word, Size.Word);
 			dskpt += 2; dsklen--;
@@ -664,13 +716,13 @@ namespace Jammy.Core.Floppy
 			return (byte)prb;
 		}
 
-		public void ReadICR(byte icr)
+		public void ReadICR(uint insaddr, byte icr)
 		{
 			//FLAG SERIAL TODALARM TIMERB TIMERA
-			if (verbose)
+			//if (verbose)
 			{
 				logger.LogTrace("      ---FSRBA");
-				logger.LogTrace($"R ICR {icr.ToBin()}");
+				logger.LogTrace($"R ICR {icr.ToBin()} @ {insaddr:X8}");
 			}
 		}
 
