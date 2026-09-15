@@ -299,7 +299,7 @@ namespace Parky.FormToAvalonia
 		=> AppBuilder.Configure<App>() // `App` is child of `Application`
 		.UsePlatformDetect()
 		//.LogToTrace(LogEventLevel.Verbose)
-		.UseReactiveUI();
+		.UseReactiveUI((x) => { });
 
 		public static void Run(string[] args)
 		{

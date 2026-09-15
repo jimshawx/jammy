@@ -1,7 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using Avalonia.Rendering;
 using Jammy.Core;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
@@ -17,11 +16,15 @@ using Jammy.WebAPI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive;
 using System.Web;
+
+/*
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
+*/
 
 namespace Jammy.Main.Linux
 {
@@ -68,8 +71,9 @@ namespace Jammy.Main.Linux
 			this.disassemblyRanges = disassemblyRanges;
 			this.memoryDumpRanges = memoryDumpRanges;
 			this.pluginManager = pluginManager;
-			var renderer = ((IRenderRoot)this).Renderer;
-			logger.LogTrace($"Using Avalonia Renderer: {renderer.GetType().FullName}");
+			
+			//var renderer = ((IRenderRoot)this).Renderer;
+			//logger.LogTrace($"Using Avalonia Renderer: {renderer.GetType().FullName}");
 
 			settings = options.Value;
 
@@ -488,7 +492,7 @@ namespace Jammy.Main.Linux
 			UpdateDisplay();
 		}
 
-		public ReactiveCommand<string, Unit> menuMemory_ItemClickedEvent {  get; }
+		public ReactiveCommand<string, RxVoid> menuMemory_ItemClickedEvent {  get; }
 
 		private void menuMemory_ItemClicked(string e)
 		{
@@ -617,7 +621,7 @@ namespace Jammy.Main.Linux
 		private int lastFound = -1;
 		private string lastText = string.Empty;
 
-		public ReactiveCommand<string, Unit> menuDisassembly_ItemClickedEvent { get; }
+		public ReactiveCommand<string, RxVoid> menuDisassembly_ItemClickedEvent { get; }
 
 		private void menuDisassembly_ItemClicked(string e)
 		{

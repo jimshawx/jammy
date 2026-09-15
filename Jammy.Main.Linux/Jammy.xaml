@@ -19,7 +19,7 @@
           <Panel Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <TextBox Canvas.Left="2" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="txtDisassembly" IsReadOnly="True">
 				<TextBox.ContextMenu>
-					<ContextMenu>
+					<ContextMenu x:CompileBindings="False">
 						<MenuItem Header="Breakpoint" Command="{Binding $parent[Window].menuDisassembly_ItemClickedEvent}" CommandParameter="toolStripBreakpoint" />
 						<MenuItem Header="Skip" Command="{Binding $parent[Window].menuDisassembly_ItemClickedEvent}" CommandParameter="toolStripSkip"/> 
 						<MenuItem Header="Go To..." Command="{Binding $parent[Window].menuDisassembly_ItemClickedEvent}" CommandParameter="toolStripGoto"/> 
@@ -32,7 +32,7 @@
           <Panel Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <TextBox Canvas.Left="2" Canvas.Top="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="txtMemory" IsReadOnly="True">
 				<TextBox.ContextMenu>
-					<ContextMenu>
+					<ContextMenu x:CompileBindings="False">
 						<MenuItem Header="Go To..." Command="{Binding $parent[Window].menuMemory_ItemClickedEvent}" CommandParameter="menuMemoryGotoItem"/> 
 						<MenuItem Header="Find..." Command="{Binding $parent[Window].menuMemory_ItemClickedEvent}" CommandParameter="menuMemoryFindItem"/> 
 					</ContextMenu>

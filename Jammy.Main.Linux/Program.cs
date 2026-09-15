@@ -94,7 +94,7 @@ public class Program
 			.UsePlatformDetect()
 			.UseSkia()
 			// .LogToTrace(LogEventLevel.Verbose)
-			.UseReactiveUI();
+			.UseReactiveUI((x) => { });
 
 	static void Main(string[] args)
 	{
@@ -146,7 +146,13 @@ public class Program
 			.AddSingleton<ISerial, Serial>()
 			.AddSingleton<IZorro2, Zorro2>()
 			.AddSingleton<IZorro3, Zorro3>()
-			.AddSingleton<IExpansionROM, TestExpansion>()
+			//.AddSingleton<IExpansionROM, TestExpansion>()
+			//.AddSingleton<IExpansionROM>(sp => ActivatorUtilities.CreateInstance<DosExpansion>(sp, "JAM0", "JDK0"))
+			//.AddSingleton<IExpansionROM>(sp => ActivatorUtilities.CreateInstance<DosExpansion>(sp, "JAM1", "JDK1"))
+			//.AddSingleton<IZorroDebugHandler, TestExpansionDebugHandler>()
+			//.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM0", "JDK0", "hd", 0))
+			//.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM1", "JDK1", "hd1", 1))
+			.AddSingleton<IZorroExpansionRegistry, ZorroExpansionRegistry>()
 			.AddSingleton<IChipRAM, ChipRAM>()
 			.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()
 			.AddSingleton<IKickstartROM, KickstartROM>()
