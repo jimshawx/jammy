@@ -30,7 +30,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IReadICR
 	{
-		void ReadICR(byte icr);
+		void ReadICR(uint insaddr, byte icr);
 	}
 
 	public interface ICustomReadWrite : ICustomRead, ICustomWrite { }

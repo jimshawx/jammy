@@ -86,14 +86,15 @@ namespace Jammy.Core.CPU.Musashi.CSharp
 			cycles = M68KCPU.m68k_execute(1);
 			
 			uint pc = M68KCPU.m68k_get_reg(null, M68KCPU.m68k_register_t.M68K_REG_PC);
-			M68KCPU.SetInstructionStartPC(pc);
 
 			//tracer
 			if (settings.Tracer.IsEnabled())
 				tracer.TracePost(traceRegs, pc, ipc, ins);
 			//tracer
 
-			breakpoints.ExecutionBreakpoint(pc);
+			breakpoints.ExecutionBreakpoint(M68KCPU.GetInstructionStartPC(), pc);
+
+			M68KCPU.SetInstructionStartPC(pc);
 		}
 
 		public uint GetCycles()
@@ -209,6 +210,10 @@ namespace m68kcpu
 		public static void SetInstructionStartPC(uint pc)
 		{
 			instructionStartPC = pc;
+		}
+		public static uint GetInstructionStartPC()
+		{
+			return instructionStartPC;
 		}
 
 		//static void m68040_fpu_op0() { throw new NotImplementedException("m68040_fpu_op0()"); }

@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jammy.Core.Interface.Interfaces;
+﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -127,7 +127,7 @@ namespace Jammy.Core
 		}
 
 		//here is where the CPUs call at the end of an instruction to check for a breakpoint at new pc
-		public bool ExecutionBreakpoint(uint pc)
+		public bool ExecutionBreakpoint(uint fromPC, uint pc)
 		{
 			if (breakpoints.TryGetValue(pc, out var bp) && IsExecutable(bp))
 			{

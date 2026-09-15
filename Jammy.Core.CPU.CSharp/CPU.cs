@@ -139,7 +139,7 @@ namespace Jammy.Core.CPU.CSharp
 
 			if (CheckInterrupt())
 			{
-				if (breakpoints.ExecutionBreakpoint(pc))
+				if (breakpoints.ExecutionBreakpoint(instructionStartPC, pc))
 					return;
 			}
 
@@ -255,7 +255,7 @@ namespace Jammy.Core.CPU.CSharp
 			//	breakpoints.SignalBreakpoint(instructionStartPC);
 			//}
 
-			breakpoints.ExecutionBreakpoint(pc);
+			breakpoints.ExecutionBreakpoint(instructionStartPC, pc);
 		}
 
 		public Regs GetRegs()

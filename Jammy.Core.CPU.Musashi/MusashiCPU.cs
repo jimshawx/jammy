@@ -172,9 +172,9 @@ namespace Jammy.Core.CPU.Musashi
 				tracer.TracePost(traceRegs, pc, ipc, ins);
 			//tracer
 
-			instructionStartPC = pc;
+			breakpoints.ExecutionBreakpoint(instructionStartPC, pc);
 
-			breakpoints.ExecutionBreakpoint(pc);
+			instructionStartPC = pc;
 		}
 
 		public void Reset()
