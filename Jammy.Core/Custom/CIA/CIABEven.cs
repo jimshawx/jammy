@@ -20,7 +20,6 @@ namespace Jammy.Core.Custom.CIA
 	public class CIABEven : CIA, ICIABEven
 	{
 		private readonly IDiskDrives diskDrives;
-		private readonly IChipsetClock clock;
 
 		private static readonly Tuple<string, string>[] debug = new Tuple<string, string>[]
 		{
@@ -98,7 +97,7 @@ namespace Jammy.Core.Custom.CIA
 			}
 
 			if (reg == ICR)
-				diskDrives.ReadICR(SnoopICRR());
+				diskDrives.ReadICR(insaddr, SnoopICRR());
 
 			//logger.LogTrace($"CIAB Read {address:X8} {regs[reg]:X2} {regs[reg]} {size} {debug[reg].Item1} {debug[reg].Item2}");
 			return base.Read(reg);
@@ -119,8 +118,8 @@ namespace Jammy.Core.Custom.CIA
 
 			base.Write(reg, value);
 
-			//if (reg == ICR && (value & 3) != 0)
-			//	logger.LogTrace($"CIAB ICR Write @ {insaddr:X8} {regs[CIA.ICR]:X8} {regs[CIA.ICR].ToBin(8)}");
+			if (reg == ICR)// && (value & 3) != 0)
+				logger.LogTrace($"CIAB ICR Write @ {insaddr:X8} {regs[CIA.ICR]:X8} {regs[CIA.ICR].ToBin(8)}");
 		}
 
 		public static List<string> GetCribSheet()

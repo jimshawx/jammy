@@ -23,7 +23,6 @@ namespace Jammy.Core.Custom.CIA
 		private readonly IKeyboard keyboard;
 		private readonly IKickstartROM kickstartROM;
 		private readonly IPSUClock psuClock;
-		private readonly IChipsetClock clock;
 		private readonly IDriveLights driveLights;
 
 		private static readonly Tuple<string, string>[] debug = new Tuple<string, string>[]

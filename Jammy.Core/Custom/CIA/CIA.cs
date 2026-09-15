@@ -20,6 +20,7 @@ namespace Jammy.Core.Custom.CIA
 	public abstract class CIA : ICIA
 	{
 		protected ILogger logger;
+		protected IChipsetClock clock;
 
 		public const int PRA = 0;
 		public const int PRB = 1;
@@ -76,6 +77,12 @@ namespace Jammy.Core.Custom.CIA
 		[Persist]
 		private int outputShift;
 
+
+		private uint timerAstart;
+		private ushort timerAlen;
+		private uint timerBstart;
+		private ushort timerBlen;
+
 		public virtual void Emulate()
 		{
 			//timer A running
@@ -96,6 +103,8 @@ namespace Jammy.Core.Custom.CIA
 						if (outputShift == 0)
 							AssertICR(ICRB.SERIAL);
 					}
+
+					//logger.LogTrace($"Timer A stop {((clock.Tick - timerAstart) * 2) / 10} {timerAlen}");
 
 					//one shot mode?
 					if ((regs[CIA.CRA] & (uint)CR.RUNMODE) != 0)
@@ -125,6 +134,8 @@ namespace Jammy.Core.Custom.CIA
 				if (timerB == 0xffff)
 				{
 					AssertICR(ICRB.TIMERB);
+
+					//logger.LogTrace($"Timer B stop {((clock.Tick - timerBstart) * 2)/10} {timerBlen}");
 
 					//one shot mode?
 					if ((regs[CIA.CRB] & (uint)CR.RUNMODE) != 0)
@@ -282,6 +293,8 @@ namespace Jammy.Core.Custom.CIA
 					{
 						timerA = timerAreset;
 						regs[CIA.CRA] |= (uint)CR.START; //start the timer
+						timerAlen = timerA;
+						timerAstart = clock.Tick;
 					}
 					break;
 				case CIA.TALO:
@@ -294,6 +307,8 @@ namespace Jammy.Core.Custom.CIA
 					{
 						timerB = timerBreset;
 						regs[CIA.CRB] |= (uint)CR.START;//start the timer
+						timerBlen = timerB;
+						timerBstart = clock.Tick;
 					}
 					break;
 				case CIA.TBLO:
