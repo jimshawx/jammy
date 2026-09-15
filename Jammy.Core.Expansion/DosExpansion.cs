@@ -363,6 +363,14 @@ namespace Jammy.Core.Expansion
 		private const int ERROR_NO_DISK = 226;
 		private const int ERROR_NO_MORE_ENTRIES = 232;
 
+		private const int ERROR_OBJECT_LINKED = 234;
+		private const int ERROR_BAD_HUN = 235;
+		private const int ERROR_NOT_IMPLEMENTED = 236;
+		private const int ERROR_RECORD_NOT_LOCKED = 240;
+		private const int ERROR_LOCK_COLLISION = 241;
+		private const int ERROR_LOCK_TIMEOUT = 242;
+		private const int ERROR_UNLOCK_ERROR = 243;
+
 		private const int ST_ROOT = 1;
 		private const int ST_USERDIR = 2;
 		private const int ST_SOFTLINK = 3;
@@ -479,7 +487,7 @@ namespace Jammy.Core.Expansion
 
 						union {
 						// --- DLT_DEVICE (Handler) fields would go here ---
-        
+
 						// --- DLT_VOLUME fields ---
 						struct {
 							struct DateStamp dol_VolumeDate; // +16 (Takes 12 bytes: Days, Mins, Ticks) 
@@ -489,12 +497,46 @@ namespace Jammy.Core.Expansion
 							BSTR dol_Name;       // +40 (The volume name BPTR) 
 						}
 						dol_volume;
-        
+
 						// --- DLT_ASSIGN fields would go here ---
 					}
 					dol_misc;
 				};
 				*/
+
+				// dummy device name string (e.g., "jammy.device")
+				string fssmDevName = "jammy.device";
+				uint fssmDevNameMem = AllocMem((uint)fssmDevName.Length + 1, 0x10001);
+				memory.UnsafeWrite8(fssmDevNameMem, (byte)fssmDevName.Length);
+				for (int i = 0; i < fssmDevName.Length; i++)
+					memory.UnsafeWrite8(fssmDevNameMem + (uint)i + 1, (byte)fssmDevName[i]);
+
+				// DosEnvec
+				uint envMem = AllocMem(17 * 4, 0x10001);
+				memory.UnsafeWrite32(envMem + (0 * 4), 16);         // de_TableSize (16 entries follow)
+				memory.UnsafeWrite32(envMem + (1 * 4), 128);        // de_SizeBlock (128 longs = 512 bytes)
+				memory.UnsafeWrite32(envMem + (2 * 4), 0);          // de_SecOrg
+				memory.UnsafeWrite32(envMem + (3 * 4), 16);         // de_Surfaces (1 Head)
+				memory.UnsafeWrite32(envMem + (4 * 4), 1);          // de_SectorPerBlock (1)
+				memory.UnsafeWrite32(envMem + (5 * 4), 64);         // de_BlocksPerTrack (1)
+				memory.UnsafeWrite32(envMem + (6 * 4), 2);          // de_Reserved (2 blocks)
+				memory.UnsafeWrite32(envMem + (7 * 4), 0);          // de_PreAlloc
+				memory.UnsafeWrite32(envMem + (8 * 4), 0);          // de_Interleave
+				memory.UnsafeWrite32(envMem + (9 * 4), 0);          // de_LowCyl
+				memory.UnsafeWrite32(envMem + (10 * 4), 2047);      // de_HighCyl (Dummy 1 cylinder)
+				memory.UnsafeWrite32(envMem + (11 * 4), 5);         // de_NumBuffers
+				memory.UnsafeWrite32(envMem + (12 * 4), 1);         // de_BufMemType (MEMF_PUBLIC)
+				memory.UnsafeWrite32(envMem + (13 * 4), 0x00FFFFFF);// de_MaxTransfer
+				memory.UnsafeWrite32(envMem + (14 * 4), 0x7FFFFFFE);// de_Mask
+				memory.UnsafeWrite32(envMem + (15 * 4), 0);         // de_BootPri
+				memory.UnsafeWrite32(envMem + (16 * 4), 0x444F5300);// de_DosType ('DOS\0')
+
+				// FileSysStartupMsg
+				uint fssmMem = AllocMem(16, 0x10001);
+				memory.UnsafeWrite32(fssmMem + 0, 0);                   // fssm_Unit
+				memory.UnsafeWrite32(fssmMem + 4, fssmDevNameMem >> 2); // fssm_Device (BPTR)
+				memory.UnsafeWrite32(fssmMem + 8, envMem >> 2);         // fssm_Environ (BPTR)
+				memory.UnsafeWrite32(fssmMem + 12, 0);                  // fssm_Flags
 
 				uint devMem = AllocMem(48, 0x10001);
 				uint volMem = AllocMem(48, 0x10001);
@@ -510,9 +552,9 @@ namespace Jammy.Core.Expansion
 				memory.UnsafeWrite32(devMem + 16, 0);               // dn_Handler
 				memory.UnsafeWrite32(devMem + 20, 0);               // dn_StackSize
 				memory.UnsafeWrite32(devMem + 24, 0);               // dn_Priority
-				memory.UnsafeWrite32(devMem + 28, 0);               // dn_Startup
+				memory.UnsafeWrite32(devMem + 28, 0);//fssmMem>>2); // dn_Startup
 				memory.UnsafeWrite32(devMem + 32, 0);               // dn_SegList
-				memory.UnsafeWrite32(devMem + 36, 0);               // dn_GlobalVec
+				memory.UnsafeWrite32(devMem + 36, 0xffffffff);      // dn_GlobalVec
 				memory.UnsafeWrite32(devMem + 40, devNameMem >> 2); // dn_Name
 
 				// Volume node
@@ -528,6 +570,7 @@ namespace Jammy.Core.Expansion
 				memory.UnsafeWrite32(volMem + 24, 0);
 				memory.UnsafeWrite32(volMem + 28, 0);
 				memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);//0x4D594653);//MYFS
+				memory.UnsafeWrite32(volMem + 36, 0);
 				memory.UnsafeWrite32(volMem + 40, volNameMem >> 2);
 
 				myVolumeNodeBPTR = volMem >> 2;
@@ -616,6 +659,16 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"ACTION_INHIBIT {pkt.dp_Arg1}");
 						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						//if (pkt.dp_Arg1 == 0)//uninhibit
+						//{ 
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						//}
+						//else
+						//{ 
+						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_IN_USE);
+						//}
 					}
 					break;
 
@@ -1590,9 +1643,19 @@ namespace Jammy.Core.Expansion
 					break;
 
 				case ACTION_FLUSH:
+					logger.LogTrace($"ACTION_FLUSH");
+					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+					memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					break;
+
 				case ACTION_MORE_CACHE:
+					logger.LogTrace($"ACTION_MORE_CACHE");
+					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+					memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					break;
+
 				case ACTION_IS_FILESYSTEM:
-					logger.LogTrace($"ACTION_FLUSH/ACTION_MORE_CACHE/ACTION_IS_FILESYSTEM");
+					logger.LogTrace($"ACTION_IS_FILESYSTEM");
 					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 					memory.UnsafeWrite32(regs.A[4] + 16, 0);
 					break;
