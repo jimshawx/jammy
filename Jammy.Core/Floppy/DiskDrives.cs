@@ -153,7 +153,7 @@ namespace Jammy.Core.Floppy
 						drive[i].indexCounter--;
 						if (drive[i].indexCounter < 0)
 						{
-							//if (verbose)
+							if (verbose)
 								logger.LogTrace($"*** FLG {clock.Tick}");
 							drive[i].indexCounter += INDEX_INTERRUPT_RATE;
 							ciab.FlagInterrupt();
@@ -436,7 +436,8 @@ namespace Jammy.Core.Floppy
 					long trackLen = drive[df].disk.GetTrack(drive[df].track, drive[df].side).Length;//should be 12688 bytes for DOS tracks
 					trackLen /= 2;//trackLen in WORDS
 					uint trackPos = (uint)((startInTrack * trackLen) / INDEX_INTERRUPT_RATE);
-					logger.LogTrace($"SKIPPING S{(synced?1:0)} {dsksync:X4} {trackPos} [{trackLen} {startInTrack} {INDEX_INTERRUPT_RATE} , {startInTrack / (float)INDEX_INTERRUPT_RATE:F2}] @ {clock} {clock.Tick} {clock.Tick-lastTick} {clock.Tick - trackStart}"); lastTick = clock.Tick;
+					if (verbose)
+						logger.LogTrace($"SKIPPING S{(synced?1:0)} {dsksync:X4} {trackPos} [{trackLen} {startInTrack} {INDEX_INTERRUPT_RATE} , {startInTrack / (float)INDEX_INTERRUPT_RATE:F2}] @ {clock} {clock.Tick} {clock.Tick-lastTick} {clock.Tick - trackStart}"); lastTick = clock.Tick;
 					dmaReqStart = clock.Tick;
 					trackCache[df].ConsumeTrackData(trackPos);
 
@@ -492,7 +493,7 @@ namespace Jammy.Core.Floppy
 				totalconsumed += dskconsumed;
 			}
 
-			if (dmalog.Count() >= 4)
+			if (dmalog.Count() >= 4 && verbose)
 			{ 
 				var bytes = MFM.DecodeMfmOddEven(dmalog.Skip(1).Take(4).Select(x=>x.Item1).ToArray(), 2);
 				logger.LogTrace($"First 4 words: {string.Join(" ", bytes.Select(b => $"{b:X2}"))} {clock.Tick}");
@@ -719,7 +720,7 @@ namespace Jammy.Core.Floppy
 		public void ReadICR(uint insaddr, byte icr)
 		{
 			//FLAG SERIAL TODALARM TIMERB TIMERA
-			//if (verbose)
+			if (verbose)
 			{
 				logger.LogTrace("      ---FSRBA");
 				logger.LogTrace($"R ICR {icr.ToBin()} @ {insaddr:X8}");
