@@ -68,6 +68,7 @@ public class DMAController : IDMA
 
 	private int blitHogCount = 0;
 
+	/*
 	public DMAActivity TriggerHighestPriorityDMA()
 	{
 		DMAActivity slotTaken = null;
@@ -162,6 +163,100 @@ public class DMAController : IDMA
 
 		//DMA required, execute the transaction
 		ExecuteDMATransfer(slotTaken);
+		return slotTaken;
+	}
+	*/
+
+	public DMAActivity TriggerHighestPriorityDMA()
+	{
+		DMAActivity slotTaken = null;
+
+		// DMA disabled, but memory refresh is required
+
+		// Agnus
+		var act = activities[(int)DMASource.Agnus];
+		if (((DMA)dmacon & DMA.DMAEN) == 0)
+		{
+			if (act.Type == DMAActivityType.Consume && act.Priority == DMA.DMAEN)
+			{
+				slotTaken = act;
+			}
+			goto checkCPU;
+		}
+		else if (act.Type != DMAActivityType.None && (act.Priority & (DMA)dmacon) != 0)
+		{
+			//Agnus can only use odd-numbered slots EXCEPT when it's doing bitplane DMA
+			//that requires even slots too (e.g. low-res > 4bpp, hi-res > 2bpp, sh-res)
+			//bitplane DMA always works
+			//other DMA only works on even slots
+			if (act.Priority == DMA.BPLEN || chipsetClock.IsAgnusSlot())
+			{
+				slotTaken = act;
+				goto executeDMA;
+			}
+		}
+
+		// Copper
+		act = activities[(int)DMASource.Copper];
+		if (act.Type != DMAActivityType.None && (act.Priority & (DMA)dmacon) != 0)
+		{
+			if (chipsetClock.IsCopperSlot())
+			{
+				slotTaken = act;
+				goto executeDMA;
+			}
+		}
+
+		// Blitter
+		act = activities[(int)DMASource.Blitter];
+		if (act.Type != DMAActivityType.None && (act.Priority & (DMA)dmacon) != 0)
+		{
+			if (((DMA)dmacon & DMA.BLTPRI) != 0)
+			{
+				blitHogCount = 0;
+				slotTaken = act;
+				goto executeDMA;
+			}
+			else
+			{
+				blitHogCount++;
+				if (blitHogCount <= 3)
+				{
+					slotTaken = act;
+					goto executeDMA;
+				}
+				blitHogCount = 0;//blitter yields to CPU after 3 slots
+			}
+		}
+
+		// Paula
+		act = activities[(int)DMASource.Paula];
+		if (act.Type != DMAActivityType.None && (act.Priority & (DMA)dmacon) != 0)
+		{
+			slotTaken = act;
+			goto executeDMA;
+		}
+
+	checkCPU:
+		// CPU
+		// done in ExecuteCPUDMASlot()
+		//act = activities[(int)DMASource.CPU];
+		//if (act.Type != DMAActivityType.None)
+		//	slotTaken = act;
+
+	executeDMA:
+		lastDMASlot = slotTaken;
+
+		if (slotTaken == null)
+		{
+			debugger.SetDMAActivity(null);
+		}
+		else
+		{
+			//DMA required, execute the transaction
+			ExecuteDMATransfer(slotTaken);
+		}
+
 		return slotTaken;
 	}
 
