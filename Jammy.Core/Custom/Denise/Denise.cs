@@ -682,6 +682,13 @@ public class Denise : IDenise
 	//private readonly uint[] bits = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	private void DoSprites(ref uint col, byte pix, int p)
 	{
+		if ((spriteMask[0] | spriteMask[1] | spriteMask[2] | spriteMask[3] |
+			 spriteMask[4] | spriteMask[5] | spriteMask[6] | spriteMask[7]) == 0)
+		{
+			CheckPlayfieldCollision(pix);
+			return;
+		}
+
 		Span<uint> bits = stackalloc uint[8];
 
 		uint active = 0;
