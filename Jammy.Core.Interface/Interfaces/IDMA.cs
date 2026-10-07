@@ -29,4 +29,5 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	void Init(IAudio audio, IMemoryMapper memoryMapper, IChipRAM chipRAM);
 	uint ChipsetSync();
 	void SetSync(Func<ushort> runChipsetEmulation);
+	bool IsCPUDMARequestAWrite();
 }

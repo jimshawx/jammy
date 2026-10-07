@@ -174,7 +174,6 @@ namespace Jammy.Core
 		}
 
 		private Regs logitRegs = new Regs();
-		private int stealingCycles = -1;
 
 		//this is run by Agnus immediately after the CPU has initiated a Chip RAM read/write
 		//when the emulation is in cycle-exact mode - the read occurs immediately, but we flag the fact that 
@@ -187,9 +186,12 @@ namespace Jammy.Core
 				logger.LogTrace($"CPU  {clock} {logitRegs.PC:X8}");
 			}
 
-			//flag we are using a slot at HPOS
-			stealingCycles = (int)clock.HorizontalPos;
-			dma.ExecuteCPUDMASlot();
+			//do the Reads now, do the Write at the right time
+			if (!dma.IsCPUDMARequestAWrite()) 
+			{ 
+				dma.ExecuteCPUDMASlot();
+				dma.SetCPUWaitingForDMA();
+			}
 
 			return dma.LastRead;
 		}
@@ -201,46 +203,16 @@ namespace Jammy.Core
 		{
 			int ticks = count / 2;
 
-			//int waitSlots = 0;
-			while (ticks > 0)
+			while (ticks > 0 || dma.IsWaitingForDMA(DMASource.CPU))
 			{
-				
-				if (logit && clock.VerticalPos == debugger.dbugLine)
-				{
-					cpu.GetRegs(logitRegs);
-					logger.LogTrace($"SYNC {clock} {count} {logitRegs.PC:X8}");
-				}
-
-				//if DMA used this slot, then the CPU has to wait
-				//todo: we actually already loaded the value though in RunChipsetEmulationForRAM
-				if (dma.LastDMASlotWasUsedByChipset() && clock.HorizontalPos == stealingCycles)
-				{
-					if (logit && clock.VerticalPos == debugger.dbugLine) logger.LogTrace($"STOLE {clock} {count}");
-
-					clock.Emulate();
-					RunAllEmulations();
-					dma.TriggerHighestPriorityDMA();
-					clock.UpdateClock();
-					stealingCycles++;
-					//todo: probalby need a mod horizontal slots here
-
-					//just in case something goes wrong, we'll get a debug message after 8 slots
-					//waitSlots++;
-					//if (waitSlots > 8)
-					//{
-					//	//logger.LogTrace("Waited 8 slots");
-					//	//goto finish;
-					//}
-					continue;
-				}
-//finish:
-				// either an odd slot or a wasted even slot
-				stealingCycles = -1;
+				dma.TriggerHighestPriorityDMA();
+				if (!dma.LastDMASlotWasUsedByChipset() && dma.IsWaitingForDMA(DMASource.CPU))
+					dma.ExecuteCPUDMASlot();
+				clock.UpdateClock();
 
 				clock.Emulate();
 				RunAllEmulations();
-				dma.TriggerHighestPriorityDMA();
-				clock.UpdateClock();
+
 				ticks--;
 			}
 		}
