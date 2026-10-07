@@ -21,7 +21,7 @@ namespace Jammy.Core.Memory
 		protected override CPUTarget target => CPUTarget.ChipRAM;
 
 		private readonly uint chipSize;
-		public ChipRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger) : base(dma)
+		public ChipRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger) : base(dma, logger)
 		{
 			chipSize = (uint)(Math.Max(settings.Value.ChipMemory, 0.5) * 1024 * 1024);
 			

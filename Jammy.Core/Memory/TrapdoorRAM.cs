@@ -18,7 +18,7 @@ namespace Jammy.Core.Memory
 		//detected by looking for mirrors of custom registers
 		protected override CPUTarget target => CPUTarget.SlowRAM;
 
-		public TrapdoorRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<TrapdoorRAM> logger) : base(dma)
+		public TrapdoorRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<TrapdoorRAM> logger) : base(dma, logger)
 		{
 			if (settings.Value.TrapdoorMemory != 0.0)
 			{

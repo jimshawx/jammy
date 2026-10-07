@@ -1,19 +1,26 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types.Types;
+using Microsoft.Extensions.Logging;
+
+/*
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
+*/
 
 namespace Jammy.Core.Memory
 {
 	public abstract class ContendedMemory : Memory, IContendedMemoryMappedDevice
 	{
 		private readonly IDMA dma;
+		private readonly ILogger logger;
 		private ulong contendedReads = 0;
 		private ulong contendedWrites = 0;
 
 		protected abstract CPUTarget target { get; }
 
-		public ContendedMemory(IDMA dma)
+		public ContendedMemory(IDMA dma, ILogger logger)
 		{
 			this.dma = dma;
+			this.logger = logger;
 		}
 
 		public new uint Read(uint insaddr, uint address, Size size)
