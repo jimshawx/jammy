@@ -102,6 +102,7 @@ namespace Jammy.Core.Types.Types
 		public DMA Priority;
 		public uint ChipReg;
 		public CPUTarget Target;
+		public uint InsAddr;
 	}
 
 	public class DMADebug
@@ -125,6 +126,7 @@ namespace Jammy.Core.Types.Types
 				dbg.Priority = value.Priority;
 				dbg.ChipReg = value.ChipReg;
 				dbg.Target = value.Target;
+				dbg.InsAddr = value.InsAddr;
 			}
 			get {
 				ref var d = ref dmadebug[i + j * 228];
@@ -136,7 +138,8 @@ namespace Jammy.Core.Types.Types
 					Size = d.Size,
 					Priority = d.Priority,
 					ChipReg = d.ChipReg,
-					Target = d.Target
+					Target = d.Target,
+					InsAddr = d.InsAddr
 				};
 			}
 		}

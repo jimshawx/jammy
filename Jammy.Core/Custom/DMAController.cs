@@ -276,6 +276,11 @@ public class DMAController : IDMA
 		ExecuteDMATransfer(activities[(int)DMASource.CPU]);
 	}
 
+	public bool IsCPUDMARequestAWrite()
+	{
+		return activities[(int)DMASource.CPU].Type == DMAActivityType.WriteCPU;
+	}
+
 	public bool IsWaitingForDMA(DMASource source)
 	{
 		return activities[(int)source].Type != DMAActivityType.None;
@@ -295,6 +300,7 @@ public class DMAController : IDMA
 	private void Consume(DMAActivity activity)
 	{
 		activity.Type = DMAActivityType.None;
+		return;
 		#if DEBUG
 		//todo: debugging, remove
 		activity.Address = 0;
@@ -316,33 +322,33 @@ public class DMAController : IDMA
 			case DMAActivityType.CPU: break;
 
 			case DMAActivityType.WriteChip:
-				chipRAM.ImmediateWrite(0, activity.Address, (uint)activity.Value, activity.Size);
+				chipRAM.ImmediateWrite(activity.InsAddr, activity.Address, (uint)activity.Value, activity.Size);
 				break;
 
 			case DMAActivityType.ReadChip:
 				if (activity.Size == Size.QWord)
 				{
-					ulong value = chipRAM.ImmediateRead(0, activity.Address, Size.Long);
-					value = (value << 32) | chipRAM.ImmediateRead(0, activity.Address + 4, Size.Long);
+					ulong value = chipRAM.ImmediateRead(activity.InsAddr, activity.Address, Size.Long);
+					value = (value << 32) | chipRAM.ImmediateRead(activity.InsAddr, activity.Address + 4, Size.Long);
 					activity.Value = value;
 					chips.ImmediateWriteWide(activity.ChipReg, value);
 				}
 				else if (activity.Size == Size.LWord)
 				{
-					ulong value = chipRAM.ImmediateRead(0, activity.Address, Size.Long);
+					ulong value = chipRAM.ImmediateRead(activity.InsAddr, activity.Address, Size.Long);
 					activity.Value = value;
 					chips.ImmediateWriteWide(activity.ChipReg, value);
 				}
 				else
 				{
-					uint value = chipRAM.ImmediateRead(0, activity.Address, activity.Size);
+					uint value = chipRAM.ImmediateRead(activity.InsAddr, activity.Address, activity.Size);
 					activity.Value = value;
-					chips.ImmediateWrite(0, activity.ChipReg, value, activity.Size);
+					chips.ImmediateWrite(activity.InsAddr, activity.ChipReg, value, activity.Size);
 				}
 				break;
 
 			case DMAActivityType.ReadCPU:
-				LastRead = (ushort)memoryMapper.ImmediateRead(0, activity.Address, activity.Size);
+				LastRead = (ushort)memoryMapper.ImmediateRead(activity.InsAddr, activity.Address, activity.Size);
 				activity.Value = LastRead;
 				break;
 
@@ -356,7 +362,7 @@ public class DMAController : IDMA
 				throw new ArgumentOutOfRangeException(nameof(activity.Type));
 		}
 		debugger.SetDMAActivity(activity);
-		if (logit) logger.LogTrace($"DMA  {chipsetClock} {activity.Type} {activity.Address:X8} {activity.ChipReg:X8}");
+		if (logit) logger.LogTrace($"DMA  {chipsetClock} {activity.Type} {activity.InsAddr:X8} {activity.Address:X8} {activity.ChipReg:X8}");
 		Consume(activity);
 	}
 	bool logit = false;
@@ -414,6 +420,7 @@ public class DMAController : IDMA
 		activity.Priority = priority;
 		activity.Size = size;
 		activity.ChipReg = chipReg;
+		activity.InsAddr = address;
 
 		//this (chipsetClock.HorizontalPos&1) is currently 1 for the first 4 planes, then 0 for the >5th one
 		//so when it's 0, we want a special case
