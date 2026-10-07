@@ -100,6 +100,7 @@ namespace Jammy.Main
 				{ 
 					sb.AppendLine($"Address: {d.Address:X8}");
 					sb.AppendLine($"   Size: {d.Size}");
+					sb.AppendLine($"InsAddr: {d.InsAddr:X8}");
 				}
 				sb.AppendLine($"    Pri: {d.Priority}");
 				if (d.Type == DMAActivityType.ReadChip)
@@ -118,12 +119,21 @@ namespace Jammy.Main
 						sb.AppendLine($"  Value: {d.Value:X16} {d.Value.ToBin(64)} {d.Value}");
 				}
 			}
+			else if (d.Type == DMAActivityType.CPU)
+			{
+				sb.AppendLine("CPU Read");
+				sb.AppendLine($"Address: {d.Address:X8}");
+				sb.AppendLine($"InsAddr: {d.InsAddr:X8}");
+				sb.AppendLine($"  Value: {d.Value:X4} {d.Value.ToBin(16)} {(short)d.Value}");
+			}
 			sb.AppendLine($"      H: {selectX:X2} {selectX}");
 			sb.AppendLine($"      V: {selectY:X2} {selectY}");
 
 			textBox.Text = sb.ToString();
 			textBox.Left = selectX * WW;
 			textBox.Top = selectY * HH;
+			if (textBox.Left + textBox.Width > pic.Width) textBox.Left = pic.Width - textBox.Width;
+			if (textBox.Top + textBox.Height > pic.Height) textBox.Top = pic.Height - textBox.Height;
 			textBox.Visible = true;
 		}
 
