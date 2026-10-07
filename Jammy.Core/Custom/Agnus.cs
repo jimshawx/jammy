@@ -718,7 +718,7 @@ public class Agnus : IAgnus
 				}
 				else
 				{
-					value |= 1 << 15; //set LOF=1
+					value |= (ushort)(vpos & (1 << 15));//set LOF to previously used value
 				}
 
 				value &= 0x80ff;
@@ -740,7 +740,7 @@ public class Agnus : IAgnus
 
 			case ChipRegs.VHPOSR:
 				int h = (int)clock.HorizontalPos;
-				h += 4;//cpubltro
+				h += 5;//cpubltro
 				h %= (int)clock.DisplayHorizontal;
 				if (h < 0) h += (int)clock.DisplayHorizontal;
 				value = (ushort)((clock.VerticalPos << 8) | ((uint)h & 0x00ff));
