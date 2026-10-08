@@ -129,12 +129,18 @@ namespace Jammy.Main
 			sb.AppendLine($"      H: {selectX:X2} {selectX}");
 			sb.AppendLine($"      V: {selectY:X2} {selectY}");
 
+			textBox.SuspendLayout();
+
 			textBox.Text = sb.ToString();
-			textBox.Left = selectX * WW;
-			textBox.Top = selectY * HH;
-			if (textBox.Left + textBox.Width > pic.Width) textBox.Left = pic.Width - textBox.Width;
-			if (textBox.Top + textBox.Height > pic.Height) textBox.Top = pic.Height - textBox.Height;
+			int xx = selectX * WW;
+			int yy = selectY * HH;
+			if (xx + textBox.Width >= pic.Width) textBox.Left = xx - textBox.Width;
+			else textBox.Left = xx;
+			if (yy + textBox.Height >= pic.Height) textBox.Top = yy - textBox.Height;
+			else textBox.Top = yy;
 			textBox.Visible = true;
+
+			textBox.ResumeLayout();
 		}
 
 		private readonly Brush [] dmacols =
@@ -158,7 +164,7 @@ namespace Jammy.Main
 			new SolidBrush(Color.Green),//SPREN
 			new SolidBrush(Color.Blue),//BLTEN
 			new SolidBrush(Color.Yellow),//COPEN
-			new SolidBrush(Color.Orange),//BPLEN
+			new SolidBrush(Color.DarkOrange),//BPLEN
 			new SolidBrush(Color.DarkGoldenrod),//DMAEN aka Refresh
 		};
 
@@ -167,6 +173,8 @@ namespace Jammy.Main
 		private readonly Brush grey = new SolidBrush(Color.Gray);
 		private readonly Brush red = new SolidBrush(Color.Red);
 		private readonly Brush blue = new SolidBrush(Color.Blue);
+		private readonly Brush pink = new SolidBrush(Color.Pink);
+		private readonly Brush cyan = new SolidBrush(Color.Cyan);
 
 		private void Repaint(object sender, PaintEventArgs e)
 		{
@@ -181,26 +189,33 @@ namespace Jammy.Main
 				{
 					r.X = x*WW;
 					ref var d = ref dbg[x+y*NX];
-					//e.Graphics.FillRectangle(dmacols[(int)d.Type], r);
+					Brush col;
 					switch (d.Type)
 					{
 						case DMAActivityType.None:
-							e.Graphics.FillRectangle(black, r);
+							col = black;
 							break;
 						//case DMAActivityType.Consume)
-						//	e.Graphics.FillRectangle(grey, r);
+						//	col = grey;
 						//  break;
 						case DMAActivityType.CPU:
 						case DMAActivityType.ReadCPU:
-							e.Graphics.FillRectangle(red, r);
+							if ((d.Address&0xdff000) == 0xdff000)
+								col = pink;
+							else
+								col = red;
 							break;
 						case DMAActivityType.WriteCPU:
-							e.Graphics.FillRectangle(blue, r);
+							if ((d.Address & 0xdff000) == 0xdff000)
+								col = cyan;
+							else
+								col = blue;
 							break;
 						default:
-							e.Graphics.FillRectangle(pricols[(int)Math.Log2((int)d.Priority)], r);
+							col = pricols[(int)Math.Log2((int)d.Priority)];
 							break;
 					}
+					e.Graphics.FillRectangle(col, r);
 				}
 			}
 			if (selectX < 0 || selectY < 0) return;
