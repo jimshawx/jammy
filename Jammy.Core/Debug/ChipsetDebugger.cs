@@ -106,6 +106,12 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 	private DMAActivity lastActivy = null;
 	public void SetDMAActivity(DMAActivity activity)
 	{
+		if (clock.HorizontalPos == 0)
+		{
+			for (int i = 0; i < slot.Length; i++)
+				slot[i] = ' ';
+		}
+
 		if (activity == null)
 			slot[clock.HorizontalPos] = '-';
 		else
