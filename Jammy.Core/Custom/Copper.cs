@@ -90,7 +90,7 @@ namespace Jammy.Core.Custom
 			}
 
 			//todo: necessary? copper can't match or move on an odd cycle anyway, so is this just an optimisation?
-			if (!clock.IsCopperSlot()) return;
+			//if (!clock.IsCopperSlot() && status != CopperStatus.Waiting && status != CopperStatus.WakingUp) return;
 
 			if (copjmp1 != 0 || copjmp2 != 0)
 			{
@@ -197,6 +197,7 @@ namespace Jammy.Core.Custom
 		}
 
 
+		private const int dbug_timing_max = 4;
 		private int dbug_timing = 3;
 
 		private void CopperInstruction()
@@ -271,6 +272,19 @@ namespace Jammy.Core.Custom
 							//WAIT
 							//logger.LogTrace($"WAIT {clock} v:{waitV} h:{waitH}");
 							status = CopperStatus.Waiting;
+
+							//does the wait already match? if so, wake up normally
+
+							//uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
+							//coppos &= waitMask;
+							//if (CopperCompare(coppos, (waitPos & waitMask)))
+							//{
+							//	//this is slower than if the compare was met while the copper is waiting
+							//	//waitTimer = 2;
+							//	//status = CopperStatus.WakingUp;
+							//	status = CopperStatus.RunningWord1;
+							//	logger.LogTrace($"WAIT pre-matched {waitPos:X4} {coppos:X4} {clock}");
+							//}
 						}
 						else
 						{
@@ -303,7 +317,7 @@ namespace Jammy.Core.Custom
 						//memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 
 						//If blitter-busy bit is set the comparisons will fail.
-						if (waitBlit == 0 && (dma.ReadDMACON() & (1 << 14)) != 0)
+						if (waitBlit == 0 && (dma.ReadDMACON() & (1 << (int)DMA.BBUSY)) != 0)
 						{
 							logger.LogTrace("WAIT delayed due to blitter running");
 							return;
@@ -336,6 +350,18 @@ namespace Jammy.Core.Custom
 									dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
 									copPC += 2;
 									status = CopperStatus.RunningWord2;
+									break;
+								case 4:
+									if (clock.IsCopperSlot())
+									{ 
+										dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+										copPC += 2;
+										status = CopperStatus.RunningWord2;
+									}
+									else
+									{
+										status = CopperStatus.RunningWord1;
+									}
 									break;
 							}
 
@@ -622,7 +648,10 @@ namespace Jammy.Core.Custom
 		public void DebugKeyDown(int obj)
 		{
 			if (obj == 'T')
-				dbug_timing = (dbug_timing + 1) % 4;
+			{ 
+				dbug_timing = (dbug_timing + 1) % (dbug_timing_max + 1);
+				logger.LogTrace($"Timing {dbug_timing}");
+			}
 		}
 	}
 }
