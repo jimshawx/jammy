@@ -29,8 +29,8 @@ namespace Jammy.Core.Custom.IO
 
 		public void Reset()
 		{
-			serdat = 0;
-			serper = (ushort)SERDAT.TBE;
+			serdat = (ushort)SERDAT.TBE;
+			serper = 0;
 			serialConsole.Reset();
 		}
 
@@ -93,7 +93,7 @@ namespace Jammy.Core.Custom.IO
 				case ChipRegs.SERPER:
 					serper = value;
 					//logger.LogTrace($"Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.27936)} NTSC");
-					logger.LogTrace($"SERPER W {((value & 0x8000) != 0 ? "9bit" : "8bit")} Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.28194)} PAL");
+					logger.LogTrace($"SERPER W {((value & 0x8000) != 0 ? "9bit" : "8bit")} Baud {value & 0x7fff} = {1000000.0 / (((value & 0x7fff) + 1) * 0.28194)} PAL @ {insaddr:X8}");
 
 					if ((value & 0x8000) != 0)
 					{
@@ -105,7 +105,6 @@ namespace Jammy.Core.Custom.IO
 						charMask = 0xff;
 						stopBit = 0x100;
 					}
-
 					break;
 
 				case ChipRegs.SERDAT:
@@ -126,8 +125,8 @@ namespace Jammy.Core.Custom.IO
 			//need to mirror TBE/RBF into serdatr
 			if ((intreq & (1 << (int)Types.Interrupt.TBE)) != 0)
 				serdat |= (ushort)SERDAT.TBE;
-			else
-				serdat &= (ushort)~SERDAT.TBE;
+			//else
+			//	serdat &= (ushort)~SERDAT.TBE;
 
 			if ((intreq & (1 << (int)Types.Interrupt.RBF)) != 0)
 				serdat |= (ushort)SERDAT.RBF;
