@@ -161,7 +161,7 @@ namespace Jammy.Main
 			new SolidBrush(Color.Cyan),//AUD2EN
 			new SolidBrush(Color.Cyan),//AUD3EN
 			new SolidBrush(Color.Teal),//DSKEN
-			new SolidBrush(Color.Green),//SPREN
+			new SolidBrush(Color.DarkGreen),//SPREN
 			new SolidBrush(Color.Blue),//BLTEN
 			new SolidBrush(Color.Yellow),//COPEN
 			new SolidBrush(Color.DarkOrange),//BPLEN
@@ -175,6 +175,7 @@ namespace Jammy.Main
 		private readonly Brush blue = new SolidBrush(Color.Blue);
 		private readonly Brush pink = new SolidBrush(Color.Pink);
 		private readonly Brush cyan = new SolidBrush(Color.Cyan);
+		private readonly Brush green = new SolidBrush(Color.Green);
 
 		private void Repaint(object sender, PaintEventArgs e)
 		{
@@ -195,9 +196,9 @@ namespace Jammy.Main
 						case DMAActivityType.None:
 							col = black;
 							break;
-						//case DMAActivityType.Consume)
-						//	col = grey;
-						//  break;
+						case DMAActivityType.Consume:
+							col = grey;
+							break;
 						case DMAActivityType.CPU:
 						case DMAActivityType.ReadCPU:
 							if ((d.Address&0xdff000) == 0xdff000)
@@ -210,6 +211,9 @@ namespace Jammy.Main
 								col = cyan;
 							else
 								col = blue;
+							break;
+						case DMAActivityType.Refresh:
+								col = green;
 							break;
 						default:
 							col = pricols[(int)Math.Log2((int)d.Priority)];

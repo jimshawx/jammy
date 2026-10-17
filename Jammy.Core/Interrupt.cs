@@ -14,6 +14,7 @@ namespace Jammy.Core
 	public class Interrupt : IInterrupt
 	{
 		private IChips custom;
+		private ICPU cpu;
 
 		public static readonly uint[] priority = [1, 1, 1, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 6, 7];
 		private readonly Queue<uint> interruptLevelQueue;
@@ -31,9 +32,10 @@ namespace Jammy.Core
 			return priority[interrupt];
 		}
 
-		public void Init(IChips custom)
+		public void Init(IChips custom, ICPU cpu)
 		{
 			this.custom = custom;
+			this.cpu = cpu;
 		}
 
 		public void Reset()
@@ -57,12 +59,13 @@ namespace Jammy.Core
 		//This is called once per instruction
 		public ushort GetInterruptLevel()
 		{
-			interruptLevelQueue.Enqueue(paulaInterruptLevel);
-			if (interruptLevelQueue.Count <= PAULA_INTERRUPT_LATENCY)
-				return 0;
-			interruptLevelQueue.TryDequeue(out uint i);
-			return (ushort)(uint)i;
+			//interruptLevelQueue.Enqueue(paulaInterruptLevel);
+			//if (interruptLevelQueue.Count <= PAULA_INTERRUPT_LATENCY)
+			//	return 0;
+			//interruptLevelQueue.TryDequeue(out uint i);
+			//return (ushort)(uint)i;
 			//return (ushort)(uint)interruptLevelQueue.Dequeue();
+			return (ushort)paulaInterruptLevel;
 		}
 
 		public void AssertInterrupt(uint intreq, bool asserted = true)
@@ -92,6 +95,11 @@ namespace Jammy.Core
 			//}
 			//same result but faster
 			paulaInterruptLevel = CPUPriority((uint)BitOperations.Log2(intreq));
+
+			//if (cpu is IMoiraCPU)
+			//{
+			//	((IMoiraCPU)cpu).CheckInterrupt();
+			//}
 		}
 
 		public void SetGayleInterruptLevel(uint level)

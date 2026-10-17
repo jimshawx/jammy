@@ -69,7 +69,7 @@ namespace Jammy.Core
 			//fulfil the circular dependencies
 			custom.Init(blitter, copper, audio, agnus, denise, dma);
 			keyboard.SetCIA(ciaa);
-			interrupt.Init(custom);
+			interrupt.Init(custom, cpu);
 
 			if (cycleExact && cpu is IMoiraCPU)
 			{
@@ -192,6 +192,8 @@ namespace Jammy.Core
 				dma.ExecuteCPUDMASlot();
 				dma.SetCPUWaitingForDMA();
 			}
+
+			((IMoiraCPU)cpu).CheckInterrupt();
 
 			return dma.LastRead;
 		}

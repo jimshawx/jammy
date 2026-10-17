@@ -14,15 +14,17 @@ namespace Jammy.Core.Custom;
 
 public class ChipsetClock : IChipsetClock
 {
+	private readonly EmulationSettings settings;
 	private readonly ILogger logger;
+	
 	public uint DisplayScanlines { get; private set; }
-	public uint DisplayHorizontal { get; private set; }
+	public uint DisplayHorizontal { get { return 227u + LongLine(); } }
 
 	public ChipsetClock(IOptions<EmulationSettings> settings, ILogger<ChipsetClock> logger)
 	{
+		this.settings = settings.Value;
 		this.logger = logger;
 		DisplayScanlines = settings.Value.VideoFormat == VideoFormat.NTSC ? 262u : 312u;
-		DisplayHorizontal = settings.Value.VideoFormat == VideoFormat.NTSC ? 228u : 227u;
 
 		//0->0xe2 (227 clocks) PAL, in NTSC every other line is 228 clocks, starting with a long one
 		//0->312 PAL, 0->262 NTSC. Have to watch it because copper only has 8bits of resolution, actually, NTSC, 262, 263, PAL 312, 313
@@ -30,7 +32,8 @@ public class ChipsetClock : IChipsetClock
 
 	[Persist]
 	public uint HorizontalPos { get; private set; }
-	public uint CopperHorizontalPos { get { return HorizontalPos; } }
+	//used for Copper horizontal position comparisons, which are 2 clocks ahead of Agnus
+	public uint CopperHorizontalPos { get { return (HorizontalPos + 2) % DisplayHorizontal; } }
 
 	[Persist]
 	public uint VerticalPos { get; private set; }
@@ -101,6 +104,12 @@ public class ChipsetClock : IChipsetClock
 	public uint LongFrame()
 	{
 		return FrameCount&1;
+	}
+
+	public uint LongLine()
+	{
+		if (settings.VideoFormat == VideoFormat.PAL) return 0;
+		return (VerticalPos & 1) ^ 1;
 	}
 
 	public bool IsAgnusSlot() 

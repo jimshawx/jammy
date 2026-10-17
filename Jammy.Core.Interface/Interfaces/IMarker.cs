@@ -89,7 +89,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		void AssertInterrupt(uint intreq, bool asserted = true);
 		void SetPaulaInterruptLevel(uint intreq, uint intena);
-		void Init(IChips custom);
+		void Init(IChips custom, ICPU cpu);
 		ushort GetInterruptLevel();
 		void SetGayleInterruptLevel(uint level);
 	}
@@ -273,6 +273,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 		void UpdateClock();
 		uint LongFrame();
+		uint LongLine();
 
 		string TimeStamp();
 		void SetClock(uint v, uint h);

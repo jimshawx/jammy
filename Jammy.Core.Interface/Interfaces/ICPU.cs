@@ -24,5 +24,6 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IMoiraCPU
 	{
 		void SetSync(Action<int> sync);
+		void CheckInterrupt();
 	}
 }

@@ -103,7 +103,7 @@ namespace Jammy.Core.CPU.Moira
 			);
 		}
 
-		private void CheckInterrupt()
+		public void CheckInterrupt()
 		{
 			ushort interruptLevel = interrupt.GetInterruptLevel();
 			Moira_set_irq(interruptLevel);

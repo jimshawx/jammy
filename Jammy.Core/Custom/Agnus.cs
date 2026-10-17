@@ -185,9 +185,9 @@ public class Agnus : IAgnus
 
 		switch (clock.HorizontalPos)
 		{
-			case DMA_START + 0x00: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); denise.Strobe(); break;
-			case DMA_START + 0x02: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
-			case DMA_START + 0x04: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;
+			case DMA_START + 0x00: dma.Refresh(); denise.Strobe(); break;
+			case DMA_START + 0x02: dma.Refresh(); break;
+			case DMA_START + 0x04: dma.Refresh(); break;
 			//case DMA_START + 0x06: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;//todo: problematic, there's only room for 3 slots when DMA_START != 0
 			case DMA_START + 0x06: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
 			case DMA_START + 0x08: if (dma.IsDMAEnabled(DMA.DSKEN)) diskDrives.DoDMA(); break;
@@ -298,7 +298,8 @@ public class Agnus : IAgnus
 			case DMA_START + 0x2E: RunSpriteDMA(13); break;
 			case DMA_START + 0x30: RunSpriteDMA(14); break;
 			case DMA_START + 0x32: RunSpriteDMA(15); break;
-			case 226: dma.NeedsDMA(DMASource.Agnus, DMA.DMAEN); break;//todo: problematic
+			case DMA_START + 225: if (clock.LongLine() == 0) dma.Refresh(); break;//todo: problematic. PAL and NTSC short lines
+			case DMA_START + 226: if (clock.LongLine() == 1) dma.Refresh(); break;//todo: problematic. NTSC long lines
 		}
 	}
 
@@ -740,7 +741,7 @@ public class Agnus : IAgnus
 
 			case ChipRegs.VHPOSR:
 				int h = (int)clock.HorizontalPos;
-				h += 5;//cpubltro
+				h += debugger.vhposFix;//cpubltro
 				h %= (int)clock.DisplayHorizontal;
 				if (h < 0) h += (int)clock.DisplayHorizontal;
 				value = (ushort)((clock.VerticalPos << 8) | ((uint)h & 0x00ff));

@@ -23,6 +23,7 @@ namespace Jammy.Core.Interface.Interfaces
 		int ddfStrtFix { get; set; }
 		int ddfStopFix { get; set; }
 		int bplDelayHack { get; set; }
+		int vhposFix { get; }
 		void SetDMAActivity(DMAActivity activity);
 		DMAEntry[] GetDMASummary();
 		void Init(IChips chips);

@@ -1,7 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
-using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -88,9 +87,10 @@ namespace Jammy.Core.Custom
 				copjmp1 = 1;
 				status = CopperStatus.Retrace;
 			}
+			//if (!clock.IsCopperSlot()) return;
 
 			//todo: necessary? copper can't match or move on an odd cycle anyway, so is this just an optimisation?
-			//if (!clock.IsCopperSlot() && status != CopperStatus.Waiting && status != CopperStatus.WakingUp) return;
+			//if (!clock.IsCopperSlot() && status != CopperStatus.Waiting)/* && status != CopperStatus.WakingUp)*/ return;
 
 			if (copjmp1 != 0 || copjmp2 != 0)
 			{
@@ -104,8 +104,9 @@ namespace Jammy.Core.Custom
 					if (copjmp2 != 0)
 						copPC = cop2lc;
 					DebugCOPPC(copPC);
-					status = CopperStatus.RunningWord1;
 					copjmp1 = copjmp2 = 0;
+					//status = CopperStatus.RunningWord1;
+					WakeUp(dbug_timing3);
 				}
 
 				CopperInstruction();
@@ -196,16 +197,12 @@ namespace Jammy.Core.Custom
 			}
 		}
 
-
-		private const int dbug_timing_max = 4;
-		private int dbug_timing = 3;
-
 		private void CopperInstruction()
 		{
 			switch (status)
 			{
 				case CopperStatus.RunningWord1:
-					if (!dma.IsDMAEnabled(DMA.COPEN)) return;
+					//if (!dma.IsDMAEnabled(DMA.COPEN)) return;
 
 					status = CopperStatus.RunningWord2;
 					dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
@@ -270,21 +267,20 @@ namespace Jammy.Core.Custom
 						if ((data & 1) == 0)
 						{
 							//WAIT
-							//logger.LogTrace($"WAIT {clock} v:{waitV} h:{waitH}");
+							if (debugger.dbugLine == clock.VerticalPos)
+								logger.LogTrace($"WAIT {clock} v:{waitV} h:{waitH} {waitPos:X4} {copPC:X6}");
 							status = CopperStatus.Waiting;
 
 							//does the wait already match? if so, wake up normally
 
-							//uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
-							//coppos &= waitMask;
-							//if (CopperCompare(coppos, (waitPos & waitMask)))
-							//{
-							//	//this is slower than if the compare was met while the copper is waiting
-							//	//waitTimer = 2;
-							//	//status = CopperStatus.WakingUp;
-							//	status = CopperStatus.RunningWord1;
-							//	logger.LogTrace($"WAIT pre-matched {waitPos:X4} {coppos:X4} {clock}");
-							//}
+							uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
+							coppos &= waitMask;
+							if (CopperCompare(coppos, (waitPos & waitMask)))
+							{
+								if (debugger.dbugLine == clock.VerticalPos)
+									logger.LogTrace($"ERLY @{clock} {waitPos:X4}");
+								WakeUp(dbug_timing2);
+							}
 						}
 						else
 						{
@@ -327,43 +323,9 @@ namespace Jammy.Core.Custom
 						coppos &= waitMask;
 						if (CopperCompare(coppos, (waitPos & waitMask)))
 						{
-							//logger.LogTrace($"AWOKE @{clock}");
-
-							switch (dbug_timing)
-							{
-								case 0:
-									//n ticks later
-									waitTimer = 2;
-									status = CopperStatus.WakingUp;
-									break;
-								case 1:
-									//n ticks later
-									waitTimer = 1;
-									status = CopperStatus.WakingUp;
-									break;
-								case 2:
-									//0 ticks delay
-									status = CopperStatus.RunningWord1;
-									break;
-								case 3:
-									//one tick sooner
-									dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
-									copPC += 2;
-									status = CopperStatus.RunningWord2;
-									break;
-								case 4:
-									if (clock.IsCopperSlot())
-									{ 
-										dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
-										copPC += 2;
-										status = CopperStatus.RunningWord2;
-									}
-									else
-									{
-										status = CopperStatus.RunningWord1;
-									}
-									break;
-							}
+							if (debugger.dbugLine == clock.VerticalPos)
+								logger.LogTrace($"WOKE @{clock} {waitPos:X4} {copPC:X6}");
+							WakeUp(dbug_timing);
 
 							if (ins == 0xffff && data == 0xfffe)
 							{
@@ -377,7 +339,7 @@ namespace Jammy.Core.Custom
 
 				case CopperStatus.WakingUp:
 					//burn a cycle after waking up
-					dma.NeedsDMA(DMASource.Copper, DMA.COPEN);
+					//dma.NeedsDMA(DMASource.Copper, DMA.COPEN);
 					waitTimer--;
 					if (waitTimer <= 0)
 						status = CopperStatus.RunningWord1;
@@ -404,6 +366,68 @@ namespace Jammy.Core.Custom
 
 				case CopperStatus.Stopped:
 					return;
+			}
+		}
+
+		private void WakeUp(int timing)
+		{
+			switch (timing)
+			{
+				case 0:
+					//n ticks later
+					waitTimer = 2;
+					status = CopperStatus.WakingUp;
+					break;
+				case 1:
+					//n ticks later
+					waitTimer = 1;
+					status = CopperStatus.WakingUp;
+					break;
+				case 2:
+					//0 ticks delay
+					status = CopperStatus.RunningWord1;
+					break;
+				case 3:
+					//one tick sooner
+					dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+					copPC += 2;
+					status = CopperStatus.RunningWord2;
+					break;
+				case 4:
+					if (clock.IsCopperSlot())
+					{
+						dma.ReadReg(DMASource.Copper, copPC, DMA.COPEN, Size.Word, ChipRegs.COPINS);
+						copPC += 2;
+						status = CopperStatus.RunningWord2;
+					}
+					else
+					{
+						status = CopperStatus.RunningWord1;
+					}
+					break;
+				case 5:
+					//don't wake up
+					break;
+				case 6:
+					//n ticks later
+					waitTimer = 3;
+					status = CopperStatus.WakingUp;
+					break;
+				case 7:
+					//n ticks later
+					waitTimer = 4;
+					status = CopperStatus.WakingUp;
+					break;
+				case 8:
+					//n ticks later
+					waitTimer = 5;
+					status = CopperStatus.WakingUp;
+					break;
+				case 9:
+					//n ticks later
+					waitTimer = 6;
+					status = CopperStatus.WakingUp;
+					break;
 			}
 		}
 
@@ -509,7 +533,17 @@ namespace Jammy.Core.Custom
 				case ChipRegs.COP2LCL: cop2lc = (cop2lc & 0xffff0000) | (uint)(value & 0xfffe); DebugCOPPtr(2, "COP2LCL", insaddr, cop2lc); break;
 				case ChipRegs.COPJMP1: copjmp1 = 1; DebugCOPJmp('W', 1, "COPJMP1", insaddr, cop1lc); break;
 				case ChipRegs.COPJMP2: copjmp2 = 1; DebugCOPJmp('W', 2, "COPJMP2", insaddr, cop2lc); break;
-				case ChipRegs.COPINS: copins = value; break;
+				case ChipRegs.COPINS: copins = value;
+					
+					//if (CopperStatus.FetchWait == status || CopperStatus.Waiting == status)
+					//{
+					//	if (debugger.dbugLine == clock.VerticalPos)
+					//		logger.LogTrace($"w {status}");
+					//	CopperInstruction();
+					//	if (debugger.dbugLine == clock.VerticalPos)
+					//		logger.LogTrace($"W {status}");
+					//}
+					break;
 			}
 		}
 
@@ -645,12 +679,40 @@ namespace Jammy.Core.Custom
 			
 		}
 
+		private const int dbug_timing_max = 9;
+		private int dbug_timing = 2;
+		private int dbug_timing_def = 2;
+
+		private const int dbug_timing2_max = 9;
+		private int dbug_timing2 = 6;
+		private int dbug_timing2_def = 6;
+
+		private const int dbug_timing3_max = 9;
+		private int dbug_timing3 = 9;
+		private int dbug_timing3_def = 9;
+
 		public void DebugKeyDown(int obj)
 		{
-			if (obj == 'T')
+			if (obj == 'C')
 			{ 
 				dbug_timing = (dbug_timing + 1) % (dbug_timing_max + 1);
 				logger.LogTrace($"Timing {dbug_timing}");
+			}
+			if (obj == 'V')
+			{
+				dbug_timing2 = (dbug_timing2 + 1) % (dbug_timing2_max + 1);
+				logger.LogTrace($"Timing2 {dbug_timing2}");
+			}
+			if (obj == 'X')
+			{
+				dbug_timing3 = (dbug_timing3 + 1) % (dbug_timing3_max + 1);
+				logger.LogTrace($"Timing3 {dbug_timing3}");
+			}
+			if (obj == 'B')
+			{
+				dbug_timing = dbug_timing_def;
+				dbug_timing2 = dbug_timing2_def;
+				dbug_timing3 = dbug_timing3_def;
 			}
 		}
 	}

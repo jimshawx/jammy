@@ -54,7 +54,8 @@ namespace Jammy.Core.Types.Types
 		Consume,
 		CPU,
 		ReadCPU,
-		WriteCPU
+		WriteCPU,
+		Refresh
 	}
 
 	public class DMAActivity
@@ -78,7 +79,9 @@ namespace Jammy.Core.Types.Types
 		{
 			switch (Priority)
 			{
-				case 0: return "c"; //CPU
+				case 0:
+					if (Type == DMAActivityType.Refresh) return "R";
+						return "c"; //CPU
 				case DMA.BPLEN: return "B";
 				case DMA.COPEN: return "C";
 				case DMA.BLTEN: return "b";

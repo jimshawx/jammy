@@ -9,6 +9,7 @@ public interface IDMA : ICustomReadWrite, IDebugChipsetRead, IStatePersister
 	uint DebugRead(uint address, Size size);
 	void WriteChip(DMASource source, uint address, DMA priority, ushort value, Size size);
 	void NoDMA(DMASource source);
+	void Refresh();
 	void NeedsDMA(DMASource source, DMA priority);
 	bool IsDMAEnabled(DMA source);
 	DMAActivity TriggerHighestPriorityDMA();

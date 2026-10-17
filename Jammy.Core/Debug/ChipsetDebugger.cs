@@ -139,6 +139,8 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 
 	public int bplDelayHack { get; set; } = 0;
 
+	public int vhposFix { get; private set; } = 5;
+
 	//	public bool ws;
 	private StringBuilder tsb = new StringBuilder();
 	private StringBuilder dsb = new StringBuilder();
@@ -417,6 +419,10 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 			if (obj == (int)'R') ddfEHack++;
 			if (obj == (int)'T') ddfEHack--;
 			if (obj == (int)'Y') ddfEHack = 0;
+
+			if (obj == (int)'U') vhposFix++;
+			if (obj == (int)'I') vhposFix--;
+			if (obj == (int)'O') vhposFix = 5;
 
 			if (obj == (int)'1') diwSHack++;
 			if (obj == (int)'2') diwSHack--;
