@@ -29,6 +29,17 @@ public class BpldatPix32 : IBpldatPix
 		}
 	}
 
+	public void WriteBitplanes(ref ulong[] bpldat, int oddeven)
+	{
+		for (int i = oddeven; i < 8; i+=2)
+		{
+			if ((i & 1) != 0)
+				Or(ref bpldatpix[i], bpldat[i], 16);
+			else
+				Or(ref bpldatpix[i], bpldat[i], 16);
+		}
+	}
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void NextPixel()
 	{

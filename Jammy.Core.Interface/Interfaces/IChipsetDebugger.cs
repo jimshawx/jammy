@@ -24,6 +24,12 @@ namespace Jammy.Core.Interface.Interfaces
 		int ddfStopFix { get; set; }
 		int bplDelayHack { get; set; }
 		int vhposFix { get; }
+		int xmatchDif { get; }
+		int deniseHpos { get; }
+		bool breakNext { get; set; }
+		int dbug_timing_fullwait { get; }
+		int dbug_timing_metwait { get; }
+		int dbug_timing_copjmp { get; }
 		void SetDMAActivity(DMAActivity activity);
 		DMAEntry[] GetDMASummary();
 		void Init(IChips chips);

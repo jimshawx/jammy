@@ -35,6 +35,29 @@ namespace Jammy.Core.Custom.Denise
 			bpldatpix |= Vector256.LoadUnsafe(ref bitsRef);
 		}
 
+		public void WriteBitplanes(ref ulong[] bpldat, int oddeven)
+		{
+			Span<uint> bits = stackalloc uint[8];
+			if (oddeven == 0)
+			{
+				bits[0] = (uint)(bpldat[0] << 16);
+				bits[2] = (uint)(bpldat[2] << 16);
+				bits[4] = (uint)(bpldat[4] << 16);
+				bits[6] = (uint)(bpldat[6] << 16);
+				bits[1] = bits[3] = bits[5] = bits[7] = 0;
+			}
+			else if (oddeven == 1)
+			{
+				bits[1] = (uint)(bpldat[1] << 16);
+				bits[3] = (uint)(bpldat[3] << 16);
+				bits[5] = (uint)(bpldat[5] << 16);
+				bits[7] = (uint)(bpldat[7] << 16);
+				bits[0] = bits[2] = bits[4] = bits[6] = 0;
+			}
+			var newbits = Vector256.Create(bits);
+			bpldatpix |= newbits;
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void NextPixel()
 		{

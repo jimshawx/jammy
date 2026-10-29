@@ -16,7 +16,7 @@ using System.Text;
 
 namespace Jammy.Core.Custom
 {
-	public class Copper : ICopper, IDebugKeys
+	public class Copper : ICopper
 	{
 		private readonly IChipsetClock clock;
 		private IDMA dma;
@@ -89,8 +89,6 @@ namespace Jammy.Core.Custom
 			}
 			//if (!clock.IsCopperSlot()) return;
 
-			//todo: necessary? copper can't match or move on an odd cycle anyway, so is this just an optimisation?
-			//if (!clock.IsCopperSlot() && status != CopperStatus.Waiting)/* && status != CopperStatus.WakingUp)*/ return;
 
 			if (copjmp1 != 0 || copjmp2 != 0)
 			{
@@ -106,12 +104,18 @@ namespace Jammy.Core.Custom
 					DebugCOPPC(copPC);
 					copjmp1 = copjmp2 = 0;
 					//status = CopperStatus.RunningWord1;
-					WakeUp(dbug_timing3);
+					WakeUp(debugger.dbug_timing_copjmp);
 				}
 
 				CopperInstruction();
 				return;
 			}
+			
+			//todo: necessary? copper can't match or move on an odd cycle anyway, so is this just an optimisation?
+			//if (!clock.IsCopperSlot() && status != CopperStatus.Waiting && status != CopperStatus.WakingUp) return;
+			//if (!clock.IsCopperSlot() && status != CopperStatus.Waiting) return;
+			//if (!clock.IsCopperSlot() && status != CopperStatus.WakingUp) return;
+			if (!clock.IsCopperSlot() && status == CopperStatus.FetchWait) return;
 
 			if (dma.IsWaitingForDMA(DMASource.Copper))
 				return;
@@ -131,11 +135,12 @@ namespace Jammy.Core.Custom
 
 			dma.NeedsDMA(DMASource.Copper, DMA.COPEN);
 
-			//todo: there's some weirdness when both are set, the registers get ORd together, can't see how that could be useful
+			//there's some weirdness when both are set, the registers get ORd together, can't see how that could be useful
+			copPC = 0;
 			if (copjmp1 != 0)
-				copPC = cop1lc;
+				copPC |= cop1lc;
 			if (copjmp2 != 0)
-				copPC = cop2lc;
+				copPC |= cop2lc;
 			DebugCOPPC(copPC);
 			copjmp1 = copjmp2 = 0;
 
@@ -279,7 +284,7 @@ namespace Jammy.Core.Custom
 							{
 								if (debugger.dbugLine == clock.VerticalPos)
 									logger.LogTrace($"ERLY @{clock} {waitPos:X4}");
-								WakeUp(dbug_timing2);
+								WakeUp(debugger.dbug_timing_metwait);
 							}
 						}
 						else
@@ -325,7 +330,7 @@ namespace Jammy.Core.Custom
 						{
 							if (debugger.dbugLine == clock.VerticalPos)
 								logger.LogTrace($"WOKE @{clock} {waitPos:X4} {copPC:X6}");
-							WakeUp(dbug_timing);
+							WakeUp(debugger.dbug_timing_fullwait);
 
 							if (ins == 0xffff && data == 0xfffe)
 							{
@@ -672,48 +677,6 @@ namespace Jammy.Core.Custom
 			if (!PersistenceManager.Is(obj, "copper")) return;
 
 			PersistenceManager.FromJObject(this, obj);
-		}
-
-		public void DebugKeyUp(int obj)
-		{
-			
-		}
-
-		private const int dbug_timing_max = 9;
-		private int dbug_timing = 2;
-		private int dbug_timing_def = 2;
-
-		private const int dbug_timing2_max = 9;
-		private int dbug_timing2 = 6;
-		private int dbug_timing2_def = 6;
-
-		private const int dbug_timing3_max = 9;
-		private int dbug_timing3 = 9;
-		private int dbug_timing3_def = 9;
-
-		public void DebugKeyDown(int obj)
-		{
-			if (obj == 'C')
-			{ 
-				dbug_timing = (dbug_timing + 1) % (dbug_timing_max + 1);
-				logger.LogTrace($"Timing {dbug_timing}");
-			}
-			if (obj == 'V')
-			{
-				dbug_timing2 = (dbug_timing2 + 1) % (dbug_timing2_max + 1);
-				logger.LogTrace($"Timing2 {dbug_timing2}");
-			}
-			if (obj == 'X')
-			{
-				dbug_timing3 = (dbug_timing3 + 1) % (dbug_timing3_max + 1);
-				logger.LogTrace($"Timing3 {dbug_timing3}");
-			}
-			if (obj == 'B')
-			{
-				dbug_timing = dbug_timing_def;
-				dbug_timing2 = dbug_timing2_def;
-				dbug_timing3 = dbug_timing3_def;
-			}
 		}
 	}
 }

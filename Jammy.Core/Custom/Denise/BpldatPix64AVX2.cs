@@ -73,6 +73,19 @@ namespace Jammy.Core.Custom.Denise
 			stashShift = (int)pixelBits - 15;
 			Unstash16B();
 		}
+		
+		public void WriteBitplanes(ref ulong[] bpldat, int oddeven)
+		{
+			for (int i = 0; i < 8; i++)
+				stashBits[i] = bpldat[i];
+
+			this.even = 0;
+			this.odd = 0;
+
+			stashedBitcount = 1;
+			stashShift = (int)pixelBits - 15;
+			Unstash16B();
+		}
 
 		private void Unstash16B()
 		{

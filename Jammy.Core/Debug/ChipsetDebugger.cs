@@ -140,6 +140,10 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 	public int bplDelayHack { get; set; } = 0;
 
 	public int vhposFix { get; private set; } = 5;
+	public int xmatchDif { get; private set; } = 0;
+	public int deniseHpos { get; private set; } = 0;
+
+	public bool breakNext { get; set; } = false;
 
 	//	public bool ws;
 	private StringBuilder tsb = new StringBuilder();
@@ -435,20 +439,29 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 			if (obj == (int)'8') bplDelayHack--;
 			if (obj == (int)'9') bplDelayHack = 0;
 
-			if (obj == (int)'A') bitplaneMask ^= 1;
-			if (obj == (int)'S') bitplaneMask ^= 2;
-			if (obj == (int)'D') bitplaneMask ^= 4;
-			if (obj == (int)'F') bitplaneMask ^= 8;
-			if (obj == (int)'G') bitplaneMask ^= 16;
-			if (obj == (int)'H') bitplaneMask ^= 32;
-			if (obj == (int)'J') bitplaneMask ^= 64;
-			if (obj == (int)'K') bitplaneMask ^= 128;
-			if (obj == (int)'L')
-			{
-				bitplaneMask = 0xff;
-				bitplaneMod = 0;
-			}
+			//if (obj == (int)'A') bitplaneMask ^= 1;
+			//if (obj == (int)'S') bitplaneMask ^= 2;
+			//if (obj == (int)'D') bitplaneMask ^= 4;
+			//if (obj == (int)'F') bitplaneMask ^= 8;
+			//if (obj == (int)'G') bitplaneMask ^= 16;
+			//if (obj == (int)'H') bitplaneMask ^= 32;
+			//if (obj == (int)'J') bitplaneMask ^= 64;
+			//if (obj == (int)'K') bitplaneMask ^= 128;
+			//if (obj == (int)'L')
+			//{
+			//	bitplaneMask = 0xff;
+			//	bitplaneMod = 0;
+			//}
+			if (obj == (int)'A') xmatchDif++;
+			if (obj == (int)'S') xmatchDif--;
+			if (obj == (int)'D') xmatchDif = 0;
 
+			if (obj == (int)'F') deniseHpos++;
+			if (obj == (int)'G') deniseHpos--;
+			if (obj == (int)'H') deniseHpos = 0;
+
+			if (obj == (int)'P') breakNext = true;
+			/*
 			if (obj == (int)'Z') bitplaneMod ^= 1;
 			if (obj == (int)'X') bitplaneMod ^= 2;
 			if (obj == (int)'C') bitplaneMod ^= 4;
@@ -457,6 +470,41 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 			if (obj == (int)'N') bitplaneMod ^= 32;
 			if (obj == (int)'M') bitplaneMod ^= 64;
 			if (obj == (int)VK.VK_OEM_COMMA) bitplaneMod ^= 128;
+			*/
+
+			if (obj == 'C')
+			{
+				dbug_timing_fullwait = (dbug_timing_fullwait + 1) % (dbug_timing_fullwait_max + 1);
+				logger.LogTrace($"Timing Full Wait {dbug_timing_fullwait}");
+			}
+			if (obj == 'V')
+			{
+				dbug_timing_metwait = (dbug_timing_metwait + 1) % (dbug_timing_metwait_max + 1);
+				logger.LogTrace($"Timing Met Wait {dbug_timing_metwait}");
+			}
+			if (obj == 'X')
+			{
+				dbug_timing_copjmp = (dbug_timing_copjmp + 1) % (dbug_timing_copjmp_max + 1);
+				logger.LogTrace($"Timing COPJMP {dbug_timing_copjmp}");
+			}
+			if (obj == 'B')
+			{
+				dbug_timing_fullwait = dbug_timing_fullwait_def;
+				dbug_timing_metwait = dbug_timing_metwait_def;
+				dbug_timing_copjmp = dbug_timing_copjmp_def;
+			}
 		}
 	}
+
+	private const int dbug_timing_fullwait_max = 9;
+	public int dbug_timing_fullwait { get; private set; } = 2;
+	private int dbug_timing_fullwait_def = 2;
+
+	private const int dbug_timing_metwait_max = 9;
+	public int dbug_timing_metwait { get; private set; } = 6;
+	private int dbug_timing_metwait_def = 6;
+
+	private const int dbug_timing_copjmp_max = 9;
+	public int dbug_timing_copjmp { get; private set; } = 7;//or 9
+	private int dbug_timing_copjmp_def = 7;
 }

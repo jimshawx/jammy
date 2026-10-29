@@ -70,6 +70,11 @@ namespace Jammy.Core.Custom.Denise
 			lo47 = Avx2.Or(lo47, Vector256.LoadUnsafe(ref loRef, 4));
 		}
 
+		public void WriteBitplanes(ref ulong[] bpldat, int oddeven)
+		{
+			throw new NotImplementedException();
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void NextPixel()
 		{

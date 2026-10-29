@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using System.Text;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -112,10 +113,14 @@ public class Denise : IDenise
 		//{ 
 		//	ClockBuffer();
 		//	RunDeniseTick(p);
+		//  if ((p % (pixelloop>>1)) == 0)
+		//		DeniseHorizontalPos++;
 		//}
+
 		if (pixelLoop == 2)
 		{
-			//ClockBuffer();
+			//DeniseHorizontalPos++;
+			ClockBuffer();
 			RunDeniseTick(0);
 			DeniseHorizontalPos++;
 			ClockBuffer();
@@ -124,14 +129,15 @@ public class Denise : IDenise
 		}
 		else if (pixelLoop == 4)
 		{
-			//ClockBuffer();
+			//DeniseHorizontalPos++;
+			ClockBuffer();
 			RunDeniseTick(0);
 			ClockBuffer();
 			RunDeniseTick(1);
-			//ClockBuffer();
 			DeniseHorizontalPos++;
+			ClockBuffer();
 			RunDeniseTick(2);
-			//ClockBuffer();
+			ClockBuffer();
 			RunDeniseTick(3);
 			DeniseHorizontalPos++;
 		}
@@ -139,7 +145,7 @@ public class Denise : IDenise
 		{
 			//ClockBuffer();
 			RunDeniseTick(0);
-			ClockBuffer();
+			//ClockBuffer();
 			RunDeniseTick(1);
 			//ClockBuffer();
 			RunDeniseTick(2);
@@ -179,7 +185,8 @@ public class Denise : IDenise
 	//this should probably be written by Agnus writing to STREQU or something
 	public void Strobe()
 	{
-		DeniseHorizontalPos = 2;
+		//DeniseHorizontalPos = clock.HorizontalPos*2+2 + debugger.deniseHpos;
+		DeniseHorizontalPos = (uint)(2 + debugger.deniseHpos);
 	}
 
 	private void RunVerticalBlankStart()
@@ -195,80 +202,80 @@ public class Denise : IDenise
 		//DebugLocation();
 	}
 
-	[Persist]
-	private int scrollhack = 0;
+	//[Persist]
+	//private int scrollhack = 0;
 
-	private int lastScrollHack = 0;
+	//private int lastScrollHack = 0;
 
-	private void SetDDFSTRTScrollHack()
-	{
-		int shmask = 0;
-		if (settings.ChipSet == ChipSet.AGA)
-		{
-			if ((fmode & 3) == 3)//quadruple fetch
-			{
-				if ((bplcon0 & (1 << 15)) != 0)//high res
-					shmask = 32;
-				else if ((bplcon0 & (1 << 6)) != 0)//super high res
-					shmask = 16;
-				else
-					shmask = 64;//low res
-			}
-			else if ((fmode & 3) == 0)
-			{
-				if ((bplcon0 & (1 << 15)) != 0)//high res
-					shmask = 8;
-				else if ((bplcon0 & (1 << 6)) != 0)//super high res
-					shmask = 4;
-				else
-					shmask = 16;//low res
-			}
-			else//double fetch
-			{
-				if ((bplcon0 & (1 << 15)) != 0)//high res
-					shmask = 16;
-				else if ((bplcon0 & (1 << 6)) != 0)//super high res
-					shmask = 8;
-				else
-					shmask = 32;//low res
-			}
-		}
-		else
-		{
-			if ((bplcon0 & (1 << 15)) != 0)//high res
-				shmask = 8;
-			else
-				shmask = 16;//low res
-		}
-		//shmask contains how many pixels are in each denise 'block'
-		//where are we in the block?
-		int blockNum = ((int)DeniseHorizontalPos) / shmask;
-		int blockPos = ((int)DeniseHorizontalPos) & (shmask - 1);
+	//private void SetDDFSTRTScrollHack()
+	//{
+	//	int shmask = 0;
+	//	if (settings.ChipSet == ChipSet.AGA)
+	//	{
+	//		if ((fmode & 3) == 3)//quadruple fetch
+	//		{
+	//			if ((bplcon0 & (1 << 15)) != 0)//high res
+	//				shmask = 32;
+	//			else if ((bplcon0 & (1 << 6)) != 0)//super high res
+	//				shmask = 16;
+	//			else
+	//				shmask = 64;//low res
+	//		}
+	//		else if ((fmode & 3) == 0)
+	//		{
+	//			if ((bplcon0 & (1 << 15)) != 0)//high res
+	//				shmask = 8;
+	//			else if ((bplcon0 & (1 << 6)) != 0)//super high res
+	//				shmask = 4;
+	//			else
+	//				shmask = 16;//low res
+	//		}
+	//		else//double fetch
+	//		{
+	//			if ((bplcon0 & (1 << 15)) != 0)//high res
+	//				shmask = 16;
+	//			else if ((bplcon0 & (1 << 6)) != 0)//super high res
+	//				shmask = 8;
+	//			else
+	//				shmask = 32;//low res
+	//		}
+	//	}
+	//	else
+	//	{
+	//		if ((bplcon0 & (1 << 15)) != 0)//high res
+	//			shmask = 8;
+	//		else
+	//			shmask = 16;//low res
+	//	}
+	//	//shmask contains how many pixels are in each denise 'block'
+	//	//where are we in the block?
+	//	int blockNum = ((int)DeniseHorizontalPos) / shmask;
+	//	int blockPos = ((int)DeniseHorizontalPos) & (shmask - 1);
 
-		scrollhack = (shmask - blockPos) & (shmask - 1);
-		if (scrollhack != lastScrollHack)
-		{
-			logger.LogTrace($"ScrollHack updated {scrollhack}");
-			lastScrollHack = scrollhack;
-		}
-	}
+	//	scrollhack = (shmask - blockPos) & (shmask - 1);
+	//	if (scrollhack != lastScrollHack)
+	//	{
+	//		logger.LogTrace($"ScrollHack updated {scrollhack}");
+	//		lastScrollHack = scrollhack;
+	//	}
+	//}
 
-	private void ApplyDDFSTRTScrollHack(ref int even, ref int odd)
-	{
-		even += scrollhack;// even &= 0xf;
-		odd += scrollhack;// odd &= 0xf;
+	//private void ApplyDDFSTRTScrollHack(ref int even, ref int odd)
+	//{
+	//	even += scrollhack;// even &= 0xf;
+	//	odd += scrollhack;// odd &= 0xf;
 
-		if (settings.ChipSet == ChipSet.AGA)
-		{
-			if ((fmode & 3) == 0) { even &= 0xf; odd &= 0xf; }
-			else if ((fmode & 3) == 3) { even &= 0x3f; odd &= 0x3f; }
-			else { even &= 0x1f; odd &= 0x1f; }
-		}
-		else
-		{
-			even &= 0xf; odd &= 0xf;
-		}
-	}
+	//	if (settings.ChipSet == ChipSet.AGA)
+	//	{
+	//		if ((fmode & 3) == 0) { even &= 0xf; odd &= 0xf; }
+	//		else if ((fmode & 3) == 3) { even &= 0x3f; odd &= 0x3f; }
+	//		else { even &= 0x1f; odd &= 0x1f; }
+	//	}
+	//	else
+	//	{
+	//		even &= 0xf; odd &= 0xf;
+	//	}
+	//}
 
 	public void WriteBitplanes(ulong[] bpldat)
 	{
@@ -283,45 +290,94 @@ public class Denise : IDenise
 		//else
 			Buffer(bpldat);
 
-		SetDDFSTRTScrollHack();
+		//SetDDFSTRTScrollHack();
 
 		scanlineIsOpen = true;
 	}
 
 	private ulong[] buffered = new ulong[8];
-	private int bufferDelay = 0;
-	private const int bufferDelayBase = 2;
+	//private int bufferDelay = 0;
+	//private const int bufferDelayBase = 2;
+	private bool pf0, pf1;
 
 	private void Buffer(ulong[] bpldat)
 	{
 		Array.Copy(bpldat, buffered, 8);
-		bufferDelay = bufferDelayBase + debugger.bplDelayHack;
+		//bufferDelay = bufferDelayBase + debugger.bplDelayHack;
+		pf0 = pf1 = true;
 	}
+
 	private void ClockBuffer()
 	{
-		if (bufferDelay > 0)
+		int even = bplcon1 & 0xf;
+		int odd = bplcon1 >> 4 & 0xf;
+
+		//if (bufferDelay == 2)
+		//	ApplyDDFSTRTScrollHack(ref even, ref odd);
+
+		if (settings.ChipSet == ChipSet.AGA)
 		{
-			bufferDelay--;
-			if (bufferDelay == 0)
-			{
-				//scrolling
-				int even = bplcon1 & 0xf;
-				int odd = bplcon1 >> 4 & 0xf;
-
-				if (settings.ChipSet == ChipSet.AGA)
-				{
-					even += ((bplcon1 >> 10) & 3) << 4;
-					odd += ((bplcon1 >> 14) & 3) << 4;
-					if ((fmode&3) == 0) { even &= 0xf; odd &= 0xf; }
-					else if ((fmode & 3) == 3) { even &= 0x3f; odd &= 0x3f; }
-					else { even &= 0x1f; odd &= 0x1f; }
-				}
-
-				ApplyDDFSTRTScrollHack(ref even, ref odd);
-
-				bpldatPix.WriteBitplanes(ref buffered, even, odd);
-			}
+			even += ((bplcon1 >> 10) & 3) << 4;
+			odd += ((bplcon1 >> 14) & 3) << 4;
+			if ((fmode & 3) == 0) { even &= 0xf; odd &= 0xf; }
+			else if ((fmode & 3) == 3) { even &= 0x3f; odd &= 0x3f; }
+			else { even &= 0x1f; odd &= 0x1f; }
 		}
+
+		uint xmatch = (uint)(DeniseHorizontalPos+debugger.xmatchDif);
+
+		if ((bplcon0 & (1<<15)) != 0)//hi-res
+		{ 
+			odd &= 7;
+			even &= 7;
+			xmatch &= 7;
+		}
+		
+		xmatch &= 15;
+
+		//if (bufferDelay > 2)
+		//{ 
+		//	bufferDelay--;
+		//	return;
+		//}
+
+		if (xmatch == even && pf0)//bufferDelay > 0)
+		{
+			//bufferDelay--;
+			bpldatPix.WriteBitplanes(ref buffered, 0);
+			pf0 = false;
+		}
+		if (xmatch == odd && pf1)//bufferDelay > 0)
+		{
+			//bufferDelay--;
+			bpldatPix.WriteBitplanes(ref buffered, 1);
+			pf1 = false;
+		}
+		return;
+
+		//if (bufferDelay > 0)
+		//{
+		//	bufferDelay--;
+		//	if (bufferDelay == 0)
+		//	{
+		//		//scrolling
+		//		int even = bplcon1 & 0xf;
+		//		int odd = bplcon1 >> 4 & 0xf;
+
+		//		if (settings.ChipSet == ChipSet.AGA)
+		//		{
+		//			even += ((bplcon1 >> 10) & 3) << 4;
+		//			odd += ((bplcon1 >> 14) & 3) << 4;
+		//			if ((fmode&3) == 0) { even &= 0xf; odd &= 0xf; }
+		//			else if ((fmode & 3) == 3) { even &= 0x3f; odd &= 0x3f; }
+		//			else { even &= 0x1f; odd &= 0x1f; }
+		//		}
+
+		//		ApplyDDFSTRTScrollHack(ref even, ref odd);
+
+		//		bpldatPix.WriteBitplanes(ref buffered, even, odd);
+		//	}
+		//}
 	}
 
 	private void DebugSprite(uint s)
@@ -438,6 +494,8 @@ public class Denise : IDenise
 	{
 		int bp = planes;
 
+		//return CopperBitplaneConvertOther;
+
 		//BPLAM is set
 		if (settings.ChipSet == ChipSet.AGA &&(bplcon4 >> 8) != 0) return CopperBitplaneConvertOther;
 
@@ -459,6 +517,9 @@ public class Denise : IDenise
 				return CopperBitplaneConvertHAM6;
 			return CopperBitplaneConvertEHB;
 		}
+
+		//HAM+DPF
+		if (settings.ChipSet != ChipSet.AGA && (bplcon0 & (uint)BPLCON0.HAM) != 0 && (bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertHAMDPF;
 
 		//DPF
 		if ((bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertDPF;
@@ -482,6 +543,58 @@ public class Denise : IDenise
 	private uint CopperBitplaneConvertNormal(uint pix)
 	{
 		return truecolour[pix];
+	}
+
+	private uint CopperBitplaneConvertHAMDPF(uint pix)
+	{
+		uint col;
+
+		//DPF
+		uint pix2 = pix;
+		//pix &= 0xf;
+		uint pix0 = dpfLookup[pix];
+		uint pix1 = dpfLookup[pix >> 1];
+
+		//uint col0 = truecolour[pix0];
+		//uint col1 = truecolour[pix1 == 0 ? 0 : pix1 + 8];
+
+		uint idx0 = pix0;
+		uint idx1 = pix1 == 0 ? 0 : pix1 + 8;
+		uint idx =0;
+
+		uint sidx0 = idx0;
+		uint sidx1 = idx1;
+		uint sprpri1 = (uint)(bplcon2 & 7);
+		uint sprpri2 = (uint)((bplcon2 >> 3) & 7);
+		if (sprpri1 >= 5) sidx0 = 0;
+		if (sprpri2 >= 5) sidx1 = 0;
+
+		//which playfield is in front?
+		if ((bplcon2 & (uint)BPLCON2.PF2PRI) != 0)
+			//col = pix1 != 0 ? col1 : col0;
+			idx = idx1 != 0 ? sidx1 : sidx0;
+		else
+			//col = pix0 != 0 ? col0 : col1;
+			idx = idx0 != 0 ? sidx0 : sidx1;
+
+		uint ham = pix2 & 0b11_0000;
+		//pix2 &= 0xf;
+		pix2 = idx;
+		if (ham == 0)
+		{
+			col = truecolour[idx];
+		}
+		else
+		{
+			ham >>= 4;
+			uint px = pix2 * 0x11;
+			//uint px = idx;
+			if (ham == 1) col = lastcol & 0xffffff00 | (px); //col+B
+			else if (ham == 3) col = lastcol & 0xffff00ff | (px<<8); //col+G
+			else col = lastcol & 0xff00ffff | (px<<16); //col+R
+		}
+
+		return col;
 	}
 
 	private uint CopperBitplaneConvertDPF(uint pix)
@@ -582,8 +695,8 @@ public class Denise : IDenise
 			{ 
 				uint sprpri1 = (uint)(bplcon2 & 7);
 				uint sprpri2 = (uint)((bplcon2 >> 3) & 7);
-				if (pix0 != 0 && sprpri1 >= 5) col0 = truecolour[0];
-				if (pix1 != 0 && sprpri2 >= 5) col1 = truecolour[0];
+				if (sprpri1 >= 5) col0 = truecolour[0];
+				if (sprpri2 >= 5) col1 = truecolour[0];
 			}
 
 			//which playfield is in front?
@@ -662,7 +775,7 @@ public class Denise : IDenise
 			if (settings.ChipSet != ChipSet.AGA)
 			{
 				uint sprpri = (uint)((bplcon2 >> 3) & 7);//sprpri2
-				if (sprpri >= 5 && planes >= 5 && (pix & (1 << 4)) != 0 && settings.ChipSet != ChipSet.AGA)
+				if (sprpri >= 5 && planes >= 5 && (pix & (1 << 4)) != 0)
 					pix = 16;
 			}
 			col = truecolour[pix];
@@ -1043,6 +1156,8 @@ end loop
 		dptr = (int)(clock.VerticalPos * SCREEN_WIDTH * 2);
 		lineStart = dptr;
 
+		pf0 = pf1 = false;
+
 		insideDIWH = false;
 
 		FirstPixel();
@@ -1149,15 +1264,24 @@ end loop
 	{
 		uint col;
 
+		if (clock.VerticalPos == debugger.dbugLine)
+		{
+			if (debugger.breakNext)
+			{
+				System.Diagnostics.Debugger.Break();
+				debugger.breakNext = false;
+			}
+		}
+
 		UpdateSprites();
 
-		if (DeniseHorizontalPos == diwstrth + debugger.diwSHack)
+		if (DeniseHorizontalPos == diwstrth - 1 + debugger.diwSHack)
 		{ 
 			insideDIWH = true;
 			//if (DeniseHorizontalPos < FIRST_DMA && DeniseHorizontalPos != 0)
 			//	logger.LogTrace($"FIRST_DMA is too soon for this code {DeniseHorizontalPos} < {FIRST_DMA}");
 		}
-		else if (DeniseHorizontalPos == diwstoph + debugger.diwEHack)
+		else if (DeniseHorizontalPos == diwstoph - 1 + debugger.diwEHack)
 		{
 			insideDIWH = false;
 			scanlineIsOpen = false;
@@ -1180,13 +1304,18 @@ end loop
 		}
 		else
 		{
-			//	//outside display window
-			int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
+			//outside display window
 
-			bpldatPix.NextPixel();
-			if ((p & m) == m)
-				for (int s = 0; s < 8; s++)
-					spriteMask[s] >>= 1;
+			if (scanlineIsOpen)
+			{
+				int m = pixelLoop / 2 - 1; //2->0,4->1,8->3
+
+				bpldatPix.NextPixel();
+
+				if ((p & m) == m)
+					for (int s = 0; s < 8; s++)
+						spriteMask[s] >>= 1;
+			}
 
 			//output colour 0 pixels
 			col = lastcol = truecolour[0];
