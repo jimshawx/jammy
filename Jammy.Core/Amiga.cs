@@ -4,6 +4,7 @@ using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +33,7 @@ namespace Jammy.Core
 		private readonly IKickstartROM kickstart;
 		private readonly ILogger logger;
 		private readonly IDebugMemoryMapper memoryMapper;
+		private readonly EmulationSettings settings;
 
 		private static EmulationMode emulationMode = EmulationMode.Stopped;
 
@@ -49,7 +51,7 @@ namespace Jammy.Core
 			IAkiko akiko,
 			IPSUClock psuClock, ICPUClock cpuClock, IChipsetDebugger debugger,
 			IBreakpointCollection breakpointCollection, IPersistenceManager statePersister,
-			IKickstartROM kickstart, ILogger<Amiga> logger)
+			IKickstartROM kickstart, IOptions<EmulationSettings> settings, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
 			this.cpu = cpu;
@@ -65,19 +67,21 @@ namespace Jammy.Core
 			this.persistenceManager = statePersister;
 			this.kickstart = kickstart;
 			this.logger = logger;
+			this.settings = settings.Value;
 
 			//fulfil the circular dependencies
 			custom.Init(blitter, copper, audio, agnus, denise, dma);
 			keyboard.SetCIA(ciaa);
 			interrupt.Init(custom, cpu);
 
-			if (cycleExact && cpu is IMoiraCPU)
+			if (cycleExact)
 			{
 				((IMoiraCPU)cpu).SetSync(this.RunChipsetEmulationForCPU);
 				dma.SetSync(this.RunChipsetEmulationForRAM);
 			}
 			else
 			{
+				(cpu as IMoiraCPU)?.SetSync((_) => { });
 				dma.SetSync(this.RunChipsetEmulationForRAMImmediate);
 			}
 
@@ -219,7 +223,11 @@ namespace Jammy.Core
 			}
 		}
 
-		private bool cycleExact { get { return cpu is IMoiraCPU; } }
+		private bool cycleExact { get {
+									if (settings.CPU != CPUType.Moira) return false;
+									if (settings.Sku != CPUSku.MC68000) return false;
+									if (settings.ChipSet != ChipSet.OCS && settings.ChipSet != ChipSet.ECS) return false;
+									return true; } }
 		private bool maximumSpeed { get { return true; } }
 
 		public void RunEmulations()
