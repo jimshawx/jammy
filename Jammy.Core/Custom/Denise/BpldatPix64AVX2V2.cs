@@ -72,7 +72,56 @@ namespace Jammy.Core.Custom.Denise
 
 		public void WriteBitplanes(ref ulong[] bpldat, int oddeven)
 		{
-			throw new NotImplementedException();
+			Span<ulong> hiBits = stackalloc ulong[8];
+			Span<ulong> loBits = stackalloc ulong[8];
+
+			ulong d0_even = bpldat[0] << pixelShiftBits;
+			ulong d1_odd = bpldat[1] << pixelShiftBits;
+			ulong d2_even = bpldat[2] << pixelShiftBits;
+			ulong d3_odd = bpldat[3] << pixelShiftBits;
+			ulong d4_even = bpldat[4] << pixelShiftBits;
+			ulong d5_odd = bpldat[5] << pixelShiftBits;
+			ulong d6_even = bpldat[6] << pixelShiftBits;
+			ulong d7_odd = bpldat[7] << pixelShiftBits;
+
+			int even = 0;
+			int odd = 0;
+
+			if (oddeven == 0)
+			{
+				// 2. Apply the scroll shift across the 128-bit boundary
+				hiBits[0] = even == 0 ? d0_even : d0_even >> even;
+				loBits[0] = even == 0 ? 0ul : d0_even << (64 - even);
+				hiBits[2] = even == 0 ? d2_even : d2_even >> even;
+				loBits[2] = even == 0 ? 0ul : d2_even << (64 - even);
+				hiBits[4] = even == 0 ? d4_even : d4_even >> even;
+				loBits[4] = even == 0 ? 0ul : d4_even << (64 - even);
+				hiBits[6] = even == 0 ? d6_even : d6_even >> even;
+				loBits[6] = even == 0 ? 0ul : d6_even << (64 - even);
+
+				loBits[1] = loBits[3] = loBits[5] = loBits[7] = 0;
+			}
+			else if (oddeven == 1)
+			{
+				hiBits[1] = odd == 0 ? d1_odd : d1_odd >> odd;
+				loBits[1] = odd == 0 ? 0ul : d1_odd << (64 - odd);
+				hiBits[3] = odd == 0 ? d3_odd : d3_odd >> odd;
+				loBits[3] = odd == 0 ? 0ul : d3_odd << (64 - odd);
+				hiBits[5] = odd == 0 ? d5_odd : d5_odd >> odd;
+				loBits[5] = odd == 0 ? 0ul : d5_odd << (64 - odd);
+				hiBits[7] = odd == 0 ? d7_odd : d7_odd >> odd;
+				loBits[7] = odd == 0 ? 0ul : d7_odd << (64 - odd);
+
+				loBits[0] = loBits[2] = loBits[4] = loBits[6] = 0;
+			}
+
+			ref ulong hiRef = ref MemoryMarshal.GetReference(hiBits);
+			ref ulong loRef = ref MemoryMarshal.GetReference(loBits);
+
+			hi03 = Avx2.Or(hi03, Vector256.LoadUnsafe(ref hiRef));
+			hi47 = Avx2.Or(hi47, Vector256.LoadUnsafe(ref hiRef, 4));
+			lo03 = Avx2.Or(lo03, Vector256.LoadUnsafe(ref loRef));
+			lo47 = Avx2.Or(lo47, Vector256.LoadUnsafe(ref loRef, 4));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

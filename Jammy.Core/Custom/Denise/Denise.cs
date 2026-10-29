@@ -215,29 +215,33 @@ public class Denise : IDenise
 
 	private void ClockBuffer()
 	{
+		//denise position to match
+		uint xmatch = (uint)(DeniseHorizontalPos + debugger.xmatchDif);
+
 		//scrolling
 		int even = bplcon1 & 0xf;
 		int odd = bplcon1 >> 4 & 0xf;
 
+		int msk = 0xf;
+
 		if (settings.ChipSet == ChipSet.AGA)
 		{
+			//extra high bits (todo: there are 2 extra low bits as well)
 			even += ((bplcon1 >> 10) & 3) << 4;
 			odd += ((bplcon1 >> 14) & 3) << 4;
-			if ((fmode & 3) == 0) { even &= 0xf; odd &= 0xf; }
-			else if ((fmode & 3) == 3) { even &= 0x3f; odd &= 0x3f; }
-			else { even &= 0x1f; odd &= 0x1f; }
+
+			if ((fmode & 3) == 0) { msk = 0xf; }
+			else if ((fmode & 3) == 3) { msk = 0x3f; }
+			else { msk = 0x1f; }
 		}
 
-		uint xmatch = (uint)(DeniseHorizontalPos+debugger.xmatchDif);
+		//any extra shifts required for high res and super high res?
+		if ((bplcon0 & (uint)BPLCON0.HiRes) != 0) msk >>= 1;
+		else if ((bplcon0 & (uint)BPLCON0.SuperHiRes) != 0) msk >>= 2;
 
-		if ((bplcon0 & (1<<15)) != 0)//hi-res
-		{ 
-			odd &= 7;
-			even &= 7;
-			xmatch &= 7;
-		}
-		
-		xmatch &= 15;
+		odd &= msk;
+		even &= msk;
+		xmatch &= (uint)msk;
 
 		if (xmatch == even && pf0)
 		{

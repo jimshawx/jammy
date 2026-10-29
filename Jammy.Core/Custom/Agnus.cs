@@ -859,7 +859,9 @@ public class Agnus : IAgnus
 			case ChipRegs.VSSTOP: vsstop = value; logger.LogTrace($"VSSTOP {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.VSSTRT: vsstrt = value; logger.LogTrace($"VSSTRT {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.VTOTAL: vtotal = value; /*logger.LogTrace($"VTOTAL {value:X4} @{insaddr:X8}");*/ break;
-			case ChipRegs.VPOSW: logger.LogTrace($"VPOSW {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.VPOSW:
+				//logger.LogTrace($"VPOSW {value:X4} @{insaddr:X8}");
+				break;
 			case ChipRegs.VHPOSW:
 				logger.LogTrace($"VHPOSW {value:X4} @{insaddr:X8} {clock}");
 				clock.SetClock((uint)(value >> 8), (uint)(value & 0xff));
