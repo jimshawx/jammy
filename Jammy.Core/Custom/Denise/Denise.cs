@@ -352,7 +352,7 @@ public class Denise : IDenise
 		for (int s = 0; s < 8; s++) 
 		{ 
 			spriteMask[s] = 0;
-			spriteArmed[s] = SpriteState.Idle;
+			//spriteArmed[s] = SpriteState.Idle;
 		}
 
 		bpldatPix.Clear();
