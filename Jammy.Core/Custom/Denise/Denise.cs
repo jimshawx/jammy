@@ -268,10 +268,37 @@ public class Denise : IDenise
 		logger.LogTrace($"SPR{s} {clock} {MergeBP(sprdata[s], sprdatb[s])} h:{sprpos[s] & 0xff,3} v:{sprpos[s] >> 8,3} {sprctl[s].ToBin()}");
 	}
 
+	private ushort[] dbgsprctl = new ushort[8];
+
 	private int HStart(uint s)
 	{
 		int hstart = (sprpos[s] & 0xff) << 1;
 		hstart |= sprctl[s] & 1; //bit 0 is low bit of hstart
+
+		//ECS/AGA supports hi-res positioning
+		//AGA supports shres positioning
+		//todo: for now, the comparator is with DeniseHorizontalPos
+		//need to normalise these higher res positions into the same ranges
+		//until Denise's clock is upgraded to deal with it
+		if (settings.ChipSet == ChipSet.ECS || settings.ChipSet == ChipSet.AGA)
+		{
+			//if ((sprctl[s] & (1 << 4)) != 0) hstart <<= 1;//70ns (ECS/AGA)
+
+			if (settings.ChipSet == ChipSet.AGA)
+			{
+				//AGA supports shres positioning
+				if ((sprctl[s] & (1 << 3)) != 0) hstart >>= 1;//35ns (AGA)
+			}
+
+			if ((sprctl[s] & (1<<0)) != 0) hstart <<= 1;// fixed to 140ns (ECS/AGA)
+
+			if (sprctl[s] != dbgsprctl[s])
+			{ 
+				logger.LogTrace($"SPR{s}CTL {((uint)(sprctl[s]&0b0000000000011001)).ToBin(8)}");
+				dbgsprctl[s] = sprctl[s];
+			}
+		}
+
 		return hstart;
 	}
 
@@ -1320,43 +1347,43 @@ end loop
 
 			case ChipRegs.SPR0POS: sprpos[0] = value; if ((value & 0xff00) == 0xcd00) logger.LogTrace($"{clock}"); break;
 			case ChipRegs.SPR0CTL: sprctl[0] = value; DisarmSprite(0); break;
-			case ChipRegs.SPR0DATA: sprdata[0] = value; break;
-			case ChipRegs.SPR0DATB: sprdatb[0] = value; ArmSprite(0); break;
+			case ChipRegs.SPR0DATA: sprdata[0] = value; ArmSprite(0); break;
+			case ChipRegs.SPR0DATB: sprdatb[0] = value; break;
 
 			case ChipRegs.SPR1POS: sprpos[1] = value; break;
 			case ChipRegs.SPR1CTL: sprctl[1] = value; DisarmSprite(1); break;
-			case ChipRegs.SPR1DATA: sprdata[1] = value; break;
-			case ChipRegs.SPR1DATB: sprdatb[1] = value; ArmSprite(1); break;
+			case ChipRegs.SPR1DATA: sprdata[1] = value; ArmSprite(1); break;
+			case ChipRegs.SPR1DATB: sprdatb[1] = value; break;
 
 			case ChipRegs.SPR2POS: sprpos[2] = value; break;
 			case ChipRegs.SPR2CTL: sprctl[2] = value; DisarmSprite(2); break;
-			case ChipRegs.SPR2DATA: sprdata[2] = value; break;
-			case ChipRegs.SPR2DATB: sprdatb[2] = value; ArmSprite(2); break;
+			case ChipRegs.SPR2DATA: sprdata[2] = value; ArmSprite(2); break;
+			case ChipRegs.SPR2DATB: sprdatb[2] = value; break;
 
 			case ChipRegs.SPR3POS: sprpos[3] = value; break;
 			case ChipRegs.SPR3CTL: sprctl[3] = value; DisarmSprite(3); break;
-			case ChipRegs.SPR3DATA: sprdata[3] = value; break;
-			case ChipRegs.SPR3DATB: sprdatb[3] = value; ArmSprite(3); break;
+			case ChipRegs.SPR3DATA: sprdata[3] = value; ArmSprite(3); break;
+			case ChipRegs.SPR3DATB: sprdatb[3] = value; break;
 
 			case ChipRegs.SPR4POS: sprpos[4] = value; break;
 			case ChipRegs.SPR4CTL: sprctl[4] = value; DisarmSprite(4); break;
-			case ChipRegs.SPR4DATA: sprdata[4] = value; break;
-			case ChipRegs.SPR4DATB: sprdatb[4] = value; ArmSprite(4); break;
+			case ChipRegs.SPR4DATA: sprdata[4] = value; ArmSprite(4); break;
+			case ChipRegs.SPR4DATB: sprdatb[4] = value; break;
 
 			case ChipRegs.SPR5POS: sprpos[5] = value; break;
 			case ChipRegs.SPR5CTL: sprctl[5] = value; DisarmSprite(5); break;
-			case ChipRegs.SPR5DATA: sprdata[5] = value; break;
-			case ChipRegs.SPR5DATB: sprdatb[5] = value; ArmSprite(5); break;
+			case ChipRegs.SPR5DATA: sprdata[5] = value; ArmSprite(5); break;
+			case ChipRegs.SPR5DATB: sprdatb[5] = value; break;
 
 			case ChipRegs.SPR6POS: sprpos[6] = value; break;
 			case ChipRegs.SPR6CTL: sprctl[6] = value; DisarmSprite(6); break;
-			case ChipRegs.SPR6DATA: sprdata[6] = value; break;
-			case ChipRegs.SPR6DATB: sprdatb[6] = value; ArmSprite(6); break;
+			case ChipRegs.SPR6DATA: sprdata[6] = value; ArmSprite(6); break;
+			case ChipRegs.SPR6DATB: sprdatb[6] = value; break;
 
 			case ChipRegs.SPR7POS: sprpos[7] = value; break;
 			case ChipRegs.SPR7CTL: sprctl[7] = value; DisarmSprite(7); break;
-			case ChipRegs.SPR7DATA: sprdata[7] = value; break;
-			case ChipRegs.SPR7DATB: sprdatb[7] = value; ArmSprite(7); break;
+			case ChipRegs.SPR7DATA: sprdata[7] = value; ArmSprite(7); break;
+			case ChipRegs.SPR7DATB: sprdatb[7] = value; break;
 
 			case ChipRegs.BPLCON0: bplcon0 = value; UpdateBPLCON0(); break;
 			case ChipRegs.BPLCON1: bplcon1 = value; DebugBPLCON1(); break;

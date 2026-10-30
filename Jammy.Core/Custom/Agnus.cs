@@ -458,14 +458,18 @@ public class Agnus : IAgnus
 	private int VStart(uint s)
 	{
 		int vstart = sprpos[s] >> 8;
-		vstart += (sprctl[s] & 4) << 6; //bit 2 is high bit of vstart
+		vstart += (sprctl[s] & 4) << 6; //bit 2 is 9th bit of vstart
+		if (settings.ChipSet == ChipSet.AGA)
+			vstart += (sprctl[s] & (1 << 6)) << 4; //bit 6 is 10th bit of vstart
 		return vstart;
 	}
 
 	private int VStop(uint s)
 	{
 		int vstop = sprctl[s] >> 8;
-		vstop += (sprctl[s] & 2) << 7; //bit 1 is high bit of vstop
+		vstop += (sprctl[s] & 2) << 7; //bit 1 is 9th bit of vstop
+		if (settings.ChipSet == ChipSet.AGA)
+			vstop += (sprctl[s] & (1 << 5)) << 5; //bit 5 is 10th bit of vstop
 		return vstop;
 	}
 
