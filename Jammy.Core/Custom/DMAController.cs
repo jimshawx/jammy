@@ -362,8 +362,10 @@ public class DMAController : IDMA
 							logger.LogTrace($"CHPR {chipsetClock} {activity.Address:X8} {ChipRegs.Name(activity.ChipReg)} {activity.Value:X4} {ChipRegs.Name((uint)(ChipRegs.ChipBase + activity.Value))} {activity.Priority}");
 						else if ((activity.Value & 1) == 0)
 							logger.LogTrace($"CHPR {chipsetClock} {activity.Address:X8} {ChipRegs.Name(activity.ChipReg)} {activity.Value:X4} {activity.Priority}");
-						else
+						else if (activity.ChipReg == ChipRegs.COPINS)
 							logger.LogTrace($"CHPR {chipsetClock} {activity.Address:X8} {ChipRegs.Name(activity.ChipReg)} {activity.Value:X4} WAIT v:{activity.Value >> 8} h:{activity.Value & 0xfe} {activity.Priority}");
+						else
+							logger.LogTrace($"CHPR {chipsetClock} {activity.Address:X8} {ChipRegs.Name(activity.ChipReg)} {activity.Value:X4} {activity.Priority}");
 					}
 				}
 				break;
