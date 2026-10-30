@@ -525,8 +525,10 @@ namespace Jammy.Core.Custom
 			}
 
 			if (origaddress >= 0xb80000)
-				logger.LogTrace($"R {regNames[address],-18} {origaddress:X8} {size} {v:X8} {v.ToBin()} @{insaddr:X8}");
-
+			{ 
+				if (address != 4 && address != 8)
+					logger.LogTrace($"R {regNames[address],-18} {origaddress:X8} {size} {v:X8} {v.ToBin()} @{insaddr:X8}");
+			}
 			return v;
 		}
 
