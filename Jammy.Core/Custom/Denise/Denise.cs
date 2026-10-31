@@ -280,24 +280,24 @@ public class Denise : IDenise
 		//todo: for now, the comparator is with DeniseHorizontalPos
 		//need to normalise these higher res positions into the same ranges
 		//until Denise's clock is upgraded to deal with it
-		if (settings.ChipSet == ChipSet.ECS || settings.ChipSet == ChipSet.AGA)
-		{
-			//if ((sprctl[s] & (1 << 4)) != 0) hstart <<= 1;//70ns (ECS/AGA)
+		//if (settings.ChipSet == ChipSet.ECS || settings.ChipSet == ChipSet.AGA)
+		//{
+		//	//if ((sprctl[s] & (1 << 4)) != 0) hstart <<= 1;//70ns (ECS/AGA)
 
-			if (settings.ChipSet == ChipSet.AGA)
-			{
-				//AGA supports shres positioning
-				if ((sprctl[s] & (1 << 3)) != 0) hstart >>= 1;//35ns (AGA)
-			}
+		//	if (settings.ChipSet == ChipSet.AGA)
+		//	{
+		//		//AGA supports shres positioning
+		//		if ((sprctl[s] & (1 << 3)) != 0) hstart >>= 1;//35ns (AGA)
+		//	}
 
-			if ((sprctl[s] & (1<<0)) != 0) hstart <<= 1;// fixed to 140ns (ECS/AGA)
+		//	if ((sprctl[s] & (1<<0)) != 0) hstart <<= 1;// fixed to 140ns (ECS/AGA)
 
-			if (sprctl[s] != dbgsprctl[s])
-			{ 
-				logger.LogTrace($"SPR{s}CTL {((uint)(sprctl[s]&0b0000000000011001)).ToBin(8)}");
-				dbgsprctl[s] = sprctl[s];
-			}
-		}
+		//	if (sprctl[s] != dbgsprctl[s])
+		//	{ 
+		//		logger.LogTrace($"SPR{s}CTL {((uint)(sprctl[s]&0b0000000000011001)).ToBin(8)}");
+		//		dbgsprctl[s] = sprctl[s];
+		//	}
+		//}
 
 		return hstart;
 	}
@@ -313,6 +313,9 @@ public class Denise : IDenise
 
 				if (DeniseHorizontalPos == hstart)
 				{
+					if (debugger.dbugLine == clock.VerticalPos)
+						logger.LogTrace($"SPR{s} {hstart}");
+
 					//DebugSprite(s);
 					WriteSprite(s, sprdata, sprdatb, sprctl);
 				}
