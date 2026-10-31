@@ -8,163 +8,135 @@ using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
 /*
-	Copyright 2020-2025 James Shaw. All Rights Reserved.
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Custom.Denise
 {
 	public class BpldatPix64AVX2V2 : IBpldatPix
 	{
-		private Vector256<ulong> hi03 = Vector256<ulong>.Zero; // Planes 0-3 (High 64 bits)
-		private Vector256<ulong> hi47 = Vector256<ulong>.Zero; // Planes 4-7 (High 64 bits)
-		private Vector256<ulong> lo03 = Vector256<ulong>.Zero; // Planes 0-3 (Low 64 bits)
-		private Vector256<ulong> lo47 = Vector256<ulong>.Zero; // Planes 4-7 (Low 64 bits)
+		// One byte per pixel, bit p = plane p. Slots 0-63 hold the pixels still to come;
+		// 64-127 is overflow room for a write that starts late in the window.
+		private readonly byte[] buf = new byte[128];
+		private int p; // slot of the next pixel out, 0-63
 
-		private int pixelShiftBits = 0;
+		// pshufb controls: output byte i takes the source byte holding word bit (width-1-i).
+		private Vector256<byte> shufA; // output pixels 0-31
+		private Vector256<byte> shufB; // output pixels 32-63 (64-bit words only)
+		private bool wide;
 
-		public void WriteBitplanes(ref ulong[] bpldat, int even, int odd)
+		// Output byte i tests bit (7 - (i & 7)) of its source byte: 0x80, 0x40, ... 0x01
+		private static readonly Vector256<byte> BitSel =
+			Vector256.Create(0x0102040810204080UL).AsByte();
+
+		public BpldatPix64AVX2V2() => SetPixelBitMask(63);
+
+		public void SetPixelBitMask(uint pixelBits)
 		{
-			Span<ulong> hiBits = stackalloc ulong[8];
-			Span<ulong> loBits = stackalloc ulong[8];
+			const ulong L = 0x0101010101010101UL; // L * n = source byte n, eight times
+			const ulong Z = 0x8080808080808080UL; // pshufb writes 0 when bit 7 of the control is set
 
-			ulong d0_even = bpldat[0] << pixelShiftBits;
-			ulong d1_odd = bpldat[1] << pixelShiftBits;
-			ulong d2_even = bpldat[2] << pixelShiftBits;
-			ulong d3_odd = bpldat[3] << pixelShiftBits;
-			ulong d4_even = bpldat[4] << pixelShiftBits;
-			ulong d5_odd = bpldat[5] << pixelShiftBits;
-			ulong d6_even = bpldat[6] << pixelShiftBits;
-			ulong d7_odd = bpldat[7] << pixelShiftBits;
+			switch (pixelBits) // width - 1
+			{
+				case 15: // 16 pixels: source bytes 1, 0
+					shufA = Vector256.Create(L * 1, L * 0, Z, Z).AsByte();
+					wide = false;
+					break;
+				case 31: // 32 pixels: source bytes 3, 2, 1, 0
+					shufA = Vector256.Create(L * 3, L * 2, L * 1, L * 0).AsByte();
+					wide = false;
+					break;
+				default: // 63: 64 pixels: source bytes 7..4, then 3..0
+					shufA = Vector256.Create(L * 7, L * 6, L * 5, L * 4).AsByte();
+					shufB = Vector256.Create(L * 3, L * 2, L * 1, L * 0).AsByte();
+					wide = true;
+					break;
+			}
+		}
 
-			// 2. Apply the scroll shift across the 128-bit boundary
-			hiBits[0] = even == 0 ? d0_even : d0_even >> even;
-			loBits[0] = even == 0 ? 0ul : d0_even << (64 - even);
+		// Plane contribution to 32 pixel bytes: bit (planeBit) set where the word bit is set.
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static Vector256<byte> Spread(Vector256<byte> word, Vector256<byte> ctl, Vector256<byte> planeBit)
+		{
+			Vector256<byte> sel = Avx2.Shuffle(word, ctl) & BitSel;   // isolate each pixel's bit
+			return Avx2.CompareEqual(sel, BitSel) & planeBit;         // 0xFF if set -> plane bit
+		}
 
-			hiBits[1] = odd == 0 ? d1_odd : d1_odd >> odd;
-			loBits[1] = odd == 0 ? 0ul : d1_odd << (64 - odd);
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void Merge(ref ulong src, int first) // first = 0 (even planes) or 1 (odd planes)
+		{
+			// vpbroadcastq: the whole word lands in both 128-bit lanes, so in-lane pshufb can reach it.
+			Vector256<byte> w0 = Vector256.Create(Unsafe.Add(ref src, first)).AsByte();
+			Vector256<byte> w1 = Vector256.Create(Unsafe.Add(ref src, first + 2)).AsByte();
+			Vector256<byte> w2 = Vector256.Create(Unsafe.Add(ref src, first + 4)).AsByte();
+			Vector256<byte> w3 = Vector256.Create(Unsafe.Add(ref src, first + 6)).AsByte();
 
-			hiBits[2] = even == 0 ? d2_even : d2_even >> even;
-			loBits[2] = even == 0 ? 0ul : d2_even << (64 - even);
+			Vector256<byte> bit0 = Vector256.Create((byte)(1 << first));
+			Vector256<byte> bit1 = Vector256.Create((byte)(4 << first));
+			Vector256<byte> bit2 = Vector256.Create((byte)(16 << first));
+			Vector256<byte> bit3 = Vector256.Create((byte)(64 << first));
 
-			hiBits[3] = odd == 0 ? d3_odd : d3_odd >> odd;
-			loBits[3] = odd == 0 ? 0ul : d3_odd << (64 - odd);
+			ref byte dst = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(buf), p);
 
-			hiBits[4] = even == 0 ? d4_even : d4_even >> even;
-			loBits[4] = even == 0 ? 0ul : d4_even << (64 - even);
+			Vector256<byte> a = Spread(w0, shufA, bit0) | Spread(w1, shufA, bit1)
+							  | Spread(w2, shufA, bit2) | Spread(w3, shufA, bit3);
+			(Vector256.LoadUnsafe(ref dst) | a).StoreUnsafe(ref dst);
 
-			hiBits[5] = odd == 0 ? d5_odd : d5_odd >> odd;
-			loBits[5] = odd == 0 ? 0ul : d5_odd << (64 - odd);
-
-			hiBits[6] = even == 0 ? d6_even : d6_even >> even;
-			loBits[6] = even == 0 ? 0ul : d6_even << (64 - even);
-
-			hiBits[7] = odd == 0 ? d7_odd : d7_odd >> odd;
-			loBits[7] = odd == 0 ? 0ul : d7_odd << (64 - odd);
-
-			ref ulong hiRef = ref MemoryMarshal.GetReference(hiBits);
-			ref ulong loRef = ref MemoryMarshal.GetReference(loBits);
-
-			hi03 = Avx2.Or(hi03, Vector256.LoadUnsafe(ref hiRef));
-			hi47 = Avx2.Or(hi47, Vector256.LoadUnsafe(ref hiRef, 4));
-			lo03 = Avx2.Or(lo03, Vector256.LoadUnsafe(ref loRef));
-			lo47 = Avx2.Or(lo47, Vector256.LoadUnsafe(ref loRef, 4));
+			if (wide)
+			{
+				Vector256<byte> b = Spread(w0, shufB, bit0) | Spread(w1, shufB, bit1)
+								  | Spread(w2, shufB, bit2) | Spread(w3, shufB, bit3);
+				(Vector256.LoadUnsafe(ref dst, 32) | b).StoreUnsafe(ref dst, 32);
+			}
 		}
 
 		public void WriteBitplanes(ref ulong[] bpldat, int oddeven)
 		{
-			Span<ulong> hiBits = stackalloc ulong[8];
-			Span<ulong> loBits = stackalloc ulong[8];
-
-			ulong d0_even = bpldat[0] << pixelShiftBits;
-			ulong d1_odd = bpldat[1] << pixelShiftBits;
-			ulong d2_even = bpldat[2] << pixelShiftBits;
-			ulong d3_odd = bpldat[3] << pixelShiftBits;
-			ulong d4_even = bpldat[4] << pixelShiftBits;
-			ulong d5_odd = bpldat[5] << pixelShiftBits;
-			ulong d6_even = bpldat[6] << pixelShiftBits;
-			ulong d7_odd = bpldat[7] << pixelShiftBits;
-
-			int even = 0;
-			int odd = 0;
-
-			if (oddeven == 0)
-			{
-				// 2. Apply the scroll shift across the 128-bit boundary
-				hiBits[0] = even == 0 ? d0_even : d0_even >> even;
-				loBits[0] = even == 0 ? 0ul : d0_even << (64 - even);
-				hiBits[2] = even == 0 ? d2_even : d2_even >> even;
-				loBits[2] = even == 0 ? 0ul : d2_even << (64 - even);
-				hiBits[4] = even == 0 ? d4_even : d4_even >> even;
-				loBits[4] = even == 0 ? 0ul : d4_even << (64 - even);
-				hiBits[6] = even == 0 ? d6_even : d6_even >> even;
-				loBits[6] = even == 0 ? 0ul : d6_even << (64 - even);
-
-				loBits[1] = loBits[3] = loBits[5] = loBits[7] = 0;
-			}
-			else if (oddeven == 1)
-			{
-				hiBits[1] = odd == 0 ? d1_odd : d1_odd >> odd;
-				loBits[1] = odd == 0 ? 0ul : d1_odd << (64 - odd);
-				hiBits[3] = odd == 0 ? d3_odd : d3_odd >> odd;
-				loBits[3] = odd == 0 ? 0ul : d3_odd << (64 - odd);
-				hiBits[5] = odd == 0 ? d5_odd : d5_odd >> odd;
-				loBits[5] = odd == 0 ? 0ul : d5_odd << (64 - odd);
-				hiBits[7] = odd == 0 ? d7_odd : d7_odd >> odd;
-				loBits[7] = odd == 0 ? 0ul : d7_odd << (64 - odd);
-
-				loBits[0] = loBits[2] = loBits[4] = loBits[6] = 0;
-			}
-
-			ref ulong hiRef = ref MemoryMarshal.GetReference(hiBits);
-			ref ulong loRef = ref MemoryMarshal.GetReference(loBits);
-
-			hi03 = Avx2.Or(hi03, Vector256.LoadUnsafe(ref hiRef));
-			hi47 = Avx2.Or(hi47, Vector256.LoadUnsafe(ref hiRef, 4));
-			lo03 = Avx2.Or(lo03, Vector256.LoadUnsafe(ref loRef));
-			lo47 = Avx2.Or(lo47, Vector256.LoadUnsafe(ref loRef, 4));
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void NextPixel()
-		{
-			// SHL 1
-			var carry03 = Avx2.ShiftRightLogical(lo03, 63);
-			hi03 = Avx2.ShiftLeftLogical(hi03, 1);
-			hi03 = Avx2.Or(hi03, carry03);
-			lo03 = Avx2.ShiftLeftLogical(lo03, 1);
-
-			var carry47 = Avx2.ShiftRightLogical(lo47, 63);
-			hi47 = Avx2.ShiftLeftLogical(hi47, 1);
-			hi47 = Avx2.Or(hi47, carry47);
-			lo47 = Avx2.ShiftLeftLogical(lo47, 1);
-		}
-
-		public void SetPixelBitMask(uint pixelBits)
-		{
-			pixelShiftBits = 63 - (int)pixelBits;
-		}
-
-		public void Clear()
-		{
-			hi03 = Vector256<ulong>.Zero;
-			hi47 = Vector256<ulong>.Zero;
-			lo03 = Vector256<ulong>.Zero;
-			lo47 = Vector256<ulong>.Zero;
+			ref ulong src = ref MemoryMarshal.GetArrayDataReference(bpldat);
+			if (oddeven == 0) Merge(ref src, 0);
+			else if (oddeven == 1) Merge(ref src, 1);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint GetPixel(int planes)
 		{
-			uint mask = (1u << planes) - 1;
+			ref byte slot = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(buf), p);
+			uint pix = slot;
+			slot = 0; // consumed; later writes OR into zeros
+			Advance();
+			return pix & ((1u << planes) - 1);
+		}
 
-			uint pix03 = (uint)Avx2.MoveMask(hi03.AsDouble());
-			uint pix47 = (uint)Avx2.MoveMask(hi47.AsDouble());
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void NextPixel()
+		{
+			Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(buf), p) = 0;
+			Advance();
+		}
 
-			uint pix = pix03 | (pix47 << 4);
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void Advance()
+		{
+			int i = p + 1;
+			if (i == 64) { Rebase(); i = 0; }
+			p = i;
+		}
 
-			NextPixel();
+		// Slots 0-63 are all consumed (and zeroed) by now, so slide the overflow down.
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private void Rebase()
+		{
+			ref byte r = ref MemoryMarshal.GetArrayDataReference(buf);
+			Vector256.LoadUnsafe(ref r, 64).StoreUnsafe(ref r);
+			Vector256.LoadUnsafe(ref r, 96).StoreUnsafe(ref r, 32);
+			Vector256<byte>.Zero.StoreUnsafe(ref r, 64);
+			Vector256<byte>.Zero.StoreUnsafe(ref r, 96);
+		}
 
-			return pix & mask;
+		public void Clear()
+		{
+			Array.Clear(buf);
+			p = 0;
 		}
 
 		public void Save(JArray jobj)

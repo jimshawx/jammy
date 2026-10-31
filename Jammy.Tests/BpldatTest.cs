@@ -21,8 +21,8 @@ namespace Jammy.Tests
 		[OneTimeSetUp]
 		public void BpldatTestInit()
 		{
-			p0 = new BpldatPix32();
-			p1 = new BpldatPix32AVX2();
+			p0 = new BpldatPix16();
+			p1 = new BpldatPix16AVX2();
 			p0.SetPixelBitMask(15);
 			p1.SetPixelBitMask(15);
 			p0.Clear();
@@ -199,10 +199,10 @@ namespace Jammy.Tests
 		[Test]
 		public void Test9()
 		{
-			var p0 = new BpldatPix32();
-			var p1 = new BpldatPix32AVX2V2();
+			var p0 = new BpldatPix16();
+			var p1 = new BpldatPix16AVX2V2();
 			var p2 = new BpldatPix64();
-			var p3 = new BpldatPix64AVX2V2();
+			var p3 = new BpldatPix64AVX2();
 
 			p0.SetPixelBitMask(31);
 			p1.SetPixelBitMask(31);
@@ -249,15 +249,15 @@ namespace Jammy.Tests
 		[Test]
 		public void TestA()
 		{
-			var p0 = new BpldatPix32();
-			var p1 = new BpldatPix32AVX2V2();
+			var p0 = new BpldatPix16();
+			var p1 = new BpldatPix16AVX2V2();
 			TestBpldatPix(p0, p1);
 		}
 
 		[Test]
 		public void TestB()
 		{
-			var p0 = new BpldatPix32();
+			var p0 = new BpldatPix16();
 			var p1 = new BpldatPix64();
 			TestBpldatPix(p0, p1);
 		}
@@ -265,8 +265,8 @@ namespace Jammy.Tests
 		[Test]
 		public void TestC()
 		{
-			var p0 = new BpldatPix32();
-			var p1 = new BpldatPix64AVX2V2();
+			var p0 = new BpldatPix16();
+			var p1 = new BpldatPix64AVX2();
 			TestBpldatPix(p0, p1);
 		}
 
@@ -333,7 +333,7 @@ namespace Jammy.Tests
 		[Test]
 		public void TestE()
 		{
-			var p0 = new BpldatPix64AVX2V2();
+			var p0 = new BpldatPix64AVX2();
 
 			p0.SetPixelBitMask(63);
 
@@ -351,7 +351,7 @@ namespace Jammy.Tests
 		[Test]
 		public void TestF()
 		{
-			var p0 = new BpldatPix32();
+			var p0 = new BpldatPix16();
 
 			p0.SetPixelBitMask(15);
 
@@ -369,7 +369,7 @@ namespace Jammy.Tests
 		[Test]
 		public void TestG()
 		{
-			var p0 = new BpldatPix32AVX2V2();
+			var p0 = new BpldatPix16AVX2V2();
 
 			p0.SetPixelBitMask(15);
 

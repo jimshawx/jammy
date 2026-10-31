@@ -296,17 +296,17 @@ namespace Jammy.Main
 
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
 			{
-				if (Avx2.IsSupported)
-					services.AddSingleton<IBpldatPix, BpldatPix32AVX2V2>();
+				if (Sse2.IsSupported)
+					services.AddSingleton<IBpldatPix, BpldatPix16SSE2>();
 				else
-					services.AddSingleton<IBpldatPix, BpldatPix32>();
+					services.AddSingleton<IBpldatPix, BpldatPix16V2>();
 			}
 			else
 			{
 				if (Avx2.IsSupported)
-					services.AddSingleton<IBpldatPix, BpldatPix64AVX2V2>();
+					services.AddSingleton<IBpldatPix, BpldatPix64AVX2>();
 				else
-					services.AddSingleton<IBpldatPix, BpldatPix64>();
+					services.AddSingleton<IBpldatPix, BpldatPix64V2>();
 			}
 
 			//set up the list of IStatePersisters

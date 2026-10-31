@@ -1,101 +1,83 @@
-﻿using Jammy.Core.Interface.Interfaces;
+﻿
+using Jammy.Core.Interface.Interfaces;
 using Newtonsoft.Json.Linq;
-using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 /*
-	Copyright 2020-2025 James Shaw. All Rights Reserved.
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.Custom.Denise
 {
 	public class BpldatPix64AVX2 : IBpldatPix
 	{
-		private readonly IBpldatPix bp = new BpldatPix32AVX2V2();
+		private Vector256<ulong> p03 = Vector256<ulong>.Zero; // planes 0-3, bit 63 = current pixel
+		private Vector256<ulong> p47 = Vector256<ulong>.Zero; // planes 4-7
+		private Vector128<ulong> shiftCount = Vector128<ulong>.Zero;
 
-		private readonly ulong[] stashBits = new ulong[8];
-		private int even, odd;
-		private ushort stashedBitcount = 1;
-		private uint pixelBits;
-		private int stashShift;
-
-		public void Clear()
+		public void WriteBitplanes(ref ulong[] bpldat, int oddeven)
 		{
-			bp.Clear();
-			stashShift = -1;
+			// Plane i is lane i, so two straight loads cover all 8 planes.
+			// (Each Create does one bounds check; length must be >= 8.)
+			Vector256<ulong> d03 = Vector256.Create(bpldat, 0);
+			Vector256<ulong> d47 = Vector256.Create(bpldat, 4);
+
+			// Even planes live in lanes 0,2 of each half; odd planes in lanes 1,3.
+			Vector256<ulong> mask = oddeven == 0
+				? Vector256.Create(ulong.MaxValue, 0UL, ulong.MaxValue, 0UL)
+				: Vector256.Create(0UL, ulong.MaxValue, 0UL, ulong.MaxValue);
+
+			p03 |= Avx2.ShiftLeftLogical(d03 & mask, shiftCount);
+			p47 |= Avx2.ShiftLeftLogical(d47 & mask, shiftCount);
 		}
 
-		public uint GetPixel(int planes)
-		{
-			uint pix = bp.GetPixel(planes);
-			NextPixel64();
-			return pix;
-		}
-
-		public void Load(JObject obj)
-		{
-			bp.Load(obj);
-		}
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void NextPixel()
 		{
-			bp.NextPixel();
-			NextPixel64();
-		}
-
-		private void NextPixel64()
-		{
-			stashedBitcount = ushort.RotateRight(stashedBitcount, 1);
-			if (stashedBitcount == 1)
-				Unstash16B();
-		}
-
-		public void Save(JArray obj)
-		{
-			bp.Save(obj);
+			// x + x == x << 1, but runs on more execution ports than a shift
+			p03 = Avx2.Add(p03, p03);
+			p47 = Avx2.Add(p47, p47);
 		}
 
 		public void SetPixelBitMask(uint pixelBits)
 		{
-			this.pixelBits = pixelBits;
-			stashedBitcount = 1;
-			bp.SetPixelBitMask(15);
+			// Align the MSB of the pixelBits-wide word with bit 63.
+			shiftCount = Vector128.CreateScalar((ulong)(63 - (int)pixelBits));
 		}
 
-		public void WriteBitplanes(ref ulong[] bpldat, int even, int odd)
+		public void Clear()
 		{
-			for (int i = 0; i < 8; i++)
-				stashBits[i] = bpldat[i];
-
-			this.even = even;
-			this.odd = odd;
-
-			stashedBitcount = 1;
-			stashShift = (int)pixelBits - 15;
-			Unstash16B();
-		}
-		
-		public void WriteBitplanes(ref ulong[] bpldat, int oddeven)
-		{
-			for (int i = 0; i < 8; i++)
-				stashBits[i] = bpldat[i];
-
-			this.even = 0;
-			this.odd = 0;
-
-			stashedBitcount = 1;
-			stashShift = (int)pixelBits - 15;
-			Unstash16B();
+			p03 = Vector256<ulong>.Zero;
+			p47 = Vector256<ulong>.Zero;
 		}
 
-		private void Unstash16B()
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public uint GetPixel(int planes)
 		{
-			if (stashShift >= 0)
-			{ 
-				ulong[] bpldat = stashBits.Select(x => (x >> stashShift) & 0xffff).ToArray();
-				stashShift -= 16;
+			uint mask = (1u << planes) - 1;
 
-				bp.WriteBitplanes(ref bpldat, even, odd);
-			}
+			Vector256<ulong> a = p03;
+			Vector256<ulong> b = p47;
+
+			uint pix = (uint)Avx.MoveMask(a.AsDouble())
+					 | ((uint)Avx.MoveMask(b.AsDouble()) << 4);
+
+			p03 = Avx2.Add(a, a);
+			p47 = Avx2.Add(b, b);
+
+			return pix & mask;
+		}
+
+		public void Save(JArray jobj)
+		{
+
+		}
+
+		public void Load(JObject jobj)
+		{
 		}
 	}
+
 }

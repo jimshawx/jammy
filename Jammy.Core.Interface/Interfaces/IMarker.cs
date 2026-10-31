@@ -242,7 +242,6 @@ namespace Jammy.Core.Interface.Interfaces
 		void Clear();
 		void NextPixel();
 		void SetPixelBitMask(uint pixelBits);
-		void WriteBitplanes(ref ulong[] bpldat, int even, int odd);
 		void WriteBitplanes(ref ulong[] bpldat, int oddeven);
 		uint GetPixel(int planes);
 	}
