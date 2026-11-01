@@ -388,10 +388,28 @@ public class Agnus : IAgnus
 		//next horizontal line, and we did some fetching this line, add on the modulos
 		if (lineState == DMALineState.LineComplete)
 		{
-			//logger.LogTrace($"MOD {clock} {planes} {bpl1mod:X4} {bpl2mod:X4}");
-			for (int i = 0; i < planes; i++)
+			//BSCAN2
+			if ((fmode & (1<<14)) != 0)
 			{
-				bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
+				//in scan-doubled mode, if V0 = DIWSTRV0 then use bpl1mod else use bpl2mod
+				if ((clock.VerticalPos ^ diwstrtv & 1) == 0)
+				{
+					for (int i = 0; i < planes; i++)
+						bplpt[i] += bpl1mod;
+				}
+				else
+				{
+					for (int i = 0; i < planes; i++)
+						bplpt[i] += bpl2mod;
+				}
+			}
+			else
+			{
+				//logger.LogTrace($"MOD {clock} {planes} {bpl1mod:X4} {bpl2mod:X4}");
+				for (int i = 0; i < planes; i++)
+				{
+					bplpt[i] += ((i & 1) == 0) ? bpl1mod : bpl2mod;
+				}
 			}
 			lineState = DMALineState.LineTerminated;
 			//debugging
@@ -476,6 +494,14 @@ public class Agnus : IAgnus
 	private void RunSpriteDMA(uint slot)
 	{
 		uint s = slot >> 1;
+
+		//SSCAN2
+		if ((fmode & (1 << 15)) != 0)
+		{
+			//in scan-doubled mode, if V0 <> SPRCTLV0 then don't do any sprite DMA/comparisons
+			if ((clock.VerticalPos ^ VStart(s) & 1) == 1)
+				return;
+		}
 
 		if (spriteState[s] == SpriteState.Waiting)
 		{
