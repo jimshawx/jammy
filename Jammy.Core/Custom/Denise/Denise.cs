@@ -121,6 +121,7 @@ public class Denise : IDenise
 			ClockBuffer();
 			RunDeniseTick(0);
 			DeniseHorizontalPos++;
+			
 			ClockBuffer();
 			RunDeniseTick(1);
 			DeniseHorizontalPos++;
@@ -132,6 +133,7 @@ public class Denise : IDenise
 			ClockBuffer();
 			RunDeniseTick(1);
 			DeniseHorizontalPos++;
+			
 			ClockBuffer();
 			RunDeniseTick(2);
 			ClockBuffer();
@@ -140,22 +142,23 @@ public class Denise : IDenise
 		}
 		else if (pixelLoop == 8)
 		{
-			//ClockBuffer();
+			ClockBuffer();
 			RunDeniseTick(0);
-			//ClockBuffer();
+			ClockBuffer();
 			RunDeniseTick(1);
-			//ClockBuffer();
+			ClockBuffer();
 			RunDeniseTick(2);
-			//ClockBuffer();
+			ClockBuffer();
 			RunDeniseTick(3);
-			//ClockBuffer();
 			DeniseHorizontalPos++;
+
+			ClockBuffer();
 			RunDeniseTick(4);
-			//ClockBuffer();
+			ClockBuffer();
 			RunDeniseTick(5);
-			//ClockBuffer();
+			ClockBuffer();
 			RunDeniseTick(6);
-			//ClockBuffer();
+			ClockBuffer();
 			RunDeniseTick(7);
 			DeniseHorizontalPos++;
 		}
