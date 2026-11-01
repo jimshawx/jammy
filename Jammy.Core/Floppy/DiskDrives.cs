@@ -410,7 +410,7 @@ namespace Jammy.Core.Floppy
 						return;
 					}
 
-					logger.LogTrace($"Reading DF{df} T: {drive[df].track} S: {drive[df].side} to {dskpt:X6} @{insaddr:X8} L: {dsklen&0x3fff:X4} ({dsklen & 0x3fff}) L/11: {(dsklen&0x3fff)/11} S:{(adkcon & (1u << 10)) == 0} {dsksync:X4}");
+					logger.LogTrace($"Reading DF{df} T:{drive[df].track} S:{drive[df].side} to {dskpt:X6} @{insaddr:X8} L:{dsklen&0x3fff:X4} ({dsklen & 0x3fff}) L/11:{(dsklen&0x3fff)/11} S:{((adkcon & (1u << 10)) == 0?"T":"F")}={dsksync:X4}");
 
 					if (drive[df].track > 161)
 					{
