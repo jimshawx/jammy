@@ -540,7 +540,7 @@ public class Denise : IDenise
 		pix &= 0xfc;
 		if (ham == 0)
 		{
-			col = truecolour[pix];
+			col = truecolour[pix>>2];
 		}
 		else
 		{
@@ -645,7 +645,7 @@ public class Denise : IDenise
 			pix &= 0xfc;
 			if (ham == 0)
 			{
-				col = truecolour[pix];
+				col = truecolour[pix>>2];
 			}
 			else
 			{
