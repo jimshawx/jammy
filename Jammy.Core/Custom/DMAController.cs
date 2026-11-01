@@ -24,6 +24,8 @@ public class DMAController : IDMA
 	private readonly ILogger<DMAController> logger;
 	private readonly DMAActivity[] activities;
 
+	private bool verbose;
+
 	public DMAController(IChipsetClock chipsetClock, IChips chips,
 		IChipsetDebugger debugger, ILogger<DMAController> logger)
 	{
@@ -316,23 +318,23 @@ public class DMAController : IDMA
 		switch (activity.Type)
 		{
 			case DMAActivityType.Consume:
-				if (debugger.dbugLine == chipsetClock.VerticalPos)
+				if (debugger.dbugLine == chipsetClock.VerticalPos && verbose)
 					logger.LogTrace($"DMA {chipsetClock} {activity.Type} {activity.Priority}");
 				break;
 
 			case DMAActivityType.Refresh:
-				if (debugger.dbugLine == chipsetClock.VerticalPos)
+				if (debugger.dbugLine == chipsetClock.VerticalPos && verbose)
 					logger.LogTrace($"DMA {chipsetClock} {activity.Type}");
 				break;
 
 			case DMAActivityType.CPU:
-				if (debugger.dbugLine == chipsetClock.VerticalPos)
+				if (debugger.dbugLine == chipsetClock.VerticalPos && verbose)
 					logger.LogTrace($"CPUR {chipsetClock} {activity.Address:X8} {activity.Value:X4} {activity.Type}");
 				break;
 
 			case DMAActivityType.WriteChip:
 				chipRAM.ImmediateWrite(activity.InsAddr, activity.Address, (uint)activity.Value, activity.Size);
-				if (debugger.dbugLine == chipsetClock.VerticalPos)
+				if (debugger.dbugLine == chipsetClock.VerticalPos && verbose)
 					logger.LogTrace($"CHPW {chipsetClock} {activity.Address:X8} {activity.Value:X4} {activity.Priority}");
 				break;
 
@@ -356,7 +358,7 @@ public class DMAController : IDMA
 					activity.Value = value;
 					chips.ImmediateWrite(activity.InsAddr, activity.ChipReg, value, activity.Size);
 
-					if (debugger.dbugLine == chipsetClock.VerticalPos)
+					if (debugger.dbugLine == chipsetClock.VerticalPos && verbose)
 					{
 						if ((activity.Value & 1) == 0 && activity.Value < 0x200 && activity.ChipReg == ChipRegs.COPINS)
 							logger.LogTrace($"CHPR {chipsetClock} {activity.Address:X8} {ChipRegs.Name(activity.ChipReg)} {activity.Value:X4} {ChipRegs.Name((uint)(ChipRegs.ChipBase + activity.Value))} {activity.Priority}");
@@ -379,12 +381,12 @@ public class DMAController : IDMA
 
 			case DMAActivityType.WriteCPU:
 				memoryMapper.ImmediateWrite(activity.InsAddr, activity.Address, (uint)activity.Value, activity.Size);
-				if (debugger.dbugLine == chipsetClock.VerticalPos)
+				if (debugger.dbugLine == chipsetClock.VerticalPos && verbose)
 					logger.LogTrace($"CPUW {chipsetClock} {activity.Address:X8} {activity.Value:X4}");
 				break;
 
 			case DMAActivityType.None:
-				if (debugger.dbugLine == chipsetClock.VerticalPos)
+				if (debugger.dbugLine == chipsetClock.VerticalPos && verbose)
 					logger.LogTrace($"NONE");
 				break;
 
