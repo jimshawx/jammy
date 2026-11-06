@@ -106,6 +106,8 @@ public class Agnus : IAgnus
 		bplcon0 = 0;
 		fmode = 0;
 		hitStop = false;
+		fetchCount = 0;
+
 		UpdateBPLCON0();
 		UpdateFMODE();
 	}
@@ -152,17 +154,11 @@ public class Agnus : IAgnus
 	[Persist]
 	private int diwstopv = 0;
 	[Persist]
-	private ushort ddfstrtfix = 0;
-	[Persist]
-	private ushort ddfstopfix = 0;
-	[Persist]
 	private ushort fetchCount = 0;
 	[Persist]
 	private int pixmod;
 	[Persist]
 	private DMALineState lineState;
-	//[Persist]
-	//private int lastFetchCount;
 	[Persist]
 	private uint plane;
 	[Persist]
@@ -238,12 +234,6 @@ public class Agnus : IAgnus
 			lineState = DMALineState.Fetching;
 			hitStop = false;
 		}
-		//else if ((clock.HorizontalPos == ddfstopfix + debugger.ddfEHack) && lineState == DMALineState.Fetching)
-		//{
-		//	debugger.activity[clock.HorizontalPos] = 'C';
-		//	lineState = DMALineState.LineComplete;
-		//	EndAgnusLine();
-		//}
 
 		bool boundary = (fetchCount & fetchCountMask) == 0;
 
@@ -260,16 +250,11 @@ public class Agnus : IAgnus
 
 			if (boundary && hitStop)
 				lineState = DMALineState.LastBitplaneFetch;
-			//lastFetchCount = (fmode&3) == 0 ? 8 : (fmode&3)==3 ? 32 : 16;
-			//lastFetchCount = (int)(fetchCountMask + 1);
-
 		}
 		else if (lineState == DMALineState.LastBitplaneFetch)
 		{
 			//either we will hit the last chance to fetch another block, or we'll hit the end of the scanline
 			//which means the modulos need to be added now todo: when does the Amiga add the modulos?
-			//lastFetchCount--;
-			//if (lastFetchCount == 0 || (clock.ClockState& ChipsetClockState.EndOfLine) != 0)
 			if (boundary || (clock.ClockState & ChipsetClockState.EndOfLine) != 0)
 			{
 				//debugging
@@ -296,8 +281,7 @@ public class Agnus : IAgnus
 
 		if (lineState == DMALineState.Fetching || lineState == DMALineState.LastBitplaneFetch)
 		{
-			bool fetched = false;
-			fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
+			bool fetched = CopperBitplaneFetch((int)clock.HorizontalPos);
 			fetchCount++;
 			if (fetched)
 				return;
@@ -339,7 +323,7 @@ public class Agnus : IAgnus
 	private bool CopperBitplaneFetch(int h)
 	{
 		//int planeIdx = h % pixmod;
-		int planeIdx = (h - ddfstrtfix) % pixmod;
+		int planeIdx = (h - ddfstrt) % pixmod;
 		while (planeIdx < 0) planeIdx += pixmod;
 
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
@@ -437,47 +421,12 @@ public class Agnus : IAgnus
 				}
 			}
 			lineState = DMALineState.LineTerminated;
+
 			//debugging
 			if (clock.VerticalPos == debugger.dbugLine)
 				debugger.activity[clock.HorizontalPos] = 'M';
 			//debugging
 		}
-	}
-
-	//https://eab.abime.net/showthread.php?t=111329
-	public const int OCS = 0;
-	public const int ECS = 1;
-	public const int AGA = 2;
-
-	public const int LORES = 0;
-	public const int HIRES = 1;
-	public const int SHRES = 2;
-
-	public static int FetchWidth(int DDFSTRT, int DDFSTOP, int chipset, int res, int FMODE)
-	{
-		// validate bits
-		FMODE &= 3;
-		DDFSTRT &= (chipset != OCS) ? 0xfe : 0xfc;
-		DDFSTOP &= (chipset != OCS) ? 0xfe : 0xfc;
-		res = (chipset == OCS) ? res & 1 : res;
-
-		// fetch=log2(fetch_width)-4; fetch_width=16,32,64
-		int fetch = (chipset == AGA) ? ((FMODE <= 1) ? FMODE : FMODE - 1) : 0;
-
-		// sub-block (OCS/ECS) and large-block (AGA) stop pad
-		int pad = (fetch > res) ? (8 << (fetch - res)) - 1 : 8 - 1;
-
-		// OCS/ECS/(AGA) sub-block
-		int sub = (res > fetch) ? res - fetch : 0;
-
-		// AGA large-block
-		int large = (fetch > res) ? fetch - res : 0;
-
-		// DMA fetched blocks
-		int blocks = ((DDFSTOP - DDFSTRT + pad) >> (3 + large)) + 1;
-
-		// 16 pixels per fetch_width per sub-block per block
-		return blocks << (4 + fetch + sub);
 	}
 
 	private enum SpriteState
@@ -630,29 +579,18 @@ public class Agnus : IAgnus
 		{
 			//4 colour clocks, fetch 16 pixels
 			//1 colour clock, draw 4 pixel
-			//pixelLoop = 4;
 			pixmod = 4;
-
-			//ddfstrtfix = (ushort)(ddfstrt & 0xfffc);
-			ddfstrtfix = ddfstrt;
 
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 			{
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				//FetchWidth(ddfstrt, ddfstop, OCS, HIRES, 0);
 			}
 			else if ((fmode & 3) == 3)
 			{
-				//ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 0xf) >> 4) + 1) << 4));
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				//FetchWidth(ddfstrt, ddfstop, AGA, HIRES, 3);
 				pixmod = 16;
 				fetchCountMask = 15;
 			}
 			else
 			{
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				//FetchWidth(ddfstrt, ddfstop, AGA, HIRES, 2);
 				pixmod = 8;
 			}
 		}
@@ -660,26 +598,18 @@ public class Agnus : IAgnus
 		{
 			//2 colour clocks, fetch 16 pixels
 			//1 colour clock, draw 8 pixel
-			ddfstrtfix = ddfstrt;
-			//pixelLoop = 8;
 			pixmod = 2;
 
 			if (settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 			{
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				//FetchWidth(ddfstrt, ddfstop, ECS, SHRES, 0)>>3;
 			}
 			else if ((fmode & 3) == 3)
 			{
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				//FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 3)>>3;
 				pixmod = 8;
 				fetchCountMask = 31;
 			}
 			else
 			{
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				//FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 2)>>3;
 				pixmod = 4;
 				fetchCountMask = 15;
 			}
@@ -688,32 +618,22 @@ public class Agnus : IAgnus
 		{
 			//8 colour clocks, fetch 16 pixels
 			//1 colour clock, draw 2 pixel
-			//pixelLoop = 2;
 			pixmod = 8;
-
-			//low-res ddfstrt ignores bit 2
-			ddfstrtfix = ddfstrt;//(ushort)(ddfstrt & 0xfff8);
 
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 			{
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				//FetchWidth(ddfstrt, ddfstop, OCS, LORES, 0);
 			}
 			else if ((fmode & 3) == 3)
 			{
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				//FetchWidth(ddfstrt, ddfstop, AGA, LORES, 3);
 				pixmod = 32;
 			}
 			else
 			{
-				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
-				//FetchWidth(ddfstrt, ddfstop, AGA, LORES, 2);
 				pixmod = 16;
 			}
 		}
-		debugger.ddfStrtFix = ddfstrtfix;
-		debugger.ddfStopFix = ddfstopfix;
+		debugger.ddfStrt = ddfstrt;
+		debugger.ddfStop = ddfstop;
 	}
 
 	private uint spriteStride = 2;

@@ -20,8 +20,8 @@ namespace Jammy.Core.Interface.Interfaces
 		int ddfEHack { get; }
 		int diwSHack { get; }
 		int diwEHack { get; }
-		int ddfStrtFix { get; set; }
-		int ddfStopFix { get; set; }
+		int ddfStrt { get; set; }
+		int ddfStop { get; set; }
 		int bplDelayHack { get; set; }
 		int vhposFix { get; }
 		int xmatchDif { get; }

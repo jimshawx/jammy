@@ -134,8 +134,8 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 	public int diwSHack { get; private set; } = 0;
 	public int diwEHack { get; private set; } = 0;
 
-	public int ddfStrtFix { get; set; } = 0;
-	public int ddfStopFix { get; set; } = 0;
+	public int ddfStrt { get; set; } = 0;
+	public int ddfStop { get; set; } = 0;
 
 	public int bplDelayHack { get; set; } = 0;
 
@@ -228,7 +228,7 @@ public class ChipsetDebugger : IChipsetDebugger, IDebugKeys
 		var sb = GetDebugStringBuilder();
 
 		sb.AppendLine($"LINE {dbugLine}");
-		sb.AppendLine(($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfStrtFix:X4}{ddfSHack:+#0;-#0} {ddfStopFix:X4}{ddfEHack:+#0;-#0} FMODE {fmode:X4} B{(fmode&3):X1}S{((fmode>>2) & 3):X1}"));
+		sb.AppendLine(($"DDF {ddfstrt:X4} {ddfstop:X4} ({wordCount}) {ddfStrt:X4}{ddfSHack:+#0;-#0} {ddfStop:X4}{ddfEHack:+#0;-#0} FMODE {fmode:X4} B{(fmode&3):X1}S{((fmode>>2) & 3):X1}"));
 		sb.AppendLine(($"DIW {diwstrt:X4} {diwstop:X4} {diwhigh:X4} V:{diwstrtv}->{diwstopv}({(int)(diwstopv - diwstrtv)}) H:{diwstrth}{diwSHack:+#0;-#0}->{diwstoph}{diwEHack:+#0;-#0}({diwstoph - diwstrth}/16={(diwstoph - diwstrth) / 16}) BD={bplDelayHack}"));
 		sb.AppendLine($"MOD {bpl1mod:X4} {bpl2mod:X4} DMA {Dmacon(dmacon)}");
 		sb.AppendLine($"BCN 0:{bplcon0:X4} {Bplcon0()} 1:{bplcon1:X4} {Bplcon1()} 2:{bplcon2:X4} {Bplcon2()}");
