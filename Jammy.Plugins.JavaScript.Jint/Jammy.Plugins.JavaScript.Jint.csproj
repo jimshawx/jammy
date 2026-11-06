@@ -5,8 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="Jint" Version="4.16.2" />
-	<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.12" />
+	<PackageReference Include="Jint" Version="4.17.0" />
+	<PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup>
