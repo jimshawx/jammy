@@ -239,7 +239,7 @@ public class Agnus : IAgnus
 		//	lineState = DMALineState.LineComplete;
 		//	EndAgnusLine();
 		//}
-		else if ((clock.HorizontalPos >= ddfstop + debugger.ddfEHack && ((fetchCount & 7) == 0) || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
+		else if ((clock.HorizontalPos >= ddfstop + debugger.ddfEHack && ((fetchCount & fetchCountMask) == 0) || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
 		{
 			//if we've passed ddfstop and we've fetched all the planes, then fetch one more lot of planes
 			//debugging
@@ -247,7 +247,8 @@ public class Agnus : IAgnus
 				debugger.activity[clock.HorizontalPos] = 'S';
 			//debugging
 			lineState = DMALineState.LastBitplaneFetch;
-			lastFetchCount = (fmode&3) == 0 ? 8 : (fmode&3)==3 ? 32 : 16;
+			//lastFetchCount = (fmode&3) == 0 ? 8 : (fmode&3)==3 ? 32 : 16;
+			lastFetchCount = (int)(fetchCountMask + 1);
 		}
 		else if (lineState == DMALineState.LastBitplaneFetch)
 		{
@@ -598,6 +599,8 @@ public class Agnus : IAgnus
 
 		//https://eab.abime.net/showthread.php?t=111329
 
+		fetchCountMask = 7;
+
 		//how many pixels should be fetched per clock in the current mode?
 		if ((bplcon0 & (uint)Denise.Denise.BPLCON0.HiRes) != 0)
 		{
@@ -620,6 +623,7 @@ public class Agnus : IAgnus
 				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
 				//FetchWidth(ddfstrt, ddfstop, AGA, HIRES, 3);
 				pixmod = 16;
+				fetchCountMask = 15;
 			}
 			else
 			{
@@ -646,12 +650,14 @@ public class Agnus : IAgnus
 				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
 				//FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 3)>>3;
 				pixmod = 8;
+				fetchCountMask = 31;
 			}
 			else
 			{
 				ddfstopfix = (ushort)(ddfstrt + ((((ddfstop - ddfstrt + 7) >> 3) + 1) << 3));
 				//FetchWidth(ddfstrt, ddfstop, AGA, SHRES, 2)>>3;
 				pixmod = 4;
+				fetchCountMask = 15;
 			}
 		}
 		else
@@ -688,6 +694,7 @@ public class Agnus : IAgnus
 
 	private uint spriteStride = 2;
 	private Size spriteSize = Size.Word;
+	private uint fetchCountMask = 7;
 
 	private void UpdateFMODE()
 	{
