@@ -607,12 +607,10 @@ public class Agnus : IAgnus
 			else if ((fmode & 3) == 3)
 			{
 				pixmod = 8;
-				fetchCountMask = 31;
 			}
 			else
 			{
 				pixmod = 4;
-				fetchCountMask = 15;
 			}
 		}
 		else
@@ -627,10 +625,12 @@ public class Agnus : IAgnus
 			else if ((fmode & 3) == 3)
 			{
 				pixmod = 32;
+				fetchCountMask = 31;
 			}
 			else
 			{
 				pixmod = 16;
+				fetchCountMask = 15;
 			}
 		}
 		debugger.ddfStrt = ddfstrt;
