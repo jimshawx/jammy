@@ -50,12 +50,18 @@ namespace Jammy.NativeOverlay.Overlays
 		{
 			string regmsg = chipsetDebugger.GetOverlayText();
 			nativeOverlay.TextScale(2);
-			const int bg = 0xffffff;
-			const int fg = 0x000000;
+			const int bg = 0xafafaf;
+			const int fg = 0xffffff;
 			nativeOverlay.WriteText(screen, 0, 81, bg, regmsg);
 			nativeOverlay.WriteText(screen, 2, 81, bg, regmsg);
 			nativeOverlay.WriteText(screen, 1, 80, bg, regmsg);
 			nativeOverlay.WriteText(screen, 1, 82, bg, regmsg);
+
+			nativeOverlay.WriteText(screen, 0, 80, bg, regmsg);
+			nativeOverlay.WriteText(screen, 2, 80, bg, regmsg);
+			nativeOverlay.WriteText(screen, 0, 82, bg, regmsg);
+			nativeOverlay.WriteText(screen, 2, 82, bg, regmsg);
+
 			nativeOverlay.WriteText(screen, 1, 81, fg, regmsg);
 		}
 
