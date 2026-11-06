@@ -18,7 +18,7 @@ So here is my humble attempt at an Amiga emulation.
 
   * A1000, A500, A500+, A600, A1200, A2000, A3000, A4000, CD32
   * 68000 in C#, verified against the Musashi 68000 CPU
-  * Other 680x0 using the Musashi CPU emulation, in C or C#
+  * Other 680x0 using the Musashi CPU emulation, in C or C# or Moira CPU emulation in C
   * Cycle-exact 68000/chipset using the Moira CPU emulation, in C++
   * Copper, Blitter, CIA emulations
   * Sprite and Playfield collision
@@ -36,13 +36,13 @@ So here is my humble attempt at an Amiga emulation.
 * The disassemblies can be stored in a Sqlite database
 * If you have a CPU which supports AVX2 your experience will be significantly improved
 * There's a Linux version!
-* There's now a packaged release to try
+* There's a packaged release to try
 * Completely new emulation not based on WinUAE
 * It's free! (MIT License)
 
 ### The not so good stuff
 
-* There are still quitw a lot of problems with DMA timing
+* There are still a few problems with DMA timing
 * More efforts need to be made to get closer to cycle exact
 * CD32 CDROM and NVRAM not working
 * Emulation of CPUs running faster than the standard 7MHz is poor
