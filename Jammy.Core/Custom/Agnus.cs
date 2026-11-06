@@ -323,8 +323,9 @@ public class Agnus : IAgnus
 	private bool CopperBitplaneFetch(int h)
 	{
 		//int planeIdx = h % pixmod;
-		int planeIdx = (h - ddfstrt) % pixmod;
-		while (planeIdx < 0) planeIdx += pixmod;
+		//int planeIdx = (h - ddfstrt) % pixmod;
+		//while (planeIdx < 0) planeIdx += pixmod;
+		int planeIdx = fetchCount % pixmod;
 
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
 		{
