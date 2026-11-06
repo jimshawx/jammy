@@ -105,6 +105,7 @@ public class Agnus : IAgnus
 		lineState = DMALineState.LineStart;
 		bplcon0 = 0;
 		fmode = 0;
+		hitStop = false;
 		UpdateBPLCON0();
 		UpdateFMODE();
 	}
@@ -160,12 +161,15 @@ public class Agnus : IAgnus
 	private int pixmod;
 	[Persist]
 	private DMALineState lineState;
-	[Persist]
-	private int lastFetchCount;
+	//[Persist]
+	//private int lastFetchCount;
 	[Persist]
 	private uint plane;
 	[Persist]
 	private bool insideDIWV;
+
+	[Persist]
+	private bool hitStop;
 
 	private void RunAgnusTick()
 	{
@@ -232,6 +236,7 @@ public class Agnus : IAgnus
 		if (clock.HorizontalPos == ddfstrt + debugger.ddfSHack && lineState == DMALineState.LineStart)
 		{
 			lineState = DMALineState.Fetching;
+			hitStop = false;
 		}
 		//else if ((clock.HorizontalPos == ddfstopfix + debugger.ddfEHack) && lineState == DMALineState.Fetching)
 		//{
@@ -239,28 +244,39 @@ public class Agnus : IAgnus
 		//	lineState = DMALineState.LineComplete;
 		//	EndAgnusLine();
 		//}
-		else if ((clock.HorizontalPos >= ddfstop + debugger.ddfEHack && ((fetchCount & fetchCountMask) == 0) || clock.HorizontalPos == DMA_HARD_STOP) && lineState == DMALineState.Fetching)
+
+		bool boundary = (fetchCount & fetchCountMask) == 0;
+
+		if (lineState == DMALineState.Fetching)
 		{
+			if (clock.HorizontalPos == ddfstop + debugger.ddfEHack || clock.HorizontalPos == DMA_HARD_STOP)
+				hitStop = true;
+
 			//if we've passed ddfstop and we've fetched all the planes, then fetch one more lot of planes
 			//debugging
 			if (clock.VerticalPos == debugger.dbugLine)
 				debugger.activity[clock.HorizontalPos] = 'S';
 			//debugging
-			lineState = DMALineState.LastBitplaneFetch;
+
+			if (boundary && hitStop)
+				lineState = DMALineState.LastBitplaneFetch;
 			//lastFetchCount = (fmode&3) == 0 ? 8 : (fmode&3)==3 ? 32 : 16;
-			lastFetchCount = (int)(fetchCountMask + 1);
+			//lastFetchCount = (int)(fetchCountMask + 1);
+
 		}
 		else if (lineState == DMALineState.LastBitplaneFetch)
 		{
 			//either we will hit the last chance to fetch another block, or we'll hit the end of the scanline
 			//which means the modulos need to be added now todo: when does the Amiga add the modulos?
-			lastFetchCount--;
-			if (lastFetchCount == 0 || (clock.ClockState& ChipsetClockState.EndOfLine) != 0)
+			//lastFetchCount--;
+			//if (lastFetchCount == 0 || (clock.ClockState& ChipsetClockState.EndOfLine) != 0)
+			if (boundary || (clock.ClockState & ChipsetClockState.EndOfLine) != 0)
 			{
 				//debugging
 				if (clock.VerticalPos == debugger.dbugLine)
 					debugger.activity[clock.HorizontalPos] = 'C';
 				//debugging
+
 				lineState = DMALineState.LineComplete;
 
 				//if (clock.HorizontalPos != ddfstopfix)
@@ -268,6 +284,14 @@ public class Agnus : IAgnus
 
 				EndAgnusLine();
 			}
+		}
+
+		//belt and suspenders
+		if ((lineState == DMALineState.Fetching || lineState == DMALineState.LastBitplaneFetch)
+				&& (clock.ClockState & ChipsetClockState.EndOfLine) != 0)
+		{
+			lineState = DMALineState.LineComplete;
+			EndAgnusLine();
 		}
 
 		if (lineState == DMALineState.Fetching || lineState == DMALineState.LastBitplaneFetch)
