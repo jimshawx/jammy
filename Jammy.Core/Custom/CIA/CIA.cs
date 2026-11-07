@@ -45,43 +45,45 @@ namespace Jammy.Core.Custom.CIA
 		protected abstract uint interruptLevel { get; }
 		protected abstract char cia { get; }
 
-		private byte icrr;
+		[Persist]
+		protected byte icrr;
 		//writing to regs[ICR] sets icr which controls which interrupts TO trigger.
 		//icrr has the equivalent bits set for which interrupt WAS triggered. reset to 0 after read.
 
 		[Persist]
-		private ushort timerA;
+		protected ushort timerA;
 		[Persist]
-		private ushort timerB;
+		protected ushort timerB;
 
 		[Persist]
-		private ushort timerAreset;
+		protected ushort timerAreset;
 		[Persist]
-		private ushort timerBreset;
+		protected ushort timerBreset;
 
 		protected IInterrupt interrupt;
 
 		[Persist]
-		private uint todAlarm;
+		protected uint todAlarm;
 		[Persist]
-		private uint todLatch;
+		protected uint todLatch;
 
 		[Persist]
-		private uint todTimer;
+		protected uint todTimer;
 
 		[Persist]
-		private bool todStopped;
+		protected bool todStopped;
 		[Persist]
-		private bool todLatched;
+		protected bool todLatched;
 
 		[Persist]
-		private int outputShift;
+		protected int outputShift;
 
-
+		/* debugging */
 		private uint timerAstart;
 		private ushort timerAlen;
 		private uint timerBstart;
 		private ushort timerBlen;
+		/* debugging */
 
 		public virtual void Emulate()
 		{
@@ -198,7 +200,7 @@ namespace Jammy.Core.Custom.CIA
 			icrr = 0;
 		}
 
-		readonly MemoryRange memoryRange = new MemoryRange(0xbf0000, 0x10000);
+		private readonly MemoryRange memoryRange = new MemoryRange(0xbf0000, 0x10000);
 
 		public virtual bool IsMapped(uint address)
 		{
