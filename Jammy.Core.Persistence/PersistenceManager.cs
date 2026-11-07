@@ -57,6 +57,12 @@ namespace Jammy.Core.Persistence
 
 		public void Load(string filename)
 		{
+			if (!File.Exists(filename))
+			{
+				logger.LogTrace($"Can't locate snapshot file {filename}");
+				return;
+			}
+
 			var objects = JArray.Parse(File.ReadAllText(filename));
 			foreach (var o in objects)
 				foreach (var p in persisters)

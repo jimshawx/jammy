@@ -6,6 +6,7 @@ using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -260,9 +261,19 @@ namespace Jammy.Core.Floppy
 		private readonly TrackCache[] trackCache;
 
 		private class TrackCache
-		{ 
+		{
 			private Memory<byte> mfmBuffer = Memory<byte>.Empty;
+
+			[Persist]
+			private string mfmData {
+
+				get { return PersistenceManager.Pack(mfmBuffer.ToArray()); }
+				set { mfmBuffer = PersistenceManager.Unpack(value).AsMemory();	}
+			}
+
+			[Persist]
 			private uint lastTrack = uint.MaxValue;
+			[Persist]
 			private uint lastSide = uint.MaxValue;
 
 			private Drive drive;
@@ -321,6 +332,17 @@ namespace Jammy.Core.Floppy
 				mfmBuffer = Array.Empty<byte>();
 				lastTrack = uint.MaxValue;
 				lastSide = uint.MaxValue;
+			}
+
+			public void Save(JArray jobj, string id)
+			{
+				var jo = PersistenceManager.ToJObject(this, id);
+				jobj.Add(jo);
+			}
+
+			public void Load(JObject obj)
+			{
+				PersistenceManager.FromJObject(this, obj);
 			}
 		}
 
@@ -755,6 +777,44 @@ namespace Jammy.Core.Floppy
 		public void ReadyDisk()
 		{
 			pra &= ~PRA.DSKRDY;
+		}
+
+		public void Save(JArray obj)
+		{
+			var jo = PersistenceManager.ToJObject(this, "disk");
+
+			var drv = new JArray();
+			drive[0].Save(drv, "df0");
+			drive[1].Save(drv, "df1");
+			drive[2].Save(drv, "df2");
+			drive[3].Save(drv, "df3");
+			jo.Add("drives", drv);
+
+			var csh = new JArray();
+			trackCache[0].Save(csh, "df0");
+			trackCache[1].Save(csh, "df1");
+			trackCache[2].Save(csh, "df2");
+			trackCache[3].Save(csh, "df3");
+			jo.Add("caches", csh);
+
+			obj.Add(jo);
+		}
+
+		public void Load(JObject obj)
+		{
+			if (!PersistenceManager.Is(obj, "disk")) return;
+
+			drive[0].Load((JObject)obj["drives"][0]);
+			drive[1].Load((JObject)obj["drives"][1]);
+			drive[2].Load((JObject)obj["drives"][2]);
+			drive[3].Load((JObject)obj["drives"][3]);
+
+			trackCache[0].Load((JObject)obj["caches"][0]);
+			trackCache[1].Load((JObject)obj["caches"][1]);
+			trackCache[2].Load((JObject)obj["caches"][2]);
+			trackCache[3].Load((JObject)obj["caches"][3]);
+
+			PersistenceManager.FromJObject(this, obj);
 		}
 	}
 }

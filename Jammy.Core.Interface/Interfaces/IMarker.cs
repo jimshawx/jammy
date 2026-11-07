@@ -67,7 +67,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Dumping(bool enabled);
 		string GetDisassembly();
 	}
-	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB, IReadICR, IDebugChipsetRead
+	public interface IDiskDrives : IEmulate, ICustomReadWrite, IReadWritePRA, IReadWritePRB, IReadICR, IDebugChipsetRead, IStatePersister
 	{
 		void InsertDisk(int df);
 		void RemoveDisk(int df);
