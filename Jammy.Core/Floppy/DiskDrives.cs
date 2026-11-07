@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
@@ -324,7 +325,9 @@ namespace Jammy.Core.Floppy
 		}
 
 		private int upcomingDiskDMA = -1;
+		[Persist]
 		private bool runningDMA = false;
+		[Persist]
 		private bool synced = false;
 		private uint lastTick = 0;
 		private uint dmaReqStart = 0;
@@ -340,7 +343,7 @@ namespace Jammy.Core.Floppy
 					//logger.LogTrace($"DSKSYNC {dsksync:X4}");
 					break;
 				case ChipRegs.DSKPTH:
-					dskpt = (dskpt & 0x0000001f) | ((uint) value << 16);
+					dskpt = (dskpt & 0x0000ffff) | ((uint)(value & 0x1f) << 16);
 					break;
 				case ChipRegs.DSKPTL:
 					dskpt = (dskpt & 0xffff0000) | (uint)(value & 0xfffe);
