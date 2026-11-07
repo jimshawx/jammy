@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 /*
@@ -163,6 +164,7 @@ namespace Jammy.Core
 		private ulong totalWaits = 0;
 		private uint totalCycles = 0;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void RunAllEmulations()
 		{
 			for (int i = 0; i < emulations.Count; i++)
