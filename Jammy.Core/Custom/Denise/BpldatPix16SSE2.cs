@@ -13,7 +13,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Jammy.Core.Custom.Denise
 {
-	public class BpldatPix16SSE2 : IBpldatPix
+	public sealed class BpldatPix16SSE2 : IBpldatPix
 	{
 		private Vector128<ushort> bpldatpix = Vector128<ushort>.Zero;
 

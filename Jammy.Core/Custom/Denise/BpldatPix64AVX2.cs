@@ -11,7 +11,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Jammy.Core.Custom.Denise
 {
-	public class BpldatPix64AVX2 : IBpldatPix
+	public sealed class BpldatPix64AVX2 : IBpldatPix
 	{
 		private Vector256<ulong> p03 = Vector256<ulong>.Zero; // planes 0-3, bit 63 = current pixel
 		private Vector256<ulong> p47 = Vector256<ulong>.Zero; // planes 4-7

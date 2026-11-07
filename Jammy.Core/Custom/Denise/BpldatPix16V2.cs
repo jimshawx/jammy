@@ -11,10 +11,10 @@ using System.Runtime.CompilerServices;
 
 namespace Jammy.Core.Custom.Denise;
 
-public class BpldatPix16V2 : IBpldatPix
+public sealed class BpldatPix16V2 : IBpldatPix
 {
 	//[Persist] //handled manually
-	private static readonly ushort[] bpldatpix = new ushort[8];
+	private readonly ushort[] bpldatpix = new ushort[8];
 
 	public void WriteBitplanes(ref ulong[] bpldat, int oddeven)
 	{

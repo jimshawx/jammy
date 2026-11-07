@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 
 namespace Jammy.Core.Custom.Denise;
 
-public class BpldatPix64V2 : IBpldatPix
+public sealed class BpldatPix64V2 : IBpldatPix
 {
 	//[Persist]
 	private int alignShift;
