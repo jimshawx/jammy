@@ -459,10 +459,6 @@ public class DMAController : IDMA
 		activity.Size = size;
 		activity.ChipReg = chipReg;
 		activity.InsAddr = address;
-
-		//this (chipsetClock.HorizontalPos&1) is currently 1 for the first 4 planes, then 0 for the >5th one
-		//so when it's 0, we want a special case
-		activity.BR = (chipsetClock.HorizontalPos&1)==0 && priority == DMA.BPLEN;
 	}
 
 	//used when chipset itself wants to write to chip memory
@@ -508,7 +504,6 @@ public class DMAController : IDMA
 		return 0;
 	}
 
-	[Persist]
 	private ushort dmacon;
 
 	public void Write(uint insaddr, uint address, ushort value)
@@ -560,8 +555,8 @@ public class DMAController : IDMA
 	public void Save(JArray obj)
 	{
 		var jo = new JObject();
-		jo.Add("activities", JToken.FromObject(activities));
 		jo.Add("id", "dma");
+		jo.Add("activities", JToken.FromObject(activities));
 		obj.Add(jo);
 	}
 
@@ -573,12 +568,14 @@ public class DMAController : IDMA
 			.Select(x =>
 				new DMAActivity
 				{
-					Address = uint.Parse((string)x["Address"]),
-					ChipReg = uint.Parse((string)x["ChipReg"]),
-					Priority = (DMA)Enum.Parse(typeof(DMA), (string)x["Priority"]),
-					Size = (Size)Enum.Parse(typeof(Size), (string)x["Size"]),
 					Type = (DMAActivityType)Enum.Parse(typeof(DMAActivityType), (string)x["Type"]),
+					Address = uint.Parse((string)x["Address"]),
 					Value = ulong.Parse((string)x["Value"]),
+					Size = (Size)Enum.Parse(typeof(Size), (string)x["Size"]),
+					Priority = (DMA)Enum.Parse(typeof(DMA), (string)x["Priority"]),
+					ChipReg = uint.Parse((string)x["ChipReg"]),
+					Target = (CPUTarget)Enum.Parse(typeof(CPUTarget), (string)x["Target"]),
+					InsAddr = uint.Parse((string)x["InsAddr"]),
 				})
 			.ToArray()
 			.CopyTo(activities, 0);

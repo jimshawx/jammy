@@ -72,7 +72,6 @@ namespace Jammy.Core.Types.Types
 		public DMA Priority { get; set; }
 		public uint ChipReg { get; set; }
 		public CPUTarget Target { get; set; }
-		public bool BR { get ; set;}
 		public uint InsAddr { get; set; }
 
 		public override string ToString()
