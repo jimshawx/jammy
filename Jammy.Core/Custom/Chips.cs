@@ -651,15 +651,15 @@ namespace Jammy.Core.Custom
 				//writes will just drop on the floor
 				ushort value = ushort.Parse(pair.Value.ToString());
 				if (pair.Key == "DMACONR")
-					Write(0, ChipRegs.DMACON, (ushort)(value|0x8000), Size.Word);
+					WriteX(0, ChipRegs.DMACON, (ushort)(value|0x8000), Size.Word);
 				else if (pair.Key == "INTENAR")
-					Write(0, ChipRegs.INTENA, (ushort)(value | 0x8000), Size.Word);
+					WriteX(0, ChipRegs.INTENA, (ushort)(value | 0x8000), Size.Word);
 				else if (pair.Key == "INTREQR")
-					Write(0, ChipRegs.INTREQ, (ushort)(value | 0x8000), Size.Word);
+					WriteX(0, ChipRegs.INTREQ, (ushort)(value | 0x8000), Size.Word);
 				else if (pair.Key == "ADKCONR")
-					Write(0, ChipRegs.ADKCON, (ushort)(value | 0x8000), Size.Word);
+					WriteX(0, ChipRegs.ADKCON, (ushort)(value | 0x8000), Size.Word);
 				else
-					Write(0, deets[pair.Key].Address, value, Size.Word);
+					WriteX(0, deets[pair.Key].Address, value, Size.Word);
 			}
 		}
 	}
