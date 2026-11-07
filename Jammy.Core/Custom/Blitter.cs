@@ -63,6 +63,8 @@ namespace Jammy.Core.Custom
 			LineD,
 			LineEndOfWord,
 			LineEnd,
+
+			ImmediateBlitInterruptDelay
 		}
 
 		[Persist]
@@ -116,6 +118,8 @@ namespace Jammy.Core.Custom
 				case BlitterState.LineD: return LineD();
 				case BlitterState.LineEndOfWord: return LineEndOfWord();
 				case BlitterState.LineEnd: return LineEnd();
+
+				case BlitterState.ImmediateBlitInterruptDelay: return BlitterInterruptDelay();
 			}
 
 			throw new ArgumentOutOfRangeException();
@@ -1103,7 +1107,11 @@ namespace Jammy.Core.Custom
 			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
-			interrupt.AssertInterrupt(Types.Interrupt.BLIT);
+			//interrupt.AssertInterrupt(Types.Interrupt.BLIT);
+			//status = BlitterState.Idle;
+
+			interruptDelayCountdown = 20;
+			status = BlitterState.ImmediateBlitInterruptDelay;
 		}
 
 		private void BlitImmediate(uint insaddr, uint width, uint height)
@@ -1234,8 +1242,23 @@ namespace Jammy.Core.Custom
 			dma.WriteDMACON(dmacon);
 
 			//write blitter interrupt bit to INTREQ, trigger blitter done
+			//interrupt.AssertInterrupt(Types.Interrupt.BLIT);
+			//status = BlitterState.Idle;
+
+			interruptDelayCountdown = 20;
+			status = BlitterState.ImmediateBlitInterruptDelay;
+		}
+
+		private int interruptDelayCountdown;
+		private bool BlitterInterruptDelay()
+		{
+			interruptDelayCountdown--;
+			if (interruptDelayCountdown > 0) return false;
+			interruptDelayCountdown = 0;
+
 			interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 			status = BlitterState.Idle;
+			return false;
 		}
 
 		public uint DebugChipsetRead(uint address, Size size)
