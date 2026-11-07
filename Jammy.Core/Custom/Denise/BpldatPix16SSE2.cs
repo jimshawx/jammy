@@ -92,7 +92,7 @@ namespace Jammy.Core.Custom.Denise
 			//pixelMaskBit = int.Parse((string)obj.GetValue("pixelBitMask"));
 			var bpldatpix32 = new ushort[8];
 			obj.GetValue("bpldatpix")
-					.Select(x => uint.Parse((string)x))
+					.Select(x => ushort.Parse((string)x))
 					.ToArray()
 					.CopyTo(bpldatpix32, 0);
 			bpldatpix = Vector128.Create(bpldatpix32);

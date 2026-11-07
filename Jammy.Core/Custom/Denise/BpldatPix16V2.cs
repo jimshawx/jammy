@@ -90,7 +90,7 @@ public sealed class BpldatPix16V2 : IBpldatPix
 		if (!PersistenceManager.Is(obj, "pixels")) return;
 
 		obj.GetValue("bpldatpix")
-				.Select(x=>uint.Parse((string)x))
+				.Select(x=>ushort.Parse((string)x))
 				.ToArray()
 				.CopyTo(bpldatpix, 0);
 	}
