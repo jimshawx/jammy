@@ -278,6 +278,9 @@ namespace Jammy.Core.Custom
 
 							//does the wait already match? if so, wake up normally
 
+							if (waitBlit == 0 && (dma.ReadDMACON() & (uint)DMA.BBUSY) != 0)
+								break;
+
 							uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
 							coppos &= waitMask;
 							if (CopperCompare(coppos, (waitPos & waitMask)))
@@ -318,7 +321,7 @@ namespace Jammy.Core.Custom
 						//memory.NeedsDMA(DMASource.Copper, DMA.COPEN);
 
 						//If blitter-busy bit is set the comparisons will fail.
-						if (waitBlit == 0 && (dma.ReadDMACON() & (1 << (int)DMA.BBUSY)) != 0)
+						if (waitBlit == 0 && (dma.ReadDMACON() & (uint)DMA.BBUSY) != 0)
 						{
 							logger.LogTrace("WAIT delayed due to blitter running");
 							return;
