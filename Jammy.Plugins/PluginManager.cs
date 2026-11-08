@@ -52,8 +52,12 @@ namespace Jammy.Plugins
 
 			debugger.LockEmulation();
 
+			//todo: load from json config file
+			var whitelist = new List<string>();
+
 			Directory.GetFiles("plugins", "*.lua").ToList().ForEach(f =>
 			{
+				if (!whitelist.Contains(Path.GetFileNameWithoutExtension(f))) return;
 				try 
 				{ 
 					var code = File.ReadAllText(f);
@@ -74,6 +78,7 @@ namespace Jammy.Plugins
 
 			Directory.GetFiles("plugins", "*.js").ToList().ForEach(f =>
 			{
+				if (!whitelist.Contains(Path.GetFileNameWithoutExtension(f))) return;
 				try
 				{ 
 					var code = File.ReadAllText(f);
