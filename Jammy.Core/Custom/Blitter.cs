@@ -686,8 +686,8 @@ namespace Jammy.Core.Custom
 			//descending mode and one of the fill modes must be set
 			if (mode == 0 || (bltcon1 & (1 << 1)) == 0) return;
 
-			//hack: what to do if both EFE and IFE set? Let's choose EFE
-			if (mode == 3) mode = 2;
+			//hack: what to do if both EFE and IFE set? Let's choose IFE
+			if (mode == 3) mode = 1;
 
 			mode--;
 			mode |= (bltcon1 & (1 << 2))>>1;
@@ -705,8 +705,8 @@ namespace Jammy.Core.Custom
 			//descending mode and one of the fill modes must be set
 			if (mode ==0 || (bltcon1&(1<<1))==0) return;
 
-			//hack: what to do if both EFE and IFE set? Let's choose EFE
-			if (mode == 3) mode = 2;
+			//hack: what to do if both EFE and IFE set? Let's choose IFE
+			if (mode == 3) mode = 1;
 
 			//carry in
 			bool inside = (bltcon1&(1<<2))!=0;
