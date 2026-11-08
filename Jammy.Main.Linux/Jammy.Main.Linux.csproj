@@ -62,7 +62,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.14" />
-    <PackageReference Include="ReactiveUI.Avalonia" Version="12.1.6" />
+    <PackageReference Include="ReactiveUI.Avalonia" Version="12.1.5" />
   </ItemGroup>
 
   <ItemGroup>
