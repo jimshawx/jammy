@@ -74,10 +74,10 @@ namespace Jammy.Core.Custom
 		{
 			while (RunStateMachine()) ;
 
-			var currentState = status;
-			while (RunStateMachine()) ;
-			if (currentState != status)
-				logger.LogTrace($"{currentState}->{status}");
+			//var currentState = status;
+			//while (RunStateMachine()) ;
+			//if (currentState != status)
+			//	logger.LogTrace($"{currentState}->{status}");
 
 			//test the blitter state machine by running it to completion immediately
 			//while (status != BlitterState.Idle)
@@ -698,6 +698,7 @@ namespace Jammy.Core.Custom
 			bltddat = (ushort)tmp;
 		}
 
+		//pre-compute fills
 		private void FillInline()
 		{
 			uint mode = (bltcon1 >> 3) & 3;
