@@ -322,10 +322,7 @@ namespace Jammy.Core.Custom
 
 						//If blitter-busy bit is set the comparisons will fail.
 						if (waitBlit == 0 && (dma.ReadDMACON() & (uint)DMA.BBUSY) != 0)
-						{
-							logger.LogTrace("WAIT delayed due to blitter running");
-							return;
-						}
+							break;
 
 						uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
 						coppos &= waitMask;
