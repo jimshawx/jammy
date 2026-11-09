@@ -21,6 +21,10 @@
   </ItemGroup>
 
   <ItemGroup>
+	<None Include="$(SolutionDir)snapshots\**\*" Link="snapshots\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <Content Include="..\emulationSettings.json" Link="emulationSettings.json" />
   </ItemGroup>
   

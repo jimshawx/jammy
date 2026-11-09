@@ -2,6 +2,7 @@ using Jammy.Core.Types;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using Parky.Configuration.WritableJson;
 using System;
 using System.ComponentModel;
@@ -9,6 +10,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Windows.Forms;
 
 /*
@@ -20,6 +22,8 @@ namespace Jammy.UI.Settings
 	public partial class Settings : Form
 	{
 		private string configPath = "config";
+		private string snapshotPath = "snapshots";
+
 		private readonly IConfigurationRoot appConfig;
 
 		public Settings()
@@ -53,6 +57,25 @@ namespace Jammy.UI.Settings
 			ActiveControl = btnQuickStart;
 			CancelButton = btnExit;
 			AcceptButton = btnGo;
+
+			var snaps = Array.Empty<string>();
+			try
+			{
+				snaps = Directory.GetFiles(snapshotPath, "snap-*.json", SearchOption.TopDirectoryOnly);
+			}
+			catch { }
+			foreach (var snap in snaps)
+			{
+				try
+				{
+					var snapName = Path.GetFileNameWithoutExtension(snap).Substring(6);
+					var config = JsonObject.Parse(File.ReadAllText(snap));
+					var df0 = Path.GetFileNameWithoutExtension(config[0]["DF0"].ToString());
+					cbSnapshots.Items.Add($"{snapName} {df0}");
+				}
+				catch { }
+			}
+			cbSnapshots.SelectedIndex = 0;
 
 			var cfgs = Array.Empty<string>();
 			try
@@ -286,6 +309,7 @@ namespace Jammy.UI.Settings
 			{
 				string cfg = File.ReadAllText(fileName);
 				currentSettings = JsonConvert.DeserializeObject<Emulation>(cfg).Settings;
+				currentSettings.Snapshot = null;
 				BindSettings();
 				UpdateCurrentSettingFilename(fileName);
 			}
@@ -676,6 +700,27 @@ namespace Jammy.UI.Settings
 					btnSaveConfig.Enabled = true;
 					break;
 			}
+		}
+
+		private void cbSnapshots_SelectedValueChanged(object sender, EventArgs e)
+		{
+			if (cbSnapshots.SelectedIndex == 0) return;
+
+			try
+			{
+				//load the config
+				string snap = $"snap-{((string)cbSnapshots.SelectedItem).Split(' ')[0]}.json";
+
+				currentSettings = JArray.Parse(File.ReadAllText(Path.Combine(snapshotPath, snap)))[0].ToObject<EmulationSettings>();
+				BindSettings();
+				currentSettings.Snapshot = snap;
+
+				//Go!
+				SaveConfig("emulationSettings.json");
+				ConfigOK = true;
+				Close();
+			}
+			catch { }
 		}
 	}
 }

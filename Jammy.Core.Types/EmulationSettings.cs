@@ -121,5 +121,7 @@ namespace Jammy.Core.Types
 		public FloppySpeed FloppySpeed { get; set; }
 
 		public string LVODirectory { get { return "c:/source/programming/amiga";} set { } }
+
+		public string Snapshot { get; set; }
 	}
 }

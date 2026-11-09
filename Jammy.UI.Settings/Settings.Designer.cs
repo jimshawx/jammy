@@ -107,6 +107,7 @@ namespace Jammy.UI.Settings
 			nudHardDiskCount = new System.Windows.Forms.NumericUpDown();
 			cbDiskController = new System.Windows.Forms.ComboBox();
 			panel8 = new System.Windows.Forms.Panel();
+			cbSnapshots = new System.Windows.Forms.ComboBox();
 			panel1.SuspendLayout();
 			groupBox1.SuspendLayout();
 			panel2.SuspendLayout();
@@ -134,13 +135,13 @@ namespace Jammy.UI.Settings
 			cbQuickStart.Location = new System.Drawing.Point(22, 26);
 			cbQuickStart.Margin = new System.Windows.Forms.Padding(6);
 			cbQuickStart.Name = "cbQuickStart";
-			cbQuickStart.Size = new System.Drawing.Size(647, 40);
+			cbQuickStart.Size = new System.Drawing.Size(430, 40);
 			cbQuickStart.TabIndex = 1;
 			cbQuickStart.SelectedValueChanged += cbQuickStart_SelectedValueChanged;
 			// 
 			// btnQuickStart
 			// 
-			btnQuickStart.Location = new System.Drawing.Point(685, 28);
+			btnQuickStart.Location = new System.Drawing.Point(464, 21);
 			btnQuickStart.Margin = new System.Windows.Forms.Padding(6);
 			btnQuickStart.Name = "btnQuickStart";
 			btnQuickStart.Size = new System.Drawing.Size(139, 49);
@@ -994,11 +995,23 @@ namespace Jammy.UI.Settings
 			panel8.Size = new System.Drawing.Size(376, 111);
 			panel8.TabIndex = 24;
 			// 
+			// cbSnapshots
+			// 
+			cbSnapshots.FormattingEnabled = true;
+			cbSnapshots.Items.AddRange(new object[] { "launch a snapshot..." });
+			cbSnapshots.Location = new System.Drawing.Point(615, 26);
+			cbSnapshots.Margin = new System.Windows.Forms.Padding(6);
+			cbSnapshots.Name = "cbSnapshots";
+			cbSnapshots.Size = new System.Drawing.Size(657, 40);
+			cbSnapshots.TabIndex = 25;
+			cbSnapshots.SelectedValueChanged += cbSnapshots_SelectedValueChanged;
+			// 
 			// Settings
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			ClientSize = new System.Drawing.Size(1292, 1019);
+			Controls.Add(cbSnapshots);
 			Controls.Add(panel8);
 			Controls.Add(panel7);
 			Controls.Add(panel6);
@@ -1123,5 +1136,6 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.TextBox txtDH0;
 		private System.Windows.Forms.TextBox txtDH1;
 		private System.Windows.Forms.Panel panel8;
+		private System.Windows.Forms.ComboBox cbSnapshots;
 	}
 }

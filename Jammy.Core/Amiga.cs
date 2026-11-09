@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime;
 using System.Runtime.CompilerServices;
@@ -380,24 +381,27 @@ namespace Jammy.Core
 			emulationSemaphore.Wait();
 		}
 
-		private bool loadSnapshot = false;
+		//private bool loadSnapshot = false;
 
 		public void Emulate()
 		{
 			Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
-			if (loadSnapshot)
+			if (!string.IsNullOrEmpty(settings.Snapshot))
 			{ 
 				kickstart.SetMirror(false);
+				persistenceManager.Load(Path.Combine("snapshots", settings.Snapshot));
 				//Desert Dream
-				//persistenceManager.Load("state-2024-11-01-20-00-00.json");
-				//persistenceManager.Load("state-2024-11-02-18-22-56.json");
+				//persistenceManager.Load("snap-2024-11-01-20-00-00.json");
+				//persistenceManager.Load("snap-2024-11-02-18-22-56.json");
+				//persistenceManager.Load("snap-2026-11-08-00-09-59.json");
+				//persistenceManager.Load("snap-2026-11-08-00-19-32.json");
 				//Mental Hangover
-				//persistenceManager.Load("state-2024-11-02-19-11-53.json");
+				//persistenceManager.Load("snap-2024-11-02-19-11-53.json");
 				//Blitter Miracle
-				persistenceManager.Load("state-2025-02-12-12-23-09.json");
+				//persistenceManager.Load("snap-2025-02-12-12-23-09.json");
 				//Pinball Fantasies
-				//persistenceManager.Load("state-2024-11-04-22-05-32.json");
+				//persistenceManager.Load("snap-2024-11-04-22-05-32.json");
 			}
 
 			uint stepOutSp = 0xffffffff;
@@ -438,7 +442,7 @@ namespace Jammy.Core
 							break;
 
 						case EmulationMode.Snapshot:
-							persistenceManager.Save($"state-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.json");
+							persistenceManager.Save(Path.Combine("snapshots", $"snap-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.json"));
 							logger.LogTrace("Snapshot Recorded!");
 							emulationMode = EmulationMode.Running;
 							break;
