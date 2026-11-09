@@ -11,7 +11,7 @@
 	<StackPanel Orientation="Vertical">
 
 	  <StackPanel Orientation="Horizontal" Margin="4">
-		<ComboBox Name="cbQuickStart" Width="400" Background="White" SelectionChanged="cbQuickStart_SelectedValueChanged">
+		<ComboBox Name="cbQuickStart" Width="300" Background="White" SelectionChanged="cbQuickStart_SelectedValueChanged">
 			<ComboBoxItem>current configuration</ComboBoxItem>
 			<ComboBoxItem>A500, 512KB+512KB, OCS, KS1.3</ComboBoxItem>
 			<ComboBoxItem>A500+, 1MB+1MB, ECS, KS2.04</ComboBoxItem>
@@ -21,6 +21,9 @@
 			<ComboBoxItem>A4000, 2MB+16MB+256MB, AGA, KS3.1</ComboBoxItem>
 		</ComboBox>
 		<Button Name="btnQuickStart" Margin="8 0" Click="btnQuickStart_Click">Quick Start</Button>
+		<ComboBox Name="cbSnapshots" Width="400" Background="White" SelectionChanged="cbSnapshots_SelectedValueChanged">
+			<ComboBoxItem>launch a snapshot...</ComboBoxItem>
+		</ComboBox>
 	  </StackPanel>
 
 	  <StackPanel Orientation="Horizontal">
