@@ -68,7 +68,7 @@ namespace Jammy.UI.Settings
 			{
 				try
 				{
-					var snapName = Path.GetFileNameWithoutExtension(snap).Substring(6);
+					var snapName = Path.GetFileNameWithoutExtension(snap).Substring(5);
 					var config = JsonObject.Parse(File.ReadAllText(snap));
 					var df0 = Path.GetFileNameWithoutExtension(config[0]["DF0"].ToString());
 					cbSnapshots.Items.Add($"{snapName} {df0}");
