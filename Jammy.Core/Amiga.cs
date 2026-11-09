@@ -442,7 +442,7 @@ namespace Jammy.Core
 							break;
 
 						case EmulationMode.Snapshot:
-							persistenceManager.Save(Path.Combine("snapshots", $"snap-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.json"));
+							persistenceManager.Save(Path.Combine("snapshots", $"snap-{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.json"));
 							logger.LogTrace("Snapshot Recorded!");
 							emulationMode = EmulationMode.Running;
 							break;

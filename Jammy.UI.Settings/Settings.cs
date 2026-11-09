@@ -64,7 +64,7 @@ namespace Jammy.UI.Settings
 				snaps = Directory.GetFiles(snapshotPath, "snap-*.json", SearchOption.TopDirectoryOnly);
 			}
 			catch { }
-			foreach (var snap in snaps)
+			foreach (var snap in snaps.OrderBy(x => x))
 			{
 				try
 				{
