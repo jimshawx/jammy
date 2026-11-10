@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Floppy.DMS;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Extensions.Extensions;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.IO;
@@ -28,10 +29,19 @@ namespace Jammy.Core.Floppy
 
 		public IDisk DiskRead(string adfFileName)
 		{
-			adfFileName = Path.Combine(floppyPath, adfFileName);
-
+			//absolute path
 			if (!File.Exists(adfFileName))
-				return null;
+			{
+				//path with normalised directory separators
+				adfFileName = Paths.NormalisePath(adfFileName);
+				if (!File.Exists(adfFileName))
+				{
+					//path rooted in the games folder
+					adfFileName = Paths.NormalisePathRoot(adfFileName, floppyPath);
+					if (!File.Exists(adfFileName))
+						return null;
+				}
+			}
 
 			byte[] data;
 
