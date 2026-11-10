@@ -970,7 +970,7 @@ namespace Jammy.UI.Settings
 			// 
 			nudHardDiskCount.Location = new System.Drawing.Point(348, 49);
 			nudHardDiskCount.Margin = new System.Windows.Forms.Padding(6);
-			nudHardDiskCount.Maximum = new decimal(new int[] { 4, 0, 0, 0 });
+			nudHardDiskCount.Maximum = new decimal(new int[] { 2, 0, 0, 0 });
 			nudHardDiskCount.Name = "nudHardDiskCount";
 			nudHardDiskCount.ReadOnly = true;
 			nudHardDiskCount.Size = new System.Drawing.Size(80, 39);
