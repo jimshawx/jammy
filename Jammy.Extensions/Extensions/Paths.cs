@@ -63,7 +63,7 @@ namespace Jammy.Extensions.Extensions
 				if (File.Exists(candidate))
 					return candidate;
 			}
-			return null;
+			return string.Empty;
 		}
 	}
 }
