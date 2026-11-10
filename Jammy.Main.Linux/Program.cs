@@ -1,8 +1,11 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Primitives;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Styling;
-using Avalonia.Themes.Simple;
+using Avalonia.Themes.Fluent;
 using Jammy.Assembler;
 using Jammy.Core;
 using Jammy.Core.Audio.Linux;
@@ -44,7 +47,6 @@ using Jammy.Plugins;
 using Jammy.Plugins.Interface;
 using Jammy.Plugins.JavaScript.Jint;
 using Jammy.Plugins.Lua;
-using Jammy.Types;
 using Jammy.UI.Settings.Avalonia;
 using Jammy.WebAPI;
 using Microsoft.Extensions.Configuration;
@@ -67,7 +69,64 @@ public class JammyApplication : Application
 {
 	public override void Initialize()
 	{
-		Styles.Add(new SimpleTheme());
+		RequestedThemeVariant = ThemeVariant.Light;
+
+		var fluent = new FluentTheme { DensityStyle = DensityStyle.Compact };
+		fluent.Palettes[ThemeVariant.Light] = new ColorPaletteResources
+		{
+			RegionColor = Color.Parse("#F0F0F0"),   // form background
+			Accent = Color.Parse("#0078D7"),
+		};
+		Styles.Add(fluent);
+
+		Resources["ControlCornerRadius"] = new CornerRadius(0);
+		Resources["OverlayCornerRadius"] = new CornerRadius(0);
+		Resources["ContentControlThemeFontFamily"] = new FontFamily("Segoe UI");
+		Resources["ControlContentThemeFontSize"] = 12.0;
+
+		Styles.Add(new Style(x => x.Is<TemplatedControl>())
+		{
+			Setters =
+		{
+			new Setter(TemplatedControl.FontFamilyProperty, new FontFamily("Segoe UI")),
+			new Setter(TemplatedControl.FontSizeProperty, 12.0),
+		}
+		});
+		Styles.Add(new Style(x => x.Is<Button>())
+		{
+			Setters =
+		{
+			new Setter(Layoutable.MinHeightProperty, 21.0),
+			new Setter(TemplatedControl.PaddingProperty, new Thickness(8, 2)),
+			new Setter(ContentControl.HorizontalContentAlignmentProperty, HorizontalAlignment.Center),
+			new Setter(ContentControl.VerticalContentAlignmentProperty, VerticalAlignment.Center),
+		}
+		});
+		Styles.Add(new Style(x => x.Is<TextBox>())
+		{
+			Setters =
+	{
+		new Setter(Layoutable.MinHeightProperty, 20.0),
+		new Setter(TemplatedControl.PaddingProperty, new Thickness(1, 0)),
+		new Setter(TextBox.VerticalContentAlignmentProperty, VerticalAlignment.Center),
+	}
+		});
+		Styles.Add(new Style(x => x.Is<ComboBox>())
+		{
+			Setters =
+	{
+		new Setter(Layoutable.MinHeightProperty, 20.0),
+		new Setter(TemplatedControl.PaddingProperty, new Thickness(2, 0, 0, 0)),
+	}
+		});
+		Styles.Add(new Style(x => x.Is<CheckBox>())
+		{
+			Setters =
+		{
+			new Setter(Layoutable.MinHeightProperty, 21.0),
+			new Setter(Layoutable.MinWidthProperty, 0.0),
+		}
+		});
 	}
 
 	public override void OnFrameworkInitializationCompleted()

@@ -2,16 +2,125 @@
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  x:Class="Jammy.UI.Settings.Avalonia.Settings"
  Title="Settings"
- Width="824"
- Height="560"
+SizeToContent="WidthAndHeight"
  Background="#f0f0f0">
+	
+	<Window.Resources>
+		<ControlTheme x:Key="{x:Type RadioButton}" TargetType="RadioButton">
+			<Setter Property="Padding" Value="5,0,0,0"/>
+			<Setter Property="HorizontalAlignment" Value="Left"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Template">
+				<ControlTemplate TargetType="RadioButton">
+					<StackPanel Orientation="Horizontal" Background="Transparent">
+						<Grid Width="13" Height="13" VerticalAlignment="Center">
+							<Ellipse Name="Outer" Fill="White" Stroke="#6E6E6E" StrokeThickness="1"/>
+							<Ellipse Name="Dot" Width="5" Height="5" Fill="White" IsVisible="False"/>
+						</Grid>
+						<ContentPresenter Name="PART_ContentPresenter"
+										  Margin="{TemplateBinding Padding}"
+										  VerticalAlignment="Center"
+										  Content="{TemplateBinding Content}"
+										  ContentTemplate="{TemplateBinding ContentTemplate}"
+										  Foreground="{TemplateBinding Foreground}"
+										  RecognizesAccessKey="True"/>
+					</StackPanel>
+				</ControlTemplate>
+			</Setter>
 
-  <Panel Name="settings" Margin="20">
+			<Style Selector="^:pointerover /template/ Ellipse#Outer">
+				<Setter Property="Stroke" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:checked /template/ Ellipse#Outer">
+				<Setter Property="Fill" Value="#005F88"/>
+				<Setter Property="Stroke" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:checked /template/ Ellipse#Dot">
+				<Setter Property="IsVisible" Value="True"/>
+			</Style>
+			<Style Selector="^:disabled /template/ Ellipse#Outer">
+				<Setter Property="Opacity" Value="0.5"/>
+			</Style>
+		</ControlTheme>
+
+		<ControlTheme x:Key="{x:Type CheckBox}" TargetType="CheckBox">
+			<Setter Property="Padding" Value="5,0,0,0"/>
+			<Setter Property="HorizontalAlignment" Value="Left"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Template">
+				<ControlTemplate TargetType="CheckBox">
+					<StackPanel Orientation="Horizontal" Background="Transparent">
+						<Border Name="Box" Width="13" Height="13" VerticalAlignment="Center"
+								Background="White" BorderBrush="#6E6E6E" BorderThickness="1"
+								CornerRadius="2">
+							<Grid>
+								<Path Name="Tick" Data="M0,4 L3,7 L8,0" Stretch="Uniform" Margin="2.5"
+									  Stroke="White" StrokeThickness="1.5"
+									  StrokeLineCap="Round" StrokeJoin="Round" IsVisible="False"/>
+								<Rectangle Name="Mixed" Width="7" Height="7" Fill="White" IsVisible="False"/>
+							</Grid>
+						</Border>
+						<ContentPresenter Name="PART_ContentPresenter"
+										  Margin="{TemplateBinding Padding}"
+										  VerticalAlignment="Center"
+										  Content="{TemplateBinding Content}"
+										  ContentTemplate="{TemplateBinding ContentTemplate}"
+										  Foreground="{TemplateBinding Foreground}"
+										  RecognizesAccessKey="True"/>
+					</StackPanel>
+				</ControlTemplate>
+			</Setter>
+
+			<Style Selector="^:pointerover /template/ Border#Box">
+				<Setter Property="BorderBrush" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:checked /template/ Border#Box">
+				<Setter Property="Background" Value="#005F88"/>
+				<Setter Property="BorderBrush" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:checked /template/ Path#Tick">
+				<Setter Property="IsVisible" Value="True"/>
+			</Style>
+			<Style Selector="^:indeterminate /template/ Border#Box">
+				<Setter Property="Background" Value="#005F88"/>
+				<Setter Property="BorderBrush" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:indeterminate /template/ Rectangle#Mixed">
+				<Setter Property="IsVisible" Value="True"/>
+			</Style>
+			<Style Selector="^:disabled /template/ Border#Box">
+				<Setter Property="Opacity" Value="0.5"/>
+			</Style>
+		</ControlTheme>
+
+		<!--
+		<ControlTheme x:Key="{x:Type NumericUpDown}" TargetType="NumericUpDown">
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+		</ControlTheme>
+		-->
+
+		<SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#F5F5F5"/>
+		<SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="#E5E5E5"/>
+		<SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#F5F5F5"/>
+		<SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="#E5E5E5"/>
+		<SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#A0A0A0"/>
+
+		<SolidColorBrush x:Key="ButtonBackground" Color="#FDFDFD"/>
+		<SolidColorBrush x:Key="ButtonBorderBrush" Color="#D6D6D6"/>
+		<SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#F6F6F6"/>
+		<SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#C8C8C8"/>
+		<SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#EDEDED"/>
+		<SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#C0C0C0"/>
+
+	</Window.Resources>
+
+  <Panel Name="settings" Margin="8">
 
 	<StackPanel Orientation="Vertical">
 
-	  <StackPanel Orientation="Horizontal" Margin="4">
-		<ComboBox Name="cbQuickStart" Width="300" Background="White" SelectionChanged="cbQuickStart_SelectedValueChanged">
+	  <StackPanel Orientation="Horizontal" Margin="0,9,4,0">
+		<ComboBox Name="cbQuickStart" Width="214" Background="White" SelectionChanged="cbQuickStart_SelectedValueChanged">
 			<ComboBoxItem>current configuration</ComboBoxItem>
 			<ComboBoxItem>A500, 512KB+512KB, OCS, KS1.3</ComboBoxItem>
 			<ComboBoxItem>A500+, 1MB+1MB, ECS, KS2.04</ComboBoxItem>
@@ -21,20 +130,20 @@
 			<ComboBoxItem>A4000, 2MB+16MB+256MB, AGA, KS3.1</ComboBoxItem>
 		</ComboBox>
 		<Button Name="btnQuickStart" Margin="8 0" Click="btnQuickStart_Click">Quick Start</Button>
-		<ComboBox Name="cbSnapshots" Width="400" Background="White" SelectionChanged="cbSnapshots_SelectedValueChanged">
+		<ComboBox Name="cbSnapshots" Width="328" Background="White" SelectionChanged="cbSnapshots_SelectedValueChanged">
 			<ComboBoxItem>launch a snapshot...</ComboBoxItem>
 		</ComboBox>
 	  </StackPanel>
 
 	  <StackPanel Orientation="Horizontal">
 		<StackPanel Orientation="Vertical">
-		  <Border BorderThickness="1" BorderBrush="Black" Margin="4" >
-			<StackPanel x:Name="groupBox1" Margin="8">
+		  <Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0" >
+			<StackPanel x:Name="groupBox1" Margin="6,2,6,4">
 
-			  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">CPU</TextBlock>
+			  <TextBlock Foreground="#0078d7" Margin="0 0 0 3">CPU</TextBlock>
 
 			  <StackPanel Orientation="Horizontal">
-				<ComboBox x:Name="cbSku" Width="200" Height="30" Background="White" SelectionChanged="cbCPU_SelectedValueChanged">
+				<ComboBox x:Name="cbSku" Width="110" Height="21" Background="White" SelectionChanged="cbCPU_SelectedValueChanged">
 				  <ComboBoxItem>MC68000</ComboBoxItem>
 				  <ComboBoxItem>MC68EC020</ComboBoxItem>
 				  <ComboBoxItem>MC68030</ComboBoxItem>
@@ -50,12 +159,12 @@
 			</StackPanel>
 		  </Border>
 
-		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
-			<StackPanel Name="groupBox2" Margin="8">
+		  <Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
+			<StackPanel Name="groupBox2" Margin="6,2,6,4">
 
-			  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">Chipset</TextBlock>
+			  <TextBlock Foreground="#0078d7" Margin="0 0 0 3">Chipset</TextBlock>
 			  <StackPanel Orientation="Horizontal" >
-				<ComboBox Name="cbChipset" Width="200" Height="30" Background="White">
+				<ComboBox Name="cbChipset" Width="110" Height="21" Background="White">
 				  <ComboBoxItem>OCS</ComboBoxItem>
 				  <ComboBoxItem>ECS</ComboBoxItem>
 				  <ComboBoxItem>AGA</ComboBoxItem>
@@ -68,36 +177,36 @@
 			  </StackPanel>
 			</StackPanel>
 		  </Border>
-		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
+		  <Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
 
-			<StackPanel Name="groupBox3" Margin="8">
+			<StackPanel Name="groupBox3" Margin="6,2,6,4">
 
-			  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">Memory</TextBlock>
+			  <TextBlock Foreground="#0078d7" Margin="0 0 0 3">Memory</TextBlock>
 
 			  <StackPanel Orientation="Horizontal">
 
 				<StackPanel Orientation="Vertical">
-				  <TextBlock Name="_text" Foreground="#0078d7" Width="100" Height="30">Chip</TextBlock>
-				  <TextBlock Name="_text2" Foreground="#0078d7" Width="100" Height="30">Trapdoor</TextBlock>
-				  <TextBlock Name="_text3" Foreground="#0078d7" Width="100" Height="30">Zorro II</TextBlock>
-				  <TextBlock Name="_text4" Foreground="#0078d7" Width="100" Height="30">Zorro III</TextBlock>
-				  <TextBlock Name="_text5" Foreground="#0078d7" Width="100" Height="30">Motherboard</TextBlock>
-				  <TextBlock Name="_text6" Foreground="#0078d7" Width="100" Height="30">CPU Slot</TextBlock>
+				  <TextBlock Name="_text" Foreground="#0078d7" Width="100" Height="21" Margin="0,0,0,9" Padding="0,3,0,0">Chip</TextBlock>
+				  <TextBlock Name="_text2" Foreground="#0078d7" Width="100" Height="21" Margin="0,0,0,9" Padding="0,3,0,0">Trapdoor</TextBlock>
+				  <TextBlock Name="_text3" Foreground="#0078d7" Width="100" Height="21" Margin="0,0,0,9" Padding="0,3,0,0">Zorro II</TextBlock>
+				  <TextBlock Name="_text4" Foreground="#0078d7" Width="100" Height="21" Margin="0,0,0,9" Padding="0,3,0,0">Zorro III</TextBlock>
+				  <TextBlock Name="_text5" Foreground="#0078d7" Width="100" Height="21" Margin="0,0,0,9" Padding="0,3,0,0">Motherboard</TextBlock>
+				  <TextBlock Name="_text6" Foreground="#0078d7" Width="100" Height="21" Margin="0,0,0,9" Padding="0,3,0,0">CPU Slot</TextBlock>
 				</StackPanel>
 				<StackPanel Orientation="Vertical">
-				  <ComboBox Name="dudChipRAM" Width="100" Height="30" Background="White">
+				  <ComboBox Name="dudChipRAM" Width="100" Height="21" Margin="0,0,0,9" Background="White">
 					<ComboBoxItem>0.5</ComboBoxItem>
 					<ComboBoxItem>1.0</ComboBoxItem>
 					<ComboBoxItem>2.0</ComboBoxItem>
 				  </ComboBox>
-				  <ComboBox Name="dudTrapdoor" Width="100" Height="30" Background="White">
+				  <ComboBox Name="dudTrapdoor" Width="100" Height="21" Margin="0,0,0,9" Background="White">
 					<ComboBoxItem>0</ComboBoxItem>
 					<ComboBoxItem>0.5</ComboBoxItem>
 					<ComboBoxItem>1.0</ComboBoxItem>
 					<ComboBoxItem>1.5</ComboBoxItem>
 					<ComboBoxItem>1.75</ComboBoxItem>
 				  </ComboBox>
-				  <ComboBox Name="dudZ2" Width="100" Height="30" Background="White">
+				  <ComboBox Name="dudZ2" Width="100" Height="21" Margin="0,0,0,9" Background="White">
 					<ComboBoxItem>0</ComboBoxItem>
 					<ComboBoxItem>0.5</ComboBoxItem>
 					<ComboBoxItem>1.0</ComboBoxItem>
@@ -105,7 +214,7 @@
 					<ComboBoxItem>4.0</ComboBoxItem>
 					<ComboBoxItem>8.0</ComboBoxItem>
 				  </ComboBox>
-				  <ComboBox Name="dudZ3" Width="100" Height="30" Background="White">
+				  <ComboBox Name="dudZ3" Width="100" Height="21" Margin="0,0,0,9" Background="White">
 					<ComboBoxItem>0</ComboBoxItem>
 					<ComboBoxItem>128</ComboBoxItem>
 					<ComboBoxItem>256</ComboBoxItem>
@@ -115,14 +224,14 @@
 					<ComboBoxItem>512+512</ComboBoxItem>
 					<ComboBoxItem>512+512+512</ComboBoxItem>
 				  </ComboBox>
-				  <ComboBox Name="dudMotherboard" Width="100" Height="30" Background="White">
+				  <ComboBox Name="dudMotherboard" Width="100" Height="21" Margin="0,0,0,9" Background="White">
 					<ComboBoxItem>0</ComboBoxItem>
 					<ComboBoxItem>8</ComboBoxItem>
 					<ComboBoxItem>16</ComboBoxItem>
 					<ComboBoxItem>32</ComboBoxItem>
 					<ComboBoxItem>64</ComboBoxItem>
 				  </ComboBox>
-				  <ComboBox Name="dudCPUSlot" Width="100" Height="30" Background="White">
+				  <ComboBox Name="dudCPUSlot" Width="100" Height="21" Margin="0,0,0,9" Background="White">
 					<ComboBoxItem>0</ComboBoxItem>
 					<ComboBoxItem>8</ComboBoxItem>
 					<ComboBoxItem>16</ComboBoxItem>
@@ -137,30 +246,30 @@
 		</StackPanel>
 
 		<StackPanel Orientation="Vertical">
-		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
-			<Panel Name="groupBox4" Margin="8">
+		  <Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
+			<Panel Name="groupBox4" Margin="6,2,6,4">
 			  <StackPanel Orientation="Vertical">
-				<TextBlock Foreground="#0078d7" Margin="0 0 0 8">Floppy Disk</TextBlock>
+				<TextBlock Foreground="#0078d7" Margin="0 0 0 3">Floppy Disk</TextBlock>
 				<StackPanel Orientation="Horizontal">
-				  <TextBox Name="txtDF0" Width="344" Height="30"></TextBox>
-				  <Button Name="btnDF0Pick" Width="29" Height="30" Margin="4 0" Click="btnDF0Pick_Click">...</Button>
-				  <Button Name="btnDF0Eject" Width="29" Height="30" Margin="4 0" Click="btnDF0Eject_Click">&#x23CF;</Button>
-				  <NumericUpDown Name="nudFloppyCount" Value= "1" Minimum="0" Maximum="4" Width="50" Height="30" Padding="0" FormatString="n0" ValueChanged="nudFloppyCount_ValueChanged"></NumericUpDown>
+				  <TextBox Name="txtDF0" Width="282" Height="21" Margin="0,0,0,8"></TextBox>
+				  <Button Name="btnDF0Pick" Width="29" Height="21" Margin="4 0" Click="btnDF0Pick_Click">...</Button>
+				  <Button Name="btnDF0Eject" Width="29" Height="21" Margin="4 0" Click="btnDF0Eject_Click">&#x23CF;&#xFE0E;</Button>
+				  <NumericUpDown Name="nudFloppyCount" Value= "1" Minimum="0" Maximum="4" Width="90" Height="21" Padding="0" FormatString="n0" VerticalContentAlignment="Center" ValueChanged="nudFloppyCount_ValueChanged"></NumericUpDown>
 				</StackPanel>
 				<StackPanel Orientation="Horizontal">
-				  <TextBox Name="txtDF1" Width="344" Height="30"></TextBox>
-				  <Button Name="btnDF1Pick" Width="29" Height="30" Margin="4 0" Click="btnDF1Pick_Click">...</Button>
-				  <Button Name="btnDF1Eject" Width="29" Height="30" Margin="4 0" Click="btnDF1Eject_Click">&#x23CF;</Button>
+				  <TextBox Name="txtDF1" Width="282" Height="21" Margin="0,0,0,8"></TextBox>
+				  <Button Name="btnDF1Pick" Width="29" Height="21" Margin="4 0" Click="btnDF1Pick_Click">...</Button>
+				  <Button Name="btnDF1Eject" Width="29" Height="21" Margin="4 0" Click="btnDF1Eject_Click">&#x23CF;&#xFE0E;</Button>
 				</StackPanel>
 				<StackPanel Orientation="Horizontal">
-				  <TextBox Name="txtDF2" Width="344" Height="30"></TextBox>
-				  <Button Name="btnDF2Pick" Width="29" Height="30" Margin="4 0" Click="btnDF2Pick_Click">...</Button>
-				  <Button Name="btnDF2Eject" Width="29" Height="30" Margin="4 0" Click="btnDF2Eject_Click">&#x23CF;</Button>
+				  <TextBox Name="txtDF2" Width="282" Height="21" Margin="0,0,0,8"></TextBox>
+				  <Button Name="btnDF2Pick" Width="29" Height="21" Margin="4 0" Click="btnDF2Pick_Click">...</Button>
+				  <Button Name="btnDF2Eject" Width="29" Height="21" Margin="4 0" Click="btnDF2Eject_Click">&#x23CF;&#xFE0E;</Button>
 				</StackPanel>
 				<StackPanel Orientation="Horizontal">
-				  <TextBox Name="txtDF3" Width="344" Height="30"></TextBox>
-				  <Button Name="btnDF3Pick" Width="29" Height="30" Margin="4 0" Click="btnDF3Pick_Click">...</Button>
-				  <Button Name="btnDF3Eject" Width="29" Height="30" Margin="4 0" Click="btnDF3Eject_Click">&#x23CF;</Button>
+				  <TextBox Name="txtDF3" Width="282" Height="21" Margin="0,0,0,8"></TextBox>
+				  <Button Name="btnDF3Pick" Width="29" Height="21" Margin="4 0" Click="btnDF3Pick_Click">...</Button>
+				  <Button Name="btnDF3Eject" Width="29" Height="21" Margin="4 0" Click="btnDF3Eject_Click">&#x23CF;&#xFE0E;</Button>
 				</StackPanel>
 				 <StackPanel Orientation="Horizontal">
 					<RadioButton Name="rbFloppyFast" IsChecked="true" Margin="4 0" Foreground="#0078d7">Fast</RadioButton>
@@ -170,57 +279,57 @@
 			</Panel>
 		  </Border>
 
-		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
+		  <Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
 
-			<Panel x:Name="groupBox5" Margin="8">
+			<Panel x:Name="groupBox5" Margin="6,2,6,4">
 
 			  <StackPanel Orientation="Vertical">
-				<TextBlock Foreground="#0078d7" Margin="0 0 0 8">Hard Disk</TextBlock>
+				<TextBlock Foreground="#0078d7" Margin="0 0 0 3">Hard Disk</TextBlock>
 
 				<StackPanel Orientation="Horizontal">
-				  <ComboBox Name="cbDiskController" Width="344" Height="30" Background="White">
+				  <ComboBox Name="cbDiskController" Width="282" Height="21" Margin="0,0,0,8" Background="White">
 					<ComboBoxItem>None</ComboBoxItem>
 					<ComboBoxItem>A600_A1200</ComboBoxItem>
 					<ComboBoxItem>A3000</ComboBoxItem>
 					<ComboBoxItem>A4000</ComboBoxItem>
 				  </ComboBox>
 
-				  <NumericUpDown Name="nudHardDiskCount" Minimum="0" Maximum="4" Value="0" Width="50" Height="30" Padding="0" Margin="4 0" FormatString="n0" ValueChanged="nudHardDiskCount_ValueChanged"></NumericUpDown>
+				  <NumericUpDown Name="nudHardDiskCount" Minimum="0" Maximum="4" Value="0" Width="90" Height="21" Padding="0" Margin="4 0" FormatString="n0" VerticalContentAlignment="Center" ValueChanged="nudHardDiskCount_ValueChanged"></NumericUpDown>
 
 				</StackPanel>
 				  <StackPanel Orientation="Horizontal">
-				  <TextBox Name="txtDH0" Width="344" Height="30"></TextBox>
-				  <Button Name="btnDH0Pick" Width="29" Height="30" Margin="4 0" Click="btnDH0Pick_Click">...</Button>
-				  <Button Name="btnDH0Eject" Width="29" Height="30" Margin="4 0" Click="btnDH0Eject_Click">&#x23CF;</Button>
+				  <TextBox Name="txtDH0" Width="282" Height="21" Margin="0,0,0,8"></TextBox>
+				  <Button Name="btnDH0Pick" Width="29" Height="21" Margin="4 0" Click="btnDH0Pick_Click">...</Button>
+				  <Button Name="btnDH0Eject" Width="29" Height="21" Margin="4 0" Click="btnDH0Eject_Click">&#x23CF;</Button>
 				</StackPanel>
 				<StackPanel Orientation="Horizontal">
-				  <TextBox Name="txtDH1" Width="344" Height="30"></TextBox>
-				  <Button Name="btnDH1Pick" Width="29" Height="30" Margin="4 0" Click="btnDH1Pick_Click">...</Button>
-				  <Button Name="btnDH1Eject" Width="29" Height="30" Margin="4 0" Click="btnDH1Eject_Click">&#x23CF;</Button>
+				  <TextBox Name="txtDH1" Width="282" Height="21" Margin="0,0,0,8"></TextBox>
+				  <Button Name="btnDH1Pick" Width="29" Height="21" Margin="4 0" Click="btnDH1Pick_Click">...</Button>
+				  <Button Name="btnDH1Eject" Width="29" Height="21" Margin="4 0" Click="btnDH1Eject_Click">&#x23CF;</Button>
 				</StackPanel>
 			  </StackPanel>
 			</Panel>
 		  </Border>
-		  <Border BorderThickness="1" BorderBrush="Black" Margin="4">
+		  <Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
 
-			<Panel Name="groupBox6" Margin="8">
+			<Panel Name="groupBox6" Margin="6,2,6,4">
 			  <StackPanel Orientation="Vertical">
-				<TextBlock Foreground="#0078d7" Margin="0 0 0 8">Kickstart</TextBlock>
+				<TextBlock Foreground="#0078d7" Margin="0 0 0 3">Kickstart</TextBlock>
 				<StackPanel Orientation="Horizontal">
-				  <TextBox Name="txtKickstart" Width="344" Height="30"></TextBox>
-				  <Button Name="btnROMPick" Width="29" Height="30" Margin="4 0" Click="btnROMPick_Click">...</Button>
+				  <TextBox Name="txtKickstart" Width="282" Height="21" Margin="0,0,0,8"></TextBox>
+				  <Button Name="btnROMPick" Width="29" Height="21" Margin="4 0" Click="btnROMPick_Click">...</Button>
 				</StackPanel>
 			  </StackPanel>
 			</Panel>
 		  </Border>
 		  <StackPanel Orientation="Horizontal">
-			<Border BorderThickness="1" BorderBrush="Black" Margin="4">
+			<Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
 
-			  <Panel Name="groupBox7" Margin="8">
+			  <Panel Name="groupBox7" Margin="6,2,6,4">
 
 				<StackPanel Orientation="Vertical">
 
-				  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">Miscellaneous</TextBlock>
+				  <TextBlock Foreground="#0078d7" Margin="0 0 0 3">Miscellaneous</TextBlock>
 				  <StackPanel Orientation="Horizontal">
 					<CheckBox Name="cbAudio" Margin="4 0" Foreground="#0078d7">Audio</CheckBox>
 					<CheckBox Name="cbDebugging" Margin="4 0" Foreground="#0078d7">Debugging</CheckBox>
@@ -229,11 +338,11 @@
 				</StackPanel>
 			  </Panel>
 			</Border>
-			<Border BorderThickness="1" BorderBrush="Black" Margin="4">
+			<Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
 
-			  <Panel Name="groupBox8" Margin="8">
+			  <Panel Name="groupBox8" Margin="6,2,6,4">
 				<StackPanel Orientation="Vertical">
-				  <TextBlock Foreground="#0078d7" Margin="0 0 0 8">Blitter</TextBlock>
+				  <TextBlock Foreground="#0078d7" Margin="0 0 0 3">Blitter</TextBlock>
 				  <StackPanel Orientation="Horizontal">
 					<RadioButton Name="rbImmediate" Margin="4 0" Foreground="#0078d7">Immediate</RadioButton>
 					<RadioButton Name="rbSynchronous" IsChecked="true" Margin="4 0" Foreground="#0078d7">Synchronous</RadioButton>
@@ -242,7 +351,7 @@
 			  </Panel>
 			</Border>
 		  </StackPanel>
-		  <StackPanel Orientation="Horizontal" Margin="4">
+		  <StackPanel Orientation="Horizontal" Margin="0,9,4,0">
 			<Button Name="btnExit" Width="80" Margin="4 0" Click="btnExit_Click">Exit</Button>
 			<Button Name="btnLoad" Width="80" Margin="4 0" Click="btnLoadConfig_Click">Load...</Button>
 			<Button Name="btnSaveConfig" Width="80" Margin="4 0" Click="btnSaveConfig_Click">Save</Button>
