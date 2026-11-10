@@ -69,7 +69,7 @@ namespace Jammy.UI.Settings.Avalonia
 				{
 					var snapName = Path.GetFileNameWithoutExtension(snap).Substring(5);
 					var config = JsonObject.Parse(File.ReadAllText(snap));
-					var df0 = Path.GetFileNameWithoutExtension(config[0]["DF0"].ToString());
+					var df0 = Path.GetFileNameWithoutExtension(config[0]["DF0"].ToString().Replace('\\','/'));
 					cbSnapshots.Items.Add($"{snapName} {df0}");
 				}
 				catch { }
@@ -90,7 +90,6 @@ namespace Jammy.UI.Settings.Avalonia
 		private bool Default(bool? value) { return value??false; }
 
 		public bool ConfigOK { get; set; }
-
 
 		private void btnQuickStart_Click(object sender, RoutedEventArgs e)
 		{
