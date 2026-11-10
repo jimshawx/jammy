@@ -36,6 +36,10 @@ namespace Parky.FormToAvalonia
 		private static string ConvertH(int h) { return ((int)(h / 2.5)).ToString(); }
 		private static string ConvertT(int t) { return ((int)(t / 2.5)).ToString(); }
 		private static string ConvertL(int l) { return ((int)(l / 2.5)).ToString(); }
+		private static string ConvertMargin(Padding margin)
+		{
+			return $"{ConvertW(margin.Left)} {ConvertH(margin.Top)} {ConvertW(margin.Right)} {ConvertH(margin.Bottom)}";
+		}
 
 		public static Avalonia.Controls.Window AvUiWindow()
 		{
@@ -144,7 +148,7 @@ namespace Parky.FormToAvalonia
 						ac.Width =  ConvertW(cc.Width);
 						ac.Height = ConvertH(cc.Height);
 						ac.Name = cc.Name;
-						ac.Margin = $"{0} {0} {0} {0}";
+						ac.Margin = ConvertMargin(cc.Margin);
 
 						var tabControl = (AvaloniaTypes.TabControl)ac;
 						var tab = (System.Windows.Forms.TabControl)cc;
@@ -176,7 +180,7 @@ namespace Parky.FormToAvalonia
 						ac.Width = ConvertW(cc.Width);
 						ac.Height = ConvertH(cc.Height);
 						ac.Name = cc.Name;
-						ac.Margin = $"{0} {0} {0} {0}";
+						ac.Margin = ConvertMargin(cc.Margin);
 
 						var grid = (AvaloniaTypes.Grid)ac;
 						var left = new AvaloniaTypes.Canvas();
@@ -230,7 +234,10 @@ namespace Parky.FormToAvalonia
 				ac.Width = ConvertW(cc.Width);
 				ac.Height = ConvertH(cc.Height);
 				ac.Name = cc.Name;
-				ac.Margin = $"{0} {0} {0} {0}";
+				ac.Margin = ConvertMargin(cc.Margin);
+
+				//styles
+				//ac.Styles = "";
 
 				// add to parent
 				if (a is AvaloniaTypes.Canvas panel)
