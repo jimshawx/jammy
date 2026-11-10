@@ -352,11 +352,11 @@ SizeToContent="WidthAndHeight"
 			</Border>
 		  </StackPanel>
 		  <StackPanel Orientation="Horizontal" Margin="0,9,4,0">
-			<Button Name="btnExit" Width="80" Margin="4 0" Click="btnExit_Click">Exit</Button>
+			<Button Name="btnExit" Width="80" Margin="4 0" Click="btnExit_Click" IsCancel="True">Exit</Button>
 			<Button Name="btnLoad" Width="80" Margin="4 0" Click="btnLoadConfig_Click">Load...</Button>
 			<Button Name="btnSaveConfig" Width="80" Margin="4 0" Click="btnSaveConfig_Click">Save</Button>
 			<Button Name="btnSaveAs" Width="80" Margin="4 0" Click="btnSaveAsConfig_Click">Save As...</Button>
-			<Button Name="btnGo" Width="80" Margin="4 0" FontStyle="Italic" Click="btnGo_Click">Go!</Button>
+			<Button Name="btnGo" Width="80" Margin="4 0" FontStyle="Italic" Click="btnGo_Click" IsDefault="True">Go!</Button>
 		  </StackPanel>
 		</StackPanel>
 
