@@ -29,19 +29,7 @@ namespace Jammy.Core.Floppy
 
 		public IDisk DiskRead(string adfFileName)
 		{
-			//absolute path
-			if (!File.Exists(adfFileName))
-			{
-				//path with normalised directory separators
-				adfFileName = Paths.NormalisePath(adfFileName);
-				if (!File.Exists(adfFileName))
-				{
-					//path rooted in the games folder
-					adfFileName = Paths.NormalisePathRoot(adfFileName, floppyPath);
-					if (!File.Exists(adfFileName))
-						return null;
-				}
-			}
+			adfFileName = Paths.GetCandidatePath(adfFileName, floppyPath);
 
 			byte[] data;
 

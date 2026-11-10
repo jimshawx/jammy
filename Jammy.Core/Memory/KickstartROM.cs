@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Types;
+using Jammy.Core.Types.Types;
+using Jammy.Extensions.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
-using Jammy.Core.Interface.Interfaces;
-using Jammy.Core.Types;
-using Jammy.Core.Types.Types;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 /*
 	Copyright 2020-2024 James Shaw. All Rights Reserved.
@@ -18,10 +19,10 @@ namespace Jammy.Core.Memory
 	{
 		private readonly IMemoryManager memoryManager;
 		private readonly ILogger logger;
-		private string path;
-		private string name;
 
 		private readonly MemoryRange mirrorRange;
+
+		private const string romsPath = "roms";
 
 		public KickstartROM(IDMA dma, IMemoryManager memoryManager, IOptions<EmulationSettings> settings, ILogger<KickstartROM> logger)// : base(dma)
 		{
@@ -40,14 +41,11 @@ namespace Jammy.Core.Memory
 				return;
 			}
 
-			path = settings.Value.KickStart;
-			name = Path.GetFileName(settings.Value.KickStart);
-
-			string fullName = Path.Combine("roms", path);
+			string fullName = Paths.GetCandidatePath(settings.Value.KickStart, romsPath);
 
 			try
 			{
-				logger.LogTrace($"Kickstart Loading {path} {name}");
+				logger.LogTrace($"Kickstart Loading {Path.GetFullPath(fullName)} {Path.GetFileName(fullName)}");
 
 				memory = File.ReadAllBytes(fullName);
 				if (memory.Length == 512 * 1024)
