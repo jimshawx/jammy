@@ -443,6 +443,24 @@ namespace Jammy.Core.Custom
 				case ChipRegs.SERPER:
 					serial.Write(insaddr, address, (ushort)value);
 					break;
+				case ChipRegs.BPLHMOD:
+				case ChipRegs.SPRHPTH:
+				case ChipRegs.SPRHPTL:
+				case ChipRegs.BPLHPTH:
+				case ChipRegs.BPLHPTL:
+				case ChipRegs.SPRHSTRT:
+				case ChipRegs.SPRHSTOP:
+				case ChipRegs.BPLHSTRT:
+				case ChipRegs.BPLHSTOP:
+				case ChipRegs.SPRHDAT:
+				case ChipRegs.BPLHDAT:
+					logger.LogTrace($"W UHRES Not Supported {ChipRegs.Name(address)} {originalAddress:X8} {value:X4} {value.ToBin()} @{insaddr:X8}");
+					break;
+
+				case ChipRegs.HHPOSW:
+					logger.LogTrace($"W DUAL Mode Not Supported {ChipRegs.Name(address)} {originalAddress:X8} {value:X4} {value.ToBin()} @{insaddr:X8}");
+					break;
+
 				default:
 					if (originalAddress >> 12 == 0xdff)
 						logger.LogTrace($"W UNMAPPED {ChipRegs.Name(address)} {originalAddress:X8} {value:X4} {value.ToBin()} @{insaddr:X8}");
