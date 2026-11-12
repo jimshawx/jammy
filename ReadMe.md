@@ -4,11 +4,15 @@
 
 [Jammy Releases](https://github.com/jimshawx/jammy/releases)
 
+
+
 ## Jim's Amiga Emulator
 
 This is a lockdown project I started in December 2020 with the intention of building an Amiga emulation that could interface the UI with Windows instead of Workbench.
 That quirky part of the project dropped away as soon as it became clear that you need to build a *really good* emulation first before you can run almost anything.
 So here is my humble attempt at an Amiga emulation.
+
+
 
 ### The good stuff
 
@@ -23,9 +27,9 @@ So here is my humble attempt at an Amiga emulation.
   * Copper, Blitter, CIA emulations
   * Sprite and Playfield collision
   * Sprite and Playfield priorities
-  * Good quality Audio
+  * Good quality Audio with filters
   * OCS, ECS, AGA emulation
-  * Floppy Disks, ADF/Zipped ADF/ADZ/DMS/RP9 (read) and ATA Hard Disks (read/write)
+  * Floppy Disks, ADF/Zipped ADF/ADZ/DMS/RP9/IPF (read) and ATA Hard Disks (read/write)
   * All kinds of RAM expansions (Chip, Trapdoor, CPU slot, Zorro II/III)
   * Battery-backed clock
   * VT100 Serial terminal
@@ -40,18 +44,87 @@ So here is my humble attempt at an Amiga emulation.
 * Completely new emulation not based on WinUAE
 * It's free! (MIT License)
 
+
+
 ### The not so good stuff
 
-* There are still a few problems with DMA timing
-* More efforts need to be made to get closer to cycle exact
-* CD32 CDROM and NVRAM not working
+* There are still a few problems with DMA timing and cycle exactness
 * Emulation of CPUs running faster than the standard 7MHz is poor
-* There are still many pieces of software that don't work yet
-* There's a broken IPF floppy disk reader
+* CD32 CDROM and NVRAM not working
+* There are still some pieces of software that don't work yet
 * The Linux version is missing the debugging UIs
 * There's no ARM build
 * The Javascript, Lua and web APIs need more work
 * The database needs more work
+
+
+
+## Instructions
+
+For the best emulation for A500 and A1200, pick Moira CPU and add some Trapdoor RAM. Set floppy to Accurate and choose Immediate Blitter. Turn the Audio on.
+If you want to use the debugger, tick the Debugging check box.
+
+The joystick is hard-coded to use Up,Down,Left,Right and Z for fire.
+
+Press F11 to take a snapshot of the emulation. When you next start the emulator the snapshot will appear in the snapshots dropdown on the settings screen.
+
+
+
+## Debugging
+
+A debug text log window appears when the emulation starts showing useful information about what the emulator is doing at that moment.
+
+Also debug UI appears when the emulation starts. There are windows showing disassembly, memory and many registers and flags.
+Using the buttons on the panel will let you stop,start and step through the emulation.
+There are buttons to enable/disable/raise interrupts in both Paula and CIAs, and to unstick the blitter.
+There are buttons to change the floppy disks, pick the radio button for the relevant drive and use Change to swap the disk. Use Insert to re-trigger the disk inserted flag.
+
+'Analyze' will generate a graph of the currently executing code.
+
+'Gen Disassemblies' will use all the gathered information from tracing the code and generate a disassembly of the kickstart ROM.
+
+'Gfx Scan' opens a window where you can examine the memory as a graphic.
+
+'String scan' opens a window where the entire memory is scanned for strings.
+
+'DMA' opens a window showing the DMA usage for the previous frame.
+
+'Crib Sheet' opens a useful window with documentation for all the Chipset and CIA registers.
+
+
+
+Also on the panel there's a dialog box which accepts the following commands:
+b address - breakpoint on execute at address
+bw address \[size(W)] - breakpoint on write at address
+br address \[size(W)] - breakpoint on read at address
+brw address \[size(W)] - breakpoint on read/write at address
+bc address - remove breakpoint at address
+t address - toggle breakpoint at address
+bl - list all breakpoints
+d address \[length(1000h)] - add an address range to the debugger
+m address \[length(1000h)] - add an address range to the memory dump
+w address \[value(0)] \[size(W)] - write a value to memory
+r address \[size(W)] - read a value from memory
+a address \[type(C)] \[length(1)] - set memory type C,B,W,L,S,U
+c address text - add a comment
+h address text - add a header
+g emulation Go
+s emulation Step
+so emulation Step Out
+x emulation Stop
+reg regname \[value(0)] - set a register
+
+? display this help in the debug window
+
+
+
+When the emulation window is active, press F9 to activate the debug keys.
+Once active, use F6 and F7 to position a dotted line over the emulation display. This will cause the state of many chipset registers at that line to be overlayed on the screen. Press F8 to reset the line, and F9 again to turn off the debug keys.
+There are many other debug keys active, and pressing some of them might corrupt the display.
+
+
+
+## Notes
 
 The C# 68000 is slightly faster than the C Musashi one, not because I have made any specific efforts to optimise it, but I think mostly because thunking out of C# into C and back again isn't particularly fast.
 In an effort to fix this, I have ported Musashi and the Musashi CPU generator to C#, and it is significantly faster now.
@@ -72,9 +145,13 @@ Thanks to Heikki Orsila and Andre Rodrigues de la Rocha for [xDMS](https://gitla
 
 Thanks to everyone who has downloaded the releases to give them a try.
 
+
+
 Contributions, PRs and comments welcome!
 
-Cheers,
 
-Jim
+
+### Cheers!
+
+### Jim
 
