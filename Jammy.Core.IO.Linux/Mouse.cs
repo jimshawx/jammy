@@ -192,7 +192,8 @@ namespace Jammy.Core.IO.Linux
 
 		public void WritePRA(uint insaddr, byte value)
 		{
-			pra = value;
+			//it's not useful to overwrite the button status
+			//pra = value;
 		}
 
 		public uint DebugChipsetRead(uint address, Size size)
