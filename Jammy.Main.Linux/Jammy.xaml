@@ -4,6 +4,117 @@
 		Title="Jammy"
 		x:Class="Jammy.Main.Linux.Jammy"
 		FontSize="9">
+
+		<Window.Resources>
+		<ControlTheme x:Key="{x:Type RadioButton}" TargetType="RadioButton">
+			<Setter Property="Padding" Value="5,0,0,0"/>
+			<Setter Property="HorizontalAlignment" Value="Left"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Template">
+				<ControlTemplate TargetType="RadioButton">
+					<StackPanel Orientation="Horizontal" Background="Transparent">
+						<Grid Width="13" Height="13" VerticalAlignment="Center">
+							<Ellipse Name="Outer" Fill="White" Stroke="#6E6E6E" StrokeThickness="1"/>
+							<Ellipse Name="Dot" Width="5" Height="5" Fill="White" IsVisible="False"/>
+						</Grid>
+						<ContentPresenter Name="PART_ContentPresenter"
+										  Margin="{TemplateBinding Padding}"
+										  VerticalAlignment="Center"
+										  Content="{TemplateBinding Content}"
+										  ContentTemplate="{TemplateBinding ContentTemplate}"
+										  Foreground="{TemplateBinding Foreground}"
+										  RecognizesAccessKey="True"/>
+					</StackPanel>
+				</ControlTemplate>
+			</Setter>
+
+			<Style Selector="^:pointerover /template/ Ellipse#Outer">
+				<Setter Property="Stroke" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:checked /template/ Ellipse#Outer">
+				<Setter Property="Fill" Value="#005F88"/>
+				<Setter Property="Stroke" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:checked /template/ Ellipse#Dot">
+				<Setter Property="IsVisible" Value="True"/>
+			</Style>
+			<Style Selector="^:disabled /template/ Ellipse#Outer">
+				<Setter Property="Opacity" Value="0.5"/>
+			</Style>
+		</ControlTheme>
+
+		<ControlTheme x:Key="{x:Type CheckBox}" TargetType="CheckBox">
+			<Setter Property="Padding" Value="5,0,0,0"/>
+			<Setter Property="HorizontalAlignment" Value="Left"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Template">
+				<ControlTemplate TargetType="CheckBox">
+					<StackPanel Orientation="Horizontal" Background="Transparent">
+						<Border Name="Box" Width="13" Height="13" VerticalAlignment="Center"
+								Background="White" BorderBrush="#6E6E6E" BorderThickness="1"
+								CornerRadius="2">
+							<Grid>
+								<Path Name="Tick" Data="M0,4 L3,7 L8,0" Stretch="Uniform" Margin="2.5"
+									  Stroke="White" StrokeThickness="1.5"
+									  StrokeLineCap="Round" StrokeJoin="Round" IsVisible="False"/>
+								<Rectangle Name="Mixed" Width="7" Height="7" Fill="White" IsVisible="False"/>
+							</Grid>
+						</Border>
+						<ContentPresenter Name="PART_ContentPresenter"
+										  Margin="{TemplateBinding Padding}"
+										  VerticalAlignment="Center"
+										  Content="{TemplateBinding Content}"
+										  ContentTemplate="{TemplateBinding ContentTemplate}"
+										  Foreground="{TemplateBinding Foreground}"
+										  RecognizesAccessKey="True"/>
+					</StackPanel>
+				</ControlTemplate>
+			</Setter>
+
+			<Style Selector="^:pointerover /template/ Border#Box">
+				<Setter Property="BorderBrush" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:checked /template/ Border#Box">
+				<Setter Property="Background" Value="#005F88"/>
+				<Setter Property="BorderBrush" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:checked /template/ Path#Tick">
+				<Setter Property="IsVisible" Value="True"/>
+			</Style>
+			<Style Selector="^:indeterminate /template/ Border#Box">
+				<Setter Property="Background" Value="#005F88"/>
+				<Setter Property="BorderBrush" Value="#005F88"/>
+			</Style>
+			<Style Selector="^:indeterminate /template/ Rectangle#Mixed">
+				<Setter Property="IsVisible" Value="True"/>
+			</Style>
+			<Style Selector="^:disabled /template/ Border#Box">
+				<Setter Property="Opacity" Value="0.5"/>
+			</Style>
+		</ControlTheme>
+
+		<!--
+		<ControlTheme x:Key="{x:Type NumericUpDown}" TargetType="NumericUpDown">
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+		</ControlTheme>
+		-->
+
+		<SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#F5F5F5"/>
+		<SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="#E5E5E5"/>
+		<SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#F5F5F5"/>
+		<SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="#E5E5E5"/>
+		<SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#A0A0A0"/>
+
+		<SolidColorBrush x:Key="ButtonBackground" Color="#FDFDFD"/>
+		<SolidColorBrush x:Key="ButtonBorderBrush" Color="#D6D6D6"/>
+		<SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#F6F6F6"/>
+		<SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#C8C8C8"/>
+		<SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#EDEDED"/>
+		<SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#C0C0C0"/>
+
+	</Window.Resources>
+
   <Canvas Width="1094" Height="544">
     <Button Canvas.Left="1045" Canvas.Top="481" Width="31" Height="18" Margin="0 0 0 0" Name="btnGenDisassemblies" Click="btnGenDisassemblies_Click">Dis</Button>
     <TextBox Canvas.Left="939" Canvas.Top="191" Width="131" Height="23" Margin="0 0 0 0" Name="tbClock" Text="" IsReadOnly="True"/>
