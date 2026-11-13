@@ -33,6 +33,7 @@ namespace Jammy.Core
 		private readonly IBreakpointCollection breakpointCollection;
 		private readonly IPersistenceManager persistenceManager;
 		private readonly IKickstartROM kickstart;
+		private readonly ICIAMemory ciaMemory;
 		private readonly ILogger logger;
 		private readonly IDebugMemoryMapper memoryMapper;
 		private readonly EmulationSettings settings;
@@ -53,7 +54,7 @@ namespace Jammy.Core
 			IAkiko akiko,
 			IPSUClock psuClock, ICPUClock cpuClock, IChipsetDebugger debugger,
 			IBreakpointCollection breakpointCollection, IPersistenceManager statePersister,
-			IKickstartROM kickstart, IOptions<EmulationSettings> settings, ILogger<Amiga> logger)
+			IKickstartROM kickstart, ICIAMemory ciaMemory, IOptions<EmulationSettings> settings, ILogger<Amiga> logger)
 		{
 			this.memoryMapper = memoryMapper;
 			this.cpu = cpu;
@@ -68,6 +69,7 @@ namespace Jammy.Core
 			this.breakpointCollection = breakpointCollection;
 			this.persistenceManager = statePersister;
 			this.kickstart = kickstart;
+			this.ciaMemory = ciaMemory;
 			this.logger = logger;
 			this.settings = settings.Value;
 
@@ -78,6 +80,13 @@ namespace Jammy.Core
 
 			if (cycleExact)
 			{
+				//A500
+				if (settings.Value.Sku == CPUSku.MC68000 && (settings.Value.ChipSet == ChipSet.OCS || settings.Value.ChipSet == ChipSet.ECS))
+					SetCycleExact(2.0);
+				//A1200
+				else if (settings.Value.Sku == CPUSku.MC68EC020 && settings.Value.ChipSet == ChipSet.AGA)
+					SetCycleExact(4.0);
+
 				((IMoiraCPU)cpu).SetSync(this.RunChipsetEmulationForCPU);
 				dma.SetSync(this.RunChipsetEmulationForRAM);
 			}
@@ -176,7 +185,8 @@ namespace Jammy.Core
 		//when the emulation is not in cycle-exact mode - the CPU read/write is executed immediately
 		private ushort RunChipsetEmulationForRAMImmediate()
 		{
-			dma.ExecuteCPUDMASlot();
+			//dma.ExecuteCPUDMASlot();
+			dma.FullSpeedExecuteAllDMAActivity();
 			return dma.LastRead;
 		}
 
@@ -208,29 +218,84 @@ namespace Jammy.Core
 		//this is run by the CPU each time it needs to run the chipset emulation (during a CPU instruction)
 		//when the emulation is in cycle-exact mode, if the CPU wanted a slot but the chipset
 		//takes it, it will iterate additional times until a slot is available
+		//private void RunChipsetEmulationForCPU(int count)
+		//{
+		//	int ticks = count / 2;
+
+		//	while (ticks > 0 || dma.IsWaitingForDMA(DMASource.CPU))
+		//	{
+		//		dma.TriggerHighestPriorityDMA();
+		//		if (!dma.LastDMASlotWasUsedByChipset() && dma.IsWaitingForDMA(DMASource.CPU))
+		//			dma.ExecuteCPUDMASlot();
+		//		clock.UpdateClock();
+
+		//		clock.Emulate();
+		//		RunAllEmulations();
+
+		//		ticks--;
+		//	}
+		//}
+
+		private void SetCycleExact(double ticksPerColorClock)
+		{
+			cckPeriod = ticksPerColorClock;
+			ePeriod = 5.0 * ticksPerColorClock;
+
+			cckCountdown = cckPeriod;
+			eCountdown = ePeriod;
+		}
+
+		private double cckPeriod;
+		private double ePeriod;
+
+		private double cckCountdown;
+		private double eCountdown;
+
 		private void RunChipsetEmulationForCPU(int count)
 		{
-			int ticks = count / 2;
+			bool isWaitingForDMA = dma.IsWaitingForDMA(DMASource.CPU);
+			bool isWaitingForCIA = ciaMemory.IsPending();
 
-			while (ticks > 0 || dma.IsWaitingForDMA(DMASource.CPU))
+			while (count > 0 || isWaitingForDMA || isWaitingForCIA)
 			{
-				dma.TriggerHighestPriorityDMA();
-				if (!dma.LastDMASlotWasUsedByChipset() && dma.IsWaitingForDMA(DMASource.CPU))
-					dma.ExecuteCPUDMASlot();
-				clock.UpdateClock();
+				eCountdown -= 1.0;
+				if (eCountdown <= 0.0)
+				{
+					eCountdown += ePeriod;
 
-				clock.Emulate();
-				RunAllEmulations();
+					if (isWaitingForCIA)
+					{
+						ciaMemory.ExecutePending();
+						isWaitingForCIA = false;
+					}
+				}
 
-				ticks--;
+				cckCountdown -= 1.0;
+				if (cckCountdown <= 0.0)
+				{
+					cckCountdown += cckPeriod;
+
+					dma.TriggerHighestPriorityDMA();
+					if (!dma.LastDMASlotWasUsedByChipset() && isWaitingForDMA)
+					{
+						dma.ExecuteCPUDMASlot();
+						isWaitingForDMA = false;
+					}
+					clock.UpdateClock();
+
+					clock.Emulate();
+					RunAllEmulations();
+				}
+				count--;
 			}
 		}
 
 		private bool cycleExact { get {
 									if (settings.CPU != CPUType.Moira) return false;
-									if (settings.Sku != CPUSku.MC68000) return false;
-									if (settings.ChipSet != ChipSet.OCS && settings.ChipSet != ChipSet.ECS) return false;
-									return true; } }
+									if (settings.Sku == CPUSku.MC68000 && (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)) return true;
+									if (settings.Sku == CPUSku.MC68EC020 && settings.ChipSet == ChipSet.AGA) return true;
+									return false; } }
+
 		private bool maximumSpeed { get { return true; } }
 
 		public void RunEmulations()
@@ -246,6 +311,7 @@ namespace Jammy.Core
 				clock.UpdateClock();
 				RunAllEmulations();
 				cpu.Emulate();
+				ciaMemory.ExecutePending();
 				dma.FullSpeedExecuteAllDMAActivity();
 				return;
 			}
@@ -381,8 +447,6 @@ namespace Jammy.Core
 			emulationSemaphore.Wait();
 		}
 
-		//private bool loadSnapshot = false;
-
 		public void Emulate()
 		{
 			Thread.CurrentThread.Priority = ThreadPriority.Highest;
@@ -391,17 +455,6 @@ namespace Jammy.Core
 			{ 
 				kickstart.SetMirror(false);
 				persistenceManager.Load(Path.Combine("snapshots", settings.Snapshot));
-				//Desert Dream
-				//persistenceManager.Load("snap-2024-11-01-20-00-00.json");
-				//persistenceManager.Load("snap-2024-11-02-18-22-56.json");
-				//persistenceManager.Load("snap-2026-11-08-00-09-59.json");
-				//persistenceManager.Load("snap-2026-11-08-00-19-32.json");
-				//Mental Hangover
-				//persistenceManager.Load("snap-2024-11-02-19-11-53.json");
-				//Blitter Miracle
-				//persistenceManager.Load("snap-2025-02-12-12-23-09.json");
-				//Pinball Fantasies
-				//persistenceManager.Load("snap-2024-11-04-22-05-32.json");
 			}
 
 			uint stepOutSp = 0xffffffff;

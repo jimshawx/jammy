@@ -473,8 +473,24 @@ namespace Jammy.Core.Custom.CIA
 			return new List<MemoryRange> {memoryRange};
 		}
 
+		private enum CIAPending
+		{
+			None,
+			Read,
+			Write
+		}
+
+		private CIAPending pending;
+		private uint pendingAddress;
+		private uint pendingValue;
+		private Size pendingSize;
+
 		public uint Read(uint insaddr, uint address, Size size)
 		{
+			pendingAddress = address;
+			pendingSize = size;
+			pending = CIAPending.Read;
+
 			if ((address & 1) != 0)
 				return ciaa.Read(insaddr, address, size);
 			else
@@ -482,6 +498,35 @@ namespace Jammy.Core.Custom.CIA
 		}
 
 		public void Write(uint insaddr, uint address, uint value, Size size)
+		{
+			pendingAddress = address;
+			pendingValue = value;
+			pendingSize = size;
+			pending = CIAPending.Write;
+			//ImmediateWrite(insaddr, address, value, size);
+		}
+
+		public bool IsPending()
+		{
+			//return false;
+			return pending != CIAPending.None;
+		}
+
+		public void ExecutePending()
+		{
+			//return;
+			if (pending == CIAPending.Read)
+			{
+				//just here to eat the time slot
+			}
+			else if (pending == CIAPending.Write)
+			{
+				ImmediateWrite(0, pendingAddress, pendingValue, pendingSize);
+			}
+			pending = CIAPending.None;
+		}
+
+		private void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
 		{
 			if ((address & 1) != 0)
 				ciaa.Write(insaddr, address, value, size);

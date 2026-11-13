@@ -61,7 +61,12 @@ namespace Jammy.Core.Interface.Interfaces
 	}
 	public interface ICIAAOdd : ICIA { }
 	public interface ICIABEven : ICIA { }
-	public interface ICIAMemory : IMemoryMappedDevice { }
+	public interface ICIAMemory : IMemoryMappedDevice
+	{
+		bool IsPending();
+		void ExecutePending();
+	}
+
 	public interface ICopper : IEmulate, ICustomReadWrite, IRequiresDMA, IDebugChipsetRead, IStatePersister
 	{
 		void Dumping(bool enabled);

@@ -423,9 +423,6 @@ public class DMAController : IDMA
 	{
 		for (int i = 0; i < activities.Length; i++)
 		{
-			//don't run the copper TOO fast
-			if ((DMASource)i == DMASource.Copper && !chipsetClock.IsCopperSlot())
-				continue;
 			ExecuteDMATransfer(activities[i]);
 		}
 	}
