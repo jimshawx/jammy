@@ -17,3 +17,6 @@ roms/**
 emulationSettings.json
 jammylog.txt
 /hd
+/hd1
+snapshots/**
+/blits
