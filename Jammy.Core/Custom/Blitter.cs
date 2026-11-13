@@ -1101,7 +1101,7 @@ namespace Jammy.Core.Custom
 			if (sign) bltcon1 |= (uint)BLTCON1.SIGN;
 
 			//clear BZERO if necessary and disable BBUSY in DMACON
-			ushort dmacon = 1 << 14;
+			ushort dmacon = 0;//1 << 14;
 			if (bltzero != 0)
 				dmacon |= 1 << 13;
 
@@ -1236,7 +1236,7 @@ namespace Jammy.Core.Custom
 			DelayedWriteImmediate(insaddr);
 
 			//clear BZERO if necessary and disable BBUSY in DMACON
-			ushort dmacon = 1 << 14;
+			ushort dmacon = 0;//1 << 14;
 			if (bltzero != 0)
 				dmacon |= 1 << 13;
 
@@ -1256,6 +1256,8 @@ namespace Jammy.Core.Custom
 			interruptDelayCountdown--;
 			if (interruptDelayCountdown > 0) return false;
 			interruptDelayCountdown = 0;
+
+			dma.WriteDMACON(1<<14);
 
 			interrupt.AssertInterrupt(Types.Interrupt.BLIT);
 			status = BlitterState.Idle;
