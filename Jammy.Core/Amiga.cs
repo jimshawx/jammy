@@ -181,18 +181,17 @@ namespace Jammy.Core
 				emulations[i].Emulate();
 		}
 
-		//this is run by Agnus immediately after the CPU has done a Chip RAM read/write
-		//when the emulation is not in cycle-exact mode - the CPU read/write is executed immediately
+		//this is run by Agnus immediately after the CPU has initiated a Contended read/write (Chip RAM, Trapdoor RAM, Chip Reg)
+		//when the emulation is not in cycle-exact mode - the read/write is executed immediately
 		private ushort RunChipsetEmulationForRAMImmediate()
 		{
-			//dma.ExecuteCPUDMASlot();
 			dma.FullSpeedExecuteAllDMAActivity();
 			return dma.LastRead;
 		}
 
 		private Regs logitRegs = new Regs();
 
-		//this is run by Agnus immediately after the CPU has initiated a Chip RAM read/write
+		//this is run by Agnus immediately after the CPU has initiated a Contended read/write (Chip RAM, Trapdoor RAM, Chip Reg)
 		//when the emulation is in cycle-exact mode - the read occurs immediately, but we flag the fact that 
 		//the CPU used a chip RAM slot
 		private ushort RunChipsetEmulationForRAM()
