@@ -8,6 +8,7 @@ using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
+using Jammy.Extensions.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -22,13 +23,15 @@ using NUnit.Framework;
 
 namespace Jammy.Tests
 {
-	public class LoggedChipRAM : ChipRAM, IMemoryMappedDevice
+	public class LoggedChipRAM : Memory, IChipRAM, IMemoryMappedDevice
 	{
 		private readonly ILogger logger;
 		private int blit;
+		private readonly uint chipSize;
 
-		public LoggedChipRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger) : base(dma, settings, logger)
+		public LoggedChipRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<ChipRAM> logger)
 		{
+			chipSize = (uint)(Math.Max(settings.Value.ChipMemory, 0.5) * 1024 * 1024);
 			this.logger = logger;
 			blit = 0;
 		}
@@ -57,6 +60,32 @@ namespace Jammy.Tests
 		{
 			log.Add(new ChipLog{address = address, value = (ushort)value});
 			base.Write(insaddr, address, value, size);
+		}
+
+		public ulong Read64(uint address)
+		{
+			return
+				  ((ulong)memory[address & addressMask] << 56)
+				+ ((ulong)memory[(address + 1) & addressMask] << 48)
+				+ ((ulong)memory[(address + 2) & addressMask] << 40)
+				+ ((ulong)memory[(address + 3) & addressMask] << 32)
+				+ ((ulong)memory[(address + 4) & addressMask] << 24)
+				+ ((ulong)memory[(address + 5) & addressMask] << 16)
+				+ ((ulong)memory[(address + 6) & addressMask] << 8)
+				+ memory[(address + 7) & addressMask];
+		}
+
+		public MemoryStream ToBmp(int w)
+		{
+			return memory[0..(int)chipSize].ToBmp(w);
+			throw new NotImplementedException();
+		}
+
+		public void FromBmp(Stream m)
+		{
+			var b = m.FromBmp();
+			Array.Copy(b, memory, b.Length);
+			throw new NotImplementedException();
 		}
 
 		//public void Copy(byte[] src)
