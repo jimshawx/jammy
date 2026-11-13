@@ -92,6 +92,7 @@ namespace Jammy.Core
 			}
 			else
 			{
+				SetCycleExact(10.0);
 				(cpu as IMoiraCPU)?.SetSync((_) => { });
 				dma.SetSync(this.RunChipsetEmulationForRAMImmediate);
 			}
@@ -123,9 +124,6 @@ namespace Jammy.Core
 			emulations.Add(cpuClock);
 			emulations.Add(denise);
 			emulations.Add(akiko);
-
-			if (!cycleExact)
-				emulations.Insert(0, clock);
 
 			resetters.Add(diskController);
 			//resetters.Add(interrupt);
@@ -163,17 +161,6 @@ namespace Jammy.Core
 			resetters.ForEach(x => x.Reset());
 		}
 
-		private ulong chipRAMReads = 0;
-		private ulong chipRAMWrites = 0;
-		private ulong trapdoorReads = 0;
-		private ulong trapdoorWrites = 0;
-		private ulong chipsetReads = 0; 
-		private ulong chipsetWrites = 0;
-		private ulong kickROMReads = 0;
-
-		private ulong totalWaits = 0;
-		private uint totalCycles = 0;
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void RunAllEmulations()
 		{
@@ -181,17 +168,18 @@ namespace Jammy.Core
 				emulations[i].Emulate();
 		}
 
-		//this is run by Agnus immediately after the CPU has initiated a Contended read/write (Chip RAM, Trapdoor RAM, Chip Reg)
+		//this is run by Agnus immediately after a Contended read/write (Chip RAM, Trapdoor RAM, Chip Reg)
 		//when the emulation is not in cycle-exact mode - the read/write is executed immediately
 		private ushort RunChipsetEmulationForRAMImmediate()
 		{
-			dma.FullSpeedExecuteAllDMAActivity();
-			return dma.LastRead;
+			ushort rv = RunChipsetEmulationForRAM();
+			RunChipsetEmulationForCPU(1);
+			return rv;
 		}
 
 		private Regs logitRegs = new Regs();
 
-		//this is run by Agnus immediately after the CPU has initiated a Contended read/write (Chip RAM, Trapdoor RAM, Chip Reg)
+		//this is run by Agnus immediately after a Contended read/write (Chip RAM, Trapdoor RAM, Chip Reg)
 		//when the emulation is in cycle-exact mode - the read occurs immediately, but we flag the fact that 
 		//the CPU used a chip RAM slot
 		private ushort RunChipsetEmulationForRAM()
@@ -209,31 +197,11 @@ namespace Jammy.Core
 				dma.SetCPUWaitingForDMA();
 			}
 
+			if (cpu is IMoiraCPU)
 			((IMoiraCPU)cpu).CheckInterrupt();
 
 			return dma.LastRead;
 		}
-
-		//this is run by the CPU each time it needs to run the chipset emulation (during a CPU instruction)
-		//when the emulation is in cycle-exact mode, if the CPU wanted a slot but the chipset
-		//takes it, it will iterate additional times until a slot is available
-		//private void RunChipsetEmulationForCPU(int count)
-		//{
-		//	int ticks = count / 2;
-
-		//	while (ticks > 0 || dma.IsWaitingForDMA(DMASource.CPU))
-		//	{
-		//		dma.TriggerHighestPriorityDMA();
-		//		if (!dma.LastDMASlotWasUsedByChipset() && dma.IsWaitingForDMA(DMASource.CPU))
-		//			dma.ExecuteCPUDMASlot();
-		//		clock.UpdateClock();
-
-		//		clock.Emulate();
-		//		RunAllEmulations();
-
-		//		ticks--;
-		//	}
-		//}
 
 		private void SetCycleExact(double ticksPerColorClock)
 		{
@@ -295,116 +263,11 @@ namespace Jammy.Core
 									if (settings.Sku == CPUSku.MC68EC020 && settings.ChipSet == ChipSet.AGA) return true;
 									return false; } }
 
-		private bool maximumSpeed { get { return true; } }
-
 		public void RunEmulations()
 		{
-			if (cycleExact)
-			{
-				cpu.Emulate();
-				return;
-			}
-
-			if (maximumSpeed)
-			{
-				clock.UpdateClock();
-				RunAllEmulations();
-				cpu.Emulate();
-				ciaMemory.ExecutePending();
-				dma.FullSpeedExecuteAllDMAActivity();
-				return;
-			}
-
-			clock.UpdateClock();
-			//emulations.ForEach(x => x.Emulate());
-			RunAllEmulations();
-
-			//totalWaits = 0;
-			//totalCycles = 0;
-			if (totalWaits == 0 && totalCycles == 0)
-			{
-				ulong nchipRAMReads;
-				ulong nchipRAMWrites;
-				ulong ntrapdoorReads;
-				ulong ntrapdoorWrites;
-				ulong nchipsetReads;
-				ulong nchipsetWrites;
-				ulong nkickROMReads;
-
-				ulong dchipRAMReads;
-				ulong dchipRAMWrites;
-				ulong dtrapdoorReads;
-				ulong dtrapdoorWrites;
-				ulong dchipsetReads;
-				ulong dchipsetWrites;
-				ulong dkickROMReads;
-
-				//in PAL, there are 312 x 227 ticks of the ChipsetClock per frame = 321 x 227 x 50 = 3,541,200 ticks per second
-				//and every time round this RunEmulations loop is on of these ticks.
-				//the CPU is running at twice that rate ~7.08MHz
-
-				agnus.Bookmark();
-				agnus.GetRGAReadWriteStats(out chipRAMReads, out chipRAMWrites, out trapdoorReads, out trapdoorWrites, out chipsetReads, out chipsetWrites, out kickROMReads);
-
-				totalCycles = 0;
-				//for (int i = 0; i < 2; i++)
-				{
-					cpu.Emulate();
-					totalCycles += cpu.GetCycles();
-				}
-
-				//the last instruction took this many CPU cycles, we need to make sure we don't try to execute any more
-				//CPU instructions until that many cycles have gone past.
-				//since chipset cycles are two CPU cycles, then
-				totalCycles /= 2;
-				//we need to eat this many cycles before we try to execute any more CPU
-
-				agnus.GetRGAReadWriteStats(out nchipRAMReads, out nchipRAMWrites, out ntrapdoorReads, out ntrapdoorWrites, out nchipsetReads, out nchipsetWrites, out nkickROMReads);
-
-				dchipRAMReads = nchipRAMReads - chipRAMReads;
-				dchipRAMWrites = nchipRAMWrites - chipRAMWrites;
-				dtrapdoorReads = ntrapdoorReads - trapdoorReads;
-				dtrapdoorWrites = ntrapdoorWrites - trapdoorWrites;
-				dchipsetReads = nchipsetReads - chipsetReads;
-				dchipsetWrites = nchipsetWrites - chipsetWrites;
-				dkickROMReads = nkickROMReads - kickROMReads;
-
-				//how many chip bus slots did that use?
-				totalWaits = dchipRAMReads + dchipRAMWrites + dtrapdoorReads + dtrapdoorWrites + dchipsetReads + dchipsetWrites + dkickROMReads;
-			}
-
-			//The CPU totalCycles time includes the 'usual' instruction fetch time.
-			//When running from Chip memory, that usual fetch coincides with an available DMA slot (x totalWaits)
-			//(usually an even-numbered one, but this is not essential).
-			//This gives the appearance of the CPU running at full speed. Only if there isn't a DMA slot
-			//available will the CPU slow down.
-			//NB. this code will only allocate even-numbered slots at the moment.
-			//If we assume that ordinarily the DMA slots needed will fall within the CPU instruction's clocks
-			//the idea is to allocate them while counting down the CPU clocks.
-			//If there are still any remaining once the CPU clocks are counted down, then that will be the delay.
-			//This isn't exactly how it works in reality, it's an approximation.
-
-			//set waiting for a DMA slot
-			if (totalWaits > 0)
-				dma.SetCPUWaitingForDMA();
-
-			//use up a CPU cycle
-			if (totalCycles > 0)
-				totalCycles--;
-
-			//dma.DebugExecuteAllDMAActivity();
-
-			//allocate the DMA slot
-			dma.TriggerHighestPriorityDMA();
-
-			if (totalWaits > 0 && !dma.IsWaitingForDMA(DMASource.CPU))
-			{
-				//CPU DMA Slot was allocated
-				totalWaits--;
-			}
-
-
-			//agnus.FlushBitplanes();
+			cpu.Emulate();
+			if (!cycleExact)
+				RunChipsetEmulationForCPU(1);
 		}
 
 		private Thread emuThread;
@@ -471,10 +334,7 @@ namespace Jammy.Core
 							break;
 
 						case EmulationMode.Step:
-							do
-							{
-								RunEmulations();
-							} while (totalCycles != 0 || totalWaits != 0);
+							RunEmulations();
 							emulationHasRun = true;
 							emulationMode = EmulationMode.Stopped;
 							break;

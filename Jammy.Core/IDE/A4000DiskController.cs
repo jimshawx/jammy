@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -29,7 +30,7 @@ namespace Jammy.Core.IDE
 		public const uint INTREQ = 0xdd3020;
 	}
 
-	public class A4000DiskController :  IA4000DiskController
+	public class A4000DiskController : MemoryMappedDevice, IA4000DiskController
 	{
 		private readonly IIDEController a4000IDEController;
 		private readonly ISCSIController scsiController;
@@ -53,14 +54,14 @@ namespace Jammy.Core.IDE
 			return new List<MemoryRange> {memoryRange};
 		}
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public override uint Read(uint insaddr, uint address, Size size)
 		{
 			if (address >= 0xdd0000 && address < 0xdd1000) return scsiController.Read(insaddr, address, size);
 			if (address >= 0xdd1000 && address < 0xdd4000) return a4000IDEController.Read(insaddr, address, size);
 			return 0;
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public override void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			if (address >= 0xdd0000 && address < 0xdd1000) { scsiController.Write(insaddr, address, value, size); return; }
 			if (address >= 0xdd1000 && address < 0xdd4000) { a4000IDEController.Write(insaddr, address, value, size); return; }

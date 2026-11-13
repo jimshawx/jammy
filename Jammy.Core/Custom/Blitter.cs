@@ -19,7 +19,7 @@ namespace Jammy.Core.Custom
 	public class Blitter : IBlitter
 	{
 		private readonly IInterrupt interrupt;
-		private readonly IContendedMemoryMappedDevice chipRam;
+		private readonly IChipRAM chipRam;
 		private readonly IDMA dma;
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
@@ -28,7 +28,7 @@ namespace Jammy.Core.Custom
 			ILogger<Blitter> logger)
 		{
 			this.interrupt = interrupt;
-			this.chipRam = (IContendedMemoryMappedDevice)chipRam;
+			this.chipRam = chipRam;
 			this.dma = dma;
 			this.settings = settings.Value;
 			this.logger = logger;

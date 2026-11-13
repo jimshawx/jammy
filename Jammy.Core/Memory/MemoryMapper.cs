@@ -118,13 +118,9 @@ namespace Jammy.Core.Memory
 			//if (address >> 16 == 0)
 			//	logger.LogTrace($"*** Read From Address 0 - {memoryManager.MappedDevice[0]}");
 
-			//if (memoryManager.MappedDevice[address] is IContendedMemoryMappedDevice)
-			//{ 
-			uint value = ((IContendedMemoryMappedDevice)memoryManager.MappedDevice[address]).ImmediateRead(insaddr, address, size);
+			uint value = memoryManager.MappedDevice[address].ImmediateRead(insaddr, address, size);
 			if (interceptor != null) interceptor.Read(insaddr, address, value, size);
 			return value;
-			//}
-			//return memoryManager.MappedDevice[address].Read(insaddr, address, size);
 		}
 
 		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
@@ -133,7 +129,7 @@ namespace Jammy.Core.Memory
 			//	logger.LogTrace($"*** Write to Address 0 - {memoryManager.MappedDevice[0]}");
 
 			if (interceptor != null) interceptor.Write(insaddr, address, value, size);
-			((IContendedMemoryMappedDevice)memoryManager.MappedDevice[address]).ImmediateWrite(insaddr, address, value, size);
+			memoryManager.MappedDevice[address].ImmediateWrite(insaddr, address, value, size);
 		}
 
 		public uint Fetch(uint insaddr, uint address, Size size)

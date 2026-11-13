@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -48,7 +49,7 @@ namespace Jammy.Core.IDE
 	}
 
 	//IDE Controller on the A600, A1200 and A4000
-	public abstract class IDEController : IIDEController, IDisposable
+	public abstract class IDEController : MemoryMappedDevice, IIDEController, IDisposable
 	{
 		private readonly IInterrupt interrupt;
 		private readonly EmulationSettings settings;
@@ -181,7 +182,7 @@ namespace Jammy.Core.IDE
 			}
 		}
 
-		public abstract uint Read(uint insaddr, uint address, Size size);
+		//public abstract uint Read(uint insaddr, uint address, Size size);
 
 		public uint ReadATA(uint insaddr, uint address, Size size)
 		{
@@ -212,7 +213,7 @@ namespace Jammy.Core.IDE
 			return value;
 		}
 
-		public abstract void Write(uint insaddr, uint address, uint value, Size size);
+		//public abstract void Write(uint insaddr, uint address, uint value, Size size);
 
 		public void WriteATA(uint insaddr, uint address, uint value, Size size)
 		{
@@ -544,6 +545,8 @@ namespace Jammy.Core.IDE
 		public List<MemoryRange> MappedRange() { return new List<MemoryRange> {emptyRange}; }
 		public uint Read(uint insaddr, uint address, Size size) { return 0; }
 		public void Write(uint insaddr, uint address, uint value, Size size) { }
+		public uint ImmediateRead(uint insaddr, uint address, Size size) { return 0; }
+		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size) { }
 		public void Reset() { }
 	}
 

@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Memory;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Enums;
@@ -220,14 +221,9 @@ namespace Jammy.Core.Custom.CIA
 			return (byte)((address >> 8) & 0xf);
 		}
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public byte Read(uint insaddr, uint address)
 		{
-			if (size == Size.Byte) return ReadByte(insaddr, address);
-			if (size == Size.Word) return (ReadByte(insaddr, address) << 8) | ReadByte(insaddr, address + 1);
-			return (ReadByte(insaddr, address) << 24) |
-					(ReadByte(insaddr, address+1) << 16) |
-					(ReadByte(insaddr, address+2) << 8) |
-					ReadByte(insaddr, address+3);
+			return (byte)ReadByte(insaddr, address);
 		}
 
 		public abstract uint ReadByte(uint insaddr, uint address);
@@ -265,14 +261,9 @@ namespace Jammy.Core.Custom.CIA
 			}
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public void Write(uint insaddr, uint address, byte value)
 		{
-			if (size == Size.Byte) { WriteByte(insaddr, address, value); return; }
-			if (size == Size.Word) { WriteByte(insaddr, address, value>>8); WriteByte(insaddr, address + 1, value); return; }
-			WriteByte(insaddr, address, value >> 24);
-			WriteByte(insaddr, address + 1, value >> 16);
-			WriteByte(insaddr, address + 2, value >> 8);
-			WriteByte(insaddr, address + 3, value);
+			WriteByte(insaddr, address, value);
 		}
 
 		public abstract void WriteByte(uint insaddr, uint address, uint value);
@@ -450,10 +441,10 @@ namespace Jammy.Core.Custom.CIA
 		}
 	}
 
-	public class CIAMemory : ICIAMemory
+	public class CIAMemory : MemoryMappedDevice, ICIAMemory
 	{
-		private readonly ICIAAOdd ciaa;
-		private readonly ICIABEven ciab;
+		protected readonly ICIAAOdd ciaa;
+		protected readonly ICIABEven ciab;
 
 		public CIAMemory(ICIAAOdd ciaa, ICIABEven ciab)
 		{
@@ -473,6 +464,50 @@ namespace Jammy.Core.Custom.CIA
 			return new List<MemoryRange> {memoryRange};
 		}
 
+		public override uint Read(uint insaddr, uint address, Size size)
+		{
+			if (size == Size.Word) return (Read(insaddr, address, Size.Byte) << 8) | Read(insaddr, address + 1, Size.Byte);
+			else if (size == Size.Long) return (Read(insaddr, address, Size.Byte) << 24) |
+												(Read(insaddr, address + 1, Size.Byte) << 16) |
+												(Read(insaddr, address + 2, Size.Byte) << 8) |
+												Read(insaddr, address + 3, Size.Byte);
+
+			if ((address & 1) != 0)
+				return ciaa.Read(insaddr, address);
+			else
+				return ciab.Read(insaddr, address);
+		}
+
+		public override void Write(uint insaddr, uint address, uint value, Size size)
+		{
+			if (size == Size.Word) { Write(insaddr, address, value >> 8, Size.Byte); Write(insaddr, address + 1, value, Size.Byte); return; }
+			else if (size == Size.Long) { 
+									Write(insaddr, address, value >> 24, Size.Byte);
+									Write(insaddr, address + 1, value >> 16, Size.Byte);
+									Write(insaddr, address + 2, value >> 8, Size.Byte);
+									Write(insaddr, address + 3, value, Size.Byte);
+									return;
+									}
+
+			if ((address & 1) != 0)
+				ciaa.Write(insaddr, address, (byte)value);
+			else
+				ciab.Write(insaddr, address, (byte)value);
+		}
+
+		public virtual bool IsPending()
+		{
+			return false;
+		}
+
+		public virtual void ExecutePending()
+		{
+			throw new System.NotImplementedException();
+		}
+	}
+
+	public class ContendedCIAMemory : CIAMemory, ICIAMemory
+	{
 		private enum CIAPending
 		{
 			None,
@@ -485,36 +520,34 @@ namespace Jammy.Core.Custom.CIA
 		private uint pendingValue;
 		private Size pendingSize;
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public ContendedCIAMemory(ICIAAOdd ciaa, ICIABEven ciab) : base(ciaa, ciab)
+		{
+		}
+
+		public new uint Read(uint insaddr, uint address, Size size)
 		{
 			pendingAddress = address;
 			pendingSize = size;
 			pending = CIAPending.Read;
 
-			if ((address & 1) != 0)
-				return ciaa.Read(insaddr, address, size);
-			else
-				return ciab.Read(insaddr, address, size);
+			return ImmediateRead(insaddr, address, size);
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public new void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			pendingAddress = address;
 			pendingValue = value;
 			pendingSize = size;
 			pending = CIAPending.Write;
-			//ImmediateWrite(insaddr, address, value, size);
 		}
 
-		public bool IsPending()
+		public override bool IsPending()
 		{
-			//return false;
 			return pending != CIAPending.None;
 		}
 
-		public void ExecutePending()
+		public override void ExecutePending()
 		{
-			//return;
 			if (pending == CIAPending.Read)
 			{
 				//just here to eat the time slot
@@ -524,14 +557,6 @@ namespace Jammy.Core.Custom.CIA
 				ImmediateWrite(0, pendingAddress, pendingValue, pendingSize);
 			}
 			pending = CIAPending.None;
-		}
-
-		private void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
-		{
-			if ((address & 1) != 0)
-				ciaa.Write(insaddr, address, value, size);
-			else
-				ciab.Write(insaddr, address, value, size);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.CDROM;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Memory;
 using Jammy.Core.Persistence;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
@@ -156,7 +157,7 @@ using System.Text;
 
 namespace Jammy.Core.Custom
 {
-	public class Akiko : IAkiko//, IDebugKeys
+	public class Akiko : MemoryMappedDevice, IAkiko//, IDebugKeys
 	{
 		[Flags]
 		private enum INTREQ : uint
@@ -428,7 +429,7 @@ namespace Jammy.Core.Custom
 		[Persist]
 		private byte piorw = 0;
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public override uint Read(uint insaddr, uint address, Size size)
 		{
 			uint origaddress = address;
 			uint v = 0;
@@ -532,7 +533,7 @@ namespace Jammy.Core.Custom
 			return v;
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public override void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			try { 
 			if (address >= 0xb80000)

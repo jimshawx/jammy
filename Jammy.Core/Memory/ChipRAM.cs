@@ -12,7 +12,6 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.Memory
 {
-
 	public class ChipRAM : ContendedMemory, IChipRAM
 	{
 		//Up to 2MB Mapped from 0x0 to 0x00200000
@@ -55,6 +54,23 @@ namespace Jammy.Core.Memory
 			//var b = m.FromBmp();
 			//Array.Copy(b, memory, b.Length);
 			throw new NotImplementedException();
+		}
+	}
+
+	public class ContendedChipRAM : ChipRAM, IChipRAM
+	{
+		public ContendedChipRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<ContendedChipRAM> logger) : base(dma, settings, logger)
+		{
+		}
+
+		public new uint Read(uint insaddr, uint address, Size size)
+		{
+			return ContendedRead(insaddr, address, size);
+		}
+
+		public new void Write(uint insaddr, uint address, uint value, Size size)
+		{
+			ContendedWrite(insaddr, address, value, size);
 		}
 	}
 }

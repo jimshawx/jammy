@@ -18,7 +18,7 @@ using System.Linq;
 
 namespace Jammy.Core.Custom
 {
-	public class Chips : IContendedMemoryMappedDevice, IChips, IDebugKeys
+	public class Chips : IMemoryMappedDevice, IChips, IDebugKeys
 	{
 		private readonly IInterrupt interrupt;
 		private readonly IDiskDrives diskDrives;
@@ -29,7 +29,7 @@ namespace Jammy.Core.Custom
 		private IDenise denise;
 		private readonly IMouse mouse;
 		private readonly ISerial serial;
-		private IDMA dma;
+		protected IDMA dma;
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
 		private IAudio audio;
@@ -120,7 +120,7 @@ namespace Jammy.Core.Custom
 
 		private HashSet<uint> unmappedReads = new HashSet<uint>();
 
-		public uint ReadX(uint insaddr, uint address, Size size)
+		public uint Read(uint insaddr, uint address, Size size)
 		{
 			uint originalAddress = address;
 			address |= 0xdf0000;
@@ -128,7 +128,7 @@ namespace Jammy.Core.Custom
 
 			if (size == Size.Byte)
 			{
-				uint r0 = ReadX(insaddr, address, Size.Word);
+				uint r0 = Read(insaddr, address, Size.Word);
 				byte r = (byte)(((originalAddress & 1) != 0) ? r0 : (r0 >> 8));
 				//if ((originalAddress & 1) != 0) logger.LogTrace($"Read from odd address {originalAddress:X8} {r0:X4} {r:X2} {ChipRegs.Name(address)}");
 				return r;
@@ -136,8 +136,8 @@ namespace Jammy.Core.Custom
 
 			if (size == Size.Long)
 			{
-				uint r0 = ReadX(insaddr, address, Size.Word);
-				uint r1 = ReadX(insaddr, address + 2, Size.Word);
+				uint r0 = Read(insaddr, address, Size.Word);
+				uint r1 = Read(insaddr, address + 2, Size.Word);
 				return (r0 << 16) | r1;
 			}
 
@@ -214,7 +214,7 @@ namespace Jammy.Core.Custom
 			return 0;
 		}
 
-		public void WriteX(uint insaddr, uint address, uint value, Size size)
+		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			uint originalAddress = address;
 			address |= 0xdf0000;
@@ -225,7 +225,7 @@ namespace Jammy.Core.Custom
 				//if ((originalAddress & 1) != 0) logger.LogTrace($"Write to odd address {originalAddress:X8},{value:X2} {ChipRegs.Name(address)}");
 				value &= 0xff;
 				value |= value << 8;
-				WriteX(insaddr, address, value, Size.Word);
+				Write(insaddr, address, value, Size.Word);
 				return;
 
 				/*
@@ -240,9 +240,9 @@ namespace Jammy.Core.Custom
 
 				//logger.LogTrace($"Custom write to byte {originalAddress:X8}");
 				if ((originalAddress & 1) != 0)
-					WriteX(insaddr, address, value, Size.Word);
+					Write(insaddr, address, value, Size.Word);
 				else
-					WriteX(insaddr, address, value << 8, Size.Word);
+					Write(insaddr, address, value << 8, Size.Word);
 				return;
 			}
 
@@ -250,8 +250,8 @@ namespace Jammy.Core.Custom
 			if (size == Size.Long)
 			{
 				//logger.LogTrace($"Custom write to long {address:X8}");
-				WriteX(insaddr, address, value >> 16, Size.Word);
-				WriteX(insaddr, address + 2, value, Size.Word);
+				Write(insaddr, address, value >> 16, Size.Word);
+				Write(insaddr, address + 2, value, Size.Word);
 				return;
 			}
 
@@ -481,50 +481,12 @@ namespace Jammy.Core.Custom
 
 		public uint ImmediateRead(uint insaddr, uint address, Size size)
 		{
-			return ReadX(insaddr, address, size);
+			return Read(insaddr, address, size);
 		}
 
 		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
 		{
-			WriteX(insaddr, address, value, size);
-		}
-
-		private uint contendedReads = 0;
-		private uint contendedWrites = 0;
-
-		public uint Read(uint insaddr, uint address, Size size)
-		{
-			uint v = 0;
-
-			if (size == Size.Long)
-			{
-				//contendedReads++;
-				dma.ReadCPU(CPUTarget.ChipReg, address, Size.Word);
-				v = dma.ChipsetSync() << 16;
-				size = Size.Word;
-				address += 2;
-			}
-
-			contendedReads++;
-			dma.ReadCPU(CPUTarget.ChipReg, address, size);
-			v |= dma.ChipsetSync();
-
-			return v;
-		}
-
-		public void Write(uint insaddr, uint address, uint value, Size size)
-		{
-			if (size == Size.Long)
-			{
-				contendedWrites++;
-				dma.WriteCPU(insaddr, CPUTarget.ChipReg, address, (ushort)(value >> 16), Size.Word);
-				dma.ChipsetSync();
-				size = Size.Word;
-				address += 2;
-			}
-			contendedWrites++;
-			dma.WriteCPU(insaddr, CPUTarget.ChipReg, address, (ushort)value, size);
-			dma.ChipsetSync();
+			Write(insaddr, address, value, size);
 		}
 
 		public uint DebugChipsetRead(uint address, Size size)
@@ -669,16 +631,63 @@ namespace Jammy.Core.Custom
 				//writes will just drop on the floor
 				ushort value = ushort.Parse(pair.Value.ToString());
 				if (pair.Key == "DMACONR")
-					WriteX(0, ChipRegs.DMACON, (ushort)(value|0x8000), Size.Word);
+					Write(0, ChipRegs.DMACON, (ushort)(value|0x8000), Size.Word);
 				else if (pair.Key == "INTENAR")
-					WriteX(0, ChipRegs.INTENA, (ushort)(value | 0x8000), Size.Word);
+					Write(0, ChipRegs.INTENA, (ushort)(value | 0x8000), Size.Word);
 				else if (pair.Key == "INTREQR")
-					WriteX(0, ChipRegs.INTREQ, (ushort)(value | 0x8000), Size.Word);
+					Write(0, ChipRegs.INTREQ, (ushort)(value | 0x8000), Size.Word);
 				else if (pair.Key == "ADKCONR")
-					WriteX(0, ChipRegs.ADKCON, (ushort)(value | 0x8000), Size.Word);
+					Write(0, ChipRegs.ADKCON, (ushort)(value | 0x8000), Size.Word);
 				else
-					WriteX(0, deets[pair.Key].Address, value, Size.Word);
+					Write(0, deets[pair.Key].Address, value, Size.Word);
 			}
 		}
+	}
+
+	public class ContendedChips : Chips, IMemoryMappedDevice
+	{
+		public ContendedChips(IInterrupt interrupt, IDiskDrives diskDrives, IMouse mouse, ISerial serial, 
+			IOptions<EmulationSettings> settings, ILogger<Chips> logger) : base(interrupt, diskDrives, mouse, serial, settings, logger)
+		{
+		}
+
+		private uint contendedReads = 0;
+		private uint contendedWrites = 0;
+
+		public new uint Read(uint insaddr, uint address, Size size)
+		{
+			uint v = 0;
+
+			if (size == Size.Long)
+			{
+				//contendedReads++;
+				dma.ReadCPU(CPUTarget.ChipReg, address, Size.Word);
+				v = dma.ChipsetSync() << 16;
+				size = Size.Word;
+				address += 2;
+			}
+
+			contendedReads++;
+			dma.ReadCPU(CPUTarget.ChipReg, address, size);
+			v |= dma.ChipsetSync();
+
+			return v;
+		}
+
+		public new void Write(uint insaddr, uint address, uint value, Size size)
+		{
+			if (size == Size.Long)
+			{
+				contendedWrites++;
+				dma.WriteCPU(insaddr, CPUTarget.ChipReg, address, (ushort)(value >> 16), Size.Word);
+				dma.ChipsetSync();
+				size = Size.Word;
+				address += 2;
+			}
+			contendedWrites++;
+			dma.WriteCPU(insaddr, CPUTarget.ChipReg, address, (ushort)value, size);
+			dma.ChipsetSync();
+		}
+
 	}
 }

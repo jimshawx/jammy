@@ -19,7 +19,7 @@ public class DMAController : IDMA
 	private IAudio audio;
 	private readonly IChipsetClock chipsetClock;
 	private readonly IChips chips;
-	private IContendedMemoryMappedDevice chipRAM;
+	private IChipRAM chipRAM;
 	private IMemoryMapper memoryMapper;
 	private readonly ILogger<DMAController> logger;
 	private readonly DMAActivity[] activities;
@@ -43,7 +43,7 @@ public class DMAController : IDMA
 	{
 		this.audio = audio;
 		this.memoryMapper = memoryMapper;
-		this.chipRAM = (IContendedMemoryMappedDevice)chipRAM;
+		this.chipRAM = chipRAM;
 	}
 
 	public void Reset()
@@ -417,14 +417,6 @@ public class DMAController : IDMA
 	{
 		foreach (var activity in activities)
 			ExecuteDMATransfer(activity);
-	}
-
-	public void FullSpeedExecuteAllDMAActivity()
-	{
-		for (int i = 0; i < activities.Length; i++)
-		{
-			ExecuteDMATransfer(activities[i]);
-		}
 	}
 
 	public void NoDMA(DMASource source)

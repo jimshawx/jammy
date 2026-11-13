@@ -10,7 +10,6 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.Memory
 {
-
 	public class TrapdoorRAM : ContendedMemory, ITrapdoorRAM
 	{
 		//AKA Slow-fast RAM
@@ -36,6 +35,21 @@ namespace Jammy.Core.Memory
 				memory = new byte[0];
 				addressMask = 0;
 			}
+		}
+	}
+
+	public class ContendedTrapdoorRAM : TrapdoorRAM, ITrapdoorRAM
+	{
+		public ContendedTrapdoorRAM(IDMA dma, IOptions<EmulationSettings> settings, ILogger<ContendedTrapdoorRAM> logger) : base(dma, settings, logger)
+		{
+		}
+		public new uint Read(uint insaddr, uint address, Size size)
+		{
+			return ContendedRead(insaddr, address, size);
+		}
+		public new void Write(uint insaddr, uint address, uint value, Size size)
+		{
+			ContendedWrite(insaddr, address, value, size);
 		}
 	}
 }

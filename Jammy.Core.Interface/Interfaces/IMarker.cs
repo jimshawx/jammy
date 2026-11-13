@@ -52,12 +52,14 @@ namespace Jammy.Core.Interface.Interfaces
 		void Dumping(bool enabled);
 		bool IsIdle();
 	}
-	public interface ICIA : IEmulate, IMemoryMappedDevice, IStatePersister
+	public interface ICIA : IEmulate, IStatePersister
 	{
 		byte SnoopICRR();
 		void SerialInterrupt();
 		void FlagInterrupt();
 		void DebugSetICR(ICRB i);
+		byte Read(uint insaddr, uint address);
+		void Write(uint insaddr, uint address, byte value);
 	}
 	public interface ICIAAOdd : ICIA { }
 	public interface ICIABEven : ICIA { }
@@ -121,7 +123,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IDebuggableMemory : IDebugRead, IDebugWrite { }
 
-	public interface IChips : IReset, IContendedMemoryMappedDevice, IMemoryMappedDevice, IDebugChipsetRead, IStatePersister
+	public interface IChips : IReset, IMemoryMappedDevice, IDebugChipsetRead, IStatePersister
 	{
 		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise, IDMA dma);
 		void ImmediateWriteWide(uint address, ulong value);
@@ -134,7 +136,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Fetch(uint insaddr, uint address, uint value, Size size);
 	}
 
-	public interface IMemoryMapper : IContendedMemoryMappedDevice, IMemoryMappedDevice, IReset
+	public interface IMemoryMapper : IMemoryMappedDevice, IReset
 	{
 		void AddMemoryIntercept(IMemoryInterceptor interceptor);
 		uint Fetch(uint insaddr, uint address, Size size);

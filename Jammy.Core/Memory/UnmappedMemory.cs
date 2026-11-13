@@ -55,5 +55,15 @@ namespace Jammy.Core.Memory
 		{
 			Write(0, address, value, size);
 		}
+
+		public uint ImmediateRead(uint insaddr, uint address, Size size)
+		{
+			return Read(insaddr, address, size);
+		}
+
+		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
+		{
+			Write(insaddr, address, value, size);
+		}
 	}
 }

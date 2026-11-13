@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Memory;
 using Jammy.Core.Types.Types;
 
 /*
@@ -8,7 +9,7 @@ using Jammy.Core.Types.Types;
 
 namespace Jammy.Core.IDE
 {
-	public class A3000DiskController : IA3000DiskController
+	public class A3000DiskController : MemoryMappedDevice, IA3000DiskController
 	{
 		private readonly ISCSIController scsiController;
 		private readonly MemoryRange memoryRange;
@@ -34,12 +35,12 @@ namespace Jammy.Core.IDE
 			scsiController.Reset();
 		}
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public override uint Read(uint insaddr, uint address, Size size)
 		{
 			return scsiController.Read(insaddr, address, size);
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public override void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			scsiController.Write(insaddr, address, value, size);
 		}

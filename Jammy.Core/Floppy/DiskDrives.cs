@@ -47,7 +47,7 @@ namespace Jammy.Core.Floppy
 		//300rpm = 5Hz = 0.2s = @7.09MHz, that's 1_418_000
 		private const int INDEX_INTERRUPT_RATE = 1_418_759/2;//cpu tick rate / 200 (/ 2 because this is called per chipset clock tick)
 
-		private IContendedMemoryMappedDevice chipRAM;
+		private IChipRAM chipRAM;
 		private ICIABEven ciab;
 
 		private readonly IInterrupt interrupt;
@@ -120,11 +120,11 @@ namespace Jammy.Core.Floppy
 			}
 		}
 
-		public void Init(IDMA dma, ICIABEven ciab, IChipRAM memory)
+		public void Init(IDMA dma, ICIABEven ciab, IChipRAM chipRAM)
 		{
 			this.dma = dma;
 			this.ciab = ciab;
-			this.chipRAM = (IContendedMemoryMappedDevice)memory;
+			this.chipRAM = chipRAM;
 		}
 
 		public enum DriveState

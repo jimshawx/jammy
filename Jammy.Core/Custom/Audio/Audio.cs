@@ -15,7 +15,7 @@ namespace Jammy.Core.Custom.Audio
 	public class Audio : IAudio
 	{
 		protected readonly IChipsetClock clock;
-		protected readonly IContendedMemoryMappedDevice memory;
+		protected readonly IChipRAM memory;
 		protected readonly IInterrupt interrupt;
 		private readonly IDMA dma;
 		protected readonly EmulationSettings settings;
@@ -36,7 +36,7 @@ namespace Jammy.Core.Custom.Audio
 		public Audio(IChipsetClock clock, IChipRAM memory, IInterrupt interrupt, IDMA dma, IOptions<EmulationSettings> settings, ILogger<Audio> logger)
 		{
 			this.clock = clock;
-			this.memory = (IContendedMemoryMappedDevice)memory;
+			this.memory = memory;
 			this.interrupt = interrupt;
 			this.dma = dma;
 			this.settings = settings.Value;

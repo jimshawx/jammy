@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Jammy.Core.Memory
 {
-	public abstract class ContendedMemory : Memory, IContendedMemoryMappedDevice
+	public abstract class ContendedMemory : Memory, IMemoryMappedDevice
 	{
 		private readonly IDMA dma;
 		private readonly ILogger logger;
@@ -23,7 +23,7 @@ namespace Jammy.Core.Memory
 			this.logger = logger;
 		}
 
-		public new uint Read(uint insaddr, uint address, Size size)
+		public uint ContendedRead(uint insaddr, uint address, Size size)
 		{
 			uint v = 0;
 			
@@ -43,7 +43,7 @@ namespace Jammy.Core.Memory
 			return v;
 		}
 
-		public new void Write(uint insaddr, uint address, uint value, Size size)
+		public void ContendedWrite(uint insaddr, uint address, uint value, Size size)
 		{
 			if (size == Size.Long)
 			{
@@ -56,6 +56,22 @@ namespace Jammy.Core.Memory
 			contendedWrites++;
 			dma.WriteCPU(insaddr, target, address, (ushort)value, size);
 			dma.ChipsetSync();
+		}
+	}
+
+	public abstract class MemoryMappedDevice
+	{
+		public abstract uint Read(uint insaddr, uint address, Size size);
+		public abstract void Write(uint insaddr, uint address, uint value, Size size);
+
+		public uint ImmediateRead(uint insaddr, uint address, Size size)
+		{
+			return Read(insaddr, address, size);
+		}
+
+		public void ImmediateWrite(uint insaddr, uint address, uint value, Size size)
+		{
+			Write(insaddr, address, value, size);
 		}
 	}
 }

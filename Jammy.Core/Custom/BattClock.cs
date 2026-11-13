@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Jammy.Extensions.Extensions;
@@ -13,7 +14,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Jammy.Core.Custom
 {
-	public class BattClock : IBattClock
+	public class BattClock : MemoryMappedDevice, IBattClock
 	{
 		private readonly ILogger logger;
 
@@ -86,7 +87,7 @@ namespace Jammy.Core.Custom
 			return $"UNKNOWN REGISTER {r}";
 		}
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public override uint Read(uint insaddr, uint address, Size size)
 		{
 			if (size == Size.Long)
 			{
@@ -174,7 +175,7 @@ namespace Jammy.Core.Custom
 			return value;
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public override void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			//lock (locker)
 			{

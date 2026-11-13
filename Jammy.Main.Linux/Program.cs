@@ -197,7 +197,6 @@ public class Program
 			.AddSingleton<IMotherboard, Motherboard>()
 			.AddSingleton<ICIAAOdd, CIAAOdd>()
 			.AddSingleton<ICIABEven, CIABEven>()
-			.AddSingleton<ICIAMemory, CIAMemory>()
 			.AddSingleton<ICopper, Copper>()
 			.AddSingleton<IDiskDrives, DiskDrives>()
 			.AddSingleton<IKeyboard, Keyboard>()
@@ -212,8 +211,6 @@ public class Program
 			//.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM0", "JDK0", "hd", 0))
 			//.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM1", "JDK1", "hd1", 1))
 			.AddSingleton<IZorroExpansionRegistry, ZorroExpansionRegistry>()
-			.AddSingleton<IChipRAM, ChipRAM>()
-			.AddSingleton<ITrapdoorRAM, TrapdoorRAM>()
 			.AddSingleton<IKickstartROM, KickstartROM>()
 			.AddSingleton<IExtendedKickstartROM, ExtendedKickstartROM>()
 			.AddSingleton<IMotherboardRAM, MotherboardRAM>()
@@ -224,7 +221,6 @@ public class Program
 			.AddSingleton<IBreakpointCollection, BreakpointCollection>()
 			.AddSingleton<IDebugger, Debugger.Debugger>()
 			.AddSingleton<ICPUAnalyser, CPUAnalyser>()
-			.AddSingleton<IChips, Chips>()
 			.AddSingleton<IAkiko, Akiko>()
 			.AddSingleton<IDenise, Denise>()
 			.AddSingleton<IAgnus, Agnus>()
@@ -302,6 +298,12 @@ public class Program
 			.AddSingleton<IDiskFormat, RawADFFormat>()
 			.AddSingleton<ICDDrive, CDDrive>()
 			.Configure<EmulationSettings>(o => emuConfig.Bind("Emulation", o));
+
+		//configure cycle exactness
+		services.AddSingleton<IChipRAM, ContendedChipRAM>();
+		services.AddSingleton<ITrapdoorRAM, ContendedTrapdoorRAM>();
+		services.AddSingleton<ICIAMemory, ContendedCIAMemory>();
+		services.AddSingleton<IChips, ContendedChips>();
 
 		//configure Blitter
 		services.AddSingleton<IBlitter, Blitter>();

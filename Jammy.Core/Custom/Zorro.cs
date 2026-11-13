@@ -21,7 +21,7 @@ namespace Jammy.Core.Custom
 			mappedRange = new MemoryRange(0x00e80000, 0x10000);
 		}
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public override uint Read(uint insaddr, uint address, Size size)
 		{
 			byte value = 0xff;
 
@@ -53,7 +53,7 @@ namespace Jammy.Core.Custom
 			return value;
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public override void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			logger.LogTrace($"Expansion W @{insaddr:X8} {address:X8} {value:X8} {size}");
 
@@ -93,7 +93,7 @@ namespace Jammy.Core.Custom
 			mappedRange = new MemoryRange(0xff000000, 0x10000);
 		}
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public override uint Read(uint insaddr, uint address, Size size)
 		{
 			byte value = 0xff;
 
@@ -125,7 +125,7 @@ namespace Jammy.Core.Custom
 			return value;
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public override void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			logger.LogTrace($"Expansion W @{insaddr:X8} {address:X8} {value:X8} {size}");
 
@@ -153,7 +153,7 @@ namespace Jammy.Core.Custom
 		}
 	}
 
-	public abstract class ZorroBase : IZorro
+	public abstract class ZorroBase : MemoryMappedDevice, IZorro
 	{
 		protected IMemoryManager memoryManager;
 		protected ILogger logger;

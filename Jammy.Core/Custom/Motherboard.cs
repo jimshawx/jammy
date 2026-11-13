@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Jammy.Core.Interface.Interfaces;
+using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Options;
 
 namespace Jammy.Core.Custom
 {
-	public class Motherboard : IMotherboard
+	public class Motherboard : MemoryMappedDevice, IMotherboard
 	{
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
@@ -61,7 +62,7 @@ namespace Jammy.Core.Custom
 		private byte reg_RAMSEY;//some kind of RAMSEY flags that won't boot unless set to 7
 		private byte reg_RAMSEYID;//RAMSEY chip version
 
-		public uint Read(uint insaddr, uint address, Size size)
+		public override uint Read(uint insaddr, uint address, Size size)
 		{
 			if (size != Size.Byte) throw new InvalidCustomRegisterSizeException(insaddr, address, size);
 			logger.LogTrace($"[MOBO] R {address:X8} @ {insaddr:X8} {size}");
@@ -75,7 +76,7 @@ namespace Jammy.Core.Custom
 			return 0;
 		}
 
-		public void Write(uint insaddr, uint address, uint value, Size size)
+		public override void Write(uint insaddr, uint address, uint value, Size size)
 		{
 			if (size == Size.Word && address == 0xde109a && value == 0xbfff) { logger.LogTrace($"W 0xDE109A at boot time? not mapped."); return;/*something writes 0xbfff here at boot time */ }
 			if (size == Size.Word && address == 0xde109a && value == 0x4000) { logger.LogTrace($"W 0xDE109A at boot time? not mapped."); return;/*something writes 0x4000 here at boot time */ }
