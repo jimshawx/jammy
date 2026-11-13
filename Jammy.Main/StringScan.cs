@@ -142,7 +142,7 @@ namespace Jammy.Main
 						{
 							string s = Encoding.ASCII.GetString(r.Memory.AsSpan((int)startI, (int)len));
 							if (!Filter(s))
-								sb.AppendLine(s);
+								sb.AppendLine($"{r.Start + startI:X8} {s}");
 						}
 						startI = -1;
 					}
