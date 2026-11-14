@@ -44,6 +44,7 @@ public class ChipsetClock : IChipsetClock
 	[Persist]
 	public uint Tick { get; private set; }
 
+	[Persist]
 	public ChipsetClockState ClockState { get; private set; }
 
 	public void Emulate()
