@@ -258,14 +258,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void Init(IDMA dma);
 	}
 
-	public interface IAgnus : IEmulate, ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead, IStatePersister, IPersistableRAM
-	{
-		void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
-				out ulong trapReads, out ulong trapWrites,
-				out ulong customReads, out ulong customWrites,
-				out ulong kickReads);
-		void Bookmark();
-	}
+	public interface IAgnus : IEmulate, ICustomReadWrite, IDebugChipsetRead, IBulkMemoryRead, IStatePersister, IPersistableRAM { }
 
 	public interface IChipsetClock : IEmulate, IStatePersister
 	{

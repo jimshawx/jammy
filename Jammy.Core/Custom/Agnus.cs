@@ -860,54 +860,9 @@ public class Agnus : IAgnus
 		}
 	}
 
-	private ulong chipRAMReads = 0;
-	private ulong chipRAMWrites = 0;
-	private ulong trapdoorReads = 0;
-	private ulong trapdoorWrites = 0;
-	private ulong chipsetReads = 0;
-	private ulong chipsetWrites = 0;
-	private ulong kickROMReads = 0;
-
-	public void GetRGAReadWriteStats(out ulong chipReads, out ulong chipWrites,
-				out ulong trapReads, out ulong trapWrites,
-				out ulong customReads, out ulong customWrites,
-				out ulong kickReads)
-	{
-		chipReads = chipRAMReads;
-		chipWrites = chipRAMWrites;
-		trapReads = trapdoorReads;
-		trapWrites = trapdoorWrites;
-		customReads = chipsetReads;
-		customWrites = chipsetWrites;
-		kickReads = kickROMReads;
-	}
-
-	private ulong bmchipRAMReads = 0;
-	private ulong bmchipRAMWrites = 0;
-	private ulong bmtrapdoorReads = 0;
-	private ulong bmtrapdoorWrites = 0;
-	private ulong bmchipsetReads = 0;
-	private ulong bmchipsetWrites = 0;
-	private ulong bmkickROMReads = 0;
-
-	public void Bookmark()
-	{
-		bmchipRAMReads = chipRAMReads;
-		bmchipRAMWrites = chipRAMWrites;
-		bmtrapdoorReads = trapdoorReads;
-		bmtrapdoorWrites = trapdoorWrites;
-		bmchipsetReads = chipsetReads;
-		bmchipsetWrites = chipsetWrites;
-		bmkickROMReads = kickROMReads;
-	}
-
 	public uint Read(uint insaddr, uint address, Size size)
 	{
 		uint v = 0;
-
-		ulong reads = (size == Size.Long)?2U:1U;
-
-		chipsetReads += reads;
 
 		if (size == Size.Long)
 		{
@@ -925,10 +880,6 @@ public class Agnus : IAgnus
 
 	public void Write(uint insaddr, uint address, uint value, Size size)
 	{
-		ulong writes = (size == Size.Long) ? 2U : 1U;
-
-		chipsetWrites += writes;
-
 		if (size == Size.Long)
 		{
 			dma.WriteCPU(insaddr, CPUTarget.ChipReg, address, (ushort)(value >> 16), Size.Word);
