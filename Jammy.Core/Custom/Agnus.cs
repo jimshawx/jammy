@@ -848,7 +848,7 @@ public class Agnus : IAgnus
 				logger.LogTrace($"VHPOSW {value:X4} @{insaddr:X8} {clock}");
 				clock.SetClock((uint)(value >> 8), (uint)(value & 0xff));
 				break;
-			case ChipRegs.HTOTAL: htotal = value; logger.LogTrace($"VHPOSW {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.HTOTAL: htotal = value; logger.LogTrace($"HTOTAL {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.HBSTRT: hbstrt = value; logger.LogTrace($"HBSTRT {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.HBSTOP: hbstop = value; logger.LogTrace($"HBSTOP {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.HSSTRT: hsstrt = value; logger.LogTrace($"HSSTRT {value:X4} @{insaddr:X8}"); break;
@@ -993,3 +993,4 @@ public class Agnus : IAgnus
 		PersistenceManager.FromJObject(this, obj);
 	}
 }
+
