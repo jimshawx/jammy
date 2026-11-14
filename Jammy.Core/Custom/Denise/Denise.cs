@@ -298,7 +298,7 @@ public class Denise : IDenise
 				uint mask = uint.MaxValue;
 
 				//SSCAN2 scan-doubling (ignore SH10)
-				if ((fmode & (1 << 15)) != 0 && (sprpos[s] & (1 << 7)) != 0) mask = 0xff;
+				if ((fmode & (1 << 15)) != 0) mask = 0xff;
 
 				//does sprite position match, with possibly top bits masked
 				if (((DeniseHorizontalPos ^ hstart) & mask) == 0)
