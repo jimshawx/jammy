@@ -29,6 +29,7 @@ namespace Jammy.Core.Custom
 		private IDenise denise;
 		private readonly IMouse mouse;
 		private readonly ISerial serial;
+		private IPipelineDelay agnus3CycleDelay;
 		protected IDMA dma;
 		private readonly EmulationSettings settings;
 		private readonly ILogger logger;
@@ -72,6 +73,7 @@ namespace Jammy.Core.Custom
 			this.copper = copper;
 			this.audio = audio;
 			this.agnus = agnus;
+			this.agnus3CycleDelay = new PipelineDelay(3, agnus);
 			this.denise = denise;
 			this.dma = dma;
 		}
@@ -79,6 +81,11 @@ namespace Jammy.Core.Custom
 		private uint lisaid;
 		private ushort intena;
 		private ushort intreq;
+
+		public void Emulate()
+		{
+			agnus3CycleDelay.Emulate();
+		}
 
 		public void Reset()
 		{
@@ -361,10 +368,15 @@ namespace Jammy.Core.Custom
 				case ChipRegs.DIWSTRT:
 				case ChipRegs.DIWSTOP:
 				case ChipRegs.DIWHIGH:
-				case ChipRegs.BPLCON0:
 				case ChipRegs.FMODE:
 					agnus.Write(insaddr, address, (ushort)value);
 					denise.Write(insaddr, address, (ushort)value);
+					break;
+				case ChipRegs.BPLCON0:
+					{
+						agnus3CycleDelay.Write(insaddr, address, (ushort)value);
+						denise.Write(insaddr, address, (ushort)value);
+					}
 					break;
 				case ChipRegs.SPR0DATA:
 				case ChipRegs.SPR0DATB:
@@ -617,6 +629,7 @@ namespace Jammy.Core.Custom
 			foreach (var reg in deets)
 				cr.Add(reg.Name, (ushort)DebugChipsetRead(reg.Address, Size.Word));
 			obj.Add(cr);
+			agnus3CycleDelay.Save(obj);
 		}
 
 		public void Load(JObject obj)
@@ -641,6 +654,7 @@ namespace Jammy.Core.Custom
 				else
 					Write(0, deets[pair.Key].Address, value, Size.Word);
 			}
+			agnus3CycleDelay.Load(obj);
 		}
 	}
 
@@ -689,5 +703,69 @@ namespace Jammy.Core.Custom
 			dma.ChipsetSync();
 		}
 
+	}
+
+	public interface IPipelineDelay : IEmulate, ICustomWrite, IStatePersister { }
+
+	public class PipelineDelay : IPipelineDelay
+	{
+		private struct DelayedWriteItem
+		{
+			public uint insaddr;
+			public uint address;
+			public ushort value;
+			public bool active;
+		}
+
+		[Persist]
+		private readonly DelayedWriteItem[] delayedWrites;
+		private readonly ICustomWrite writer;
+		private readonly int delay;
+		[Persist]
+		private int writeIndex = 0;
+
+		public PipelineDelay(int delay, ICustomWrite writer)
+		{
+			delayedWrites = new DelayedWriteItem[delay];
+			this.writer = writer;
+			this.delay = delay;
+		}
+
+		public void Write(uint insaddr, uint address, ushort value)
+		{
+			delayedWrites[writeIndex].insaddr = insaddr;
+			delayedWrites[writeIndex].address = address;
+			delayedWrites[writeIndex].value = value;
+			delayedWrites[writeIndex].active = true;
+		}
+
+		public void Emulate()
+		{
+			writeIndex = (writeIndex + 1) % delay;
+
+			ref DelayedWriteItem item = ref delayedWrites[writeIndex];
+			if (!item.active) return;
+
+			writer.Write(item.insaddr, item.address, item.value);
+			item.active = false;
+		}
+
+		public void Reset()
+		{
+			Array.Clear(delayedWrites);
+		}
+
+		public void Save(JArray obj)
+		{
+			var jo = PersistenceManager.ToJObject(this, "agnus3");
+			obj.Add(jo);
+		}
+
+		public void Load(JObject obj)
+		{
+			//PersistenceManager.FromJObject(this, (JObject)obj["agnus3"]);
+			for (int i = 0; i < delay; i++)
+				Emulate();
+		}
 	}
 }

@@ -123,7 +123,7 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IDebuggableMemory : IDebugRead, IDebugWrite { }
 
-	public interface IChips : IReset, IMemoryMappedDevice, IDebugChipsetRead, IStatePersister
+	public interface IChips : IMemoryMappedDevice, IDebugChipsetRead, IStatePersister, IEmulate
 	{
 		void Init(IBlitter blitter, ICopper copper, IAudio audio, IAgnus agnus, IDenise denise, IDMA dma);
 		void ImmediateWriteWide(uint address, ulong value);

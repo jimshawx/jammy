@@ -46,8 +46,8 @@ namespace Jammy.Core
 		private readonly List<IEmulate> emulations = new List<IEmulate>();
 		private readonly List<IReset> resetters = new List<IReset>();
 
-		public Amiga(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock, 
-			ICIAAOdd ciaa, ICIABEven ciab, IChips custom, IMemoryMapper memory,
+		public Amiga(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock,
+			ICIAAOdd ciaa, ICIABEven ciab, IChips chips, IMemoryMapper memory,
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IDiskDrives diskDrives, IMouse mouse, IDiskController diskController,
 			ISerial serial, IMotherboard motherboard, IAgnus agnus, IDenise denise, IChipsetClock clock, IDMA dma,
@@ -74,9 +74,9 @@ namespace Jammy.Core
 			this.settings = settings.Value;
 
 			//fulfil the circular dependencies
-			custom.Init(blitter, copper, audio, agnus, denise, dma);
+			chips.Init(blitter, copper, audio, agnus, denise, dma);
 			keyboard.SetCIA(ciaa);
-			interrupt.Init(custom, cpu);
+			interrupt.Init(chips, cpu);
 
 			if (cycleExact)
 			{
@@ -104,6 +104,7 @@ namespace Jammy.Core
 			emulations.Add(mouse);
 			emulations.Add(keyboard);
 			emulations.Add(agnus);
+			emulations.Add(chips);
 			emulations.Add(copper);
 			emulations.Add(blitter);
 			emulations.Add(audio);
@@ -130,7 +131,6 @@ namespace Jammy.Core
 			resetters.Add(memory);
 			resetters.Add(battClock);
 			resetters.Add(motherboard);
-			resetters.Add(custom);
 
 			if (resetters.Any(x => x is IEmulate))
 				throw new AmbiguousImplementationException();
