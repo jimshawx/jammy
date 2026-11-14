@@ -327,7 +327,7 @@ public class Agnus : IAgnus
 		//while (planeIdx < 0) planeIdx += pixmod;
 		int planeIdx = fetchCount % pixmod;
 
-		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
+		if ((fmode & 3) == 0)
 		{
 			if ((bplcon0 & (uint)Denise.Denise.BPLCON0.HiRes) != 0)
 				plane = fetchHi[planeIdx] - 1;
@@ -347,7 +347,7 @@ public class Agnus : IAgnus
 
 		if (plane < planes)
 		{
-			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
+			if ((fmode & 3) == 0)
 			{
 				dma.ReadReg(DMASource.Agnus, bplpt[plane], DMA.BPLEN, Size.Word, ChipRegs.BPL1DAT + plane * 2);
 				bplpt[plane] += 2;
@@ -582,7 +582,7 @@ public class Agnus : IAgnus
 			//1 colour clock, draw 4 pixel
 			pixmod = 4;
 
-			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
+			if ((fmode & 3) == 0)
 			{
 			}
 			else if ((fmode & 3) == 3)
@@ -601,7 +601,7 @@ public class Agnus : IAgnus
 			//1 colour clock, draw 8 pixel
 			pixmod = 2;
 
-			if (settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
+			if ((fmode & 3) == 0)
 			{
 			}
 			else if ((fmode & 3) == 3)
@@ -619,7 +619,7 @@ public class Agnus : IAgnus
 			//1 colour clock, draw 2 pixel
 			pixmod = 8;
 
-			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
+			if ((fmode & 3) == 0)
 			{
 			}
 			else if ((fmode & 3) == 3)
@@ -644,7 +644,7 @@ public class Agnus : IAgnus
 	private void UpdateFMODE()
 	{
 		var spriteMode = (fmode >> 2) & 3;
-		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || spriteMode == 0)
+		if (spriteMode == 0)
 			{ spriteStride = 2; spriteSize = Size.Word; }
 		else if (spriteMode == 3)
 			{ spriteStride = 8; spriteSize = Size.QWord; }
@@ -856,7 +856,7 @@ public class Agnus : IAgnus
 			case ChipRegs.HCENTER: hcentre = value; logger.LogTrace($"HCENTER {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.BEAMCON0: beamcon0 = value; logger.LogTrace($"BEAMCON0 {value:X4} @{insaddr:X8}"); break;
 
-			case ChipRegs.FMODE: fmode = value; UpdateFMODE(); UpdateDDF(); break;
+			case ChipRegs.FMODE: if (settings.ChipSet == ChipSet.AGA) fmode = value; UpdateFMODE(); UpdateDDF(); break;
 		}
 	}
 

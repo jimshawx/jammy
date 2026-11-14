@@ -320,19 +320,12 @@ public class Denise : IDenise
 		this.sprctl[s] = sprctl[s];
 		int spriteFetch = (fmode>>2)&3;
 
-		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
-		{ 
-			spriteMask[s] = 0x8000;
-		}
-		else
-		{ 
-			switch (spriteFetch)
-			{
-				case 0: spriteMask[s] = 0x8000; break;
-				case 1: spriteMask[s] = 0x80000000; break;
-				case 2: spriteMask[s] = 0x80000000; break;
-				case 3: spriteMask[s] = 0x8000000000000000; break;
-			}
+		switch (spriteFetch)
+		{
+			case 0: spriteMask[s] = 0x8000; break;
+			case 1: spriteMask[s] = 0x80000000; break;
+			case 2: spriteMask[s] = 0x80000000; break;
+			case 3: spriteMask[s] = 0x8000000000000000; break;
 		}
 	}
 
@@ -1124,7 +1117,7 @@ end loop
 		pixelAction = GetModeConversion();
 
 		uint pixelBits;
-		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS || (fmode & 3) == 0)
+		if ((fmode & 3) == 0)
 			pixelBits = 15;
 		else if ((fmode & 3) == 3)
 			pixelBits = 63;
@@ -1395,7 +1388,7 @@ end loop
 			case ChipRegs.DIWSTOP: diwstop = value; diwhigh = 0; UpdateDIWSTOP(); break;
 			case ChipRegs.DIWHIGH: diwhigh = value; UpdateDIWHIGH(); break;
 
-			case ChipRegs.FMODE: fmode = value; UpdateFMODE(); break;
+			case ChipRegs.FMODE: if (settings.ChipSet == ChipSet.AGA) fmode = value; UpdateFMODE(); break;
 
 			case ChipRegs.CLXCON: clxcon = value; clxcon2 = 0; break;
 			case ChipRegs.CLXCON2: clxcon2 = value; break;
