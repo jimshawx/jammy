@@ -471,7 +471,7 @@ public class Agnus : IAgnus
 		uint s = slot >> 1;
 
 		//SSCAN2
-		if ((fmode & (1 << 15)) != 0 && spriteState[s] == SpriteState.Fetching)
+		if ((fmode & (1 << 15)) != 0 && (sprpos[s] & (1 << 7)) != 0 && spriteState[s] == SpriteState.Fetching)
 		{
 			//in scan-doubled mode, if V0 <> SPRCTLV0 then don't do any sprite DMA/comparisons
 			if (((clock.VerticalPos ^ VStart(s)) & 1) == 1)
