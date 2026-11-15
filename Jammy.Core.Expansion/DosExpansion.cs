@@ -475,6 +475,7 @@ namespace Jammy.Core.Expansion
 				LockDOSLists();
 
 				volumeLinked = true;
+				deviceIsDead = false;
 
 				uint volMem = AllocMem(48, 0x10001);
 				uint volNameMem = AllocMem((uint)volumeName.Length + 2, 0x10001);
