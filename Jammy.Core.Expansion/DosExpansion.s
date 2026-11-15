@@ -20,6 +20,8 @@ ADNF_STARTPROC      EQU 1
 dn_Handler          EQU 16      ; Offset of the Handler string BPTR
 dn_SegList          EQU 32      ; SegList BPTR
 dn_GlobalVec        EQU 36      ; BCPL Global Vector
+dn_StackSize        EQU 20      ; Stack size
+dn_Priority         EQU 24      ; Priority
 pr_MsgPort          EQU 92      ; Offset of MsgPort in Process struct
 dp_Port             EQU 4       ; DosPacket reply port offset
 
@@ -69,6 +71,8 @@ DiagPoint:
     add.l   #ROM_SegList_BPTR_Target-ROM_Start,d0 
     lsr.l   #2,d0                   ; make BPTR
     move.l  d0,dn_SegList(a4)       ; put BPTR into DeviceNode
+
+	move.l  #4096,dn_StackSize(a4)  ; generous handler stack
 
 	move.l  #-1,dn_GlobalVec(a4)    ; 68000 code not BCPL
     move.l  #0,dn_Handler(a4)

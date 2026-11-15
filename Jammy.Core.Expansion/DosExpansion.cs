@@ -25,7 +25,6 @@ namespace Jammy.Core.Expansion
 		private readonly IAssembler assembler;
 		private readonly ILogger<TestExpansion> logger;
 
-		//public static readonly uint Serial = ZorroConfiguration.MakeSerial("JAM0");
 		public readonly string serial;
 		private readonly string volumeName;
 
@@ -1926,7 +1925,7 @@ namespace Jammy.Core.Expansion
 		}
 
 		//assuming this is extremely unsafe (interrupts, locks etc), but here we go
-		//we're inside a call to the expansion ROM from dos.library, and inside a trap handler, so it can't be that bad
+		//we're inside a call to the expansion ROM from dos.library, so it can't be that bad
 		private uint CallExec(int lvo, string parms)
 		{
 			string asm =
@@ -1942,8 +1941,9 @@ namespace Jammy.Core.Expansion
 
 			logger.LogTrace($"EXEC {lvo}");
 
-			//we know this space (copy of DiagArea) is unused after expansion.library is finished with it
-			uint i = configuration.BaseAddress;
+			//half-way through our 64KB memory bank
+			uint baseAddress = configuration.BaseAddress + 32768;
+			uint i = baseAddress;
 			if (r.Program == null || r.Program.Length > 0x20)
 				throw new ArgumentOutOfRangeException("Program too long");
 
@@ -1959,7 +1959,7 @@ namespace Jammy.Core.Expansion
 
 			var saved = regs.Clone();
 
-			cpu.SetPC(configuration.BaseAddress);
+			cpu.SetPC(baseAddress);
 			do
 			{
 				cpu.Emulate();
