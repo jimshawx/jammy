@@ -542,7 +542,7 @@ namespace Jammy.Core.Expansion
 				uint volMem = AllocMem(48, 0x10001);
 
 				// Device node
-				uint devNameMem = AllocMem((uint)serial.Length + 1, 0x10001);
+				uint devNameMem = AllocMem((uint)serial.Length + 2, 0x10001);
 				WriteDOSString(devNameMem, serial);
 
 				memory.UnsafeWrite32(devMem + 0, volMem>>2);          // dn_Next = Link to our Volume node!
@@ -552,13 +552,13 @@ namespace Jammy.Core.Expansion
 				memory.UnsafeWrite32(devMem + 16, 0);               // dn_Handler
 				memory.UnsafeWrite32(devMem + 20, 0);               // dn_StackSize
 				memory.UnsafeWrite32(devMem + 24, 0);               // dn_Priority
-				memory.UnsafeWrite32(devMem + 28, 0);//fssmMem>>2); // dn_Startup
+				memory.UnsafeWrite32(devMem + 28, fssmMem >> 2); // dn_Startup
 				memory.UnsafeWrite32(devMem + 32, 0);               // dn_SegList
 				memory.UnsafeWrite32(devMem + 36, 0xffffffff);      // dn_GlobalVec
 				memory.UnsafeWrite32(devMem + 40, devNameMem >> 2); // dn_Name
 
 				// Volume node
-				uint volNameMem = AllocMem((uint)volumeName.Length + 1, 0x10001);
+				uint volNameMem = AllocMem((uint)volumeName.Length + 2, 0x10001);
 				WriteDOSString(volNameMem, volumeName);
 
 				memory.UnsafeWrite32(volMem + 0, 0);          // dol_Next
@@ -1688,7 +1688,7 @@ namespace Jammy.Core.Expansion
 						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_INVALID_COMPONENT_NAME);
 						break;
 					}
-					uint nameMem = AllocMem((uint)name.Length+1, 0x10001);
+					uint nameMem = AllocMem((uint)name.Length+2, 0x10001);
 					WriteDOSString(nameMem, name);
 
 					uint oldName = memory.UnsafeRead32((myVolumeNodeBPTR<<2)+40)<<2;
@@ -1958,6 +1958,7 @@ namespace Jammy.Core.Expansion
 			memory.UnsafeWrite8(address++, (byte)str.Length);
 			for (int i = 0; i < str.Length; i++)
 				memory.UnsafeWrite8(address++, (byte)str[i]);
+			memory.UnsafeWrite8(address++,0);
 		}
 
 		private void WriteCString(uint address, string str)
