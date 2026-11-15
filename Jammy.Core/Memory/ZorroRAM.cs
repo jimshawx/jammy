@@ -91,7 +91,9 @@ namespace Jammy.Core.Memory
 
 	public class ZorroConfigurator : IZorroConfigurator
 	{
-		public ZorroConfigurator(IZorro2 zorro2, IZorro3 zorro3, IEnumerable<IExpansionROM> expansionRoms, IOptions<EmulationSettings> settings)
+		public ZorroConfigurator(IZorro2 zorro2, IZorro3 zorro3,
+			IEnumerable<IExpansionROM> expansionRoms, 
+			IOptions<EmulationSettings> settings)
 		{
 			if (!string.IsNullOrEmpty(settings.Value.ZorroIIMemory))
 			{
@@ -128,13 +130,38 @@ namespace Jammy.Core.Memory
 		}
 	}
 
-	public class ZorroRAM : Memory, IZorroRAM
+	public class ZorroRAM : Memory, IZorroRAM, IMemoryMappedDevice
 	{
+		private bool isActive = false;
+
 		public ZorroRAM(uint address, uint size)
 		{
 			memory = new byte[size];
 			memoryRange = new MemoryRange(address, size);
 			addressMask = (uint)(memoryRange.Length - 1);
+		}
+
+		public new bool IsMapped(uint address)
+		{
+			if (!isActive) return false;
+			return memoryRange.Contains(address);
+		}
+
+		public override List<MemoryRange> MappedRange()
+		{
+			if (!isActive) return [];
+			return new List<MemoryRange> { memoryRange };
+		}
+
+		public void UpdateBaseAddress(uint baseAddress)
+		{
+			memoryRange.Start = baseAddress;
+			isActive = true;
+		}
+
+		public void Reset()
+		{
+			isActive = false;
 		}
 	}
 }

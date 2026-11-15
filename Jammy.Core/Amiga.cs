@@ -51,7 +51,7 @@ namespace Jammy.Core
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
 			IDiskDrives diskDrives, IMouse mouse, IDiskController diskController,
 			ISerial serial, IMotherboard motherboard, IAgnus agnus, IDenise denise, IChipsetClock clock, IDMA dma,
-			IAkiko akiko,
+			IAkiko akiko, IZorro2 zorro2, IZorro3 zorro3,
 			IPSUClock psuClock, ICPUClock cpuClock, IChipsetDebugger debugger,
 			IBreakpointCollection breakpointCollection, IPersistenceManager statePersister,
 			IKickstartROM kickstart, ICIAMemory ciaMemory, IOptions<EmulationSettings> settings, ILogger<Amiga> logger)
@@ -131,6 +131,8 @@ namespace Jammy.Core
 			resetters.Add(memory);
 			resetters.Add(battClock);
 			resetters.Add(motherboard);
+			resetters.Add(zorro2);
+			resetters.Add(zorro3);
 
 			if (resetters.Any(x => x is IEmulate))
 				throw new AmbiguousImplementationException();

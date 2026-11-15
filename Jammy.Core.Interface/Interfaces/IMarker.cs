@@ -172,8 +172,8 @@ namespace Jammy.Core.Interface.Interfaces
 		void AddConfiguration(ZorroConfiguration configuration, IExpansionROM expansion = null);
 	}
 
-	public interface IZorro2 : IMemoryMappedDevice { }
-	public interface IZorro3 : IMemoryMappedDevice { }
+	public interface IZorro2 : IMemoryMappedDevice, IReset { }
+	public interface IZorro3 : IMemoryMappedDevice, IReset { }
 
 	public interface IPersistableRAM { }
 
@@ -186,7 +186,12 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface ITrapdoorRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM { }
 	public interface IUnmappedMemory : IMemoryMappedDevice, IDebuggableMemory { }
-	public interface IZorroRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM { }
+	public interface IZorroRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM
+	{
+		void UpdateBaseAddress(uint baseAddress);
+		void Reset();
+	}
+
 	public interface IMotherboardRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM { }
 	public interface ICPUSlotRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM { }
 

@@ -18,15 +18,26 @@ namespace Jammy.Core.Expansion
 			return expansionROMs.GetValueOrDefault(serial);
 		}
 
+		public IZorroDebugHandler GetHandler(uint serial)
+		{
+			return expansionHandlers.GetValueOrDefault(serial);
+		}
+
 		public void RegisterExpansion(ZorroConfiguration configuration)
 		{
-			expansionROMs.Add(configuration.GetSerial(), configuration);
-			expansionHandlers[configuration.GetSerial()].Init(configuration);
+			//expansionROMs.Add(configuration.GetSerial(), configuration);
+			//expansionHandlers[configuration.GetSerial()].Init(configuration);
 		}
 
 		public void RegisterHandler(uint serial, IZorroDebugHandler handler)
 		{
 			expansionHandlers.Add(serial, handler);
+		}
+
+		public void Reset()
+		{
+			foreach (var ex in expansionHandlers.Values)
+				ex.Reset();
 		}
 	}
 
@@ -38,5 +49,6 @@ namespace Jammy.Core.Expansion
 		}
 
 		public abstract void Init(ZorroConfiguration configuration);
+		public abstract void Reset();
 	}
 }

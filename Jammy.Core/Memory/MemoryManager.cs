@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
+using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
@@ -66,7 +67,7 @@ namespace Jammy.Core.Memory
 
 		public void BuildMappedDevices()
 		{
-			foreach (var dev in devices.Select(x => new {device = x, range = x.MappedRange()}))
+			foreach (var dev in devices.OrderBy(x=>x is UnmappedMemory?0:1).Select(x => new {device = x, range = x.MappedRange()}))
 			{
 				foreach (var range in dev.range.Where(x=>x.Length != 0))
 				{
@@ -75,17 +76,11 @@ namespace Jammy.Core.Memory
 					for (uint i = start; i < end; i++)
 					{
 						if (dev.device.IsMapped(i << 16))
-						{
-							//if (i == 0)
-							//{	
-							//	//logger.LogTrace($"Setting Slot 0 tid: {Thread.CurrentThread.ManagedThreadId} to {dev.device} @ {new System.Diagnostics.StackTrace(true)}");
-							//	logger.LogTrace($"Setting Slot 0 tid: {Thread.CurrentThread.ManagedThreadId} to {dev.device}");
-							//}
 							mapping[i] = dev.device;
-						}
 					}
 				}
 			}
+			//Dump();
 		}
 
 		public void Add(IMemoryMappedDevice device)
@@ -108,6 +103,12 @@ namespace Jammy.Core.Memory
 		public List<IPersistableRAM> PersistableDevices()
 		{
 			return devices.OfType<IPersistableRAM>().ToList();
+		}
+
+		private void Dump()
+		{
+			for (int i = 0; i < 256; i++)
+				logger.LogTrace($"{i:X2} {i} {mapping[i]}");
 		}
 	}
 }

@@ -20,17 +20,14 @@ namespace Jammy.Core.Expansion
 
 	public class DosExpansion : IExpansionROM
 	{
-		private readonly IZorroExpansionRegistry zorroExpansionRegistry;
-
 		private readonly IAssembler assembler;
 		private readonly ILogger<TestExpansion> logger;
 
 		public readonly string serial;
 		private readonly string volumeName;
 
-		public DosExpansion(IZorroExpansionRegistry zorroExpansionRegistry, IAssembler assembler, ILogger<TestExpansion> logger, string serial, string volumeName)
+		public DosExpansion(IAssembler assembler, ILogger<TestExpansion> logger, string serial, string volumeName)
 		{
-			this.zorroExpansionRegistry = zorroExpansionRegistry;
 			this.assembler = assembler;
 			this.logger = logger;
 			this.serial = serial;
@@ -61,8 +58,6 @@ namespace Jammy.Core.Expansion
 
 		public void PopulateROM(IDebuggableMemory zorroRAM, ZorroConfiguration configuration)
 		{
-			zorroExpansionRegistry.RegisterExpansion(configuration);
-
 			string asm = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "DosExpansion.s"), Encoding.UTF8);
 			asm = asm.Replace("MYDEV", volumeName);
 			int unitNo = volumeName[volumeName.Length-1] - '0';
@@ -387,6 +382,11 @@ namespace Jammy.Core.Expansion
 
 		private readonly Dictionary<uint, MyDirCache> dircache = new Dictionary<uint, MyDirCache>();
 
+		public override void Reset()
+		{
+			volumeLinked = false;
+		}
+
 		public override void Init(ZorroConfiguration configuration)
 		{
 			uint baseAddress = configuration.BaseAddress;
@@ -463,7 +463,6 @@ namespace Jammy.Core.Expansion
 			//});
 
 			debugger.AddBreakpoint(0x00fffffe-unitNo*2, callback: (bp) => ProcessAmigaDOSAction(bp));
-
 		}
 
 		private bool ProcessAmigaDOSAction(BreakpointHitInfo bp)

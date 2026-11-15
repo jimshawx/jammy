@@ -13,13 +13,11 @@ namespace Jammy.Core.Expansion
 	public class TestExpansion : IExpansionROM
 	{
 		private readonly IAssembler assembler;
-		private readonly IZorroExpansionRegistry zorroExpansionRegistry;
 		private readonly ILogger<TestExpansion> logger;
 
-		public TestExpansion(IAssembler assembler, IZorroExpansionRegistry zorroExpansionRegistry, ILogger<TestExpansion> logger)
+		public TestExpansion(IAssembler assembler, ILogger<TestExpansion> logger)
 		{
 			this.assembler = assembler;
-			this.zorroExpansionRegistry = zorroExpansionRegistry;
 			this.logger = logger;
 		}
 
@@ -47,8 +45,6 @@ namespace Jammy.Core.Expansion
 
 		public void PopulateROM(IDebuggableMemory zorroRAM, ZorroConfiguration configuration)
 		{
-			zorroExpansionRegistry.RegisterExpansion(configuration);
-
 			const byte DAC_WORDWIDE = 0x80;
 			const byte DAC_NYBBLEWIDE = 0x00;
 			const byte DAC_BYTEWIDE = 0x40;
@@ -110,6 +106,9 @@ namespace Jammy.Core.Expansion
 		}
 
 		public override void Init(ZorroConfiguration configuration)
+		{
+		}
+		public override void Reset()
 		{
 		}
 	}

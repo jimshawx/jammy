@@ -14,11 +14,12 @@ namespace Jammy.Core.Custom
 	// HRM pp 431
 	public class Zorro2 : ZorroBase, IZorro2
 	{
-		public Zorro2(IMemoryManager memoryManager, ILogger<Zorro2> logger)
+		public Zorro2(IMemoryManager memoryManager, IZorroExpansionRegistry zorroExpansionRegistry, ILogger<Zorro2> logger)
 		{
 			this.memoryManager = memoryManager;
 			this.logger = logger;
 			mappedRange = new MemoryRange(0x00e80000, 0x10000);
+			this.zorroExpansionRegistry = zorroExpansionRegistry;
 		}
 
 		public override uint Read(uint insaddr, uint address, Size size)
@@ -86,11 +87,12 @@ namespace Jammy.Core.Custom
 
 	public class Zorro3 : ZorroBase, IZorro3
 	{
-		public Zorro3(IMemoryManager memoryManager, ILogger<Zorro2> logger)
+		public Zorro3(IMemoryManager memoryManager, IZorroExpansionRegistry zorroExpansionRegistry, ILogger<Zorro2> logger)
 		{
 			this.memoryManager = memoryManager;
 			this.logger = logger;
 			mappedRange = new MemoryRange(0xff000000, 0x10000);
+			this.zorroExpansionRegistry = zorroExpansionRegistry;
 		}
 
 		public override uint Read(uint insaddr, uint address, Size size)
@@ -158,18 +160,23 @@ namespace Jammy.Core.Custom
 		protected IMemoryManager memoryManager;
 		protected ILogger logger;
 		protected MemoryRange mappedRange;
+		protected IZorroExpansionRegistry zorroExpansionRegistry;
 
 		protected readonly List<ZorroCfg> configurations = new List<ZorroCfg>();
+		protected readonly List<ZorroCfg> completed = new List<ZorroCfg>();
 
 		protected class ZorroCfg
 		{
 			public ZorroConfiguration Cfg;
 			public IExpansionROM Expansion;
+			public IZorroRAM Ram;
 		}
 
 		public void AddConfiguration(ZorroConfiguration zorroConfiguration, IExpansionROM expansion = null)
 		{
-			this.configurations.Add(new ZorroCfg { Cfg = zorroConfiguration, Expansion = expansion });
+			var cfg = new ZorroCfg { Cfg = zorroConfiguration, Expansion = expansion };
+			this.configurations.Add(cfg);
+			AddNewMemoryDevice(cfg);
 		}
 
 		public bool IsMapped(uint address)
@@ -194,18 +201,45 @@ namespace Jammy.Core.Custom
 				configurations[0].Cfg.IsConfigured = true;
 
 				if (configurations[0].Cfg.Mapping == ZorroConfiguration.MappingType.MemoryMapped)
-					AddNewMemoryDevice(configurations[0]);
+					ConfigureMemoryDevice(configurations[0]);
 			}
 
+			completed.Add(configurations[0]);
 			configurations.RemoveAt(0);
 		}
 
 		private void AddNewMemoryDevice(ZorroCfg configuration) 
 		{ 
-			var zorroRAM = new ZorroRAM(configuration.Cfg.BaseAddress, configuration.Cfg.Size); 
-			memoryManager.AddDevice(zorroRAM);
+			var zorroRAM = new ZorroRAM(0, configuration.Cfg.Size); 
+			configuration.Ram = zorroRAM;
 			if (configuration.Expansion != null)
-				configuration.Expansion.PopulateROM(zorroRAM, configuration.Cfg);
+				configuration.Expansion.PopulateROM(configuration.Ram, configuration.Cfg);
+			memoryManager.AddDevice(zorroRAM);
  		}
+		
+		private void ConfigureMemoryDevice(ZorroCfg configuration)
+		{
+			//AddNewMemoryDevice(configuration);
+			configuration.Ram.UpdateBaseAddress(configuration.Cfg.BaseAddress);
+			if (configuration.Expansion != null)
+				zorroExpansionRegistry.GetHandler(configuration.Cfg.GetSerial()).Init(configuration.Cfg);
+
+			memoryManager.RefreshDevices();
+		}
+
+		public void Reset()
+		{
+			foreach (var config in completed)
+			{
+				config.Cfg.IsConfigured = false;
+				config.Cfg.BaseAddress = 0;
+				config.Ram.Reset();
+			}
+			memoryManager.RefreshDevices();
+			zorroExpansionRegistry.Reset();
+
+			configurations.AddRange(completed);
+			completed.Clear();
+		}
 	}
 }
