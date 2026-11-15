@@ -51,18 +51,17 @@ DiagArea:
 DiagPoint:
     movem.l d2-d7/a2-a6,-(sp)       ; Preserve registers
 
-	;lea $dff000,a0
-	;move.w #$f00,$180(a0)
-
     ; --- Patch and Create DOS Node ---
     lea     DosPacket(pc),a0        ; A0 = Parameter packet
     lea     DosName(pc),a1          ; A1 = "MYDEV" string
     move.l  a1,(a0)                 ; Patch pointer 0 in packet (DOS Name)
-    
+    lea     ExecName(pc),a1
+    move.l  a1,4(a0)                ; Patch pointer 1 in packer (exec device name)
+	
     move.l  a5,a6                   ; A6 = ExpansionBase
     jsr     _LVOMakeDosNode(a6)
     tst.l   d0
-    beq     .NodeFail
+    beq     .InitFail
     move.l  d0,a4                   ; A4 = returned DeviceNode
 
     ; --- Calculate SegList BPTR and patch it ---
@@ -81,8 +80,6 @@ DiagPoint:
     move.l  #ADNF_STARTPROC,d1      ; D1 = 1 (Spawn handler process)
     jsr     _LVOAddDosNode(a6)
 
-.NodeFail:
- 
     moveq   #1,d0                   ; success
     bra     .Exit
 
@@ -100,7 +97,7 @@ DiagPoint:
 	CNOP    0,4
 
 ROM_SegList_Start:
-	DC.L    (ROM_Handler_End-ROM_Handler_Entry)/4
+	DC.L    (ROM_Handler_End-ROM_SegList_Start)/4
 ROM_SegList_BPTR_Target:
     DC.L    0                       ; Next BPTR (0 = NULL)
 
@@ -137,6 +134,7 @@ ROM_Handler_Entry:
 	jsr		$00fffffe
 
     move.l  dp_Port(a4),a0          ; A0 = Where AmigaDOS wants the reply
+	move.l  a3,dp_Port(a4)          ; A3 = MsgPort tell the sender who replied
     move.l  a2,a1                   ; A1 = The Exec Message
     move.l  4,a6                    ; A6 = ExecBase
     jsr     _LVOPutMsg(a6)
@@ -150,6 +148,7 @@ ROM_Handler_End:
 ExpLibName: DC.B    "expansion.library",0
 DevName:    DC.B    "JammyDevice",0
 DosName:    DC.B    "MYDEV",0
+ExecName:	DC.B	"exec.library",0
 
     EVEN
 
@@ -159,16 +158,16 @@ DosPacket:
     DC.L    0           ; [2] Unit number
     DC.L    0           ; [3] Open Flags
     DC.L    16          ; [4] Env Vector Table Size
-    DC.L    512         ; [5] Block Size
+    DC.L    128         ; [5] Block Size
     DC.L    0           ; [6] SecOrg
-    DC.L    1           ; [7] Surfaces
+    DC.L    16          ; [7] Surfaces
     DC.L    1           ; [8] Sectors Per Block
-    DC.L    1           ; [9] Blocks Per Track
-    DC.L    0           ; [10] Reserved Blocks
+    DC.L    64          ; [9] Blocks Per Track
+    DC.L    2           ; [10] Reserved Blocks
     DC.L    0           ; [11] Prealloc
     DC.L    0           ; [12] Interleave
     DC.L    0           ; [13] LowCyl
-    DC.L    0           ; [14] HighCyl
+    DC.L    2047        ; [14] HighCyl
     DC.L    5           ; [15] NumBuffers
     DC.L    1           ; [16] BufMemType (MEMF_PUBLIC)
     DC.L    $00FFFFFF   ; [17] MaxTransfer 

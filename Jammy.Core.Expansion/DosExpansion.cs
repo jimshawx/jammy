@@ -477,103 +477,32 @@ namespace Jammy.Core.Expansion
 
 				volumeLinked = true;
 
-				/*
-				struct DosList {
-					BPTR             dol_Next;      // +0  
-					LONG dol_Type;      // +4  
-
-					struct MsgPort * dol_Task;      // +8  
-					BPTR dol_Lock;      // +12 
-
-						union {
-						// --- DLT_DEVICE (Handler) fields would go here ---
-
-						// --- DLT_VOLUME fields ---
-						struct {
-							struct DateStamp dol_VolumeDate; // +16 (Takes 12 bytes: Days, Mins, Ticks) 
-							BPTR dol_LockList;   // +28 
-							LONG dol_DiskType;   // +32 DOS0
-							LONG dol_pad3;       // +36 (Reserved/padding) 
-							BSTR dol_Name;       // +40 (The volume name BPTR) 
-						}
-						dol_volume;
-
-						// --- DLT_ASSIGN fields would go here ---
-					}
-					dol_misc;
-				};
-				*/
-
-				// dummy device name string (e.g., "jammy.device")
-				string fssmDevName = "jammy.device";
-				uint fssmDevNameMem = AllocMem((uint)fssmDevName.Length + 1, 0x10001);
-				memory.UnsafeWrite8(fssmDevNameMem, (byte)fssmDevName.Length);
-				for (int i = 0; i < fssmDevName.Length; i++)
-					memory.UnsafeWrite8(fssmDevNameMem + (uint)i + 1, (byte)fssmDevName[i]);
-
-				// DosEnvec
-				uint envMem = AllocMem(17 * 4, 0x10001);
-				memory.UnsafeWrite32(envMem + (0 * 4), 16);         // de_TableSize (16 entries follow)
-				memory.UnsafeWrite32(envMem + (1 * 4), 128);        // de_SizeBlock (128 longs = 512 bytes)
-				memory.UnsafeWrite32(envMem + (2 * 4), 0);          // de_SecOrg
-				memory.UnsafeWrite32(envMem + (3 * 4), 16);         // de_Surfaces (1 Head)
-				memory.UnsafeWrite32(envMem + (4 * 4), 1);          // de_SectorPerBlock (1)
-				memory.UnsafeWrite32(envMem + (5 * 4), 64);         // de_BlocksPerTrack (1)
-				memory.UnsafeWrite32(envMem + (6 * 4), 2);          // de_Reserved (2 blocks)
-				memory.UnsafeWrite32(envMem + (7 * 4), 0);          // de_PreAlloc
-				memory.UnsafeWrite32(envMem + (8 * 4), 0);          // de_Interleave
-				memory.UnsafeWrite32(envMem + (9 * 4), 0);          // de_LowCyl
-				memory.UnsafeWrite32(envMem + (10 * 4), 2047);      // de_HighCyl (Dummy 1 cylinder)
-				memory.UnsafeWrite32(envMem + (11 * 4), 5);         // de_NumBuffers
-				memory.UnsafeWrite32(envMem + (12 * 4), 1);         // de_BufMemType (MEMF_PUBLIC)
-				memory.UnsafeWrite32(envMem + (13 * 4), 0x00FFFFFF);// de_MaxTransfer
-				memory.UnsafeWrite32(envMem + (14 * 4), 0x7FFFFFFE);// de_Mask
-				memory.UnsafeWrite32(envMem + (15 * 4), 0);         // de_BootPri
-				memory.UnsafeWrite32(envMem + (16 * 4), 0x444F5300);// de_DosType ('DOS\0')
-
-				// FileSysStartupMsg
-				uint fssmMem = AllocMem(16, 0x10001);
-				memory.UnsafeWrite32(fssmMem + 0, 0);                   // fssm_Unit
-				memory.UnsafeWrite32(fssmMem + 4, fssmDevNameMem >> 2); // fssm_Device (BPTR)
-				memory.UnsafeWrite32(fssmMem + 8, envMem >> 2);         // fssm_Environ (BPTR)
-				memory.UnsafeWrite32(fssmMem + 12, 0);                  // fssm_Flags
-
-				uint devMem = AllocMem(48, 0x10001);
 				uint volMem = AllocMem(48, 0x10001);
-
-				// Device node
-				uint devNameMem = AllocMem((uint)serial.Length + 2, 0x10001);
-				WriteDOSString(devNameMem, serial);
-
-				memory.UnsafeWrite32(devMem + 0, volMem>>2);          // dn_Next = Link to our Volume node!
-				memory.UnsafeWrite32(devMem + 4, 0);                // dn_Type = DLT_DEVICE (0)
-				memory.UnsafeWrite32(devMem + 8, regs.A[3]);        // dn_Task = MsgPort
-				memory.UnsafeWrite32(devMem + 12, 0);               // dn_Lock = 0
-				memory.UnsafeWrite32(devMem + 16, 0);               // dn_Handler
-				memory.UnsafeWrite32(devMem + 20, 0);               // dn_StackSize
-				memory.UnsafeWrite32(devMem + 24, 0);               // dn_Priority
-				memory.UnsafeWrite32(devMem + 28, fssmMem >> 2); // dn_Startup
-				memory.UnsafeWrite32(devMem + 32, 0);               // dn_SegList
-				memory.UnsafeWrite32(devMem + 36, 0xffffffff);      // dn_GlobalVec
-				memory.UnsafeWrite32(devMem + 40, devNameMem >> 2); // dn_Name
-
-				// Volume node
 				uint volNameMem = AllocMem((uint)volumeName.Length + 2, 0x10001);
 				WriteDOSString(volNameMem, volumeName);
 
-				memory.UnsafeWrite32(volMem + 0, 0);          // dol_Next
-				memory.UnsafeWrite32(volMem + 4, 2);          // dol_Type = DLT_VOLUME (2)
-				memory.UnsafeWrite32(volMem + 8, regs.A[3]);  // dol_Task = Your MsgPort
-				memory.UnsafeWrite32(volMem + 12, 0);         // dol_Lock = 0
-				memory.UnsafeWrite32(volMem + 16, 0);
-				memory.UnsafeWrite32(volMem + 20, 0);
-				memory.UnsafeWrite32(volMem + 24, 0);
-				memory.UnsafeWrite32(volMem + 28, 0);
-				memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);//0x4D594653);//MYFS
-				memory.UnsafeWrite32(volMem + 36, 0);
-				memory.UnsafeWrite32(volMem + 40, volNameMem >> 2);
+				memory.UnsafeWrite32(volMem + 0, 0);                // dol_Next (set below)
+				memory.UnsafeWrite32(volMem + 4, 2);                // DLT_VOLUME
+				memory.UnsafeWrite32(volMem + 8, regs.A[3]);        // dol_Task = handler's MsgPort
+				memory.UnsafeWrite32(volMem + 12, 0);               // dol_Lock
+
+				DateTime now = DateTime.Now;                        // local time, as AmigaDOS expects
+				uint days = (uint)(now.Date - new DateTime(1978, 1, 1)).TotalDays;
+				uint minutes = (uint)(now.Hour * 60 + now.Minute);
+				uint ticks = (uint)(now.Second * 50 + now.Millisecond / 20);
+
+				memory.UnsafeWrite32(volMem + 16, days);
+				memory.UnsafeWrite32(volMem + 20, minutes);
+				memory.UnsafeWrite32(volMem + 24, ticks);
+
+				memory.UnsafeWrite32(volMem + 28, 0);               // dol_LockList
+				memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);     // dol_DiskType
+				memory.UnsafeWrite32(volMem + 40, volNameMem >> 2); // dol_Name
 
 				myVolumeNodeBPTR = volMem >> 2;
+
+				uint devNode = memory.UnsafeRead32(regs.A[4] + 28) << 2;
+				memory.UnsafeWrite32(devNode + 8, regs.A[3]);
 
 				// walk ExecBase->libList to find dos.library
 				uint execBase = memory.UnsafeRead32(4);
@@ -603,7 +532,7 @@ namespace Jammy.Core.Expansion
 
 					// insert VolumeNode at list head
 					memory.UnsafeWrite32(volMem + 0, headBPTR);             // node->Next = oldHead
-					memory.UnsafeWrite32(dosInfo + 4, devMem>>2);    // Head = node
+					memory.UnsafeWrite32(dosInfo + 4, volMem>>2);    // Head = node
 
 					logger.LogTrace($"{serial} {volumeName} Volume Node injected");
 				}
