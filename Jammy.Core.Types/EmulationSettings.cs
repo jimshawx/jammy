@@ -95,6 +95,9 @@ namespace Jammy.Core.Types
 		public int HardDiskCount { get; set; }
 		public string DH0 { get; set; }
 		public string DH1 { get; set; }
+		public int FolderCount { get; set; }
+		public string Folder0 { get; set; }
+		public string Folder1 { get; set; }
 
 		public string ZorroIIMemory { get; set; }
 		public string ZorroIIIMemory { get; set; }
