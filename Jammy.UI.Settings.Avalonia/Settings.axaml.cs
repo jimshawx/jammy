@@ -528,6 +528,13 @@ namespace Jammy.UI.Settings.Avalonia
 			txtDH0.Text = currentSettings.DH0;
 			txtDH1.Text = currentSettings.DH1;
 
+			//Folders
+			nudFolderCount.Value = currentSettings.FolderCount;
+			txtFolder0.IsEnabled = btnFolder0Pick.IsEnabled = nudFolderCount.Value > 0;
+			txtFolder1.IsEnabled = btnFolder1Pick.IsEnabled = nudFolderCount.Value > 1;
+			txtFolder0.Text = currentSettings.Folder0;
+			txtFolder1.Text = currentSettings.Folder1;
+
 			//Kickstart
 			txtKickstart.Text = currentSettings.KickStart;
 
@@ -580,6 +587,11 @@ namespace Jammy.UI.Settings.Avalonia
 			currentSettings.HardDiskCount = (int)nudHardDiskCount.Value;
 			currentSettings.DH0 = txtDH0.Text;
 			currentSettings.DH1 = txtDH1.Text;
+
+			//Folders
+			currentSettings.FolderCount = (int)nudFolderCount.Value;
+			currentSettings.Folder0 = txtFolder0.Text;
+			currentSettings.Folder1 = txtFolder1.Text;
 
 			//Kickstart
 			currentSettings.KickStart = txtKickstart.Text;
@@ -813,6 +825,59 @@ namespace Jammy.UI.Settings.Avalonia
 				Close();
 			}
 			catch { }
+		}
+
+		private void nudFolderCount_ValueChanged(object sender, NumericUpDownValueChangedEventArgs e)
+		{
+			int f = (int)nudFolderCount.Value;
+			txtFolder0.IsEnabled = btnFolder0Pick.IsEnabled = f > 0;
+			txtFolder1.IsEnabled = btnFolder1Pick.IsEnabled = f > 1;
+		}
+
+		private async void btnFolder0Pick_Click(object sender, RoutedEventArgs e)
+		{
+			await StorageProvider.OpenFolderPickerAsync(
+				new FolderPickerOpenOptions
+				{
+					SuggestedFileName = txtFolder0.Text,
+					AllowMultiple = false
+				}).ContinueWith((t) => {
+					var folderBrowserDialog1 = t.Result;
+					if (folderBrowserDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => {
+							txtFolder0.Text = folderBrowserDialog1.First().Path.LocalPath;
+						});
+					}
+				});
+		}
+
+		private void btnFolder0Eject_Click(object sender, RoutedEventArgs e)
+		{
+			txtFolder0.Text = string.Empty;
+		}
+
+		private async void btnFolder1Pick_Click(object sender, RoutedEventArgs e)
+		{
+			await StorageProvider.OpenFolderPickerAsync(
+				new FolderPickerOpenOptions
+				{
+					SuggestedFileName = txtFolder1.Text,
+					AllowMultiple = false
+				}).ContinueWith((t) => {
+					var folderBrowserDialog1 = t.Result;
+					if (folderBrowserDialog1.Any())
+					{
+						Dispatcher.UIThread.Invoke(() => {
+							txtFolder1.Text = folderBrowserDialog1.First().Path.LocalPath;
+						});
+					}
+				});
+		}
+
+		private void btnFolder1Eject_Click(object sender, RoutedEventArgs e)
+		{
+			txtFolder1.Text = string.Empty;
 		}
 	}
 }
