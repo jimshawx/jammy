@@ -112,11 +112,7 @@ namespace Jammy.Main
 				.AddSingleton<IZorro2, Zorro2>()
 				.AddSingleton<IZorro3, Zorro3>()
 				//.AddSingleton<IExpansionROM, TestExpansion>()
-				//.AddSingleton<IExpansionROM>(sp => ActivatorUtilities.CreateInstance<DosExpansion>(sp, "JAM0", "JDK0"))
-				//.AddSingleton<IExpansionROM>(sp => ActivatorUtilities.CreateInstance<DosExpansion>(sp, "JAM1", "JDK1"))
 				//.AddSingleton<IZorroDebugHandler, TestExpansionDebugHandler>()
-				//.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM0", "JDK0", "hd", 0))
-				//.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM1", "JDK1", "hd1", 1))
 				.AddSingleton<IZorroExpansionRegistry, ZorroExpansionRegistry>()
 				.AddSingleton<IKickstartROM, KickstartROM>()
 				.AddSingleton<IExtendedKickstartROM, ExtendedKickstartROM>()
@@ -295,6 +291,17 @@ namespace Jammy.Main
 				services.AddSingleton<IHardDrive>(x => x.GetRequiredService<IHardDriveLoader>().DiskRead(settings.DH1, 1));
 			else
 				services.AddSingleton<IHardDrive>(x => new NullHardDrive(1));
+
+			if (settings.FolderCount > 0)
+			{
+				services.AddSingleton<IExpansionROM>(sp => ActivatorUtilities.CreateInstance<DosExpansion>(sp, "JAM0", "JDK0"));
+				services.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM0", "JDK0", settings.Folder0, 0));
+			}
+			if (settings.FolderCount > 1)
+			{ 
+				services.AddSingleton<IExpansionROM>(sp => ActivatorUtilities.CreateInstance<DosExpansion>(sp, "JAM1", "JDK1"));
+				services.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM1", "JDK1", settings.Folder1, 1));
+			}
 
 			if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
 			{
