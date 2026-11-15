@@ -219,7 +219,6 @@ namespace Jammy.Core.Custom
 		
 		private void ConfigureMemoryDevice(ZorroCfg configuration)
 		{
-			//AddNewMemoryDevice(configuration);
 			configuration.Ram.UpdateBaseAddress(configuration.Cfg.BaseAddress);
 			if (configuration.Expansion != null)
 				zorroExpansionRegistry.GetHandler(configuration.Cfg.GetSerial()).Init(configuration.Cfg);
