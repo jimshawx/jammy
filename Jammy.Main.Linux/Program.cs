@@ -55,6 +55,7 @@ using Microsoft.Extensions.Logging;
 using Parky.Logging;
 using ReactiveUI.Avalonia;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Intrinsics.X86;
@@ -372,6 +373,17 @@ public class Program
 		else
 			services.AddSingleton<IHardDrive>(x => new NullHardDrive(1));
 
+		if (settings.FolderCount > 0)
+		{
+			services.AddSingleton<IExpansionROM>(sp => ActivatorUtilities.CreateInstance<DosExpansion>(sp, "JAM0", "JDK0"));
+			services.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM0", "JDK0", settings.Folder0, 0));
+		}
+		if (settings.FolderCount > 1)
+		{
+			services.AddSingleton<IExpansionROM>(sp => ActivatorUtilities.CreateInstance<DosExpansion>(sp, "JAM1", "JDK1"));
+			services.AddSingleton<IZorroDebugHandler>(sp => ActivatorUtilities.CreateInstance<DosExpansionDebugHandler>(sp, "JAM1", "JDK1", settings.Folder1, 1));
+		}
+
 		if (settings.ChipSet == ChipSet.OCS || settings.ChipSet == ChipSet.ECS)
 		{
 			if (Sse2.IsSupported)
@@ -425,6 +437,9 @@ public class Program
 			.Search(new DatabaseSearch { Name = "default" })
 			.SingleOrDefault() ?? new Database.Types.Database { Name = "default" };
 		databaseDao.SaveOrUpdate(database);
+
+		//Zorro expansion handlers
+		var __ = serviceProvider.GetRequiredService<IEnumerable<IZorroDebugHandler>>();
 
 		var audio = serviceProvider.GetRequiredService<IAudio>();
 		var dma = serviceProvider.GetRequiredService<IDMA>();
