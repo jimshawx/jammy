@@ -51,7 +51,6 @@ namespace Jammy.UI.Settings
 			panel3 = new System.Windows.Forms.Panel();
 			groupBox3 = new System.Windows.Forms.GroupBox();
 			btnROMPick = new System.Windows.Forms.Button();
-			panel4 = new System.Windows.Forms.Panel();
 			groupBox5 = new System.Windows.Forms.GroupBox();
 			rbFloppyAccurate = new System.Windows.Forms.RadioButton();
 			btnDF3Eject = new System.Windows.Forms.Button();
@@ -96,7 +95,6 @@ namespace Jammy.UI.Settings
 			groupBox8 = new System.Windows.Forms.GroupBox();
 			rbSynchronous = new System.Windows.Forms.RadioButton();
 			rbImmediate = new System.Windows.Forms.RadioButton();
-			panel7 = new System.Windows.Forms.Panel();
 			groupBox7 = new System.Windows.Forms.GroupBox();
 			btnDH1Eject = new System.Windows.Forms.Button();
 			btnDH0Eject = new System.Windows.Forms.Button();
@@ -108,13 +106,25 @@ namespace Jammy.UI.Settings
 			cbDiskController = new System.Windows.Forms.ComboBox();
 			panel8 = new System.Windows.Forms.Panel();
 			cbSnapshots = new System.Windows.Forms.ComboBox();
+			tabDrives = new System.Windows.Forms.TabControl();
+			tabFloppy = new System.Windows.Forms.TabPage();
+			tabHardfile = new System.Windows.Forms.TabPage();
+			tabFolder = new System.Windows.Forms.TabPage();
+			groupBox9 = new System.Windows.Forms.GroupBox();
+			btnFolder1Eject = new System.Windows.Forms.Button();
+			btnFolder0Eject = new System.Windows.Forms.Button();
+			btnFolder1Pick = new System.Windows.Forms.Button();
+			btnFolder0Pick = new System.Windows.Forms.Button();
+			txtFolder0 = new System.Windows.Forms.TextBox();
+			txtFolder1 = new System.Windows.Forms.TextBox();
+			nudFolderCount = new System.Windows.Forms.NumericUpDown();
+			folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
 			panel1.SuspendLayout();
 			groupBox1.SuspendLayout();
 			panel2.SuspendLayout();
 			groupBox2.SuspendLayout();
 			panel3.SuspendLayout();
 			groupBox3.SuspendLayout();
-			panel4.SuspendLayout();
 			groupBox5.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)nudFloppyCount).BeginInit();
 			groupBox4.SuspendLayout();
@@ -122,10 +132,15 @@ namespace Jammy.UI.Settings
 			panel6.SuspendLayout();
 			groupBox6.SuspendLayout();
 			groupBox8.SuspendLayout();
-			panel7.SuspendLayout();
 			groupBox7.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)nudHardDiskCount).BeginInit();
 			panel8.SuspendLayout();
+			tabDrives.SuspendLayout();
+			tabFloppy.SuspendLayout();
+			tabHardfile.SuspendLayout();
+			tabFolder.SuspendLayout();
+			groupBox9.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)nudFolderCount).BeginInit();
 			SuspendLayout();
 			// 
 			// cbQuickStart
@@ -307,7 +322,7 @@ namespace Jammy.UI.Settings
 			// panel3
 			// 
 			panel3.Controls.Add(groupBox3);
-			panel3.Location = new System.Drawing.Point(475, 676);
+			panel3.Location = new System.Drawing.Point(478, 540);
 			panel3.Margin = new System.Windows.Forms.Padding(6);
 			panel3.Name = "panel3";
 			panel3.Size = new System.Drawing.Size(802, 128);
@@ -340,17 +355,9 @@ namespace Jammy.UI.Settings
 			btnROMPick.UseVisualStyleBackColor = true;
 			btnROMPick.Click += btnROMPick_Click;
 			// 
-			// panel4
-			// 
-			panel4.Controls.Add(groupBox5);
-			panel4.Location = new System.Drawing.Point(475, 90);
-			panel4.Margin = new System.Windows.Forms.Padding(6);
-			panel4.Name = "panel4";
-			panel4.Size = new System.Drawing.Size(802, 345);
-			panel4.TabIndex = 11;
-			// 
 			// groupBox5
 			// 
+			groupBox5.BackColor = System.Drawing.SystemColors.Control;
 			groupBox5.Controls.Add(rbFloppyAccurate);
 			groupBox5.Controls.Add(btnDF3Eject);
 			groupBox5.Controls.Add(rbFloppyFast);
@@ -368,11 +375,11 @@ namespace Jammy.UI.Settings
 			groupBox5.Controls.Add(txtDF3);
 			groupBox5.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox5.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox5.Location = new System.Drawing.Point(0, 0);
+			groupBox5.Location = new System.Drawing.Point(3, 3);
 			groupBox5.Margin = new System.Windows.Forms.Padding(6);
 			groupBox5.Name = "groupBox5";
 			groupBox5.Padding = new System.Windows.Forms.Padding(6);
-			groupBox5.Size = new System.Drawing.Size(802, 345);
+			groupBox5.Size = new System.Drawing.Size(804, 358);
 			groupBox5.TabIndex = 16;
 			groupBox5.TabStop = false;
 			groupBox5.Text = "Floppy Disk";
@@ -719,7 +726,7 @@ namespace Jammy.UI.Settings
 			// btnGo
 			// 
 			btnGo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
-			btnGo.Location = new System.Drawing.Point(1115, 941);
+			btnGo.Location = new System.Drawing.Point(1118, 805);
 			btnGo.Margin = new System.Windows.Forms.Padding(6);
 			btnGo.Name = "btnGo";
 			btnGo.Size = new System.Drawing.Size(139, 49);
@@ -730,7 +737,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnExit
 			// 
-			btnExit.Location = new System.Drawing.Point(495, 939);
+			btnExit.Location = new System.Drawing.Point(498, 803);
 			btnExit.Margin = new System.Windows.Forms.Padding(6);
 			btnExit.Name = "btnExit";
 			btnExit.Size = new System.Drawing.Size(139, 49);
@@ -750,7 +757,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnLoadConfig
 			// 
-			btnLoadConfig.Location = new System.Drawing.Point(664, 939);
+			btnLoadConfig.Location = new System.Drawing.Point(667, 803);
 			btnLoadConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnLoadConfig.Name = "btnLoadConfig";
 			btnLoadConfig.Size = new System.Drawing.Size(139, 49);
@@ -761,7 +768,7 @@ namespace Jammy.UI.Settings
 			// 
 			// btnSaveAsConfig
 			// 
-			btnSaveAsConfig.Location = new System.Drawing.Point(965, 941);
+			btnSaveAsConfig.Location = new System.Drawing.Point(968, 805);
 			btnSaveAsConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnSaveAsConfig.Name = "btnSaveAsConfig";
 			btnSaveAsConfig.Size = new System.Drawing.Size(139, 49);
@@ -773,7 +780,7 @@ namespace Jammy.UI.Settings
 			// btnSaveConfig
 			// 
 			btnSaveConfig.Enabled = false;
-			btnSaveConfig.Location = new System.Drawing.Point(814, 941);
+			btnSaveConfig.Location = new System.Drawing.Point(817, 805);
 			btnSaveConfig.Margin = new System.Windows.Forms.Padding(6);
 			btnSaveConfig.Name = "btnSaveConfig";
 			btnSaveConfig.Size = new System.Drawing.Size(139, 49);
@@ -785,7 +792,7 @@ namespace Jammy.UI.Settings
 			// panel6
 			// 
 			panel6.Controls.Add(groupBox6);
-			panel6.Location = new System.Drawing.Point(476, 817);
+			panel6.Location = new System.Drawing.Point(479, 681);
 			panel6.Margin = new System.Windows.Forms.Padding(6);
 			panel6.Name = "panel6";
 			panel6.Size = new System.Drawing.Size(419, 111);
@@ -874,17 +881,9 @@ namespace Jammy.UI.Settings
 			rbImmediate.Text = "Immediate";
 			rbImmediate.UseVisualStyleBackColor = true;
 			// 
-			// panel7
-			// 
-			panel7.Controls.Add(groupBox7);
-			panel7.Location = new System.Drawing.Point(475, 447);
-			panel7.Margin = new System.Windows.Forms.Padding(6);
-			panel7.Name = "panel7";
-			panel7.Size = new System.Drawing.Size(803, 219);
-			panel7.TabIndex = 23;
-			// 
 			// groupBox7
 			// 
+			groupBox7.BackColor = System.Drawing.SystemColors.Control;
 			groupBox7.Controls.Add(btnDH1Eject);
 			groupBox7.Controls.Add(btnDH0Eject);
 			groupBox7.Controls.Add(btnDH1Pick);
@@ -895,11 +894,11 @@ namespace Jammy.UI.Settings
 			groupBox7.Controls.Add(cbDiskController);
 			groupBox7.Dock = System.Windows.Forms.DockStyle.Fill;
 			groupBox7.ForeColor = System.Drawing.SystemColors.Highlight;
-			groupBox7.Location = new System.Drawing.Point(0, 0);
+			groupBox7.Location = new System.Drawing.Point(3, 3);
 			groupBox7.Margin = new System.Windows.Forms.Padding(6);
 			groupBox7.Name = "groupBox7";
 			groupBox7.Padding = new System.Windows.Forms.Padding(6);
-			groupBox7.Size = new System.Drawing.Size(803, 219);
+			groupBox7.Size = new System.Drawing.Size(804, 358);
 			groupBox7.TabIndex = 0;
 			groupBox7.TabStop = false;
 			groupBox7.Text = "Hard Disk";
@@ -990,7 +989,7 @@ namespace Jammy.UI.Settings
 			// panel8
 			// 
 			panel8.Controls.Add(groupBox8);
-			panel8.Location = new System.Drawing.Point(904, 817);
+			panel8.Location = new System.Drawing.Point(907, 681);
 			panel8.Name = "panel8";
 			panel8.Size = new System.Drawing.Size(376, 111);
 			panel8.TabIndex = 24;
@@ -1006,14 +1005,152 @@ namespace Jammy.UI.Settings
 			cbSnapshots.TabIndex = 25;
 			cbSnapshots.SelectedValueChanged += cbSnapshots_SelectedValueChanged;
 			// 
+			// tabDrives
+			// 
+			tabDrives.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
+			tabDrives.Controls.Add(tabFloppy);
+			tabDrives.Controls.Add(tabHardfile);
+			tabDrives.Controls.Add(tabFolder);
+			tabDrives.Location = new System.Drawing.Point(475, 109);
+			tabDrives.Name = "tabDrives";
+			tabDrives.SelectedIndex = 0;
+			tabDrives.Size = new System.Drawing.Size(818, 412);
+			tabDrives.TabIndex = 26;
+			// 
+			// tabFloppy
+			// 
+			tabFloppy.Controls.Add(groupBox5);
+			tabFloppy.Location = new System.Drawing.Point(4, 44);
+			tabFloppy.Name = "tabFloppy";
+			tabFloppy.Padding = new System.Windows.Forms.Padding(3);
+			tabFloppy.Size = new System.Drawing.Size(810, 364);
+			tabFloppy.TabIndex = 0;
+			tabFloppy.Text = "Floppy Disks";
+			tabFloppy.UseVisualStyleBackColor = true;
+			// 
+			// tabHardfile
+			// 
+			tabHardfile.Controls.Add(groupBox7);
+			tabHardfile.Location = new System.Drawing.Point(4, 44);
+			tabHardfile.Name = "tabHardfile";
+			tabHardfile.Padding = new System.Windows.Forms.Padding(3);
+			tabHardfile.Size = new System.Drawing.Size(810, 364);
+			tabHardfile.TabIndex = 1;
+			tabHardfile.Text = "Hardfiles";
+			tabHardfile.UseVisualStyleBackColor = true;
+			// 
+			// tabFolder
+			// 
+			tabFolder.BackColor = System.Drawing.SystemColors.Control;
+			tabFolder.Controls.Add(groupBox9);
+			tabFolder.Location = new System.Drawing.Point(4, 44);
+			tabFolder.Name = "tabFolder";
+			tabFolder.Size = new System.Drawing.Size(810, 364);
+			tabFolder.TabIndex = 2;
+			tabFolder.Text = "Folders";
+			// 
+			// groupBox9
+			// 
+			groupBox9.BackColor = System.Drawing.SystemColors.Control;
+			groupBox9.Controls.Add(btnFolder1Eject);
+			groupBox9.Controls.Add(btnFolder0Eject);
+			groupBox9.Controls.Add(btnFolder1Pick);
+			groupBox9.Controls.Add(btnFolder0Pick);
+			groupBox9.Controls.Add(txtFolder0);
+			groupBox9.Controls.Add(txtFolder1);
+			groupBox9.Controls.Add(nudFolderCount);
+			groupBox9.Dock = System.Windows.Forms.DockStyle.Fill;
+			groupBox9.ForeColor = System.Drawing.SystemColors.Highlight;
+			groupBox9.Location = new System.Drawing.Point(0, 0);
+			groupBox9.Margin = new System.Windows.Forms.Padding(6);
+			groupBox9.Name = "groupBox9";
+			groupBox9.Padding = new System.Windows.Forms.Padding(6);
+			groupBox9.Size = new System.Drawing.Size(810, 364);
+			groupBox9.TabIndex = 19;
+			groupBox9.TabStop = false;
+			groupBox9.Text = "Folders";
+			// 
+			// btnFolder1Eject
+			// 
+			btnFolder1Eject.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnFolder1Eject.Location = new System.Drawing.Point(659, 162);
+			btnFolder1Eject.Name = "btnFolder1Eject";
+			btnFolder1Eject.Size = new System.Drawing.Size(27, 46);
+			btnFolder1Eject.TabIndex = 18;
+			btnFolder1Eject.Text = "⏏";
+			btnFolder1Eject.UseVisualStyleBackColor = true;
+			btnFolder1Eject.Click += btnFolder1Eject_Click;
+			// 
+			// btnFolder0Eject
+			// 
+			btnFolder0Eject.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnFolder0Eject.Location = new System.Drawing.Point(659, 101);
+			btnFolder0Eject.Name = "btnFolder0Eject";
+			btnFolder0Eject.Size = new System.Drawing.Size(27, 46);
+			btnFolder0Eject.TabIndex = 17;
+			btnFolder0Eject.Text = "⏏";
+			btnFolder0Eject.UseVisualStyleBackColor = true;
+			btnFolder0Eject.Click += btnFolder0Eject_Click;
+			// 
+			// btnFolder1Pick
+			// 
+			btnFolder1Pick.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnFolder1Pick.Location = new System.Drawing.Point(594, 158);
+			btnFolder1Pick.Margin = new System.Windows.Forms.Padding(6);
+			btnFolder1Pick.Name = "btnFolder1Pick";
+			btnFolder1Pick.Size = new System.Drawing.Size(65, 49);
+			btnFolder1Pick.TabIndex = 16;
+			btnFolder1Pick.Text = "...";
+			btnFolder1Pick.UseVisualStyleBackColor = true;
+			btnFolder1Pick.Click += btnFolder1Pick_Click;
+			// 
+			// btnFolder0Pick
+			// 
+			btnFolder0Pick.ForeColor = System.Drawing.SystemColors.WindowText;
+			btnFolder0Pick.Location = new System.Drawing.Point(594, 98);
+			btnFolder0Pick.Margin = new System.Windows.Forms.Padding(6);
+			btnFolder0Pick.Name = "btnFolder0Pick";
+			btnFolder0Pick.Size = new System.Drawing.Size(65, 49);
+			btnFolder0Pick.TabIndex = 15;
+			btnFolder0Pick.Text = "...";
+			btnFolder0Pick.UseVisualStyleBackColor = true;
+			btnFolder0Pick.Click += btnFolder0Pick_Click;
+			// 
+			// txtFolder0
+			// 
+			txtFolder0.Location = new System.Drawing.Point(11, 101);
+			txtFolder0.Margin = new System.Windows.Forms.Padding(6);
+			txtFolder0.Name = "txtFolder0";
+			txtFolder0.Size = new System.Drawing.Size(567, 39);
+			txtFolder0.TabIndex = 13;
+			// 
+			// txtFolder1
+			// 
+			txtFolder1.Location = new System.Drawing.Point(11, 162);
+			txtFolder1.Margin = new System.Windows.Forms.Padding(6);
+			txtFolder1.Name = "txtFolder1";
+			txtFolder1.Size = new System.Drawing.Size(567, 39);
+			txtFolder1.TabIndex = 14;
+			// 
+			// nudFolderCount
+			// 
+			nudFolderCount.Location = new System.Drawing.Point(12, 50);
+			nudFolderCount.Margin = new System.Windows.Forms.Padding(6);
+			nudFolderCount.Maximum = new decimal(new int[] { 2, 0, 0, 0 });
+			nudFolderCount.Name = "nudFolderCount";
+			nudFolderCount.ReadOnly = true;
+			nudFolderCount.Size = new System.Drawing.Size(80, 39);
+			nudFolderCount.TabIndex = 1;
+			nudFolderCount.ValueChanged += nudFolderCount_ValueChanged;
+			// 
 			// Settings
 			// 
 			AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
 			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			ClientSize = new System.Drawing.Size(1292, 1019);
+			ClientSize = new System.Drawing.Size(1317, 883);
+			Controls.Add(tabDrives);
 			Controls.Add(cbSnapshots);
 			Controls.Add(panel8);
-			Controls.Add(panel7);
 			Controls.Add(panel6);
 			Controls.Add(btnSaveConfig);
 			Controls.Add(btnSaveAsConfig);
@@ -1021,7 +1158,6 @@ namespace Jammy.UI.Settings
 			Controls.Add(panel5);
 			Controls.Add(btnExit);
 			Controls.Add(btnGo);
-			Controls.Add(panel4);
 			Controls.Add(panel3);
 			Controls.Add(panel2);
 			Controls.Add(panel1);
@@ -1040,7 +1176,6 @@ namespace Jammy.UI.Settings
 			panel3.ResumeLayout(false);
 			groupBox3.ResumeLayout(false);
 			groupBox3.PerformLayout();
-			panel4.ResumeLayout(false);
 			groupBox5.ResumeLayout(false);
 			groupBox5.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)nudFloppyCount).EndInit();
@@ -1052,11 +1187,17 @@ namespace Jammy.UI.Settings
 			groupBox6.PerformLayout();
 			groupBox8.ResumeLayout(false);
 			groupBox8.PerformLayout();
-			panel7.ResumeLayout(false);
 			groupBox7.ResumeLayout(false);
 			groupBox7.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)nudHardDiskCount).EndInit();
 			panel8.ResumeLayout(false);
+			tabDrives.ResumeLayout(false);
+			tabFloppy.ResumeLayout(false);
+			tabHardfile.ResumeLayout(false);
+			tabFolder.ResumeLayout(false);
+			groupBox9.ResumeLayout(false);
+			groupBox9.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)nudFolderCount).EndInit();
 			ResumeLayout(false);
 		}
 
@@ -1075,7 +1216,6 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.TextBox txtKickstart;
 		private System.Windows.Forms.Panel panel3;
 		private System.Windows.Forms.Button btnROMPick;
-		private System.Windows.Forms.Panel panel4;
 		private System.Windows.Forms.Button btnDF3Pick;
 		private System.Windows.Forms.Button btnDF2Pick;
 		private System.Windows.Forms.Button btnDF1Pick;
@@ -1103,7 +1243,6 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.Panel panel6;
 		private System.Windows.Forms.GroupBox groupBox6;
 		private System.Windows.Forms.CheckBox cbAudio;
-		private System.Windows.Forms.Panel panel7;
 		private System.Windows.Forms.GroupBox groupBox7;
 		private System.Windows.Forms.ComboBox cbDiskController;
 		private System.Windows.Forms.DomainUpDown dudChipRAM;
@@ -1137,5 +1276,18 @@ namespace Jammy.UI.Settings
 		private System.Windows.Forms.TextBox txtDH1;
 		private System.Windows.Forms.Panel panel8;
 		private System.Windows.Forms.ComboBox cbSnapshots;
+		private System.Windows.Forms.TabControl tabDrives;
+		private System.Windows.Forms.TabPage tabFloppy;
+		private System.Windows.Forms.TabPage tabHardfile;
+		private System.Windows.Forms.TabPage tabFolder;
+		private System.Windows.Forms.GroupBox groupBox9;
+		private System.Windows.Forms.Button btnFolder1Eject;
+		private System.Windows.Forms.Button btnFolder0Eject;
+		private System.Windows.Forms.Button btnFolder1Pick;
+		private System.Windows.Forms.Button btnFolder0Pick;
+		private System.Windows.Forms.TextBox txtFolder0;
+		private System.Windows.Forms.TextBox txtFolder1;
+		private System.Windows.Forms.NumericUpDown nudFolderCount;
+		private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
 	}
 }

@@ -435,6 +435,13 @@ namespace Jammy.UI.Settings
 			txtDH0.Text = currentSettings.DH0;
 			txtDH1.Text = currentSettings.DH1;
 
+			//Folders
+			nudFolderCount.Value = currentSettings.FolderCount;
+			txtFolder0.Enabled = btnFolder0Pick.Enabled = nudFolderCount.Value > 0;
+			txtFolder1.Enabled = btnFolder1Pick.Enabled = nudFolderCount.Value > 1;
+			txtFolder0.Text = currentSettings.Folder0;
+			txtFolder1.Text = currentSettings.Folder1;
+
 			//Kickstart
 			txtKickstart.Text = currentSettings.KickStart;
 
@@ -487,6 +494,11 @@ namespace Jammy.UI.Settings
 			currentSettings.HardDiskCount = (int)nudHardDiskCount.Value;
 			currentSettings.DH0 = txtDH0.Text;
 			currentSettings.DH1 = txtDH1.Text;
+
+			//Folders
+			currentSettings.FolderCount= (int)nudFolderCount.Value;
+			currentSettings.Folder0 = txtFolder0.Text;
+			currentSettings.Folder1 = txtFolder1.Text;
 
 			//Kickstart
 			currentSettings.KickStart = txtKickstart.Text;
@@ -721,6 +733,37 @@ namespace Jammy.UI.Settings
 				Close();
 			}
 			catch { }
+		}
+
+		private void nudFolderCount_ValueChanged(object sender, EventArgs e)
+		{
+			int f = (int)nudFolderCount.Value;
+			txtFolder0.Enabled = btnFolder0Pick.Enabled = f > 0;
+			txtFolder1.Enabled = btnFolder1Pick.Enabled = f > 1;
+		}
+
+		private void btnFolder0Pick_Click(object sender, EventArgs e)
+		{
+			folderBrowserDialog1.Multiselect = false;
+			if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+				txtFolder0.Text = folderBrowserDialog1.SelectedPath;
+		}
+
+		private void btnFolder0Eject_Click(object sender, EventArgs e)
+		{
+			txtFolder0.Text = string.Empty;
+		}
+
+		private void btnFolder1Pick_Click(object sender, EventArgs e)
+		{
+			folderBrowserDialog1.Multiselect = false;
+			if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+				txtFolder1.Text = folderBrowserDialog1.SelectedPath;
+		}
+
+		private void btnFolder1Eject_Click(object sender, EventArgs e)
+		{
+			txtFolder1.Text = string.Empty;
 		}
 	}
 }
