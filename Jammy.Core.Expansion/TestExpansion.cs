@@ -105,13 +105,7 @@ namespace Jammy.Core.Expansion
 		{
 		}
 
-		public override void Init(ZorroConfiguration configuration)
-		{
-		}
-		public override void Reset()
-		{
-		}
+		public override void Init(ZorroConfiguration configuration) { }
+		public override void Reset() { }
 	}
-
-	
 }

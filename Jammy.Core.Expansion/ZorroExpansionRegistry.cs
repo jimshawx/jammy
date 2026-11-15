@@ -9,24 +9,11 @@ namespace Jammy.Core.Expansion
 {
 	public class ZorroExpansionRegistry : IZorroExpansionRegistry
 	{
-		private readonly Dictionary<uint, ZorroConfiguration> expansionROMs = new Dictionary<uint, ZorroConfiguration>();
 		private readonly  Dictionary<uint, IZorroDebugHandler> expansionHandlers = new Dictionary<uint, IZorroDebugHandler>();
-
-
-		public ZorroConfiguration GetExpansion(uint serial)
-		{
-			return expansionROMs.GetValueOrDefault(serial);
-		}
 
 		public IZorroDebugHandler GetHandler(uint serial)
 		{
 			return expansionHandlers.GetValueOrDefault(serial);
-		}
-
-		public void RegisterExpansion(ZorroConfiguration configuration)
-		{
-			//expansionROMs.Add(configuration.GetSerial(), configuration);
-			//expansionHandlers[configuration.GetSerial()].Init(configuration);
 		}
 
 		public void RegisterHandler(uint serial, IZorroDebugHandler handler)

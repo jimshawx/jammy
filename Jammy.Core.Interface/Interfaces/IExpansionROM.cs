@@ -14,16 +14,13 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IZorroExpansionRegistry
 	{
-		void RegisterExpansion(ZorroConfiguration configuration);
-		ZorroConfiguration GetExpansion(uint serial);
 		void RegisterHandler(uint ser, IZorroDebugHandler handler);
 		IZorroDebugHandler GetHandler(uint serial);
 		void Reset();
 	}
 
-	public interface IZorroDebugHandler
+	public interface IZorroDebugHandler : IReset
 	{
 		void Init(ZorroConfiguration configuration);
-		void Reset();
 	}
 }

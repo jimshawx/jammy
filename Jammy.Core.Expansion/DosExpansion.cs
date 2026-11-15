@@ -385,6 +385,7 @@ namespace Jammy.Core.Expansion
 		public override void Reset()
 		{
 			volumeLinked = false;
+			Cleanup();
 		}
 
 		public override void Init(ZorroConfiguration configuration)
@@ -1589,18 +1590,7 @@ namespace Jammy.Core.Expansion
 
 				case ACTION_DIE:
 					logger.LogTrace($"ACTION_DIE");
-					//close all open files
-					foreach (var file in files.Values)
-					{
-						try
-						{ 
-							file.stream.Close();
-							file.stream.Dispose();
-						}
-						catch { /* ignore any errors */ }
-					}
-					files.Clear();
-					deviceIsDead = true;
+					Cleanup();
 					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 					memory.UnsafeWrite32(regs.A[4] + 16, 0);
 					break;
@@ -1664,6 +1654,26 @@ namespace Jammy.Core.Expansion
 			cpu.SetRegs(regs);
 
 			return false;
+		}
+
+		private void Cleanup()
+		{
+			//close all open files
+			foreach (var file in files.Values)
+			{
+				try
+				{
+					file.stream.Close();
+					file.stream.Dispose();
+				}
+				catch { /* ignore any errors */ }
+			}
+			files.Clear();
+
+			dircache.Clear();
+			locks.Clear();
+
+			deviceIsDead = true;
 		}
 
 		private string AmigaPathCombine(string root, string fragment)
@@ -1938,7 +1948,7 @@ namespace Jammy.Core.Expansion
 				";
 			var r = assembler.Assemble(asm);
 
-			logger.LogTrace($"EXEC {lvo}");
+			//logger.LogTrace($"EXEC {lvo}");
 
 			//half-way through our 64KB memory bank
 			uint baseAddress = configuration.BaseAddress + 32768;
@@ -1969,7 +1979,7 @@ namespace Jammy.Core.Expansion
 
 			cpu.SetRegs(saved);
 
-			logger.LogTrace("EXEC DONE");
+			//logger.LogTrace("EXEC DONE");
 
 			return rv;
 		}
