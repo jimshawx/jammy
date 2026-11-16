@@ -3,6 +3,7 @@ using Jammy.Core.Types;
 using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -20,6 +21,8 @@ namespace Jammy.Core.Memory
 		public IMemoryMappedDeviceCollection MappedDevice { get; }
 		public IMemoryMappedDeviceCollection DebugMappedDevice { get; }
 
+		private readonly List<IMemoryMappedDevice> devices = new List<IMemoryMappedDevice>();
+
 		public MemoryManager(ILogger<MemoryManager> logger, IOptions<EmulationSettings> settings)
 		{
 			MappedDevice = new MemoryMappedDeviceCollection(logger, settings.Value.AddressBits);
@@ -31,6 +34,7 @@ namespace Jammy.Core.Memory
 		{
 			MappedDevice.AddRange(devs);
 			DebugMappedDevice.AddRange(devs.Where(x=> x is IDebuggableMemory));
+			devices.AddRange(devs);
 
 			BuildMappedDevices();
 		}
@@ -49,6 +53,33 @@ namespace Jammy.Core.Memory
 		{
 			MappedDevice.BuildMappedDevices();
 			DebugMappedDevice.BuildMappedDevices();
+		}
+
+		public void ActivateDevice(uint start, ulong length)
+		{
+			//if there's already an active device at the start address, do nothing
+			foreach (var device in devices.Where(x => !(x is UnmappedMemory)))
+			{
+				foreach (var range in device.MappedRange())
+				{
+					if (range.Start == start)
+						return;
+				}
+			}
+
+			//find an inactive zorro board of the right size and activate it
+			foreach (var zorro in devices.OfType<IZorroRAM>())
+			{
+				if (!zorro.IsActive(out ulong zlen))
+				{ 
+					if (zlen == length)
+					{ 
+						zorro.UpdateBaseAddress(start);
+						BuildMappedDevices();
+						break;
+					} 
+				}
+			}
 		}
 	}
 

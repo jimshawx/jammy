@@ -163,5 +163,11 @@ namespace Jammy.Core.Memory
 		{
 			isActive = false;
 		}
+
+		public bool IsActive(out ulong length)
+		{
+			length = memoryRange.Length;
+			return isActive;
+		}
 	}
 }

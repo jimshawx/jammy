@@ -190,6 +190,7 @@ namespace Jammy.Core.Interface.Interfaces
 	{
 		void UpdateBaseAddress(uint baseAddress);
 		void Reset();
+		bool IsActive(out ulong length);
 	}
 
 	public interface IMotherboardRAM : IMemoryMappedDevice, IDebuggableMemory, IPersistableRAM { }

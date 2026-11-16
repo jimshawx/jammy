@@ -301,6 +301,9 @@ namespace Jammy.Core.Memory
 			if (!PersistenceManager.Is(obj, "RAM")) return;
 			
 			var mem = obj.ToObject<PersistMemory>();
+
+			memoryManager.ActivateDevice(mem.Start, mem.Length);
+
 			var bytes = PersistenceManager.Unpack(mem.Content);
 			for (ulong address = 0; address < mem.Length; address++)
 				UnsafeWrite8((uint)(address+mem.Start), bytes[address]);
