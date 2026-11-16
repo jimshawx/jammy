@@ -243,8 +243,98 @@ namespace Jammy.Core.Expansion
 				p = Path.GetFileName(p);
 				p = p.Replace('\\', '/');
 				p = p.Length <= 30 ? p : p.Substring(0, 30);
+				//p = ToAmigaName(p, out var _);
 				return p;
 			}
+
+			/*
+			private static string Latin1Safe(string host, out bool lossy)
+			{
+				lossy = false;
+
+				string s;
+				try { s = host.Normalize(NormalizationForm.FormC); }   // e + U+0301 -> é
+				catch (ArgumentException) { s = host; }                // lone surrogates can make Normalize throw
+
+				var sb = new StringBuilder(s.Length);
+				for (int i = 0; i < s.Length; i++)
+				{
+					char c = s[i];
+
+					bool ok = (c >= 0x20 && c <= 0x7E)      // printable ASCII
+						   || (c >= 0xA0 && c <= 0xFF);     // printable Latin-1
+					if (c == ':' || c == '/') ok = false;   // structural in AmigaDOS
+
+					if (ok) { sb.Append(c); continue; }
+
+					sb.Append('_');
+					lossy = true;
+
+					// a non-BMP character is two UTF-16 chars; replace it once, not twice
+					if (char.IsHighSurrogate(c) && i + 1 < s.Length && char.IsLowSurrogate(s[i + 1]))
+						i++;
+				}
+				return sb.ToString();
+			}
+
+			private const string B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";    // upper-case only
+
+			private const int HashLen = 4;     // 5 bits per character; up to 6 fits in the uint
+			private const int TailMax = 10;
+			private const int HeadMin = 6;
+
+			private static string HashStr(string host, int salt)
+			{
+				string src = salt == 0 ? host : host + "\0" + salt;
+				byte[] d = SHA1.HashData(Encoding.UTF8.GetBytes(src));
+				uint v = BinaryPrimitives.ReadUInt32LittleEndian(d);
+				var sb = new StringBuilder(HashLen);
+				for (int i = 0; i < HashLen; i++) { sb.Append(B32[(int)(v & 31)]); v >>= 5; }
+				return sb.ToString();
+			}
+
+			private static string ToAmigaName(string host, out bool mangled, int salt = 0, int limit = 30)
+			{
+				string s = Latin1Safe(host, out bool lossy);
+				mangled = salt != 0 || lossy || s.Length > limit;
+				if (!mangled) return s;                                   // pass-through
+
+				int dot = s.LastIndexOf('.');
+				string ext = (dot > 0 && s.Length - dot <= 8) ? s.Substring(dot) : "";
+				string stem = s.Substring(0, s.Length - ext.Length);
+
+				int budget = limit - ext.Length - (1 + HashLen);         // "~" + hash
+				int tailLen = Math.Max(0, Math.Min(TailMax, budget - HeadMin));
+				int headLen = budget - tailLen;
+
+				string kept = stem.Length <= budget
+					? stem
+					: stem.Substring(0, headLen) + stem.Substring(stem.Length - tailLen);
+
+				return kept + "~" + HashStr(host, salt) + ext;
+			}
+
+			private Dictionary<string, string> BuildDirMap(string dir)
+			{
+				var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+				var pending = new List<string>();
+
+				foreach (string host in Directory.EnumerateFileSystemEntries(dir)
+												 .Select(Path.GetFileName)
+												 .OrderBy(n => n, StringComparer.Ordinal))
+				{
+					string a = ToAmigaName(host, out bool mangled);
+					if (!mangled && map.TryAdd(a, host)) continue;        // real names claim their spot first
+					pending.Add(host);
+				}
+
+				foreach (string host in pending)                           // then mangled ones, in stable order
+					for (int salt = 0; ; salt++)
+						if (map.TryAdd(ToAmigaName(host, out _, salt), host)) break;
+
+				return map;
+			}
+			*/
 
 			public class MyDirEntry
 			{
@@ -263,11 +353,6 @@ namespace Jammy.Core.Expansion
 				DirEntries.RemoveAt(0);
 				return d;
 			}
-
-			//public bool IsEmpty()
-			//{
-			//	return DirEntries.Count == 0;
-			//}
 		}
 
 		private const int ACTION_NIL = 0;
@@ -1220,18 +1305,27 @@ namespace Jammy.Core.Expansion
 							//if (pkt.dp_Type == ACTION_FINDOUTPUT) { mode = FileMode.Create; access = FileAccess.ReadWrite; }
 							////if (pkt.dp_Type == ACTION_FINDUPDATE) { mode = FileMode.Open; access = FileAccess.ReadWrite; }
 
-							fi.stream = File.Open(basePath, mode, access, FileShare.Read);
-							uint id = UniqueFileId();
-							files.Add(id, fi);
+							try
+							{ 
+								fi.stream = File.Open(basePath, mode, access, FileShare.Read);
+								uint id = UniqueFileId();
+								files.Add(id, fi);
 
-							//set fh_Pos/fh_End = -1
-							uint address = (uint)pkt.dp_Arg1 << 2;
-							memory.UnsafeWrite32(address + 16, 0xffffffff);
-							memory.UnsafeWrite32(address + 20, 0xffffffff);
-							memory.UnsafeWrite32(address + 36, id);
+								//set fh_Pos/fh_End = -1
+								uint address = (uint)pkt.dp_Arg1 << 2;
+								memory.UnsafeWrite32(address + 16, 0xffffffff);
+								memory.UnsafeWrite32(address + 20, 0xffffffff);
+								memory.UnsafeWrite32(address + 36, id);
 
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-							memory.UnsafeWrite32(regs.A[4] + 16, 0);
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+								memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							}
+							catch (Exception ex)
+							{
+								logger.LogTrace($"Exception: {ex}");
+								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							}
 							break;
 						}
 
