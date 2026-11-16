@@ -27,7 +27,7 @@ namespace Jammy.NativeOverlay.Overlays
 		{
 			var truecolour = chipsetDebugger.GetDebugPalette();
 
-			int sx = 256;
+			int sx = 300;
 			int sy = 5;
 
 			int box = 5;

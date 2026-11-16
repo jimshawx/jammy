@@ -20,7 +20,7 @@ namespace Jammy.NativeOverlay.Overlays
 		private DateTime lastTick = DateTime.Now;
 		private float[] fpsarr = new float[128];
 		private int fpsarrpos = 0;
-		private const int displayHz = 120;
+		private const int displayHz = 120+10;
 
 		public void Render(int[] screen)
 		{
