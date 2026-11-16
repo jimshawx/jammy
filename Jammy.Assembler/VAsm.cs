@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 /*
@@ -72,7 +73,15 @@ namespace Jammy.Assembler
 		{
 			//vasmm68k_mot -m68000 -Fbin -o {outputFile} [sourceFile]
 
-			string vasmExecutable = "vasmm68k_mot_Win64/vasmm68k_mot.exe";
+			string vasmExecutable;
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				vasmExecutable = "vasmm68k_mot_Win64/vasmm68k_mot.exe";
+			else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+				vasmExecutable = "vasmm68k_mot_Linux/vasmm68k_mot";
+			else
+				throw new NotImplementedException("vasm not found for this platform");
+
+			vasmExecutable = Path.Combine(AppContext.BaseDirectory, vasmExecutable);
 
 			string arguments = $"-m68000 -Fbin -o \"{outputFile}\" \"{sourceFile}\"";
 
