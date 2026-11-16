@@ -284,6 +284,7 @@ namespace Jammy.Core.Interface.Interfaces
 		void SetClock(uint v, uint h);
 		bool IsAgnusSlot();
 		bool IsCopperSlot();
+		bool IsCopperWaitMatchBlocked();
 	}
 
 	public interface IPSUClock : IEmulate

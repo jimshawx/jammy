@@ -283,7 +283,7 @@ namespace Jammy.Core.Custom
 
 							uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
 							coppos &= waitMask;
-							if (CopperCompare(coppos, (waitPos & waitMask)))
+							if (!clock.IsCopperWaitMatchBlocked() && CopperCompare(coppos, (waitPos & waitMask)))
 							{
 								if (debugger.dbugLine == clock.VerticalPos)
 									logger.LogTrace($"ERLY @{clock} {waitPos:X4}");
@@ -326,7 +326,7 @@ namespace Jammy.Core.Custom
 
 						uint coppos = (clock.VerticalPos & 0xff) << 8 | (clock.CopperHorizontalPos & 0xff);
 						coppos &= waitMask;
-						if (CopperCompare(coppos, (waitPos & waitMask)))
+						if (!clock.IsCopperWaitMatchBlocked() && CopperCompare(coppos, (waitPos & waitMask)))
 						{
 							if (debugger.dbugLine == clock.VerticalPos)
 								logger.LogTrace($"WOKE @{clock} {waitPos:X4} {copPC:X6}");

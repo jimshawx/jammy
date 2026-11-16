@@ -123,6 +123,11 @@ public class ChipsetClock : IChipsetClock
 		return (HorizontalPos & 1) == 0;
 	}
 
+	public bool IsCopperWaitMatchBlocked()
+	{
+		return HorizontalPos >= DisplayHorizontal - 5;
+	}
+
 	public void Save(JArray obj)
 	{
 		var jo = PersistenceManager.ToJObject(this, "chipclock");
