@@ -65,5 +65,16 @@ namespace Jammy.Extensions.Extensions
 			}
 			return string.Empty;
 		}
+
+		public static string GetCandidateDirectory(string path, string root)
+		{
+			var candidates = GetCandidatePaths(path, root);
+			foreach (var candidate in candidates)
+			{
+				if (Directory.Exists(candidate))
+					return candidate;
+			}
+			return string.Empty;
+		}
 	}
 }

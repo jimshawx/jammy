@@ -5,6 +5,7 @@ using Jammy.Core.Memory;
 using Jammy.Core.Types;
 using Jammy.Core.Types.Types;
 using Jammy.Core.Types.Types.Breakpoints;
+using Jammy.Extensions.Extensions;
 using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -111,7 +112,7 @@ namespace Jammy.Core.Expansion
 			this.cpu = cpu;
 			this.memory = memory;
 			this.assembler = assembler;
-			this.rootDir = rootDir;
+			this.rootDir = Paths.GetCandidateDirectory(rootDir, "");
 			this.unitNo = (uint)unitNo;
 		}
 
@@ -241,6 +242,7 @@ namespace Jammy.Core.Expansion
 			{
 				p = Path.GetFileName(p);
 				p = p.Replace('\\', '/');
+				p = p.Length <= 30 ? p : p.Substring(0, 30);
 				return p;
 			}
 
