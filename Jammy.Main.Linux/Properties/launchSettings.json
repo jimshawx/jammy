@@ -8,7 +8,7 @@
 			"commandName": "WSL2",
 			"distributionName": "",
 			"environmentVariables": {
-				"JAMMY_WORKING_DIR": "/mnt/c/source/jammy"
+				"JAMMY_WORKING_DIR": "/mnt/c/source/Jammy"
 			}
 		}
 	}
