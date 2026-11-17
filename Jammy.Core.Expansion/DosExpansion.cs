@@ -553,83 +553,87 @@ namespace Jammy.Core.Expansion
 			debugger.AddBreakpoint(0x00fffffe-unitNo*2, callback: (bp) => ProcessAmigaDOSAction(bp));
 		}
 
+		private void InsertVolume(Regs regs)
+		{
+			if (volumeLinked) return;
+
+			LockDOSLists();
+
+			volumeLinked = true;
+			deviceIsDead = false;
+
+			uint volMem = AllocMem(48, 0x10001);
+			uint volNameMem = AllocMem((uint)volumeName.Length + 2, 0x10001);
+			WriteDOSString(volNameMem, volumeName);
+
+			memory.UnsafeWrite32(volMem + 0, 0);                // dol_Next (set below)
+			memory.UnsafeWrite32(volMem + 4, 2);                // DLT_VOLUME
+			memory.UnsafeWrite32(volMem + 8, regs.A[3]);        // dol_Task = handler's MsgPort
+			memory.UnsafeWrite32(volMem + 12, 0);               // dol_Lock
+
+			DateTime now = DateTime.Now;                        // local time, as AmigaDOS expects
+			uint days = (uint)(now.Date - new DateTime(1978, 1, 1)).TotalDays;
+			uint minutes = (uint)(now.Hour * 60 + now.Minute);
+			uint ticks = (uint)(now.Second * 50 + now.Millisecond / 20);
+
+			memory.UnsafeWrite32(volMem + 16, days);
+			memory.UnsafeWrite32(volMem + 20, minutes);
+			memory.UnsafeWrite32(volMem + 24, ticks);
+
+			memory.UnsafeWrite32(volMem + 28, 0);               // dol_LockList
+			memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);     // dol_DiskType
+			memory.UnsafeWrite32(volMem + 40, volNameMem >> 2); // dol_Name
+
+			myVolumeNodeBPTR = volMem >> 2;
+
+			uint devNode = memory.UnsafeRead32(regs.A[4] + 28) << 2;
+			memory.UnsafeWrite32(devNode + 8, regs.A[3]);
+
+			// walk ExecBase->libList to find dos.library
+			uint execBase = memory.UnsafeRead32(4);
+			uint libListHead = execBase + 378; // libList.lh_Head
+			uint node = memory.UnsafeRead32(libListHead);
+			uint dosBase = 0;
+
+			while (memory.UnsafeRead32(node) != 0)
+			{
+				uint namePtr = memory.UnsafeRead32(node + 10); // ln_Name pointer
+				string libName = ReadCString(namePtr);
+				if (libName == "dos.library")
+				{
+					dosBase = node;
+					break;
+				}
+				node = memory.UnsafeRead32(node); // Next node
+			}
+
+			if (dosBase != 0)
+			{
+				uint rootNode = memory.UnsafeRead32(dosBase + 34);     // dos.library->dl_Root
+				uint dosInfo = memory.UnsafeRead32(rootNode + 24) << 2; // RootNode->rn_Info
+
+				// DosList head
+				uint headBPTR = memory.UnsafeRead32(dosInfo + 4);       // DosInfo->di_DevInfo
+
+				// insert VolumeNode at list head
+				memory.UnsafeWrite32(volMem + 0, headBPTR);             // node->Next = oldHead
+				memory.UnsafeWrite32(dosInfo + 4, volMem >> 2);    // Head = node
+
+				logger.LogTrace($"{serial} {volumeName} Volume Node injected");
+			}
+			else
+			{
+				logger.LogTrace("FAILED to find dos.library");
+			}
+
+			UnlockDOSLists();
+		}
+
 		private bool ProcessAmigaDOSAction(BreakpointHitInfo bp)
 		{
 			var regs = cpu.GetRegs();
 
-			if (!volumeLinked)
-			{
-				LockDOSLists();
-
-				volumeLinked = true;
-				deviceIsDead = false;
-
-				uint volMem = AllocMem(48, 0x10001);
-				uint volNameMem = AllocMem((uint)volumeName.Length + 2, 0x10001);
-				WriteDOSString(volNameMem, volumeName);
-
-				memory.UnsafeWrite32(volMem + 0, 0);                // dol_Next (set below)
-				memory.UnsafeWrite32(volMem + 4, 2);                // DLT_VOLUME
-				memory.UnsafeWrite32(volMem + 8, regs.A[3]);        // dol_Task = handler's MsgPort
-				memory.UnsafeWrite32(volMem + 12, 0);               // dol_Lock
-
-				DateTime now = DateTime.Now;                        // local time, as AmigaDOS expects
-				uint days = (uint)(now.Date - new DateTime(1978, 1, 1)).TotalDays;
-				uint minutes = (uint)(now.Hour * 60 + now.Minute);
-				uint ticks = (uint)(now.Second * 50 + now.Millisecond / 20);
-
-				memory.UnsafeWrite32(volMem + 16, days);
-				memory.UnsafeWrite32(volMem + 20, minutes);
-				memory.UnsafeWrite32(volMem + 24, ticks);
-
-				memory.UnsafeWrite32(volMem + 28, 0);               // dol_LockList
-				memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);     // dol_DiskType
-				memory.UnsafeWrite32(volMem + 40, volNameMem >> 2); // dol_Name
-
-				myVolumeNodeBPTR = volMem >> 2;
-
-				uint devNode = memory.UnsafeRead32(regs.A[4] + 28) << 2;
-				memory.UnsafeWrite32(devNode + 8, regs.A[3]);
-
-				// walk ExecBase->libList to find dos.library
-				uint execBase = memory.UnsafeRead32(4);
-				uint libListHead = execBase + 378; // libList.lh_Head
-				uint node = memory.UnsafeRead32(libListHead);
-				uint dosBase = 0;
-
-				while (memory.UnsafeRead32(node) != 0)
-				{
-					uint namePtr = memory.UnsafeRead32(node + 10); // ln_Name pointer
-					string libName = ReadCString(namePtr);
-					if (libName == "dos.library")
-					{
-						dosBase = node;
-						break;
-					}
-					node = memory.UnsafeRead32(node); // Next node
-				}
-
-				if (dosBase != 0)
-				{
-					uint rootNode = memory.UnsafeRead32(dosBase + 34);     // dos.library->dl_Root
-					uint dosInfo = memory.UnsafeRead32(rootNode + 24) << 2; // RootNode->rn_Info
-
-					// DosList head
-					uint headBPTR = memory.UnsafeRead32(dosInfo + 4);       // DosInfo->di_DevInfo
-
-					// insert VolumeNode at list head
-					memory.UnsafeWrite32(volMem + 0, headBPTR);             // node->Next = oldHead
-					memory.UnsafeWrite32(dosInfo + 4, volMem>>2);    // Head = node
-
-					logger.LogTrace($"{serial} {volumeName} Volume Node injected");
-				}
-				else
-				{
-					logger.LogTrace("FAILED to find dos.library");
-				}
-
-				UnlockDOSLists();
-			}
+			InsertVolume(regs);
 
 			//nb. while it _is_ a StandardPacket, there's sometimes a gap between the two structures
 			//it holds because of BCPL alignment
@@ -668,6 +672,20 @@ namespace Jammy.Core.Expansion
 			if (typ != pkt.dp_Type)
 				throw new ArgumentException($"MAPPING packet type mismatch {typ} {pkt.dp_Type}");
 
+			ProcessPacket(pkt, regs);
+
+			//return back to emulation
+			//regs.SR = memory.UnsafeRead16(regs.SSP); regs.SSP += 2;
+			//regs.PC = memory.UnsafeRead32(regs.SSP); regs.SSP += 4;
+			regs.PC = memory.UnsafeRead32(regs.SP); regs.SP += 4;
+			cpu.SetRegs(regs);
+
+			return false;
+
+		}
+
+		private void ProcessPacket(DosPacket pkt, Regs regs)
+		{ 
 			switch (pkt.dp_Type)
 			{
 				case ACTION_INHIBIT:
@@ -1743,14 +1761,6 @@ namespace Jammy.Core.Expansion
 					memory.UnsafeWrite32(regs.A[4] + 16, ERROR_ACTION_NOT_KNOWN);
 					break;
 			}
-
-			//return back to emulation
-			//regs.SR = memory.UnsafeRead16(regs.SSP); regs.SSP += 2;
-			//regs.PC = memory.UnsafeRead32(regs.SSP); regs.SSP += 4;
-			regs.PC = memory.UnsafeRead32(regs.SP); regs.SP += 4;
-			cpu.SetRegs(regs);
-
-			return false;
 		}
 
 		private void Cleanup()
