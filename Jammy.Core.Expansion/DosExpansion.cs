@@ -656,8 +656,7 @@ namespace Jammy.Core.Expansion
 			if (deviceIsDead)
 			{
 				logger.LogTrace("DEAD DEVICE - RECEIVE MSG IGNORED");
-				memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-				memory.UnsafeWrite32(regs.A[4] + 16, 0);
+				DosFail(regs, 0);
 				regs.PC = memory.UnsafeRead32(regs.SP); regs.SP += 4;
 				cpu.SetRegs(regs);
 				return false;
@@ -681,30 +680,27 @@ namespace Jammy.Core.Expansion
 			cpu.SetRegs(regs);
 
 			return false;
-
 		}
 
-		private void ProcessPacket(DosPacket pkt, Regs regs)
+		private bool ProcessPacket(DosPacket pkt, Regs regs)
 		{ 
 			switch (pkt.dp_Type)
 			{
 				case ACTION_INHIBIT:
 					{
 						logger.LogTrace($"ACTION_INHIBIT {pkt.dp_Arg1}");
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return DosTrue(regs);
+						
 						//if (pkt.dp_Arg1 == 0)//uninhibit
 						//{ 
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						//	return DosTrue(regs);
+						//	
 						//}
 						//else
 						//{ 
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_IN_USE);
+						//	return DosFail(regs, ERROR_OBJECT_IN_USE);
 						//}
 					}
-					break;
 
 				case ACTION_DISK_INFO://aka ACTION_HANDLER_INFO
 					{
@@ -726,8 +722,6 @@ namespace Jammy.Core.Expansion
 						*/
 
 						//the hard way
-
-
 						memory.UnsafeWrite32(address, 0); address += 4;
 						memory.UnsafeWrite32(address, unitNo); address += 4;
 						memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;//ID_VALIDATED); address += 4;
@@ -753,10 +747,8 @@ namespace Jammy.Core.Expansion
 						//logger.LogTrace(c);
 						//var w = ObjectWalk.Walk2(t);
 
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return DosTrue(regs);
 					}
-					break;
 
 				case ACTION_INFO:
 					{
@@ -773,10 +765,8 @@ namespace Jammy.Core.Expansion
 						memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
 						memory.UnsafeWrite32(address, 0); address += 4;
 
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return DosTrue(regs);
 					}
-					break;
 
 				case ACTION_LOCATE_OBJECT:
 					{
@@ -828,9 +818,7 @@ namespace Jammy.Core.Expansion
 						if (parentPath == null)
 						{
 							logger.LogTrace("NOT FOUND PARENT");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 
 						searchPath = AmigaPathCombine(parentPath, pathName);
@@ -849,9 +837,7 @@ namespace Jammy.Core.Expansion
 						if (searchPath == null)
 						{
 							logger.LogTrace("NOT FOUND SEARCH");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 
 						string hostPath = MakeHostPath(searchPath);
@@ -871,15 +857,13 @@ namespace Jammy.Core.Expansion
 
 							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
-							break;
+							return true;
 						}
 
 						logger.LogTrace($"PATH DOES NOT EXIST {hostPath}");
 
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 					}
-					break;
 
 				case ACTION_COPY_DIR:
 					{
@@ -888,7 +872,7 @@ namespace Jammy.Core.Expansion
 						var lok = new FileLock();
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1, lok);
 						if (parent == null)
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						//create a new lock, same place
 						uint mem = AllocMem(20, 0x10001);
@@ -905,8 +889,8 @@ namespace Jammy.Core.Expansion
 
 						memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return true;
 					}
-					break;
 
 				case ACTION_EXAMINE_OBJECT:
 					{
@@ -916,7 +900,7 @@ namespace Jammy.Core.Expansion
 						string basePath = "";
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1, lok);
 						if (parent == null)
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
 						basePath = parent.FullPath;
@@ -925,16 +909,12 @@ namespace Jammy.Core.Expansion
 						if (basePath == "")
 						{
 							logger.LogTrace("NO PATH");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 						if (!Path.Exists(MakeHostPath(basePath)))
 						{
 							logger.LogTrace($"NO PATH HOST");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 
 						MyDirCache dircach = null;
@@ -982,10 +962,8 @@ namespace Jammy.Core.Expansion
 						memory.UnsafeWrite32(fib + 144, 0);//no comment
 						memory.UnsafeWrite32(fib + 128, (dirEntry.Size + 511) / 512);
 
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return DosTrue(regs);
 					}
-					break;
 
 				case ACTION_EXAMINE_NEXT:
 					{
@@ -1001,9 +979,7 @@ namespace Jammy.Core.Expansion
 							if (thing == null)
 							{
 								logger.LogTrace("NO MORE FILES");
-								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-								break;
+								return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 							}
 
 							logger.LogTrace($"{thing.Name} {thing.Size} {(thing.IsDirectory ? 'D' : 'F')}");
@@ -1031,18 +1007,14 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(fib + 144, 0);//no comment
 							memory.UnsafeWrite32(fib + 128, (thing.Size + 511) / 512);
 
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-							memory.UnsafeWrite32(regs.A[4] + 16, 0);
-							break;
+							return DosTrue(regs);
 						}
 
 						logger.LogTrace($"dir cache not found {(uint)pkt.dp_Arg1 << 2:X8}");
 
 						//no more files
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_NO_MORE_ENTRIES);
+						return DosFail(regs, ERROR_NO_MORE_ENTRIES);
 					}
-					break;
 
 				case ACTION_FREE_LOCK:
 					{
@@ -1058,10 +1030,8 @@ namespace Jammy.Core.Expansion
 						FreeMem(lockPtr, 20);
 						locks.Remove(lockPtr);
 
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return DosTrue(regs);
 					}
-					break;
 
 				case ACTION_PARENT:
 					{
@@ -1070,7 +1040,7 @@ namespace Jammy.Core.Expansion
 						var lok = new FileLock();
 						var child = LockFromBPtr(regs, pkt.dp_Arg1, lok);
 						if (child == null)
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						logger.LogTrace($"PARENT {child.FullPath} {AmigaParentPath(child.FullPath)}");
 
@@ -1091,15 +1061,13 @@ namespace Jammy.Core.Expansion
 
 							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
-							break;
+							return true;
 						}
 
 						logger.LogTrace($"NO PARENT OF {child.FullPath}");
-
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+						
 					}
-					break;
 
 				case ACTION_FINDINPUT:
 				case ACTION_FINDOUTPUT:
@@ -1117,7 +1085,7 @@ namespace Jammy.Core.Expansion
 
 						var parent = LockFromBPtr(regs, pkt.dp_Arg2);
 						if (parent == null)
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
 						basePath = parent.FullPath;
@@ -1126,9 +1094,7 @@ namespace Jammy.Core.Expansion
 						if (bstrAddr == 0)
 						{
 							logger.LogTrace("ACTION_FINDINPUT empty name");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 
 						string pathName = ReadDOSString(bstrAddr);
@@ -1160,16 +1126,13 @@ namespace Jammy.Core.Expansion
 								memory.UnsafeWrite32(address + 20, 0xffffffff);
 								memory.UnsafeWrite32(address + 36, id);
 
-								memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-								memory.UnsafeWrite32(regs.A[4] + 16, 0);
+								return DosTrue(regs);
 							}
 							catch (Exception ex)
 							{
 								logger.LogTrace($"Exception: {ex}");
-								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 							}
-							break;
 						}
 						else if (pkt.dp_Type == ACTION_FINDOUTPUT)
 						{
@@ -1191,23 +1154,18 @@ namespace Jammy.Core.Expansion
 								memory.UnsafeWrite32(address + 20, 0xffffffff);
 								memory.UnsafeWrite32(address + 36, id);
 
-								memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-								memory.UnsafeWrite32(regs.A[4] + 16, 0);
+								return DosTrue(regs);
 							}
 							catch (Exception ex)
 							{
 								logger.LogTrace($"Exception: {ex}");
-								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+								return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 							}
-							break;
 						}
 
 						logger.LogTrace("NOT FOUND");
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+						return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 					}
-					break;
 
 				case ACTION_READ:
 					{
@@ -1215,9 +1173,7 @@ namespace Jammy.Core.Expansion
 						if (!files.TryGetValue((uint)pkt.dp_Arg1, out var file))
 						{
 							logger.LogTrace("CAN'T FIND FILE");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 						logger.LogTrace("READ FILE");
 						var tmp = new byte[pkt.dp_Arg3];
@@ -1227,8 +1183,8 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"READ {r}");
 						memory.UnsafeWrite32(regs.A[4] + 12, r);
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return true;
 					}
-					break;
 
 				case ACTION_WRITE:
 					{
@@ -1236,9 +1192,7 @@ namespace Jammy.Core.Expansion
 						if (!files.TryGetValue((uint)pkt.dp_Arg1, out var file))
 						{
 							logger.LogTrace("CAN'T FIND FILE");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 						var tmp = new byte[pkt.dp_Arg3];
 						for (uint i = 0; i < pkt.dp_Arg3; i++)
@@ -1247,8 +1201,8 @@ namespace Jammy.Core.Expansion
 
 						memory.UnsafeWrite32(regs.A[4] + 12, (uint)pkt.dp_Arg3);
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return true;
 					}
-					break;
 
 				case ACTION_SEEK:
 					{
@@ -1256,9 +1210,7 @@ namespace Jammy.Core.Expansion
 						if (!files.TryGetValue((uint)pkt.dp_Arg1, out var file))
 						{
 							logger.LogTrace("CAN'T FIND FILE");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 
 						var origin = pkt.dp_Arg3 == -1 ? SeekOrigin.Begin :
@@ -1266,10 +1218,8 @@ namespace Jammy.Core.Expansion
 
 						file.stream.Seek(pkt.dp_Arg2, origin);
 
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return DosTrue(regs);
 					}
-					break;
 
 				case ACTION_END:
 					{
@@ -1277,18 +1227,14 @@ namespace Jammy.Core.Expansion
 						if (!files.TryGetValue((uint)pkt.dp_Arg1, out var file))
 						{
 							logger.LogTrace("CAN'T FIND FILE");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 						file.stream.Close();
 						file.stream.Dispose();
 						files.Remove((uint)pkt.dp_Arg1);
 
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return DosTrue(regs);
 					}
-					break;
 
 				case ACTION_DELETE_OBJECT:
 					{
@@ -1298,7 +1244,7 @@ namespace Jammy.Core.Expansion
 
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1);
 						if (parent == null)
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						logger.LogTrace($"DELETE {parent.FullPath}");
 
@@ -1315,9 +1261,7 @@ namespace Jammy.Core.Expansion
 								}
 								catch (IOException)
 								{
-									memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-									memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_IN_USE);
-									break;
+									return DosFail(regs, ERROR_OBJECT_IN_USE);
 								}
 							}
 							else if (Directory.Exists(hostPath))
@@ -1328,28 +1272,21 @@ namespace Jammy.Core.Expansion
 								}
 								catch (IOException)
 								{
-									memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-									memory.UnsafeWrite32(regs.A[4] + 16, ERROR_DIRECTORY_NOT_EMPTY);
-									break;
+									return DosFail(regs, ERROR_DIRECTORY_NOT_EMPTY);
 								}
 							}
 							else
 							{
-								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-								break;
+								return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 							}
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-							memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							return DosTrue(regs);
 						}
 						catch (Exception ex)
 						{
 							logger.LogTrace($"Exception: {ex}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 					}
-					break;
 
 				case ACTION_CREATE_DIR:
 					{
@@ -1357,13 +1294,11 @@ namespace Jammy.Core.Expansion
 
 						string filename = string.Empty;
 
-						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 						var lok = new FileLock();
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1, lok);
 						if (parent == null)
-							break;
-						//else
-						//{
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
 						logger.LogTrace($"CREATE DIR {parent.FullPath}");
 
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
@@ -1373,9 +1308,7 @@ namespace Jammy.Core.Expansion
 							string hostPath = MakeHostPath(filename);
 							if (Path.Exists(hostPath))
 							{
-								memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-								memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_EXISTS);
-								break;
+								return DosFail(regs, ERROR_OBJECT_EXISTS);
 							}
 
 							Directory.CreateDirectory(hostPath);
@@ -1394,15 +1327,14 @@ namespace Jammy.Core.Expansion
 
 							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							return true;							
 						}
 						catch (Exception ex)
 						{
 							logger.LogTrace($"Exception: {ex}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 					}
-					break;
 
 				case ACTION_RENAME_OBJECT:
 					{
@@ -1412,12 +1344,14 @@ namespace Jammy.Core.Expansion
 						string dstFilename = string.Empty;
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1);
 						if (parent == null)
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
 
 						var parentTo = LockFromBPtr(regs, pkt.dp_Arg3);
 						if (parentTo == null)
-							break;
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
 						dstFilename = AmigaPathCombine(parentTo.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
 
 						try
@@ -1431,17 +1365,18 @@ namespace Jammy.Core.Expansion
 								File.Move(from, to);
 							else if (Directory.Exists(from))
 								Directory.Move(from, to);
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-							memory.UnsafeWrite32(regs.A[4] + 16, 0);
+							else
+							{
+								return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+							}
+							return DosTrue(regs);
 						}
 						catch (Exception ex)
 						{
 							logger.LogTrace($"Exception: {ex}");
-							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 					}
-					break;
 
 				case ACTION_SAME_LOCK:
 					logger.LogTrace($"ACTION_SAME_LOCK");
@@ -1449,62 +1384,42 @@ namespace Jammy.Core.Expansion
 					var lock2 = LockFromBPtr(regs, pkt.dp_Arg2);
 					if (lock1 == null || lock2 == null)
 					{
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-						break;
+						return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 					}
 					if (lock1.FullPath.ToUpper() != lock2.FullPath.ToUpper())
 					{
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						memory.UnsafeWrite32(regs.A[4] + 16, 0);
-						break;
+						return DosFail(regs, 0);//todo: what error should this be?
 					}
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
-					break;
+					return DosTrue(regs);
 
 				case ACTION_SET_PROTECT:
 					logger.LogTrace($"ACTION_SET_PROTECT");
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
-					break;
+					return DosTrue(regs);
 
 				case ACTION_SET_COMMENT:
 					logger.LogTrace($"ACTION_SET_COMMENT");
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
-					break;
+					return DosTrue(regs);
 
 				case ACTION_SET_DATE:
 					logger.LogTrace($"ACTION_SET_DATE");
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
-					break;
+					return DosTrue(regs);
 
 				case ACTION_FLUSH:
 					logger.LogTrace($"ACTION_FLUSH");
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
-					break;
+					return DosTrue(regs);
 
 				case ACTION_MORE_CACHE:
 					logger.LogTrace($"ACTION_MORE_CACHE");
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
-					break;
+					return DosTrue(regs);
 
 				case ACTION_IS_FILESYSTEM:
 					logger.LogTrace($"ACTION_IS_FILESYSTEM");
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
-					break;
+					return DosTrue(regs);
 
 				case ACTION_DIE:
 					logger.LogTrace($"ACTION_DIE");
 					Cleanup();
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
-					break;
+					return DosTrue(regs);
 
 				case ACTION_RENAME_DISK:
 					{ 
@@ -1512,9 +1427,7 @@ namespace Jammy.Core.Expansion
 					string name = ReadDOSString((uint)pkt.dp_Arg1<<2);
 					if (name.Length > 30)
 					{
-						memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						memory.UnsafeWrite32(regs.A[4] + 16, ERROR_INVALID_COMPONENT_NAME);
-						break;
+						return DosFail(regs, ERROR_INVALID_COMPONENT_NAME);
 					}
 					uint nameMem = AllocMem((uint)name.Length+2, 0x10001);
 					WriteDOSString(nameMem, name);
@@ -1529,16 +1442,12 @@ namespace Jammy.Core.Expansion
 					//update this device's volume name
 					volumeName = name;
 
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
+					return DosTrue(regs);
 					}
-					break;
 
 				case ACTION_NIL:
 					logger.LogTrace("ACTION_NIL");
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
-					memory.UnsafeWrite32(regs.A[4] + 16, 0);
-					break;
+					return DosTrue(regs);
 
 				case > ACTION_MAXIMUM_VALUE:
 
@@ -1548,15 +1457,27 @@ namespace Jammy.Core.Expansion
 					//var f = new FileSysStartupMsg();
 					//objectMapper.Deserialize(regs.A[4], f);
 
-					break;
+					return false;
 
 				default:
 					logger.LogTrace($"ACTION_UNHANDLED** {pkt.dp_Type} {pkt.dp_Type:X8} {pkt.dp_Type << 2:X8}");
 
-					memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-					memory.UnsafeWrite32(regs.A[4] + 16, ERROR_ACTION_NOT_KNOWN);
-					break;
+					return DosFail(regs, ERROR_ACTION_NOT_KNOWN);
 			}
+		}
+
+		private bool DosFail(Regs regs, uint code)
+		{
+			memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
+			memory.UnsafeWrite32(regs.A[4] + 16, code);
+			return false;
+		}
+
+		private bool DosTrue(Regs regs)
+		{
+			memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+			memory.UnsafeWrite32(regs.A[4] + 16, 0);
+			return true;
 		}
 
 		private void Cleanup()
@@ -1608,38 +1529,6 @@ namespace Jammy.Core.Expansion
 			return null;
 		}
 
-		//private string PathFromLock(int arg)
-		//{
-		//	if (arg != 0)
-		//	{
-		//		var @lock = new FileLock();
-		//		objectMapper.Deserialize((uint)arg << 2, @lock);
-		//		logger.LogTrace($"LOCATE FAILING (parent) {@lock.fl_Key:X8}");
-
-		//		if (locks.TryGetValue((uint)@lock.fl_Key, out var ll))
-		//		{
-		//			logger.LogTrace($"FOUND {ll.FullPath}");
-		//			return ll.FullPath;
-		//		}
-		//		else
-		//		{
-		//			logger.LogTrace("FOUND NOTHING");
-		//		}
-		//	}
-		//	return null;
-		//}
-
-		//private MyLockInfo LockFromKey(Regs regs, int key)
-		//{
-		//	if (locks.TryGetValue((uint)key, out var parent))
-		//		return parent;
-
-		//	logger.LogTrace($"parent lock not found {key:X8}");
-		//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-		//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-		//	return null;
-		//}
-
 		private MyLockInfo LockFromBPtr(Regs regs, int arg)
 		{
 			var @lock = new FileLock();
@@ -1651,9 +1540,6 @@ namespace Jammy.Core.Expansion
 			if (arg == 0)
 			{
 				logger.LogTrace("Lock 0");
-
-				memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-				memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 				return null;
 			}
 
@@ -1663,9 +1549,6 @@ namespace Jammy.Core.Expansion
 				return parent;
 
 			logger.LogTrace($"Lock not found {(uint)arg << 2:X8} {@lock.fl_Key:X8}");
-
-			memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-			memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 			return null;
 		}
 
