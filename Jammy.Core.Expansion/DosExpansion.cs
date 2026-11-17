@@ -799,24 +799,6 @@ namespace Jammy.Core.Expansion
 						if (parent != null)
 							parentPath = parent.FullPath;
 						
-						//MyLockInfo parent = null;
-						//if (pkt.dp_Arg1 != 0)
-						//{
-						//	var @lock = new FileLock();
-						//	objectMapper.Deserialize((uint)pkt.dp_Arg1 << 2, @lock);
-						//	logger.LogTrace($"LOCATE FAILING (parent) {@lock.fl_Key:X8}");
-
-						//	if (locks.TryGetValue((uint)@lock.fl_Key, out parent))
-						//	{
-						//		logger.LogTrace($"FOUND {parent.FullPath}");
-						//		parentPath = parent.FullPath;
-						//	}
-						//	else
-						//	{
-						//		logger.LogTrace("FOUND NOTHING");
-						//	}
-						//}
-
 						uint namePtr = (uint)pkt.dp_Arg2 << 2;
 						if (namePtr == 0)
 						{
@@ -905,15 +887,6 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"ACTION_COPY_DIR (AKA COPY_LOCK)");
 
 						var lok = new FileLock();
-						//objectMapper.Deserialize((uint)pkt.dp_Arg1 << 2, lok);
-
-						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						//{
-						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-						//	break;
-						//}
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1, lok);
 						if (parent == null)
 							break;
@@ -940,32 +913,14 @@ namespace Jammy.Core.Expansion
 					{
 						logger.LogTrace($"ACTION_EXAMINE_OBJECT {pkt.dp_Arg1 << 2:X8}");
 
-						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 						var lok = new FileLock();
-						//objectMapper.Deserialize(lockPtr, lok);
-
-						//logger.LogTrace($"{lok.fl_Link:X8}");
-						//logger.LogTrace($"{lok.fl_Key:X8}");
-						//logger.LogTrace($"{lok.fl_Access:X8}");
-						//logger.LogTrace($"{lok.fl_Task.Address:X8}");
-						//logger.LogTrace($"{lok.fl_Volume:X8}");
-
 						string basePath = "";
-						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						//{
-						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-						//	break;
-						//}
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1, lok);
 						if (parent == null)
 							break;
-						//else
-						//{
+
 						logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
 						basePath = parent.FullPath;
-						//}
 						logger.LogTrace($"PATH {basePath}");
 
 						if (basePath == "")
@@ -990,24 +945,6 @@ namespace Jammy.Core.Expansion
 							//overwrite any existing entry
 							dircache[(uint)pkt.dp_Arg1 << 2] = dircach;
 						}
-
-						//var s = new FileInfoBlock();
-						/*
-						  0 public LONG fib_DiskKey { get; set; }
-						  4 public LONG fib_DirEntryType { get; set; }
-							[AmigaArraySize(108)]
-						  8 public char[] fib_FileName { get; set; }
-						116 public LONG fib_Protection { get; set; }
-						120	public LONG fib_EntryType { get; set; }
-						124	public LONG fib_Size { get; set; }
-						128	public LONG fib_NumBlocks { get; set; }
-						132	public DateStamp fib_Date { get; set; }
-							[AmigaArraySize(80)]
-						144	public char[] fib_Comment { get; set; }
-							[AmigaArraySize(36)]
-						224	public char[] fib_Reserved { get; set; }
-						260
-						*/
 
 						var dirEntry = new MyDirCache.MyDirEntry { Name = basePath, IsDirectory = dircach != null };
 						logger.LogTrace($"{dirEntry.Name} {dirEntry.Size} {(dirEntry.IsDirectory ? 'D' : 'F')}");
@@ -1061,14 +998,6 @@ namespace Jammy.Core.Expansion
 
 						if (dircache.TryGetValue((uint)pkt.dp_Arg1 << 2, out var dircach2))
 						{
-							//if (dircach2.IsEmpty())
-							//{
-							//	logger.LogTrace("NO MORE");
-							//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-							//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_NO_MORE_ENTRIES);
-							//	break;
-							//}
-
 							var thing = dircach2.Next();
 							if (thing == null)
 							{
@@ -1129,11 +1058,6 @@ namespace Jammy.Core.Expansion
 						if (@lock.Freed) logger.LogTrace($"DOUBLE FREE LOCK {@lock}");
 						FreeMem(lockPtr, 20);
 						locks.Remove(lockPtr);
-						//remove parent lock link
-						//foreach (var l in locks.Values)
-						//	if (l.Parent == @lock) l.Parent = null;
-						//WalkLocks();
-						//locks[lockPtr].Freed = true;
 
 						memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -1144,45 +1068,11 @@ namespace Jammy.Core.Expansion
 					{
 						logger.LogTrace($"ACTION_PARENT {pkt.dp_Arg1 << 2:X8}");
 
-						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 						var lok = new FileLock();
-						//objectMapper.Deserialize(lockPtr, lok);
-
-						//if (!locks.TryGetValue((uint)lok.fl_Key, out var child))
-						//{
-						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-						//	break;
-						//}
 						var child = LockFromBPtr(regs, pkt.dp_Arg1, lok);
 						if (child == null)
 							break;
 
-						/*
-						//at the root already?
-						if (child.Parent != null)
-						{
-							uint mem = AllocMem(20, 0x10001);
-							memory.UnsafeWrite32(mem, 0);
-							memory.UnsafeWrite32(mem + 4, mem);
-							memory.UnsafeWrite32(mem + 8, (uint)lok.fl_Access);
-							memory.UnsafeWrite32(mem + 12, lok.fl_Task.Address);
-							memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
-
-							if (child.Parent.Parent != null)
-								locks.Add(mem, new MyLockInfo { FullPath = child.Parent.Parent.FullPath, Size = 0, LockKey = mem, Parent = child.Parent.Parent });
-							else
-								locks.Add(mem, new MyLockInfo { FullPath = ":", Size = 0, LockKey = mem, Parent = null });
-							WalkLocks();
-
-							logger.LogTrace($"LOCATE lock {mem:X8} {locks[mem].FullPath} {AmigaParentPath(child.FullPath)}");
-
-							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
-							memory.UnsafeWrite32(regs.A[4] + 16, 0);
-							break;
-						}
-						*/
 						logger.LogTrace($"PARENT {child.FullPath} {AmigaParentPath(child.FullPath)}");
 
 						string parentPath = AmigaParentPath(child.FullPath);
@@ -1226,24 +1116,12 @@ namespace Jammy.Core.Expansion
 
 						string basePath = "";
 
-						//var @lock = new FileLock();
-						//objectMapper.Deserialize((uint)pkt.dp_Arg2 << 2, @lock);
-
-						//if (!locks.TryGetValue((uint)@lock.fl_Key, out var parent))
-						//{
-						//	logger.LogTrace($"parent lock not found {pkt.dp_Arg2 << 2:X8}");
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-						//	break;
-						//}
 						var parent = LockFromBPtr(regs, pkt.dp_Arg2);
 						if (parent == null)
 							break;
-						//else
-						//{
+
 						logger.LogTrace($"PATH \"{parent.FullPath}\" {parent.LockKey:X8}");
 						basePath = parent.FullPath;
-						//}
 
 						uint bstrAddr = (uint)pkt.dp_Arg3 << 2;
 						if (bstrAddr == 0)
@@ -1253,33 +1131,16 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
 						}
-						//else
-						//{
+
 						string pathName = ReadDOSString(bstrAddr);
 						logger.LogTrace($"ACTION_FINDINPUT {pathName}");
 						basePath = AmigaPathCombine(basePath, pathName);
-						//}
 
 						basePath = MakeHostPath(basePath);
 						logger.LogTrace($"Looking for {basePath}");
 						if (Path.Exists(basePath))
 						{
 							logger.LogTrace("FOUND");
-							//need to fill in FileHandle at Arg1
-							/*
-							var x = new FileHandle();
-							public MessagePtr fh_Link { get; set; }
-							public MsgPortPtr fh_Port { get; set; }
-							public MsgPortPtr fh_Type { get; set; }
-							public LONG fh_Buf { get; set; }
-							public LONG fh_Pos { get; set; }
-							public LONG fh_End { get; set; }
-							public LONG fh_Funcs { get; set; }
-							public LONG fh_Func2 { get; set; }
-							public LONG fh_Func3 { get; set; }
-							public LONG fh_Args { get; set; }
-							public LONG fh_Arg2 { get; set; }
-							*/
 
 							var fi = new MyFileInfo();
 
@@ -1319,9 +1180,6 @@ namespace Jammy.Core.Expansion
 
 							FileAccess access = FileAccess.ReadWrite;
 							FileMode mode = FileMode.Create;
-							////if (pkt.dp_Type == ACTION_FINDINPUT) { mode = FileMode.Open; access = FileAccess.Read; }
-							//if (pkt.dp_Type == ACTION_FINDOUTPUT) { mode = FileMode.Create; access = FileAccess.ReadWrite; }
-							////if (pkt.dp_Type == ACTION_FINDUPDATE) { mode = FileMode.Open; access = FileAccess.ReadWrite; }
 
 							try
 							{ 
@@ -1440,28 +1298,15 @@ namespace Jammy.Core.Expansion
 
 						string filename = string.Empty;
 
-						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
-						//var lok = new FileLock();
-						//objectMapper.Deserialize(lockPtr, lok);
-
-						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						//{
-						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-						//	break;
-						//}
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1);
 						if (parent == null)
 							break;
-						//else
-						//{
+
 						logger.LogTrace($"DELETE {parent.FullPath}");
 
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
 						logger.LogTrace($"{filename}");
 						logger.LogTrace($"{MakeHostPath(filename)}");
-						//}
 
 						try
 						{
@@ -1518,15 +1363,6 @@ namespace Jammy.Core.Expansion
 
 						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 						var lok = new FileLock();
-						//objectMapper.Deserialize(lockPtr, lok);
-
-						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						//{
-						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-						//	break;
-						//}
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1, lok);
 						if (parent == null)
 							break;
@@ -1581,53 +1417,25 @@ namespace Jammy.Core.Expansion
 
 						string filename = string.Empty;
 						string dstFilename = string.Empty;
-
-						//uint lockPtr = (uint)pkt.dp_Arg1 << 2;
-						//var lok = new FileLock();
-						//objectMapper.Deserialize(lockPtr, lok);
-
-
-						//uint lockDst = (uint)pkt.dp_Arg3 << 2;
-						//var lokDst = new FileLock();
-						//objectMapper.Deserialize(lockDst, lokDst);
-
-						//if (!locks.TryGetValue((uint)lok.fl_Key, out var parent))
-						//{
-						//	logger.LogTrace($"parent lock not found {lok.fl_Key:X8}");
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-						//	break;
-						//}
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1);
 						if (parent == null)
 							break;
-						//else
-						//{
+
 						logger.LogTrace($"RENAME FROM {parent.FullPath}");
 
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
 						logger.LogTrace($"{filename}");
 						logger.LogTrace($"{MakeHostPath(filename)}");
-						//}
 
-						//if (!locks.TryGetValue((uint)lokDst.fl_Key, out var parent2))
-						//{
-						//	logger.LogTrace($"parent lock not found {lokDst.fl_Key:X8}");
-						//	memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
-						//	memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
-						//	break;
-						//}
 						var parent2 = LockFromBPtr(regs, pkt.dp_Arg3);
 						if (parent2 == null)
 							break;
-						//else
-						//{
+
 						logger.LogTrace($"RENAME TO {parent2.FullPath}");
 
 						dstFilename = AmigaPathCombine(parent2.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
 						logger.LogTrace($"{dstFilename}");
 						logger.LogTrace($"{MakeHostPath(dstFilename)}");
-						//}
 
 						try
 						{
