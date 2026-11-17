@@ -8,6 +8,8 @@ using Jammy.Core.Types.Types.Breakpoints;
 using Jammy.Extensions.Extensions;
 using Jammy.Interface;
 using Microsoft.Extensions.Logging;
+using System.Buffers.Binary;
+using System.Security.Cryptography;
 using System.Text;
 using DateTime = System.DateTime;
 
@@ -138,18 +140,38 @@ namespace Jammy.Core.Expansion
 			public Stream stream;
 		}
 
+		private string UnwindExtraSlash(string searchPath)
+		{
+			//what to do here, with // inside the combined path
+			//cd dir//dirsibling is definitely a thing
+			while (searchPath != null && searchPath.Contains("//"))
+			{
+				int i = searchPath.IndexOf("//");
+				string p0 = searchPath.Substring(0, i);
+				string p1 = searchPath.Substring(i + 1);
+				logger.LogTrace($"RELATIVE {searchPath} {p0} {p1}");
+				searchPath = AmigaParentPath(p0) ??"";
+				if (searchPath != null) searchPath += p1;
+			}
+			return searchPath;
+		}
+
 		//turn an Amiga path like df0:dir1/dir2 into a host path, like c:\source\jammy\hd\dir1\dir2
 		private string MakeHostPath(string amigaPath)
 		{
 			string fromPath = amigaPath;
 
-			//the bit up to the first colon
-			int t = amigaPath.IndexOf(':');
+			amigaPath = UnwindExtraSlash(amigaPath);
+
+
+			//the bit up to the last colon
+			int t = amigaPath.LastIndexOf(':');
 			if (t != -1)
 			{
 				amigaPath = amigaPath.Substring(t + 1);
 			}
 			
+
 			//if (amigaPath.StartsWith('\\'))
 			//	amigaPath = amigaPath.Substring(1);
 
@@ -169,8 +191,29 @@ namespace Jammy.Core.Expansion
 					amigaPath = amigaPath.Replace(c, '_');
 			}
 
+			//we need to search the directory caches for
+			//the amiga filename to get the host filename
+
+			logger.LogTrace($"AMIGA PATH {amigaPath}");
+
+			string[] amigaBits = amigaPath.Split('/');
+			string hostPathBits = rootDir;
+			foreach (string amigaBit in amigaBits)
+			{
+				var dc = new MyDirCache(hostPathBits, logger);
+
+				string hostBit = dc.AmigaToHost(amigaBit);
+				if (hostBit == null)
+					hostPathBits = Path.Combine(hostPathBits, amigaBit);
+				else
+					hostPathBits = Path.Combine(hostPathBits, hostBit);
+			}
+
+			amigaPath = hostPathBits;
+			logger.LogTrace($"->HOST PATH {amigaPath}");
+
 			//finally attach the Host root path from the settings
-			amigaPath = Path.Combine(rootDir, amigaPath);
+			//amigaPath = Path.Combine(rootDir, amigaPath);
 
 			//path would escape the sandbox?
 			if (!IsSandboxEscape(amigaPath))
@@ -203,20 +246,29 @@ namespace Jammy.Core.Expansion
 		{
 			public MyDirCache(string basePath, ILogger logger)
 			{
-				logger.LogTrace($"DirCache {basePath}");
+				try
+				{ 
+					logger.LogTrace($"DirCache {basePath}");
 
-				var dirs = Directory.GetDirectories(basePath);
-				var fils = Directory.GetFiles(basePath);
+					var dirs = Directory.GetDirectories(basePath);
+					var fils = Directory.GetFiles(basePath);
 
-				foreach (var d in dirs)
-				{
-					logger.LogTrace($"D {d}");
-					DirEntries.Add(new MyDirEntry { Name = MungeName(d), IsDirectory = true, Stamp = DirDate(d) });
+					foreach (var d in dirs)
+					{
+						//logger.LogTrace($"D {d}");
+						dirEntries.Add(new MyDirEntry { HostName = MungeName(d), IsDirectory = true, Stamp = DirDate(d) });
+					}
+					foreach (var f in fils)
+					{
+						//logger.LogTrace($"F {f}");
+						dirEntries.Add(new MyDirEntry { HostName = MungeName(f), IsDirectory = false, Size = FileLen(f), Stamp = FileDate(f) });
+					}
+					BuildDirMap();
 				}
-				foreach (var f in fils)
+				catch (Exception ex)
 				{
-					logger.LogTrace($"F {f}");
-					DirEntries.Add(new MyDirEntry { Name = MungeName(f), IsDirectory = false, Size = FileLen(f), Stamp = FileDate(f) });
+					logger.LogTrace($"{ex}");
+					logger.LogTrace($"Can't build dir cache {basePath}");
 				}
 			}
 
@@ -242,116 +294,135 @@ namespace Jammy.Core.Expansion
 			{
 				p = Path.GetFileName(p);
 				p = p.Replace('\\', '/');
-				p = p.Length <= 30 ? p : p.Substring(0, 30);
-				//p = ToAmigaName(p, out var _);
+				//p = p.Length <= 30 ? p : p.Substring(0, 30);
 				return p;
 			}
 
-			/*
-			private static string Latin1Safe(string host, out bool lossy)
+			private static byte[] ToAmigaFileNameBytes(string name)
 			{
-				lossy = false;
+				byte[] bytes = Encoding.Latin1.GetBytes(name);
 
-				string s;
-				try { s = host.Normalize(NormalizationForm.FormC); }   // e + U+0301 -> é
-				catch (ArgumentException) { s = host; }                // lone surrogates can make Normalize throw
+				foreach (ref byte b in bytes.AsSpan())
+					if (b is (byte)'?' or (byte)':' or < 0x20 or (>= 0x7F and <= 0x9F))
+						b = (byte)'_';
 
-				var sb = new StringBuilder(s.Length);
-				for (int i = 0; i < s.Length; i++)
-				{
-					char c = s[i];
-
-					bool ok = (c >= 0x20 && c <= 0x7E)      // printable ASCII
-						   || (c >= 0xA0 && c <= 0xFF);     // printable Latin-1
-					if (c == ':' || c == '/') ok = false;   // structural in AmigaDOS
-
-					if (ok) { sb.Append(c); continue; }
-
-					sb.Append('_');
-					lossy = true;
-
-					// a non-BMP character is two UTF-16 chars; replace it once, not twice
-					if (char.IsHighSurrogate(c) && i + 1 < s.Length && char.IsLowSurrogate(s[i + 1]))
-						i++;
-				}
-				return sb.ToString();
+				return bytes;
 			}
 
-			private const string B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";    // upper-case only
+			private static string ToAmigaFileName(string name) => Encoding.Latin1.GetString(ToAmigaFileNameBytes(name));
 
-			private const int HashLen = 4;     // 5 bits per character; up to 6 fits in the uint
-			private const int TailMax = 10;
-			private const int HeadMin = 6;
+			private const string B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
-			private static string HashStr(string host, int salt)
+			private const int HashLen = 4;		// 5 bits per character; 32 bits of hash used, so up to 6 fits in the uint
+			private const int TailMax = 10;		// maximum size of the kept tail
+			private const int HeadMin = 7;		// minimum size of the kept head
+
+			private static string HashStr(string hostName)
 			{
-				string src = salt == 0 ? host : host + "\0" + salt;
-				byte[] d = SHA1.HashData(Encoding.UTF8.GetBytes(src));
+				byte[] d = SHA1.HashData(Encoding.UTF8.GetBytes(hostName));
 				uint v = BinaryPrimitives.ReadUInt32LittleEndian(d);
 				var sb = new StringBuilder(HashLen);
 				for (int i = 0; i < HashLen; i++) { sb.Append(B32[(int)(v & 31)]); v >>= 5; }
 				return sb.ToString();
 			}
 
-			private static string ToAmigaName(string host, out bool mangled, int salt = 0, int limit = 30)
+			private static string ToAmigaName(string hostName, out bool mangled, int limit = 30)
 			{
-				string s = Latin1Safe(host, out bool lossy);
-				mangled = salt != 0 || lossy || s.Length > limit;
-				if (!mangled) return s;                                   // pass-through
+				//remove any invalid characters
+				string s = ToAmigaFileName(hostName);
+
+				//short enough to fit?
+				mangled = s != hostName;
+				if (s.Length < limit) return s;
+
+				//too long, insert a hash token in the filename
+				mangled = true;
 
 				int dot = s.LastIndexOf('.');
 				string ext = (dot > 0 && s.Length - dot <= 8) ? s.Substring(dot) : "";
 				string stem = s.Substring(0, s.Length - ext.Length);
 
-				int budget = limit - ext.Length - (1 + HashLen);         // "~" + hash
+				int budget = limit - ext.Length - (1 + HashLen); // "~" + hash
 				int tailLen = Math.Max(0, Math.Min(TailMax, budget - HeadMin));
 				int headLen = budget - tailLen;
 
-				string kept = stem.Length <= budget
-					? stem
-					: stem.Substring(0, headLen) + stem.Substring(stem.Length - tailLen);
+				string kept;
+				if (stem.Length <= budget)
+					kept = stem;
+				else if (tailLen == 0)
+					kept = stem.Substring(0, headLen);
+				else
+					kept = stem.Substring(0, headLen-1) + "-" + stem.Substring(stem.Length - tailLen);
 
-				return kept + "~" + HashStr(host, salt) + ext;
+				return kept + "~" + HashStr(hostName) + ext;
 			}
 
-			private Dictionary<string, string> BuildDirMap(string dir)
+			private void BuildDirMap()
 			{
-				var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-				var pending = new List<string>();
+				//every file in dirEntries needs to get put in nameMapping
+				//they must be unique, less than 30 long, no invalid characters, and case insensitive
+				
+				var distinct = dirEntries.Select(x=>
+					{ 
+						string amigaName = ToAmigaName(x.HostName, out _);
+						return new { hostName = x.HostName, hashed = amigaName.ToLower(), caseHashed = amigaName };
+					})
+					.GroupBy(x=>x.hashed)
+					.ToDictionary(x=>x.Key, x=>x.Select(z=> new { hostName = z.hostName, caseHashed = z.caseHashed } ).ToList());
 
-				foreach (string host in Directory.EnumerateFileSystemEntries(dir)
-												 .Select(Path.GetFileName)
-												 .OrderBy(n => n, StringComparer.Ordinal))
+				//the indistinct ones will be those hashed names that map to multiple files
+				//the only way that happens is if two names were the same after hashing and lower case
+				//so the only thing to do is to separate them by forcibly hashing them
+				foreach (var tieBreak in distinct.Where(x => x.Value.Count > 1).ToList())
 				{
-					string a = ToAmigaName(host, out bool mangled);
-					if (!mangled && map.TryAdd(a, host)) continue;        // real names claim their spot first
-					pending.Add(host);
+					//remove the original hashed name
+					distinct.Remove(tieBreak.Key);
+
+					//for each filename that matched to the non-unique key, re-key them (force them to hash)
+					foreach (var tie in tieBreak.Value)
+					{
+						if (!distinct.TryAdd(ToAmigaName(tie.hostName, out _, int.MaxValue).ToLower(), [ tie ]))
+							throw new InvalidOperationException($"Filename HASH Collision {tie}");
+					}
+				}
+				//should now be totally distinct
+
+				var hostToAmiga = new Dictionary<string, string>();
+				foreach (var f in distinct)
+				{ 
+					amigaToHost.Add(f.Key, f.Value.Single().hostName);
+					hostToAmiga.Add(f.Value.Single().hostName, f.Value.Single().caseHashed);
 				}
 
-				foreach (string host in pending)                           // then mangled ones, in stable order
-					for (int salt = 0; ; salt++)
-						if (map.TryAdd(ToAmigaName(host, out _, salt), host)) break;
-
-				return map;
+				foreach (var entry in dirEntries)
+					entry.AmigaName = hostToAmiga[entry.HostName];
 			}
-			*/
 
 			public class MyDirEntry
 			{
-				public string Name { get; set; }
+				public string AmigaName { get; set; }
+				public string HostName { get; set; }
 				public bool IsDirectory { get; set; }
 				public uint Size { get; set; }
 				public DateTime Stamp { get; set; }
 			}
 
-			private readonly List<MyDirEntry> DirEntries = new List<MyDirEntry>();
+			private readonly List<MyDirEntry> dirEntries = new List<MyDirEntry>();
+			private readonly Dictionary<string, string> amigaToHost = new Dictionary<string, string>();
 
 			public MyDirEntry Next()
 			{
-				if (DirEntries.Count == 0) return null;
-				var d = DirEntries[0];
-				DirEntries.RemoveAt(0);
+				if (dirEntries.Count == 0) return null;
+				var d = dirEntries[0];
+				dirEntries.RemoveAt(0);
 				return d;
+			}
+
+			public string AmigaToHost(string amiga)
+			{
+				if (amigaToHost.TryGetValue(amiga.ToLower(), out string host))
+					return host;
+				return null;
 			}
 		}
 
@@ -582,9 +653,9 @@ namespace Jammy.Core.Expansion
 
 			memory.UnsafeWrite32(volMem + 28, 0);               // dol_LockList
 			memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);     // dol_DiskType
-			memory.UnsafeWrite32(volMem + 40, volNameMem >> 2); // dol_Name
+			memory.UnsafeWrite32(volMem + 40, BPtr(volNameMem)); // dol_Name
 
-			myVolumeNodeBPTR = volMem >> 2;
+			myVolumeNodeBPTR = BPtr(volMem);
 
 			uint devNode = memory.UnsafeRead32(regs.A[4] + 28) << 2;
 			memory.UnsafeWrite32(devNode + 8, regs.A[3]);
@@ -617,7 +688,7 @@ namespace Jammy.Core.Expansion
 
 				// insert VolumeNode at list head
 				memory.UnsafeWrite32(volMem + 0, headBPTR);             // node->Next = oldHead
-				memory.UnsafeWrite32(dosInfo + 4, volMem >> 2);    // Head = node
+				memory.UnsafeWrite32(dosInfo + 4, BPtr(volMem));    // Head = node
 
 				logger.LogTrace($"{serial} {volumeName} Volume Node injected");
 			}
@@ -739,11 +810,11 @@ namespace Jammy.Core.Expansion
 						//the hard way
 						memory.UnsafeWrite32(address, 0); address += 4;
 						memory.UnsafeWrite32(address, unitNo); address += 4;
-						memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;//ID_VALIDATED); address += 4;
+						memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;
 						memory.UnsafeWrite32(address, 0x40000000 / 512); address += 4;//1GB
 						memory.UnsafeWrite32(address, 0x20000000 / 512); address += 4;//half used
 						memory.UnsafeWrite32(address, 512); address += 4;//512 byte blocks
-						memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;//MYFS        0x4A414D4D);0x4D594653 address += 4;//JAMM
+						memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;
 						memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
 						memory.UnsafeWrite32(address, 0); address += 4;
 						return DosTrue(regs);
@@ -763,7 +834,6 @@ namespace Jammy.Core.Expansion
 						memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;
 						memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
 						memory.UnsafeWrite32(address, 0); address += 4;
-
 						return DosTrue(regs);
 					}
 
@@ -924,8 +994,8 @@ namespace Jammy.Core.Expansion
 							dircache[pkt.dp_Arg1] = dircach;
 						}
 
-						var dirEntry = new MyDirCache.MyDirEntry { Name = basePath, IsDirectory = dircach != null };
-						logger.LogTrace($"{dirEntry.Name} {dirEntry.Size} {(dirEntry.IsDirectory ? 'D' : 'F')}");
+						var dirEntry = new MyDirCache.MyDirEntry { AmigaName = basePath, IsDirectory = dircach != null };
+						logger.LogTrace($"{dirEntry.AmigaName} {dirEntry.Size} {(dirEntry.IsDirectory ? 'D' : 'F')}");
 
 						uint fib = (uint)pkt.dp_Arg2 << 2;
 						memory.UnsafeWrite32(fib + 4, (uint)(dirEntry.IsDirectory ? ST_USERDIR : ST_FILE));
@@ -951,7 +1021,7 @@ namespace Jammy.Core.Expansion
 						memory.UnsafeWrite32(fib + 140, (uint)ticks);
 
 						uint s = fib + 8;
-						string name = dirEntry.Name;
+						string name = dirEntry.AmigaName;
 						int j = name.IndexOf(':');
 						if (j != -1) name = name.Substring(j + 1);
 						memory.UnsafeWrite8(s++, (byte)Math.Min(107, name.Length));
@@ -982,7 +1052,7 @@ namespace Jammy.Core.Expansion
 								return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 							}
 
-							logger.LogTrace($"{thing.Name} {thing.Size} {(thing.IsDirectory ? 'D' : 'F')}");
+							logger.LogTrace($"{thing.AmigaName} {thing.Size} {(thing.IsDirectory ? 'D' : 'F')}");
 
 							uint fib = (uint)pkt.dp_Arg2 << 2;
 							memory.UnsafeWrite32(fib + 4, (uint)(thing.IsDirectory ? ST_USERDIR : ST_FILE));
@@ -1000,9 +1070,9 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(fib + 140, (uint)ticks);
 
 							uint s = fib + 8;
-							memory.UnsafeWrite8(s++, (byte)Math.Min(107, thing.Name.Length));
-							for (int i = 0; i < Math.Min(107, thing.Name.Length); i++)
-								memory.UnsafeWrite8(s++, (byte)thing.Name[i]);
+							memory.UnsafeWrite8(s++, (byte)Math.Min(107, thing.AmigaName.Length));
+							for (int i = 0; i < Math.Min(107, thing.AmigaName.Length); i++)
+								memory.UnsafeWrite8(s++, (byte)thing.AmigaName[i]);
 
 							memory.UnsafeWrite32(fib + 144, 0);//no comment
 							memory.UnsafeWrite32(fib + 128, (thing.Size + 511) / 512);
@@ -1433,7 +1503,7 @@ namespace Jammy.Core.Expansion
 
 					uint oldName = memory.UnsafeRead32((myVolumeNodeBPTR<<2)+40)<<2;
 					uint size = memory.UnsafeRead8(oldName);
-					memory.UnsafeWrite32((myVolumeNodeBPTR<<2)+40, nameMem>>2);
+					memory.UnsafeWrite32((myVolumeNodeBPTR<<2)+40, BPtr(nameMem));
 
 					//todo: race condition
 					FreeMem(oldName, size);
