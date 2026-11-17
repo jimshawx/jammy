@@ -1,12 +1,9 @@
 ﻿using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
-using Jammy.Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -75,6 +72,8 @@ namespace Jammy.Core.Memory
 					if (zlen == length)
 					{ 
 						zorro.UpdateBaseAddress(start);
+						var range = zorro.MappedRange().Single();
+						logger.LogTrace($"Reactivate Zorro Expansion @{range.Start:X8} {range.Length:X8}");
 						BuildMappedDevices();
 						break;
 					} 
