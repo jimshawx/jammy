@@ -467,7 +467,7 @@ namespace Jammy.Core.Expansion
 
 		private readonly Dictionary<uint, MyFileInfo> files = new Dictionary<uint, MyFileInfo>();
 
-		private readonly Dictionary<uint, MyDirCache> dircache = new Dictionary<uint, MyDirCache>();
+		private readonly Dictionary<int, MyDirCache> dircache = new Dictionary<int, MyDirCache>();
 
 		public override void Reset()
 		{
@@ -707,6 +707,7 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"ACTION_DISK_INFO");
 						uint address = (uint)pkt.dp_Arg1 << 2;//InfoData
 						/*
+						//the easy way
 						public class InfoData
 						{
 							public LONG id_NumSoftErrors { get; set; }
@@ -719,6 +720,20 @@ namespace Jammy.Core.Expansion
 							public BPTR id_VolumeNode { get; set; }
 							public LONG id_InUse { get; set; }
 						}
+
+						var t = new InfoData();
+						t.id_NumSoftErrors = 0;
+						t.id_UnitNumber = 0;
+						t.id_DiskState = 2;
+						t.id_NumBlocks = 0x40000000 / 512;
+						t.id_NumBlocksUsed = 0;
+						t.id_BytesPerBlock = 512;
+						t.id_DiskType = 0x4D594653;
+						t.id_VolumeNode = myVolumeNodeBPTR;
+						t.id_InUse = 0;
+						var c = ObjectWalk.Walk(t);
+						logger.LogTrace(c);
+						var w = ObjectWalk.Walk2(t);
 						*/
 
 						//the hard way
@@ -731,22 +746,6 @@ namespace Jammy.Core.Expansion
 						memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;//MYFS        0x4A414D4D);0x4D594653 address += 4;//JAMM
 						memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
 						memory.UnsafeWrite32(address, 0); address += 4;
-
-						////the easy way
-						//var t = new InfoData();
-						//t.id_NumSoftErrors = 0;
-						//t.id_UnitNumber = 0;
-						//t.id_DiskState = 2;
-						//t.id_NumBlocks = 0x40000000 / 512;
-						//t.id_NumBlocksUsed = 0;
-						//t.id_BytesPerBlock = 512;
-						//t.id_DiskType = 0x4D594653;
-						//t.id_VolumeNode = myVolumeNodeBPTR;
-						//t.id_InUse = 0;
-						//var c = ObjectWalk.Walk(t);
-						//logger.LogTrace(c);
-						//var w = ObjectWalk.Walk2(t);
-
 						return DosTrue(regs);
 					}
 
@@ -757,11 +756,11 @@ namespace Jammy.Core.Expansion
 						uint address = (uint)pkt.dp_Arg2 << 2;//InfoData
 						memory.UnsafeWrite32(address, 0); address += 4;
 						memory.UnsafeWrite32(address, unitNo); address += 4;
-						memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;//ID_VALIDATED); address += 4;
+						memory.UnsafeWrite32(address, ID_VALIDATED); address += 4;
 						memory.UnsafeWrite32(address, 0x40000000 / 512); address += 4;//1GB
 						memory.UnsafeWrite32(address, 0x20000000 / 512); address += 4;//half used
 						memory.UnsafeWrite32(address, 512); address += 4;//512 byte blocks
-						memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;//MYFS        0x4A414D4D); address += 4;//JAMM
+						memory.UnsafeWrite32(address, ID_DOS_DISK); address += 4;
 						memory.UnsafeWrite32(address, myVolumeNodeBPTR); address += 4;
 						memory.UnsafeWrite32(address, 0); address += 4;
 
@@ -855,7 +854,7 @@ namespace Jammy.Core.Expansion
 							//WalkLocks();
 							logger.LogTrace($"LOCATE lock {mem:X8}");
 
-							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
+							memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 							return true;
 						}
@@ -887,7 +886,7 @@ namespace Jammy.Core.Expansion
 
 						logger.LogTrace($"LOCATE lock {mem:X8}");
 
-						memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
+						memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						return true;
 					}
@@ -922,7 +921,7 @@ namespace Jammy.Core.Expansion
 						{
 							dircach = new MyDirCache(MakeHostPath(basePath), logger);
 							//overwrite any existing entry
-							dircache[(uint)pkt.dp_Arg1 << 2] = dircach;
+							dircache[pkt.dp_Arg1] = dircach;
 						}
 
 						var dirEntry = new MyDirCache.MyDirEntry { Name = basePath, IsDirectory = dircach != null };
@@ -973,12 +972,13 @@ namespace Jammy.Core.Expansion
 						var lok = new FileLock();
 						objectMapper.Deserialize(lockPtr, lok);
 
-						if (dircache.TryGetValue((uint)pkt.dp_Arg1 << 2, out var dircach2))
+						if (dircache.TryGetValue(pkt.dp_Arg1, out var dircach2))
 						{
 							var thing = dircach2.Next();
 							if (thing == null)
 							{
 								logger.LogTrace("NO MORE FILES");
+								dircache.Remove(pkt.dp_Arg1);
 								return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 							}
 
@@ -1059,14 +1059,13 @@ namespace Jammy.Core.Expansion
 
 							logger.LogTrace($"LOCATE NAME lock {mem:X8}");
 
-							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
+							memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 							return true;
 						}
 
-						logger.LogTrace($"NO PARENT OF {child.FullPath}");
-						return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
-						
+						logger.LogTrace($"ROOT {child.FullPath}");
+						return DosFail(regs, 0);//zero lock at root of file system
 					}
 
 				case ACTION_FINDINPUT:
@@ -1325,7 +1324,7 @@ namespace Jammy.Core.Expansion
 
 							logger.LogTrace($"LOCATE lock {mem:X8}");
 
-							memory.UnsafeWrite32(regs.A[4] + 12, mem / 4);
+							memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 							return true;							
 						}
@@ -1479,6 +1478,8 @@ namespace Jammy.Core.Expansion
 			memory.UnsafeWrite32(regs.A[4] + 16, 0);
 			return true;
 		}
+
+		private uint BPtr(uint mem) { return mem >> 2; }
 
 		private void Cleanup()
 		{
