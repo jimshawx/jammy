@@ -125,14 +125,12 @@ namespace Jammy.Core.Expansion
 			public string FullPath { get; set; }
 			public uint Size { get; set; }
 			public uint LockKey { get; set; }
-			//public MyLockInfo Parent { get; set; }
 			public bool Freed { get; set; }
 
 			public override string ToString()
 			{
 				return $"{LockKey:X8} {Size:X8} {FullPath} {(Freed ? "FREE" : "")}";
 			}
-			//public List<MyLockInfo> Children { get; } = new List<MyLockInfo>();
 		}
 
 		private class MyFileInfo
@@ -143,6 +141,8 @@ namespace Jammy.Core.Expansion
 		//turn an Amiga path like df0:dir1/dir2 into a host path, like c:\source\jammy\hd\dir1\dir2
 		private string MakeHostPath(string amigaPath)
 		{
+			string fromPath = amigaPath;
+
 			//the bit up to the first colon
 			int t = amigaPath.IndexOf(':');
 			if (t != -1)
@@ -176,6 +176,8 @@ namespace Jammy.Core.Expansion
 			if (!IsSandboxEscape(amigaPath))
 				amigaPath = rootDir;
 
+			logger.LogTrace($"MHP: {fromPath} {amigaPath}");
+
 			return amigaPath;
 		}
 
@@ -201,8 +203,6 @@ namespace Jammy.Core.Expansion
 		{
 			public MyDirCache(string basePath, ILogger logger)
 			{
-				//basePath = MakeHostPath(basePath);
-
 				logger.LogTrace($"DirCache {basePath}");
 
 				var dirs = Directory.GetDirectories(basePath);
@@ -855,7 +855,6 @@ namespace Jammy.Core.Expansion
 						}
 
 						string hostPath = MakeHostPath(searchPath);
-						logger.LogTrace($"SEARCH {searchPath} {hostPath}");
 
 						if (Path.Exists(hostPath))
 						{
@@ -932,7 +931,7 @@ namespace Jammy.Core.Expansion
 						}
 						if (!Path.Exists(MakeHostPath(basePath)))
 						{
-							logger.LogTrace($"NO PATH HOST {MakeHostPath(basePath)}");
+							logger.LogTrace($"NO PATH HOST");
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_OBJECT_NOT_FOUND);
 							break;
@@ -1137,7 +1136,6 @@ namespace Jammy.Core.Expansion
 						basePath = AmigaPathCombine(basePath, pathName);
 
 						basePath = MakeHostPath(basePath);
-						logger.LogTrace($"Looking for {basePath}");
 						if (Path.Exists(basePath))
 						{
 							logger.LogTrace("FOUND");
@@ -1305,8 +1303,6 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"DELETE {parent.FullPath}");
 
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
-						logger.LogTrace($"{filename}");
-						logger.LogTrace($"{MakeHostPath(filename)}");
 
 						try
 						{
@@ -1371,9 +1367,6 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"CREATE DIR {parent.FullPath}");
 
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
-						logger.LogTrace($"{filename}");
-						logger.LogTrace($"{MakeHostPath(filename)}");
-						//}
 
 						try
 						{
@@ -1420,29 +1413,24 @@ namespace Jammy.Core.Expansion
 						var parent = LockFromBPtr(regs, pkt.dp_Arg1);
 						if (parent == null)
 							break;
-
-						logger.LogTrace($"RENAME FROM {parent.FullPath}");
-
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
-						logger.LogTrace($"{filename}");
-						logger.LogTrace($"{MakeHostPath(filename)}");
 
-						var parent2 = LockFromBPtr(regs, pkt.dp_Arg3);
-						if (parent2 == null)
+						var parentTo = LockFromBPtr(regs, pkt.dp_Arg3);
+						if (parentTo == null)
 							break;
-
-						logger.LogTrace($"RENAME TO {parent2.FullPath}");
-
-						dstFilename = AmigaPathCombine(parent2.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
-						logger.LogTrace($"{dstFilename}");
-						logger.LogTrace($"{MakeHostPath(dstFilename)}");
+						dstFilename = AmigaPathCombine(parentTo.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
 
 						try
 						{
-							if (File.Exists(MakeHostPath(filename)))
-								File.Move(MakeHostPath(filename), MakeHostPath(dstFilename));
-							else if (Directory.Exists(MakeHostPath(filename)))
-								Directory.Move(MakeHostPath(filename), MakeHostPath(dstFilename));
+							logger.LogTrace($"RENAME");
+							string from = MakeHostPath(filename);
+							logger.LogTrace("->");
+							string to = MakeHostPath(dstFilename);
+
+							if (File.Exists(from))
+								File.Move(from, to);
+							else if (Directory.Exists(from))
+								Directory.Move(from, to);
 							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						}
