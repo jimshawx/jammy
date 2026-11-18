@@ -30,6 +30,7 @@ So here is my humble attempt at an Amiga emulation.
   * Good quality Audio with filters
   * OCS, ECS, AGA emulation
   * Floppy Disks, ADF/Zipped ADF/ADZ/DMS/RP9/IPF (read) and ATA Hard Disks (read/write)
+  * Host folders can be mapped as Amiga drives (read/write)
   * All kinds of RAM expansions (Chip, Trapdoor, CPU slot, Zorro II/III)
   * Battery-backed clock
   * VT100 Serial terminal
@@ -50,6 +51,7 @@ So here is my humble attempt at an Amiga emulation.
 
 * There are still a few problems with DMA timing and cycle exactness
 * Emulation of CPUs running faster than the standard 7MHz is poor
+* Host folders don't currently survive a reboot
 * CD32 CDROM and NVRAM not working
 * There are still some pieces of software that don't work yet
 * The Linux version is missing the debugging UIs
