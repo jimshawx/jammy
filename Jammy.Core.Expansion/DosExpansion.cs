@@ -235,14 +235,14 @@ namespace Jammy.Core.Expansion
 
 		private class MyDirCache
 		{
-			public MyDirCache(string basePath, ILogger logger)
+			public MyDirCache(string hostPath, ILogger logger)
 			{
 				try
 				{ 
-					logger.LogTrace($"DirCache {basePath}");
+					logger.LogTrace($"DirCache {hostPath}");
 
-					var dirs = Directory.GetDirectories(basePath);
-					var fils = Directory.GetFiles(basePath);
+					var dirs = Directory.GetDirectories(hostPath);
+					var fils = Directory.GetFiles(hostPath);
 
 					foreach (var d in dirs)
 					{
@@ -259,7 +259,7 @@ namespace Jammy.Core.Expansion
 				catch (Exception ex)
 				{
 					logger.LogTrace($"{ex}");
-					logger.LogTrace($"Can't build dir cache {basePath}");
+					logger.LogTrace($"Can't build dir cache {hostPath}");
 				}
 			}
 
@@ -954,16 +954,18 @@ namespace Jammy.Core.Expansion
 							logger.LogTrace("NO PATH");
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
-						if (!Path.Exists(MakeHostPath(basePath)))
+						
+						string hostPath = MakeHostPath(basePath);
+						if (!Path.Exists(hostPath))
 						{
 							logger.LogTrace($"NO PATH HOST");
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
 
 						MyDirCache dircach = null;
-						if (Directory.Exists(MakeHostPath(basePath)))
+						if (Directory.Exists(hostPath))
 						{
-							dircach = new MyDirCache(MakeHostPath(basePath), logger);
+							dircach = new MyDirCache(hostPath, logger);
 							//overwrite any existing entry
 							dircache[pkt.dp_Arg1] = dircach;
 						}
