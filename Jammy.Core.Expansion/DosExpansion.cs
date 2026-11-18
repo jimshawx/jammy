@@ -281,13 +281,13 @@ namespace Jammy.Core.Expansion
 			private DateTime FileDate(string p)
 			{
 				var f = new FileInfo(p);
-				return f.CreationTimeUtc.AddYears(-40);
+				return f.CreationTimeUtc.ToLocalTime();
 			}
 
 			private DateTime DirDate(string p)
 			{
 				var f = new DirectoryInfo(p);
-				return f.CreationTimeUtc.AddYears(-40);
+				return f.CreationTimeUtc.ToLocalTime();
 			}
 
 			private string MungeName(string p)
