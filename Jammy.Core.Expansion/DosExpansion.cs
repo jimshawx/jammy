@@ -140,10 +140,11 @@ namespace Jammy.Core.Expansion
 			public Stream stream;
 		}
 
-		private string UnwindExtraSlash(string searchPath)
+		private string UnwindExtraSlashes(string searchPath)
 		{
-			//what to do here, with // inside the combined path
+			//what to do here, with // or /// etc inside the combined path
 			//cd dir//dirsibling is definitely a thing
+			//remove one level of hierarchy at a time
 			while (searchPath != null && searchPath.Contains("//"))
 			{
 				int i = searchPath.IndexOf("//");
@@ -161,8 +162,7 @@ namespace Jammy.Core.Expansion
 		{
 			string fromPath = amigaPath;
 
-			amigaPath = UnwindExtraSlash(amigaPath);
-
+			amigaPath = UnwindExtraSlashes(amigaPath);
 
 			//the bit up to the last colon
 			int t = amigaPath.LastIndexOf(':');
@@ -171,14 +171,7 @@ namespace Jammy.Core.Expansion
 				amigaPath = amigaPath.Substring(t + 1);
 			}
 			
-
-			//if (amigaPath.StartsWith('\\'))
-			//	amigaPath = amigaPath.Substring(1);
-
-			//have to eliminate '..' from Host path
-			amigaPath = amigaPath.Replace("..", "__");
-
-			////special file names on Windows
+			//special file names on Windows
 			//string[] bad3 = {"CON", "PRN", "AUX", "NUL" };
 			//string[] bad4 = {"COM", "LPT" };
 			//if (bad3.Contains(amigaPath.ToUpper())) amigaPath = "_" + amigaPath;
@@ -191,13 +184,14 @@ namespace Jammy.Core.Expansion
 					amigaPath = amigaPath.Replace(c, '_');
 			}
 
-			//we need to search the directory caches for
+			//need to search the directory caches for
 			//the amiga filename to get the host filename
 
 			logger.LogTrace($"AMIGA PATH {amigaPath}");
 
-			string[] amigaBits = amigaPath.Split('/');
+			//start with the Host root path from the settings
 			string hostPathBits = rootDir;
+			string[] amigaBits = amigaPath.Split('/');
 			foreach (string amigaBit in amigaBits)
 			{
 				var dc = new MyDirCache(hostPathBits, logger);
@@ -212,14 +206,11 @@ namespace Jammy.Core.Expansion
 			amigaPath = hostPathBits;
 			logger.LogTrace($"->HOST PATH {amigaPath}");
 
-			//finally attach the Host root path from the settings
-			//amigaPath = Path.Combine(rootDir, amigaPath);
-
 			//path would escape the sandbox?
 			if (!IsSandboxEscape(amigaPath))
 				amigaPath = rootDir;
 
-			logger.LogTrace($"MHP: {fromPath} {amigaPath}");
+			logger.LogTrace($"{fromPath}->{amigaPath}");
 
 			return amigaPath;
 		}
@@ -293,7 +284,7 @@ namespace Jammy.Core.Expansion
 			private string MungeName(string p)
 			{
 				p = Path.GetFileName(p);
-				p = p.Replace('\\', '/');
+				//p = p.Replace('\\', '/');
 				//p = p.Length <= 30 ? p : p.Substring(0, 30);
 				return p;
 			}
@@ -891,23 +882,6 @@ namespace Jammy.Core.Expansion
 						}
 
 						searchPath = AmigaPathCombine(parentPath, pathName);
-
-						//what to do here, with // inside the combined path
-						//cd dir//dirsibling is definitely a thing
-						while (searchPath != null && searchPath.Contains("//"))
-						{
-							int i = searchPath.IndexOf("//");
-							string p0 = searchPath.Substring(0, i);
-							string p1 = searchPath.Substring(i + 1);
-							logger.LogTrace($"RELATIVE {searchPath} {p0} {p1}");
-							searchPath = AmigaParentPath(p0);
-							if (searchPath != null) searchPath += p1;
-						}
-						if (searchPath == null)
-						{
-							logger.LogTrace("NOT FOUND SEARCH");
-							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
-						}
 
 						string hostPath = MakeHostPath(searchPath);
 
@@ -1573,6 +1547,7 @@ namespace Jammy.Core.Expansion
 
 		private string AmigaPathCombine(string root, string fragment)
 		{
+			if (fragment == "." || fragment == "..") fragment = "";//disallow . and ..
 			if (root == string.Empty) return fragment;
 			if (root.EndsWith(':'))
 				return root + fragment;
