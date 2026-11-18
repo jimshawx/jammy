@@ -171,12 +171,6 @@ namespace Jammy.Core.Expansion
 				amigaPath = amigaPath.Substring(t + 1);
 			}
 			
-			//special file names on Windows
-			//string[] bad3 = {"CON", "PRN", "AUX", "NUL" };
-			//string[] bad4 = {"COM", "LPT" };
-			//if (bad3.Contains(amigaPath.ToUpper())) amigaPath = "_" + amigaPath;
-			//if (amigaPath.Length == 4 && bad4.Contains(amigaPath.Substring(0, 3).ToUpper()) && char.IsAsciiDigit(amigaPath[3])) amigaPath = "_" + amigaPath;
-
 			char[] badChars = { '\\', '*', '?', '"', '<', '>', '|', ':' };
 			foreach (var c in badChars)
 			{
@@ -882,6 +876,8 @@ namespace Jammy.Core.Expansion
 						}
 
 						searchPath = AmigaPathCombine(parentPath, pathName);
+						if (searchPath == null)
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						string hostPath = MakeHostPath(searchPath);
 
@@ -1145,6 +1141,8 @@ namespace Jammy.Core.Expansion
 						string pathName = ReadDOSString(bstrAddr);
 						logger.LogTrace($"ACTION_FINDINPUT {pathName}");
 						basePath = AmigaPathCombine(basePath, pathName);
+						if (basePath == null)
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						basePath = MakeHostPath(basePath);
 						if (Path.Exists(basePath))
@@ -1294,6 +1292,8 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"DELETE {parent.FullPath}");
 
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+						if (filename == null)
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						try
 						{
@@ -1347,6 +1347,8 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"CREATE DIR {parent.FullPath}");
 
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+						if (filename == null)
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						try
 						{
@@ -1392,12 +1394,16 @@ namespace Jammy.Core.Expansion
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+						if (filename == null)
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						var parentTo = LockFromBPtr(regs, pkt.dp_Arg3);
 						if (parentTo == null)
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						dstFilename = AmigaPathCombine(parentTo.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
+						if (dstFilename == null)
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						try
 						{
@@ -1547,9 +1553,26 @@ namespace Jammy.Core.Expansion
 			deviceIsDead = true;
 		}
 
+		private readonly string[] bad3 = { "CON", "PRN", "AUX", "NUL" };
+		private readonly string[] bad4 = { "COM", "LPT" };
+
 		private string AmigaPathCombine(string root, string fragment)
 		{
-			if (fragment == "." || fragment == "..") fragment = "";//disallow . and ..
+			//disallow . and ..
+			var bits = fragment.Split('/', StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries);
+			if (bits.Any(x => x == "." || x == "..")) return null;
+
+			//special filenames on Windows
+			if (OperatingSystem.IsWindows())
+			{
+				foreach (var bit in bits)
+				{ 
+					var winBit = bit.Split([':','.'], 1)[0].ToUpper();
+					if (bad3.Contains(winBit)) return null;
+					if (winBit.Length == 4 && bad4.Contains(winBit.Substring(0, 3)) && char.IsAsciiDigit(winBit[3])) return null;
+				}
+			}
+
 			if (root == string.Empty) return fragment;
 			if (root.EndsWith(':'))
 				return root + fragment;
