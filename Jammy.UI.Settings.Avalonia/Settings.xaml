@@ -246,6 +246,8 @@ SizeToContent="WidthAndHeight"
 		</StackPanel>
 
 		<StackPanel Orientation="Vertical">
+		<TabControl Canvas.Left="3" Canvas.Top="6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0 0 0 0" Name="tabControl1">
+		<TabItem Header="Floppy Disks" >
 		  <Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
 			<Panel Name="groupBox4" Margin="6,2,6,4">
 			  <StackPanel Orientation="Vertical">
@@ -278,7 +280,8 @@ SizeToContent="WidthAndHeight"
 			  </StackPanel>
 			</Panel>
 		  </Border>
-
+		</TabItem>
+		<TabItem Header="Hardfiles" >
 		  <Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
 
 			<Panel x:Name="groupBox5" Margin="6,2,6,4">
@@ -310,7 +313,8 @@ SizeToContent="WidthAndHeight"
 			  </StackPanel>
 			</Panel>
 		  </Border>
-
+		</TabItem>
+		<TabItem Header="Folders" >
 			<Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
 
 			<Panel x:Name="groupBox9" Margin="6,2,6,4">
@@ -336,7 +340,8 @@ SizeToContent="WidthAndHeight"
 			  </StackPanel>
 			</Panel>
 		  </Border>
-
+		</TabItem>
+		</TabControl>
 		  <Border BorderThickness="1" BorderBrush="#DCDCDC" Margin="0,9,4,0">
 
 			<Panel Name="groupBox6" Margin="6,2,6,4">
