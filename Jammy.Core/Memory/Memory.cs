@@ -42,6 +42,7 @@ namespace Jammy.Core.Memory
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint Read(uint insaddr, uint address, Size size)
 		{
+			address -= memoryRange.Start;
 			address &= _addressMask;
 			switch (size)
 			{
@@ -70,6 +71,7 @@ namespace Jammy.Core.Memory
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Write(uint insaddr, uint address, uint value, Size size)
 		{
+			address -= memoryRange.Start;
 			address &= _addressMask;
 			switch (size)
 			{
