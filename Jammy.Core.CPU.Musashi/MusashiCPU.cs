@@ -367,6 +367,11 @@ namespace Jammy.Core.CPU.Musashi
 			regs.SP = uint.Parse((string)obj["SP"]);
 			regs.SSP = uint.Parse((string)obj["SSP"]);
 			regs.SR = ushort.Parse((string)obj["SR"]);
+
+			//hack: if previous instruction was STOP, re-execute it to get the CPU in the correct state
+			if (((IDebugMemoryMapper)memoryMapper).UnsafeRead16(regs.PC - 4) == 0x4e72)//STOP
+				regs.PC -= 4;
+
 			SetRegs(regs);
 		}
 	}
