@@ -51,7 +51,6 @@ So here is my humble attempt at an Amiga emulation.
 
 * There are still a few problems with DMA timing and cycle exactness
 * Emulation of CPUs running faster than the standard 7MHz is poor
-* Host folders don't currently survive a reboot
 * CD32 CDROM and NVRAM not working
 * There are still some pieces of software that don't work yet
 * The Linux version is missing the debugging UIs
