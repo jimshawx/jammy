@@ -537,75 +537,6 @@ namespace Jammy.Core.Expansion
 			this.configuration = configuration;
 
 			logger.LogTrace($"Configured {serial} @ {baseAddress:X8}");
-
-			// hard to track the execution of the code, much easier to use a trap which will end up at a fixed address
-
-			//debugger.AddBreakpoint(baseAddress + 0x40, BreakpointType.Read, size: Size.Long, callback: (bp) =>
-			//{
-			//	debugger.RemoveBreakpoint(bp.Bp);
-			//	var regs = debugger.GetRegs();
-			//	logger.LogTrace($"DiagArea L copied @ {regs.PC:X8} to {regs.A[1] - 4:X8}");
-
-			//	//FC2FCC  22D8                move.l    (a0)+,(a1)+
-			//	//FC2FCE  51C9 FFFC           dbra d1,#$FC2FCC(pc)
-			//	//It's copying the code to A1
-
-			//	//break when it's executed at the new location
-			//	debugger.AddBreakpoint(regs.A[1] - 4 + 14, callback: (bp2) =>
-			//	{
-			//		debugger.RemoveBreakpoint(bp2.Bp);
-			//		//var regs2 = debugger.GetRegs();
-			//		//logger.LogTrace($"DiagArea W copied @ {regs2.PC:X8}");
-			//		return true;
-			//	});
-
-			//	// then it copies the whole block again to a correctly-sized allocation
-			//	// A0 is EA0040
-
-			//	//FC2FA8  48E7 7F3E           movem.l d1-d7 / a2 - a6,-(sp)
-			//	//FC2FAC  4CD8 7CFE movem.l(a0) +,d1 - d7 / a2 - a6
-			//	//FC2FB0  48D1 7CFE movem.l d1-d7 / a2 - a6,(a1)
-			//	//FC2FB4  7230                moveq     #48,d1
-			//	//FC2FB6  D3C1 adda.l d1, a1
-			//	//FC2FB8  9081                sub.l d1, d0
-			//	//FC2FBA B081                cmp.l     d1,d0
-			//	//FC2FBC  64EE bcc.s     #$FC2FAC
-			//	//FC2FBE  4CDF 7CFE movem.l(sp) +,d1 - d7 / a2 - a6
-
-			//	debugger.AddBreakpoint(baseAddress + 0x40, BreakpointType.Read, size: Size.Long, callback: (bp) =>
-			//	{
-			//		var regs2 = debugger.GetRegs();
-			//		logger.LogTrace("Copy DiagPoint");
-			//		return true;
-			//	});
-
-
-
-			//	return true;
-			//});
-
-			//debugger.AddBreakpoint(baseAddress + 0x40 + 14, BreakpointType.Read, size: Size.Long, callback: (bp) =>
-			//{
-			//	debugger.RemoveBreakpoint(bp.Bp);
-			//	var regs = debugger.GetRegs();
-			//	logger.LogTrace($"DiagPoint copied @ {regs.PC:X8} to {regs.A[1] - 4:X8}");
-
-			//	//FC2FCC  22D8                move.l    (a0)+,(a1)+
-			//	//FC2FCE  51C9 FFFC           dbra d1,#$FC2FCC(pc)
-			//	//It's copying the code to A1
-
-			//	//break when it's executed at the new location
-			//	//debugger.AddBreakpoint(regs.A[1] - 4 + 14, callback: (bp2) =>
-			//	//{
-			//	//	debugger.RemoveBreakpoint(bp2);
-			//	//	//var regs2 = debugger.GetRegs();
-			//	//	//logger.LogTrace($"DiagArea W copied @ {regs2.PC:X8}");
-			//	//	return true;
-			//	//});
-
-			//	return true;
-			//});
-
 			debugger.AddBreakpoint(0x00fffffe-unitNo*2, callback: (bp) => ProcessAmigaDOSAction(bp));
 		}
 
@@ -615,8 +546,54 @@ namespace Jammy.Core.Expansion
 
 			LockDOSLists();
 
+			// walk ExecBase->libList to find dos.library
+			uint execBase = memory.UnsafeRead32(4);
+			uint libListHead = execBase + 378; // libList.lh_Head
+			uint node = memory.UnsafeRead32(libListHead);
+			uint dosBase = 0;
+
+			while (memory.UnsafeRead32(node) != 0)
+			{
+				uint namePtr = memory.UnsafeRead32(node + 10); // ln_Name pointer
+				string libName = ReadCString(namePtr);
+				if (libName == "dos.library")
+				{
+					dosBase = node;
+					break;
+				}
+				node = memory.UnsafeRead32(node); // Next node
+			}
+			if (dosBase == 0)
+			{ 
+				logger.LogTrace("FAILED to find dos.library");
+				return;
+			}
+
 			volumeLinked = true;
 			deviceIsDead = false;
+
+			//is our device already in the list? (snapshot restored)
+			uint rootNode = memory.UnsafeRead32(dosBase + 34);          // dl_Root
+			uint dosInfo = CPtr(memory.UnsafeRead32(rootNode + 24));    // rootNode->rn_Info
+			uint devInfo = CPtr(memory.UnsafeRead32(dosInfo + 4));      // di_DevInfo
+
+			while (devInfo != 0)
+			{
+				uint namePtr = CPtr(memory.UnsafeRead32(devInfo + 40));     // dol_Name
+
+				if (memory.UnsafeRead32(devInfo + 4) == 2 &&                // DLT_VOLUME
+					memory.UnsafeRead32(devInfo + 8) == regs.A[3] &&		// dol_Task == our port
+					namePtr != 0 &&
+					ReadDOSString(namePtr) == volumeName)
+				{
+					logger.LogTrace($"{serial} {volumeName} Volume Node already injected");
+					UnlockDOSLists();
+					myVolumeNodeBPTR = BPtr(devInfo);
+					return;
+				}
+
+				devInfo = CPtr(memory.UnsafeRead32(devInfo));				// dol_Next
+			}
 
 			uint volMem = AllocMem(48, 0x10001);
 			uint volNameMem = AllocMem((uint)volumeName.Length + 2, 0x10001);
@@ -636,51 +613,21 @@ namespace Jammy.Core.Expansion
 			memory.UnsafeWrite32(volMem + 20, minutes);
 			memory.UnsafeWrite32(volMem + 24, ticks);
 
-			memory.UnsafeWrite32(volMem + 28, 0);               // dol_LockList
-			memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);     // dol_DiskType
-			memory.UnsafeWrite32(volMem + 40, BPtr(volNameMem)); // dol_Name
+			memory.UnsafeWrite32(volMem + 28, 0);					// dol_LockList
+			memory.UnsafeWrite32(volMem + 32, ID_DOS_DISK);			// dol_DiskType
+			memory.UnsafeWrite32(volMem + 40, BPtr(volNameMem));	// dol_Name
 
 			myVolumeNodeBPTR = BPtr(volMem);
 
 			uint devNode = memory.UnsafeRead32(regs.A[4] + 28) << 2;
 			memory.UnsafeWrite32(devNode + 8, regs.A[3]);
 
-			// walk ExecBase->libList to find dos.library
-			uint execBase = memory.UnsafeRead32(4);
-			uint libListHead = execBase + 378; // libList.lh_Head
-			uint node = memory.UnsafeRead32(libListHead);
-			uint dosBase = 0;
+			//insert the node at the head of the dos device list
+			uint headBPTR = memory.UnsafeRead32(dosInfo + 4);       // DosInfo->di_DevInfo
+			memory.UnsafeWrite32(volMem + 0, headBPTR);             // node->Next = oldHead
+			memory.UnsafeWrite32(dosInfo + 4, BPtr(volMem));		// Head = node
 
-			while (memory.UnsafeRead32(node) != 0)
-			{
-				uint namePtr = memory.UnsafeRead32(node + 10); // ln_Name pointer
-				string libName = ReadCString(namePtr);
-				if (libName == "dos.library")
-				{
-					dosBase = node;
-					break;
-				}
-				node = memory.UnsafeRead32(node); // Next node
-			}
-
-			if (dosBase != 0)
-			{
-				uint rootNode = memory.UnsafeRead32(dosBase + 34);     // dos.library->dl_Root
-				uint dosInfo = memory.UnsafeRead32(rootNode + 24) << 2; // RootNode->rn_Info
-
-				// DosList head
-				uint headBPTR = memory.UnsafeRead32(dosInfo + 4);       // DosInfo->di_DevInfo
-
-				// insert VolumeNode at list head
-				memory.UnsafeWrite32(volMem + 0, headBPTR);             // node->Next = oldHead
-				memory.UnsafeWrite32(dosInfo + 4, BPtr(volMem));    // Head = node
-
-				logger.LogTrace($"{serial} {volumeName} Volume Node injected");
-			}
-			else
-			{
-				logger.LogTrace("FAILED to find dos.library");
-			}
+			logger.LogTrace($"{serial} {volumeName} Volume Node injected");
 
 			UnlockDOSLists();
 		}
@@ -1532,6 +1479,7 @@ namespace Jammy.Core.Expansion
 		}
 
 		private uint BPtr(uint mem) { return mem >> 2; }
+		private uint CPtr(uint mem) { return mem << 2; }
 
 		private void Cleanup()
 		{
