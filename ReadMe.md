@@ -73,47 +73,42 @@ Press F11 to take a snapshot of the emulation. When you next start the emulator 
 
 ## Debugging
 
-A debug text log window appears when the emulation starts showing useful information about what the emulator is doing at that moment.
-
-Also debug UI appears when the emulation starts. There are windows showing disassembly, memory and many registers and flags.
-Using the buttons on the panel will let you stop,start and step through the emulation.
-There are buttons to enable/disable/raise interrupts in both Paula and CIAs, and to unstick the blitter.
-There are buttons to change the floppy disks, pick the radio button for the relevant drive and use Change to swap the disk. Use Insert to re-trigger the disk inserted flag.
-
-'Analyze' will generate a graph of the currently executing code.
-
-'Gen Disassemblies' will use all the gathered information from tracing the code and generate a disassembly of the kickstart ROM.
-
-'Gfx Scan' opens a window where you can examine the memory as a graphic.
-
-'String scan' opens a window where the entire memory is scanned for strings.
-
-'DMA' opens a window showing the DMA usage for the previous frame.
-
+A debug text log window appears when the emulation starts showing useful information about what the emulator is doing at that moment.  
+Also a debug UI appears when the emulation starts. There are windows showing disassembly, memory and many registers and flags.  
+Using the buttons on the panel will let you stop, start and step through the emulation.  
+There are buttons to enable/disable/raise interrupts in both Paula and CIAs, and to unstick the blitter.  
+To change the floppy disks, pick the radio button for the relevant drive and use Change to swap the disk. Use Insert to re-trigger the disk inserted flag.  
+'Analyze' will generate a graph of the currently executing code.  
+'Gen Disassemblies' will use all the gathered information from tracing the code and generate a disassembly of the kickstart ROM.  
+'Gfx Scan' opens a window where you can examine the memory as a graphic.  
+'String scan' opens a window where the entire memory is scanned for strings.  
+'DMA' opens a window showing the DMA usage for the previous frame. Wand over the display to see the type and location.  
 'Crib Sheet' opens a useful window with documentation for all the Chipset and CIA registers.
 
 
 
-Also on the panel there's a dialog box which accepts the following commands:
-b address - breakpoint on execute at address
-bw address \[size(W)] - breakpoint on write at address
-br address \[size(W)] - breakpoint on read at address
-brw address \[size(W)] - breakpoint on read/write at address
-bc address - remove breakpoint at address
-t address - toggle breakpoint at address
-bl - list all breakpoints
-d address \[length(1000h)] - add an address range to the debugger
-m address \[length(1000h)] - add an address range to the memory dump
-w address \[value(0)] \[size(W)] - write a value to memory
-r address \[size(W)] - read a value from memory
-a address \[type(C)] \[length(1)] - set memory type C,B,W,L,S,U
-c address text - add a comment
-h address text - add a header
-g emulation Go
-s emulation Step
-so emulation Step Out
-x emulation Stop
+Also on the panel there's a dialog box which accepts the following commands:  
+b address - breakpoint on execute at address  
+bw address \[size(W)] - breakpoint on write at address  
+br address \[size(W)] - breakpoint on read at address  
+brw address \[size(W)] - breakpoint on read/write at address  
+bc address - remove breakpoint at address  
+t address - toggle breakpoint at address  
+bl - list all breakpoints  
+d address \[length(1000h)] - add an address range to the debugger  
+m address \[length(1000h)] - add an address range to the memory dump  
+w address \[value(0)] \[size(W)] - write a value to memory  
+r address \[size(W)] - read a value from memory  
+a address \[type(C)] \[length(1)] - set memory type C,B,W,L,S,U  
+c address text - add a comment  
+h address text - add a header  
+g emulation Go  
+s emulation Step  
+so emulation Step Out  
+x emulation Stop  
 reg regname \[value(0)] - set a register
+
+
 
 ? display this help in the debug window
 
