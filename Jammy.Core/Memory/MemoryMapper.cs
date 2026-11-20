@@ -304,6 +304,7 @@ namespace Jammy.Core.Memory
 			
 			var mem = obj.ToObject<PersistMemory>();
 
+			//find the relevant memory and map it
 			var zorroRAM = memoryManager.FindMappedDevice(mem.Start, mem.Length);
 			if (zorroRAM != null) 
 			{
@@ -314,12 +315,6 @@ namespace Jammy.Core.Memory
 			var bytes = PersistenceManager.Unpack(mem.Content);
 			for (ulong address = 0; address < mem.Length; address++)
 				UnsafeWrite8((uint)(address+mem.Start), bytes[address]);
-
-			if (zorroRAM != null)
-			{
-				logger.LogTrace($"Reactivate Zorro Expansion @{mem.Start:X8} {mem.Length:X8}");
-				((IZorro)zorro2).CompleteConfiguration2(mem.Start);
-			}
 		}
 	}
 }

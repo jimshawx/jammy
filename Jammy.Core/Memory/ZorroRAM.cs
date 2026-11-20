@@ -133,12 +133,14 @@ namespace Jammy.Core.Memory
 	public class ZorroRAM : Memory, IZorroRAM, IMemoryMappedDevice
 	{
 		private bool isActive = false;
+		private readonly ZorroConfiguration zorroConfig;
 
-		public ZorroRAM(uint address, uint size)
+		public ZorroRAM(uint address, ZorroConfiguration zorroConfig)
 		{
-			memory = new byte[size];
-			memoryRange = new MemoryRange(address, size);
+			memory = new byte[zorroConfig.Size];
+			memoryRange = new MemoryRange(address, zorroConfig.Size);
 			addressMask = (uint)(memoryRange.Length - 1);
+			this.zorroConfig = zorroConfig;
 		}
 
 		public new bool IsMapped(uint address)
@@ -155,6 +157,7 @@ namespace Jammy.Core.Memory
 
 		public void UpdateBaseAddress(uint baseAddress)
 		{
+			zorroConfig.BaseAddress = baseAddress;
 			memoryRange.Start = baseAddress;
 			isActive = true;
 		}

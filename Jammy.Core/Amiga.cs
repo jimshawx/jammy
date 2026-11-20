@@ -28,6 +28,8 @@ namespace Jammy.Core
 		private readonly IDenise denise;
 		private readonly IChipsetClock clock;
 		private readonly IDMA dma;
+		private readonly IZorro2 zorro2;
+		private readonly IZorro3 zorro3;
 		private readonly ICPUClock cpuClock;
 		private readonly IChipsetDebugger debugger;
 		private readonly IBreakpointCollection breakpointCollection;
@@ -64,6 +66,8 @@ namespace Jammy.Core
 			this.denise = denise;
 			this.clock = clock;
 			this.dma = dma;
+			this.zorro2 = zorro2;
+			this.zorro3 = zorro3;
 			this.cpuClock = cpuClock;
 			this.debugger = debugger;
 			this.breakpointCollection = breakpointCollection;
@@ -316,9 +320,11 @@ namespace Jammy.Core
 			Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
 			if (!string.IsNullOrEmpty(settings.Snapshot))
-			{ 
+			{
 				kickstart.SetMirror(false);
 				persistenceManager.Load(Path.Combine("snapshots", settings.Snapshot));
+				((IZorro)zorro2).ConfigureAllDevices();
+				((IZorro)zorro3).ConfigureAllDevices();
 			}
 
 			uint stepOutSp = 0xffffffff;
