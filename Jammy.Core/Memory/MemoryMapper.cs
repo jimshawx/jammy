@@ -19,6 +19,7 @@ namespace Jammy.Core.Memory
 	public class MemoryMapper : IMemoryMapper, IDebugMemoryMapper, IStatePersister
 	{
 		private readonly IMemoryManager memoryManager;
+		private readonly IZorro2 zorro2;
 		private readonly ILogger logger;
 		private readonly EmulationSettings settings;
 		private IMemoryInterceptor interceptor;
@@ -36,6 +37,7 @@ namespace Jammy.Core.Memory
 			ILogger<MemoryMapper> logger)
 		{
 			this.memoryManager = memoryManager;
+			this.zorro2 = zorro2;
 			this.logger = logger;
 			_ = zorroConfigurator;
 			this.settings = settings.Value;
@@ -302,11 +304,22 @@ namespace Jammy.Core.Memory
 			
 			var mem = obj.ToObject<PersistMemory>();
 
-			memoryManager.ActivateDevice(mem.Start, mem.Length);
+			var zorroRAM = memoryManager.FindMappedDevice(mem.Start, mem.Length);
+			if (zorroRAM != null) 
+			{
+				zorroRAM.UpdateBaseAddress(mem.Start);
+				memoryManager.RefreshDevices();
+			}
 
 			var bytes = PersistenceManager.Unpack(mem.Content);
 			for (ulong address = 0; address < mem.Length; address++)
 				UnsafeWrite8((uint)(address+mem.Start), bytes[address]);
+
+			if (zorroRAM != null)
+			{
+				logger.LogTrace($"Reactivate Zorro Expansion @{mem.Start:X8} {mem.Length:X8}");
+				((IZorro)zorro2).CompleteConfiguration2(mem.Start);
+			}
 		}
 	}
 }

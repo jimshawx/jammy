@@ -14,6 +14,6 @@ namespace Jammy.Core.Interface.Interfaces
 		void AddDevice(IMemoryMappedDevice device);
 		void AddDevices(List<IMemoryMappedDevice> devs);
 		void RefreshDevices();
-		void ActivateDevice(uint start, ulong length);
+		IZorroRAM FindMappedDevice(uint start, ulong length);
 	}
 }

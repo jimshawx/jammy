@@ -52,7 +52,7 @@ namespace Jammy.Core.Memory
 			DebugMappedDevice.BuildMappedDevices();
 		}
 
-		public void ActivateDevice(uint start, ulong length)
+		public IZorroRAM FindMappedDevice(uint start, ulong length)
 		{
 			//if there's already an active device at the start address, do nothing
 			foreach (var device in devices.Where(x => !(x is UnmappedMemory)))
@@ -60,7 +60,7 @@ namespace Jammy.Core.Memory
 				foreach (var range in device.MappedRange())
 				{
 					if (range.Start == start)
-						return;
+						return null;
 				}
 			}
 
@@ -70,15 +70,10 @@ namespace Jammy.Core.Memory
 				if (!zorro.IsActive(out ulong zlen))
 				{ 
 					if (zlen == length)
-					{ 
-						zorro.UpdateBaseAddress(start);
-						var range = zorro.MappedRange().Single();
-						logger.LogTrace($"Reactivate Zorro Expansion @{range.Start:X8} {range.Length:X8}");
-						BuildMappedDevices();
-						break;
-					} 
+						return zorro;
 				}
 			}
+			return null;
 		}
 	}
 

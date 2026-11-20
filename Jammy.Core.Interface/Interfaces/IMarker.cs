@@ -170,6 +170,7 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IZorro
 	{
 		void AddConfiguration(ZorroConfiguration configuration, IExpansionROM expansion = null);
+		void CompleteConfiguration2(uint baseAddress);
 	}
 
 	public interface IZorro2 : IMemoryMappedDevice, IReset { }

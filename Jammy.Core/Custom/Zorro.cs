@@ -208,6 +208,12 @@ namespace Jammy.Core.Custom
 			configurations.RemoveAt(0);
 		}
 
+		public void CompleteConfiguration2(uint baseAddress)
+		{
+			configurations[0].Cfg.BaseAddress = baseAddress;
+			CompleteConfiguration();
+		}
+
 		private void AddNewMemoryDevice(ZorroCfg configuration) 
 		{ 
 			var zorroRAM = new ZorroRAM(0, configuration.Cfg.Size); 
