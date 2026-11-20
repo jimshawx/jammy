@@ -107,6 +107,7 @@ public class Agnus : IAgnus
 		fmode = 0;
 		hitStop = false;
 		fetchCount = 0;
+		pixmod = 8;
 
 		UpdateBPLCON0();
 		UpdateFMODE();
