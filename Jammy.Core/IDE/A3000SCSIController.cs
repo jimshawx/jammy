@@ -35,7 +35,10 @@ namespace Jammy.Core.IDE
 			uint origAddress = address;
 
 			uint value = 0;
+
 			address &= 0xff;
+			value = sdmacRam.Read(0, address, size);
+
 			switch (address)
 			{
 				case 0x41:
@@ -45,10 +48,8 @@ namespace Jammy.Core.IDE
 				case 0x43:
 					value = ScsiRead();
 					break;
-				case 0x1f:
-					value = (uint)(isr | 1); break;
-				default:
-					value = sdmacRam.Read(0, address, size);
+				case 0x1F:
+					value = (uint)(isr | 1);
 					break;
 			}
 			if (!(address == 0x1f && value == 1))
@@ -61,6 +62,8 @@ namespace Jammy.Core.IDE
 			uint origAddress = address;
 
 			address &= 0xff;
+			sdmacRam.Write(0, address, value, size);
+
 			switch (address&0xff)
 			{
 				case 0x41:
@@ -70,10 +73,9 @@ namespace Jammy.Core.IDE
 				case 0x43:
 					ScsiWrite((byte)value);
 					break;
-				default:
-					sdmacRam.Write(0, address, value, size);
-					if (address == 0x0A || address == 0x0B)// CNTR (word at $0A covers $0B)
-						Interrupt();
+				case 0xA:
+				case 0xB: //CNTR
+					Interrupt();
 					break;
 			}
 			logger.LogTrace($"SDMAC W {origAddress:X8} @{insaddr:X8} {value:X8} {size}");
@@ -97,6 +99,7 @@ namespace Jammy.Core.IDE
 		private void ScsiWrite(byte value)
 		{
 			sasrReg[sasrRegIndex] = value;
+
 			if (sasrRegIndex == 0x18)
 			{
 				isr = 0x50;
