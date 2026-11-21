@@ -1010,14 +1010,19 @@ namespace Jammy.Core.Expansion
 						logger.LogTrace($"ACTION_FREE_LOCK {pkt.dp_Arg1 << 2:X8}");
 
 						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
-						var lok = new FileLock();
-						objectMapper.Deserialize(lockPtr, lok);
 
-						var @lock = locks[lockPtr];
-						logger.LogTrace($"FREE LOCK {@lock}");
-						if (@lock.Freed) logger.LogTrace($"DOUBLE FREE LOCK {@lock}");
+						if (locks.ContainsKey(lockPtr))
+						{
+							var @lock = locks[lockPtr];
+							logger.LogTrace($"FREE LOCK {@lock}");
+							if (@lock.Freed) logger.LogTrace($"DOUBLE FREE LOCK {@lock}");
+							locks.Remove(lockPtr);
+						}
+						else
+						{
+							logger.LogTrace($"WARNING: LOCK NOT FOUND {lockPtr:X8} (snapshot?)");
+						}
 						FreeMem(lockPtr, 20);
-						locks.Remove(lockPtr);
 
 						return DosTrue(regs);
 					}
