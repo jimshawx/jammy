@@ -70,8 +70,8 @@ namespace Jammy.Core.Memory
 				case 64.0f:   cfg[0] = (byte)((cfg[0] & 0xfc) | 0b010); break;
 				case 128.0f:  cfg[0] = (byte)((cfg[0] & 0xfc) | 0b011); break;
 				case 256.0f:  cfg[0] = (byte)((cfg[0] & 0xfc) | 0b100); break;
-				case 512.0f:  cfg[0] = (byte)((cfg[0] & 0xfc) | 0b110); break;
-				case 1024.0f: cfg[0] = (byte)((cfg[0] & 0xfc) | 0b111); break;
+				case 512.0f:  cfg[0] = (byte)((cfg[0] & 0xfc) | 0b101); break;
+				case 1024.0f: cfg[0] = (byte)((cfg[0] & 0xfc) | 0b110); break;
 
 				default:
 					throw new ArgumentOutOfRangeException();
