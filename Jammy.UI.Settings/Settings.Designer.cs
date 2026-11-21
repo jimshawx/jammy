@@ -579,7 +579,9 @@ namespace Jammy.UI.Settings
 			// dudZ3
 			// 
 			dudZ3.Items.Add("512+512+512");
+			dudZ3.Items.Add("512+512+256");
 			dudZ3.Items.Add("512+512");
+			dudZ3.Items.Add("512+256");
 			dudZ3.Items.Add("256+256");
 			dudZ3.Items.Add("1024");
 			dudZ3.Items.Add("512");

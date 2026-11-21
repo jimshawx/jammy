@@ -221,7 +221,9 @@ SizeToContent="WidthAndHeight"
 					<ComboBoxItem>512</ComboBoxItem>
 					<ComboBoxItem>1024</ComboBoxItem>
 					<ComboBoxItem>256+256</ComboBoxItem>
+					<ComboBoxItem>512+256</ComboBoxItem>
 					<ComboBoxItem>512+512</ComboBoxItem>
+					<ComboBoxItem>512+512+256</ComboBoxItem>
 					<ComboBoxItem>512+512+512</ComboBoxItem>
 				  </ComboBox>
 				  <ComboBox Name="dudMotherboard" Width="100" Height="21" Margin="0,0,0,9" Background="White">
