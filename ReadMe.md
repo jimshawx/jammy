@@ -52,6 +52,7 @@ So here is my humble attempt at an Amiga emulation.
 * There are still a few problems with DMA timing and cycle exactness
 * Emulation of CPUs running faster than the standard 7MHz is poor
 * CD32 CDROM and NVRAM not working
+* A3000 hardfiles not supported (no SCSI)
 * There are still some pieces of software that don't work yet
 * The Linux version is missing the debugging UIs
 * There's no ARM build
