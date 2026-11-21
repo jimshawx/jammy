@@ -418,7 +418,7 @@ namespace Jammy.Main.Linux
 			txtDisassembly.ReallySuspendLayout();
 			txtDisassembly.DeselectAll();
 
-			int line = disassemblyView.GetAddressLine(pc & (uint)((1 << settings.AddressBits) - 1));
+			int line = disassemblyView.GetAddressLine(pc & (uint)((1ul << settings.AddressBits) - 1));
 
 			//scroll the view to the line 5 lines before the PC
 			txtDisassembly.SelectionStart = txtDisassembly.GetFirstCharIndexFromLine(Math.Max(0, line - 5));
