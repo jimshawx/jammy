@@ -33,10 +33,10 @@ namespace Jammy.Core.IDE
 	public class A4000DiskController : MemoryMappedDevice, IA4000DiskController
 	{
 		private readonly IIDEController a4000IDEController;
-		private readonly ISCSIController scsiController;
+		private readonly IA4000SCSIController scsiController;
 		private readonly MemoryRange memoryRange;
 
-		public A4000DiskController(IA4000IDEController a4000IDEController, ISCSIController scsiController)
+		public A4000DiskController(IA4000IDEController a4000IDEController, IA4000SCSIController scsiController)
 		{
 			this.a4000IDEController = (IIDEController)a4000IDEController;
 			this.scsiController = scsiController;

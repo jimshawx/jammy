@@ -11,10 +11,10 @@ namespace Jammy.Core.IDE
 {
 	public class A3000DiskController : MemoryMappedDevice, IA3000DiskController
 	{
-		private readonly ISCSIController scsiController;
+		private readonly IA3000SCSIController scsiController;
 		private readonly MemoryRange memoryRange;
 
-		public A3000DiskController(ISCSIController scsiController)
+		public A3000DiskController(IA3000SCSIController scsiController)
 		{
 			this.scsiController = scsiController;
 			memoryRange = new MemoryRange(0xdd0000, 0x10000);

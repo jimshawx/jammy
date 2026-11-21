@@ -3,17 +3,17 @@ using Jammy.Core.Types.Types;
 using Microsoft.Extensions.Logging;
 
 /*
-	Copyright 2020-2021 James Shaw. All Rights Reserved.
+	Copyright 2020-2026 James Shaw. All Rights Reserved.
 */
 
 namespace Jammy.Core.IDE
 {
-	//SCSI/IDE Controller on the A3000 and A4000
-	public class SCSIController : ISCSIController
+	//SCSI/IDE Controller on the A4000
+	public class A4000SCSIController : IA4000SCSIController
 	{
 		private readonly ILogger logger;
 
-		public SCSIController(ILogger<SCSIController> logger)
+		public A4000SCSIController(ILogger<A4000SCSIController> logger)
 		{
 			this.logger = logger;
 		}

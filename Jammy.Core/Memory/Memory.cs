@@ -135,4 +135,14 @@ namespace Jammy.Core.Memory
 			Write(0, address, value, size);
 		}
 	}
+
+	public class MemoryUtility : Memory
+	{
+		public MemoryUtility(ulong size)
+		{
+			memoryRange = new MemoryRange(0, size);
+			memory = new byte[size];
+			addressMask = (uint)(size-1);
+		}
+	}
 }

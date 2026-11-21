@@ -232,7 +232,12 @@ namespace Jammy.Core.Interface.Interfaces
 	public interface IA4000DiskController : IDiskController { }
 	public interface IA3000DiskController : IDiskController { }
 
-	public interface ISCSIController : IReset
+	public interface IA4000SCSIController : IReset
+	{
+		public uint Read(uint insaddr, uint address, Size size);
+		public void Write(uint insaddr, uint address, uint value, Size size);
+	}
+	public interface IA3000SCSIController : IReset
 	{
 		public uint Read(uint insaddr, uint address, Size size);
 		public void Write(uint insaddr, uint address, uint value, Size size);

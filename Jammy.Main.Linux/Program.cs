@@ -358,13 +358,13 @@ public class Program
 		else if (settings.DiskController == DiskController.A3000)
 		{
 			services.AddSingleton<IDiskController, A3000DiskController>()
-					.AddSingleton<ISCSIController, SCSIController>();
+					.AddSingleton<IA3000SCSIController, A3000SCSIController>();
 		}
 		else if (settings.DiskController == DiskController.A4000)
 		{
 			services.AddSingleton<IDiskController, A4000DiskController>()
 					.AddSingleton<IA4000IDEController, A4000IDEController>()
-					.AddSingleton<ISCSIController, SCSIController>();
+					.AddSingleton<IA4000SCSIController, A4000SCSIController>();
 		}
 		else
 		{
