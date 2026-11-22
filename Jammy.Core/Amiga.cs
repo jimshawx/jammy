@@ -48,6 +48,8 @@ namespace Jammy.Core
 		private readonly List<IEmulate> emulations = new List<IEmulate>();
 		private readonly List<IReset> resetters = new List<IReset>();
 
+		private double cpuSyncRate = 8.0;
+
 		public Amiga(IInterrupt interrupt, IDebugMemoryMapper memoryMapper, IBattClock battClock,
 			ICIAAOdd ciaa, ICIABEven ciab, IChips chips, IMemoryMapper memory,
 			ICPU cpu, IKeyboard keyboard, IBlitter blitter, ICopper copper, IAudio audio,
@@ -96,7 +98,7 @@ namespace Jammy.Core
 			}
 			else
 			{
-				SetCycleExact(10.0);
+				SetCycleExact(cpuSyncRate);
 				(cpu as IMoiraCPU)?.SetSync((_) => { });
 				dma.SetSync(this.RunChipsetEmulationForRAMImmediate);
 			}
@@ -158,6 +160,8 @@ namespace Jammy.Core
 		{
 			if ((VK)key == VK.VK_F11) if (emulationMode == EmulationMode.Running) SetEmulationMode(EmulationMode.Snapshot);
 			if ((VK)key == VK.VK_F10) logit = true;
+			if (key == 'N') { cpuSyncRate /= 2.0; if (cpuSyncRate < 1.0) cpuSyncRate = 1.0; logger.LogTrace($"S: {cpuSyncRate}"); }
+			if (key == 'M') { cpuSyncRate *= 2.0; if (cpuSyncRate > 1024.0) cpuSyncRate = 1024.0; logger.LogTrace($"S: {cpuSyncRate}"); }
 		}
 
 		public void DebugKeyDown(int obj) { }
