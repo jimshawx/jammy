@@ -97,7 +97,7 @@ namespace Jammy.Debugger
 		private bool ShouldTrace(uint pc)
 		{
 			if (!enabled) return false;
-			if (pc >= 0xf00000) return false;
+			if (pc >= 0xf00000 && pc <= 0x1000000) return false;
 			if (seen.Contains(pc)) return false;
 			return true;
 		}
@@ -158,7 +158,7 @@ namespace Jammy.Debugger
 
 		private string DisassembleAddress(uint pc)
 		{
-			if (pc >= mem.Length) return "";
+			if (pc >= mem.End) return "";
 			var dasm = disassembler.Disassemble(pc, mem.GetEnumerable(pc, Disassembler.Disassembler.LONGEST_68K_INSTRUCTION));
 			return dasm.ToString();
 		}
