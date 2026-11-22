@@ -151,7 +151,7 @@ namespace Jammy.Core.Expansion
 				string p0 = searchPath.Substring(0, i);
 				string p1 = searchPath.Substring(i + 1);
 				logger.LogTrace($"RELATIVE {searchPath} {p0} {p1}");
-				searchPath = AmigaParentPath(p0) ??"";
+				searchPath = AmigaParentPath(p0);
 				if (searchPath != null) searchPath += p1;
 			}
 			return searchPath;
@@ -163,6 +163,7 @@ namespace Jammy.Core.Expansion
 			string fromPath = amigaPath;
 
 			amigaPath = UnwindExtraSlashes(amigaPath);
+			if (amigaPath == null) return null;
 
 			//the bit up to the last colon
 			int t = amigaPath.LastIndexOf(':');
@@ -175,7 +176,7 @@ namespace Jammy.Core.Expansion
 			foreach (var c in badChars)
 			{
 				if (amigaPath.Contains(c))
-					amigaPath = amigaPath.Replace(c, '_');
+					return null;
 			}
 
 			//need to search the directory caches for
@@ -201,8 +202,8 @@ namespace Jammy.Core.Expansion
 			logger.LogTrace($"->HOST PATH {amigaPath}");
 
 			//path would escape the sandbox?
-			if (!IsSandboxEscape(amigaPath))
-				amigaPath = rootDir;
+			if (IsSandboxEscape(amigaPath))
+				return null;
 
 			logger.LogTrace($"{fromPath}->{amigaPath}");
 
@@ -218,7 +219,10 @@ namespace Jammy.Core.Expansion
 
 			string resolvedPath = Path.GetFullPath(combinedPath);
 
-			return resolvedPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase);
+			if (!resolvedPath.EndsWith(Path.DirectorySeparatorChar))
+				resolvedPath += Path.DirectorySeparatorChar;
+
+			return !resolvedPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase);
 		}
 
 		private string SanitiseAmigaPath(string amigaPath)
@@ -827,6 +831,7 @@ namespace Jammy.Core.Expansion
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						string hostPath = MakeHostPath(searchPath);
+						if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						if (Path.Exists(hostPath))
 						{
@@ -899,6 +904,8 @@ namespace Jammy.Core.Expansion
 						}
 						
 						string hostPath = MakeHostPath(basePath);
+						if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
 						if (!Path.Exists(hostPath))
 						{
 							logger.LogTrace($"NO PATH HOST");
@@ -1097,6 +1104,8 @@ namespace Jammy.Core.Expansion
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 						basePath = MakeHostPath(basePath);
+						if (basePath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
 						if (Path.Exists(basePath))
 						{
 							logger.LogTrace("FOUND");
@@ -1250,6 +1259,8 @@ namespace Jammy.Core.Expansion
 						try
 						{
 							string hostPath = MakeHostPath(filename);
+							if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
 							if (File.Exists(hostPath))
 							{
 								try
@@ -1305,6 +1316,8 @@ namespace Jammy.Core.Expansion
 						try
 						{
 							string hostPath = MakeHostPath(filename);
+							if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
 							if (Path.Exists(hostPath))
 							{
 								return DosFail(regs, ERROR_OBJECT_EXISTS);
@@ -1361,8 +1374,10 @@ namespace Jammy.Core.Expansion
 						{
 							logger.LogTrace($"RENAME");
 							string from = MakeHostPath(filename);
+							if (from == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 							logger.LogTrace("->");
 							string to = MakeHostPath(dstFilename);
+							if (to == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
 							if (File.Exists(from))
 								File.Move(from, to);
