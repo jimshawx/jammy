@@ -168,46 +168,47 @@ namespace Jammy.Core.Expansion
 			//the bit up to the last colon
 			int t = amigaPath.LastIndexOf(':');
 			if (t != -1)
-			{
 				amigaPath = amigaPath.Substring(t + 1);
-			}
-			
-			char[] badChars = { '\\', '*', '?', '"', '<', '>', '|', ':' };
-			foreach (var c in badChars)
+
+			if (OperatingSystem.IsWindows())
 			{
-				if (amigaPath.Contains(c))
-					return null;
+				//these characters are invalid in paths on Windows
+				char[] badChars = { '\\', '*', '?', '"', '<', '>', '|', ':' };
+				foreach (var c in badChars)
+				{
+					if (amigaPath.Contains(c))
+						return null;
+				}
 			}
+
+			logger.LogTrace($"AMIGA PATH {amigaPath}");
 
 			//need to search the directory caches for
 			//the amiga filename to get the host filename
 
-			logger.LogTrace($"AMIGA PATH {amigaPath}");
-
 			//start with the Host root path from the settings
-			string hostPathBits = rootDir;
+			string hostPath = rootDir;
 			string[] amigaBits = amigaPath.Split('/');
 			foreach (string amigaBit in amigaBits)
 			{
-				var dc = new MyDirCache(hostPathBits, logger);
+				var dc = new MyDirCache(hostPath, logger);
 
 				string hostBit = dc.AmigaToHost(amigaBit);
 				if (hostBit == null)
-					hostPathBits = Path.Combine(hostPathBits, amigaBit);
+					hostPath = Path.Combine(hostPath, amigaBit);
 				else
-					hostPathBits = Path.Combine(hostPathBits, hostBit);
+					hostPath = Path.Combine(hostPath, hostBit);
 			}
 
-			amigaPath = hostPathBits;
-			logger.LogTrace($"->HOST PATH {amigaPath}");
+			logger.LogTrace($"->HOST PATH {hostPath}");
 
 			//path would escape the sandbox?
-			if (IsSandboxEscape(amigaPath))
+			if (IsSandboxEscape(hostPath))
 				return null;
 
-			logger.LogTrace($"{fromPath}->{amigaPath}");
+			logger.LogTrace($"{fromPath}->{hostPath}");
 
-			return amigaPath;
+			return hostPath;
 		}
 
 		private bool IsSandboxEscape(string combinedPath)
