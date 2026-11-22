@@ -855,7 +855,7 @@ public class Agnus : IAgnus
 			case ChipRegs.HSSTRT: hsstrt = value; logger.LogTrace($"HSSTRT {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.HSSTOP: hsstop = value; logger.LogTrace($"HSSTOP {value:X4} @{insaddr:X8}"); break;
 			case ChipRegs.HCENTER: hcentre = value; logger.LogTrace($"HCENTER {value:X4} @{insaddr:X8}"); break;
-			case ChipRegs.BEAMCON0: beamcon0 = value; logger.LogTrace($"BEAMCON0 {value:X4} @{insaddr:X8}"); break;
+			case ChipRegs.BEAMCON0: beamcon0 = value; if (value != 0x0020) logger.LogTrace($"BEAMCON0 {value:X4} @{insaddr:X8}"); break;
 
 			case ChipRegs.FMODE: if (settings.ChipSet == ChipSet.AGA) fmode = value; UpdateFMODE(); UpdateDDF(); break;
 		}
