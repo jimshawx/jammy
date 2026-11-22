@@ -225,12 +225,6 @@ namespace Jammy.Core.Expansion
 			return !resolvedPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase);
 		}
 
-		private string SanitiseAmigaPath(string amigaPath)
-		{
-			amigaPath = amigaPath.Replace('\\', '_');
-			return amigaPath;
-		}
-
 		private class MyDirCache
 		{
 			public MyDirCache(string hostPath, ILogger logger)
@@ -802,7 +796,6 @@ namespace Jammy.Core.Expansion
 						else
 						{
 							pathName = ReadDOSString(namePtr);
-							pathName = SanitiseAmigaPath(pathName);
 							logger.LogTrace($"LOCATE {parentPath} {pathName}");
 						}
 
