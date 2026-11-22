@@ -112,22 +112,18 @@ namespace Jammy.Disassembler.TypeMapper
 			return memory[(int)start..(int)(start+length)];
 		}
 
-		public IEnumerable<byte> GetEnumerable(uint start)
-		{
-			return memory[(int)start..];
-		}
-
-		public IEnumerable<uint> AsULong(uint start)
+		public IEnumerable<uint> AsULong(uint start, ulong length)
 		{
 			return memory.AsULong();
 		}
 
-		public IEnumerable<ushort> AsUWord(uint start)
+		public IEnumerable<ushort> AsUWord(uint start, ulong length)
 		{
 			return memory.AsUWord();
 		}
 
 		public ulong Length => (ulong)memory.Length;
+		public ulong End => (ulong)memory.Length;
 
 		public List<MemoryRange> MappedRange()
 		{

@@ -19,10 +19,10 @@ namespace Jammy.Core.Interface.Interfaces
 		void UnsafeWrite8(uint address, byte value);
 		void UnsafeWrite(uint address, uint value, Size size);
 		IEnumerable<byte> GetEnumerable(uint start, ulong length);
-		IEnumerable<byte> GetEnumerable(uint start);
-		IEnumerable<uint> AsULong(uint start);
-		IEnumerable<ushort> AsUWord(uint start);
+		IEnumerable<uint> AsULong(uint start, ulong length);
+		IEnumerable<ushort> AsUWord(uint start, ulong length);
 		ulong Length { get; }
+		ulong End { get; }
 		List<MemoryRange> MappedRange();
 		List<BulkMemoryRange> GetBulkRanges();
 		string GetString(uint address);

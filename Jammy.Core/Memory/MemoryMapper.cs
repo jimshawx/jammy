@@ -84,7 +84,7 @@ namespace Jammy.Core.Memory
 			this.interceptor = interceptor;
 		}
 
-		readonly MemoryRange memoryRange = new MemoryRange(0x0, 0x1000000);
+		private readonly MemoryRange memoryRange = new MemoryRange(0x0, 0x100000000);
 
 		public bool IsMapped(uint address)
 		{
@@ -207,43 +207,24 @@ namespace Jammy.Core.Memory
 
 		public IEnumerable<byte> GetEnumerable(uint start, ulong length)
 		{
-			for (ulong i = start; i < Math.Min(start + length, memoryRange.Length); i++)
-				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
-					yield return 0;
-				else
-					yield return UnsafeRead8((uint)i);
+			for (ulong i = start; i < Math.Min(start + length, memoryRange.End); i++)
+				yield return UnsafeRead8((uint)i);
 		}
 
-		public IEnumerable<byte> GetEnumerable(uint start)
+		public IEnumerable<uint> AsULong(uint start, ulong length)
 		{
-			for (ulong i = start; i < memoryRange.Length; i++)
-			{
-				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
-					yield return 0;
-				else
-					yield return UnsafeRead8((uint)i);
-			}
+			for (ulong i = start; i < Math.Min(start + length, memoryRange.End); i += 4)
+				yield return UnsafeRead32((uint)i);
 		}
 
-		public IEnumerable<uint> AsULong(uint start)
+		public IEnumerable<ushort> AsUWord(uint start, ulong length)
 		{
-			for (ulong i = start; i < memoryRange.Length; i += 4)
-				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
-					yield return 0;
-				else
-					yield return UnsafeRead32((uint)i);
-		}
-
-		public IEnumerable<ushort> AsUWord(uint start)
-		{
-			for (ulong i = start; i < memoryRange.Length; i += 2)
-				if (memoryManager.DebugMappedDevice[(uint)i] is IUnmappedMemory)
-					yield return 0;
-				else
-					yield return UnsafeRead16((uint)i);
+			for (ulong i = start; i < Math.Min(start + length, memoryRange.End); i += 2)
+				yield return UnsafeRead16((uint)i);
 		}
 
 		public ulong Length => memoryRange.Length;
+		public ulong End => memoryRange.Start + memoryRange.Length;
 
 		public List<BulkMemoryRange> GetBulkRanges()
 		{

@@ -4,10 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Jammy.Core.Interface.Interfaces;
-using Jammy.Core.Types.Types;
 using Jammy.Interface;
 using Jammy.Types;
-using Jammy.Types.Debugger;
 using Jammy.Types.Options;
 using Microsoft.Extensions.Logging;
 
@@ -68,7 +66,7 @@ namespace Jammy.Disassembler
 			foreach (var range in ranges.OrderBy(x=>x.Start))
 			{
 				uint address = range.Start;
-				uint size = (uint)range.Length;
+				ulong size = range.Length;
 				lines.AddRange(DisassembleBlock(options, address, size).SelectMany(x=>x.Lines));
 			}
 			return string.Join('\n', lines);
@@ -80,7 +78,7 @@ namespace Jammy.Disassembler
 			return (char)b;
 		}
 
-		private IEnumerable<AddressEntry> DisassembleBlock(DisassemblyOptions options, uint address, uint size)
+		private IEnumerable<AddressEntry> DisassembleBlock(DisassemblyOptions options, ulong address, ulong size)
 		{
 			logger.LogTrace($"Disassembling Block {address:X8} {size}");
 			int line = 0;
@@ -90,11 +88,11 @@ namespace Jammy.Disassembler
 			var comments = analysis.GetComments();
 			var headers = analysis.GetHeaders();
 
-			uint startAddress = address;
-			uint endAddress = address + size;
+			ulong startAddress = address;
+			ulong endAddress = address + size;
 
-			Dictionary<uint, AddressEntry> addressToLine = new Dictionary<uint, AddressEntry>();
-			Dictionary<int, uint> lineToAddress = new Dictionary<int, uint>();
+			var addressToLine = new Dictionary<ulong, AddressEntry>();
+			var lineToAddress = new Dictionary<int, ulong>();
 
 			while (address < endAddress)
 			{
@@ -102,7 +100,7 @@ namespace Jammy.Disassembler
 					address++;
 
 				var ade = new AddressEntry();
-				ade.Address = address;
+				ade.Address = (uint)address;
 				
 				if (addressToLine.ContainsKey(address))
 				{
@@ -112,7 +110,7 @@ namespace Jammy.Disassembler
 
 				addressToLine.Add(address, ade);
 
-				if (options.IncludeComments && headers.TryGetValue(address, out Header hdrs))
+				if (options.IncludeComments && headers.TryGetValue((uint)address, out Header hdrs))
 				{
 					foreach (var hdr in hdrs.TextLines)
 					{
@@ -120,9 +118,9 @@ namespace Jammy.Disassembler
 						line++;
 					}
 				}
-				if (labeller.HasLabel(address))
+				if (labeller.HasLabel((uint)address))
 				{
-					var label = labeller.LabelName(address);
+					var label = labeller.LabelName((uint)address);
 					ade.Lines.Add("");
 					ade.Lines.Add("---------------------------------------------------------------------------");
 					ade.Lines.Add($"\t{label}()");
@@ -135,12 +133,12 @@ namespace Jammy.Disassembler
 
 				lineToAddress.Add(line, address);
 
-				uint lineAddress = address;
+				ulong lineAddress = address;
 
 				string asm;
 
 				if (options.IncludeBreakpoints)
-					asm = breakpoints.IsBreakpoint(address) ? "*" : " ";
+					asm = breakpoints.IsBreakpoint((uint)address) ? "*" : " ";
 				else
 					asm = "";
 
@@ -149,26 +147,26 @@ namespace Jammy.Disassembler
 					if (memType[address] == MemType.Byte)
 					{
 						if (options.Full32BitAddress)
-							asm = $"{address:X8}  {memory.UnsafeRead8(address):X2}";
+							asm = $"{address:X8}  {UnsafeRead8(address):X2}";
 						else
-							asm = $"{address:X6}  {memory.UnsafeRead8(address):X2}";
+							asm = $"{address:X6}  {UnsafeRead8(address):X2}";
 						address += 1;
 					}
 					else if (memType[address] == MemType.Word)
 					{
 						if (options.Full32BitAddress)
-							asm = $"{address:X8}  {memory.UnsafeRead16(address):X4}";
+							asm = $"{address:X8}  {UnsafeRead16(address):X4}";
 						else
-							asm = $"{address:X6}  {memory.UnsafeRead16(address):X4}";
+							asm = $"{address:X6}  {UnsafeRead16(address):X4}";
 
 						address += 2;
 					}
 					else if (memType[address] == MemType.Long)
 					{
 						if (options.Full32BitAddress)
-							asm = $"{address:X8}  {memory.UnsafeRead32(address):X8}";
+							asm = $"{address:X8}  {UnsafeRead32(address):X8}";
 						else
-							asm = $"{address:X6}  {memory.UnsafeRead32(address):X8}";
+							asm = $"{address:X6}  {UnsafeRead32(address):X8}";
 						address += 4;
 					}
 					else if (memType[address] == MemType.Str)
@@ -177,17 +175,17 @@ namespace Jammy.Disassembler
 
 						while (memType[address] == MemType.Str)
 						{
-							if (memory.UnsafeRead8(address) == 0)
+							if (UnsafeRead8(address) == 0)
 							{
 								str.Add("00");
 								address++;
 								break;
 							}
-							else if (memory.UnsafeRead8(address) == 0xD)
+							else if (UnsafeRead8(address) == 0xD)
 							{
 								str.Add("CR");
 							}
-							else if (memory.UnsafeRead8(address) == 0xA)
+							else if (UnsafeRead8(address) == 0xA)
 							{
 								str.Add("LF");
 							}
@@ -195,9 +193,9 @@ namespace Jammy.Disassembler
 							{
 								tmp.Clear();
 								tmp.Append('"');
-								while (memory.UnsafeRead8(address) != 0 && memory.UnsafeRead8(address) != 0x0d && memory.UnsafeRead8(address) != 0xa)
+								while (UnsafeRead8(address) != 0 && UnsafeRead8(address) != 0x0d && UnsafeRead8(address) != 0xa)
 								{
-									tmp.Append(SafeToChar(memory.UnsafeRead8(address)));
+									tmp.Append(SafeToChar(UnsafeRead8(address)));
 									address++;
 								}
 
@@ -221,14 +219,14 @@ namespace Jammy.Disassembler
 					if ((address & 1) != 0)
 					{
 						if (options.Full32BitAddress)
-							asm = $"{address:X8}  {memory.UnsafeRead8(address):X2}";
+							asm = $"{address:X8}  {UnsafeRead8(address):X2}";
 						else
-							asm = $"{address:X6}  {memory.UnsafeRead8(address):X2}";
+							asm = $"{address:X6}  {UnsafeRead8(address):X2}";
 						address += 1;
 					}
 					else
 					{
-						var dasm = disassembler.Disassemble(address, memory.GetEnumerable(address, Disassembler.LONGEST_68K_INSTRUCTION));
+						var dasm = disassembler.Disassemble((uint)address, memory.GetEnumerable((uint)address, Disassembler.LONGEST_68K_INSTRUCTION));
 						asm = dasm.ToString(options);
 
 						var ia = instructionAnalysisDatabase.GetInstructionAnalysis(dasm.Address);
@@ -245,16 +243,17 @@ namespace Jammy.Disassembler
 							}
 						}
 
-						uint start = address, end = (uint)(address + dasm.Bytes.Length);
-						for (uint i = start; i < end && i < memory.Length; i++)
+						ulong start = address, end = address + (ulong)dasm.Bytes.Length;
+						for (ulong i = start; i < end && i < memory.End; i++)
 						{
-							if (memType[i] != MemType.Code && memType[i] != MemType.Unknown)
+							if (memType[(uint)i] != MemType.Code && memType[(uint)i] != MemType.Unknown)
 							{
 								break; //todo: the instruction overlapped something we know isn't code, so we could mark it as data
 							}
 
 							address++;
 						}
+						address = (uint)end;
 					}
 				}
 
@@ -263,7 +262,7 @@ namespace Jammy.Disassembler
 
 				if (options.IncludeComments)
 				{
-					if (comments.TryGetValue(lineAddress, out Comment comment))
+					if (comments.TryGetValue((uint)lineAddress, out Comment comment))
 					{
 						if (asm.Length < 64)
 							ade.Lines.Add($"{asm.PadRight(64)} {comment.Text}");
@@ -290,14 +289,18 @@ namespace Jammy.Disassembler
 			return addressToLine.Select(x=>x.Value);
 		}
 
-		private void MergeBlock(Dictionary<uint, AddressEntry> addressToLine, Dictionary<int, uint> lineToAddress, uint startAddress, uint endAddress)
+		private byte UnsafeRead8(ulong address) => memory.UnsafeRead8((uint)address);
+		private ushort UnsafeRead16(ulong address) => memory.UnsafeRead16((uint)address);
+		private uint UnsafeRead32(ulong address) => memory.UnsafeRead32((uint)address);
+
+		private void MergeBlock(Dictionary<ulong, AddressEntry> addressToLine, Dictionary<int, ulong> lineToAddress, ulong startAddress, ulong endAddress)
 		{
 			logger.LogTrace($"Merging Block {startAddress:X8} {endAddress:X8}");
 			//any lines lower than incoming start line can be left alone
 			//any lines higher than that need to be incremented by the number of lines in the incoming block
 
 			//start line of the incoming block
-			int firstLine = GetAddressLine(startAddress);
+			int firstLine = GetAddressLine((uint)startAddress);
 			int lineCount = addressToLine.Sum(x => x.Value.Lines.Count);
 			int overwritten = 0;
 
@@ -345,11 +348,11 @@ namespace Jammy.Disassembler
 			foreach (var kvp in addressToLine)
 			{
 				kvp.Value.Line += firstLine;
-				globalAddressToLine[kvp.Key] = kvp.Value;
+				globalAddressToLine[(uint)kvp.Key] = kvp.Value;
 			}
 
 			foreach (var kvp in lineToAddress)
-				globalLineToAddress[kvp.Key + firstLine] = kvp.Value;
+				globalLineToAddress[kvp.Key + firstLine] = (uint)kvp.Value;
 
 			Check(2);
 		}
@@ -470,7 +473,7 @@ namespace Jammy.Disassembler
 
 		public IDisassemblyView FullDisassemblyView(DisassemblyOptions options)
 		{
-			return new DisassemblyView(this, 0, GetDisassembly(0, 0x1000000));
+			return new DisassemblyView(this, 0, GetDisassembly(0, 0x100000000));
 		}
 	}
 

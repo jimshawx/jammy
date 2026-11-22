@@ -831,7 +831,7 @@ namespace Jammy.Disassembler.Analysers
 			uint i;
 
 			i = range.Start;
-			foreach (uint s in mem.AsULong(range.Start))
+			foreach (uint s in mem.AsULong(range.Start, range.Length))
 			{
 				//rts/rte 0000
 				if (s == 0x4e750000 || s == 0x4e730000)
@@ -847,7 +847,7 @@ namespace Jammy.Disassembler.Analysers
 			}
 
 			i = range.Start;
-			foreach (ushort s in mem.AsUWord(range.Start))
+			foreach (ushort s in mem.AsUWord(range.Start, range.Length))
 			{
 				//bra
 				if ((s & 0xff00) == 0x6000)

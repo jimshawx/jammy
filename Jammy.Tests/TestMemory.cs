@@ -106,22 +106,18 @@ namespace Jammy.Tests
 			return memory[(int)start..(int)Math.Min((ulong)memory.Length, start+length)];
 		}
 
-		public IEnumerable<byte> GetEnumerable(uint start)
+		public IEnumerable<uint> AsULong(uint start, ulong length)
 		{
-			return memory[(int)start..];
+			return memory[(int)start..(int)Math.Min((ulong)memory.Length, start + length)].AsULong();
 		}
 
-		public IEnumerable<uint> AsULong(uint start)
+		public IEnumerable<ushort> AsUWord(uint start, ulong length)
 		{
-			return memory[(int)start..].AsULong();
-		}
-
-		public IEnumerable<ushort> AsUWord(uint start)
-		{
-			return memory[(int)start..].AsUWord();
+			return memory[(int)start..(int)Math.Min((ulong)memory.Length, start + length)].AsUWord();
 		}
 
 		public ulong Length => (ulong)memory.Length;
+		public ulong End => (ulong)memory.Length;
 
 		public void AddMemoryIntercept(IMemoryInterceptor interceptor)
 		{

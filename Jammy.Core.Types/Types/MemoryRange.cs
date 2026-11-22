@@ -20,7 +20,7 @@ namespace Jammy.Core.Types.Types
 		public uint Start { get; set; }
 		public ulong Length { get; set; }
 
-		private ulong End => Start + Length;
+		public ulong End => Start + Length;
 
 		public bool Contains(uint location)
 		{

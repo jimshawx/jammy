@@ -28,16 +28,16 @@ namespace Jammy.Types
 			this.memTypes = memTypes;
 		}
 
-		public MemType this[int i]
+		public MemType this[uint i]
 		{
 			get
 			{
-				var block = memTypes[(uint)i >> MEMTYPE_SHIFT];
+				var block = memTypes[i >> MEMTYPE_SHIFT];
 				if (block == null) return MemType.Unknown;
 				return block[i & MEMTYPE_MASK];
 			}
 		}
 
-		public MemType this[uint i] => this[(int)i];
+		public MemType this[ulong i] => this[(uint)i];
 	}
 }
