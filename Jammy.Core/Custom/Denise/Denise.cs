@@ -387,14 +387,14 @@ public class Denise : IDenise
 		//BPLAM is set
 		if (settings.ChipSet == ChipSet.AGA &&(bplcon4 >> 8) != 0) return CopperBitplaneConvertOther;
 
-		//SPRPRI2>=5 and SPF or SPRPRI1/2>=5 and DPF (weird sprite priority hacks)
+		//PFPRI2>=5 and SPF or PFPRI1/2>=5 and DPF (weird sprite priority hacks)
 		if (settings.ChipSet != ChipSet.AGA && ((bplcon0 & (uint)BPLCON0.HAM) == 0))
-		{ 
+		{
 			//doesn't affect AGA or HAM modes
-			uint sprpri1 = (uint)(bplcon2 & 7);
-			uint sprpri2 = (uint)((bplcon2 >> 3) & 7);
-			if (sprpri2 >= 5) return CopperBitplaneConvertOther;
-			if (sprpri1 >= 5 && (bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertOther;
+			uint pfpri1 = (uint)(bplcon2 & 7);
+			uint pfpri2 = (uint)((bplcon2 >> 3) & 7);
+			if (pfpri2 >= 5) return CopperBitplaneConvertOther;//SWIV
+			if (pfpri1 >= 5 && (bplcon0 & (uint)BPLCON0.DPF) != 0) return CopperBitplaneConvertOther;//odd things for DPF mode
 		}
 
 		//when planes == 7, 4 planes are fetched, 2 are static
@@ -581,10 +581,10 @@ public class Denise : IDenise
 			//see Running man / Scoopex intro logo
 			if (settings.ChipSet != ChipSet.AGA)
 			{ 
-				uint sprpri1 = (uint)(bplcon2 & 7);
-				uint sprpri2 = (uint)((bplcon2 >> 3) & 7);
-				if (sprpri1 >= 5) col0 = truecolour[0];
-				if (sprpri2 >= 5) col1 = truecolour[0];
+				uint pfpri1 = (uint)(bplcon2 & 7);
+				uint pfpri2 = (uint)((bplcon2 >> 3) & 7);
+				if (pfpri1 >= 5) col0 = truecolour[0];
+				if (pfpri2 >= 5) col1 = truecolour[0];
 			}
 
 			//which playfield is in front?
@@ -634,7 +634,7 @@ public class Denise : IDenise
 			if ((pix & 0b100000) != 0)
 				col = (col & 0x00fefefe) >> 1;
 		}
-		else if (planes == 8 && (bplcon0 & (uint)BPLCON0.HAM) != 0)
+		else if (planes == 8 && (bplcon0 & (uint)BPLCON0.HAM) != 0 && settings.ChipSet == ChipSet.AGA)
 		{
 			//HAM8
 			uint ham = pix & 0b11;
@@ -651,7 +651,7 @@ public class Denise : IDenise
 				else col = lastcol & 0xff00ffff | (px << 16); //col+R
 			}
 		}
-		else
+		else if (planes >= 5 && settings.ChipSet != ChipSet.AGA)
 		{
 			//https://eab.abime.net/showpost.php?p=1213908&postcount=227
 			//If number of planes is 5 or 6 and
@@ -660,12 +660,15 @@ public class Denise : IDenise
 			//other planes are ignored in palette selection = COLOR16 is selected.
 			//PF1 does nothing.
 			//see SWIV score board feature
-			if (settings.ChipSet != ChipSet.AGA)
-			{
-				uint sprpri = (uint)((bplcon2 >> 3) & 7);//sprpri2
-				if (sprpri >= 5 && planes >= 5 && (pix & (1 << 4)) != 0)
-					pix = 16;
-			}
+
+			uint pfpri2 = (uint)((bplcon2 >> 3) & 7);
+			if (pfpri2 >= 5 && (pix & (1 << 4)) != 0)
+				pix = 16;
+
+			col = truecolour[pix];
+		}
+		else
+		{
 			col = truecolour[pix];
 		}
 
