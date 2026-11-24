@@ -225,8 +225,9 @@ namespace m68kcpu
 		//static void m68040_fpu_op1() { throw new NotImplementedException("m68040_fpu_op1()"); }
 		//static void m68881_mmu_ops() { throw new NotImplementedException("m68881_mmu_ops()"); }
 		static uint m68k_read_memory_8(uint A) { return memoryMapper.Read(instructionStartPC, A, Size.Byte); }
+		private const int LONGEST_68K_INSTRUCTION = 22;
 		static uint m68k_read_memory_16(uint A) {
-			if (A == instructionStartPC)
+			if (A - instructionStartPC < LONGEST_68K_INSTRUCTION)
 				return memoryMapper.Fetch(instructionStartPC, A, Size.Word);
 			return memoryMapper.Read(instructionStartPC, A, Size.Word); }
 		static uint m68k_read_memory_32(uint A) { return memoryMapper.Read(instructionStartPC, A, Size.Long); }

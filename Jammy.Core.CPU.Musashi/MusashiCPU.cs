@@ -305,11 +305,12 @@ namespace Jammy.Core.CPU.Musashi
 			return memoryMapper.Read(instructionStartPC, address, Size.Long);
 		}
 
+		private const int LONGEST_68K_INSTRUCTION = 22;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private uint Musashi_read16(uint address)
 		{
 			//word read at instruction address is instruction fetch
-			if (address == instructionStartPC)
+			if (address - instructionStartPC < LONGEST_68K_INSTRUCTION)
 			{
 				uint m = memoryMapper.Fetch(instructionStartPC, address, Size.Word);
 				return m;

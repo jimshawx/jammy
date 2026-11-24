@@ -265,11 +265,12 @@ namespace Jammy.Core.CPU.Moira
 			FromIntPtr(context).Moira_sync(cycles);
 		}
 
+		private const int LONGEST_68K_INSTRUCTION = 22;
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private uint Moira_read16(uint address)
 		{
 			//word read at instruction address is instruction fetch
-			if (address == instructionStartPC)
+			if (address - instructionStartPC < LONGEST_68K_INSTRUCTION)
 			{ 
 				uint m = memoryMapper.Fetch(instructionStartPC, address, Size.Word);
 				return m;
