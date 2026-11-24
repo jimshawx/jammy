@@ -213,6 +213,7 @@ namespace Jammy.Core.Floppy
 			runningDMA = false;
 			adkcon = 0;
 			upcomingDiskDMA = -1;
+			pra = PRA.MASK;
 		}
 
 		public ushort Read(uint insaddr, uint address)

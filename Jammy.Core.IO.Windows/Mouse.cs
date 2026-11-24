@@ -156,6 +156,7 @@ namespace Jammy.Core.IO.Windows
 		{
 			joy0dat = 0;
 			joy1dat = 0;
+			pra = PRAMASK;
 		}
 
 		public ushort Read(uint insaddr, uint address)
