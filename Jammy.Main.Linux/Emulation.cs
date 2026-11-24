@@ -1,4 +1,5 @@
 ﻿using Jammy.Core.Interface.Interfaces;
+using System;
 
 /*
 	Copyright 2020-2021 James Shaw. All Rights Reserved.
@@ -20,9 +21,9 @@ namespace Jammy.Main.Linux
 			amiga.Reset();
 		}
 
-		public void Start()
+		public void Start(Action refreshCallback)
 		{
-			amiga.Start();
+			amiga.Start(refreshCallback);
 		}
 	}
 }

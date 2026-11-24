@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Jammy.Core;
 using Jammy.Core.Interface.Interfaces;
 using Jammy.Core.Types;
@@ -103,56 +104,25 @@ namespace Jammy.Main.Linux
 			memoryDumpRanges.Add(new AddressRange(0xf80000, 0x40000));
 			memoryDumpRanges.Add(new AddressRange(0xfc0000, 0x40000));
 
-			emulation.Start();
+			emulation.Start(RefreshCallback);
 
 			FetchUI(FetchUIFlags.All);
 			UpdateDisassembly();
 			UpdateDisplay();
-
-			//InitUIRefreshThread();
 			
 			pluginManager.Start();
 			webServer.Start();
 		}
 
-		//private CancellationTokenSource uiUpdateTokenSource;
-		//private Task uiUpdateTask;
-
-		//private void InitUIRefreshThread()
-		//{
-		//	uiUpdateTokenSource = new CancellationTokenSource();
-
-		//	uiUpdateTask = new Task(() =>
-		//	{
-		//		while (!uiUpdateTokenSource.IsCancellationRequested)
-		//		{
-		//			//this.Invoke((Action)UpdatePowerLight);
-
-		//			if (UI.UI.IsDirty)
-		//			{
-		//				this.Invoke((Action)delegate ()
-		//				{
-		//					FetchUI(FetchUIFlags.All);
-		//					SetSelection();
-		//					UpdateDisplay();
-		//				});
-		//			}
-		//		}
-		//	}, uiUpdateTokenSource.Token, TaskCreationOptions.LongRunning);
-		//	uiUpdateTask.Start();
-		//}
-
-		//private void UpdatePowerLight()
-		//{
-		//	bool power = UI.UI.PowerLight;
-		//	picPower.BackColor = power ? Color.Red : Color.DarkRed;
-		//}
-
-		//private void UpdateDiskLight()
-		//{
-		//	bool disk = global::Jammy.UI.UI.DiskLight;
-		//	picDisk.BackColor = disk ? Color.LightGreen : Color.DarkGreen;
-		//}
+		private void RefreshCallback()
+		{
+			Dispatcher.UIThread.Invoke(() =>
+			{ 
+				FetchUINoLock(FetchUIFlags.All);
+				SetSelection();
+				UpdateDisplay();
+			});
+		}
 
 		[Flags]
 		private enum FetchUIFlags
@@ -176,10 +146,15 @@ namespace Jammy.Main.Linux
 		private void FetchUI(FetchUIFlags flags)
 		{
 			Amiga.LockEmulation();
+			FetchUINoLock(flags);
+			Amiga.UnlockEmulation();
+		}
+
+		private void FetchUINoLock(FetchUIFlags flags)
+		{
 			if ((flags & FetchUIFlags.Regs) != 0) uiData.Regs = debugger.GetRegs();
 			//if ((flags & FetchUIFlags.Memory) != 0) uiData.Memory = debugger.GetMemory();
 			if ((flags & FetchUIFlags.ChipRegs) != 0) uiData.ChipRegs = debugger.GetChipRegs();
-			Amiga.UnlockEmulation();
 		}
 
 		private void UpdateDisassembly()
@@ -226,8 +201,6 @@ namespace Jammy.Main.Linux
 			var debug = debugger.Analyse();
 			instructionAnalysisDatabase.Add(debug);
 			logger.LogTrace($"{string.Join(" ", debug.EffectiveAddresses.Select(x => $"{x.Ea:X8}"))}");
-
-			UI.UI.IsDirty = false;
 		}
 
 		private void UpdateCopper()

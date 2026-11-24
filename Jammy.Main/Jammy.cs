@@ -126,43 +126,29 @@ namespace Jammy.Main
 			memoryDumpRanges.Add(new AddressRange(0xf80000, 0x40000));
 			memoryDumpRanges.Add(new AddressRange(0xfc0000, 0x40000));
 
-			emulation.Start();
+			emulation.Start(RefreshCallback);
 
 			FetchUI(FetchUIFlags.All);
 			UpdateDisassembly();
 			UpdateDisplay();
 
-			InitUIRefreshThread();
-
 			pluginManager.Start();
 			webServer.Start();
 		}
 
-		private CancellationTokenSource uiUpdateTokenSource;
-		private Task uiUpdateTask;
+		private static readonly AutoResetEvent uiRefreshWaitHandle = new AutoResetEvent(false);
 
-		private void InitUIRefreshThread()
+		private void RefreshCallback()
 		{
-			uiUpdateTokenSource = new CancellationTokenSource();
-
-			uiUpdateTask = new Task(() =>
+			if (this.InvokeRequired)
 			{
-				while (!uiUpdateTokenSource.IsCancellationRequested)
-				{
-					//this.Invoke((Action)UpdatePowerLight);
+				this.Invoke(RefreshCallback);
+				return;
+			}
 
-					if (UI.UI.IsDirty)
-					{
-						this.Invoke((Action)delegate ()
-						{
-							FetchUI(FetchUIFlags.All);
-							SetSelection();
-							UpdateDisplay();
-						});
-					}
-				}
-			}, uiUpdateTokenSource.Token, TaskCreationOptions.LongRunning);
-			uiUpdateTask.Start();
+			FetchUINoLock(FetchUIFlags.All);
+			SetSelection();
+			UpdateDisplay();
 		}
 
 		[Flags]
@@ -187,10 +173,15 @@ namespace Jammy.Main
 		private void FetchUI(FetchUIFlags flags)
 		{
 			Amiga.LockEmulation();
+			FetchUINoLock(flags);
+			Amiga.UnlockEmulation();
+		}
+
+		private void FetchUINoLock(FetchUIFlags flags)
+		{
 			if ((flags & FetchUIFlags.Regs) != 0) uiData.Regs = debugger.GetRegs();
 			//if ((flags & FetchUIFlags.Memory) != 0) uiData.Memory = debugger.GetMemory();
 			if ((flags & FetchUIFlags.ChipRegs) != 0) uiData.ChipRegs = debugger.GetChipRegs();
-			Amiga.UnlockEmulation();
 		}
 
 		private void UpdateDisassembly()
@@ -238,8 +229,6 @@ namespace Jammy.Main
 			var debug = debugger.Analyse();
 			instructionAnalysisDatabase.Add(debug);
 			logger.LogTrace($"{string.Join(" ", debug.EffectiveAddresses.Select(x => $"{x.Ea:X8}"))}");
-
-			UI.UI.IsDirty = false;
 		}
 
 		private void UpdateCopper()
@@ -495,19 +484,6 @@ namespace Jammy.Main
 
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			//set the token to cancel the UI thread
-			uiUpdateTokenSource.Cancel();
-
-			//release the UI thread semaphore in case it's being awaited on
-			//(UI may well get redrawn now)
-			UI.UI.IsDirty = true;
-
-			//ensure Invokes are run
-			Application.DoEvents();
-
-			//wait for the Task to complete
-			uiUpdateTask.Wait();
-
 			//neatly exit the emulation thread
 			Amiga.SetEmulationMode(EmulationMode.Exit);
 		}

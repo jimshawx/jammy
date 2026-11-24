@@ -1,5 +1,6 @@
 ﻿using Jammy.Core.Types.Enums;
 using Jammy.Core.Types.Types;
+using System;
 using System.IO;
 
 /*
@@ -144,13 +145,13 @@ namespace Jammy.Core.Interface.Interfaces
 
 	public interface IAmiga
 	{
-		void Start();
+		void Start(Action refreshCallback);
 		void Reset();
 	}
 
 	public interface IEmulation
 	{
-		void Start();
+		void Start(Action refreshCallback);
 		void Reset();
 	}
 

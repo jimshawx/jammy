@@ -24,7 +24,6 @@
     <ProjectReference Include="..\Jammy.Plugins.Lua\Jammy.Plugins.Lua.csproj" />
     <ProjectReference Include="..\Jammy.Plugins\Jammy.Plugins.csproj" />
     <ProjectReference Include="..\Jammy.UI.Settings.Avalonia\Jammy.UI.Settings.Avalonia.csproj" />
-    <ProjectReference Include="..\Jammy.UI\Jammy.UI.csproj" />
     <ProjectReference Include="..\Jammy.Types\Jammy.Types.csproj" />
     <ProjectReference Include="..\Jammy.Core.EmulationWindow.X\Jammy.Core.EmulationWindow.X.csproj" />
     <ProjectReference Include="..\Jammy.Core.CPU.CSharp\Jammy.Core.CPU.CSharp.csproj" />

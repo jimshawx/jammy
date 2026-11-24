@@ -281,9 +281,11 @@ namespace Jammy.Core
 		}
 
 		private Thread emuThread;
+		private Action refreshCallback;
 
-		public void Start()
+		public void Start(Action refreshCallback)
 		{
+			this.refreshCallback = refreshCallback;
 			emuThread = new Thread(Emulate);
 			emuThread.Name = "Amiga";
 			emuThread.Start();
@@ -382,7 +384,7 @@ namespace Jammy.Core
 
 				if (emulationMode == EmulationMode.Stopped && emulationHasRun)
 				{
-					UI.UI.IsDirty = true;
+					refreshCallback();
 					emulationHasRun = false;
 				}
 

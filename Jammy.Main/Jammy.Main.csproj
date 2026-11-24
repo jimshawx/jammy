@@ -62,7 +62,6 @@
     <ProjectReference Include="..\Parky.Logging.OutputDebugString\Parky.Logging.OutputDebugString.csproj" />
     <ProjectReference Include="..\Parky.Logging.SQLite\Parky.Logging.SQLite.csproj" />
     <ProjectReference Include="..\Jammy.UI.Settings\Jammy.UI.Settings.csproj" />
-    <ProjectReference Include="..\Jammy.UI\Jammy.UI.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Dialogs\Find.cs">
