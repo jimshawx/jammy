@@ -292,7 +292,7 @@ SizeToContent="WidthAndHeight"
 				<TextBlock Foreground="#0078d7" Margin="0 0 0 3">Hard Disk</TextBlock>
 
 				<StackPanel Orientation="Horizontal">
-				  <ComboBox Name="cbDiskController" Width="282" Height="21" Margin="0,0,0,8" Background="White">
+				  <ComboBox Name="cbDiskController" Width="282" Height="21" Margin="0,0,0,8" Background="White" SelectionChanged="cbDiskController_SelectedValueChanged">
 					<ComboBoxItem>None</ComboBoxItem>
 					<ComboBoxItem>A600_A1200</ComboBoxItem>
 					<ComboBoxItem>A3000</ComboBoxItem>

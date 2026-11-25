@@ -550,7 +550,9 @@ namespace Jammy.UI.Settings.Avalonia
 			rbSynchronous.IsChecked = currentSettings.BlitterMode == BlitterMode.Synchronous;
 
 			//Floppy Speed
-			rbFloppyAccurate.IsChecked = currentSettings.FloppySpeed == FloppySpeed.CycleExact;
+			rbFloppyAccurate.IsChecked = true;//currentSettings.FloppySpeed == FloppySpeed.CycleExact;
+			rbFloppyAccurate.IsEnabled = false;
+			rbFloppyFast.IsEnabled = false;
 		}
 
 		private void UnbindSettings()
@@ -666,7 +668,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.ChipSet = ChipSet.OCS;
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.FloppyCount = 1;
-					currentSettings.FloppySpeed = FloppySpeed.Immediate;
+					currentSettings.FloppySpeed = FloppySpeed.CycleExact;
 					currentSettings.KickStart = "kick13.rom";
 					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68000;
@@ -688,7 +690,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.ChipSet = ChipSet.ECS;
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.FloppyCount = 1;
-					currentSettings.FloppySpeed = FloppySpeed.Immediate;
+					currentSettings.FloppySpeed = FloppySpeed.CycleExact;
 					currentSettings.KickStart = "kick204.rom";
 					currentSettings.CPU = CPUType.Moira;
 					currentSettings.Sku = CPUSku.MC68000;
@@ -710,7 +712,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.DiskController = DiskController.A600_A1200;
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.FloppyCount = 1;
-					currentSettings.FloppySpeed = FloppySpeed.Immediate;
+					currentSettings.FloppySpeed = FloppySpeed.CycleExact;
 					currentSettings.KickStart = "kick205.rom";
 					currentSettings.HardDiskCount = 0;
 					currentSettings.CPU = CPUType.Moira;
@@ -733,7 +735,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.DiskController = DiskController.A600_A1200;
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.FloppyCount = 1;
-					currentSettings.FloppySpeed = FloppySpeed.Immediate;
+					currentSettings.FloppySpeed = FloppySpeed.CycleExact;
 					currentSettings.KickStart = "kick31_a1200.rom";
 					currentSettings.HardDiskCount = 0;
 					currentSettings.CPU = CPUType.Moira;
@@ -760,7 +762,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.DiskController = DiskController.A3000;
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.FloppyCount = 1;
-					currentSettings.FloppySpeed = FloppySpeed.Immediate;
+					currentSettings.FloppySpeed = FloppySpeed.CycleExact;
 					currentSettings.KickStart = "kick31_a3000.rom";
 					currentSettings.HardDiskCount = 0;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
@@ -785,7 +787,7 @@ namespace Jammy.UI.Settings.Avalonia
 					currentSettings.DiskController = DiskController.A4000;
 					currentSettings.Audio = AudioDriver.XAudio2;
 					currentSettings.FloppyCount = 1;
-					currentSettings.FloppySpeed = FloppySpeed.Immediate;
+					currentSettings.FloppySpeed = FloppySpeed.CycleExact;
 					currentSettings.KickStart = "kick31_a4000.rom";
 					currentSettings.HardDiskCount = 0;
 					currentSettings.BlitterMode = BlitterMode.Immediate;
@@ -878,6 +880,19 @@ namespace Jammy.UI.Settings.Avalonia
 		private void btnFolder1Eject_Click(object sender, RoutedEventArgs e)
 		{
 			txtFolder1.Text = string.Empty;
+		}
+
+		private void cbDiskController_SelectedValueChanged(object sender, SelectionChangedEventArgs e)
+		{
+			if (StringFromSelection(cbDiskController.SelectedItem) == "A3000")
+			{
+				nudHardDiskCount.Value = 0;
+				nudHardDiskCount.IsEnabled = false;
+			}
+			else
+			{
+				nudHardDiskCount.IsEnabled = true;
+			}
 		}
 	}
 }

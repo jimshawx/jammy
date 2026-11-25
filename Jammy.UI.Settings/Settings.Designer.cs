@@ -987,6 +987,7 @@ namespace Jammy.UI.Settings
 			cbDiskController.Name = "cbDiskController";
 			cbDiskController.Size = new System.Drawing.Size(322, 40);
 			cbDiskController.TabIndex = 0;
+			cbDiskController.SelectedValueChanged += cbDiskController_SelectedValueChanged;
 			// 
 			// panel8
 			// 
