@@ -347,9 +347,9 @@ namespace Jammy.Core.IO.Linux
 			{(int)VK.VK_LMENU, 0x64 },
 			{(int)VK.VK_MENU, 0x64 },//Alias VK_MENU to VK_LMENU (Alt keys)
 			{(int)VK.VK_RMENU, 0x65 },
-			{(int)VK.VK_LWIN, 0x66 },
-			{(int)VK.VK_RWIN, 0x67 },//there's a max of 103 keys in the Amiga ROM
-
+			{(int)VK.VK_LWIN, 0x66 },//LAmiga
+			{(int)VK.VK_RWIN, 0x67 },//RAmiga there's a max of 103 keys in the Amiga ROM
+			{(int)VK.VK_RCONTROL, 0x67}//RAmiga
 		};
 	}
 }
