@@ -163,7 +163,7 @@ namespace Jammy.Core.EmulationWindow.DX
 
 				ss.Release();
 
-				RegisterRawInput(emulation.Handle);
+				RegisterRawInputMouse(emulation.Handle);
 
 				emulation.MouseClick += Emulation_MouseClick;
 				emulation.KeyPress += Emulation_KeyPress;
@@ -200,6 +200,7 @@ namespace Jammy.Core.EmulationWindow.DX
 				IsCaptured = true;
 				Cursor.Hide();
 				Cursor.Clip = emulation.RectangleToScreen(emulation.ClientRectangle);
+				RegisterRawInputKeyboard(emulation.Handle);
 			}
 		}
 
@@ -207,6 +208,7 @@ namespace Jammy.Core.EmulationWindow.DX
 		{
 			if (IsCaptured)
 			{
+				UnregisterRawInputKeyboard(emulation.Handle);
 				IsCaptured = false;
 				Cursor.Show();
 				Cursor.Clip = new Rectangle(0, 0, 0, 0);
@@ -523,34 +525,58 @@ namespace Jammy.Core.EmulationWindow.DX
 			public IntPtr hwndTarget;
 		}
 
-		private void RegisterRawInput(nint hwnd)
+		private const uint RIDEV_REMOVE = 0x00000001;
+		private const uint RIDEV_EXCLUDE = 0x00000010;
+		private const uint RIDEV_PAGEONLY = 0x00000020;
+		private const uint RIDEV_NOLEGACY = 0x00000030;
+		private const uint RIDEV_INPUTSINK = 0x00000100;
+		private const uint RIDEV_CAPTUREMOUSE = 0x00000200;  // effective when mouse nolegacy is specified
+		private const uint RIDEV_NOHOTKEYS = 0x00000200;  // effective for keyboard.
+		private const uint RIDEV_APPKEYS = 0x00000400;  // effective for keyboard.
+		private const uint RIDEV_EXINPUTSINK = 0x00001000;
+		private const uint RIDEV_DEVNOTIFY = 0x00002000;
+		private const uint RIDEV_EXMODEMASK = 0x000000F0;
+
+		private void RegisterRawInputMouse(nint hwnd)
 		{
-			var rid = new RAWINPUTDEVICE[2];
+			var rid = new RAWINPUTDEVICE[1];
 
-			//everyone
-			//rid[0].dwFlags = RIDEV_INPUTSINK
-			//rid[0].hwndTarget = hwnd;
-
-			// Mouse
 			rid[0].usUsagePage = 0x01;
-			rid[0].usUsage = 0x02;            // Mouse
-			rid[0].dwFlags = 0;               
+			rid[0].usUsage = 0x02; // Mouse
+			rid[0].dwFlags = 0;
 			rid[0].hwndTarget = IntPtr.Zero; 
 
-			// Keyboard
-			rid[1].usUsagePage = 0x01;
-			rid[1].usUsage = 0x06;            // Keyboard
-			rid[1].dwFlags = 0;               
-			rid[1].hwndTarget = IntPtr.Zero;
+			RegisterRawInputDevices(rid, 1, (uint)Marshal.SizeOf(rid[0]));
+		}
 
-			RegisterRawInputDevices(rid, 2, (uint)Marshal.SizeOf(rid[0]));
+		private void RegisterRawInputKeyboard(nint hwnd)
+		{
+			var rid = new RAWINPUTDEVICE[1];
+
+			rid[0].usUsagePage = 0x01;
+			rid[0].usUsage = 0x06; // Keyboard
+			rid[0].dwFlags = RIDEV_NOHOTKEYS;
+			rid[0].hwndTarget = IntPtr.Zero;
+
+			RegisterRawInputDevices(rid, 1, (uint)Marshal.SizeOf(rid[0]));
+		}
+
+		private void UnregisterRawInputKeyboard(nint hwnd)
+		{
+			var rid = new RAWINPUTDEVICE[1];
+
+			rid[0].usUsagePage = 0x01;
+			rid[0].usUsage = 0x06; // Keyboard
+			rid[0].dwFlags = RIDEV_REMOVE;
+			rid[0].hwndTarget = 0;
+
+			RegisterRawInputDevices(rid, 1, (uint)Marshal.SizeOf(rid[0]));
 		}
 
 		const int WM_INPUT = 0x00FF;
 		const uint RID_INPUT = 0x10000003;
 		const uint RIM_TYPEMOUSE = 0;
 		const uint RIM_TYPEKEYBOARD = 1;
-		const uint RIDEV_INPUTSINK = 0x00000100;
 
 		[StructLayout(LayoutKind.Sequential)]
 		public struct RAWINPUTHEADER
