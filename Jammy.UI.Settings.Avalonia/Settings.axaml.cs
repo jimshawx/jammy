@@ -67,10 +67,11 @@ namespace Jammy.UI.Settings.Avalonia
 			{
 				try
 				{
-					var snapName = Path.GetFileNameWithoutExtension(snap).Substring(5);
-					var config = JsonObject.Parse(File.ReadAllText(snap));
-					var df0 = Path.GetFileNameWithoutExtension(config[0]["DF0"].ToString().Replace('\\','/'));
-					cbSnapshots.Items.Add($"{snapName} {df0}");
+					//var snapName = Path.GetFileNameWithoutExtension(snap).Substring(5);
+					//var config = JsonObject.Parse(File.ReadAllText(snap));
+					//var df0 = Path.GetFileNameWithoutExtension(config[0]["DF0"].ToString().Replace('\\','/'));
+					//cbSnapshots.Items.Add($"{snapName} {df0}");
+					cbSnapshots.Items.Add($"{Path.GetFileNameWithoutExtension(snap).Substring(5)}");
 				}
 				catch { }
 			}
@@ -815,7 +816,8 @@ namespace Jammy.UI.Settings.Avalonia
 			try
 			{
 				//load the config
-				string snap = $"snap-{((string)cbSnapshots.SelectedItem).Split(' ')[0]}.json";
+				//string snap = $"snap-{((string)cbSnapshots.SelectedItem).Split(' ')[0]}.json";
+				string snap = $"snap-{((string)cbSnapshots.SelectedItem)}.json";
 
 				currentSettings = JArray.Parse(File.ReadAllText(Path.Combine(snapshotPath, snap)))[0].ToObject<EmulationSettings>();
 				BindSettings();
