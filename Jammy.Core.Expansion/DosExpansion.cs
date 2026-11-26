@@ -868,7 +868,7 @@ namespace Jammy.Core.Expansion
 
 						AddLock(new MyLockInfo { FullPath = parent.FullPath, Size = parent.Size, LockKey = mem });
 
-						logger.LogTrace($"LOCATE lock {mem:X8}");
+						logger.LogTrace($"LOCATE lock {mem:X8} {parent.FullPath}");
 
 						memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -1012,10 +1012,10 @@ namespace Jammy.Core.Expansion
 
 						if (locks.TryGetValue(lockPtr, out MyLockInfo @lock))
 						{
-							logger.LogTrace($"FREE LOCK {@lock}");
+							logger.LogTrace($"FREE LOCK {@lock} {@lock.FullPath}");
 							if (@lock.Freed) logger.LogTrace($"DOUBLE FREE LOCK {@lock}");
 							locks.Remove(lockPtr);
-							WalkLocks();
+							//WalkLocks();
 						}
 						else
 						{
@@ -1047,9 +1047,9 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(mem + 12, lok.fl_Task.Address);
 							memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
 
-							AddLock(new MyLockInfo { FullPath = ":", Size = 0, LockKey = mem });
+							AddLock(new MyLockInfo { FullPath = parentPath, Size = 0, LockKey = mem });
 
-							logger.LogTrace($"LOCATE NAME lock {mem:X8}");
+							logger.LogTrace($"LOCATE NAME lock {mem:X8} {parentPath}");
 
 							memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -1476,6 +1476,8 @@ namespace Jammy.Core.Expansion
 
 		private bool DosFail(Regs regs, uint code)
 		{
+			if (code != 0) logger.LogTrace($"DOSFAIL {code}");
+			else logger.LogTrace("DOSFAIL LOCK 0");
 			memory.UnsafeWrite32(regs.A[4] + 12, DOSFAIL);
 			memory.UnsafeWrite32(regs.A[4] + 16, code);
 			return false;
@@ -1483,6 +1485,7 @@ namespace Jammy.Core.Expansion
 
 		private bool DosTrue(Regs regs)
 		{
+			logger.LogTrace("DOSTRUE");
 			memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
 			memory.UnsafeWrite32(regs.A[4] + 16, 0);
 			return true;
@@ -1542,7 +1545,7 @@ namespace Jammy.Core.Expansion
 		{
 			if (path.EndsWith(':'))
 			{
-				logger.LogTrace("PARENT OF ROOT");
+				//logger.LogTrace("PARENT OF ROOT");
 				return null;
 			}
 
