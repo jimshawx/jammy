@@ -1123,6 +1123,12 @@ namespace Jammy.Core.Expansion
 
 								return DosTrue(regs);
 							}
+							catch (UnauthorizedAccessException)
+							{
+								if (pkt.dp_Type == ACTION_FINDOUTPUT) return DosFail(regs, ERROR_WRITE_PROTECTED);
+								if (pkt.dp_Type == ACTION_FINDINPUT) return DosFail(regs, ERROR_READ_PROTECTED);
+								if (pkt.dp_Type == ACTION_FINDUPDATE) return DosFail(regs, ERROR_WRITE_PROTECTED);
+							}
 							catch (Exception ex)
 							{
 								logger.LogTrace($"Exception: {ex}");
@@ -1150,6 +1156,10 @@ namespace Jammy.Core.Expansion
 								memory.UnsafeWrite32(address + 36, id);
 
 								return DosTrue(regs);
+							}
+							catch (UnauthorizedAccessException)
+							{
+								return DosFail(regs, ERROR_WRITE_PROTECTED); 
 							}
 							catch (Exception ex)
 							{
@@ -1280,6 +1290,10 @@ namespace Jammy.Core.Expansion
 							}
 							return DosTrue(regs);
 						}
+						catch (UnauthorizedAccessException)
+						{
+							return DosFail(regs, ERROR_WRITE_PROTECTED);
+						}
 						catch (Exception ex)
 						{
 							logger.LogTrace($"Exception: {ex}");
@@ -1331,6 +1345,10 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 							return true;							
 						}
+						catch (UnauthorizedAccessException)
+						{
+							return DosFail(regs, ERROR_WRITE_PROTECTED);
+						}
 						catch (Exception ex)
 						{
 							logger.LogTrace($"Exception: {ex}");
@@ -1378,6 +1396,10 @@ namespace Jammy.Core.Expansion
 								return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 							}
 							return DosTrue(regs);
+						}
+						catch (UnauthorizedAccessException)
+						{
+							return DosFail(regs, ERROR_WRITE_PROTECTED);
 						}
 						catch (Exception ex)
 						{
@@ -1434,9 +1456,8 @@ namespace Jammy.Core.Expansion
 					logger.LogTrace($"ACTION_RENAME_DISK");
 					string name = ReadDOSString((uint)pkt.dp_Arg1<<2);
 					if (name.Length > 30)
-					{
 						return DosFail(regs, ERROR_INVALID_COMPONENT_NAME);
-					}
+
 					uint nameMem = AllocMem((uint)name.Length+2, 0x10001);
 					WriteDOSString(nameMem, name);
 
