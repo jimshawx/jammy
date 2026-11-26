@@ -67,7 +67,6 @@ namespace Jammy.Core.Persistence
 			foreach (var o in objects)
 				foreach (var p in persisters)
 					p.Load((JObject)o);
-			logger.LogTrace("Snapshot restored!");
 		}
 
 		public static string Pack(byte[] mem)

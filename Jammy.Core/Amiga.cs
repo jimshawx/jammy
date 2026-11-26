@@ -325,13 +325,7 @@ namespace Jammy.Core
 		{
 			Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
-			if (!string.IsNullOrEmpty(settings.Snapshot))
-			{
-				kickstart.SetMirror(false);
-				persistenceManager.Load(Path.Combine("snapshots", settings.Snapshot));
-				((IZorro)zorro2).ConfigureAllDevices();
-				((IZorro)zorro3).ConfigureAllDevices();
-			}
+			LoadSnapshot();
 
 			uint stepOutSp = 0xffffffff;
 			bool emulationHasRun = false;
@@ -361,16 +355,14 @@ namespace Jammy.Core
 							RunEmulations();
 							emulationHasRun = true;
 							if (stopping)
-							{ 
+							{
 								emulationMode = EmulationMode.Stopped;
 								stepOutSp = 0xffffffff;
 							}
 							break;
 
 						case EmulationMode.Snapshot:
-							string name = Path.GetFileNameWithoutExtension(settings.DF0);
-							persistenceManager.Save(Path.Combine("snapshots", $"snap-{DateTime.Now:yyyy-MM-dd_HH-mm-ss} {name}.json"));
-							logger.LogTrace("Snapshot Recorded!");
+							SaveSnapshot();
 							emulationMode = EmulationMode.Running;
 							break;
 
@@ -401,6 +393,33 @@ namespace Jammy.Core
 				emulationSemaphore.Wait();
 
 				emulationMode = desiredEmulationMode;
+			}
+		}
+
+		private void SaveSnapshot()
+		{
+			string name = "";
+			if (settings.DF0 != null)
+				name = Path.GetFileNameWithoutExtension(settings.DF0.Replace('\\', '/'));
+			if (string.IsNullOrWhiteSpace(name) && settings.DH0 != null)
+				name = Path.GetFileNameWithoutExtension(settings.DH0.Replace('\\', '/'));
+			if (string.IsNullOrWhiteSpace(name) && settings.KickStart != null)
+				name = Path.GetFileNameWithoutExtension(settings.KickStart.Replace('\\', '/'));
+			logger.LogTrace("Saving Snapshot...");
+			persistenceManager.Save(Path.Combine("snapshots", $"snap-{DateTime.Now:yyyy-MM-dd_HH-mm-ss} {name}.json"));
+			logger.LogTrace("Snapshot Saved!");
+		}
+
+		private void LoadSnapshot()
+		{
+			if (!string.IsNullOrEmpty(settings.Snapshot))
+			{
+				logger.LogTrace("Loading Snapshot...");
+				kickstart.SetMirror(false);
+				persistenceManager.Load(Path.Combine("snapshots", settings.Snapshot));
+				((IZorro)zorro2).ConfigureAllDevices();
+				((IZorro)zorro3).ConfigureAllDevices();
+				logger.LogTrace("Snapshot Restored!");
 			}
 		}
 	}
