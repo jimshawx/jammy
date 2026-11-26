@@ -836,8 +836,7 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(mem + 12, regs.A[3]);
 							memory.UnsafeWrite32(mem + 16, myVolumeNodeBPTR);
 
-							locks.Add(mem, new MyLockInfo { FullPath = searchPath, Size = 0, LockKey = mem/*, Parent = parent*/ });
-							//WalkLocks();
+							AddLock(new MyLockInfo { FullPath = searchPath, Size = 0, LockKey = mem });
 							logger.LogTrace($"LOCATE lock {mem:X8}");
 
 							memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
@@ -867,8 +866,7 @@ namespace Jammy.Core.Expansion
 						memory.UnsafeWrite32(mem + 12, lok.fl_Task.Address);
 						memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
 
-						locks.Add(mem, new MyLockInfo { FullPath = parent.FullPath, Size = parent.Size, LockKey = mem/*, Parent = parent*/ });
-						//WalkLocks();
+						AddLock(new MyLockInfo { FullPath = parent.FullPath, Size = parent.Size, LockKey = mem });
 
 						logger.LogTrace($"LOCATE lock {mem:X8}");
 
@@ -1012,12 +1010,12 @@ namespace Jammy.Core.Expansion
 
 						uint lockPtr = (uint)pkt.dp_Arg1 << 2;
 
-						if (locks.ContainsKey(lockPtr))
+						if (locks.TryGetValue(lockPtr, out MyLockInfo @lock))
 						{
-							var @lock = locks[lockPtr];
 							logger.LogTrace($"FREE LOCK {@lock}");
 							if (@lock.Freed) logger.LogTrace($"DOUBLE FREE LOCK {@lock}");
 							locks.Remove(lockPtr);
+							WalkLocks();
 						}
 						else
 						{
@@ -1049,8 +1047,7 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(mem + 12, lok.fl_Task.Address);
 							memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
 
-							locks.Add(mem, new MyLockInfo { FullPath = ":", Size = 0, LockKey = mem/*, Parent = null*/ });
-							//WalkLocks();
+							AddLock(new MyLockInfo { FullPath = ":", Size = 0, LockKey = mem });
 
 							logger.LogTrace($"LOCATE NAME lock {mem:X8}");
 
@@ -1321,13 +1318,12 @@ namespace Jammy.Core.Expansion
 
 							uint mem = AllocMem(20, 0x10001);
 							memory.UnsafeWrite32(mem, 0);
-							memory.UnsafeWrite32(mem + 4, (uint)lok.fl_Key);
+							memory.UnsafeWrite32(mem + 4, mem);//(uint)lok.fl_Key);
 							memory.UnsafeWrite32(mem + 8, (uint)lok.fl_Access);
 							memory.UnsafeWrite32(mem + 12, lok.fl_Task.Address);
 							memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
 
-							locks.Add(mem, new MyLockInfo { FullPath = filename, Size = 0, LockKey = mem/*, Parent = parent*/ });
-							//WalkLocks();
+							AddLock(new MyLockInfo { FullPath = filename, Size = 0, LockKey = mem });
 
 							logger.LogTrace($"LOCATE lock {mem:X8}");
 
@@ -1585,54 +1581,18 @@ namespace Jammy.Core.Expansion
 			return null;
 		}
 
-		//private void WalkLocks()
-		//{
-		//	logger.LogTrace($"WALK LOCKS {locks.Count}");
-		//	var childs = new Dictionary<MyLockInfo, List<MyLockInfo>>();
+		private void AddLock(MyLockInfo info)
+		{
+			locks.Add(info.LockKey, info);
+			//WalkLocks();
+		}
 
-		//	var children = new List<MyLockInfo>();
-		//	var orphans = locks.Values.ToList();
-
-		//	int maxloops = orphans.Count;
-
-		//	while (maxloops-- > 0)
-		//	{
-		//		children.AddRange(orphans);
-		//		orphans.Clear();
-
-		//		foreach (var my in children)
-		//		{
-		//			if (my.Parent == null)
-		//			{
-		//				childs.Add(my, new List<MyLockInfo>());
-		//			}
-		//			else if (childs.TryGetValue(my.Parent, out var p))
-		//			{
-		//				p.Add(my);
-		//				childs.Add(my, new List<MyLockInfo>());
-		//			}
-		//			else
-		//			{
-		//				orphans.Add(my);
-		//			}
-		//		}
-		//		if (orphans.Count == 0) break;
-		//		children.Clear();
-		//	}
-
-		//	logger.LogTrace("LOCK TREE");
-		//	foreach (var root in childs.Where(x => x.Key.Parent == null))
-		//		WalkLocks2(root, 0);
-		//	foreach (var orp in orphans)
-		//		logger.LogTrace($"ORPHAN {orp} Parent: {(orp.Parent != null ? orp.Parent : "")}");
-
-		//	void WalkLocks2(KeyValuePair<MyLockInfo, List<MyLockInfo>> kvp, int depth)
-		//	{
-		//		logger.LogTrace($"{new string(' ', depth * 2)} {kvp.Key}");
-		//		foreach (var c in kvp.Value)
-		//			WalkLocks2(new KeyValuePair<MyLockInfo, List<MyLockInfo>>(c, childs[c]), depth + 1);
-		//	}
-		//}
+		private void WalkLocks()
+		{
+			logger.LogTrace($"WALK LOCKS {locks.Count}");
+			foreach (var @lock in locks)
+				logger.LogTrace($"{@lock.Key:X8} {@lock.Value}");
+		}
 
 		private uint uniqueFileId = 1;
 		private uint UniqueFileId()
