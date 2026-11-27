@@ -265,13 +265,13 @@ namespace Jammy.Core.Expansion
 			private DateTime FileDate(string p)
 			{
 				var f = new FileInfo(p);
-				return f.CreationTimeUtc.ToLocalTime();
+				return f.CreationTime;
 			}
 
 			private DateTime DirDate(string p)
 			{
 				var f = new DirectoryInfo(p);
-				return f.CreationTimeUtc.ToLocalTime();
+				return f.CreationTime;
 			}
 
 			private string MungeName(string p)
@@ -837,7 +837,6 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(mem + 16, myVolumeNodeBPTR);
 
 							AddLock(new MyLockInfo { FullPath = searchPath, Size = 0, LockKey = mem });
-							logger.LogTrace($"LOCATE lock {mem:X8}");
 
 							memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -867,8 +866,6 @@ namespace Jammy.Core.Expansion
 						memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
 
 						AddLock(new MyLockInfo { FullPath = parent.FullPath, Size = parent.Size, LockKey = mem });
-
-						logger.LogTrace($"LOCATE lock {mem:X8} {parent.FullPath}");
 
 						memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -1048,8 +1045,6 @@ namespace Jammy.Core.Expansion
 							memory.UnsafeWrite32(mem + 16, lok.fl_Volume);
 
 							AddLock(new MyLockInfo { FullPath = parentPath, Size = 0, LockKey = mem });
-
-							logger.LogTrace($"LOCATE NAME lock {mem:X8} {parentPath}");
 
 							memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
@@ -1339,8 +1334,6 @@ namespace Jammy.Core.Expansion
 
 							AddLock(new MyLockInfo { FullPath = filename, Size = 0, LockKey = mem });
 
-							logger.LogTrace($"LOCATE lock {mem:X8}");
-
 							memory.UnsafeWrite32(regs.A[4] + 12, BPtr(mem));
 							memory.UnsafeWrite32(regs.A[4] + 16, 0);
 							return true;							
@@ -1431,9 +1424,62 @@ namespace Jammy.Core.Expansion
 					return DosTrue(regs);
 
 				case ACTION_SET_DATE:
-					logger.LogTrace($"ACTION_SET_DATE");
-					return DosTrue(regs);
+					{ 
+						logger.LogTrace($"ACTION_SET_DATE");
 
+						string filename = string.Empty;
+
+						var lok = new FileLock();
+						var parent = LockFromBPtr(regs, pkt.dp_Arg2, lok);
+						if (parent == null)
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
+						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg3 << 2));
+						if (filename == null)
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
+						try
+						{
+							string hostPath = MakeHostPath(filename);
+							if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
+							uint datePtr = (uint)pkt.dp_Arg4;
+							int days = (int)memory.UnsafeRead32(datePtr);
+							int mins = (int)memory.UnsafeRead32(datePtr+4);
+							int tick = (int)memory.UnsafeRead32(datePtr+8);
+
+							var time = AmigaToDateTimeUtc(days, mins, tick);
+
+							if (Directory.Exists(hostPath))
+							{ 
+								Directory.SetCreationTime(hostPath, time);
+								Directory.SetLastWriteTime(hostPath, time);
+								Directory.SetLastAccessTime(hostPath, time);
+							}
+							else if (Path.Exists(hostPath))
+							{
+								File.SetCreationTime(hostPath, time);
+								File.SetLastWriteTime(hostPath, time);
+								File.SetLastAccessTime(hostPath, time);
+							}
+							else
+							{
+								return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+							}
+
+							return DosTrue(regs);
+						}
+						catch (UnauthorizedAccessException)
+						{
+							logger.LogTrace("WRITE PROTECTED");
+							return DosFail(regs, ERROR_WRITE_PROTECTED);
+						}
+						catch (Exception ex)
+						{
+							logger.LogTrace($"Exception: {ex}");
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+						}
+					}
 				case ACTION_FLUSH:
 					logger.LogTrace($"ACTION_FLUSH");
 					return DosTrue(regs);
@@ -1709,31 +1755,27 @@ namespace Jammy.Core.Expansion
 		}
 
 		// Amiga file date epoch January 1, 1978
-		private static readonly DateTime AmigaEpoch = new DateTime(1978, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+		private static readonly DateTime AmigaEpoch = new DateTime(1978, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
-		//nb. 60 on NTSC
-		private const int TicksPerSecond = 50;
-
-		public static DateTime AmigaToDateTime(int days, int minute, int tick)
+		public static DateTime AmigaToDateTimeUtc(int days, int minute, int tick)
 		{
-			long totalSeconds = (days * 86400L) + (minute * 60L) + (tick / TicksPerSecond);
-			return AmigaEpoch.AddSeconds(totalSeconds).ToLocalTime();
+			return AmigaEpoch.AddDays(days).AddMinutes(minute).AddMilliseconds(tick * 20.0);
 		}
 
 		public static void DateTimeToAmiga(DateTime dateTime, out int days, out int minute, out int tick)
 		{
-			DateTime utcDateTime = dateTime.Kind == DateTimeKind.Utc ? dateTime : dateTime.ToUniversalTime();
-			TimeSpan span = utcDateTime - AmigaEpoch;
+			var span = dateTime - AmigaEpoch;
 
-			long totalSeconds = (long)span.TotalSeconds;
-			if (totalSeconds < 0) totalSeconds = 0;
+			if (span < TimeSpan.Zero)
+			{
+				days = minute = tick = 0;
+				return;
+			}
 
-			days = (int)(totalSeconds / 86400);
-			long remainingSeconds = totalSeconds % 86400;
-			minute = (int)(remainingSeconds / 60);
-
-			long subMinuteSeconds = remainingSeconds % 60;
-			tick = (int)(subMinuteSeconds * TicksPerSecond);
+			days = span.Days;
+			minute = (span.Hours * 60) + span.Minutes;
+			// 1 Amiga tick = 20 ms = 200,000 .NET ticks (TimeSpan.TicksPerMillisecond * 20)
+			tick = (int)(((span.Seconds * 1000L) + span.Milliseconds) / 20L);
 		}
 
 		//assuming this is extremely unsafe (interrupts, locks etc), but here we go
