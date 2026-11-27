@@ -1448,7 +1448,7 @@ namespace Jammy.Core.Expansion
 							int mins = (int)memory.UnsafeRead32(datePtr+4);
 							int tick = (int)memory.UnsafeRead32(datePtr+8);
 
-							var time = AmigaToDateTimeUtc(days, mins, tick);
+							var time = AmigaToDateTime(days, mins, tick);
 
 							if (Directory.Exists(hostPath))
 							{ 
@@ -1757,7 +1757,7 @@ namespace Jammy.Core.Expansion
 		// Amiga file date epoch January 1, 1978
 		private static readonly DateTime AmigaEpoch = new DateTime(1978, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
-		public static DateTime AmigaToDateTimeUtc(int days, int minute, int tick)
+		public static DateTime AmigaToDateTime(int days, int minute, int tick)
 		{
 			return AmigaEpoch.AddDays(days).AddMinutes(minute).AddMilliseconds(tick * 20.0);
 		}
