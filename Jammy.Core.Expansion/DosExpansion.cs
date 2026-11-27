@@ -191,7 +191,7 @@ namespace Jammy.Core.Expansion
 			string[] amigaBits = amigaPath.Split('/');
 			foreach (string amigaBit in amigaBits)
 			{
-				var dc = new MyDirCache(hostPath, logger);
+				var dc = GetDirCache(hostPath, logger);
 
 				string hostBit = dc.AmigaToHost(amigaBit);
 				if (hostBit == null)
@@ -408,6 +408,44 @@ namespace Jammy.Core.Expansion
 					return host;
 				return null;
 			}
+		}
+
+		private class DirStoreEntry
+		{
+			public MyDirCache dirCache;
+			public DateTime validTime;
+		}
+
+		private Dictionary<string, DirStoreEntry> dirStore = new Dictionary<string, DirStoreEntry>();
+		private const int cacheValidTimeSeconds = 2;
+
+		private MyDirCache GetDirCache(string hostPath, ILogger logger)
+		{
+			//prune stale cache entries
+			var now = DateTime.Now;
+			foreach (var key in dirStore.Keys.ToList())
+				if ((now - dirStore[key].validTime).Seconds > cacheValidTimeSeconds)
+					dirStore.Remove(key);
+
+			//is there an entry for this path?
+			if (dirStore.TryGetValue(hostPath, out var cacheEntry))
+			{
+				logger.LogTrace($"CACHE HIT {hostPath}");
+				return cacheEntry.dirCache;
+			}
+
+			logger.LogTrace($"CACHE MISS {hostPath}");
+			//create a new entry
+			cacheEntry = new DirStoreEntry
+				{
+					dirCache = new MyDirCache(hostPath, logger),
+					validTime = now
+				};
+
+			//cache it
+			dirStore.Add(hostPath, cacheEntry);
+
+			return cacheEntry.dirCache;;
 		}
 
 		private const int ACTION_NIL = 0;
