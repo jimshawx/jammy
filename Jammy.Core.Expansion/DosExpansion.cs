@@ -789,7 +789,7 @@ namespace Jammy.Core.Expansion
 						if (parent != null)
 							parentPath = parent.FullPath;
 						
-						uint namePtr = (uint)pkt.dp_Arg2 << 2;
+						uint namePtr = CPtr(pkt.dp_Arg2);
 						if (namePtr == 0)
 						{
 							logger.LogTrace($"LOCATE empty name");
@@ -1175,9 +1175,19 @@ namespace Jammy.Core.Expansion
 							logger.LogTrace("CAN'T FIND FILE");
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
-						logger.LogTrace("READ FILE");
 						var tmp = new byte[pkt.dp_Arg3];
-						uint r = (uint)file.stream.Read(tmp, 0, pkt.dp_Arg3);
+						uint r = 0;
+						try
+						{ 
+							r = (uint)file.stream.Read(tmp, 0, pkt.dp_Arg3);
+						}
+						catch (Exception ex)
+						{
+							logger.LogTrace($"{ex}");
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_READ_PROTECTED);
+							return false;
+						}
 						for (uint i = 0; i < r; i++)
 							memory.UnsafeWrite8((uint)pkt.dp_Arg2 + i, tmp[i]);
 						logger.LogTrace($"READ {r}");
@@ -1197,8 +1207,17 @@ namespace Jammy.Core.Expansion
 						var tmp = new byte[pkt.dp_Arg3];
 						for (uint i = 0; i < pkt.dp_Arg3; i++)
 							tmp[i] = memory.UnsafeRead8((uint)pkt.dp_Arg2 + i);
-						file.stream.Write(tmp, 0, pkt.dp_Arg3);
-
+						try
+						{ 
+							file.stream.Write(tmp, 0, pkt.dp_Arg3);
+						}
+						catch (Exception ex)
+						{
+							logger.LogTrace($"{ex}");
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_WRITE_PROTECTED);
+							return false;
+						}
 						memory.UnsafeWrite32(regs.A[4] + 12, (uint)pkt.dp_Arg3);
 						memory.UnsafeWrite32(regs.A[4] + 16, 0);
 						return true;
@@ -1216,9 +1235,23 @@ namespace Jammy.Core.Expansion
 						var origin = pkt.dp_Arg3 == -1 ? SeekOrigin.Begin :
 									(pkt.dp_Arg3 == 1 ? SeekOrigin.End : SeekOrigin.Current);
 
-						file.stream.Seek(pkt.dp_Arg2, origin);
+						long posn = 0;
+						try
+						{ 
+							posn = file.stream.Seek(0, SeekOrigin.Current);
+							file.stream.Seek(pkt.dp_Arg2, origin);
+						}
+						catch (Exception ex)
+						{
+							logger.LogTrace($"{ex}");
+							memory.UnsafeWrite32(regs.A[4] + 12, DOSTRUE);
+							memory.UnsafeWrite32(regs.A[4] + 16, ERROR_SEEK_ERROR);
+							return false;
 
-						return DosTrue(regs);
+						}
+						memory.UnsafeWrite32(regs.A[4] + 12, (uint)posn);
+						memory.UnsafeWrite32(regs.A[4] + 16, 0);
+						return true;
 					}
 
 				case ACTION_END:
@@ -1229,10 +1262,17 @@ namespace Jammy.Core.Expansion
 							logger.LogTrace("CAN'T FIND FILE");
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 						}
-						file.stream.Close();
-						file.stream.Dispose();
-						files.Remove((uint)pkt.dp_Arg1);
-
+						try
+						{ 
+							file.stream.Close();
+							file.stream.Dispose();
+							files.Remove((uint)pkt.dp_Arg1);
+						}
+						catch (Exception ex)
+						{
+							logger.LogTrace($"{ex}");
+							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+						}
 						return DosTrue(regs);
 					}
 
@@ -1248,15 +1288,15 @@ namespace Jammy.Core.Expansion
 
 						logger.LogTrace($"DELETE {parent.FullPath}");
 
-						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+						filename = AmigaPathCombine(parent.FullPath, ReadDOSString(CPtr(pkt.dp_Arg2)));
 						if (filename == null)
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
+						string hostPath = MakeHostPath(filename);
+						if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND); 
+						
 						try
 						{
-							string hostPath = MakeHostPath(filename);
-							if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
-
 							if (File.Exists(hostPath))
 							{
 								try
@@ -1287,7 +1327,7 @@ namespace Jammy.Core.Expansion
 						}
 						catch (UnauthorizedAccessException)
 						{
-							return DosFail(regs, ERROR_WRITE_PROTECTED);
+							return DosFail(regs, ERROR_DELETE_PROTECTED);
 						}
 						catch (Exception ex)
 						{
@@ -1309,19 +1349,17 @@ namespace Jammy.Core.Expansion
 
 						logger.LogTrace($"CREATE DIR {parent.FullPath}");
 
-						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+						filename = AmigaPathCombine(parent.FullPath, ReadDOSString(CPtr(pkt.dp_Arg2)));
 						if (filename == null)
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
+						string hostPath = MakeHostPath(filename);
+						if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
 						try
 						{
-							string hostPath = MakeHostPath(filename);
-							if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
-
 							if (Path.Exists(hostPath))
-							{
 								return DosFail(regs, ERROR_OBJECT_EXISTS);
-							}
 
 							Directory.CreateDirectory(hostPath);
 
@@ -1359,7 +1397,7 @@ namespace Jammy.Core.Expansion
 						if (parent == null)
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
-						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg2 << 2));
+						filename = AmigaPathCombine(parent.FullPath, ReadDOSString(CPtr(pkt.dp_Arg2)));
 						if (filename == null)
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
@@ -1367,19 +1405,18 @@ namespace Jammy.Core.Expansion
 						if (parentTo == null)
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
-						dstFilename = AmigaPathCombine(parentTo.FullPath, ReadDOSString((uint)pkt.dp_Arg4 << 2));
+						dstFilename = AmigaPathCombine(parentTo.FullPath, ReadDOSString(CPtr(pkt.dp_Arg4)));
 						if (dstFilename == null)
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
+						string from = MakeHostPath(filename);
+						if (from == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
+						string to = MakeHostPath(dstFilename);
+						if (to == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
 						try
 						{
-							logger.LogTrace($"RENAME");
-							string from = MakeHostPath(filename);
-							if (from == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
-							logger.LogTrace("->");
-							string to = MakeHostPath(dstFilename);
-							if (to == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
-
 							if (File.Exists(from))
 								File.Move(from, to);
 							else if (Directory.Exists(from))
@@ -1434,22 +1471,22 @@ namespace Jammy.Core.Expansion
 						if (parent == null)
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
-						filename = AmigaPathCombine(parent.FullPath, ReadDOSString((uint)pkt.dp_Arg3 << 2));
+						filename = AmigaPathCombine(parent.FullPath, ReadDOSString(CPtr(pkt.dp_Arg3)));
 						if (filename == null)
 							return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
 
+						string hostPath = MakeHostPath(filename);
+						if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
+
+						uint datePtr = (uint)pkt.dp_Arg4;
+						int days = (int)memory.UnsafeRead32(datePtr);
+						int mins = (int)memory.UnsafeRead32(datePtr + 4);
+						int tick = (int)memory.UnsafeRead32(datePtr + 8);
+
+						var time = AmigaToDateTime(days, mins, tick);
+
 						try
 						{
-							string hostPath = MakeHostPath(filename);
-							if (hostPath == null) return DosFail(regs, ERROR_OBJECT_NOT_FOUND);
-
-							uint datePtr = (uint)pkt.dp_Arg4;
-							int days = (int)memory.UnsafeRead32(datePtr);
-							int mins = (int)memory.UnsafeRead32(datePtr+4);
-							int tick = (int)memory.UnsafeRead32(datePtr+8);
-
-							var time = AmigaToDateTime(days, mins, tick);
-
 							if (Directory.Exists(hostPath))
 							{ 
 								Directory.SetCreationTime(hostPath, time);
@@ -1500,7 +1537,7 @@ namespace Jammy.Core.Expansion
 				case ACTION_RENAME_DISK:
 					{ 
 					logger.LogTrace($"ACTION_RENAME_DISK");
-					string name = ReadDOSString((uint)pkt.dp_Arg1<<2);
+					string name = ReadDOSString(CPtr(pkt.dp_Arg1));
 					if (name.Length > 30)
 						return DosFail(regs, ERROR_INVALID_COMPONENT_NAME);
 
@@ -1560,6 +1597,7 @@ namespace Jammy.Core.Expansion
 
 		private uint BPtr(uint mem) { return mem >> 2; }
 		private uint CPtr(uint mem) { return mem << 2; }
+		private uint CPtr(int mem) { return (uint)mem << 2; }
 
 		private void Cleanup()
 		{
